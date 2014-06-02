@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com
+ * For more information, contact us at license @ x265.com
  *****************************************************************************/
 
 #include "threadpool.h"
@@ -66,7 +66,7 @@ void WaveFront::enqueueRow(int row)
     // thread safe
     uint64_t bit = 1LL << (row & 63);
 
-    assert(row < m_numRows);
+    X265_CHECK(row < m_numRows, "invalid row\n");
     ATOMIC_OR(&m_internalDependencyBitmap[row >> 6], bit);
     m_pool->pokeIdleThread();
 }
@@ -76,7 +76,7 @@ void WaveFront::enableRow(int row)
     // thread safe
     uint64_t bit = 1LL << (row & 63);
 
-    assert(row < m_numRows);
+    X265_CHECK(row < m_numRows, "invalid row\n");
     ATOMIC_OR(&m_externalDependencyBitmap[row >> 6], bit);
 }
 
@@ -112,7 +112,7 @@ bool WaveFront::dequeueRow(int row)
     return ATOMIC_CAS(&m_internalDependencyBitmap[row >> 6], oldval, newval) == oldval;
 }
 
-bool WaveFront::findJob()
+bool WaveFront::findJob(int threadId)
 {
     unsigned long id;
 
@@ -130,7 +130,7 @@ bool WaveFront::findJob()
             if (ATOMIC_CAS(&m_internalDependencyBitmap[w], oldval, newval) == oldval)
             {
                 // we cleared the bit, process row
-                processRow(w * 64 + id);
+                processRow(w * 64 + id, threadId);
                 return true;
             }
             // some other thread cleared the bit, try another bit

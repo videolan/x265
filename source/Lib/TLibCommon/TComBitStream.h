@@ -109,7 +109,7 @@ public:
     void        writeAlignZero();
 
     /** this function should never be called */
-    void resetBits() { assert(0); }
+    void resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
 
     // utility functions
 

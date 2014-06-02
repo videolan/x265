@@ -24,7 +24,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "common.h"
@@ -722,11 +722,11 @@ void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scal
 {
 #if !HIGH_BIT_DEPTH
     // NOTE: maximum of scale is (72 * 256)
-    assert(scale < 32768);
+    X265_CHECK(scale < 32768, "dequant invalid scale %d\n", scale);
 #endif
-    assert(num <= 32 * 32);
-    assert((num % 8) == 0);
-    assert(shift <= 10);
+    X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
+    X265_CHECK((num % 8) == 0, "dequant num %d not multiple of 8\n", num);
+    X265_CHECK(shift <= 10, "shift too large %d\n", shift);
 
     int add, coeffQ;
 
@@ -744,7 +744,7 @@ void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scal
 
 void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
-    assert(num <= 32 * 32);
+    X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
 
     int add, coeffQ;
     int clipQCoef;
@@ -800,8 +800,8 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
 
 int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
 {
-    assert(((intptr_t)quantCoeff & 15) == 0);
-    assert(numCoeff > 0 && (numCoeff & 15) == 0);
+    X265_CHECK(((intptr_t)quantCoeff & 15) == 0, "quant buffer not aligned\n");
+    X265_CHECK(numCoeff > 0 && (numCoeff & 15) == 0, "numCoeff invalid %d\n", numCoeff);
 
     int count = 0;
 

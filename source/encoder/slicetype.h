@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_SLICETYPE_H
@@ -110,7 +110,7 @@ struct CostEstimate : public WaveFront
     volatile bool    bFrameCompleted;
     int              curb, curp0, curp1;
 
-    void     processRow(int row);
+    void     processRow(int row, int threadId);
     int64_t  estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
 protected:
@@ -155,7 +155,7 @@ protected:
     volatile bool bFilling;
     volatile bool bFlushed;
 
-    bool findJob();
+    bool findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();

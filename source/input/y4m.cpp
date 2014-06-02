@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "y4m.h"
@@ -53,6 +53,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     head.set(0);
     tail.set(0);
 
+    threadActive = false;
     colorSpace = info.csp;
     sarWidth = info.sarWidth;
     sarHeight = info.sarHeight;
@@ -60,6 +61,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     height = info.height;
     rateNum = info.fpsNum;
     rateDenom = info.fpsDenom;
+    depth = info.depth;
 
     ifs = NULL;
     if (!strcmp(info.filename, "-"))
@@ -72,13 +74,30 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     else
         ifs = new ifstream(info.filename, ios::binary | ios::in);
 
-    threadActive = false;
+    uint32_t bytesPerPixel = 1;
+    size_t frameSize = strlen(header) + 1;
     if (ifs && ifs->good() && parseHeader())
     {
-        threadActive = true;
-        for (uint32_t i = 0; i < QUEUE_SIZE; i++)
+        bytesPerPixel = depth > 8 ? 2 : 1;
+        for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
         {
-            pictureAlloc(i);
+            plane_stride[i] = (uint32_t)(width >> x265_cli_csps[colorSpace].width[i]) * bytesPerPixel;
+            plane_size[i] =   (uint32_t)(plane_stride[i] * (height >> x265_cli_csps[colorSpace].height[i]));
+            frameSize += plane_size[i];
+        }
+        threadActive = true;
+        for (uint32_t q = 0; q < QUEUE_SIZE && threadActive; q++)
+        {
+            for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+            {
+                plane[q][i] = X265_MALLOC(char, plane_size[i]);
+                if (!plane[q][i])
+                {
+                    x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
+                    threadActive = false;
+                    break;
+                }
+            }
         }
     }
     if (!threadActive)
@@ -96,15 +115,8 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     info.fpsNum = rateNum;
     info.fpsDenom = rateDenom;
     info.csp = colorSpace;
-    info.depth = 8;
+    info.depth = depth;
     info.frameCount = -1;
-
-    size_t frameSize = strlen(header) + 1;
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        frameSize += (size_t)((width  >> x265_cli_csps[colorSpace].width[i]) *
-                              (height >> x265_cli_csps[colorSpace].height[i]));
-    }
 
     /* try to estimate frame count, if this is not stdin */
     if (ifs != &cin)
@@ -137,10 +149,14 @@ Y4MInput::Y4MInput(InputFileInfo& info)
 
     if (info.skipFrames)
     {
+#if X86_64
+        ifs->seekg((uint64_t)frameSize * info.skipFrames, ios::cur);
+#else
         for (int i = 0; i < info.skipFrames; i++)
         {
             ifs->ignore(frameSize);
         }
+#endif
     }
 }
 
@@ -153,23 +169,7 @@ Y4MInput::~Y4MInput()
     {
         for (int j = 0; j < x265_cli_csps[colorSpace].planes; j++)
         {
-            delete[] plane[i][j];
-        }
-    }
-}
-
-void Y4MInput::pictureAlloc(int queueindex)
-{
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        plane_stride[i] = (uint32_t)(width >> x265_cli_csps[colorSpace].width[i]);
-        plane_size[i] =   (uint32_t)(plane_stride[i] * (height >> x265_cli_csps[colorSpace].height[i]));
-        plane[queueindex][i] = new char[plane_size[i]];
-        if (!plane[queueindex][i])
-        {
-            x265_log(NULL, X265_LOG_ERROR, "y4m: buffer allocation failure, aborting");
-            threadActive = false;
-            return;
+            x265_free(plane[i][j]);
         }
     }
 }
@@ -180,6 +180,7 @@ bool Y4MInput::parseHeader()
         return false;
 
     int csp = 0;
+    int d = 0;
 
     while (!ifs->eof())
     {
@@ -309,20 +310,35 @@ bool Y4MInput::parseHeader()
 
             case 'C':
                 csp = 0;
+                d = 0;
                 while (!ifs->eof())
                 {
                     c = ifs->get();
 
-                    if (c == ' ' || c == '\n')
-                    {
-                        break;
-                    }
-                    else
+                    if (c <= '9' && c >= '0')
                     {
                         csp = csp * 10 + (c - '0');
                     }
+                    else if (c == 'p')
+                    {
+                        // example: C420p16
+                        while (!ifs->eof())
+                        {
+                            c = ifs->get();
+
+                            if (c <= '9' && c >= '0')
+                                d = d * 10 + (c - '0');
+                            else
+                                break;
+                        }
+                        break;
+                    }
+                    else
+                        break;
                 }
 
+                if (d >= 8 && d <= 16)
+                    depth = d;
                 colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
                 break;
 
@@ -402,7 +418,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
     if (!frameStat[curHead])
         return false;
 
-    pic.bitDepth = 8;
+    pic.bitDepth = depth;
     pic.colorSpace = colorSpace;
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
     {

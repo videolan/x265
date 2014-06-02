@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #if _MSC_VER
@@ -69,6 +69,7 @@ static const struct option long_options[] =
     { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log-level",      required_argument, NULL, 0 },
+    { "level",          required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
@@ -129,6 +130,7 @@ static const struct option long_options[] =
     { "weightb",              no_argument, NULL, 0 },
     { "crf",            required_argument, NULL, 0 },
     { "crf-max",        required_argument, NULL, 0 },
+    { "crf-min",        required_argument, NULL, 0 },
     { "vbv-maxrate",    required_argument, NULL, 0 },
     { "vbv-bufsize",    required_argument, NULL, 0 },
     { "vbv-init",       required_argument, NULL, 0 },
@@ -139,6 +141,11 @@ static const struct option long_options[] =
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
+    { "psy-rd",         required_argument, NULL, 0 },
+    { "lossless",             no_argument, NULL, 0 },
+    { "no-lossless",          no_argument, NULL, 0 },
+    { "cu-lossless",          no_argument, NULL, 0 },
+    { "no-cu-lossless",       no_argument, NULL, 0 },
     { "no-signhide",          no_argument, NULL, 0 },
     { "signhide",             no_argument, NULL, 0 },
     { "no-lft",               no_argument, NULL, 0 },
@@ -167,8 +174,14 @@ static const struct option long_options[] =
     { "crop-rect",      required_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
+    { "no-repeat-headers",    no_argument, NULL, 0 },
+    { "repeat-headers",       no_argument, NULL, 0 },
     { "aud",                  no_argument, NULL, 0 },
     { "no-aud",               no_argument, NULL, 0 },
+    { "qpfile",         required_argument, NULL, 0 },
+    { "b-intra",              no_argument, NULL, 0 },
+    { "no-b-intra",           no_argument, NULL, 0 },
+    { "nr",             required_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -196,6 +209,7 @@ struct CLIOptions
     int64_t startTime;
     int64_t prevUpdateTime;
     float   frameRate;
+    FILE*   qpfile;
 
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
@@ -211,6 +225,7 @@ struct CLIOptions
         startTime = x265_mdate();
         prevUpdateTime = 0;
         dither = false;
+        qpfile = NULL;
     }
 
     void destroy();
@@ -219,6 +234,7 @@ struct CLIOptions
     void printVersion(x265_param *param);
     void showHelp(x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
+    bool parseQPFile(x265_picture &pic_org);
 };
 
 void CLIOptions::destroy()
@@ -229,6 +245,9 @@ void CLIOptions::destroy()
     if (recon)
         recon->release();
     recon = NULL;
+    if (qpfile)
+        fclose(qpfile);
+    qpfile = NULL;
 }
 
 void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
@@ -300,11 +319,17 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
     H0("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
     H0("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
+    H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
+    H0("   --level <integer|float>       Force a minumum required decoder level (as '5.0' or '50')\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
+    H0("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
+    H0("                                 Format of each line: framenumber frametype QP\n");
+    H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
+    H0("                                 QPs are restricted by qpmin/qpmax.\n");
     H0("\nPresets:\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
@@ -345,24 +370,30 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
+    H0("   --[no-]b-intra                Enable intra in B frames in veryslow presets. Default %s\n", OPT(param->bIntraInBFrames));
     H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));
+    H0("   --[no-]lossless               Enable lossless mode, bypassing transform, quantization and in-loop filters globally. Default %s\n", OPT(param->bLossless));
+    H0("   --[no-]cu-lossless            Consider lossless mode in CU RDO decisions. Default %s\n", OPT(param->bCULossless));
     H0("\nRate control and rate distortion options:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps), implies ABR. Default %d\n", param->rc.bitrate);
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
-    H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. 0 for no limit (default)\n");
+    H0("   --crf-max <float>             With CRF+VBV, limit RF to this value. Default %f\n", param->rc.rfConstantMax);
     H0("                                 May cause VBV underflows!\n");
+    H0("   --crf-min <float>             With CRF+VBV, limit RF to this value. Default %f\n", param->rc.rfConstantMin);
+    H0("                                 this specifies a minimum rate factor value for encode!\n");
     H0("   --vbv-maxrate <integer>       Max local bitrate (kbit/s). Default %d\n", param->rc.vbvMaxBitrate);
     H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
     H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %f\n", param->rc.vbvBufferInit);
-    H0("-q/--qp <integer>                Base QP for CQP mode. Default %d\n", param->rc.qp);
+    H0("-q/--qp <integer>                Base QP for CQP mode\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
+    H0("   --psy-rd <0..2.0>             Strength of psycho-visual optimization. Requires slow preset or below. Default %f\n", param->psyRd);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
@@ -388,11 +419,11 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("\nBitstream options:\n");
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
+    H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
+    H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("\nReconstructed video options (debugging):\n");
     H0("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H0("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
-    H0("\nSEI options:\n");
-    H0("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
 #undef OPT
 #undef H0
     printf("\n\nFull documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
@@ -408,8 +439,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *inputfn = NULL;
     const char *reconfn = NULL;
     const char *bitstreamfn = NULL;
-    const char *preset = "medium";
-    const char *tune = "ssim";
+    const char *preset = NULL;
+    const char *tune = NULL;
 
     if (argc <= 1)
     {
@@ -502,6 +533,15 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("y4m") bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
+            OPT("qpfile")
+            {
+                this->qpfile = fopen(optarg, "rb");
+                if (!this->qpfile)
+                {
+                    x265_log(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file \n", optarg);
+                    return false;
+                }
+            }
             else
                 bError |= !!x265_param_parse(param, long_options[long_options_index].name, optarg);
 
@@ -594,8 +634,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[128];
-        int p = sprintf(buf, "%dx%d fps %d/%d %s", param->sourceWidth, param->sourceHeight,
-                        param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp]);
+        int p = sprintf(buf, "%dx%d fps %d/%d %sp%d", param->sourceWidth, param->sourceHeight,
+                        param->fpsNum, param->fpsDenom, x265_source_csp_names[param->internalCsp], info.depth);
 
         int width, height;
         getParamAspectRatio(param, width, height);
@@ -638,6 +678,40 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
 
     return false;
+}
+
+bool CLIOptions::parseQPFile(x265_picture &pic_org)
+{
+    int32_t num = -1, qp, ret;
+    char type;
+    uint32_t filePos;
+    pic_org.forceqp = 0;
+    pic_org.sliceType = X265_TYPE_AUTO;
+    while (num < pic_org.poc)
+    {
+        filePos = ftell(qpfile);
+        qp = -1;
+        ret = fscanf(qpfile, "%d %c%*[ \t]%d\n", &num, &type, &qp);
+
+        if (num > pic_org.poc || ret == EOF)
+        {
+            fseek(qpfile, filePos, SEEK_SET);
+            break;
+        }
+        if (num < pic_org.poc && ret >= 2)
+            continue;
+        if (ret == 3 && qp >= 0)
+            pic_org.forceqp = qp + 1;
+        if (type == 'I') pic_org.sliceType = X265_TYPE_IDR;
+        else if (type == 'i') pic_org.sliceType = X265_TYPE_I;
+        else if (type == 'P') pic_org.sliceType = X265_TYPE_P;
+        else if (type == 'B') pic_org.sliceType = X265_TYPE_BREF;
+        else if (type == 'b') pic_org.sliceType = X265_TYPE_B;
+        else ret = 0;
+        if (ret < 2 || qp < -1 || qp > 51)
+            return 0;
+    }
+    return 1;
 }
 
 int main(int argc, char **argv)
@@ -706,6 +780,15 @@ int main(int argc, char **argv)
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
+        if (cliopt.qpfile)
+        {
+            if (!cliopt.parseQPFile(pic_orig))
+            {
+                x265_log(NULL, X265_LOG_ERROR, "can't parse qpfile for frame %d\n", pic_in->poc);
+                fclose(cliopt.qpfile);
+                cliopt.qpfile = NULL;
+            }
+        }
 
         if (cliopt.framesToBeEncoded && inFrameCount >= cliopt.framesToBeEncoded)
             pic_in = NULL;

@@ -566,14 +566,9 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
         rec    = m_pic->getPicYuvRec()->getLumaAddr(addr);
         stride = m_pic->getStride();
     }
-    else if (yCbCr == 1)
-    {
-        rec    = m_pic->getPicYuvRec()->getCbAddr(addr);
-        stride = m_pic->getCStride();
-    }
     else
     {
-        rec    = m_pic->getPicYuvRec()->getCrAddr(addr);
+        rec    = m_pic->getPicYuvRec()->getChromaAddr(yCbCr, addr);
         stride = m_pic->getCStride();
     }
 
@@ -848,14 +843,9 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
         rec        = m_pic->getPicYuvRec()->getLumaAddr();
         picWidthTmp = m_picWidth;
     }
-    else if (yCbCr == 1)
-    {
-        rec        = m_pic->getPicYuvRec()->getCbAddr();
-        picWidthTmp = m_picWidth >> m_hChromaShift;
-    }
     else
     {
-        rec        = m_pic->getPicYuvRec()->getCrAddr();
+        rec        = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
@@ -892,15 +882,9 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
             stride = m_pic->getStride();
             picWidthTmp = m_picWidth;
         }
-        else if (yCbCr == 1)
-        {
-            rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
-            stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> m_hChromaShift;
-        }
         else
         {
-            rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
+            rec  = m_pic->getPicYuvRec()->getChromaAddr(yCbCr, addr);
             stride = m_pic->getCStride();
             picWidthTmp = m_picWidth >> m_hChromaShift;
         }
@@ -977,14 +961,9 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
                         rec  = m_pic->getPicYuvRec()->getLumaAddr(addr);
                         stride = m_pic->getStride();
                     }
-                    else if (yCbCr == 1)
-                    {
-                        rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
-                        stride = m_pic->getCStride();
-                    }
                     else
                     {
-                        rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
+                        rec  = m_pic->getPicYuvRec()->getChromaAddr(yCbCr, addr);
                         stride = m_pic->getCStride();
                     }
 
@@ -1019,14 +998,9 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
         rec        = m_pic->getPicYuvRec()->getLumaAddr();
         picWidthTmp = m_picWidth;
     }
-    else if (yCbCr == 1)
-    {
-        rec        = m_pic->getPicYuvRec()->getCbAddr();
-        picWidthTmp = m_picWidth >> m_hChromaShift;
-    }
     else
     {
-        rec        = m_pic->getPicYuvRec()->getCrAddr();
+        rec        = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
@@ -1061,15 +1035,9 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
             stride = m_pic->getStride();
             picWidthTmp = m_picWidth;
         }
-        else if (yCbCr == 1)
-        {
-            rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
-            stride = m_pic->getCStride();
-            picWidthTmp = m_picWidth >> m_hChromaShift;
-        }
         else
         {
-            rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
+            rec  = m_pic->getPicYuvRec()->getChromaAddr(yCbCr, addr);
             stride = m_pic->getCStride();
             picWidthTmp = m_picWidth >> m_hChromaShift;
         }
@@ -1139,14 +1107,9 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
                         rec  = m_pic->getPicYuvRec()->getLumaAddr(addr);
                         stride = m_pic->getStride();
                     }
-                    else if (yCbCr == 1)
-                    {
-                        rec  = m_pic->getPicYuvRec()->getCbAddr(addr);
-                        stride = m_pic->getCStride();
-                    }
                     else
                     {
-                        rec  = m_pic->getPicYuvRec()->getCrAddr(addr);
+                        rec  = m_pic->getPicYuvRec()->getChromaAddr(yCbCr, addr);
                         stride = m_pic->getCStride();
                     }
 
@@ -1368,10 +1331,10 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
     uint32_t height;
     uint32_t pcmLeftShiftBit;
     uint32_t x, y;
+    int hChromaShift = cu->getHorzChromaShift();
+    int vChromaShift = cu->getVertChromaShift();
     uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
-    uint32_t chromaOffset = lumaOffset >> 2;
-
-    //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
+    uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     if (ttText == TEXT_LUMA)
     {
@@ -1403,10 +1366,9 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
         }
 
         stride = pcPicYuvRec->getCStride();
-        //width  = ((g_maxCUSize >> depth) >> m_hChromaShift);
-        //height = ((g_maxCUSize >> depth) >> m_vhChromaShift);
-        width  = ((g_maxCUSize >> depth) >> 1);
-        height = ((g_maxCUSize >> depth) >> 1);
+        width  = ((g_maxCUSize >> depth) >> hChromaShift);
+        height = ((g_maxCUSize >> depth) >> vChromaShift);
+
         if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
         {
             pcmLeftShiftBit = 0;

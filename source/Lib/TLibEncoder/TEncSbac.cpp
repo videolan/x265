@@ -289,7 +289,7 @@ void TEncSbac::codeVPS(TComVPS* vps)
     WRITE_CODE(0,                                  6,        "vps_reserved_zero_6bits");
     WRITE_CODE(vps->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1");
     WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
-    assert(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag());
+    X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
     codePTL(vps->getPTL(), true, vps->getMaxTLayers() - 1);
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
@@ -300,8 +300,8 @@ void TEncSbac::codeVPS(TComVPS* vps)
         WRITE_UVLC(vps->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]");
     }
 
-    assert(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS);
-    assert(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1);
+    X265_CHECK(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS, "invalid HRD param\n");
+    X265_CHECK(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1, "invalid layer\n");
     WRITE_CODE(vps->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id");
     vps->setMaxOpSets(1);
     WRITE_UVLC(vps->getMaxOpSets() - 1,                    "vps_max_op_sets_minus1");
@@ -471,7 +471,7 @@ void TEncSbac::codeSPS(TComSPS* sps)
         WRITE_FLAG(sps->getPCMFilterDisableFlag() ? 1 : 0,               "pcm_loop_filter_disable_flag");
     }
 
-    assert(sps->getMaxTLayers() > 0);
+    X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
 
     TComRPSList* rpsList = sps->getRPSList();
     TComReferencePictureSet* rps;
@@ -879,7 +879,7 @@ void TEncSbac::xCodePredWeightTable(TComSlice* slice)
             }
         }
 
-        assert(totalSignalledWeightFlags <= 24);
+        X265_CHECK(totalSignalledWeightFlags <= 24, "total weights must be <= 24\n");
     }
 }
 
@@ -1011,7 +1011,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
     {
         for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
         {
-            assert(!!"slice_reserved_undetermined_flag[]");
+            X265_CHECK(0, "slice_reserved_undetermined_flag[]");
             WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
         }
 
@@ -1043,7 +1043,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
             {
                 for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
                 {
-                    assert(!rps->getUsed(picIdx));
+                    X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
                 }
             }
 
@@ -1134,7 +1134,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
                         else
                         {
                             int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
-                            assert(differenceInDeltaMSB >= 0);
+                            X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
                             WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
                         }
                         prevLSB = rps->getPocLSBLT(i);
@@ -1210,7 +1210,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
 
             if (slice->getSliceType() != I_SLICE &&
                 ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
-                 (slice->getColFromL0Flag() == 0  && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+                 (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
             {
                 WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
             }
@@ -1219,7 +1219,7 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         {
             xCodePredWeightTable(slice);
         }
-        assert(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS);
+        X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
         if (!slice->isIntra())
         {
             WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
@@ -1299,7 +1299,7 @@ void  TEncSbac::codeTilesWPPEntryPoint(TComSlice* slice)
     while (maxOffset >= (1u << (offsetLenMinus1 + 1)))
     {
         offsetLenMinus1++;
-        assert(offsetLenMinus1 + 1 < 32);
+        X265_CHECK(offsetLenMinus1 + 1 < 32, "offsetLenMinus1 is too large\n");
     }
 
     WRITE_UVLC(numEntryPointOffsets, "num_entry_point_offsets");
@@ -1328,7 +1328,7 @@ void TEncSbac::codeSliceFinish()
 
 void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
-    assert(maxSymbol > 0);
+    X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
     m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
 
@@ -1369,7 +1369,7 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
     bins = (bins << count) | symbol;
     numBins += count;
 
-    assert(numBins <= 32);
+    X265_CHECK(numBins <= 32, "numBins too large\n");
     m_binIf->encodeBinsEP(bins, numBins);
 }
 
@@ -1387,9 +1387,8 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
     {
         length = codeNumber >> absGoRice;
 
-        assert(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)));
-
-        assert(length + 1 + absGoRice < 32);
+        X265_CHECK(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)), "codeNumber failure\n");
+        X265_CHECK(length + 1 + absGoRice < 32, "length failure\n");
         m_binIf->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
@@ -1511,7 +1510,8 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         break;
 
     default:
-        assert(0);
+        X265_CHECK(0, "invalid CU partition\n");
+        break;
     }
 }
 
@@ -1591,7 +1591,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
         m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
-        assert(unaryIdx < numCand);
+        X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
         if (unaryIdx != 0)
         {
@@ -1615,7 +1615,7 @@ void TEncSbac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     uint32_t ctx           = cu->getCtxSplitFlag(absPartIdx, depth);
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
-    assert(ctx < 3);
+    X265_CHECK(ctx < 3, "ctx out of range\n");
     m_binIf->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
@@ -1636,7 +1636,7 @@ void TEncSbac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
 {
     uint32_t dir[4], j;
-    int preds[4][3];
+    uint32_t preds[4][3];
     int predIdx[4];
     PartSize mode = cu->getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
@@ -1662,7 +1662,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
     {
         if (predIdx[j] != -1)
         {
-            assert((predIdx[j] >= 0) && (predIdx[j] <= 2));
+            X265_CHECK((predIdx[j] >= 0) && (predIdx[j] <= 2), "predIdx out of range\n");
             // NOTE: Mapping
             //       0 = 0
             //       1 = 10
@@ -1930,8 +1930,7 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
         m_binIf->encodePCMAlignBits();
 
         uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
-        uint32_t chromaOffset = lumaOffset >> 2;
-        //uint32_t chromaOffset = lumaOffset >> (m_hChromaShift + m_vChromaShift);
+        uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
         uint32_t width;
         uint32_t height;
         uint32_t sampleBits;
@@ -2037,7 +2036,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
  */
 void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
 {
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     // swap
     if (scanIdx == SCAN_VER)
     {
@@ -2089,7 +2088,7 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
@@ -2099,8 +2098,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     DTRACE_CABAC_V(trSize)
     DTRACE_CABAC_T("\theight=")
     DTRACE_CABAC_V(trSize)
-    DTRACE_CABAC_T("\tdepth=")
-    DTRACE_CABAC_V(depth)
     DTRACE_CABAC_T("\tabspartidx=")
     DTRACE_CABAC_V(absPartIdx)
     DTRACE_CABAC_T("\ttoCU-X=")
@@ -2116,11 +2113,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     DTRACE_CABAC_T("\tpredmode=")
     DTRACE_CABAC_V(cu->getPredictionMode(absPartIdx))
     DTRACE_CABAC_T("\n")
-#else // if ENC_DEC_TRACE
-    (void)depth;
 #endif // if ENC_DEC_TRACE
 
-    assert(trSize <= m_slice->getSPS()->getMaxTrSize());
+    X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
@@ -2331,7 +2326,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
 
 void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 {
-    assert(maxSymbol > 0);
+    X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
     uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
     uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
@@ -2362,7 +2357,7 @@ void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
  */
 void TEncSbac::codeSaoMerge(uint32_t code)
 {
-    assert((code == 0) || (code == 1));
+    X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
     m_binIf->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
@@ -2430,7 +2425,7 @@ void TEncSbac::estCBFBit(estBitsSbacStruct* estBitsSbac)
  */
 void TEncSbac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
 {
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
@@ -2500,7 +2495,7 @@ void TEncSbac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, 
     int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
-    assert((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA));
+    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int ctx;
     const ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)

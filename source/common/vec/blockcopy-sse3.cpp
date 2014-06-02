@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com
+ * For more information, contact us at license @ x265.com
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
@@ -30,7 +30,7 @@ namespace {
 #if HIGH_BIT_DEPTH
 void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    if ((bx & 7) || (((size_t)dst | (size_t)src | sstride | dstride) & 15))
+    if ((bx & 7) || (((intptr_t)dst | (intptr_t)src | sstride | dstride) & 15))
     {
         // slow path, irregular memory alignments or sizes
         for (int y = 0; y < by; y++)
@@ -60,7 +60,7 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
 #else // if HIGH_BIT_DEPTH
 void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+    intptr_t aligncheck = (intptr_t)dst | (intptr_t)src | bx | sstride | dstride;
 
     if (!(aligncheck & 15))
     {
@@ -91,7 +91,7 @@ void blockcopy_pp(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intp
 
 void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, intptr_t sstride)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src | bx | sstride | dstride;
+    intptr_t aligncheck = (intptr_t)dst | (intptr_t)src | bx | sstride | dstride;
 
     if (!(aligncheck & 15))
     {
@@ -134,7 +134,7 @@ void blockcopy_ps(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, in
 
 void pixeladd_ss(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1)
 {
-    size_t aligncheck = (size_t)dst | (size_t)src0 | sstride0 | sstride1 | dstride;
+    intptr_t aligncheck = (intptr_t)dst | (intptr_t)src0 | sstride0 | sstride1 | dstride;
 
     if (!(aligncheck & 15) && !(bx & 7))
     {

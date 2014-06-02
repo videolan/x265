@@ -52,15 +52,27 @@ namespace x265 {
 
 class TComDataCU;
 
+struct IntraNeighbors
+{
+    int  numIntraNeighbor;
+    int  totalUnits;
+    int  aboveUnits;
+    int  leftUnits;
+    int  tuSize;
+    int  unitWidth;
+    int  unitHeight;
+    bool bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
+};
+
 /// neighboring pixel access class for all components
 class TComPattern
 {
 public:
 
     // access functions of ADI buffers
-    static pixel* getAdiChromaBuf(int chromaId, int cuHeight, pixel* adiBuf)
+    static pixel* getAdiChromaBuf(uint32_t chromaId, int tuSize, pixel* adiBuf)
     {
-        return adiBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (cuHeight * 2 + 1));
+        return adiBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (tuSize * 2 + 1));
     }
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -69,21 +81,19 @@ public:
 
     /// set parameters from pixel buffers for accessing neighboring pixels
     static void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
-                               int strideOrig, int heightOrig, pixel* refAbove, pixel* refLeft,
-                               pixel* refAboveFlt, pixel* refLeftFlt);
-
-    /// set luma parameters from CU data for accessing ADI data
-    static void  initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
-                                int strideOrig, int heightOrig);
+                               pixel* refAbove, pixel* refLeft,
+                               pixel* refAboveFlt, pixel* refLeftFlt, int dirMode);
 
     /// set chroma parameters from CU data for accessing ADI data
-    static void  initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
-                                      pixel* adiBuf, int strideOrig, int heightOrig, int chromaId);
+    static void initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
+                                     pixel* adiBuf, uint32_t chromaId);
+
+    static void initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, TextType cType, IntraNeighbors *IntraNeighbors);
 
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    static void fillReferenceSamples(pixel* roiOrigin, pixel* adiTemp, bool* bNeighborFlags, int numIntraNeighbor, int unitWidth, int unitHeight, int aboveUnits, int leftUnits, uint32_t cuWidth, uint32_t cuHeight, uint32_t width, uint32_t height, int picStride);
+    static void fillReferenceSamples(pixel* roiOrigin, int picStride, pixel* adiTemp, const IntraNeighbors& intraNeighbors);
 
     /// constrained intra prediction
     static bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);

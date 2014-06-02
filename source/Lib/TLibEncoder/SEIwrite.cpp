@@ -139,7 +139,8 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
     case SEI::FRAME_PACKING:
     case SEI::TEMPORAL_LEVEL0_INDEX:
     default:
-        assert(!"Unhandled SEI message");
+        X265_CHECK(0, "Unhandled SEI message");
+        break;
     }
 }
 
@@ -167,7 +168,7 @@ void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
 #endif
 
     uint32_t payload_data_num_bits = bs_count.getNumberOfWrittenBits();
-    assert(0 == payload_data_num_bits % 8);
+    X265_CHECK(0 == payload_data_num_bits % 8, "payload unaligned\n");
 
     setBitstream(&bs);
 

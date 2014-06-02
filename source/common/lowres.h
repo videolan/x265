@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_LOWRES_H
@@ -126,9 +126,9 @@ struct Lowres : public ReferencePlanes
     int       bframes;
 
     /* rate control / adaptive quant data */
-    double*   qpAqOffset;      // qp Aq offset values for each Cu
+    double*   qpAqOffset;      // AQ QP offset values for each 16x16 CU
+    double*   qpCuTreeOffset;  // cuTree QP offset values for each 16x16 CU
     int*      invQscaleFactor; // qScale values for qp Aq Offsets
-    double*   qpOffset;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
 

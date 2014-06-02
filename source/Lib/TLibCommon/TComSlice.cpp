@@ -299,7 +299,7 @@ void TComSlice::setRefPicList(PicList& picList)
         rpsCurrList0[cIdx] = refPicSetLtCurr[i];
     }
 
-    assert(cIdx == numPocTotalCurr);
+    X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
 
     if (m_sliceType == B_SLICE)
     {
@@ -319,7 +319,7 @@ void TComSlice::setRefPicList(PicList& picList)
             rpsCurrList1[cIdx] = refPicSetLtCurr[i];
         }
 
-        assert(cIdx == numPocTotalCurr);
+        X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
 
     ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
@@ -327,7 +327,7 @@ void TComSlice::setRefPicList(PicList& picList)
     for (int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
     {
         cIdx = rIdx % numPocTotalCurr;
-        assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+        X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
         m_refPicList[0][rIdx] = rpsCurrList0[cIdx];
         m_bIsUsedAsLongTerm[0][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
     }
@@ -342,7 +342,7 @@ void TComSlice::setRefPicList(PicList& picList)
         for (int rIdx = 0; rIdx < m_numRefIdx[1]; rIdx++)
         {
             cIdx = rIdx % numPocTotalCurr;
-            assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+            X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
             m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
             m_bIsUsedAsLongTerm[1][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
         }
@@ -668,7 +668,7 @@ void TComReferencePictureSet::setDeltaPOC(int bufferNum, int deltaPOC)
     m_deltaPOC[bufferNum] = deltaPOC;
 }
 
-int TComReferencePictureSet::getUsed(int bufferNum) const
+bool TComReferencePictureSet::getUsed(int bufferNum) const
 {
     return m_used[bufferNum];
 }
@@ -991,7 +991,7 @@ int32_t* TComScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t
         src = (listId < 1) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
         break;
     default:
-        assert(0);
+        X265_CHECK(0, "invalid scaling list size\n");
         src = NULL;
         break;
     }

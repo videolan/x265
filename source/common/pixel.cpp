@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
@@ -395,7 +395,7 @@ void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, int16_t *b, intpt
     {
         for (int x = 0; x < bx; x++)
         {
-            assert((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)));
+            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy error\n");
             a[x] = (pixel)b[x];
         }
 
@@ -511,7 +511,7 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride,
 {
     int x, y;
 
-    assert(!(width & 15));
+    X265_CHECK(!(width & 15), "weightp alignment error\n");
 
     for (y = 0; y <= height - 1; y++)
     {
@@ -654,12 +654,12 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
 
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #if HIGH_BIT_DEPTH
-    assert(X265_DEPTH == 10);
+    X265_CHECK(X265_DEPTH == 10, "ssim invalid depth\n");
 #define type float
     static const float ssim_c1 = (float)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64);
     static const float ssim_c2 = (float)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63);
 #else
-    assert(X265_DEPTH == 8);
+    X265_CHECK(X265_DEPTH == 8, "ssim invalid depth\n");
 #define type int
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5);
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5);
@@ -760,7 +760,7 @@ void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
     {
         for (int x = 0; x < bx; x++)
         {
-            assert((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)));
+            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy pixel size fail\n");
             a[x] = (pixel)b[x];
         }
 
@@ -1151,11 +1151,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.calcrecon[BLOCK_32x32] = calcRecons<32>;
     p.calcrecon[BLOCK_64x64] = NULL;
 
-    p.transpose[0] = transpose<4>;
-    p.transpose[1] = transpose<8>;
-    p.transpose[2] = transpose<16>;
-    p.transpose[3] = transpose<32>;
-    p.transpose[4] = transpose<64>;
+    p.transpose[BLOCK_4x4] = transpose<4>;
+    p.transpose[BLOCK_8x8] = transpose<8>;
+    p.transpose[BLOCK_16x16] = transpose<16>;
+    p.transpose[BLOCK_32x32] = transpose<32>;
+    p.transpose[BLOCK_64x64] = transpose<64>;
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;

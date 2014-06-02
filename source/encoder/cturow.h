@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_CTUROW_H
@@ -32,6 +32,8 @@
 #include "TLibEncoder/TEncSearch.h"
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
+
+#include "rdcost.h"
 
 namespace x265 {
 // private x265 namespace
@@ -53,7 +55,7 @@ public:
     TEncBinCABAC           m_binCoderCABAC;
     TEncBinCABAC           m_rdGoOnBinCodersCABAC;
     TComBitCounter         m_bitCounter;
-    TComRdCost             m_rdCost;
+    RDCost                 m_rdCost;
     TEncEntropy            m_entropyCoder;
     TEncSearch             m_search;
     TEncCu                 m_cuCoder;

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
@@ -440,7 +440,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
     }
 
     int numLongPics = rps->getNumberOfLongtermPictures();
-    assert(ctr == numLongPics);
+    X265_CHECK(ctr == numLongPics, "\n");
 
     // Arrange pictures in decreasing order of MSB;
     for (i = 0; i < numLongPics; i++)
@@ -499,7 +499,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
         rps->setDeltaPocMSBCycleLT(i, (currMSB - (longtermPicsPoc[ctr] - longtermPicsLSB[ctr])) / maxPicOrderCntLSB);
         rps->setDeltaPocMSBPresentFlag(i, mSBPresentFlag[ctr]);
 
-        assert(rps->getDeltaPocMSBCycleLT(i) >= 0); // Non-negative value
+        X265_CHECK(rps->getDeltaPocMSBCycleLT(i) >= 0, "delta POC MSB must be positive\n"); // Non-negative value
     }
 
     for (i = rps->getNumberOfPictures() - 1, ctr = 1; i >= offset; i--, ctr++)
@@ -508,7 +508,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
         {
             // Here at the encoder we know that we have set the full POC value for the LTRPs, hence we
             // don't have to check the MSB present flag values for this constraint.
-            assert(rps->getPOC(i) != rps->getPOC(j)); // If assert fails, LTRP entry repeated in RPS!!!
+            X265_CHECK(rps->getPOC(i) != rps->getPOC(j), "LTRP releated in RPS\n");
         }
     }
 }

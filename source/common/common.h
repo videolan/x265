@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_COMMON_H
@@ -63,6 +63,29 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
 
 #endif // if defined(__GNUC__)
+
+#if HAVE_INT_TYPES_H
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#define X265_LL "%" PRIu64
+#else
+#define X265_LL "%lld"
+#endif
+
+/* If compiled with CHECKED_BUILD perform run-time checks and log any that
+ * fail, both to stderr and to a file */
+#if CHECKED_BUILD || _DEBUG
+#define X265_CHECK(expr, ...) if (!(expr)) { \
+    x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
+    FILE *fp = fopen("x265_check_failures.txt", "a"); \
+    if (fp) { fprintf(fp, "%s:%d\n", __FILE__, __LINE__); fprintf(fp, __VA_ARGS__); fclose(fp); } \
+}
+#if _MSC_VER
+#pragma warning(disable: 4127) // some checks have constant conditions
+#endif
+#else
+#define X265_CHECK(expr, ...)
+#endif
 
 #if HIGH_BIT_DEPTH
 typedef uint16_t pixel;
@@ -153,6 +176,21 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOG2F(x) log2f(x)
 #define X265_LOG2(x)  log2(x)
 #endif
+
+struct NoiseReduction
+{
+    bool bNoiseReduction;
+
+    /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
+     * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
+    uint16_t (*offset)[1024];
+    uint32_t (*residualSum)[1024];
+    uint32_t *count;
+
+    uint16_t offsetDenoise[8][1024];
+    uint32_t residualSumBuf[4][8][1024];
+    uint32_t countBuf[4][8];
+};
 
 /* defined in common.cpp */
 int64_t x265_mdate(void);

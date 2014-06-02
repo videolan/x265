@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
@@ -110,7 +110,7 @@ MotionEstimate::~MotionEstimate()
 void MotionEstimate::setSourcePU(int offset, int width, int height)
 {
     partEnum = partitionFromSizes(width, height);
-    assert(LUMA_4x4 != partEnum);
+    X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
     sad = primitives.sad[partEnum];
     satd = primitives.satd[partEnum];
     sa8d = primitives.sa8d_inter[partEnum];
@@ -1032,7 +1032,7 @@ me_hex2:
     }
 
     default:
-        assert(0);
+        X265_CHECK(0, "invalid motion estimate mode\n");
         break;
     }
 

@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "PPA/ppa.h"
@@ -179,8 +179,59 @@ bool FrameEncoder::init(Encoder *top, int numRows)
         ok = false;
     }
 
+    memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
+    memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
+    memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0][0]) * 4 * 8);
+
+    m_nr.offset = m_nr.offsetDenoise;
+    m_nr.residualSum = m_nr.residualSumBuf[0];
+    m_nr.count = m_nr.countBuf[0];
+
+    m_nr.bNoiseReduction = !!m_cfg->param->noiseReduction;
+
     start();
     return ok;
+}
+
+/****************************************************************************
+ * DCT-domain noise reduction / adaptive deadzone
+ * from libavcodec
+ ****************************************************************************/
+
+void FrameEncoder::noiseReductionUpdate()
+{
+    if (!m_nr.bNoiseReduction)
+        return;
+
+    m_nr.offset = m_nr.offsetDenoise;
+    m_nr.residualSum = m_nr.residualSumBuf[0];
+    m_nr.count = m_nr.countBuf[0];
+
+    int transformSize[4] = {16, 64, 256, 1024};
+    uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
+
+    int isCspI444 = (m_cfg->param->internalCsp == X265_CSP_I444) ? 1 : 0;
+    for (int cat = 0; cat < 7 + isCspI444; cat++)
+    {
+        int index = cat % 4;
+        int size = transformSize[index];
+
+        if (m_nr.count[cat] > blockCount[index])
+        {
+            for (int i = 0; i < size; i++)
+                m_nr.residualSum[cat][i] >>= 1;
+            m_nr.count[cat] >>= 1;
+        }
+
+        for (int i = 0; i < size; i++)
+            m_nr.offset[cat][i] =
+                (uint16_t)(((uint64_t)m_cfg->param->noiseReduction * m_nr.count[cat]
+                 + m_nr.residualSum[cat][i] / 2)
+              / ((uint64_t)m_nr.residualSum[cat][i] + 1));
+
+        // Don't denoise DC coefficients
+        m_nr.offset[cat][0] = 0;
+    }
 }
 
 int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
@@ -446,7 +497,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
     if (bUseWeightP || bUseWeightB)
     {
-        assert(slice->getPPS()->getUseWP());
+        X265_CHECK(slice->getPPS()->getUseWP(), "weightp not enabled in PPS, but in use\n");
         weightAnalyse(*slice, *m_cfg->param);
     }
 
@@ -473,7 +524,7 @@ void FrameEncoder::compressFrame()
         slice->setNextSlice(true);
     }
 
-    if ((m_cfg->m_recoveryPointSEIEnabled) && (slice->getSliceType() == I_SLICE))
+    if (slice->getPic()->m_lowres.bKeyframe)
     {
         if (m_cfg->m_gradualDecodingRefreshInfoEnabled && !slice->getRapPicFlag())
         {
@@ -492,12 +543,19 @@ void FrameEncoder::compressFrame()
                 m_nalCount++;
             }
         }
-        // Recovery point SEI
+        // The recovery point SEI message assists a decoder in determining when the decoding
+        // process will produce acceptable pictures for display after the decoder initiates
+        // random access. The m_recoveryPocCnt is in units of POC(picture order count) which
+        // means pictures encoded after the CRA but precede it in display order(leading) are
+        // implicitly discarded after a random access seek regardless of the value of
+        // m_recoveryPocCnt. Our encoder does not use references prior to the most recent CRA,
+        // so all pictures following the CRA in POC order are guaranteed to be displayable,
+        // so m_recoveryPocCnt is always 0.
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
         SEIRecoveryPoint sei_recovery_point;
         sei_recovery_point.m_recoveryPocCnt    = 0;
-        sei_recovery_point.m_exactMatchingFlag = (slice->getPOC() == 0) ? (true) : (false);
+        sei_recovery_point.m_exactMatchingFlag = true;
         sei_recovery_point.m_brokenLinkFlag    = false;
 
         m_seiWriter.writeSEImessage(nalu.m_bitstream, sei_recovery_point, slice->getSPS());
@@ -515,7 +573,14 @@ void FrameEncoder::compressFrame()
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
         SEIPictureTiming sei;
-        sei.m_picStruct = (slice->getPOC() & 1) && m_cfg->param->interlaceMode == 2 ? 1 /* top */ : 2 /* bot */;
+        if (m_cfg->param->interlaceMode == 2)
+        {
+            sei.m_picStruct = (slice->getPOC() & 1) ? 1 /* top */ : 2 /* bottom */;
+        }
+        else
+        {
+            sei.m_picStruct = (slice->getPOC() & 1) ? 2 /* bottom */ : 1 /* top */;
+        }
         sei.m_sourceScanType = 0;
         sei.m_duplicateFlag = 0;
 
@@ -727,6 +792,8 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
+
+    noiseReductionUpdate();
 
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
@@ -1021,13 +1088,13 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
-                processRow(i * 2 + 0);
+                processRow(i * 2 + 0, -1);
             }
 
             // Filter
             if (i >= m_filterRowDelay)
             {
-                processRow((i - m_filterRowDelay) * 2 + 1);
+                processRow((i - m_filterRowDelay) * 2 + 1, -1);
             }
         }
     }
@@ -1036,7 +1103,7 @@ void FrameEncoder::compressCTURows()
 }
 
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row)
+void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
@@ -1057,7 +1124,7 @@ void FrameEncoder::processRowEncoder(int row)
              * believe the problem is fixed, but are leaving this check in place
              * to prevent crashes in case it is not */
             x265_log(m_cfg->param, X265_LOG_WARNING,
-                     "internal error - simulaneous row access detected. Please report HW to x265-devel@videolan.org\n");
+                     "internal error - simultaneous row access detected. Please report HW to x265-devel@videolan.org\n");
             return;
         }
         curRow.m_busy = true;
@@ -1072,6 +1139,7 @@ void FrameEncoder::processRowEncoder(int row)
     {
         int col = curRow.m_completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
+        curRow.m_trQuant.m_nr = &m_nr;
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
         cu->setQPSubParts(m_pic->getSlice()->getSliceQp(), 0, 0);
@@ -1247,9 +1315,8 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     int block_y = (cuAddr / m_pic->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
     int block_x = (cuAddr * noOfBlocks) - block_y * m_pic->getPicSym()->getFrameWidthInCU();
 
-    /* Use cuTree offsets in m_pic->m_lowres.qpOffset if cuTree enabled and
-     * frame is referenced, else use AQ offsets */
-    double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpOffset : m_pic->m_lowres.qpAqOffset;
+    /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
+    double *qpoffs = (m_isReferenced && m_cfg->param->rc.cuTree) ? m_pic->m_lowres.qpCuTreeOffset : m_pic->m_lowres.qpAqOffset;
 
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
@@ -1287,7 +1354,7 @@ TComPic *FrameEncoder::getEncodedPicture(NALUnitEBSP **nalunits)
         if (nalunits)
         {
             // move NALs from member variable to user's container
-            assert(m_nalCount <= MAX_NAL_UNITS);
+            X265_CHECK(m_nalCount <= MAX_NAL_UNITS, "NAL unit overflow\n");
             ::memcpy(nalunits, m_nalList, sizeof(NALUnitEBSP*) * m_nalCount);
             m_nalCount = 0;
         }

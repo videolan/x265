@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_H
@@ -131,6 +131,9 @@ typedef struct x265_picture
      * output */
     void*   userData;
 
+    /* force quantizer for != X265_QP_AUTO */
+    int     forceqp;
+
     /* new data members to this structure must be added to the end so that
      * users of x265_picture_alloc/free() can be assured of future safety */
 } x265_picture;
@@ -208,6 +211,7 @@ typedef enum
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
 #define X265_TYPE_B             0x0005
+#define X265_QP_AUTO                 0
 
 #define X265_AQ_NONE                 0
 #define X265_AQ_VARIANCE             1
@@ -381,6 +385,16 @@ typedef struct x265_param
      * multiple of 4, the encoder will pad the pictures internally to meet this
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
+
+    /* Minimum decoder requirement level. Defaults to -1, which implies auto-
+     * detection by the encoder. If specified, the encoder will attempt to bring
+     * the encode specifications within that specified level. If the encoder is
+     * unable to reach the level it issues a warning and emits the actual
+     * decoder requirement. If the requested requirement level is higher than
+     * the actual level, the actual requirement level is signaled. The value is
+     * an specified as an integer with the level times 10, for example level
+     * "5.1" is specified as 51, and level "5.0" is specified as 50. */
+    int       levelIdc;
 
     /* Interlace type of source pictures. 0 - progressive pictures (default).
      * 1 - top field first, 2 - bottom field first. HEVC encodes interlaced
@@ -575,6 +589,11 @@ typedef struct x265_param
      * efficiency at a major cost of performance. Default is no RDO (0) */
     int       rdLevel;
 
+    /* Psycho-visual rate-distortion strength. Only has an effect in presets
+     * which use RDO. It makes mode decision favor options which preserve the
+     * energy of the source, at the cost of lost compression. Default 0.0 */
+    double     psyRd;
+
     /*== Coding tools ==*/
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of
@@ -630,6 +649,26 @@ typedef struct x265_param
      * the Cr chroma residual (delta from luma QP specified by rate-control).
      * Default is 0, which is recommended */
     int       crQpOffset;
+
+    /* Specify whether to attempt to encode intra modes in B frames. By default
+     * enabled, but only applicable for the presets which use rdLevel 5 or 6
+     * (veryslow and placebo). All other presets will not try intra in B frames
+     * regardless of this setting. */
+    int       bIntraInBFrames;
+
+    /* An integer value in range of 100 to 1000, which denotes strength of noise
+     * reduction */
+    int       noiseReduction;
+
+    /* The lossless flag enables true lossless coding, by bypassing scaling, transform,
+     * quantization and in-loop filter processes. This is used for ultra-high bitrates with
+     * zero loss of quality. */
+    int bLossless;
+
+    /* The CU Lossless flag, when enabled, compares the rate-distortion costs for normal
+     * and lossless encoding, and chooses the best mode for each CU. If lossless mode is 
+     * chosen, the cu-transquant-bypass flag is set for that CU. */
+    int bCULossless;
 
     /*== Rate Control ==*/
 
@@ -699,6 +738,9 @@ typedef struct x265_param
 
         /* In CRF mode, maximum CRF as caused by VBV. 0 implies no limit */
         double    rfConstantMax;
+
+        /* In CRF mode, minimum CRF as caused by VBV */
+        double    rfConstantMin;
     } rc;
 
     /*== Video Usability Information ==*/
@@ -812,11 +854,11 @@ x265_param *x265_param_alloc();
 
 /* x265_param_free:
  *  Use x265_param_free() to release storage for an x265_param instance
- *  allocated by x26_param_alloc() */
+ *  allocated by x265_param_alloc() */
 void x265_param_free(x265_param *);
 
 /***
- * Initialize an x265_param_t structure to default values
+ * Initialize an x265_param structure to default values
  */
 void x265_param_default(x265_param *param);
 
@@ -824,8 +866,7 @@ void x265_param_default(x265_param *param);
  *  set one parameter by name.
  *  returns 0 on success, or returns one of the following errors.
  *  note: BAD_VALUE occurs only if it can't even parse the value,
- *  numerical range is not checked until x265_encoder_open() or
- *  x265_encoder_reconfig().
+ *  numerical range is not checked until x265_encoder_open().
  *  value=NULL means "true" for boolean options, but is a BAD_VALUE for non-booleans. */
 #define X265_PARAM_BAD_NAME  (-1)
 #define X265_PARAM_BAD_VALUE (-2)
@@ -871,7 +912,7 @@ x265_picture *x265_picture_alloc();
 
 /* x265_picture_free:
  *  Use x265_picture_free() to release storage for an x265_picture instance
- *  allocated by x26_picture_alloc() */
+ *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
 
 /***
@@ -900,14 +941,22 @@ X265_API extern const char *x265_build_info_str;
 
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
- * is x265_encoder_open_##X264_BUILD (for purposes of dlopen). */
+ * is x265_encoder_open_##X265_BUILD (for purposes of dlopen). */
 #define x265_encoder_glue1(x, y) x ## y
 #define x265_encoder_glue2(x, y) x265_encoder_glue1(x, y)
 #define x265_encoder_open x265_encoder_glue2(x265_encoder_open_, X265_BUILD)
 
 /* x265_encoder_open:
- *      create a new encoder handler, all parameters from x265_param_t are copied */
+ *      create a new encoder handler, all parameters from x265_param are copied */
 x265_encoder* x265_encoder_open(x265_param *);
+
+/* x265_encoder_parameters:
+ *      copies the current internal set of parameters to the pointer provided
+ *      by the caller.  useful when the calling application needs to know
+ *      how x265_encoder_open has changed the parameters.
+ *      note that the data accessible through pointers in the returned param struct
+ *      (e.g. filenames) should not be modified by the calling application. */
+void x265_encoder_parameters(x265_encoder *, x265_param *);
 
 /* x265_encoder_headers:
  *      return the SPS and PPS that will be used for the whole stream.

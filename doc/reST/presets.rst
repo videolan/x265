@@ -2,6 +2,8 @@
 Presets
 *******
 
+.. _preset-tune-ref:
+
 x265 has a number of predefined :option:`--preset` options that make
 trade-offs between encode speed (encoded frames per second) and
 compression efficiency (quality per bit in the bitstream).  The default
@@ -36,9 +38,9 @@ The presets adjust encoder parameters to affect these trade-offs.
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | subme        |    0      |     1     |    1     |   2    |  2   |    2   |  3   |   3    |    4     |    5    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
-| rect         |    0      |     0     |    0     |   1    |  1   |    1   |  1   |   1    |    1     |    1    |
+| rect         |    0      |     0     |    0     |   0    |  0   |    0   |  1   |   1    |    1     |    1    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
-| amp          |    0      |     0     |    0     |   0    |  0   |    1   |  1   |   1    |    1     |    1    |
+| amp          |    0      |     0     |    0     |   0    |  0   |    0   |  0   |   1    |    1     |    1    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | max-merge    |    2      |     2     |    2     |   2    |  2   |    2   |  3   |   3    |    4     |    5    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
@@ -56,7 +58,9 @@ The presets adjust encoder parameters to affect these trade-offs.
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | cuTree       |    0      |     0     |    0     |   0    |  1   |    1   |  1   |   1    |    1     |    1    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
-| rdLevel      |    3      |     3     |    3     |   3    |  3   |    3   |  4   |   6    |    6     |    6    |
+| rdLevel      |    2      |     2     |    2     |   2    |  2   |    3   |  4   |   6    |    6     |    6    |
++--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
+| lft          |    0      |     1     |    1     |   1    |  1   |    1   |  1   |   1    |    1     |    1    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | tu-intra     |    1      |     1     |    1     |   1    |  1   |    1   |  1   |   2    |    3     |    4    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
@@ -72,14 +76,23 @@ Tuning
 There are a few :option:`--tune` options available, which are applied
 after the preset.
 
-+--------------+--------------------------------------+
-| --tune       | effect                               |
-+==============+======================================+
-| psnr         | disables adaptive quant and cutree   |
-+--------------+--------------------------------------+
-| ssim         | enables adaptive quant auto-mode     |
-+--------------+--------------------------------------+
-| fastdecode   | no loop filters, no weighted pred    |
-+--------------+--------------------------------------+
-| zerolatency  | no lookahead, no B frames, no cutree |
-+--------------+--------------------------------------+
+.. Note::
+
+	The *psnr* and *ssim* tune options disable all optimizations that
+	sacrafice metric scores for perceived visual quality (also known as
+	psycho-visual optimizations). By default x265 always tunes for
+	highest perceived visual quality but if one intends to measure an
+	encode using PSNR or SSIM for the purpose of benchmarking, we highly
+	recommend you configure x265 to tune for that particular metric.
+
++--------------+-----------------------------------------------------+
+| --tune       | effect                                              |
++==============+=====================================================+
+| psnr         | disables adaptive quant, psy-rd, and cutree         |
++--------------+-----------------------------------------------------+
+| ssim         | enables adaptive quant auto-mode, disables psy-rd   |
++--------------+-----------------------------------------------------+
+| fastdecode   | no loop filters, no weighted pred, no intra in B    |
++--------------+-----------------------------------------------------+
+| zerolatency  | no lookahead, no B frames, no cutree                |
++--------------+-----------------------------------------------------+

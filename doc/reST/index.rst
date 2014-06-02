@@ -5,5 +5,6 @@ x265 Documentation
 
    introduction
    cli
+   api
    threading
    presets

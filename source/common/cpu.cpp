@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "cpu.h"
@@ -244,7 +244,7 @@ uint32_t cpu_detect(void)
             if (model == 9 || model == 13 || model == 14)
             {
                 cpu &= ~(X265_CPU_SSE2 | X265_CPU_SSE3);
-                assert(!(cpu & (X265_CPU_SSSE3 | X265_CPU_SSE4)));
+                X265_CHECK(!(cpu & (X265_CPU_SSSE3 | X265_CPU_SSE4)), "unexpected CPU ID %d\n", cpu);
             }
             /* Detect Atom CPU */
             else if (model == 28)

@@ -96,7 +96,7 @@ void  SyntaxElementWriter::xWriteFlagTr(uint32_t value, const char *symbolName)
 
 void SyntaxElementWriter::xWriteCode(uint32_t code, uint32_t len)
 {
-    assert(len > 0);
+    X265_CHECK(len, "wrote zero length code\n");
     m_bitIf->write(code, len);
 }
 
@@ -105,7 +105,7 @@ void SyntaxElementWriter::xWriteUvlc(uint32_t code)
     uint32_t len = 1;
     uint32_t temp = ++code;
 
-    assert(temp);
+    X265_CHECK(temp, "writing -1 code\n");
 
     while (1 != temp)
     {

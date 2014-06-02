@@ -209,10 +209,10 @@ void TEncEntropy::initTUEntropySection(TComTURecurse *tuIterator, uint32_t split
     tuIterator->m_absPartIdxStep    = absPartIdxStep >> partIdxStepShift[splitMode];
 }
 
-void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t width, uint32_t height, uint32_t trIdx, bool& bCodeDQP)
+void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
-    const uint32_t log2TrafoSize = g_convertToBit[cu->getSlice()->getSPS()->getMaxCUSize()] + 2 - depth;
+    const uint32_t log2TrafoSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift        = cu->getHorzChromaShift();
     uint32_t vChromaShift        = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -227,12 +227,12 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
         uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
-        if ((absPartIdx % partNum) == 0)
+        if ((absPartIdx & (partNum - 1)) == 0)
         {
             m_bakAbsPartIdx   = absPartIdx;
             m_bakChromaOffset = offsetChroma;
         }
-        else if ((absPartIdx % partNum) == (partNum - 1))
+        else if ((absPartIdx & (partNum - 1)) == (partNum - 1))
         {
             cbfU = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_U, trIdx);
             cbfV = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_V, trIdx);
@@ -241,34 +241,34 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
     if (cu->getPredictionMode(absPartIdx) == MODE_INTRA && cu->getPartitionSize(absPartIdx) == SIZE_NxN && depth == cu->getDepth(absPartIdx))
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&  (cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1))
     {
         if (log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
-            assert(subdiv);
+            X265_CHECK(subdiv, "subdivision state failure\n");
         }
         else
         {
-            assert(!subdiv);
+            X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
     else if (log2TrafoSize > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
     {
-        assert(subdiv);
+        X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (log2TrafoSize == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else if (log2TrafoSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
-        assert(!subdiv);
+        X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else
     {
-        assert(log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+        X265_CHECK(log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
         m_entropyCoderIf->codeTransformSubdivFlag(subdiv, 5 - log2TrafoSize);
     }
 
@@ -276,7 +276,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     const bool bFirstCbfOfCU = trDepthCurr == 0;
 
     bool mCodeAll = true;
-    const uint32_t numPels = (width >> hChromaShift) * (height >> vChromaShift);
+    const uint32_t numPels = (tuSize * tuSize) >> (hChromaShift + vChromaShift);
     if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
     {
         mCodeAll = false;
@@ -286,46 +286,45 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     {
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1))
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (width  >> hChromaShift), (height >> vChromaShift), (subdiv == 0));
+            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
         }
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1))
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (width  >> hChromaShift), (height >> vChromaShift), (subdiv == 0));
+            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
         }
     }
     else
     {
-        assert(cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1));
-        assert(cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1));
+        X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1), "chroma xform size match failure\n");
+        X265_CHECK(cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr) == cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1), "chroma xform size match failure\n");
     }
 
     if (subdiv)
     {
-        uint32_t size;
-        width  >>= 1;
-        height >>= 1;
-        size = width * height;
+        tuSize >>= 1;
+        uint32_t numCoeff  = tuSize * tuSize;
+        uint32_t numCoeffC = (numCoeff >> (hChromaShift + vChromaShift));
         trIdx++;
         ++depth;
-        absPartIdxStep    = absPartIdxStep >> partIdxStepShift[QUAD_SPLIT];
+        absPartIdxStep >>= 2;
         const uint32_t partNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
 
-        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, width, height, trIdx, bCodeDQP);
+        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
-        offsetLuma += size;
-        offsetChroma += (size >> (hChromaShift + vChromaShift));
-        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, width, height, trIdx, bCodeDQP);
+        offsetLuma += numCoeff;
+        offsetChroma += numCoeffC;
+        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
-        offsetLuma += size;
-        offsetChroma += (size >> (hChromaShift + vChromaShift));
-        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, width, height, trIdx, bCodeDQP);
+        offsetLuma += numCoeff;
+        offsetChroma += numCoeffC;
+        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
-        offsetLuma += size;
-        offsetChroma += (size >> (hChromaShift + vChromaShift));
-        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, width, height, trIdx, bCodeDQP);
+        offsetLuma += numCoeff;
+        offsetChroma += numCoeffC;
+        xEncodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
     }
     else
     {
@@ -342,12 +341,11 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 
         if (cu->getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu->getDepth(absPartIdx) && !cu->getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu->getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
-            assert(cu->getCbf(absPartIdx, TEXT_LUMA, 0));
-            //      printf( "saved one bin! " );
+            X265_CHECK(cu->getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
         else
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx), absPartIdxStep, width, height, (subdiv == 0));
+            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx), absPartIdxStep, tuSize, tuSize, (subdiv == 0));
         }
 
         if (cbfY || cbfU || cbfV)
@@ -364,31 +362,32 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         if (cbfY)
         {
-            m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, width, depth, TEXT_LUMA);
+            m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, tuSize, TEXT_LUMA);
         }
 
-        if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
+        int chFmt = cu->getChromaFormat();
+        if ((log2TrafoSize == 2) && !(chFmt == CHROMA_444))
         {
             uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
-            if ((absPartIdx % partNum) == (partNum - 1))
+            if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
-                uint32_t trWidthC          = log2TrafoSize << 1;
-                const bool splitIntoSubTUs = (cu->getChromaFormat() == CHROMA_422) ? true : false;
+                uint32_t trSizeC           = 1 << log2TrafoSize;
+                const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
                 uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
 
-                for (uint32_t chromaId = TEXT_CHROMA; chromaId < MAX_NUM_COMPONENT; chromaId++)
+                for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
                 {
                     TComTURecurse tuIterator;
                     initTUEntropySection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, m_bakAbsPartIdx);
-                    coeff_t* coeffChroma = (chromaId == 1) ? cu->getCoeffCb() : cu->getCoeffCr();
+                    coeff_t* coeffChroma = cu->getCoeff((TextType)chromaId);
                     do
                     {
-                        uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx);
-                        uint32_t subTUIndex = tuIterator.m_section * trWidthC * trWidthC;
+                        uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
+                        uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                         if (cbf)
                         {
-                            m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trWidthC, depth, (TextType)chromaId);
+                            m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -397,23 +396,21 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         else
         {
-            uint32_t trWidthC  = width  >> hChromaShift;
-            uint32_t trHeightC = height >> vChromaShift;
-            const bool splitIntoSubTUs = trWidthC != trHeightC;
-            trHeightC = splitIntoSubTUs ? trHeightC >> 1 : trHeightC;
+            uint32_t trSizeC  = tuSize >> hChromaShift;
+            const bool splitIntoSubTUs = (chFmt == CHROMA_422);
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
-            for (uint32_t chromaId = TEXT_CHROMA; chromaId < MAX_NUM_COMPONENT; chromaId++)
+            for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
             {
                 TComTURecurse tuIterator;
                 initTUEntropySection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
-                coeff_t* coeffChroma = (chromaId == 1) ? cu->getCoeffCb() : cu->getCoeffCr();
+                coeff_t* coeffChroma = cu->getCoeff((TextType)chromaId);
                 do
                 {
-                    uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx);
-                    uint32_t subTUIndex = tuIterator.m_section * trWidthC * trHeightC;
+                    uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
+                    uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                     if (cbf)
                     {
-                        m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trWidthC, depth, (TextType)chromaId);
+                        m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                     }
                 }
                 while (isNextTUSection(&tuIterator));
@@ -439,11 +436,12 @@ void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)
     if (cu->isIntra(absPartIdx)) // If it is Intra mode, encode intra prediction mode.
     {
         encodeIntraDirModeLuma(cu, absPartIdx, true);
-        if (cu->getChromaFormat() != CHROMA_400)
+        int chFmt = cu->getChromaFormat();
+        if (chFmt != CHROMA_400)
         {
             encodeIntraDirModeChroma(cu, absPartIdx);
 
-            if ((cu->getChromaFormat() == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
+            if ((chFmt == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
                 uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 encodeIntraDirModeChroma(cu, absPartIdx + partOffset);
@@ -485,7 +483,7 @@ void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
             {
                 if (interDir & (1 << refListIdx))
                 {
-                    assert(cu->getSlice()->getNumRefIdx(refListIdx) > 0);
+                    X265_CHECK(cu->getSlice()->getNumRefIdx(refListIdx) > 0, "numRefs should have been > 0\n");
 
                     encodeRefFrmIdxPU(cu, subPartIdx, refListIdx);
                     encodeMvdPU(cu, subPartIdx, refListIdx);
@@ -514,14 +512,14 @@ void TEncEntropy::encodeInterDirPU(TComDataCU* cu, uint32_t absPartIdx)
  */
 void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(!cu->isIntra(absPartIdx));
+    X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
     {
         if ((cu->getSlice()->getNumRefIdx(list) == 1))
         {
             return;
         }
 
-        assert(cu->getInterDir(absPartIdx) & (1 << list));
+        X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
         {
             m_entropyCoderIf->codeRefFrmIdx(cu, absPartIdx, list);
         }
@@ -536,20 +534,15 @@ void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int lis
  */
 void TEncEntropy::encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(!cu->isIntra(absPartIdx));
-
-    assert(cu->getInterDir(absPartIdx) & (1 << list));
-    {
-        m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
-    }
+    X265_CHECK(!cu->isIntra(absPartIdx), "intra found where inter expected\n");
+    X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
+    m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
 }
 
 void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    assert(cu->getInterDir(absPartIdx) & (1 << list));
-    {
-        m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
-    }
+    X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
+    m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
 }
 
 void TEncEntropy::encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
@@ -592,7 +585,7 @@ void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx)
  * \param width
  * \param height
  */
-void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP)
+void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP)
 {
     uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
@@ -617,30 +610,12 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
     }
 
     uint32_t absPartIdxStep = cu->getPic()->getNumPartInCU() >> (depth << 1);
-    xEncodeTransform(cu, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, width, height, 0, bCodeDQP);
+    xEncodeTransform(cu, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, cuSize, 0, bCodeDQP);
 }
 
-void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype)
+void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
-    // This is for Transform unit processing. This may be used at mode selection stage for Inter.
-    if (trWidth != trHeight)
-    {
-        uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
-        TComTURecurse tuIterator;
-        initTUEntropySection(&tuIterator, VERTICAL_SPLIT, curPartNum, absPartIdx);
-        trHeight >>= 1;
-        uint32_t subTUSize = trWidth * trHeight;
-
-        do
-        {
-            m_entropyCoderIf->codeCoeffNxN(cu, coeff + tuIterator.m_section * subTUSize, tuIterator.m_absPartIdxTURelCU, trWidth, depth, ttype);
-        }
-        while (isNextTUSection(&tuIterator));
-    }
-    else
-    {
-        m_entropyCoderIf->codeCoeffNxN(cu, coeff, absPartIdx, trWidth, depth, ttype);
-    }
+    m_entropyCoderIf->codeCoeffNxN(cu, coeff, absPartIdx, trSize, ttype);
 }
 
 void TEncEntropy::estimateBit(estBitsSbacStruct* estBitsSBac, int trSize, TextType ttype)

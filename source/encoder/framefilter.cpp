@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "encoder.h"
@@ -512,10 +512,8 @@ void FrameFilter::processSao(int row)
     const uint32_t lineStartCUAddr = row * numCols;
     SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
 
-    // NOTE: these flag is not use in this mode
-    assert(saoParam->oneUnitFlag[0] == false);
-    assert(saoParam->oneUnitFlag[1] == false);
-    assert(saoParam->oneUnitFlag[2] == false);
+    // NOTE: these flags are not used in this mode
+    X265_CHECK(!saoParam->oneUnitFlag[0] && !saoParam->oneUnitFlag[1] && !saoParam->oneUnitFlag[2], "invalid SAO flag");
 
     if (saoParam->bSaoFlag[0])
     {
@@ -528,7 +526,7 @@ void FrameFilter::processSao(int row)
     }
 
     // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
-    bool  bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    bool bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
     if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
         for (uint32_t col = 0; col < numCols; col++)

@@ -92,8 +92,8 @@ extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
 extern uint32_t g_addCUDepth;
 
-#define MAX_TS_WIDTH  4
-#define MAX_TS_HEIGHT 4
+#define LOG2_MAX_TS_SIZE 2 // TODO: RExt
+#define MAX_TS_SIZE (1 << LOG2_MAX_TS_SIZE)
 
 extern const uint32_t g_puOffset[8];
 

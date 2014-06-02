@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TComPic.h"
@@ -51,7 +51,7 @@ bool Lowres::create(TComPicYuv *orig, int _bframes, bool bAQEnabled)
     {
         CHECKED_MALLOC(qpAqOffset, double, cuCount);
         CHECKED_MALLOC(invQscaleFactor, int, cuCount);
-        CHECKED_MALLOC(qpOffset, double, cuCount);
+        CHECKED_MALLOC(qpCuTreeOffset, double, cuCount);
     }
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
@@ -121,7 +121,7 @@ void Lowres::destroy()
 
     X265_FREE(qpAqOffset);
     X265_FREE(invQscaleFactor);
-    X265_FREE(qpOffset);
+    X265_FREE(qpCuTreeOffset);
     X265_FREE(propagateCost);
 }
 

@@ -486,9 +486,8 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     int numLcu = m_numCuInWidth * m_numCuInHeight;
     if (m_countPreDblk == NULL)
     {
-        assert(m_offsetOrgPreDblk == NULL);
-
-        m_countPreDblk  = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+        X265_CHECK(!m_offsetOrgPreDblk, "m_offsetOrgPreDblk was not NULL\n");
+        m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
         m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     }
 
@@ -1219,7 +1218,7 @@ void TEncSampleAdaptiveOffset::resetStats()
  */
 void TEncSampleAdaptiveOffset::SAOProcess(SAOParam *saoParam)
 {
-    assert(m_saoLcuBasedOptimization == false);
+    X265_CHECK(!m_saoLcuBasedOptimization, "SAO LCU mode failure\n"); 
     double costFinal = 0;
     saoParam->bSaoFlag[0] = 1;
     saoParam->bSaoFlag[1] = 0;
@@ -1529,8 +1528,8 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                             m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
                             for (compIdx = 0; compIdx < 3; compIdx++)
                             {
-                                mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = 1 - mergeUp;
-                                mergeSaoParam[compIdx][mergeUp].mergeUpFlag = mergeUp;
+                                mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = !mergeUp;
+                                mergeSaoParam[compIdx][mergeUp].mergeUpFlag = !!mergeUp;
                                 if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
                                 {
                                     copySaoUnit(&saoParam->saoLcuParam[compIdx][addr], &mergeSaoParam[compIdx][mergeUp]);
@@ -1784,7 +1783,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
             }
 
             copySaoUnit(&compSaoParam[idxNeighbor], saoLcuParamNeighbor);
-            compSaoParam[idxNeighbor].mergeUpFlag   = idxNeighbor;
+            compSaoParam[idxNeighbor].mergeUpFlag   = !!idxNeighbor;
             compSaoParam[idxNeighbor].mergeLeftFlag = !idxNeighbor;
 
             compDistortion[idxNeighbor + 1] += ((double)estDist / lambda);
@@ -1951,7 +1950,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
                 }
 
                 copySaoUnit(saoMergeParam[compIdx][idxNeighbor], saoLcuParamNeighbor[compIdx]);
-                saoMergeParam[compIdx][idxNeighbor]->mergeUpFlag   = idxNeighbor;
+                saoMergeParam[compIdx][idxNeighbor]->mergeUpFlag   = !!idxNeighbor;
                 saoMergeParam[compIdx][idxNeighbor]->mergeLeftFlag = !idxNeighbor;
                 distortion[idxNeighbor + 1] += ((double)estDist[compIdx] / lambda);
             }

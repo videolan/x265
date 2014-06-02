@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "primitives.h"
@@ -190,12 +190,14 @@ extern "C" {
     p.sse_ss[LUMA_64x64]   = x265_pixel_ssd_ss_64x64_ ## cpu;
 
 #define SA8D_INTER_FROM_BLOCK(cpu) \
-    p.sa8d_inter[LUMA_4x8]  = x265_pixel_satd_4x8_ ## cpu; \
-    p.sa8d_inter[LUMA_8x4]  = x265_pixel_satd_8x4_ ## cpu; \
+    p.sa8d_inter[LUMA_4x8]   = x265_pixel_satd_4x8_ ## cpu; \
+    p.sa8d_inter[LUMA_8x4]   = x265_pixel_satd_8x4_ ## cpu; \
     p.sa8d_inter[LUMA_4x16]  = x265_pixel_satd_4x16_ ## cpu; \
     p.sa8d_inter[LUMA_16x4]  = x265_pixel_satd_16x4_ ## cpu; \
-    p.sa8d_inter[LUMA_12x16]  = x265_pixel_satd_12x16_ ## cpu; \
-    p.sa8d_inter[LUMA_16x12]  = x265_pixel_satd_16x12_ ## cpu; \
+    p.sa8d_inter[LUMA_12x16] = x265_pixel_satd_12x16_ ## cpu; \
+    p.sa8d_inter[LUMA_8x8]   = x265_pixel_sa8d_8x8_ ## cpu; \
+    p.sa8d_inter[LUMA_16x16] = x265_pixel_sa8d_16x16_ ## cpu; \
+    p.sa8d_inter[LUMA_16x12] = x265_pixel_satd_16x12_ ## cpu; \
     p.sa8d_inter[LUMA_16x8]  = x265_pixel_sa8d_16x8_ ## cpu; \
     p.sa8d_inter[LUMA_8x16]  = x265_pixel_sa8d_8x16_ ## cpu; \
     p.sa8d_inter[LUMA_32x24] = x265_pixel_sa8d_32x24_ ## cpu; \
@@ -1331,6 +1333,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
     primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
     primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
+
+    primitives.sad_square[BLOCK_4x4]   = primitives.sad[LUMA_4x4];
+    primitives.sad_square[BLOCK_8x8]   = primitives.sad[LUMA_8x8];
+    primitives.sad_square[BLOCK_16x16] = primitives.sad[LUMA_16x16];
+    primitives.sad_square[BLOCK_32x32] = primitives.sad[LUMA_32x32];
+    primitives.sad_square[BLOCK_64x64] = primitives.sad[LUMA_64x64];
 
     // SA8D devolves to SATD for blocks not even multiples of 8x8
     primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];

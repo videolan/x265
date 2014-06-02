@@ -42,7 +42,6 @@
 #include "CommonDef.h"
 #include "TComMotionInfo.h"
 #include "TComSlice.h"
-#include "TComRdCost.h"
 #include "TComPattern.h"
 
 namespace x265 {
@@ -113,9 +112,7 @@ private:
     uint8_t*      m_transformSkip[3];   ///< array of transform skipping flags
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
-    coeff_t*      m_trCoeffY;           ///< transformed coefficient buffer (Y)
-    coeff_t*      m_trCoeffCb;          ///< transformed coefficient buffer (Cb)
-    coeff_t*      m_trCoeffCr;          ///< transformed coefficient buffer (Cr)
+    coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
 
     pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
     pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
@@ -166,7 +163,9 @@ public:
     TComDataCU();
     virtual ~TComDataCU();
 
-    uint64_t      m_totalCost;       ///< sum of partition RD costs
+    uint32_t      m_psyEnergy;
+    uint64_t      m_totalPsyCost;
+    uint64_t      m_totalRDCost;       ///< sum of partition RD costs
     uint32_t      m_totalDistortion; ///< sum of partition distortion
     uint32_t      m_totalBits;       ///< sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
@@ -278,11 +277,13 @@ public:
 
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 
-    coeff_t*&     getCoeffY()                 { return m_trCoeffY; }
+    coeff_t*      getCoeffY()                 { return m_trCoeff[0]; }
 
-    coeff_t*&     getCoeffCb()                { return m_trCoeffCb; }
+    coeff_t*      getCoeffCb()                { return m_trCoeff[1]; }
 
-    coeff_t*&     getCoeffCr()                { return m_trCoeffCr; }
+    coeff_t*      getCoeffCr()                { return m_trCoeff[2]; }
+
+    coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
     pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
 
@@ -300,9 +301,8 @@ public:
 
     uint8_t       getQtRootCbf(uint32_t idx)  { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
 
-    void          setCbfSubParts(uint32_t cbfY, uint32_t cbfU, uint32_t cbfV, uint32_t absPartIdx, uint32_t depth);
+    void          clearCbf(uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
-    void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
     void          setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
     void          setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
@@ -413,7 +413,7 @@ public:
     void          deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth);
 
     bool          hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_t candAbsPartIdx);
-    void          getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField* mFieldNeighbours, uint8_t* interDirNeighbours, int& numValidMergeCand);
+    void          getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t& maxNumMergeCand);
     void          deriveLeftRightTopIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT);
     void          deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& partIdxLB);
 
@@ -431,7 +431,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     void          getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList);
-    int           getIntraDirLumaPredictor(uint32_t absPartIdx, int32_t* intraDirPred);
+    int           getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for SBAC context

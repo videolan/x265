@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "encoder.h"
@@ -33,8 +33,8 @@ bool CTURow::create(Encoder* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_trQuant.init(1 << top->m_quadtreeTULog2MaxSize, top->bEnableRDOQ, top->bEnableRDOQTS, top->param->bEnableTSkipFast);
-
+    m_trQuant.init(1 << top->m_quadtreeTULog2MaxSize, top->bEnableRDOQ, top->bEnableRDOQTS, !!top->param->bEnableTSkipFast);
+    m_rdCost.setPsyRdScale(top->param->rdLevel >= 5 ? top->param->psyRd : 0);
     m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
 

@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_FRAMEENCODER_H
@@ -63,7 +63,7 @@ public:
 
     void destroy();
 
-    void processRowEncoder(int row);
+    void processRowEncoder(int row, const int threadId);
 
     void processRowFilter(int row)
     {
@@ -90,7 +90,7 @@ public:
         WaveFront::enableRow(row * 2 + 1);
     }
 
-    void processRow(int row)
+    void processRow(int row, int threadId)
     {
         const int realRow = row >> 1;
         const int typeNum = row & 1;
@@ -98,7 +98,7 @@ public:
         // TODO: use switch when more type
         if (typeNum == 0)
         {
-            processRowEncoder(realRow);
+            processRowEncoder(realRow, threadId);
         }
         else
         {
@@ -173,6 +173,8 @@ protected:
 
     void determineSliceBounds();
     int calcQpForCu(uint32_t cuAddr, double baseQp);
+    void noiseReductionUpdate();
+
     Encoder*                 m_top;
     Encoder*                 m_cfg;
 
@@ -181,6 +183,7 @@ protected:
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
     TComBitCounter           m_bitCounter;
+    NoiseReduction           m_nr;
 
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;

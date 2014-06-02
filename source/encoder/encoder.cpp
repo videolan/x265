@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/NAL.h"
@@ -41,14 +41,6 @@
 
 #include "x265.h"
 
-#if HAVE_INT_TYPES_H
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#define LL "%" PRIu64
-#else
-#define LL "%lld"
-#endif
-
 using namespace x265;
 
 Encoder::Encoder()
@@ -62,6 +54,8 @@ Encoder::Encoder()
     m_numChromaWPFrames = 0;
     m_numLumaWPBiFrames = 0;
     m_numChromaWPBiFrames = 0;
+    m_TransquantBypassEnableFlag = false;
+    m_CUTransquantBypassFlagValue = false;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -124,7 +118,12 @@ void Encoder::create()
             if (m_csvfpt)
             {
                 if (param->logLevel >= X265_LOG_DEBUG)
-                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                {
+                    fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, ");
+                    if (param->rc.rateControlMode == X265_RC_CRF)
+                        fprintf(m_csvfpt, "RateFactor, ");
+                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                }
                 else
                     fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
             }
@@ -136,7 +135,7 @@ void Encoder::destroy()
 {
     if (m_frameEncoder)
     {
-        for (int i = 0; i < param->frameNumThreads; i++)
+        for (int i = 0; i < m_totalFrameThreads; i++)
         {
             // Ensure frame encoder is idle before destroying it
             m_frameEncoder[i].getEncodedPicture(NULL);
@@ -189,6 +188,7 @@ void Encoder::init()
     }
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
+    m_totalFrameThreads = param->frameNumThreads;
 }
 
 int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
@@ -205,18 +205,13 @@ void Encoder::updateVbvPlan(RateControl* rc)
     while (encIdx != curIdx)
     {
         FrameEncoder *encoder = &m_frameEncoder[encIdx];
-        double bits;
-        bits = encoder->m_rce.frameSizePlanned;
-        if (!encoder->m_rce.isActive)
+        if (encoder->m_rce.isActive)
         {
-            encIdx = (encIdx + 1) % param->frameNumThreads;
-            continue;
+            rc->bufferFill -= encoder->m_rce.frameSizeEstimated;
+            rc->bufferFill = X265_MAX(rc->bufferFill, 0);
+            rc->bufferFill += encoder->m_rce.bufferRate;
+            rc->bufferFill = X265_MIN(rc->bufferFill, rc->bufferSize);
         }
-        bits = X265_MAX(bits, encoder->m_rce.frameSizeEstimated);
-        rc->bufferFill -= bits;
-        rc->bufferFill = X265_MAX(rc->bufferFill, 0);
-        rc->bufferFill += encoder->m_rce.bufferRate;
-        rc->bufferFill = X265_MIN(rc->bufferFill, rc->bufferSize);
         encIdx = (encIdx + 1) % param->frameNumThreads;
     }
 }
@@ -313,6 +308,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
+        pic->m_forceqp = pic_in->forceqp;
 
         if (m_pocLast == 0)
             m_firstPts = pic->m_pts;
@@ -329,6 +325,20 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
     if (flush)
         m_lookahead->flush();
+
+    if (param->rc.rateControlMode == X265_RC_ABR)
+    {
+        // delay frame parallelism for non-VBV ABR
+        if (m_pocLast == 0 && !param->rc.vbvBufferSize && !param->rc.vbvMaxBitrate)
+            param->frameNumThreads = 1;
+        else if (param->frameNumThreads != m_totalFrameThreads)
+        {
+            // re-enable frame parallelism after the first few P frames are encoded
+            uint32_t frameCnt = (uint32_t)((0.5 * param->fpsNum / param->fpsDenom) / (param->bframes + 1));
+            if (m_analyzeP.m_numPics > frameCnt)
+                param->frameNumThreads = m_totalFrameThreads;
+        }
+    }
 
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     m_curEncoder = (m_curEncoder + 1) % param->frameNumThreads;
@@ -536,7 +546,7 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            for (int j = 0; j < param->frameNumThreads; j++)
+            for (int j = 0; j < m_totalFrameThreads; j++)
             {
                 for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
                 {
@@ -631,39 +641,39 @@ void Encoder::printSummary()
             int len = 0;
             if (sliceType != I_SLICE)
             {
-                len += sprintf(stats + len, "EncCU "LL "%% Merge "LL "%%", encCu, cntSkipCu);
+                len += sprintf(stats + len, "EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
             }
             if (cntInter)
             {
-                len += sprintf(stats + len, " Inter "LL "%%", cntInter);
+                len += sprintf(stats + len, " Inter "X265_LL "%%", cntInter);
                 if (param->bEnableAMP)
-                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%% AMP "LL "%%)",
+                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%% AMP "X265_LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
                                    cuSize / 2, cuSize, cuInterDistribution[2],
                                    cuSize, cuSize / 2, cuInterDistribution[1],
                                    cuInterDistribution[3]);
                 else if (param->bEnableRectInter)
-                    len += sprintf(stats + len, "(%dx%d "LL "%% %dx%d "LL "%% %dx%d "LL "%%)",
+                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%%)",
                                    cuSize, cuSize, cuInterDistribution[0],
                                    cuSize / 2, cuSize, cuInterDistribution[2],
                                    cuSize, cuSize / 2, cuInterDistribution[1]);
             }
             if (cntIntra)
             {
-                len += sprintf(stats + len, " Intra "LL "%%(DC "LL "%% P "LL "%% Ang "LL "%%",
+                len += sprintf(stats + len, " Intra "X265_LL "%%(DC "X265_LL "%% P "X265_LL "%% Ang "X265_LL "%%",
                                cntIntra, cuIntraDistribution[0],
                                cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
                 len += sprintf(stats + len, ")");
                 if (sliceType == I_SLICE)
                 {
                     if (depth == (int)g_maxCUDepth - 1)
-                        len += sprintf(stats + len, " %dx%d: "LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
+                        len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
             const char slicechars[] = "BPI";
@@ -898,6 +908,8 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         char buf[1024];
         int p;
         p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->getSliceQp(), (int)bits);
+        if (param->rc.rateControlMode == X265_RC_CRF)
+            p += sprintf(buf + p, " RF:%.3lf", pic->m_rateFactor);
         if (param->bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (param->bEnableSsim)
@@ -923,6 +935,8 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
         if (m_csvfpt)
         {
             fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpAq, (int)bits);
+            if (param->rc.rateControlMode == X265_RC_CRF)
+                fprintf(m_csvfpt, "%.3lf,", pic->m_rateFactor);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (param->bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
@@ -1189,6 +1203,8 @@ void Encoder::initPPS(TComPPS *pps)
 
 void Encoder::configure(x265_param *p)
 {
+    this->param = p;
+
     // Trim the thread pool if WPP is disabled
     if (!p->bEnableWavefront)
         p->poolNumThreads = 1;
@@ -1332,6 +1348,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");
     }
 
+    if (p->rc.rfConstantMin > p->rc.rfConstant)
+    {
+        x265_log(param, X265_LOG_WARNING, "CRF min must be less than CRF\n");
+        p->rc.rfConstantMin = 0;
+    }
+
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     //====== Coding Tools ========
@@ -1404,7 +1426,6 @@ void Encoder::configure(x265_param *p)
 
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
-    m_recoveryPointSEIEnabled = 0;
     m_bufferingPeriodSEIEnabled = 0;
     m_displayOrientationSEIAngle = 0;
     m_gradualDecodingRefreshInfoEnabled = 0;
@@ -1427,8 +1448,17 @@ void Encoder::configure(x265_param *p)
     m_bPCMFilterDisableFlag = false;
 
     m_useLossless = false;  // x264 configures this via --qp=0
-    m_TransquantBypassEnableFlag = false;
-    m_CUTransquantBypassFlagValue = false;
+    
+    if (p->bLossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+        m_CUTransquantBypassFlagValue = true; 
+    }
+    
+    if (p->bCULossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+    }
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)

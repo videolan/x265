@@ -19,13 +19,18 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 16)
+set(X265_BUILD 21)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
                "${PROJECT_BINARY_DIR}/x265_config.h")
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
+
+option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
+if(CHECKED_BUILD)
+    add_definitions(-DCHECKED_BUILD=1)
+endif()
 
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
@@ -98,24 +103,21 @@ if(MSVC)
     endif()
 endif(MSVC)
 
+check_include_files(inttypes.h HAVE_INT_TYPES_H)
+if(HAVE_INT_TYPES_H)
+    add_definitions(-DHAVE_INT_TYPES_H=1)
+endif()
+
 if(INTEL_CXX AND UNIX)
-    # treat icpc roughly like gcc
-    set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow)
+    set(GCC 1) # treat icpc roughly like gcc
 elseif(CLANG)
-    # treat clang roughly like gcc
-    set(GCC 1)
-    add_definitions(-Wall -Wextra -Wshadow -ffast-math)
+    set(GCC 1) # treat clang roughly like gcc
 elseif(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-Wall -Wextra -Wshadow -ffast-math)
-    check_cxx_compiler_flag(-Wno-narrowing GCC_HAS_NO_NARROWING) 
-    check_cxx_compiler_flag(-mstackrealign GCC_HAS_STACK_REALIGN) 
-    if (GCC_HAS_STACK_REALIGN)
-        add_definitions(-mstackrealign)
-    endif()
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    set(GCC 1)
 endif()
 if(GCC)
+    add_definitions(-Wall -Wextra -Wshadow)
+    add_definitions(-D__STDC_LIMIT_MACROS=1)
     if(X64 AND NOT WIN32)
         add_definitions(-fPIC)
     endif(X64 AND NOT WIN32)
@@ -125,6 +127,21 @@ if(GCC)
     if(ARM)
         add_definitions(-march=armv6 -mfloat-abi=hard -mfpu=vfp)
     endif()
+    check_cxx_compiler_flag(-Wno-narrowing CC_HAS_NO_NARROWING) 
+    check_cxx_compiler_flag(-ffast-math CC_HAS_FAST_MATH) 
+    if (CC_HAS_FAST_MATH)
+        add_definitions(-ffast-math)
+    endif()
+    check_cxx_compiler_flag(-mstackrealign CC_HAS_STACK_REALIGN) 
+    if (CC_HAS_STACK_REALIGN)
+        add_definitions(-mstackrealign)
+    endif()
+    # Disable exceptions. Reduce executable size, increase compability.
+    check_cxx_compiler_flag(-fno-exceptions CC_HAS_FNO_EXCEPTIONS_FLAG)
+    if(CC_HAS_FNO_EXCEPTIONS_FLAG)
+        add_definitions(-fno-exceptions)
+    endif()
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
 
 find_package(Yasm)
@@ -248,6 +265,10 @@ if(CMAKE_RC_COMPILER)
     set(X265_BRANCH_ID 0) # TODO: 0 - stable, 1 - default or other
     set(X265_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/x265.rc")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/x265.rc.in" "${X265_RC_FILE}" @ONLY)
+endif()
+
+if(NOT (MSVC_IDE OR XCODE))
+    add_custom_target(clean-generated COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/clean-generated.cmake)
 endif()
 
 option(ENABLE_SHARED "Build shared library" ON)

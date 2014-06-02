@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TypeDef.h"
@@ -43,7 +43,7 @@ int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
     intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
 
     /* directly reference the pre-extended integer pel plane */
-    fpelPlane = pic->m_picBufY + startpad;
+    fpelPlane = pic->m_picBuf[0] + startpad;
     isWeighted = false;
 
     if (w)

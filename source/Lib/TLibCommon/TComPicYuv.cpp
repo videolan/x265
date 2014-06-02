@@ -46,13 +46,13 @@ using namespace x265;
 
 TComPicYuv::TComPicYuv()
 {
-    m_picBufY = NULL; // Buffer (including margin)
-    m_picBufU = NULL;
-    m_picBufV = NULL;
+    m_picBuf[0] = NULL; // Buffer (including margin)
+    m_picBuf[1] = NULL;
+    m_picBuf[2] = NULL;
 
-    m_picOrgY = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
-    m_picOrgU = NULL;
-    m_picOrgV = NULL;
+    m_picOrg[0] = NULL;  // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
+    m_picOrg[1] = NULL;
+    m_picOrg[2] = NULL;
 
     m_cuOffsetY = NULL;
     m_cuOffsetC = NULL;
@@ -88,13 +88,13 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUS
     m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUSize;
 
-    CHECKED_MALLOC(m_picBufY, pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-    CHECKED_MALLOC(m_picBufU, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-    CHECKED_MALLOC(m_picBufV, pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+    CHECKED_MALLOC(m_picBuf[2], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
-    m_picOrgY = m_picBufY + m_lumaMarginY   * getStride()  + m_lumaMarginX;
-    m_picOrgU = m_picBufU + m_chromaMarginY * getCStride() + m_chromaMarginX;
-    m_picOrgV = m_picBufV + m_chromaMarginY * getCStride() + m_chromaMarginX;
+    m_picOrg[0] = m_picBuf[0] + m_lumaMarginY   * getStride()  + m_lumaMarginX;
+    m_picOrg[1] = m_picBuf[1] + m_chromaMarginY * getCStride() + m_chromaMarginX;
+    m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * getCStride() + m_chromaMarginX;
 
     /* TODO: these four buffers are the same for every TComPicYuv in the encoder */
     CHECKED_MALLOC(m_cuOffsetY, int, m_numCuInWidth * m_numCuInHeight);
@@ -127,9 +127,9 @@ fail:
 
 void TComPicYuv::destroy()
 {
-    X265_FREE(m_picBufY);
-    X265_FREE(m_picBufU);
-    X265_FREE(m_picBufV);
+    X265_FREE(m_picBuf[0]);
+    X265_FREE(m_picBuf[1]);
+    X265_FREE(m_picBuf[2]);
     X265_FREE(m_cuOffsetY);
     X265_FREE(m_cuOffsetC);
     X265_FREE(m_buOffsetY);

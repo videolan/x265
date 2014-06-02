@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com
+ * For more information, contact us at license @ x265.com
  *****************************************************************************/
 
 #include "threading.h"
@@ -122,5 +122,9 @@ void cond_destroy(ConditionVariable *cond)
     DeleteCriticalSection(&cond->waiterCountMutex);
 }
 } // namespace x265
+
+#else
+
+namespace { int _avoid_linker_warnings = 0; }
 
 #endif // _WIN32_WINNT <= _WIN32_WINNT_WINXP

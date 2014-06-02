@@ -123,7 +123,7 @@ public:
     virtual void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
     virtual void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int eRefList) = 0;
     virtual void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx) = 0;
-    virtual void codeCoeffNxN(TComDataCU* cu, coeff_t* pcCoef, uint32_t absPartIdx, uint32_t trSize, uint32_t depth, TextType ttype) = 0;
+    virtual void codeCoeffNxN(TComDataCU* cu, coeff_t* pcCoef, uint32_t absPartIdx, uint32_t trSize, TextType ttype) = 0;
     virtual void codeSAOSign(uint32_t code) = 0;
     virtual void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol) = 0;
     virtual void codeSaoMerge(uint32_t code) = 0;
@@ -198,13 +198,13 @@ public:
 
 private:
 
-    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t width, uint32_t height, uint32_t uiTrIdx, bool& bCodeDQP);
+    void xEncodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
 public:
 
-    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t width, uint32_t height, bool& bCodeDQP);
+    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
 
-    void encodeCoeffNxN(TComDataCU* cu, coeff_t* pcCoeff, uint32_t absPartIdx, uint32_t trWidth, uint32_t trHeight, uint32_t depth, TextType ttype);
+    void encodeCoeffNxN(TComDataCU* cu, coeff_t* pcCoeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);

@@ -96,13 +96,15 @@ public:
     double                m_ssim;
     int                   m_ssimCnt;
 
+    bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
+
     double                m_elapsedCompressTime; // elapsed time spent in worker threads
     double                m_frameTime;           // wall time from frame start to finish
 
     MD5Context            m_state[3];
     uint32_t              m_crc[3];
     uint32_t              m_checksum[3];
-    bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
+
     double*               m_rowDiagQp;
     double*               m_rowDiagQScale;
     uint32_t*             m_rowDiagSatd;
@@ -114,8 +116,10 @@ public:
     uint32_t*             m_intraCuCostsForVbv;
     double*               m_qpaAq;
     double*               m_qpaRc;
-    double                m_avgQpRc; //avg QP as decided by ratecontrol
-    double                m_avgQpAq; //avg QP as decided by AQ in addition to ratecontrol
+    double                m_avgQpRc;    // avg QP as decided by ratecontrol
+    double                m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
+    double                m_rateFactor; // calculated based on the Frame QP
+    int32_t               m_forceqp;    // Force to use the qp specified in qp file
 
     TComPic();
     virtual ~TComPic();

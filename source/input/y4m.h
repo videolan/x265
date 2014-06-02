@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_Y4M_H
@@ -45,6 +45,8 @@ protected:
 
     uint32_t sarHeight;
 
+    int depth;
+
     int width;
 
     int height;
@@ -68,8 +70,6 @@ protected:
     std::istream *ifs;
 
     bool parseHeader();
-
-    void pictureAlloc(int index);
 
     void threadMain();
 

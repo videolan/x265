@@ -1,27 +1,4 @@
 # vim: syntax=cmake
-set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/CommonDef.h
-    ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/NAL.h
-    ../Lib/TLibCommon/SEI.h
-    ../Lib/TLibCommon/TComBitCounter.h
-    ../Lib/TLibCommon/TComBitStream.h
-    ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComLoopFilter.h
-    ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPattern.h
-    ../Lib/TLibCommon/TComPic.h
-    ../Lib/TLibCommon/TComPicSym.h
-    ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComPrediction.h
-    ../Lib/TLibCommon/TComRdCost.h
-    ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComSlice.h
-    ../Lib/TLibCommon/TComTrQuant.h
-    ../Lib/TLibCommon/TComWeightPrediction.h
-    ../Lib/TLibCommon/TComYuv.h
-    ../Lib/TLibCommon/TypeDef.h)
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComBitStream.cpp
     ../Lib/TLibCommon/TComDataCU.cpp
@@ -39,8 +16,30 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComTrQuant.cpp
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
-source_group(TLibCommon FILES ${LIBCOMMON_SRC})
-source_group(TLibCommonH FILES ${LIBCOMMON_HDR})
+set(LIBCOMMON_HDR
+    ../Lib/TLibCommon/NAL.h
+    ../Lib/TLibCommon/SEI.h
+    ../Lib/TLibCommon/TComBitCounter.h
+    ../Lib/TLibCommon/CommonDef.h
+    ../Lib/TLibCommon/TypeDef.h
+    ../Lib/TLibCommon/ContextTables.h
+    ../Lib/TLibCommon/TComBitStream.h
+    ../Lib/TLibCommon/TComDataCU.h
+    ../Lib/TLibCommon/TComLoopFilter.h
+    ../Lib/TLibCommon/TComMotionInfo.h
+    ../Lib/TLibCommon/TComPattern.h
+    ../Lib/TLibCommon/TComPic.h
+    ../Lib/TLibCommon/TComPicSym.h
+    ../Lib/TLibCommon/TComPicYuv.h
+    ../Lib/TLibCommon/TComPrediction.h
+    ../Lib/TLibCommon/TComRom.h
+    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
+    ../Lib/TLibCommon/TComSlice.h
+    ../Lib/TLibCommon/TComTrQuant.h
+    ../Lib/TLibCommon/TComWeightPrediction.h
+    ../Lib/TLibCommon/TComYuv.h)
+
+source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
@@ -50,9 +49,8 @@ if(MSVC)
     # /wd4244 type conversion, possible loss of data
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
-    # /wd4800 performance warning: bool coersion
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018 /wd4800")
+        "/wd4244 /wd4389 /wd4018")
     if(INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
@@ -64,10 +62,7 @@ set(SSE41 vec/dct-sse41.cpp)
 
 if(MSVC AND X86)
     set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
-    # wd4127 conditional expression is constant
-    # wd4244 'argument' : conversion from 'int' to 'char', possible loss of data
-    # wd4100 unreferenced formal parameter
-    set(WARNDISABLE "/wd4244 /wd4127 /wd4100")
+    set(WARNDISABLE "/wd4100") # unreferenced formal parameter
     if(INTEL_CXX)
         add_definitions(/Qwd111) # statement is unreachable
         add_definitions(/Qwd128) # loop is unreachable
@@ -89,7 +84,7 @@ if(GCC AND X86)
     else()
         set(WARNDISABLE "-Wno-unused-parameter")
     endif()
-    if(INTEL_CXX OR CLANG OR (NOT GCC_VERSION VERSION_LESS 4.3))
+    if(INTEL_CXX OR CLANG OR (NOT CC_VERSION VERSION_LESS 4.3))
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
         set_source_files_properties(${SSE3}  PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -msse3")
         set_source_files_properties(${SSSE3} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} -mssse3")
@@ -134,23 +129,22 @@ if(HAVE_STRTOK_R)
     set_source_files_properties(param.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=1)
 endif()
 
-if(GCC AND GCC_HAS_NO_NARROWING)
+if(GCC AND CC_HAS_NO_NARROWING)
     set_source_files_properties(cpu.cpp PROPERTIES COMPILE_FLAGS -Wno-narrowing)
 endif()
 if(WIN32)
-    set(WINXP winxp.cpp)
+    set(WINXP winxp.h winxp.cpp)
 endif(WIN32)
 
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
-    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR}
+    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
-    winxp.h ${WINXP}
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h

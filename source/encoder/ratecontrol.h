@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_RATECONTROL_H
@@ -93,9 +93,10 @@ struct RateControl
     double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
     double bufferRate;       /* # of bits added to buffer_fill after each frame */
     double vbvMaxRate;       /* in kbps */
-    double vbvMinRate;       /* in kbps */
+    bool   isCbr;
     bool singleFrameVbv;
     double rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
+    double rateFactorMaxDecrement; /* don't allow RF below (this value). */
     bool isVbv;
     Predictor pred[5];
     Predictor predBfromP;
@@ -121,7 +122,6 @@ struct RateControl
     double lastRceq;
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     double qCompress;
-    double qpNoVbv;             /* QP for the current frame if 1-pass VBV was disabled. */
     RateControl(Encoder * _cfg);
 
     // to be called for each frame to process RateControl and set QP
@@ -131,6 +131,12 @@ struct RateControl
     int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
 
 protected:
+
+    static const double amortizeFraction;
+    static const int amortizeFrames;
+
+    int residualFrames;
+    int residualCost;
 
     void init();
     double getQScale(RateControlEntry *rce, double rateFactor);

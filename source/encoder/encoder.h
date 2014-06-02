@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_ENCODER_H
@@ -91,6 +91,7 @@ private:
     /* frame parallelism */
     int                m_curEncoder;
 
+
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
     EncStats           m_analyzeI;
@@ -157,7 +158,6 @@ public:
     bool               m_loopFilterAcrossTilesEnabledFlag;
 
     int                m_bufferingPeriodSEIEnabled;
-    int                m_recoveryPointSEIEnabled;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
     int                m_decodingUnitInfoSEIEnabled;
@@ -185,8 +185,8 @@ public:
     x265_param*        param;
     RateControl*       m_rateControl;
 
-    int                bEnableRDOQ;
-    int                bEnableRDOQTS;
+    bool               bEnableRDOQ;
+    bool               bEnableRDOQTS;
 
     int                m_pad[2];
     Window             m_conformanceWindow;
@@ -194,6 +194,7 @@ public:
 
     x265_nal*          m_nals;
     char*              m_packetData;
+    int                m_totalFrameThreads;
 
     Encoder();
 

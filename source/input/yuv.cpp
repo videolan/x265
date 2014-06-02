@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "yuv.h"
@@ -136,10 +136,14 @@ YUVInput::YUVInput(InputFileInfo& info)
 
     if (info.skipFrames)
     {
+#if X86_64
+        ifs->seekg((uint64_t)framesize * info.skipFrames, ios::cur);
+#else
         for (int i = 0; i < info.skipFrames; i++)
         {
             ifs->ignore(framesize);
         }
+#endif
     }
 }
 

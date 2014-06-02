@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "common.h"
@@ -58,8 +58,8 @@ bool YUVOutput::writePicture(const x265_picture& pic)
     uint64_t fileOffset = pic.poc;
     fileOffset *= frameSize;
 
-    assert(pic.colorSpace == colorSpace);
-    assert(pic.bitDepth == (int)depth);
+    X265_CHECK(pic.colorSpace == colorSpace, "invalid color space\n");
+    X265_CHECK(pic.bitDepth == (int)depth, "invalid bit depth\n");
 
 #if HIGH_BIT_DEPTH
     if (depth == 8)

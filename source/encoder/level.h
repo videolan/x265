@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_LEVEL_H
@@ -30,7 +30,7 @@
 
 namespace x265 {
 void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier);
-void enforceLevel(x265_param& param, int level, bool bHighTier);
+void enforceLevel(x265_param& param);
 }
 
 #endif // ifndef X265_LEVEL_H

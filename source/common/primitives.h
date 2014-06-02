@@ -23,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #ifndef X265_PRIMITIVES_H
@@ -102,12 +102,21 @@ enum IDcts
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
-    assert(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0);
-    extern uint8_t lumaPartitioneMapTable[];
+    X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
+    extern const uint8_t lumaPartitionMapTable[];
     int w = (width >> 2) - 1;
     int h = (height >> 2) - 1;
-    int part = (int)lumaPartitioneMapTable[(w << 4) + h];
-    assert(part != 255);
+    int part = (int)lumaPartitionMapTable[(w << 4) + h];
+    X265_CHECK(part != 255, "Invalid block width %d height %d\n", width, height);
+    return part;
+}
+
+inline int partitionFromSize(int size)
+{
+    X265_CHECK((size & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block size\n");
+    extern const uint8_t lumaSquarePartitionMapTable[];
+    int part = (int)lumaSquarePartitionMapTable[(size >> 2) - 1];
+    X265_CHECK(part != 255, "Invalid block size %d\n", size);
     return part;
 }
 
@@ -190,6 +199,7 @@ struct EncoderPrimitives
     pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
+    pixelcmp_t      sad_square[NUM_SQUARE_BLOCKS];   // sad primitives for square coding blocks
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel

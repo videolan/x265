@@ -64,13 +64,9 @@ public:
     //  YUV buffer
     // ------------------------------------------------------------------------------------------------
 
-    pixel*  m_picBufY;         ///< Buffer (including margin)
-    pixel*  m_picBufU;
-    pixel*  m_picBufV;
+    pixel*  m_picBuf[3];        ///< Buffer (including margin)
 
-    pixel*  m_picOrgY;          ///< m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
-    pixel*  m_picOrgU;
-    pixel*  m_picOrgV;
+    pixel*  m_picOrg[3];        ///< m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
 
     // ------------------------------------------------------------------------------------------------
     //  Parameter for general YUV buffer usage
@@ -131,32 +127,31 @@ public:
     //  Access function for picture buffer
     // ------------------------------------------------------------------------------------------------
 
-    //  Access starting position of picture buffer with margin
-    pixel*  getBufY()     { return m_picBufY; }
-
-    pixel*  getBufU()     { return m_picBufU; }
-
-    pixel*  getBufV()     { return m_picBufV; }
-
     //  Access starting position of original picture
-    pixel*  getLumaAddr()   { return m_picOrgY; }
+    pixel*  getLumaAddr()   { return m_picOrg[0]; }
 
-    pixel*  getCbAddr()     { return m_picOrgU; }
+    pixel*  getCbAddr()     { return m_picOrg[1]; }
 
-    pixel*  getCrAddr()     { return m_picOrgV; }
+    pixel*  getCrAddr()     { return m_picOrg[2]; }
+
+    pixel*  getChromaAddr(uint32_t chromaId)     { return m_picOrg[chromaId]; }
 
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
-    pixel*  getLumaAddr(int cuAddr) { return m_picOrgY + m_cuOffsetY[cuAddr]; }
+    pixel*  getLumaAddr(int cuAddr) { return m_picOrg[0] + m_cuOffsetY[cuAddr]; }
 
-    pixel*  getCbAddr(int cuAddr) { return m_picOrgU + m_cuOffsetC[cuAddr]; }
+    pixel*  getCbAddr(int cuAddr) { return m_picOrg[1] + m_cuOffsetC[cuAddr]; }
 
-    pixel*  getCrAddr(int cuAddr) { return m_picOrgV + m_cuOffsetC[cuAddr]; }
+    pixel*  getCrAddr(int cuAddr) { return m_picOrg[2] + m_cuOffsetC[cuAddr]; }
 
-    pixel*  getLumaAddr(int cuAddr, int absZOrderIdx) { return m_picOrgY + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getChromaAddr(uint32_t chromaId, int cuAddr) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr]; }
 
-    pixel*  getCbAddr(int cuAddr, int absZOrderIdx) { return m_picOrgU + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getLumaAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[0] + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
 
-    pixel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrgV + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getCbAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[1] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+
+    pixel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[2] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+
+    pixel*  getChromaAddr(uint32_t chromaId, int cuAddr, int absZOrderIdx) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
 
     uint32_t getCUHeight(int rowNum);
 

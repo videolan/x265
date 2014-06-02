@@ -2,6 +2,8 @@
 Command Line Options
 *********************
 
+.. _string-options-ref:
+
 Note that unless an option is listed as **CLI ONLY** the option is also
 supported by x265_param_parse(). The CLI uses getopt to parse the
 command line options so the short or long versions may be used and the
@@ -184,6 +186,21 @@ Input Options
 
 	**CLI ONLY**
 
+.. option:: --nr <integer>
+
+	Noise reduction - an adaptive deadzone applied after DCT
+	(subtracting from DCT coefficients), before quantization, on inter
+	blocks. It does no pixel-level filtering, doesn't cross DCT block
+	boundaries, has no overlap, doesn't affect intra blocks. The higher
+	the strength value parameter, the more aggressively it will reduce
+	noise.
+
+	Enabling noise reduction will make outputs diverge between different
+	numbers of frame threads. Outputs will be deterministic but the
+	outputs of -F2 will no longer match the outputs of -F3, etc.
+
+	**Values:** any value in range of 100 to 1000. Default disabled.
+
 .. option:: --input-res <wxh>
 
 	YUV only: Source picture size [w x h]
@@ -236,6 +253,21 @@ Input Options
 
 	**CLI ONLY**
 
+.. option:: --qpfile <filename>
+
+	Specify a text file which contains frametypes and QPs for some or
+	all frames. The format of each line is:
+
+	framenumber frametype QP
+
+	Frametype can be one of [I,i,P,B,b]. **B** is a referenced B frame,
+	**b** is an unreferenced B frame.  **I** is a keyframe (random
+	access point) while **i** is a I frame that is not a keyframe
+	(references are not broken).
+
+	Specifying QP (integer) is optional, and if specified they are
+	clamped within the encoder to qpmin/qpmax.
+
 Quad-Tree analysis
 ==================
 
@@ -270,7 +302,6 @@ Quad-Tree analysis
 	split the transform unit tree if it improves compression efficiency.
 	This setting limits the number of extra recursion depth which can be
 	attempted for inter coded units. Default: 1
-
 
 Temporal / motion search options
 ================================
@@ -333,7 +364,7 @@ Temporal / motion search options
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN
-	(50/50 splits, two directions). Default enabled
+	(50/50 splits, two directions). Default disabled
 
 .. option:: --amp, --no-amp
 
@@ -341,7 +372,7 @@ Temporal / motion search options
 	directions). This setting has no effect if rectangular partitions
 	are disabled. Even though there are four possible AMP partitions,
 	only the most likely candidate is tested, based on the results of
-	the rectangular mode tests. Default enabled
+	the rectangular mode tests. Default disabled
 
 .. option:: --max-merge <1..5>
 
@@ -396,6 +427,12 @@ Spatial/intra options
 	Penalty for 32x32 intra TU in non-I slices. Default 0
 
 	**Values:** 0:disabled 1:RD-penalty 2:maximum
+
+.. option:: --b-intra, --no-b-intra
+
+	Enables the use of intra modes in very slow presets (:option:`--rd`
+	5 or 6). Presets slow to ultrafast do not try intra in B frames
+	regardless of this setting. Default enabled.
 
 .. option:: --tskip, --no-tskip
 
@@ -482,6 +519,22 @@ Slice decision options
 
 	Use B-frames as references, when possible. Default enabled
 
+.. option:: --level <integer|float>
+
+	Minimum decoder requirement level. Defaults to -1, which implies
+	auto-detection by the encoder. If specified, the encoder will
+	attempt to bring the encode specifications within that specified
+	level. If the encoder is unable to reach the level it issues a
+	warning and emits the actual decoder requirement. If the requested
+	requirement level is higher than the actual level, the actual
+	requirement level is signaled.
+
+	The value is specified as a float or as an integer with the level
+	times 10, for example level **5.1** is specified as "5.1" or "51",
+	and level **5.0** is specified as "5.0" or "50".
+
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+
 Quality, rate control and rate distortion options
 =================================================
 
@@ -505,6 +558,13 @@ Quality, rate control and rate distortion options
 
 	Specify an upper limit to the rate factor which may be assigned to
 	any given frame (ensuring a max QP).  This is dangerous when CRF is
+	used in combination with VBV as it may result in buffer underruns.
+	Default disabled
+        
+.. option:: --min-crf <0..51.0>
+
+	Specify an lower limit to the rate factor which may be assigned to
+	any given frame (ensuring a min QP).  This is dangerous when CRF is
 	used in combination with VBV as it may result in buffer underruns.
 	Default disabled
 
@@ -536,10 +596,15 @@ Quality, rate control and rate distortion options
 	slices using param->rc.ipFactor and param->rc.pbFactor unless QP 0
 	is specified, in which case QP 0 is used for all slice types.  Note
 	that QP 0 does not cause lossless encoding, it only disables
-	quantization. A truly lossless option may be added in a later
-	release. Default disabled (CRF)
+	quantization. Default disabled (CRF)
 
 	**Range of values:** an integer from 0 to 51
+
+.. option:: --lossless, --no-lossless
+
+	Enables true lossless coding by bypassing scaling, transform,
+	quantization and in-loop filter processes. This is used for
+	ultra-high bitrates with zero loss of quality. Default disabled.
 
 .. option:: --aq-mode <0|1|2>
 
@@ -593,7 +658,46 @@ Quality, rate control and rate distortion options
 	used. The lower the value the faster the encode, the higher the
 	value the smaller the bitstream (in general). Default 3
 
+	Note that this table aims for accuracy, but is not necessarily our
+	final target behavior for each mode.
+
+	+-------+---------------------------------------------------------------+
+	| Level | Description                                                   |
+	+=======+===============================================================+
+	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
+	+-------+---------------------------------------------------------------+
+	| 1     | recon generated (better intra), RDO merge residual            |
+	+-------+---------------------------------------------------------------+
+	| 2     | RDO splits and merge residual choice                          |
+	+-------+---------------------------------------------------------------+
+	| 3     | RDO mode and split decisions                                  |
+	+-------+---------------------------------------------------------------+
+	| 4     | Adds RDO Quant                                                |
+	+-------+---------------------------------------------------------------+
+	| 5     | Adds RDO prediction decisions, enables intra modes in B slices|
+	+-------+---------------------------------------------------------------+
+	| 6     | Currently same as 5                                           |
+	+-------+---------------------------------------------------------------+
+
 	**Range of values:** 0: least .. 6: full RDO analysis
+
+.. option:: --psy-rd <float>
+
+	Influence rate distortion optimizations to try to preserve the
+	energy of the source image in the encoded image, at the expense of
+	compression efficiency. 1.0 is a typical value. Default disabled. It
+	only has effect on presets which use full RDO-based decisions (slower,
+	veryslow and placebo)
+
+	**Range of values:** 0 .. 2.0
+
+.. option:: --cu-lossless, --no-cu-lossless
+
+	For each CU, evaluate lossless encode (transform and quant bypass)
+	as a potential rate distortion optimization. If :option:`--lossless`
+	has been specified, all CUs will use this option unconditionally
+	regardless of whether this option was seperately enabled. Default
+	disabled.
 
 .. option:: --signhide, --no-signhide
 
@@ -747,14 +851,12 @@ VUI fields must be manually specified.
 Bitstream options
 =================
 
-.. option:: --repeat-headers
+.. option:: --repeat-headers, --no-repeat-headers
 
 	If enabled, x265 will emit VPS, SPS, and PPS headers with every
 	keyframe. This is intended for use when you do not have a container
 	to keep the stream headers for you and you want keyframes to be
-	random access points.
-
-	**API ONLY**
+	random access points. Default disabled
 
 .. option:: --aud, --no-aud
 

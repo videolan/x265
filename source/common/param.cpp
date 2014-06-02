@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com.
+ * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
 #include "TLibCommon/TComSlice.h"
@@ -107,6 +107,7 @@ void x265_param_default(x265_param *param)
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
+    param->levelIdc = -1;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -136,8 +137,8 @@ void x265_param_default(x265_param *param)
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 0;
     param->bEnableCbfFastMode = 0;
-    param->bEnableAMP = 1;
-    param->bEnableRectInter = 1;
+    param->bEnableAMP = 0;
+    param->bEnableRectInter = 0;
     param->rdLevel = 3;
     param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 0;
@@ -156,6 +157,8 @@ void x265_param_default(x265_param *param)
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
+    param->psyRd = 0.0;
+    param->bIntraInBFrames = 1;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -170,9 +173,11 @@ void x265_param_default(x265_param *param)
     param->rc.qpStep = 4;
     param->rc.rateControlMode = X265_RC_CRF;
     param->rc.qp = 32;
-    param->rc.aqMode = X265_AQ_VARIANCE;
+    param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
     param->rc.aqStrength = 1.0;
     param->rc.cuTree = 1;
+    param->rc.rfConstantMax = 0;
+    param->rc.rfConstantMin = 0;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
@@ -254,14 +259,14 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
-            param->bEnableRectInter = 0;
-            param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
+            param->rdLevel = 2;
             param->maxNumReferences = 1;
+            param->bEnableLoopFilter = 1;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
@@ -273,11 +278,10 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->searchRange = 44;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
-            param->bEnableRectInter = 0;
-            param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
             param->bEnableWeightedPred = 0;
+            param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
@@ -289,10 +293,9 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->maxCUSize = 32;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
-            param->bEnableRectInter = 0;
-            param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
+            param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
         }
@@ -300,18 +303,16 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
-            param->bEnableRectInter = 0;
-            param->bEnableAMP = 0;
             param->bEnableEarlySkip = 1;
             param->bEnableCbfFastMode = 1;
+            param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
         }
         else if (!strcmp(preset, "fast"))
         {
             param->lookaheadDepth = 15;
-            param->bEnableRectInter = 0;
-            param->bEnableAMP = 0;
+            param->rdLevel = 2;
         }
         else if (!strcmp(preset, "medium"))
         {
@@ -319,6 +320,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "slow"))
         {
+            param->bEnableRectInter = 1;
             param->lookaheadDepth = 25;
             param->rdLevel = 4;
             param->subpelRefine = 3;
@@ -327,6 +329,8 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "slower"))
         {
+            param->bEnableAMP = 1;
+            param->bEnableRectInter = 1;
             param->lookaheadDepth = 30;
             param->bframes = 8;
             param->tuQTMaxInterDepth = 2;
@@ -338,6 +342,8 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "veryslow"))
         {
+            param->bEnableAMP = 1;
+            param->bEnableRectInter = 1;
             param->lookaheadDepth = 40;
             param->bframes = 8;
             param->tuQTMaxInterDepth = 3;
@@ -350,6 +356,8 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "placebo"))
         {
+            param->bEnableAMP = 1;
+            param->bEnableRectInter = 1;
             param->lookaheadDepth = 60;
             param->searchRange = 92;
             param->bframes = 8;
@@ -371,10 +379,12 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         if (!strcmp(tune, "psnr"))
         {
             param->rc.aqStrength = 0.0;
+            param->psyRd = 0.0;
         }
         else if (!strcmp(tune, "ssim"))
         {
             param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
+            param->psyRd = 0.0;
         }
         else if (!strcmp(tune, "fastdecode") ||
                  !strcmp(tune, "fast-decode"))
@@ -383,6 +393,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableSAO = 0;
             param->bEnableWeightedPred = 0;
             param->bEnableWeightedBiPred = 0;
+            param->bIntraInBFrames = 0;
         }
         else if (!strcmp(tune, "zerolatency") ||
                  !strcmp(tune, "zero-latency"))
@@ -522,6 +533,14 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("csv") p->csvfn = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
+    OPT2("level-idc", "level")
+    {
+        /* allow "5.1" or "51", both converted to integer 51 */
+        if (atof(value) < 7)
+            p->levelIdc = (int)(10 * atof(value) + .5);
+        else
+            p->levelIdc = atoi(value);
+    }
     OPT2("log-level", "log")
     {
         p->logLevel = atoi(value);
@@ -548,6 +567,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("no-tskip-fast") p->bEnableTSkipFast = atobool(value);
     OPT("tskip-fast") p->bEnableTSkipFast = atobool(value);
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
+    OPT("lossless") p->bLossless = atobool(value);
+    OPT("cu-lossless") p->bCULossless = atobool(value);
     OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
     OPT("scenecut")
@@ -588,7 +609,9 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
+    OPT("psy-rd") p->psyRd = atof(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
+    OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value);
     OPT("sao") p->bEnableSAO = atobool(value);
     OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
@@ -604,6 +627,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("vbv-bufsize") p->rc.vbvBufferSize = atoi(value);
     OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
     OPT("crf-max")     p->rc.rfConstantMax = atof(value);
+    OPT("crf-min")     p->rc.rfConstantMin = atof(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);
@@ -688,6 +712,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
                          &p->vui.defDispWinRightOffset,
                          &p->vui.defDispWinBottomOffset) != 4;
     }
+    OPT("nr") p->noiseReduction = atoi(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -848,6 +873,40 @@ int x265_check_params(x265_param *param)
           "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
 
+    if (param->rdLevel < 5)
+        param->psyRd = 0;
+    if (param->rc.aqStrength == 0)
+        param->rc.aqMode = 0;
+    if (param->logLevel < X265_LOG_INFO)
+    {
+        /* don't measure these metrics if they will not be reported */
+        param->bEnablePsnr = 0;
+        param->bEnableSsim = 0;
+    }
+    /* Warn users trying to measure PSNR/SSIM with psy opts on. */
+    if (param->bEnablePsnr || param->bEnableSsim)
+    {
+        const char *s = NULL;
+
+        if (param->psyRd != 0)
+        {
+            s = param->bEnablePsnr ? "psnr" : "ssim";
+            x265_log(param, X265_LOG_WARNING, "--%s used with psy on: results will be invalid!\n", s);
+        }
+        else if (!param->rc.aqMode && param->bEnableSsim)
+        {
+            x265_log(param, X265_LOG_WARNING, "--ssim used with AQ off: results will be invalid!\n");
+            s = "ssim";
+        }
+        else if (param->rc.aqMode && param->bEnablePsnr)
+        {
+            x265_log(param, X265_LOG_WARNING, "--psnr used with AQ on: results will be invalid!\n");
+            s = "psnr";
+        }
+        if (s)
+            x265_log(param, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
+    }
+
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
@@ -889,7 +948,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->maxNumReferences < 1, "maxNumReferences must be 1 or greater.");
     CHECK(param->maxNumReferences > MAX_NUM_REF, "maxNumReferences must be 16 or smaller.");
 
-    CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceWidth < (int)param->maxCUSize,
+    CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceHeight < (int)param->maxCUSize,
           "Picture size must be at least one CTU");
     CHECK(param->internalCsp < X265_CSP_I420 || X265_CSP_I444 < param->internalCsp,
           "Color space must be i420, i422, or i444");
@@ -914,7 +973,7 @@ int x265_check_params(x265_param *param)
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
-
+    CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
@@ -980,6 +1039,8 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->bFrameBias < 0, "Bias towards B frame decisions must be 0 or greater");
+    if (param->noiseReduction)
+        CHECK(100 > param->noiseReduction || param->noiseReduction > 1000, "Valid noise reduction range 100 - 1000");
     return check_failed;
 }
 
@@ -1060,7 +1121,10 @@ void x265_print_params(x265_param *param)
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
-    switch (param->rc.rateControlMode)
+
+    if (param->bLossless)
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : Lossless\n");
+    else switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
         x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate,
@@ -1090,6 +1154,7 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
+    fprintf(stderr, "psyrd=%.1lf ", param->psyRd);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
@@ -1099,7 +1164,8 @@ void x265_print_params(x265_param *param)
         else
             fprintf(stderr, "sao-frame ");
     }
-    TOOLOPT(param->bEnableSignHiding, "sign-hide");
+    TOOLOPT(param->bEnableSignHiding, "signhide");
+    TOOLOPT(param->bCULossless, "cu-lossless");
     if (param->bEnableTransformSkip)
     {
         if (param->bEnableTSkipFast)
@@ -1139,6 +1205,8 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableTransformSkip, "tskip");
     BOOL(p->bEnableTSkipFast, "tskip-fast");
     BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
+    BOOL(p->bLossless, "lossless");
+    BOOL(p->bCULossless, "cu-lossless");
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " interlace=%d", p->interlaceMode);

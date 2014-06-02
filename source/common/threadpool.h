@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com
+ * For more information, contact us at license @ x265.com
  *****************************************************************************/
 
 #ifndef X265_THREADPOOL_H
@@ -62,7 +62,7 @@ public:
 
     // Worker threads will call this method to find a job.  Must return true if
     // work was completed.  False if no work was available.
-    virtual bool findJob() = 0;
+    virtual bool findJob(int threadId) = 0;
 
     // All derived objects that call Enqueue *MUST* call flush before allowing
     // their object to be destroyed, otherwise you will see random crashes involving
