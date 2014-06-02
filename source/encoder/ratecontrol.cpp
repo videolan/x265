@@ -323,9 +323,9 @@ RateControl::RateControl(Encoder * _cfg)
     init();
 
     /* Adjust the first frame in order to stabilize the quality level compared to the rest */
-#define ABR_INIT_QP_MIN (24 + QP_BD_OFFSET)
-#define ABR_INIT_QP_MAX (40 + QP_BD_OFFSET)
-#define CRF_INIT_QP ((int)param->rc.rfConstant) + QP_BD_OFFSET
+#define ABR_INIT_QP_MIN (24)
+#define ABR_INIT_QP_MAX (40)
+#define CRF_INIT_QP (int)param->rc.rfConstant
     for (int i = 0; i < 3; i++)
         lastQScaleFor[i] = x265_qp2qScale(param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);
 
