@@ -213,6 +213,10 @@ struct EncoderPrimitives
     copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
+    copy_pp_t       square_copy_pp[NUM_SQUARE_BLOCKS];
+    copy_sp_t       square_copy_sp[NUM_SQUARE_BLOCKS];
+    copy_ps_t       square_copy_ps[NUM_SQUARE_BLOCKS];
+    copy_ss_t       square_copy_ss[NUM_SQUARE_BLOCKS];
 
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
     filter_hps_t    luma_hps[NUM_LUMA_PARTITIONS];

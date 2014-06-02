@@ -2120,8 +2120,9 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
 
-    if (numSig == 0)
-        return;
+#if CHECKED_BUILD || _DEBUG
+    X265_CHECK(numSig > 0, "cbf check fail");
+#endif
 
     bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))

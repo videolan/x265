@@ -1316,29 +1316,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
 #endif // if HIGH_BIT_DEPTH
 
-    /* copy reusable luma primitives to chroma 4:4:4 */
-    for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
-    {
-        p.chroma[X265_CSP_I444].copy_pp[i] = p.luma_copy_pp[i];
-        p.chroma[X265_CSP_I444].copy_ps[i] = p.luma_copy_ps[i];
-        p.chroma[X265_CSP_I444].copy_sp[i] = p.luma_copy_sp[i];
-        p.chroma[X265_CSP_I444].copy_ss[i] = p.luma_copy_ss[i];
-        p.chroma[X265_CSP_I444].add_ps[i]  = p.luma_add_ps[i];
-        p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
-        p.chroma[X265_CSP_I444].addAvg[i]  = p.luma_addAvg[i];
-    }
-
     primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
     primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
     primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
     primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
     primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
-
-    primitives.sad_square[BLOCK_4x4]   = primitives.sad[LUMA_4x4];
-    primitives.sad_square[BLOCK_8x8]   = primitives.sad[LUMA_8x8];
-    primitives.sad_square[BLOCK_16x16] = primitives.sad[LUMA_16x16];
-    primitives.sad_square[BLOCK_32x32] = primitives.sad[LUMA_32x32];
-    primitives.sad_square[BLOCK_64x64] = primitives.sad[LUMA_64x64];
 
     // SA8D devolves to SATD for blocks not even multiples of 8x8
     primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
