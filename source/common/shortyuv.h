@@ -1,5 +1,5 @@
 /*****************************************************************************
- * x265: TShortYUV classes for short sized YUV-style frames
+ * x265: ShortYUV class for short sized YUV-style frames
  *****************************************************************************
  * Copyright (C) 2013 x265 project
  *
@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
  *
  * This program is also available under a commercial proprietary license.
- * For more information, contact us at licensing@multicorewareinc.com
+ * For more information, contact us at license @ x265.com
  *****************************************************************************/
 
 #ifndef X265_SHORTYUV_H
