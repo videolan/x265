@@ -1332,7 +1332,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     int origQP = outTempCU->getQP(0);
                     xCheckDQP(outTempCU);
                     uint64_t tempCost = m_rdCost->psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
-                    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;    
+                    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                     if (tempCost < bestCost)
                     {
                         TComDataCU* tmp = outTempCU;
@@ -1553,7 +1553,7 @@ void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
 void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth)
 {
     uint64_t tempCost = m_rdCost->psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
-    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;    
+    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
 
     if (tempCost < bestCost)
     {
