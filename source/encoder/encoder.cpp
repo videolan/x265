@@ -1299,6 +1299,19 @@ void Encoder::configure(x265_param *p)
         bEnableRDOQTS = 0;
     }
 
+    if (p->bLossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+        m_CUTransquantBypassFlagValue = true; 
+        p->rc.rateControlMode = X265_RC_CQP;
+        p->rc.qp = 4; // An oddity, QP=4 is more lossless than QP=0 and gives better lambdas
+    }
+    
+    if (p->bCULossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+    }
+
     if (p->rc.rateControlMode == X265_RC_CQP)
     {
         p->rc.aqMode = X265_AQ_NONE;
@@ -1438,17 +1451,6 @@ void Encoder::configure(x265_param *p)
     m_pcmLog2MaxSize = 5;
     m_bPCMInputBitDepthFlag = true;
     m_bPCMFilterDisableFlag = false;
-
-    if (p->bLossless)
-    {
-        m_TransquantBypassEnableFlag  = true;
-        m_CUTransquantBypassFlagValue = true; 
-    }
-    
-    if (p->bCULossless)
-    {
-        m_TransquantBypassEnableFlag  = true;
-    }
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
