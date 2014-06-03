@@ -311,8 +311,8 @@ private:
 public:
 
     TComHRD()
-        : m_nalHrdParametersPresentFlag(0)
-        , m_vclHrdParametersPresentFlag(0)
+        : m_nalHrdParametersPresentFlag(false)
+        , m_vclHrdParametersPresentFlag(false)
         , m_subPicHrdParamsPresentFlag(false)
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
