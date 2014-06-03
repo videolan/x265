@@ -159,6 +159,8 @@ void x265_param_default(x265_param *param)
     param->rdPenalty = 0;
     param->psyRd = 0.0;
     param->bIntraInBFrames = 1;
+    param->bLossless = 0;
+    param->bCULossless = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
