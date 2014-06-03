@@ -1315,21 +1315,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
-
-    primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
-    primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
-    primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
-    primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
-    primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
-
-    // SA8D devolves to SATD for blocks not even multiples of 8x8
-    primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
-    primitives.sa8d_inter[LUMA_4x8]   = primitives.satd[LUMA_4x8];
-    primitives.sa8d_inter[LUMA_4x16]  = primitives.satd[LUMA_4x16];
-    primitives.sa8d_inter[LUMA_8x4]   = primitives.satd[LUMA_8x4];
-    primitives.sa8d_inter[LUMA_16x4]  = primitives.satd[LUMA_16x4];
-    primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
-    primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
 }
 }
 

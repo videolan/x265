@@ -101,6 +101,21 @@ static void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.square_copy_sp[i] = p.luma_copy_sp[partL];
         p.square_copy_ss[i] = p.luma_copy_ss[partL];
     }
+
+    primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
+    primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
+    primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
+    primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
+    primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
+
+    // SA8D devolves to SATD for blocks not even multiples of 8x8
+    primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
+    primitives.sa8d_inter[LUMA_4x8]   = primitives.satd[LUMA_4x8];
+    primitives.sa8d_inter[LUMA_4x16]  = primitives.satd[LUMA_4x16];
+    primitives.sa8d_inter[LUMA_8x4]   = primitives.satd[LUMA_8x4];
+    primitives.sa8d_inter[LUMA_16x4]  = primitives.satd[LUMA_16x4];
+    primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
+    primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
 }
 }
 using namespace x265;
