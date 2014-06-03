@@ -722,6 +722,13 @@ void Encoder::printSummary()
 
             x265_log(param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
         }
+        if (param->bLossless)
+        {
+            float frameSize = (float)(param->sourceWidth - m_pad[0]) * (param->sourceHeight - m_pad[1]);
+            float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
+
+            x265_log(param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+        }
     }
 }
 
@@ -1305,6 +1312,8 @@ void Encoder::configure(x265_param *p)
         m_CUTransquantBypassFlagValue = true; 
         p->rc.rateControlMode = X265_RC_CQP;
         p->rc.qp = 4; // An oddity, QP=4 is more lossless than QP=0 and gives better lambdas
+        p->bEnableSsim = 0;
+        p->bEnablePsnr = 0;
     }
     
     if (p->bCULossless)
