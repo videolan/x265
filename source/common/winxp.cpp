@@ -123,7 +123,7 @@ void cond_destroy(ConditionVariable *cond)
 }
 } // namespace x265
 
-#else
+#elif defined(_MSC_VER)
 
 namespace { int _avoid_linker_warnings = 0; }
 
