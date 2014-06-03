@@ -1057,7 +1057,6 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
 
     sps->setTMVPFlagsPresent(false);
-    sps->setUseLossless(m_useLossless);
 
     sps->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
@@ -1154,16 +1153,9 @@ void Encoder::initPPS(TComPPS *pps)
 
     int lowestQP = -QP_BD_OFFSET;
 
-    if (m_useLossless)
+    if ((m_maxCuDQPDepth == 0) && (param->rc.qp == lowestQP))
     {
-        if ((m_maxCuDQPDepth == 0) && (param->rc.qp == lowestQP))
-        {
-            bUseDQP = false;
-        }
-        else
-        {
-            bUseDQP = true;
-        }
+        bUseDQP = false;
     }
 
     if (bUseDQP)
@@ -1447,8 +1439,6 @@ void Encoder::configure(x265_param *p)
     m_bPCMInputBitDepthFlag = true;
     m_bPCMFilterDisableFlag = false;
 
-    m_useLossless = false;  // x264 configures this via --qp=0
-    
     if (p->bLossless)
     {
         m_TransquantBypassEnableFlag  = true;
