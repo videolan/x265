@@ -460,6 +460,14 @@ public:
     void setNumTicksPocDiffOneMinus1(int x)     { m_numTicksPocDiffOneMinus1 = x; }
 };
 
+struct HRDTiming
+{
+    double cpbInitialAT;
+    double cpbFinalAT;
+    double dpbOutputTime;
+    double cpbRemovalTime;
+};
+
 class TComVPS
 {
 private:

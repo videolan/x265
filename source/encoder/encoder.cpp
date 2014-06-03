@@ -186,6 +186,7 @@ void Encoder::init()
             }
         }
     }
+    m_rateControl->init(&m_frameEncoder[0].m_sps);
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
     m_totalFrameThreads = param->frameNumThreads;
@@ -1123,8 +1124,8 @@ void Encoder::initSPS(TComSPS *sps)
     vui->setFrameFieldInfoPresentFlag(!!param->interlaceMode);
     vui->setFieldSeqFlag(!!param->interlaceMode);
 
-    vui->setHrdParametersPresentFlag(false);
-    vui->getHrdParameters()->setNalHrdParametersPresentFlag(false);
+    vui->setHrdParametersPresentFlag(param->bEmitHRDSEI);
+    vui->getHrdParameters()->setNalHrdParametersPresentFlag(param->bEmitHRDSEI);
     vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
 
     vui->getTimingInfo()->setTimingInfoPresentFlag(true);
@@ -1426,12 +1427,10 @@ void Encoder::configure(x265_param *p)
 
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
-    m_bufferingPeriodSEIEnabled = 0;
     m_displayOrientationSEIAngle = 0;
     m_gradualDecodingRefreshInfoEnabled = 0;
     m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
-    m_activeParameterSetsSEIEnabled = 0;
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;
     m_pocProportionalToTimingFlag = false;

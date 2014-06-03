@@ -163,6 +163,8 @@ static const struct option long_options[] =
     { "strong-intra-smoothing",    no_argument, NULL, 0 },
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
+    { "no-hrd",               no_argument, NULL, 0 },
+    { "hrd",                  no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -392,6 +394,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
+    H0("   --[no-]hrd                    Enable HRD parameters signalling. Default %s\n", OPT(param->bEmitHRDSEI));
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual optimization. Requires slow preset or below. Default %f\n", param->psyRd);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));

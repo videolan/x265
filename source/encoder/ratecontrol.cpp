@@ -27,6 +27,10 @@
 #include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
+#include "TLibCommon/SEI.h"
+
+#define BR_SHIFT  6
+#define CPB_SHIFT 4
 
 using namespace x265;
 
@@ -34,6 +38,50 @@ using namespace x265;
 const double RateControl::amortizeFraction = 0.85;
 const int RateControl::amortizeFrames = 75;
 
+namespace {
+
+inline int calcScale(uint32_t x)
+{
+    static uint8_t lut[16] = {4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0};
+    int y, z = (((x & 0xffff) - 1) >> 27) & 16;
+    x >>= z;
+    z += y = (((x & 0xff) - 1) >> 28) & 8;
+    x >>= y;
+    z += y = (((x & 0xf) - 1) >> 29) & 4;
+    x >>= y;
+    return z + lut[x&0xf];
+}
+
+inline int calcLength(uint32_t x)
+{
+    static uint8_t lut[16] = {4, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
+    int y, z = (((x >> 16) - 1) >> 27) & 16;
+    x >>= z ^ 16;
+    z += y = ((x - 0x100) >> 28) & 8;
+    x >>= y ^ 8;
+    z += y = ((x - 0x10) >> 29) & 4;
+    x >>= y ^ 4;
+    return z + lut[x];
+}
+
+inline void reduceFraction(int* n, int* d)
+{
+    int a = *n;
+    int b = *d;
+    int c;
+    if (!a || !b)
+        return;
+    c = a % b;
+    while (c)
+    {
+        a = b;
+        b = c;
+        c = a % b;
+    }
+    *n /= b;
+    *d /= b;
+}
+}  // end anonymous namespace
 /* Compute variance to derive AC energy of each block */
 static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
 {
@@ -287,40 +335,11 @@ RateControl::RateControl(Encoder * _cfg)
         param->rc.vbvMaxBitrate = 0;
     }
 
-    isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
-    double fps = (double)param->fpsNum / param->fpsDenom;
-    if (isVbv)
-    {
-        /* We don't support changing the ABR bitrate right now,
-           so if the stream starts as CBR, keep it CBR. */
-        if (param->rc.vbvBufferSize < (int)(param->rc.vbvMaxBitrate / fps))
-        {
-            param->rc.vbvBufferSize = (int)(param->rc.vbvMaxBitrate / fps);
-            x265_log(param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
-                     param->rc.vbvBufferSize);
-        }
-        int vbvBufferSize = param->rc.vbvBufferSize * 1000;
-        int vbvMaxBitrate = param->rc.vbvMaxBitrate * 1000;
-
-        bufferRate = vbvMaxBitrate / fps;
-        vbvMaxRate = vbvMaxBitrate;
-        bufferSize = vbvBufferSize;
-        singleFrameVbv = bufferRate * 1.1 > bufferSize;
-
-        if (param->rc.vbvBufferInit > 1.)
-            param->rc.vbvBufferInit = Clip3(0.0, 1.0, param->rc.vbvBufferInit / param->rc.vbvBufferSize);
-        param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
-        bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
-        isCbr = param->rc.rateControlMode == X265_RC_ABR
-            && param->rc.vbvMaxBitrate <= param->rc.bitrate;
-    }
-
     bframes = param->bframes;
     bframeBits = 0;
     leadingNoBSatd = 0;
     ipOffset = 6.0 * X265_LOG2(param->rc.ipFactor);
     pbOffset = 6.0 * X265_LOG2(param->rc.pbFactor);
-    init();
 
     /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24)
@@ -347,8 +366,41 @@ RateControl::RateControl(Encoder * _cfg)
     lstep = pow(2, param->rc.qpStep / 6.0);
 }
 
-void RateControl::init()
+void RateControl::init(TComSPS *sps)
 {
+    isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
+    double fps = (double)param->fpsNum / param->fpsDenom;
+    if (isVbv)
+    {
+        /* We don't support changing the ABR bitrate right now,
+           so if the stream starts as CBR, keep it CBR. */
+        if (param->rc.vbvBufferSize < (int)(param->rc.vbvMaxBitrate / fps))
+        {
+            param->rc.vbvBufferSize = (int)(param->rc.vbvMaxBitrate / fps);
+            x265_log(param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
+                     param->rc.vbvBufferSize);
+        }
+        int vbvBufferSize = param->rc.vbvBufferSize * 1000;
+        int vbvMaxBitrate = param->rc.vbvMaxBitrate * 1000;
+
+        TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
+        if (hrd->getNalHrdParametersPresentFlag())
+        {
+            vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+            vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+        }
+        bufferRate = vbvMaxBitrate / fps;
+        vbvMaxRate = vbvMaxBitrate;
+        bufferSize = vbvBufferSize;
+        singleFrameVbv = bufferRate * 1.1 > bufferSize;
+
+        if (param->rc.vbvBufferInit > 1.)
+            param->rc.vbvBufferInit = Clip3(0.0, 1.0, param->rc.vbvBufferInit / param->rc.vbvBufferSize);
+        param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
+        bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
+        isCbr = param->rc.rateControlMode == X265_RC_ABR
+            && param->rc.vbvMaxBitrate <= param->rc.bitrate;
+    }
     totalBits = 0;
     framesDone = 0;
     double tuneCplxFactor = 1;
@@ -371,6 +423,45 @@ void RateControl::init()
     }
 
     predBfromP = pred[0];
+}
+
+void RateControl::initHRD(TComSPS *sps)
+{
+    int vbvBufferSize = param->rc.vbvBufferSize * 1000;
+    int vbvMaxBitrate = param->rc.vbvMaxBitrate * 1000;
+
+    // Init HRD
+    TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
+    hrd->setCpbCntMinus1(0, 0);
+    hrd->setLowDelayHrdFlag(0, false);
+    hrd->setFixedPicRateFlag(0, 1);
+    hrd->setPicDurationInTcMinus1(0, 0);
+
+    // normalize HRD size and rate to the value / scale notation
+    hrd->setBitRateScale(Clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT));
+    hrd->setBitRateValueMinus1(0, 0, 0, (vbvMaxBitrate >> (hrd->getBitRateScale() + BR_SHIFT)) - 1);
+
+    hrd->setCpbSizeScale(Clip3(0, 15, calcScale(vbvBufferSize) - CPB_SHIFT));
+    hrd->setCpbSizeValueMinus1(0, 0, 0, (vbvBufferSize >> (hrd->getCpbSizeScale() + CPB_SHIFT)) - 1);
+    int bitRateUnscale = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+    int cpbSizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+
+    // arbitrary
+    #define MAX_DURATION 0.5
+
+    TimingInfo *time = sps->getVuiParameters()->getTimingInfo();
+    int maxCpbOutputDelay = (int)(X265_MIN(param->keyframeMax * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick(), INT_MAX));
+    int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering(0) * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick());
+    int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
+
+    hrd->setInitialCpbRemovalDelayLengthMinus1(2 + Clip3(4, 22, 32 - calcLength(maxDelay)) - 1);
+    hrd->setCpbRemovalDelayLengthMinus1(Clip3(4, 31, 32 - calcLength(maxCpbOutputDelay)) - 1);
+    hrd->setDpbOutputDelayLengthMinus1(Clip3(4, 31, 32 - calcLength(maxDpbOutputDelay)) - 1);
+
+    #undef MAX_DURATION
+
+    vbvBufferSize = cpbSizeUnscale;
+    vbvMaxBitrate = bitRateUnscale;
 }
 
 void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
@@ -627,7 +718,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             double underflow = 1.0 + (totalBits - wantedBitsWindow) / abrBuffer;
             if (underflow < 0.9 && !isFrameDone)
             {
-                init();
+                init(NULL);
                 shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
                 shortTermCplxCount = 1;
                 isAbrReset = true;
@@ -640,6 +731,26 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             isAbrReset = false;
         }
     }
+}
+
+void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
+{
+    TComVUI* vui = curSlice->getSPS()->getVuiParameters();
+    TComHRD* hrd = vui->getHrdParameters();
+    int num = 90000;
+    int denom = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+    reduceFraction(&num, &denom);
+    int64_t cpbState = (int64_t)bufferFillFinal;
+    int64_t cpbSize = (int64_t)((hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT));
+
+    if(cpbState < 0 || cpbState > cpbSize)
+    {
+         x265_log(param, X265_LOG_WARNING, "CPB %s: %.0lf bits in a %.0lf-bit buffer\n",
+                   cpbState < 0 ? "underflow" : "overflow", (float)cpbState/denom, (float)cpbSize/denom);
+    }
+
+    seiBP->m_initialCpbRemovalDelay[0][0] = (uint32_t)(num * cpbState + denom) / denom;
+    seiBP->m_initialCpbRemovalDelayOffset[0][0] = (uint32_t)(num * cpbSize + denom) / denom - seiBP->m_initialCpbRemovalDelay[0][0];
 }
 
 void RateControl::updateVbvPlan(Encoder* enc)
@@ -1133,6 +1244,37 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             }
         }
         updateVbv(bits, rce);
+
+        if (param->bEmitHRDSEI)
+        {
+            TComVUI *vui = pic->getSlice()->getSPS()->getVuiParameters();
+            TComHRD *hrd = vui->getHrdParameters();
+            TimingInfo *time = vui->getTimingInfo();
+            if (pic->getSlice()->getPOC() == 0)
+            {
+                // access unit initialises the HRD
+                pic->m_hrdTiming.cpbInitialAT = 0;
+                pic->m_hrdTiming.cpbRemovalTime = nominalRemovalTime = (double)sei.m_initialCpbRemovalDelay[0][0] / 90000;
+            }
+            else
+            {
+                pic->m_hrdTiming.cpbRemovalTime = nominalRemovalTime + (double)pic->m_sei.m_auCpbRemovalDelay * time->getNumUnitsInTick() / time->getTimeScale();
+                double cpbEarliestAT = pic->m_hrdTiming.cpbRemovalTime - (double)sei.m_initialCpbRemovalDelay[0][0] / 90000;
+                if (!pic->m_lowres.bKeyframe)
+                {
+                    cpbEarliestAT -= (double)sei.m_initialCpbRemovalDelayOffset[0][0] / 90000;
+                }
+
+                if (hrd->getCbrFlag(0, 0, 0))
+                    pic->m_hrdTiming.cpbInitialAT = prevCpbFinalAT;
+                else
+                    pic->m_hrdTiming.cpbInitialAT = X265_MAX(prevCpbFinalAT, cpbEarliestAT);
+            }
+
+            uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+            pic->m_hrdTiming.cpbFinalAT = prevCpbFinalAT = pic->m_hrdTiming.cpbInitialAT + bits / cpbsizeUnscale;
+            pic->m_hrdTiming.dpbOutputTime = (double)pic->m_sei.m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + pic->m_hrdTiming.cpbRemovalTime;
+        }
     }
     rce->isActive = false;
     return 0;

@@ -143,9 +143,15 @@ bool FrameEncoder::init(Encoder *top, int numRows)
     {
         m_sps.setHrdParameters(m_cfg->param->fpsNum, m_cfg->param->fpsDenom, 0, m_cfg->param->rc.bitrate, m_cfg->param->bframes > 0);
     }
-    if (m_cfg->m_bufferingPeriodSEIEnabled || m_cfg->m_decodingUnitInfoSEIEnabled)
+    if (m_cfg->param->bEmitHRDSEI || m_cfg->m_decodingUnitInfoSEIEnabled)
     {
         m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
+    }
+
+    // initialize HRD parameters of SPS
+    if (m_cfg->param->bEmitHRDSEI)
+    {
+        top->m_rateControl->initHRD(&m_sps);
     }
 
     m_sps.setTMVPFlagsPresent(true);
@@ -266,7 +272,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
     nalunits[count]->init(nalu);
     count++;
 
-    if (m_cfg->m_activeParameterSetsSEIEnabled)
+    if (m_cfg->param->bEmitHRDSEI)
     {
         SEIActiveParameterSets sei;
         sei.activeVPSId = m_top->m_vps.getVPSId();
@@ -275,6 +281,7 @@ int FrameEncoder::getStreamHeaders(NALUnitEBSP **nalunits)
         sei.numSpsIdsMinus1 = 0;
         sei.activeSeqParamSetId = m_sps.getSPSId();
 
+        nalu.resetToType(NAL_UNIT_PREFIX_SEI);
         entropyCoder->setBitstream(&nalu.m_bitstream);
         m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_bitstream);
@@ -404,6 +411,7 @@ void FrameEncoder::compressFrame()
     TEncEntropy* entropyCoder      = getEntropyCoder(0);
     TComSlice*   slice             = m_pic->getSlice();
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
+    int          totalCoded        = (int)m_top->m_encodedFrameNum - 1;
 
     m_nalCount = 0;
     entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
@@ -526,6 +534,34 @@ void FrameEncoder::compressFrame()
 
     if (slice->getPic()->m_lowres.bKeyframe)
     {
+        if (m_cfg->param->bEmitHRDSEI)
+        {
+            OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
+            SEIBufferingPeriod* sei_buffering_period = &m_top->m_rateControl->sei;
+            sei_buffering_period->m_bpSeqParameterSetId = m_sps.getSPSId();
+            sei_buffering_period->m_rapCpbParamsPresentFlag = 0;
+
+            // for the concatenation, it can be set to one during splicing.
+            sei_buffering_period->m_concatenationFlag = 0;
+
+            // since the temporal layer HRD is not ready, we assumed it is fixed
+            sei_buffering_period->m_auCpbRemovalDelayDelta = 1;
+            sei_buffering_period->m_cpbDelayOffset = 0;
+            sei_buffering_period->m_dpbDelayOffset = 0;
+
+            // hrdFullness() calculates the initial CPB removal delay and offset
+            m_top->m_rateControl->hrdFullness(sei_buffering_period);
+            m_seiWriter.writeSEImessage(nalu.m_bitstream, *sei_buffering_period, &m_sps);
+            writeRBSPTrailingBits(nalu.m_bitstream);
+            m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
+            if (m_nalList[m_nalCount])
+            {
+                m_nalList[m_nalCount]->init(nalu);
+                m_nalCount++;
+            }
+
+            m_top->m_lastBPSEI = totalCoded;
+        }
         if (m_cfg->m_gradualDecodingRefreshInfoEnabled && !slice->getRapPicFlag())
         {
             // Gradual decoding refresh SEI
@@ -568,24 +604,38 @@ void FrameEncoder::compressFrame()
         }
     }
 
-    if (!!m_cfg->param->interlaceMode)
+    if (m_cfg->param->bEmitHRDSEI || !!m_cfg->param->interlaceMode)
     {
+        // Picture Timing SEI
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
-        SEIPictureTiming sei;
+        SEIPictureTiming *sei = &m_pic->m_sei;
+        int poc = slice->getPOC();
+        int cpbDelayLength = slice->getSPS()->getVuiParameters()->getHrdParameters()->getCpbRemovalDelayLengthMinus1() + 1;
         if (m_cfg->param->interlaceMode == 2)
         {
-            sei.m_picStruct = (slice->getPOC() & 1) ? 1 /* top */ : 2 /* bottom */;
+            sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
+        }
+        else if (m_cfg->param->interlaceMode == 1)
+        {
+            sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
         }
         else
         {
-            sei.m_picStruct = (slice->getPOC() & 1) ? 2 /* bottom */ : 1 /* top */;
+            sei->m_picStruct = 0;
         }
-        sei.m_sourceScanType = 0;
-        sei.m_duplicateFlag = 0;
+        sei->m_sourceScanType = 0;
+        sei->m_duplicateFlag = false;
+        sei->m_picDpbOutputDuDelay = 0;
+        sei->m_numNalusInDuMinus1 = NULL;
+        sei->m_duCpbRemovalDelayMinus1 = NULL;
 
+        // The m_aucpbremoval delay specifies how many clock ticks the access unit associated with the picture timing
+        // SEI message has to wait after removal of the access unit with the most recent buffering period SEI message
+        sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
+        sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
         entropyCoder->setBitstream(&nalu.m_bitstream);
-        m_seiWriter.writeSEImessage(nalu.m_bitstream, sei, &m_sps);
+        m_seiWriter.writeSEImessage(nalu.m_bitstream, *sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_bitstream);
         m_nalList[m_nalCount] = X265_MALLOC(NALUnitEBSP, 1);
         if (m_nalList[m_nalCount])

@@ -185,14 +185,7 @@ public:
 
     PayloadType payloadType() const { return PICTURE_TIMING; }
 
-    SEIPictureTiming()
-        : m_picStruct(0)
-        , m_sourceScanType(0)
-        , m_duplicateFlag(false)
-        , m_picDpbOutputDuDelay(0)
-        , m_numNalusInDuMinus1(NULL)
-        , m_duCpbRemovalDelayMinus1(NULL)
-    {}
+    SEIPictureTiming() {}
 
     virtual ~SEIPictureTiming()
     {

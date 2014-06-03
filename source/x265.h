@@ -410,6 +410,10 @@ typedef struct x265_param
      * NAL at the start of every access unit. Default false */
     int       bEnableAccessUnitDelimiters;
 
+    /* Enables the buffering period SEI and picture timing SEI to signal the HRD
+     * parameteres. Default is disabled */
+    int       bEmitHRDSEI;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.

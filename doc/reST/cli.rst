@@ -858,6 +858,13 @@ Bitstream options
 	to keep the stream headers for you and you want keyframes to be
 	random access points. Default disabled
 
+.. option:: --hrd, --no-hrd
+
+	Enable the signalling of HRD parameters to the decoder. The HRD
+	parameters are carried by the Buffering Period SEI messages and
+	Picture Timing SEI messages providing timing information to the
+	decoder. Default disabled
+
 .. option:: --aud, --no-aud
 
 	Emit an access unit delimiter NAL at the start of each slice access

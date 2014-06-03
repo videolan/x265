@@ -45,6 +45,7 @@
 #include "lowres.h"
 #include "threading.h"
 #include "md5.h"
+#include "SEI.h"
 
 namespace x265 {
 // private namespace
@@ -120,6 +121,8 @@ public:
     double                m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
     double                m_rateFactor; // calculated based on the Frame QP
     int32_t               m_forceqp;    // Force to use the qp specified in qp file
+    SEIPictureTiming      m_sei;
+    HRDTiming             m_hrdTiming;
 
     TComPic();
     virtual ~TComPic();

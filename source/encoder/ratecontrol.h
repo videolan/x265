@@ -26,14 +26,14 @@
 #ifndef X265_RATECONTROL_H
 #define X265_RATECONTROL_H
 
-#include "TLibCommon/CommonDef.h"
-
 namespace x265 {
 // encoder namespace
 
 struct Lookahead;
 class Encoder;
 class TComPic;
+class TComSPS;
+class SEIBufferingPeriod;
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -122,6 +122,12 @@ struct RateControl
     double lastRceq;
     int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
     double qCompress;
+
+    /* hrd stuff */
+    SEIBufferingPeriod sei;
+    double nominalRemovalTime;
+    double prevCpbFinalAT;
+
     RateControl(Encoder * _cfg);
 
     // to be called for each frame to process RateControl and set QP
@@ -130,6 +136,9 @@ struct RateControl
     int rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce);
     int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
 
+    void hrdFullness(SEIBufferingPeriod* sei);
+    void init(TComSPS* sps);
+    void initHRD(TComSPS* sps);
 protected:
 
     static const double amortizeFraction;
@@ -138,7 +147,6 @@ protected:
     int residualFrames;
     int residualCost;
 
-    void init();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();

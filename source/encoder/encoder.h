@@ -82,7 +82,6 @@ private:
     int64_t            m_firstPts;
     int64_t            m_bframeDelayTime;
     int64_t            m_prevReorderedPts[2];
-    int64_t            m_encodedFrameNum;
 
     ThreadPool*        m_threadPool;
     Lookahead*         m_lookahead;
@@ -157,7 +156,8 @@ public:
     bool               m_bPCMFilterDisableFlag;
     bool               m_loopFilterAcrossTilesEnabledFlag;
 
-    int                m_bufferingPeriodSEIEnabled;
+    int64_t            m_encodedFrameNum;
+    int                m_lastBPSEI;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
     int                m_decodingUnitInfoSEIEnabled;
@@ -168,7 +168,6 @@ public:
 
     bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
     bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    int                m_activeParameterSetsSEIEnabled; ///< enable active parameter set SEI message
 
     bool               m_neutralChromaIndicationFlag;
     bool               m_pocProportionalToTimingFlag;
