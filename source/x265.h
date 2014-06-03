@@ -670,7 +670,7 @@ typedef struct x265_param
     int bLossless;
 
     /* The CU Lossless flag, when enabled, compares the rate-distortion costs for normal
-     * and lossless encoding, and chooses the best mode for each CU. If lossless mode is 
+     * and lossless encoding, and chooses the best mode for each CU. If lossless mode is
      * chosen, the cu-transquant-bypass flag is set for that CU. */
     int bCULossless;
 

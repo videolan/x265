@@ -1418,7 +1418,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
             TComTURecurse tuIterator;
-            uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) +  actualTrDepth) << 1);
+            uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + actualTrDepth) << 1);
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
 
             do
@@ -3075,7 +3075,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     {
         uint32_t trSizeC = 1 << trSizeCLog2;
         int sizeIdx  = trSizeLog2 - 2;
-        int sizeIdxC = trSizeCLog2 - 2; 
+        int sizeIdxC = trSizeCLog2 - 2;
         const uint32_t qtlayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - trSizeLog2;
         uint32_t coeffOffsetY = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
