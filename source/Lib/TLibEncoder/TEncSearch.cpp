@@ -2822,10 +2822,6 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     }
 }
 
-#if _MSC_VER
-#pragma warning(disable: 4701) // potentially uninitialized local variable
-#endif
-
 void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, const uint32_t depth, bool curuseRDOQ)
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
