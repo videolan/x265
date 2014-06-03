@@ -606,34 +606,44 @@ void FrameEncoder::compressFrame()
 
     if (m_cfg->param->bEmitHRDSEI || !!m_cfg->param->interlaceMode)
     {
-        // Picture Timing SEI
-        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-
         SEIPictureTiming *sei = &m_pic->m_sei;
+        TComVUI *vui = slice->getSPS()->getVuiParameters();
+        TComHRD *hrd = vui->getHrdParameters();
         int poc = slice->getPOC();
-        int cpbDelayLength = slice->getSPS()->getVuiParameters()->getHrdParameters()->getCpbRemovalDelayLengthMinus1() + 1;
-        if (m_cfg->param->interlaceMode == 2)
-        {
-            sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
-        }
-        else if (m_cfg->param->interlaceMode == 1)
-        {
-            sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
-        }
-        else
-        {
-            sei->m_picStruct = 0;
-        }
-        sei->m_sourceScanType = 0;
-        sei->m_duplicateFlag = false;
-        sei->m_picDpbOutputDuDelay = 0;
-        sei->m_numNalusInDuMinus1 = NULL;
-        sei->m_duCpbRemovalDelayMinus1 = NULL;
 
-        // The m_aucpbremoval delay specifies how many clock ticks the access unit associated with the picture timing
-        // SEI message has to wait after removal of the access unit with the most recent buffering period SEI message
-        sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
-        sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
+        if (vui->getFrameFieldInfoPresentFlag())
+        {
+            if (m_cfg->param->interlaceMode == 2)
+            {
+                sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
+            }
+            else if (m_cfg->param->interlaceMode == 1)
+            {
+                sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
+            }
+            else
+            {
+                sei->m_picStruct = 0;
+            }
+            sei->m_sourceScanType = 0;
+            sei->m_duplicateFlag = false;
+        }
+
+        if (hrd->getCpbDpbDelaysPresentFlag())
+        {
+            // The m_aucpbremoval delay specifies how many clock ticks the
+            // access unit associated with the picture timing SEI message has to
+            // wait after removal of the access unit with the most recent
+            // buffering period SEI message
+            int cpbDelayLength = hrd->getCpbRemovalDelayLengthMinus1() + 1;
+            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
+            sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
+            sei->m_picDpbOutputDuDelay = 0;
+            sei->m_numNalusInDuMinus1 = NULL;
+            sei->m_duCpbRemovalDelayMinus1 = NULL;
+        }
+
+        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
         entropyCoder->setBitstream(&nalu.m_bitstream);
         m_seiWriter.writeSEImessage(nalu.m_bitstream, *sei, &m_sps);
         writeRBSPTrailingBits(nalu.m_bitstream);
