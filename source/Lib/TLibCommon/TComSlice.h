@@ -824,8 +824,6 @@ private:
     int         m_qpBDOffsetY;
     int         m_qpBDOffsetC;
 
-    bool        m_useLossless;
-
     uint32_t    m_pcmBitDepthLuma;
     uint32_t    m_pcmBitDepthChroma;
     bool        m_bPCMFilterDisableFlag;
@@ -980,11 +978,6 @@ public:
     void setMaxTrSize(uint32_t u)   { m_maxTrSize = u; }
 
     uint32_t getMaxTrSize() const   { return m_maxTrSize; }
-
-    // Tool list
-    bool getUseLossless() const { return m_useLossless; }
-
-    void setUseLossless(bool b) { m_useLossless  = b; }
 
     // AMP accuracy
     int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }

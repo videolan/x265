@@ -1157,7 +1157,8 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
-    fprintf(stderr, "psyrd=%.1lf ", param->psyRd);
+    if (param->psyRd > 0.)
+        fprintf(stderr, "psy-rd=%.1lf ", param->psyRd);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)

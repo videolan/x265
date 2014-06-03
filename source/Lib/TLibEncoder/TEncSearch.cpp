@@ -638,7 +638,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                    !cu->getCUTransquantBypass(0));
         if (checkTransformSkip)
         {
-            checkTransformSkip &= (!((cu->getQP(0) == 0) && (cu->getSlice()->getSPS()->getUseLossless())));
+            checkTransformSkip &= !((cu->getQP(0) == 0));
             if (m_cfg->param->bEnableTSkipFast)
             {
                 checkTransformSkip &= (cu->getPartitionSize(absPartIdx) == SIZE_NxN);

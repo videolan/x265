@@ -604,7 +604,11 @@ Quality, rate control and rate distortion options
 
 	Enables true lossless coding by bypassing scaling, transform,
 	quantization and in-loop filter processes. This is used for
-	ultra-high bitrates with zero loss of quality. Default disabled.
+	ultra-high bitrates with zero loss of quality. Reconstructed output
+	pictures are bit-exact to the input pictures. Lossless encodes
+	implicitly have no rate control, all rate control options are
+	ignored. Slower presets will generally achieve better compression
+	efficiency (and generate smaller bitstreams). Default disabled.
 
 .. option:: --aq-mode <0|1|2>
 

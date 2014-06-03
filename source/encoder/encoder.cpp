@@ -723,6 +723,13 @@ void Encoder::printSummary()
 
             x265_log(param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
         }
+        if (param->bLossless)
+        {
+            float frameSize = (float)(param->sourceWidth - m_pad[0]) * (param->sourceHeight - m_pad[1]);
+            float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
+
+            x265_log(param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+        }
     }
 }
 
@@ -1058,7 +1065,6 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQuadtreeTUMaxDepthIntra(param->tuQTMaxIntraDepth);
 
     sps->setTMVPFlagsPresent(false);
-    sps->setUseLossless(m_useLossless);
 
     sps->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
@@ -1155,16 +1161,9 @@ void Encoder::initPPS(TComPPS *pps)
 
     int lowestQP = -QP_BD_OFFSET;
 
-    if (m_useLossless)
+    if ((m_maxCuDQPDepth == 0) && (param->rc.qp == lowestQP))
     {
-        if ((m_maxCuDQPDepth == 0) && (param->rc.qp == lowestQP))
-        {
-            bUseDQP = false;
-        }
-        else
-        {
-            bUseDQP = true;
-        }
+        bUseDQP = false;
     }
 
     if (bUseDQP)
@@ -1308,6 +1307,21 @@ void Encoder::configure(x265_param *p)
         bEnableRDOQTS = 0;
     }
 
+    if (p->bLossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+        m_CUTransquantBypassFlagValue = true; 
+        p->rc.rateControlMode = X265_RC_CQP;
+        p->rc.qp = 4; // An oddity, QP=4 is more lossless than QP=0 and gives better lambdas
+        p->bEnableSsim = 0;
+        p->bEnablePsnr = 0;
+    }
+    
+    if (p->bCULossless)
+    {
+        m_TransquantBypassEnableFlag  = true;
+    }
+
     if (p->rc.rateControlMode == X265_RC_CQP)
     {
         p->rc.aqMode = X265_AQ_NONE;
@@ -1445,19 +1459,6 @@ void Encoder::configure(x265_param *p)
     m_pcmLog2MaxSize = 5;
     m_bPCMInputBitDepthFlag = true;
     m_bPCMFilterDisableFlag = false;
-
-    m_useLossless = false;  // x264 configures this via --qp=0
-    
-    if (p->bLossless)
-    {
-        m_TransquantBypassEnableFlag  = true;
-        m_CUTransquantBypassFlagValue = true; 
-    }
-    
-    if (p->bCULossless)
-    {
-        m_TransquantBypassEnableFlag  = true;
-    }
 }
 
 int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
