@@ -1993,7 +1993,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
         uint32_t combCbfU = 0;
         uint32_t combCbfV = 0;
         uint32_t partIdx  = 0;
-        for (uint32_t part = 0; part < 4; part++, partIdx += tuIterator.m_absPartIdxStep)
+        for (uint32_t p = 0; p < 4; p++, partIdx += tuIterator.m_absPartIdxStep)
         {
             combCbfU |= cu->getCbf(partIdx, TEXT_CHROMA_U, 1);
             combCbfV |= cu->getCbf(partIdx, TEXT_CHROMA_V, 1);
