@@ -596,7 +596,7 @@ typedef struct x265_param
     /* Psycho-visual rate-distortion strength. Only has an effect in presets
      * which use RDO. It makes mode decision favor options which preserve the
      * energy of the source, at the cost of lost compression. Default 0.0 */
-    double     psyRd;
+    double    psyRd;
 
     /*== Coding tools ==*/
 
@@ -667,12 +667,12 @@ typedef struct x265_param
     /* The lossless flag enables true lossless coding, by bypassing scaling, transform,
      * quantization and in-loop filter processes. This is used for ultra-high bitrates with
      * zero loss of quality. */
-    int bLossless;
+    int       bLossless;
 
     /* The CU Lossless flag, when enabled, compares the rate-distortion costs for normal
      * and lossless encoding, and chooses the best mode for each CU. If lossless mode is
      * chosen, the cu-transquant-bypass flag is set for that CU. */
-    int bCULossless;
+    int       bCULossless;
 
     /*== Rate Control ==*/
 
