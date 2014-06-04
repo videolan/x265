@@ -185,26 +185,12 @@ public:
 
     PayloadType payloadType() const { return PICTURE_TIMING; }
 
-    SEIPictureTiming() {}
-
-    virtual ~SEIPictureTiming()
-    {
-        delete m_numNalusInDuMinus1;
-        delete m_duCpbRemovalDelayMinus1;
-    }
-
     uint32_t  m_picStruct;
     uint32_t  m_sourceScanType;
-    bool  m_duplicateFlag;
+    bool      m_duplicateFlag;
 
     uint32_t  m_auCpbRemovalDelay;
     uint32_t  m_picDpbOutputDelay;
-    uint32_t  m_picDpbOutputDuDelay;
-    uint32_t  m_numDecodingUnitsMinus1;
-    bool  m_duCommonCpbRemovalDelayFlag;
-    uint32_t  m_duCommonCpbRemovalDelayMinus1;
-    uint32_t* m_numNalusInDuMinus1;
-    uint32_t* m_duCpbRemovalDelayMinus1;
 };
 
 class SEIDecodingUnitInfo : public SEI

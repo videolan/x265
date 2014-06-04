@@ -638,9 +638,6 @@ void FrameEncoder::compressFrame()
             int cpbDelayLength = hrd->getCpbRemovalDelayLengthMinus1() + 1;
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
             sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
-            sei->m_picDpbOutputDuDelay = 0;
-            sei->m_numNalusInDuMinus1 = NULL;
-            sei->m_duCpbRemovalDelayMinus1 = NULL;
         }
 
         OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
