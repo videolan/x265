@@ -361,19 +361,6 @@ Temporal / motion search options
 
 	**Range of values:** an integer from 0 to 32768
 
-.. option:: --rect, --no-rect
-
-	Enable analysis of rectangular motion partitions Nx2N and 2NxN
-	(50/50 splits, two directions). Default disabled
-
-.. option:: --amp, --no-amp
-
-	Enable analysis of asymmetric motion partitions (75/25 splits, four
-	directions). This setting has no effect if rectangular partitions
-	are disabled. Even though there are four possible AMP partitions,
-	only the most likely candidate is tested, based on the results of
-	the rectangular mode tests. Default disabled
-
 .. option:: --max-merge <1..5>
 
 	Maximum number of neighbor (spatial and temporal) candidate blocks
@@ -383,41 +370,6 @@ Temporal / motion search options
 	motion estimation when searching for the least cost inter option.
 	The max candidate number is encoded in the SPS and determines the
 	bit cost of signaling merge CUs. Default 2
-
-.. option:: --early-skip, --no-early-skip
-
-	Measure full CU size (2Nx2N) merge candidates first; if no residual
-	is found the analysis is short circuited. Default disabled
-
-.. option:: --fast-cbf, --no-fast-cbf
-
-	Short circuit analysis if a prediction is found that does not set
-	the coded block flag (aka: no residual was encoded).  It prevents
-	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits. Default disabled
-
-.. option:: --ref <1..16>
-
-	Max number of L0 references to be allowed. This number has a linear
-	multiplier effect on the amount of work performed in motion search,
-	but will generally have a beneficial affect on compression and
-	distortion. Default 3
-
-.. option:: --weightp, -w, --no-weightp
-
-	Enable weighted prediction in P slices. This enables weighting
-	analysis in the lookahead, which influences slice decisions, and
-	enables weighting analysis in the main encoder which allows P
-	reference samples to have a weight function applied to them prior to
-	using them for motion compensation.  In video which has lighting
-	changes, it can give a large improvement in compression efficiency.
-	Default is enabled
-
-
-.. option:: --weightb, --no-weightb
-
-	Enable weighted prediction in B slices. Default disabled
-
 
 Spatial/intra options
 =====================
@@ -457,6 +409,100 @@ Spatial/intra options
 	propagation of reference errors that may have resulted from lossy
 	signals. Default disabled
 
+Mode decision / Analysis
+========================
+
+.. option:: --rect, --no-rect
+
+	Enable analysis of rectangular motion partitions Nx2N and 2NxN
+	(50/50 splits, two directions). Default disabled
+
+.. option:: --amp, --no-amp
+
+	Enable analysis of asymmetric motion partitions (75/25 splits, four
+	directions). This setting has no effect if rectangular partitions
+	are disabled. Even though there are four possible AMP partitions,
+	only the most likely candidate is tested, based on the results of
+	the rectangular mode tests. Default disabled
+
+.. option:: --early-skip, --no-early-skip
+
+	Measure full CU size (2Nx2N) merge candidates first; if no residual
+	is found the analysis is short circuited. Default disabled
+
+.. option:: --fast-cbf, --no-fast-cbf
+
+	Short circuit analysis if a prediction is found that does not set
+	the coded block flag (aka: no residual was encoded).  It prevents
+	the encoder from perhaps finding other predictions that also have no
+	residual but require less signaling bits. Default disabled
+
+.. option:: --weightp, -w, --no-weightp
+
+	Enable weighted prediction in P slices. This enables weighting
+	analysis in the lookahead, which influences slice decisions, and
+	enables weighting analysis in the main encoder which allows P
+	reference samples to have a weight function applied to them prior to
+	using them for motion compensation.  In video which has lighting
+	changes, it can give a large improvement in compression efficiency.
+	Default is enabled
+
+.. option:: --weightb, --no-weightb
+
+	Enable weighted prediction in B slices. Default disabled
+
+.. option:: --rd <0..6>
+
+	Level of RDO in mode decision. The higher the value, the more
+	exhaustive the analysis and the more rate distortion optimization is
+	used. The lower the value the faster the encode, the higher the
+	value the smaller the bitstream (in general). Default 3
+
+	Note that this table aims for accuracy, but is not necessarily our
+	final target behavior for each mode.
+
+	+-------+---------------------------------------------------------------+
+	| Level | Description                                                   |
+	+=======+===============================================================+
+	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
+	+-------+---------------------------------------------------------------+
+	| 1     | recon generated (better intra), RDO merge residual            |
+	+-------+---------------------------------------------------------------+
+	| 2     | RDO splits and merge residual choice                          |
+	+-------+---------------------------------------------------------------+
+	| 3     | RDO mode and split decisions                                  |
+	+-------+---------------------------------------------------------------+
+	| 4     | Adds RDO Quant                                                |
+	+-------+---------------------------------------------------------------+
+	| 5     | Adds RDO prediction decisions, enables intra modes in B slices|
+	+-------+---------------------------------------------------------------+
+	| 6     | Currently same as 5                                           |
+	+-------+---------------------------------------------------------------+
+
+	**Range of values:** 0: least .. 6: full RDO analysis
+
+.. option:: --psy-rd <float>
+
+	Influence rate distortion optimizations to try to preserve the
+	energy of the source image in the encoded image, at the expense of
+	compression efficiency. 1.0 is a typical value. Default disabled. It
+	only has effect on presets which use full RDO-based decisions (slower,
+	veryslow and placebo)
+
+	**Range of values:** 0 .. 2.0
+
+.. option:: --cu-lossless, --no-cu-lossless
+
+	For each CU, evaluate lossless encode (transform and quant bypass)
+	as a potential rate distortion optimization. If :option:`--lossless`
+	has been specified, all CUs will use this option unconditionally
+	regardless of whether this option was seperately enabled. Default
+	disabled.
+
+.. option:: --signhide, --no-signhide
+
+	Hide sign bit of one coeff per TU (rdo). Default enabled
+ 
 
 Slice decision options
 ======================
@@ -534,6 +580,13 @@ Slice decision options
 	and level **5.0** is specified as "5.0" or "50".
 
 	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+
+.. option:: --ref <1..16>
+
+	Max number of L0 references to be allowed. This number has a linear
+	multiplier effect on the amount of work performed in motion search,
+	but will generally have a beneficial affect on compression and
+	distortion. Default 3
 
 Quality, rate control and rate distortion options
 =================================================
@@ -655,58 +708,6 @@ Quality, rate control and rate distortion options
 
 	**Range of values:**  -12 to 12
 
-.. option:: --rd <0..6>
-
-	Level of RDO in mode decision. The higher the value, the more
-	exhaustive the analysis and the more rate distortion optimization is
-	used. The lower the value the faster the encode, the higher the
-	value the smaller the bitstream (in general). Default 3
-
-	Note that this table aims for accuracy, but is not necessarily our
-	final target behavior for each mode.
-
-	+-------+---------------------------------------------------------------+
-	| Level | Description                                                   |
-	+=======+===============================================================+
-	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
-	+-------+---------------------------------------------------------------+
-	| 1     | recon generated (better intra), RDO merge residual            |
-	+-------+---------------------------------------------------------------+
-	| 2     | RDO splits and merge residual choice                          |
-	+-------+---------------------------------------------------------------+
-	| 3     | RDO mode and split decisions                                  |
-	+-------+---------------------------------------------------------------+
-	| 4     | Adds RDO Quant                                                |
-	+-------+---------------------------------------------------------------+
-	| 5     | Adds RDO prediction decisions, enables intra modes in B slices|
-	+-------+---------------------------------------------------------------+
-	| 6     | Currently same as 5                                           |
-	+-------+---------------------------------------------------------------+
-
-	**Range of values:** 0: least .. 6: full RDO analysis
-
-.. option:: --psy-rd <float>
-
-	Influence rate distortion optimizations to try to preserve the
-	energy of the source image in the encoded image, at the expense of
-	compression efficiency. 1.0 is a typical value. Default disabled. It
-	only has effect on presets which use full RDO-based decisions (slower,
-	veryslow and placebo)
-
-	**Range of values:** 0 .. 2.0
-
-.. option:: --cu-lossless, --no-cu-lossless
-
-	For each CU, evaluate lossless encode (transform and quant bypass)
-	as a potential rate distortion optimization. If :option:`--lossless`
-	has been specified, all CUs will use this option unconditionally
-	regardless of whether this option was seperately enabled. Default
-	disabled.
-
-.. option:: --signhide, --no-signhide
-
-	Hide sign bit of one coeff per TU (rdo). Default enabled
- 
 Loop filters
 ============
 
