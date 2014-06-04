@@ -174,6 +174,7 @@ void Encoder::destroy()
 
 void Encoder::init()
 {
+    m_totalFrameThreads = param->frameNumThreads;
     if (m_frameEncoder)
     {
         int numRows = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
@@ -188,7 +189,6 @@ void Encoder::init()
     }
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
-    m_totalFrameThreads = param->frameNumThreads;
 }
 
 int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
