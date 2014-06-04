@@ -247,10 +247,9 @@ RateControl::RateControl(Encoder * _cfg)
     int lowresCuWidth = ((param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int lowresCuHeight = ((param->sourceHeight / 2)  + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     ncu = lowresCuWidth * lowresCuHeight;
+
     if (param->rc.cuTree)
-    {
         qCompress = 1;
-    }
     else
         qCompress = param->rc.qCompress;
 
