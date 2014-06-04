@@ -383,12 +383,16 @@ void RateControl::init(TComSPS *sps)
         int vbvBufferSize = param->rc.vbvBufferSize * 1000;
         int vbvMaxBitrate = param->rc.vbvMaxBitrate * 1000;
 
-        TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
-        if (hrd->getNalHrdParametersPresentFlag())
+        if (param->bEmitHRDSEI)
         {
-            vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
-            vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+            TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
+            if (!hrd && hrd->getNalHrdParametersPresentFlag())
+            {
+                vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+                vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+            }
         }
+
         bufferRate = vbvMaxBitrate / fps;
         vbvMaxRate = vbvMaxBitrate;
         bufferSize = vbvBufferSize;
@@ -459,9 +463,6 @@ void RateControl::initHRD(TComSPS *sps)
     hrd->setDpbOutputDelayLengthMinus1(Clip3(4, 31, 32 - calcLength(maxDpbOutputDelay)) - 1);
 
     #undef MAX_DURATION
-
-    vbvBufferSize = cpbSizeUnscale;
-    vbvMaxBitrate = bitRateUnscale;
 }
 
 void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
@@ -718,7 +719,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             double underflow = 1.0 + (totalBits - wantedBitsWindow) / abrBuffer;
             if (underflow < 0.9 && !isFrameDone)
             {
-                init(NULL);
+                init(curSlice->getSPS());
                 shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(frameDuration) / BASE_FRAME_DURATION);
                 shortTermCplxCount = 1;
                 isAbrReset = true;
