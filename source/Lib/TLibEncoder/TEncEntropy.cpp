@@ -202,7 +202,6 @@ bool TEncEntropy::isNextTUSection(TComTURecurse *tuIterator)
 
 void TEncEntropy::initTUEntropySection(TComTURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU)
 {
-    tuIterator->m_partOffset        = 0;
     tuIterator->m_section           = 0;
     tuIterator->m_absPartIdxTURelCU = m_absPartIdxTU;
     tuIterator->m_splitMode         = splitMode;
