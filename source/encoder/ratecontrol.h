@@ -76,57 +76,66 @@ struct RateControlEntry
     bool isActive;
 };
 
-struct RateControl
+class RateControl
 {
-    TComSlice *curSlice;      /* all info about the current frame */
-    x265_param* param;
-    SliceType sliceType;      /* Current frame type */
-    int ncu;                  /* number of CUs in a frame */
-    int qp;                   /* updated qp for current frame */
+public:
 
-    double frameDuration;     /* current frame duration in seconds */
-    double bitrate;
-    double rateFactorConstant;
-    bool   isAbr;
-    double bufferSize;
-    double bufferFillFinal;  /* real buffer as of the last finished frame */
-    double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
-    double bufferRate;       /* # of bits added to buffer_fill after each frame */
-    double vbvMaxRate;       /* in kbps */
-    bool   isCbr;
-    bool singleFrameVbv;
-    double rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
-    double rateFactorMaxDecrement; /* don't allow RF below (this value). */
-    bool isVbv;
-    Predictor pred[5];
-    Predictor predBfromP;
-    int bframes;
-    int bframeBits;
-    bool isAbrReset;
-    int lastAbrResetPoc;
-    int64_t currentSatd;
-    int    qpConstant[3];
-    double cplxrSum;          /* sum of bits*qscale/rceq */
-    double wantedBitsWindow;  /* target bitrate * window */
-    double ipOffset;
-    double pbOffset;
-    int lastNonBPictType;
-    int64_t leadingNoBSatd;
-    double accumPQp;          /* for determining I-frame quant */
-    double accumPNorm;
-    double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
-    double lstep;
-    double shortTermCplxSum;
-    double shortTermCplxCount;
-    int64_t totalBits;        /* totalbits used for already encoded frames */
-    double lastRceq;
-    int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
-    double qCompress;
+    TComSlice*  m_curSlice;      /* all info about the current frame */
+    x265_param* m_param;
+    SliceType   m_sliceType;     /* Current frame type */
+    int         m_ncu;           /* number of CUs in a frame */
+    int         m_qp;            /* updated qp for current frame */
+
+    bool   m_isAbr;
+    bool   m_isVbv;
+    bool   m_isCbr;
+    bool   m_singleFrameVbv;
+
+    bool   m_isAbrReset;
+    int    m_lastAbrResetPoc;
+
+    double m_frameDuration;     /* current frame duration in seconds */
+    double m_bitrate;
+    double m_rateFactorConstant;
+    double m_bufferSize;
+    double m_bufferFillFinal;  /* real buffer as of the last finished frame */
+    double m_bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
+    double m_bufferRate;       /* # of bits added to buffer_fill after each frame */
+    double m_vbvMaxRate;       /* in kbps */
+    double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
+    double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
+
+    Predictor m_pred[5];
+    Predictor m_predBfromP;
+
+    int       m_bframes;
+    int       m_bframeBits;
+    int64_t   m_currentSatd;
+    int       m_qpConstant[3];
+    double    m_ipOffset;
+    double    m_pbOffset;
+
+    int      m_lastNonBPictType;
+    int64_t  m_leadingNoBSatd;
+
+    double   m_cplxrSum;          /* sum of bits*qscale/rceq */
+    double   m_wantedBitsWindow;  /* target bitrate * window */
+    double   m_accumPQp;          /* for determining I-frame quant */
+    double   m_accumPNorm;
+    double   m_lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
+    double   m_lstep;
+    double   m_shortTermCplxSum;
+    double   m_shortTermCplxCount;
+    double   m_lastRceq;
+    double   m_qCompress;
+
+    int64_t  m_totalBits;        /* total bits used for already encoded frames */
+    int      m_framesDone;       /* # of frames passed through RateCotrol already */
 
     /* hrd stuff */
-    SEIBufferingPeriod sei;
-    double nominalRemovalTime;
-    double prevCpbFinalAT;
+    SEIBufferingPeriod m_sei;
+    double   m_nominalRemovalTime;
+    double   m_prevCpbFinalAT;
 
     RateControl(x265_param *p);
 
@@ -139,13 +148,14 @@ struct RateControl
     void hrdFullness(SEIBufferingPeriod* sei);
     void init(TComSPS* sps);
     void initHRD(TComSPS* sps);
+
 protected:
 
-    static const double amortizeFraction;
-    static const int amortizeFrames;
+    static const double s_amortizeFraction;
+    static const int    s_amortizeFrames;
 
-    int residualFrames;
-    int residualCost;
+    int m_residualFrames;
+    int m_residualCost;
 
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR

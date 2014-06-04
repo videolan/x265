@@ -529,7 +529,7 @@ void FrameEncoder::compressFrame()
         if (m_cfg->param->bEmitHRDSEI)
         {
             OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-            SEIBufferingPeriod* sei_buffering_period = &m_top->m_rateControl->sei;
+            SEIBufferingPeriod* sei_buffering_period = &m_top->m_rateControl->m_sei;
             sei_buffering_period->m_bpSeqParameterSetId = m_sps.getSPSId();
             sei_buffering_period->m_rapCpbParamsPresentFlag = 0;
 
