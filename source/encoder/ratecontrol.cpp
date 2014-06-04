@@ -250,7 +250,6 @@ RateControl::RateControl(Encoder * _cfg)
     if (param->rc.cuTree)
     {
         qCompress = 1;
-        param->rc.pbFactor = 1;
     }
     else
         qCompress = param->rc.qCompress;
