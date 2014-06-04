@@ -438,7 +438,6 @@ void RateControl::initHRD(TComSPS *sps)
     hrd->setLowDelayHrdFlag(0, false);
     hrd->setFixedPicRateFlag(0, 1);
     hrd->setPicDurationInTcMinus1(0, 0);
-    bool isCbr = param->rc.rateControlMode == X265_RC_ABR && param->rc.vbvMaxBitrate <= param->rc.bitrate;
     hrd->setCbrFlag(0, 0, 0, isCbr);
 
     // normalize HRD size and rate to the value / scale notation
