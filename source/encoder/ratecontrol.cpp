@@ -1153,6 +1153,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 /* After encoding one frame, update rate control state */
 int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce)
 {
+    double actualBits = bits;
     if (isAbr)
     {
         if (param->rc.rateControlMode == X265_RC_ABR)
@@ -1237,7 +1238,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
     {
         if (rce->sliceType == B_SLICE)
         {
-            bframeBits += (int)bits;
+            bframeBits += (int)actualBits;
             if (rce->bLastMiniGopBFrame)
             {
                 if (rce->bframes != 0)
@@ -1245,7 +1246,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
                 bframeBits = 0;
             }
         }
-        updateVbv(bits, rce);
+        updateVbv(actualBits, rce);
 
         if (param->bEmitHRDSEI)
         {
@@ -1274,7 +1275,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             }
 
             uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
-            pic->m_hrdTiming.cpbFinalAT = prevCpbFinalAT = pic->m_hrdTiming.cpbInitialAT + bits / cpbsizeUnscale;
+            pic->m_hrdTiming.cpbFinalAT = prevCpbFinalAT = pic->m_hrdTiming.cpbInitialAT + actualBits / cpbsizeUnscale;
             pic->m_hrdTiming.dpbOutputTime = (double)pic->m_sei.m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + pic->m_hrdTiming.cpbRemovalTime;
         }
     }
