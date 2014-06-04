@@ -332,6 +332,7 @@ RateControl::RateControl(Encoder * _cfg)
         param->rc.vbvMaxBitrate = 0;
     }
     isCbr = param->rc.rateControlMode == X265_RC_ABR && param->rc.vbvMaxBitrate <= param->rc.bitrate;
+    isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
 
     bframes = param->bframes;
     bframeBits = 0;
@@ -366,12 +367,12 @@ RateControl::RateControl(Encoder * _cfg)
 
 void RateControl::init(TComSPS *sps)
 {
-    isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
-    double fps = (double)param->fpsNum / param->fpsDenom;
     if (isVbv)
     {
+        double fps = (double)param->fpsNum / param->fpsDenom;
+
         /* We don't support changing the ABR bitrate right now,
-           so if the stream starts as CBR, keep it CBR. */
+         * so if the stream starts as CBR, keep it CBR. */
         if (param->rc.vbvBufferSize < (int)(param->rc.vbvMaxBitrate / fps))
         {
             param->rc.vbvBufferSize = (int)(param->rc.vbvMaxBitrate / fps);
@@ -401,13 +402,14 @@ void RateControl::init(TComSPS *sps)
         param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
         bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
     }
+
     totalBits = 0;
     framesDone = 0;
     residualCost = 0;
-    double tuneCplxFactor = 1;
+
     /* 720p videos seem to be a good cutoff for cplxrSum */
-    if (param->rc.cuTree && ncu > 3600)
-        tuneCplxFactor = 2.5;
+    double tuneCplxFactor = (param->rc.cuTree && ncu > 3600) ? 2.5 : 1;
+
     /* estimated ratio that produces a reasonable QP for the first I-frame */
     cplxrSum = .01 * pow(7.0e5, qCompress) * pow(ncu, 0.5) * tuneCplxFactor;
     wantedBitsWindow = bitrate * frameDuration;
