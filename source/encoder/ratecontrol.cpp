@@ -350,6 +350,7 @@ void RateControl::init()
 {
     totalBits = 0;
     framesDone = 0;
+    residualCost = 0;
     double tuneCplxFactor = 1;
     /* 720p videos seem to be a good cutoff for cplxrSum */
     if (param->rc.cuTree && ncu > 3600)
@@ -601,10 +602,11 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
 
         lastQScaleFor[sliceType] = q;
 
-        if (curSlice->getPOC() == 0 || (isAbrReset && sliceType == I_SLICE))
+        if (curSlice->getPOC() == 0 || lastQScaleFor[P_SLICE] < q )
             lastQScaleFor[P_SLICE] = q * fabs(param->rc.ipFactor);
 
         rce->frameSizePlanned = predictSize(&pred[sliceType], q, (double)currentSatd);
+        rce->frameSizeEstimated = rce->frameSizePlanned;
         /* Always use up the whole VBV in this case. */
         if (singleFrameVbv)
             rce->frameSizePlanned = bufferRate;
