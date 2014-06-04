@@ -298,7 +298,6 @@ RateControl::RateControl(Encoder * _cfg)
     param->rc.vbvBufferSize = Clip3(0, 2000000, param->rc.vbvBufferSize);
     param->rc.vbvMaxBitrate = Clip3(0, 2000000, param->rc.vbvMaxBitrate);
     param->rc.vbvBufferInit = Clip3(0.0, 2000000.0, param->rc.vbvBufferInit);
-    isCbr = false;
     singleFrameVbv = 0;
     if (param->rc.vbvBufferSize)
     {
@@ -333,6 +332,7 @@ RateControl::RateControl(Encoder * _cfg)
         x265_log(param, X265_LOG_WARNING, "VBV maxrate specified, but no bufsize, ignored\n");
         param->rc.vbvMaxBitrate = 0;
     }
+    isCbr = param->rc.rateControlMode == X265_RC_ABR && param->rc.vbvMaxBitrate <= param->rc.bitrate;
 
     bframes = param->bframes;
     bframeBits = 0;
@@ -401,8 +401,6 @@ void RateControl::init(TComSPS *sps)
             param->rc.vbvBufferInit = Clip3(0.0, 1.0, param->rc.vbvBufferInit / param->rc.vbvBufferSize);
         param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(param->rc.vbvBufferInit, bufferRate / bufferSize));
         bufferFillFinal = bufferSize * param->rc.vbvBufferInit;
-        isCbr = param->rc.rateControlMode == X265_RC_ABR
-            && param->rc.vbvMaxBitrate <= param->rc.bitrate;
     }
     totalBits = 0;
     framesDone = 0;
