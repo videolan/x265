@@ -108,7 +108,7 @@ uint8_t *write(const OutputNALUnit& nalu, uint32_t &packetSize)
         }
 
         uint32_t i = packetSize;
-        out = (uint8_t*)realloc(out, nalsize + 4);
+        out = (uint8_t*)realloc(out, packetSize + nalsize + 4);
         memcpy(out + packetSize, emulation, nalsize);
         packetSize += nalsize;
 
