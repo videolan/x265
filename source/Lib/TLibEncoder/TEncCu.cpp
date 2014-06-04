@@ -919,12 +919,11 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                 }
             }
 
-            // do normal intra modes
-            // speedup for inter frames
-            if ((slice->getSliceType() == I_SLICE ||
-                outBestCU->getCbf(0, TEXT_LUMA) != 0   ||
-                outBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
-                outBestCU->getCbf(0, TEXT_CHROMA_V) != 0) && m_param->bIntraInBFrames) // avoid very complex intra if it is unlikely
+            // speedup for inter frames, avoid intra in special cases
+            bool doIntra = slice->getSliceType() == B_SLICE ? !!m_param->bIntraInBFrames : true;
+            if ((outBestCU->getCbf(0, TEXT_LUMA)     != 0   ||
+                 outBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
+                 outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)  && doIntra)
             {
                 xCheckRDCostIntraInInter(outBestCU, outTempCU, SIZE_2Nx2N);
                 outTempCU->initEstData(depth);
