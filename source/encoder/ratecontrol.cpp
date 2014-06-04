@@ -241,9 +241,9 @@ void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
     }
 }
 
-RateControl::RateControl(Encoder * _cfg)
+RateControl::RateControl(x265_param *p)
 {
-    param = _cfg->param;
+    param = p;
     int lowresCuWidth = ((param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int lowresCuHeight = ((param->sourceHeight / 2)  + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     ncu = lowresCuWidth * lowresCuHeight;

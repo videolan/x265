@@ -128,7 +128,7 @@ struct RateControl
     double nominalRemovalTime;
     double prevCpbFinalAT;
 
-    RateControl(Encoder * _cfg);
+    RateControl(x265_param *p);
 
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);

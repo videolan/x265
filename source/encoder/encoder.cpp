@@ -99,7 +99,7 @@ void Encoder::create()
     }
     m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(this);
-    m_rateControl = new RateControl(this);
+    m_rateControl = new RateControl(param);
 
     /* Try to open CSV file handle */
     if (param->csvfn)
