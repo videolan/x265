@@ -1196,7 +1196,10 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
         if (bIsVbv)
         {
             if (!row)
+            {
                 m_pic->m_rowDiagQp[row] = m_pic->m_avgQpRc;
+                m_pic->m_rowDiagQScale[row] = x265_qp2qScale(m_pic->m_avgQpRc);
+            }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
                 cu->m_baseQp = m_pic->getCU(cuAddr - numCols + 1)->m_baseQp;
