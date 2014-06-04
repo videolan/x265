@@ -139,14 +139,6 @@ bool FrameEncoder::init(Encoder *top, int numRows)
     top->initPPS(&m_pps);
 
     m_sps.setNumLongTermRefPicSPS(0);
-    if (m_cfg->m_decodingUnitInfoSEIEnabled)
-    {
-        m_sps.setHrdParameters(m_cfg->param->fpsNum, m_cfg->param->fpsDenom, 0, m_cfg->param->rc.bitrate, m_cfg->param->bframes > 0);
-    }
-    if (m_cfg->param->bEmitHRDSEI || m_cfg->m_decodingUnitInfoSEIEnabled)
-    {
-        m_sps.getVuiParameters()->setHrdParametersPresentFlag(true);
-    }
 
     // initialize HRD parameters of SPS
     if (m_cfg->param->bEmitHRDSEI)

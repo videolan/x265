@@ -1443,7 +1443,6 @@ void Encoder::configure(x265_param *p)
     m_frameOnlyConstraintFlag = false;
     m_displayOrientationSEIAngle = 0;
     m_gradualDecodingRefreshInfoEnabled = 0;
-    m_decodingUnitInfoSEIEnabled = 0;
     m_useScalingListId = 0;
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;

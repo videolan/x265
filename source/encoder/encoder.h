@@ -160,7 +160,6 @@ public:
     int                m_lastBPSEI;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
-    int                m_decodingUnitInfoSEIEnabled;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
 
