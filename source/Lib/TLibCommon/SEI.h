@@ -99,7 +99,7 @@ public:
         delete userData;
     }
 
-    uint8_t uuid_iso_iec_11578[16];
+    uint8_t  uuid_iso_iec_11578[16];
     uint32_t userDataLength;
     uint8_t *userData;
 };
@@ -140,11 +140,11 @@ public:
 
     virtual ~SEIActiveParameterSets() {}
 
-    int activeVPSId;
+    int  activeVPSId;
     bool m_fullRandomAccessFlag;
     bool m_noParamSetUpdateFlag;
-    int numSpsIdsMinus1;
-    int activeSeqParamSetId;
+    int  numSpsIdsMinus1;
+    int  activeSeqParamSetId;
 };
 
 class SEIBufferingPeriod : public SEI
@@ -168,14 +168,14 @@ public:
     virtual ~SEIBufferingPeriod() {}
 
     uint32_t m_bpSeqParameterSetId;
-    bool m_rapCpbParamsPresentFlag;
-    bool m_cpbDelayOffset;
-    bool m_dpbDelayOffset;
+    bool     m_rapCpbParamsPresentFlag;
+    bool     m_cpbDelayOffset;
+    bool     m_dpbDelayOffset;
     uint32_t m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
     uint32_t m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
     uint32_t m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
     uint32_t m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    bool m_concatenationFlag;
+    bool     m_concatenationFlag;
     uint32_t m_auCpbRemovalDelayDelta;
 };
 
@@ -208,10 +208,10 @@ public:
 
     virtual ~SEIDecodingUnitInfo() {}
 
-    int m_decodingUnitIdx;
-    int m_duSptCpbRemovalDelay;
+    int  m_decodingUnitIdx;
+    int  m_duSptCpbRemovalDelay;
     bool m_dpbOutputDuDelayPresentFlag;
-    int m_picSptDpbOutputDuDelay;
+    int  m_picSptDpbOutputDuDelay;
 };
 
 class SEIRecoveryPoint : public SEI
@@ -243,13 +243,13 @@ public:
 
     virtual ~SEIDisplayOrientation() {}
 
-    bool cancelFlag;
-    bool horFlip;
-    bool verFlip;
+    bool     cancelFlag;
+    bool     horFlip;
+    bool     verFlip;
 
     uint32_t anticlockwiseRotation;
-    bool persistenceFlag;
-    bool extensionFlag;
+    bool     persistenceFlag;
+    bool     extensionFlag;
 };
 
 class SEIGradualDecodingRefreshInfo : public SEI
