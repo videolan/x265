@@ -138,9 +138,6 @@ public:
     int                m_loopFilterTcOffsetDiv2;
     int                m_maxNumOffsetsPerPic;
 
-    //====== Lossless ========
-    bool               m_useLossless;
-
     //====== Quality control ========
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
