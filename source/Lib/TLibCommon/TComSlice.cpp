@@ -38,7 +38,6 @@
 #include "common.h"
 #include "TComSlice.h"
 #include "TComPic.h"
-#include "TLibEncoder/TEncSbac.h" // layer violation
 
 using namespace x265;
 
