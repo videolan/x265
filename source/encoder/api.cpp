@@ -93,7 +93,7 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     {
         if (nalunits[i])
         {
-            free(nalunits[i]->m_nalUnitData);
+            X265_FREE(nalunits[i]->m_nalUnitData);
             X265_FREE(nalunits[i]);
         }
     }
@@ -135,7 +135,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     {
         if (nalunits[i])
         {
-            free(nalunits[i]->m_nalUnitData);
+            X265_FREE(nalunits[i]->m_nalUnitData);
             X265_FREE(nalunits[i]);
         }
     }
