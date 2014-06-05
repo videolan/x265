@@ -38,7 +38,7 @@
 #ifndef X265_TCOMLOOPFILTER_H
 #define X265_TCOMLOOPFILTER_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComPic.h"
 
 //! \ingroup TLibCommon

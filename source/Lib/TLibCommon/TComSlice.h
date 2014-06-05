@@ -38,11 +38,10 @@
 #ifndef X265_TCOMSLICE_H
 #define X265_TCOMSLICE_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
 #include "piclist.h"
-#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{

@@ -36,7 +36,7 @@
     \todo     this should be merged with TComPicYuv
 */
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComYuv.h"
 #include "TComPrediction.h"
 #include "shortyuv.h"

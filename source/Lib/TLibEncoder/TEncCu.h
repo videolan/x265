@@ -43,7 +43,7 @@
 #define INTER_MODES 4
 #define INTRA_MODES 3
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"

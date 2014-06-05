@@ -21,12 +21,11 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComSlice.h"
 #include "x265.h"
 #include "threading.h"
-#include "common.h"
 
 #if _WIN32
 #include <sys/types.h>

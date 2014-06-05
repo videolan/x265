@@ -38,7 +38,7 @@
 #ifndef X265_COMBITSTREAM_H
 #define X265_COMBITSTREAM_H
 
-#include "CommonDef.h"
+#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{

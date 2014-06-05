@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "TLibCommon/CommonDef.h"
 #include "level.h"
 
 namespace x265 {

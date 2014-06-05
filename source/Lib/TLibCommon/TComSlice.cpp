@@ -35,11 +35,10 @@
     \brief    slice header and SPS class
 */
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComSlice.h"
 #include "TComPic.h"
-#include "TLibEncoder/TEncSbac.h"
-#include "threadpool.h"
+#include "TLibEncoder/TEncSbac.h" // layer violation
 
 using namespace x265;
 

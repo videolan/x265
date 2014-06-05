@@ -38,6 +38,7 @@
 #include <memory.h>
 #include <assert.h>
 
+#include "TLibCommon/CommonDef.h"
 #include "x265.h"
 
 #define FENC_STRIDE 64

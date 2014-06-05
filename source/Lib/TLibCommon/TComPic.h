@@ -39,7 +39,7 @@
 #define X265_TCOMPIC_H
 
 // Include files
-#include "CommonDef.h"
+#include "common.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
 #include "lowres.h"

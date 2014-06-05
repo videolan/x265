@@ -38,7 +38,7 @@
 #ifndef X265_SYNTAXELEMENTWRITER_H
 #define X265_SYNTAXELEMENTWRITER_H
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/TComRom.h"
 

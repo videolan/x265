@@ -38,9 +38,7 @@
 #ifndef X265_TCOMROM_H
 #define X265_TCOMROM_H
 
-#include "CommonDef.h"
-
-#include <iostream>
+#include "common.h"
 
 namespace x265 {
 // private namespace
