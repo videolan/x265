@@ -33,8 +33,8 @@ bool CTURow::create(Encoder* top)
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_trQuant.init(1 << top->m_quadtreeTULog2MaxSize, top->bEnableRDOQ, top->bEnableRDOQTS, !!top->param->bEnableTSkipFast);
-    m_rdCost.setPsyRdScale(top->param->rdLevel >= 5 ? top->param->psyRd : 0);
+    m_trQuant.init(1 << top->m_quadtreeTULog2MaxSize, top->bEnableRDOQ, top->bEnableRDOQTS, !!top->m_param->bEnableTSkipFast);
+    m_rdCost.setPsyRdScale(top->m_param->rdLevel >= 5 ? top->m_param->psyRd : 0);
     m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
 

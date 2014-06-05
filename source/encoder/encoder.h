@@ -177,7 +177,7 @@ public:
     int                m_log2MaxMvLengthHorizontal;
     int                m_log2MaxMvLengthVertical;
 
-    x265_param*        param;
+    x265_param*        m_param;
     RateControl*       m_rateControl;
 
     bool               bEnableRDOQ;

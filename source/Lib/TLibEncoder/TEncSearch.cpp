@@ -101,13 +101,13 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
 
-    initTempBuff(cfg->param->internalCsp);
-    m_me.setSearchMethod(cfg->param->searchMethod);
-    m_me.setSubpelRefine(cfg->param->subpelRefine);
+    initTempBuff(cfg->m_param->internalCsp);
+    m_me.setSearchMethod(cfg->m_param->searchMethod);
+    m_me.setSubpelRefine(cfg->m_param->subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_refLagPixels = cfg->m_totalFrameThreads > 1 ? cfg->param->searchRange : cfg->param->sourceHeight;
+    m_refLagPixels = cfg->m_totalFrameThreads > 1 ? cfg->m_param->searchRange : cfg->m_param->sourceHeight;
 
     const uint32_t numLayersToAllocate = cfg->m_quadtreeTULog2MaxSize - cfg->m_quadtreeTULog2MinSize + 1;
     m_qtTempCoeff[0] = new coeff_t*[numLayersToAllocate * 3];
@@ -121,7 +121,7 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
-        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->param->internalCsp);
+        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
@@ -137,7 +137,7 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeff[1] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE;
     m_qtTempTUCoeff[2] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE * 2;
 
-    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->param->internalCsp);
+    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->m_param->internalCsp);
 
 fail:
     return false;
@@ -607,13 +607,13 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     // don't check split if TU size is less or equal to max TU size
     bool noSplitIntraMaxTuSize = bCheckFull;
 
-    if (m_cfg->param->rdPenalty && !isIntraSlice)
+    if (m_cfg->m_param->rdPenalty && !isIntraSlice)
     {
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
 
         // if maximum RD-penalty don't check TU size 32x32
-        if (m_cfg->param->rdPenalty == 2)
+        if (m_cfg->m_param->rdPenalty == 2)
         {
             bCheckFull = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
         }
@@ -639,7 +639,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         if (checkTransformSkip)
         {
             checkTransformSkip &= !((cu->getQP(0) == 0));
-            if (m_cfg->param->bEnableTSkipFast)
+            if (m_cfg->m_param->bEnableTSkipFast)
             {
                 checkTransformSkip &= (cu->getPartitionSize(absPartIdx) == SIZE_NxN);
             }
@@ -739,7 +739,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 singleCbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trDepth);
 
             uint32_t singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, 0, true, false);
-            if (m_cfg->param->rdPenalty && (trSizeLog2 == 5) && !isIntraSlice)
+            if (m_cfg->m_param->rdPenalty && (trSizeLog2 == 5) && !isIntraSlice)
                 singleBits *= 4;
 
             singleCost = m_rdCost->calcRdCost(singleDistY, singleBits);
@@ -835,7 +835,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     int maxTuSize = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
-    if (m_cfg->param->rdPenalty == 2 && !isIntraSlice)
+    if (m_cfg->m_param->rdPenalty == 2 && !isIntraSlice)
     {
         // if maximum RD-penalty don't check TU size 32x32
         bCheckFull = (trSizeLog2 <= X265_MIN(maxTuSize, 4));
@@ -1182,7 +1182,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                    trSizeCLog2 <= LOG2_MAX_TS_SIZE &&
                                    !cu->getCUTransquantBypass(0));
 
-        if (m_cfg->param->bEnableTSkipFast)
+        if (m_cfg->m_param->bEnableTSkipFast)
         {
             checkTransformSkip &= ((cu->getCUSize(0) >> trDepth) <= 4);
             if (checkTransformSkip)
@@ -2195,8 +2195,8 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
         if (m_cfg->m_totalFrameThreads > 1 &&
-            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_cfg->param->searchRange + 1) * 4 ||
-             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_cfg->param->searchRange + 1) * 4))
+            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_cfg->m_param->searchRange + 1) * 4 ||
+             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_cfg->m_param->searchRange + 1) * 4))
         {
             continue;
         }
@@ -2335,7 +2335,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
 
-                int merange = m_cfg->param->searchRange;
+                int merange = m_cfg->m_param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -2389,7 +2389,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 /* Do not try zero MV if unidir motion predictors are beyond
                  * valid search area */
                 MV mvmin, mvmax;
-                int merange = X265_MAX(m_cfg->param->sourceWidth, m_cfg->param->sourceHeight);
+                int merange = X265_MAX(m_cfg->m_param->sourceWidth, m_cfg->m_param->sourceHeight);
                 xSetSearchRange(cu, mvzero, merange, mvmin, mvmax);
                 mvmax.y += 2; // there is some pad for subpel refine
                 mvmin <<= 2;

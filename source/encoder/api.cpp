@@ -107,7 +107,7 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
     if (enc && out)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        memcpy(out, encoder->param, sizeof(x265_param));
+        memcpy(out, encoder->m_param, sizeof(x265_param));
     }
 }
 

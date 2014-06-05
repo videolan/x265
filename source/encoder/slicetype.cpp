@@ -59,7 +59,7 @@ Lookahead::Lookahead(Encoder *_cfg, ThreadPool* pool)
     , m_est(pool)
 {
     m_bReady = 0;
-    m_param = _cfg->param;
+    m_param = _cfg->m_param;
     m_lastKeyframe = -m_param->keyframeMax;
     m_lastNonB = NULL;
     m_bFilling = true;
