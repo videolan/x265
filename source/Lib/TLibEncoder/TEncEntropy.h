@@ -66,7 +66,6 @@ struct TComTURecurse
     uint32_t          m_splitMode;
     uint32_t          m_absPartIdxTURelCU;
     uint32_t          m_absPartIdxStep;
-    uint32_t          m_partOffset;
 };
 
 // ====================================================================================================================

@@ -124,7 +124,7 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    void init(uint32_t maxTrSize, bool useRDOQ, bool useRDOQTS, bool useTransformSkipFast);
+    void init(uint32_t maxTrSize, bool useRDOQ, bool useTransformSkipFast);
 
     // transform & inverse transform functions
     uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize,
@@ -211,7 +211,6 @@ protected:
 
     uint32_t m_maxTrSize;
     bool     m_useRDOQ;
-    bool     m_useRDOQTS;
     bool     m_useTransformSkipFast;
     bool     m_scalingListEnabledFlag;
 

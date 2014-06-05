@@ -55,14 +55,12 @@ class TComBitIf
 {
 public:
 
-    virtual void        writeAlignOne() {}
-
-    virtual void        writeAlignZero() {}
-
-    virtual void        write(uint32_t uiBits, uint32_t uiNumberOfBits)  = 0;
-    virtual void        writeByte(uint32_t val)                      = 0;
-    virtual void        resetBits()                              = 0;
-    virtual uint32_t getNumberOfWrittenBits() const = 0;
+    virtual void     writeAlignOne() {}
+    virtual void     writeAlignZero() {}
+    virtual void     write(uint32_t val, uint32_t numBits)  = 0;
+    virtual void     writeByte(uint32_t val)                = 0;
+    virtual void     resetBits()                            = 0;
+    virtual uint32_t getNumberOfWrittenBits() const         = 0;
     virtual ~TComBitIf() {}
 };
 
@@ -84,7 +82,7 @@ class TComOutputBitstream : public TComBitIf
     uint32_t m_buffsize;
 
     uint32_t m_num_held_bits; /// number of bits not flushed to bytestream.
-    uint8_t m_held_bits; /// the bits held and not flushed to bytestream.
+    uint8_t  m_held_bits;     /// the bits held and not flushed to bytestream.
     /// this value is always msb-aligned, bigendian.
 
 public:
@@ -109,7 +107,7 @@ public:
     void        writeAlignZero();
 
     /** this function should never be called */
-    void resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
+    void        resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
 
     // utility functions
 
@@ -145,14 +143,14 @@ public:
     /**
      * Return a reference to the internal fifo
      */
-    uint8_t* getFIFO() { return m_fifo; }
+    uint8_t* getFIFO()     { return m_fifo; }
 
-    uint8_t getHeldBits()          { return m_held_bits; }
+    uint8_t  getHeldBits() { return m_held_bits; }
 
     /** Return a reference to the internal fifo */
     uint8_t* getFIFO() const { return m_fifo; }
 
-    void          addSubstream(TComOutputBitstream* pcSubstream);
+    void addSubstream(TComOutputBitstream* substream);
     void writeByteAlignment();
 
     //! returns the number of start code emulations contained in the current buffer

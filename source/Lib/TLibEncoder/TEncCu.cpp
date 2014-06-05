@@ -355,7 +355,7 @@ void TEncCu::destroy()
  */
 void TEncCu::init(Encoder* top)
 {
-    m_param = top->param;
+    m_param = top->m_param;
     m_CUTransquantBypassFlagValue = top->m_CUTransquantBypassFlagValue;
 }
 

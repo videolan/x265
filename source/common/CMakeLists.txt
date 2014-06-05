@@ -17,7 +17,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/NAL.h
     ../Lib/TLibCommon/SEI.h
     ../Lib/TLibCommon/TComBitCounter.h
     ../Lib/TLibCommon/CommonDef.h

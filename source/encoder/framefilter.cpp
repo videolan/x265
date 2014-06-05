@@ -60,7 +60,7 @@ void FrameFilter::destroy()
 
 void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
-    m_param = top->param;
+    m_param = top->m_param;
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
@@ -68,17 +68,17 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
     // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
-    if (top->param->bEnableLoopFilter)
+    if (top->m_param->bEnableLoopFilter)
     {
         m_loopFilter.create(g_maxCUDepth);
     }
 
-    if (top->param->bEnableSAO)
+    if (top->m_param->bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(top->param->saoLcuBoundary);
-        m_sao.setSaoLcuBasedOptimization(top->param->saoLcuBasedOptimization);
+        m_sao.setSaoLcuBoundary(top->m_param->saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(top->m_param->saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
-        m_sao.create(top->param->sourceWidth, top->param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
+        m_sao.create(top->m_param->sourceWidth, top->m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
 

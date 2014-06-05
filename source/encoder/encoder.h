@@ -64,10 +64,10 @@ namespace x265 {
 
 class FrameEncoder;
 class DPB;
-struct Lookahead;
-struct RateControl;
+class Lookahead;
+class RateControl;
 class ThreadPool;
-struct NALUnitEBSP;
+struct NALUnit;
 
 class Encoder : public x265_encoder
 {
@@ -82,7 +82,6 @@ private:
     int64_t            m_firstPts;
     int64_t            m_bframeDelayTime;
     int64_t            m_prevReorderedPts[2];
-    int64_t            m_encodedFrameNum;
 
     ThreadPool*        m_threadPool;
     Lookahead*         m_lookahead;
@@ -139,9 +138,6 @@ public:
     int                m_loopFilterTcOffsetDiv2;
     int                m_maxNumOffsetsPerPic;
 
-    //====== Lossless ========
-    bool               m_useLossless;
-
     //====== Quality control ========
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
@@ -157,10 +153,10 @@ public:
     bool               m_bPCMFilterDisableFlag;
     bool               m_loopFilterAcrossTilesEnabledFlag;
 
-    int                m_bufferingPeriodSEIEnabled;
+    int64_t            m_encodedFrameNum;
+    int                m_lastBPSEI;
     int                m_displayOrientationSEIAngle;
     int                m_gradualDecodingRefreshInfoEnabled;
-    int                m_decodingUnitInfoSEIEnabled;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
 
@@ -168,7 +164,6 @@ public:
 
     bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
     bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    int                m_activeParameterSetsSEIEnabled; ///< enable active parameter set SEI message
 
     bool               m_neutralChromaIndicationFlag;
     bool               m_pocProportionalToTimingFlag;
@@ -182,11 +177,10 @@ public:
     int                m_log2MaxMvLengthHorizontal;
     int                m_log2MaxMvLengthVertical;
 
-    x265_param*        param;
+    x265_param*        m_param;
     RateControl*       m_rateControl;
 
-    bool               bEnableRDOQ;
-    bool               bEnableRDOQTS;
+    bool               m_bEnableRDOQ;
 
     int                m_pad[2];
     Window             m_conformanceWindow;
@@ -207,9 +201,9 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnitEBSP **nalunits);
+    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnit **nalunits);
 
-    int getStreamHeaders(NALUnitEBSP **nalunits);
+    int getStreamHeaders(NALUnit **nalunits);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -225,7 +219,7 @@ public:
 
     void configure(x265_param *param);
 
-    int  extractNalData(NALUnitEBSP **nalunits, int& memsize);
+    int  extractNalData(NALUnit **nalunits, int& memsize);
 
     void updateVbvPlan(RateControl* rc);
 

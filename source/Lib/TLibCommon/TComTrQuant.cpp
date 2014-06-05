@@ -58,8 +58,6 @@ typedef struct
 // Constants
 // ====================================================================================================================
 
-#define RDOQ_CHROMA 1  ///< use of RDOQ in chroma
-
 inline static int x265_min_fast(int x, int y)
 {
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
@@ -268,12 +266,9 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, int 
 {
     uint32_t acSum = 0;
     int add = 0;
-    bool useRDOQ = (cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ) && curUseRDOQ;
+    bool useRDOQ = m_useRDOQ && curUseRDOQ;
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
-    if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
+    if (useRDOQ)
     {
         acSum = xRateDistOptQuant(cu, coef, qCoef, trSize, ttype, absPartIdx, lastPos);
     }
@@ -305,11 +300,10 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, int 
     return acSum;
 }
 
-void TComTrQuant::init(uint32_t maxTrSize, bool useRDOQ, bool useRDOQTS, bool useTransformSkipFast)
+void TComTrQuant::init(uint32_t maxTrSize, bool useRDOQ, bool useTransformSkipFast)
 {
     m_maxTrSize            = maxTrSize;
     m_useRDOQ              = useRDOQ;
-    m_useRDOQTS            = useRDOQTS;
     m_useTransformSkipFast = useTransformSkipFast;
 }
 
