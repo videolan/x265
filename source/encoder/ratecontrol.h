@@ -109,7 +109,7 @@ public:
     Predictor m_predBfromP;
 
     int       m_bframes;
-    int       m_bframeBits;
+    int64_t   m_bframeBits;
     int64_t   m_currentSatd;
     int       m_qpConstant[3];
     double    m_ipOffset;
