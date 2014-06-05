@@ -60,7 +60,7 @@ uint8_t *write(const OutputNALUnit& nalu, uint32_t &bytes)
         return NULL;
 
     /* padded allocation for emulation prevention bytes */
-    uint8_t* out = X265_MALLOC(uint8_t, headerSize + bitsSize + bitsSize / 3);
+    uint8_t* out = X265_MALLOC(uint8_t, headerSize + bitsSize + (bitsSize + 2) / 3);
     if (!out)
         return NULL;
 
@@ -94,6 +94,8 @@ uint8_t *write(const OutputNALUnit& nalu, uint32_t &bytes)
      */
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
+
+    X265_CHECK(bytes <= headerSize + bitsSize + (bitsSize + 2) / 3, "NAL buffer overflow\n")
 
     return out;
 }
