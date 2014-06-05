@@ -1153,7 +1153,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 /* After encoding one frame, update rate control state */
 int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce)
 {
-    double actualBits = bits;
+    int64_t actualBits = bits;
     if (isAbr)
     {
         if (param->rc.rateControlMode == X265_RC_ABR)
