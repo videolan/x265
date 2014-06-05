@@ -44,7 +44,6 @@
 
 #include "TEncEntropy.h"
 #include "TEncSbac.h"
-#include "TLibCommon/TComBitCounter.h"
 
 //! \ingroup TLibEncoder
 //! \{

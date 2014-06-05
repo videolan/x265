@@ -47,7 +47,6 @@
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
-#include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComDataCU.h"
 #include "shortyuv.h"
 

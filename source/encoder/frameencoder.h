@@ -28,7 +28,6 @@
 #include "common.h"
 #include "wavefront.h"
 
-#include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
 
 #include "TLibEncoder/TEncCu.h"

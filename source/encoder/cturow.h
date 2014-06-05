@@ -25,7 +25,6 @@
 #ifndef X265_CTUROW_H
 #define X265_CTUROW_H
 
-#include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
 
 #include "TLibEncoder/TEncCu.h"

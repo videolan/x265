@@ -64,10 +64,21 @@ public:
     virtual ~TComBitIf() {}
 };
 
-/**
- * Model of a writable bitstream that accumulates bits to produce a
- * bytestream.
- */
+class TComBitCounter : public TComBitIf
+{
+protected:
+
+    uint32_t  m_bitCounter;
+
+public:
+
+    void     write(uint32_t, uint32_t num)  { m_bitCounter += num; }
+    void     writeByte(uint32_t)            { m_bitCounter += 8;   }
+    void     resetBits()                    { m_bitCounter = 0;    }
+    uint32_t getNumberOfWrittenBits() const { return m_bitCounter; }
+};
+
+
 class TComOutputBitstream : public TComBitIf
 {
     /**
