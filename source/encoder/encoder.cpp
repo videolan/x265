@@ -21,15 +21,15 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/NAL.h"
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
+#include "primitives.h"
+#include "threadpool.h"
+#include "param.h"
+#include "nal.h"
+
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComPicYuv.h"
 #include "TLibCommon/TComRom.h"
-#include "primitives.h"
-#include "threadpool.h"
-#include "common.h"
-#include "param.h"
 
 #include "bitcost.h"
 #include "encoder.h"
@@ -191,7 +191,7 @@ void Encoder::init()
     m_encodeStartTime = x265_mdate();
 }
 
-int Encoder::getStreamHeaders(NALUnitEBSP **nalunits)
+int Encoder::getStreamHeaders(NALUnit **nalunits)
 {
     return m_frameEncoder->getStreamHeaders(nalunits);
 }
@@ -258,7 +258,7 @@ static const char* nalUnitTypeToString(NalUnitType type)
  \param   nalunits            output NAL packets
  \retval                      number of encoded pictures
  */
-int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out, NALUnitEBSP **nalunits)
+int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out, NALUnit **nalunits)
 {
     if (m_aborted)
         return -1;
@@ -1431,7 +1431,7 @@ void Encoder::configure(x265_param *p)
     m_bPCMFilterDisableFlag = false;
 }
 
-int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
+int Encoder::extractNalData(NALUnit **nalunits, int& memsize)
 {
     int offset = 0;
     int nalcount = 0;
@@ -1440,7 +1440,7 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
     memsize = 0;
     for (; num < MAX_NAL_UNITS && nalunits[num] != NULL; num++)
     {
-        const NALUnitEBSP& temp = *nalunits[num];
+        const NALUnit& temp = *nalunits[num];
         memsize += temp.m_packetSize + 4;
     }
 
@@ -1454,7 +1454,7 @@ int Encoder::extractNalData(NALUnitEBSP **nalunits, int& memsize)
     /* Copy NAL output packets into x265_nal_t structures */
     for (; nalcount < num; nalcount++)
     {
-        const NALUnitEBSP& nalu = *nalunits[nalcount];
+        const NALUnit& nalu = *nalunits[nalcount];
         int size; /* size of annexB unit in bytes */
 
         static const char start_code_prefix[] = { 0, 0, 0, 1 };

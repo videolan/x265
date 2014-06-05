@@ -67,7 +67,7 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
-struct NALUnitEBSP;
+struct NALUnit;
 
 class Encoder : public x265_encoder
 {
@@ -201,9 +201,9 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnitEBSP **nalunits);
+    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnit **nalunits);
 
-    int getStreamHeaders(NALUnitEBSP **nalunits);
+    int getStreamHeaders(NALUnit **nalunits);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -219,7 +219,7 @@ public:
 
     void configure(x265_param *param);
 
-    int  extractNalData(NALUnitEBSP **nalunits, int& memsize);
+    int  extractNalData(NALUnit **nalunits, int& memsize);
 
     void updateVbvPlan(RateControl* rc);
 

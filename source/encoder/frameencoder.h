@@ -25,9 +25,11 @@
 #ifndef X265_FRAMEENCODER_H
 #define X265_FRAMEENCODER_H
 
+#include "common.h"
+#include "wavefront.h"
+
 #include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/NAL.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
@@ -36,7 +38,6 @@
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 #include "TLibEncoder/SEIwrite.h"
 
-#include "wavefront.h"
 #include "framefilter.h"
 #include "cturow.h"
 #include "ratecontrol.h"
@@ -47,6 +48,7 @@ namespace x265 {
 
 class ThreadPool;
 class Encoder;
+struct NALUnit;
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
@@ -134,7 +136,7 @@ public:
         }
     }
 
-    int getStreamHeaders(NALUnitEBSP **nalunits);
+    int getStreamHeaders(NALUnit **nalunits);
 
     void initSlice(TComPic* pic);
 
@@ -147,7 +149,7 @@ public:
     void encodeSlice(TComOutputBitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
-    TComPic *getEncodedPicture(NALUnitEBSP **nalunits);
+    TComPic *getEncodedPicture(NALUnit **nalunits);
 
     void setLambda(int qp, int row);
 
@@ -187,7 +189,7 @@ protected:
 
     /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
-    NALUnitEBSP*             m_nalList[MAX_NAL_UNITS];
+    NALUnit*                 m_nalList[MAX_NAL_UNITS];
     int                      m_nalCount;
 
     int                      m_filterRowDelay;

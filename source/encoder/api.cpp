@@ -21,11 +21,12 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "param.h"
 #include "encoder.h"
 #include "frameencoder.h"
 #include "level.h"
+#include "nal.h"
 
 using namespace x265;
 
@@ -76,7 +77,8 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     Encoder *encoder = static_cast<Encoder*>(enc);
 
     int ret = 0;
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
+    NALUnit *nalunits[MAX_NAL_UNITS];
+    memset(nalunits, 0, sizeof(nalunits));
     if (encoder->getStreamHeaders(nalunits) > 0)
     {
         int nalcount = encoder->extractNalData(nalunits, ret);
@@ -90,13 +92,7 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     }
 
     for (int i = 0; i < MAX_NAL_UNITS; i++)
-    {
-        if (nalunits[i])
-        {
-            X265_FREE(nalunits[i]->m_nalUnitData);
-            X265_FREE(nalunits[i]);
-        }
-    }
+        delete nalunits[i];
 
     return ret;
 }
@@ -118,7 +114,8 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
+    NALUnit *nalunits[MAX_NAL_UNITS];
+    memset(nalunits, 0, sizeof(nalunits));
     int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
 
     if (pp_nal && numEncoded > 0)
@@ -132,13 +129,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         *pi_nal = 0;
 
     for (int i = 0; i < MAX_NAL_UNITS; i++)
-    {
-        if (nalunits[i])
-        {
-            X265_FREE(nalunits[i]->m_nalUnitData);
-            X265_FREE(nalunits[i]);
-        }
-    }
+        delete nalunits[i];
 
     return numEncoded;
 }
