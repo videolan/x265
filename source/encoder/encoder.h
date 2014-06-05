@@ -181,7 +181,6 @@ public:
     RateControl*       m_rateControl;
 
     bool               m_bEnableRDOQ;
-    bool               bEnableRDOQTS;
 
     int                m_pad[2];
     Window             m_conformanceWindow;

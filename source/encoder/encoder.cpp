@@ -1203,7 +1203,7 @@ void Encoder::initPPS(TComPPS *pps)
 
 void Encoder::configure(x265_param *p)
 {
-    this->param = p;
+    this->m_param = p;
 
     // Trim the thread pool if WPP is disabled
     if (!p->bEnableWavefront)
@@ -1276,36 +1276,8 @@ void Encoder::configure(x265_param *p)
     {
         p->bBPyramid = 0;
     }
-    /* Set flags according to RDLevel specified - check_params has verified that RDLevel is within range */
-    switch (p->rdLevel)
-    {
-    case 6:
-        m_bEnableRDOQ = bEnableRDOQTS = 1;
-        break;
-    case 5:
-        m_bEnableRDOQ = bEnableRDOQTS = 1;
-        break;
-    case 4:
-        m_bEnableRDOQ = bEnableRDOQTS = 1;
-        break;
-    case 3:
-        m_bEnableRDOQ = bEnableRDOQTS = 0;
-        break;
-    case 2:
-        m_bEnableRDOQ = bEnableRDOQTS = 0;
-        break;
-    case 1:
-        m_bEnableRDOQ = bEnableRDOQTS = 0;
-        break;
-    case 0:
-        m_bEnableRDOQ = bEnableRDOQTS = 0;
-        break;
-    }
 
-    if (!(m_bEnableRDOQ && p->bEnableTransformSkip))
-    {
-        bEnableRDOQTS = 0;
-    }
+    m_bEnableRDOQ = p->rdLevel >= 4;
 
     if (p->bLossless)
     {
