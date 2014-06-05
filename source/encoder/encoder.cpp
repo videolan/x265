@@ -31,7 +31,6 @@
 #include "common.h"
 #include "param.h"
 
-#include "TLibEncoder/NALwrite.h"
 #include "bitcost.h"
 #include "encoder.h"
 #include "slicetype.h"
