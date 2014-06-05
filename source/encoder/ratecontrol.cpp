@@ -1039,6 +1039,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 /* After encoding one frame, update rate control state */
 int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce)
 {
+    int64_t actualBits = bits;
     if (isAbr)
     {
         if (param->rc.rateControlMode == X265_RC_ABR)
@@ -1123,7 +1124,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
     {
         if (rce->sliceType == B_SLICE)
         {
-            bframeBits += (int)bits;
+            bframeBits += actualBits;
             if (rce->bLastMiniGopBFrame)
             {
                 if (rce->bframes != 0)
@@ -1131,7 +1132,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
                 bframeBits = 0;
             }
         }
-        updateVbv(bits, rce);
+        updateVbv(actualBits, rce);
     }
     rce->isActive = false;
     return 0;
