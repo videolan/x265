@@ -498,6 +498,10 @@ void FrameEncoder::compressFrame()
         X265_CHECK(slice->getPPS()->getUseWP(), "weightp not enabled in PPS, but in use\n");
         weightAnalyse(*slice, *m_cfg->m_param);
     }
+    else
+    {
+        slice->resetWpScaling();
+    }
 
     // Generate motion references
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
