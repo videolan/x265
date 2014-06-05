@@ -45,7 +45,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
         return;
 
     /* padded allocation for emulation prevention bytes */
-    uint8_t* out = m_nalUnitData = X265_MALLOC(uint8_t, headerSize + bitsSize + (bitsSize + 2) / 3);
+    uint8_t* out = m_nalUnitData = X265_MALLOC(uint8_t, headerSize + bitsSize + (bitsSize >> 1));
     if (!out)
         return;
 
@@ -80,7 +80,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
 
-    X265_CHECK(bytes <= headerSize + bitsSize + (bitsSize + 2) / 3, "NAL buffer overflow\n");
+    X265_CHECK(bytes <= headerSize + bitsSize + (bitsSize >> 1), "NAL buffer overflow\n");
 
     m_nalUnitType = nalUnitType;
     m_packetSize = bytes;
