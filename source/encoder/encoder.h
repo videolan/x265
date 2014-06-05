@@ -180,7 +180,7 @@ public:
     x265_param*        m_param;
     RateControl*       m_rateControl;
 
-    bool               bEnableRDOQ;
+    bool               m_bEnableRDOQ;
     bool               bEnableRDOQTS;
 
     int                m_pad[2];

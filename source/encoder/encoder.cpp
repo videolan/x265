@@ -1280,29 +1280,29 @@ void Encoder::configure(x265_param *p)
     switch (p->rdLevel)
     {
     case 6:
-        bEnableRDOQ = bEnableRDOQTS = 1;
+        m_bEnableRDOQ = bEnableRDOQTS = 1;
         break;
     case 5:
-        bEnableRDOQ = bEnableRDOQTS = 1;
+        m_bEnableRDOQ = bEnableRDOQTS = 1;
         break;
     case 4:
-        bEnableRDOQ = bEnableRDOQTS = 1;
+        m_bEnableRDOQ = bEnableRDOQTS = 1;
         break;
     case 3:
-        bEnableRDOQ = bEnableRDOQTS = 0;
+        m_bEnableRDOQ = bEnableRDOQTS = 0;
         break;
     case 2:
-        bEnableRDOQ = bEnableRDOQTS = 0;
+        m_bEnableRDOQ = bEnableRDOQTS = 0;
         break;
     case 1:
-        bEnableRDOQ = bEnableRDOQTS = 0;
+        m_bEnableRDOQ = bEnableRDOQTS = 0;
         break;
     case 0:
-        bEnableRDOQ = bEnableRDOQTS = 0;
+        m_bEnableRDOQ = bEnableRDOQTS = 0;
         break;
     }
 
-    if (!(bEnableRDOQ && p->bEnableTransformSkip))
+    if (!(m_bEnableRDOQ && p->bEnableTransformSkip))
     {
         bEnableRDOQTS = 0;
     }
