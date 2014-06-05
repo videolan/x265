@@ -29,7 +29,7 @@
 namespace x265 {
 // encoder namespace
 
-struct Lookahead;
+class Lookahead;
 class Encoder;
 class TComPic;
 class TComSPS;

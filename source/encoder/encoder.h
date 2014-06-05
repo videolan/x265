@@ -64,7 +64,7 @@ namespace x265 {
 
 class FrameEncoder;
 class DPB;
-struct Lookahead;
+class Lookahead;
 class RateControl;
 class ThreadPool;
 struct NALUnitEBSP;
