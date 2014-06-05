@@ -31,10 +31,10 @@ namespace x265 {
 void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
 {
     TComOutputBitstream header;
-    header.write(0, 1);
-    header.write(nalUnitType, 6);
-    header.write(0, 6);
-    header.write(0 + 1, 3);
+    header.write(0, 1);           // forbidden_zero_bit
+    header.write(nalUnitType, 6); // nal_unit_type
+    header.write(0, 6);           // nuh_reserved_zero_6bits
+    header.write(1, 3);           // nuh_temporal_id_plus1
 
     uint32_t headerSize = header.getNumberOfWrittenBytes();
     const uint8_t* hpayload = header.getFIFO();
