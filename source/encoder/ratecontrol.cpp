@@ -745,7 +745,7 @@ void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
     int64_t cpbState = (int64_t)m_bufferFillFinal;
     int64_t cpbSize = (int64_t)((hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT));
 
-    if(cpbState < 0 || cpbState > cpbSize)
+    if (cpbState < 0 || cpbState > cpbSize)
     {
          x265_log(m_param, X265_LOG_WARNING, "CPB %s: %.0lf bits in a %.0lf-bit buffer\n",
                    cpbState < 0 ? "underflow" : "overflow", (float)cpbState/denom, (float)cpbSize/denom);
