@@ -765,7 +765,7 @@ void FrameEncoder::compressFrame()
         int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
         for (int i = 0; i < nss; i++)
         {
-            bitstreamRedirect->addSubstream(&outStreams[i]);
+            bitstreamRedirect->appendSubstream(&outStreams[i]);
         }
     }
 
@@ -779,7 +779,7 @@ void FrameEncoder::compressFrame()
     // Perform bitstream concatenation
     if (bitstreamRedirect->getNumberOfWrittenBits() > 0)
     {
-        bs.addSubstream(bitstreamRedirect);
+        bs.appendSubstream(bitstreamRedirect);
     }
     entropyCoder->setBitstream(&bs);
     bitstreamRedirect->clear();

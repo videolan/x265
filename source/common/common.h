@@ -156,7 +156,6 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOWRES_CU_BITS   3
 
 #define MAX_NAL_UNITS 12
-#define MIN_FIFO_SIZE 1000
 
 #define X265_MALLOC(type, count)    (type*)x265_malloc(sizeof(type) * (count))
 #define X265_FREE(ptr)              x265_free(ptr)

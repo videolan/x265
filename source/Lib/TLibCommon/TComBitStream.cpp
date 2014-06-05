@@ -31,141 +31,101 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComBitStream.cpp
-    \brief    class for handling bitstream
-*/
-
-#include "TComBitStream.h"
 #include "common.h"
+#include "TComBitStream.h"
 
 using namespace x265;
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / create / destroy
-// ====================================================================================================================
+#define MIN_FIFO_SIZE 1000
 
 TComOutputBitstream::TComOutputBitstream()
 {
     m_fifo = X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
-    m_buffsize = MIN_FIFO_SIZE;
+    m_byteAlloc = MIN_FIFO_SIZE;
     clear();
 }
 
-TComOutputBitstream::~TComOutputBitstream()
+void TComOutputBitstream::push_back(uint8_t val)
 {
-    X265_FREE(m_fifo);
+    if (!m_fifo)
+        return;
+
+    if (m_byteOccupancy >= m_byteAlloc)
+    {
+        /** reallocate buffer with doubled size */
+        uint8_t *temp = X265_MALLOC(uint8_t, m_byteAlloc * 2);
+        if (temp)
+        {
+            ::memcpy(temp, m_fifo, m_byteOccupancy);
+            X265_FREE(m_fifo);
+            m_fifo = temp;
+            m_byteAlloc *= 2;
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc bitstream buffer");
+            return;
+        }
+    }
+    m_fifo[m_byteOccupancy++] = val;
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-
-char* TComOutputBitstream::getByteStream() const
-{
-    return (char*)m_fifo;
-}
-
-uint32_t TComOutputBitstream::getByteStreamLength() const
-{
-    return m_fsize;
-}
-
-void TComOutputBitstream::clear()
-{
-    m_held_bits = 0;
-    m_num_held_bits = 0;
-    m_fsize = 0;
-}
-
-void TComOutputBitstream::write(uint32_t bits, uint32_t numBits)
+void TComOutputBitstream::write(uint32_t val, uint32_t numBits)
 {
     X265_CHECK(numBits <= 32, "numBits out of range\n");
-    X265_CHECK(numBits == 32 || (bits & (~0 << numBits)) == 0, "numBits & bits out of range\n");
+    X265_CHECK(numBits == 32 || (val & (~0 << numBits)) == 0, "numBits & val out of range\n");
 
-    /* any modulo 8 remainder of num_total_bits cannot be written this time,
-     * and will be held until next time. */
-    uint32_t num_total_bits = numBits + m_num_held_bits;
-    uint32_t next_num_held_bits = num_total_bits & 7;
+    uint32_t totalPartialBits = m_partialByteBits + numBits;
+    uint32_t nextPartialBits = totalPartialBits & 7;
+    uint8_t  nextHeldByte = val << (8 - nextPartialBits);
+    uint32_t writeBytes = totalPartialBits >> 3;
 
-    /* form a byte aligned word (write_bits), by concatenating any held bits
-     * with the new bits, discarding the bits that will form the next_held_bits.
-     * eg: H = held bits, V = n new bits        /---- next_held_bits
-     * len(H)=7, len(V)=1: ... ---- HHHH HHHV . 0000 0000, next_num_held_bits=0
-     * len(H)=7, len(V)=2: ... ---- HHHH HHHV . V000 0000, next_num_held_bits=1
-     * if total_bits < 8, the value of v_ is not used */
-    uint8_t next_held_bits = bits << (8 - next_num_held_bits);
-
-    if (!(num_total_bits >> 3))
+    if (writeBytes)
     {
-        /* insufficient bits accumulated to write out, append new_held_bits to
-         * current held_bits */
-        /* NB, this requires that v only contains 0 in bit positions {31..n} */
-        m_held_bits |= next_held_bits;
-        m_num_held_bits = next_num_held_bits;
-        return;
+        /* topword aligns m_partialByte with the msb of val */
+        uint32_t topword = (numBits - nextPartialBits) & ~7;
+        uint32_t write_bits = (m_partialByte << topword) | (val >> nextPartialBits);
+
+        switch (writeBytes)
+        {
+        case 4: push_back(write_bits >> 24);
+        case 3: push_back(write_bits >> 16);
+        case 2: push_back(write_bits >> 8);
+        case 1: push_back(write_bits);
+        }
+
+        m_partialByte = nextHeldByte;
+        m_partialByteBits = nextPartialBits;
     }
-
-    /* topword serves to justify held_bits to align with the msb of uiBits */
-    uint32_t topword = (numBits - next_num_held_bits) & ~((1 << 3) - 1);
-    uint32_t write_bits = (m_held_bits << topword) | (bits >> next_num_held_bits);
-
-    switch (num_total_bits >> 3)
+    else
     {
-    case 4: push_back(write_bits >> 24);
-    case 3: push_back(write_bits >> 16);
-    case 2: push_back(write_bits >> 8);
-    case 1: push_back(write_bits);
+        m_partialByte |= nextHeldByte;
+        m_partialByteBits = nextPartialBits;
     }
-
-    m_held_bits = next_held_bits;
-    m_num_held_bits = next_num_held_bits;
 }
 
 void TComOutputBitstream::writeByte(uint32_t val)
 {
-    // NOTE: we are here only in Cabac
-    X265_CHECK(!m_num_held_bits, "expecting m_num_held_bits = 0\n");
+    // Only CABAC will call writeByte, the fifo must be byte aligned
+    X265_CHECK(!m_partialByteBits, "expecting m_partialByteBits = 0\n");
 
     push_back(val);
 }
 
 void TComOutputBitstream::writeAlignOne()
 {
-    uint32_t numBits = getNumBitsUntilByteAligned();
+    uint32_t numBits = (8 - m_partialByteBits) & 0x7;
 
     write((1 << numBits) - 1, numBits);
 }
 
 void TComOutputBitstream::writeAlignZero()
 {
-    if (!m_num_held_bits)
-        return;
-
-    push_back(m_held_bits);
-    m_held_bits = 0;
-    m_num_held_bits = 0;
-}
-
-/**
- * add substream to the end of the current bitstream
- */
-void TComOutputBitstream::addSubstream(TComOutputBitstream* substream)
-{
-    uint32_t numBits = substream->getNumberOfWrittenBits();
-
-    const uint8_t* rbsp = substream->getFIFO();
-
-    for (uint32_t count = 0; count < substream->m_fsize; count++)
+    if (m_partialByteBits)
     {
-        write(rbsp[count], 8);
-    }
-
-    if (numBits & 0x7)
-    {
-        write(substream->getHeldBits() >> (8 - (numBits & 0x7)), numBits & 0x7);
+        push_back(m_partialByte);
+        m_partialByte = 0;
+        m_partialByteBits = 0;
     }
 }
 
@@ -178,12 +138,10 @@ void TComOutputBitstream::writeByteAlignment()
 int TComOutputBitstream::countStartCodeEmulations()
 {
     int numStartCodes = 0;
-    uint8_t *rbsp = getFIFO();
-    uint32_t fsize = getByteStreamLength();
 
-    for (uint32_t i = 0; i + 2 < fsize; i++)
+    for (uint32_t i = 0; i + 2 < m_byteOccupancy; i++)
     {
-        if (!rbsp[i] && !rbsp[i + 1] && rbsp[i + 2] <= 3)
+        if (!m_fifo[i] && !m_fifo[i + 1] && m_fifo[i + 2] <= 3)
         {
             numStartCodes++;
             i++;
@@ -193,29 +151,12 @@ int TComOutputBitstream::countStartCodeEmulations()
     return numStartCodes;
 }
 
-void TComOutputBitstream::push_back(uint8_t val)
+void TComOutputBitstream::appendSubstream(TComOutputBitstream* substream)
 {
-    if (!m_fifo)
-        return;
-
-    if (m_fsize >= m_buffsize)
-    {
-        /** reallocate buffer with doubled size */
-        uint8_t *temp = X265_MALLOC(uint8_t, m_buffsize * 2);
-        if (temp)
-        {
-            ::memcpy(temp, m_fifo, m_fsize);
-            X265_FREE(m_fifo);
-            m_fifo = temp;
-            m_buffsize *= 2;
-        }
-        else
-        {
-            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc bitstream buffer");
-            return;
-        }
-    }
-    m_fifo[m_fsize++] = val;
+    /* TODO: if m_partialByteBits == 0, this should be a memcpy */
+    const uint8_t* rbsp = substream->getFIFO();
+    for (uint32_t i = 0; i < substream->m_byteOccupancy; i++)
+        write(rbsp[i], 8);
+    if (substream->m_partialByteBits)
+        write(substream->m_partialByte >> (8 - substream->m_partialByteBits), substream->m_partialByteBits);
 }
-
-//! \}

@@ -36,11 +36,11 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
     header.write(0, 6);
     header.write(0 + 1, 3);
 
-    uint32_t headerSize = header.getByteStreamLength();
-    uint8_t* hpayload = header.getFIFO();
+    uint32_t headerSize = header.getNumberOfWrittenBytes();
+    const uint8_t* hpayload = header.getFIFO();
 
-    uint32_t bitsSize = bs.getByteStreamLength();
-    uint8_t* bpayload = bs.getFIFO();
+    uint32_t bitsSize = bs.getNumberOfWrittenBytes();
+    const uint8_t* bpayload = bs.getFIFO();
     if (!bpayload || !hpayload)
         return;
 
