@@ -415,11 +415,11 @@ void FrameEncoder::compressFrame()
         m_nalList[m_nalCount] = new NALUnit;
         if (m_nalList[m_nalCount])
         {
-            TComOutputBitstream bs;
-            entropyCoder->setBitstream(&bs);
+            entropyCoder->setBitstream(&m_bs);
+            m_bs.clear();
             entropyCoder->encodeAUD(slice);
-            bs.writeByteAlignment();
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, bs);
+            m_bs.writeByteAlignment();
+            m_nalList[m_nalCount++]->serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
         }
     }
     if (m_cfg->m_param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
@@ -543,11 +543,11 @@ void FrameEncoder::compressFrame()
                 // hrdFullness() calculates the initial CPB removal delay and offset
                 m_top->m_rateControl->hrdFullness(sei_buffering_period);
 
-                TComOutputBitstream bs;
-                m_seiWriter.writeSEImessage(bs, *sei_buffering_period, &m_sps);
-                bs.writeByteAlignment();
+                m_bs.clear();
+                m_seiWriter.writeSEImessage(m_bs, *sei_buffering_period, &m_sps);
+                m_bs.writeByteAlignment();
 
-                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
+                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
             }
 
             m_top->m_lastBPSEI = totalCoded;
@@ -562,11 +562,11 @@ void FrameEncoder::compressFrame()
                 SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
                 seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
 
-                TComOutputBitstream bs;
-                m_seiWriter.writeSEImessage(bs, seiGradualDecodingRefreshInfo, slice->getSPS());
-                bs.writeByteAlignment();
+                m_bs.clear();
+                m_seiWriter.writeSEImessage(m_bs, seiGradualDecodingRefreshInfo, slice->getSPS());
+                m_bs.writeByteAlignment();
 
-                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
+                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
             }
         }
 
@@ -586,11 +586,11 @@ void FrameEncoder::compressFrame()
             sei_recovery_point.m_exactMatchingFlag = true;
             sei_recovery_point.m_brokenLinkFlag = false;
 
-            TComOutputBitstream bs;
-            m_seiWriter.writeSEImessage(bs, sei_recovery_point, slice->getSPS());
-            bs.writeByteAlignment();
+            m_bs.clear();
+            m_seiWriter.writeSEImessage(m_bs, sei_recovery_point, slice->getSPS());
+            m_bs.writeByteAlignment();
 
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
+            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
     }
 
@@ -633,11 +633,11 @@ void FrameEncoder::compressFrame()
         m_nalList[m_nalCount] = new NALUnit;
         if (m_nalList[m_nalCount])
         {
-            TComOutputBitstream bs;
-            m_seiWriter.writeSEImessage(bs, *sei, &m_sps);
-            bs.writeByteAlignment();
+            m_bs.clear();
+            m_seiWriter.writeSEImessage(m_bs, *sei, &m_sps);
+            m_bs.writeByteAlignment();
 
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
+            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
     }
 
@@ -679,8 +679,9 @@ void FrameEncoder::compressFrame()
 
     /* start slice NALunit */
     bool sliceSegment = !slice->isNextSlice();
-    TComOutputBitstream bs;
-    entropyCoder->setBitstream(&bs);
+
+    m_bs.clear();
+    entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeSliceHeader(slice);
 
     // is it needed?
@@ -716,7 +717,7 @@ void FrameEncoder::compressFrame()
         }
         else
         {
-            entropyCoder->setBitstream(&bs);
+            entropyCoder->setBitstream(&m_bs);
         }
 
         // for now, override the TILES_DECODER setting in order to write substreams.
@@ -753,7 +754,7 @@ void FrameEncoder::compressFrame()
 
         // Complete the slice header info.
         entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->setBitstream(&bs);
+        entropyCoder->setBitstream(&m_bs);
         entropyCoder->encodeTilesWPPEntryPoint(slice);
 
         // Substreams...
@@ -769,20 +770,20 @@ void FrameEncoder::compressFrame()
     // current NALU is the last NALU of slice and a NALU was buffered, then (a)
     // Write current NALU (b) Update an write buffered NALU at appropriate
     // location in NALU list.
-    bs.writeByteAlignment(); // Slice header byte-alignment
+    m_bs.writeByteAlignment(); // Slice header byte-alignment
 
     // Perform bitstream concatenation
     if (bitstreamRedirect->getNumberOfWrittenBits() > 0)
     {
-        bs.appendSubstream(bitstreamRedirect);
+        m_bs.appendSubstream(bitstreamRedirect);
     }
-    entropyCoder->setBitstream(&bs);
+    entropyCoder->setBitstream(&m_bs);
     bitstreamRedirect->clear();
 
     /* TODO: It's a bit late to handle malloc failure well here */
     m_nalList[m_nalCount] = new NALUnit;
     if (m_nalList[m_nalCount])
-        m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), bs);
+        m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), m_bs);
 
     /* write decoded picture hash SEI messages */
     if (m_cfg->m_param->decodedPictureHashSEI)
@@ -814,11 +815,11 @@ void FrameEncoder::compressFrame()
         m_nalList[m_nalCount] = new NALUnit;
         if (m_nalList[m_nalCount])
         {
-            bs.clear();
-            m_seiWriter.writeSEImessage(bs, m_seiReconPictureDigest, slice->getSPS());
-            bs.writeByteAlignment();
+            m_bs.clear();
+            m_seiWriter.writeSEImessage(m_bs, m_seiReconPictureDigest, slice->getSPS());
+            m_bs.writeByteAlignment();
 
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_SUFFIX_SEI, bs);
+            m_nalList[m_nalCount++]->serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
         }
     }
 

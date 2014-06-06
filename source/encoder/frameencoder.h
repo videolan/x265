@@ -29,6 +29,7 @@
 #include "wavefront.h"
 
 #include "TLibCommon/TComPic.h"
+#include "TLibCommon/TComBitstream.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
@@ -183,6 +184,7 @@ protected:
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
+    TComOutputBitstream      m_bs;
     TComBitCounter           m_bitCounter;
     NoiseReduction           m_nr;
 
