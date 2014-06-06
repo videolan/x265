@@ -38,11 +38,10 @@
 #ifndef X265_TCOMSLICE_H
 #define X265_TCOMSLICE_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
 #include "piclist.h"
-#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -311,8 +310,8 @@ private:
 public:
 
     TComHRD()
-        : m_nalHrdParametersPresentFlag(0)
-        , m_vclHrdParametersPresentFlag(0)
+        : m_nalHrdParametersPresentFlag(false)
+        , m_vclHrdParametersPresentFlag(false)
         , m_subPicHrdParamsPresentFlag(false)
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
@@ -458,6 +457,14 @@ public:
     int  getNumTicksPocDiffOneMinus1()          { return m_numTicksPocDiffOneMinus1; }
 
     void setNumTicksPocDiffOneMinus1(int x)     { m_numTicksPocDiffOneMinus1 = x; }
+};
+
+struct HRDTiming
+{
+    double cpbInitialAT;
+    double cpbFinalAT;
+    double dpbOutputTime;
+    double cpbRemovalTime;
 };
 
 class TComVPS

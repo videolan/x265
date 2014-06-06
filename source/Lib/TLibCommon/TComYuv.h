@@ -39,7 +39,7 @@
 #ifndef X265_TCOMYUV_H
 #define X265_TCOMYUV_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComRom.h"
 #include "primitives.h"
 

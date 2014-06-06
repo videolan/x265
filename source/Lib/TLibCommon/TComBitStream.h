@@ -38,128 +38,72 @@
 #ifndef X265_COMBITSTREAM_H
 #define X265_COMBITSTREAM_H
 
-#include "CommonDef.h"
-
-//! \ingroup TLibCommon
-//! \{
+#include "common.h"
 
 namespace x265 {
 // private namespace
 
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// pure virtual class for basic bit handling
 class TComBitIf
 {
 public:
 
-    virtual void        writeAlignOne() {}
-
-    virtual void        writeAlignZero() {}
-
-    virtual void        write(uint32_t uiBits, uint32_t uiNumberOfBits)  = 0;
-    virtual void        writeByte(uint32_t val)                      = 0;
-    virtual void        resetBits()                              = 0;
-    virtual uint32_t getNumberOfWrittenBits() const = 0;
+    virtual void     writeAlignOne() {}
+    virtual void     writeAlignZero() {}
+    virtual void     write(uint32_t val, uint32_t numBits)  = 0;
+    virtual void     writeByte(uint32_t val)                = 0;
+    virtual void     resetBits()                            = 0;
+    virtual uint32_t getNumberOfWrittenBits() const         = 0;
     virtual ~TComBitIf() {}
 };
 
-/**
- * Model of a writable bitstream that accumulates bits to produce a
- * bytestream.
- */
-class TComOutputBitstream : public TComBitIf
+class TComBitCounter : public TComBitIf
 {
-    /**
-     * FIFO for storage of bytes.  Use:
-     *  - fifo.push_back(x) to append words
-     *  - fifo.clear() to empty the FIFO
-     *  - &fifo.front() to get a pointer to the data array.
-     *    NB, this pointer is only valid until the next push_back()/clear()
-     */
-    uint8_t *m_fifo;
-    uint32_t m_fsize;
-    uint32_t m_buffsize;
+protected:
 
-    uint32_t m_num_held_bits; /// number of bits not flushed to bytestream.
-    uint8_t m_held_bits; /// the bits held and not flushed to bytestream.
-    /// this value is always msb-aligned, bigendian.
+    uint32_t  m_bitCounter;
 
 public:
 
-    // create / destroy
+    void     write(uint32_t, uint32_t num)  { m_bitCounter += num; }
+    void     writeByte(uint32_t)            { m_bitCounter += 8;   }
+    void     resetBits()                    { m_bitCounter = 0;    }
+    uint32_t getNumberOfWrittenBits() const { return m_bitCounter; }
+};
+
+
+class TComOutputBitstream : public TComBitIf
+{
+public:
+
     TComOutputBitstream();
-    ~TComOutputBitstream();
+    ~TComOutputBitstream()                   { X265_FREE(m_fifo); }
 
-    // interface for encoding
+    void     clear()                         { m_partialByteBits = m_byteOccupancy = 0; m_partialByte = 0; }
+    uint32_t getNumberOfWrittenBytes() const { return m_byteOccupancy; }
+    uint32_t getNumberOfWrittenBits()  const { return m_byteOccupancy * 8 + m_partialByteBits; }
+    const uint8_t* getFIFO() const           { return m_fifo; }
 
-    /**
-     * append uiNumberOfBits least significant bits of uiBits to
-     * the current bitstream
-     */
-    void        write(uint32_t uiBits, uint32_t uiNumberOfBits);
-    void        writeByte(uint32_t val);
+    void     write(uint32_t val, uint32_t numBits);
+    void     writeByte(uint32_t val);
 
-    /** insert one bits until the bitstream is byte-aligned */
-    void        writeAlignOne();
+    void     writeAlignOne();      // insert one bits until the bitstream is byte-aligned
+    void     writeAlignZero();     // insert zero bits until the bitstream is byte-aligned
+    void     writeByteAlignment(); // insert 1 bit, then pad to byte-align with zero
 
-    /** insert zero bits until the bitstream is byte-aligned */
-    void        writeAlignZero();
+    void     appendSubstream(TComOutputBitstream* substream);
+    int      countStartCodeEmulations();
 
-    /** this function should never be called */
-    void resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
+private:
 
-    // utility functions
+    uint8_t *m_fifo;
+    uint32_t m_byteAlloc;
+    uint32_t m_byteOccupancy;
+    uint32_t m_partialByteBits;
+    uint8_t  m_partialByte;
 
-    /**
-     * Return a pointer to the start of the byte-stream buffer.
-     * Pointer is valid until the next write/flush/reset call.
-     * NB, data is arranged such that subsequent bytes in the
-     * bytestream are stored in ascending addresses.
-     */
-    char* getByteStream() const;
-
-    /**
-     * Return the number of valid bytes available from  getByteStream()
-     */
-    uint32_t getByteStreamLength() const;
-
-    /**
-     * Reset all internal state.
-     */
-    void clear();
-
-    /**
-     * returns the number of bits that need to be written to
-     * achieve byte alignment.
-     */
-    int getNumBitsUntilByteAligned() { return (8 - m_num_held_bits) & 0x7; }
-
-    /**
-     * Return the number of bits that have been written since the last clear()
-     */
-    uint32_t getNumberOfWrittenBits() const { return m_fsize * 8 + m_num_held_bits; }
-
-    /**
-     * Return a reference to the internal fifo
-     */
-    uint8_t* getFIFO() { return m_fifo; }
-
-    uint8_t getHeldBits()          { return m_held_bits; }
-
-    /** Return a reference to the internal fifo */
-    uint8_t* getFIFO() const { return m_fifo; }
-
-    void          addSubstream(TComOutputBitstream* pcSubstream);
-    void writeByteAlignment();
-
-    //! returns the number of start code emulations contained in the current buffer
-    int countStartCodeEmulations();
-    void push_back(uint8_t val);
+    void     resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
+    void     push_back(uint8_t val);
 };
 }
-//! \}
 
 #endif // ifndef X265_COMBITSTREAM_H

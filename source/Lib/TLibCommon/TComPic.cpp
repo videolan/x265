@@ -103,18 +103,18 @@ bool TComPic::create(Encoder* cfg)
         return false;
 
     bool ok = true;
-    ok &= m_picSym->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_origPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(cfg->param->sourceWidth, cfg->param->sourceHeight, cfg->param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_lowres.create(m_origPicYuv, cfg->param->bframes, !!cfg->param->rc.aqMode);
+    ok &= m_picSym->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_origPicYuv->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_reconPicYuv->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_lowres.create(m_origPicYuv, cfg->m_param->bframes, !!cfg->m_param->rc.aqMode);
 
-    bool isVbv = cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0;
-    if (ok && (isVbv || cfg->param->rc.aqMode))
+    bool isVbv = cfg->m_param->rc.vbvBufferSize > 0 && cfg->m_param->rc.vbvMaxBitrate > 0;
+    if (ok && (isVbv || cfg->m_param->rc.aqMode))
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
 
-        if (cfg->param->rc.aqMode)
+        if (cfg->m_param->rc.aqMode)
             CHECKED_MALLOC(m_qpaAq, double, numRows);
         if (isVbv)
         {
@@ -141,7 +141,7 @@ fail:
 
 void TComPic::reInit(Encoder* cfg)
 {
-    if (cfg->param->rc.vbvBufferSize > 0 && cfg->param->rc.vbvMaxBitrate > 0)
+    if (cfg->m_param->rc.vbvBufferSize > 0 && cfg->m_param->rc.vbvMaxBitrate > 0)
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
@@ -156,7 +156,7 @@ void TComPic::reInit(Encoder* cfg)
         memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
-    if (cfg->param->rc.aqMode)
+    if (cfg->m_param->rc.aqMode)
         memset(m_qpaAq, 0,  m_picSym->getFrameHeightInCU() * sizeof(double));
 }
 

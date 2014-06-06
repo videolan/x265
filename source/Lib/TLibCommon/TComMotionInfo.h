@@ -39,7 +39,6 @@
 #ifndef X265_TCOMMOTIONINFO_H
 #define X265_TCOMMOTIONINFO_H
 
-#include "CommonDef.h"
 #include "common.h"
 #include "mv.h"
 

@@ -24,7 +24,6 @@
 #ifndef _TESTHARNESS_H_
 #define _TESTHARNESS_H_ 1
 
-#include "TLibCommon/CommonDef.h"
 #include "common.h"
 #include "primitives.h"
 

@@ -39,7 +39,7 @@
 #ifndef X265_TCOMDATACU_H
 #define X265_TCOMDATACU_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComMotionInfo.h"
 #include "TComSlice.h"
 #include "TComPattern.h"

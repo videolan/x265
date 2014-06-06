@@ -38,7 +38,7 @@
 #ifndef X265_TCOMSAMPLEADAPTIVEOFFSET_H
 #define X265_TCOMSAMPLEADAPTIVEOFFSET_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComPic.h"
 
 //! \ingroup TLibCommon

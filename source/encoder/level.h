@@ -25,7 +25,6 @@
 #define X265_LEVEL_H 1
 
 #include "common.h"
-#include "TLibCommon/CommonDef.h"
 #include "x265.h"
 
 namespace x265 {

@@ -115,10 +115,7 @@ public:
         break;
 
         default:
-        {
-            std::cerr << "ERROR: Unknown scan type \"" << m_scanType << "\"in ScanGenerator::GetNextIndex" << std::endl;
-            exit(1);
-        }
+            X265_CHECK(0, "ERROR: Unknown scan type %d in ScanGenerator::GetNextIndex", m_scanType);
         break;
         }
 

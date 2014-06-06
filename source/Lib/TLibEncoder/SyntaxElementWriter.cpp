@@ -35,7 +35,7 @@
     \brief    CAVLC encoder class
 */
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "SyntaxElementWriter.h"
 
 using namespace x265;

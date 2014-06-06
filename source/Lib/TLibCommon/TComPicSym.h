@@ -39,7 +39,7 @@
 #define X265_TCOMPICSYM_H
 
 // Include files
-#include "CommonDef.h"
+#include "common.h"
 #include "TComSlice.h"
 #include "TComDataCU.h"
 
