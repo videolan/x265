@@ -153,10 +153,33 @@ int TComOutputBitstream::countStartCodeEmulations()
 
 void TComOutputBitstream::appendSubstream(TComOutputBitstream* substream)
 {
-    /* TODO: if m_partialByteBits == 0, this should be a memcpy */
-    const uint8_t* rbsp = substream->getFIFO();
-    for (uint32_t i = 0; i < substream->m_byteOccupancy; i++)
-        write(rbsp[i], 8);
+    if (m_byteOccupancy + substream->m_byteOccupancy > m_byteAlloc)
+    {
+        /* reallocate buffer with doubled size */
+        uint8_t *temp = X265_MALLOC(uint8_t, (m_byteOccupancy + substream->m_byteOccupancy) * 2);
+        if (temp)
+        {
+            ::memcpy(temp, m_fifo, m_byteOccupancy);
+            X265_FREE(m_fifo);
+            m_fifo = temp;
+            m_byteAlloc = (m_byteOccupancy + substream->m_byteOccupancy) * 2;
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc bitstream buffer");
+            return;
+        }
+    }
+    if (m_partialByteBits)
+    {
+        for (uint32_t i = 0; i < substream->m_byteOccupancy; i++)
+            write(substream->m_fifo[i], 8);
+    }
+    else
+    {
+        memcpy(m_fifo + m_byteOccupancy, substream->m_fifo, substream->m_byteOccupancy);
+        m_byteOccupancy += substream->m_byteOccupancy;
+    }
     if (substream->m_partialByteBits)
         write(substream->m_partialByte >> (8 - substream->m_partialByteBits), substream->m_partialByteBits);
 }
