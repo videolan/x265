@@ -314,7 +314,9 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         else if (!strcmp(preset, "fast"))
         {
             param->lookaheadDepth = 15;
+            param->bFrameAdaptive = 0;
             param->rdLevel = 2;
+            param->maxNumReferences = 2;
         }
         else if (!strcmp(preset, "medium"))
         {
