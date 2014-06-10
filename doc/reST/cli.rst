@@ -558,8 +558,8 @@ Slice decision options
 .. option:: --bframe-bias <integer>
 
 	Bias towards B frames in slicetype decision. The higher the bias the
-	more likely x265 is to use B frames. Can be any value between -20
-	and 100, but is typically between 10 and 30. Default 0
+	more likely x265 is to use B frames. Can be any value between -90
+	and 100 and is clipped to that range. Default 0
 
 .. option:: --b-pyramid, --no-b-pyramid
 

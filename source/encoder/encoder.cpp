@@ -1342,6 +1342,8 @@ void Encoder::configure(x265_param *p)
 
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
+    p->bFrameBias = X265_MIN(X265_MAX(-90, p->bFrameBias), 100);
+
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = g_convertToBit[p->maxCUSize] + 2 - 1;
