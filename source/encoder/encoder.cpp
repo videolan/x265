@@ -173,7 +173,6 @@ void Encoder::destroy()
 
 void Encoder::init()
 {
-    m_totalFrameThreads = m_param->frameNumThreads;
     if (m_frameEncoder)
     {
         int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
@@ -1247,6 +1246,8 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
+    m_totalFrameThreads = m_param->frameNumThreads;
+
     if (p->keyframeMax < 0)
     {
         /* A negative max GOP size indicates the user wants only one I frame at
