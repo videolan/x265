@@ -45,7 +45,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
      * nal_unit_type            6-bits
      * nuh_reserved_zero_6bits  6-bits
      * nuh_temporal_id_plus1    3-bits */
-    out[0] = nalUnitType << 1;
+    out[0] = (uint8_t)nalUnitType << 1;
     out[1] = 1;
     uint32_t bytes = 2;
 
