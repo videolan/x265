@@ -30,27 +30,24 @@ namespace x265 {
 
 void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
 {
-    TComOutputBitstream header;
-    header.write(0, 1);           // forbidden_zero_bit
-    header.write(nalUnitType, 6); // nal_unit_type
-    header.write(0, 6);           // nuh_reserved_zero_6bits
-    header.write(1, 3);           // nuh_temporal_id_plus1
-
-    uint32_t headerSize = header.getNumberOfWrittenBytes();
-    const uint8_t* hpayload = header.getFIFO();
-
     uint32_t bitsSize = bs.getNumberOfWrittenBytes();
     const uint8_t* bpayload = bs.getFIFO();
-    if (!bpayload || !hpayload)
+    if (!bpayload)
         return;
 
     /* padded allocation for emulation prevention bytes */
-    uint8_t* out = m_nalUnitData = X265_MALLOC(uint8_t, headerSize + bitsSize + (bitsSize >> 1));
+    uint8_t* out = m_nalUnitData = X265_MALLOC(uint8_t, 2 + bitsSize + (bitsSize >> 1));
     if (!out)
         return;
 
-    memcpy(out, hpayload, headerSize);
-    uint32_t bytes = headerSize;
+    /* 16bit NAL header:
+     * forbidden_zero_bit       1-bit
+     * nal_unit_type            6-bits
+     * nuh_reserved_zero_6bits  6-bits
+     * nuh_temporal_id_plus1    3-bits */
+    out[0] = nalUnitType << 1;
+    out[1] = 1;
+    uint32_t bytes = 2;
 
     /* 7.4.1 ...
      * Within the NAL unit, the following three-byte sequences shall not occur at
@@ -80,7 +77,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs)
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
 
-    X265_CHECK(bytes <= headerSize + bitsSize + (bitsSize >> 1), "NAL buffer overflow\n");
+    X265_CHECK(bytes <= 2 + bitsSize + (bitsSize >> 1), "NAL buffer overflow\n");
 
     m_nalUnitType = nalUnitType;
     m_packetSize = bytes;
