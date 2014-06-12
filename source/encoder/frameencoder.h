@@ -29,7 +29,7 @@
 #include "wavefront.h"
 
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/TComBitstream.h"
+#include "TLibCommon/TComBitStream.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
