@@ -222,7 +222,7 @@ public:
 
     char*         getPartitionSize()                      { return m_partSizes; }
 
-    PartSize      getPartitionSize(uint32_t idx)              { return static_cast<PartSize>(m_partSizes[idx]); }
+    PartSize      getPartitionSize(uint32_t idx)          { return static_cast<PartSize>(m_partSizes[idx]); }
 
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
     void          setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, uint32_t depth);
@@ -235,23 +235,23 @@ public:
 
     char*         getPredictionMode()                 { return m_predModes; }
 
-    PredMode      getPredictionMode(uint32_t idx)         { return static_cast<PredMode>(m_predModes[idx]); }
+    PredMode      getPredictionMode(uint32_t idx)     { return static_cast<PredMode>(m_predModes[idx]); }
 
     bool*         getCUTransquantBypass()             { return m_cuTransquantBypass; }
 
-    bool          getCUTransquantBypass(uint32_t idx)     { return m_cuTransquantBypass[idx]; }
+    bool          getCUTransquantBypass(uint32_t idx) { return m_cuTransquantBypass[idx]; }
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t*      getCUSize()                     { return m_cuSize; }
 
-    uint8_t       getCUSize(uint32_t idx)            { return m_cuSize[idx]; }
+    uint8_t       getCUSize(uint32_t idx)         { return m_cuSize[idx]; }
 
-    char*         getQP()                        { return m_qp; }
+    char*         getQP()                         { return m_qp; }
 
-    char          getQP(uint32_t idx)                { return m_qp[idx]; }
+    char          getQP(uint32_t idx)             { return m_qp[idx]; }
 
-    void          setQP(uint32_t idx, char value)    { m_qp[idx] =  value; }
+    void          setQP(uint32_t idx, char value) { m_qp[idx] =  value; }
 
     void          setQPSubParts(int qp,   uint32_t absPartIdx, uint32_t depth);
     int           getLastValidPartIdx(int absPartIdx);
@@ -447,7 +447,7 @@ public:
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t&     getTotalNumPart()               { return m_numPartitions; }
+    uint32_t&     getTotalNumPart()     { return m_numPartitions; }
 
     uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
 
