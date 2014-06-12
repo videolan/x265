@@ -336,7 +336,6 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             }
         }
     }
-    x265_emms();
 }
 
 void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint8_t minDepth)
@@ -831,13 +830,16 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             xCopyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
     }
 
-    if (!bInsidePicture) return;
-
     /* Assert if Best prediction mode is NONE
      * Selected mode's RD-cost must be not MAX_INT64 */
-    X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
-    X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
-    X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best prediction cost\n");
+    if (bInsidePicture)
+    {
+        X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
+        X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
+        X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best prediction cost\n");
+    }
+
+    x265_emms();
 }
 
 void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint8_t depth)
