@@ -383,7 +383,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         char currentQP = outTempCU->getQP(0);
         char previousQP = colocated0->getQP(0);
         uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
-        double sum0 = 0, sum1 = 0, avgDepth0 = 0, avgDepth1 = 0, avgDepth = 0;
+        uint32_t sum0 = 0, sum1 = 0;
         for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
         {
             if (colocated0 && colocated0->getDepth(i) < minDepth0)
@@ -396,12 +396,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 sum1 += (colocated1->getDepth(i) * 4);
         }
 
-        avgDepth0 = sum0 / outTempCU->getTotalNumPart();
-        avgDepth1 = sum1 / outTempCU->getTotalNumPart();
-        avgDepth = (avgDepth0 + avgDepth1) / 2;
-
+        uint32_t avgDepth2 = (sum0 + sum1) / outTempCU->getTotalNumPart();
         minDepth = X265_MIN(minDepth0, minDepth1);
-        if (((currentQP - previousQP) < 0) || (((currentQP - previousQP) >= 0) && ((avgDepth - minDepth) > 0.5)))
+        if (((currentQP - previousQP) < 0) || (((currentQP - previousQP) >= 0) && ((avgDepth2 - 2 * minDepth) > 1)))
             delta = 0;
         else
             delta = 1;
@@ -649,7 +646,6 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #endif
         {
             uint64_t totalCostNeigh = 0, totalCostCU = 0, totalCountNeigh = 0, totalCountCU = 0;
-            double avgCost = 0;
             TComDataCU* above = outTempCU->getCUAbove();
             TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
             TComDataCU* aboveRight = outTempCU->getCUAboveRight();
@@ -679,13 +675,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 totalCountNeigh += left->m_count[depth];
             }
 
-            //giving 60% weight to all CU's and 40% weight to neighbour CU's
+            // give 60% weight to all CU's and 40% weight to neighbour CU's
+            uint64_t avgCost = 0;
             if (totalCountNeigh + totalCountCU)
-                avgCost = ((0.6 * totalCostCU) + (0.4 * totalCostNeigh)) / ((0.6 * totalCountCU) + (0.4 * totalCountNeigh));
+                avgCost = ((3 * totalCostCU) + (2 * totalCostNeigh)) / ((3 * totalCountCU) + (2 * totalCountNeigh));
 
-            float lambda = 1.0f;
-
-            if (outBestCU->m_totalRDCost < lambda * avgCost && avgCost != 0 && depth != 0)
+            if (outBestCU->m_totalRDCost < avgCost && avgCost != 0 && depth != 0)
             {
                 /* Copy Best data to Picture for next partition prediction. */
                 outBestCU->copyToPic((uint8_t)depth);
