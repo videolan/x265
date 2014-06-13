@@ -1298,7 +1298,6 @@ private:
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
     int         m_sliceQp;
-    bool        m_dependentSliceSegmentFlag;
     bool        m_deblockingFilterDisable;
     bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
@@ -1329,7 +1328,6 @@ private:
     uint32_t    m_maxNumMergeCand;
 
     uint32_t    m_sliceCurEndCUAddr;
-    bool        m_nextSlice;
     uint32_t    m_sliceBits;
     uint32_t    m_sliceSegmentBits;
 
@@ -1398,10 +1396,6 @@ public:
     int       getPOC()                            { return m_poc; }
 
     int       getSliceQp()                        { return m_sliceQp; }
-
-    bool      getDependentSliceSegmentFlag() const   { return m_dependentSliceSegmentFlag; }
-
-    void      setDependentSliceSegmentFlag(bool val) { m_dependentSliceSegmentFlag = val; }
 
     int       getSliceQpDelta()                   { return m_sliceQpDelta; }
 
@@ -1511,10 +1505,6 @@ public:
     void setSliceCurEndCUAddr(uint32_t uiAddr)     { m_sliceCurEndCUAddr = uiAddr; }
 
     uint32_t getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
-
-    void setNextSlice(bool b)                  { m_nextSlice = b; }
-
-    bool isNextSlice()                         { return m_nextSlice; }
 
     void setSliceBits(uint32_t val)            { m_sliceBits = val; }
 

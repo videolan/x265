@@ -623,9 +623,7 @@ void FrameEncoder::compressFrame()
     else
         for (int i = 0; i < numSubstreams; i++)
             m_outStreams[i].clear();
-
     slice->allocSubstreamSizes(numSubstreams);
-    slice->setNextSlice(true);
 
     m_bs.clear();
     m_sbacCoder.init(&m_binCoderCABAC);

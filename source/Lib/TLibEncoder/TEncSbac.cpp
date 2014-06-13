@@ -1002,12 +1002,11 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
     }
     WRITE_UVLC(slice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
-    slice->setDependentSliceSegmentFlag(!slice->isNextSlice());
     if (sliceSegmentAddress > 0)
     {
         WRITE_CODE(sliceSegmentAddress, bitsSliceSegmentAddress, "slice_segment_address");
     }
-    if (!slice->getDependentSliceSegmentFlag())
+    if (!sliceSegmentAddress)
     {
         for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
         {
