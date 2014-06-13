@@ -116,10 +116,6 @@ void FrameFilter::start(TComPic *pic)
     }
 }
 
-void FrameFilter::end()
-{
-}
-
 void FrameFilter::processRow(int row, Encoder* cfg)
 {
     PPAScopeEvent(Thread_filterCU);

@@ -48,7 +48,6 @@ public:
     void destroy();
 
     void start(TComPic *pic);
-    void end();
 
     void processRow(int row, Encoder* cfg);
     void processRowPost(int row, Encoder* cfg);

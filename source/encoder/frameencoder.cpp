@@ -709,11 +709,6 @@ void FrameEncoder::compressFrame()
         }
     }
 
-    if (m_sps.getUseSAO())
-    {
-        m_frameFilter.end();
-    }
-
     // Decrement referenced frame reference counts, allow them to be recycled
     for (int l = 0; l < numPredDir; l++)
     {
