@@ -456,23 +456,6 @@ void FrameEncoder::compressFrame()
 
             m_top->m_lastBPSEI = totalCoded;
         }
-        if (m_cfg->m_gradualDecodingRefreshInfoEnabled && !slice->getRapPicFlag())
-        {
-            m_nalList[m_nalCount] = new NALUnit;
-            if (m_nalList[m_nalCount])
-            {
-                // Gradual decoding refresh SEI
-
-                SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
-                seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
-
-                m_bs.clear();
-                m_seiWriter.writeSEImessage(m_bs, seiGradualDecodingRefreshInfo, slice->getSPS());
-                m_bs.writeByteAlignment();
-
-                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
-            }
-        }
 
         // The recovery point SEI message assists a decoder in determining when the decoding
         // process will produce acceptable pictures for display after the decoder initiates

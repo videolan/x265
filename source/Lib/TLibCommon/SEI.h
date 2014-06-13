@@ -251,21 +251,6 @@ public:
     bool     persistenceFlag;
     bool     extensionFlag;
 };
-
-class SEIGradualDecodingRefreshInfo : public SEI
-{
-public:
-
-    PayloadType payloadType() const { return REGION_REFRESH_INFO; }
-
-    SEIGradualDecodingRefreshInfo()
-        : m_gdrForegroundFlag(0)
-    {}
-
-    virtual ~SEIGradualDecodingRefreshInfo() {}
-
-    bool m_gdrForegroundFlag;
-};
 }
 //! \}
 

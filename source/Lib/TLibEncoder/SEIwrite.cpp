@@ -130,8 +130,6 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
         xWriteSEIDisplayOrientation(*static_cast<const SEIDisplayOrientation*>(&sei));
         break;
     case SEI::REGION_REFRESH_INFO:
-        xWriteSEIGradualDecodingRefreshInfo(*static_cast<const SEIGradualDecodingRefreshInfo*>(&sei));
-        break;
     case SEI::SOP_DESCRIPTION:
     case SEI::TONE_MAPPING_INFO:
     case SEI::SCALABLE_NESTING:
@@ -366,12 +364,6 @@ void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
         WRITE_CODE(sei.anticlockwiseRotation, 16, "anticlockwise_rotation");
         WRITE_FLAG(sei.persistenceFlag,           "display_orientation_persistence_flag");
     }
-    xWriteByteAlign();
-}
-
-void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei)
-{
-    WRITE_FLAG(sei.m_gdrForegroundFlag, "gdr_foreground_flag");
     xWriteByteAlign();
 }
 
