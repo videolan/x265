@@ -422,107 +422,11 @@ void FrameEncoder::compressFrame()
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
         }
     }
-    if (m_cfg->m_param->bRepeatHeaders && m_pic->m_lowres.bKeyframe)
-        m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
-
-    int qp = slice->getSliceQp();
-
-    // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
-    // instead we weight the distortion of chroma.
-    int qpc;
-    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-    qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
-
-    double lambda = x265_lambda2_tab[qp];
-    double chromaLambda = lambda / crWeight;
-
-    // NOTE: set SAO lambda every Frame
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
-
-    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
-    for (int i = 0; i < m_numRows; i++)
+    if (m_pic->m_lowres.bKeyframe)
     {
-        m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
-    }
+        if (m_cfg->m_param->bRepeatHeaders)
+            m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
 
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
-
-    switch (slice->getSliceType())
-    {
-    case I_SLICE:
-        m_frameFilter.m_sao.depth = 0;
-        break;
-    case P_SLICE:
-        m_frameFilter.m_sao.depth = 1;
-        break;
-    case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
-        break;
-    }
-
-    /* Clip qps back to 0-51 range before encoding */
-    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->setSliceQp(qp);
-    m_pic->m_avgQpAq = qp;
-    slice->setSliceQpDelta(0);
-    slice->setSliceQpDeltaCb(0);
-    slice->setSliceQpDeltaCr(0);
-
-    int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
-    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
-    TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
-    TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
-
-    slice->setSliceSegmentBits(0);
-    determineSliceBounds();
-    slice->setNextSlice(false);
-
-    //------------------------------------------------------------------------------
-    //  Weighted Prediction parameters estimation.
-    //------------------------------------------------------------------------------
-    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
-    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
-    if (bUseWeightP || bUseWeightB)
-        weightAnalyse(*slice, *m_cfg->m_param);
-    else
-        slice->resetWpScaling();
-
-    // Generate motion references
-    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-    for (int l = 0; l < numPredDir; l++)
-    {
-        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
-        {
-            wpScalingParam *w = NULL;
-            if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
-                w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
-        }
-    }
-
-    // Analyze CTU rows, most of the hard work is done here
-    // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
-    // wave-front behind the CU compression and reconstruction
-    compressCTURows();
-
-    if (m_cfg->m_param->bEnableWavefront)
-    {
-        slice->setNextSlice(true);
-    }
-
-    if (slice->getPic()->m_lowres.bKeyframe)
-    {
         if (m_cfg->m_param->bEmitHRDSEI)
         {
             m_nalList[m_nalCount] = new NALUnit;
@@ -639,6 +543,103 @@ void FrameEncoder::compressFrame()
 
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
+    }
+
+
+    int qp = slice->getSliceQp();
+
+    // for RDO
+    // in RdCost there is only one lambda because the luma and chroma bits are not separated,
+    // instead we weight the distortion of chroma.
+    int qpc;
+    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
+    double cbWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
+    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
+    qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
+    double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
+
+    double lambda = x265_lambda2_tab[qp];
+    double chromaLambda = lambda / crWeight;
+
+    // NOTE: set SAO lambda every Frame
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambda = chromaLambda;
+
+    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
+    for (int i = 0; i < m_numRows; i++)
+    {
+        m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+        m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
+    }
+
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambda = chromaLambda;
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
+
+    switch (slice->getSliceType())
+    {
+    case I_SLICE:
+        m_frameFilter.m_sao.depth = 0;
+        break;
+    case P_SLICE:
+        m_frameFilter.m_sao.depth = 1;
+        break;
+    case B_SLICE:
+        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
+        break;
+    }
+
+    /* Clip qps back to 0-51 range before encoding */
+    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+    slice->setSliceQp(qp);
+    m_pic->m_avgQpAq = qp;
+    slice->setSliceQpDelta(0);
+    slice->setSliceQpDeltaCb(0);
+    slice->setSliceQpDeltaCr(0);
+
+    int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
+    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
+    TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
+    TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
+
+    slice->setSliceSegmentBits(0);
+    determineSliceBounds();
+    slice->setNextSlice(false);
+
+    //------------------------------------------------------------------------------
+    //  Weighted Prediction parameters estimation.
+    //------------------------------------------------------------------------------
+    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
+    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
+    if (bUseWeightP || bUseWeightB)
+        weightAnalyse(*slice, *m_cfg->m_param);
+    else
+        slice->resetWpScaling();
+
+    // Generate motion references
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    for (int l = 0; l < numPredDir; l++)
+    {
+        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
+        {
+            wpScalingParam *w = NULL;
+            if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
+                w = slice->m_weightPredTable[l][ref];
+            m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
+        }
+    }
+
+    // Analyze CTU rows, most of the hard work is done here
+    // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
+    // wave-front behind the CU compression and reconstruction
+    compressCTURows();
+
+    if (m_cfg->m_param->bEnableWavefront)
+    {
+        slice->setNextSlice(true);
     }
 
     /* use the main bitstream buffer for storing the marshaled picture */
