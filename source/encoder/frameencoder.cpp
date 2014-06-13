@@ -702,7 +702,6 @@ void FrameEncoder::compressFrame()
     encodeSlice(outStreams);
 
     // Construct the final bitstream by flushing and concatenating substreams.
-    // The final bitstream is either nalu.m_bitstream or pcBitstreamRedirect;
     uint32_t* substreamSizes = slice->getSubstreamSizes();
     for (int i = 0; i < numSubstreams; i++)
     {
