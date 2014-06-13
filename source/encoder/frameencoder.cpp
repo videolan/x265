@@ -616,9 +616,6 @@ void FrameEncoder::compressFrame()
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
     }
 
-    entropyCoder->setBitstream(NULL);
-
-
     /* start slice NALunit */
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     if (!m_outStreams)
