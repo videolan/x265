@@ -584,9 +584,6 @@ void FrameEncoder::compressFrame()
     slice->setSliceQpDeltaCr(0);
 
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
-    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
-    TComOutputBitstream*  bitstreamRedirect = new TComOutputBitstream;
-    TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
     slice->setSliceSegmentBits(0);
     determineSliceBounds();
@@ -621,9 +618,7 @@ void FrameEncoder::compressFrame()
     compressCTURows();
 
     if (m_cfg->m_param->bEnableWavefront)
-    {
         slice->setNextSlice(true);
-    }
 
     /* use the main bitstream buffer for storing the marshaled picture */
     if (m_sps.getUseSAO())
@@ -652,11 +647,13 @@ void FrameEncoder::compressFrame()
     slice->setNextSlice(true);
     determineSliceBounds();
 
+    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
+    TComOutputBitstream bitstreamRedirect;
+    TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
+
     slice->allocSubstreamSizes(numSubstreams);
     for (int i = 0; i < numSubstreams; i++)
-    {
         outStreams[i].clear();
-    }
 
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
@@ -670,13 +667,7 @@ void FrameEncoder::compressFrame()
 
     // is it needed?
     if (!sliceSegment)
-    {
-        bitstreamRedirect->writeAlignOne();
-    }
-    else
-    {
-        // We've not completed our slice header info yet, do the alignment later.
-    }
+        bitstreamRedirect.writeAlignOne();
 
     m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
@@ -696,13 +687,9 @@ void FrameEncoder::compressFrame()
 
         // File writing
         if (!sliceSegment)
-        {
-            entropyCoder->setBitstream(bitstreamRedirect);
-        }
+            entropyCoder->setBitstream(&bitstreamRedirect);
         else
-        {
             entropyCoder->setBitstream(&m_bs);
-        }
 
         // for now, override the TILES_DECODER setting in order to write substreams.
         entropyCoder->setBitstream(&outStreams[0]);
@@ -714,55 +701,43 @@ void FrameEncoder::compressFrame()
     slice->setTileOffstForMultES(0);
     encodeSlice(outStreams);
 
+    // Construct the final bitstream by flushing and concatenating substreams.
+    // The final bitstream is either nalu.m_bitstream or pcBitstreamRedirect;
+    uint32_t* substreamSizes = slice->getSubstreamSizes();
+    for (int i = 0; i < numSubstreams; i++)
     {
-        // Construct the final bitstream by flushing and concatenating substreams.
-        // The final bitstream is either nalu.m_bitstream or pcBitstreamRedirect;
-        uint32_t* substreamSizes = slice->getSubstreamSizes();
-        for (int i = 0; i < numSubstreams; i++)
+        // Flush all substreams -- this includes empty ones.
+        // Terminating bit and flush.
+        entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
+        entropyCoder->setBitstream(&outStreams[i]);
+        entropyCoder->encodeTerminatingBit(1);
+        entropyCoder->encodeSliceFinish();
+
+        outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
+
+        // Byte alignment is necessary between tiles when tiles are independent.
+        if (i + 1 < numSubstreams)
         {
-            // Flush all substreams -- this includes empty ones.
-            // Terminating bit and flush.
-            entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
-            entropyCoder->setBitstream(&outStreams[i]);
-            entropyCoder->encodeTerminatingBit(1);
-            entropyCoder->encodeSliceFinish();
-
-            outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
-
-            // Byte alignment is necessary between tiles when tiles are independent.
-            if (i + 1 < numSubstreams)
-            {
-                substreamSizes[i] = outStreams[i].getNumberOfWrittenBits() + (outStreams[i].countStartCodeEmulations() << 3);
-            }
-        }
-
-        // Complete the slice header info.
-        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->setBitstream(&m_bs);
-        entropyCoder->encodeTilesWPPEntryPoint(slice);
-
-        // Substreams...
-        int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
-        for (int i = 0; i < nss; i++)
-        {
-            bitstreamRedirect->appendSubstream(&outStreams[i]);
+            substreamSizes[i] = outStreams[i].getNumberOfWrittenBits() + (outStreams[i].countStartCodeEmulations() << 3);
         }
     }
 
-    // If current NALU is the first NALU of slice (containing slice header) and
-    // more NALUs exist (due to multiple dependent slices) then buffer it.  If
-    // current NALU is the last NALU of slice and a NALU was buffered, then (a)
-    // Write current NALU (b) Update an write buffered NALU at appropriate
-    // location in NALU list.
-    m_bs.writeByteAlignment(); // Slice header byte-alignment
+    // Complete the slice header info.
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+    entropyCoder->setBitstream(&m_bs);
+    entropyCoder->encodeTilesWPPEntryPoint(slice);
+
+    // Substreams...
+    int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
+    for (int i = 0; i < nss; i++)
+        bitstreamRedirect.appendSubstream(&outStreams[i]);
 
     // Perform bitstream concatenation
-    if (bitstreamRedirect->getNumberOfWrittenBits() > 0)
-    {
-        m_bs.appendSubstream(bitstreamRedirect);
-    }
+    m_bs.writeByteAlignment(); // Slice header byte-alignment
+    if (bitstreamRedirect.getNumberOfWrittenBits() > 0)
+        m_bs.appendSubstream(&bitstreamRedirect);
+
     entropyCoder->setBitstream(&m_bs);
-    bitstreamRedirect->clear();
 
     /* TODO: It's a bit late to handle malloc failure well here */
     m_nalList[m_nalCount] = new NALUnit;
@@ -826,7 +801,6 @@ void FrameEncoder::compressFrame()
 
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
     delete[] outStreams;
-    delete bitstreamRedirect;
 }
 
 void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
