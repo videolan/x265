@@ -595,9 +595,6 @@ void FrameEncoder::compressFrame()
     // wave-front behind the CU compression and reconstruction
     compressCTURows();
 
-    if (m_cfg->m_param->bEnableWavefront)
-        slice->setNextSlice(true);
-
     if (m_sps.getUseSAO())
     {
         SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
