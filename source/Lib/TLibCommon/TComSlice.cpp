@@ -71,7 +71,6 @@ TComSlice::TComSlice()
     , m_nextSlice(false)
     , m_sliceBits(0)
     , m_sliceSegmentBits(0)
-    , m_bFinalized(false)
     , m_tileOffstForMultES(0)
     , m_substreamSizes(NULL)
     , m_cabacInitFlag(false)
@@ -111,8 +110,6 @@ void TComSlice::initSlice()
     m_sliceQpDeltaCb = 0;
     m_sliceQpDeltaCr = 0;
     m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
-
-    m_bFinalized = false;
 
     m_cabacInitFlag = false;
     m_numEntryPointOffsets = 0;

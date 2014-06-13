@@ -1332,7 +1332,6 @@ private:
     bool        m_nextSlice;
     uint32_t    m_sliceBits;
     uint32_t    m_sliceSegmentBits;
-    bool        m_bFinalized;
 
     uint32_t    m_tileOffstForMultES;
 
@@ -1526,10 +1525,6 @@ public:
     void setSliceSegmentBits(uint32_t val)     { m_sliceSegmentBits = val; }
 
     uint32_t getSliceSegmentBits()             { return m_sliceSegmentBits; }
-
-    void setFinalized(bool val)                { m_bFinalized = val; }
-
-    bool getFinalized()                        { return m_bFinalized; }
 
     void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3); }
 

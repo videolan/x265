@@ -694,7 +694,6 @@ void FrameEncoder::compressFrame()
         // for now, override the TILES_DECODER setting in order to write substreams.
         entropyCoder->setBitstream(&outStreams[0]);
     }
-    slice->setFinalized(true);
 
     m_sbacCoder.load(getSbacCoder(0));
 
