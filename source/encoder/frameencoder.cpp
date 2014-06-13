@@ -528,7 +528,6 @@ void FrameEncoder::compressFrame()
         }
     }
 
-
     int qp = slice->getSliceQp();
 
     // for RDO
