@@ -993,270 +993,263 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         bitsSliceSegmentAddress++;
     }
 
-    //write slice address
-    int sliceSegmentAddress = 0;
-
-    WRITE_FLAG(sliceSegmentAddress == 0, "first_slice_segment_in_pic_flag");
+    WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
     {
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
     }
     WRITE_UVLC(slice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
-    if (sliceSegmentAddress > 0)
+
+    /* x265 does not use dependent slices, so always write all this data */
+    for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
-        WRITE_CODE(sliceSegmentAddress, bitsSliceSegmentAddress, "slice_segment_address");
+        X265_CHECK(0, "slice_reserved_undetermined_flag[]");
+        WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
-    if (!sliceSegmentAddress)
+
+    WRITE_UVLC(slice->getSliceType(),       "slice_type");
+
+    if (slice->getPPS()->getOutputFlagPresentFlag())
     {
-        for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+        WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
+    }
+    if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
+    {
+        //In this version separate_color_plane_flag is 0
+        if (slice->getSPS()->getSeparateColorPlaneFlag())
         {
-            X265_CHECK(0, "slice_reserved_undetermined_flag[]");
-            WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+            //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
+            //WRITE_FLAG(0, "colour_plane_id");
         }
+    }
+    if (!slice->getIdrPicFlag())
+    {
+        int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());
+        WRITE_CODE(picOrderCntLSB, slice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
+        TComReferencePictureSet* rps = slice->getRPS();
 
-        WRITE_UVLC(slice->getSliceType(),       "slice_type");
-
-        if (slice->getPPS()->getOutputFlagPresentFlag())
+        // check for bitstream restriction stating that:
+        // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+        // Ideally this process should not be repeated for each slice in a picture
+        if (slice->isIRAP())
         {
-            WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
-        }
-        if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
-        {
-            //In this version separate_color_plane_flag is 0
-            if (slice->getSPS()->getSeparateColorPlaneFlag())
+            for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
             {
-                //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
-                //WRITE_FLAG(0, "colour_plane_id");
-            }
-        }
-        if (!slice->getIdrPicFlag())
-        {
-            int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());
-            WRITE_CODE(picOrderCntLSB, slice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
-            TComReferencePictureSet* rps = slice->getRPS();
-
-            // check for bitstream restriction stating that:
-            // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-            // Ideally this process should not be repeated for each slice in a picture
-            if (slice->isIRAP())
-            {
-                for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
-                {
-                    X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
-                }
-            }
-
-            if (slice->getRPSidx() < 0)
-            {
-                WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-                codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
-            }
-            else
-            {
-                WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
-                int numBits = 0;
-                while ((1 << numBits) < slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets())
-                {
-                    numBits++;
-                }
-
-                if (numBits > 0)
-                {
-                    WRITE_CODE(slice->getRPSidx(), numBits, "short_term_ref_pic_set_idx");
-                }
-            }
-            if (slice->getSPS()->getLongTermRefsPresent())
-            {
-                int numLtrpInSH = rps->getNumberOfLongtermPictures();
-                int ltrpInSPS[MAX_NUM_REF_PICS];
-                int numLtrpInSPS = 0;
-                uint32_t ltrpIndex;
-                int counter = 0;
-                for (int k = rps->getNumberOfPictures() - 1; k > rps->getNumberOfPictures() - rps->getNumberOfLongtermPictures() - 1; k--)
-                {
-                    if (findMatchingLTRP(slice, &ltrpIndex, rps->getPOC(k), rps->getUsed(k)))
-                    {
-                        ltrpInSPS[numLtrpInSPS] = ltrpIndex;
-                        numLtrpInSPS++;
-                    }
-                    else
-                    {
-                        counter++;
-                    }
-                }
-
-                numLtrpInSH -= numLtrpInSPS;
-
-                int bitsForLtrpInSPS = 0;
-                while (slice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
-                {
-                    bitsForLtrpInSPS++;
-                }
-
-                if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
-                {
-                    WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
-                }
-                WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
-                // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
-                // Not sorted here because LT ref indices will be used in setRefPicList()
-                int prevDeltaMSB = 0, prevLSB = 0;
-                int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
-                for (int i = rps->getNumberOfPictures() - 1; i > offset - 1; i--)
-                {
-                    if (counter < numLtrpInSPS)
-                    {
-                        if (bitsForLtrpInSPS > 0)
-                        {
-                            WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
-                        }
-                    }
-                    else
-                    {
-                        WRITE_CODE(rps->getPocLSBLT(i), slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
-                        WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
-                    }
-                    WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
-
-                    if (rps->getDeltaPocMSBPresentFlag(i))
-                    {
-                        bool deltaFlag = false;
-                        //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
-                        if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
-                        {
-                            deltaFlag = true;
-                        }
-                        if (deltaFlag)
-                        {
-                            WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
-                        }
-                        else
-                        {
-                            int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
-                            X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
-                            WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
-                        }
-                        prevLSB = rps->getPocLSBLT(i);
-                        prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
-                    }
-                }
-            }
-            if (slice->getSPS()->getTMVPFlagsPresent())
-            {
-                WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
-            }
-        }
-        if (slice->getSPS()->getUseSAO())
-        {
-            if (slice->getSPS()->getUseSAO())
-            {
-                WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
-                {
-                    SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-                    WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
-                }
+                X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
             }
         }
 
-        //check if numrefidxes match the defaults. If not, override
-
-        if (!slice->isIntra())
+        if (slice->getRPSidx() < 0)
         {
-            bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
-            WRITE_FLAG(overrideFlag ? 1 : 0,                               "num_ref_idx_active_override_flag");
-            if (overrideFlag)
-            {
-                WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,      "num_ref_idx_l0_active_minus1");
-                if (slice->isInterB())
-                {
-                    WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1,    "num_ref_idx_l1_active_minus1");
-                }
-                else
-                {
-                    slice->setNumRefIdx(REF_PIC_LIST_1, 0);
-                }
-            }
+            WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+            codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
         }
         else
         {
-            slice->setNumRefIdx(REF_PIC_LIST_0, 0);
-            slice->setNumRefIdx(REF_PIC_LIST_1, 0);
-        }
-
-        if (slice->isInterB())
-        {
-            WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
-        }
-
-        if (!slice->isIntra())
-        {
-            if (!slice->isIntra() && slice->getPPS()->getCabacInitPresentFlag())
+            WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
+            int numBits = 0;
+            while ((1 << numBits) < slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets())
             {
-                SliceType sliceType   = slice->getSliceType();
-                int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
-                bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-                slice->setCabacInitFlag(encCabacInitFlag);
-                WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
-            }
-        }
-
-        if (slice->getEnableTMVPFlag())
-        {
-            if (slice->getSliceType() == B_SLICE)
-            {
-                WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
+                numBits++;
             }
 
-            if (slice->getSliceType() != I_SLICE &&
-                ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
-                 (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+            if (numBits > 0)
             {
-                WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
+                WRITE_CODE(slice->getRPSidx(), numBits, "short_term_ref_pic_set_idx");
             }
         }
-        if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
+        if (slice->getSPS()->getLongTermRefsPresent())
         {
-            xCodePredWeightTable(slice);
-        }
-        X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
-        if (!slice->isIntra())
-        {
-            WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
-        }
-        int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
-        WRITE_SVLC(code, "slice_qp_delta");
-        if (slice->getPPS()->getSliceChromaQpFlag())
-        {
-            code = slice->getSliceQpDeltaCb();
-            WRITE_SVLC(code, "slice_qp_delta_cb");
-            code = slice->getSliceQpDeltaCr();
-            WRITE_SVLC(code, "slice_qp_delta_cr");
-        }
-        if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
-        {
-            if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
+            int numLtrpInSH = rps->getNumberOfLongtermPictures();
+            int ltrpInSPS[MAX_NUM_REF_PICS];
+            int numLtrpInSPS = 0;
+            uint32_t ltrpIndex;
+            int counter = 0;
+            for (int k = rps->getNumberOfPictures() - 1; k > rps->getNumberOfPictures() - rps->getNumberOfLongtermPictures() - 1; k--)
             {
-                WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
-            }
-            if (slice->getDeblockingFilterOverrideFlag())
-            {
-                WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
-                if (!slice->getDeblockingFilterDisable())
+                if (findMatchingLTRP(slice, &ltrpIndex, rps->getPOC(k), rps->getUsed(k)))
                 {
-                    WRITE_SVLC(slice->getDeblockingFilterBetaOffsetDiv2(), "slice_beta_offset_div2");
-                    WRITE_SVLC(slice->getDeblockingFilterTcOffsetDiv2(),   "slice_tc_offset_div2");
+                    ltrpInSPS[numLtrpInSPS] = ltrpIndex;
+                    numLtrpInSPS++;
+                }
+                else
+                {
+                    counter++;
+                }
+            }
+
+            numLtrpInSH -= numLtrpInSPS;
+
+            int bitsForLtrpInSPS = 0;
+            while (slice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
+            {
+                bitsForLtrpInSPS++;
+            }
+
+            if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
+            {
+                WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
+            }
+            WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
+            // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
+            // Not sorted here because LT ref indices will be used in setRefPicList()
+            int prevDeltaMSB = 0, prevLSB = 0;
+            int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
+            for (int i = rps->getNumberOfPictures() - 1; i > offset - 1; i--)
+            {
+                if (counter < numLtrpInSPS)
+                {
+                    if (bitsForLtrpInSPS > 0)
+                    {
+                        WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
+                    }
+                }
+                else
+                {
+                    WRITE_CODE(rps->getPocLSBLT(i), slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
+                    WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
+                }
+                WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
+
+                if (rps->getDeltaPocMSBPresentFlag(i))
+                {
+                    bool deltaFlag = false;
+                    //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
+                    if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
+                    {
+                        deltaFlag = true;
+                    }
+                    if (deltaFlag)
+                    {
+                        WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
+                    }
+                    else
+                    {
+                        int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
+                        X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
+                        WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
+                    }
+                    prevLSB = rps->getPocLSBLT(i);
+                    prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
                 }
             }
         }
-
-        bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
-        bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
-
-        if (isSAOEnabled || isDBFEnabled)
+        if (slice->getSPS()->getTMVPFlagsPresent())
         {
-            WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+            WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
         }
     }
+    if (slice->getSPS()->getUseSAO())
+    {
+        if (slice->getSPS()->getUseSAO())
+        {
+            WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
+            {
+                SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+                WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
+            }
+        }
+    }
+
+    //check if numrefidxes match the defaults. If not, override
+
+    if (!slice->isIntra())
+    {
+        bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
+        WRITE_FLAG(overrideFlag ? 1 : 0,                               "num_ref_idx_active_override_flag");
+        if (overrideFlag)
+        {
+            WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,      "num_ref_idx_l0_active_minus1");
+            if (slice->isInterB())
+            {
+                WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1,    "num_ref_idx_l1_active_minus1");
+            }
+            else
+            {
+                slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+            }
+        }
+    }
+    else
+    {
+        slice->setNumRefIdx(REF_PIC_LIST_0, 0);
+        slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+    }
+
+    if (slice->isInterB())
+    {
+        WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
+    }
+
+    if (!slice->isIntra())
+    {
+        if (!slice->isIntra() && slice->getPPS()->getCabacInitPresentFlag())
+        {
+            SliceType sliceType   = slice->getSliceType();
+            int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
+            bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
+            slice->setCabacInitFlag(encCabacInitFlag);
+            WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
+        }
+    }
+
+    if (slice->getEnableTMVPFlag())
+    {
+        if (slice->getSliceType() == B_SLICE)
+        {
+            WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
+        }
+
+        if (slice->getSliceType() != I_SLICE &&
+            ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
+                (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+        {
+            WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
+        }
+    }
+    if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
+    {
+        xCodePredWeightTable(slice);
+    }
+    X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
+    if (!slice->isIntra())
+    {
+        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
+    }
+    int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
+    WRITE_SVLC(code, "slice_qp_delta");
+    if (slice->getPPS()->getSliceChromaQpFlag())
+    {
+        code = slice->getSliceQpDeltaCb();
+        WRITE_SVLC(code, "slice_qp_delta_cb");
+        code = slice->getSliceQpDeltaCr();
+        WRITE_SVLC(code, "slice_qp_delta_cr");
+    }
+    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    {
+        if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
+        {
+            WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
+        }
+        if (slice->getDeblockingFilterOverrideFlag())
+        {
+            WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
+            if (!slice->getDeblockingFilterDisable())
+            {
+                WRITE_SVLC(slice->getDeblockingFilterBetaOffsetDiv2(), "slice_beta_offset_div2");
+                WRITE_SVLC(slice->getDeblockingFilterTcOffsetDiv2(),   "slice_tc_offset_div2");
+            }
+        }
+    }
+
+    bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
+    bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
+
+    if (isSAOEnabled || isDBFEnabled)
+    {
+        WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+    }
+
     if (slice->getPPS()->getSliceHeaderExtensionPresentFlag())
     {
         WRITE_UVLC(0, "slice_header_extension_length");
