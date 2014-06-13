@@ -556,7 +556,7 @@ void FrameEncoder::compressFrame()
         m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
     }
 
-    /* Clip qps back to 0-51 range before encoding */
+    // Clip qps back to 0-51 range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
     slice->setSliceQp(qp);
     m_pic->m_avgQpAq = qp;
@@ -580,9 +580,7 @@ void FrameEncoder::compressFrame()
     slice->setSliceSegmentBits(0);
     slice->setSliceCurEndCUAddr(m_pic->getNumCUsInFrame() * m_pic->getNumPartInCU());
 
-    //------------------------------------------------------------------------------
-    //  Weighted Prediction parameters estimation.
-    //------------------------------------------------------------------------------
+    // Weighted Prediction parameters estimation.
     bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
     bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
     if (bUseWeightP || bUseWeightB)
@@ -614,7 +612,6 @@ void FrameEncoder::compressFrame()
     if (m_cfg->m_param->bEnableWavefront)
         slice->setNextSlice(true);
 
-    /* use the main bitstream buffer for storing the marshaled picture */
     if (m_sps.getUseSAO())
     {
         SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
@@ -736,7 +733,7 @@ void FrameEncoder::compressFrame()
     if (m_nalList[m_nalCount])
         m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), m_bs);
 
-    /* write decoded picture hash SEI messages */
+    // write decoded picture hash SEI messages
     if (m_cfg->m_param->decodedPictureHashSEI)
     {
         if (m_cfg->m_param->decodedPictureHashSEI == 1)
@@ -779,7 +776,7 @@ void FrameEncoder::compressFrame()
         m_frameFilter.end();
     }
 
-    /* Decrement referenced frame reference counts, allow them to be recycled */
+    // Decrement referenced frame reference counts, allow them to be recycled
     for (int l = 0; l < numPredDir; l++)
     {
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
