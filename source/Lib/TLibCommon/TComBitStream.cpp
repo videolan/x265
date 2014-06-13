@@ -153,6 +153,9 @@ int TComOutputBitstream::countStartCodeEmulations()
 
 void TComOutputBitstream::appendSubstream(TComOutputBitstream* substream)
 {
+    X265_CHECK(!m_partialByteBits, "appending to a non-aligned buffer\n");
+    X265_CHECK(!substream->m_partialByteBits, "appending a non-aligned buffer\n");
+
     if (m_byteOccupancy + substream->m_byteOccupancy > m_byteAlloc)
     {
         /* reallocate buffer with doubled size */
@@ -170,16 +173,7 @@ void TComOutputBitstream::appendSubstream(TComOutputBitstream* substream)
             return;
         }
     }
-    if (m_partialByteBits)
-    {
-        for (uint32_t i = 0; i < substream->m_byteOccupancy; i++)
-            write(substream->m_fifo[i], 8);
-    }
-    else
-    {
-        memcpy(m_fifo + m_byteOccupancy, substream->m_fifo, substream->m_byteOccupancy);
-        m_byteOccupancy += substream->m_byteOccupancy;
-    }
-    if (substream->m_partialByteBits)
-        write(substream->m_partialByte >> (8 - substream->m_partialByteBits), substream->m_partialByteBits);
+
+    memcpy(m_fifo + m_byteOccupancy, substream->m_fifo, substream->m_byteOccupancy);
+    m_byteOccupancy += substream->m_byteOccupancy;
 }
