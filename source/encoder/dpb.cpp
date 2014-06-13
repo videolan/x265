@@ -176,7 +176,6 @@ void DPB::prepareEncode(TComPic *pic)
     }
 
     slice->setMvdL1ZeroFlag(bGPBcheck);
-    slice->setNextSlice(false);
 
     /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
      * it prevents the frame from being recycled, and second the referenced frames know how many
