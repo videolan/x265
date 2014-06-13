@@ -564,11 +564,6 @@ void FrameEncoder::compressFrame()
     slice->setSliceQpDeltaCb(0);
     slice->setSliceQpDeltaCr(0);
 
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
-
     switch (slice->getSliceType())
     {
     case I_SLICE:
@@ -581,8 +576,6 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
         break;
     }
-
-    int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
 
     slice->setSliceSegmentBits(0);
     slice->setSliceCurEndCUAddr(m_pic->getNumCUsInFrame() * m_pic->getNumPartInCU());
@@ -609,6 +602,9 @@ void FrameEncoder::compressFrame()
             m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
         }
     }
+
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
 
     // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
@@ -645,6 +641,7 @@ void FrameEncoder::compressFrame()
     slice->setNextSlice(true);
 
     // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
+    int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     TComOutputBitstream bitstreamRedirect;
     TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
 
