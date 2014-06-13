@@ -557,6 +557,14 @@ void FrameEncoder::compressFrame()
         m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
     }
 
+    /* Clip qps back to 0-51 range before encoding */
+    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+    slice->setSliceQp(qp);
+    m_pic->m_avgQpAq = qp;
+    slice->setSliceQpDelta(0);
+    slice->setSliceQpDeltaCb(0);
+    slice->setSliceQpDeltaCr(0);
+
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
     m_bAllRowsStop = false;
@@ -574,14 +582,6 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
         break;
     }
-
-    /* Clip qps back to 0-51 range before encoding */
-    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->setSliceQp(qp);
-    m_pic->m_avgQpAq = qp;
-    slice->setSliceQpDelta(0);
-    slice->setSliceQpDeltaCb(0);
-    slice->setSliceQpDeltaCr(0);
 
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
 
