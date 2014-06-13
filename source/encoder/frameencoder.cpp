@@ -663,8 +663,7 @@ void FrameEncoder::compressFrame()
     entropyCoder->encodeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
 
-    int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
-    for (int i = 0; i < nss; i++)
+    for (int i = 0; i < numSubstreams; i++)
         m_bs.appendSubstream(&m_outStreams[i]);
 
     /* TODO: It's a bit late to handle malloc failure well here */
