@@ -630,60 +630,42 @@ void FrameEncoder::compressFrame()
     slice->allocSubstreamSizes(numSubstreams);
     slice->setNextSlice(true);
 
+    m_bs.clear();
+    m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
-
-    m_bs.clear();
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeSliceHeader(slice);
-
-    m_sbacCoder.init(&m_binCoderCABAC);
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-    entropyCoder->resetEntropy();
     resetEntropy(slice);
 
-    // set entropy coder for writing
-    m_sbacCoder.init(&m_binCoderCABAC);
-    resetEntropy(slice);
     getSbacCoder(0)->load(&m_sbacCoder);
-
     entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
     entropyCoder->resetEntropy();
-
-    // for now, override the TILES_DECODER setting in order to write substreams.
     entropyCoder->setBitstream(&m_outStreams[0]);
-
     m_sbacCoder.load(getSbacCoder(0));
-
     encodeSlice(m_outStreams);
 
     // Construct the final bitstream by flushing and concatenating substreams.
     uint32_t* substreamSizes = slice->getSubstreamSizes();
     for (int i = 0; i < numSubstreams; i++)
     {
-        // Flush all substreams -- this includes empty ones.
-        // Terminating bit and flush.
         entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
         entropyCoder->setBitstream(&m_outStreams[i]);
         entropyCoder->encodeTerminatingBit(1);
         entropyCoder->encodeSliceFinish();
 
-        m_outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
-
-        // Byte alignment is necessary between tiles when tiles are independent.
+        // record final byte size (after start code escaping) for WPP entry points in slice header
+        m_outStreams[i].writeByteAlignment();
         if (i + 1 < numSubstreams)
-        {
             substreamSizes[i] = m_outStreams[i].getNumberOfWrittenBits() + (m_outStreams[i].countStartCodeEmulations() << 3);
-        }
     }
 
     // Complete the slice header info.
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeTilesWPPEntryPoint(slice);
+    m_bs.writeByteAlignment();
 
-    // Substreams...
-    m_bs.writeByteAlignment(); // Slice header byte-alignment
     int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
     for (int i = 0; i < nss; i++)
         m_bs.appendSubstream(&m_outStreams[i]);
