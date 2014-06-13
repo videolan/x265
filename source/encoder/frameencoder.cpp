@@ -601,6 +601,7 @@ void FrameEncoder::compressFrame()
 
         if (!getSAO()->getSaoLcuBasedOptimization())
         {
+            /* frame based SAO */
             getSAO()->SAOProcess(saoParam);
             getSAO()->endSaoEnc();
             PCMLFDisableProcess(m_pic);
