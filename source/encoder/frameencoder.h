@@ -173,7 +173,6 @@ public:
 
 protected:
 
-    void determineSliceBounds();
     int calcQpForCu(uint32_t cuAddr, double baseQp);
     void noiseReductionUpdate();
 

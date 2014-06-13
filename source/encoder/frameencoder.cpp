@@ -586,8 +586,7 @@ void FrameEncoder::compressFrame()
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
 
     slice->setSliceSegmentBits(0);
-    determineSliceBounds();
-    slice->setNextSlice(false);
+    slice->setSliceCurEndCUAddr(m_pic->getNumCUsInFrame() * m_pic->getNumPartInCU());
 
     //------------------------------------------------------------------------------
     //  Weighted Prediction parameters estimation.
@@ -645,7 +644,6 @@ void FrameEncoder::compressFrame()
 
     // Reconstruction slice
     slice->setNextSlice(true);
-    determineSliceBounds();
 
     // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
     TComOutputBitstream bitstreamRedirect;
@@ -974,18 +972,6 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
     {
         entropyCoder->determineCabacInitIdx();
     }
-}
-
-/** Determines the starting and bounding LCU address of current slice / dependent slice
- * \returns Updates startCUAddr, boundingCUAddr with appropriate LCU address
- */
-void FrameEncoder::determineSliceBounds()
-{
-    uint32_t numberOfCUsInFrame = m_pic->getNumCUsInFrame();
-    uint32_t boundingCUAddrSlice = numberOfCUsInFrame * m_pic->getNumPartInCU();
-
-    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    m_pic->getSlice()->setSliceCurEndCUAddr(boundingCUAddrSlice);
 }
 
 void FrameEncoder::compressCTURows()
