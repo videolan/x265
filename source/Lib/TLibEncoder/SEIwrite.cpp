@@ -127,8 +127,6 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
         xWriteSEIRecoveryPoint(*static_cast<const SEIRecoveryPoint*>(&sei));
         break;
     case SEI::DISPLAY_ORIENTATION:
-        xWriteSEIDisplayOrientation(*static_cast<const SEIDisplayOrientation*>(&sei));
-        break;
     case SEI::REGION_REFRESH_INFO:
     case SEI::SOP_DESCRIPTION:
     case SEI::TONE_MAPPING_INFO:
@@ -351,19 +349,6 @@ void SEIWriter::xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei)
     WRITE_SVLC(sei.m_recoveryPocCnt,    "recovery_poc_cnt");
     WRITE_FLAG(sei.m_exactMatchingFlag, "exact_matching_flag");
     WRITE_FLAG(sei.m_brokenLinkFlag,    "broken_link_flag");
-    xWriteByteAlign();
-}
-
-void SEIWriter::xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei)
-{
-    WRITE_FLAG(sei.cancelFlag,           "display_orientation_cancel_flag");
-    if (!sei.cancelFlag)
-    {
-        WRITE_FLAG(sei.horFlip,                   "hor_flip");
-        WRITE_FLAG(sei.verFlip,                   "ver_flip");
-        WRITE_CODE(sei.anticlockwiseRotation, 16, "anticlockwise_rotation");
-        WRITE_FLAG(sei.persistenceFlag,           "display_orientation_persistence_flag");
-    }
     xWriteByteAlign();
 }
 

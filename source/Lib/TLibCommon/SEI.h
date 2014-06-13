@@ -228,29 +228,6 @@ public:
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;
 };
-
-class SEIDisplayOrientation : public SEI
-{
-public:
-
-    PayloadType payloadType() const { return DISPLAY_ORIENTATION; }
-
-    SEIDisplayOrientation()
-        : cancelFlag(true)
-        , persistenceFlag(0)
-        , extensionFlag(false)
-    {}
-
-    virtual ~SEIDisplayOrientation() {}
-
-    bool     cancelFlag;
-    bool     horFlip;
-    bool     verFlip;
-
-    uint32_t anticlockwiseRotation;
-    bool     persistenceFlag;
-    bool     extensionFlag;
-};
 }
 //! \}
 

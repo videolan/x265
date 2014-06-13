@@ -155,7 +155,6 @@ public:
 
     int64_t            m_encodedFrameNum;
     int                m_lastBPSEI;
-    int                m_displayOrientationSEIAngle;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
 

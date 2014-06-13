@@ -64,7 +64,6 @@ protected:
     void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps);
     void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
     void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
-    void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
     void xWriteByteAlign();
 };
 }

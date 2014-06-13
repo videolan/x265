@@ -1415,7 +1415,6 @@ void Encoder::configure(x265_param *p)
 
     m_nonPackedConstraintFlag = false;
     m_frameOnlyConstraintFlag = false;
-    m_displayOrientationSEIAngle = 0;
     m_useScalingListId = 0;
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;

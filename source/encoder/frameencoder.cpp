@@ -285,23 +285,6 @@ int FrameEncoder::getStreamHeaders(NALUnit **nalunits)
         }
     }
 
-    if (m_cfg->m_displayOrientationSEIAngle)
-    {
-        SEIDisplayOrientation sei;
-        sei.cancelFlag = false;
-        sei.horFlip = false;
-        sei.verFlip = false;
-        sei.anticlockwiseRotation = m_cfg->m_displayOrientationSEIAngle;
-
-        nalunits[count] = new NALUnit;
-        if (nalunits[count])
-        {
-            bs.clear();
-            m_seiWriter.writeSEImessage(bs, sei, &m_sps);
-            bs.writeByteAlignment();
-            nalunits[count++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
-        }
-    }
     return count;
 }
 
