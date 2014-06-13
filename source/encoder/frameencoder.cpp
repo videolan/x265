@@ -617,9 +617,8 @@ void FrameEncoder::compressFrame()
 
     entropyCoder->setBitstream(NULL);
 
-    // Reconstruction slice
-    slice->setNextSlice(true);
 
+    /* start slice NALunit */
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     if (!m_outStreams)
         m_outStreams = new TComOutputBitstream[numSubstreams];
@@ -628,12 +627,10 @@ void FrameEncoder::compressFrame()
             m_outStreams[i].clear();
 
     slice->allocSubstreamSizes(numSubstreams);
+    slice->setNextSlice(true);
 
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
-
-    /* start slice NALunit */
-    bool sliceSegment = !slice->isNextSlice();
 
     m_bs.clear();
     entropyCoder->setBitstream(&m_bs);
@@ -641,35 +638,21 @@ void FrameEncoder::compressFrame()
 
     TComOutputBitstream bitstreamRedirect;
 
-    // is it needed?
-    if (!sliceSegment)
-        bitstreamRedirect.writeAlignOne();
-
     m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
     resetEntropy(slice);
 
-    if (slice->isNextSlice())
-    {
-        // set entropy coder for writing
-        m_sbacCoder.init(&m_binCoderCABAC);
-        resetEntropy(slice);
-        getSbacCoder(0)->load(&m_sbacCoder);
+    // set entropy coder for writing
+    m_sbacCoder.init(&m_binCoderCABAC);
+    resetEntropy(slice);
+    getSbacCoder(0)->load(&m_sbacCoder);
 
-        //ALF is written in substream #0 with CABAC coder #0 (see ALF param encoding below)
-        entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
-        entropyCoder->resetEntropy();
+    entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
+    entropyCoder->resetEntropy();
 
-        // File writing
-        if (!sliceSegment)
-            entropyCoder->setBitstream(&bitstreamRedirect);
-        else
-            entropyCoder->setBitstream(&m_bs);
-
-        // for now, override the TILES_DECODER setting in order to write substreams.
-        entropyCoder->setBitstream(&m_outStreams[0]);
-    }
+    // for now, override the TILES_DECODER setting in order to write substreams.
+    entropyCoder->setBitstream(&m_outStreams[0]);
 
     m_sbacCoder.load(getSbacCoder(0));
 
