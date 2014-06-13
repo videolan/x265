@@ -654,7 +654,6 @@ void FrameEncoder::compressFrame()
 
     m_sbacCoder.load(getSbacCoder(0));
 
-    slice->setTileOffstForMultES(0);
     encodeSlice(m_outStreams);
 
     // Construct the final bitstream by flushing and concatenating substreams.

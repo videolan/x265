@@ -1333,8 +1333,6 @@ private:
     uint32_t    m_sliceBits;
     uint32_t    m_sliceSegmentBits;
 
-    uint32_t    m_tileOffstForMultES;
-
     uint32_t*   m_substreamSizes;
     TComScalingList* m_scalingList; //!< pointer of quantization matrix
     bool        m_cabacInitFlag;
@@ -1533,10 +1531,6 @@ public:
     void  resetWpScaling();
     void  initWpScaling();
     inline bool applyWP() { return (m_sliceType == P_SLICE && m_pps->getUseWP()) || (m_sliceType == B_SLICE && m_pps->getWPBiPred()); }
-
-    void setTileOffstForMultES(uint32_t offset) { m_tileOffstForMultES = offset; }
-
-    uint32_t getTileOffstForMultES()           { return m_tileOffstForMultES; }
 
     void allocSubstreamSizes(uint32_t uiNumSubstreams);
     uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
