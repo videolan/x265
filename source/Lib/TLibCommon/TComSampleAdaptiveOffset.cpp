@@ -1246,7 +1246,6 @@ void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam*
     }
 }
 
-static void xPCMRestoration(TComPic* pic);
 static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, TextType ttText);
 
 /** PCM LF disable process.
@@ -1256,15 +1255,6 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
  * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
  */
 void PCMLFDisableProcess(TComPic* pic)
-{
-    xPCMRestoration(pic);
-}
-
-/** Picture-level PCM restoration.
- * \param pic picture (TComPic) pointer
- * \returns void
- */
-static void xPCMRestoration(TComPic* pic)
 {
     bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
