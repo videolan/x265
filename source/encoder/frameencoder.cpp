@@ -633,7 +633,12 @@ void FrameEncoder::compressFrame()
     entropyCoder->resetEntropy();
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeSliceHeader(slice);
-    resetEntropy(slice);
+
+    for (int i = 0; i < m_numRows; i++)
+    {
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
+        m_rows[i].m_entropyCoder.resetEntropy();
+    }
 
     getSbacCoder(0)->load(&m_sbacCoder);
     entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
@@ -657,7 +662,7 @@ void FrameEncoder::compressFrame()
             substreamSizes[i] = m_outStreams[i].getNumberOfWrittenBits() + (m_outStreams[i].countStartCodeEmulations() << 3);
     }
 
-    // Complete the slice header info.
+    // Complete the slice header
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeTilesWPPEntryPoint(slice);

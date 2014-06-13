@@ -127,15 +127,6 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
-    void resetEntropy(TComSlice *slice)
-    {
-        for (int i = 0; i < this->m_numRows; i++)
-        {
-            this->m_rows[i].m_entropyCoder.setEntropyCoder(&this->m_rows[i].m_sbacCoder, slice);
-            this->m_rows[i].m_entropyCoder.resetEntropy();
-        }
-    }
-
     int getStreamHeaders(NALUnit **nalunits);
 
     void initSlice(TComPic* pic);
