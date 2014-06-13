@@ -146,7 +146,6 @@ public:
     uint32_t           m_pcmLog2MaxSize;
     uint32_t           m_pcmLog2MinSize;
 
-    bool               m_bPCMInputBitDepthFlag; //unused field
     uint32_t           m_pcmBitDepthLuma;  // unused field, TComSPS has it's own version defaulted to 8
     uint32_t           m_pcmBitDepthChroma; // unused field, TComSPS has it's own version defaulted to 8
 

@@ -1425,10 +1425,11 @@ void Encoder::configure(x265_param *p)
     m_maxBitsPerMinCuDenom = 1;
     m_log2MaxMvLengthHorizontal = 15;
     m_log2MaxMvLengthVertical = 15;
+
+    /* Should PCM be entirely removed? Would it help lossless? */
     m_usePCM = 0;
     m_pcmLog2MinSize = 3;
     m_pcmLog2MaxSize = 5;
-    m_bPCMInputBitDepthFlag = true;
     m_bPCMFilterDisableFlag = false;
 }
 
