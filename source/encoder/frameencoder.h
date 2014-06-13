@@ -184,6 +184,7 @@ protected:
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
     TComOutputBitstream      m_bs;
+    TComOutputBitstream*     m_outStreams;
     TComBitCounter           m_bitCounter;
     NoiseReduction           m_nr;
 

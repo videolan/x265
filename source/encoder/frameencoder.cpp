@@ -57,6 +57,7 @@ FrameEncoder::FrameEncoder()
     m_totalTime = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
+    m_outStreams = NULL;
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
@@ -86,7 +87,9 @@ void FrameEncoder::destroy()
         delete[] m_rows;
     }
 
+    delete[] m_outStreams;
     m_frameFilter.destroy();
+
     // wait for worker thread to exit
     stop();
 }
@@ -637,14 +640,14 @@ void FrameEncoder::compressFrame()
     // Reconstruction slice
     slice->setNextSlice(true);
 
-    // TODO: these two items can likely be FrameEncoder member variables to avoid re-allocs
     int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
-    TComOutputBitstream bitstreamRedirect;
-    TComOutputBitstream*  outStreams = new TComOutputBitstream[numSubstreams];
+    if (!m_outStreams)
+        m_outStreams = new TComOutputBitstream[numSubstreams];
+    else
+        for (int i = 0; i < numSubstreams; i++)
+            m_outStreams[i].clear();
 
     slice->allocSubstreamSizes(numSubstreams);
-    for (int i = 0; i < numSubstreams; i++)
-        outStreams[i].clear();
 
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
@@ -655,6 +658,8 @@ void FrameEncoder::compressFrame()
     m_bs.clear();
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeSliceHeader(slice);
+
+    TComOutputBitstream bitstreamRedirect;
 
     // is it needed?
     if (!sliceSegment)
@@ -683,13 +688,13 @@ void FrameEncoder::compressFrame()
             entropyCoder->setBitstream(&m_bs);
 
         // for now, override the TILES_DECODER setting in order to write substreams.
-        entropyCoder->setBitstream(&outStreams[0]);
+        entropyCoder->setBitstream(&m_outStreams[0]);
     }
 
     m_sbacCoder.load(getSbacCoder(0));
 
     slice->setTileOffstForMultES(0);
-    encodeSlice(outStreams);
+    encodeSlice(m_outStreams);
 
     // Construct the final bitstream by flushing and concatenating substreams.
     uint32_t* substreamSizes = slice->getSubstreamSizes();
@@ -698,16 +703,16 @@ void FrameEncoder::compressFrame()
         // Flush all substreams -- this includes empty ones.
         // Terminating bit and flush.
         entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
-        entropyCoder->setBitstream(&outStreams[i]);
+        entropyCoder->setBitstream(&m_outStreams[i]);
         entropyCoder->encodeTerminatingBit(1);
         entropyCoder->encodeSliceFinish();
 
-        outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
+        m_outStreams[i].writeByteAlignment(); // Byte-alignment in slice_data() at end of sub-stream
 
         // Byte alignment is necessary between tiles when tiles are independent.
         if (i + 1 < numSubstreams)
         {
-            substreamSizes[i] = outStreams[i].getNumberOfWrittenBits() + (outStreams[i].countStartCodeEmulations() << 3);
+            substreamSizes[i] = m_outStreams[i].getNumberOfWrittenBits() + (m_outStreams[i].countStartCodeEmulations() << 3);
         }
     }
 
@@ -719,7 +724,7 @@ void FrameEncoder::compressFrame()
     // Substreams...
     int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
     for (int i = 0; i < nss; i++)
-        bitstreamRedirect.appendSubstream(&outStreams[i]);
+        bitstreamRedirect.appendSubstream(&m_outStreams[i]);
 
     // Perform bitstream concatenation
     m_bs.writeByteAlignment(); // Slice header byte-alignment
@@ -789,7 +794,6 @@ void FrameEncoder::compressFrame()
     noiseReductionUpdate();
 
     m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
-    delete[] outStreams;
 }
 
 void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
