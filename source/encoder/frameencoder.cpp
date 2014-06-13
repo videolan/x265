@@ -636,8 +636,6 @@ void FrameEncoder::compressFrame()
     entropyCoder->setBitstream(&m_bs);
     entropyCoder->encodeSliceHeader(slice);
 
-    TComOutputBitstream bitstreamRedirect;
-
     m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
@@ -685,16 +683,10 @@ void FrameEncoder::compressFrame()
     entropyCoder->encodeTilesWPPEntryPoint(slice);
 
     // Substreams...
+    m_bs.writeByteAlignment(); // Slice header byte-alignment
     int nss = m_pps.getEntropyCodingSyncEnabledFlag() ? slice->getNumEntryPointOffsets() + 1 : numSubstreams;
     for (int i = 0; i < nss; i++)
-        bitstreamRedirect.appendSubstream(&m_outStreams[i]);
-
-    // Perform bitstream concatenation
-    m_bs.writeByteAlignment(); // Slice header byte-alignment
-    if (bitstreamRedirect.getNumberOfWrittenBits() > 0)
-        m_bs.appendSubstream(&bitstreamRedirect);
-
-    entropyCoder->setBitstream(&m_bs);
+        m_bs.appendSubstream(&m_outStreams[i]);
 
     /* TODO: It's a bit late to handle malloc failure well here */
     m_nalList[m_nalCount] = new NALUnit;
