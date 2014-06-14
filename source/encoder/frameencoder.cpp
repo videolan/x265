@@ -378,7 +378,7 @@ void FrameEncoder::setLambda(int qp, int row)
     qpc = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     double crWeight = pow(2.0, (qp - g_chromaScale[chFmt][qpc]) / 3.0); // takes into account of the chroma qp mapping and chroma qp Offset
 
-    m_rows[row].m_search.setQP(qp, crWeight, cbWeight);
+    m_rows[row].m_search.setQP(qp, cbWeight, crWeight);
 }
 
 void FrameEncoder::compressFrame()
@@ -539,7 +539,7 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_numRows; i++)
     {
         m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_rows[i].m_search.setQP(qp, crWeight, cbWeight);
+        m_rows[i].m_search.setQP(qp, cbWeight, crWeight);
     }
 
     // Clip qps back to 0-51 range before encoding

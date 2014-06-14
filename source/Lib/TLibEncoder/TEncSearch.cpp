@@ -143,13 +143,12 @@ fail:
     return false;
 }
 
-void TEncSearch::setQP(int qp, double crWeight, double cbWeight)
+void TEncSearch::setQP(int qp, double cbWeight, double crWeight)
 {
     double lambda2 = x265_lambda2_tab[qp];
-    double chromaLambda = lambda2 / crWeight;
 
     m_me.setQP(qp);
-    m_trQuant->setLambda(lambda2, chromaLambda);
+    m_trQuant->setLambdas(lambda2, lambda2 / cbWeight, lambda2 / crWeight);
     m_rdCost->setLambda(lambda2, x265_lambda_tab[qp]);
     m_rdCost->setCbDistortionWeight(cbWeight);
     m_rdCost->setCrDistortionWeight(crWeight);
@@ -543,7 +542,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
     }
     m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-    m_trQuant->selectLambda(TEXT_CHROMA);
+    m_trQuant->selectLambda(ttype);
 
     absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, ttype, absPartIdx, &lastPos, useTransformSkipChroma);
 
@@ -1475,8 +1474,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 }
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-
-                m_trQuant->selectLambda(TEXT_CHROMA);
+                m_trQuant->selectLambda(ttype);
 
                 absSum = m_trQuant->transformNxN(cu, residual, stride, coeff, tuSize, ttype, absPartIdxC, &lastPos, useTransformSkipChroma);
 
@@ -2930,14 +2928,13 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-
-                m_trQuant->selectLambda(TEXT_CHROMA);
-
+                m_trQuant->selectLambda(TEXT_CHROMA_U);
                 absSumU = m_trQuant->transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUBufferOffset,
                                                   trSizeC, TEXT_CHROMA_U, absPartIdxC, &lastPosU, false, curuseRDOQ);
 
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                m_trQuant->selectLambda(TEXT_CHROMA_V);
                 absSumV = m_trQuant->transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUBufferOffset,
                                                   trSizeC, TEXT_CHROMA_V, absPartIdxC, &lastPosV, false, curuseRDOQ);
 
@@ -3131,14 +3128,13 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 //Cb transform
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-
-                m_trQuant->selectLambda(TEXT_CHROMA);
-
+                m_trQuant->selectLambda(TEXT_CHROMA_U);
                 absSum[TEXT_CHROMA_U][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUBufferOffset,
                                                                                       trSizeC, TEXT_CHROMA_U, absPartIdxC, &lastPos[TEXT_CHROMA_U][tuIterator.m_section], false, curuseRDOQ);
                 //Cr transform
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                m_trQuant->selectLambda(TEXT_CHROMA_V);
                 absSum[TEXT_CHROMA_V][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUBufferOffset,
                                                                                       trSizeC, TEXT_CHROMA_V, absPartIdxC, &lastPos[TEXT_CHROMA_V][tuIterator.m_section], false, curuseRDOQ);
 
@@ -3415,7 +3411,6 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
 
             m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-
             m_trQuant->selectLambda(TEXT_LUMA);
             absSumTransformSkipY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, coeffCurY,
                                                            trSize, TEXT_LUMA, absPartIdx, &lastPosTransformSkip[TEXT_LUMA][0], true, curuseRDOQ);
@@ -3496,12 +3491,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                m_trQuant->selectLambda(TEXT_CHROMA);
-
+                m_trQuant->selectLambda(TEXT_CHROMA_U);
                 absSumTransformSkipU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUBufferOffset,
                                                                trSizeC, TEXT_CHROMA_U, absPartIdxC, &lastPosTransformSkip[TEXT_CHROMA_U][tuIterator.m_section], true, curuseRDOQ);
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                m_trQuant->selectLambda(TEXT_CHROMA_V);
                 absSumTransformSkipV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUBufferOffset,
                                                                trSizeC, TEXT_CHROMA_V, absPartIdxC, &lastPosTransformSkip[TEXT_CHROMA_V][tuIterator.m_section], true, curuseRDOQ);
 

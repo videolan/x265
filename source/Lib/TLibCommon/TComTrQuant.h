@@ -124,7 +124,7 @@ public:
     ~TComTrQuant();
 
     // initialize class
-    void init(uint32_t maxTrSize, bool useRDOQ, bool useTransformSkipFast);
+    void init(bool useRDOQ);
 
     // transform & inverse transform functions
     uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize,
@@ -134,9 +134,9 @@ public:
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
-    void setLambda(double lambdaLuma, double lambdaChroma) { m_lumaLambda = lambdaLuma; m_chromaLambda = lambdaChroma; }
+    void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
-    void selectLambda(TextType ttype) { m_lambda = (ttype == TEXT_LUMA) ? m_lumaLambda : m_chromaLambda; }
+    void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
 
     void initScalingList();
     void destroyScalingList();
@@ -206,12 +206,9 @@ protected:
     QpParam  m_qpParam;
 
     double   m_lambda;
-    double   m_lumaLambda;
-    double   m_chromaLambda;
+    double   m_lambdas[3];
 
-    uint32_t m_maxTrSize;
     bool     m_useRDOQ;
-    bool     m_useTransformSkipFast;
     bool     m_scalingListEnabledFlag;
 
     int32_t* m_tmpCoeff;
@@ -224,7 +221,7 @@ private:
 
     void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize);
     void signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ = true);
+    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
 
     // RDOQ functions
     uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
