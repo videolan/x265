@@ -211,7 +211,7 @@ void TEncEntropy::initTUEntropySection(TComTURecurse *tuIterator, uint32_t split
 void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
-    const uint32_t log2TrafoSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
+    const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift        = cu->getHorzChromaShift();
     uint32_t vChromaShift        = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -223,7 +223,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         m_bakAbsPartIdxCU = absPartIdx;
     }
 
-    if ((log2TrafoSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
+    if ((log2TrSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
         uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
         if ((absPartIdx & (partNum - 1)) == 0)
@@ -244,7 +244,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&  (cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1))
     {
-        if (log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+        if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
             X265_CHECK(subdiv, "subdivision state failure\n");
         }
@@ -253,22 +253,22 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrafoSize > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
+    else if (log2TrSize > cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize())
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (log2TrafoSize == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
+    else if (log2TrSize == cu->getSlice()->getSPS()->getQuadtreeTULog2MinSize())
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
-    else if (log2TrafoSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+    else if (log2TrSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else
     {
-        X265_CHECK(log2TrafoSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
-        m_entropyCoderIf->codeTransformSubdivFlag(subdiv, 5 - log2TrafoSize);
+        X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
+        m_entropyCoderIf->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
     const uint32_t trDepthCurr = depth - cu->getDepth(absPartIdx);
@@ -365,12 +365,12 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
 
         int chFmt = cu->getChromaFormat();
-        if ((log2TrafoSize == 2) && !(chFmt == CHROMA_444))
+        if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
         {
             uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
-                uint32_t trSizeC           = 1 << log2TrafoSize;
+                uint32_t trSizeC           = 1 << log2TrSize;
                 const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
                 uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
