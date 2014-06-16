@@ -338,24 +338,29 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     }
 }
 
-void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint8_t minDepth)
+void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint8_t minDepth)
 {
     TComPic* pic = outTempCU->getPic();
+    uint32_t absPartIdx = outTempCU->getZorderIdxInCU();
 
     if (depth == 0)
     {
         // get original YUV data from picture
-        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), outTempCU->getZorderIdxInCU());
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outTempCU->getAddr(), absPartIdx);
     }
     else
     {
         // copy partition YUV from depth 0 CTU cache
-        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outTempCU->getZorderIdxInCU());
+        m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
     }
 
     // variables for fast encoder decision
     bool bSubBranch = true;
     int qp = outTempCU->getQP(0);
+
+#if TOPSKIP
+    bool bInsidePictureParent = bInsidePicture;
+#endif
 
     TComSlice* slice = outTempCU->getSlice();
     if (!bInsidePicture)
@@ -375,7 +380,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     // We need to split, so don't try these modes.
     TComYuv* tempYuv = NULL;
 #if TOPSKIP
-    if (depth == 0)
+    if (bInsidePicture && !bInsidePictureParent)
     {
         TComDataCU* colocated0 = slice->getNumRefIdx(REF_PIC_LIST_0) > 0 ? slice->getRefPic(REF_PIC_LIST_0, 0)->getCU(outTempCU->getAddr()) : NULL;
         TComDataCU* colocated1 = slice->getNumRefIdx(REF_PIC_LIST_1) > 0 ? slice->getRefPic(REF_PIC_LIST_1, 0)->getCU(outTempCU->getAddr()) : NULL;
@@ -383,19 +388,21 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
         char previousQP = colocated0->getQP(0);
         uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
         uint32_t sum0 = 0, sum1 = 0;
-        for (uint32_t i = 0; i < outTempCU->getTotalNumPart(); i = i + 4)
+        uint32_t numPartitions = outTempCU->getTotalNumPart();
+        for (uint32_t i = 0; i < numPartitions; i = i + 4)
         {
-            if (colocated0 && colocated0->getDepth(i) < minDepth0)
-                minDepth0 = colocated0->getDepth(i);
-            if (colocated1 && colocated1->getDepth(i) < minDepth1)
-                minDepth1 = colocated1->getDepth(i);
+            uint32_t j = absPartIdx + i;
+            if (colocated0 && colocated0->getDepth(j) < minDepth0)
+                minDepth0 = colocated0->getDepth(j);
+            if (colocated1 && colocated1->getDepth(j) < minDepth1)
+                minDepth1 = colocated1->getDepth(j);
             if (colocated0)
-                sum0 += (colocated0->getDepth(i) * 4);
+                sum0 += (colocated0->getDepth(j) * 4);
             if (colocated1)
-                sum1 += (colocated1->getDepth(i) * 4);
+                sum1 += (colocated1->getDepth(j) * 4);
         }
 
-        uint32_t avgDepth2 = (sum0 + sum1) / outTempCU->getTotalNumPart();
+        uint32_t avgDepth2 = (sum0 + sum1) / numPartitions;
         minDepth = X265_MIN(minDepth0, minDepth1);
         if (((currentQP - previousQP) < 0) || (((currentQP - previousQP) >= 0) && ((avgDepth2 - 2 * minDepth) > 1)))
             delta = 0;
@@ -686,7 +693,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
                 /* Copy Yuv data to picture Yuv */
                 if (m_param->rdLevel != 0)
-                    xCopyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
+                    xCopyYuv2Pic(pic, outBestCU->getAddr(), absPartIdx, depth);
                 return;
             }
         }
@@ -827,7 +834,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
     {
         /* Copy Yuv data to picture Yuv */
         if (bInsidePicture)
-            xCopyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
+            xCopyYuv2Pic(pic, outBestCU->getAddr(), absPartIdx, depth);
     }
 
     /* Assert if Best prediction mode is NONE
