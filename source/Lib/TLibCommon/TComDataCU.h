@@ -68,6 +68,30 @@ enum NDBFBlockBorderTag
     NUM_SGU_BORDER
 };
 
+
+typedef struct
+{
+    char*    qpMemBlock;
+    uint8_t* depthMemBlock;
+    uint8_t* cuSizeMemBlock;
+    bool*    skipFlagMemBlock;
+    char*    partSizeMemBlock;
+    char*    predModeMemBlock;
+    bool*    cuTQBypassMemBlock;
+    bool*    mergeFlagMemBlock;
+    uint8_t* lumaIntraDirMemBlock;
+    uint8_t* chromaIntraDirMemBlock;
+    uint8_t* interDirMemBlock;
+    uint8_t* trIdxMemBlock;
+    uint8_t* transformSkipMemBlock;
+    uint8_t* cbfMemBlock;
+    uint8_t* mvpIdxMemBlock;
+    coeff_t* trCoeffMemBlock;
+    bool*    iPCMFlagMemBlock;
+    pixel*   iPCMSampleYMemBlock;
+} DataCUMemPool;
+
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -142,6 +166,9 @@ private:
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
 
+    DataCUMemPool *m_DataCUMemPool;
+    TComCUMvField m_cuMvFieldMemPool;
+
 protected:
 
     /// add possible motion vector predictor candidates
@@ -172,11 +199,14 @@ public:
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
     double        m_baseQp;          //Qp of Cu set from RateControl/Vbv.
+
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
+    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index);
 
-    bool          create(uint32_t numPartition, uint32_t cuSize, int unitSize, int csp);
+    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks);
+
     void          destroy();
 
     void          initCU(TComPic* pic, uint32_t cuAddr);

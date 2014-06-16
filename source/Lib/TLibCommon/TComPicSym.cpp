@@ -86,8 +86,13 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp)
         m_cuData[i] = new TComDataCU;
         if (!m_cuData[i])
             return false;
-        if (!m_cuData[i]->create(m_numPartitions, g_maxCUSize, m_unitSize, picCsp))
+
+        uint32_t sizeL = g_maxCUSize * g_maxCUSize;
+        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(picCsp) + CHROMA_V_SHIFT(picCsp));
+        if (!m_cuData[i]->initialize(m_numPartitions, sizeL, sizeC, 1))
             return false;
+
+        m_cuData[i]->create(m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, picCsp, 0);
     }
 
     return true;

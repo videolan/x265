@@ -90,14 +90,17 @@ private:
 
     static const int MAX_PRED_TYPES = 6;
 
-    TComDataCU** m_interCU_2Nx2N;
-    TComDataCU** m_interCU_2NxN;
-    TComDataCU** m_interCU_Nx2N;
-    TComDataCU** m_intraInInterCU;
-    TComDataCU** m_mergeCU;
-    TComDataCU** m_bestMergeCU;
-    TComDataCU** m_bestCU;      ///< Best CUs at each depth
-    TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
+    TComDataCU** pDataCU;
+    TComDataCU* m_memPool[MAX_CU_DEPTH];
+
+    TComDataCU* m_interCU_2Nx2N[MAX_CU_DEPTH];
+    TComDataCU* m_interCU_2NxN[MAX_CU_DEPTH];
+    TComDataCU* m_interCU_Nx2N[MAX_CU_DEPTH];
+    TComDataCU* m_intraInInterCU[MAX_CU_DEPTH];
+    TComDataCU* m_mergeCU[MAX_CU_DEPTH];
+    TComDataCU* m_bestMergeCU[MAX_CU_DEPTH];
+    TComDataCU* m_bestCU[MAX_CU_DEPTH];      ///< Best CUs at each depth
+    TComDataCU* m_tempCU[MAX_CU_DEPTH];      ///< Temporary CUs at each depth
 
     TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
     ShortYuv**   m_bestResiYuv; ///< Best Residual Yuv for each depth

@@ -51,28 +51,40 @@ using namespace x265;
 // Create / destroy
 // --------------------------------------------------------------------------------------------------------------------
 
-bool TComCUMvField::create(uint32_t numPartition)
+bool TComCUMvField::initialize(uint32_t numPartition, uint32_t numBlocks)
 {
-    CHECKED_MALLOC(m_mv, MV, numPartition);
-    CHECKED_MALLOC(m_mvd, MV, numPartition);
-    CHECKED_MALLOC(m_refIdx, char, numPartition);
+    m_MVFieldMemPool = new MVFieldMemPool;
 
-    m_numPartitions = numPartition;
+    CHECKED_MALLOC(m_MVFieldMemPool->m_mvBase, MV, numPartition * 2 * numBlocks);
+    CHECKED_MALLOC(m_MVFieldMemPool->m_mvdBase, MV, numPartition * 2 * numBlocks);
+    CHECKED_MALLOC(m_MVFieldMemPool->m_refIdxBase, char, numPartition * 2 * numBlocks);
 
     return true;
+
 fail:
     return false;
 }
 
+void TComCUMvField::create(TComCUMvField p, uint32_t numPartition, int index, int idx)
+{
+    m_mv     = p.m_MVFieldMemPool->m_mvBase     + (index * 2 + idx) * numPartition;
+    m_mvd    = p.m_MVFieldMemPool->m_mvdBase    + (index * 2 + idx) * numPartition;
+    m_refIdx = p.m_MVFieldMemPool->m_refIdxBase + (index * 2 + idx) * numPartition;
+
+    m_numPartitions = numPartition;
+}
+
 void TComCUMvField::destroy()
 {
-    X265_FREE(m_mv);
-    X265_FREE(m_mvd);
-    X265_FREE(m_refIdx);
+    X265_FREE(m_MVFieldMemPool->m_mvBase);
+    X265_FREE(m_MVFieldMemPool->m_mvdBase);
+    X265_FREE(m_MVFieldMemPool->m_refIdxBase);
 
-    m_mv     = NULL;
-    m_mvd    = NULL;
-    m_refIdx = NULL;
+    m_MVFieldMemPool->m_mvBase     = NULL;
+    m_MVFieldMemPool->m_mvdBase    = NULL;
+    m_MVFieldMemPool->m_refIdxBase = NULL;
+
+    delete m_MVFieldMemPool;
 
     m_numPartitions = 0;
 }

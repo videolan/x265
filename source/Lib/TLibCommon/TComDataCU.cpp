@@ -100,7 +100,47 @@ TComDataCU::TComDataCU()
 TComDataCU::~TComDataCU()
 {}
 
-bool TComDataCU::create(uint32_t numPartition, uint32_t cuSize, int unitSize, int csp)
+
+bool TComDataCU::initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks)
+{
+    bool ok = true;
+
+    m_DataCUMemPool = new DataCUMemPool;
+
+    ok &= m_cuMvFieldMemPool.initialize(numPartition, numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->qpMemBlock, char,  numPartition * numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->depthMemBlock, uint8_t, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->cuSizeMemBlock, uint8_t, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->skipFlagMemBlock, bool, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->partSizeMemBlock, char, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->predModeMemBlock, char, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->cuTQBypassMemBlock, bool, numPartition * numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->mergeFlagMemBlock, bool,  numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->lumaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->chromaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->interDirMemBlock, uint8_t, numPartition * numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->trIdxMemBlock, uint8_t, numPartition * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->transformSkipMemBlock, uint8_t, numPartition * 3 * numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->cbfMemBlock, uint8_t, numPartition * 3 * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->mvpIdxMemBlock, uint8_t, numPartition * 2 * numBlocks);
+    CHECKED_MALLOC(m_DataCUMemPool->trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
+
+    CHECKED_MALLOC(m_DataCUMemPool->iPCMFlagMemBlock, bool, numPartition * 8);
+    CHECKED_MALLOC(m_DataCUMemPool->iPCMSampleYMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
+
+    return ok;
+
+fail:
+    ok = false;
+    return ok;
+}
+
+void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index)
 {
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
@@ -119,75 +159,70 @@ bool TComDataCU::create(uint32_t numPartition, uint32_t cuSize, int unitSize, in
     uint32_t sizeL = cuSize * cuSize;
     uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
 
-    bool ok = true;
-    ok &= m_cuMvField[0].create(numPartition);
-    ok &= m_cuMvField[1].create(numPartition);
+    m_cuMvField[0].create(cu->m_cuMvFieldMemPool, numPartition, index, 0);
+    m_cuMvField[1].create(cu->m_cuMvFieldMemPool, numPartition, index, 1);
 
-    CHECKED_MALLOC(m_qp, char,  numPartition);
-    CHECKED_MALLOC(m_depth, uint8_t, numPartition);
-    CHECKED_MALLOC(m_cuSize, uint8_t, numPartition);
-    CHECKED_MALLOC(m_skipFlag, bool, numPartition);
-    CHECKED_MALLOC(m_partSizes, char, numPartition);
-    CHECKED_MALLOC(m_predModes, char, numPartition);
-    CHECKED_MALLOC(m_cuTransquantBypass, bool, numPartition);
+    m_qp                 = cu->m_DataCUMemPool->qpMemBlock             + index * numPartition;
+    m_depth              = cu->m_DataCUMemPool->depthMemBlock          + index * numPartition;
+    m_cuSize             = cu->m_DataCUMemPool->cuSizeMemBlock         + index * numPartition;
+    m_skipFlag           = cu->m_DataCUMemPool->skipFlagMemBlock       + index * numPartition;
+    m_partSizes          = cu->m_DataCUMemPool->partSizeMemBlock       + index * numPartition;
+    m_predModes          = cu->m_DataCUMemPool->predModeMemBlock       + index * numPartition;
+    m_cuTransquantBypass = cu->m_DataCUMemPool->cuTQBypassMemBlock     + index * numPartition;
 
-    CHECKED_MALLOC(m_bMergeFlags, bool,  numPartition);
-    CHECKED_MALLOC(m_lumaIntraDir, uint8_t, numPartition);
-    CHECKED_MALLOC(m_chromaIntraDir, uint8_t, numPartition);
-    CHECKED_MALLOC(m_interDir, uint8_t, numPartition);
+    m_bMergeFlags        = cu->m_DataCUMemPool->mergeFlagMemBlock      + index * numPartition;
+    m_lumaIntraDir       = cu->m_DataCUMemPool->lumaIntraDirMemBlock   + index * numPartition;
+    m_chromaIntraDir     = cu->m_DataCUMemPool->chromaIntraDirMemBlock + index * numPartition;
+    m_interDir           = cu->m_DataCUMemPool->interDirMemBlock       + index * numPartition;
 
-    CHECKED_MALLOC(m_trIdx, uint8_t, numPartition);
-    CHECKED_MALLOC(m_transformSkip[0], uint8_t, numPartition * 3);
-    m_transformSkip[1] = m_transformSkip[0] + numPartition;
-    m_transformSkip[2] = m_transformSkip[0] + numPartition * 2;
+    m_trIdx              = cu->m_DataCUMemPool->trIdxMemBlock          + index * numPartition;
+    m_transformSkip[0]   = cu->m_DataCUMemPool->transformSkipMemBlock  + index * numPartition * 3;
+    m_transformSkip[1]   = m_transformSkip[0]                          + numPartition;
+    m_transformSkip[2]   = m_transformSkip[0]                          + numPartition * 2;
 
-    CHECKED_MALLOC(m_cbf[0], uint8_t, numPartition * 3);
-    m_cbf[1] = m_cbf[0] + numPartition;
-    m_cbf[2] = m_cbf[0] + numPartition * 2;
+    m_cbf[0]             = cu->m_DataCUMemPool->cbfMemBlock            + index * numPartition * 3;
+    m_cbf[1]             = m_cbf[0]                                    + numPartition;
+    m_cbf[2]             = m_cbf[0]                                    + numPartition * 2;
 
-    CHECKED_MALLOC(m_mvpIdx[0], uint8_t, numPartition * 2);
-    m_mvpIdx[1] = m_mvpIdx[0] + numPartition;
+    m_mvpIdx[0]          = cu->m_DataCUMemPool->mvpIdxMemBlock         + index * numPartition * 2;
+    m_mvpIdx[1]          = m_mvpIdx[0]                                 + numPartition;
 
-    CHECKED_MALLOC(m_trCoeff[0], coeff_t, sizeL + sizeC * 2);
-    m_trCoeff[1] = m_trCoeff[0] + sizeL;
-    m_trCoeff[2] = m_trCoeff[0] + sizeL + sizeC;
+    m_trCoeff[0]         = cu->m_DataCUMemPool->trCoeffMemBlock        + index * (sizeL + sizeC * 2);
+    m_trCoeff[1]         = m_trCoeff[0]                                + sizeL;
+    m_trCoeff[2]         = m_trCoeff[0]                                + sizeL + sizeC;
 
-    CHECKED_MALLOC(m_iPCMFlags, bool, numPartition);
-    CHECKED_MALLOC(m_iPCMSampleY, pixel, sizeL + sizeC * 2);
-    m_iPCMSampleCb = m_iPCMSampleY + sizeL;
-    m_iPCMSampleCr = m_iPCMSampleY + sizeL + sizeC;
+    m_iPCMFlags          = cu->m_DataCUMemPool->iPCMFlagMemBlock       + index * numPartition;
+    m_iPCMSampleY        = cu->m_DataCUMemPool->iPCMSampleYMemBlock    + index * (sizeL + sizeC * 2);
+    m_iPCMSampleCb       = m_iPCMSampleY                               + sizeL;
+    m_iPCMSampleCr       = m_iPCMSampleY                               + sizeL + sizeC;
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
-    return ok;
-
-fail:
-    ok = false;
-    return ok;
 }
 
 void TComDataCU::destroy()
 {
-    X265_FREE(m_qp);
-    X265_FREE(m_depth);
-    X265_FREE(m_cuSize);
-    X265_FREE(m_cbf[0]);
-    X265_FREE(m_interDir);
-    X265_FREE(m_bMergeFlags);
-    X265_FREE(m_lumaIntraDir);
-    X265_FREE(m_chromaIntraDir);
-    X265_FREE(m_trIdx);
-    X265_FREE(m_transformSkip[0]);
-    X265_FREE(m_trCoeff[0]);
-    X265_FREE(m_iPCMFlags);
-    X265_FREE(m_iPCMSampleY);
-    X265_FREE(m_mvpIdx[0]);
-    X265_FREE(m_cuTransquantBypass);
-    X265_FREE(m_skipFlag);
-    X265_FREE(m_partSizes);
-    X265_FREE(m_predModes);
+    X265_FREE(m_DataCUMemPool->qpMemBlock);
+    X265_FREE(m_DataCUMemPool->depthMemBlock);
+    X265_FREE(m_DataCUMemPool->cuSizeMemBlock);
+    X265_FREE(m_DataCUMemPool->cbfMemBlock);
+    X265_FREE(m_DataCUMemPool->interDirMemBlock);
+    X265_FREE(m_DataCUMemPool->mergeFlagMemBlock);
+    X265_FREE(m_DataCUMemPool->lumaIntraDirMemBlock);
+    X265_FREE(m_DataCUMemPool->chromaIntraDirMemBlock);
+    X265_FREE(m_DataCUMemPool->trIdxMemBlock);
+    X265_FREE(m_DataCUMemPool->transformSkipMemBlock);
+    X265_FREE(m_DataCUMemPool->trCoeffMemBlock);
+    X265_FREE(m_DataCUMemPool->iPCMFlagMemBlock);
+    X265_FREE(m_DataCUMemPool->iPCMSampleYMemBlock);
+    X265_FREE(m_DataCUMemPool->mvpIdxMemBlock);
+    X265_FREE(m_DataCUMemPool->cuTQBypassMemBlock);
+    X265_FREE(m_DataCUMemPool->skipFlagMemBlock);
+    X265_FREE(m_DataCUMemPool->partSizeMemBlock);
+    X265_FREE(m_DataCUMemPool->predModeMemBlock);
 
-    m_cuMvField[0].destroy();
-    m_cuMvField[1].destroy();
+    delete m_DataCUMemPool;
+
+    m_cuMvFieldMemPool.destroy();
 }
 
 // ====================================================================================================================

@@ -56,15 +56,6 @@ using namespace x265;
 
 TEncCu::TEncCu()
 {
-    m_interCU_2Nx2N   = NULL;
-    m_interCU_2NxN    = NULL;
-    m_interCU_Nx2N    = NULL;
-    m_intraInInterCU  = NULL;
-    m_mergeCU         = NULL;
-    m_bestMergeCU     = NULL;
-    m_bestCU          = NULL;
-    m_tempCU          = NULL;
-
     m_bestPredYuv     = NULL;
     m_bestResiYuv     = NULL;
     m_bestRecoYuv     = NULL;
@@ -95,68 +86,74 @@ TEncCu::TEncCu()
  */
 bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 {
-    m_totalDepth     = totalDepth + 1;
-    m_interCU_2Nx2N  = new TComDataCU*[m_totalDepth - 1];
-    m_interCU_2NxN   = new TComDataCU*[m_totalDepth - 1];
-    m_interCU_Nx2N   = new TComDataCU*[m_totalDepth - 1];
-    m_intraInInterCU = new TComDataCU*[m_totalDepth - 1];
-    m_mergeCU        = new TComDataCU*[m_totalDepth - 1];
-    m_bestMergeCU    = new TComDataCU*[m_totalDepth - 1];
-    m_bestCU         = new TComDataCU*[m_totalDepth - 1];
-    m_tempCU         = new TComDataCU*[m_totalDepth - 1];
+    m_totalDepth     = totalDepth;
 
-    m_bestPredYuv = new TComYuv*[m_totalDepth - 1];
-    m_bestResiYuv = new ShortYuv*[m_totalDepth - 1];
-    m_bestRecoYuv = new TComYuv*[m_totalDepth - 1];
+    m_bestPredYuv = new TComYuv*[totalDepth];
+    m_bestResiYuv = new ShortYuv*[totalDepth];
+    m_bestRecoYuv = new TComYuv*[totalDepth];
 
-    m_tmpPredYuv = new TComYuv*[m_totalDepth - 1];
+    m_tmpPredYuv = new TComYuv*[totalDepth];
 
-    m_modePredYuv[0] = new TComYuv*[m_totalDepth - 1];
-    m_modePredYuv[1] = new TComYuv*[m_totalDepth - 1];
-    m_modePredYuv[2] = new TComYuv*[m_totalDepth - 1];
-    m_modePredYuv[3] = new TComYuv*[m_totalDepth - 1];
-    m_modePredYuv[4] = new TComYuv*[m_totalDepth - 1];
-    m_modePredYuv[5] = new TComYuv*[m_totalDepth - 1];
+    m_modePredYuv[0] = new TComYuv*[totalDepth];
+    m_modePredYuv[1] = new TComYuv*[totalDepth];
+    m_modePredYuv[2] = new TComYuv*[totalDepth];
+    m_modePredYuv[3] = new TComYuv*[totalDepth];
+    m_modePredYuv[4] = new TComYuv*[totalDepth];
+    m_modePredYuv[5] = new TComYuv*[totalDepth];
 
-    m_tmpResiYuv = new ShortYuv*[m_totalDepth - 1];
-    m_tmpRecoYuv = new TComYuv*[m_totalDepth - 1];
+    m_tmpResiYuv = new ShortYuv*[totalDepth];
+    m_tmpRecoYuv = new TComYuv*[totalDepth];
 
-    m_bestMergeRecoYuv = new TComYuv*[m_totalDepth - 1];
+    m_bestMergeRecoYuv = new TComYuv*[totalDepth];
 
-    m_origYuv = new TComYuv*[m_totalDepth - 1];
+    m_origYuv = new TComYuv*[totalDepth];
 
-    int unitSize = maxWidth >> (m_totalDepth - 1);
+    int unitSize = maxWidth >> totalDepth;
     int csp = m_param->internalCsp;
 
     bool ok = true;
-    for (int i = 0; i < m_totalDepth - 1; i++)
+    for (int i = 0; i < totalDepth; i++)
     {
-        uint32_t numPartitions = 1 << ((m_totalDepth - i - 1) << 1);
+        uint32_t numPartitions = 1 << ((totalDepth - i) << 1);
         uint32_t cuSize = maxWidth >> i;
 
-        m_bestCU[i] = new TComDataCU;
-        ok &= m_bestCU[i]->create(numPartitions, cuSize, unitSize, csp);
+        pDataCU = new TComDataCU*[8];
+        pDataCU[0] = new TComDataCU[8 * sizeof(TComDataCU)];
 
-        m_tempCU[i] = new TComDataCU;
-        ok &= m_tempCU[i]->create(numPartitions, cuSize, unitSize, csp);
+        for (int j = 0; j < 8; j++)
+        {
+            pDataCU[j] = pDataCU[0] + j * sizeof(TComDataCU);
+        }
 
-        m_interCU_2Nx2N[i] = new TComDataCU;
-        ok &= m_interCU_2Nx2N[i]->create(numPartitions, cuSize, unitSize, csp);
+        uint32_t sizeL = cuSize * cuSize;
+        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
 
-        m_interCU_2NxN[i] = new TComDataCU;
-        ok &= m_interCU_2NxN[i]->create(numPartitions, cuSize, unitSize, csp);
+        m_memPool[i] = new TComDataCU;
+        ok &= m_memPool[i]->initialize(numPartitions, sizeL, sizeC, 8);
 
-        m_interCU_Nx2N[i] = new TComDataCU;
-        ok &= m_interCU_Nx2N[i]->create(numPartitions, cuSize, unitSize, csp);
+        m_interCU_2Nx2N[i]  = pDataCU[0];
+        m_interCU_2Nx2N[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 0);
 
-        m_intraInInterCU[i] = new TComDataCU;
-        ok &= m_intraInInterCU[i]->create(numPartitions, cuSize, unitSize, csp);
+        m_interCU_2NxN[i]   = pDataCU[1];
+        m_interCU_2NxN[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 1);
 
-        m_mergeCU[i] = new TComDataCU;
-        ok &= m_mergeCU[i]->create(numPartitions, cuSize, unitSize, csp);
+        m_interCU_Nx2N[i]   = pDataCU[2];
+        m_interCU_Nx2N[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 2);
 
-        m_bestMergeCU[i] = new TComDataCU;
-        ok &= m_bestMergeCU[i]->create(numPartitions, cuSize, unitSize, csp);
+        m_intraInInterCU[i] = pDataCU[3];
+        m_intraInInterCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 3);
+
+        m_mergeCU[i]        = pDataCU[4];
+        m_mergeCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 4);
+
+        m_bestMergeCU[i]    = pDataCU[5];
+        m_bestMergeCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 5);
+
+        m_bestCU[i]         = pDataCU[6];
+        m_bestCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 6);
+
+        m_tempCU[i]         = pDataCU[7];
+        m_tempCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 7);
 
         m_bestPredYuv[i] = new TComYuv;
         ok &= m_bestPredYuv[i]->create(cuSize, cuSize, csp);
@@ -195,56 +192,11 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 
 void TEncCu::destroy()
 {
-    for (int i = 0; i < m_totalDepth - 1; i++)
+    for (int i = 0; i < m_totalDepth; i++)
     {
-        if (m_interCU_2Nx2N && m_interCU_2Nx2N[i])
-        {
-            m_interCU_2Nx2N[i]->destroy();
-            delete m_interCU_2Nx2N[i];
-            m_interCU_2Nx2N[i] = NULL;
-        }
-        if (m_interCU_2NxN && m_interCU_2NxN[i])
-        {
-            m_interCU_2NxN[i]->destroy();
-            delete m_interCU_2NxN[i];
-            m_interCU_2NxN[i] = NULL;
-        }
-        if (m_interCU_Nx2N && m_interCU_Nx2N[i])
-        {
-            m_interCU_Nx2N[i]->destroy();
-            delete m_interCU_Nx2N[i];
-            m_interCU_Nx2N[i] = NULL;
-        }
-        if (m_intraInInterCU && m_intraInInterCU[i])
-        {
-            m_intraInInterCU[i]->destroy();
-            delete m_intraInInterCU[i];
-            m_intraInInterCU[i] = NULL;
-        }
-        if (m_mergeCU && m_mergeCU[i])
-        {
-            m_mergeCU[i]->destroy();
-            delete m_mergeCU[i];
-            m_mergeCU[i] = NULL;
-        }
-        if (m_bestMergeCU && m_bestMergeCU[i])
-        {
-            m_bestMergeCU[i]->destroy();
-            delete m_bestMergeCU[i];
-            m_bestMergeCU[i] = NULL;
-        }
-        if (m_bestCU && m_bestCU[i])
-        {
-            m_bestCU[i]->destroy();
-            delete m_bestCU[i];
-            m_bestCU[i] = NULL;
-        }
-        if (m_tempCU && m_tempCU[i])
-        {
-            m_tempCU[i]->destroy();
-            delete m_tempCU[i];
-            m_tempCU[i] = NULL;
-        }
+        m_memPool[i]->destroy();
+        delete m_memPool[i];
+        m_memPool[i] = NULL;
 
         if (m_bestPredYuv && m_bestPredYuv[i])
         {
@@ -308,22 +260,10 @@ void TEncCu::destroy()
         }
     }
 
-    delete [] m_interCU_2Nx2N;
-    m_interCU_2Nx2N = NULL;
-    delete [] m_interCU_2NxN;
-    m_interCU_2NxN = NULL;
-    delete [] m_interCU_Nx2N;
-    m_interCU_Nx2N = NULL;
-    delete [] m_intraInInterCU;
-    m_intraInInterCU = NULL;
-    delete [] m_mergeCU;
-    m_mergeCU = NULL;
-    delete [] m_bestMergeCU;
-    m_bestMergeCU = NULL;
-    delete [] m_bestCU;
-    m_bestCU = NULL;
-    delete [] m_tempCU;
-    m_tempCU = NULL;
+    delete [] pDataCU[0];
+    pDataCU[0] = NULL;
+    delete [] pDataCU;
+    pDataCU = NULL;
 
     delete [] m_bestPredYuv;
     m_bestPredYuv = NULL;
