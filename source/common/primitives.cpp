@@ -95,7 +95,6 @@ static void Setup_Alias_Primitives(EncoderPrimitives &p)
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
         int partL = lumaPartitionsFromSquareBlocksTable[i];
-        p.sad_square[i]     = p.sad[partL];
         p.square_copy_pp[i] = p.luma_copy_pp[partL];
         p.square_copy_ps[i] = p.luma_copy_ps[partL];
         p.square_copy_sp[i] = p.luma_copy_sp[partL];
