@@ -123,6 +123,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
     if (ttype == TEXT_LUMA)
     {
         qpScaled = qpy + qpBdOffset;
+        qpScaled = Clip3(-QP_BD_OFFSET, MAX_QP, qpScaled);
     }
     else
     {
