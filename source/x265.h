@@ -745,6 +745,22 @@ typedef struct x265_param
 
         /* In CRF mode, minimum CRF as caused by VBV */
         double    rfConstantMin;
+
+        /* Two pass (INCOMPLETE) */
+        /* Enable writing the stats in a multipass encode to the stat output file */
+        int       bStatWrite;
+
+        /* Enable loading data from the stat input file in a multi pass encode */
+        int       bStatRead;
+
+        /* Filename of the 2pass output/input stats file */
+        char*     statFileName;
+
+        /* temporally blur quants */
+        double    qblur;
+
+        /* temporally blur complexity */
+        double    complexityBlur;
     } rc;
 
     /*== Video Usability Information ==*/
