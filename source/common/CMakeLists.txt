@@ -17,7 +17,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/SEI.h
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h

@@ -36,7 +36,6 @@
 */
 
 #include "TComPic.h"
-#include "SEI.h"
 #include "mv.h"
 #include "encoder.h"
 

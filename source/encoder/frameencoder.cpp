@@ -269,18 +269,17 @@ int FrameEncoder::getStreamHeaders(NALUnit **nalunits)
     if (m_cfg->m_param->bEmitHRDSEI)
     {
         SEIActiveParameterSets sei;
-        sei.activeVPSId = m_top->m_vps.getVPSId();
+        sei.m_activeVPSId = m_top->m_vps.getVPSId();
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
-        sei.numSpsIdsMinus1 = 0;
-        sei.activeSeqParamSetId = m_sps.getSPSId();
+        sei.m_numSpsIdsMinus1 = 0;
+        sei.m_activeSeqParamSetId = m_sps.getSPSId();
 
         nalunits[count] = new NALUnit;
         if (nalunits[count])
         {
             bs.clear();
-            m_seiWriter.writeSEImessage(bs, sei, &m_sps);
-            bs.writeByteAlignment();
+            sei.write(bs, m_sps);
             nalunits[count++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
         }
     }
@@ -418,24 +417,23 @@ void FrameEncoder::compressFrame()
             m_nalList[m_nalCount] = new NALUnit;
             if (m_nalList[m_nalCount])
             {
-                SEIBufferingPeriod* sei_buffering_period = &m_top->m_rateControl->m_sei;
-                sei_buffering_period->m_bpSeqParameterSetId = m_sps.getSPSId();
-                sei_buffering_period->m_rapCpbParamsPresentFlag = 0;
+                SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_sei;
+                bpSei->m_bpSeqParameterSetId = m_sps.getSPSId();
+                bpSei->m_rapCpbParamsPresentFlag = 0;
 
                 // for the concatenation, it can be set to one during splicing.
-                sei_buffering_period->m_concatenationFlag = 0;
+                bpSei->m_concatenationFlag = 0;
 
                 // since the temporal layer HRD is not ready, we assumed it is fixed
-                sei_buffering_period->m_auCpbRemovalDelayDelta = 1;
-                sei_buffering_period->m_cpbDelayOffset = 0;
-                sei_buffering_period->m_dpbDelayOffset = 0;
+                bpSei->m_auCpbRemovalDelayDelta = 1;
+                bpSei->m_cpbDelayOffset = 0;
+                bpSei->m_dpbDelayOffset = 0;
 
                 // hrdFullness() calculates the initial CPB removal delay and offset
-                m_top->m_rateControl->hrdFullness(sei_buffering_period);
+                m_top->m_rateControl->hrdFullness(bpSei);
 
                 m_bs.clear();
-                m_seiWriter.writeSEImessage(m_bs, *sei_buffering_period, &m_sps);
-                m_bs.writeByteAlignment();
+                bpSei->write(m_bs, m_sps);
 
                 m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
             }
@@ -460,7 +458,7 @@ void FrameEncoder::compressFrame()
             sei_recovery_point.m_brokenLinkFlag = false;
 
             m_bs.clear();
-            m_seiWriter.writeSEImessage(m_bs, sei_recovery_point, slice->getSPS());
+            sei_recovery_point.write(m_bs, *slice->getSPS());
             m_bs.writeByteAlignment();
 
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
@@ -507,9 +505,7 @@ void FrameEncoder::compressFrame()
         if (m_nalList[m_nalCount])
         {
             m_bs.clear();
-            m_seiWriter.writeSEImessage(m_bs, *sei, &m_sps);
-            m_bs.writeByteAlignment();
-
+            sei->write(m_bs, m_sps);
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
     }
@@ -701,8 +697,7 @@ void FrameEncoder::compressFrame()
         if (m_nalList[m_nalCount])
         {
             m_bs.clear();
-            m_seiWriter.writeSEImessage(m_bs, m_seiReconPictureDigest, slice->getSPS());
-            m_bs.writeByteAlignment();
+            m_seiReconPictureDigest.write(m_bs, *slice->getSPS());
 
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
         }

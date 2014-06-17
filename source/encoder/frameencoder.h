@@ -36,7 +36,6 @@
 #include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
-#include "TLibEncoder/SEIwrite.h"
 
 #include "framefilter.h"
 #include "cturow.h"
@@ -153,7 +152,6 @@ public:
 
     int                      m_numRows;
     CTURow*                  m_rows;
-    SEIWriter                m_seiWriter;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
     RateControlEntry         m_rce;

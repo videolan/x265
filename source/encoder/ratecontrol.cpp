@@ -27,7 +27,7 @@
 #include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
-#include "TLibCommon/SEI.h"
+#include "sei.h"
 
 #define BR_SHIFT  6
 #define CPB_SHIFT 4
