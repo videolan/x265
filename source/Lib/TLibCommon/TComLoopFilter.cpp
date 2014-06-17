@@ -196,10 +196,12 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
         return;
     }
 
-    xSetLoopfilterParam(cu, absZOrderIdx);
+    ///< status structure
+    LFCUParam lfcuParam;
+    xSetLoopfilterParam(cu, absZOrderIdx, &lfcuParam);
 
     xSetEdgefilterTU(cu, absZOrderIdx, absZOrderIdx, depth);
-    xSetEdgefilterPU(cu, absZOrderIdx);
+    xSetEdgefilterPU(cu, absZOrderIdx, &lfcuParam);
 
     int dir = edge;
     for (uint32_t partIdx = absZOrderIdx; partIdx < absZOrderIdx + curNumParts; partIdx++)
@@ -286,7 +288,7 @@ void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uin
     xSetEdgefilterMultiple(cu, absTUPartIdx, depth, EDGE_HOR, 0, true, widthInBaseUnits, heightInBaseUnits);
 }
 
-void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx)
+void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, LFCUParam *lfcuParam)
 {
     const uint32_t depth = cu->getDepth(absZOrderIdx);
     const uint32_t widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
@@ -296,8 +298,8 @@ void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx)
     const uint32_t qWidthInBaseUnits  = widthInBaseUnits  >> 2;
     const uint32_t qHeightInBaseUnits = heightInBaseUnits >> 2;
 
-    xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, 0, m_lfcuParam.bLeftEdge);
-    xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, 0, m_lfcuParam.bTopEdge);
+    xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_VER, 0, lfcuParam->bLeftEdge);
+    xSetEdgefilterMultiple(cu, absZOrderIdx, depth, EDGE_HOR, 0, lfcuParam->bTopEdge);
 
     switch (cu->getPartitionSize(absZOrderIdx))
     {
@@ -348,7 +350,7 @@ void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx)
     }
 }
 
-void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx)
+void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, LFCUParam *lfcuParam)
 {
     uint32_t x = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
     uint32_t y = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
@@ -361,35 +363,35 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx)
 
     if (x == 0)
     {
-        m_lfcuParam.bLeftEdge = false;
+        lfcuParam->bLeftEdge = false;
     }
     else
     {
         tempCU = cu->getPULeft(tempPartIdx, absZOrderIdx, !true, !m_bLFCrossTileBoundary);
         if (tempCU)
         {
-            m_lfcuParam.bLeftEdge = true;
+            lfcuParam->bLeftEdge = true;
         }
         else
         {
-            m_lfcuParam.bLeftEdge = false;
+            lfcuParam->bLeftEdge = false;
         }
     }
 
     if (y == 0)
     {
-        m_lfcuParam.bTopEdge = false;
+        lfcuParam->bTopEdge = false;
     }
     else
     {
         tempCU = cu->getPUAbove(tempPartIdx, absZOrderIdx, !true, false, !m_bLFCrossTileBoundary);
         if (tempCU)
         {
-            m_lfcuParam.bTopEdge = true;
+            lfcuParam->bTopEdge = true;
         }
         else
         {
-            m_lfcuParam.bTopEdge = false;
+            lfcuParam->bTopEdge = false;
         }
     }
 }

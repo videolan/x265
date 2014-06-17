@@ -70,7 +70,6 @@ private:
     uint32_t    m_numPartitions;
     uint8_t*    m_blockingStrength[2]; ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
     bool*       m_bEdgeFilter[2];
-    LFCUParam   m_lfcuParam;           ///< status structure
 
     bool        m_bLFCrossTileBoundary;
 
@@ -80,10 +79,10 @@ protected:
     void xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int Edge);
 
     // set / get functions
-    void xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx);
+    void xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, LFCUParam *lfcuParam);
     // filtering functions
     void xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uint32_t absZOrderIdx, uint32_t depth);
-    void xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx);
+    void xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, LFCUParam *lfcuParam);
     void xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_t partIdx);
     uint32_t xCalcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int dir, int edgeIdx, int baseUnitIdx)
     {
