@@ -261,7 +261,7 @@ RateControl::RateControl(x265_param *p)
 
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
-        m_param->rc.qp = (int)m_param->rc.rfConstant + QP_BD_OFFSET;
+        m_param->rc.qp = (int)m_param->rc.rfConstant;
         m_param->rc.bitrate = 0;
 
         double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
