@@ -717,7 +717,7 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 template<int size>
 int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
 {
-    static pixel zeroBuf[8 * 8] /* = { 0 } */;
+    static pixel zeroBuf[8] /* = { 0 } */;
 
     if (size)
     {
@@ -728,10 +728,10 @@ int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
             for (int j = 0; j < dim; j+= 8)
             {
                 /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
-                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 8) - 
-                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 8) >> 2);
-                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 8) - 
-                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 8) >> 2);
+                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
+                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
 
                 totEnergy += abs(sourceEnergy - reconEnergy);
             }
@@ -741,8 +741,8 @@ int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
     else
     {
         /* 4x4 is too small for sa8d */
-        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 8) - (sad<4, 4>(source, sstride, zeroBuf, 8) >> 2);
-        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 8) - (sad<4, 4>(recon, rstride, zeroBuf, 8) >> 2);
+        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 8) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 8) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
         return abs(sourceEnergy - reconEnergy);
     }
 }
