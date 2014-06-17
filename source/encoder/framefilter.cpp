@@ -145,23 +145,25 @@ void FrameFilter::processRow(int row, Encoder* cfg)
 
     if (m_param->bEnableLoopFilter)
     {
+        bool edgeFilter[256];    // NOTE: the maximum LCU 64x64 have 256 partitions
+
         for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            m_loopFilter.loopFilterCU(cu, EDGE_VER);
+            m_loopFilter.loopFilterCU(cu, EDGE_VER, edgeFilter);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
-                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
+                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, edgeFilter);
             }
         }
 
         {
             TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
+            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, edgeFilter);
         }
     }
 
