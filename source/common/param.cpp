@@ -180,6 +180,11 @@ void x265_param_default(x265_param *param)
     param->rc.cuTree = 1;
     param->rc.rfConstantMax = 0;
     param->rc.rfConstantMin = 0;
+    param->rc.bStatRead = 0;
+    param->rc.bStatWrite = 0;
+    param->rc.statFileName = NULL;
+    param->rc.complexityBlur = 20;
+    param->rc.qblur = 0.5;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
@@ -912,6 +917,8 @@ int x265_check_params(x265_param *param)
             x265_log(param, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
+    if (param->bOpenGOP && param->rc.bStatRead)
+        param->lookaheadDepth = 0;
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
@@ -966,7 +973,7 @@ int x265_check_params(x265_param *param)
           "Rate control mode is out of range");
     CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
-    CHECK(param->bframes > param->lookaheadDepth,
+    CHECK(param->bframes > param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
           "bframe count should be greater than zero");
@@ -1049,6 +1056,10 @@ int x265_check_params(x265_param *param)
           "Target bitrate can not be less than zero");
     if (param->noiseReduction)
         CHECK(100 > param->noiseReduction || param->noiseReduction > 1000, "Valid noise reduction range 100 - 1000");
+    CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead,
+          "Constant rate-factor is incompatible with 2pass");
+    CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
+          "Constant QP is incompatible with 2pass");
     return check_failed;
 }
 
