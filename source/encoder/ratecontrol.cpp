@@ -37,6 +37,7 @@ using namespace x265;
 /* Amortize the partial cost of I frames over the next N frames */
 const double RateControl::s_amortizeFraction = 0.85;
 const int RateControl::s_amortizeFrames = 75;
+const char *RateControl::s_defaultStatFileName = "x265_2pass.log";
 
 namespace {
 

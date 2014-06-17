@@ -140,8 +140,20 @@ public:
     double   m_nominalRemovalTime;
     double   m_prevCpbFinalAT;
 
-    RateControl(x265_param *p);
+    /* 2 pass */
+    bool     m_2pass;
+    FILE*    m_statFileOut;
+    FILE*    m_cutreeStatFileOut;
+    FILE*    m_cutreeStatFileIn;
 
+    struct
+    {
+        uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
+        int qpBufPos;          /* In order to handle pyramid reordering, QP buffer acts as a stack.
+                                * This value is the current position (0 or 1). */
+    } m_cuTreeStats;
+
+    RateControl(x265_param *p);
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(TComPic *pic);
@@ -156,6 +168,7 @@ protected:
 
     static const double s_amortizeFraction;
     static const int    s_amortizeFrames;
+    static const char  *s_defaultStatFileName;
 
     int m_residualFrames;
     int m_residualCost;
