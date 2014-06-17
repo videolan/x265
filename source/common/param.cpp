@@ -1240,8 +1240,6 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " ref=%d", p->maxNumReferences);
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
-    s += sprintf(s, " bitrate=%d", p->rc.bitrate);
-    s += sprintf(s, " qp=%d", p->rc.qp);
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);
     s += sprintf(s, " aq-strength=%.2f", p->rc.aqStrength);
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
@@ -1252,10 +1250,40 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableSAO, "sao");
     s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
     s += sprintf(s, " sao-lcu-opt=%d", p->saoLcuBasedOptimization);
-    s += sprintf(s, " b-pyramid=%d", p->bBPyramid);
+    BOOL(p->bBPyramid, "b-pyramid");
     BOOL(p->rc.cuTree, "cutree");
+    s += sprintf(s, " rc=%s", p->rc.rateControlMode == X265_RC_ABR ? (
+         p->rc.bStatRead ? "2 pass" : p->rc.bitrate == p->rc.vbvMaxBitrate ? "cbr" : "abr")
+         : p->rc.rateControlMode == X265_RC_CRF ? "crf" : "cqp");
+    if (p->rc.rateControlMode == X265_RC_ABR || p->rc.rateControlMode == X265_RC_CRF)
+    {
+        if (p->rc.rateControlMode == X265_RC_CRF)
+            s += sprintf(s, " crf=%.1f", p->rc.rfConstant);
+        else
+            s += sprintf(s, " bitrate=%d ratetol=%.1f",
+                         p->rc.bitrate, p->rc.rateTolerance);
+        s += sprintf(s, " qcomp=%.2f qpmin=%d qpmax=%d qpstep=%d",
+                     p->rc.qCompress, MIN_QP, MAX_QP, p->rc.qpStep);
+        if (p->rc.bStatRead)
+            s += sprintf( s, " cplxblur=%.1f qblur=%.1f",
+                          p->rc.complexityBlur, p->rc.qblur);
+        if (p->rc.vbvBufferSize)
+        {
+            s += sprintf(s, " vbv_maxrate=%d vbv_bufsize=%d",
+                          p->rc.vbvMaxBitrate, p->rc.vbvBufferSize);
+            if (p->rc.rateControlMode == X265_RC_CRF)
+                s += sprintf(s, " crf_max=%.1f", p->rc.rfConstantMax);
+        }
+    }
+    else if (p->rc.rateControlMode == X265_RC_CQP)
+        s += sprintf(s, " qp=%d", p->rc.qp);
+    if (!(p->rc.rateControlMode == X265_RC_CQP && p->rc.qp == 0))
+    {
+        s += sprintf(s, " ip_ratio=%.2f", p->rc.ipFactor);
+        if (p->bframes)
+            s += sprintf(s, " pb_ratio=%.2f", p->rc.pbFactor);
+    }
 #undef BOOL
-
     return buf;
 }
 }
