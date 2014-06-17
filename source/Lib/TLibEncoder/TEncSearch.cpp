@@ -666,9 +666,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, singleCbfYTmp, singleDistYTmp);
                 if (m_rdCost->psyRdEnabled())
                 {
-                    int size = g_convertToBit[1 << log2TrSize];
                     uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
-                    singlePsyEnergyYTmp = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                    singlePsyEnergyYTmp = m_rdCost->psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                         cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
                 }
                 cu->setCbfSubParts(singleCbfYTmp << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -730,9 +729,8 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, singleCbfY, singleDistY);
             if (m_rdCost->psyRdEnabled())
             {
-                int size = g_convertToBit[1 << log2TrSize];
                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
-                singlePsyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                singlePsyEnergyY = m_rdCost->psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                     cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -1225,9 +1223,8 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                             uint32_t bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, absPartIdxC, chromaId, splitIntoSubTUs);
                             if (m_rdCost->psyRdEnabled())
                             {
-                                int size = g_convertToBit[1 << log2TrSizeC];
                                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
-                                singlePsyEnergyTmp = m_rdCost->psyCost(size, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
+                                singlePsyEnergyTmp = m_rdCost->psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
                                     cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
                                 singleCostTmp = m_rdCost->calcPsyRdCost(singleDistCTmp, bitsTmp, singlePsyEnergyTmp);
                             }
@@ -1277,9 +1274,8 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                     xIntraCodingChromaBlk(cu, absPartIdxC, log2TrSize, fencYuv, predYuv, resiYuv, singleCbfC, outDist, chromaId, log2TrSizeC);
                     if (m_rdCost->psyRdEnabled())
                     {
-                        int size = g_convertToBit[1 << log2TrSizeC];
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
-                        singlePsyEnergyTmp = m_rdCost->psyCost(size, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
+                        singlePsyEnergyTmp = m_rdCost->psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
                             cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
                     }
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.m_absPartIdxStep);
