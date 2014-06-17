@@ -154,16 +154,15 @@ public:
     } m_cuTreeStats;
 
     RateControl(x265_param *p);
+    void destroy();
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(TComPic *pic);
     int rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce);
     int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
-
     void hrdFullness(SEIBufferingPeriod* sei);
-    void init(TComSPS* sps);
+    bool init(TComSPS* sps);
     void initHRD(TComSPS* sps);
-
 protected:
 
     static const double s_amortizeFraction;

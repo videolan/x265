@@ -158,14 +158,18 @@ void Encoder::destroy()
     }
 
     delete m_dpb;
-    delete m_rateControl;
-
+    if (m_rateControl)
+    {
+        m_rateControl->destroy();
+        delete m_rateControl;
+    }
     // thread pool release should always happen last
     if (m_threadPool)
         m_threadPool->release();
 
     X265_FREE(m_nals);
     X265_FREE(m_packetData);
+    X265_FREE(m_param->rc.statFileName);
     X265_FREE(m_param);
     if (m_csvfpt)
         fclose(m_csvfpt);
@@ -185,7 +189,8 @@ void Encoder::init()
             }
         }
     }
-    m_rateControl->init(&m_frameEncoder[0].m_sps);
+    if (!m_rateControl->init(&m_frameEncoder[0].m_sps))
+        m_aborted = true;
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
 }

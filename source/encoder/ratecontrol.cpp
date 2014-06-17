@@ -27,6 +27,7 @@
 #include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
+#include "param.h"
 #include "sei.h"
 
 #define BR_SHIFT  6
@@ -82,6 +83,17 @@ inline void reduceFraction(int* n, int* d)
     *n /= b;
     *d /= b;
 }
+
+inline char *strcatFilename(const char *input, const char *suffix)
+{
+    char *output = X265_MALLOC(char, strlen(input) + strlen(suffix) + 1);
+    if (!output)
+        return NULL;
+    strcpy(output, input);
+    strcat(output, suffix);
+    return output;
+}
+
 }  // end anonymous namespace
 /* Compute variance to derive AC energy of each block */
 static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
@@ -281,8 +293,8 @@ RateControl::RateControl(x265_param *p)
         if (m_param->rc.rfConstantMin)
             m_rateFactorMaxDecrement = m_param->rc.rfConstant - m_param->rc.rfConstantMin;
     }
-
-    m_isAbr = m_param->rc.rateControlMode != X265_RC_CQP; // later add 2pass option
+    m_isAbr = m_param->rc.rateControlMode != X265_RC_CQP && !m_param->rc.bStatRead;
+    m_2pass =  m_param->rc.rateControlMode == X265_RC_ABR && m_param->rc.bStatRead;
     m_bitrate = m_param->rc.bitrate * 1000;
     m_frameDuration = (double)m_param->fpsDenom / m_param->fpsNum;
     m_qp = m_param->rc.qp;
@@ -292,6 +304,8 @@ RateControl::RateControl(x265_param *p)
     m_lastNonBPictType = I_SLICE;
     m_isAbrReset = false;
     m_lastAbrResetPoc = -1;
+    m_statFileOut = NULL;
+    m_cutreeStatFileOut = m_cutreeStatFileIn = NULL;
     // vbv initialization
     m_param->rc.vbvBufferSize = Clip3(0, 2000000, m_param->rc.vbvBufferSize);
     m_param->rc.vbvMaxBitrate = Clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
@@ -337,7 +351,7 @@ RateControl::RateControl(x265_param *p)
         m_param->bEmitHRDSEI = 0;
     }
 
-    m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && m_param->rc.vbvMaxBitrate == m_param->rc.bitrate;
+    m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
     m_bframes = m_param->bframes;
     m_bframeBits = 0;
     m_leadingNoBSatd = 0;
@@ -367,11 +381,64 @@ RateControl::RateControl(x265_param *p)
 
     /* qstep - value set as encoder specific */
     m_lstep = pow(2, m_param->rc.qpStep / 6.0);
+
+    for (int i = 0; i < 2; i++)
+        m_cuTreeStats.qpBuffer[i] = NULL;
 }
 
-void RateControl::init(TComSPS *sps)
+bool RateControl::init(TComSPS *sps)
 {
-    if (m_isVbv)
+    if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
+    {
+        /* If the user hasn't defined the stat filename, use the default value */
+        const char *fileName = m_param->rc.statFileName;
+        if (!fileName)
+            fileName = s_defaultStatFileName;
+
+        /* Open output file */
+        /* If input and output files are the same, output to a temp file
+         * and move it to the real name only when it's complete */
+        if (m_param->rc.bStatWrite)
+        {
+            char *p, *statFileTmpname;
+            statFileTmpname = strcatFilename(fileName, ".temp");
+            if (!statFileTmpname)
+                return false;
+            m_statFileOut = fopen(statFileTmpname, "wb");
+            x265_free(statFileTmpname);
+            if (!m_statFileOut)
+            {
+                x265_log(m_param, X265_LOG_ERROR, "RateControl Init: can't open stats file\n");
+                return false;
+            }
+            p = x265_param2string(m_param);
+            if (p)
+                fprintf(m_statFileOut, "#options: %s\n", p);
+            X265_FREE(p);
+            if (m_param->rc.cuTree && !m_param->rc.bStatRead)
+            {
+                statFileTmpname = strcatFilename(fileName, ".cutree.temp");
+                if (!statFileTmpname)
+                    return false;
+                m_cutreeStatFileOut = fopen(statFileTmpname, "wb");
+                x265_free(statFileTmpname);
+                if (!m_cutreeStatFileOut)
+                {
+                    x265_log(m_param, X265_LOG_ERROR, "RateControl Init: can't open mbtree stats file\n");
+                    return false;
+                }
+            }
+        }
+        if (m_param->rc.cuTree)
+        {
+            m_cuTreeStats.qpBuffer[0] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
+            if (m_param->bBPyramid && m_param->rc.bStatRead)
+                m_cuTreeStats.qpBuffer[1] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
+            m_cuTreeStats.qpBufPos = -1;
+        }
+    }
+
+    if (m_isVbv && !m_2pass)
     {
         double fps = (double)m_param->fpsNum / m_param->fpsDenom;
 
@@ -428,10 +495,9 @@ void RateControl::init(TComSPS *sps)
         m_pred[i].decay = 0.5;
         m_pred[i].offset = 0.0;
     }
-
     m_predBfromP = m_pred[0];
+    return true;
 }
-
 void RateControl::initHRD(TComSPS *sps)
 {
     int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
@@ -636,7 +702,8 @@ double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
         }
         else
         {
-            checkAndResetABR(rce, false);
+            if (!m_param->rc.bStatRead)
+                checkAndResetABR(rce, false);
             q = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
 
             /* ABR code can potentially be counterproductive in CBR, so just
@@ -1160,7 +1227,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
     int64_t actualBits = bits;
     if (m_isAbr)
     {
-        if (m_param->rc.rateControlMode == X265_RC_ABR)
+        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
         {
             checkAndResetABR(rce, true);
         }
@@ -1285,4 +1352,55 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
     }
     rce->isActive = false;
     return 0;
+}
+
+void RateControl::destroy()
+{
+    const char *fileName = m_param->rc.statFileName;
+    if (!fileName)
+        fileName = s_defaultStatFileName;
+
+    if (m_statFileOut)
+    {
+        fclose(m_statFileOut);
+        char *tmpFileName = strcatFilename(fileName, ".temp");
+        int bError = 1;
+        if (tmpFileName)
+        {
+           unlink(fileName);
+           bError = rename(tmpFileName, fileName);
+        }
+        if (bError)
+        {
+            x265_log(m_param, X265_LOG_ERROR, "failed to rename output stats file to \"%s\"\n",
+                     fileName);
+        }
+        X265_FREE(tmpFileName);
+    }
+
+    if (m_cutreeStatFileOut)
+    {
+        fclose(m_cutreeStatFileOut);
+        char *tmpFileName = strcatFilename(fileName, ".cutree.temp");
+        char *newFileName = strcatFilename(fileName, ".cutree");
+        int bError = 1;
+        if (tmpFileName && newFileName)
+        {
+           unlink(newFileName);
+           bError = rename(tmpFileName, newFileName);
+        }
+        if (!bError)
+        {
+            x265_log(m_param, X265_LOG_ERROR, "failed to rename cutree output stats file to \"%s\"\n",
+                     m_param->rc.statFileName);
+        }
+        X265_FREE(tmpFileName);
+        X265_FREE(newFileName);
+    }
+
+    if (m_cutreeStatFileIn)
+        fclose(m_cutreeStatFileIn);
+
+    for (int i = 0; i < 2; i++)
+        X265_FREE(m_cuTreeStats.qpBuffer[i]);
 }
