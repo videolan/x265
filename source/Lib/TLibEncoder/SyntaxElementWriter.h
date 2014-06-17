@@ -74,22 +74,21 @@ protected:
         : m_bitIf(NULL)
     {}
 
-    virtual ~SyntaxElementWriter() {}
-
-    void  setBitstream(TComBitIf* p)  { m_bitIf = p;  }
+    void  setBitstream(TComBitIf* p)  { m_bitIf = p; }
 
     void  xWriteCode(uint32_t code, uint32_t len);
     void  xWriteUvlc(uint32_t code);
     void  xWriteSvlc(int code);
     void  xWriteFlag(uint32_t code);
+
 #if ENC_DEC_TRACE
     void  xWriteCodeTr(uint32_t value, uint32_t  length, const char *symbolName);
-    void  xWriteUvlcTr(uint32_t value,               const char *symbolName);
-    void  xWriteSvlcTr(int value,                const char *symbolName);
-    void  xWriteFlagTr(uint32_t value,               const char *symbolName);
+    void  xWriteUvlcTr(uint32_t value,                   const char *symbolName);
+    void  xWriteSvlcTr(int value,                        const char *symbolName);
+    void  xWriteFlagTr(uint32_t value,                   const char *symbolName);
 #endif
 
-    uint32_t  xConvertToUInt(int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }
+    inline uint32_t xConvertToUInt(int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }
 };
 }
 //! \}
