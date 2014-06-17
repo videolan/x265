@@ -710,6 +710,10 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
     return sum + ((uint64_t)sqr << 32);
 }
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
+
 template<int size>
 int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
 {
