@@ -64,6 +64,8 @@ protected:
 
 public:
 
+    TComBitCounter() : m_bitCounter(0) {}
+
     void     write(uint32_t, uint32_t num)  { m_bitCounter += num; }
     void     writeByte(uint32_t)            { m_bitCounter += 8;   }
     void     resetBits()                    { m_bitCounter = 0;    }
