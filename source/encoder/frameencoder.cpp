@@ -617,64 +617,60 @@ void FrameEncoder::compressFrame()
     }
 
     /* start slice NALunit */
-    int numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
+    uint32_t numSubstreams = m_cfg->m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     if (!m_outStreams)
         m_outStreams = new TComOutputBitstream[numSubstreams];
     else
-        for (int i = 0; i < numSubstreams; i++)
+        for (uint32_t i = 0; i < numSubstreams; i++)
             m_outStreams[i].clear();
     slice->allocSubstreamSizes(numSubstreams);
 
-    m_bs.clear();
-    m_sbacCoder.init(&m_binCoderCABAC);
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-    entropyCoder->resetEntropy();
-    entropyCoder->setBitstream(&m_bs);
-    entropyCoder->encodeSliceHeader(slice);
-
-    for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
-        m_rows[i].m_entropyCoder.resetEntropy();
-    }
-
-    getSbacCoder(0)->load(&m_sbacCoder);
-    entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
-    entropyCoder->resetEntropy();
-    entropyCoder->setBitstream(&m_outStreams[0]);
-    m_sbacCoder.load(getSbacCoder(0));
-    encodeSlice(m_outStreams);
-
-    // Construct the final bitstream by flushing and concatenating substreams.
-    uint32_t* substreamSizes = slice->getSubstreamSizes();
-    for (int i = 0; i < numSubstreams; i++)
-    {
-        entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
-        entropyCoder->setBitstream(&m_outStreams[i]);
-        entropyCoder->encodeTerminatingBit(1);
-        entropyCoder->encodeSliceFinish();
-
-        // record final byte size (after start code escaping) for WPP entry points in slice header
-        m_outStreams[i].writeByteAlignment();
-        if (i + 1 < numSubstreams)
-            substreamSizes[i] = m_outStreams[i].getNumberOfWrittenBits() + (m_outStreams[i].countStartCodeEmulations() << 3);
-    }
-
-    // Complete the slice header
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-    entropyCoder->setBitstream(&m_bs);
-    entropyCoder->encodeTilesWPPEntryPoint(slice);
-    m_bs.writeByteAlignment();
-
-    for (int i = 0; i < numSubstreams; i++)
-        m_bs.appendSubstream(&m_outStreams[i]);
-
-    /* TODO: It's a bit late to handle malloc failure well here */
     m_nalList[m_nalCount] = new NALUnit;
     if (m_nalList[m_nalCount])
-        m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), m_bs);
+    {
+        m_bs.clear();
+        m_sbacCoder.init(&m_binCoderCABAC);
+        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+        entropyCoder->resetEntropy();
+        entropyCoder->setBitstream(&m_bs);
+        entropyCoder->encodeSliceHeader(slice);
 
-    // write decoded picture hash SEI messages
+        // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
+        for (int i = 0; i < m_numRows; i++)
+        {
+            m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
+            m_rows[i].m_entropyCoder.resetEntropy();
+        }
+        getSbacCoder(0)->load(&m_sbacCoder);
+        entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
+        entropyCoder->resetEntropy();
+        entropyCoder->setBitstream(&m_outStreams[0]);
+        m_sbacCoder.load(getSbacCoder(0));
+        encodeSlice(m_outStreams);
+
+        // flush per-row streams
+        for (uint32_t i = 0; i < numSubstreams; i++)
+        {
+            entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
+            entropyCoder->setBitstream(&m_outStreams[i]);
+            entropyCoder->encodeTerminatingBit(1);
+            entropyCoder->encodeSliceFinish();
+            m_outStreams[i].writeByteAlignment();
+        }
+
+        uint32_t totalBytes;
+        uint8_t *concatStreams = m_nalList[m_nalCount]->serializeMultiple(slice->getSubstreamSizes(), totalBytes, numSubstreams, m_outStreams);
+
+        // complete the slice header by writing WPP row-starts
+        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+        entropyCoder->setBitstream(&m_bs);
+        entropyCoder->encodeTilesWPPEntryPoint(slice);
+        m_bs.writeByteAlignment();
+
+        m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), m_bs, concatStreams, totalBytes);
+        X265_FREE(concatStreams);
+    }
+
     if (m_cfg->m_param->decodedPictureHashSEI)
     {
         if (m_cfg->m_param->decodedPictureHashSEI == 1)

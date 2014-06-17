@@ -40,7 +40,8 @@ struct NALUnit
     NALUnit() : m_packetSize(0), m_nalUnitData(NULL), m_nalUnitType(NAL_UNIT_INVALID) {}
     ~NALUnit() { X265_FREE(m_nalUnitData); }
 
-    void serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs);
+    void serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t *extra = NULL, uint32_t extraBytes = 0);
+    uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams);
 };
 
 }

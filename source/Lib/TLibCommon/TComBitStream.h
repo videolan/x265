@@ -90,9 +90,6 @@ public:
     void     writeAlignZero();     // insert zero bits until the bitstream is byte-aligned
     void     writeByteAlignment(); // insert 1 bit, then pad to byte-align with zero
 
-    void     appendSubstream(TComOutputBitstream* substream);
-    int      countStartCodeEmulations();
-
 private:
 
     uint8_t *m_fifo;
