@@ -330,6 +330,12 @@ RateControl::RateControl(x265_param *p)
         m_param->rc.vbvMaxBitrate = 0;
     }
     m_isVbv = m_param->rc.vbvMaxBitrate > 0 && m_param->rc.vbvBufferSize > 0;
+    if (m_param->bEmitHRDSEI && !m_isVbv)
+    {
+        x265_log(m_param, X265_LOG_WARNING, "NAL HRD parameters require VBV parameters, ignored\n");
+        m_param->bEmitHRDSEI = 0;
+    }
+
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && m_param->rc.vbvMaxBitrate == m_param->rc.bitrate;
     m_bframes = m_param->bframes;
     m_bframeBits = 0;
