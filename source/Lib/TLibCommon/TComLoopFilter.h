@@ -124,9 +124,6 @@ public:
     /// set configuration
     void setCfg(bool bLFCrossTileBoundary);
 
-    /// picture-level deblocking filter
-    void loopFilterPic(TComPic* pic);
-
     void loopFilterCU(TComDataCU* cu, int dir, bool edgeFilter[]);
 
     static int getBeta(int qp)

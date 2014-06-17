@@ -108,49 +108,6 @@ void TComLoopFilter::destroy()
     }
 }
 
-/**
- - call deblocking function for every CU
- .
- \param  pic   picture class (TComPic) pointer
- */
-void TComLoopFilter::loopFilterPic(TComPic* pic)
-{
-    // TODO: Min, thread parallelism later
-    bool edgeFilter[256];    // NOTE: the maximum LCU 64x64 have 256 partitions
-
-    // Horizontal filtering
-    for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
-    {
-        TComDataCU* cu = pic->getCU(cuAddr);
-
-        ::memset(m_blockingStrength[EDGE_VER], 0, sizeof(uint8_t) * m_numPartitions);
-        ::memset(edgeFilter, 0, sizeof(bool) * m_numPartitions);
-
-        // CU-based deblocking
-        xDeblockCU(cu, 0, 0, EDGE_VER, edgeFilter);
-
-        // Vertical filtering
-        // NOTE: delay one CU to avoid conflict between V and H
-        if (cuAddr > 0)
-        {
-            cu = pic->getCU(cuAddr - 1);
-            ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(uint8_t) * m_numPartitions);
-            ::memset(edgeFilter, 0, sizeof(bool) * m_numPartitions);
-
-            xDeblockCU(cu, 0, 0, EDGE_HOR, edgeFilter);
-        }
-    }
-
-    // Last H-Filter
-    {
-        TComDataCU* cu = pic->getCU(pic->getNumCUsInFrame() - 1);
-        ::memset(m_blockingStrength[EDGE_HOR], 0, sizeof(uint8_t) * m_numPartitions);
-        ::memset(edgeFilter, 0, sizeof(bool) * m_numPartitions);
-
-        xDeblockCU(cu, 0, 0, EDGE_HOR, edgeFilter);
-    }
-}
-
 void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir, bool edgeFilter[])
 {
     ::memset(m_blockingStrength[dir], 0, sizeof(uint8_t) * m_numPartitions);
