@@ -256,8 +256,6 @@ RateControl::RateControl(x265_param *p)
     // validate for param->rc, maybe it is need to add a function like x265_parameters_valiate()
     m_residualFrames = 0;
     m_residualCost = 0;
-    m_param->rc.rfConstant = Clip3((double)-QP_BD_OFFSET, (double)51, m_param->rc.rfConstant);
-    m_param->rc.rfConstantMax = Clip3((double)-QP_BD_OFFSET, (double)51, m_param->rc.rfConstantMax);
     m_rateFactorMaxIncrement = 0;
     m_rateFactorMaxDecrement = 0;
 

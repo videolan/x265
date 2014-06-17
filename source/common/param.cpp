@@ -1021,8 +1021,12 @@ int x265_check_params(x265_param *param)
           "Default Display Window Top Offset must be 0 or greater");
     CHECK(param->vui.defDispWinBottomOffset < 0,
           "Default Display Window Bottom Offset must be 0 or greater");
-    CHECK(param->rc.rfConstant < 0 || param->rc.rfConstant > 51,
-          "Valid quality based VBR range 0 - 51");
+    CHECK(param->rc.rfConstant < -6 * (param->internalBitDepth - 8) || param->rc.rfConstant > 51,
+          "Valid quality based range: -qpBDOffsetY to 51");
+    CHECK(param->rc.rfConstantMax < -6 * (param->internalBitDepth - 8) || param->rc.rfConstantMax > 51,
+          "Valid quality based range: -qpBDOffsetY to 51");
+    CHECK(param->rc.rfConstantMin < -6 * (param->internalBitDepth - 8) || param->rc.rfConstantMin > 51,
+          "Valid quality based range: -qpBDOffsetY to 51");
     CHECK(param->bFrameAdaptive < 0 || param->bFrameAdaptive > 2,
           "Valid adaptive b scheduling values 0 - none, 1 - fast, 2 - full");
     CHECK(param->logLevel<-1 || param->logLevel> X265_LOG_FULL,
