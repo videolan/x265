@@ -873,7 +873,7 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     }
 
     double ssim = 0.0;
-    if (m_param->bEnableSsim && curEncoder->m_ssimCnt > 0)
+    if (m_param->bEnableSsim && curEncoder->m_ssimCnt)
     {
         ssim = curEncoder->m_ssim / curEncoder->m_ssimCnt;
         m_analyzeAll.addSsim(ssim);

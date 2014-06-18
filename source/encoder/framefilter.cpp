@@ -31,7 +31,7 @@
 using namespace x265;
 
 static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t *cnt);
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
 
 // **************************************************************************
 // * LoopFilter
@@ -305,14 +305,14 @@ void FrameFilter::processRowPost(int row)
         int bStart = (row == 0);
         int minPixY = row * g_maxCUSize - 4 * !bStart;
         int maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
-        int ssim_cnt;
+        uint32_t ssim_cnt;
         x265_emms();
 
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
         m_frame->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
-                                         m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
+                                         m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
         m_frame->m_ssimCnt += ssim_cnt;
     }
     if (m_param->decodedPictureHashSEI == 1)
@@ -473,7 +473,7 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 }
 
 /* Function to calculate SSIM for each row */
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t* cnt)
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt)
 {
     int z = 0;
     float ssim = 0.0;
@@ -502,7 +502,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         }
     }
 
-    *cnt = (height - 1) * (width - 1);
+    cnt = (height - 1) * (width - 1);
     return ssim;
 }
 

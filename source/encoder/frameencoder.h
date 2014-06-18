@@ -161,7 +161,7 @@ public:
     uint64_t                 m_SSDU;
     uint64_t                 m_SSDV;
     double                   m_ssim;
-    int                      m_ssimCnt;
+    uint32_t                 m_ssimCnt;
     MD5Context               m_state[3];
     uint32_t                 m_crc[3];
     uint32_t                 m_checksum[3];
