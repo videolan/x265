@@ -44,20 +44,16 @@
 #include "TLibCommon/TComPattern.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
-#include "TLibCommon/TComPic.h"
 #include "TEncEntropy.h"
 #include "TEncSbac.h"
-#include "primitives.h"
 #include "bitcost.h"
 #include "motion.h"
 
 #define MVP_IDX_BITS 1
 
-//! \ingroup TLibEncoder
-//! \{
-
 namespace x265 {
 // private namespace
+
 class TEncCu;
 class Encoder;
 class RDCost;
@@ -252,6 +248,5 @@ protected:
     void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype);
 };
 }
-//! \}
 
 #endif // ifndef X265_TENCSEARCH_H
