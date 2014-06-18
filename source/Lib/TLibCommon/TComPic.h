@@ -122,7 +122,7 @@ public:
     double                m_rateFactor; // calculated based on the Frame QP
     int32_t               m_forceqp;    // Force to use the qp specified in qp file
 
-    SEIPictureTiming      m_sei;        // TODO: move these to frame encoder, better name
+    SEIPictureTiming      m_picTimingSei; // TODO: move these to frame encoder
     HRDTiming             m_hrdTiming;
 
     TComPic();

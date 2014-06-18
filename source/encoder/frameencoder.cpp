@@ -467,7 +467,7 @@ void FrameEncoder::compressFrame()
 
     if (m_cfg->m_param->bEmitHRDSEI || !!m_cfg->m_param->interlaceMode)
     {
-        SEIPictureTiming *sei = &m_pic->m_sei;
+        SEIPictureTiming *sei = &m_pic->m_picTimingSei;
         TComVUI *vui = slice->getSPS()->getVuiParameters();
         TComHRD *hrd = vui->getHrdParameters();
         int poc = slice->getPOC();

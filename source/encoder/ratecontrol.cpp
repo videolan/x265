@@ -1264,7 +1264,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
             }
             else
             {
-                pic->m_hrdTiming.cpbRemovalTime = m_nominalRemovalTime + (double)pic->m_sei.m_auCpbRemovalDelay * time->getNumUnitsInTick() / time->getTimeScale();
+                pic->m_hrdTiming.cpbRemovalTime = m_nominalRemovalTime + (double)pic->m_picTimingSei.m_auCpbRemovalDelay * time->getNumUnitsInTick() / time->getTimeScale();
                 double cpbEarliestAT = pic->m_hrdTiming.cpbRemovalTime - (double)m_sei.m_initialCpbRemovalDelay[0][0] / 90000;
                 if (!pic->m_lowres.bKeyframe)
                 {
@@ -1279,7 +1279,7 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
 
             uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
             pic->m_hrdTiming.cpbFinalAT = m_prevCpbFinalAT = pic->m_hrdTiming.cpbInitialAT + actualBits / cpbsizeUnscale;
-            pic->m_hrdTiming.dpbOutputTime = (double)pic->m_sei.m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + pic->m_hrdTiming.cpbRemovalTime;
+            pic->m_hrdTiming.dpbOutputTime = (double)pic->m_picTimingSei.m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + pic->m_hrdTiming.cpbRemovalTime;
         }
     }
     rce->isActive = false;
