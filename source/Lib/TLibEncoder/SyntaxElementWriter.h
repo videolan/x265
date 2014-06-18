@@ -87,8 +87,6 @@ protected:
     void  xWriteSvlcTr(int value,                        const char *symbolName);
     void  xWriteFlagTr(uint32_t value,                   const char *symbolName);
 #endif
-
-    inline uint32_t xConvertToUInt(int val) { return (val <= 0) ? -val << 1 : (val << 1) - 1; }
 };
 }
 //! \}
