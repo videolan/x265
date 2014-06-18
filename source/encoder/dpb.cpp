@@ -33,16 +33,31 @@ using namespace x265;
 
 DPB::~DPB()
 {
+    while (!m_freeList.empty())
+    {
+        TComPic* pic = m_freeList.popFront();
+        pic->destroy();
+        delete pic;
+    }
+
     while (!m_picList.empty())
     {
         TComPic* pic = m_picList.popFront();
         pic->destroy();
         delete pic;
     }
+
+    while (m_picSymFreeList)
+    {
+        TComPicSym* next = m_picSymFreeList->m_freeListNext;
+        m_picSymFreeList->destroy();
+        delete m_picSymFreeList;
+        m_picSymFreeList = next;
+    }
 }
 
 // move unreferenced pictures from picList to freeList for recycle
-void DPB::recycleUnreferenced(PicList& freeList)
+void DPB::recycleUnreferenced()
 {
     TComPic *iterPic = m_picList.first();
 
@@ -59,7 +74,10 @@ void DPB::recycleUnreferenced(PicList& freeList)
             m_picList.remove(*pic);
             iterPic = m_picList.first();
 
-            freeList.pushBack(*pic);
+            m_freeList.pushBack(*pic);
+            pic->m_picSym->m_freeListNext = m_picSymFreeList;
+            m_picSymFreeList = pic->m_picSym;
+            pic->m_picSym = NULL;
         }
     }
 }

@@ -49,8 +49,7 @@ using namespace x265;
 // ====================================================================================================================
 
 TComPic::TComPic()
-    : m_picSym(NULL)
-    , m_origPicYuv(NULL)
+    : m_origPicYuv(NULL)
     , m_reconPicYuv(NULL)
     , m_bIsLongTerm(false)
     , m_rowDiagQp(NULL)
@@ -63,6 +62,7 @@ TComPic::TComPic()
     , m_cuCostsForVbv(NULL)
     , m_intraCuCostsForVbv(NULL)
 {
+    m_picSym = NULL;
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
@@ -91,7 +91,7 @@ bool TComPic::create(Encoder* top)
     if (!m_origPicYuv || !m_reconPicYuv)
         return false;
 
-    bool ok = allocPicSym(top);
+    bool ok = true;
     ok &= m_origPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_reconPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_lowres.create(m_origPicYuv, top->m_param->bframes, !!top->m_param->rc.aqMode);
@@ -99,8 +99,8 @@ bool TComPic::create(Encoder* top)
     bool isVbv = top->m_param->rc.vbvBufferSize > 0 && top->m_param->rc.vbvMaxBitrate > 0;
     if (ok && (isVbv || top->m_param->rc.aqMode))
     {
-        int numRows = m_picSym->getFrameHeightInCU();
-        int numCols = m_picSym->getFrameWidthInCU();
+        int numCols = (top->m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+        int numRows = (top->m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
 
         if (top->m_param->rc.aqMode)
             CHECKED_MALLOC(m_qpaAq, double, numRows);
@@ -131,17 +131,17 @@ bool TComPic::allocPicSym(Encoder* top)
 {
     m_picSym = new TComPicSym;
     if (m_picSym)
-        return m_picSym->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+        return m_picSym->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp);
     else
         return false;
 }
 
 void TComPic::reinit(Encoder* top)
 {
+    int numCols = (top->m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+    int numRows = (top->m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
     if (top->m_param->rc.vbvBufferSize > 0 && top->m_param->rc.vbvMaxBitrate > 0)
     {
-        int numRows = m_picSym->getFrameHeightInCU();
-        int numCols = m_picSym->getFrameWidthInCU();
         memset(m_rowDiagQp, 0, numRows * sizeof(double));
         memset(m_rowDiagQScale, 0, numRows * sizeof(double));
         memset(m_rowDiagSatd, 0, numRows * sizeof(uint32_t));
@@ -154,7 +154,7 @@ void TComPic::reinit(Encoder* top)
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
     if (top->m_param->rc.aqMode)
-        memset(m_qpaAq, 0,  m_picSym->getFrameHeightInCU() * sizeof(double));
+        memset(m_qpaAq, 0, numRows * sizeof(double));
 }
 
 void TComPic::destroy()

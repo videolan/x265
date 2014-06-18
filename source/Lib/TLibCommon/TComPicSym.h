@@ -64,11 +64,9 @@ private:
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
 
-    uint32_t      m_maxCUSize;
     uint32_t      m_unitSize;
     uint32_t      m_log2UnitSize;
 
-    uint8_t       m_totalDepth;
     uint32_t      m_numPartitions;
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
@@ -80,7 +78,9 @@ private:
 
 public:
 
-    bool        create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxDepth);
+    TComPicSym*   m_freeListNext;
+
+    bool        create(int picWidth, int picHeight, int picCsp);
     void        destroy();
 
     TComPicSym();

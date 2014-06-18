@@ -97,7 +97,7 @@ void Encoder::create()
         }
     }
     m_lookahead = new Lookahead(this, m_threadPool);
-    m_dpb = new DPB(this);
+    m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 
     /* Try to open CSV file handle */
@@ -142,13 +142,6 @@ void Encoder::destroy()
         }
 
         delete [] m_frameEncoder;
-    }
-
-    while (!m_freeList.empty())
-    {
-        TComPic* pic = m_freeList.popFront();
-        pic->destroy();
-        delete pic;
     }
 
     if (m_lookahead)
@@ -278,7 +271,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         }
 
         TComPic *pic;
-        if (m_freeList.empty())
+        if (m_dpb->m_freeList.empty())
         {
             pic = new TComPic;
             if (!pic || !pic->create(this))
@@ -292,17 +285,12 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                 }
                 return -1;
             }
-            if (m_param->bEnableSAO)
-            {
-                // TODO: these should be allocated on demand within the encoder
-                // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
-                pic->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
-            }
         }
         else
-            pic = m_freeList.popBack();
+            pic = m_dpb->m_freeList.popBack();
+
         /* Copy input picture into a TComPic, send to lookahead */
-        pic->getSlice()->setPOC(++m_pocLast);
+        pic->m_POC = ++m_pocLast;
         pic->reinit(this);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
@@ -447,7 +435,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 
         // Allow this frame to be recycled if no frame encoders are using it for reference
         ATOMIC_DEC(&out->m_countRefEncoders);
-        m_dpb->recycleUnreferenced(m_freeList);
+        m_dpb->recycleUnreferenced();
         ret = 1;
     }
 
@@ -456,6 +444,21 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
     TComPic* fenc = m_lookahead->getDecidedPicture();
     if (fenc)
     {
+        // give this picture a TComPicSym instance before encoding
+        if (m_dpb->m_picSymFreeList)
+        {
+            fenc->m_picSym = m_dpb->m_picSymFreeList;
+            m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
+        }
+        else
+        {
+            fenc->allocPicSym(this);
+            // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
+            if (m_param->bEnableSAO)
+                fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
+        }
+        fenc->getSlice()->setPOC(fenc->m_POC);
+
         m_encodedFrameNum++;
         if (m_bframeDelay)
         {

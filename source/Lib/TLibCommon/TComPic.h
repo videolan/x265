@@ -52,7 +52,6 @@ class TComPic
 {
 private:
 
-    TComPicSym*       m_picSym;
     TComPicYuv*       m_origPicYuv;
     TComPicYuv*       m_reconPicYuv;
 
@@ -62,6 +61,9 @@ private:
     bool              m_bIsLongTerm;
 
 public:
+
+    TComPicSym*       m_picSym;
+    int               m_POC;
 
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
     ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
@@ -112,7 +114,7 @@ public:
 
     TComSlice*  getSlice()              { return m_picSym->getSlice(); }
 
-    int         getPOC()                { return m_picSym->getSlice()->getPOC(); }
+    int         getPOC()                { return m_POC; }
 
     TComDataCU* getCU(uint32_t cuAddr)  { return m_picSym->getCU(cuAddr); }
 

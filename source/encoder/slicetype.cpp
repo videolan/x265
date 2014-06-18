@@ -112,7 +112,7 @@ void Lookahead::addPicture(TComPic *pic, int sliceType)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
-    pic->m_lowres.init(orig, pic->getSlice()->getPOC(), sliceType);
+    pic->m_lowres.init(orig, pic->getPOC(), sliceType);
 
     m_inputQueueLock.acquire();
     m_inputQueue.pushBack(*pic);

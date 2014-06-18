@@ -67,6 +67,7 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
+class TComPicSym;
 struct NALUnit;
 
 class Encoder : public x265_encoder
@@ -87,6 +88,7 @@ private:
     Lookahead*         m_lookahead;
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
+
     /* frame parallelism */
     int                m_curEncoder;
 
