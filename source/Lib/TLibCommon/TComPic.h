@@ -104,9 +104,9 @@ public:
     void        reinit(Encoder* top);
     void        destroy();
 
-    bool        getIsLongTerm()           { return m_bIsLongTerm; }
+    bool        getIsLongTerm()         { return m_bIsLongTerm; }
 
-    void        setIsLongTerm(bool lt)    { m_bIsLongTerm = lt; }
+    void        setIsLongTerm(bool lt)  { m_bIsLongTerm = lt; }
 
     TComPicSym* getPicSym()             { return m_picSym; }
 
