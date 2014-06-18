@@ -49,8 +49,8 @@ public:
 
     void start(TComPic *pic);
 
-    void processRow(int row, Encoder* cfg);
-    void processRowPost(int row, Encoder* cfg);
+    void processRow(int row);
+    void processRowPost(int row);
     void processSao(int row);
 
 protected:
@@ -60,6 +60,7 @@ protected:
     FrameEncoder*               m_frame;
     int                         m_hChromaShift;
     int                         m_vChromaShift;
+    int                         m_pad[2];
 
 public:
 

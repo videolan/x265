@@ -68,7 +68,7 @@ public:
 
     void processRowFilter(int row)
     {
-        m_frameFilter.processRow(row, m_top);
+        m_frameFilter.processRow(row);
     }
 
     void enqueueRowEncoder(int row)

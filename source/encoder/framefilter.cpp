@@ -68,16 +68,18 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac*
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
+    m_pad[0] = top->m_pad[0];
+    m_pad[1] = top->m_pad[1];
 
     // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
-    if (top->m_param->bEnableLoopFilter)
+    if (m_param->bEnableLoopFilter)
     {
         m_loopFilter.create(g_maxCUDepth);
     }
 
-    if (top->m_param->bEnableSAO)
+    if (m_param->bEnableSAO)
     {
         m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
@@ -120,13 +122,13 @@ void FrameFilter::start(TComPic *pic)
     }
 }
 
-void FrameFilter::processRow(int row, Encoder* cfg)
+void FrameFilter::processRow(int row)
 {
     PPAScopeEvent(Thread_filterCU);
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
-        processRowPost(row, cfg);
+        processRowPost(row);
         return;
     }
 
@@ -192,7 +194,7 @@ void FrameFilter::processRow(int row, Encoder* cfg)
 
     if (row > 0)
     {
-        processRowPost(row - 1, cfg);
+        processRowPost(row - 1);
     }
 
     if (row == m_numRows - 1)
@@ -207,11 +209,11 @@ void FrameFilter::processRow(int row, Encoder* cfg)
             }
         }
 
-        processRowPost(row, cfg);
+        processRowPost(row);
     }
 }
 
-void FrameFilter::processRowPost(int row, Encoder* cfg)
+void FrameFilter::processRowPost(int row)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -273,7 +275,7 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         TComPicYuv* orig  = m_pic->getPicYuvOrg();
 
         int stride = recon->getStride();
-        int width  = recon->getWidth() - cfg->m_pad[0];
+        int width  = recon->getWidth() - m_pad[0];
         int height;
 
         if (row == m_numRows - 1)
@@ -295,8 +297,8 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = (pixel*)m_pic->getPicYuvRec()->getLumaAddr();
-        pixel *org = (pixel*)m_pic->getPicYuvOrg()->getLumaAddr();
+        pixel *rec = m_pic->getPicYuvRec()->getLumaAddr();
+        pixel *org = m_pic->getPicYuvOrg()->getLumaAddr();
         int stride1 = m_pic->getPicYuvOrg()->getStride();
         int stride2 = m_pic->getPicYuvRec()->getStride();
         int bEnd = ((row + 1) == (this->m_numRows - 1));
