@@ -36,6 +36,15 @@ class SEI : public SyntaxElementWriter
 {
 public:
 
+    /* SEI users call write() to marshal an SEI to a bitstream. SEI
+     * subclasses may implement write() or accept the default write()
+     * method which calls writeSEI() with a bitcounter to determine
+     * the size, then it encodes the header and calls writeSEI a
+     * second time for the real encode. */
+    virtual void write(TComOutputBitstream& bs, TComSPS& sps);
+
+protected:
+
     enum PayloadType
     {
         BUFFERING_PERIOD                     = 0,
@@ -65,9 +74,7 @@ public:
 
     virtual PayloadType payloadType() const = 0;
 
-    virtual void writeSEI(TComSPS& sps) = 0;
-
-    void write(TComOutputBitstream& bs, TComSPS& sps);
+    virtual void writeSEI(TComSPS&) {}
 
     void writeByteAlign();
 };
@@ -94,11 +101,29 @@ public:
 
     uint8_t m_digest[3][16];
 
-    void writeSEI(TComSPS&)
+    void write(TComOutputBitstream& bs, TComSPS&)
     {
+        setBitstream(&bs);
+
         LOG("=========== Decoded picture hash SEI message ===========\n");
 
-        WRITE_CODE(m_method, 8, "hash_type");
+        WRITE_CODE(DECODED_PICTURE_HASH, 8, "payload_type");
+
+        switch (m_method)
+        {
+        case MD5:
+            WRITE_CODE(1 + 16 * 3, 8, "payload_size");
+            WRITE_CODE(MD5, 8, "hash_type");
+            break;
+        case CRC:
+            WRITE_CODE(1 + 2 * 3, 8, "payload_size");
+            WRITE_CODE(CRC, 8, "hash_type");
+            break;
+        case CHECKSUM:
+            WRITE_CODE(1 + 4 * 3, 8, "payload_size");
+            WRITE_CODE(CHECKSUM, 8, "hash_type");
+            break;
+        }
 
         for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
         {
