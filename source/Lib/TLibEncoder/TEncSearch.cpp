@@ -143,15 +143,17 @@ fail:
     return false;
 }
 
-void TEncSearch::setQP(int qp, double cbWeight, double crWeight)
+void TEncSearch::setQP(int qp, int qpCb, int qpCr)
 {
     double lambda2 = x265_lambda2_tab[qp];
+    double lambdaCb = x265_lambda2_tab[qpCb];
+    double lambdaCr = x265_lambda2_tab[qpCr];
 
     m_me.setQP(qp);
-    m_trQuant->setLambdas(lambda2, lambda2 / cbWeight, lambda2 / crWeight);
+    m_trQuant->setLambdas(lambda2, lambdaCb, lambdaCr);
     m_rdCost->setLambda(lambda2, x265_lambda_tab[qp]);
-    m_rdCost->setCbDistortionWeight(cbWeight);
-    m_rdCost->setCrDistortionWeight(crWeight);
+    m_rdCost->setCbDistortionWeight(1.0);
+    m_rdCost->setCrDistortionWeight(1.0);
 }
 
 void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool bLuma, bool bChroma)

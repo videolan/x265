@@ -140,7 +140,7 @@ public:
 
     void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
-    void setQP(int QP, double cbWeight, double crWeight);
+    void setQP(int qp, int qpCb, int qpCr);
 
     TEncSearch();
     virtual ~TEncSearch();
