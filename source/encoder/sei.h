@@ -96,7 +96,6 @@ public:
         MD5,
         CRC,
         CHECKSUM,
-        RESERVED,
     } m_method;
 
     uint8_t m_digest[3][16];
