@@ -78,33 +78,31 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {}
 
-bool TComPic::create(Encoder* cfg)
+bool TComPic::create(Encoder* top)
 {
     /* store conformance window parameters with picture */
-    m_conformanceWindow = cfg->m_conformanceWindow;
+    m_conformanceWindow = top->m_conformanceWindow;
 
     /* store display window parameters with picture */
-    m_defaultDisplayWindow = cfg->m_defaultDisplayWindow;
+    m_defaultDisplayWindow = top->m_defaultDisplayWindow;
 
-    m_picSym = new TComPicSym;
     m_origPicYuv = new TComPicYuv;
     m_reconPicYuv = new TComPicYuv;
-    if (!m_picSym || !m_origPicYuv || !m_reconPicYuv)
+    if (!m_origPicYuv || !m_reconPicYuv)
         return false;
 
-    bool ok = true;
-    ok &= m_picSym->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_origPicYuv->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(cfg->m_param->sourceWidth, cfg->m_param->sourceHeight, cfg->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_lowres.create(m_origPicYuv, cfg->m_param->bframes, !!cfg->m_param->rc.aqMode);
+    bool ok = allocPicSym(top);
+    ok &= m_origPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_reconPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    ok &= m_lowres.create(m_origPicYuv, top->m_param->bframes, !!top->m_param->rc.aqMode);
 
-    bool isVbv = cfg->m_param->rc.vbvBufferSize > 0 && cfg->m_param->rc.vbvMaxBitrate > 0;
-    if (ok && (isVbv || cfg->m_param->rc.aqMode))
+    bool isVbv = top->m_param->rc.vbvBufferSize > 0 && top->m_param->rc.vbvMaxBitrate > 0;
+    if (ok && (isVbv || top->m_param->rc.aqMode))
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
 
-        if (cfg->m_param->rc.aqMode)
+        if (top->m_param->rc.aqMode)
             CHECKED_MALLOC(m_qpaAq, double, numRows);
         if (isVbv)
         {
@@ -119,7 +117,7 @@ bool TComPic::create(Encoder* cfg)
             CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
             CHECKED_MALLOC(m_qpaRc, double, numRows);
         }
-        reInit(cfg);
+        reinit(top);
     }
 
     return ok;
@@ -129,9 +127,18 @@ fail:
     return ok;
 }
 
-void TComPic::reInit(Encoder* cfg)
+bool TComPic::allocPicSym(Encoder* top)
 {
-    if (cfg->m_param->rc.vbvBufferSize > 0 && cfg->m_param->rc.vbvMaxBitrate > 0)
+    m_picSym = new TComPicSym;
+    if (m_picSym)
+        return m_picSym->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    else
+        return false;
+}
+
+void TComPic::reinit(Encoder* top)
+{
+    if (top->m_param->rc.vbvBufferSize > 0 && top->m_param->rc.vbvMaxBitrate > 0)
     {
         int numRows = m_picSym->getFrameHeightInCU();
         int numCols = m_picSym->getFrameWidthInCU();
@@ -146,7 +153,7 @@ void TComPic::reInit(Encoder* cfg)
         memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
-    if (cfg->m_param->rc.aqMode)
+    if (top->m_param->rc.aqMode)
         memset(m_qpaAq, 0,  m_picSym->getFrameHeightInCU() * sizeof(double));
 }
 

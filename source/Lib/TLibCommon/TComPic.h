@@ -99,9 +99,10 @@ public:
     TComPic();
     virtual ~TComPic();
 
-    bool        create(Encoder* cfg);
+    bool        create(Encoder* top);
+    bool        allocPicSym(Encoder* top);
+    void        reinit(Encoder* top);
     void        destroy();
-    void        reInit(Encoder* cfg);
 
     bool        getIsLongTerm()           { return m_bIsLongTerm; }
 
