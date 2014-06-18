@@ -237,7 +237,6 @@ void TComSlice::setRefPicList(PicList& picList)
             refPic->setIsLongTerm(0);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
-            refPic->setCheckLTMSBPresent(false);
         }
     }
 
@@ -249,7 +248,6 @@ void TComSlice::setRefPicList(PicList& picList)
             refPic->setIsLongTerm(0);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
-            refPic->setCheckLTMSBPresent(false);
         }
     }
 
@@ -267,7 +265,6 @@ void TComSlice::setRefPicList(PicList& picList)
         {
             refPic = xGetLongTermRefPic(picList, m_rps->getPOC(i), m_rps->getCheckLTMSBPresent(i));
         }
-        refPic->setCheckLTMSBPresent(m_rps->getCheckLTMSBPresent(i));
     }
 
     // ref_pic_list_init

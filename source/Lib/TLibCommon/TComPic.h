@@ -72,7 +72,6 @@ private:
     Window                m_defaultDisplayWindow;
 
     bool                  m_bIsLongTerm;          // IS long term picture
-    bool                  m_bCheckLTMSB;
 
 public:
 
@@ -118,10 +117,6 @@ public:
     bool          getIsLongTerm()           { return m_bIsLongTerm; }
 
     void          setIsLongTerm(bool lt)    { m_bIsLongTerm = lt; }
-
-    void          setCheckLTMSBPresent(bool b) { m_bCheckLTMSB = b; }
-
-    bool          getCheckLTMSBPresent()  { return m_bCheckLTMSB; }
 
     TComPicSym*   getPicSym()             { return m_picSym; }
 
