@@ -52,94 +52,94 @@ class TComPic
 {
 private:
 
-    TComPicSym*           m_picSym;
-    TComPicYuv*           m_origPicYuv;
-    TComPicYuv*           m_reconPicYuv;
+    TComPicSym*       m_picSym;
+    TComPicYuv*       m_origPicYuv;
+    TComPicYuv*       m_reconPicYuv;
 
-    Window                m_conformanceWindow;
-    Window                m_defaultDisplayWindow;
+    Window            m_conformanceWindow;
+    Window            m_defaultDisplayWindow;
 
-    bool                  m_bIsLongTerm;
+    bool              m_bIsLongTerm;
 
 public:
 
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
-    ThreadSafeInteger     m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
-    volatile uint32_t     m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
-    void*                 m_userData;           // user provided pointer passed in with this picture
+    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
+    void*             m_userData;           // user provided pointer passed in with this picture
 
-    int64_t               m_pts;                // user provided presentation time stamp
-    int64_t               m_reorderedPts;
-    int64_t               m_dts;
+    int64_t           m_pts;                // user provided presentation time stamp
+    int64_t           m_reorderedPts;
+    int64_t           m_dts;
 
-    Lowres                m_lowres;
+    Lowres            m_lowres;
 
-    TComPic*              m_next;               // PicList doubly linked list pointers
-    TComPic*              m_prev;
+    TComPic*          m_next;               // PicList doubly linked list pointers
+    TComPic*          m_prev;
 
-    bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
+    bool              m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
 
     /* TODO: much of this data can be moved to RCE */
-    double*               m_rowDiagQp;
-    double*               m_rowDiagQScale;
-    uint32_t*             m_rowDiagSatd;
-    uint32_t*             m_rowDiagIntraSatd;
-    uint32_t*             m_rowEncodedBits;
-    uint32_t*             m_numEncodedCusPerRow;
-    uint32_t*             m_rowSatdForVbv;
-    uint32_t*             m_cuCostsForVbv;
-    uint32_t*             m_intraCuCostsForVbv;
-    double*               m_qpaAq;
-    double*               m_qpaRc;
-    double                m_avgQpRc;    // avg QP as decided by ratecontrol
-    double                m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
-    double                m_rateFactor; // calculated based on the Frame QP
-    int32_t               m_forceqp;    // Force to use the qp specified in qp file
+    double*           m_rowDiagQp;
+    double*           m_rowDiagQScale;
+    uint32_t*         m_rowDiagSatd;
+    uint32_t*         m_rowDiagIntraSatd;
+    uint32_t*         m_rowEncodedBits;
+    uint32_t*         m_numEncodedCusPerRow;
+    uint32_t*         m_rowSatdForVbv;
+    uint32_t*         m_cuCostsForVbv;
+    uint32_t*         m_intraCuCostsForVbv;
+    double*           m_qpaAq;
+    double*           m_qpaRc;
+    double            m_avgQpRc;    // avg QP as decided by ratecontrol
+    double            m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
+    double            m_rateFactor; // calculated based on the Frame QP
+    int32_t           m_forceqp;    // Force to use the qp specified in qp file
 
     TComPic();
     virtual ~TComPic();
 
-    bool          create(Encoder* cfg);
-    virtual void  destroy();
-    void          reInit(Encoder* cfg);
+    bool        create(Encoder* cfg);
+    void        destroy();
+    void        reInit(Encoder* cfg);
 
-    bool          getIsLongTerm()           { return m_bIsLongTerm; }
+    bool        getIsLongTerm()           { return m_bIsLongTerm; }
 
-    void          setIsLongTerm(bool lt)    { m_bIsLongTerm = lt; }
+    void        setIsLongTerm(bool lt)    { m_bIsLongTerm = lt; }
 
-    TComPicSym*   getPicSym()             { return m_picSym; }
+    TComPicSym* getPicSym()             { return m_picSym; }
 
-    TComSlice*    getSlice()              { return m_picSym->getSlice(); }
+    TComSlice*  getSlice()              { return m_picSym->getSlice(); }
 
-    int           getPOC()                { return m_picSym->getSlice()->getPOC(); }
+    int         getPOC()                { return m_picSym->getSlice()->getPOC(); }
 
-    TComDataCU*   getCU(uint32_t cuAddr)  { return m_picSym->getCU(cuAddr); }
+    TComDataCU* getCU(uint32_t cuAddr)  { return m_picSym->getCU(cuAddr); }
 
-    TComPicYuv*   getPicYuvOrg()          { return m_origPicYuv; }
+    TComPicYuv* getPicYuvOrg()          { return m_origPicYuv; }
 
-    TComPicYuv*   getPicYuvRec()          { return m_reconPicYuv; }
+    TComPicYuv* getPicYuvRec()          { return m_reconPicYuv; }
 
-    uint32_t      getNumCUsInFrame() const { return m_picSym->getNumberOfCUsInFrame(); }
+    uint32_t    getNumCUsInFrame() const { return m_picSym->getNumberOfCUsInFrame(); }
 
-    uint32_t      getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
+    uint32_t    getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
 
-    uint32_t      getNumPartInCU() const  { return m_picSym->getNumPartition(); }
+    uint32_t    getNumPartInCU() const  { return m_picSym->getNumPartition(); }
 
-    uint32_t      getFrameWidthInCU() const { return m_picSym->getFrameWidthInCU(); }
+    uint32_t    getFrameWidthInCU() const { return m_picSym->getFrameWidthInCU(); }
 
-    uint32_t      getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
+    uint32_t    getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
 
-    uint32_t      getUnitSize() const     { return m_picSym->getUnitSize(); }
+    uint32_t    getUnitSize() const     { return m_picSym->getUnitSize(); }
 
-    uint32_t      getLog2UnitSize() const   { return m_picSym->getLog2UnitSize(); }
+    uint32_t    getLog2UnitSize() const   { return m_picSym->getLog2UnitSize(); }
 
-    int           getStride()             { return m_reconPicYuv->getStride(); }
+    int         getStride()             { return m_reconPicYuv->getStride(); }
 
-    int           getCStride()            { return m_reconPicYuv->getCStride(); }
+    int         getCStride()            { return m_reconPicYuv->getCStride(); }
 
-    Window&       getConformanceWindow()  { return m_conformanceWindow; }
+    Window&     getConformanceWindow()  { return m_conformanceWindow; }
 
-    Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
+    Window&     getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 };
 }
 
