@@ -106,6 +106,7 @@ public:
 
     TEncSbac***     m_rdSbacCoders;
     TEncSbac*       m_rdGoOnSbacCoder;
+    bool            m_bFrameParallel;
 
 protected:
 
@@ -123,14 +124,15 @@ protected:
     TComTrQuant*    m_trQuant;
     RDCost*         m_rdCost;
     TEncEntropy*    m_entropyCoder;
+    x265_param*     m_param;
+
+    bool            m_bEnableRDOQ;
+    int             m_numLayers;
 
     // ME parameters
     int             m_refLagPixels;
 
 public:
-
-    // interface to option
-    Encoder*        m_cfg;
 
     void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
@@ -143,7 +145,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    bool init(Encoder* cfg, RDCost* rdCost, TComTrQuant *trQuant);
+    bool init(Encoder* top, RDCost* rdCost, TComTrQuant *trQuant);
 
     uint32_t xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t xModeBitsRemIntra(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t & mpms);

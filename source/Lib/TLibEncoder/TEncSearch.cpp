@@ -66,25 +66,23 @@ TEncSearch::TEncSearch()
         m_qtTempCbf[i] = NULL;
     }
 
-    m_cfg = NULL;
-    m_rdCost  = NULL;
+    m_param = NULL;
+    m_rdCost = NULL;
     m_trQuant = NULL;
     m_entropyCoder = NULL;
-    m_rdSbacCoders    = NULL;
+    m_rdSbacCoders = NULL;
     m_rdGoOnSbacCoder = NULL;
+    m_numLayers = 0;
 }
 
 TEncSearch::~TEncSearch()
 {
-    if (m_cfg)
+    for (uint32_t i = 0; i < m_numLayers; ++i)
     {
-        const uint32_t numLayersToAllocate = m_cfg->m_quadtreeTULog2MaxSize - m_cfg->m_quadtreeTULog2MinSize + 1;
-        for (uint32_t i = 0; i < numLayersToAllocate; ++i)
-        {
-            X265_FREE(m_qtTempCoeff[0][i]);
-            m_qtTempShortYuv[i].destroy();
-        }
+        X265_FREE(m_qtTempCoeff[0][i]);
+        m_qtTempShortYuv[i].destroy();
     }
+
     X265_FREE(m_qtTempTUCoeff[0]);
     X265_FREE(m_qtTempTrIdx);
     X265_FREE(m_qtTempCbf[0]);
@@ -95,33 +93,35 @@ TEncSearch::~TEncSearch()
     m_qtTempTransformSkipYuv.destroy();
 }
 
-bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
+bool TEncSearch::init(Encoder* top, RDCost* rdCost, TComTrQuant* trQuant)
 {
-    m_cfg     = cfg;
+    m_param   = top->m_param;
     m_trQuant = trQuant;
     m_rdCost  = rdCost;
+    m_bEnableRDOQ = top->m_bEnableRDOQ;
 
-    initTempBuff(cfg->m_param->internalCsp);
-    m_me.setSearchMethod(cfg->m_param->searchMethod);
-    m_me.setSubpelRefine(cfg->m_param->subpelRefine);
+    initTempBuff(m_param->internalCsp);
+    m_me.setSearchMethod(m_param->searchMethod);
+    m_me.setSubpelRefine(m_param->subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_refLagPixels = cfg->m_totalFrameThreads > 1 ? cfg->m_param->searchRange : cfg->m_param->sourceHeight;
+    m_bFrameParallel = top->m_totalFrameThreads > 1;
+    m_refLagPixels = m_bFrameParallel ? m_param->searchRange : m_param->sourceHeight;
 
-    const uint32_t numLayersToAllocate = cfg->m_quadtreeTULog2MaxSize - cfg->m_quadtreeTULog2MinSize + 1;
-    m_qtTempCoeff[0] = new coeff_t*[numLayersToAllocate * 3];
-    m_qtTempCoeff[1] = m_qtTempCoeff[0] + numLayersToAllocate;
-    m_qtTempCoeff[2] = m_qtTempCoeff[0] + numLayersToAllocate * 2;
-    m_qtTempShortYuv = new ShortYuv[numLayersToAllocate];
+    m_numLayers = top->m_quadtreeTULog2MaxSize - top->m_quadtreeTULog2MinSize + 1;
+    m_qtTempCoeff[0] = new coeff_t*[m_numLayers * 3];
+    m_qtTempCoeff[1] = m_qtTempCoeff[0] + m_numLayers;
+    m_qtTempCoeff[2] = m_qtTempCoeff[0] + m_numLayers * 2;
+    m_qtTempShortYuv = new ShortYuv[m_numLayers];
     uint32_t sizeL = g_maxCUSize * g_maxCUSize;
     uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
-    for (uint32_t i = 0; i < numLayersToAllocate; ++i)
+    for (uint32_t i = 0; i < m_numLayers; ++i)
     {
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
-        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, cfg->m_param->internalCsp);
+        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
@@ -137,7 +137,7 @@ bool TEncSearch::init(Encoder* cfg, RDCost* rdCost, TComTrQuant* trQuant)
     m_qtTempTUCoeff[1] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE;
     m_qtTempTUCoeff[2] = m_qtTempTUCoeff[0] + MAX_CU_SIZE * MAX_CU_SIZE * 2;
 
-    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, cfg->m_param->internalCsp);
+    return m_qtTempTransformSkipYuv.create(g_maxCUSize, g_maxCUSize, m_param->internalCsp);
 
 fail:
     return false;
@@ -420,7 +420,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
-    if (m_cfg->m_bEnableRDOQ)
+    if (m_bEnableRDOQ)
     {
         m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, tuSize, TEXT_LUMA);
     }
@@ -501,7 +501,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
-    if (m_cfg->m_bEnableRDOQ)
+    if (m_bEnableRDOQ)
     {
         m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, tuSize, ttype);
     }
@@ -585,13 +585,13 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     // don't check split if TU size is less or equal to max TU size
     bool noSplitIntraMaxTuSize = bCheckFull;
 
-    if (m_cfg->m_param->rdPenalty && !isIntraSlice)
+    if (m_param->rdPenalty && !isIntraSlice)
     {
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (log2TrSize <= X265_MIN(maxTuSize, 4));
 
         // if maximum RD-penalty don't check TU size 32x32
-        if (m_cfg->m_param->rdPenalty == 2)
+        if (m_param->rdPenalty == 2)
         {
             bCheckFull = (log2TrSize <= X265_MIN(maxTuSize, 4));
         }
@@ -618,13 +618,13 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         if (checkTransformSkip)
         {
             checkTransformSkip &= !((cu->getQP(0) == 0));
-            if (m_cfg->m_param->bEnableTSkipFast)
+            if (m_param->bEnableTSkipFast)
             {
                 checkTransformSkip &= (cu->getPartitionSize(absPartIdx) == SIZE_NxN);
             }
         }
 
-        bool checkTQbypass = cu->getSlice()->getPPS()->getTransquantBypassEnableFlag() && !m_cfg->m_CUTransquantBypassFlagValue;
+        bool checkTQbypass = cu->getSlice()->getPPS()->getTransquantBypassEnableFlag() && !m_param->bLossless;
 
         uint32_t stride = fencYuv->getStride();
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
@@ -736,7 +736,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
             uint32_t singleBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, 0, true, false);
-            if (m_cfg->m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
+            if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
             if (m_rdCost->psyRdEnabled())
@@ -846,7 +846,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     int maxTuSize = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize();
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
-    if (m_cfg->m_param->rdPenalty == 2 && !isIntraSlice)
+    if (m_param->rdPenalty == 2 && !isIntraSlice)
     {
         // if maximum RD-penalty don't check TU size 32x32
         bCheckFull = (log2TrSize <= X265_MIN(maxTuSize, 4));
@@ -1147,7 +1147,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                    log2TrSizeC <= LOG2_MAX_TS_SIZE &&
                                    !cu->getCUTransquantBypass(0));
 
-        if (m_cfg->m_param->bEnableTSkipFast)
+        if (m_param->bEnableTSkipFast)
         {
             checkTransformSkip &= ((cu->getCUSize(0) >> trDepth) <= 4);
             if (checkTransformSkip)
@@ -2184,9 +2184,9 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
     for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
-        if (m_cfg->m_totalFrameThreads > 1 &&
-            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_cfg->m_param->searchRange + 1) * 4 ||
-             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_cfg->m_param->searchRange + 1) * 4))
+        if (m_bFrameParallel &&
+            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
         {
             continue;
         }
@@ -2325,7 +2325,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
 
-                int merange = m_cfg->m_param->searchRange;
+                int merange = m_param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -2379,7 +2379,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 /* Do not try zero MV if unidir motion predictors are beyond
                  * valid search area */
                 MV mvmin, mvmax;
-                int merange = X265_MAX(m_cfg->m_param->sourceWidth, m_cfg->m_param->sourceHeight);
+                int merange = X265_MAX(m_param->sourceWidth, m_param->sourceHeight);
                 xSetSearchRange(cu, mvzero, merange, mvmin, mvmax);
                 mvmax.y += 2; // there is some pad for subpel refine
                 mvmin <<= 2;
@@ -2685,7 +2685,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     {
         bIsTQBypassEnable = true; // mark that the first iteration is to cost TQB mode.
         tqBypassMode = 2;
-        if (m_cfg->m_CUTransquantBypassFlagValue)
+        if (m_param->bLossless)
             tqBypassMode = 1;
     }
 
@@ -3093,7 +3093,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
 
-        if (m_cfg->m_bEnableRDOQ && curuseRDOQ)
+        if (m_bEnableRDOQ && curuseRDOQ)
         {
             m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trSize, TEXT_LUMA);
         }
@@ -3127,7 +3127,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.m_absPartIdxStep);
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.m_absPartIdxStep);
 
-                if (m_cfg->m_bEnableRDOQ && curuseRDOQ)
+                if (m_bEnableRDOQ && curuseRDOQ)
                 {
                     m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trSizeC, TEXT_CHROMA);
                 }
@@ -3500,7 +3500,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             cu->setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
-            if (m_cfg->m_bEnableRDOQ)
+            if (m_bEnableRDOQ)
             {
                 m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trSize, TEXT_LUMA);
             }
@@ -3593,7 +3593,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setTransformSkipPartRange(1, TEXT_CHROMA_U, absPartIdxC, tuIterator.m_absPartIdxStep);
                 cu->setTransformSkipPartRange(1, TEXT_CHROMA_V, absPartIdxC, tuIterator.m_absPartIdxStep);
 
-                if (m_cfg->m_bEnableRDOQ)
+                if (m_bEnableRDOQ)
                 {
                     m_entropyCoder->estimateBit(m_trQuant->m_estBitsSbac, trSizeC, TEXT_CHROMA);
                 }
