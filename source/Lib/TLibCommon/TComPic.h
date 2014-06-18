@@ -91,20 +91,10 @@ public:
     TComPic*              m_next;               // PicList doubly linked list pointers
     TComPic*              m_prev;
 
-    uint64_t              m_SSDY;
-    uint64_t              m_SSDU;
-    uint64_t              m_SSDV;
-    double                m_ssim;
-    int                   m_ssimCnt;
-
     bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
 
     double                m_elapsedCompressTime; // elapsed time spent in worker threads
     double                m_frameTime;           // wall time from frame start to finish
-
-    MD5Context            m_state[3];
-    uint32_t              m_crc[3];
-    uint32_t              m_checksum[3];
 
     double*               m_rowDiagQp;
     double*               m_rowDiagQScale;

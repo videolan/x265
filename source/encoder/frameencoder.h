@@ -157,6 +157,15 @@ public:
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
+    uint64_t                 m_SSDY;
+    uint64_t                 m_SSDU;
+    uint64_t                 m_SSDV;
+    double                   m_ssim;
+    int                      m_ssimCnt;
+    MD5Context               m_state[3];
+    uint32_t                 m_crc[3];
+    uint32_t                 m_checksum[3];
+
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
 

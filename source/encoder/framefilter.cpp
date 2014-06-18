@@ -25,6 +25,7 @@
 #include "encoder.h"
 #include "PPA/ppa.h"
 #include "framefilter.h"
+#include "frameencoder.h"
 #include "wavefront.h"
 
 using namespace x265;
@@ -40,6 +41,8 @@ FrameFilter::FrameFilter()
     , m_rdGoOnBinCodersCABAC(true)
     , m_ssimBuf(NULL)
 {
+    m_pic = NULL;
+    m_frame = NULL;
 }
 
 void FrameFilter::destroy()
@@ -58,9 +61,10 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
     m_param = top->m_param;
+    m_frame = frame;
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
@@ -75,10 +79,10 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
 
     if (top->m_param->bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(top->m_param->saoLcuBoundary);
-        m_sao.setSaoLcuBasedOptimization(top->m_param->saoLcuBasedOptimization);
+        m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
-        m_sao.create(top->m_param->sourceWidth, top->m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
+        m_sao.create(m_param->sourceWidth, m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
 
@@ -285,9 +289,9 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint64_t ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
         uint64_t ssdV = computeSSD(orig->getCrAddr(cuAddr), recon->getCrAddr(cuAddr), stride, width, height);
 
-        m_pic->m_SSDY += ssdY;
-        m_pic->m_SSDU += ssdU;
-        m_pic->m_SSDV += ssdV;
+        m_frame->m_SSDY += ssdY;
+        m_frame->m_SSDU += ssdU;
+        m_frame->m_SSDV += ssdV;
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
@@ -305,9 +309,9 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_pic->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
-                                       m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
-        m_pic->m_ssimCnt += ssim_cnt;
+        m_frame->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
+                                         m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
+        m_frame->m_ssimCnt += ssim_cnt;
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
@@ -315,39 +319,36 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
 
-        if (row == 0)
+        if (!row)
         {
             for (int i = 0; i < 3; i++)
             {
-                MD5Init(&(m_pic->m_state[i]));
+                MD5Init(&m_frame->m_state[i]);
             }
         }
 
-        updateMD5Plane(m_pic->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
 
-        updateMD5Plane(m_pic->m_state[1], recon->getCbAddr(cuAddr), width, height, stride);
-
-        updateMD5Plane(m_pic->m_state[2], recon->getCrAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[1], recon->getCbAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[2], recon->getCrAddr(cuAddr), width, height, stride);
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
         uint32_t width = recon->getWidth();
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
-        if (row == 0)
-        {
-            m_pic->m_crc[0] = m_pic->m_crc[1] = m_pic->m_crc[2] = 0xffff;
-        }
-        updateCRC(recon->getLumaAddr(cuAddr), m_pic->m_crc[0], height, width, stride);
+        if (!row)
+            m_frame->m_crc[0] = m_frame->m_crc[1] = m_frame->m_crc[2] = 0xffff;
+        updateCRC(recon->getLumaAddr(cuAddr), m_frame->m_crc[0], height, width, stride);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
 
-        updateCRC(recon->getCbAddr(cuAddr), m_pic->m_crc[1], height, width, stride);
-        updateCRC(recon->getCrAddr(cuAddr), m_pic->m_crc[2], height, width, stride);
+        updateCRC(recon->getCbAddr(cuAddr), m_frame->m_crc[1], height, width, stride);
+        updateCRC(recon->getCrAddr(cuAddr), m_frame->m_crc[2], height, width, stride);
     }
     else if (m_param->decodedPictureHashSEI == 3)
     {
@@ -355,17 +356,16 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
         uint32_t cuHeight = g_maxCUSize;
-        if (row == 0)
-        {
-            m_pic->m_checksum[0] = m_pic->m_checksum[1] = m_pic->m_checksum[2] = 0;
-        }
-        updateChecksum(recon->getLumaAddr(), m_pic->m_checksum[0], height, width, stride, row, cuHeight);
+        if (!row)
+            m_frame->m_checksum[0] = m_frame->m_checksum[1] = m_frame->m_checksum[2] = 0;
+        updateChecksum(recon->getLumaAddr(), m_frame->m_checksum[0], height, width, stride, row, cuHeight);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
         cuHeight >>= m_vChromaShift;
-        updateChecksum(recon->getCbAddr(), m_pic->m_checksum[1], height, width, stride, row, cuHeight);
-        updateChecksum(recon->getCrAddr(), m_pic->m_checksum[2], height, width, stride, row, cuHeight);
+
+        updateChecksum(recon->getCbAddr(), m_frame->m_checksum[1], height, width, stride, row, cuHeight);
+        updateChecksum(recon->getCrAddr(), m_frame->m_checksum[2], height, width, stride, row, cuHeight);
     }
 }
 

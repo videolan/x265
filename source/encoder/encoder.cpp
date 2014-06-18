@@ -851,9 +851,9 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     double refValueC = (double)maxvalC * maxvalC * size / 4.0;
     uint64_t ssdY, ssdU, ssdV;
 
-    ssdY = pic->m_SSDY;
-    ssdU = pic->m_SSDU;
-    ssdV = pic->m_SSDV;
+    ssdY = curEncoder->m_SSDY;
+    ssdU = curEncoder->m_SSDU;
+    ssdV = curEncoder->m_SSDV;
     double psnrY = (ssdY ? 10.0 * log10(refValueY / (double)ssdY) : 99.99);
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
@@ -870,9 +870,9 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
     }
 
     double ssim = 0.0;
-    if (m_param->bEnableSsim && pic->m_ssimCnt > 0)
+    if (m_param->bEnableSsim && curEncoder->m_ssimCnt > 0)
     {
-        ssim = pic->m_ssim / pic->m_ssimCnt;
+        ssim = curEncoder->m_ssim / curEncoder->m_ssimCnt;
         m_analyzeAll.addSsim(ssim);
     }
     if (slice->isIntra())

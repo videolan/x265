@@ -125,7 +125,7 @@ bool FrameEncoder::init(Encoder *top, int numRows)
         m_pool = NULL;
     }
 
-    m_frameFilter.init(top, numRows, getRDGoOnSbacCoder(0));
+    m_frameFilter.init(top, this, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
     top->initSPS(&m_sps);
@@ -674,7 +674,7 @@ void FrameEncoder::compressFrame()
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
             for (int i = 0; i < 3; i++)
             {
-                MD5Final(&(m_pic->m_state[i]), m_seiReconPictureDigest.m_digest[i]);
+                MD5Final(&m_state[i], m_seiReconPictureDigest.m_digest[i]);
             }
         }
         else if (m_cfg->m_param->decodedPictureHashSEI == 2)
@@ -682,7 +682,7 @@ void FrameEncoder::compressFrame()
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
             for (int i = 0; i < 3; i++)
             {
-                crcFinish((m_pic->m_crc[i]), m_seiReconPictureDigest.m_digest[i]);
+                crcFinish(m_crc[i], m_seiReconPictureDigest.m_digest[i]);
             }
         }
         else if (m_cfg->m_param->decodedPictureHashSEI == 3)
@@ -690,7 +690,7 @@ void FrameEncoder::compressFrame()
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
             for (int i = 0; i < 3; i++)
             {
-                checksumFinish(m_pic->m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
+                checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
             }
         }
         m_nalList[m_nalCount] = new NALUnit;
@@ -922,10 +922,9 @@ void FrameEncoder::compressCTURows()
     int refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
-    m_pic->m_SSDY = 0;
-    m_pic->m_SSDU = 0;
-    m_pic->m_SSDV = 0;
-
+    m_SSDY = m_SSDU = m_SSDV = 0;
+    m_ssim = 0;
+    m_ssimCnt = 0;
     m_frameFilter.start(m_pic);
 
     m_rows[0].m_active = true;

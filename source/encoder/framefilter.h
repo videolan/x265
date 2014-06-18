@@ -43,7 +43,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder);
+    void init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder);
 
     void destroy();
 
@@ -57,6 +57,7 @@ protected:
 
     x265_param*                 m_param;
     TComPic*                    m_pic;
+    FrameEncoder*               m_frame;
     int                         m_hChromaShift;
     int                         m_vChromaShift;
 
