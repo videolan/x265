@@ -698,6 +698,7 @@ void FrameEncoder::compressFrame()
         {
             m_bs.clear();
             m_seiReconPictureDigest.write(m_bs, *slice->getSPS());
+            m_bs.writeByteAlignment();
 
             m_nalList[m_nalCount++]->serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
         }
