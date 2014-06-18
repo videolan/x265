@@ -185,7 +185,6 @@ protected:
     FrameFilter              m_frameFilter;
     TComOutputBitstream      m_bs;
     TComOutputBitstream*     m_outStreams;
-    TComBitCounter           m_bitCounter;
     NoiseReduction           m_nr;
 
     /* Picture being encoded, and its output NAL list */
