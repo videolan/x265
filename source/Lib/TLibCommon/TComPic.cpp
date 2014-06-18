@@ -70,8 +70,6 @@ TComPic::TComPic()
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
     m_prev = NULL;
-    m_frameTime = 0.0;
-    m_elapsedCompressTime = 0.0;
     m_qpaAq = NULL;
     m_qpaRc = NULL;
     m_avgQpRc = 0;

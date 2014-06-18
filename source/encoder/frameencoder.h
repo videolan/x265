@@ -165,6 +165,8 @@ public:
     MD5Context               m_state[3];
     uint32_t                 m_crc[3];
     uint32_t                 m_checksum[3];
+    double                   m_elapsedCompressTime; // elapsed time spent in worker threads
+    double                   m_frameTime;           // wall time from frame start to finish
 
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;

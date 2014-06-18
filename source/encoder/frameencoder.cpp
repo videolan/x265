@@ -716,7 +716,7 @@ void FrameEncoder::compressFrame()
 
     noiseReductionUpdate();
 
-    m_pic->m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
+    m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
 }
 
 void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
@@ -1004,7 +1004,7 @@ void FrameEncoder::compressCTURows()
             }
         }
     }
-    m_pic->m_frameTime = (double)m_totalTime / 1000000;
+    m_frameTime = (double)m_totalTime / 1000000;
     m_totalTime = 0;
 }
 

@@ -93,9 +93,6 @@ public:
 
     bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
 
-    double                m_elapsedCompressTime; // elapsed time spent in worker threads
-    double                m_frameTime;           // wall time from frame start to finish
-
     double*               m_rowDiagQp;
     double*               m_rowDiagQScale;
     uint32_t*             m_rowDiagSatd;
