@@ -71,7 +71,6 @@ private:
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    bool                  m_bUsedByCurr;          // Used by current picture
     bool                  m_bIsLongTerm;          // IS long term picture
     bool                  m_bCheckLTMSB;
 
@@ -115,10 +114,6 @@ public:
     bool          create(Encoder* cfg);
     virtual void  destroy();
     void          reInit(Encoder* cfg);
-
-    bool          getUsedByCurr()           { return m_bUsedByCurr; }
-
-    void          setUsedByCurr(bool bUsed) { m_bUsedByCurr = bUsed; }
 
     bool          getIsLongTerm()           { return m_bIsLongTerm; }
 

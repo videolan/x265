@@ -310,7 +310,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
             if (!outPic->getIsLongTerm() && outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->getDeltaPOC(i))
             {
                 isReference = 1;
-                outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 outPic->setIsLongTerm(0);
             }
         }
@@ -322,7 +321,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
                 if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC()) == rps->getPOC(i))
                 {
                     isReference = 1;
-                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 }
             }
             else
@@ -332,7 +330,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
                     (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC()))
                 {
                     isReference = 1;
-                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 }
             }
         }
@@ -342,7 +339,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
         if (outPic->getPicSym()->getSlice()->getPOC() != curPoc && isReference == 0)
         {
             outPic->getSlice()->setReferenced(false);
-            outPic->setUsedByCurr(0);
             outPic->setIsLongTerm(0);
         }
     }
