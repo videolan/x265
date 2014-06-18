@@ -741,8 +741,8 @@ int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
     else
     {
         /* 4x4 is too small for sa8d */
-        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 8) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
-        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 8) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
+        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 0) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 0) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
         return abs(sourceEnergy - reconEnergy);
     }
 }
