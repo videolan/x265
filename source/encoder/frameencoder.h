@@ -68,7 +68,7 @@ public:
 
     void processRowFilter(int row)
     {
-        m_frameFilter.processRow(row, m_cfg);
+        m_frameFilter.processRow(row, m_top);
     }
 
     void enqueueRowEncoder(int row)
@@ -177,7 +177,7 @@ protected:
     void noiseReductionUpdate();
 
     Encoder*                 m_top;
-    Encoder*                 m_cfg;
+    x265_param*              m_param;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     TEncSbac                 m_sbacCoder;
