@@ -979,17 +979,17 @@ void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t 
             const char* digestStr = NULL;
             if (m_param->decodedPictureHashSEI == 1)
             {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 16);
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 16);
                 p += sprintf(buf + p, " [MD5:%s]", digestStr);
             }
             else if (m_param->decodedPictureHashSEI == 2)
             {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 2);
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 2);
                 p += sprintf(buf + p, " [CRC:%s]", digestStr);
             }
             else if (m_param->decodedPictureHashSEI == 3)
             {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.digest, 4);
+                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 4);
                 p += sprintf(buf + p, " [Checksum:%s]", digestStr);
             }
         }

@@ -90,31 +90,31 @@ public:
         CRC,
         CHECKSUM,
         RESERVED,
-    } method;
+    } m_method;
 
-    uint8_t digest[3][16];
+    uint8_t m_digest[3][16];
 
     void writeSEI(TComSPS&)
     {
         LOG("=========== Decoded picture hash SEI message ===========\n");
 
-        WRITE_CODE(method, 8, "hash_type");
+        WRITE_CODE(m_method, 8, "hash_type");
 
         for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
         {
-            if (method == MD5)
+            if (m_method == MD5)
             {
                 for (uint32_t i = 0; i < 16; i++)
-                    WRITE_CODE(digest[yuvIdx][i], 8, "picture_md5");
+                    WRITE_CODE(m_digest[yuvIdx][i], 8, "picture_md5");
             }
-            else if (method == CRC)
+            else if (m_method == CRC)
             {
-                uint32_t val = (digest[yuvIdx][0] << 8) + digest[yuvIdx][1];
+                uint32_t val = (m_digest[yuvIdx][0] << 8) + m_digest[yuvIdx][1];
                 WRITE_CODE(val, 16, "picture_crc");
             }
-            else if (method == CHECKSUM)
+            else if (m_method == CHECKSUM)
             {
-                uint32_t val = (digest[yuvIdx][0] << 24) + (digest[yuvIdx][1] << 16) + (digest[yuvIdx][2] << 8) + digest[yuvIdx][3];
+                uint32_t val = (m_digest[yuvIdx][0] << 24) + (m_digest[yuvIdx][1] << 16) + (m_digest[yuvIdx][2] << 8) + m_digest[yuvIdx][3];
                 WRITE_CODE(val, 32, "picture_checksum");
             }
         }

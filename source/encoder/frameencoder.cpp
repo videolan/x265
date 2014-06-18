@@ -671,26 +671,26 @@ void FrameEncoder::compressFrame()
     {
         if (m_cfg->m_param->decodedPictureHashSEI == 1)
         {
-            m_seiReconPictureDigest.method = SEIDecodedPictureHash::MD5;
+            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
             for (int i = 0; i < 3; i++)
             {
-                MD5Final(&(m_pic->m_state[i]), m_seiReconPictureDigest.digest[i]);
+                MD5Final(&(m_pic->m_state[i]), m_seiReconPictureDigest.m_digest[i]);
             }
         }
         else if (m_cfg->m_param->decodedPictureHashSEI == 2)
         {
-            m_seiReconPictureDigest.method = SEIDecodedPictureHash::CRC;
+            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
             for (int i = 0; i < 3; i++)
             {
-                crcFinish((m_pic->m_crc[i]), m_seiReconPictureDigest.digest[i]);
+                crcFinish((m_pic->m_crc[i]), m_seiReconPictureDigest.m_digest[i]);
             }
         }
         else if (m_cfg->m_param->decodedPictureHashSEI == 3)
         {
-            m_seiReconPictureDigest.method = SEIDecodedPictureHash::CHECKSUM;
+            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
             for (int i = 0; i < 3; i++)
             {
-                checksumFinish(m_pic->m_checksum[i], m_seiReconPictureDigest.digest[i]);
+                checksumFinish(m_pic->m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
             }
         }
         m_nalList[m_nalCount] = new NALUnit;
