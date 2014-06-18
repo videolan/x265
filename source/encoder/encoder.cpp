@@ -449,6 +449,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         {
             fenc->m_picSym = m_dpb->m_picSymFreeList;
             m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
+            fenc->m_reconPicYuv = fenc->m_picSym->m_reconPicYuv;
         }
         else
         {

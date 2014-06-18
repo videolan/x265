@@ -48,6 +48,7 @@ namespace x265 {
 
 struct SAOParam;
 class TComSampleAdaptiveOffset;
+class TComPicYuv;
 
 //! \ingroup TLibCommon
 //! \{
@@ -79,6 +80,7 @@ private:
 public:
 
     TComPicSym*   m_freeListNext;
+    TComPicYuv*   m_reconPicYuv;
 
     bool        create(int picWidth, int picHeight, int picCsp);
     void        destroy();

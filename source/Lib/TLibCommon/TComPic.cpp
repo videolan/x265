@@ -87,13 +87,11 @@ bool TComPic::create(Encoder* top)
     m_defaultDisplayWindow = top->m_defaultDisplayWindow;
 
     m_origPicYuv = new TComPicYuv;
-    m_reconPicYuv = new TComPicYuv;
-    if (!m_origPicYuv || !m_reconPicYuv)
+    if (!m_origPicYuv)
         return false;
 
     bool ok = true;
     ok &= m_origPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
-    ok &= m_reconPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
     ok &= m_lowres.create(m_origPicYuv, top->m_param->bframes, !!top->m_param->rc.aqMode);
 
     bool isVbv = top->m_param->rc.vbvBufferSize > 0 && top->m_param->rc.vbvMaxBitrate > 0;
@@ -130,8 +128,13 @@ fail:
 bool TComPic::allocPicSym(Encoder* top)
 {
     m_picSym = new TComPicSym;
-    if (m_picSym)
-        return m_picSym->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp);
+    m_reconPicYuv = new TComPicYuv;
+    if (m_picSym && m_reconPicYuv)
+    {
+        m_picSym->m_reconPicYuv = m_reconPicYuv;
+        return m_picSym->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp) &&
+          m_reconPicYuv->create(top->m_param->sourceWidth, top->m_param->sourceHeight, top->m_param->internalCsp, g_maxCUSize, g_maxCUDepth);
+    }
     else
         return false;
 }

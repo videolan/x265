@@ -53,7 +53,6 @@ class TComPic
 private:
 
     TComPicYuv*       m_origPicYuv;
-    TComPicYuv*       m_reconPicYuv;
 
     Window            m_conformanceWindow;
     Window            m_defaultDisplayWindow;
@@ -63,6 +62,7 @@ private:
 public:
 
     TComPicSym*       m_picSym;
+    TComPicYuv*       m_reconPicYuv;
     int               m_POC;
 
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **

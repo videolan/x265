@@ -78,6 +78,7 @@ void DPB::recycleUnreferenced()
             pic->m_picSym->m_freeListNext = m_picSymFreeList;
             m_picSymFreeList = pic->m_picSym;
             pic->m_picSym = NULL;
+            pic->m_reconPicYuv = NULL;
         }
     }
 }
