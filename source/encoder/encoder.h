@@ -32,6 +32,9 @@
 
 struct x265_encoder {};
 
+namespace x265 {
+// private namespace
+
 struct EncStats
 {
     double        m_psnrSumY;
@@ -59,15 +62,11 @@ struct EncStats
     void addSsim(double ssim);
 };
 
-namespace x265 {
-// private namespace
-
 class FrameEncoder;
 class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
-class TComPicSym;
 struct NALUnit;
 
 class Encoder : public x265_encoder
