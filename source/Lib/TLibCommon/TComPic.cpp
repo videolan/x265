@@ -50,8 +50,8 @@ using namespace x265;
 
 TComPic::TComPic()
     : m_origPicYuv(NULL)
-    , m_reconPicYuv(NULL)
     , m_bIsLongTerm(false)
+    , m_reconPicYuv(NULL)
     , m_rowDiagQp(NULL)
     , m_rowDiagQScale(NULL)
     , m_rowDiagSatd(NULL)
