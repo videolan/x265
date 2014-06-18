@@ -74,6 +74,9 @@ struct RateControlEntry
     Predictor* rowPred[2];
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
     bool isActive;
+
+    SEIPictureTiming picTimingSEI;
+    HRDTiming        hrdTiming;
 };
 
 class RateControl
@@ -133,7 +136,7 @@ public:
     int      m_framesDone;       /* # of frames passed through RateCotrol already */
 
     /* hrd stuff */
-    SEIBufferingPeriod m_sei;
+    SEIBufferingPeriod m_bufPeriodSEI;
     double   m_nominalRemovalTime;
     double   m_prevCpbFinalAT;
 

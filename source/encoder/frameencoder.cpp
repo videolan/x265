@@ -417,7 +417,7 @@ void FrameEncoder::compressFrame()
             m_nalList[m_nalCount] = new NALUnit;
             if (m_nalList[m_nalCount])
             {
-                SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_sei;
+                SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
                 bpSei->m_bpSeqParameterSetId = m_sps.getSPSId();
                 bpSei->m_rapCpbParamsPresentFlag = 0;
 
@@ -467,7 +467,7 @@ void FrameEncoder::compressFrame()
 
     if (m_cfg->m_param->bEmitHRDSEI || !!m_cfg->m_param->interlaceMode)
     {
-        SEIPictureTiming *sei = &m_pic->m_picTimingSei;
+        SEIPictureTiming *sei = &m_rce.picTimingSEI;
         TComVUI *vui = slice->getSPS()->getVuiParameters();
         TComHRD *hrd = vui->getHrdParameters();
         int poc = slice->getPOC();
