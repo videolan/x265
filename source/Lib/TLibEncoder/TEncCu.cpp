@@ -363,7 +363,7 @@ void TEncCu::init(Encoder* top)
 // Public member functions
 // ====================================================================================================================
 
-/** \param  rpcCU pointer of CU data class
+/** \param  cu pointer of CU data class
  */
 
 void TEncCu::compressCU(TComDataCU* cu)

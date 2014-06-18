@@ -534,18 +534,18 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     m_totalBits        = 0;
     m_numPartitions    = cu->getTotalNumPart() >> 2;
 
-    TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
+    TComDataCU* otherCU = m_pic->getCU(m_cuAddr);
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
-    memcpy(m_skipFlag, rpcCU->getSkipFlag() + m_absIdxInLCU, sizeof(*m_skipFlag) * m_numPartitions);
-    memcpy(m_qp, rpcCU->getQP() + m_absIdxInLCU, sizeInChar);
+    memcpy(m_skipFlag, otherCU->getSkipFlag() + m_absIdxInLCU, sizeof(*m_skipFlag) * m_numPartitions);
+    memcpy(m_qp, otherCU->getQP() + m_absIdxInLCU, sizeInChar);
 
-    memcpy(m_partSizes, rpcCU->getPartitionSize() + m_absIdxInLCU, sizeof(*m_partSizes) * m_numPartitions);
-    memcpy(m_predModes, rpcCU->getPredictionMode() + m_absIdxInLCU, sizeof(*m_predModes) * m_numPartitions);
+    memcpy(m_partSizes, otherCU->getPartitionSize() + m_absIdxInLCU, sizeof(*m_partSizes) * m_numPartitions);
+    memcpy(m_predModes, otherCU->getPredictionMode() + m_absIdxInLCU, sizeof(*m_predModes) * m_numPartitions);
 
-    memcpy(m_lumaIntraDir, rpcCU->getLumaIntraDir() + m_absIdxInLCU, sizeInChar);
-    memcpy(m_depth, rpcCU->getDepth() + m_absIdxInLCU, sizeInChar);
-    memcpy(m_cuSize, rpcCU->getCUSize() + m_absIdxInLCU, sizeInChar);
+    memcpy(m_lumaIntraDir, otherCU->getLumaIntraDir() + m_absIdxInLCU, sizeInChar);
+    memcpy(m_depth, otherCU->getDepth() + m_absIdxInLCU, sizeInChar);
+    memcpy(m_cuSize, otherCU->getCUSize() + m_absIdxInLCU, sizeInChar);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -621,85 +621,85 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
 // It is used to predict for next part
 void TComDataCU::copyToPic(uint8_t depth)
 {
-    TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
+    TComDataCU* cu = m_pic->getCU(m_cuAddr);
 
-    rpcCU->m_psyEnergy       = m_psyEnergy;
-    rpcCU->m_totalPsyCost    = m_totalPsyCost;
-    rpcCU->m_totalRDCost     = m_totalRDCost;
-    rpcCU->m_totalDistortion = m_totalDistortion;
-    rpcCU->m_totalBits       = m_totalBits;
+    cu->m_psyEnergy       = m_psyEnergy;
+    cu->m_totalPsyCost    = m_totalPsyCost;
+    cu->m_totalRDCost     = m_totalRDCost;
+    cu->m_totalDistortion = m_totalDistortion;
+    cu->m_totalBits       = m_totalBits;
 
     int sizeInBool  = sizeof(bool) * m_numPartitions;
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
-    memcpy(rpcCU->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
+    memcpy(cu->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
 
-    memcpy(rpcCU->getQP() + m_absIdxInLCU, m_qp, sizeInChar);
+    memcpy(cu->getQP() + m_absIdxInLCU, m_qp, sizeInChar);
 
-    memcpy(rpcCU->getPartitionSize()  + m_absIdxInLCU, m_partSizes, sizeof(*m_partSizes) * m_numPartitions);
-    memcpy(rpcCU->getPredictionMode() + m_absIdxInLCU, m_predModes, sizeof(*m_predModes) * m_numPartitions);
-    memcpy(rpcCU->getCUTransquantBypass() + m_absIdxInLCU, m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * m_numPartitions);
-    memcpy(rpcCU->getMergeFlag()         + m_absIdxInLCU, m_bMergeFlags,      sizeInBool);
-    memcpy(rpcCU->getLumaIntraDir()      + m_absIdxInLCU, m_lumaIntraDir,     sizeInChar);
-    memcpy(rpcCU->getChromaIntraDir()    + m_absIdxInLCU, m_chromaIntraDir,   sizeInChar);
-    memcpy(rpcCU->getInterDir()          + m_absIdxInLCU, m_interDir,         sizeInChar);
-    memcpy(rpcCU->getTransformIdx()      + m_absIdxInLCU, m_trIdx,            sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_LUMA)     + m_absIdxInLCU, m_transformSkip[0], sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_CHROMA_U) + m_absIdxInLCU, m_transformSkip[1], sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_CHROMA_V) + m_absIdxInLCU, m_transformSkip[2], sizeInChar);
+    memcpy(cu->getPartitionSize()  + m_absIdxInLCU, m_partSizes, sizeof(*m_partSizes) * m_numPartitions);
+    memcpy(cu->getPredictionMode() + m_absIdxInLCU, m_predModes, sizeof(*m_predModes) * m_numPartitions);
+    memcpy(cu->getCUTransquantBypass() + m_absIdxInLCU, m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * m_numPartitions);
+    memcpy(cu->getMergeFlag()         + m_absIdxInLCU, m_bMergeFlags,      sizeInBool);
+    memcpy(cu->getLumaIntraDir()      + m_absIdxInLCU, m_lumaIntraDir,     sizeInChar);
+    memcpy(cu->getChromaIntraDir()    + m_absIdxInLCU, m_chromaIntraDir,   sizeInChar);
+    memcpy(cu->getInterDir()          + m_absIdxInLCU, m_interDir,         sizeInChar);
+    memcpy(cu->getTransformIdx()      + m_absIdxInLCU, m_trIdx,            sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_LUMA)     + m_absIdxInLCU, m_transformSkip[0], sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + m_absIdxInLCU, m_transformSkip[1], sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + m_absIdxInLCU, m_transformSkip[2], sizeInChar);
 
-    memcpy(rpcCU->getCbf(TEXT_LUMA)     + m_absIdxInLCU, m_cbf[0], sizeInChar);
-    memcpy(rpcCU->getCbf(TEXT_CHROMA_U) + m_absIdxInLCU, m_cbf[1], sizeInChar);
-    memcpy(rpcCU->getCbf(TEXT_CHROMA_V) + m_absIdxInLCU, m_cbf[2], sizeInChar);
+    memcpy(cu->getCbf(TEXT_LUMA)     + m_absIdxInLCU, m_cbf[0], sizeInChar);
+    memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInLCU, m_cbf[1], sizeInChar);
+    memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInLCU, m_cbf[2], sizeInChar);
 
-    memcpy(rpcCU->getDepth()  + m_absIdxInLCU, m_depth,  sizeInChar);
-    memcpy(rpcCU->getCUSize() + m_absIdxInLCU, m_cuSize, sizeInChar);
+    memcpy(cu->getDepth()  + m_absIdxInLCU, m_depth,  sizeInChar);
+    memcpy(cu->getCUSize() + m_absIdxInLCU, m_cuSize, sizeInChar);
 
-    memcpy(rpcCU->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInLCU, m_mvpIdx[0], sizeInChar);
-    memcpy(rpcCU->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInLCU, m_mvpIdx[1], sizeInChar);
+    memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInLCU, m_mvpIdx[0], sizeInChar);
+    memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInLCU, m_mvpIdx[1], sizeInChar);
 
-    m_cuMvField[0].copyTo(rpcCU->getCUMvField(REF_PIC_LIST_0), m_absIdxInLCU);
-    m_cuMvField[1].copyTo(rpcCU->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU);
+    m_cuMvField[0].copyTo(cu->getCUMvField(REF_PIC_LIST_0), m_absIdxInLCU);
+    m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU);
 
-    memcpy(rpcCU->getIPCMFlag() + m_absIdxInLCU, m_iPCMFlags, sizeInBool);
+    memcpy(cu->getIPCMFlag() + m_absIdxInLCU, m_iPCMFlags, sizeInBool);
 
     uint32_t tmp  = (g_maxCUSize * g_maxCUSize) >> (depth << 1);
     uint32_t tmp2 = m_absIdxInLCU << m_pic->getLog2UnitSize() * 2;
-    memcpy(rpcCU->getCoeffY()     + tmp2, m_trCoeff[0],    sizeof(coeff_t) * tmp);
-    memcpy(rpcCU->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(pixel) * tmp);
+    memcpy(cu->getCoeffY()     + tmp2, m_trCoeff[0],    sizeof(coeff_t) * tmp);
+    memcpy(cu->getPCMSampleY() + tmp2, m_iPCMSampleY, sizeof(pixel) * tmp);
     tmp  >>= m_hChromaShift + m_vChromaShift;
     tmp2 >>= m_hChromaShift + m_vChromaShift;
-    memcpy(rpcCU->m_trCoeff[1] + tmp2, m_trCoeff[1], sizeof(coeff_t) * tmp);
-    memcpy(rpcCU->m_trCoeff[2] + tmp2, m_trCoeff[2], sizeof(coeff_t) * tmp);
-    memcpy(rpcCU->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(pixel) * tmp);
-    memcpy(rpcCU->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(pixel) * tmp);
+    memcpy(cu->m_trCoeff[1] + tmp2, m_trCoeff[1], sizeof(coeff_t) * tmp);
+    memcpy(cu->m_trCoeff[2] + tmp2, m_trCoeff[2], sizeof(coeff_t) * tmp);
+    memcpy(cu->getPCMSampleCb() + tmp2, m_iPCMSampleCb, sizeof(pixel) * tmp);
+    memcpy(cu->getPCMSampleCr() + tmp2, m_iPCMSampleCr, sizeof(pixel) * tmp);
 }
 
 void TComDataCU::copyCodedToPic(uint8_t depth)
 {
-    TComDataCU* rpcCU = m_pic->getCU(m_cuAddr);
+    TComDataCU* cu = m_pic->getCU(m_cuAddr);
 
     int sizeInChar  = sizeof(uint8_t) * m_numPartitions;
 
-    memcpy(rpcCU->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
-    memcpy(rpcCU->getTransformIdx() + m_absIdxInLCU, m_trIdx, sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_LUMA) + m_absIdxInLCU, m_transformSkip[0], sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_CHROMA_U) + m_absIdxInLCU, m_transformSkip[1], sizeInChar);
-    memcpy(rpcCU->getTransformSkip(TEXT_CHROMA_V) + m_absIdxInLCU, m_transformSkip[2], sizeInChar);
-    memcpy(rpcCU->getChromaIntraDir() + m_absIdxInLCU, m_chromaIntraDir, sizeInChar);
-    memcpy(rpcCU->getQP() + m_absIdxInLCU, m_qp, sizeof(char) * m_numPartitions);
+    memcpy(cu->getSkipFlag() + m_absIdxInLCU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
+    memcpy(cu->getTransformIdx() + m_absIdxInLCU, m_trIdx, sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_LUMA) + m_absIdxInLCU, m_transformSkip[0], sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + m_absIdxInLCU, m_transformSkip[1], sizeInChar);
+    memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + m_absIdxInLCU, m_transformSkip[2], sizeInChar);
+    memcpy(cu->getChromaIntraDir() + m_absIdxInLCU, m_chromaIntraDir, sizeInChar);
+    memcpy(cu->getQP() + m_absIdxInLCU, m_qp, sizeof(char) * m_numPartitions);
 
-    memcpy(rpcCU->getCbf(TEXT_LUMA) + m_absIdxInLCU, m_cbf[0], sizeInChar);
-    memcpy(rpcCU->getCbf(TEXT_CHROMA_U) + m_absIdxInLCU, m_cbf[1], sizeInChar);
-    memcpy(rpcCU->getCbf(TEXT_CHROMA_V) + m_absIdxInLCU, m_cbf[2], sizeInChar);
+    memcpy(cu->getCbf(TEXT_LUMA) + m_absIdxInLCU, m_cbf[0], sizeInChar);
+    memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInLCU, m_cbf[1], sizeInChar);
+    memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInLCU, m_cbf[2], sizeInChar);
 
     uint32_t tmp  = (g_maxCUSize * g_maxCUSize) >> (depth << 1);
     uint32_t tmp2 = m_absIdxInLCU << m_pic->getLog2UnitSize() * 2;
-    memcpy(rpcCU->getCoeffY() + tmp2, m_trCoeff[0], sizeof(coeff_t) * tmp);
+    memcpy(cu->getCoeffY() + tmp2, m_trCoeff[0], sizeof(coeff_t) * tmp);
     tmp  >>= m_hChromaShift + m_vChromaShift;
     tmp2 >>= m_hChromaShift + m_vChromaShift;
-    memcpy(rpcCU->m_trCoeff[1] + tmp2, m_trCoeff[1], sizeof(coeff_t) * tmp);
-    memcpy(rpcCU->m_trCoeff[2] + tmp2, m_trCoeff[2], sizeof(coeff_t) * tmp);
+    memcpy(cu->m_trCoeff[1] + tmp2, m_trCoeff[1], sizeof(coeff_t) * tmp);
+    memcpy(cu->m_trCoeff[2] + tmp2, m_trCoeff[2], sizeof(coeff_t) * tmp);
 }
 
 void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
