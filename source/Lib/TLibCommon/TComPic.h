@@ -31,14 +31,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComPic.h
-    \brief    picture class (header)
-*/
-
 #ifndef X265_TCOMPIC_H
 #define X265_TCOMPIC_H
 
-// Include files
+
 #include "common.h"
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
@@ -52,14 +48,6 @@ namespace x265 {
 
 class Encoder;
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// picture class (symbol + YUV buffers)
 class TComPic
 {
 private:
@@ -71,7 +59,7 @@ private:
     Window                m_conformanceWindow;
     Window                m_defaultDisplayWindow;
 
-    bool                  m_bIsLongTerm;          // IS long term picture
+    bool                  m_bIsLongTerm;
 
 public:
 
@@ -91,6 +79,7 @@ public:
 
     bool                  m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
 
+    /* TODO: much of this data can be moved to RCE */
     double*               m_rowDiagQp;
     double*               m_rowDiagQScale;
     uint32_t*             m_rowDiagSatd;
@@ -151,8 +140,7 @@ public:
     Window&       getConformanceWindow()  { return m_conformanceWindow; }
 
     Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
-}; // END CLASS DEFINITION TComPic
+};
 }
-//! \}
 
 #endif // ifndef X265_TCOMPIC_H
