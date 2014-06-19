@@ -401,9 +401,9 @@ public:
     TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
     TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
 
-    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t uiCurrAbsIdxInLCU);
+    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInLCU);
     TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInLCU);
-    char          getRefQP(uint32_t uiCurrAbsIdxInLCU);
+    char          getRefQP(uint32_t currAbsIdxInLCU);
 
     TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
     TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
