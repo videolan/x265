@@ -76,7 +76,6 @@ private:
     bool               m_aborted;          // fatal error detected
     int                m_pocLast;          ///< time index (POC)
     int                m_outputCount;
-    PicList            m_freeList;
 
     int                m_bframeDelay;
     int64_t            m_firstPts;
