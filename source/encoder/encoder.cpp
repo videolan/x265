@@ -144,7 +144,7 @@ void Encoder::destroy()
         for (int i = 0; i < m_totalFrameThreads; i++)
         {
             // Ensure frame encoder is idle before destroying it
-            m_frameEncoder[i].getEncodedPicture(NULL);
+            m_frameEncoder[i].getEncodedPicture(m_nalList);
             m_frameEncoder[i].destroy();
         }
 
@@ -190,9 +190,10 @@ void Encoder::init()
     m_encodeStartTime = x265_mdate();
 }
 
-int Encoder::getStreamHeaders(NALUnit **nalunits)
+void Encoder::getStreamHeaders()
 {
-    return m_frameEncoder->getStreamHeaders(nalunits);
+    TComOutputBitstream bs;
+    m_frameEncoder->getStreamHeaders(m_nalList, bs);
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)
@@ -215,49 +216,13 @@ void Encoder::updateVbvPlan(RateControl* rc)
     }
 }
 
-#define VERBOSE_RATE 0
-#if VERBOSE_RATE
-static const char* nalUnitTypeToString(NalUnitType type)
-{
-    switch (type)
-    {
-    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "TRAIL_R";
-    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "TRAIL_N";
-    case NAL_UNIT_CODED_SLICE_TLA_R:      return "TLA_R";
-    case NAL_UNIT_CODED_SLICE_TSA_N:      return "TSA_N";
-    case NAL_UNIT_CODED_SLICE_STSA_R:     return "STSA_R";
-    case NAL_UNIT_CODED_SLICE_STSA_N:     return "STSA_N";
-    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "BLA_W_LP";
-    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
-    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "BLA_N_LP";
-    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
-    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "IDR_N_LP";
-    case NAL_UNIT_CODED_SLICE_CRA:        return "CRA";
-    case NAL_UNIT_CODED_SLICE_RADL_R:     return "RADL_R";
-    case NAL_UNIT_CODED_SLICE_RASL_R:     return "RASL_R";
-    case NAL_UNIT_VPS:                    return "VPS";
-    case NAL_UNIT_SPS:                    return "SPS";
-    case NAL_UNIT_PPS:                    return "PPS";
-    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "AUD";
-    case NAL_UNIT_EOS:                    return "EOS";
-    case NAL_UNIT_EOB:                    return "EOB";
-    case NAL_UNIT_FILLER_DATA:            return "FILLER";
-    case NAL_UNIT_PREFIX_SEI:             return "SEI";
-    case NAL_UNIT_SUFFIX_SEI:             return "SEI";
-    default:                              return "UNK";
-    }
-}
-
-#endif // if VERBOSE_RATE
-
 /**
  \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
  \param   pic_out             pointer to reconstructed picture struct
- \param   nalunits            output NAL packets
- \retval                      number of encoded pictures
+ \retval                      number of encoded pictures, m_nalList contains access unit
  */
-int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out, NALUnit **nalunits)
+int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out)
 {
     if (m_aborted)
         return -1;
@@ -348,7 +313,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
     // getEncodedPicture() should block until the FrameEncoder has completed
     // encoding the frame.  This is how back-pressure through the API is
     // accomplished when the encoder is full.
-    TComPic *out = curEncoder->getEncodedPicture(nalunits);
+    TComPic *out = curEncoder->getEncodedPicture(m_nalList);
 
     if (!out && flush)
     {
@@ -362,7 +327,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         {
             curEncoder = &m_frameEncoder[m_curEncoder];
             m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
-            out = curEncoder->getEncodedPicture(nalunits);
+            out = curEncoder->getEncodedPicture(m_nalList);
         }
         while (!out && flushed != m_curEncoder);
     }
@@ -426,26 +391,21 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
                 m_numChromaWPBiFrames++;
         }
 
-        /* calculate the size of the access unit, excluding:
-         *  - any AnnexB contributions (start_code_prefix, zero_byte, etc.,)
-         *  - SEI NAL units
-         */
-        uint32_t numRBSPBytes = 0;
-        for (int count = 0; nalunits[count] != NULL; count++)
+        uint64_t bytes = 0;
+        for (uint32_t i = 0; i < m_nalList.m_numNal; i++)
         {
-            uint32_t numRBSPBytes_nal = nalunits[count]->m_packetSize;
-#if VERBOSE_RATE
-            printf("*** %6s numBytesInNALunit: %u\n", nalUnitTypeToString(nalunits[count]->m_nalUnitType), numRBSPBytes_nal);
-#endif
-            if (nalunits[count]->m_nalUnitType != NAL_UNIT_PREFIX_SEI && nalunits[count]->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
+            int type = m_nalList.m_nal[i].type;
+
+            // exclude SEI
+            if (type != NAL_UNIT_PREFIX_SEI && type != NAL_UNIT_SUFFIX_SEI)
             {
-                numRBSPBytes += numRBSPBytes_nal;
+                bytes += m_nalList.m_nal[i].sizeBytes;
+                // and exclude start code prefix
+                bytes -= (!i || type == NAL_UNIT_SPS || type == NAL_UNIT_PPS) ? 4 : 3;
             }
         }
-
-        uint64_t bits = numRBSPBytes * 8;
-        m_rateControl->rateControlEnd(out, bits, &curEncoder->m_rce);
-        finishFrameStats(out, curEncoder, bits);
+        m_rateControl->rateControlEnd(out, bytes << 3, &curEncoder->m_rce);
+        finishFrameStats(out, curEncoder, bytes << 3);
 
         // Allow this frame to be recycled if no frame encoders are using it for reference
         if (!pic_out)
@@ -1455,68 +1415,4 @@ void Encoder::configure(x265_param *p)
     m_pcmLog2MinSize = 3;
     m_pcmLog2MaxSize = 5;
     m_bPCMFilterDisableFlag = false;
-}
-
-int Encoder::extractNalData(NALUnit **nalunits, int& memsize)
-{
-    int offset = 0;
-    int nalcount = 0;
-    int num = 0;
-
-    memsize = 0;
-    for (; num < MAX_NAL_UNITS && nalunits[num] != NULL; num++)
-    {
-        const NALUnit& temp = *nalunits[num];
-        memsize += temp.m_packetSize + 4;
-    }
-
-    X265_FREE(m_packetData);
-    X265_FREE(m_nals);
-    CHECKED_MALLOC(m_packetData, char, memsize);
-    CHECKED_MALLOC(m_nals, x265_nal, num);
-
-    memsize = 0;
-
-    /* Copy NAL output packets into x265_nal_t structures */
-    for (; nalcount < num; nalcount++)
-    {
-        const NALUnit& nalu = *nalunits[nalcount];
-        int size; /* size of annexB unit in bytes */
-
-        static const char start_code_prefix[] = { 0, 0, 0, 1 };
-        if (nalcount == 0 || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS)
-        {
-            /* From AVC, When any of the following conditions are fulfilled, the
-             * zero_byte syntax element shall be present:
-             *  - the nal_unit_type within the nal_unit() is equal to 7 (sequence
-             *    parameter set) or 8 (picture parameter set),
-             *  - the byte stream NAL unit syntax structure contains the first NAL
-             *    unit of an access unit in decoding order, as specified by subclause
-             *    7.4.1.2.3.
-             */
-            ::memcpy(m_packetData + memsize, start_code_prefix, 4);
-            size = 4;
-        }
-        else
-        {
-            ::memcpy(m_packetData + memsize, start_code_prefix + 1, 3);
-            size = 3;
-        }
-        memsize += size;
-        ::memcpy(m_packetData + memsize, nalu.m_nalUnitData, nalu.m_packetSize);
-        memsize += nalu.m_packetSize;
-
-        m_nals[nalcount].type = nalu.m_nalUnitType;
-        m_nals[nalcount].sizeBytes = size + nalu.m_packetSize;
-    }
-
-    /* Setup payload pointers, now that we're done adding content to m_packetData */
-    for (int i = 0; i < nalcount; i++)
-    {
-        m_nals[i].payload = (uint8_t*)m_packetData + offset;
-        offset += m_nals[i].sizeBytes;
-    }
-
-fail:
-    return nalcount;
 }

@@ -41,13 +41,13 @@
 #include "cturow.h"
 #include "ratecontrol.h"
 #include "reference.h"
+#include "nal.h"
 
 namespace x265 {
 // private x265 namespace
 
 class ThreadPool;
 class Encoder;
-struct NALUnit;
 
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
@@ -126,7 +126,7 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
-    int getStreamHeaders(NALUnit **nalunits);
+    void getStreamHeaders(NALList& list, TComOutputBitstream& bs);
 
     void initSlice(TComPic* pic);
 
@@ -139,7 +139,7 @@ public:
     void encodeSlice(TComOutputBitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
-    TComPic *getEncodedPicture(NALUnit **nalunits);
+    TComPic *getEncodedPicture(NALList& list);
 
     void setLambda(int qp, int row);
 
@@ -186,11 +186,9 @@ protected:
     TComOutputBitstream      m_bs;
     TComOutputBitstream*     m_outStreams;
     NoiseReduction           m_nr;
+    NALList                  m_nalList;
 
-    /* Picture being encoded, and its output NAL list */
     TComPic*                 m_pic;
-    NALUnit*                 m_nalList[MAX_NAL_UNITS];
-    int                      m_nalCount;
 
     int                      m_filterRowDelay;
     Event                    m_completionEvent;

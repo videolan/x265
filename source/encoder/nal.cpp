@@ -25,29 +25,79 @@
 #include "TLibCommon/TComBitStream.h"
 #include "nal.h"
 
-namespace x265 {
-// private namespace
+using namespace x265;
 
-void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t* extra, uint32_t extraBytes)
+void NALList::takeContents(NALList& other)
 {
-    uint32_t bitsSize = bs.getNumberOfWrittenBytes();
+    /* take other NAL buffer, discard our old one */
+    X265_FREE(m_buffer);
+    m_buffer = other.m_buffer;
+    m_allocSize = other.m_allocSize;
+    m_occupancy = other.m_occupancy;
+
+    /* copy packet data */
+    m_numNal = other.m_numNal;
+    memcpy(m_nal, other.m_nal, sizeof(x265_nal) * m_numNal);
+
+    /* reset other list, re-allocate their buffer with same size */
+    other.m_numNal = 0;
+    other.m_occupancy = 0;
+    other.m_buffer = X265_MALLOC(uint8_t, m_allocSize);
+}
+
+void NALList::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t* extra, uint32_t extraBytes)
+{
+    static const char startCodePrefix[] = { 0, 0, 0, 1 };
+
+    uint32_t payloadSize = bs.getNumberOfWrittenBytes();
     const uint8_t* bpayload = bs.getFIFO();
     if (!bpayload)
         return;
 
-    /* padded allocation for emulation prevention bytes */
-    uint8_t* out = m_nalUnitData = X265_MALLOC(uint8_t, 2 + bitsSize + (bitsSize >> 1) + extraBytes);
-    if (!out)
-        return;
+    uint32_t nextSize = m_occupancy + sizeof(startCodePrefix) + 2 + payloadSize + (payloadSize >> 1) + extraBytes;
+    if (nextSize > m_allocSize)
+    {
+        uint8_t *temp = X265_MALLOC(uint8_t, nextSize);
+        if (temp)
+        {
+            memcpy(temp, m_buffer, m_occupancy);
 
-    /* 16bit NAL header:
+            /* fixup existing payload pointers */
+            for (uint32_t i = 0; i < m_numNal; i++)
+                m_nal[i].payload = temp + (m_nal[i].payload - m_buffer);
+
+            X265_FREE(m_buffer);
+            m_buffer = temp;
+            m_allocSize = nextSize;
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc access unit buffer");
+            return;
+        }
+    }
+
+    uint8_t *out = m_buffer + m_occupancy;
+    uint32_t bytes = 0;
+
+    if (!m_numNal || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
+    {
+        memcpy(out, startCodePrefix, 4);
+        bytes += 4;
+    }
+    else
+    {
+        memcpy(out, startCodePrefix + 1, 3);
+        bytes += 3;
+    }
+
+    /* 16 bit NAL header:
      * forbidden_zero_bit       1-bit
      * nal_unit_type            6-bits
      * nuh_reserved_zero_6bits  6-bits
      * nuh_temporal_id_plus1    3-bits */
-    out[0] = (uint8_t)nalUnitType << 1;
-    out[1] = 1;
-    uint32_t bytes = 2;
+    out[bytes++] = (uint8_t)nalUnitType << 1;
+    out[bytes++] = 1;
 
     /* 7.4.1 ...
      * Within the NAL unit, the following three-byte sequences shall not occur at
@@ -56,7 +106,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, 
      *  - 0x000001
      *  - 0x000002
      */
-    for (uint32_t i = 0; i < bitsSize; i++)
+    for (uint32_t i = 0; i < payloadSize; i++)
     {
         if (i > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
         {
@@ -71,6 +121,7 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, 
 
     if (extra)
     {
+        /* these bytes were escaped by serializeMultiple */
         memcpy(out + bytes, extra, extraBytes);
         bytes += extraBytes;
     }
@@ -82,16 +133,20 @@ void NALUnit::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, 
      */
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
+    m_occupancy += bytes;
 
-    X265_CHECK(bytes <= 2 + bitsSize + (bitsSize >> 1) + extraBytes, "NAL buffer overflow\n");
+    X265_CHECK(bytes <= 2 + payloadSize + (payloadSize >> 1) + extraBytes, "NAL buffer overflow\n");
+    X265_CHECK(m_numNal < MAX_NAL_UNITS, "NAL count overflow\n");
 
-    m_nalUnitType = nalUnitType;
-    m_packetSize = bytes;
+    x265_nal& nal = m_nal[m_numNal++];
+    nal.type = nalUnitType;
+    nal.sizeBytes = bytes;
+    nal.payload = out;
 }
 
 /* concatenate and escape multiple sub-streams, return final escaped lengths and
  * concatenated buffer. Caller is responsible for freeing the returned buffer */
-uint8_t *NALUnit::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams)
+uint8_t *NALList::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams)
 {
     uint32_t estSize = 0;
     for (uint32_t s = 0; s < streamCount; s++)
@@ -130,4 +185,3 @@ uint8_t *NALUnit::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBy
     return out;
 }
 
-}

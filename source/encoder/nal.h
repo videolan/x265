@@ -25,23 +25,34 @@
 #define X265_NAL_H
 
 #include "common.h"
+#include "x265.h"
 
 namespace x265 {
 // private namespace
 
 class TComOutputBitstream;
 
-struct NALUnit
+class NALList
 {
-    uint32_t    m_packetSize;
-    uint8_t*    m_nalUnitData;
-    NalUnitType m_nalUnitType;
+    static const int MAX_NAL_UNITS = 16;
 
-    NALUnit() : m_packetSize(0), m_nalUnitData(NULL), m_nalUnitType(NAL_UNIT_INVALID) {}
-    ~NALUnit() { X265_FREE(m_nalUnitData); }
+public:
+
+    x265_nal    m_nal[MAX_NAL_UNITS];
+    uint32_t    m_numNal;
+
+    uint8_t*    m_buffer;
+    uint32_t    m_occupancy;
+    uint32_t    m_allocSize;
+
+    NALList() : m_numNal(0), m_buffer(NULL), m_occupancy(0), m_allocSize(0) {}
+    ~NALList() { X265_FREE(m_buffer); }
+
+    void takeContents(NALList& other);
 
     void serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t *extra = NULL, uint32_t extraBytes = 0);
-    uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams);
+
+    static uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams);
 };
 
 }

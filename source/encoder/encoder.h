@@ -25,10 +25,8 @@
 #define X265_ENCODER_H
 
 #include "x265.h"
-
 #include "TLibCommon/TComSlice.h"
-
-#include "piclist.h"
+#include "nal.h"
 
 struct x265_encoder {};
 
@@ -67,7 +65,6 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
-struct NALUnit;
 
 class Encoder : public x265_encoder
 {
@@ -114,6 +111,7 @@ public:
 
     int                m_conformanceMode;
     TComVPS            m_vps;
+    NALList            m_nalList;
 
     /* profile & level */
     Profile::Name      m_profile;
@@ -200,9 +198,9 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnit **nalunits);
+    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out);
 
-    int getStreamHeaders(NALUnit **nalunits);
+    void getStreamHeaders();
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -217,8 +215,6 @@ public:
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
     void configure(x265_param *param);
-
-    int  extractNalData(NALUnit **nalunits, int& memsize);
 
     void updateVbvPlan(RateControl* rc);
 

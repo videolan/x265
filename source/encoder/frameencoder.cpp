@@ -50,10 +50,6 @@ FrameEncoder::FrameEncoder()
     , m_param(NULL)
     , m_pic(NULL)
 {
-    for (int i = 0; i < MAX_NAL_UNITS; i++)
-        m_nalList[i] = NULL;
-
-    m_nalCount = 0;
     m_totalTime = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
@@ -72,10 +68,6 @@ void FrameEncoder::destroy()
 
     m_threadActive = false;
     m_enable.trigger();
-
-    // flush condition, release queued NALs
-    for (int i = 0; i < m_nalCount; i++)
-        delete m_nalList[i];
 
     if (m_rows)
     {
@@ -229,42 +221,26 @@ void FrameEncoder::noiseReductionUpdate()
     }
 }
 
-int FrameEncoder::getStreamHeaders(NALUnit **nalunits)
+void FrameEncoder::getStreamHeaders(NALList& list, TComOutputBitstream& bs)
 {
-    TComOutputBitstream bs;
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
+    /* headers for start of bitstream */
     entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
     entropyCoder->setBitstream(&bs);
+    entropyCoder->encodeVPS(&m_top->m_vps);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_VPS, bs);
 
-    int count = 0;
+    bs.clear();
+    entropyCoder->encodeSPS(&m_sps);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_SPS, bs);
 
-    /* headers for start of bitstream */
-    nalunits[count] = new NALUnit;
-    if (nalunits[count])
-    {
-        entropyCoder->encodeVPS(&m_top->m_vps);
-        bs.writeByteAlignment();
-        nalunits[count++]->serialize(NAL_UNIT_VPS, bs);
-    }
-
-    nalunits[count] = new NALUnit;
-    if (nalunits[count])
-    {
-        bs.clear();
-        entropyCoder->encodeSPS(&m_sps);
-        bs.writeByteAlignment();
-        nalunits[count++]->serialize(NAL_UNIT_SPS, bs);
-    }
-
-    nalunits[count] = new NALUnit;
-    if (nalunits[count])
-    {
-        bs.clear();
-        entropyCoder->encodePPS(&m_pps);
-        bs.writeByteAlignment();
-        nalunits[count++]->serialize(NAL_UNIT_PPS, bs);
-    }
+    bs.clear();
+    entropyCoder->encodePPS(&m_pps);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_PPS, bs);
 
     if (m_param->bEmitHRDSEI)
     {
@@ -275,16 +251,10 @@ int FrameEncoder::getStreamHeaders(NALUnit **nalunits)
         sei.m_numSpsIdsMinus1 = 0;
         sei.m_activeSeqParamSetId = m_sps.getSPSId();
 
-        nalunits[count] = new NALUnit;
-        if (nalunits[count])
-        {
-            bs.clear();
-            sei.write(bs, m_sps);
-            nalunits[count++]->serialize(NAL_UNIT_PREFIX_SEI, bs);
-        }
+        bs.clear();
+        sei.write(bs, m_sps);
+        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
-
-    return count;
 }
 
 void FrameEncoder::initSlice(TComPic* pic)
@@ -389,7 +359,6 @@ void FrameEncoder::compressFrame()
     int          chFmt             = slice->getSPS()->getChromaFormatIdc();
     int          totalCoded        = (int)m_top->m_encodedFrameNum - 1;
 
-    m_nalCount = 0;
     entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
 
     /* Emit access unit delimiter unless this is the first frame and the user is
@@ -397,46 +366,38 @@ void FrameEncoder::compressFrame()
      * unit) */
     if (m_param->bEnableAccessUnitDelimiters && (m_pic->getPOC() || m_param->bRepeatHeaders))
     {
-        m_nalList[m_nalCount] = new NALUnit;
-        if (m_nalList[m_nalCount])
-        {
-            entropyCoder->setBitstream(&m_bs);
-            m_bs.clear();
-            entropyCoder->encodeAUD(slice);
-            m_bs.writeByteAlignment();
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
-        }
+        m_bs.clear();
+        entropyCoder->setBitstream(&m_bs);
+        entropyCoder->encodeAUD(slice);
+        m_bs.writeByteAlignment();
+        m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
     if (m_pic->m_lowres.bKeyframe)
     {
         if (m_param->bRepeatHeaders)
-            m_nalCount += getStreamHeaders(m_nalList + m_nalCount);
+            getStreamHeaders(m_nalList, m_bs);
 
         if (m_param->bEmitHRDSEI)
         {
-            m_nalList[m_nalCount] = new NALUnit;
-            if (m_nalList[m_nalCount])
-            {
-                SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
-                bpSei->m_bpSeqParameterSetId = m_sps.getSPSId();
-                bpSei->m_rapCpbParamsPresentFlag = 0;
+            SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
+            bpSei->m_bpSeqParameterSetId = m_sps.getSPSId();
+            bpSei->m_rapCpbParamsPresentFlag = 0;
 
-                // for the concatenation, it can be set to one during splicing.
-                bpSei->m_concatenationFlag = 0;
+            // for the concatenation, it can be set to one during splicing.
+            bpSei->m_concatenationFlag = 0;
 
-                // since the temporal layer HRD is not ready, we assumed it is fixed
-                bpSei->m_auCpbRemovalDelayDelta = 1;
-                bpSei->m_cpbDelayOffset = 0;
-                bpSei->m_dpbDelayOffset = 0;
+            // since the temporal layer HRD is not ready, we assumed it is fixed
+            bpSei->m_auCpbRemovalDelayDelta = 1;
+            bpSei->m_cpbDelayOffset = 0;
+            bpSei->m_dpbDelayOffset = 0;
 
-                // hrdFullness() calculates the initial CPB removal delay and offset
-                m_top->m_rateControl->hrdFullness(bpSei);
+            // hrdFullness() calculates the initial CPB removal delay and offset
+            m_top->m_rateControl->hrdFullness(bpSei);
 
-                m_bs.clear();
-                bpSei->write(m_bs, m_sps);
+            m_bs.clear();
+            bpSei->write(m_bs, m_sps);
 
-                m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
-            }
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
             m_top->m_lastBPSEI = totalCoded;
         }
@@ -449,20 +410,16 @@ void FrameEncoder::compressFrame()
         // m_recoveryPocCnt. Our encoder does not use references prior to the most recent CRA,
         // so all pictures following the CRA in POC order are guaranteed to be displayable,
         // so m_recoveryPocCnt is always 0.
-        m_nalList[m_nalCount] = new NALUnit;
-        if (m_nalList[m_nalCount])
-        {
-            SEIRecoveryPoint sei_recovery_point;
-            sei_recovery_point.m_recoveryPocCnt = 0;
-            sei_recovery_point.m_exactMatchingFlag = true;
-            sei_recovery_point.m_brokenLinkFlag = false;
+        SEIRecoveryPoint sei_recovery_point;
+        sei_recovery_point.m_recoveryPocCnt = 0;
+        sei_recovery_point.m_exactMatchingFlag = true;
+        sei_recovery_point.m_brokenLinkFlag = false;
 
-            m_bs.clear();
-            sei_recovery_point.write(m_bs, *slice->getSPS());
-            m_bs.writeByteAlignment();
+        m_bs.clear();
+        sei_recovery_point.write(m_bs, *slice->getSPS());
+        m_bs.writeByteAlignment();
 
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
-        }
+        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
@@ -501,13 +458,9 @@ void FrameEncoder::compressFrame()
             sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
         }
 
-        m_nalList[m_nalCount] = new NALUnit;
-        if (m_nalList[m_nalCount])
-        {
-            m_bs.clear();
-            sei->write(m_bs, m_sps);
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_PREFIX_SEI, m_bs);
-        }
+        m_bs.clear();
+        sei->write(m_bs, m_sps);
+        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
     int qp = slice->getSliceQp();
@@ -621,51 +574,47 @@ void FrameEncoder::compressFrame()
             m_outStreams[i].clear();
     slice->allocSubstreamSizes(numSubstreams);
 
-    m_nalList[m_nalCount] = new NALUnit;
-    if (m_nalList[m_nalCount])
+    m_bs.clear();
+    m_sbacCoder.init(&m_binCoderCABAC);
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+    entropyCoder->resetEntropy();
+    entropyCoder->setBitstream(&m_bs);
+    entropyCoder->encodeSliceHeader(slice);
+
+    // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
+    for (int i = 0; i < m_numRows; i++)
     {
-        m_bs.clear();
-        m_sbacCoder.init(&m_binCoderCABAC);
-        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->resetEntropy();
-        entropyCoder->setBitstream(&m_bs);
-        entropyCoder->encodeSliceHeader(slice);
-
-        // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
-            m_rows[i].m_entropyCoder.resetEntropy();
-        }
-        getSbacCoder(0)->load(&m_sbacCoder);
-        entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
-        entropyCoder->resetEntropy();
-        entropyCoder->setBitstream(&m_outStreams[0]);
-        m_sbacCoder.load(getSbacCoder(0));
-        encodeSlice(m_outStreams);
-
-        // flush per-row streams
-        for (uint32_t i = 0; i < numSubstreams; i++)
-        {
-            entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
-            entropyCoder->setBitstream(&m_outStreams[i]);
-            entropyCoder->encodeTerminatingBit(1);
-            entropyCoder->encodeSliceFinish();
-            m_outStreams[i].writeByteAlignment();
-        }
-
-        uint32_t totalBytes;
-        uint8_t *concatStreams = m_nalList[m_nalCount]->serializeMultiple(slice->getSubstreamSizes(), totalBytes, numSubstreams, m_outStreams);
-
-        // complete the slice header by writing WPP row-starts
-        entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-        entropyCoder->setBitstream(&m_bs);
-        entropyCoder->encodeTilesWPPEntryPoint(slice);
-        m_bs.writeByteAlignment();
-
-        m_nalList[m_nalCount++]->serialize(slice->getNalUnitType(), m_bs, concatStreams, totalBytes);
-        X265_FREE(concatStreams);
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
+        m_rows[i].m_entropyCoder.resetEntropy();
     }
+    getSbacCoder(0)->load(&m_sbacCoder);
+    entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
+    entropyCoder->resetEntropy();
+    entropyCoder->setBitstream(&m_outStreams[0]);
+    m_sbacCoder.load(getSbacCoder(0));
+    encodeSlice(m_outStreams);
+
+    // flush per-row streams
+    for (uint32_t i = 0; i < numSubstreams; i++)
+    {
+        entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
+        entropyCoder->setBitstream(&m_outStreams[i]);
+        entropyCoder->encodeTerminatingBit(1);
+        entropyCoder->encodeSliceFinish();
+        m_outStreams[i].writeByteAlignment();
+    }
+
+    uint32_t totalBytes;
+    uint8_t *concatStreams = m_nalList.serializeMultiple(slice->getSubstreamSizes(), totalBytes, numSubstreams, m_outStreams);
+
+    // complete the slice header by writing WPP row-starts
+    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+    entropyCoder->setBitstream(&m_bs);
+    entropyCoder->encodeTilesWPPEntryPoint(slice);
+    m_bs.writeByteAlignment();
+
+    m_nalList.serialize(slice->getNalUnitType(), m_bs, concatStreams, totalBytes);
+    X265_FREE(concatStreams);
 
     if (m_param->decodedPictureHashSEI)
     {
@@ -693,15 +642,12 @@ void FrameEncoder::compressFrame()
                 checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
             }
         }
-        m_nalList[m_nalCount] = new NALUnit;
-        if (m_nalList[m_nalCount])
-        {
-            m_bs.clear();
-            m_seiReconPictureDigest.write(m_bs, *slice->getSPS());
-            m_bs.writeByteAlignment();
 
-            m_nalList[m_nalCount++]->serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
-        }
+        m_bs.clear();
+        m_seiReconPictureDigest.write(m_bs, *slice->getSPS());
+        m_bs.writeByteAlignment();
+
+        m_nalList.serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
     }
 
     // Decrement referenced frame reference counts, allow them to be recycled
@@ -1250,7 +1196,7 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     return Clip3(MIN_QP, MAX_MAX_QP, (int)(qp + 0.5));
 }
 
-TComPic *FrameEncoder::getEncodedPicture(NALUnit **nalunits)
+TComPic *FrameEncoder::getEncodedPicture(NALList& output)
 {
     if (m_pic)
     {
@@ -1259,14 +1205,7 @@ TComPic *FrameEncoder::getEncodedPicture(NALUnit **nalunits)
 
         TComPic *ret = m_pic;
         m_pic = NULL;
-
-        if (nalunits)
-        {
-            // move NALs from member variable to user's container
-            X265_CHECK(m_nalCount <= MAX_NAL_UNITS, "NAL unit overflow\n");
-            ::memcpy(nalunits, m_nalList, sizeof(NALUnit*) * m_nalCount);
-            m_nalCount = 0;
-        }
+        output.takeContents(m_nalList);
         return ret;
     }
 

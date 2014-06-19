@@ -71,30 +71,16 @@ x265_encoder *x265_encoder_open(x265_param *p)
 extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
-    if (!pp_nal || !enc)
-        return -1;
-
-    Encoder *encoder = static_cast<Encoder*>(enc);
-
-    int ret = 0;
-    NALUnit *nalunits[MAX_NAL_UNITS];
-    memset(nalunits, 0, sizeof(nalunits));
-    if (encoder->getStreamHeaders(nalunits) > 0)
+    if (pp_nal && enc)
     {
-        int nalcount = encoder->extractNalData(nalunits, ret);
-        *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
-    }
-    else if (pi_nal)
-    {
-        *pi_nal = 0;
-        ret = -1;
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        encoder->getStreamHeaders();
+        *pp_nal = &encoder->m_nalList.m_nal[0];
+        if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
+        return encoder->m_nalList.m_occupancy;
     }
 
-    for (int i = 0; i < MAX_NAL_UNITS; i++)
-        delete nalunits[i];
-
-    return ret;
+    return -1;
 }
 
 extern "C"
@@ -114,22 +100,15 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
-    NALUnit *nalunits[MAX_NAL_UNITS];
-    memset(nalunits, 0, sizeof(nalunits));
-    int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
+    int numEncoded = encoder->encode(!pic_in, pic_in, pic_out);
 
     if (pp_nal && numEncoded > 0)
     {
-        int memsize;
-        int nalcount = encoder->extractNalData(nalunits, memsize);
-        *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
+        *pp_nal = &encoder->m_nalList.m_nal[0];
+        if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
     }
     else if (pi_nal)
         *pi_nal = 0;
-
-    for (int i = 0; i < MAX_NAL_UNITS; i++)
-        delete nalunits[i];
 
     return numEncoded;
 }
