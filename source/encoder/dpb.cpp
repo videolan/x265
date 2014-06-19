@@ -51,6 +51,8 @@ DPB::~DPB()
     {
         TComPicSym* next = m_picSymFreeList->m_freeListNext;
         m_picSymFreeList->destroy();
+        m_picSymFreeList->m_reconPicYuv->destroy();
+        delete m_picSymFreeList->m_reconPicYuv;
         delete m_picSymFreeList;
         m_picSymFreeList = next;
     }
