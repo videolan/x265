@@ -86,7 +86,6 @@ private:
 
     TComPic*           m_exportedPic;
 
-    /* frame parallelism */
     int                m_curEncoder;
 
 
