@@ -59,6 +59,7 @@ Encoder::Encoder()
     m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
+    m_exportedPic = NULL;
     m_nals = NULL;
     m_packetData = NULL;
     m_outputCount = 0;
@@ -132,6 +133,12 @@ void Encoder::create()
 
 void Encoder::destroy()
 {
+    if (m_exportedPic)
+    {
+        ATOMIC_DEC(&m_exportedPic->m_countRefEncoders);
+        m_exportedPic = NULL;
+    }
+
     if (m_frameEncoder)
     {
         for (int i = 0; i < m_totalFrameThreads; i++)
@@ -254,6 +261,13 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
 {
     if (m_aborted)
         return -1;
+
+    if (m_exportedPic)
+    {
+        ATOMIC_DEC(&m_exportedPic->m_countRefEncoders);
+        m_exportedPic = NULL;
+        m_dpb->recycleUnreferenced();
+    }
 
     if (pic_in)
     {
@@ -434,8 +448,14 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         finishFrameStats(out, curEncoder, bits);
 
         // Allow this frame to be recycled if no frame encoders are using it for reference
-        ATOMIC_DEC(&out->m_countRefEncoders);
-        m_dpb->recycleUnreferenced();
+        if (!pic_out)
+        {
+            ATOMIC_DEC(&out->m_countRefEncoders);
+            m_dpb->recycleUnreferenced();
+        }
+        else
+            m_exportedPic = out;
+
         ret = 1;
     }
 

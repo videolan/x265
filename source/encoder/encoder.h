@@ -87,6 +87,8 @@ private:
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
 
+    TComPic*           m_exportedPic;
+
     /* frame parallelism */
     int                m_curEncoder;
 
