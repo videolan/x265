@@ -98,7 +98,7 @@ protected:
         }
     }
 
-    void xSetEdgefilterMultiple(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edgeIdx, bool bValue, bool edgeFilter[], uint32_t widthInBaseUnits = 0, uint32_t heightInBaseUnits = 0);
+    void xSetEdgefilterMultiple(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edgeIdx, bool bValue, bool edgeFilter[], uint32_t widthInBaseUnits = 0);
 
     void xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge);
     void xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge);

@@ -192,20 +192,15 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
     }
 }
 
-void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, uint32_t depth, int dir, int edgeIdx, bool bValue, bool edgeFilter[], uint32_t widthInBaseUnits, uint32_t heightInBaseUnits)
+void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, uint32_t depth, int dir, int edgeIdx, bool bValue, bool edgeFilter[], uint32_t widthInBaseUnits)
 {
     if (widthInBaseUnits == 0)
     {
         widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
     }
-    if (heightInBaseUnits == 0)
-    {
-        heightInBaseUnits = cu->getPic()->getNumPartInCUSize() >> depth;
-    }
-    const uint32_t numElem = dir == 0 ? heightInBaseUnits : widthInBaseUnits;
+    const uint32_t numElem = widthInBaseUnits;
     X265_CHECK(numElem > 0, "numElem edge filter check\n");
     X265_CHECK(widthInBaseUnits > 0, "widthInBaseUnits edge filter check\n");
-    X265_CHECK(heightInBaseUnits > 0, "heightInBaseUnits edge filter check\n");
     for (uint32_t i = 0; i < numElem; i++)
     {
         const uint32_t bsidx = xCalcBsIdx(cu, scanIdx, dir, edgeIdx, i);
@@ -233,12 +228,10 @@ void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uin
     }
 
     int trWidth  = cu->getCUSize(absZOrderIdx) >> cu->getTransformIdx(absZOrderIdx);
-    int trHeight = cu->getCUSize(absZOrderIdx) >> cu->getTransformIdx(absZOrderIdx);
 
     uint32_t widthInBaseUnits  = trWidth / (g_maxCUSize >> g_maxCUDepth);
-    uint32_t heightInBaseUnits = trHeight / (g_maxCUSize >> g_maxCUDepth);
 
-    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, dir, 0, true, edgeFilter, widthInBaseUnits, heightInBaseUnits);
+    xSetEdgefilterMultiple(cu, absTUPartIdx, depth, dir, 0, true, edgeFilter, widthInBaseUnits);
 }
 
 void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int dir, LFCUParam *lfcuParam, bool edgeFilter[])
@@ -263,7 +256,7 @@ void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int
         const int realDir = (mode == SIZE_2NxN ? EDGE_HOR : EDGE_VER);
 
         if (realDir == dir)
-            xSetEdgefilterMultiple(cu, absZOrderIdx, depth, realDir, hWidthInBaseUnits, true, edgeFilter);
+            xSetEdgefilterMultiple(cu, absZOrderIdx, depth, dir, hWidthInBaseUnits, true, edgeFilter);
         break;
     }
     case SIZE_NxN:
