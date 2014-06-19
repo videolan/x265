@@ -1089,8 +1089,6 @@ private:
     bool     m_useTransformSkip;
     bool     m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
-    bool     m_loopFilterAcrossTilesEnabledFlag;
-
     int      m_signHideFlag;
 
     bool     m_cabacInitPresentFlag;
@@ -1185,10 +1183,6 @@ public:
     bool      getUseTransformSkip() const { return m_useTransformSkip; }
 
     void      setUseTransformSkip(bool b) { m_useTransformSkip = b; }
-
-    void    setLoopFilterAcrossTilesEnabledFlag(bool b) { m_loopFilterAcrossTilesEnabledFlag = b; }
-
-    bool    getLoopFilterAcrossTilesEnabledFlag()      { return m_loopFilterAcrossTilesEnabledFlag; }
 
     bool    getEntropyCodingSyncEnabledFlag() const    { return m_entropyCodingSyncEnabledFlag; }
 

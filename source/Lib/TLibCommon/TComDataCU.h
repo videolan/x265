@@ -418,18 +418,11 @@ public:
 
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
 
-    TComDataCU*   getPULeft(uint32_t& lPartUnitIdx,
-                            uint32_t  curPartUnitIdx,
-                            bool      bEnforceSliceRestriction = true,
-                            bool      bEnforceTileRestriction = true);
-    TComDataCU*   getPUAbove(uint32_t& uiAPartUnitIdx,
-                             uint32_t  curPartUnitIdx,
-                             bool      bEnforceSliceRestriction = true,
-                             bool      planarAtLCUBoundary = false,
-                             bool      bEnforceTileRestriction = true);
-    TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtLCUBoundary = false);
+    TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx);
 
     TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInLCU);
     TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInLCU);

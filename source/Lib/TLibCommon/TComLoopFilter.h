@@ -69,8 +69,6 @@ private:
 
     uint32_t    m_numPartitions;
 
-    static bool m_bLFCrossTileBoundary;
-
 protected:
 
     /// CU-level deblocking function
@@ -119,9 +117,6 @@ public:
 
     void  create(uint32_t maxCUDepth);
     void  destroy();
-
-    /// set configuration
-    void setCfg(bool bLFCrossTileBoundary);
 
     void loopFilterCU(TComDataCU* cu, int dir, bool edgeFilter[], uint8_t blockingStrength[]);
 

@@ -64,8 +64,6 @@ const uint8_t TComLoopFilter::sm_betaTable[52] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64
 };
 
-bool TComLoopFilter::m_bLFCrossTileBoundary = true;
-
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
@@ -77,14 +75,6 @@ TComLoopFilter::TComLoopFilter()
 
 TComLoopFilter::~TComLoopFilter()
 {}
-
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-void TComLoopFilter::setCfg(bool bLFCrossTileBoundary)
-{
-    m_bLFCrossTileBoundary = bLFCrossTileBoundary;
-}
 
 void TComLoopFilter::create(uint32_t maxCuDepth)
 {
@@ -294,7 +284,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
     }
     else
     {
-        tempCU = cu->getPULeft(tempPartIdx, absZOrderIdx, !true, !m_bLFCrossTileBoundary);
+        tempCU = cu->getPULeft(tempPartIdx, absZOrderIdx);
         if (tempCU)
         {
             lfcuParam->bLeftEdge = true;
@@ -311,7 +301,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
     }
     else
     {
-        tempCU = cu->getPUAbove(tempPartIdx, absZOrderIdx, !true, false, !m_bLFCrossTileBoundary);
+        tempCU = cu->getPUAbove(tempPartIdx, absZOrderIdx);
         if (tempCU)
         {
             lfcuParam->bTopEdge = true;
@@ -337,11 +327,11 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
     //-- Calculate Block Index
     if (dir == EDGE_VER)
     {
-        cuP = cuQ->getPULeft(partP, partQ, !true, !m_bLFCrossTileBoundary);
+        cuP = cuQ->getPULeft(partP, partQ);
     }
     else // (dir == EDGE_HOR)
     {
-        cuP = cuQ->getPUAbove(partP, partQ, !true, false, !m_bLFCrossTileBoundary);
+        cuP = cuQ->getPUAbove(partP, partQ);
     }
 
     //-- Set BS for Intra MB : BS = 4 or 3
@@ -364,7 +354,7 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
         {
             if (dir == EDGE_HOR)
             {
-                cuP = cuQ->getPUAbove(partP, partQ, !true, false, !m_bLFCrossTileBoundary);
+                cuP = cuQ->getPUAbove(partP, partQ);
             }
             if (slice->isInterB() || cuP->getSlice()->isInterB())
             {
@@ -499,11 +489,11 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
             // Derive neighboring PU index
             if (dir == EDGE_VER)
             {
-                cuP = cuQ->getPULeft(partP, partQ, !true, !m_bLFCrossTileBoundary);
+                cuP = cuQ->getPULeft(partP, partQ);
             }
             else // (dir == EDGE_HOR)
             {
-                cuP = cuQ->getPUAbove(partP, partQ, !true, false, !m_bLFCrossTileBoundary);
+                cuP = cuQ->getPUAbove(partP, partQ);
             }
 
             qpP = cuP->getQP(partP);
@@ -634,11 +624,11 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
             // Derive neighboring PU index
             if (dir == EDGE_VER)
             {
-                cuP = cuQ->getPULeft(partP, partQ, !true, !m_bLFCrossTileBoundary);
+                cuP = cuQ->getPULeft(partP, partQ);
             }
             else // (dir == EDGE_HOR)
             {
-                cuP = cuQ->getPUAbove(partP, partQ, !true, false, !m_bLFCrossTileBoundary);
+                cuP = cuQ->getPUAbove(partP, partQ);
             }
 
             qpP = cuP->getQP(partP);

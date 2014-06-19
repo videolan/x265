@@ -149,7 +149,6 @@ public:
     uint32_t           m_pcmBitDepthChroma; // unused field, TComSPS has it's own version defaulted to 8
 
     bool               m_bPCMFilterDisableFlag;
-    bool               m_loopFilterAcrossTilesEnabledFlag;
 
     int64_t            m_encodedFrameNum;
     int                m_lastBPSEI;

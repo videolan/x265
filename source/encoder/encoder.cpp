@@ -1167,7 +1167,6 @@ void Encoder::initPPS(TComPPS *pps)
 
     pps->setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     pps->setUseTransformSkip(m_param->bEnableTransformSkip);
-    pps->setLoopFilterAcrossTilesEnabledFlag(m_loopFilterAcrossTilesEnabledFlag);
 }
 
 void Encoder::configure(x265_param *p)
@@ -1372,7 +1371,6 @@ void Encoder::configure(x265_param *p)
     m_loopFilterOffsetInPPS = 0;
     m_loopFilterBetaOffsetDiv2 = 0;
     m_loopFilterTcOffsetDiv2 = 0;
-    m_loopFilterAcrossTilesEnabledFlag = 1;
 
     m_vps.setMaxTLayers(1);
     m_vps.setTemporalNestingFlag(true);
