@@ -70,7 +70,7 @@ private:
     uint32_t    m_numPartitions;
     uint8_t*    m_blockingStrength[2]; ///< Bs for [Ver/Hor][Y/U/V][Blk_Idx]
 
-    bool        m_bLFCrossTileBoundary;
+    static bool m_bLFCrossTileBoundary;
 
 protected:
 

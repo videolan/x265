@@ -64,13 +64,14 @@ const uint8_t TComLoopFilter::sm_betaTable[52] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64
 };
 
+bool TComLoopFilter::m_bLFCrossTileBoundary = true;
+
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
 
 TComLoopFilter::TComLoopFilter()
     : m_numPartitions(0)
-    , m_bLFCrossTileBoundary(true)
 {
     for (uint32_t dir = 0; dir < 2; dir++)
     {
