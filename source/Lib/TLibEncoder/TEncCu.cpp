@@ -498,7 +498,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 {
     //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
 
-    TComPic* pic = outBestCU->getPic();
+    Frame* pic = outBestCU->getPic();
 
     if (depth == 0)
     {
@@ -666,7 +666,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
 {
     //PPAScopeEvent(TEncCu_xCompressCU + depth);
 
-    TComPic* pic = outBestCU->getPic();
+    Frame* pic = outBestCU->getPic();
 
     if (depth == 0)
     {
@@ -1028,7 +1028,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
  */
 void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    TComPic* pic = cu->getPic();
+    Frame* pic = cu->getPic();
     TComSlice* slice = cu->getPic()->getSlice();
 
     //Calculate end address
@@ -1101,7 +1101,7 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
  */
 void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture)
 {
-    TComPic* pic = cu->getPic();
+    Frame* pic = cu->getPic();
 
     TComSlice* slice = cu->getSlice();
     if (!bInsidePicture)
@@ -1533,7 +1533,7 @@ void TEncCu::xCheckDQP(TComDataCU* cu)
     }
 }
 
-void TEncCu::xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth)
+void TEncCu::xCopyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth)
 {
     m_bestRecoYuv[depth]->copyToPicYuv(outPic->getPicYuvRec(), cuAddr, absPartIdx);
 }

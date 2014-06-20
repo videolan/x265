@@ -36,8 +36,9 @@
 */
 
 #include "common.h"
+#include "frame.h"
+#include "piclist.h"
 #include "TComSlice.h"
-#include "TComPic.h"
 
 using namespace x265;
 
@@ -134,10 +135,10 @@ void  TComSlice::allocSubstreamSizes(uint32_t numSubstreams)
     m_substreamSizes = new uint32_t[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
-TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
+Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
 {
-    TComPic *iterPic = picList.first();
-    TComPic* pic = NULL;
+    Frame *iterPic = picList.first();
+    Frame* pic = NULL;
 
     while (iterPic)
     {
@@ -152,11 +153,11 @@ TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
     return pic;
 }
 
-TComPic* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
+Frame* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
 {
-    TComPic* iterPic = picList.first();
-    TComPic* pic = iterPic;
-    TComPic* stPic = pic;
+    Frame* iterPic = picList.first();
+    Frame* pic = iterPic;
+    Frame* stPic = pic;
 
     int pocCycle = 1 << getSPS()->getBitsForPOC();
 
@@ -220,10 +221,10 @@ void TComSlice::setRefPicList(PicList& picList)
     m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
     m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
 
-    TComPic* refPic = NULL;
-    TComPic* refPicSetStCurr0[MAX_NUM_REF];
-    TComPic* refPicSetStCurr1[MAX_NUM_REF];
-    TComPic* refPicSetLtCurr[MAX_NUM_REF];
+    Frame* refPic = NULL;
+    Frame* refPicSetStCurr0[MAX_NUM_REF];
+    Frame* refPicSetStCurr1[MAX_NUM_REF];
+    Frame* refPicSetLtCurr[MAX_NUM_REF];
     uint32_t numPocStCurr0 = 0;
     uint32_t numPocStCurr1 = 0;
     uint32_t numPocLtCurr = 0;
@@ -268,8 +269,8 @@ void TComSlice::setRefPicList(PicList& picList)
     }
 
     // ref_pic_list_init
-    TComPic* rpsCurrList0[MAX_NUM_REF + 1];
-    TComPic* rpsCurrList1[MAX_NUM_REF + 1];
+    Frame* rpsCurrList0[MAX_NUM_REF + 1];
+    Frame* rpsCurrList1[MAX_NUM_REF + 1];
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
 
     int cIdx = 0;

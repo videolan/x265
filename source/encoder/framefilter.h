@@ -25,7 +25,8 @@
 #ifndef X265_FRAMEFILTER_H
 #define X265_FRAMEFILTER_H
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "TLibCommon/TComLoopFilter.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
@@ -47,7 +48,7 @@ public:
 
     void destroy();
 
-    void start(TComPic *pic);
+    void start(Frame *pic);
 
     void processRow(int row);
     void processRowPost(int row);
@@ -56,7 +57,7 @@ public:
 protected:
 
     x265_param*                 m_param;
-    TComPic*                    m_pic;
+    Frame*                      m_pic;
     FrameEncoder*               m_frame;
     int                         m_hChromaShift;
     int                         m_vChromaShift;

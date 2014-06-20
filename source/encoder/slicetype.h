@@ -32,8 +32,7 @@ namespace x265 {
 // private namespace
 
 struct Lowres;
-class TComPic;
-class Encoder;
+class Frame;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
@@ -95,7 +94,7 @@ class CostEstimate : public WaveFront
 public:
     CostEstimate(ThreadPool *p);
     ~CostEstimate();
-    void init(x265_param *, TComPic *);
+    void init(x265_param *, Frame *);
 
     x265_param      *m_param;
     EstimateRow     *m_rows;
@@ -126,7 +125,7 @@ class Lookahead : public JobProvider
 {
 public:
 
-    Lookahead(Encoder *, ThreadPool *pool);
+    Lookahead(x265_param *param, ThreadPool *pool);
     ~Lookahead();
     void init();
     void destroy();
@@ -144,11 +143,11 @@ public:
     int              m_lastKeyframe;
     int              m_histogram[X265_BFRAME_MAX + 1];
 
-    void addPicture(TComPic*, int sliceType);
+    void addPicture(Frame*, int sliceType);
     void flush();
-    TComPic* getDecidedPicture();
+    Frame* getDecidedPicture();
 
-    int64_t getEstimatedPictureCost(TComPic *pic);
+    int64_t getEstimatedPictureCost(Frame *pic);
 
 protected:
 

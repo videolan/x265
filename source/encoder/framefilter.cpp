@@ -92,7 +92,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac*
         m_ssimBuf = (int*)x265_malloc(sizeof(int) * 8 * (m_param->sourceWidth / 4 + 3));
 }
 
-void FrameFilter::start(TComPic *pic)
+void FrameFilter::start(Frame *pic)
 {
     m_pic = pic;
 

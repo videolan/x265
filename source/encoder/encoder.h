@@ -85,7 +85,7 @@ private:
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
 
-    TComPic*           m_exportedPic;
+    Frame*             m_exportedPic;
 
     int                m_curEncoder;
 
@@ -220,7 +220,7 @@ public:
 
 protected:
 
-    void finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t bits);
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };
 }
 

@@ -232,7 +232,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     }
 }
 
-void FrameEncoder::initSlice(TComPic* pic)
+void FrameEncoder::initSlice(Frame* pic)
 {
     m_pic = pic;
     TComSlice* slice = pic->getSlice();
@@ -607,7 +607,7 @@ void FrameEncoder::compressFrame()
     {
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPic *refpic = slice->getRefPic(l, ref);
+            Frame *refpic = slice->getRefPic(l, ref);
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
@@ -838,7 +838,7 @@ void FrameEncoder::compressCTURows()
             {
                 for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
                 {
-                    TComPic *refpic = slice->getRefPic(l, ref);
+                    Frame *refpic = slice->getRefPic(l, ref);
 
                     int reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
@@ -877,7 +877,7 @@ void FrameEncoder::compressCTURows()
                     int list = l;
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
-                        TComPic *refpic = slice->getRefPic(list, ref);
+                        Frame *refpic = slice->getRefPic(list, ref);
 
                         int reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
@@ -1157,14 +1157,14 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     return Clip3(MIN_QP, MAX_MAX_QP, (int)(qp + 0.5));
 }
 
-TComPic *FrameEncoder::getEncodedPicture(NALList& output)
+Frame *FrameEncoder::getEncodedPicture(NALList& output)
 {
     if (m_pic)
     {
         /* block here until worker thread completes */
         m_done.wait();
 
-        TComPic *ret = m_pic;
+        Frame *ret = m_pic;
         m_pic = NULL;
         output.takeContents(m_nalList);
         return ret;

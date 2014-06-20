@@ -503,7 +503,7 @@ inline int xSign(int x)
 /** initialize variables for SAO process
  * \param  pic picture data pointer
  */
-void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
+void TComSampleAdaptiveOffset::createPicSaoInfo(Frame* pic)
 {
     m_pic = pic;
 }
@@ -840,12 +840,12 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
 
     if (yCbCr == 0)
     {
-        rec        = m_pic->getPicYuvRec()->getLumaAddr();
+        rec         = m_pic->getPicYuvRec()->getLumaAddr();
         picWidthTmp = m_picWidth;
     }
     else
     {
-        rec        = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
+        rec         = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
@@ -1155,7 +1155,7 @@ void TComSampleAdaptiveOffset::resetLcuPart(SaoLcuParam* saoLcuParam)
  */
 void TComSampleAdaptiveOffset::convertQT2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int yCbCr)
 {
-    SAOQTPart*  saoPart = &(saoParam->saoPart[yCbCr][partIdx]);
+    SAOQTPart* saoPart = &(saoParam->saoPart[yCbCr][partIdx]);
 
     if (!saoPart->bSplit)
     {
@@ -1254,9 +1254,9 @@ static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_
  *
  * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
  */
-void PCMLFDisableProcess(TComPic* pic)
+void PCMLFDisableProcess(Frame* pic)
 {
-    bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
+    bool bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
 
     if (bPCMFilter || pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
@@ -1277,7 +1277,7 @@ void PCMLFDisableProcess(TComPic* pic)
  */
 void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPic* pic     = cu->getPic();
+    Frame* pic = cu->getPic();
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -1286,8 +1286,8 @@ void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
     {
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
-            uint32_t lpelx   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
+            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
             if ((lpelx < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (tpely < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
                 xPCMCURestoration(cu, absZOrderIdx, depth + 1);
         }

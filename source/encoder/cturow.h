@@ -25,7 +25,8 @@
 #ifndef X265_CTUROW_H
 #define X265_CTUROW_H
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"

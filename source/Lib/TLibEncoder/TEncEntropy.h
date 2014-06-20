@@ -40,9 +40,9 @@
 
 #include "common.h"
 #include "bitstream.h"
+#include "frame.h"
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/TComDataCU.h"
-#include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 

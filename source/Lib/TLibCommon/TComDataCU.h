@@ -47,6 +47,9 @@
 namespace x265 {
 // private namespace
 
+class Frame;
+class TComSlice;
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -105,7 +108,7 @@ private:
     // class pointers
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      m_pic;            ///< picture class pointer
+    Frame*        m_pic;            ///< picture class pointer
     TComSlice*    m_slice;          ///< slice header pointer
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -209,7 +212,7 @@ public:
 
     void          destroy();
 
-    void          initCU(TComPic* pic, uint32_t cuAddr);
+    void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData(uint32_t depth);
     void          initEstData(uint32_t depth, int qp);
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth);
@@ -226,7 +229,7 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      getPic()                         { return m_pic; }
+    Frame*        getPic()                         { return m_pic; }
 
     TComSlice*    getSlice()                       { return m_slice; }
 

@@ -39,7 +39,7 @@
 #define X265_TCOMLOOPFILTER_H
 
 #include "common.h"
-#include "TComPic.h"
+#include "frame.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -82,7 +82,7 @@ protected:
     void xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_t partIdx, uint8_t blockingStrength[]);
     uint32_t xCalcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int dir, int edgeIdx, int baseUnitIdx)
     {
-        TComPic* const pic = cu->getPic();
+        Frame* const pic = cu->getPic();
         const uint32_t lcuWidthInBaseUnits = pic->getNumPartInCUSize();
 
         if (dir == 0)

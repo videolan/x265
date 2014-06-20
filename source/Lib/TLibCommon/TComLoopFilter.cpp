@@ -47,7 +47,7 @@ using namespace x265;
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
-#define   QpUV(iQpY, chFmt)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[chFmt][(iQpY)]))
+#define QpUV(iQpY, chFmt)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[chFmt][(iQpY)]))
 #define DEFAULT_INTRA_TC_OFFSET 2 ///< Default intra TC offset
 
 // ====================================================================================================================
@@ -110,7 +110,7 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
     {
         return;
     }
-    TComPic* pic     = cu->getPic();
+    Frame* pic = cu->getPic();
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -118,8 +118,8 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
     {
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
-            uint32_t lpelx   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
+            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
             if ((lpelx < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (tpely < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
             {
                 xDeblockCU(cu, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
@@ -273,7 +273,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
     uint32_t y = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
 
     TComDataCU* tempCU;
-    uint32_t        tempPartIdx;
+    uint32_t    tempPartIdx;
 
     // We can't here when DeblockingDisable flag is true
     X265_CHECK(!cu->getSlice()->getDeblockingFilterDisable(), "internal deblock state failure\n");
@@ -359,7 +359,7 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
             if (slice->isInterB() || cuP->getSlice()->isInterB())
             {
                 int refIdx;
-                TComPic *refP0, *refP1, *refQ0, *refQ1;
+                Frame *refP0, *refP1, *refQ0, *refQ1;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
                 refP0 = (refIdx < 0) ? NULL : cuP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partP);
@@ -418,7 +418,7 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
             else // slice->isInterP()
             {
                 int refIdx;
-                TComPic *refp0, *refq0;
+                Frame *refp0, *refq0;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
                 refp0 = (refIdx < 0) ? NULL : cuP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partQ);

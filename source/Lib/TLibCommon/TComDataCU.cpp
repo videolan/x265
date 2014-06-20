@@ -36,8 +36,9 @@
     \todo     not all entities are documented
 */
 
+#include "common.h"
 #include "TComDataCU.h"
-#include "TComPic.h"
+#include "frame.h"
 #include "mv.h"
 
 using namespace x265;
@@ -241,7 +242,7 @@ void TComDataCU::destroy()
  \param  pic     picture (TComPic) class pointer
  \param  cuAddr  CU address
  */
-void TComDataCU::initCU(TComPic* pic, uint32_t cuAddr)
+void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
 {
     m_pic              = pic;
     m_slice            = pic->getSlice();
@@ -2726,7 +2727,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     MV colmv;
 
     // use coldir.
-    TComPic *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0, getSlice()->getColRefIdx());
+    Frame *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0, getSlice()->getColRefIdx());
     TComDataCU *colCU = colPic->getCU(cuAddr);
 
     if (colCU->getPic() == 0 || colCU->getPartitionSize(partUnitIdx) == SIZE_NONE)

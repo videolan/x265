@@ -38,8 +38,8 @@
 #ifndef X265_TCOMPREDICTION_H
 #define X265_TCOMPREDICTION_H
 
-// Include files
-#include "TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "TComMotionInfo.h"
 #include "TComPattern.h"
 #include "TComTrQuant.h"

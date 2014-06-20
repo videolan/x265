@@ -23,11 +23,13 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "param.h"
+#include "frame.h"
+
 #include "encoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
-#include "param.h"
 #include "sei.h"
 
 #define BR_SHIFT  6
@@ -96,7 +98,7 @@ inline char *strcatFilename(const char *input, const char *suffix)
 
 }  // end anonymous namespace
 /* Compute variance to derive AC energy of each block */
-static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, int i)
+static inline uint32_t acEnergyVar(Frame *pic, uint64_t sum_ssd, int shift, int i)
 {
     uint32_t sum = (uint32_t)sum_ssd;
     uint32_t ssd = (uint32_t)(sum_ssd >> 32);
@@ -107,7 +109,7 @@ static inline uint32_t acEnergyVar(TComPic *pic, uint64_t sum_ssd, int shift, in
 }
 
 /* Find the energy of each block in Y/Cb/Cr plane */
-static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, int bChroma, int colorFormat)
+static inline uint32_t acEnergyPlane(Frame *pic, pixel* src, int srcStride, int bChroma, int colorFormat)
 {
     if ((colorFormat != X265_CSP_I444) && bChroma)
     {
@@ -120,7 +122,7 @@ static inline uint32_t acEnergyPlane(TComPic *pic, pixel* src, int srcStride, in
 }
 
 /* Find the total AC energy of each block in all planes */
-uint32_t RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y)
+uint32_t RateControl::acEnergyCu(Frame* pic, uint32_t block_x, uint32_t block_y)
 {
     int stride = pic->getPicYuvOrg()->getStride();
     int cStride = pic->getPicYuvOrg()->getCStride();
@@ -139,7 +141,7 @@ uint32_t RateControl::acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_
     return var;
 }
 
-void RateControl::calcAdaptiveQuantFrame(TComPic *pic)
+void RateControl::calcAdaptiveQuantFrame(Frame *pic)
 {
     /* Actual adaptive quantization */
     int maxCol = pic->getPicYuvOrg()->getWidth();
@@ -535,7 +537,7 @@ void RateControl::initHRD(TComSPS *sps)
     #undef MAX_DURATION
 }
 
-void RateControl::rateControlStart(TComPic* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
+void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
     m_curSlice = pic->getSlice();
     m_sliceType = m_curSlice->getSliceType();
@@ -618,7 +620,7 @@ void RateControl::accumPQpUpdate()
         m_accumPQp += m_qp;
 }
 
-double RateControl::rateEstimateQscale(TComPic* pic, RateControlEntry *rce)
+double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
 {
     double q;
 
@@ -837,7 +839,7 @@ double RateControl::predictSize(Predictor *p, double q, double var)
     return (p->coeff * var + p->offset) / (q * p->count);
 }
 
-double RateControl::clipQscale(TComPic* pic, double q)
+double RateControl::clipQscale(Frame* pic, double q)
 {
     // B-frames are not directly subject to VBV,
     // since they are controlled by referenced P-frames' QPs.
@@ -964,14 +966,14 @@ double RateControl::clipQscale(TComPic* pic, double q)
     return Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
 }
 
-double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, double qpVbv, int32_t & encodedBitsSoFar)
+double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpVbv, int32_t & encodedBitsSoFar)
 {
     uint32_t rowSatdCostSoFar = 0, totalSatdBits = 0;
 
     encodedBitsSoFar = 0;
     double qScale = x265_qp2qScale(qpVbv);
     int picType = pic->getSlice()->getSliceType();
-    TComPic* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+    Frame* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
     int maxRows = pic->getPicSym()->getFrameHeightInCU();
     for (int row = 0; row < maxRows; row++)
     {
@@ -1029,7 +1031,7 @@ double RateControl::predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, doub
     return totalSatdBits + encodedBitsSoFar;
 }
 
-int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv)
+int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = pic->m_rowDiagSatd[row];
@@ -1044,7 +1046,7 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
     if (pic->getSlice()->getSliceType() == P_SLICE)
     {
-        TComPic* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+        Frame* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
             uint64_t intraRowSatdCost = pic->m_rowDiagIntraSatd[row];
@@ -1079,8 +1081,8 @@ int RateControl::rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateContr
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
         {
-            TComPic* refSlice1 = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
-            TComPic* refSlice2 = pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0);
+            Frame* refSlice1 = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+            Frame* refSlice2 = pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0);
             qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_rowDiagQp[row], refSlice2->m_rowDiagQp[row]));
             qpVbv = X265_MAX(qpVbv, qpMin);
         }
@@ -1222,7 +1224,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 }
 
 /* After encoding one frame, update rate control state */
-int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce)
+int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce)
 {
     int64_t actualBits = bits;
     if (m_isAbr)

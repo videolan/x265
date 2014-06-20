@@ -4,7 +4,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComLoopFilter.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComPattern.cpp
-    ../Lib/TLibCommon/TComPic.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
@@ -23,7 +22,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComPattern.h
-    ../Lib/TLibCommon/TComPic.h
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComPrediction.h
@@ -148,6 +146,7 @@ add_library(common OBJECT
     shortyuv.cpp shortyuv.h
     common.cpp common.h
     param.cpp param.h
+    frame.cpp frame.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
     loopfilter.cpp)

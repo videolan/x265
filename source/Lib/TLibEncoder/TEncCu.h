@@ -179,7 +179,7 @@ protected:
     void xCheckDQP(TComDataCU* cu);
 
     void xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU);
-    void xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
+    void xCopyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void xCopyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);
 
     bool getdQPFlag()        { return m_bEncodeDQP; }

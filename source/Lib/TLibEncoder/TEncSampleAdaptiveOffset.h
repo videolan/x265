@@ -39,8 +39,9 @@
 #ifndef X265_TENCSAMPLEADAPTIVEOFFSET_H
 #define X265_TENCSAMPLEADAPTIVEOFFSET_H
 
+#include "common.h"
+#include "frame.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
-#include "TLibCommon/TComPic.h"
 
 #include "TEncEntropy.h"
 #include "TEncSbac.h"
@@ -89,7 +90,7 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    void startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
+    void startSaoEnc(Frame* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
     void endSaoEnc();
     void resetStats();
     void SAOProcess(SAOParam *saoParam);
@@ -100,7 +101,7 @@ public:
     void disablePartTree(SAOQTPart *psQTPart, int partIdx);
     void getSaoStats(SAOQTPart *psQTPart, int yCbCr);
     void calcSaoStatsCu(int addr, int partIdx, int yCbCr);
-    void calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY);
+    void calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idxY);
     void destroyEncBuffer();
     void createEncBuffer();
     void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, bool &oneUnitFlag);

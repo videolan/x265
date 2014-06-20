@@ -28,8 +28,7 @@
 #include "common.h"
 #include "wavefront.h"
 #include "bitstream.h"
-
-#include "TLibCommon/TComPic.h"
+#include "frame.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
@@ -132,7 +131,7 @@ public:
 
     void getStreamHeaders(NALList& list, Bitstream& bs);
 
-    void initSlice(TComPic* pic);
+    void initSlice(Frame* pic);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
@@ -143,7 +142,7 @@ public:
     void encodeSlice(Bitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
-    TComPic *getEncodedPicture(NALList& list);
+    Frame *getEncodedPicture(NALList& list);
 
     void setLambda(int qp, ThreadLocalData& tld);
 
@@ -193,7 +192,7 @@ protected:
     NALList                  m_nalList;
     ThreadLocalData          m_tld;
 
-    TComPic*                 m_pic;
+    Frame*                 m_pic;
 
     int                      m_filterRowDelay;
     Event                    m_completionEvent;

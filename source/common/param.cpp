@@ -21,12 +21,12 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComSlice.h"
-#include "threading.h"
 #include "common.h"
+#include "threading.h"
 #include "param.h"
 #include "cpu.h"
 #include "x265.h"
+#include "TLibCommon/TComSlice.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks

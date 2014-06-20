@@ -41,7 +41,6 @@
 #include "common.h"
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
-#include "piclist.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -49,9 +48,10 @@
 namespace x265 {
 // private namespace
 
-class TComPic;
+class Frame;
 class TComTrQuant;
 class MotionReference;
+class PicList;
 
 // ====================================================================================================================
 // Constants
@@ -1304,7 +1304,7 @@ private:
     int         m_sliceQpDelta;
     int         m_sliceQpDeltaCb;
     int         m_sliceQpDeltaCr;
-    TComPic*    m_refPicList[2][MAX_NUM_REF + 1];
+    Frame*    m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
     bool        m_bIsUsedAsLongTerm[2][MAX_NUM_REF + 1];
 
@@ -1315,7 +1315,7 @@ private:
     TComSPS*    m_sps;
     TComPPS*    m_pps;
     TComVPS*    m_vps;
-    TComPic*    m_pic;
+    Frame*    m_pic;
     uint32_t    m_colFromL0Flag; // collocated picture from List0 flag
 
     uint32_t    m_colRefIdx;
@@ -1409,9 +1409,9 @@ public:
 
     const int* getNumRefIdx() const               { return m_numRefIdx; }
 
-    TComPic*  getPic()                            { return m_pic; }
+    Frame*  getPic()                            { return m_pic; }
 
-    TComPic*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }
+    Frame*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }
 
     int       getRefPOC(int e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
@@ -1464,13 +1464,13 @@ public:
 
     void      setDeblockingFilterTcOffsetDiv2(int i)   { m_deblockingFilterTcOffsetDiv2 = i; }
 
-    void      setRefPic(TComPic* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
+    void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 
     void      setRefPOC(int i, int e, int refIdx) { m_refPOCList[e][refIdx] = i; }
 
     void      setNumRefIdx(int e, int i)   { m_numRefIdx[e] = i; }
 
-    void      setPic(TComPic* p)                  { m_pic = p; }
+    void      setPic(Frame* p)                  { m_pic = p; }
 
     void      setRefPicList(PicList& picList);
 
@@ -1543,9 +1543,9 @@ public:
 
 protected:
 
-    TComPic*  xGetRefPic(PicList& picList, int poc);
+    Frame*  xGetRefPic(PicList& picList, int poc);
 
-    TComPic*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
+    Frame*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
 }
 //! \}

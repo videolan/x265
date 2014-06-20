@@ -511,7 +511,7 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
+void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
 {
     m_pic = pic;
     m_entropyCoder = entropyCoder;
@@ -813,7 +813,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     }
 }
 
-void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY)
+void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idxY)
 {
     int addr, yCbCr;
     int x, y;

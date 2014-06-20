@@ -340,7 +340,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
 void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint8_t minDepth)
 {
-    TComPic* pic = outTempCU->getPic();
+    Frame* pic = outTempCU->getPic();
     uint32_t absPartIdx = outTempCU->getZorderIdxInCU();
 
     if (depth == 0)
@@ -853,7 +853,7 @@ void TEncCu::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx,
 {
     uint8_t nextDepth = (uint8_t)(depth + 1);
     TComDataCU* subTempPartCU = m_tempCU[nextDepth];
-    TComPic* pic = cu->getPic();
+    Frame* pic = cu->getPic();
     TComSlice* slice = cu->getSlice();
 
     if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))

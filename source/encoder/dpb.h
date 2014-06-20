@@ -29,7 +29,7 @@
 namespace x265 {
 // private namespace for x265
 
-class TComPic;
+class Frame;
 class TComPicSym;
 class TComSlice;
 class Encoder;
@@ -61,7 +61,7 @@ public:
 
     ~DPB();
 
-    void prepareEncode(TComPic*);
+    void prepareEncode(Frame*);
 
     void recycleUnreferenced();
 
@@ -74,7 +74,7 @@ protected:
 
     void arrangeLongtermPicturesInRPS(TComSlice *);
 
-    NalUnitType getNalUnitType(int curPoc, int lastIdr, TComPic* pic);
+    NalUnitType getNalUnitType(int curPoc, int lastIdr, Frame* pic);
 };
 }
 

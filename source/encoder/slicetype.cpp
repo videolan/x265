@@ -22,15 +22,16 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "primitives.h"
 #include "lowres.h"
+#include "TLibCommon/TComRom.h"
+#include "mv.h"
 
 #include "encoder.h"
 #include "slicetype.h"
 #include "motion.h"
-#include "mv.h"
 #include "ratecontrol.h"
 
 #define NUM_CUS (m_widthInCU > 2 && m_heightInCU > 2 ? (m_widthInCU - 2) * (m_heightInCU - 2) : m_widthInCU * m_heightInCU)
@@ -54,12 +55,12 @@ static inline void median_mv(MV &dst, MV a, MV b, MV c)
     dst.y = median(a.y, b.y, c.y);
 }
 
-Lookahead::Lookahead(Encoder *_cfg, ThreadPool* pool)
+Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     : JobProvider(pool)
     , m_est(pool)
 {
     m_bReady = 0;
-    m_param = _cfg->m_param;
+    m_param = param;
     m_lastKeyframe = -m_param->keyframeMax;
     m_lastNonB = NULL;
     m_bFilling = true;
@@ -92,14 +93,14 @@ void Lookahead::destroy()
     // these two queues will be empty unless the encode was aborted
     while (!m_inputQueue.empty())
     {
-        TComPic* pic = m_inputQueue.popFront();
+        Frame* pic = m_inputQueue.popFront();
         pic->destroy();
         delete pic;
     }
 
     while (!m_outputQueue.empty())
     {
-        TComPic* pic = m_outputQueue.popFront();
+        Frame* pic = m_outputQueue.popFront();
         pic->destroy();
         delete pic;
     }
@@ -108,7 +109,7 @@ void Lookahead::destroy()
 }
 
 /* Called by API thread */
-void Lookahead::addPicture(TComPic *pic, int sliceType)
+void Lookahead::addPicture(Frame *pic, int sliceType)
 {
     TComPicYuv *orig = pic->getPicYuvOrg();
 
@@ -166,7 +167,7 @@ void Lookahead::flush()
  * first time, it immediately returns NULL.  Else the function blocks until
  * outputs are available and then pops the first frame from the output queue. If
  * flush() has been called and the output queue is empty, NULL is returned. */
-TComPic* Lookahead::getDecidedPicture()
+Frame* Lookahead::getDecidedPicture()
 {
     m_outputQueueLock.acquire();
 
@@ -183,7 +184,7 @@ TComPic* Lookahead::getDecidedPicture()
         m_outputQueueLock.acquire();
     }
 
-    TComPic *fenc = m_outputQueue.popFront();
+    Frame *fenc = m_outputQueue.popFront();
     m_outputQueueLock.release();
     return fenc;
 }
@@ -204,7 +205,7 @@ bool Lookahead::findJob(int)
 /* Called by rate-control to get the estimated SATD cost for a given picture.
  * It assumes dpb->prepareEncode() has already been called for the picture and
  * all the references are established */
-int64_t Lookahead::getEstimatedPictureCost(TComPic *pic)
+int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
@@ -293,14 +294,14 @@ void Lookahead::slicetypeDecide()
     ScopedLock lock(m_decideLock);
 
     Lowres *frames[X265_LOOKAHEAD_MAX];
-    TComPic *list[X265_LOOKAHEAD_MAX];
+    Frame *list[X265_LOOKAHEAD_MAX];
     int maxSearch = X265_MIN(m_param->lookaheadDepth, X265_LOOKAHEAD_MAX);
 
     memset(frames, 0, sizeof(frames));
     memset(list, 0, sizeof(list));
 
     {
-        TComPic *pic = m_inputQueue.first();
+        Frame *pic = m_inputQueue.first();
         int j;
         for (j = 0; j < m_param->bframes + 2; j++)
         {
@@ -456,7 +457,7 @@ void Lookahead::slicetypeDecide()
     int64_t pts[X265_BFRAME_MAX + 1];
     for (int i = 0; i <= bframes; i++)
     {
-        TComPic *pic;
+        Frame *pic;
         pic = m_inputQueue.popFront();
         pts[i] = pic->m_pts;
         maxSearch--;
@@ -498,7 +499,7 @@ void Lookahead::slicetypeDecide()
     if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
     {
         m_inputQueueLock.acquire();
-        TComPic *pic = m_inputQueue.first();
+        Frame *pic = m_inputQueue.first();
         frames[0] = m_lastNonB;
         int j;
         for (j = 0; j < maxSearch; j++)
@@ -1197,7 +1198,7 @@ CostEstimate::~CostEstimate()
     delete[] m_rows;
 }
 
-void CostEstimate::init(x265_param *_param, TComPic *pic)
+void CostEstimate::init(x265_param *_param, Frame *pic)
 {
     m_param = _param;
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;

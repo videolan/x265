@@ -31,7 +31,7 @@ namespace x265 {
 
 class Lookahead;
 class Encoder;
-class TComPic;
+class Frame;
 class TComSPS;
 class SEIBufferingPeriod;
 
@@ -156,10 +156,10 @@ public:
     RateControl(x265_param *p);
     void destroy();
     // to be called for each frame to process RateControl and set QP
-    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
-    void calcAdaptiveQuantFrame(TComPic *pic);
-    int rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce);
-    int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
+    void rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
+    void calcAdaptiveQuantFrame(Frame *pic);
+    int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce);
+    int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
     bool init(TComSPS* sps);
     void initHRD(TComSPS* sps);
@@ -173,17 +173,17 @@ protected:
     int m_residualCost;
 
     double getQScale(RateControlEntry *rce, double rateFactor);
-    double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
+    double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
-    uint32_t acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y);
+    uint32_t acEnergyCu(Frame* pic, uint32_t block_x, uint32_t block_y);
 
     void updateVbv(int64_t bits, RateControlEntry* rce);
     void updatePredictor(Predictor *p, double q, double var, double bits);
-    double clipQscale(TComPic* pic, double q);
+    double clipQscale(Frame* pic, double q);
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
-    double predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
+    double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

@@ -35,10 +35,11 @@
     \brief    transform and quantization class
 */
 
-#include "TComTrQuant.h"
-#include "TComPic.h"
-#include "ContextTables.h"
+#include "common.h"
 #include "primitives.h"
+#include "frame.h"
+#include "TComTrQuant.h"
+#include "ContextTables.h"
 
 using namespace x265;
 

@@ -35,7 +35,7 @@
     \brief    neighboring pixel access classes
 */
 
-#include "TComPic.h"
+#include "frame.h"
 #include "TComPattern.h"
 #include "TComDataCU.h"
 #include "TComPrediction.h"

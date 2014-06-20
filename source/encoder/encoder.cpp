@@ -25,9 +25,8 @@
 #include "primitives.h"
 #include "threadpool.h"
 #include "param.h"
-#include "nal.h"
+#include "frame.h"
 
-#include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComPicYuv.h"
 #include "TLibCommon/TComRom.h"
 
@@ -38,6 +37,7 @@
 #include "frameencoder.h"
 #include "ratecontrol.h"
 #include "dpb.h"
+#include "nal.h"
 
 #include "x265.h"
 
@@ -110,7 +110,7 @@ void Encoder::create()
     else
         m_aborted = true;
 
-    m_lookahead = new Lookahead(this, m_threadPool);
+    m_lookahead = new Lookahead(m_param, m_threadPool);
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 
@@ -267,11 +267,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             return -1;
         }
 
-        TComPic *pic;
+        Frame *pic;
         if (m_dpb->m_freeList.empty())
         {
-            pic = new TComPic;
-            if (!pic || !pic->create(this))
+            pic = new Frame;
+            if (!pic || !pic->create(m_param, m_defaultDisplayWindow, m_conformanceWindow))
             {
                 m_aborted = true;
                 x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -288,7 +288,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
 
         /* Copy input picture into a TComPic, send to lookahead */
         pic->m_POC = ++m_pocLast;
-        pic->reinit(this);
+        pic->reinit(m_param);
         pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
@@ -331,7 +331,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
     // getEncodedPicture() should block until the FrameEncoder has completed
     // encoding the frame.  This is how back-pressure through the API is
     // accomplished when the encoder is full.
-    TComPic *out = curEncoder->getEncodedPicture(m_nalList);
+    Frame *out = curEncoder->getEncodedPicture(m_nalList);
 
     if (out)
     {
@@ -425,7 +425,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
 
     // pop a single frame from decided list, then provide to frame encoder
     // curEncoder is guaranteed to be idle at this point
-    TComPic* fenc = m_lookahead->getDecidedPicture();
+    Frame* fenc = m_lookahead->getDecidedPicture();
     if (fenc)
     {
         // give this picture a TComPicSym instance before encoding
@@ -437,7 +437,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         }
         else
         {
-            fenc->allocPicSym(this);
+            fenc->allocPicSym(m_param);
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
@@ -824,7 +824,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-void Encoder::finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t bits)
+void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits)
 {
     TComPicYuv* recon = pic->getPicYuvRec();
 

@@ -23,7 +23,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "lowres.h"
 #include "mv.h"
 #include "slicetype.h"
@@ -269,7 +270,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     for (int list = 0; list < cache.numPredDir; list++)
     {
         wpScalingParam *weights = wp[list][0];
-        TComPic *refPic = slice.getRefPic(list, 0);
+        Frame *refPic = slice.getRefPic(list, 0);
         Lowres& refLowres = refPic->m_lowres;
         int diffPoc = abs(curPoc - refPic->getPOC());
 
