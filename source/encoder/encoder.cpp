@@ -183,7 +183,7 @@ void Encoder::destroy()
     if (m_threadPool)
         m_threadPool->release();
 
-    X265_FREE(m_param->rc.statFileName);
+    free(m_param->rc.statFileName); // alloc'd by strdup
     X265_FREE(m_param);
     if (m_csvfpt)
         fclose(m_csvfpt);
