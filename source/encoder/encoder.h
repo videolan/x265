@@ -197,7 +197,7 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out);
+    int encode(const x265_picture* pic, x265_picture *pic_out);
 
     void getStreamHeaders();
 

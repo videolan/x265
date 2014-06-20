@@ -219,12 +219,11 @@ void Encoder::updateVbvPlan(RateControl* rc)
 }
 
 /**
- \param   flush               force encoder to encode a frame
  \param   pic_in              input original YUV picture or NULL
  \param   pic_out             pointer to reconstructed picture struct
- \retval                      number of encoded pictures, m_nalList contains access unit
+ \retval                      1 - success, negative on error. m_nalList contains access unit
  */
-int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_out)
+int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
 {
     if (m_aborted)
         return -1;
@@ -291,8 +290,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         m_lookahead->addPicture(pic, pic_in->sliceType);
         m_numDelayedPic++;
     }
-
-    if (flush)
+    else
         m_lookahead->flush();
 
     if (m_param->rc.rateControlMode == X265_RC_ABR)

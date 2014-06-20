@@ -100,15 +100,14 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
-    bool flush = !pic_in;
     int numEncoded;
 
     // While flushing, we cannot return 0 until the entire stream is flushed
     do
     {
-        numEncoded = encoder->encode(flush, pic_in, pic_out);
+        numEncoded = encoder->encode(pic_in, pic_out);
     }
-    while (numEncoded == 0 && flush && encoder->m_numDelayedPic);
+    while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic);
 
     if (pp_nal && numEncoded > 0)
     {
