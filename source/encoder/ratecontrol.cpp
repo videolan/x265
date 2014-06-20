@@ -1354,6 +1354,10 @@ int RateControl::rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rc
     return 0;
 }
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4996) // POSIX function names are just fine, thank you
+#endif
+
 void RateControl::destroy()
 {
     const char *fileName = m_param->rc.statFileName;
