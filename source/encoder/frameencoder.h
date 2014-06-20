@@ -46,6 +46,12 @@
 namespace x265 {
 // private x265 namespace
 
+enum SCALING_LIST_PARAMETER
+{
+    SCALING_LIST_OFF,
+    SCALING_LIST_DEFAULT,
+};
+
 class ThreadPool;
 class Encoder;
 
@@ -121,8 +127,6 @@ public:
 
     TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
 
-    TEncCu*      getCuEncoder(int row)         { return &this->m_rows[row].m_cuCoder; }
-
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
@@ -141,7 +145,7 @@ public:
     /* blocks until worker thread is done, returns encoded picture and bitstream */
     TComPic *getEncodedPicture(NALList& list);
 
-    void setLambda(int qp, int row);
+    void setLambda(int qp, ThreadLocalData& tld);
 
     // worker thread
     void threadMain();
@@ -187,6 +191,7 @@ protected:
     Bitstream*               m_outStreams;
     NoiseReduction           m_nr;
     NALList                  m_nalList;
+    ThreadLocalData          m_tld;
 
     TComPic*                 m_pic;
 

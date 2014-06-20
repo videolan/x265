@@ -39,6 +39,17 @@ namespace x265 {
 
 class Encoder;
 
+struct ThreadLocalData
+{
+    TEncSearch  m_search;
+    TEncCu      m_cuCoder;
+    RDCost      m_rdCost;
+    TComTrQuant m_trQuant;
+
+    void init(Encoder&);
+    ~ThreadLocalData();
+};
+
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded.
  * When WPP is inactive, only one CTURow instance is used. */
@@ -53,15 +64,11 @@ public:
     TEncSbac               m_bufferSbacCoder;
     TEncBinCABAC           m_binCoderCABAC;
     TEncBinCABAC           m_rdGoOnBinCodersCABAC;
-    RDCost                 m_rdCost;
     TEncEntropy            m_entropyCoder;
-    TEncSearch             m_search;
-    TEncCu                 m_cuCoder;
-    TComTrQuant            m_trQuant;
     TEncSbac            ***m_rdSbacCoders;
     TEncBinCABAC        ***m_binCodersCABAC;
 
-    bool create(Encoder* top);
+    bool create();
 
     void destroy();
 
@@ -84,7 +91,9 @@ public:
         m_rdGoOnSbacCoder.resetEntropy();
     }
 
-    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
+    void setThreadLocalData(ThreadLocalData& tld);
+
+    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 

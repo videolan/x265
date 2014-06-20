@@ -120,6 +120,7 @@ protected:
     uint8_t*        m_qtTempTransformSkipFlag[3];
     TComYuv         m_qtTempTransformSkipYuv;
 
+public:
     // interface to classes
     TComTrQuant*    m_trQuant;
     RDCost*         m_rdCost;

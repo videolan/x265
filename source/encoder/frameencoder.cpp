@@ -36,12 +36,6 @@
 namespace x265 {
 void weightAnalyse(TComSlice& slice, x265_param& param);
 
-enum SCALING_LIST_PARAMETER
-{
-    SCALING_LIST_OFF,
-    SCALING_LIST_DEFAULT,
-};
-
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
@@ -99,15 +93,7 @@ bool FrameEncoder::init(Encoder *top, int numRows)
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
     {
-        ok &= m_rows[i].create(top);
-
-        for (int list = 0; list <= 1; list++)
-        {
-            for (int ref = 0; ref <= MAX_NUM_REF; ref++)
-            {
-                m_rows[i].m_search.m_mref[list][ref] = &m_mref[list][ref];
-            }
-        }
+        ok &= m_rows[i].create();
     }
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -117,6 +103,7 @@ bool FrameEncoder::init(Encoder *top, int numRows)
         m_pool = NULL;
     }
 
+    m_tld.init(*top);
     m_frameFilter.init(top, this, numRows, getRDGoOnSbacCoder(0));
 
     // initialize SPS
@@ -140,23 +127,11 @@ bool FrameEncoder::init(Encoder *top, int numRows)
     // set default slice level flag to the same as SPS level flag
     if (m_top->m_useScalingListId == SCALING_LIST_OFF)
     {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_trQuant.setFlatScalingList();
-            m_rows[i].m_trQuant.setUseScalingList(false);
-        }
-
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
     else if (m_top->m_useScalingListId == SCALING_LIST_DEFAULT)
     {
-        for (int i = 0; i < m_numRows; i++)
-        {
-            m_rows[i].m_trQuant.setScalingList(m_top->getScalingList());
-            m_rows[i].m_trQuant.setUseScalingList(true);
-        }
-
         m_sps.setScalingListPresentFlag(false);
         m_pps.setScalingListPresentFlag(false);
     }
@@ -331,7 +306,7 @@ void FrameEncoder::threadMain()
     while (m_threadActive);
 }
 
-void FrameEncoder::setLambda(int qp, int row)
+void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
     TComSlice*  slice = m_pic->getSlice();
   
@@ -341,7 +316,7 @@ void FrameEncoder::setLambda(int qp, int row)
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     int qpCr = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
-    m_rows[row].m_search.setQP(qp, qpCb, qpCr);
+    tld.m_search.setQP(qp, qpCb, qpCr);
 }
 
 void FrameEncoder::compressFrame()
@@ -461,9 +436,6 @@ void FrameEncoder::compressFrame()
     int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
     int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-    int qpCr = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    
     double lambda = x265_lambda2_tab[qp];
     /* Assuming qpCb and qpCr are the same, since SAO takes only a single chroma lambda. TODO: Check why */
     double chromaLambda = x265_lambda2_tab[qpCb];
@@ -471,13 +443,6 @@ void FrameEncoder::compressFrame()
     // NOTE: set SAO lambda every Frame
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
-
-    TComPicYuv *fenc = slice->getPic()->getPicYuvOrg();
-    for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_rows[i].m_search.setQP(qp, qpCb, qpCr);
-    }
 
     // Clip qps back to 0-51 range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
@@ -660,7 +625,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 
     // Initialize slice singletons
     m_sbacCoder.init(&m_binCoderCABAC);
-    getCuEncoder(0)->setBitCounting(false);
+    m_tld.m_cuCoder.setBitCounting(false);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 
     uint32_t cuAddr;
@@ -804,8 +769,8 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-        getCuEncoder(0)->setEntropyCoder(entropyCoder);
-        getCuEncoder(0)->encodeCU(cu);
+        m_tld.m_cuCoder.setEntropyCoder(entropyCoder);
+        m_tld.m_cuCoder.encodeCU(cu);
 
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
@@ -942,7 +907,7 @@ void FrameEncoder::compressCTURows()
 }
 
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
+void FrameEncoder::processRowEncoder(int row, const int threadId)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
@@ -969,6 +934,22 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
         curRow.m_busy = true;
     }
 
+    // setup thread-local data
+    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
+    tld.m_trQuant.m_nr = &m_nr;
+    for (int list = 0; list <= 1; list++)
+    {
+        for (int ref = 0; ref <= MAX_NUM_REF; ref++)
+        {
+            tld.m_search.m_mref[list][ref] = &m_mref[list][ref];
+        }
+    }
+    curRow.setThreadLocalData(tld);
+
+    setLambda(m_pic->getSlice()->getSliceQp(), tld);
+    TComPicYuv* fenc = m_pic->getPicYuvOrg();
+    tld.m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+
     int64_t startTime = x265_mdate();
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -978,7 +959,6 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
     {
         int col = curRow.m_completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        curRow.m_trQuant.m_nr = &m_nr;
         TComDataCU* cu = m_pic->getCU(cuAddr);
         cu->initCU(m_pic, cuAddr);
         cu->setQPSubParts(m_pic->getSlice()->getSliceQp(), 0, 0);
@@ -1002,8 +982,8 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
         if (m_param->rc.aqMode || bIsVbv)
         {
             int qp = calcQpForCu(cuAddr, cu->m_baseQp);
-            setLambda(qp, row);
             qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+            setLambda(qp, tld);
             cu->setQPSubParts(char(qp), 0, 0);
             if (m_param->rc.aqMode)
                 m_pic->m_qpaAq[row] += qp;
@@ -1012,7 +992,7 @@ void FrameEncoder::processRowEncoder(int row, const int /* threadId */)
         TEncSbac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_pic->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
-        codeRow.processCU(cu, m_pic->getSlice(), bufSbac, m_param->bEnableWavefront && col == 1);
+        codeRow.processCU(cu, m_pic->getSlice(), bufSbac, tld, m_param->bEnableWavefront && col == 1);
         // Completed CU processing
         curRow.m_completed++;
 

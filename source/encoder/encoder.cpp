@@ -32,6 +32,7 @@
 #include "TLibCommon/TComRom.h"
 
 #include "bitcost.h"
+#include "cturow.h"
 #include "encoder.h"
 #include "slicetype.h"
 #include "frameencoder.h"
@@ -96,6 +97,19 @@ void Encoder::create()
             m_frameEncoder[i].setThreadPool(m_threadPool);
         }
     }
+
+    /* Allocate thread local data shared by all frame encoders */
+    ThreadPool *pool = ThreadPool::getThreadPool();
+    const int poolThreadCount = pool ? pool->getThreadCount() : 1;
+    m_threadLocalData = new ThreadLocalData[poolThreadCount];
+    if (m_threadLocalData)
+    {
+        for (int i = 0; i < poolThreadCount; i++)
+            m_threadLocalData[i].init(*this);
+    }
+    else
+        m_aborted = true;
+
     m_lookahead = new Lookahead(this, m_threadPool);
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
@@ -149,6 +163,9 @@ void Encoder::destroy()
 
         delete [] m_frameEncoder;
     }
+
+    if (m_threadLocalData)
+        delete [] m_threadLocalData;
 
     if (m_lookahead)
     {

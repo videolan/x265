@@ -65,6 +65,7 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
+struct ThreadLocalData;
 
 class Encoder : public x265_encoder
 {
@@ -174,6 +175,7 @@ public:
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
+    ThreadLocalData*   m_threadLocalData;
 
     bool               m_bEnableRDOQ;
 
