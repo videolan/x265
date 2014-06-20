@@ -632,13 +632,13 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     uint32_t boundingCUAddr = slice->getSliceCurEndCUAddr();
 
     const uint32_t heightInLCUs = m_frame->getPicSym()->getFrameHeightInCU();
-    const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
+    const int numSubstreams = (m_param->bEnableWavefront ? heightInLCUs : 1);
 
     uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     uint32_t col = 0, lin = 0, subStrm = 0;
     cuAddr = (startCUAddr / m_frame->getNumPartInCU()); /* for tiles, startCUAddr is NOT the real raster scan address, it is actually
-                                                       an encoding order index, so we need to convert the index (startCUAddr)
-                                                       into the real raster scan address (cuAddr) via the CUOrderMap */
+                                                         * an encoding order index, so we need to convert the index (startCUAddr)
+                                                         * into the real raster scan address (cuAddr) via the CUOrderMap */
     uint32_t encCUOrder;
     for (encCUOrder = startCUAddr / m_frame->getNumPartInCU();
          encCUOrder < (boundingCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
