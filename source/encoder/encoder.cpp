@@ -194,7 +194,7 @@ void Encoder::init()
 
 void Encoder::getStreamHeaders()
 {
-    TComOutputBitstream bs;
+    Bitstream bs;
     m_frameEncoder->getStreamHeaders(m_nalList, bs);
 }
 

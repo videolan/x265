@@ -1,6 +1,5 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComBitStream.cpp
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComLoopFilter.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
@@ -20,7 +19,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComBitStream.h
     ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
@@ -145,7 +143,8 @@ add_library(common OBJECT
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
-    bitstream.h mv.h
+    bitstream.h bitstream.cpp
+    mv.h
     shortyuv.cpp shortyuv.h
     common.cpp common.h
     param.cpp param.h

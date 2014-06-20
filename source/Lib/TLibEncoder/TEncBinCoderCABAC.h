@@ -38,8 +38,9 @@
 #ifndef X265_TENCBINCODERCABAC_H
 #define X265_TENCBINCODERCABAC_H
 
+#include "common.h"
+#include "bitstream.h"
 #include "TLibCommon/ContextTables.h"
-#include "TLibCommon/TComBitStream.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -54,7 +55,7 @@ public:
     TEncBinCABAC(bool isCounter = false);
     virtual ~TEncBinCABAC();
 
-    void  init(TComBitIf* bitIf);
+    void  init(BitInterface* bitIf);
 
     void  start();
     void  finish();
@@ -84,7 +85,7 @@ protected:
 
 public:
 
-    TComBitIf* m_bitIf;
+    BitInterface* m_bitIf;
     uint32_t   m_low;
     uint32_t   m_range;
     uint32_t   m_bufferedByte;

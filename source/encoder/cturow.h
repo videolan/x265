@@ -53,7 +53,6 @@ public:
     TEncSbac               m_bufferSbacCoder;
     TEncBinCABAC           m_binCoderCABAC;
     TEncBinCABAC           m_rdGoOnBinCodersCABAC;
-    TComBitCounter         m_bitCounter;
     RDCost                 m_rdCost;
     TEncEntropy            m_entropyCoder;
     TEncSearch             m_search;

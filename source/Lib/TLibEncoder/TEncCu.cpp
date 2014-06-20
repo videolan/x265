@@ -73,10 +73,10 @@ TEncCu::TEncCu()
     m_search          = NULL;
     m_trQuant         = NULL;
     m_rdCost          = NULL;
-    m_bitCounter      = NULL;
     m_entropyCoder    = NULL;
     m_rdSbacCoders    = NULL;
     m_rdGoOnSbacCoder = NULL;
+    m_bBitCounting    = false;
 }
 
 /**
@@ -1077,7 +1077,7 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 
     int numberOfWrittenBits = 0;
-    if (m_bitCounter)
+    if (m_bBitCounting)
     {
         numberOfWrittenBits = m_entropyCoder->getNumberOfWrittenBits();
     }
@@ -1086,7 +1086,7 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         slice->setSliceBits((uint32_t)(slice->getSliceBits() + numberOfWrittenBits));
         slice->setSliceSegmentBits(slice->getSliceSegmentBits() + numberOfWrittenBits);
-        if (m_bitCounter)
+        if (m_bBitCounting)
         {
             m_entropyCoder->resetBits();
         }

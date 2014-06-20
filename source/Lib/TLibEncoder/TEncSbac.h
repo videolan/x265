@@ -38,7 +38,8 @@
 #ifndef X265_TENCSBAC_H
 #define X265_TENCSBAC_H
 
-#include "TLibCommon/TComBitStream.h"
+#include "common.h"
+#include "bitstream.h"
 #include "TLibCommon/ContextTables.h"
 #include "TEncEntropy.h"
 #include "TEncBinCoderCABAC.h"
@@ -79,7 +80,7 @@ public:
     //  Virtual list
     void resetEntropy();
     void determineCabacInitIdx();
-    void setBitstream(TComBitIf* p);
+    void setBitstream(BitInterface* p);
 
     // SBAC RD
     void load(TEncSbac* src);

@@ -221,7 +221,7 @@ void FrameEncoder::noiseReductionUpdate()
     }
 }
 
-void FrameEncoder::getStreamHeaders(NALList& list, TComOutputBitstream& bs)
+void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
 {
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
@@ -556,7 +556,7 @@ void FrameEncoder::compressFrame()
     /* start slice NALunit */
     uint32_t numSubstreams = m_param->bEnableWavefront ? m_pic->getPicSym()->getFrameHeightInCU() : 1;
     if (!m_outStreams)
-        m_outStreams = new TComOutputBitstream[numSubstreams];
+        m_outStreams = new Bitstream[numSubstreams];
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
             m_outStreams[i].resetBits();
@@ -653,7 +653,7 @@ void FrameEncoder::compressFrame()
     m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
 }
 
-void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
+void FrameEncoder::encodeSlice(Bitstream* substreams)
 {
     // choose entropy coder
     TEncEntropy *entropyCoder = getEntropyCoder(0);
@@ -661,7 +661,7 @@ void FrameEncoder::encodeSlice(TComOutputBitstream* substreams)
 
     // Initialize slice singletons
     m_sbacCoder.init(&m_binCoderCABAC);
-    getCuEncoder(0)->setBitCounter(NULL);
+    getCuEncoder(0)->setBitCounting(false);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
 
     uint32_t cuAddr;

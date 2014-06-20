@@ -118,7 +118,7 @@ private:
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
     TEncEntropy* m_entropyCoder;
-    TComBitCounter* m_bitCounter;
+    bool         m_bBitCounting;
 
     // SBAC RD
     TEncSbac***  m_rdSbacCoders;
@@ -155,7 +155,7 @@ public:
 
     void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
 
-    void setBitCounter(TComBitCounter* pcBitCounter) { m_bitCounter = pcBitCounter; }
+    void setBitCounting(bool b) { m_bBitCounting = b; }
 
 protected:
 

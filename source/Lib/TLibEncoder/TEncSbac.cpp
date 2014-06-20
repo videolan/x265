@@ -1401,7 +1401,7 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
     }
 }
 
-void  TEncSbac::setBitstream(TComBitIf* p)
+void  TEncSbac::setBitstream(BitInterface* p)
 {
     m_bitIf = p;
     // NOTE: When write header, it isn't initial

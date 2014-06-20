@@ -22,7 +22,7 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "TLibCommon/TComBitStream.h"
+#include "bitstream.h"
 #include "TLibCommon/TComSlice.h"
 #include "sei.h"
 
@@ -38,7 +38,7 @@ using namespace x265;
  * marshal a single SEI message sei, storing the marshalled representation
  * in bitstream bs.
  */
-void SEI::write(TComOutputBitstream& bs, TComSPS& sps)
+void SEI::write(Bitstream& bs, TComSPS& sps)
 {
     /* disable logging while we measure the SEI */
 #if ENC_DEC_TRACE
@@ -46,7 +46,7 @@ void SEI::write(TComOutputBitstream& bs, TComSPS& sps)
     g_HLSTraceEnable = false;
 #endif
 
-    TComBitCounter count;
+    BitCounter count;
     setBitstream(&count);
     writeSEI(sps);
 

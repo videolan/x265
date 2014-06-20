@@ -39,7 +39,7 @@
 #define X265_SYNTAXELEMENTWRITER_H
 
 #include "common.h"
-#include "TLibCommon/TComBitStream.h"
+#include "bitstream.h"
 #include "TLibCommon/TComRom.h"
 
 //! \ingroup TLibEncoder
@@ -68,13 +68,13 @@ class SyntaxElementWriter
 {
 protected:
 
-    TComBitIf* m_bitIf;
+    BitInterface* m_bitIf;
 
     SyntaxElementWriter()
         : m_bitIf(NULL)
     {}
 
-    void  setBitstream(TComBitIf* p)  { m_bitIf = p; }
+    void  setBitstream(BitInterface* p)  { m_bitIf = p; }
 
     void  xWriteCode(uint32_t code, uint32_t len);
     void  xWriteUvlc(uint32_t code);

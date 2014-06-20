@@ -22,7 +22,7 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "TLibCommon/TComBitStream.h"
+#include "bitstream.h"
 #include "nal.h"
 
 using namespace x265;
@@ -45,7 +45,7 @@ void NALList::takeContents(NALList& other)
     other.m_buffer = X265_MALLOC(uint8_t, m_allocSize);
 }
 
-void NALList::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t* extra, uint32_t extraBytes)
+void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* extra, uint32_t extraBytes)
 {
     static const char startCodePrefix[] = { 0, 0, 0, 1 };
 
@@ -146,7 +146,7 @@ void NALList::serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, 
 
 /* concatenate and escape multiple sub-streams, return final escaped lengths and
  * concatenated buffer. Caller is responsible for freeing the returned buffer */
-uint8_t *NALList::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams)
+uint8_t *NALList::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const Bitstream* streams)
 {
     uint32_t estSize = 0;
     for (uint32_t s = 0; s < streamCount; s++)
@@ -160,7 +160,7 @@ uint8_t *NALList::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBy
 
     for (uint32_t s = 0; s < streamCount; s++)
     {
-        const TComOutputBitstream& stream = streams[s];
+        const Bitstream& stream = streams[s];
         uint32_t inSize = stream.getNumberOfWrittenBytes();
         const uint8_t *inBytes = stream.getFIFO();
         uint32_t prevBufSize = totalBytes;

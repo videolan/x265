@@ -27,9 +27,9 @@
 
 #include "common.h"
 #include "wavefront.h"
+#include "bitstream.h"
 
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/TComBitStream.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
@@ -126,7 +126,7 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
-    void getStreamHeaders(NALList& list, TComOutputBitstream& bs);
+    void getStreamHeaders(NALList& list, Bitstream& bs);
 
     void initSlice(TComPic* pic);
 
@@ -136,7 +136,7 @@ public:
     /* called by compressFrame to perform wave-front compression analysis */
     void compressCTURows();
 
-    void encodeSlice(TComOutputBitstream* substreams);
+    void encodeSlice(Bitstream* substreams);
 
     /* blocks until worker thread is done, returns encoded picture and bitstream */
     TComPic *getEncodedPicture(NALList& list);
@@ -183,8 +183,8 @@ protected:
     TEncSbac                 m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
-    TComOutputBitstream      m_bs;
-    TComOutputBitstream*     m_outStreams;
+    Bitstream                m_bs;
+    Bitstream*               m_outStreams;
     NoiseReduction           m_nr;
     NALList                  m_nalList;
 

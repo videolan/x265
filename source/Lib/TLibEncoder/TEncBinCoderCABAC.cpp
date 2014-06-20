@@ -35,9 +35,11 @@
     \brief    binary entropy encoder of CABAC
 */
 
-#include "TEncBinCoderCABAC.h"
-#include "TLibCommon/TComRom.h"
+#include "common.h"
+#include "bitstream.h"
 #include "threading.h"  // CLZ32
+#include "TLibCommon/TComRom.h"
+#include "TEncBinCoderCABAC.h"
 
 using namespace x265;
 
@@ -53,7 +55,7 @@ TEncBinCABAC::TEncBinCABAC(bool isCounter)
 TEncBinCABAC::~TEncBinCABAC()
 {}
 
-void TEncBinCABAC::init(TComBitIf* bitIf)
+void TEncBinCABAC::init(BitInterface* bitIf)
 {
     m_bitIf = bitIf;
 }

@@ -38,9 +38,10 @@
 #ifndef X265_TENCENTROPY_H
 #define X265_TENCENTROPY_H
 
+#include "common.h"
+#include "bitstream.h"
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/TComDataCU.h"
-#include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
@@ -79,7 +80,7 @@ public:
 
     virtual void resetEntropy() = 0;
     virtual void determineCabacInitIdx() = 0;
-    virtual void setBitstream(TComBitIf* p) = 0;
+    virtual void setBitstream(BitInterface* p) = 0;
     virtual void setSlice(TComSlice* p) = 0;
     virtual void resetBits() = 0;
     virtual uint32_t getNumberOfWrittenBits() = 0;
@@ -145,7 +146,7 @@ private:
 public:
 
     void    setEntropyCoder(TEncEntropyIf* e, TComSlice* slice);
-    void    setBitstream(TComBitIf* p) { m_entropyCoderIf->setBitstream(p);  }
+    void    setBitstream(BitInterface* p) { m_entropyCoderIf->setBitstream(p);  }
 
     void    resetBits() { m_entropyCoderIf->resetBits();      }
 

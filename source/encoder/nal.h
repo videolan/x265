@@ -30,7 +30,7 @@
 namespace x265 {
 // private namespace
 
-class TComOutputBitstream;
+class Bitstream;
 
 class NALList
 {
@@ -50,9 +50,9 @@ public:
 
     void takeContents(NALList& other);
 
-    void serialize(NalUnitType nalUnitType, const TComOutputBitstream& bs, uint8_t *extra = NULL, uint32_t extraBytes = 0);
+    void serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t *extra = NULL, uint32_t extraBytes = 0);
 
-    static uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const TComOutputBitstream* streams);
+    static uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const Bitstream* streams);
 };
 
 }

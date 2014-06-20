@@ -25,7 +25,7 @@
 #define X265_SEI_H
 
 #include "common.h"
-#include "TLibCommon/TComBitStream.h"
+#include "bitstream.h"
 #include "TLibCommon/TComSlice.h"
 #include "TLibEncoder/SyntaxElementWriter.h"
 
@@ -41,7 +41,7 @@ public:
      * method which calls writeSEI() with a bitcounter to determine
      * the size, then it encodes the header and calls writeSEI a
      * second time for the real encode. */
-    virtual void write(TComOutputBitstream& bs, TComSPS& sps);
+    virtual void write(Bitstream& bs, TComSPS& sps);
 
 protected:
 
@@ -100,7 +100,7 @@ public:
 
     uint8_t m_digest[3][16];
 
-    void write(TComOutputBitstream& bs, TComSPS&)
+    void write(Bitstream& bs, TComSPS&)
     {
         setBitstream(&bs);
 

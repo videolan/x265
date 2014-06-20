@@ -1,51 +1,18 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
- *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "common.h"
-#include "TComBitStream.h"
+#include "bitstream.h"
 
 using namespace x265;
 
 #define MIN_FIFO_SIZE 1000
 
-TComOutputBitstream::TComOutputBitstream()
+Bitstream::Bitstream()
 {
     m_fifo = X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
     m_byteAlloc = MIN_FIFO_SIZE;
     resetBits();
 }
 
-void TComOutputBitstream::push_back(uint8_t val)
+void Bitstream::push_back(uint8_t val)
 {
     if (!m_fifo)
         return;
@@ -70,7 +37,7 @@ void TComOutputBitstream::push_back(uint8_t val)
     m_fifo[m_byteOccupancy++] = val;
 }
 
-void TComOutputBitstream::write(uint32_t val, uint32_t numBits)
+void Bitstream::write(uint32_t val, uint32_t numBits)
 {
     X265_CHECK(numBits <= 32, "numBits out of range\n");
     X265_CHECK(numBits == 32 || (val & (~0 << numBits)) == 0, "numBits & val out of range\n");
@@ -104,7 +71,7 @@ void TComOutputBitstream::write(uint32_t val, uint32_t numBits)
     }
 }
 
-void TComOutputBitstream::writeByte(uint32_t val)
+void Bitstream::writeByte(uint32_t val)
 {
     // Only CABAC will call writeByte, the fifo must be byte aligned
     X265_CHECK(!m_partialByteBits, "expecting m_partialByteBits = 0\n");
@@ -112,14 +79,14 @@ void TComOutputBitstream::writeByte(uint32_t val)
     push_back(val);
 }
 
-void TComOutputBitstream::writeAlignOne()
+void Bitstream::writeAlignOne()
 {
     uint32_t numBits = (8 - m_partialByteBits) & 0x7;
 
     write((1 << numBits) - 1, numBits);
 }
 
-void TComOutputBitstream::writeAlignZero()
+void Bitstream::writeAlignZero()
 {
     if (m_partialByteBits)
     {
@@ -129,7 +96,7 @@ void TComOutputBitstream::writeAlignZero()
     }
 }
 
-void TComOutputBitstream::writeByteAlignment()
+void Bitstream::writeByteAlignment()
 {
     write(1, 1);
     writeAlignZero();

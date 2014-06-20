@@ -73,7 +73,7 @@ public:
     TEncEntropy                 m_entropyCoder;
     TEncSbac                    m_rdGoOnSbacCoder;
     TEncBinCABAC                m_rdGoOnBinCodersCABAC;
-    TComBitCounter              m_bitCounter;
+    BitCounter                  m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;
