@@ -136,7 +136,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* e
     m_occupancy += bytes;
 
     X265_CHECK(bytes <= 2 + payloadSize + (payloadSize >> 1) + extraBytes, "NAL buffer overflow\n");
-    X265_CHECK(m_numNal < MAX_NAL_UNITS, "NAL count overflow\n");
+    X265_CHECK(m_numNal < (uint32_t)MAX_NAL_UNITS, "NAL count overflow\n");
 
     x265_nal& nal = m_nal[m_numNal++];
     nal.type = nalUnitType;
