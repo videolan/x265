@@ -651,28 +651,11 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         entropyCoder->setBitstream(&substreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-        if (numSubstreams > 1 && !col)
-        {
-            // We'll sync if the TR is available.
-            TComDataCU *cuUp = m_frame->getCU(cuAddr)->getCUAbove();
-            TComDataCU *cuTr = NULL;
+        if (m_param->bEnableWavefront && !col && lin)
+            getSbacCoder(subStrm)->loadContexts(getBufferSBac(lin - 1));
 
-            // CHECK_ME: here can be optimize a little, do it later
-            if (cuUp && ((cuAddr % widthInLCUs + 1) < widthInLCUs))
-            {
-                cuTr = m_frame->getCU(cuAddr - widthInLCUs + 1);
-            }
-            if ( /*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
-            {
-                // TR not available.
-            }
-            else
-            {
-                // TR is available, we use it.
-                getSbacCoder(subStrm)->loadContexts(getBufferSBac(lin - 1));
-            }
-        }
-        m_sbacCoder.load(getSbacCoder(subStrm)); //this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
+        // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
+        m_sbacCoder.load(getSbacCoder(subStrm));
 
         TComDataCU* cu = m_frame->getCU(cuAddr);
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
