@@ -656,7 +656,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         entropyCoder->setBitstream(&substreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-        if ((numSubstreams > 1) && (col == 0) && bWaveFrontsynchro)
+        if ((numSubstreams > 1) && (col == 0) && m_param->bEnableWavefront)
         {
             // We'll sync if the TR is available.
             TComDataCU *cuUp = m_frame->getCU(cuAddr)->getCUAbove();
@@ -752,6 +752,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
+
         m_tld.m_cuCoder.setEntropyCoder(entropyCoder);
         m_tld.m_cuCoder.encodeCU(cu);
 
@@ -763,7 +764,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         getSbacCoder(subStrm)->load(&m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
-        if ((numSubstreams > 1) && (col == 1) && bWaveFrontsynchro)
+        if ((numSubstreams > 1) && (col == 1) && m_param->bEnableWavefront)
         {
             getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
         }
