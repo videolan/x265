@@ -317,36 +317,35 @@ void TEncCu::compressCU(TComDataCU* cu)
     m_tempCU[0]->initCU(cu->getPic(), cu->getAddr());
 
     // analysis of CU
-#if LOG_CU_STATISTICS
     int numPartition = cu->getTotalNumPart();
-#endif
 
     if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
     {
         xCompressIntraCU(m_bestCU[0], m_tempCU[0], 0, false);
-#if LOG_CU_STATISTICS
-        int i = 0, part;
-        do
+        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
-            m_log->totalCu++;
-            part = cu->getDepth(i);
-            int next = numPartition >> (part * 2);
-            if (part == g_maxCUDepth - 1 && cu->getPartitionSize(i) != SIZE_2Nx2N)
+            int i = 0, part;
+            do
             {
-                m_log->cntIntraNxN++;
-            }
-            else
-            {
-                m_log->cntIntra[part]++;
-                if (cu->getLumaIntraDir()[i] > 1)
-                    m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
+                m_log->totalCu++;
+                part = cu->getDepth(i);
+                int next = numPartition >> (part * 2);
+                if (part == g_maxCUDepth - 1 && cu->getPartitionSize(i) != SIZE_2Nx2N)
+                {
+                    m_log->cntIntraNxN++;
+                }
                 else
-                    m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[i]]++;
+                {
+                    m_log->cntIntra[part]++;
+                    if (cu->getLumaIntraDir()[i] > 1)
+                        m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
+                    else
+                        m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[i]]++;
+                }
+                i += next;
             }
-            i += next;
+            while (i < numPartition);
         }
-        while (i < numPartition);
-#endif // if LOG_CU_STATISTICS
     }
     else
     {
@@ -360,48 +359,49 @@ void TEncCu::compressCU(TComDataCU* cu)
         }
         else
             xCompressCU(m_bestCU[0], m_tempCU[0], 0, false);
-#if LOG_CU_STATISTICS
-        int i = 0, part;
-        do
+        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
-            part = cu->getDepth(i);
-            m_log->cntTotalCu[part]++;
-            int next = numPartition >> (part * 2);
-            if (cu->isSkipped(i))
+            int i = 0, part;
+            do
             {
-                m_log->cntSkipCu[part]++;
-            }
-            else
-            {
-                m_log->totalCu++;
-                if (cu->getPredictionMode(0) == MODE_INTER)
+                part = cu->getDepth(i);
+                m_log->cntTotalCu[part]++;
+                int next = numPartition >> (part * 2);
+                if (cu->isSkipped(i))
                 {
-                    m_log->cntInter[part]++;
-                    if (cu->getPartitionSize(0) < AMP_ID)
-                        m_log->cuInterDistribution[part][cu->getPartitionSize(0)]++;
-                    else
-                        m_log->cuInterDistribution[part][AMP_ID]++;
+                    m_log->cntSkipCu[part]++;
                 }
-                else if (cu->getPredictionMode(0) == MODE_INTRA)
+                else
                 {
-                    if (part == g_maxCUDepth - 1 && cu->getPartitionSize(0) == SIZE_NxN)
+                    m_log->totalCu++;
+                    if (cu->getPredictionMode(0) == MODE_INTER)
                     {
-                        m_log->cntIntraNxN++;
-                    }
-                    else
-                    {
-                        m_log->cntIntra[part]++;
-                        if (cu->getLumaIntraDir()[0] > 1)
-                            m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
+                        m_log->cntInter[part]++;
+                        if (cu->getPartitionSize(0) < AMP_ID)
+                            m_log->cuInterDistribution[part][cu->getPartitionSize(0)]++;
                         else
-                            m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[0]]++;
+                            m_log->cuInterDistribution[part][AMP_ID]++;
+                    }
+                    else if (cu->getPredictionMode(0) == MODE_INTRA)
+                    {
+                        if (part == g_maxCUDepth - 1 && cu->getPartitionSize(0) == SIZE_NxN)
+                        {
+                            m_log->cntIntraNxN++;
+                        }
+                        else
+                        {
+                            m_log->cntIntra[part]++;
+                            if (cu->getLumaIntraDir()[0] > 1)
+                                m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
+                            else
+                                m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[0]]++;
+                        }
                     }
                 }
+                i = i + next;
             }
-            i = i + next;
+            while (i < numPartition);
         }
-        while (i < numPartition);
-#endif // if LOG_CU_STATISTICS
     }
 }
 

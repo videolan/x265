@@ -71,6 +71,8 @@ static const struct option long_options[] =
     { "log-level",      required_argument, NULL, 0 },
     { "level",          required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
+    { "no-cu-stats",          no_argument, NULL, 0 },
+    { "cu-stats",             no_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
@@ -315,6 +317,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel + 1]);
     H0("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
+    H0("   --[no-]cu-stats               Enable logging stats about distribution of cu across all modes. Default %s\n",OPT(param->bLogCuStats));
     H0("-o/--output <filename>           Bitstream output file name\n");
     H0("\nInput Options:\n");
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");

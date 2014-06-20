@@ -103,6 +103,7 @@ void x265_param_default(x265_param *param)
     param->frameNumThreads = 0;
     param->poolNumThreads = 0;
     param->csvfn = NULL;
+    param->bLogCuStats = 0;
 
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
@@ -559,6 +560,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->logLevel = parseName(value, logLevelNames, bError) - 1;
         }
     }
+    OPT("cu-stats") p->bLogCuStats = atobool(value);
     OPT("repeat-headers") p->bRepeatHeaders = atobool(value);
     OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);

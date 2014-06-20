@@ -522,7 +522,60 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
 
 void Encoder::printSummary()
 {
-#if LOG_CU_STATISTICS
+    if (m_param->logLevel < X265_LOG_INFO)
+        return;
+
+    char buffer[200];
+    if (m_analyzeI.m_numPics)
+        x265_log(m_param, X265_LOG_INFO, "frame I: %s\n", statsString(m_analyzeI, buffer));
+    if (m_analyzeP.m_numPics)
+        x265_log(m_param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
+    if (m_analyzeB.m_numPics)
+        x265_log(m_param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
+    if (m_analyzeAll.m_numPics)
+        x265_log(m_param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
+    if (m_param->bEnableWeightedPred && m_analyzeP.m_numPics)
+    {
+        x265_log(m_param, X265_LOG_INFO, "Weighted P-Frames: Y:%.1f%% UV:%.1f%%\n",
+            (float)100.0 * m_numLumaWPFrames / m_analyzeP.m_numPics,
+            (float)100.0 * m_numChromaWPFrames / m_analyzeP.m_numPics);
+    }
+    if (m_param->bEnableWeightedBiPred && m_analyzeB.m_numPics)
+    {
+        x265_log(m_param, X265_LOG_INFO, "Weighted B-Frames: Y:%.1f%% UV:%.1f%%\n",
+            (float)100.0 * m_numLumaWPBiFrames / m_analyzeB.m_numPics,
+            (float)100.0 * m_numChromaWPBiFrames / m_analyzeB.m_numPics);
+    }
+    int pWithB = 0;
+    for (int i = 0; i <= m_param->bframes; i++)
+    {
+        pWithB += m_lookahead->m_histogram[i];
+    }
+
+    if (pWithB)
+    {
+        int p = 0;
+        for (int i = 0; i <= m_param->bframes; i++)
+        {
+            p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->m_histogram[i] / pWithB);
+        }
+
+        x265_log(m_param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
+    }
+    if (m_param->bLossless)
+    {
+        float frameSize = (float)(m_param->sourceWidth - m_pad[0]) * (m_param->sourceHeight - m_pad[1]);
+        float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
+
+        x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+    }
+    
+    if (!m_param->bLogCuStats)
+        return;
+
+    ThreadPool *pool = ThreadPool::getThreadPool();
+    const int poolThreadCount = pool ? pool->getThreadCount() : 1;
+
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
         if (sliceType == P_SLICE && !m_analyzeP.m_numPics)
@@ -533,31 +586,26 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
         {
-            for (int j = 0; j < m_totalFrameThreads; j++)
+            for (int i = 0; i < poolThreadCount; i++)
             {
-                for (int row = 0; row < m_frameEncoder[0].m_numRows; row++)
+                StatisticLog& enclog = m_threadLocalData[i].m_cuCoder.m_sliceTypeLog[sliceType];
+                if (depth == 0)
+                    finalLog.totalCu += enclog.totalCu;
+                finalLog.cntIntra[depth] += enclog.cntIntra[depth];
+                for (int m = 0; m < INTER_MODES; m++)
                 {
-                    StatisticLog& enclog = m_frameEncoder[j].m_rows[row].m_cuCoder.m_sliceTypeLog[sliceType];
-                    if (depth == 0)
-                        finalLog.totalCu += enclog.totalCu;
-                    finalLog.cntIntra[depth] += enclog.cntIntra[depth];
-                    for (int m = 0; m < INTER_MODES; m++)
-                    {
-                        if (m < INTRA_MODES)
-                        {
-                            finalLog.cuIntraDistribution[depth][m] += enclog.cuIntraDistribution[depth][m];
-                        }
-                        finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
-                    }
+                    if (m < INTRA_MODES)
+                        finalLog.cuIntraDistribution[depth][m] += enclog.cuIntraDistribution[depth][m];
+                    finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
+                }
 
-                    if (depth == (int)g_maxCUDepth - 1)
-                        finalLog.cntIntraNxN += enclog.cntIntraNxN;
-                    if (sliceType != I_SLICE)
-                    {
-                        finalLog.cntTotalCu[depth] += enclog.cntTotalCu[depth];
-                        finalLog.cntInter[depth] += enclog.cntInter[depth];
-                        finalLog.cntSkipCu[depth] += enclog.cntSkipCu[depth];
-                    }
+                if (depth == (int)g_maxCUDepth - 1)
+                    finalLog.cntIntraNxN += enclog.cntIntraNxN;
+                if (sliceType != I_SLICE)
+                {
+                    finalLog.cntTotalCu[depth] += enclog.cntTotalCu[depth];
+                    finalLog.cntInter[depth] += enclog.cntInter[depth];
+                    finalLog.cntSkipCu[depth] += enclog.cntSkipCu[depth];
                 }
             }
 
@@ -628,7 +676,7 @@ void Encoder::printSummary()
             int len = 0;
             if (sliceType != I_SLICE)
             {
-                len += sprintf(stats + len, "EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
+                len += sprintf(stats + len, " EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
             }
             if (cntInter)
             {
@@ -665,56 +713,7 @@ void Encoder::printSummary()
             }
             const char slicechars[] = "BPI";
             if (stats[0])
-                x265_log(m_param, X265_LOG_INFO, "%c%-2d: %s\n", slicechars[sliceType], cuSize, stats);
-        }
-    }
-
-#endif // if LOG_CU_STATISTICS
-    if (m_param->logLevel >= X265_LOG_INFO)
-    {
-        char buffer[200];
-        if (m_analyzeI.m_numPics)
-            x265_log(m_param, X265_LOG_INFO, "frame I: %s\n", statsString(m_analyzeI, buffer));
-        if (m_analyzeP.m_numPics)
-            x265_log(m_param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
-        if (m_analyzeB.m_numPics)
-            x265_log(m_param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
-        if (m_analyzeAll.m_numPics)
-            x265_log(m_param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
-        if (m_param->bEnableWeightedPred && m_analyzeP.m_numPics)
-        {
-            x265_log(m_param, X265_LOG_INFO, "Weighted P-Frames: Y:%.1f%% UV:%.1f%%\n",
-                     (float)100.0 * m_numLumaWPFrames / m_analyzeP.m_numPics,
-                     (float)100.0 * m_numChromaWPFrames / m_analyzeP.m_numPics);
-        }
-        if (m_param->bEnableWeightedBiPred && m_analyzeB.m_numPics)
-        {
-            x265_log(m_param, X265_LOG_INFO, "Weighted B-Frames: Y:%.1f%% UV:%.1f%%\n",
-                     (float)100.0 * m_numLumaWPBiFrames / m_analyzeB.m_numPics,
-                     (float)100.0 * m_numChromaWPBiFrames / m_analyzeB.m_numPics);
-        }
-        int pWithB = 0;
-        for (int i = 0; i <= m_param->bframes; i++)
-        {
-            pWithB += m_lookahead->m_histogram[i];
-        }
-
-        if (pWithB)
-        {
-            int p = 0;
-            for (int i = 0; i <= m_param->bframes; i++)
-            {
-                p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->m_histogram[i] / pWithB);
-            }
-
-            x265_log(m_param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
-        }
-        if (m_param->bLossless)
-        {
-            float frameSize = (float)(m_param->sourceWidth - m_pad[0]) * (m_param->sourceHeight - m_pad[1]);
-            float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
-
-            x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+                x265_log(m_param, X265_LOG_INFO, "%c%-2d:%s\n", slicechars[sliceType], cuSize, stats);
         }
     }
 }

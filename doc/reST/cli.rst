@@ -115,6 +115,12 @@ Standalone Executable Options
 	:option:`--log-level` is debug or above, it writes one line per
 	frame. Default none
 
+.. option:: --cu-stats, --no-cu-stats
+
+	Records statistics on how each CU was coded (split depths and other
+	mode decisions) and reports those statistics at the end of the
+	encode. Default disabled
+
 .. option:: --output, -o <filename>
 
 	Bitstream output file name. If there are two extra CLI options, the

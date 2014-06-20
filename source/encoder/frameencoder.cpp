@@ -259,13 +259,7 @@ void FrameEncoder::initSlice(Frame* pic)
 
     slice->setScalingList(m_top->getScalingList());
     slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
-#if LOG_CU_STATISTICS
-    for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].m_cuCoder.m_log = &m_rows[i].m_cuCoder.m_sliceTypeLog[sliceType];
-    }
 
-#endif
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_top->m_loopFilterOffsetInPPS);
@@ -943,6 +937,7 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     setLambda(m_pic->getSlice()->getSliceQp(), tld);
     TComPicYuv* fenc = m_pic->getPicYuvOrg();
     tld.m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+    tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_pic->getSlice()->getSliceType()];
 
     int64_t startTime = x265_mdate();
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();

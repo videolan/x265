@@ -340,6 +340,10 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
+    /* Enable analysis and logging distribution of Cus encoded across various
+     * modes during mode decision. Default disabled */
+    int       bLogCuStats;
+
     /* Enable the measurement and reporting of PSNR. Default is enabled */
     int       bEnablePsnr;
 
