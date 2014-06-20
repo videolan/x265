@@ -192,7 +192,7 @@ protected:
     NALList                  m_nalList;
     ThreadLocalData          m_tld;
 
-    Frame*                 m_pic;
+    Frame*                   m_frame;
 
     int                      m_filterRowDelay;
     Event                    m_completionEvent;
