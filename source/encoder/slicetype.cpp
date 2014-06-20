@@ -141,6 +141,9 @@ void Lookahead::addPicture(TComPic *pic, int sliceType)
 /* Called by API thread */
 void Lookahead::flush()
 {
+    /* just in case the input queue is never allowed to fill */
+    m_bFilling = false;
+
     /* flush synchronously */
     m_inputQueueLock.acquire();
     if (!m_inputQueue.empty())
@@ -149,9 +152,6 @@ void Lookahead::flush()
     }
     else
         m_inputQueueLock.release();
-
-    /* just in case the input queue is never allowed to fill */
-    m_bFilling = false;
 
     m_inputQueueLock.acquire();
 

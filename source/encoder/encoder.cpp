@@ -60,6 +60,7 @@ Encoder::Encoder()
     m_rateControl = NULL;
     m_dpb = NULL;
     m_exportedPic = NULL;
+    m_numDelayedPic = 0;
     m_nals = NULL;
     m_packetData = NULL;
     m_outputCount = 0;
@@ -292,6 +293,7 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         if (m_param->rc.aqMode || bEnableWP)
             m_rateControl->calcAdaptiveQuantFrame(pic);
         m_lookahead->addPicture(pic, pic_in->sliceType);
+        m_numDelayedPic++;
     }
 
     if (flush)
@@ -320,22 +322,6 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
     // accomplished when the encoder is full.
     TComPic *out = curEncoder->getEncodedPicture(m_nalList);
 
-    if (!out && flush)
-    {
-        // if the current encoder did not return an output picture and we are
-        // flushing, check all the other encoders in logical order until
-        // we find an output picture or have cycled around.  We cannot return
-        // 0 until the entire stream is flushed
-        // (can only be an issue when --frames < --frame-threads)
-        int flushed = m_curEncoder;
-        do
-        {
-            curEncoder = &m_frameEncoder[m_curEncoder];
-            m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
-            out = curEncoder->getEncodedPicture(m_nalList);
-        }
-        while (!out && flushed != m_curEncoder);
-    }
     if (out)
     {
         if (pic_out)
@@ -420,6 +406,8 @@ int Encoder::encode(bool flush, const x265_picture* pic_in, x265_picture *pic_ou
         }
         else
             m_exportedPic = out;
+
+        m_numDelayedPic--;
 
         ret = 1;
     }

@@ -186,6 +186,8 @@ public:
     char*              m_packetData;
     int                m_totalFrameThreads;
 
+    uint32_t           m_numDelayedPic;
+
     Encoder();
 
     virtual ~Encoder();
