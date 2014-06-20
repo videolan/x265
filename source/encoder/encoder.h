@@ -182,8 +182,6 @@ public:
     Window             m_conformanceWindow;
     Window             m_defaultDisplayWindow;
 
-    x265_nal*          m_nals;
-    char*              m_packetData;
     int                m_totalFrameThreads;
 
     uint32_t           m_numDelayedPic;

@@ -61,8 +61,6 @@ Encoder::Encoder()
     m_dpb = NULL;
     m_exportedPic = NULL;
     m_numDelayedPic = 0;
-    m_nals = NULL;
-    m_packetData = NULL;
     m_outputCount = 0;
     m_csvfpt = NULL;
     m_param = NULL;
@@ -168,8 +166,6 @@ void Encoder::destroy()
     if (m_threadPool)
         m_threadPool->release();
 
-    X265_FREE(m_nals);
-    X265_FREE(m_packetData);
     X265_FREE(m_param->rc.statFileName);
     X265_FREE(m_param);
     if (m_csvfpt)
