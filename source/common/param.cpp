@@ -883,8 +883,6 @@ int x265_check_params(x265_param *param)
           "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
 
-    if (param->rdLevel < 5)
-        param->psyRd = 0;
     if (param->rc.aqStrength == 0)
         param->rc.aqMode = 0;
     if (param->logLevel < X265_LOG_INFO)
