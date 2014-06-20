@@ -73,7 +73,7 @@ private:
     uint32_t      m_numCUsInFrame;
 
     TComSlice*    m_slice;
-    TComDataCU**  m_cuData;
+    TComDataCU*   m_cuData;
 
     SAOParam*     m_saoParam;
 
@@ -99,7 +99,7 @@ public:
 
     uint32_t    getNumberOfCUsInFrame() const { return m_numCUsInFrame; }
 
-    TComDataCU* getCU(uint32_t cuAddr)    { return m_cuData[cuAddr]; }
+    TComDataCU* getCU(uint32_t cuAddr)    { return &m_cuData[cuAddr]; }
 
     uint32_t    getNumPartition() const   { return m_numPartitions; }
 

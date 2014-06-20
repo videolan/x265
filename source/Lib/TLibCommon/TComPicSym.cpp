@@ -77,22 +77,18 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp)
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
     m_slice = new TComSlice;
-    m_cuData = new TComDataCU*[m_numCUsInFrame];
+    m_cuData = new TComDataCU[m_numCUsInFrame];
     if (!m_slice || !m_cuData)
         return false;
 
     for (i = 0; i < m_numCUsInFrame; i++)
     {
-        m_cuData[i] = new TComDataCU;
-        if (!m_cuData[i])
-            return false;
-
         uint32_t sizeL = g_maxCUSize * g_maxCUSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(picCsp) + CHROMA_V_SHIFT(picCsp));
-        if (!m_cuData[i]->initialize(m_numPartitions, sizeL, sizeC, 1))
+        if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1))
             return false;
 
-        m_cuData[i]->create(m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, picCsp, 0);
+        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, picCsp, 0);
     }
 
     return true;
@@ -102,12 +98,6 @@ void TComPicSym::destroy()
 {
     delete m_slice;
     m_slice = NULL;
-
-    for (int i = 0; i < m_numCUsInFrame; i++)
-    {
-        m_cuData[i]->destroy();
-        delete m_cuData[i];
-    }
 
     delete [] m_cuData;
     m_cuData = NULL;
