@@ -642,13 +642,6 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     const int  bWaveFrontsynchro = m_param->bEnableWavefront;
     const uint32_t heightInLCUs = m_pic->getPicSym()->getFrameHeightInCU();
     const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
-    uint32_t bitsOriginallyInSubstreams = 0;
-
-    for (int substrmIdx = 0; substrmIdx < numSubstreams; substrmIdx++)
-    {
-        getBufferSBac(substrmIdx)->loadContexts(&m_sbacCoder); //init. state
-        bitsOriginallyInSubstreams += substreams[substrmIdx].getNumberOfWrittenBits();
-    }
 
     uint32_t widthInLCUs = m_pic->getPicSym()->getFrameWidthInCU();
     uint32_t col = 0, lin = 0, subStrm = 0;
