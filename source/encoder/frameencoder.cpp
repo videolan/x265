@@ -655,13 +655,12 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         {
             // We'll sync if the TR is available.
             TComDataCU *cuUp = m_frame->getCU(cuAddr)->getCUAbove();
-            uint32_t widthInCU = m_frame->getFrameWidthInCU();
             TComDataCU *cuTr = NULL;
 
             // CHECK_ME: here can be optimize a little, do it later
-            if (cuUp && ((cuAddr % widthInCU + 1) < widthInCU))
+            if (cuUp && ((cuAddr % widthInLCUs + 1) < widthInLCUs))
             {
-                cuTr = m_frame->getCU(cuAddr - widthInCU + 1);
+                cuTr = m_frame->getCU(cuAddr - widthInLCUs + 1);
             }
             if ( /*bEnforceSliceRestriction &&*/ ((cuTr == NULL) || (cuTr->getSlice() == NULL)))
             {
