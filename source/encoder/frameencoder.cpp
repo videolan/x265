@@ -534,11 +534,6 @@ void FrameEncoder::compressFrame()
         m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
         m_rows[i].m_entropyCoder.resetEntropy();
     }
-    getSbacCoder(0)->load(&m_sbacCoder);  // most of these are likely redundant
-    entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
-    entropyCoder->resetEntropy();
-    entropyCoder->setBitstream(&m_outStreams[0]);
-    m_sbacCoder.load(getSbacCoder(0));
     encodeSlice(m_outStreams);
 
     // flush per-row streams
@@ -619,8 +614,9 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 
     // Initialize slice singletons
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_tld.m_cuCoder.setBitCounting(false);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+    entropyCoder->setBitstream(&m_outStreams[0]);
+    m_tld.m_cuCoder.setBitCounting(false);
 
     uint32_t cuAddr;
     uint32_t startCUAddr = 0;
