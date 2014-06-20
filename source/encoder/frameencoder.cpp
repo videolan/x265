@@ -592,8 +592,8 @@ void FrameEncoder::compressFrame()
         m_outStreams[i].writeByteAlignment();
     }
 
-    uint32_t totalBytes;
-    uint8_t *concatStreams = m_nalList.serializeMultiple(slice->getSubstreamSizes(), totalBytes, numSubstreams, m_outStreams);
+    // serialize each row, record final lenghts in slice header
+    m_nalList.serializeSubstreams(slice->getSubstreamSizes(), numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
@@ -601,8 +601,7 @@ void FrameEncoder::compressFrame()
     entropyCoder->encodeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
 
-    m_nalList.serialize(slice->getNalUnitType(), m_bs, concatStreams, totalBytes);
-    X265_FREE(concatStreams);
+    m_nalList.serialize(slice->getNalUnitType(), m_bs);
 
     if (m_param->decodedPictureHashSEI)
     {

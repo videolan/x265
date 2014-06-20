@@ -27,6 +27,16 @@
 
 using namespace x265;
 
+NALList::NALList()
+    : m_numNal(0)
+    , m_buffer(NULL)
+    , m_occupancy(0)
+    , m_allocSize(0)
+    , m_extraBuffer(NULL)
+    , m_extraOccupancy(0)
+    , m_extraAllocSize(0)
+{}
+
 void NALList::takeContents(NALList& other)
 {
     /* take other NAL buffer, discard our old one */
@@ -45,7 +55,7 @@ void NALList::takeContents(NALList& other)
     other.m_buffer = X265_MALLOC(uint8_t, m_allocSize);
 }
 
-void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* extra, uint32_t extraBytes)
+void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
 {
     static const char startCodePrefix[] = { 0, 0, 0, 1 };
 
@@ -54,7 +64,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* e
     if (!bpayload)
         return;
 
-    uint32_t nextSize = m_occupancy + sizeof(startCodePrefix) + 2 + payloadSize + (payloadSize >> 1) + extraBytes;
+    uint32_t nextSize = m_occupancy + sizeof(startCodePrefix) + 2 + payloadSize + (payloadSize >> 1) + m_extraOccupancy;
     if (nextSize > m_allocSize)
     {
         uint8_t *temp = X265_MALLOC(uint8_t, nextSize);
@@ -119,11 +129,14 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* e
         out[bytes++] = bpayload[i];
     }
 
-    if (extra)
+    X265_CHECK(bytes <= 2 + payloadSize + (payloadSize >> 1), "NAL buffer overflow\n");
+
+    if (m_extraOccupancy)
     {
-        /* these bytes were escaped by serializeMultiple */
-        memcpy(out + bytes, extra, extraBytes);
-        bytes += extraBytes;
+        /* these bytes were escaped by serializeSubstreams */
+        memcpy(out + bytes, m_extraBuffer, m_extraOccupancy);
+        bytes += m_extraOccupancy;
+        m_extraOccupancy = 0;
     }
 
     /* 7.4.1.1
@@ -135,7 +148,6 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* e
         out[bytes++] = 0x03;
     m_occupancy += bytes;
 
-    X265_CHECK(bytes <= 2 + payloadSize + (payloadSize >> 1) + extraBytes, "NAL buffer overflow\n");
     X265_CHECK(m_numNal < (uint32_t)MAX_NAL_UNITS, "NAL count overflow\n");
 
     x265_nal& nal = m_nal[m_numNal++];
@@ -144,44 +156,59 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t* e
     nal.payload = out;
 }
 
-/* concatenate and escape multiple sub-streams, return final escaped lengths and
- * concatenated buffer. Caller is responsible for freeing the returned buffer */
-uint8_t *NALList::serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const Bitstream* streams)
+/* concatenate and escape WPP sub-streams, return escaped row lengths.
+ * These streams will be appended to the next serialized NAL */
+void NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams)
 {
     uint32_t estSize = 0;
     for (uint32_t s = 0; s < streamCount; s++)
         estSize += streams[s].getNumberOfWrittenBytes();
-    totalBytes = 0;
+    estSize += estSize >> 1;
 
-    /* padded allocation for emulation prevention bytes */
-    uint8_t* out = X265_MALLOC(uint8_t, estSize + (estSize >> 1));
-    if (!out)
-        return NULL;
+    if (estSize > m_extraAllocSize)
+    {
+        uint8_t *temp = X265_MALLOC(uint8_t, estSize);
+        if (temp)
+        {
+            X265_FREE(m_extraBuffer);
+            m_extraBuffer = temp;
+            m_extraAllocSize = estSize;
+        }
+        else
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc WPP substream concatenation buffer\n");
+            return;
+        }
+    }
 
+    uint32_t bytes = 0;
+    uint8_t *out = m_extraBuffer;
     for (uint32_t s = 0; s < streamCount; s++)
     {
         const Bitstream& stream = streams[s];
         uint32_t inSize = stream.getNumberOfWrittenBytes();
         const uint8_t *inBytes = stream.getFIFO();
-        uint32_t prevBufSize = totalBytes;
+        uint32_t prevBufSize = bytes;
 
-        for (uint32_t i = 0; i < inSize; i++)
+        if (inBytes)
         {
-            if (totalBytes > 2 && !out[totalBytes - 2] && !out[totalBytes - 3] && out[totalBytes - 1] <= 0x03)
+            for (uint32_t i = 0; i < inSize; i++)
             {
-                /* inject 0x03 to prevent emulating a start code */
-                out[totalBytes] = out[totalBytes - 1];
-                out[totalBytes - 1] = 0x03;
-                totalBytes++;
-            }
+                if (bytes > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
+                {
+                    /* inject 0x03 to prevent emulating a start code */
+                    out[bytes] = out[bytes - 1];
+                    out[bytes - 1] = 0x03;
+                    bytes++;
+                }
 
-            out[totalBytes++] = inBytes[i];
+                out[bytes++] = inBytes[i];
+            }
         }
 
         if (s < streamCount - 1)
-            streamSizeBytes[s] = (totalBytes - prevBufSize) << 3;
+            streamSizeBytes[s] = (bytes - prevBufSize) << 3;
     }
 
-    return out;
+    m_extraOccupancy = bytes;
 }
-

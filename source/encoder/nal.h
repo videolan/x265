@@ -45,14 +45,18 @@ public:
     uint32_t    m_occupancy;
     uint32_t    m_allocSize;
 
-    NALList() : m_numNal(0), m_buffer(NULL), m_occupancy(0), m_allocSize(0) {}
-    ~NALList() { X265_FREE(m_buffer); }
+    uint8_t*    m_extraBuffer;
+    uint32_t    m_extraOccupancy;
+    uint32_t    m_extraAllocSize;
+
+    NALList();
+    ~NALList() { X265_FREE(m_buffer); X265_FREE(m_extraBuffer); }
 
     void takeContents(NALList& other);
 
-    void serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t *extra = NULL, uint32_t extraBytes = 0);
+    void serialize(NalUnitType nalUnitType, const Bitstream& bs);
 
-    static uint8_t *serializeMultiple(uint32_t* streamSizeBytes, uint32_t& totalBytes, uint32_t streamCount, const Bitstream* streams);
+    void serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams);
 };
 
 }
