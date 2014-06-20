@@ -612,6 +612,15 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     TEncEntropy *entropyCoder = getEntropyCoder(0);
     TComSlice* slice = m_frame->getSlice();
 
+#if ENC_DEC_TRACE
+    g_bJustDoIt = g_bEncDecTraceEnable;
+    DTRACE_CABAC_VL(g_nSymbolCounter++);
+    DTRACE_CABAC_T("\tPOC: ");
+    DTRACE_CABAC_V(m_frame->getPOC());
+    DTRACE_CABAC_T("\n");
+    g_bJustDoIt = g_bEncDecTraceDisable;
+#endif
+
     // Initialize slice singletons
     m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
@@ -622,20 +631,6 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     uint32_t startCUAddr = 0;
     uint32_t boundingCUAddr = slice->getSliceCurEndCUAddr();
 
-    // Appropriate substream bitstream is switched later.
-    // for every CU
-#if ENC_DEC_TRACE
-    g_bJustDoIt = g_bEncDecTraceEnable;
-#endif
-    DTRACE_CABAC_VL(g_nSymbolCounter++);
-    DTRACE_CABAC_T("\tPOC: ");
-    DTRACE_CABAC_V(m_frame->getPOC());
-    DTRACE_CABAC_T("\n");
-#if ENC_DEC_TRACE
-    g_bJustDoIt = g_bEncDecTraceDisable;
-#endif
-
-    const int  bWaveFrontsynchro = m_param->bEnableWavefront;
     const uint32_t heightInLCUs = m_frame->getPicSym()->getFrameHeightInCU();
     const int  numSubstreams = (bWaveFrontsynchro ? heightInLCUs : 1);
 
