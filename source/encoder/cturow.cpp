@@ -85,7 +85,7 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, b
     // restore entropy coder to an initial state
     m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
     m_entropyCoder.setBitstream(&bc);
-    m_cuCoder.setBitCounting(&bc);
+    m_cuCoder.setBitCounting(true);
     bc.resetBits();
 
     m_cuCoder.encodeCU(cu);  // Count bits

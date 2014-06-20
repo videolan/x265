@@ -3,6 +3,10 @@
 
 using namespace x265;
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4244)
+#endif
+
 #define MIN_FIFO_SIZE 1000
 
 Bitstream::Bitstream()
