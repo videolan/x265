@@ -102,7 +102,7 @@ class TEncSearch : public TComPrediction
 public:
 
     MotionEstimate   m_me;
-    MotionReference* m_mref[2][MAX_NUM_REF + 1];
+    MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
     TEncSbac***     m_rdSbacCoders;
     TEncSbac*       m_rdGoOnSbacCoder;

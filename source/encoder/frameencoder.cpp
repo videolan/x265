@@ -937,13 +937,7 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     // setup thread-local data
     ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
     tld.m_trQuant.m_nr = &m_nr;
-    for (int list = 0; list <= 1; list++)
-    {
-        for (int ref = 0; ref <= MAX_NUM_REF; ref++)
-        {
-            tld.m_search.m_mref[list][ref] = &m_mref[list][ref];
-        }
-    }
+    tld.m_search.m_mref = m_mref;
     curRow.setThreadLocalData(tld);
 
     setLambda(m_pic->getSlice()->getSliceQp(), tld);

@@ -2329,7 +2329,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 int merange = m_param->searchRange;
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                int satdCost = m_me.motionEstimate(m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                int satdCost = m_me.motionEstimate(&m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
@@ -2393,9 +2393,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             if (bTryZero)
             {
                 // coincident blocks of the two reference pictures
-                pixel *ref0 = m_mref[0][list[0].ref]->fpelPlane + (pu - fenc->getLumaAddr());
-                pixel *ref1 = m_mref[1][list[1].ref]->fpelPlane + (pu - fenc->getLumaAddr());
-                intptr_t refStride = m_mref[0][0]->lumaStride;
+                pixel *ref0 = m_mref[0][list[0].ref].fpelPlane + (pu - fenc->getLumaAddr());
+                pixel *ref1 = m_mref[1][list[1].ref].fpelPlane + (pu - fenc->getLumaAddr());
+                intptr_t refStride = m_mref[0][0].lumaStride;
 
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
                 satdCost = m_me.bufSATD(avg, roiWidth);
