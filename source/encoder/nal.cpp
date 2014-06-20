@@ -82,7 +82,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
         }
         else
         {
-            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc access unit buffer");
+            x265_log(NULL, X265_LOG_ERROR, "Unable to realloc access unit buffer\n");
             return;
         }
     }
@@ -114,8 +114,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
      * any byte-aligned position:
      *  - 0x000000
      *  - 0x000001
-     *  - 0x000002
-     */
+     *  - 0x000002 */
     for (uint32_t i = 0; i < payloadSize; i++)
     {
         if (i > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
@@ -142,8 +141,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
     /* 7.4.1.1
      * ... when the last byte of the RBSP data is equal to 0x00 (which can
      * only occur when the RBSP ends in a cabac_zero_word), a final byte equal
-     * to 0x03 is appended to the end of the data.
-     */
+     * to 0x03 is appended to the end of the data.  */
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
     m_occupancy += bytes;
