@@ -42,7 +42,7 @@ TComOutputBitstream::TComOutputBitstream()
 {
     m_fifo = X265_MALLOC(uint8_t, MIN_FIFO_SIZE);
     m_byteAlloc = MIN_FIFO_SIZE;
-    clear();
+    resetBits();
 }
 
 void TComOutputBitstream::push_back(uint8_t val)

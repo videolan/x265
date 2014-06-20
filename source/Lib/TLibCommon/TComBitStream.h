@@ -80,7 +80,7 @@ public:
     TComOutputBitstream();
     ~TComOutputBitstream()                   { X265_FREE(m_fifo); }
 
-    void     clear()                         { m_partialByteBits = m_byteOccupancy = 0; m_partialByte = 0; }
+    void     resetBits()                     { m_partialByteBits = m_byteOccupancy = 0; m_partialByte = 0; }
     uint32_t getNumberOfWrittenBytes() const { return m_byteOccupancy; }
     uint32_t getNumberOfWrittenBits()  const { return m_byteOccupancy * 8 + m_partialByteBits; }
     const uint8_t* getFIFO() const           { return m_fifo; }
@@ -100,7 +100,6 @@ private:
     uint32_t m_partialByteBits;
     uint8_t  m_partialByte;
 
-    void     resetBits() { X265_CHECK(0, "resetBits called on base class\n"); }
     void     push_back(uint8_t val);
 };
 }

@@ -232,12 +232,12 @@ void FrameEncoder::getStreamHeaders(NALList& list, TComOutputBitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
-    bs.clear();
+    bs.resetBits();
     entropyCoder->encodeSPS(&m_sps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
-    bs.clear();
+    bs.resetBits();
     entropyCoder->encodePPS(&m_pps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
@@ -251,7 +251,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, TComOutputBitstream& bs)
         sei.m_numSpsIdsMinus1 = 0;
         sei.m_activeSeqParamSetId = m_sps.getSPSId();
 
-        bs.clear();
+        bs.resetBits();
         sei.write(bs, m_sps);
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
@@ -359,7 +359,7 @@ void FrameEncoder::compressFrame()
      * unit) */
     if (m_param->bEnableAccessUnitDelimiters && (m_pic->getPOC() || m_param->bRepeatHeaders))
     {
-        m_bs.clear();
+        m_bs.resetBits();
         entropyCoder->setBitstream(&m_bs);
         entropyCoder->encodeAUD(slice);
         m_bs.writeByteAlignment();
@@ -387,7 +387,7 @@ void FrameEncoder::compressFrame()
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
 
-            m_bs.clear();
+            m_bs.resetBits();
             bpSei->write(m_bs, m_sps);
 
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
@@ -408,7 +408,7 @@ void FrameEncoder::compressFrame()
         sei_recovery_point.m_exactMatchingFlag = true;
         sei_recovery_point.m_brokenLinkFlag = false;
 
-        m_bs.clear();
+        m_bs.resetBits();
         sei_recovery_point.write(m_bs, *slice->getSPS());
         m_bs.writeByteAlignment();
 
@@ -451,7 +451,7 @@ void FrameEncoder::compressFrame()
             sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
         }
 
-        m_bs.clear();
+        m_bs.resetBits();
         sei->write(m_bs, m_sps);
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
@@ -559,10 +559,10 @@ void FrameEncoder::compressFrame()
         m_outStreams = new TComOutputBitstream[numSubstreams];
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
-            m_outStreams[i].clear();
+            m_outStreams[i].resetBits();
     slice->allocSubstreamSizes(numSubstreams);
 
-    m_bs.clear();
+    m_bs.resetBits();
     m_sbacCoder.init(&m_binCoderCABAC);
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
@@ -631,7 +631,7 @@ void FrameEncoder::compressFrame()
             }
         }
 
-        m_bs.clear();
+        m_bs.resetBits();
         m_seiReconPictureDigest.write(m_bs, *slice->getSPS());
         m_bs.writeByteAlignment();
 
