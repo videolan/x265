@@ -128,7 +128,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
         out[bytes++] = bpayload[i];
     }
 
-    X265_CHECK(bytes <= 2 + payloadSize + (payloadSize >> 1), "NAL buffer overflow\n");
+    X265_CHECK(bytes <= 4 + 2 + payloadSize + (payloadSize >> 1), "NAL buffer overflow\n");
 
     if (m_extraOccupancy)
     {
