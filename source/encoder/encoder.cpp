@@ -1248,7 +1248,14 @@ void Encoder::configure(x265_param *p)
         p->bBPyramid = 0;
     }
 
-    m_bEnableRDOQ = p->rdLevel >= 4;
+    if (p->psyRd > 0)
+    {
+        m_bEnableRDOQ = 0;
+    }
+    else
+    {
+        m_bEnableRDOQ = p->rdLevel >= 4;
+    }
 
     if (p->bLossless)
     {
