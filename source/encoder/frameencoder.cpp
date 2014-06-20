@@ -575,7 +575,7 @@ void FrameEncoder::compressFrame()
         m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
         m_rows[i].m_entropyCoder.resetEntropy();
     }
-    getSbacCoder(0)->load(&m_sbacCoder);
+    getSbacCoder(0)->load(&m_sbacCoder);  // most of these are likely redundant
     entropyCoder->setEntropyCoder(getSbacCoder(0), slice);
     entropyCoder->resetEntropy();
     entropyCoder->setBitstream(&m_outStreams[0]);
@@ -592,7 +592,7 @@ void FrameEncoder::compressFrame()
         m_outStreams[i].writeByteAlignment();
     }
 
-    // serialize each row, record final lenghts in slice header
+    // serialize each row, record final lengths in slice header
     m_nalList.serializeSubstreams(slice->getSubstreamSizes(), numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
