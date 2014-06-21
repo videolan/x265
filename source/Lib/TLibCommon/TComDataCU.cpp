@@ -131,7 +131,7 @@ bool TComDataCU::initialize(uint32_t numPartition, uint32_t sizeL, uint32_t size
     CHECKED_MALLOC(m_DataCUMemPool->mvpIdxMemBlock, uint8_t, numPartition * 2 * numBlocks);
     CHECKED_MALLOC(m_DataCUMemPool->trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
 
-    CHECKED_MALLOC(m_DataCUMemPool->iPCMFlagMemBlock, bool, numPartition * 8);
+    CHECKED_MALLOC(m_DataCUMemPool->iPCMFlagMemBlock, bool, numPartition * numBlocks);
     CHECKED_MALLOC(m_DataCUMemPool->iPCMSampleYMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
 
     return ok;

@@ -61,9 +61,9 @@ struct AMVPInfo
 
 typedef struct
 {
-    MV*   m_mvBase    ;
-    MV*   m_mvdBase   ;
-    char* m_refIdxBase;
+    MV*   m_mvMemBlock    ;
+    MV*   m_mvdMemBlock   ;
+    char* m_refIdxMemBlock;
 } MVFieldMemPool;
 
 // ====================================================================================================================
