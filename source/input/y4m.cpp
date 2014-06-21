@@ -390,7 +390,6 @@ void Y4MInput::threadMain()
     /* "open the throttle" at the end, allow reader to consume
      * remaining valid queue entries */
     threadActive = false;
-    frameStat[tail.get()] = false;
     tail.set(QUEUE_SIZE);
 }
 
@@ -406,7 +405,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
     {
         curTail = tail.waitForChange(curTail);
         if (!threadActive)
-            return false;
+            break;
     }
 
 #else
@@ -417,6 +416,7 @@ bool Y4MInput::readPicture(x265_picture& pic)
 
     if (!frameStat[curHead])
         return false;
+    frameStat[curHead] = false;
 
     pic.bitDepth = depth;
     pic.colorSpace = colorSpace;

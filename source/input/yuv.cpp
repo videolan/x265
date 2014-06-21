@@ -182,7 +182,6 @@ void YUVInput::threadMain()
     }
 
     threadActive = false;
-    frameStat[tail.get()] = false;
     tail.set(QUEUE_SIZE);
 }
 
@@ -218,7 +217,7 @@ bool YUVInput::readPicture(x265_picture& pic)
     {
         curTail = tail.waitForChange(curTail);
         if (!threadActive)
-            return false;
+            break;
     }
 
 #else
@@ -229,6 +228,7 @@ bool YUVInput::readPicture(x265_picture& pic)
 
     if (!frameStat[curHead])
         return false;
+    frameStat[curHead] = false;
 
     pic.colorSpace = colorSpace;
     pic.bitDepth = depth;
