@@ -376,7 +376,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         else
         {
-            uint32_t trSizeC  = tuSize >> hChromaShift;
+            uint32_t trSizeC = tuSize >> hChromaShift;
             const bool splitIntoSubTUs = (chFmt == CHROMA_422);
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
