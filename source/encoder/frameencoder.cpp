@@ -938,7 +938,7 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
     tld.m_trQuant.m_nr = &m_nr;
     tld.m_search.m_mref = m_mref;
-    curRow.setThreadLocalData(tld);
+    codeRow.setThreadLocalData(tld);
 
     setLambda(m_pic->getSlice()->getSliceQp(), tld);
     TComPicYuv* fenc = m_pic->getPicYuvOrg();
