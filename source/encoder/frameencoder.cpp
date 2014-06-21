@@ -692,10 +692,8 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         getSbacCoder(subStrm)->load(&m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
-        if ((numSubstreams > 1) && (col == 1) && m_param->bEnableWavefront)
-        {
+        if (col == 1 && m_param->bEnableWavefront)
             getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
-        }
     }
 
     if (slice->getPPS()->getCabacInitPresentFlag())
