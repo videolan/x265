@@ -44,10 +44,10 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-void TEncEntropy::setEntropyCoder(TEncEntropyIf* e, TComSlice* slice)
+void TEncEntropy::setEntropyCoder(TEncSbac* e, TComSlice* slice)
 {
-    m_entropyCoderIf = e;
-    m_entropyCoderIf->setSlice(slice);
+    m_entropyCoder = e;
+    m_entropyCoder->setSlice(slice);
 }
 
 void TEncEntropy::encodeSliceHeader(TComSlice* slice)
@@ -59,47 +59,47 @@ void TEncEntropy::encodeSliceHeader(TComSlice* slice)
         slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
 
-    m_entropyCoderIf->codeSliceHeader(slice);
+    m_entropyCoder->codeSliceHeader(slice);
 }
 
 void  TEncEntropy::encodeTilesWPPEntryPoint(TComSlice* pSlice)
 {
-    m_entropyCoderIf->codeTilesWPPEntryPoint(pSlice);
+    m_entropyCoder->codeTilesWPPEntryPoint(pSlice);
 }
 
 void TEncEntropy::encodeTerminatingBit(uint32_t isLast)
 {
-    m_entropyCoderIf->codeTerminatingBit(isLast);
+    m_entropyCoder->codeTerminatingBit(isLast);
 }
 
 void TEncEntropy::encodeSliceFinish()
 {
-    m_entropyCoderIf->codeSliceFinish();
+    m_entropyCoder->codeSliceFinish();
 }
 
 void TEncEntropy::encodePPS(TComPPS* pps)
 {
-    m_entropyCoderIf->codePPS(pps);
+    m_entropyCoder->codePPS(pps);
 }
 
 void TEncEntropy::encodeSPS(TComSPS* sps)
 {
-    m_entropyCoderIf->codeSPS(sps);
+    m_entropyCoder->codeSPS(sps);
 }
 
 void TEncEntropy::encodeAUD(TComSlice* slice)
 {
-    m_entropyCoderIf->codeAUD(slice);
+    m_entropyCoder->codeAUD(slice);
 }
 
 void TEncEntropy::encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
-    m_entropyCoderIf->codeCUTransquantBypassFlag(cu, absPartIdx);
+    m_entropyCoder->codeCUTransquantBypassFlag(cu, absPartIdx);
 }
 
 void TEncEntropy::encodeVPS(TComVPS* vps)
 {
-    m_entropyCoderIf->codeVPS(vps);
+    m_entropyCoder->codeVPS(vps);
 }
 
 void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
@@ -108,7 +108,7 @@ void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     {
         return;
     }
-    m_entropyCoderIf->codeSkipFlag(cu, absPartIdx);
+    m_entropyCoder->codeSkipFlag(cu, absPartIdx);
 }
 
 /** encode merge flag
@@ -119,7 +119,7 @@ void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
 void TEncEntropy::encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     // at least one merge candidate exists
-    m_entropyCoderIf->codeMergeFlag(cu, absPartIdx);
+    m_entropyCoder->codeMergeFlag(cu, absPartIdx);
 }
 
 /** encode merge index
@@ -130,7 +130,7 @@ void TEncEntropy::encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
  */
 void TEncEntropy::encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
-    m_entropyCoderIf->codeMergeIndex(cu, absPartIdx);
+    m_entropyCoder->codeMergeIndex(cu, absPartIdx);
 }
 
 /** encode prediction mode
@@ -145,13 +145,13 @@ void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx)
         return;
     }
 
-    m_entropyCoderIf->codePredMode(cu, absPartIdx);
+    m_entropyCoder->codePredMode(cu, absPartIdx);
 }
 
 // Split mode
 void TEncEntropy::encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    m_entropyCoderIf->codeSplitFlag(cu, absPartIdx, depth);
+    m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth);
 }
 
 /** encode partition size
@@ -162,7 +162,7 @@ void TEncEntropy::encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t 
  */
 void TEncEntropy::encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    m_entropyCoderIf->codePartSize(cu, absPartIdx, depth);
+    m_entropyCoder->codePartSize(cu, absPartIdx, depth);
 }
 
 /** Encode I_PCM information.
@@ -179,7 +179,7 @@ void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
         return;
     }
 
-    m_entropyCoderIf->codeIPCMInfo(cu, absPartIdx);
+    m_entropyCoder->codeIPCMInfo(cu, absPartIdx);
 }
 
 bool TEncEntropy::isNextTUSection(TComTURecurse *tuIterator)
@@ -266,7 +266,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     else
     {
         X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
-        m_entropyCoderIf->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
+        m_entropyCoder->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
     const uint32_t trDepthCurr = depth - cu->getDepth(absPartIdx);
@@ -283,11 +283,11 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
     {
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1))
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
+            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
         }
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1))
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
+            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
         }
     }
     else
@@ -342,7 +342,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         else
         {
-            m_entropyCoderIf->codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx), absPartIdxStep, tuSize, tuSize, (subdiv == 0));
+            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx), absPartIdxStep, tuSize, tuSize, (subdiv == 0));
         }
 
         if (cbfY || cbfU || cbfV)
@@ -359,7 +359,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
         }
         if (cbfY)
         {
-            m_entropyCoderIf->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, tuSize, TEXT_LUMA);
+            m_entropyCoder->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, tuSize, TEXT_LUMA);
         }
 
         int chFmt = cu->getChromaFormat();
@@ -384,7 +384,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
                         uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                         if (cbf)
                         {
-                            m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
+                            m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -407,7 +407,7 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
                     uint32_t subTUIndex = tuIterator.m_section * trSizeC * trSizeC;
                     if (cbf)
                     {
-                        m_entropyCoderIf->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
+                        m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUIndex), tuIterator.m_absPartIdxTURelCU, trSizeC, (TextType)chromaId);
                     }
                 }
                 while (isNextTUSection(&tuIterator));
@@ -419,13 +419,13 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 // Intra direction for Luma
 void TEncEntropy::encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU)
 {
-    m_entropyCoderIf->codeIntraDirLumaAng(cu, absPartIdx, isMultiplePU);
+    m_entropyCoder->codeIntraDirLumaAng(cu, absPartIdx, isMultiplePU);
 }
 
 // Intra direction for Chroma
 void TEncEntropy::encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx)
 {
-    m_entropyCoderIf->codeIntraDirChroma(cu, absPartIdx);
+    m_entropyCoder->codeIntraDirChroma(cu, absPartIdx);
 }
 
 void TEncEntropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)
@@ -498,7 +498,7 @@ void TEncEntropy::encodeInterDirPU(TComDataCU* cu, uint32_t absPartIdx)
         return;
     }
 
-    m_entropyCoderIf->codeInterDir(cu, absPartIdx);
+    m_entropyCoder->codeInterDir(cu, absPartIdx);
 }
 
 /** encode reference frame index for a PU block
@@ -518,7 +518,7 @@ void TEncEntropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int lis
 
         X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
         {
-            m_entropyCoderIf->codeRefFrmIdx(cu, absPartIdx, list);
+            m_entropyCoder->codeRefFrmIdx(cu, absPartIdx, list);
         }
     }
 }
@@ -533,44 +533,44 @@ void TEncEntropy::encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra found where inter expected\n");
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
-    m_entropyCoderIf->codeMvd(cu, absPartIdx, list);
+    m_entropyCoder->codeMvd(cu, absPartIdx, list);
 }
 
 void TEncEntropy::encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir check failed\n");
-    m_entropyCoderIf->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
+    m_entropyCoder->codeMVPIdx(cu->getMVPIdx(list, absPartIdx));
 }
 
 void TEncEntropy::encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
 {
-    m_entropyCoderIf->codeQtCbf(cu, absPartIdx, ttype, trDepth, absPartIdxStep, width, height, lowestLevel);
+    m_entropyCoder->codeQtCbf(cu, absPartIdx, ttype, trDepth, absPartIdxStep, width, height, lowestLevel);
 }
 
 void TEncEntropy::encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
-    m_entropyCoderIf->codeTransformSubdivFlag(symbol, ctx);
+    m_entropyCoder->codeTransformSubdivFlag(symbol, ctx);
 }
 
 void TEncEntropy::encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
 {
-    m_entropyCoderIf->codeQtRootCbf(cu, absPartIdx);
+    m_entropyCoder->codeQtRootCbf(cu, absPartIdx);
 }
 
 void TEncEntropy::encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
 {
-    m_entropyCoderIf->codeQtCbfZero(cu, ttype, trDepth);
+    m_entropyCoder->codeQtCbfZero(cu, ttype, trDepth);
 }
 
 void TEncEntropy::encodeQtRootCbfZero(TComDataCU* cu)
 {
-    m_entropyCoderIf->codeQtRootCbfZero(cu);
+    m_entropyCoder->codeQtRootCbfZero(cu);
 }
 
 // dQP
 void TEncEntropy::encodeQP(TComDataCU* cu, uint32_t absPartIdx)
 {
-    m_entropyCoderIf->codeDeltaQP(cu, absPartIdx);
+    m_entropyCoder->codeDeltaQP(cu, absPartIdx);
 }
 
 // texture
@@ -598,7 +598,7 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
         {
-            m_entropyCoderIf->codeQtRootCbf(cu, absPartIdx);
+            m_entropyCoder->codeQtRootCbf(cu, absPartIdx);
         }
         if (!cu->getQtRootCbf(absPartIdx))
         {
@@ -612,14 +612,14 @@ void TEncEntropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t dept
 
 void TEncEntropy::encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
-    m_entropyCoderIf->codeCoeffNxN(cu, coeff, absPartIdx, trSize, ttype);
+    m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, trSize, ttype);
 }
 
 void TEncEntropy::estimateBit(estBitsSbacStruct* estBitsSBac, int trSize, TextType ttype)
 {
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
-    m_entropyCoderIf->estBit(estBitsSBac, trSize, ttype);
+    m_entropyCoder->estBit(estBitsSBac, trSize, ttype);
 }
 
 /** Encode SAO Offset
@@ -633,7 +633,7 @@ void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
     symbol = saoLcuParam->typeIdx + 1;
     if (compIdx != 2)
     {
-        m_entropyCoderIf->codeSaoTypeIdx(symbol);
+        m_entropyCoder->codeSaoTypeIdx(symbol);
     }
     if (symbol)
     {
@@ -647,7 +647,7 @@ void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
             for (i = 0; i < saoLcuParam->length; i++)
             {
                 uint32_t absOffset = ((saoLcuParam->offset[i] < 0) ? -saoLcuParam->offset[i] : saoLcuParam->offset[i]);
-                m_entropyCoderIf->codeSaoMaxUvlc(absOffset, offsetTh - 1);
+                m_entropyCoder->codeSaoMaxUvlc(absOffset, offsetTh - 1);
             }
 
             for (i = 0; i < saoLcuParam->length; i++)
@@ -655,23 +655,23 @@ void TEncEntropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
                 if (saoLcuParam->offset[i] != 0)
                 {
                     uint32_t sign = (saoLcuParam->offset[i] < 0) ? 1 : 0;
-                    m_entropyCoderIf->codeSAOSign(sign);
+                    m_entropyCoder->codeSAOSign(sign);
                 }
             }
 
             symbol = (uint32_t)(saoLcuParam->subTypeIdx);
-            m_entropyCoderIf->codeSaoUflc(5, symbol);
+            m_entropyCoder->codeSaoUflc(5, symbol);
         }
         else if (saoLcuParam->typeIdx < 4)
         {
-            m_entropyCoderIf->codeSaoMaxUvlc(saoLcuParam->offset[0], offsetTh - 1);
-            m_entropyCoderIf->codeSaoMaxUvlc(saoLcuParam->offset[1], offsetTh - 1);
-            m_entropyCoderIf->codeSaoMaxUvlc(-saoLcuParam->offset[2], offsetTh - 1);
-            m_entropyCoderIf->codeSaoMaxUvlc(-saoLcuParam->offset[3], offsetTh - 1);
+            m_entropyCoder->codeSaoMaxUvlc(saoLcuParam->offset[0], offsetTh - 1);
+            m_entropyCoder->codeSaoMaxUvlc(saoLcuParam->offset[1], offsetTh - 1);
+            m_entropyCoder->codeSaoMaxUvlc(-saoLcuParam->offset[2], offsetTh - 1);
+            m_entropyCoder->codeSaoMaxUvlc(-saoLcuParam->offset[3], offsetTh - 1);
             if (compIdx != 2)
             {
                 symbol = (uint32_t)(saoLcuParam->subTypeIdx);
-                m_entropyCoderIf->codeSaoUflc(2, symbol);
+                m_entropyCoder->codeSaoUflc(2, symbol);
             }
         }
     }
@@ -692,7 +692,7 @@ void TEncEntropy::encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, i
     {
         if (rx > 0 && cuAddrInSlice != 0 && allowMergeLeft)
         {
-            m_entropyCoderIf->codeSaoMerge(saoLcuParam->mergeLeftFlag);
+            m_entropyCoder->codeSaoMerge(saoLcuParam->mergeLeftFlag);
         }
         else
         {
@@ -702,7 +702,7 @@ void TEncEntropy::encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, i
         {
             if ((ry > 0) && (cuAddrUpInSlice >= 0) && allowMergeUp)
             {
-                m_entropyCoderIf->codeSaoMerge(saoLcuParam->mergeUpFlag);
+                m_entropyCoder->codeSaoMerge(saoLcuParam->mergeUpFlag);
             }
             else
             {
@@ -721,7 +721,7 @@ void TEncEntropy::encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, i
  */
 void TEncEntropy::encodeScalingList(TComScalingList* scalingList)
 {
-    m_entropyCoderIf->codeScalingList(scalingList);
+    m_entropyCoder->codeScalingList(scalingList);
 }
 
 //! \}

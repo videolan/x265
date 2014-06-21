@@ -1439,11 +1439,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_CURR_BEST]);
             if (allowMergeLeft)
             {
-                m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
             }
             if (allowMergeUp)
             {
-                m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
             }
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
             // reset stats Y, Cb, Cr
@@ -1486,11 +1486,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 m_rdGoOnSbacCoder->resetBits();
                 if (allowMergeLeft)
                 {
-                    m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                    m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
                 }
                 if (allowMergeUp)
                 {
-                    m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                    m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
                 }
                 for (compIdx = 0; compIdx < 3; compIdx++)
                 {
@@ -1513,11 +1513,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                         m_rdGoOnSbacCoder->resetBits();
                         if (allowMergeLeft)
                         {
-                            m_entropyCoder->m_entropyCoderIf->codeSaoMerge(1 - mergeUp);
+                            m_entropyCoder->m_entropyCoder->codeSaoMerge(1 - mergeUp);
                         }
                         if (allowMergeUp && (mergeUp == 1))
                         {
-                            m_entropyCoder->m_entropyCoderIf->codeSaoMerge(1);
+                            m_entropyCoder->m_entropyCoder->codeSaoMerge(1);
                         }
 
                         rate = m_entropyCoder->getNumberOfWrittenBits();

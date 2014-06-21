@@ -656,9 +656,9 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
                 int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
                 int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
                 if (col)
-                    entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeLeft);
+                    entropyCoder->m_entropyCoder->codeSaoMerge(mergeLeft);
                 if (lin && !mergeLeft)
-                    entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeUp);
+                    entropyCoder->m_entropyCoder->codeSaoMerge(mergeUp);
                 if (!mergeLeft && !mergeUp)
                 {
                     if (saoParam->bSaoFlag[0])

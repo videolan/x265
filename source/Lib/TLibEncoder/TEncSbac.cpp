@@ -35,8 +35,11 @@
     \brief    SBAC encoder class
 */
 
-#include "TEncSbac.h"
+#include "common.h"
 #include "primitives.h"
+#include "frame.h"
+#include "TLibCommon/TComSampleAdaptiveOffset.h"
+#include "TEncSbac.h"
 
 namespace x265 {
 //! \ingroup TLibEncoder
@@ -167,7 +170,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
 TEncSbac::TEncSbac()
 // new structure here
     : m_slice(NULL)
-    , m_binIf(NULL)
+    , m_cabac(NULL)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
@@ -219,7 +222,7 @@ void TEncSbac::resetEntropy()
     initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
 
-    m_binIf->start();
+    m_cabac->start();
 }
 
 /** The function does the following:
@@ -1310,19 +1313,19 @@ void  TEncSbac::codeTilesWPPEntryPoint(TComSlice* slice)
 
 void TEncSbac::codeTerminatingBit(uint32_t lsLast)
 {
-    m_binIf->encodeBinTrm(lsLast);
+    m_cabac->encodeBinTrm(lsLast);
 }
 
 void TEncSbac::codeSliceFinish()
 {
-    m_binIf->finish();
+    m_cabac->finish();
 }
 
 void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
-    m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
+    m_cabac->encodeBin(symbol ? 1 : 0, scmModel[0]);
 
     if (symbol == 0)
     {
@@ -1333,12 +1336,12 @@ void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int
 
     while (--symbol)
     {
-        m_binIf->encodeBin(1, scmModel[offset]);
+        m_cabac->encodeBin(1, scmModel[offset]);
     }
 
     if (bCodeLast)
     {
-        m_binIf->encodeBin(0, scmModel[offset]);
+        m_cabac->encodeBin(0, scmModel[offset]);
     }
 }
 
@@ -1362,7 +1365,7 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
     numBins += count;
 
     X265_CHECK(numBins <= 32, "numBins too large\n");
-    m_binIf->encodeBinsEP(bins, numBins);
+    m_cabac->encodeBinsEP(bins, numBins);
 }
 
 /** Coding of coeff_abs_level_minus3
@@ -1381,7 +1384,7 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
 
         X265_CHECK(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)), "codeNumber failure\n");
         X265_CHECK(length + 1 + absGoRice < 32, "length failure\n");
-        m_binIf->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
+        m_cabac->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
     {
@@ -1396,8 +1399,8 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
         }
         codeNumber = (codeNumber << absGoRice) + codeRemain;
 
-        m_binIf->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
-        m_binIf->encodeBinsEP(codeNumber, length + absGoRice);
+        m_cabac->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
+        m_cabac->encodeBinsEP(codeNumber, length + absGoRice);
     }
 }
 
@@ -1405,8 +1408,8 @@ void  TEncSbac::setBitstream(BitInterface* p)
 {
     m_bitIf = p;
     // NOTE: When write header, it isn't initial
-    if (m_binIf)
-        m_binIf->init(p);
+    if (m_cabac)
+        m_cabac->init(p);
 }
 
 // SBAC RD
@@ -1417,7 +1420,7 @@ void  TEncSbac::load(TEncSbac* src)
 
 void  TEncSbac::loadIntraDirModeLuma(TEncSbac* src)
 {
-    m_binIf->copyState(src->m_binIf);
+    m_cabac->copyState(src->m_cabac);
 
     ::memcpy(&this->m_contextModels[OFF_ADI_CTX], &src->m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
@@ -1429,14 +1432,14 @@ void  TEncSbac::store(TEncSbac* pDest)
 
 void TEncSbac::xCopyFrom(TEncSbac* src)
 {
-    m_binIf->copyState(src->m_binIf);
+    m_cabac->copyState(src->m_cabac);
 
     memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
 void TEncSbac::codeMVPIdx(uint32_t symbol)
 {
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
 }
 
 void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1447,7 +1450,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
-            m_binIf->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
+            m_cabac->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
         }
         return;
     }
@@ -1455,20 +1458,20 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     switch (partSize)
     {
     case SIZE_2Nx2N:
-        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
         break;
 
     case SIZE_2NxN:
     case SIZE_2NxnU:
     case SIZE_2NxnD:
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_binIf->encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            m_cabac->encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
             {
-                m_binIf->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
+                m_cabac->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
             }
         }
         break;
@@ -1476,18 +1479,18 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_Nx2N:
     case SIZE_nLx2N:
     case SIZE_nRx2N:
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_binIf->encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            m_cabac->encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
             {
-                m_binIf->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
+                m_cabac->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
             }
         }
         break;
@@ -1495,9 +1498,9 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_NxN:
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         break;
 
@@ -1517,14 +1520,14 @@ void TEncSbac::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
 
-    m_binIf->encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
+    m_cabac->encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
 }
 
 void TEncSbac::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
 /** code skip flag
@@ -1538,7 +1541,7 @@ void TEncSbac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
     uint32_t ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tSkipFlag");
     DTRACE_CABAC_T("\tuiCtxSkip: ");
@@ -1557,7 +1560,7 @@ void TEncSbac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
 
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tMergeFlag: ");
@@ -1581,7 +1584,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
     if (numCand > 1)
     {
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
-        m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
+        m_cabac->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
         X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
@@ -1589,7 +1592,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
         {
             uint32_t mask = (1 << unaryIdx) - 2;
             mask >>= (unaryIdx == numCand - 1) ? 1 : 0;
-            m_binIf->encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
+            m_cabac->encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
     DTRACE_CABAC_VL(g_nSymbolCounter++);
@@ -1608,14 +1611,14 @@ void TEncSbac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
-    m_binIf->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
+    m_cabac->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
 }
 
 void TEncSbac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSubdivFlag()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -1647,7 +1650,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             }
         }
 
-        m_binIf->encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
+        m_cabac->encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
     }
 
     for (j = 0; j < partNum; j++)
@@ -1660,7 +1663,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             //       1 = 10
             //       2 = 11
             int nonzero = (!!predIdx[j]);
-            m_binIf->encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
+            m_cabac->encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
         }
         else
         {
@@ -1680,7 +1683,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             dir[j] += (dir[j] > preds[j][1]) ? -1 : 0;
             dir[j] += (dir[j] > preds[j][0]) ? -1 : 0;
 
-            m_binIf->encodeBinsEP(dir[j], 5);
+            m_cabac->encodeBinsEP(dir[j], 5);
         }
     }
 }
@@ -1691,7 +1694,7 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
 
     if (intraDirChroma == DM_CHROMA_IDX)
     {
-        m_binIf->encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
     }
     else
     {
@@ -1707,9 +1710,9 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
             }
         }
 
-        m_binIf->encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
 
-        m_binIf->encodeBinsEP(intraDirChroma, 2);
+        m_cabac->encodeBinsEP(intraDirChroma, 2);
     }
 }
 
@@ -1720,11 +1723,11 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
 
     if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getCUSize(absPartIdx) != 8)
     {
-        m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
+        m_cabac->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     }
     if (interDir < 2)
     {
-        m_binIf->encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
+        m_cabac->encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
     }
 }
 
@@ -1732,7 +1735,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     int refFrame = cu->getCUMvField(list)->getRefIdx(absPartIdx);
 
-    m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
+    m_cabac->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
 
     if (refFrame > 0)
     {
@@ -1742,12 +1745,12 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
             return;
         }
         refFrame--;
-        m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
+        m_cabac->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
         if (refFrame > 0)
         {
             uint32_t mask = (1 << refFrame) - 2;
             mask >>= (refFrame == refNum) ? 1 : 0;
-            m_binIf->encodeBinsEP(mask, refFrame - (refFrame == refNum));
+            m_cabac->encodeBinsEP(mask, refFrame - (refFrame == refNum));
         }
     }
 }
@@ -1763,8 +1766,8 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     const int hor = cuMvField->getMvd(absPartIdx).x;
     const int ver = cuMvField->getMvd(absPartIdx).y;
 
-    m_binIf->encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
-    m_binIf->encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    m_cabac->encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    m_cabac->encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
 
     const bool bHorAbsGr0 = hor != 0;
     const bool bVerAbsGr0 = ver != 0;
@@ -1773,12 +1776,12 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
 
     if (bHorAbsGr0)
     {
-        m_binIf->encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        m_cabac->encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bVerAbsGr0)
     {
-        m_binIf->encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        m_cabac->encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bHorAbsGr0)
@@ -1788,7 +1791,7 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
             xWriteEpExGolomb(horAbs - 2, 1);
         }
 
-        m_binIf->encodeBinEP(0 > hor ? 1 : 0);
+        m_cabac->encodeBinEP(0 > hor ? 1 : 0);
     }
 
     if (bVerAbsGr0)
@@ -1798,7 +1801,7 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
             xWriteEpExGolomb(verAbs - 2, 1);
         }
 
-        m_binIf->encodeBinEP(0 > ver ? 1 : 0);
+        m_cabac->encodeBinEP(0 > ver ? 1 : 0);
     }
 }
 
@@ -1821,7 +1824,7 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
     if (absDQp > 0)
     {
         uint32_t sign = (dqp > 0 ? 0 : 1);
-        m_binIf->encodeBinEP(sign);
+        m_cabac->encodeBinEP(sign);
     }
 }
 
@@ -1843,7 +1846,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
             uint32_t subTUAbsPartIdx = absPartIdx + (subTU * partIdxesPerSubTU);
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
-            m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+            m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
             DTRACE_CABAC_VL(g_nSymbolCounter++)
             DTRACE_CABAC_T("\tparseQtCbf()")
             DTRACE_CABAC_T("\tsub-TU=")
@@ -1863,7 +1866,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     {
         uint32_t cbf = cu->getCbf(absPartIdx, ttype, lowestTUDepth);
 
-        m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+        m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
         DTRACE_CABAC_VL(g_nSymbolCounter++)
         DTRACE_CABAC_T("\tparseQtCbf()")
         DTRACE_CABAC_T("\tsymbol=")
@@ -1890,7 +1893,7 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint3
     }
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    m_binIf->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
+    m_cabac->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSkip()");
     DTRACE_CABAC_T("\tsymbol=")
@@ -1915,11 +1918,11 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
 
     bool writePCMSampleFlag = cu->getIPCMFlag(absPartIdx);
 
-    m_binIf->encodeBinTrm(ipcm);
+    m_cabac->encodeBinTrm(ipcm);
 
     if (writePCMSampleFlag)
     {
-        m_binIf->encodePCMAlignBits();
+        m_cabac->encodePCMAlignBits();
 
         uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
@@ -1939,7 +1942,7 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
             {
                 uint32_t sample = pcmSample[x];
 
-                m_binIf->xWritePCMCode(sample, sampleBits);
+                m_cabac->xWritePCMCode(sample, sampleBits);
             }
 
             pcmSample += width;
@@ -1956,7 +1959,7 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
             {
                 uint32_t sample = pcmSample[x];
 
-                m_binIf->xWritePCMCode(sample, sampleBits);
+                m_cabac->xWritePCMCode(sample, sampleBits);
             }
 
             pcmSample += width;
@@ -1970,13 +1973,13 @@ void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
             {
                 uint32_t sample = pcmSample[x];
 
-                m_binIf->xWritePCMCode(sample, sampleBits);
+                m_cabac->xWritePCMCode(sample, sampleBits);
             }
 
             pcmSample += width;
         }
 
-        m_binIf->resetBac();
+        m_cabac->resetBac();
     }
 }
 
@@ -1985,7 +1988,7 @@ void TEncSbac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t cbf = cu->getQtRootCbf(absPartIdx);
     uint32_t ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtRootCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -2004,7 +2007,7 @@ void TEncSbac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     uint32_t cbf = 0;
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 }
 
 void TEncSbac::codeQtRootCbfZero(TComDataCU*)
@@ -2014,7 +2017,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
     uint32_t cbf = 0;
     uint32_t ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -2046,37 +2049,37 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxX < maxGroupIdx)
     {
-        m_binIf->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     // posY
     ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
     for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxY < maxGroupIdx)
     {
-        m_binIf->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxX > 3)
     {
         uint32_t count = (groupIdxX - 2) >> 1;
         posx = posx - g_minInGroup[groupIdxX];
-        m_binIf->encodeBinsEP(posx, count);
+        m_cabac->encodeBinsEP(posx, count);
     }
     if (groupIdxY > 3)
     {
         uint32_t count = (groupIdxY - 2) >> 1;
         posy = posy - g_minInGroup[groupIdxY];
-        m_binIf->encodeBinsEP(posy, count);
+        m_cabac->encodeBinsEP(posy, count);
     }
 }
 
@@ -2206,7 +2209,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
             uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-            m_binIf->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
+            m_cabac->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
@@ -2220,7 +2223,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
                     ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
-                    m_binIf->encodeBin(sig, baseCtx[ctxSig]);
+                    m_cabac->encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
                 {
@@ -2257,7 +2260,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
             for (int idx = 0; idx < numC1Flag; idx++)
             {
                 uint32_t symbol = absCoeff[idx] > 1;
-                m_binIf->encodeBin(symbol, baseCtxMod[c1]);
+                m_cabac->encodeBin(symbol, baseCtxMod[c1]);
                 if (symbol)
                 {
                     c1 = 0;
@@ -2279,17 +2282,17 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
                 if (firstC2FlagIdx != -1)
                 {
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                    m_binIf->encodeBin(symbol, baseCtxMod[0]);
+                    m_cabac->encodeBin(symbol, baseCtxMod[0]);
                 }
             }
 
             if (beValid && signHidden)
             {
-                m_binIf->encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
+                m_cabac->encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
             }
             else
             {
-                m_binIf->encodeBinsEP(coeffSigns, numNonZero);
+                m_cabac->encodeBinsEP(coeffSigns, numNonZero);
             }
 
             int firstCoeff2 = 1;
@@ -2324,14 +2327,14 @@ void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
     uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
     uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
 
-    m_binIf->encodeBinEP(isCodeNonZero);
+    m_cabac->encodeBinEP(isCodeNonZero);
     if (isCodeNonZero)
     {
         uint32_t mask = (1 << (code - 1)) - 1;
         uint32_t len = code - 1 + isCodeLast;
         mask <<= isCodeLast;
 
-        m_binIf->encodeBinsEP(mask, len);
+        m_cabac->encodeBinsEP(mask, len);
     }
 }
 
@@ -2341,7 +2344,7 @@ void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
  */
 void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
 {
-    m_binIf->encodeBinsEP(code, length);
+    m_cabac->encodeBinsEP(code, length);
 }
 
 /** Code SAO merge flags
@@ -2351,7 +2354,7 @@ void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
 void TEncSbac::codeSaoMerge(uint32_t code)
 {
     X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
-    m_binIf->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
+    m_cabac->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
 /** Code SAO type index
@@ -2359,10 +2362,10 @@ void TEncSbac::codeSaoMerge(uint32_t code)
  */
 void TEncSbac::codeSaoTypeIdx(uint32_t code)
 {
-    m_binIf->encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
+    m_cabac->encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
     if (code != 0)
     {
-        m_binIf->encodeBinEP(code <= 4 ? 1 : 0);
+        m_cabac->encodeBinEP(code <= 4 ? 1 : 0);
     }
 }
 
