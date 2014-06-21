@@ -56,9 +56,7 @@ void TEncEntropy::encodeSliceHeader(TComSlice* slice)
     {
         SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
-        {
-            slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
-        }
+        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
 
     m_entropyCoderIf->codeSliceHeader(slice);
