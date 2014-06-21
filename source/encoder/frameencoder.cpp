@@ -651,45 +651,29 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
         {
             SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-            int numCuInWidth     = saoParam->numCuInWidth;
-            int cuAddrInSlice    = cuAddr;
-            int rx = cuAddr % numCuInWidth;
-            int ry = cuAddr / numCuInWidth;
-            int allowMergeLeft = 1;
-            int allowMergeUp   = 1;
-            int addr = cu->getAddr();
-            allowMergeLeft = (rx > 0) && (cuAddrInSlice != 0);
-            allowMergeUp = (ry > 0) && (cuAddrInSlice >= 0);
+
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
-                int mergeLeft = saoParam->saoLcuParam[0][addr].mergeLeftFlag;
-                int mergeUp = saoParam->saoLcuParam[0][addr].mergeUpFlag;
-                if (allowMergeLeft)
-                {
+                int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag;
+                int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag;
+                if (col)
                     entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeLeft);
-                }
                 else
-                {
                     mergeLeft = 0;
-                }
-                if (mergeLeft == 0)
+                if (!mergeLeft)
                 {
-                    if (allowMergeUp)
-                    {
+                    if (lin)
                         entropyCoder->m_entropyCoderIf->codeSaoMerge(mergeUp);
-                    }
                     else
-                    {
                         mergeUp = 0;
-                    }
-                    if (mergeUp == 0)
+                    if (!mergeUp)
                     {
-                        for (int compIdx = 0; compIdx < 3; compIdx++)
+                        if (saoParam->bSaoFlag[0])
+                            entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
+                        if (saoParam->bSaoFlag[1])
                         {
-                            if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                            {
-                                entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
-                            }
+                            entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
+                            entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
                         }
                     }
                 }
