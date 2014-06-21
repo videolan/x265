@@ -203,12 +203,11 @@ struct CLIOptions
     std::fstream bitstreamFile;
     bool bProgress;
     bool bForceY4m;
+    bool bDither;
 
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
-
-    bool dither;
 
     int64_t startTime;
     int64_t prevUpdateTime;
@@ -228,7 +227,7 @@ struct CLIOptions
         bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
-        dither = false;
+        bDither = false;
         qpfile = NULL;
     }
 
@@ -534,9 +533,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("recon") reconfn = optarg;
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("dither") this->dither = true;
+            OPT("dither") this->bDither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("y4m") bForceY4m = true;
+            OPT("y4m") this->bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
             OPT("qpfile")
@@ -608,7 +607,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    this->input = Input::open(info, bForceY4m);
+    this->input = Input::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -773,13 +772,13 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
-    if (cliopt.dither)
+    if (cliopt.bDither)
     {
         errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
         if (errorBuf)
             memset(errorBuf, 0, (param->sourceWidth + 1) * sizeof(int16_t));
         else
-            cliopt.dither = false;
+            cliopt.bDither = false;
     }
 
     // main encoder loop
@@ -803,7 +802,7 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.dither)
+        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
         {
             ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
             pic_in->bitDepth = X265_DEPTH;
