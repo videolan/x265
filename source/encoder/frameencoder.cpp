@@ -651,12 +651,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 
         if (slice->getSPS()->getUseSAO())
         {
-            if (!slice->getSaoEnabledFlag() && !slice->getSaoEnabledFlagChroma())
-            {
-                for (int i = 0; i < 3; i++)
-                    saoParam->saoLcuParam[i][cuAddr].reset();
-            }
-            else if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
+            if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
                 int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
                 int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
@@ -674,6 +669,11 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
                         entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
                     }
                 }
+            }
+            else
+            {
+                for (int i = 0; i < 3; i++)
+                    saoParam->saoLcuParam[i][cuAddr].reset();
             }
         }
 
