@@ -105,15 +105,27 @@ typedef struct _SaoLcuParam
     int        partIdx;
     int        partIdxTmp;
     int        length;
+
+    void reset()
+    {
+        mergeUpFlag   = false;
+        mergeLeftFlag = false;
+        typeIdx       = -1;
+        subTypeIdx    = 0;
+        offset[0]     = 0;
+        offset[1]     = 0;
+        offset[2]     = 0;
+        offset[3]     = 0;
+    }
 } SaoLcuParam;
 
 struct SAOParam
 {
-    bool       bSaoFlag[2];
-    SAOQTPart* saoPart[3];
-    int        maxSplitLevel;
-    bool         oneUnitFlag[3];
     SaoLcuParam* saoLcuParam[3];
+    SAOQTPart*   saoPart[3];
+    bool         bSaoFlag[2];
+    bool         oneUnitFlag[3];
+    int          maxSplitLevel;
     int          numCuInHeight;
     int          numCuInWidth;
     ~SAOParam();

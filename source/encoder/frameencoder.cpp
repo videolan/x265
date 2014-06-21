@@ -631,6 +631,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? heightInLCUs : 1;
+    SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
 
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
@@ -648,11 +649,14 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
         m_sbacCoder.load(getSbacCoder(subStrm));
 
-        if (slice->getSPS()->getUseSAO() && (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma()))
+        if (slice->getSPS()->getUseSAO())
         {
-            SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-
-            if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
+            if (!slice->getSaoEnabledFlag() && !slice->getSaoEnabledFlagChroma())
+            {
+                for (int i = 0; i < 3; i++)
+                    saoParam->saoLcuParam[i][cuAddr].reset();
+            }
+            else if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
                 int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
                 int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
@@ -669,26 +673,6 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
                         entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
                         entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
                     }
-                }
-            }
-        }
-        else if (slice->getSPS()->getUseSAO())
-        {
-            int addr = cu->getAddr();
-            SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-            for (int cIdx = 0; cIdx < 3; cIdx++)
-            {
-                SaoLcuParam *saoLcuParam = &(saoParam->saoLcuParam[cIdx][addr]);
-                if (((cIdx == 0) && !slice->getSaoEnabledFlag()) || ((cIdx == 1 || cIdx == 2) && !slice->getSaoEnabledFlagChroma()))
-                {
-                    saoLcuParam->mergeUpFlag   = 0;
-                    saoLcuParam->mergeLeftFlag = 0;
-                    saoLcuParam->subTypeIdx    = 0;
-                    saoLcuParam->typeIdx       = -1;
-                    saoLcuParam->offset[0]     = 0;
-                    saoLcuParam->offset[1]     = 0;
-                    saoLcuParam->offset[2]     = 0;
-                    saoLcuParam->offset[3]     = 0;
                 }
             }
         }
