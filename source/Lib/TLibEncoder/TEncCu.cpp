@@ -111,43 +111,42 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
     int unitSize = maxWidth >> totalDepth;
     int csp = m_param->internalCsp;
 
+    m_memPool = new TComDataCU[totalDepth];
+
     bool ok = true;
     for (int i = 0; i < totalDepth; i++)
     {
         uint32_t numPartitions = 1 << ((totalDepth - i) << 1);
         uint32_t cuSize = maxWidth >> i;
 
-        pDataCU = new TComDataCU[8];
-
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
 
-        m_memPool[i] = new TComDataCU;
-        ok &= m_memPool[i]->initialize(numPartitions, sizeL, sizeC, 8);
+        ok &= m_memPool[i].initialize(numPartitions, sizeL, sizeC, 8);
 
-        m_interCU_2Nx2N[i]  = &pDataCU[0];
-        m_interCU_2Nx2N[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 0);
+        m_interCU_2Nx2N[i]  = new TComDataCU;
+        m_interCU_2Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 0);
 
-        m_interCU_2NxN[i]   = &pDataCU[1];
-        m_interCU_2NxN[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 1);
+        m_interCU_2NxN[i]   = new TComDataCU;
+        m_interCU_2NxN[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 1);
 
-        m_interCU_Nx2N[i]   = &pDataCU[2];
-        m_interCU_Nx2N[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 2);
+        m_interCU_Nx2N[i]   = new TComDataCU;
+        m_interCU_Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 2);
 
-        m_intraInInterCU[i] = &pDataCU[3];
-        m_intraInInterCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 3);
+        m_intraInInterCU[i] = new TComDataCU;
+        m_intraInInterCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 3);
 
-        m_mergeCU[i]        = &pDataCU[4];
-        m_mergeCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 4);
+        m_mergeCU[i]        = new TComDataCU;
+        m_mergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 4);
 
-        m_bestMergeCU[i]    = &pDataCU[5];
-        m_bestMergeCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 5);
+        m_bestMergeCU[i]    = new TComDataCU;
+        m_bestMergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 5);
 
-        m_bestCU[i]         = &pDataCU[6];
-        m_bestCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 6);
+        m_bestCU[i]         = new TComDataCU;
+        m_bestCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 6);
 
-        m_tempCU[i]         = &pDataCU[7];
-        m_tempCU[i]->create(m_memPool[i], numPartitions, cuSize, unitSize, csp, 7);
+        m_tempCU[i]         = new TComDataCU;
+        m_tempCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 7);
 
         m_bestPredYuv[i] = new TComYuv;
         ok &= m_bestPredYuv[i]->create(cuSize, cuSize, csp);
@@ -188,9 +187,31 @@ void TEncCu::destroy()
 {
     for (int i = 0; i < m_totalDepth; i++)
     {
-        m_memPool[i]->destroy();
-        delete m_memPool[i];
-        m_memPool[i] = NULL;
+        m_memPool[i].destroy();
+
+        delete m_interCU_2Nx2N[i];
+        m_interCU_2Nx2N[i] = NULL;
+
+        delete m_interCU_2NxN[i];
+        m_interCU_2NxN[i] = NULL;
+
+        delete m_interCU_Nx2N[i];
+        m_interCU_Nx2N[i] = NULL;
+
+        delete m_intraInInterCU[i];
+        m_intraInInterCU[i] = NULL;
+
+        delete m_mergeCU[i];
+        m_mergeCU[i] = NULL;
+
+        delete m_bestMergeCU[i];
+        m_bestMergeCU[i] = NULL;
+
+        delete m_bestCU[i] ;
+        m_bestCU[i] = NULL;
+
+        delete m_tempCU[i] ;
+        m_tempCU[i] = NULL;
 
         if (m_bestPredYuv && m_bestPredYuv[i])
         {
@@ -254,8 +275,8 @@ void TEncCu::destroy()
         }
     }
 
-    delete [] pDataCU;
-    pDataCU = NULL;
+    delete [] m_memPool;
+    m_memPool = NULL;
 
     delete [] m_bestPredYuv;
     m_bestPredYuv = NULL;

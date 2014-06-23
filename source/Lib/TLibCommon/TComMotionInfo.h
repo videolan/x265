@@ -108,10 +108,10 @@ public:
     // initialize / create / destroy
     // ------------------------------------------------------------------------------------------------------------------
 
-    MVFieldMemPool *m_MVFieldMemPool;
+    MVFieldMemPool m_MVFieldMemPool;
 
     bool initialize(uint32_t numPartition, uint32_t numBlocks);
-    void create(TComCUMvField p, uint32_t numPartition, int index, int idx);
+    void create(TComCUMvField *p, uint32_t numPartition, int index, int idx);
     void destroy();
 
     // ------------------------------------------------------------------------------------------------------------------

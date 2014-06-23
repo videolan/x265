@@ -169,7 +169,7 @@ private:
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
 
-    DataCUMemPool *m_DataCUMemPool;
+    DataCUMemPool m_DataCUMemPool;
     TComCUMvField m_cuMvFieldMemPool;
 
 protected:

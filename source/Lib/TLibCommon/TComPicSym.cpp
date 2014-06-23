@@ -99,6 +99,11 @@ void TComPicSym::destroy()
     delete m_slice;
     m_slice = NULL;
 
+    for (int i = 0; i < m_numCUsInFrame; i++)
+    {
+        m_cuData[i].destroy();
+    }
+
     delete [] m_cuData;
     m_cuData = NULL;
 

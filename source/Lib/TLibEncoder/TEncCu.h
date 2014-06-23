@@ -90,8 +90,7 @@ private:
 
     static const int MAX_PRED_TYPES = 6;
 
-    TComDataCU* pDataCU;
-    TComDataCU* m_memPool[MAX_CU_DEPTH];
+    TComDataCU* m_memPool;
 
     TComDataCU* m_interCU_2Nx2N[MAX_CU_DEPTH];
     TComDataCU* m_interCU_2NxN[MAX_CU_DEPTH];
