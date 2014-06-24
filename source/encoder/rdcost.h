@@ -55,12 +55,12 @@ public:
 
     void setCbDistortionWeight(double cbDistortionWeight)
     {
-        m_cbDistortionWeight = (uint64_t)floor(256.0 * cbDistortionWeight);
+        m_cbDistortionWeight = (uint64_t)floor(cbDistortionWeight);
     }
 
     void setCrDistortionWeight(double crDistortionWeight)
     {
-        m_crDistortionWeight = (uint64_t)floor(256.0 * crDistortionWeight);
+        m_crDistortionWeight = (uint64_t)floor(crDistortionWeight);
     }
 
     void setPsyRdScale(double scale)

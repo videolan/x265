@@ -152,8 +152,12 @@ void TEncSearch::setQP(int qp, int qpCb, int qpCr)
     m_me.setQP(qp);
     m_trQuant->setLambdas(lambda2, lambdaCb, lambdaCr);
     m_rdCost->setLambda(lambda2, x265_lambda_tab[qp]);
-    m_rdCost->setCbDistortionWeight(1.0);
-    m_rdCost->setCrDistortionWeight(1.0);
+    int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
+    double lambdaOffset = m_rdCost->psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    m_rdCost->setCbDistortionWeight(lambdaOffset);
+    chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
+    lambdaOffset = m_rdCost->psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    m_rdCost->setCrDistortionWeight(lambdaOffset);
 }
 
 void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
