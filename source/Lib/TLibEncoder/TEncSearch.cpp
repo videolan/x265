@@ -258,7 +258,8 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
         trDepth--;
         uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
         bool bFirstQ = ((absPartIdx & (qpdiv - 1)) == 0);
-        if (!bFirstQ)
+        bool bSecondQ = (chFmt == CHROMA_422 && splitIntoSubTUs) ? ((absPartIdx & (qpdiv - 1)) == 2) : false;
+        if ((!bFirstQ) && (!bSecondQ))
         {
             return;
         }
@@ -1226,7 +1227,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                         }
                         else
                         {
-                            uint32_t bitsTmp = xGetIntraBitsQTChroma(cu, trDepth, absPartIdxC, chromaId, splitIntoSubTUs);
+                            uint32_t bitsTmp = singleCbfCTmp ? xGetIntraBitsQTChroma(cu, trDepth, absPartIdxC, chromaId, splitIntoSubTUs) : 0;
                             if (m_rdCost->psyRdEnabled())
                             {
                                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;

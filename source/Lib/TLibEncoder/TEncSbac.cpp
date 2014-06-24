@@ -2116,7 +2116,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
 
 #if CHECKED_BUILD || _DEBUG
-    X265_CHECK(numSig > 0, "cbf check fail");
+    X265_CHECK(numSig > 0, "cbf check fail\n");
 #endif
 
     bool beValid;
