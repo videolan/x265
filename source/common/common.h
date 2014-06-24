@@ -146,6 +146,7 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_MIN4(a, b, c, d) X265_MIN((a), X265_MIN3((b), (c), (d)))
 #define X265_MAX4(a, b, c, d) X265_MAX((a), X265_MAX3((b), (c), (d)))
 #define QP_BD_OFFSET (6 * (X265_DEPTH - 8))
+#define MAX_CHROMA_LAMBDA_OFFSET 36
 
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
