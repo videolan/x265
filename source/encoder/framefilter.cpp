@@ -121,13 +121,15 @@ void FrameFilter::start(Frame *pic)
     }
 }
 
-void FrameFilter::processRow(int row)
+void FrameFilter::processRow(int row, const int threadId)
 {
     PPAScopeEvent(Thread_filterCU);
+    assert(threadId >= 0);
+    ThreadLocalData& tld = Encoder::m_threadLocalData[threadId];
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
-        processRowPost(row);
+        processRowPost(row, threadId);
         return;
     }
 
@@ -146,26 +148,23 @@ void FrameFilter::processRow(int row)
 
     if (m_param->bEnableLoopFilter)
     {
-        bool edgeFilter[256];    // NOTE: the maximum LCU 64x64 have 256 partitions
-        uint8_t blockingStrength[256];
-
         for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            m_loopFilter.loopFilterCU(cu, EDGE_VER, edgeFilter, blockingStrength);
+            m_loopFilter.loopFilterCU(cu, EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
-                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, edgeFilter, blockingStrength);
+                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
             }
         }
 
         {
             TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, edgeFilter, blockingStrength);
+            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
         }
     }
 
@@ -178,7 +177,7 @@ void FrameFilter::processRow(int row)
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
         {
-            processSao(row - m_saoRowDelay);
+            processSao(row - m_saoRowDelay, threadId);
         }
     }
 
@@ -190,7 +189,7 @@ void FrameFilter::processRow(int row)
 
     if (row > 0)
     {
-        processRowPost(row - 1);
+        processRowPost(row - 1, threadId);
     }
 
     if (row == m_numRows - 1)
@@ -201,15 +200,15 @@ void FrameFilter::processRow(int row)
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
             {
-                processSao(i);
+                processSao(i, threadId);
             }
         }
 
-        processRowPost(row);
+        processRowPost(row, threadId);
     }
 }
 
-void FrameFilter::processRowPost(int row)
+void FrameFilter::processRowPost(int row, const int /*threadId*/)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -502,7 +501,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     return ssim;
 }
 
-void FrameFilter::processSao(int row)
+void FrameFilter::processSao(int row, const int threadId)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;

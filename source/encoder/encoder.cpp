@@ -42,6 +42,7 @@
 #include "x265.h"
 
 using namespace x265;
+ThreadLocalData* Encoder::m_threadLocalData;
 
 Encoder::Encoder()
 {
@@ -194,9 +195,10 @@ void Encoder::init()
     if (m_frameEncoder)
     {
         int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+        int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
         for (int i = 0; i < m_param->frameNumThreads; i++)
         {
-            if (!m_frameEncoder[i].init(this, numRows))
+            if (!m_frameEncoder[i].init(this, numRows, numCols))
             {
                 x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
                 m_aborted = true;

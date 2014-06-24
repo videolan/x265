@@ -80,15 +80,17 @@ void FrameEncoder::destroy()
     stop();
 }
 
-bool FrameEncoder::init(Encoder *top, int numRows)
+bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 {
     bool ok = true;
 
     m_top = top;
     m_param = top->m_param;
     m_numRows = numRows;
+    m_numCols = numCols;
     m_filterRowDelay = (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary) ?
         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
+    m_filterRowDelayCus = m_filterRowDelay * numCols;
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
@@ -505,7 +507,7 @@ void FrameEncoder::compressFrame()
             // Extend border after whole-frame SAO is finished
             for (int row = 0; row < m_numRows; row++)
             {
-                m_frameFilter.processRowPost(row);
+                m_frameFilter.processRowPost(row, 0);
             }
         }
 
@@ -845,7 +847,7 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     }
 
     // setup thread-local data
-    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
+    ThreadLocalData& tld = threadId >= 0 ? Encoder::m_threadLocalData[threadId] : m_tld;
     tld.m_trQuant.m_nr = &m_nr;
     tld.m_search.m_mref = m_mref;
     codeRow.setThreadLocalData(tld);
@@ -856,7 +858,8 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->getSliceType()];
 
     int64_t startTime = x265_mdate();
-    const uint32_t numCols = m_frame->getPicSym()->getFrameWidthInCU();
+    assert(m_frame->getPicSym()->getFrameWidthInCU() == m_numCols);
+    const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 

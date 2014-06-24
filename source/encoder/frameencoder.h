@@ -65,15 +65,15 @@ public:
 
     void setThreadPool(ThreadPool *p);
 
-    bool init(Encoder *top, int numRows);
+    bool init(Encoder *top, int numRows, int numCols);
 
     void destroy();
 
     void processRowEncoder(int row, const int threadId);
 
-    void processRowFilter(int row)
+    void processRowFilter(int row, const int threadId)
     {
-        m_frameFilter.processRow(row);
+        m_frameFilter.processRow(row, threadId);
     }
 
     void enqueueRowEncoder(int row)
@@ -108,7 +108,7 @@ public:
         }
         else
         {
-            processRowFilter(realRow);
+            processRowFilter(realRow, threadId);
 
             // NOTE: Active next row
             if (realRow != m_numRows - 1)
@@ -154,6 +154,7 @@ public:
     bool                     m_threadActive;
 
     int                      m_numRows;
+    uint32_t                 m_numCols;
     CTURow*                  m_rows;
     TComSPS                  m_sps;
     TComPPS                  m_pps;
@@ -195,6 +196,7 @@ protected:
     Frame*                   m_frame;
 
     int                      m_filterRowDelay;
+    int                      m_filterRowDelayCus;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
     bool                     m_isReferenced;

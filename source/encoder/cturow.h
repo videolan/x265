@@ -47,6 +47,10 @@ struct ThreadLocalData
     RDCost      m_rdCost;
     TComTrQuant m_trQuant;
 
+    // NOTE: the maximum LCU 64x64 have 256 partitions
+    bool        m_edgeFilter[256];
+    uint8_t     m_blockingStrength[256];
+
     void init(Encoder&);
     ~ThreadLocalData();
 };
