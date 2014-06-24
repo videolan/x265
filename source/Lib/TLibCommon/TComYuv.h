@@ -131,7 +131,6 @@ public:
     void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     void    copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize);
-    void    copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs);
 
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
