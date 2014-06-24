@@ -976,6 +976,18 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
                 }
             }
         }
+
+        // NOTE: do CU level Filter
+        {
+            // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+            if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
+            {
+                // TODO: seems dead code, DEBUG IT!
+                m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
+            }
+        }
+
+        // NOTE: active next row
         if (curRow.m_completed >= 2 && row < m_numRows - 1)
         {
             ScopedLock below(m_rows[row + 1].m_lock);

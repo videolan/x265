@@ -813,11 +813,10 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     }
 }
 
-void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idxY)
+void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
 {
-    int addr, yCbCr;
+    int addr;
     int x, y;
-    TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
 
     pixel* fenc;
     pixel* pRec;
@@ -837,7 +836,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idx
     int endY;
     int firstX, firstY;
 
-    int idxX;
     int frameWidthInCU  = m_numCuInWidth;
 
     int isChroma;
@@ -848,11 +846,12 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idx
     pixel* pTableBo;
     int32_t *tmp_swap;
 
+    // NOTE: Row
     {
-        for (idxX = 0; idxX < frameWidthInCU; idxX++)
+        // NOTE: Col
         {
-            lcuHeight = pTmpSPS->getMaxCUSize();
-            lcuWidth  = pTmpSPS->getMaxCUSize();
+            lcuHeight = g_maxCUSize;
+            lcuWidth  = g_maxCUSize;
             addr     = idxX  + frameWidthInCU * idxY;
             pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();
@@ -860,7 +859,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idx
 
             memset(m_countPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
             memset(m_offsetOrgPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
-            for (yCbCr = 0; yCbCr < 3; yCbCr++)
+            for (int yCbCr = 0; yCbCr < 3; yCbCr++)
             {
                 isChroma = (yCbCr != 0) ? 1 : 0;
 
@@ -1116,9 +1115,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(Frame* pic, int idx
     }
 }
 
-/** get SAO statistics
- * \param  *psQTPart,  yCbCr
- */
 void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, int yCbCr)
 {
     int levelIdx, partIdx, typeIdx, classIdx;

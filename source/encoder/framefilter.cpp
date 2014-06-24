@@ -142,11 +142,7 @@ void FrameFilter::processRow(int row)
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
 
-    // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
-    {
-        m_sao.calcSaoStatsRowCus_BeforeDblk(m_pic, row);
-    }
+    // NOTE: remove m_sao.calcSaoStatsRowCus_BeforeDblk at here, we do it in encode loop now
 
     if (m_param->bEnableLoopFilter)
     {
