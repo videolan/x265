@@ -1267,6 +1267,13 @@ void Encoder::configure(x265_param *p)
     if (p->rdLevel < 5)
         p->psyRd = 0.0;
 
+    /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
+    if (p->internalCsp == X265_CSP_I444 && p->psyRd)
+    {
+        p->cbQpOffset += 6;
+        p->crQpOffset += 6;
+    }
+
     // disable RDOQ if psy-rd is enabled; until we make it psy-aware
     m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 4;
 
