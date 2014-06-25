@@ -165,23 +165,6 @@ void TEncEntropy::encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t d
     m_entropyCoder->codePartSize(cu, absPartIdx, depth);
 }
 
-/** Encode I_PCM information.
- * \param cu pointer to CU
- * \param absPartIdx CU index
- * \returns void
- */
-void TEncEntropy::encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
-{
-    if (!cu->getSlice()->getSPS()->getUsePCM()
-        || cu->getCUSize(absPartIdx) > (1 << cu->getSlice()->getSPS()->getPCMLog2MaxSize())
-        || cu->getCUSize(absPartIdx) < (1 << cu->getSlice()->getSPS()->getPCMLog2MinSize()))
-    {
-        return;
-    }
-
-    m_entropyCoder->codeIPCMInfo(cu, absPartIdx);
-}
-
 bool TEncEntropy::isNextTUSection(TComTURecurse *tuIterator)
 {
     if (tuIterator->m_splitMode == DONT_SPLIT)

@@ -90,8 +90,7 @@ typedef struct
     uint8_t* cbfMemBlock;
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
-    bool*    iPCMFlagMemBlock;
-    pixel*   iPCMSampleYMemBlock;
+    pixel*   m_tqBypassYuvMemBlock;
 } DataCUMemPool;
 
 
@@ -140,10 +139,7 @@ private:
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
-
-    pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
-    pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
-    pixel*        m_iPCMSampleCr;       ///< PCM sample buffer (Cr)
+    pixel*        m_tqBypassOrigYuv[3]; ///< Original Lossless YUV buffer (Y/Cb/Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -163,7 +159,6 @@ private:
     uint8_t*      m_chromaIntraDir;   ///< array of intra directions (chroma)
     uint8_t*      m_interDir;         ///< array of inter directions
     uint8_t*      m_mvpIdx[2];        ///< array of motion vector predictor candidates or merge candidate indices [0]
-    bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
@@ -206,9 +201,9 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
-    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index);
+    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index, bool isLossLess);
 
-    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks);
+    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
 
     void          destroy();
 
@@ -318,11 +313,9 @@ public:
 
     coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
-    pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
+    pixel*&       getLumaOrigYuv()             { return m_tqBypassOrigYuv[0]; }
 
-    pixel*&       getPCMSampleCb()            { return m_iPCMSampleCb; }
-
-    pixel*&       getPCMSampleCr()            { return m_iPCMSampleCr; }
+    pixel*&       getChromaOrigYuv(uint32_t chromaId) { return m_tqBypassOrigYuv[chromaId]; }
 
     uint8_t       getCbf(uint32_t idx, TextType ttype) { return m_cbf[ttype][idx]; }
 
@@ -375,14 +368,6 @@ public:
     uint8_t       getInterDir(uint32_t idx) { return m_interDir[idx]; }
 
     void          setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
-
-    bool*         getIPCMFlag()             { return m_iPCMFlags; }
-
-    bool          getIPCMFlag(uint32_t idx)             { return m_iPCMFlags[idx]; }
-
-    void          setIPCMFlag(uint32_t idx, bool b)     { m_iPCMFlags[idx] = b; }
-
-    void          setIPCMFlagSubParts(bool bIpcmFlag, uint32_t absPartIdx, uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for accessing partition information

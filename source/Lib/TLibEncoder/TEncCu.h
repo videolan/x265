@@ -126,7 +126,7 @@ private:
     uint8_t      m_totalDepth;
 
     bool         m_bEncodeDQP;
-    bool         m_CUTransquantBypassFlagValue;
+    bool         m_CUTransquantBypass;
 
 public:
 
@@ -176,7 +176,6 @@ protected:
     void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckDQP(TComDataCU* cu);
 
-    void xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU);
     void xCopyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void xCopyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);
 
@@ -187,7 +186,7 @@ protected:
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
 
-    void xFillPCMBuffer(TComDataCU* outCU, TComYuv* origYuv);
+    void xFillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
 }
 //! \}

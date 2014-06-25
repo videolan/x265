@@ -500,7 +500,7 @@ void FrameEncoder::compressFrame()
             /* frame based SAO */
             getSAO()->SAOProcess(saoParam);
             getSAO()->endSaoEnc();
-            PCMLFDisableProcess(m_frame);
+            restoreLFDisabledOrigYuv(m_frame);
 
             // Extend border after whole-frame SAO is finished
             for (int row = 0; row < m_numRows; row++)

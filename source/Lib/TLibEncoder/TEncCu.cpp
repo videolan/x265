@@ -92,8 +92,7 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
     m_bestResiYuv = new ShortYuv*[totalDepth];
     m_bestRecoYuv = new TComYuv*[totalDepth];
 
-    m_tmpPredYuv = new TComYuv*[totalDepth];
-
+    m_tmpPredYuv     = new TComYuv*[totalDepth];
     m_modePredYuv[0] = new TComYuv*[totalDepth];
     m_modePredYuv[1] = new TComYuv*[totalDepth];
     m_modePredYuv[2] = new TComYuv*[totalDepth];
@@ -108,8 +107,9 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 
     m_origYuv = new TComYuv*[totalDepth];
 
-    int unitSize = maxWidth >> totalDepth;
-    int csp = m_param->internalCsp;
+    int unitSize  = maxWidth >> totalDepth;
+    int csp       = m_param->internalCsp;
+    bool tqBypass = m_param->bCULossless || m_param->bLossless;
 
     m_memPool = new TComDataCU[totalDepth];
 
@@ -122,31 +122,31 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
 
-        ok &= m_memPool[i].initialize(numPartitions, sizeL, sizeC, 8);
+        ok &= m_memPool[i].initialize(numPartitions, sizeL, sizeC, 8, tqBypass);
 
         m_interCU_2Nx2N[i]  = new TComDataCU;
-        m_interCU_2Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 0);
+        m_interCU_2Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 0, tqBypass);
 
         m_interCU_2NxN[i]   = new TComDataCU;
-        m_interCU_2NxN[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 1);
+        m_interCU_2NxN[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 1, tqBypass);
 
         m_interCU_Nx2N[i]   = new TComDataCU;
-        m_interCU_Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 2);
+        m_interCU_Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 2, tqBypass);
 
         m_intraInInterCU[i] = new TComDataCU;
-        m_intraInInterCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 3);
+        m_intraInInterCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 3, tqBypass);
 
         m_mergeCU[i]        = new TComDataCU;
-        m_mergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 4);
+        m_mergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 4, tqBypass);
 
         m_bestMergeCU[i]    = new TComDataCU;
-        m_bestMergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 5);
+        m_bestMergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 5, tqBypass);
 
         m_bestCU[i]         = new TComDataCU;
-        m_bestCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 6);
+        m_bestCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 6, tqBypass);
 
         m_tempCU[i]         = new TComDataCU;
-        m_tempCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 7);
+        m_tempCU[i]->create(&m_memPool[i], numPartitions, cuSize, unitSize, csp, 7, tqBypass);
 
         m_bestPredYuv[i] = new TComYuv;
         ok &= m_bestPredYuv[i]->create(cuSize, cuSize, csp);
@@ -309,7 +309,7 @@ void TEncCu::destroy()
 void TEncCu::init(Encoder* top)
 {
     m_param = top->m_param;
-    m_CUTransquantBypassFlagValue = top->m_CUTransquantBypassFlagValue;
+    m_CUTransquantBypass = top->m_CUTransquantBypassFlagValue;
 }
 
 // ====================================================================================================================
@@ -566,10 +566,10 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
         }
     }
 
-    // copy original YUV samples to PCM buffer
-    if (outBestCU->isLosslessCoded(0) && (outBestCU->getIPCMFlag(0) == false))
+    // copy original YUV samples in lossless mode
+    if (outBestCU->isLosslessCoded(0))
     {
-        xFillPCMBuffer(outBestCU, m_origYuv[depth]);
+        xFillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
     }
 
     outTempCU->initEstData(depth);
@@ -890,18 +890,6 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                     }
                 }
             }
-            // test PCM
-            if (slice->getSPS()->getUsePCM()
-                && cuSize <= (1 << slice->getSPS()->getPCMLog2MaxSize())
-                && cuSize >= (1 << slice->getSPS()->getPCMLog2MinSize()))
-            {
-                uint32_t rawbits = (2 * X265_DEPTH + X265_DEPTH) * cuSize * cuSize / 2;
-                uint32_t bestbits = outBestCU->m_totalBits;
-                if ((bestbits > rawbits) || (outBestCU->m_totalRDCost > m_rdCost->calcRdCost(0, rawbits)))
-                {
-                    xCheckIntraPCM(outBestCU, outTempCU);
-                }
-            }
         }
 
         m_entropyCoder->resetBits();
@@ -924,10 +912,10 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
             bSubBranch = true;
     }
 
-    // copy original YUV samples to PCM buffer
-    if (outBestCU->isLosslessCoded(0) && (outBestCU->getIPCMFlag(0) == false))
+    // copy original YUV samples in lossless mode
+    if (outBestCU->isLosslessCoded(0))
     {
-        xFillPCMBuffer(outBestCU, m_origYuv[depth]);
+        xFillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
     }
 
     outTempCU->initEstData(depth);
@@ -1187,18 +1175,6 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
     m_entropyCoder->encodePartSize(cu, absPartIdx, depth);
 
-    if (cu->isIntra(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N)
-    {
-        m_entropyCoder->encodeIPCMInfo(cu, absPartIdx);
-
-        if (cu->getIPCMFlag(absPartIdx))
-        {
-            // Encode slice finish
-            finishCU(cu, absPartIdx, depth);
-            return;
-        }
-    }
-
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
     m_entropyCoder->encodePredInfo(cu, absPartIdx);
 
@@ -1225,7 +1201,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
-    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     int mergeCandBuffer[MRG_MAX_NUM_CANDS];
@@ -1262,7 +1238,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                 {
                     // set MC parameters
                     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth); // interprets depth relative to LCU level
-                    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
+                    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
                     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
                     outTempCU->setMergeFlag(0, true);
                     outTempCU->setMergeIndex(0, mergeCand);
@@ -1356,7 +1332,7 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
     if (m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
     {
@@ -1374,7 +1350,7 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
     m_search->estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
@@ -1389,7 +1365,6 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     m_entropyCoder->encodePredMode(outTempCU, 0);
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
-    m_entropyCoder->encodeIPCMInfo(outTempCU, 0);
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
@@ -1421,7 +1396,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
+    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
     m_search->estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
@@ -1436,7 +1411,6 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     m_entropyCoder->encodePredMode(outTempCU, 0);
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
-    m_entropyCoder->encodeIPCMInfo(outTempCU, 0);
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
@@ -1455,50 +1429,6 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     {
         outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
     }
-    xCheckDQP(outTempCU);
-    xCheckBestMode(outBestCU, outTempCU, depth);
-}
-
-/** Check R-D costs for a CU with PCM mode.
- * \param outBestCU pointer to best mode CU data structure
- * \param outTempCU pointer to testing mode CU data structure
- * \returns void
- *
- * \note Current PCM implementation encodes sample values in a lossless way. The distortion of PCM mode CUs are zero. PCM mode is selected if the best mode yields bits greater than that of PCM mode.
- */
-void TEncCu::xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU)
-{
-    //PPAScopeEvent(TEncCU_xCheckIntraPCM);
-
-    uint32_t depth = outTempCU->getDepth(0);
-
-    outTempCU->setSkipFlagSubParts(false, 0, depth);
-    outTempCU->setIPCMFlag(0, true);
-    outTempCU->setIPCMFlagSubParts(true, 0, outTempCU->getDepth(0));
-    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
-    outTempCU->setTrIdxSubParts(0, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypassFlagValue, 0, depth);
-
-    m_search->IPCMSearch(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
-
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
-
-    m_entropyCoder->resetBits();
-    if (outTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-    {
-        m_entropyCoder->encodeCUTransquantBypassFlag(outTempCU, 0);
-    }
-    m_entropyCoder->encodeSkipFlag(outTempCU, 0);
-    m_entropyCoder->encodePredMode(outTempCU, 0);
-    m_entropyCoder->encodePartSize(outTempCU, 0, depth);
-    m_entropyCoder->encodeIPCMInfo(outTempCU, 0);
-
-    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
-
-    outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
-    outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
-
     xCheckDQP(outTempCU);
     xCheckBestMode(outBestCU, outTempCU, depth);
 }
@@ -1556,18 +1486,18 @@ void TEncCu::xCopyYuv2Tmp(uint32_t partUnitIdx, uint32_t nextDepth)
     m_bestRecoYuv[nextDepth]->copyToPartYuv(m_tmpRecoYuv[nextDepth - 1], partUnitIdx);
 }
 
-/** Function for filling the PCM buffer of a CU using its original sample array
+/** Function for filling original YUV samples of a CU in lossless mode
  * \param cu pointer to current CU
  * \param fencYuv pointer to original sample array
  * \returns void
  */
-void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
+void TEncCu::xFillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
 {
-    uint32_t width = cu->getCUSize(0);
+    uint32_t width  = cu->getCUSize(0);
     uint32_t height = cu->getCUSize(0);
 
     pixel* srcY = fencYuv->getLumaAddr();
-    pixel* dstY = cu->getPCMSampleY();
+    pixel* dstY = cu->getLumaOrigYuv();
     uint32_t srcStride = fencYuv->getStride();
 
     for (int y = 0; y < height; y++)
@@ -1581,11 +1511,11 @@ void TEncCu::xFillPCMBuffer(TComDataCU* cu, TComYuv* fencYuv)
         srcY += srcStride;
     }
 
-    pixel* srcCb = fencYuv->getCbAddr();
-    pixel* srcCr = fencYuv->getCrAddr();
+    pixel* srcCb = fencYuv->getChromaAddr(1);
+    pixel* srcCr = fencYuv->getChromaAddr(2);
 
-    pixel* dstCb = cu->getPCMSampleCb();
-    pixel* dstCr = cu->getPCMSampleCr();
+    pixel* dstCb = cu->getChromaOrigYuv(1);
+    pixel* dstCr = cu->getChromaOrigYuv(2);
 
     uint32_t srcStrideC = fencYuv->getCStride();
     uint32_t widthC  = width  >> cu->getHorzChromaShift();

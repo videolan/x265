@@ -455,7 +455,6 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     uint32_t bsAbsIdx = 0, bs = 0;
     int  offset, srcStep;
 
-    bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
     bool  bPartPNoFilter = false;
     bool  bPartQNoFilter = false;
     uint32_t  partP = 0;
@@ -522,15 +521,11 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
                 int dq = dq0 + dq3;
                 int d =  d0 + d3;
 
-                if (bPCMFilter || cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+                if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
                 {
-                    // Check if each of PUs is I_PCM with LF disabling
-                    bPartPNoFilter = (bPCMFilter && cuP->getIPCMFlag(partP));
-                    bPartQNoFilter = (bPCMFilter && cuQ->getIPCMFlag(partQ));
-
                     // check if each of PUs is lossless coded
-                    bPartPNoFilter = bPartPNoFilter || (cuP->isLosslessCoded(partP));
-                    bPartQNoFilter = bPartQNoFilter || (cuQ->isLosslessCoded(partQ));
+                    bPartPNoFilter = cuP->isLosslessCoded(partP);
+                    bPartQNoFilter = cuQ->isLosslessCoded(partQ);
                 }
 
                 if (d < beta)
@@ -566,7 +561,6 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
     const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInCUSize();
 
-    bool  bPCMFilter = (cu->getSlice()->getSPS()->getUsePCM() && cu->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
     bool  bPartPNoFilter = false;
     bool  bPartQNoFilter = false;
     uint32_t  partP;
@@ -633,15 +627,11 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             qpP = cuP->getQP(partP);
 
-            if (bPCMFilter || cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+            if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             {
-                // Check if each of PUs is I_PCM with LF disabling
-                bPartPNoFilter = (bPCMFilter && cuP->getIPCMFlag(partP));
-                bPartQNoFilter = (bPCMFilter && cuQ->getIPCMFlag(partQ));
-
                 // check if each of PUs is lossless coded
-                bPartPNoFilter = bPartPNoFilter || (cuP->isLosslessCoded(partP));
-                bPartQNoFilter = bPartQNoFilter || (cuQ->isLosslessCoded(partQ));
+                bPartPNoFilter = cuP->isLosslessCoded(partP);
+                bPartQNoFilter = cuQ->isLosslessCoded(partQ);
             }
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)

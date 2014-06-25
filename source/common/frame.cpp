@@ -108,7 +108,7 @@ bool Frame::allocPicSym(x265_param *param)
     if (m_picSym && m_reconPicYuv)
     {
         m_picSym->m_reconPicYuv = m_reconPicYuv;
-        return m_picSym->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
+        return m_picSym->create(param) &&
           m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxCUDepth);
     }
     else

@@ -464,15 +464,7 @@ void TEncSbac::codeSPS(TComSPS* sps)
     WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
     WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
 
-    WRITE_FLAG(sps->getUsePCM() ? 1 : 0, "pcm_enabled_flag");
-    if (sps->getUsePCM())
-    {
-        WRITE_CODE(sps->getPCMBitDepthLuma() - 1, 4,                     "pcm_sample_bit_depth_luma_minus1");
-        WRITE_CODE(sps->getPCMBitDepthChroma() - 1, 4,                   "pcm_sample_bit_depth_chroma_minus1");
-        WRITE_UVLC(sps->getPCMLog2MinSize() - 3,                         "log2_min_pcm_luma_coding_block_size_minus3");
-        WRITE_UVLC(sps->getPCMLog2MaxSize() - sps->getPCMLog2MinSize(),  "log2_diff_max_min_pcm_luma_coding_block_size");
-        WRITE_FLAG(sps->getPCMFilterDisableFlag() ? 1 : 0,               "pcm_loop_filter_disable_flag");
-    }
+    WRITE_FLAG(0, "pcm_enabled_flag"); //PCM mode disabled
 
     X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
 
@@ -1905,82 +1897,6 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint3
     DTRACE_CABAC_T("\tuiAbsPartIdx=")
     DTRACE_CABAC_V(absPartIdx)
     DTRACE_CABAC_T("\n")
-}
-
-/** Code I_PCM information.
- * \param cu pointer to CU
- * \param absPartIdx CU index
- * \returns void
- */
-void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
-{
-    uint32_t ipcm = (cu->getIPCMFlag(absPartIdx) == true) ? 1 : 0;
-
-    bool writePCMSampleFlag = cu->getIPCMFlag(absPartIdx);
-
-    m_cabac->encodeBinTrm(ipcm);
-
-    if (writePCMSampleFlag)
-    {
-        m_cabac->encodePCMAlignBits();
-
-        uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
-        uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
-        uint32_t width;
-        uint32_t height;
-        uint32_t sampleBits;
-        uint32_t x, y;
-
-        pixel *pcmSample = cu->getPCMSampleY() + lumaOffset;
-        width = cu->getCUSize(absPartIdx);
-        height = cu->getCUSize(absPartIdx);
-        sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthLuma();
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_cabac->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        pcmSample = cu->getPCMSampleCb() + chromaOffset;
-        width = cu->getCUSize(absPartIdx) / 2;
-        height = cu->getCUSize(absPartIdx) / 2;
-        sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthChroma();
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_cabac->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        pcmSample = cu->getPCMSampleCr() + chromaOffset;
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_cabac->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        m_cabac->resetBac();
-    }
 }
 
 void TEncSbac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)

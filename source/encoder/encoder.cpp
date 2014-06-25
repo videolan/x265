@@ -1040,10 +1040,6 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setLog2MinCodingBlockSize(log2MinCUSize);
     sps->setLog2DiffMaxMinCodingBlockSize(sps->getMaxCUDepth() - g_addCUDepth);
 
-    sps->setPCMLog2MinSize(m_pcmLog2MinSize);
-    sps->setUsePCM(m_usePCM);
-    sps->setPCMLog2MaxSize(m_pcmLog2MaxSize);
-
     sps->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
     sps->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
     sps->setQuadtreeTUMaxDepthInter(m_param->tuQTMaxInterDepth);
@@ -1082,10 +1078,6 @@ void Encoder::initSPS(TComSPS *sps)
         sps->setNumReorderPics(m_numReorderPics[i], i);
     }
 
-    // TODO: it is recommended for this to match the input bit depth
-    sps->setPCMBitDepthLuma(X265_DEPTH);
-    sps->setPCMBitDepthChroma(X265_DEPTH);
-    sps->setPCMFilterDisableFlag(m_bPCMFilterDisableFlag);
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
 
@@ -1422,10 +1414,4 @@ void Encoder::configure(x265_param *p)
     m_maxBitsPerMinCuDenom = 1;
     m_log2MaxMvLengthHorizontal = 15;
     m_log2MaxMvLengthVertical = 15;
-
-    /* Should PCM be entirely removed? Would it help lossless? */
-    m_usePCM = 0;
-    m_pcmLog2MinSize = 3;
-    m_pcmLog2MaxSize = 5;
-    m_bPCMFilterDisableFlag = false;
 }

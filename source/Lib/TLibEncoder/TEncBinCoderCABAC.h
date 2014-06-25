@@ -63,9 +63,6 @@ public:
     void  flush();
 
     void  resetBac();
-    void  encodePCMAlignBits();
-    void  xWritePCMCode(uint32_t code, uint32_t length);
-
     void  resetBits();
 
     uint32_t getNumWrittenBits()

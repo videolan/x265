@@ -812,9 +812,6 @@ private:
     uint32_t    m_quadtreeTULog2MinSize;
     uint32_t    m_quadtreeTUMaxDepthInter;
     uint32_t    m_quadtreeTUMaxDepthIntra;
-    bool        m_usePCM;
-    uint32_t    m_pcmLog2MaxSize;
-    uint32_t    m_pcmLog2MinSize;
     bool        m_useAMP;
 
     // Parameter
@@ -822,10 +819,6 @@ private:
     int         m_bitDepthC;
     int         m_qpBDOffsetY;
     int         m_qpBDOffsetC;
-
-    uint32_t    m_pcmBitDepthLuma;
-    uint32_t    m_pcmBitDepthChroma;
-    bool        m_bPCMFilterDisableFlag;
 
     uint32_t    m_bitsForPOC;
     uint32_t    m_numLongTermRefPicSPS;
@@ -921,18 +914,6 @@ public:
 
     uint32_t getMaxCUDepth() const { return m_maxCUDepth; }
 
-    void setUsePCM(bool b)   { m_usePCM = b; }
-
-    bool getUsePCM() const   { return m_usePCM; }
-
-    void setPCMLog2MaxSize(uint32_t u) { m_pcmLog2MaxSize = u; }
-
-    uint32_t getPCMLog2MaxSize() const { return m_pcmLog2MaxSize; }
-
-    void setPCMLog2MinSize(uint32_t u) { m_pcmLog2MinSize = u; }
-
-    uint32_t getPCMLog2MinSize() const { return m_pcmLog2MinSize; }
-
     void setBitsForPOC(uint32_t u) { m_bitsForPOC = u; }
 
     uint32_t getBitsForPOC() const { return m_bitsForPOC; }
@@ -1011,18 +992,6 @@ public:
     bool      getTemporalIdNestingFlag() const        { return m_bTemporalIdNestingFlag; }
 
     void      setTemporalIdNestingFlag(bool bValue)   { m_bTemporalIdNestingFlag = bValue; }
-
-    uint32_t      getPCMBitDepthLuma() const { return m_pcmBitDepthLuma; }
-
-    void      setPCMBitDepthLuma(uint32_t u) { m_pcmBitDepthLuma = u; }
-
-    uint32_t      getPCMBitDepthChroma() const { return m_pcmBitDepthChroma; }
-
-    void      setPCMBitDepthChroma(uint32_t u) { m_pcmBitDepthChroma = u; }
-
-    void      setPCMFilterDisableFlag(bool bValue)    { m_bPCMFilterDisableFlag = bValue; }
-
-    bool      getPCMFilterDisableFlag() const         { return m_bPCMFilterDisableFlag; }
 
     bool getScalingListFlag() const { return m_scalingListEnabledFlag; }
 

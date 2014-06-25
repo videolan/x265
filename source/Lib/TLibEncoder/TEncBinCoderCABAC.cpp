@@ -123,26 +123,6 @@ void TEncBinCABAC::resetBac()
     start();
 }
 
-/** Encode PCM alignment zero bits.
- * \returns void
- */
-void TEncBinCABAC::encodePCMAlignBits()
-{
-    finish();
-    m_bitIf->write(1, 1);
-    m_bitIf->writeAlignZero(); // pcm align zero
-}
-
-/** Write a PCM code.
- * \param code code value
- * \param length code bit-depth
- * \returns void
- */
-void TEncBinCABAC::xWritePCMCode(uint32_t code, uint32_t length)
-{
-    m_bitIf->write(code, length);
-}
-
 void TEncBinCABAC::copyState(TEncBinCABAC* binCABAC)
 {
     m_low              = binCABAC->m_low;

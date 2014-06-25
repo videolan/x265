@@ -82,7 +82,7 @@ public:
     TComPicSym*   m_freeListNext;
     TComPicYuv*   m_reconPicYuv;
 
-    bool        create(int picWidth, int picHeight, int picCsp);
+    bool        create(x265_param *param);
     void        destroy();
 
     TComPicSym();

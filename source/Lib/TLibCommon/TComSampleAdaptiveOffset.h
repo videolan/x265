@@ -229,8 +229,8 @@ public:
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
 };
 
-void PCMLFDisableProcess(Frame* pic);
-void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
+void restoreLFDisabledOrigYuv(Frame* pic);
+void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
 }
 
 //! \}

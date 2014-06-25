@@ -108,7 +108,6 @@ public:
     void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
     void encodePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void encodeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
     void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false);
     void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx);

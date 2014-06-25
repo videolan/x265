@@ -521,16 +521,14 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
     }
 
-    // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
-    bool bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-    if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
         for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            xPCMCURestoration(cu, 0, 0);
+            xOrigCUSampleRestoration(cu, 0, 0);
         }
     }
 }

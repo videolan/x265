@@ -59,7 +59,7 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-bool TComPicSym::create(int picWidth, int picHeight, int picCsp)
+bool TComPicSym::create(x265_param *param)
 {
     uint32_t i;
 
@@ -71,8 +71,8 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp)
 
     m_numPartInCUSize = g_maxCUSize >> m_log2UnitSize;
 
-    m_widthInCU       = (picWidth  + g_maxCUSize - 1) / g_maxCUSize;
-    m_heightInCU      = (picHeight + g_maxCUSize - 1) / g_maxCUSize;
+    m_widthInCU       = (param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
+    m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
@@ -81,14 +81,15 @@ bool TComPicSym::create(int picWidth, int picHeight, int picCsp)
     if (!m_slice || !m_cuData)
         return false;
 
+    bool tqBypass = param->bCULossless || param->bLossless;
     for (i = 0; i < m_numCUsInFrame; i++)
     {
         uint32_t sizeL = g_maxCUSize * g_maxCUSize;
-        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(picCsp) + CHROMA_V_SHIFT(picCsp));
-        if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1))
+        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
+        if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
             return false;
 
-        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, picCsp, 0);
+        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, param->internalCsp, 0, tqBypass);
     }
 
     return true;

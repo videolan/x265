@@ -142,15 +142,6 @@ public:
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
     //====== Tool list ========
-    bool               m_usePCM;
-    uint32_t           m_pcmLog2MaxSize;
-    uint32_t           m_pcmLog2MinSize;
-
-    uint32_t           m_pcmBitDepthLuma;  // unused field, TComSPS has it's own version defaulted to 8
-    uint32_t           m_pcmBitDepthChroma; // unused field, TComSPS has it's own version defaulted to 8
-
-    bool               m_bPCMFilterDisableFlag;
-
     int64_t            m_encodedFrameNum;
     int                m_lastBPSEI;
 
