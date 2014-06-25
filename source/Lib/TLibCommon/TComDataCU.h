@@ -197,6 +197,8 @@ public:
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
     double        m_baseQp;          //Qp of Cu set from RateControl/Vbv.
+    uint32_t      m_mvBits;         // Mv bits + Ref + block type
+    uint32_t      m_coeffBits;        // Texture bits (DCT Coeffs)
 
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy

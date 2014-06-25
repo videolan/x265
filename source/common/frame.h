@@ -37,6 +37,20 @@ namespace x265 {
 
 class Encoder;
 
+/* Current frame stats for 2 pass */
+struct FrameStats
+{
+    /* MV bits (MV+Ref+Block Type) */
+    int         mvBits;
+    /* Texture bits (DCT coefs) */
+    int         coeffBits;
+    int         miscBits;
+    /* CU type counts */
+    int         cuCount_i;
+    int         cuCount_p;
+    int         cuCount_skip;
+};
+
 class Frame
 {
 public:
@@ -84,6 +98,7 @@ public:
     double            m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
     double            m_rateFactor; // calculated based on the Frame QP
     int32_t           m_forceqp;    // Force to use the qp specified in qp file
+    FrameStats        m_stats;   // stats of current frame for multipass encodes
 
     Frame();
     virtual ~Frame();
