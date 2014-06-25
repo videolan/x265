@@ -692,8 +692,8 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         m_shortTermCplxCount *= 0.5;
         m_shortTermCplxSum += m_currentSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
         m_shortTermCplxCount++;
-        /* texBits to be used in 2-pass */
-        rce->texBits = m_currentSatd;
+        /* coeffBits to be used in 2-pass */
+        rce->coeffBits = m_currentSatd;
         rce->blurredComplexity = m_shortTermCplxSum / m_shortTermCplxCount;
         rce->mvBits = 0;
         rce->sliceType = m_sliceType;

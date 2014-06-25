@@ -53,9 +53,8 @@ struct Predictor
 
 struct RateControlEntry
 {
-    int64_t texBits;  /* Required in 2-pass rate control */
+    int64_t coeffBits;  /* Required in 2-pass rate control */
     int64_t lastSatd; /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
-
     int sliceType;
     int mvBits;
     int bframes;
