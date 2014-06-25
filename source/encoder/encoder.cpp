@@ -1255,8 +1255,8 @@ void Encoder::configure(x265_param *p)
         p->bBPyramid = 0;
     }
 
-    // psy-rd is not yet supported in RD levels below 5
-    if (p->rdLevel < 5)
+    // psy-rd is not supported in RD levels below 2
+    if (p->rdLevel < 2)
         p->psyRd = 0.0;
 
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
@@ -1267,7 +1267,7 @@ void Encoder::configure(x265_param *p)
     }
 
     // disable RDOQ if psy-rd is enabled; until we make it psy-aware
-    m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 4;
+    m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 1;
 
     if (p->bLossless)
     {

@@ -71,7 +71,17 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
-    cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+    if (m_rdCost->psyRdEnabled())
+    {
+        int part = g_convertToBit[cu->getCUSize(0)];
+        cu->m_psyEnergy = m_rdCost->psyCost(part, m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
+            m_tmpRecoYuv[depth]->getLumaAddr(), m_tmpRecoYuv[depth]->getStride());
+        cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
+    }
+    else
+    {
+        cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+    }
 }
 
 void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
@@ -320,7 +330,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             //Encode with residue
             m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
 
-            if (outTempCU->m_totalRDCost < outBestCU->m_totalRDCost)    //Choose best from no-residue mode and residue mode
+            uint64_t tempCost = m_rdCost->psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
+            uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+            if (tempCost < bestCost) //Choose best from no-residue mode and residue mode
             {
                 TComDataCU* tmp = outTempCU;
                 outTempCU = outBestCU;
@@ -484,7 +496,9 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 
                     m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
                                                         m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
-                    if (m_bestMergeCU[depth]->m_totalRDCost < outBestCU->m_totalRDCost)
+                    uint64_t bestMergeCost = m_rdCost->psyRdEnabled() ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
+                    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                    if (bestMergeCost < bestCost)
                     {
                         outBestCU = m_bestMergeCU[depth];
                         tempYuv = m_modePredYuv[3][depth];
@@ -511,12 +525,21 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                     if (bdoIntra)
                     {
                         xComputeCostIntraInInter(m_intraInInterCU[depth], SIZE_2Nx2N);
+                        uint64_t intraInInterCost, bestCost;
                         if (m_param->rdLevel > 2)
                         {
                             xEncodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth],
                                                 m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
+                            intraInInterCost = m_rdCost->psyRdEnabled() ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
+                            bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                         }
-                        if (m_intraInInterCU[depth]->m_totalRDCost < outBestCU->m_totalRDCost)
+                        else
+                        {
+                            intraInInterCost = m_intraInInterCU[depth]->m_totalRDCost;
+                            bestCost = outBestCU->m_totalRDCost;
+
+                        }
+                        if (intraInInterCost < bestCost)
                         {
                             outBestCU = m_intraInInterCU[depth];
                             tempYuv = m_modePredYuv[5][depth];
@@ -624,7 +647,15 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 m_entropyCoder->resetBits();
                 m_entropyCoder->encodeSplitFlag(outBestCU, 0, depth);
                 outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
-                outBestCU->m_totalRDCost  = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+                if (m_rdCost->psyRdEnabled())
+                {
+                    outBestCU->m_totalPsyCost = m_rdCost->calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits,
+                        outBestCU->m_psyEnergy);
+                }
+                else
+                {
+                    outBestCU->m_totalRDCost = m_rdCost->calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
+                }
             }
 
             // copy original YUV samples in lossless mode
@@ -681,8 +712,13 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             uint64_t avgCost = 0;
             if (totalCountNeigh + totalCountCU)
                 avgCost = ((3 * totalCostCU) + (2 * totalCostNeigh)) / ((3 * totalCountCU) + (2 * totalCountNeigh));
+            uint64_t bestavgCost = 0;
+            if (m_param->rdLevel > 1)
+                bestavgCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+            else
+                bestavgCost = outBestCU->m_totalRDCost;
 
-            if (outBestCU->m_totalRDCost < avgCost && avgCost != 0 && depth != 0)
+            if (bestavgCost < avgCost && avgCost != 0 && depth != 0)
             {
                 /* Copy Best data to Picture for next partition prediction. */
                 outBestCU->copyToPic((uint8_t)depth);
@@ -719,7 +755,11 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #if EARLY_EXIT
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
-                    uint64_t tempavgCost = subBestPartCU->m_totalRDCost;
+                    uint64_t tempavgCost = 0;
+                    if (m_param->rdLevel > 1)
+                        tempavgCost = m_rdCost->psyRdEnabled() ? subBestPartCU->m_totalPsyCost : subBestPartCU->m_totalRDCost;
+                    else
+                        tempavgCost = subBestPartCU->m_totalRDCost;
                     TComDataCU* rootCU = pic->getPicSym()->getCU(outTempCU->getAddr());
                     uint64_t temp = rootCU->m_avgCost[depth + 1] * rootCU->m_count[depth + 1];
                     rootCU->m_count[depth + 1] += 1;
@@ -750,7 +790,17 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
         }
         if (m_param->rdLevel > 1)
-            outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+        {
+            if (m_rdCost->psyRdEnabled())
+            {
+                outTempCU->m_totalPsyCost = m_rdCost->calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits,
+                    outTempCU->m_psyEnergy);
+            }
+            else
+            {
+                outTempCU->m_totalRDCost = m_rdCost->calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+            }
+        }
         else
             outTempCU->m_totalRDCost = m_rdCost->calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
@@ -789,14 +839,16 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
 #if EARLY_EXIT
             if (depth == 0)
             {
-                uint64_t tempavgCost = outBestCU->m_totalRDCost;
+                uint64_t tempavgCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                 TComDataCU* rootCU = pic->getPicSym()->getCU(outTempCU->getAddr());
                 uint64_t temp = rootCU->m_avgCost[depth] * rootCU->m_count[depth];
                 rootCU->m_count[depth] += 1;
                 rootCU->m_avgCost[depth] = (temp + tempavgCost) / rootCU->m_count[depth];
             }
 #endif
-            if (outTempCU->m_totalRDCost < outBestCU->m_totalRDCost)
+            uint64_t tempCost = m_rdCost->psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
+            uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost; 
+            if (tempCost < bestCost)
             {
                 outBestCU = outTempCU;
                 tempYuv = m_tmpRecoYuv[depth];
