@@ -142,6 +142,8 @@ static const struct option long_options[] =
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
     { "aq-strength",    required_argument, NULL, 0 },
+    { "ipratio",        required_argument, NULL, 0 },
+    { "pbratio",        required_argument, NULL, 0 },
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
@@ -393,6 +395,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
+    H0("   --ipratio <float>             QP factor between I and P. Default %f\n", param->rc.ipFactor);
+    H0("   --pbratio <float>             QP factor between P and B. Default %f\n", param->rc.pbFactor);
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --[no-]hrd                    Enable HRD parameters signalling. Default %s\n", OPT(param->bEmitHRDSEI));

@@ -633,6 +633,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("aud") p->bEnableAccessUnitDelimiters = atobool(value);
     OPT("b-pyramid") p->bBPyramid = atobool(value);
     OPT("hrd") p->bEmitHRDSEI = atobool(value);
+    OPT2("ipratio", "ip-factor") p->rc.ipFactor = atof(value);
+    OPT2("pbratio", "pb-factor") p->rc.pbFactor = atof(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
