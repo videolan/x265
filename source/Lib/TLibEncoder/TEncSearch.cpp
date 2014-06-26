@@ -4020,6 +4020,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         }
         m_entropyCoder->encodeSkipFlag(cu, 0);
         m_entropyCoder->encodeMergeIndex(cu, 0);
+        cu->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
         return m_entropyCoder->getNumberOfWrittenBits();
     }
     else
@@ -4034,8 +4035,11 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
         m_entropyCoder->encodePredInfo(cu, 0);
         bool bDummy = false;
+        cu->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
         m_entropyCoder->encodeCoeff(cu, 0, cu->getDepth(0), cu->getCUSize(0), bDummy);
-        return m_entropyCoder->getNumberOfWrittenBits();
+        int totalBits = m_entropyCoder->getNumberOfWrittenBits();
+        cu->m_coeffBits = totalBits - cu->m_mvBits;
+        return totalBits;
     }
 }
 

@@ -63,6 +63,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_entropyCoder->encodePredMode(cu, 0);
     m_entropyCoder->encodePartSize(cu, 0, depth);
     m_entropyCoder->encodePredInfo(cu, 0);
+    cu->m_mvBits += m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
@@ -71,6 +72,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
+    cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;
     if (m_rdCost->psyRdEnabled())
     {
         int part = g_convertToBit[cu->getCUSize(0)];

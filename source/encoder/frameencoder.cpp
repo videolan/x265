@@ -697,6 +697,11 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
             getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
+
+        // Collect Frame Stats for 2 pass
+        m_frame->m_stats.mvBits += cu->m_mvBits;
+        m_frame->m_stats.coeffBits += cu->m_coeffBits;
+        m_frame->m_stats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
     }
 
     if (slice->getPPS()->getCabacInitPresentFlag())

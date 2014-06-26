@@ -1365,12 +1365,14 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     m_entropyCoder->encodePredMode(outTempCU, 0);
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
+    outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
     m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
+    outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
     if (m_rdCost->psyRdEnabled())
     {
@@ -1411,12 +1413,14 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     m_entropyCoder->encodePredMode(outTempCU, 0);
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
+    outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = getdQPFlag();
     m_entropyCoder->encodeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
+    outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
     if (m_rdCost->psyRdEnabled())
     {
