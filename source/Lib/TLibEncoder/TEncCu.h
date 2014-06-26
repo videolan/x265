@@ -66,6 +66,10 @@ struct StatisticLog
     uint64_t cntTotalCu[4];
     uint64_t totalCu;
 
+    /* These states store the count of inter,intra and skip ctus within quad tree structure of each CU */
+    uint32_t qTreeInterCnt[4];
+    uint32_t qTreeIntraCnt[4];
+    uint32_t qTreeSkipCnt[4];
     StatisticLog()
     {
         memset(this, 0, sizeof(StatisticLog));

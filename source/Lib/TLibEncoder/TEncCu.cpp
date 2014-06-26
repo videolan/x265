@@ -343,6 +343,7 @@ void TEncCu::compressCU(TComDataCU* cu)
                 m_log->totalCu++;
                 part = cu->getDepth(i);
                 int next = numPartition >> (part * 2);
+                m_log->qTreeIntraCnt[part]++;
                 if (part == g_maxCUDepth - 1 && cu->getPartitionSize(i) != SIZE_2Nx2N)
                 {
                     m_log->cntIntraNxN++;
@@ -383,6 +384,7 @@ void TEncCu::compressCU(TComDataCU* cu)
                 if (cu->isSkipped(i))
                 {
                     m_log->cntSkipCu[part]++;
+                    m_log->qTreeSkipCnt[part]++;
                 }
                 else
                 {
@@ -390,6 +392,7 @@ void TEncCu::compressCU(TComDataCU* cu)
                     if (cu->getPredictionMode(0) == MODE_INTER)
                     {
                         m_log->cntInter[part]++;
+                        m_log->qTreeInterCnt[part]++;
                         if (cu->getPartitionSize(0) < AMP_ID)
                             m_log->cuInterDistribution[part][cu->getPartitionSize(0)]++;
                         else
@@ -397,6 +400,7 @@ void TEncCu::compressCU(TComDataCU* cu)
                     }
                     else if (cu->getPredictionMode(0) == MODE_INTRA)
                     {
+                        m_log->qTreeIntraCnt[part]++;
                         if (part == g_maxCUDepth - 1 && cu->getPartitionSize(0) == SIZE_NxN)
                         {
                             m_log->cntIntraNxN++;

@@ -63,9 +63,9 @@ struct FrameStats
     int         coeffBits;
     int         miscBits;
     /* CU type counts */
-    int         cuCount_i;
-    int         cuCount_p;
-    int         cuCount_skip;
+    double      cuCount_i;
+    double      cuCount_p;
+    double      cuCount_skip;
 };
 
 // Manages the wave-front processing of a single encoding frame

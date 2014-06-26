@@ -73,6 +73,11 @@ public:
     TEncSbac            ***m_rdSbacCoders;
     TEncBinCABAC        ***m_binCodersCABAC;
 
+    // to compute stats for 2 pass
+    double                 m_iCuCnt;
+    double                 m_pCuCnt;
+    double                 m_skipCuCnt;
+
     bool create();
 
     void destroy();
@@ -94,6 +99,7 @@ public:
 
         m_rdGoOnSbacCoder.setSlice(slice);
         m_rdGoOnSbacCoder.resetEntropy();
+        m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
     void setThreadLocalData(ThreadLocalData& tld);

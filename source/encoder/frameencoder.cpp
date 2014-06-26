@@ -543,6 +543,14 @@ void FrameEncoder::compressFrame()
     {
         m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
         m_rows[i].m_entropyCoder.resetEntropy();
+
+        // accumulate intra,inter,skip cu count per frame for 2 pass
+        if (m_param->rc.bStatWrite)
+        {
+            m_frameStats.cuCount_i += m_rows[i].m_iCuCnt;
+            m_frameStats.cuCount_p += m_rows[i].m_pCuCnt;
+            m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
+        }
     }
     encodeSlice(m_outStreams);
 
@@ -749,6 +757,7 @@ void FrameEncoder::compressCTURows()
     m_ssim = 0;
     m_ssimCnt = 0;
     m_frameFilter.start(m_frame);
+    memset(&m_frameStats, 0, sizeof(m_frameStats));
 
     m_rows[0].m_active = true;
     if (m_pool && m_param->bEnableWavefront)
@@ -937,6 +946,21 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // Completed CU processing
         curRow.m_completed++;
 
+        // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
+        if (m_param->rc.bStatWrite)
+        {
+            double scale = pow(2, g_maxCUSize / 16);
+            for (int part = 0; part < g_maxCUDepth ; part++, scale /= 4)
+            {
+                curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[part];
+                curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[part];
+                curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[part];
+
+                //clear the row cu data from thread local object
+                tld.m_cuCoder.m_log->qTreeIntraCnt[part] = tld.m_cuCoder.m_log->qTreeInterCnt[part] = tld.m_cuCoder.m_log->qTreeSkipCnt[part] = 0;
+            }
+        }
+
         if (bIsVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
@@ -999,6 +1023,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                         }
 
                         stopRow.m_completed = 0;
+                        stopRow.m_iCuCnt = stopRow.m_pCuCnt = stopRow.m_skipCuCnt = 0;
                         if (m_frame->m_qpaAq)
                             m_frame->m_qpaAq[r] = 0;
                         m_frame->m_qpaRc[r] = 0;
@@ -1065,6 +1090,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             enableRowFilter(i);
         }
     }
+
     m_totalTime += x265_mdate() - startTime;
     curRow.m_busy = false;
 }
