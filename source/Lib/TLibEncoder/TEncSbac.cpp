@@ -2028,8 +2028,10 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
 
     X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
 
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
+
     // compute number of significant coefficients
-    uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
+    uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
 #if CHECKED_BUILD || _DEBUG
     X265_CHECK(numSig > 0, "cbf check fail\n");
@@ -2050,7 +2052,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     }
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
 
     //select scans
     TUEntropyCodingParameters codingParameters;
@@ -2059,27 +2060,27 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     //----- encode significance map -----
 
     // Find position of last coefficient
-    int scanPosLast = -1;
-    int posLast;
+    int scanPosLast = 0;
+    uint32_t posLast;
     uint64_t sigCoeffGroupFlag64 = 0;
-    const uint32_t maskPosXY = (1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1;
+    const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
+    assert(((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1));
     do
     {
-        posLast = codingParameters.scan[++scanPosLast];
-        if (coeff[posLast] != 0)
-        {
-            // get L1 sig map
-            // NOTE: the new algorithm is complicated, so I keep reference code here
-            //uint32_t posy   = posLast >> log2TrSize;
-            //uint32_t posx   = posLast - (posy << log2TrSize);
-            //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
-            uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
-            sigCoeffGroupFlag64 |= ((uint64_t)1 << blkIdx);
+        posLast = codingParameters.scan[scanPosLast++];
 
-            numSig--;
-        }
+        const uint32_t isNZCoeff = (coeff[posLast] != 0);
+        // get L1 sig map
+        // NOTE: the new algorithm is complicated, so I keep reference code here
+        //uint32_t posy   = posLast >> log2TrSize;
+        //uint32_t posx   = posLast - (posy << log2TrSize);
+        //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
+        const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
+        sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
+        numSig -= isNZCoeff;
     }
     while (numSig > 0);
+    scanPosLast--;
 
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
