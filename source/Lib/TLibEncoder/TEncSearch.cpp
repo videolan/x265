@@ -2996,7 +2996,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         {
             int size = g_convertToBit[trSize];
             psyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
-               (pixel*)RDCost::zeroPel, cu->getPic()->getPicYuvRec()->getStride()); // need to check whether zero distortion is similar to psyenergy of fenc
+                (pixel*)RDCost::zeroPel, trSize); // need to check whether zero distortion is similar to psyenergy of fenc
         }
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width not full CU\n");
