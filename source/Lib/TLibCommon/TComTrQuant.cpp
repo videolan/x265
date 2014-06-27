@@ -508,6 +508,9 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
 uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
+    x265_emms();
+    selectLambda(ttype);
+
     const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
