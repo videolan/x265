@@ -501,7 +501,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     return ssim;
 }
 
-void FrameFilter::processSao(int row, const int threadId)
+void FrameFilter::processSao(int row, const int /*threadId*/)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
