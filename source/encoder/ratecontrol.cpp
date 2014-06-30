@@ -28,6 +28,7 @@
 #include "frame.h"
 
 #include "encoder.h"
+#include "frameencoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
 #include "sei.h"
@@ -1224,7 +1225,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 }
 
 /* After encoding one frame, update rate control state */
-int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce)
+int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats)
 {
     int64_t actualBits = bits;
     if (m_isAbr)
@@ -1273,7 +1274,38 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce)
                     pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
                 }
             }
-
+            // Write frame stats into the stats file if 2 pass is enabled.
+            if (m_param->rc.bStatWrite)
+            {
+                char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
+                            : rce->sliceType == P_SLICE ? (pic->getSlice()->isReferenced()? 'P' : 'p')
+                            : pic->getSlice()->isReferenced()? 'B' : 'b';
+                if (fprintf(m_statFileOut,
+                         "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d imb:%.2f pmb:%.2f smb:%.2f ",
+                         rce->poc, rce->encodeOrder,
+                         cType, m_frameDuration,
+                         pic->m_avgQpRc, pic->m_avgQpAq,
+                         stats->coeffBits,
+                         stats->mvBits,
+                         stats->miscBits,
+                         stats->cuCount_i,
+                         stats->cuCount_p,
+                         stats->cuCount_skip) < 0)
+                    goto writeFailure;
+                if (fprintf(m_statFileOut, ";\n") < 0)
+                    goto writeFailure;
+                /* Don't re-write the data in multi-pass mode. */
+                if (m_param->rc.cuTree && pic->getSlice()->isReferenced() && !m_param->rc.bStatRead)
+                {
+                    uint8_t sliceType = (uint8_t)rce->sliceType;
+                    for (int i = 0; i < m_ncu; i++)
+                         m_cuTreeStats.qpBuffer[0][i] = ((uint16_t)pic->m_lowres.qpCuTreeOffset[i]) * 256.0;
+                    if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
+                        goto writeFailure;
+                    if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < m_ncu)
+                        goto writeFailure;
+                }
+            }
             /* amortize part of each I slice over the next several frames, up to
              * keyint-max, to avoid over-compensating for the large I slice cost */
             if (rce->sliceType == I_SLICE)
@@ -1354,6 +1386,10 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce)
     }
     rce->isActive = false;
     return 0;
+
+writeFailure:
+    x265_log(m_param, X265_LOG_ERROR, "RatecontrolEnd: stats file write failure\n");
+    return 1;
 }
 
 #if defined(_MSC_VER)

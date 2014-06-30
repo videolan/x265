@@ -34,7 +34,7 @@ class Encoder;
 class Frame;
 class TComSPS;
 class SEIBufferingPeriod;
-
+struct FrameStats;
 #define BASE_FRAME_DURATION 0.04
 
 /* Arbitrary limitations as a sanity check. */
@@ -59,6 +59,7 @@ struct RateControlEntry
     int mvBits;
     int bframes;
     int poc;
+    uint64_t encodeOrder;
     int64_t leadingNoBSatd;
     bool bLastMiniGopBFrame;
     double blurredComplexity;
@@ -157,7 +158,7 @@ public:
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(Frame *pic);
-    int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce);
+    int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);
     int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
     bool init(TComSPS* sps);

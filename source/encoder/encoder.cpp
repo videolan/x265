@@ -407,9 +407,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
                 bytes -= (!i || type == NAL_UNIT_SPS || type == NAL_UNIT_PPS) ? 4 : 3;
             }
         }
-        m_rateControl->rateControlEnd(out, bytes << 3, &curEncoder->m_rce);
+        if (m_rateControl->rateControlEnd(out, bytes << 3, &curEncoder->m_rce, &curEncoder->m_frameStats) < 0)
+        {
+            m_aborted = true;
+            return -1;
+        }
         finishFrameStats(out, curEncoder, bytes << 3);
-
         // Allow this frame to be recycled if no frame encoders are using it for reference
         if (!pic_out)
         {
@@ -444,8 +447,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
         }
         fenc->getSlice()->setPOC(fenc->m_POC);
-
-        m_encodedFrameNum++;
+        curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
         {
             int64_t *prevReorderedPts = m_prevReorderedPts;
