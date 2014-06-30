@@ -203,6 +203,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     TEncEntropy* entropyCoder = getEntropyCoder(0);
 
     /* headers for start of bitstream */
+    bs.resetBits();
     entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
     entropyCoder->setBitstream(&bs);
     entropyCoder->encodeVPS(&m_top->m_vps);
