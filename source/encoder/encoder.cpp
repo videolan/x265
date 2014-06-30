@@ -1269,7 +1269,7 @@ void Encoder::configure(x265_param *p)
     }
 
     // disable RDOQ if psy-rd is enabled; until we make it psy-aware
-    m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 1;
+    m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 4;
 
     if (p->bLossless)
     {
