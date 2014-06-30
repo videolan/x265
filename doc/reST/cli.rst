@@ -659,6 +659,18 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** an integer from 0 to 51
 
+.. option:: --ipratio <float>
+
+	QP ratio factor between I and P slices. This ratio is used in all of
+	the rate control modes. Some :option:`--tune` options may change the
+	default value. It is not typically manually specified. Default 1.4
+
+.. option:: --pbratio <float>
+
+	QP ratio factor between P and B slices. This ratio is used in all of
+	the rate control modes. Some :option:`--tune` options may change the
+	default value. It is not typically manually specified. Default 1.3
+
 .. option:: --lossless, --no-lossless
 
 	Enables true lossless coding by bypassing scaling, transform,
