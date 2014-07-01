@@ -151,7 +151,7 @@ void TEncSearch::setQP(int qp, int qpCb, int qpCr)
     m_rdCost->setCrDistortionWeight(lambdaOffset);
 }
 
-void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
+void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
@@ -177,77 +177,116 @@ void TEncSearch::xEncSubdivCbfQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
     else
     {
         X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size too small\n");
-        if (bLuma)
-        {
-            m_entropyCoder->encodeTransformSubdivFlag(subdiv, 5 - log2TrSize);
-        }
-    }
-
-    if (bChroma)
-    {
-        int      chFmt      = cu->getChromaFormat();
-        if ((log2TrSize > 2) && !(chFmt == CHROMA_444))
-        {
-            if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepth - 1))
-                m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> m_hChromaShift), (height >> m_vChromaShift), TEXT_CHROMA_U, trDepth, (subdiv == 0));
-
-            if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepth - 1))
-                m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> m_hChromaShift), (height >> m_vChromaShift), TEXT_CHROMA_V, trDepth, (subdiv == 0));
-        }
+        m_entropyCoder->encodeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
     if (subdiv)
     {
-        TComTURecurse tuIterator;
-        initSection(&tuIterator, QUAD_SPLIT, absPartIdxStep);
-        width  >>= 1;
-        height >>= 1;
-
         uint32_t qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
         {
-            xEncSubdivCbfQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, tuIterator.m_absPartIdxStep, width, height, bLuma, bChroma);
+            xEncSubdivCbfQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum);
         }
 
         return;
     }
 
     //===== Cbfs =====
-    if (bLuma)
+    m_entropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
+}
+
+void TEncSearch::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
+{
+    uint32_t fullDepth  = cu->getDepth(0) + trDepth;
+    uint32_t trMode     = cu->getTransformIdx(absPartIdx);
+    uint32_t subdiv     = (trMode > trDepth ? 1 : 0);
+    uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - fullDepth;
+
+    int      chFmt      = cu->getChromaFormat();
+    if ((log2TrSize > 2) && !(chFmt == CHROMA_444))
     {
-        m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, width, height, TEXT_LUMA, trMode, (subdiv == 0));
+        if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepth - 1))
+            m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> m_hChromaShift), (height >> m_vChromaShift), TEXT_CHROMA_U, trDepth, (subdiv == 0));
+
+        if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepth - 1))
+            m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> m_hChromaShift), (height >> m_vChromaShift), TEXT_CHROMA_V, trDepth, (subdiv == 0));
+    }
+
+    if (subdiv)
+    {
+        absPartIdxStep >>= 2;
+        width  >>= 1;
+        height >>= 1;
+
+        uint32_t qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        for (uint32_t part = 0; part < 4; part++)
+        {
+            xEncSubdivCbfQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, absPartIdxStep, width, height);
+        }
     }
 }
 
-void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype)
+void TEncSearch::xEncCoeffQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
+{
+    const TextType ttype = TEXT_LUMA;
+
+    if (!cu->getCbf(absPartIdx, ttype, trDepth))
+        return;
+
+    uint32_t fullDepth  = cu->getDepth(0) + trDepth;
+    uint32_t trMode     = cu->getTransformIdx(absPartIdx);
+
+    if (trMode > trDepth)
+    {
+        uint32_t qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
+        for (uint32_t part = 0; part < 4; part++)
+        {
+            xEncCoeffQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum);
+        }
+
+        return;
+    }
+
+    uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - fullDepth;
+    uint32_t qtLayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - log2TrSize;
+    uint32_t log2UnitSize = cu->getPic()->getLog2UnitSize();
+    uint32_t coeffOffset = absPartIdx << (log2UnitSize * 2);
+    coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
+    m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, ttype);
+}
+
+void TEncSearch::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype)
 {
     if (!cu->getCbf(absPartIdx, ttype, trDepth))
         return;
 
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
-    uint32_t subdiv     = (trMode > trDepth ? 1 : 0);
 
-    if (subdiv)
+    if (trMode > trDepth)
     {
         uint32_t qtPartNum = cu->getPic()->getNumPartInCU() >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
         {
-            xEncCoeffQT(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype);
+            xEncCoeffQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype);
         }
 
         return;
     }
 
-    uint32_t origTrDepth = trDepth;
-
     uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - fullDepth;
-    int chFmt           = cu->getChromaFormat();
-    if ((ttype != TEXT_LUMA) && (log2TrSize == 2) && !(chFmt == CHROMA_444))
+    uint32_t qtLayer    = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - log2TrSize;
+    uint32_t log2UnitSize = cu->getPic()->getLog2UnitSize();
+
+    uint32_t trDepthC = trDepth;
+    uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
+    int chFmt = cu->getChromaFormat();
+    if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
     {
         X265_CHECK(trDepth > 0, "transform size too small\n");
-        trDepth--;
-        uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepth) << 1);
+        trDepthC--;
+        log2TrSizeC++;
+        uint32_t qpdiv = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepthC) << 1);
         bool bFirstQ = ((absPartIdx & (qpdiv - 1)) == 0);
         if (!bFirstQ)
         {
@@ -255,132 +294,122 @@ void TEncSearch::xEncCoeffQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartI
         }
     }
 
-    //===== coefficients =====
-    uint32_t chroma     = (ttype != TEXT_LUMA ? 1 : 0);
-    int cspx = chroma ? m_hChromaShift : 0;
-    int cspy = chroma ? m_vChromaShift : 0;
-    uint32_t width = cu->getCUSize(0) >> (trDepth + cspx);
-    uint32_t height = cu->getCUSize(0) >> (trDepth + cspy);
-    uint32_t coeffOffset = absPartIdx << (cu->getPic()->getLog2UnitSize() * 2 - (cspx + cspy));
-    uint32_t qtLayer = cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() - log2TrSize;
-    coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
-
-    if (width == height)
+    if (chFmt != CHROMA_422)
     {
-        m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, width, ttype);
+        uint32_t shift = (chFmt == CHROMA_420) ? 2 : 0;
+        uint32_t coeffOffset = absPartIdx << (log2UnitSize * 2 - shift);
+        coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
+        m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, ttype);
     }
     else
     {
-        uint32_t subTUSize = width * width;
-        uint32_t partIdxesPerSubTU  = cu->getPic()->getNumPartInCU() >> (((cu->getDepth(absPartIdx) + trDepth) << 1) + 1);
-
-        if (cu->getCbf(absPartIdx, ttype, origTrDepth + 1))
-            m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, width, ttype);
-        if (cu->getCbf(absPartIdx + partIdxesPerSubTU, ttype, origTrDepth + 1))
-            m_entropyCoder->encodeCoeffNxN(cu, coeff + subTUSize, absPartIdx + partIdxesPerSubTU, width, ttype);
+        uint32_t coeffOffset = absPartIdx << (log2UnitSize * 2 - 1);
+        coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
+        uint32_t subTUSize = 1 << (log2TrSizeC * 2);
+        uint32_t partIdxesPerSubTU  = cu->getPic()->getNumPartInCU() >> (((cu->getDepth(absPartIdx) + trDepthC) << 1) + 1);
+        if (cu->getCbf(absPartIdx, ttype, trDepth + 1))
+            m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, ttype);
+        if (cu->getCbf(absPartIdx + partIdxesPerSubTU, ttype, trDepth + 1))
+            m_entropyCoder->encodeCoeffNxN(cu, coeff + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, ttype);
     }
 }
 
-void TEncSearch::xEncIntraHeader(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, bool bLuma, bool bChroma)
+void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
 {
-    if (bLuma)
+    // CU header
+    if (absPartIdx == 0)
     {
-        // CU header
+        if (!cu->getSlice()->isIntra())
+        {
+            if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+            {
+                m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
+            }
+            m_entropyCoder->encodeSkipFlag(cu, 0);
+            m_entropyCoder->encodePredMode(cu, 0);
+        }
+
+        m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
+    }
+    // luma prediction mode
+    if (cu->getPartitionSize(0) == SIZE_2Nx2N)
+    {
         if (absPartIdx == 0)
         {
-            if (!cu->getSlice()->isIntra())
-            {
-                if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-                {
-                    m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
-                }
-                m_entropyCoder->encodeSkipFlag(cu, 0);
-                m_entropyCoder->encodePredMode(cu, 0);
-            }
-
-            m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
-        }
-        // luma prediction mode
-        if (cu->getPartitionSize(0) == SIZE_2Nx2N)
-        {
-            if (absPartIdx == 0)
-            {
-                m_entropyCoder->encodeIntraDirModeLuma(cu, 0);
-            }
-        }
-        else
-        {
-            uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
-            if (trDepth == 0)
-            {
-                X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
-                for (uint32_t part = 0; part < 4; part++)
-                {
-                    m_entropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts);
-                }
-            }
-            else if ((absPartIdx & (qtNumParts - 1)) == 0)
-            {
-                m_entropyCoder->encodeIntraDirModeLuma(cu, absPartIdx);
-            }
+            m_entropyCoder->encodeIntraDirModeLuma(cu, 0);
         }
     }
-    if (bChroma)
+    else
     {
-        // chroma prediction mode
-        if ((cu->getPartitionSize(0) == SIZE_2Nx2N) || !(cu->getChromaFormat() == CHROMA_444))
+        uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
+        if (trDepth == 0)
         {
-            if (absPartIdx == 0)
+            X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
+            for (uint32_t part = 0; part < 4; part++)
             {
-                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
+                m_entropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts);
             }
         }
-        else
+        else if ((absPartIdx & (qtNumParts - 1)) == 0)
         {
-            uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
-            X265_CHECK(trDepth > 0, "unexpected trDepth %d\n", trDepth);
-            if ((absPartIdx & (qtNumParts - 1)) == 0)
-                m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
+            m_entropyCoder->encodeIntraDirModeLuma(cu, absPartIdx);
         }
     }
 }
 
-uint32_t TEncSearch::xGetIntraBitsQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, bool bLuma, bool bChroma)
+void TEncSearch::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
+{
+    // chroma prediction mode
+    if ((cu->getPartitionSize(0) == SIZE_2Nx2N) || !(cu->getChromaFormat() == CHROMA_444))
+    {
+        if (absPartIdx == 0)
+        {
+            m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
+        }
+    }
+    else
+    {
+        uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
+        if ((absPartIdx & (qtNumParts - 1)) == 0)
+            m_entropyCoder->encodeIntraDirModeChroma(cu, absPartIdx);
+    }
+}
+
+uint32_t TEncSearch::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
 {
     m_entropyCoder->resetBits();
-    xEncIntraHeader(cu, trDepth, absPartIdx, bLuma, bChroma);
-    xEncSubdivCbfQT(cu, trDepth, absPartIdx, absPartIdxStep, cu->getCUSize(absPartIdx), cu->getCUSize(absPartIdx), bLuma, bChroma);
-
-    if (bLuma)
-    {
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_LUMA);
-    }
-    if (bChroma)
-    {
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
-        xEncCoeffQT(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
-    }
+    xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
+    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx);
+    xEncCoeffQTLuma(cu, trDepth, absPartIdx);
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-uint32_t TEncSearch::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff)
+uint32_t TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep)
 {
     m_entropyCoder->resetBits();
-    xEncIntraHeader(cu, trDepth, absPartIdx, true, false);
-    xEncSubdivCbfQT(cu, trDepth, absPartIdx, 0, cu->getCUSize(absPartIdx), cu->getCUSize(absPartIdx), true, false);
+    xEncIntraHeaderChroma(cu, absPartIdx);
+    xEncSubdivCbfQTChroma(cu, trDepth, absPartIdx, absPartIdxStep, cu->getCUSize(absPartIdx), cu->getCUSize(absPartIdx));
+    xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
+    xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
+    return m_entropyCoder->getNumberOfWrittenBits();
+}
+
+uint32_t TEncSearch::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff)
+{
+    m_entropyCoder->resetBits();
+    xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
+    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx);
 
     if (cu->getCbf(absPartIdx, TEXT_LUMA, trDepth))
-    {
-        m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, 1 << log2TrSize, TEXT_LUMA);
-    }
+        m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
 
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-uint32_t TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, coeff_t* coeff)
+uint32_t TEncSearch::xGetIntraBitsChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, coeff_t* coeff)
 {
     m_entropyCoder->resetBits();
-    m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, 1 << log2TrSizeC, (TextType)chromaId);
+    m_entropyCoder->encodeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, (TextType)chromaId);
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
@@ -684,7 +713,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 }
                 else
                 {
-                    uint32_t singleBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx, log2TrSize, coeff);
+                    uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff);
                     if (m_rdCost->psyRdEnabled())
                         singleCostTmp = m_rdCost->calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
                     else
@@ -744,7 +773,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
-            uint32_t singleBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY);
+            uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY);
             if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
@@ -795,7 +824,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
         //----- determine rate and r-d cost -----
-        uint32_t splitBits = xGetIntraBitsQT(cu, trDepth, absPartIdx, 0, true, false);
+        uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx);
         if (m_rdCost->psyRdEnabled())
             splitCost = m_rdCost->calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
         else
@@ -1169,7 +1198,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                         }
                         else
                         {
-                            uint32_t bitsTmp = singleCbfCTmp ? xGetIntraBitsQTChroma(cu, absPartIdxC, log2TrSizeC, chromaId, coeff) : 0;
+                            uint32_t bitsTmp = singleCbfCTmp ? xGetIntraBitsChroma(cu, absPartIdxC, log2TrSizeC, chromaId, coeff) : 0;
                             if (m_rdCost->psyRdEnabled())
                             {
                                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
@@ -1882,7 +1911,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                 m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
             }
 
-            uint32_t bits = xGetIntraBitsQT(cu, initTrDepth, absPartIdxC, tuIterator.m_absPartIdxStep, false, true);
+            uint32_t bits = xGetIntraBitsQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.m_absPartIdxStep);
             uint64_t cost = 0; 
             if (m_rdCost->psyRdEnabled())
                 cost = m_rdCost->calcPsyRdCost(dist, bits, cu->m_psyEnergy);
@@ -2727,7 +2756,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
             do
             {
                 uint32_t absPartIdxC = tuIterator.m_absPartIdxTURelCU;
-                uint32_t subTUBufferOffset = trSizeC * trSizeC * tuIterator.m_section;
+                uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
 
                 int16_t *curResiU = resiYuv->getCbAddr(absPartIdxC);
                 int16_t *curResiV = resiYuv->getCrAddr(absPartIdxC);
@@ -2737,12 +2766,12 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                absSumU = m_trQuant->transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUBufferOffset,
+                absSumU = m_trQuant->transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUOffset,
                                                   trSizeC, TEXT_CHROMA_U, absPartIdxC, &lastPosU, false, curuseRDOQ);
 
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                absSumV = m_trQuant->transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUBufferOffset,
+                absSumV = m_trQuant->transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUOffset,
                                                   trSizeC, TEXT_CHROMA_V, absPartIdxC, &lastPosV, false, curuseRDOQ);
 
                 cu->setCbfPartRange(absSumU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.m_absPartIdxStep);
@@ -2755,7 +2784,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                     int scalingListType = 3 + TEXT_CHROMA_U;
                     X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiU, strideResiC, coeffCurU + subTUBufferOffset, trSizeC, scalingListType, false, lastPosU);
+                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiU, strideResiC, coeffCurU + subTUOffset, trSizeC, scalingListType, false, lastPosU);
                 }
                 else
                 {
@@ -2768,7 +2797,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                     int scalingListType = 3 + TEXT_CHROMA_V;
                     X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiV, strideResiC, coeffCurV + subTUBufferOffset, trSizeC, scalingListType, false, lastPosV);
+                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiV, strideResiC, coeffCurV + subTUOffset, trSizeC, scalingListType, false, lastPosV);
                 }
                 else
                 {
@@ -2910,9 +2939,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         cu->setCbfSubParts(absSum[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
         m_entropyCoder->resetBits();
-        m_entropyCoder->encodeQtCbf(cu, absPartIdx, 0, trSize, trSize, TEXT_LUMA, trMode, true);
+        m_entropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
         if (absSum[TEXT_LUMA][0])
-            m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx,  trSize, TEXT_LUMA);
+            m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
         singleBitsComp[TEXT_LUMA][0] = m_entropyCoder->getNumberOfWrittenBits();
 
         uint32_t singleBitsPrev = singleBitsComp[TEXT_LUMA][0];
@@ -2925,7 +2954,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             do
             {
                 uint32_t absPartIdxC = tuIterator.m_absPartIdxTURelCU;
-                uint32_t subTUBufferOffset = trSizeC * trSizeC * tuIterator.m_section;
+                uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
 
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.m_absPartIdxStep);
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.m_absPartIdxStep);
@@ -2937,25 +2966,25 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 //Cb transform
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                absSum[TEXT_CHROMA_U][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUBufferOffset,
+                absSum[TEXT_CHROMA_U][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUOffset,
                                                                                       trSizeC, TEXT_CHROMA_U, absPartIdxC, &lastPos[TEXT_CHROMA_U][tuIterator.m_section], false, curuseRDOQ);
                 //Cr transform
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                absSum[TEXT_CHROMA_V][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUBufferOffset,
+                absSum[TEXT_CHROMA_V][tuIterator.m_section] = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUOffset,
                                                                                       trSizeC, TEXT_CHROMA_V, absPartIdxC, &lastPos[TEXT_CHROMA_V][tuIterator.m_section], false, curuseRDOQ);
 
                 cu->setCbfPartRange(absSum[TEXT_CHROMA_U][tuIterator.m_section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.m_absPartIdxStep);
                 cu->setCbfPartRange(absSum[TEXT_CHROMA_V][tuIterator.m_section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.m_absPartIdxStep);
 
-                m_entropyCoder->encodeQtCbf(cu, absPartIdxC, tuIterator.m_absPartIdxStep, trSizeC, trSizeC, TEXT_CHROMA_U, trMode, true);
+                m_entropyCoder->encodeQtCbf(cu, absPartIdxC, TEXT_CHROMA_U, trMode);
                 if (absSum[TEXT_CHROMA_U][tuIterator.m_section])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUBufferOffset, absPartIdxC, trSizeC, TEXT_CHROMA_U);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUOffset, absPartIdxC, log2TrSizeC, TEXT_CHROMA_U);
                 singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section] = m_entropyCoder->getNumberOfWrittenBits() - singleBitsPrev;
 
-                m_entropyCoder->encodeQtCbf(cu, absPartIdxC, tuIterator.m_absPartIdxStep, trSizeC, trSizeC, TEXT_CHROMA_V, trMode, true);
+                m_entropyCoder->encodeQtCbf(cu, absPartIdxC, TEXT_CHROMA_V, trMode);
                 if (absSum[TEXT_CHROMA_V][tuIterator.m_section])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUBufferOffset, absPartIdxC, trSizeC, TEXT_CHROMA_V);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUOffset, absPartIdxC, log2TrSizeC, TEXT_CHROMA_V);
                 uint32_t newBits = m_entropyCoder->getNumberOfWrittenBits();
                 singleBitsComp[TEXT_CHROMA_V][tuIterator.m_section] = newBits - (singleBitsPrev + singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section]);
 
@@ -3090,7 +3119,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             do
             {
                 uint32_t absPartIdxC = tuIterator.m_absPartIdxTURelCU;
-                uint32_t subTUBufferOffset = trSizeC * trSizeC * tuIterator.m_section;
+                uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
 
                 int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
                 int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
@@ -3108,7 +3137,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                     int scalingListType = 3 + TEXT_CHROMA_U;
                     X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiU, strideResiC, coeffCurU + subTUBufferOffset,
+                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiU, strideResiC, coeffCurU + subTUOffset,
                                                trSizeC, scalingListType, false, lastPos[TEXT_CHROMA_U][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiU, strideResiC);
@@ -3151,7 +3180,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         {
                             absSum[TEXT_CHROMA_U][tuIterator.m_section] = 0;
 #if CHECKED_BUILD || _DEBUG
-                            ::memset(coeffCurU + subTUBufferOffset, 0, sizeof(coeff_t) * numCoeffC);
+                            ::memset(coeffCurU + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
 #endif
                             if (checkTransformSkipUV)
                             {
@@ -3200,7 +3229,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                     int scalingListType = 3 + TEXT_CHROMA_V;
                     X265_CHECK(scalingListType < 6, "scalingListType too large %d\n", scalingListType);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiV, strideResiC, coeffCurV + subTUBufferOffset,
+                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), REG_DCT, curResiV, strideResiC, coeffCurV + subTUOffset,
                                                trSizeC, scalingListType, false, lastPos[TEXT_CHROMA_V][tuIterator.m_section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiV, strideResiC);
@@ -3244,7 +3273,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         {
                             absSum[TEXT_CHROMA_V][tuIterator.m_section] = 0;
 #if CHECKED_BUILD || _DEBUG
-                            ::memset(coeffCurV + subTUBufferOffset, 0, sizeof(coeff_t) * numCoeffC);
+                            ::memset(coeffCurV + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
 #endif
                             if (checkTransformSkipUV)
                             {
@@ -3314,8 +3343,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             if (absSumTransformSkipY)
             {
                 m_entropyCoder->resetBits();
-                m_entropyCoder->encodeQtCbf(cu, absPartIdx, 0, trSize, trSize, TEXT_LUMA, trMode, true);
-                m_entropyCoder->encodeCoeffNxN(cu, tsCoeffY, absPartIdx, trSize, TEXT_LUMA);
+                m_entropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
+                m_entropyCoder->encodeCoeffNxN(cu, tsCoeffY, absPartIdx, log2TrSize, TEXT_LUMA);
                 const uint32_t skipSingleBitsY = m_entropyCoder->getNumberOfWrittenBits();
 
                 m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
@@ -3380,7 +3409,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             do
             {
                 uint32_t absPartIdxC = tuIterator.m_absPartIdxTURelCU;
-                uint32_t subTUBufferOffset = trSizeC * trSizeC * tuIterator.m_section;
+                uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
 
                 int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
                 int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
@@ -3415,8 +3444,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 if (absSumTransformSkipU)
                 {
-                    m_entropyCoder->encodeQtCbf(cu, absPartIdxC, tuIterator.m_absPartIdxStep, trSizeC, trSizeC, TEXT_CHROMA_U, trMode, true);
-                    m_entropyCoder->encodeCoeffNxN(cu, tsCoeffU, absPartIdxC, trSizeC, TEXT_CHROMA_U);
+                    m_entropyCoder->encodeQtCbf(cu, absPartIdxC, TEXT_CHROMA_U, trMode);
+                    m_entropyCoder->encodeCoeffNxN(cu, tsCoeffU, absPartIdxC, log2TrSizeC, TEXT_CHROMA_U);
                     singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section] = m_entropyCoder->getNumberOfWrittenBits();
 
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
@@ -3457,14 +3486,14 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     singlePsyEnergyComp[TEXT_CHROMA_U][tuIterator.m_section] = nonZeroPsyEnergyU;
                     absSum[TEXT_CHROMA_U][tuIterator.m_section] = absSumTransformSkipU;
                     bestTransformMode[TEXT_CHROMA_U][tuIterator.m_section] = 1;
-                    memcpy(coeffCurU + subTUBufferOffset, tsCoeffU, sizeof(coeff_t) * numCoeffC);
+                    memcpy(coeffCurU + subTUOffset, tsCoeffU, sizeof(coeff_t) * numCoeffC);
                     primitives.square_copy_ss[sizeIdxC](curResiU, strideResiC, tsResiU, trSizeC);
                 }
 
                 if (absSumTransformSkipV)
                 {
-                    m_entropyCoder->encodeQtCbf(cu, absPartIdxC, tuIterator.m_absPartIdxStep, trSizeC, trSizeC, TEXT_CHROMA_V, trMode, true);
-                    m_entropyCoder->encodeCoeffNxN(cu, tsCoeffV, absPartIdxC, trSizeC, TEXT_CHROMA_V);
+                    m_entropyCoder->encodeQtCbf(cu, absPartIdxC, TEXT_CHROMA_V, trMode);
+                    m_entropyCoder->encodeCoeffNxN(cu, tsCoeffV, absPartIdxC, log2TrSizeC, TEXT_CHROMA_V);
                     singleBitsComp[TEXT_CHROMA_V][tuIterator.m_section] = m_entropyCoder->getNumberOfWrittenBits() - singleBitsComp[TEXT_CHROMA_U][tuIterator.m_section];
 
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
@@ -3505,7 +3534,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     singlePsyEnergyComp[TEXT_CHROMA_V][tuIterator.m_section] = nonZeroPsyEnergyV;
                     absSum[TEXT_CHROMA_V][tuIterator.m_section] = absSumTransformSkipV;
                     bestTransformMode[TEXT_CHROMA_V][tuIterator.m_section] = 1;
-                    memcpy(coeffCurV + subTUBufferOffset, tsCoeffV, sizeof(coeff_t) * numCoeffC);
+                    memcpy(coeffCurV + subTUOffset, tsCoeffV, sizeof(coeff_t) * numCoeffC);
                     primitives.square_copy_ss[sizeIdxC](curResiV, strideResiC, tsResiV, trSizeC);
                 }
 
@@ -3538,32 +3567,32 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             m_entropyCoder->encodeQtCbf(cu, absPartIdx, absPartIdxStep, trSizeC, trHeightC, TEXT_CHROMA_V, trMode, true);
         }
 
-        m_entropyCoder->encodeQtCbf(cu, absPartIdx, 0, trSize, trSize, TEXT_LUMA,     trMode, true);
+        m_entropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
         if (absSum[TEXT_LUMA][0])
-            m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, trSize, TEXT_LUMA);
+            m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
 
         if (bCodeChroma)
         {
             if (!splitIntoSubTUs)
             {
                 if (absSum[TEXT_CHROMA_U][0])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, trSizeC, TEXT_CHROMA_U);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
                 if (absSum[TEXT_CHROMA_V][0])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, trSizeC, TEXT_CHROMA_V);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
             }
             else
             {
-                uint32_t subTUSize = trSizeC * trSizeC;
+                uint32_t subTUSize = 1 << (log2TrSizeC * 2);
                 uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
 
                 if (absSum[TEXT_CHROMA_U][0])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, trSizeC, TEXT_CHROMA_U);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
                 if (absSum[TEXT_CHROMA_U][1])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUSize, absPartIdx + partIdxesPerSubTU, trSizeC, TEXT_CHROMA_U);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_U);
                 if (absSum[TEXT_CHROMA_V][0])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, trSizeC, TEXT_CHROMA_V);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
                 if (absSum[TEXT_CHROMA_V][1])
-                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUSize, absPartIdx + partIdxesPerSubTU, trSizeC, TEXT_CHROMA_V);
+                    m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_V);
             }
         }
 
@@ -3751,7 +3780,6 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     X265_CHECK(cu->getPredictionMode(absPartIdx) != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
 
     bool mCodeAll = true;
-    uint32_t trSize    = 1 << log2TrSize;
     uint32_t trWidthC  = 1 << log2TrSizeC;
     uint32_t trHeightC = splitIntoSubTUs ? (trWidthC << 1) : trWidthC;
 
@@ -3803,49 +3831,48 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
 
         if (bSubdivAndCbf)
         {
-            m_entropyCoder->encodeQtCbf(cu, absPartIdx, 0, trSize, trSize, TEXT_LUMA, trMode, true);
+            m_entropyCoder->encodeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
         }
         else
         {
             if (ttype == TEXT_LUMA && cu->getCbf(absPartIdx, TEXT_LUMA, trMode))
             {
-                m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, trSize, TEXT_LUMA);
+                m_entropyCoder->encodeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
             }
             if (bCodeChroma)
             {
                 uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
                 coeff_t *coeffCurU = m_qtTempCoeff[1][qtLayer] + coeffOffsetC;
                 coeff_t *coeffCurV = m_qtTempCoeff[2][qtLayer] + coeffOffsetC;
-                uint32_t trSizeC = 1 << log2TrSizeC;
 
                 if (!splitIntoSubTUs)
                 {
                     if (ttype == TEXT_CHROMA_U && cu->getCbf(absPartIdx, TEXT_CHROMA_U, trMode))
                     {
-                        m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, trSizeC, TEXT_CHROMA_U);
+                        m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
                     }
                     if (ttype == TEXT_CHROMA_V && cu->getCbf(absPartIdx, TEXT_CHROMA_V, trMode))
                     {
-                        m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, trSizeC, TEXT_CHROMA_V);
+                        m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
                     }
                 }
                 else
                 {
                     uint32_t partIdxesPerSubTU  = cu->getPic()->getNumPartInCU() >> (((cu->getDepth(absPartIdx) + trModeC) << 1) + 1);
-                    uint32_t subTUSize = trSizeC * trSizeC;
+                    uint32_t subTUSize = 1 << (log2TrSizeC * 2);
                     if (ttype == TEXT_CHROMA_U && cu->getCbf(absPartIdx, TEXT_CHROMA_U, trMode))
                     {
                         if (cu->getCbf(absPartIdx, ttype, trMode + 1))
-                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, trSizeC, TEXT_CHROMA_U);
+                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
                         if (cu->getCbf(absPartIdx + partIdxesPerSubTU, ttype, trMode + 1))
-                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUSize, absPartIdx + partIdxesPerSubTU, trSizeC, TEXT_CHROMA_U);
+                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurU + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_U);
                     }
                     if (ttype == TEXT_CHROMA_V && cu->getCbf(absPartIdx, TEXT_CHROMA_V, trMode))
                     {
                         if (cu->getCbf(absPartIdx, ttype, trMode + 1))
-                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, trSizeC, TEXT_CHROMA_V);
+                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
                         if (cu->getCbf(absPartIdx + partIdxesPerSubTU, ttype, trMode + 1))
-                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUSize, absPartIdx + partIdxesPerSubTU, trSizeC, TEXT_CHROMA_V);
+                            m_entropyCoder->encodeCoeffNxN(cu, coeffCurV + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_V);
                     }
                 }
             }

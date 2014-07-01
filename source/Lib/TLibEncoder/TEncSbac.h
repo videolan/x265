@@ -114,6 +114,7 @@ public:
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel);
+    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
@@ -127,7 +128,7 @@ public:
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
 
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
+    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------

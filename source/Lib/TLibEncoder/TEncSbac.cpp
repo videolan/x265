@@ -1873,6 +1873,25 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     }
 }
 
+void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
+{
+    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+
+    DTRACE_CABAC_VL(g_nSymbolCounter++)
+    DTRACE_CABAC_T("\tparseQtCbf()")
+    DTRACE_CABAC_T("\tsymbol=")
+    DTRACE_CABAC_V(cbf)
+    DTRACE_CABAC_T("\tctx=")
+    DTRACE_CABAC_V(ctx)
+    DTRACE_CABAC_T("\tetype=")
+    DTRACE_CABAC_V(ttype)
+    DTRACE_CABAC_T("\tuiAbsPartIdx=")
+    DTRACE_CABAC_V(absPartIdx)
+    DTRACE_CABAC_T("\n")
+}
+
 void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -1999,8 +2018,9 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
+    uint32_t trSize = 1 << log2TrSize;
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
@@ -2027,8 +2047,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
 #endif // if ENC_DEC_TRACE
 
     X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
-
-    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));

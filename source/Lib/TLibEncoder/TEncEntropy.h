@@ -114,14 +114,24 @@ public:
 
     void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
-    void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
+    void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
+    {
+        m_entropyCoder->codeQtCbf(cu, absPartIdx, ttype, trDepth);
+    }
+    void encodeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
+    {
+        m_entropyCoder->codeQtCbfZero(cu, ttype, trDepth);
+    }
+
     void encodeQtRootCbfZero(TComDataCU* cu);
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void encodeQP(TComDataCU* cu, uint32_t absPartIdx);
     void encodeScalingList(TComScalingList* scalingList);
     void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
-    void encodeCoeffNxN(TComDataCU* cu, coeff_t* pcCoeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
-
+    void encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+    {
+        m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, ttype);
+    }
 
     void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
