@@ -25,12 +25,13 @@
 #include "encoder.h"
 #include "PPA/ppa.h"
 #include "framefilter.h"
+#include "frameencoder.h"
 #include "wavefront.h"
 
 using namespace x265;
 
 static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t *cnt);
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
 
 // **************************************************************************
 // * LoopFilter
@@ -40,6 +41,8 @@ FrameFilter::FrameFilter()
     , m_rdGoOnBinCodersCABAC(true)
     , m_ssimBuf(NULL)
 {
+    m_pic = NULL;
+    m_frame = NULL;
 }
 
 void FrameFilter::destroy()
@@ -58,27 +61,30 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder)
 {
-    m_param = top->param;
+    m_param = top->m_param;
+    m_frame = frame;
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
+    m_pad[0] = top->m_pad[0];
+    m_pad[1] = top->m_pad[1];
 
     // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
-    if (top->param->bEnableLoopFilter)
+    if (m_param->bEnableLoopFilter)
     {
         m_loopFilter.create(g_maxCUDepth);
     }
 
-    if (top->param->bEnableSAO)
+    if (m_param->bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(top->param->saoLcuBoundary);
-        m_sao.setSaoLcuBasedOptimization(top->param->saoLcuBasedOptimization);
+        m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
         m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
-        m_sao.create(top->param->sourceWidth, top->param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
+        m_sao.create(m_param->sourceWidth, m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
 
@@ -86,12 +92,11 @@ void FrameFilter::init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder)
         m_ssimBuf = (int*)x265_malloc(sizeof(int) * 8 * (m_param->sourceWidth / 4 + 3));
 }
 
-void FrameFilter::start(TComPic *pic)
+void FrameFilter::start(Frame *pic)
 {
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_loopFilter.setCfg(pic->getSlice()->getPPS()->getLoopFilterAcrossTilesEnabledFlag());
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
     m_entropyCoder.setBitstream(&m_bitCounter);
@@ -116,17 +121,15 @@ void FrameFilter::start(TComPic *pic)
     }
 }
 
-void FrameFilter::end()
-{
-}
-
-void FrameFilter::processRow(int row, Encoder* cfg)
+void FrameFilter::processRow(int row, const int threadId)
 {
     PPAScopeEvent(Thread_filterCU);
+    assert(threadId >= 0);
+    ThreadLocalData& tld = Encoder::m_threadLocalData[threadId];
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
-        processRowPost(row, cfg);
+        processRowPost(row, threadId);
         return;
     }
 
@@ -134,18 +137,14 @@ void FrameFilter::processRow(int row, Encoder* cfg)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_binIf))->m_fracBits;
+        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
         m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
 
-    // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-    if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
-    {
-        m_sao.calcSaoStatsRowCus_BeforeDblk(m_pic, row);
-    }
+    // NOTE: remove m_sao.calcSaoStatsRowCus_BeforeDblk at here, we do it in encode loop now
 
     if (m_param->bEnableLoopFilter)
     {
@@ -154,18 +153,18 @@ void FrameFilter::processRow(int row, Encoder* cfg)
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            m_loopFilter.loopFilterCU(cu, EDGE_VER);
+            m_loopFilter.loopFilterCU(cu, EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
-                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
+                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
             }
         }
 
         {
             TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR);
+            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
         }
     }
 
@@ -178,7 +177,7 @@ void FrameFilter::processRow(int row, Encoder* cfg)
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
         {
-            processSao(row - m_saoRowDelay);
+            processSao(row - m_saoRowDelay, threadId);
         }
     }
 
@@ -190,7 +189,7 @@ void FrameFilter::processRow(int row, Encoder* cfg)
 
     if (row > 0)
     {
-        processRowPost(row - 1, cfg);
+        processRowPost(row - 1, threadId);
     }
 
     if (row == m_numRows - 1)
@@ -201,15 +200,15 @@ void FrameFilter::processRow(int row, Encoder* cfg)
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
             {
-                processSao(i);
+                processSao(i, threadId);
             }
         }
 
-        processRowPost(row, cfg);
+        processRowPost(row, threadId);
     }
 }
 
-void FrameFilter::processRowPost(int row, Encoder* cfg)
+void FrameFilter::processRowPost(int row, const int /*threadId*/)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -271,7 +270,7 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         TComPicYuv* orig  = m_pic->getPicYuvOrg();
 
         int stride = recon->getStride();
-        int width  = recon->getWidth() - cfg->m_pad[0];
+        int width  = recon->getWidth() - m_pad[0];
         int height;
 
         if (row == m_numRows - 1)
@@ -287,29 +286,29 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint64_t ssdU = computeSSD(orig->getCbAddr(cuAddr), recon->getCbAddr(cuAddr), stride, width, height);
         uint64_t ssdV = computeSSD(orig->getCrAddr(cuAddr), recon->getCrAddr(cuAddr), stride, width, height);
 
-        m_pic->m_SSDY += ssdY;
-        m_pic->m_SSDU += ssdU;
-        m_pic->m_SSDV += ssdV;
+        m_frame->m_SSDY += ssdY;
+        m_frame->m_SSDU += ssdU;
+        m_frame->m_SSDV += ssdV;
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = (pixel*)m_pic->getPicYuvRec()->getLumaAddr();
-        pixel *org = (pixel*)m_pic->getPicYuvOrg()->getLumaAddr();
+        pixel *rec = m_pic->getPicYuvRec()->getLumaAddr();
+        pixel *org = m_pic->getPicYuvOrg()->getLumaAddr();
         int stride1 = m_pic->getPicYuvOrg()->getStride();
         int stride2 = m_pic->getPicYuvRec()->getStride();
         int bEnd = ((row + 1) == (this->m_numRows - 1));
         int bStart = (row == 0);
         int minPixY = row * g_maxCUSize - 4 * !bStart;
         int maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
-        int ssim_cnt;
+        uint32_t ssim_cnt;
         x265_emms();
 
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_pic->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
-                                       m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, &ssim_cnt);
-        m_pic->m_ssimCnt += ssim_cnt;
+        m_frame->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
+                                         m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
+        m_frame->m_ssimCnt += ssim_cnt;
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
@@ -317,39 +316,36 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
 
-        if (row == 0)
+        if (!row)
         {
             for (int i = 0; i < 3; i++)
             {
-                MD5Init(&(m_pic->m_state[i]));
+                MD5Init(&m_frame->m_state[i]);
             }
         }
 
-        updateMD5Plane(m_pic->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
 
-        updateMD5Plane(m_pic->m_state[1], recon->getCbAddr(cuAddr), width, height, stride);
-
-        updateMD5Plane(m_pic->m_state[2], recon->getCrAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[1], recon->getCbAddr(cuAddr), width, height, stride);
+        updateMD5Plane(m_frame->m_state[2], recon->getCrAddr(cuAddr), width, height, stride);
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
         uint32_t width = recon->getWidth();
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
-        if (row == 0)
-        {
-            m_pic->m_crc[0] = m_pic->m_crc[1] = m_pic->m_crc[2] = 0xffff;
-        }
-        updateCRC(recon->getLumaAddr(cuAddr), m_pic->m_crc[0], height, width, stride);
+        if (!row)
+            m_frame->m_crc[0] = m_frame->m_crc[1] = m_frame->m_crc[2] = 0xffff;
+        updateCRC(recon->getLumaAddr(cuAddr), m_frame->m_crc[0], height, width, stride);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
 
-        updateCRC(recon->getCbAddr(cuAddr), m_pic->m_crc[1], height, width, stride);
-        updateCRC(recon->getCrAddr(cuAddr), m_pic->m_crc[2], height, width, stride);
+        updateCRC(recon->getCbAddr(cuAddr), m_frame->m_crc[1], height, width, stride);
+        updateCRC(recon->getCrAddr(cuAddr), m_frame->m_crc[2], height, width, stride);
     }
     else if (m_param->decodedPictureHashSEI == 3)
     {
@@ -357,17 +353,16 @@ void FrameFilter::processRowPost(int row, Encoder* cfg)
         uint32_t height = recon->getCUHeight(row);
         uint32_t stride = recon->getStride();
         uint32_t cuHeight = g_maxCUSize;
-        if (row == 0)
-        {
-            m_pic->m_checksum[0] = m_pic->m_checksum[1] = m_pic->m_checksum[2] = 0;
-        }
-        updateChecksum(recon->getLumaAddr(), m_pic->m_checksum[0], height, width, stride, row, cuHeight);
+        if (!row)
+            m_frame->m_checksum[0] = m_frame->m_checksum[1] = m_frame->m_checksum[2] = 0;
+        updateChecksum(recon->getLumaAddr(), m_frame->m_checksum[0], height, width, stride, row, cuHeight);
         width  >>= m_hChromaShift;
         height >>= m_vChromaShift;
         stride = recon->getCStride();
         cuHeight >>= m_vChromaShift;
-        updateChecksum(recon->getCbAddr(), m_pic->m_checksum[1], height, width, stride, row, cuHeight);
-        updateChecksum(recon->getCrAddr(), m_pic->m_checksum[2], height, width, stride, row, cuHeight);
+
+        updateChecksum(recon->getCbAddr(), m_frame->m_checksum[1], height, width, stride, row, cuHeight);
+        updateChecksum(recon->getCrAddr(), m_frame->m_checksum[2], height, width, stride, row, cuHeight);
     }
 }
 
@@ -473,7 +468,7 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 }
 
 /* Function to calculate SSIM for each row */
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, int32_t* cnt)
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt)
 {
     int z = 0;
     float ssim = 0.0;
@@ -502,11 +497,11 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         }
     }
 
-    *cnt = (height - 1) * (width - 1);
+    cnt = (height - 1) * (width - 1);
     return ssim;
 }
 
-void FrameFilter::processSao(int row)
+void FrameFilter::processSao(int row, const int /*threadId*/)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -525,16 +520,14 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
     }
 
-    // TODO: this code is NOT VERIFIED because TransformSkip and PCM modes have some bugs, they are never enabled
-    bool bPCMFilter = (m_pic->getSlice()->getSPS()->getUsePCM() && m_pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-    if (bPCMFilter || m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
         for (uint32_t col = 0; col < numCols; col++)
         {
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            xPCMCURestoration(cu, 0, 0);
+            xOrigCUSampleRestoration(cu, 0, 0);
         }
     }
 }

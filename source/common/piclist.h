@@ -27,14 +27,14 @@
 #include <cstdlib>
 
 namespace x265 {
-class TComPic;
+class Frame;
 
 class PicList
 {
 protected:
 
-    TComPic* m_start;
-    TComPic* m_end;
+    Frame*   m_start;
+    Frame*   m_end;
     int      m_count;
 
 public:
@@ -47,23 +47,23 @@ public:
     }
 
     /** Push picture to end of the list */
-    void pushBack(TComPic& pic);
+    void pushBack(Frame& pic);
 
     /** Push picture to beginning of the list */
-    void pushFront(TComPic& pic);
+    void pushFront(Frame& pic);
 
     /** Pop picture from end of the list */
-    TComPic* popBack();
+    Frame* popBack();
 
     /** Pop picture from beginning of the list */
-    TComPic* popFront();
+    Frame* popFront();
 
     /** Remove picture from list */
-    void remove(TComPic& pic);
+    void remove(Frame& pic);
 
-    TComPic* first()      { return m_start;   }
+    Frame* first()        { return m_start;   }
 
-    TComPic* last()       { return m_end;     }
+    Frame* last()         { return m_end;     }
 
     int size()            { return m_count;   }
 

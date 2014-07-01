@@ -21,7 +21,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPic.h"
+#include "TLibCommon/TComPicYuv.h"
 #include "lowres.h"
 #include "mv.h"
 

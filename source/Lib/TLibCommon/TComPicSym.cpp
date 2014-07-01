@@ -50,10 +50,8 @@ using namespace x265;
 TComPicSym::TComPicSym()
     : m_widthInCU(0)
     , m_heightInCU(0)
-    , m_maxCUSize(0)
     , m_unitSize(0)
     , m_log2UnitSize(0)
-    , m_totalDepth(0)
     , m_numPartitions(0)
     , m_numPartInCUSize(0)
     , m_numCUsInFrame(0)
@@ -61,38 +59,37 @@ TComPicSym::TComPicSym()
     , m_cuData(NULL)
 {}
 
-bool TComPicSym::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxDepth)
+bool TComPicSym::create(x265_param *param)
 {
     uint32_t i;
 
     m_saoParam        = NULL;
-    m_totalDepth      = maxDepth;
-    m_numPartitions   = 1 << (m_totalDepth << 1);
+    m_numPartitions   = 1 << (g_maxCUDepth << 1);
 
-    m_maxCUSize       = maxCUSize;
-
-    m_unitSize        = maxCUSize  >> m_totalDepth;
+    m_unitSize        = g_maxCUSize >> g_maxCUDepth;
     m_log2UnitSize    = g_convertToBit[m_unitSize] + 2;
 
-    m_numPartInCUSize = m_maxCUSize >> m_log2UnitSize;
+    m_numPartInCUSize = g_maxCUSize >> m_log2UnitSize;
 
-    m_widthInCU       = (picWidth  + m_maxCUSize - 1) / m_maxCUSize;
-    m_heightInCU      = (picHeight + m_maxCUSize - 1) / m_maxCUSize;
+    m_widthInCU       = (param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
+    m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
     m_slice = new TComSlice;
-    m_cuData = new TComDataCU*[m_numCUsInFrame];
+    m_cuData = new TComDataCU[m_numCUsInFrame];
     if (!m_slice || !m_cuData)
         return false;
 
+    bool tqBypass = param->bCULossless || param->bLossless;
     for (i = 0; i < m_numCUsInFrame; i++)
     {
-        m_cuData[i] = new TComDataCU;
-        if (!m_cuData[i])
+        uint32_t sizeL = g_maxCUSize * g_maxCUSize;
+        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
+        if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
             return false;
-        if (!m_cuData[i]->create(m_numPartitions, m_maxCUSize, m_unitSize, picCsp))
-            return false;
+
+        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, param->internalCsp, 0, tqBypass);
     }
 
     return true;
@@ -105,8 +102,7 @@ void TComPicSym::destroy()
 
     for (int i = 0; i < m_numCUsInFrame; i++)
     {
-        m_cuData[i]->destroy();
-        delete m_cuData[i];
+        m_cuData[i].destroy();
     }
 
     delete [] m_cuData;

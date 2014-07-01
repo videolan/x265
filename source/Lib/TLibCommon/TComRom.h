@@ -38,9 +38,7 @@
 #ifndef X265_TCOMROM_H
 #define X265_TCOMROM_H
 
-#include "CommonDef.h"
-
-#include <iostream>
+#include "common.h"
 
 namespace x265 {
 // private namespace
@@ -274,6 +272,7 @@ extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 
 extern const double x265_lambda_tab[MAX_MAX_QP + 1];
 extern const double x265_lambda2_tab[MAX_MAX_QP + 1];
+extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1];
 
 // CABAC tables
 extern const uint8_t g_lpsTable[64][4];

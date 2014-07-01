@@ -100,7 +100,6 @@ public:
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t partSize);
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height);
     void copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, bool bChromaSame);
-    void copyPartToPartYuvChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions to support multiple color space formats

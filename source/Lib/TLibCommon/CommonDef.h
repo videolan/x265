@@ -38,8 +38,6 @@
 #ifndef X265_COMMONDEF_H
 #define X265_COMMONDEF_H
 
-#include <cstdlib>
-#include "common.h"
 #include "TypeDef.h"
 
 //! \ingroup TLibCommon

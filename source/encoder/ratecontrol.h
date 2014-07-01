@@ -26,14 +26,14 @@
 #ifndef X265_RATECONTROL_H
 #define X265_RATECONTROL_H
 
-#include "TLibCommon/CommonDef.h"
-
 namespace x265 {
 // encoder namespace
 
-struct Lookahead;
+class Lookahead;
 class Encoder;
-class TComPic;
+class Frame;
+class TComSPS;
+class SEIBufferingPeriod;
 
 #define BASE_FRAME_DURATION 0.04
 
@@ -53,9 +53,8 @@ struct Predictor
 
 struct RateControlEntry
 {
-    int64_t texBits;  /* Required in 2-pass rate control */
+    int64_t coeffBits;  /* Required in 2-pass rate control */
     int64_t lastSatd; /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
-
     int sliceType;
     int mvBits;
     int bframes;
@@ -74,83 +73,116 @@ struct RateControlEntry
     Predictor* rowPred[2];
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
     bool isActive;
+
+    SEIPictureTiming picTimingSEI;
+    HRDTiming        hrdTiming;
 };
 
-struct RateControl
+class RateControl
 {
-    TComSlice *curSlice;      /* all info about the current frame */
-    x265_param* param;
-    SliceType sliceType;      /* Current frame type */
-    int ncu;                  /* number of CUs in a frame */
-    int qp;                   /* updated qp for current frame */
+public:
 
-    double frameDuration;     /* current frame duration in seconds */
-    double bitrate;
-    double rateFactorConstant;
-    bool   isAbr;
-    double bufferSize;
-    double bufferFillFinal;  /* real buffer as of the last finished frame */
-    double bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
-    double bufferRate;       /* # of bits added to buffer_fill after each frame */
-    double vbvMaxRate;       /* in kbps */
-    bool   isCbr;
-    bool singleFrameVbv;
-    double rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
-    double rateFactorMaxDecrement; /* don't allow RF below (this value). */
-    bool isVbv;
-    Predictor pred[5];
-    Predictor predBfromP;
-    int bframes;
-    int bframeBits;
-    bool isAbrReset;
-    int lastAbrResetPoc;
-    int64_t currentSatd;
-    int    qpConstant[3];
-    double cplxrSum;          /* sum of bits*qscale/rceq */
-    double wantedBitsWindow;  /* target bitrate * window */
-    double ipOffset;
-    double pbOffset;
-    int lastNonBPictType;
-    int64_t leadingNoBSatd;
-    double accumPQp;          /* for determining I-frame quant */
-    double accumPNorm;
-    double lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
-    double lstep;
-    double shortTermCplxSum;
-    double shortTermCplxCount;
-    int64_t totalBits;        /* totalbits used for already encoded frames */
-    double lastRceq;
-    int framesDone;           /* framesDone keeps track of # of frames passed through RateCotrol already */
-    double qCompress;
-    RateControl(Encoder * _cfg);
+    TComSlice*  m_curSlice;      /* all info about the current frame */
+    x265_param* m_param;
+    SliceType   m_sliceType;     /* Current frame type */
+    int         m_ncu;           /* number of CUs in a frame */
+    int         m_qp;            /* updated qp for current frame */
 
+    bool   m_isAbr;
+    bool   m_isVbv;
+    bool   m_isCbr;
+    bool   m_singleFrameVbv;
+
+    bool   m_isAbrReset;
+    int    m_lastAbrResetPoc;
+
+    double m_frameDuration;     /* current frame duration in seconds */
+    double m_bitrate;
+    double m_rateFactorConstant;
+    double m_bufferSize;
+    double m_bufferFillFinal;  /* real buffer as of the last finished frame */
+    double m_bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
+    double m_bufferRate;       /* # of bits added to buffer_fill after each frame */
+    double m_vbvMaxRate;       /* in kbps */
+    double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
+    double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
+
+    Predictor m_pred[5];
+    Predictor m_predBfromP;
+
+    int       m_bframes;
+    int64_t   m_bframeBits;
+    int64_t   m_currentSatd;
+    int       m_qpConstant[3];
+    double    m_ipOffset;
+    double    m_pbOffset;
+
+    int      m_lastNonBPictType;
+    int64_t  m_leadingNoBSatd;
+
+    double   m_cplxrSum;          /* sum of bits*qscale/rceq */
+    double   m_wantedBitsWindow;  /* target bitrate * window */
+    double   m_accumPQp;          /* for determining I-frame quant */
+    double   m_accumPNorm;
+    double   m_lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
+    double   m_lstep;
+    double   m_shortTermCplxSum;
+    double   m_shortTermCplxCount;
+    double   m_lastRceq;
+    double   m_qCompress;
+
+    int64_t  m_totalBits;        /* total bits used for already encoded frames */
+    int      m_framesDone;       /* # of frames passed through RateCotrol already */
+
+    /* hrd stuff */
+    SEIBufferingPeriod m_bufPeriodSEI;
+    double   m_nominalRemovalTime;
+    double   m_prevCpbFinalAT;
+
+    /* 2 pass */
+    bool     m_2pass;
+    FILE*    m_statFileOut;
+    FILE*    m_cutreeStatFileOut;
+    FILE*    m_cutreeStatFileIn;
+
+    struct
+    {
+        uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
+        int qpBufPos;          /* In order to handle pyramid reordering, QP buffer acts as a stack.
+                                * This value is the current position (0 or 1). */
+    } m_cuTreeStats;
+
+    RateControl(x265_param *p);
+    void destroy();
     // to be called for each frame to process RateControl and set QP
-    void rateControlStart(TComPic* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
-    void calcAdaptiveQuantFrame(TComPic *pic);
-    int rateControlEnd(TComPic* pic, int64_t bits, RateControlEntry* rce);
-    int rowDiagonalVbvRateControl(TComPic* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
-
+    void rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
+    void calcAdaptiveQuantFrame(Frame *pic);
+    int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce);
+    int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
+    void hrdFullness(SEIBufferingPeriod* sei);
+    bool init(TComSPS* sps);
+    void initHRD(TComSPS* sps);
 protected:
 
-    static const double amortizeFraction;
-    static const int amortizeFrames;
+    static const double s_amortizeFraction;
+    static const int    s_amortizeFrames;
+    static const char  *s_defaultStatFileName;
 
-    int residualFrames;
-    int residualCost;
+    int m_residualFrames;
+    int m_residualCost;
 
-    void init();
     double getQScale(RateControlEntry *rce, double rateFactor);
-    double rateEstimateQscale(TComPic* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
+    double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();
-    uint32_t acEnergyCu(TComPic* pic, uint32_t block_x, uint32_t block_y);
+    uint32_t acEnergyCu(Frame* pic, uint32_t block_x, uint32_t block_y);
 
     void updateVbv(int64_t bits, RateControlEntry* rce);
     void updatePredictor(Predictor *p, double q, double var, double bits);
-    double clipQscale(TComPic* pic, double q);
+    double clipQscale(Frame* pic, double q);
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
-    double predictRowsSizeSum(TComPic* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
+    double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

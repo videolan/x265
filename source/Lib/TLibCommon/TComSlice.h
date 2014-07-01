@@ -38,11 +38,9 @@
 #ifndef X265_TCOMSLICE_H
 #define X265_TCOMSLICE_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComRom.h"
 #include "x265.h"  // NAL type enums
-#include "piclist.h"
-#include "common.h"
 
 //! \ingroup TLibCommon
 //! \{
@@ -50,9 +48,10 @@
 namespace x265 {
 // private namespace
 
-class TComPic;
+class Frame;
 class TComTrQuant;
 class MotionReference;
+class PicList;
 
 // ====================================================================================================================
 // Constants
@@ -311,8 +310,8 @@ private:
 public:
 
     TComHRD()
-        : m_nalHrdParametersPresentFlag(0)
-        , m_vclHrdParametersPresentFlag(0)
+        : m_nalHrdParametersPresentFlag(false)
+        , m_vclHrdParametersPresentFlag(false)
         , m_subPicHrdParamsPresentFlag(false)
         , m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
@@ -458,6 +457,14 @@ public:
     int  getNumTicksPocDiffOneMinus1()          { return m_numTicksPocDiffOneMinus1; }
 
     void setNumTicksPocDiffOneMinus1(int x)     { m_numTicksPocDiffOneMinus1 = x; }
+};
+
+struct HRDTiming
+{
+    double cpbInitialAT;
+    double cpbFinalAT;
+    double dpbOutputTime;
+    double cpbRemovalTime;
 };
 
 class TComVPS
@@ -805,9 +812,6 @@ private:
     uint32_t    m_quadtreeTULog2MinSize;
     uint32_t    m_quadtreeTUMaxDepthInter;
     uint32_t    m_quadtreeTUMaxDepthIntra;
-    bool        m_usePCM;
-    uint32_t    m_pcmLog2MaxSize;
-    uint32_t    m_pcmLog2MinSize;
     bool        m_useAMP;
 
     // Parameter
@@ -815,10 +819,6 @@ private:
     int         m_bitDepthC;
     int         m_qpBDOffsetY;
     int         m_qpBDOffsetC;
-
-    uint32_t    m_pcmBitDepthLuma;
-    uint32_t    m_pcmBitDepthChroma;
-    bool        m_bPCMFilterDisableFlag;
 
     uint32_t    m_bitsForPOC;
     uint32_t    m_numLongTermRefPicSPS;
@@ -914,18 +914,6 @@ public:
 
     uint32_t getMaxCUDepth() const { return m_maxCUDepth; }
 
-    void setUsePCM(bool b)   { m_usePCM = b; }
-
-    bool getUsePCM() const   { return m_usePCM; }
-
-    void setPCMLog2MaxSize(uint32_t u) { m_pcmLog2MaxSize = u; }
-
-    uint32_t getPCMLog2MaxSize() const { return m_pcmLog2MaxSize; }
-
-    void setPCMLog2MinSize(uint32_t u) { m_pcmLog2MinSize = u; }
-
-    uint32_t getPCMLog2MinSize() const { return m_pcmLog2MinSize; }
-
     void setBitsForPOC(uint32_t u) { m_bitsForPOC = u; }
 
     uint32_t getBitsForPOC() const { return m_bitsForPOC; }
@@ -1005,18 +993,6 @@ public:
 
     void      setTemporalIdNestingFlag(bool bValue)   { m_bTemporalIdNestingFlag = bValue; }
 
-    uint32_t      getPCMBitDepthLuma() const { return m_pcmBitDepthLuma; }
-
-    void      setPCMBitDepthLuma(uint32_t u) { m_pcmBitDepthLuma = u; }
-
-    uint32_t      getPCMBitDepthChroma() const { return m_pcmBitDepthChroma; }
-
-    void      setPCMBitDepthChroma(uint32_t u) { m_pcmBitDepthChroma = u; }
-
-    void      setPCMFilterDisableFlag(bool bValue)    { m_bPCMFilterDisableFlag = bValue; }
-
-    bool      getPCMFilterDisableFlag() const         { return m_bPCMFilterDisableFlag; }
-
     bool getScalingListFlag() const { return m_scalingListEnabledFlag; }
 
     void setScalingListFlag(bool b) { m_scalingListEnabledFlag = b; }
@@ -1081,8 +1057,6 @@ private:
     bool     m_transquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
     bool     m_useTransformSkip;
     bool     m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
-
-    bool     m_loopFilterAcrossTilesEnabledFlag;
 
     int      m_signHideFlag;
 
@@ -1178,10 +1152,6 @@ public:
     bool      getUseTransformSkip() const { return m_useTransformSkip; }
 
     void      setUseTransformSkip(bool b) { m_useTransformSkip = b; }
-
-    void    setLoopFilterAcrossTilesEnabledFlag(bool b) { m_loopFilterAcrossTilesEnabledFlag = b; }
-
-    bool    getLoopFilterAcrossTilesEnabledFlag()      { return m_loopFilterAcrossTilesEnabledFlag; }
 
     bool    getEntropyCodingSyncEnabledFlag() const    { return m_entropyCodingSyncEnabledFlag; }
 
@@ -1291,7 +1261,6 @@ private:
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
     int         m_sliceQp;
-    bool        m_dependentSliceSegmentFlag;
     bool        m_deblockingFilterDisable;
     bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
     int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
@@ -1304,7 +1273,7 @@ private:
     int         m_sliceQpDelta;
     int         m_sliceQpDeltaCb;
     int         m_sliceQpDeltaCr;
-    TComPic*    m_refPicList[2][MAX_NUM_REF + 1];
+    Frame*    m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
     bool        m_bIsUsedAsLongTerm[2][MAX_NUM_REF + 1];
 
@@ -1315,19 +1284,15 @@ private:
     TComSPS*    m_sps;
     TComPPS*    m_pps;
     TComVPS*    m_vps;
-    TComPic*    m_pic;
+    Frame*    m_pic;
     uint32_t    m_colFromL0Flag; // collocated picture from List0 flag
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
 
     uint32_t    m_sliceCurEndCUAddr;
-    bool        m_nextSlice;
     uint32_t    m_sliceBits;
     uint32_t    m_sliceSegmentBits;
-    bool        m_bFinalized;
-
-    uint32_t    m_tileOffstForMultES;
 
     uint32_t*   m_substreamSizes;
     TComScalingList* m_scalingList; //!< pointer of quantization matrix
@@ -1395,10 +1360,6 @@ public:
 
     int       getSliceQp()                        { return m_sliceQp; }
 
-    bool      getDependentSliceSegmentFlag() const   { return m_dependentSliceSegmentFlag; }
-
-    void      setDependentSliceSegmentFlag(bool val) { m_dependentSliceSegmentFlag = val; }
-
     int       getSliceQpDelta()                   { return m_sliceQpDelta; }
 
     int       getSliceQpDeltaCb()                 { return m_sliceQpDeltaCb; }
@@ -1417,9 +1378,9 @@ public:
 
     const int* getNumRefIdx() const               { return m_numRefIdx; }
 
-    TComPic*  getPic()                            { return m_pic; }
+    Frame*  getPic()                            { return m_pic; }
 
-    TComPic*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }
+    Frame*  getRefPic(int e, int refIdx) { return m_refPicList[e][refIdx]; }
 
     int       getRefPOC(int e, int refIdx) { return m_refPOCList[e][refIdx]; }
 
@@ -1472,13 +1433,13 @@ public:
 
     void      setDeblockingFilterTcOffsetDiv2(int i)   { m_deblockingFilterTcOffsetDiv2 = i; }
 
-    void      setRefPic(TComPic* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
+    void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 
     void      setRefPOC(int i, int e, int refIdx) { m_refPOCList[e][refIdx] = i; }
 
     void      setNumRefIdx(int e, int i)   { m_numRefIdx[e] = i; }
 
-    void      setPic(TComPic* p)                  { m_pic = p; }
+    void      setPic(Frame* p)                  { m_pic = p; }
 
     void      setRefPicList(PicList& picList);
 
@@ -1508,10 +1469,6 @@ public:
 
     uint32_t getSliceCurEndCUAddr()                { return m_sliceCurEndCUAddr; }
 
-    void setNextSlice(bool b)                  { m_nextSlice = b; }
-
-    bool isNextSlice()                         { return m_nextSlice; }
-
     void setSliceBits(uint32_t val)            { m_sliceBits = val; }
 
     uint32_t getSliceBits()                    { return m_sliceBits; }
@@ -1520,10 +1477,6 @@ public:
 
     uint32_t getSliceSegmentBits()             { return m_sliceSegmentBits; }
 
-    void setFinalized(bool val)                { m_bFinalized = val; }
-
-    bool getFinalized()                        { return m_bFinalized; }
-
     void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3); }
 
     void  getWpScaling(int e, int refIdx, wpScalingParam *&wp);
@@ -1531,10 +1484,6 @@ public:
     void  resetWpScaling();
     void  initWpScaling();
     inline bool applyWP() { return (m_sliceType == P_SLICE && m_pps->getUseWP()) || (m_sliceType == B_SLICE && m_pps->getWPBiPred()); }
-
-    void setTileOffstForMultES(uint32_t offset) { m_tileOffstForMultES = offset; }
-
-    uint32_t getTileOffstForMultES()           { return m_tileOffstForMultES; }
 
     void allocSubstreamSizes(uint32_t uiNumSubstreams);
     uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
@@ -1563,9 +1512,9 @@ public:
 
 protected:
 
-    TComPic*  xGetRefPic(PicList& picList, int poc);
+    Frame*  xGetRefPic(PicList& picList, int poc);
 
-    TComPic*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
+    Frame*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
 }
 //! \}

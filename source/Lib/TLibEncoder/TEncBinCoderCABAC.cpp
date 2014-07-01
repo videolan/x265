@@ -35,9 +35,11 @@
     \brief    binary entropy encoder of CABAC
 */
 
-#include "TEncBinCoderCABAC.h"
-#include "TLibCommon/TComRom.h"
+#include "common.h"
+#include "bitstream.h"
 #include "threading.h"  // CLZ32
+#include "TLibCommon/TComRom.h"
+#include "TEncBinCoderCABAC.h"
 
 using namespace x265;
 
@@ -53,7 +55,7 @@ TEncBinCABAC::TEncBinCABAC(bool isCounter)
 TEncBinCABAC::~TEncBinCABAC()
 {}
 
-void TEncBinCABAC::init(TComBitIf* bitIf)
+void TEncBinCABAC::init(BitInterface* bitIf)
 {
     m_bitIf = bitIf;
 }
@@ -119,26 +121,6 @@ void TEncBinCABAC::flush()
 void TEncBinCABAC::resetBac()
 {
     start();
-}
-
-/** Encode PCM alignment zero bits.
- * \returns void
- */
-void TEncBinCABAC::encodePCMAlignBits()
-{
-    finish();
-    m_bitIf->write(1, 1);
-    m_bitIf->writeAlignZero(); // pcm align zero
-}
-
-/** Write a PCM code.
- * \param code code value
- * \param length code bit-depth
- * \returns void
- */
-void TEncBinCABAC::xWritePCMCode(uint32_t code, uint32_t length)
-{
-    m_bitIf->write(code, length);
 }
 
 void TEncBinCABAC::copyState(TEncBinCABAC* binCABAC)

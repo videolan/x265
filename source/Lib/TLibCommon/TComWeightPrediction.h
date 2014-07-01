@@ -39,7 +39,7 @@
 #define X265_TCOMWEIGHTPREDICTION_H
 
 // Include files
-#include "TComPic.h"
+#include "frame.h"
 #include "TComMotionInfo.h"
 #include "TComPattern.h"
 

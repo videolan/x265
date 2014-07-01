@@ -1,7 +1,5 @@
 # vim: syntax=cmake
 set(LIBENCODER_HDR
-    ../Lib/TLibEncoder/NALwrite.h
-    ../Lib/TLibEncoder/SEIwrite.h
     ../Lib/TLibEncoder/SyntaxElementWriter.h
     ../Lib/TLibEncoder/TEncBinCoderCABAC.h
     ../Lib/TLibEncoder/TEncCu.h
@@ -10,8 +8,6 @@ set(LIBENCODER_HDR
     ../Lib/TLibEncoder/TEncSbac.h
     ../Lib/TLibEncoder/TEncSearch.h)
 set(LIBENCODER_SRC
-    ../Lib/TLibEncoder/NALwrite.cpp
-    ../Lib/TLibEncoder/SEIwrite.cpp
     ../Lib/TLibEncoder/SyntaxElementWriter.cpp
     ../Lib/TLibEncoder/TEncBinCoderCABAC.cpp
     ../Lib/TLibEncoder/TEncCu.cpp
@@ -43,6 +39,8 @@ add_library(encoder OBJECT ../x265.h
     framefilter.cpp framefilter.h
     cturow.cpp cturow.h
     level.cpp level.h
+    nal.cpp nal.h
+    sei.cpp sei.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
     compress.cpp

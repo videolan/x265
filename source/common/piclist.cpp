@@ -21,12 +21,13 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "piclist.h"
-#include "TLibCommon/TComPic.h"
+#include "frame.h"
 
 using namespace x265;
 
-void PicList::pushFront(TComPic& pic)
+void PicList::pushFront(Frame& pic)
 {
     X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
     pic.m_next = m_start;
@@ -44,7 +45,7 @@ void PicList::pushFront(TComPic& pic)
     m_count++;
 }
 
-void PicList::pushBack(TComPic& pic)
+void PicList::pushBack(Frame& pic)
 {
     X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
     pic.m_next = NULL;
@@ -62,11 +63,11 @@ void PicList::pushBack(TComPic& pic)
     m_count++;
 }
 
-TComPic *PicList::popFront()
+Frame *PicList::popFront()
 {
     if (m_start)
     {
-        TComPic *temp = m_start;
+        Frame *temp = m_start;
         m_count--;
 
         if (m_count)
@@ -85,11 +86,11 @@ TComPic *PicList::popFront()
         return NULL;
 }
 
-TComPic *PicList::popBack()
+Frame *PicList::popBack()
 {
     if (m_end)
     {
-        TComPic* temp = m_end;
+        Frame* temp = m_end;
         m_count--;
 
         if (m_count)
@@ -108,10 +109,10 @@ TComPic *PicList::popBack()
         return NULL;
 }
 
-void PicList::remove(TComPic& pic)
+void PicList::remove(Frame& pic)
 {
 #if _DEBUG
-    TComPic *tmp = m_start;
+    Frame *tmp = m_start;
     while (tmp && tmp != &pic)
     {
         tmp = tmp->m_next;

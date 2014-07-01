@@ -710,6 +710,43 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
     return sum + ((uint64_t)sqr << 32);
 }
 
+#if defined(_MSC_VER)
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
+
+template<int size>
+int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+{
+    static pixel zeroBuf[8] /* = { 0 } */;
+
+    if (size)
+    {
+        int dim = 1 << (size + 2);
+        uint32_t totEnergy = 0;
+        for (int i = 0; i < dim; i += 8)
+        {
+            for (int j = 0; j < dim; j+= 8)
+            {
+                /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
+                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
+                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
+
+                totEnergy += abs(sourceEnergy - reconEnergy);
+            }
+        }
+        return totEnergy;
+    }
+    else
+    {
+        /* 4x4 is too small for sa8d */
+        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 0) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 0) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
+        return abs(sourceEnergy - reconEnergy);
+    }
+}
+
 void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride,
                                     pixel *src,  intptr_t srcStride, int w, int h)
 {
@@ -1113,6 +1150,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d[BLOCK_16x16] = sa8d_16x16;
     p.sa8d[BLOCK_32x32] = sa8d16<32, 32>;
     p.sa8d[BLOCK_64x64] = sa8d16<64, 64>;
+
+    p.psy_cost[BLOCK_4x4] = psyCost<BLOCK_4x4>;
+    p.psy_cost[BLOCK_8x8] = psyCost<BLOCK_8x8>;
+    p.psy_cost[BLOCK_16x16] = psyCost<BLOCK_16x16>;
+    p.psy_cost[BLOCK_32x32] = psyCost<BLOCK_32x32>;
+    p.psy_cost[BLOCK_64x64] = psyCost<BLOCK_64x64>;
 
     p.sa8d_inter[LUMA_4x4]   = satd_4x4;
     p.sa8d_inter[LUMA_8x8]   = sa8d_8x8;

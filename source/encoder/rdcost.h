@@ -55,12 +55,12 @@ public:
 
     void setCbDistortionWeight(double cbDistortionWeight)
     {
-        m_cbDistortionWeight = (uint64_t)floor(256.0 * cbDistortionWeight);
+        m_cbDistortionWeight = (uint64_t)floor(cbDistortionWeight);
     }
 
     void setCrDistortionWeight(double crDistortionWeight)
     {
-        m_crDistortionWeight = (uint64_t)floor(256.0 * crDistortionWeight);
+        m_crDistortionWeight = (uint64_t)floor(crDistortionWeight);
     }
 
     void setPsyRdScale(double scale)
@@ -81,16 +81,9 @@ public:
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline uint32_t psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
     {
-        int sdc = primitives.sad_square[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) >> 2;
-        int sEnergy = primitives.sa8d[size](source, sstride, (pixel*)zeroPel, MAX_CU_SIZE) - sdc;
-
-        int rdc = primitives.sad_square[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) >> 2;
-        int rEnergy = primitives.sa8d[size](recon, rstride, (pixel*)zeroPel, MAX_CU_SIZE) - rdc;
-
-        X265_CHECK(sEnergy >= 0 && rEnergy >= 0, "DC component of energy is more than total cost\n")
-        return abs(sEnergy - rEnergy);
+        return primitives.psy_cost[size](source, sstride, recon, rstride);
     }
 
     /* return the RD cost of this prediction, including the effect of psy-rd */

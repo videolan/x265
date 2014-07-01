@@ -21,11 +21,13 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "TLibCommon/TComSlice.h"
-#include "encoder.h"
 
 #include "PPA/ppa.h"
+
+#include "encoder.h"
 #include "dpb.h"
 #include "frameencoder.h"
 
@@ -33,22 +35,39 @@ using namespace x265;
 
 DPB::~DPB()
 {
-    while (!m_picList.empty())
+    while (!m_freeList.empty())
     {
-        TComPic* pic = m_picList.popFront();
+        Frame* pic = m_freeList.popFront();
         pic->destroy();
         delete pic;
+    }
+
+    while (!m_picList.empty())
+    {
+        Frame* pic = m_picList.popFront();
+        pic->destroy();
+        delete pic;
+    }
+
+    while (m_picSymFreeList)
+    {
+        TComPicSym* next = m_picSymFreeList->m_freeListNext;
+        m_picSymFreeList->destroy();
+        m_picSymFreeList->m_reconPicYuv->destroy();
+        delete m_picSymFreeList->m_reconPicYuv;
+        delete m_picSymFreeList;
+        m_picSymFreeList = next;
     }
 }
 
 // move unreferenced pictures from picList to freeList for recycle
-void DPB::recycleUnreferenced(PicList& freeList)
+void DPB::recycleUnreferenced()
 {
-    TComPic *iterPic = m_picList.first();
+    Frame *iterPic = m_picList.first();
 
     while (iterPic)
     {
-        TComPic *pic = iterPic;
+        Frame *pic = iterPic;
         iterPic = iterPic->m_next;
         if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
         {
@@ -59,12 +78,16 @@ void DPB::recycleUnreferenced(PicList& freeList)
             m_picList.remove(*pic);
             iterPic = m_picList.first();
 
-            freeList.pushBack(*pic);
+            m_freeList.pushBack(*pic);
+            pic->m_picSym->m_freeListNext = m_picSymFreeList;
+            m_picSymFreeList = pic->m_picSym;
+            pic->m_picSym = NULL;
+            pic->m_reconPicYuv = NULL;
         }
     }
 }
 
-void DPB::prepareEncode(TComPic *pic)
+void DPB::prepareEncode(Frame *pic)
 {
     PPAScopeEvent(DPB_prepareEncode);
 
@@ -176,7 +199,6 @@ void DPB::prepareEncode(TComPic *pic)
     }
 
     slice->setMvdL1ZeroFlag(bGPBcheck);
-    slice->setNextSlice(false);
 
     /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
      * it prevents the frame from being recycled, and second the referenced frames know how many
@@ -186,7 +208,7 @@ void DPB::prepareEncode(TComPic *pic)
     {
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            TComPic *refpic = slice->getRefPic(l, ref);
+            Frame *refpic = slice->getRefPic(l, ref);
             ATOMIC_INC(&refpic->m_countRefEncoders);
         }
     }
@@ -196,7 +218,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
 {
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
-    TComPic* iterPic = m_picList.first();
+    Frame* iterPic = m_picList.first();
 
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
@@ -247,7 +269,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
         || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
     {
         // mark all pictures as not used for reference
-        TComPic* iterPic = m_picList.first();
+        Frame* iterPic = m_picList.first();
         while (iterPic)
         {
             if (iterPic->getPOC() != pocCurr)
@@ -266,7 +288,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
     {
         if (m_bRefreshPending == true && pocCurr > m_pocCRA) // CRA reference marking pending
         {
-            TComPic* iterPic = m_picList.first();
+            Frame* iterPic = m_picList.first();
             while (iterPic)
             {
                 if (iterPic->getPOC() != pocCurr && iterPic->getPOC() != m_pocCRA)
@@ -287,11 +309,11 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet */
 void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 {
-    TComPic* outPic;
+    Frame* outPic;
     int i, isReference;
 
     // loop through all pictures in the reference picture buffer
-    TComPic* iterPic = m_picList.first();
+    Frame* iterPic = m_picList.first();
 
     while (iterPic)
     {
@@ -311,7 +333,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
             if (!outPic->getIsLongTerm() && outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->getDeltaPOC(i))
             {
                 isReference = 1;
-                outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 outPic->setIsLongTerm(0);
             }
         }
@@ -323,7 +344,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
                 if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC()) == rps->getPOC(i))
                 {
                     isReference = 1;
-                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 }
             }
             else
@@ -333,7 +353,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
                     (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC()))
                 {
                     isReference = 1;
-                    outPic->setUsedByCurr(rps->getUsed(i) == 1);
                 }
             }
         }
@@ -343,7 +362,6 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
         if (outPic->getPicSym()->getSlice()->getPOC() != curPoc && isReference == 0)
         {
             outPic->getSlice()->setReferenced(false);
-            outPic->setUsedByCurr(0);
             outPic->setIsLongTerm(0);
         }
     }
@@ -354,7 +372,7 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
  * \returns the nal unit type of the picture
  * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
  */
-NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, TComPic* pic)
+NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, Frame* pic)
 {
     if (curPOC == 0)
     {
@@ -461,7 +479,7 @@ void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
     {
         // Check if MSB present flag should be enabled.
         // Check if the buffer contains any pictures that have the same LSB.
-        TComPic* iterPic = m_picList.first();
+        Frame* iterPic = m_picList.first();
         while (iterPic)
         {
             if ((getLSB(iterPic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB

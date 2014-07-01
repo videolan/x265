@@ -71,6 +71,8 @@ static const struct option long_options[] =
     { "log-level",      required_argument, NULL, 0 },
     { "level",          required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
+    { "no-cu-stats",          no_argument, NULL, 0 },
+    { "cu-stats",             no_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
@@ -140,6 +142,8 @@ static const struct option long_options[] =
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
     { "aq-strength",    required_argument, NULL, 0 },
+    { "ipratio",        required_argument, NULL, 0 },
+    { "pbratio",        required_argument, NULL, 0 },
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
@@ -163,6 +167,8 @@ static const struct option long_options[] =
     { "strong-intra-smoothing",    no_argument, NULL, 0 },
     { "no-cutree",                 no_argument, NULL, 0 },
     { "cutree",                    no_argument, NULL, 0 },
+    { "no-hrd",               no_argument, NULL, 0 },
+    { "hrd",                  no_argument, NULL, 0 },
     { "sar",            required_argument, NULL, 0 },
     { "overscan",       required_argument, NULL, 0 },
     { "videoformat",    required_argument, NULL, 0 },
@@ -199,12 +205,11 @@ struct CLIOptions
     std::fstream bitstreamFile;
     bool bProgress;
     bool bForceY4m;
+    bool bDither;
 
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
-
-    bool dither;
 
     int64_t startTime;
     int64_t prevUpdateTime;
@@ -224,7 +229,7 @@ struct CLIOptions
         bForceY4m = false;
         startTime = x265_mdate();
         prevUpdateTime = 0;
-        dither = false;
+        bDither = false;
         qpfile = NULL;
     }
 
@@ -313,6 +318,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", logLevelNames[param->logLevel + 1]);
     H0("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("   --no-progress                 Disable CLI progress reports\n");
+    H0("   --[no-]cu-stats               Enable logging stats about distribution of cu across all modes. Default %s\n",OPT(param->bLogCuStats));
     H0("-o/--output <filename>           Bitstream output file name\n");
     H0("\nInput Options:\n");
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
@@ -389,8 +395,11 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas.(0 to 3.0). Default %f\n", param->rc.aqStrength);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
+    H0("   --ipratio <float>             QP factor between I and P. Default %f\n", param->rc.ipFactor);
+    H0("   --pbratio <float>             QP factor between P and B. Default %f\n", param->rc.pbFactor);
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
+    H0("   --[no-]hrd                    Enable HRD parameters signalling. Default %s\n", OPT(param->bEmitHRDSEI));
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual optimization. Requires slow preset or below. Default %f\n", param->psyRd);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
@@ -528,9 +537,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("recon") reconfn = optarg;
             OPT("input-res") bError |= sscanf(optarg, "%dx%d", &param->sourceWidth, &param->sourceHeight) != 2;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("dither") this->dither = true;
+            OPT("dither") this->bDither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
-            OPT("y4m") bForceY4m = true;
+            OPT("y4m") this->bForceY4m = true;
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
             OPT("qpfile")
@@ -602,7 +611,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    this->input = Input::open(info, bForceY4m);
+    this->input = Input::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -767,13 +776,13 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
-    if (cliopt.dither)
+    if (cliopt.bDither)
     {
         errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
         if (errorBuf)
             memset(errorBuf, 0, (param->sourceWidth + 1) * sizeof(int16_t));
         else
-            cliopt.dither = false;
+            cliopt.bDither = false;
     }
 
     // main encoder loop
@@ -797,7 +806,7 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.dither)
+        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
         {
             ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
             pic_in->bitDepth = X265_DEPTH;

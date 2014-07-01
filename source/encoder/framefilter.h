@@ -25,7 +25,8 @@
 #ifndef X265_FRAMEFILTER_H
 #define X265_FRAMEFILTER_H
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "TLibCommon/TComLoopFilter.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
@@ -43,23 +44,24 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(Encoder *top, int numRows, TEncSbac* rdGoOnSbacCoder);
+    void init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder);
 
     void destroy();
 
-    void start(TComPic *pic);
-    void end();
+    void start(Frame *pic);
 
-    void processRow(int row, Encoder* cfg);
-    void processRowPost(int row, Encoder* cfg);
-    void processSao(int row);
+    void processRow(int row, const int threadId);
+    void processRowPost(int row, const int threadId);
+    void processSao(int row, const int threadId);
 
 protected:
 
     x265_param*                 m_param;
-    TComPic*                    m_pic;
+    Frame*                      m_pic;
+    FrameEncoder*               m_frame;
     int                         m_hChromaShift;
     int                         m_vChromaShift;
+    int                         m_pad[2];
 
 public:
 
@@ -72,7 +74,7 @@ public:
     TEncEntropy                 m_entropyCoder;
     TEncSbac                    m_rdGoOnSbacCoder;
     TEncBinCABAC                m_rdGoOnBinCodersCABAC;
-    TComBitCounter              m_bitCounter;
+    BitCounter                  m_bitCounter;
     TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;

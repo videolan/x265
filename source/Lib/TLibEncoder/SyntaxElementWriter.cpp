@@ -35,7 +35,7 @@
     \brief    CAVLC encoder class
 */
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "SyntaxElementWriter.h"
 
 using namespace x265;
@@ -118,9 +118,14 @@ void SyntaxElementWriter::xWriteUvlc(uint32_t code)
     m_bitIf->write(code, (len + 1) >> 1);
 }
 
+inline uint32_t toUInt(int val)
+{
+    return (val <= 0) ? -val << 1 : (val << 1) - 1;
+}
+
 void SyntaxElementWriter::xWriteSvlc(int code)
 {
-    uint32_t ucode = xConvertToUInt(code);
+    uint32_t ucode = toUInt(code);
 
     xWriteUvlc(ucode);
 }

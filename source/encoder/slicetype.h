@@ -32,8 +32,7 @@ namespace x265 {
 // private namespace
 
 struct Lowres;
-class TComPic;
-class Encoder;
+class Frame;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
@@ -46,39 +45,41 @@ class Encoder;
         (w).bPresentFlag = b; \
     }
 
-struct EstimateRow
+class EstimateRow
 {
-    MotionEstimate      me;
-    Lock                lock;
-    pixel*              predictions;    // buffer for 35 intra predictions
+public:
+    MotionEstimate      m_me;
+    Lock                m_lock;
+    pixel*              m_predictions;    // buffer for 35 intra predictions
 
-    volatile uint32_t   completed;      // Number of CUs in this row for which cost estimation is completed
-    volatile bool       active;
+    volatile uint32_t   m_completed;      // Number of CUs in this row for which cost estimation is completed
+    volatile bool       m_active;
 
-    uint64_t            costEst;        // Estimated cost for all CUs in a row
-    uint64_t            costEstAq;      // Estimated weight Aq cost for all CUs in a row
-    uint64_t            costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
-    int                 intraMbs;       // Number of Intra CUs
-    int                 costIntra;      // Estimated Intra cost for all CUs in a row
+    uint64_t            m_costEst;        // Estimated cost for all CUs in a row
+    uint64_t            m_costEstAq;      // Estimated weight Aq cost for all CUs in a row
+    uint64_t            m_costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
+    int                 m_intraMbs;       // Number of Intra CUs
+    int                 m_costIntra;      // Estimated Intra cost for all CUs in a row
 
-    int                 widthInCU;
-    int                 heightInCU;
-    int                 merange;
-    int                 lookAheadLambda;
+    int                 m_merange;
+    int                 m_lookAheadLambda;
+
+    int                 m_widthInCU;
+    int                 m_heightInCU;
 
     EstimateRow()
     {
-        me.setQP(X265_LOOKAHEAD_QP);
-        me.setSearchMethod(X265_HEX_SEARCH);
-        me.setSubpelRefine(1);
-        predictions = X265_MALLOC(pixel, 35 * 8 * 8);
-        merange = 16;
-        lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
+        m_me.setQP(X265_LOOKAHEAD_QP);
+        m_me.setSearchMethod(X265_HEX_SEARCH);
+        m_me.setSubpelRefine(1);
+        m_predictions = X265_MALLOC(pixel, 35 * 8 * 8);
+        m_merange = 16;
+        m_lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     }
 
     ~EstimateRow()
     {
-        X265_FREE(predictions);
+        X265_FREE(m_predictions);
     }
 
     void init();
@@ -88,27 +89,28 @@ struct EstimateRow
 
 /* CostEstimate manages the cost estimation of a single frame, ie:
  * estimateFrameCost() and everything below it in the call graph */
-struct CostEstimate : public WaveFront
+class CostEstimate : public WaveFront
 {
+public:
     CostEstimate(ThreadPool *p);
     ~CostEstimate();
-    void init(x265_param *, TComPic *);
+    void init(x265_param *, Frame *);
 
-    x265_param      *param;
-    EstimateRow     *rows;
-    pixel           *wbuffer[4];
-    Lowres         **curframes;
+    x265_param      *m_param;
+    EstimateRow     *m_rows;
+    pixel           *m_wbuffer[4];
+    Lowres         **m_curframes;
 
-    ReferencePlanes  weightedRef;
-    wpScalingParam   w;
+    ReferencePlanes  m_weightedRef;
+    wpScalingParam   m_w;
 
-    int              paddedLines;     // number of lines in padded frame
-    int              widthInCU;       // width of lowres frame in downscale CUs
-    int              heightInCU;      // height of lowres frame in downscale CUs
+    int              m_paddedLines;     // number of lines in padded frame
+    int              m_widthInCU;       // width of lowres frame in downscale CUs
+    int              m_heightInCU;      // height of lowres frame in downscale CUs
 
-    bool             bDoSearch[2];
-    volatile bool    bFrameCompleted;
-    int              curb, curp0, curp1;
+    bool             m_bDoSearch[2];
+    volatile bool    m_bFrameCompleted;
+    int              m_curb, m_curp0, m_curp1;
 
     void     processRow(int row, int threadId);
     int64_t  estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
@@ -119,41 +121,43 @@ protected:
     uint32_t weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *w);
 };
 
-struct Lookahead : public JobProvider
+class Lookahead : public JobProvider
 {
-    Lookahead(Encoder *, ThreadPool *pool);
+public:
+
+    Lookahead(x265_param *param, ThreadPool *pool);
     ~Lookahead();
     void init();
     void destroy();
 
-    CostEstimate     est;             // Frame cost estimator
-    PicList          inputQueue;      // input pictures in order received
-    PicList          outputQueue;     // pictures to be encoded, in encode order
+    CostEstimate     m_est;             // Frame cost estimator
+    PicList          m_inputQueue;      // input pictures in order received
+    PicList          m_outputQueue;     // pictures to be encoded, in encode order
 
-    x265_param      *param;
-    Lowres          *lastNonB;
-    int             *scratch;         // temp buffer
+    x265_param      *m_param;
+    Lowres          *m_lastNonB;
+    int             *m_scratch;         // temp buffer
 
-    int              widthInCU;       // width of lowres frame in downscale CUs
-    int              heightInCU;      // height of lowres frame in downscale CUs
-    int              lastKeyframe;
-    int              histogram[X265_BFRAME_MAX + 1];
+    int              m_widthInCU;       // width of lowres frame in downscale CUs
+    int              m_heightInCU;      // height of lowres frame in downscale CUs
+    int              m_lastKeyframe;
+    int              m_histogram[X265_BFRAME_MAX + 1];
 
-    void addPicture(TComPic*, int sliceType);
+    void addPicture(Frame*, int sliceType);
     void flush();
-    TComPic* getDecidedPicture();
+    Frame* getDecidedPicture();
 
-    int64_t getEstimatedPictureCost(TComPic *pic);
+    int64_t getEstimatedPictureCost(Frame *pic);
 
 protected:
 
-    Lock  inputQueueLock;
-    Lock  outputQueueLock;
-    Lock  decideLock;
-    Event outputAvailable;
-    volatile int  bReady;
-    volatile bool bFilling;
-    volatile bool bFlushed;
+    Lock  m_inputQueueLock;
+    Lock  m_outputQueueLock;
+    Lock  m_decideLock;
+    Event m_outputAvailable;
+    volatile int  m_bReady;
+    volatile bool m_bFilling;
+    volatile bool m_bFlushed;
 
     bool findJob(int);
 

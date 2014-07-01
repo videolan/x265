@@ -340,6 +340,10 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
+    /* Enable analysis and logging distribution of Cus encoded across various
+     * modes during mode decision. Default disabled */
+    int       bLogCuStats;
+
     /* Enable the measurement and reporting of PSNR. Default is enabled */
     int       bEnablePsnr;
 
@@ -409,6 +413,10 @@ typedef struct x265_param
     /* Flag indicating whether the encoder should emit an Access Unit Delimiter
      * NAL at the start of every access unit. Default false */
     int       bEnableAccessUnitDelimiters;
+
+    /* Enables the buffering period SEI and picture timing SEI to signal the HRD
+     * parameteres. Default is disabled */
+    int       bEmitHRDSEI;
 
     /*== Coding Unit (CU) definitions ==*/
 
@@ -592,7 +600,7 @@ typedef struct x265_param
     /* Psycho-visual rate-distortion strength. Only has an effect in presets
      * which use RDO. It makes mode decision favor options which preserve the
      * energy of the source, at the cost of lost compression. Default 0.0 */
-    double     psyRd;
+    double    psyRd;
 
     /*== Coding tools ==*/
 
@@ -660,15 +668,16 @@ typedef struct x265_param
      * reduction */
     int       noiseReduction;
 
-    /* The lossless flag enables true lossless coding, by bypassing scaling, transform,
-     * quantization and in-loop filter processes. This is used for ultra-high bitrates with
-     * zero loss of quality. */
-    int bLossless;
+    /* The lossless flag enables true lossless coding, by bypassing scaling,
+     * transform, quantization and in-loop filter processes. This is used for
+     * ultra-high bitrates with zero loss of quality. */
+    int       bLossless;
 
-    /* The CU Lossless flag, when enabled, compares the rate-distortion costs for normal
-     * and lossless encoding, and chooses the best mode for each CU. If lossless mode is 
-     * chosen, the cu-transquant-bypass flag is set for that CU. */
-    int bCULossless;
+    /* The CU Lossless flag, when enabled, compares the rate-distortion costs
+     * for normal and lossless encoding, and chooses the best mode for each CU.
+     * If lossless mode is chosen, the cu-transquant-bypass flag is set for that
+     * CU. */
+    int       bCULossless;
 
     /*== Rate Control ==*/
 
@@ -689,7 +698,7 @@ typedef struct x265_param
 
         /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used
          * alongwith overflow (difference between actual and target bitrate), to adjust
-           qp. Default is 1.0 */
+         * qp. Default is 1.0 */
         double    rateTolerance;
 
         /* qComp sets the quantizer curve compression factor. It weights the frame
@@ -698,7 +707,7 @@ typedef struct x265_param
         double    qCompress;
 
         /* QP offset between I/P and P/B frames. Default ipfactor: 1.4
-         *  Default pbFactor: 1.3 */
+         * Default pbFactor: 1.3 */
         double    ipFactor;
         double    pbFactor;
 
@@ -741,6 +750,22 @@ typedef struct x265_param
 
         /* In CRF mode, minimum CRF as caused by VBV */
         double    rfConstantMin;
+
+        /* Two pass (INCOMPLETE) */
+        /* Enable writing the stats in a multipass encode to the stat output file */
+        int       bStatWrite;
+
+        /* Enable loading data from the stat input file in a multi pass encode */
+        int       bStatRead;
+
+        /* Filename of the 2pass output/input stats file */
+        char*     statFileName;
+
+        /* temporally blur quants */
+        double    qblur;
+
+        /* temporally blur complexity */
+        double    complexityBlur;
     } rc;
 
     /*== Video Usability Information ==*/

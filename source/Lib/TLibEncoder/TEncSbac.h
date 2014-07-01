@@ -38,48 +38,43 @@
 #ifndef X265_TENCSBAC_H
 #define X265_TENCSBAC_H
 
-#include "TLibCommon/TComBitStream.h"
+#include "common.h"
+#include "bitstream.h"
 #include "TLibCommon/ContextTables.h"
-#include "TEncEntropy.h"
+#include "TLibCommon/TComDataCU.h"
+#include "TLibCommon/TComSlice.h"
+#include "TLibCommon/TComTrQuant.h"
 #include "TEncBinCoderCABAC.h"
 #include "SyntaxElementWriter.h"
 
 namespace x265 {
 // private namespace
 
-//! \ingroup TLibEncoder
-//! \{
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// SBAC encoder class
-class TEncSbac : public SyntaxElementWriter, public TEncEntropyIf
+class TEncSbac : public SyntaxElementWriter
 {
 public:
 
-    uint64_t pad;
-    ContextModel m_contextModels[MAX_OFF_CTX_MOD];
+    uint64_t      m_pad;
+    ContextModel  m_contextModels[MAX_OFF_CTX_MOD];
 
     TComSlice*    m_slice;
-    TEncBinCABAC* m_binIf;
+    TEncBinCABAC* m_cabac;
 
     TEncSbac();
     virtual ~TEncSbac();
 
-    void  init(TEncBinCABAC* p)       { m_binIf = p; }
+    void  init(TEncBinCABAC* p)       { m_cabac = p; }
+    TEncBinCABAC* getEncBinIf()       { return m_cabac; }
 
     void  setSlice(TComSlice* p)      { m_slice = p; }
 
-    void  resetBits()                 { m_binIf->resetBits(); m_bitIf->resetBits(); }
+    void  resetBits()                 { m_cabac->resetBits(); m_bitIf->resetBits(); }
 
-    uint32_t getNumberOfWrittenBits() { return m_binIf->getNumWrittenBits(); }
+    uint32_t getNumberOfWrittenBits() { return m_cabac->getNumWrittenBits(); }
 
-    //  Virtual list
     void resetEntropy();
     void determineCabacInitIdx();
-    void setBitstream(TComBitIf* p);
+    void setBitstream(BitInterface* p);
 
     // SBAC RD
     void load(TEncSbac* src);
@@ -104,10 +99,8 @@ public:
     void codeSaoTypeIdx(uint32_t code);
     void codeSaoUflc(uint32_t length, uint32_t code);
     void codeShortTermRefPicSet(TComReferencePictureSet* pcRPS, bool calledFromSliceHeader, int idx);
-    bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 
-    void codeSAOSign(uint32_t code) { m_binIf->encodeBinEP(code); }
-
+    void codeSAOSign(uint32_t code) { m_cabac->encodeBinEP(code); }
     void codeScalingList(TComScalingList*);
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
@@ -119,9 +112,9 @@ public:
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
-    void codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel);
+    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
@@ -135,7 +128,7 @@ public:
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
 
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
+    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -148,10 +141,7 @@ public:
     void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
-    TEncBinCABAC* getEncBinIf()  { return m_binIf; }
-
-private:
-
+    bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
     void xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void xWriteEpExGolomb(uint32_t symbol, uint32_t count);
     void xWriteCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
@@ -162,6 +152,5 @@ private:
     void xCodeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
 };
 }
-//! \}
 
 #endif // ifndef X265_TENCSBAC_H

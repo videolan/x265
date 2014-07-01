@@ -23,14 +23,15 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 #include "lowres.h"
 #include "mv.h"
 #include "slicetype.h"
 #include "bitstream.h"
 
 using namespace x265;
-namespace weightp {
+namespace {
 struct Cache
 {
     const int * intraCost;
@@ -225,13 +226,16 @@ uint32_t weightCost(pixel *         fenc,
     x265_emms();
     return cost;
 }
+}
 
-void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MAX_NUM_REF][3])
+namespace x265 {
+void weightAnalyse(TComSlice& slice, x265_param& param)
 {
+    wpScalingParam wp[2][MAX_NUM_REF][3];
     TComPicYuv *fencYuv = slice.getPic()->getPicYuvOrg();
     Lowres& fenc        = slice.getPic()->m_lowres;
 
-    weightp::Cache cache;
+    Cache cache;
 
     memset(&cache, 0, sizeof(cache));
     cache.intraCost = fenc.intraCost;
@@ -245,7 +249,10 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     /* Use single allocation for motion compensated ref and weight buffers */
     pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
     if (!mcbuf)
+    {
+        slice.resetWpScaling();
         return;
+    }
     pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
 
     int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
@@ -255,15 +262,15 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     int chromaDenom, lumaDenom, denom;
     chromaDenom = lumaDenom = 7;
     int numpixels[3];
-    int w = ((fencYuv->getWidth()  + 15) >> 4) << 4;
-    int h = ((fencYuv->getHeight() + 15) >> 4) << 4;
-    numpixels[0] = w * h;
+    int w16 = ((fencYuv->getWidth()  + 15) >> 4) << 4;
+    int h16 = ((fencYuv->getHeight() + 15) >> 4) << 4;
+    numpixels[0] = w16 * h16;
     numpixels[1] = numpixels[2] = numpixels[0] >> (cache.hshift + cache.vshift);
 
     for (int list = 0; list < cache.numPredDir; list++)
     {
         wpScalingParam *weights = wp[list][0];
-        TComPic *refPic = slice.getRefPic(list, 0);
+        Frame *refPic = slice.getRefPic(list, 0);
         Lowres& refLowres = refPic->m_lowres;
         int diffPoc = abs(curPoc - refPic->getPOC());
 
@@ -403,6 +410,7 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
                 break;
 
             default:
+                slice.resetWpScaling();
                 X265_FREE(mcbuf);
                 return;
             }
@@ -502,15 +510,6 @@ void analyzeWeights(TComSlice& slice, x265_param& param, wpScalingParam wp[2][MA
     }
 
     X265_FREE(mcbuf);
-}
-}
-
-namespace x265 {
-void weightAnalyse(TComSlice& slice, x265_param& param)
-{
-    wpScalingParam wp[2][MAX_NUM_REF][3];
-
-    weightp::analyzeWeights(slice, param, wp);
 
     slice.setWpScaling(wp);
 

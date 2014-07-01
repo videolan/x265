@@ -199,7 +199,7 @@ struct EncoderPrimitives
     pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
-    pixelcmp_t      sad_square[NUM_SQUARE_BLOCKS];   // sad primitives for square coding blocks
+    pixelcmp_t      psy_cost[NUM_SQUARE_BLOCKS];     // difference in AC energy between two blocks
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
@@ -213,6 +213,10 @@ struct EncoderPrimitives
     copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
     pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
     pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
+    copy_pp_t       square_copy_pp[NUM_SQUARE_BLOCKS];
+    copy_sp_t       square_copy_sp[NUM_SQUARE_BLOCKS];
+    copy_ps_t       square_copy_ps[NUM_SQUARE_BLOCKS];
+    copy_ss_t       square_copy_ss[NUM_SQUARE_BLOCKS];
 
     filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
     filter_hps_t    luma_hps[NUM_LUMA_PARTITIONS];

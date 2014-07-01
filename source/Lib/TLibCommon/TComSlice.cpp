@@ -35,11 +35,10 @@
     \brief    slice header and SPS class
 */
 
-#include "CommonDef.h"
+#include "common.h"
+#include "frame.h"
+#include "piclist.h"
 #include "TComSlice.h"
-#include "TComPic.h"
-#include "TLibEncoder/TEncSbac.h"
-#include "threadpool.h"
 
 using namespace x265;
 
@@ -53,7 +52,6 @@ TComSlice::TComSlice()
     , m_nalUnitType(NAL_UNIT_CODED_SLICE_IDR_W_RADL)
     , m_sliceType(I_SLICE)
     , m_sliceQp(0)
-    , m_dependentSliceSegmentFlag(false)
     , m_deblockingFilterDisable(false)
     , m_deblockingFilterOverrideFlag(false)
     , m_deblockingFilterBetaOffsetDiv2(0)
@@ -70,11 +68,8 @@ TComSlice::TComSlice()
     , m_colFromL0Flag(1)
     , m_colRefIdx(0)
     , m_sliceCurEndCUAddr(0)
-    , m_nextSlice(false)
     , m_sliceBits(0)
     , m_sliceSegmentBits(0)
-    , m_bFinalized(false)
-    , m_tileOffstForMultES(0)
     , m_substreamSizes(NULL)
     , m_cabacInitFlag(false)
     , m_bLMvdL1Zero(false)
@@ -114,8 +109,6 @@ void TComSlice::initSlice()
     m_sliceQpDeltaCr = 0;
     m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
 
-    m_bFinalized = false;
-
     m_cabacInitFlag = false;
     m_numEntryPointOffsets = 0;
     m_enableTMVPFlag = true;
@@ -142,10 +135,10 @@ void  TComSlice::allocSubstreamSizes(uint32_t numSubstreams)
     m_substreamSizes = new uint32_t[numSubstreams > 0 ? numSubstreams - 1 : 0];
 }
 
-TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
+Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
 {
-    TComPic *iterPic = picList.first();
-    TComPic* pic = NULL;
+    Frame *iterPic = picList.first();
+    Frame* pic = NULL;
 
     while (iterPic)
     {
@@ -160,11 +153,11 @@ TComPic* TComSlice::xGetRefPic(PicList& picList, int poc)
     return pic;
 }
 
-TComPic* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
+Frame* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
 {
-    TComPic* iterPic = picList.first();
-    TComPic* pic = iterPic;
-    TComPic* stPic = pic;
+    Frame* iterPic = picList.first();
+    Frame* pic = iterPic;
+    Frame* stPic = pic;
 
     int pocCycle = 1 << getSPS()->getBitsForPOC();
 
@@ -228,10 +221,10 @@ void TComSlice::setRefPicList(PicList& picList)
     m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
     m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
 
-    TComPic* refPic = NULL;
-    TComPic* refPicSetStCurr0[MAX_NUM_REF];
-    TComPic* refPicSetStCurr1[MAX_NUM_REF];
-    TComPic* refPicSetLtCurr[MAX_NUM_REF];
+    Frame* refPic = NULL;
+    Frame* refPicSetStCurr0[MAX_NUM_REF];
+    Frame* refPicSetStCurr1[MAX_NUM_REF];
+    Frame* refPicSetLtCurr[MAX_NUM_REF];
     uint32_t numPocStCurr0 = 0;
     uint32_t numPocStCurr1 = 0;
     uint32_t numPocLtCurr = 0;
@@ -245,7 +238,6 @@ void TComSlice::setRefPicList(PicList& picList)
             refPic->setIsLongTerm(0);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
-            refPic->setCheckLTMSBPresent(false);
         }
     }
 
@@ -257,7 +249,6 @@ void TComSlice::setRefPicList(PicList& picList)
             refPic->setIsLongTerm(0);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
-            refPic->setCheckLTMSBPresent(false);
         }
     }
 
@@ -275,12 +266,11 @@ void TComSlice::setRefPicList(PicList& picList)
         {
             refPic = xGetLongTermRefPic(picList, m_rps->getPOC(i), m_rps->getCheckLTMSBPresent(i));
         }
-        refPic->setCheckLTMSBPresent(m_rps->getCheckLTMSBPresent(i));
     }
 
     // ref_pic_list_init
-    TComPic* rpsCurrList0[MAX_NUM_REF + 1];
-    TComPic* rpsCurrList1[MAX_NUM_REF + 1];
+    Frame* rpsCurrList0[MAX_NUM_REF + 1];
+    Frame* rpsCurrList1[MAX_NUM_REF + 1];
     int numPocTotalCurr = numPocStCurr0 + numPocStCurr1 + numPocLtCurr;
 
     int cIdx = 0;
@@ -480,16 +470,10 @@ TComSPS::TComSPS()
     , m_quadtreeTUMaxDepthInter(0)
     , m_quadtreeTUMaxDepthIntra(0)
 // Tool list
-    , m_usePCM(false)
-    , m_pcmLog2MaxSize(5)
-    , m_pcmLog2MinSize(7)
     , m_bitDepthY(8)
     , m_bitDepthC(8)
     , m_qpBDOffsetY(0)
     , m_qpBDOffsetC(0)
-    , m_pcmBitDepthLuma(8)
-    , m_pcmBitDepthChroma(8)
-    , m_bPCMFilterDisableFlag(false)
     , m_bitsForPOC(8)
     , m_numLongTermRefPicSPS(0)
     , m_maxTrSize(32)
@@ -524,87 +508,6 @@ void  TComSPS::createRPSList(int numRPS)
     m_RPSList.create(numRPS);
 }
 
-void TComSPS::setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numDU, uint32_t bitRate, bool randomAccess)
-{
-    if (!getVuiParametersPresentFlag())
-    {
-        return;
-    }
-
-    TComVUI *vui = getVuiParameters();
-    TComHRD *hrd = vui->getHrdParameters();
-
-    TimingInfo *timingInfo = vui->getTimingInfo();
-    timingInfo->setTimingInfoPresentFlag(true);
-    timingInfo->setNumUnitsInTick(fpsDenom);
-    timingInfo->setTimeScale(fpsNum);
-
-    bool rateCnt = (bitRate > 0);
-    hrd->setVclHrdParametersPresentFlag(rateCnt);
-
-    if (hrd->getSubPicHrdParamsPresentFlag())
-    {
-        hrd->setTickDivisorMinus2(100 - 2);
-        hrd->setDuCpbRemovalDelayLengthMinus1(7);                  // 8-bit precision ( plus 1 for last DU in AU )
-        hrd->setSubPicCpbParamsInPicTimingSEIFlag(true);
-        hrd->setDpbOutputDelayDuLengthMinus1(5 + 7);               // With sub-clock tick factor of 100, at least 7 bits to have the same value as AU dpb delay
-    }
-    else
-    {
-        hrd->setSubPicCpbParamsInPicTimingSEIFlag(false);
-    }
-
-    hrd->setBitRateScale(4);                                       // in units of 2~( 6 + 4 ) = 1,024 bps
-    hrd->setCpbSizeScale(6);                                       // in units of 2~( 4 + 4 ) = 1,024 bit
-    hrd->setDuCpbSizeScale(6);                                     // in units of 2~( 4 + 4 ) = 1,024 bit
-
-    hrd->setInitialCpbRemovalDelayLengthMinus1(15);                // assuming 0.5 sec, log2( 90,000 * 0.5 ) = 16-bit
-    if (randomAccess)
-    {
-        hrd->setCpbRemovalDelayLengthMinus1(5);                    // 32 = 2^5 (plus 1)
-        hrd->setDpbOutputDelayLengthMinus1(5);                     // 32 + 3 = 2^6
-    }
-    else
-    {
-        hrd->setCpbRemovalDelayLengthMinus1(9);                    // max. 2^10
-        hrd->setDpbOutputDelayLengthMinus1(9);                     // max. 2^10
-    }
-
-/*
-   Note: only the case of "vps_max_temporal_layers_minus1 = 0" is supported.
-*/
-    int i, j;
-    uint32_t birateValue, cpbSizeValue;
-    uint32_t ducpbSizeValue;
-    uint32_t duBitRateValue = 0;
-
-    for (i = 0; i < MAX_TLAYER; i++)
-    {
-        hrd->setFixedPicRateFlag(i, 1);
-        hrd->setPicDurationInTcMinus1(i, 0);
-        hrd->setLowDelayHrdFlag(i, 0);
-        hrd->setCpbCntMinus1(i, 0);
-
-        birateValue  = bitRate;
-        cpbSizeValue = bitRate;                                 // 1 second
-        ducpbSizeValue = bitRate / numDU;
-        duBitRateValue = bitRate;
-        for (j = 0; j < (hrd->getCpbCntMinus1(i) + 1); j++)
-        {
-            hrd->setBitRateValueMinus1(i, j, 0, (birateValue  - 1));
-            hrd->setCpbSizeValueMinus1(i, j, 0, (cpbSizeValue - 1));
-            hrd->setDuCpbSizeValueMinus1(i, j, 0, (ducpbSizeValue - 1));
-            hrd->setCbrFlag(i, j, 0, (j == 0));
-
-            hrd->setBitRateValueMinus1(i, j, 1, (birateValue  - 1));
-            hrd->setCpbSizeValueMinus1(i, j, 1, (cpbSizeValue - 1));
-            hrd->setDuCpbSizeValueMinus1(i, j, 1, (ducpbSizeValue - 1));
-            hrd->setDuBitRateValueMinus1(i, j, 1, (duBitRateValue - 1));
-            hrd->setCbrFlag(i, j, 1, (j == 0));
-        }
-    }
-}
-
 TComPPS::TComPPS()
     : m_PPSId(0)
     , m_SPSId(0)
@@ -622,7 +525,6 @@ TComPPS::TComPPS()
     , m_transquantBypassEnableFlag(false)
     , m_useTransformSkip(false)
     , m_entropyCodingSyncEnabledFlag(false)
-    , m_loopFilterAcrossTilesEnabledFlag(true)
     , m_signHideFlag(0)
     , m_cabacInitPresentFlag(false)
     , m_encCABACTableIdx(I_SLICE)

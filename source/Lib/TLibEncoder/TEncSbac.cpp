@@ -35,8 +35,11 @@
     \brief    SBAC encoder class
 */
 
-#include "TEncSbac.h"
+#include "common.h"
 #include "primitives.h"
+#include "frame.h"
+#include "TLibCommon/TComSampleAdaptiveOffset.h"
+#include "TEncSbac.h"
 
 namespace x265 {
 //! \ingroup TLibEncoder
@@ -167,7 +170,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
 TEncSbac::TEncSbac()
 // new structure here
     : m_slice(NULL)
-    , m_binIf(NULL)
+    , m_cabac(NULL)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
@@ -219,7 +222,7 @@ void TEncSbac::resetEntropy()
     initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
 
-    m_binIf->start();
+    m_cabac->start();
 }
 
 /** The function does the following:
@@ -461,15 +464,7 @@ void TEncSbac::codeSPS(TComSPS* sps)
     WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
     WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
 
-    WRITE_FLAG(sps->getUsePCM() ? 1 : 0, "pcm_enabled_flag");
-    if (sps->getUsePCM())
-    {
-        WRITE_CODE(sps->getPCMBitDepthLuma() - 1, 4,                     "pcm_sample_bit_depth_luma_minus1");
-        WRITE_CODE(sps->getPCMBitDepthChroma() - 1, 4,                   "pcm_sample_bit_depth_chroma_minus1");
-        WRITE_UVLC(sps->getPCMLog2MinSize() - 3,                         "log2_min_pcm_luma_coding_block_size_minus3");
-        WRITE_UVLC(sps->getPCMLog2MaxSize() - sps->getPCMLog2MinSize(),  "log2_diff_max_min_pcm_luma_coding_block_size");
-        WRITE_FLAG(sps->getPCMFilterDisableFlag() ? 1 : 0,               "pcm_loop_filter_disable_flag");
-    }
+    WRITE_FLAG(0, "pcm_enabled_flag"); //PCM mode disabled
 
     X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
 
@@ -993,271 +988,263 @@ void TEncSbac::codeSliceHeader(TComSlice* slice)
         bitsSliceSegmentAddress++;
     }
 
-    //write slice address
-    int sliceSegmentAddress = 0;
-
-    WRITE_FLAG(sliceSegmentAddress == 0, "first_slice_segment_in_pic_flag");
+    WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
     {
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
     }
     WRITE_UVLC(slice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
-    slice->setDependentSliceSegmentFlag(!slice->isNextSlice());
-    if (sliceSegmentAddress > 0)
+
+    /* x265 does not use dependent slices, so always write all this data */
+    for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
-        WRITE_CODE(sliceSegmentAddress, bitsSliceSegmentAddress, "slice_segment_address");
+        X265_CHECK(0, "slice_reserved_undetermined_flag[]");
+        WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
-    if (!slice->getDependentSliceSegmentFlag())
+
+    WRITE_UVLC(slice->getSliceType(),       "slice_type");
+
+    if (slice->getPPS()->getOutputFlagPresentFlag())
     {
-        for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+        WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
+    }
+    if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
+    {
+        //In this version separate_color_plane_flag is 0
+        if (slice->getSPS()->getSeparateColorPlaneFlag())
         {
-            X265_CHECK(0, "slice_reserved_undetermined_flag[]");
-            WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+            //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
+            //WRITE_FLAG(0, "colour_plane_id");
         }
+    }
+    if (!slice->getIdrPicFlag())
+    {
+        int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());
+        WRITE_CODE(picOrderCntLSB, slice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
+        TComReferencePictureSet* rps = slice->getRPS();
 
-        WRITE_UVLC(slice->getSliceType(),       "slice_type");
-
-        if (slice->getPPS()->getOutputFlagPresentFlag())
+        // check for bitstream restriction stating that:
+        // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+        // Ideally this process should not be repeated for each slice in a picture
+        if (slice->isIRAP())
         {
-            WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
-        }
-        if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
-        {
-            //In this version separate_color_plane_flag is 0
-            if (slice->getSPS()->getSeparateColorPlaneFlag())
+            for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
             {
-                //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
-                //WRITE_FLAG(0, "colour_plane_id");
-            }
-        }
-        if (!slice->getIdrPicFlag())
-        {
-            int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());
-            WRITE_CODE(picOrderCntLSB, slice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
-            TComReferencePictureSet* rps = slice->getRPS();
-
-            // check for bitstream restriction stating that:
-            // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-            // Ideally this process should not be repeated for each slice in a picture
-            if (slice->isIRAP())
-            {
-                for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
-                {
-                    X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
-                }
-            }
-
-            if (slice->getRPSidx() < 0)
-            {
-                WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-                codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
-            }
-            else
-            {
-                WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
-                int numBits = 0;
-                while ((1 << numBits) < slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets())
-                {
-                    numBits++;
-                }
-
-                if (numBits > 0)
-                {
-                    WRITE_CODE(slice->getRPSidx(), numBits, "short_term_ref_pic_set_idx");
-                }
-            }
-            if (slice->getSPS()->getLongTermRefsPresent())
-            {
-                int numLtrpInSH = rps->getNumberOfLongtermPictures();
-                int ltrpInSPS[MAX_NUM_REF_PICS];
-                int numLtrpInSPS = 0;
-                uint32_t ltrpIndex;
-                int counter = 0;
-                for (int k = rps->getNumberOfPictures() - 1; k > rps->getNumberOfPictures() - rps->getNumberOfLongtermPictures() - 1; k--)
-                {
-                    if (findMatchingLTRP(slice, &ltrpIndex, rps->getPOC(k), rps->getUsed(k)))
-                    {
-                        ltrpInSPS[numLtrpInSPS] = ltrpIndex;
-                        numLtrpInSPS++;
-                    }
-                    else
-                    {
-                        counter++;
-                    }
-                }
-
-                numLtrpInSH -= numLtrpInSPS;
-
-                int bitsForLtrpInSPS = 0;
-                while (slice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
-                {
-                    bitsForLtrpInSPS++;
-                }
-
-                if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
-                {
-                    WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
-                }
-                WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
-                // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
-                // Not sorted here because LT ref indices will be used in setRefPicList()
-                int prevDeltaMSB = 0, prevLSB = 0;
-                int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
-                for (int i = rps->getNumberOfPictures() - 1; i > offset - 1; i--)
-                {
-                    if (counter < numLtrpInSPS)
-                    {
-                        if (bitsForLtrpInSPS > 0)
-                        {
-                            WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
-                        }
-                    }
-                    else
-                    {
-                        WRITE_CODE(rps->getPocLSBLT(i), slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
-                        WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
-                    }
-                    WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
-
-                    if (rps->getDeltaPocMSBPresentFlag(i))
-                    {
-                        bool deltaFlag = false;
-                        //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
-                        if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
-                        {
-                            deltaFlag = true;
-                        }
-                        if (deltaFlag)
-                        {
-                            WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
-                        }
-                        else
-                        {
-                            int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
-                            X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
-                            WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
-                        }
-                        prevLSB = rps->getPocLSBLT(i);
-                        prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
-                    }
-                }
-            }
-            if (slice->getSPS()->getTMVPFlagsPresent())
-            {
-                WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
-            }
-        }
-        if (slice->getSPS()->getUseSAO())
-        {
-            if (slice->getSPS()->getUseSAO())
-            {
-                WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
-                {
-                    SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-                    WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
-                }
+                X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
             }
         }
 
-        //check if numrefidxes match the defaults. If not, override
-
-        if (!slice->isIntra())
+        if (slice->getRPSidx() < 0)
         {
-            bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
-            WRITE_FLAG(overrideFlag ? 1 : 0,                               "num_ref_idx_active_override_flag");
-            if (overrideFlag)
-            {
-                WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,      "num_ref_idx_l0_active_minus1");
-                if (slice->isInterB())
-                {
-                    WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1,    "num_ref_idx_l1_active_minus1");
-                }
-                else
-                {
-                    slice->setNumRefIdx(REF_PIC_LIST_1, 0);
-                }
-            }
+            WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+            codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
         }
         else
         {
-            slice->setNumRefIdx(REF_PIC_LIST_0, 0);
-            slice->setNumRefIdx(REF_PIC_LIST_1, 0);
-        }
-
-        if (slice->isInterB())
-        {
-            WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
-        }
-
-        if (!slice->isIntra())
-        {
-            if (!slice->isIntra() && slice->getPPS()->getCabacInitPresentFlag())
+            WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
+            int numBits = 0;
+            while ((1 << numBits) < slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets())
             {
-                SliceType sliceType   = slice->getSliceType();
-                int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
-                bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-                slice->setCabacInitFlag(encCabacInitFlag);
-                WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
-            }
-        }
-
-        if (slice->getEnableTMVPFlag())
-        {
-            if (slice->getSliceType() == B_SLICE)
-            {
-                WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
+                numBits++;
             }
 
-            if (slice->getSliceType() != I_SLICE &&
-                ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
-                 (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+            if (numBits > 0)
             {
-                WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
+                WRITE_CODE(slice->getRPSidx(), numBits, "short_term_ref_pic_set_idx");
             }
         }
-        if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
+        if (slice->getSPS()->getLongTermRefsPresent())
         {
-            xCodePredWeightTable(slice);
-        }
-        X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
-        if (!slice->isIntra())
-        {
-            WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
-        }
-        int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
-        WRITE_SVLC(code, "slice_qp_delta");
-        if (slice->getPPS()->getSliceChromaQpFlag())
-        {
-            code = slice->getSliceQpDeltaCb();
-            WRITE_SVLC(code, "slice_qp_delta_cb");
-            code = slice->getSliceQpDeltaCr();
-            WRITE_SVLC(code, "slice_qp_delta_cr");
-        }
-        if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
-        {
-            if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
+            int numLtrpInSH = rps->getNumberOfLongtermPictures();
+            int ltrpInSPS[MAX_NUM_REF_PICS];
+            int numLtrpInSPS = 0;
+            uint32_t ltrpIndex;
+            int counter = 0;
+            for (int k = rps->getNumberOfPictures() - 1; k > rps->getNumberOfPictures() - rps->getNumberOfLongtermPictures() - 1; k--)
             {
-                WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
-            }
-            if (slice->getDeblockingFilterOverrideFlag())
-            {
-                WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
-                if (!slice->getDeblockingFilterDisable())
+                if (findMatchingLTRP(slice, &ltrpIndex, rps->getPOC(k), rps->getUsed(k)))
                 {
-                    WRITE_SVLC(slice->getDeblockingFilterBetaOffsetDiv2(), "slice_beta_offset_div2");
-                    WRITE_SVLC(slice->getDeblockingFilterTcOffsetDiv2(),   "slice_tc_offset_div2");
+                    ltrpInSPS[numLtrpInSPS] = ltrpIndex;
+                    numLtrpInSPS++;
+                }
+                else
+                {
+                    counter++;
+                }
+            }
+
+            numLtrpInSH -= numLtrpInSPS;
+
+            int bitsForLtrpInSPS = 0;
+            while (slice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
+            {
+                bitsForLtrpInSPS++;
+            }
+
+            if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
+            {
+                WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
+            }
+            WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
+            // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
+            // Not sorted here because LT ref indices will be used in setRefPicList()
+            int prevDeltaMSB = 0, prevLSB = 0;
+            int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
+            for (int i = rps->getNumberOfPictures() - 1; i > offset - 1; i--)
+            {
+                if (counter < numLtrpInSPS)
+                {
+                    if (bitsForLtrpInSPS > 0)
+                    {
+                        WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
+                    }
+                }
+                else
+                {
+                    WRITE_CODE(rps->getPocLSBLT(i), slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
+                    WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
+                }
+                WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
+
+                if (rps->getDeltaPocMSBPresentFlag(i))
+                {
+                    bool deltaFlag = false;
+                    //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
+                    if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
+                    {
+                        deltaFlag = true;
+                    }
+                    if (deltaFlag)
+                    {
+                        WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
+                    }
+                    else
+                    {
+                        int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
+                        X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
+                        WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
+                    }
+                    prevLSB = rps->getPocLSBLT(i);
+                    prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
                 }
             }
         }
-
-        bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
-        bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
-
-        if (isSAOEnabled || isDBFEnabled)
+        if (slice->getSPS()->getTMVPFlagsPresent())
         {
-            WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+            WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
         }
     }
+    if (slice->getSPS()->getUseSAO())
+    {
+        if (slice->getSPS()->getUseSAO())
+        {
+            WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
+            {
+                SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+                WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
+            }
+        }
+    }
+
+    //check if numrefidxes match the defaults. If not, override
+
+    if (!slice->isIntra())
+    {
+        bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != slice->getPPS()->getNumRefIdxL0DefaultActive() || (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != slice->getPPS()->getNumRefIdxL1DefaultActive()));
+        WRITE_FLAG(overrideFlag ? 1 : 0,                               "num_ref_idx_active_override_flag");
+        if (overrideFlag)
+        {
+            WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,      "num_ref_idx_l0_active_minus1");
+            if (slice->isInterB())
+            {
+                WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1,    "num_ref_idx_l1_active_minus1");
+            }
+            else
+            {
+                slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+            }
+        }
+    }
+    else
+    {
+        slice->setNumRefIdx(REF_PIC_LIST_0, 0);
+        slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+    }
+
+    if (slice->isInterB())
+    {
+        WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
+    }
+
+    if (!slice->isIntra())
+    {
+        if (!slice->isIntra() && slice->getPPS()->getCabacInitPresentFlag())
+        {
+            SliceType sliceType   = slice->getSliceType();
+            int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
+            bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
+            slice->setCabacInitFlag(encCabacInitFlag);
+            WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
+        }
+    }
+
+    if (slice->getEnableTMVPFlag())
+    {
+        if (slice->getSliceType() == B_SLICE)
+        {
+            WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
+        }
+
+        if (slice->getSliceType() != I_SLICE &&
+            ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
+                (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+        {
+            WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
+        }
+    }
+    if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
+    {
+        xCodePredWeightTable(slice);
+    }
+    X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
+    if (!slice->isIntra())
+    {
+        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
+    }
+    int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
+    WRITE_SVLC(code, "slice_qp_delta");
+    if (slice->getPPS()->getSliceChromaQpFlag())
+    {
+        code = slice->getSliceQpDeltaCb();
+        WRITE_SVLC(code, "slice_qp_delta_cb");
+        code = slice->getSliceQpDeltaCr();
+        WRITE_SVLC(code, "slice_qp_delta_cr");
+    }
+    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    {
+        if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
+        {
+            WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
+        }
+        if (slice->getDeblockingFilterOverrideFlag())
+        {
+            WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
+            if (!slice->getDeblockingFilterDisable())
+            {
+                WRITE_SVLC(slice->getDeblockingFilterBetaOffsetDiv2(), "slice_beta_offset_div2");
+                WRITE_SVLC(slice->getDeblockingFilterTcOffsetDiv2(),   "slice_tc_offset_div2");
+            }
+        }
+    }
+
+    bool isSAOEnabled = (!slice->getSPS()->getUseSAO()) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
+    bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
+
+    if (isSAOEnabled || isDBFEnabled)
+    {
+        WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+    }
+
     if (slice->getPPS()->getSliceHeaderExtensionPresentFlag())
     {
         WRITE_UVLC(0, "slice_header_extension_length");
@@ -1318,19 +1305,19 @@ void  TEncSbac::codeTilesWPPEntryPoint(TComSlice* slice)
 
 void TEncSbac::codeTerminatingBit(uint32_t lsLast)
 {
-    m_binIf->encodeBinTrm(lsLast);
+    m_cabac->encodeBinTrm(lsLast);
 }
 
 void TEncSbac::codeSliceFinish()
 {
-    m_binIf->finish();
+    m_cabac->finish();
 }
 
 void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
-    m_binIf->encodeBin(symbol ? 1 : 0, scmModel[0]);
+    m_cabac->encodeBin(symbol ? 1 : 0, scmModel[0]);
 
     if (symbol == 0)
     {
@@ -1341,12 +1328,12 @@ void TEncSbac::xWriteUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int
 
     while (--symbol)
     {
-        m_binIf->encodeBin(1, scmModel[offset]);
+        m_cabac->encodeBin(1, scmModel[offset]);
     }
 
     if (bCodeLast)
     {
-        m_binIf->encodeBin(0, scmModel[offset]);
+        m_cabac->encodeBin(0, scmModel[offset]);
     }
 }
 
@@ -1370,7 +1357,7 @@ void TEncSbac::xWriteEpExGolomb(uint32_t symbol, uint32_t count)
     numBins += count;
 
     X265_CHECK(numBins <= 32, "numBins too large\n");
-    m_binIf->encodeBinsEP(bins, numBins);
+    m_cabac->encodeBinsEP(bins, numBins);
 }
 
 /** Coding of coeff_abs_level_minus3
@@ -1389,7 +1376,7 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
 
         X265_CHECK(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)), "codeNumber failure\n");
         X265_CHECK(length + 1 + absGoRice < 32, "length failure\n");
-        m_binIf->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
+        m_cabac->encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
     {
@@ -1404,17 +1391,17 @@ void TEncSbac::xWriteCoefRemainExGolomb(uint32_t codeNumber, const uint32_t absG
         }
         codeNumber = (codeNumber << absGoRice) + codeRemain;
 
-        m_binIf->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
-        m_binIf->encodeBinsEP(codeNumber, length + absGoRice);
+        m_cabac->encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
+        m_cabac->encodeBinsEP(codeNumber, length + absGoRice);
     }
 }
 
-void  TEncSbac::setBitstream(TComBitIf* p)
+void  TEncSbac::setBitstream(BitInterface* p)
 {
     m_bitIf = p;
     // NOTE: When write header, it isn't initial
-    if (m_binIf)
-        m_binIf->init(p);
+    if (m_cabac)
+        m_cabac->init(p);
 }
 
 // SBAC RD
@@ -1425,7 +1412,7 @@ void  TEncSbac::load(TEncSbac* src)
 
 void  TEncSbac::loadIntraDirModeLuma(TEncSbac* src)
 {
-    m_binIf->copyState(src->m_binIf);
+    m_cabac->copyState(src->m_cabac);
 
     ::memcpy(&this->m_contextModels[OFF_ADI_CTX], &src->m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
@@ -1437,14 +1424,14 @@ void  TEncSbac::store(TEncSbac* pDest)
 
 void TEncSbac::xCopyFrom(TEncSbac* src)
 {
-    m_binIf->copyState(src->m_binIf);
+    m_cabac->copyState(src->m_cabac);
 
     memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
 void TEncSbac::codeMVPIdx(uint32_t symbol)
 {
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
 }
 
 void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1455,7 +1442,7 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
-            m_binIf->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
+            m_cabac->encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
         }
         return;
     }
@@ -1463,20 +1450,20 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     switch (partSize)
     {
     case SIZE_2Nx2N:
-        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
         break;
 
     case SIZE_2NxN:
     case SIZE_2NxnU:
     case SIZE_2NxnD:
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_binIf->encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            m_cabac->encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
             {
-                m_binIf->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
+                m_cabac->encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
             }
         }
         break;
@@ -1484,18 +1471,18 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_Nx2N:
     case SIZE_nLx2N:
     case SIZE_nRx2N:
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            m_cabac->encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_binIf->encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            m_cabac->encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
             {
-                m_binIf->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
+                m_cabac->encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
             }
         }
         break;
@@ -1503,9 +1490,9 @@ void TEncSbac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_NxN:
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-            m_binIf->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+            m_cabac->encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         break;
 
@@ -1525,14 +1512,14 @@ void TEncSbac::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
 
-    m_binIf->encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
+    m_cabac->encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
 }
 
 void TEncSbac::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
 /** code skip flag
@@ -1546,7 +1533,7 @@ void TEncSbac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
     uint32_t ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tSkipFlag");
     DTRACE_CABAC_T("\tuiCtxSkip: ");
@@ -1565,7 +1552,7 @@ void TEncSbac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
 
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tMergeFlag: ");
@@ -1589,7 +1576,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
     if (numCand > 1)
     {
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
-        m_binIf->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
+        m_cabac->encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
         X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
@@ -1597,7 +1584,7 @@ void TEncSbac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
         {
             uint32_t mask = (1 << unaryIdx) - 2;
             mask >>= (unaryIdx == numCand - 1) ? 1 : 0;
-            m_binIf->encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
+            m_cabac->encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
     DTRACE_CABAC_VL(g_nSymbolCounter++);
@@ -1616,14 +1603,14 @@ void TEncSbac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
-    m_binIf->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
+    m_cabac->encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
 }
 
 void TEncSbac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
-    m_binIf->encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
+    m_cabac->encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSubdivFlag()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -1655,7 +1642,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             }
         }
 
-        m_binIf->encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
+        m_cabac->encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
     }
 
     for (j = 0; j < partNum; j++)
@@ -1668,7 +1655,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             //       1 = 10
             //       2 = 11
             int nonzero = (!!predIdx[j]);
-            m_binIf->encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
+            m_cabac->encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
         }
         else
         {
@@ -1688,7 +1675,7 @@ void TEncSbac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isM
             dir[j] += (dir[j] > preds[j][1]) ? -1 : 0;
             dir[j] += (dir[j] > preds[j][0]) ? -1 : 0;
 
-            m_binIf->encodeBinsEP(dir[j], 5);
+            m_cabac->encodeBinsEP(dir[j], 5);
         }
     }
 }
@@ -1699,7 +1686,7 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
 
     if (intraDirChroma == DM_CHROMA_IDX)
     {
-        m_binIf->encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        m_cabac->encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
     }
     else
     {
@@ -1715,9 +1702,9 @@ void TEncSbac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
             }
         }
 
-        m_binIf->encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        m_cabac->encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
 
-        m_binIf->encodeBinsEP(intraDirChroma, 2);
+        m_cabac->encodeBinsEP(intraDirChroma, 2);
     }
 }
 
@@ -1728,11 +1715,11 @@ void TEncSbac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
 
     if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getCUSize(absPartIdx) != 8)
     {
-        m_binIf->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
+        m_cabac->encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     }
     if (interDir < 2)
     {
-        m_binIf->encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
+        m_cabac->encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
     }
 }
 
@@ -1740,7 +1727,7 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     int refFrame = cu->getCUMvField(list)->getRefIdx(absPartIdx);
 
-    m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
+    m_cabac->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
 
     if (refFrame > 0)
     {
@@ -1750,12 +1737,12 @@ void TEncSbac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
             return;
         }
         refFrame--;
-        m_binIf->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
+        m_cabac->encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
         if (refFrame > 0)
         {
             uint32_t mask = (1 << refFrame) - 2;
             mask >>= (refFrame == refNum) ? 1 : 0;
-            m_binIf->encodeBinsEP(mask, refFrame - (refFrame == refNum));
+            m_cabac->encodeBinsEP(mask, refFrame - (refFrame == refNum));
         }
     }
 }
@@ -1771,8 +1758,8 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     const int hor = cuMvField->getMvd(absPartIdx).x;
     const int ver = cuMvField->getMvd(absPartIdx).y;
 
-    m_binIf->encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
-    m_binIf->encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    m_cabac->encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    m_cabac->encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
 
     const bool bHorAbsGr0 = hor != 0;
     const bool bVerAbsGr0 = ver != 0;
@@ -1781,12 +1768,12 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
 
     if (bHorAbsGr0)
     {
-        m_binIf->encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        m_cabac->encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bVerAbsGr0)
     {
-        m_binIf->encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        m_cabac->encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
     }
 
     if (bHorAbsGr0)
@@ -1796,7 +1783,7 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
             xWriteEpExGolomb(horAbs - 2, 1);
         }
 
-        m_binIf->encodeBinEP(0 > hor ? 1 : 0);
+        m_cabac->encodeBinEP(0 > hor ? 1 : 0);
     }
 
     if (bVerAbsGr0)
@@ -1806,7 +1793,7 @@ void TEncSbac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
             xWriteEpExGolomb(verAbs - 2, 1);
         }
 
-        m_binIf->encodeBinEP(0 > ver ? 1 : 0);
+        m_cabac->encodeBinEP(0 > ver ? 1 : 0);
     }
 }
 
@@ -1829,7 +1816,7 @@ void TEncSbac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
     if (absDQp > 0)
     {
         uint32_t sign = (dqp > 0 ? 0 : 1);
-        m_binIf->encodeBinEP(sign);
+        m_cabac->encodeBinEP(sign);
     }
 }
 
@@ -1851,7 +1838,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
             uint32_t subTUAbsPartIdx = absPartIdx + (subTU * partIdxesPerSubTU);
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
-            m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+            m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
             DTRACE_CABAC_VL(g_nSymbolCounter++)
             DTRACE_CABAC_T("\tparseQtCbf()")
             DTRACE_CABAC_T("\tsub-TU=")
@@ -1871,7 +1858,7 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     {
         uint32_t cbf = cu->getCbf(absPartIdx, ttype, lowestTUDepth);
 
-        m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+        m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
         DTRACE_CABAC_VL(g_nSymbolCounter++)
         DTRACE_CABAC_T("\tparseQtCbf()")
         DTRACE_CABAC_T("\tsymbol=")
@@ -1886,6 +1873,25 @@ void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, ui
     }
 }
 
+void TEncSbac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
+{
+    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+
+    DTRACE_CABAC_VL(g_nSymbolCounter++)
+    DTRACE_CABAC_T("\tparseQtCbf()")
+    DTRACE_CABAC_T("\tsymbol=")
+    DTRACE_CABAC_V(cbf)
+    DTRACE_CABAC_T("\tctx=")
+    DTRACE_CABAC_V(ctx)
+    DTRACE_CABAC_T("\tetype=")
+    DTRACE_CABAC_V(ttype)
+    DTRACE_CABAC_T("\tuiAbsPartIdx=")
+    DTRACE_CABAC_V(absPartIdx)
+    DTRACE_CABAC_T("\n")
+}
+
 void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -1898,7 +1904,7 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint3
     }
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    m_binIf->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
+    m_cabac->encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSkip()");
     DTRACE_CABAC_T("\tsymbol=")
@@ -1912,88 +1918,12 @@ void TEncSbac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint3
     DTRACE_CABAC_T("\n")
 }
 
-/** Code I_PCM information.
- * \param cu pointer to CU
- * \param absPartIdx CU index
- * \returns void
- */
-void TEncSbac::codeIPCMInfo(TComDataCU* cu, uint32_t absPartIdx)
-{
-    uint32_t ipcm = (cu->getIPCMFlag(absPartIdx) == true) ? 1 : 0;
-
-    bool writePCMSampleFlag = cu->getIPCMFlag(absPartIdx);
-
-    m_binIf->encodeBinTrm(ipcm);
-
-    if (writePCMSampleFlag)
-    {
-        m_binIf->encodePCMAlignBits();
-
-        uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
-        uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
-        uint32_t width;
-        uint32_t height;
-        uint32_t sampleBits;
-        uint32_t x, y;
-
-        pixel *pcmSample = cu->getPCMSampleY() + lumaOffset;
-        width = cu->getCUSize(absPartIdx);
-        height = cu->getCUSize(absPartIdx);
-        sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthLuma();
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_binIf->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        pcmSample = cu->getPCMSampleCb() + chromaOffset;
-        width = cu->getCUSize(absPartIdx) / 2;
-        height = cu->getCUSize(absPartIdx) / 2;
-        sampleBits = cu->getSlice()->getSPS()->getPCMBitDepthChroma();
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_binIf->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        pcmSample = cu->getPCMSampleCr() + chromaOffset;
-
-        for (y = 0; y < height; y++)
-        {
-            for (x = 0; x < width; x++)
-            {
-                uint32_t sample = pcmSample[x];
-
-                m_binIf->xWritePCMCode(sample, sampleBits);
-            }
-
-            pcmSample += width;
-        }
-
-        m_binIf->resetBac();
-    }
-}
-
 void TEncSbac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t cbf = cu->getQtRootCbf(absPartIdx);
     uint32_t ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtRootCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -2012,7 +1942,7 @@ void TEncSbac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     uint32_t cbf = 0;
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 }
 
 void TEncSbac::codeQtRootCbfZero(TComDataCU*)
@@ -2022,7 +1952,7 @@ void TEncSbac::codeQtRootCbfZero(TComDataCU*)
     uint32_t cbf = 0;
     uint32_t ctx = 0;
 
-    m_binIf->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    m_cabac->encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -2054,42 +1984,43 @@ void TEncSbac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2
     ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxX < maxGroupIdx)
     {
-        m_binIf->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     // posY
     ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
     for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
     {
-        m_binIf->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxY < maxGroupIdx)
     {
-        m_binIf->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        m_cabac->encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
     }
 
     if (groupIdxX > 3)
     {
         uint32_t count = (groupIdxX - 2) >> 1;
         posx = posx - g_minInGroup[groupIdxX];
-        m_binIf->encodeBinsEP(posx, count);
+        m_cabac->encodeBinsEP(posx, count);
     }
     if (groupIdxY > 3)
     {
         uint32_t count = (groupIdxY - 2) >> 1;
         posy = posy - g_minInGroup[groupIdxY];
-        m_binIf->encodeBinsEP(posy, count);
+        m_cabac->encodeBinsEP(posy, count);
     }
 }
 
-void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
+void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
+    uint32_t trSize = 1 << log2TrSize;
 #if ENC_DEC_TRACE
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
@@ -2118,10 +2049,11 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
 
     // compute number of significant coefficients
-    uint32_t numSig = primitives.count_nonzero(coeff, trSize * trSize);
+    uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
-    if (numSig == 0)
-        return;
+#if CHECKED_BUILD || _DEBUG
+    X265_CHECK(numSig > 0, "cbf check fail\n");
+#endif
 
     bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -2138,7 +2070,6 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     }
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
 
     //select scans
     TUEntropyCodingParameters codingParameters;
@@ -2147,27 +2078,27 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     //----- encode significance map -----
 
     // Find position of last coefficient
-    int scanPosLast = -1;
-    int posLast;
+    int scanPosLast = 0;
+    uint32_t posLast;
     uint64_t sigCoeffGroupFlag64 = 0;
-    const uint32_t maskPosXY = (1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1;
+    const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
+    assert(((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1));
     do
     {
-        posLast = codingParameters.scan[++scanPosLast];
-        if (coeff[posLast] != 0)
-        {
-            // get L1 sig map
-            // NOTE: the new algorithm is complicated, so I keep reference code here
-            //uint32_t posy   = posLast >> log2TrSize;
-            //uint32_t posx   = posLast - (posy << log2TrSize);
-            //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
-            uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
-            sigCoeffGroupFlag64 |= ((uint64_t)1 << blkIdx);
+        posLast = codingParameters.scan[scanPosLast++];
 
-            numSig--;
-        }
+        const uint32_t isNZCoeff = (coeff[posLast] != 0);
+        // get L1 sig map
+        // NOTE: the new algorithm is complicated, so I keep reference code here
+        //uint32_t posy   = posLast >> log2TrSize;
+        //uint32_t posx   = posLast - (posy << log2TrSize);
+        //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
+        const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
+        sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
+        numSig -= isNZCoeff;
     }
     while (numSig > 0);
+    scanPosLast--;
 
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
@@ -2213,7 +2144,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
             uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-            m_binIf->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
+            m_cabac->encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
@@ -2227,7 +2158,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
                     ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
-                    m_binIf->encodeBin(sig, baseCtx[ctxSig]);
+                    m_cabac->encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
                 {
@@ -2264,7 +2195,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
             for (int idx = 0; idx < numC1Flag; idx++)
             {
                 uint32_t symbol = absCoeff[idx] > 1;
-                m_binIf->encodeBin(symbol, baseCtxMod[c1]);
+                m_cabac->encodeBin(symbol, baseCtxMod[c1]);
                 if (symbol)
                 {
                     c1 = 0;
@@ -2286,17 +2217,17 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
                 if (firstC2FlagIdx != -1)
                 {
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                    m_binIf->encodeBin(symbol, baseCtxMod[0]);
+                    m_cabac->encodeBin(symbol, baseCtxMod[0]);
                 }
             }
 
             if (beValid && signHidden)
             {
-                m_binIf->encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
+                m_cabac->encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
             }
             else
             {
-                m_binIf->encodeBinsEP(coeffSigns, numNonZero);
+                m_cabac->encodeBinsEP(coeffSigns, numNonZero);
             }
 
             int firstCoeff2 = 1;
@@ -2331,14 +2262,14 @@ void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
     uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
     uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
 
-    m_binIf->encodeBinEP(isCodeNonZero);
+    m_cabac->encodeBinEP(isCodeNonZero);
     if (isCodeNonZero)
     {
         uint32_t mask = (1 << (code - 1)) - 1;
         uint32_t len = code - 1 + isCodeLast;
         mask <<= isCodeLast;
 
-        m_binIf->encodeBinsEP(mask, len);
+        m_cabac->encodeBinsEP(mask, len);
     }
 }
 
@@ -2348,7 +2279,7 @@ void TEncSbac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
  */
 void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
 {
-    m_binIf->encodeBinsEP(code, length);
+    m_cabac->encodeBinsEP(code, length);
 }
 
 /** Code SAO merge flags
@@ -2358,7 +2289,7 @@ void TEncSbac::codeSaoUflc(uint32_t length, uint32_t code)
 void TEncSbac::codeSaoMerge(uint32_t code)
 {
     X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
-    m_binIf->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
+    m_cabac->encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
 /** Code SAO type index
@@ -2366,10 +2297,10 @@ void TEncSbac::codeSaoMerge(uint32_t code)
  */
 void TEncSbac::codeSaoTypeIdx(uint32_t code)
 {
-    m_binIf->encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
+    m_cabac->encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
     if (code != 0)
     {
-        m_binIf->encodeBinEP(code <= 4 ? 1 : 0);
+        m_cabac->encodeBinEP(code <= 4 ? 1 : 0);
     }
 }
 

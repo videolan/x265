@@ -25,8 +25,8 @@
 #ifndef X265_CTUROW_H
 #define X265_CTUROW_H
 
-#include "TLibCommon/TComBitCounter.h"
-#include "TLibCommon/TComPic.h"
+#include "common.h"
+#include "frame.h"
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
@@ -39,6 +39,21 @@ namespace x265 {
 // private x265 namespace
 
 class Encoder;
+
+struct ThreadLocalData
+{
+    TEncSearch  m_search;
+    TEncCu      m_cuCoder;
+    RDCost      m_rdCost;
+    TComTrQuant m_trQuant;
+
+    // NOTE: the maximum LCU 64x64 have 256 partitions
+    bool        m_edgeFilter[256];
+    uint8_t     m_blockingStrength[256];
+
+    void init(Encoder&);
+    ~ThreadLocalData();
+};
 
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded.
@@ -54,16 +69,11 @@ public:
     TEncSbac               m_bufferSbacCoder;
     TEncBinCABAC           m_binCoderCABAC;
     TEncBinCABAC           m_rdGoOnBinCodersCABAC;
-    TComBitCounter         m_bitCounter;
-    RDCost                 m_rdCost;
     TEncEntropy            m_entropyCoder;
-    TEncSearch             m_search;
-    TEncCu                 m_cuCoder;
-    TComTrQuant            m_trQuant;
     TEncSbac            ***m_rdSbacCoders;
     TEncBinCABAC        ***m_binCodersCABAC;
 
-    bool create(Encoder* top);
+    bool create();
 
     void destroy();
 
@@ -86,7 +96,9 @@ public:
         m_rdGoOnSbacCoder.resetEntropy();
     }
 
-    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, bool bSaveCabac);
+    void setThreadLocalData(ThreadLocalData& tld);
+
+    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 

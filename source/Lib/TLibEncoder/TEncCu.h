@@ -43,11 +43,10 @@
 #define INTER_MODES 4
 #define INTRA_MODES 3
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
-#include "TLibCommon/TComBitCounter.h"
 #include "TLibCommon/TComDataCU.h"
 #include "shortyuv.h"
 
@@ -91,14 +90,16 @@ private:
 
     static const int MAX_PRED_TYPES = 6;
 
-    TComDataCU** m_interCU_2Nx2N;
-    TComDataCU** m_interCU_2NxN;
-    TComDataCU** m_interCU_Nx2N;
-    TComDataCU** m_intraInInterCU;
-    TComDataCU** m_mergeCU;
-    TComDataCU** m_bestMergeCU;
-    TComDataCU** m_bestCU;      ///< Best CUs at each depth
-    TComDataCU** m_tempCU;      ///< Temporary CUs at each depth
+    TComDataCU* m_memPool;
+
+    TComDataCU* m_interCU_2Nx2N[MAX_CU_DEPTH];
+    TComDataCU* m_interCU_2NxN[MAX_CU_DEPTH];
+    TComDataCU* m_interCU_Nx2N[MAX_CU_DEPTH];
+    TComDataCU* m_intraInInterCU[MAX_CU_DEPTH];
+    TComDataCU* m_mergeCU[MAX_CU_DEPTH];
+    TComDataCU* m_bestMergeCU[MAX_CU_DEPTH];
+    TComDataCU* m_bestCU[MAX_CU_DEPTH];      ///< Best CUs at each depth
+    TComDataCU* m_tempCU[MAX_CU_DEPTH];      ///< Temporary CUs at each depth
 
     TComYuv**    m_bestPredYuv; ///< Best Prediction Yuv for each depth
     ShortYuv**   m_bestResiYuv; ///< Best Residual Yuv for each depth
@@ -116,7 +117,7 @@ private:
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
     TEncEntropy* m_entropyCoder;
-    TComBitCounter* m_bitCounter;
+    bool         m_bBitCounting;
 
     // SBAC RD
     TEncSbac***  m_rdSbacCoders;
@@ -125,14 +126,13 @@ private:
     uint8_t      m_totalDepth;
 
     bool         m_bEncodeDQP;
-    bool         m_CUTransquantBypassFlagValue;
+    bool         m_CUTransquantBypass;
 
 public:
 
-#if LOG_CU_STATISTICS
     StatisticLog  m_sliceTypeLog[3];
     StatisticLog* m_log;
-#endif
+
     TEncCu();
 
     void init(Encoder* top);
@@ -153,14 +153,14 @@ public:
 
     void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
 
-    void setBitCounter(TComBitCounter* pcBitCounter) { m_bitCounter = pcBitCounter; }
+    void setBitCounting(bool b) { m_bBitCounting = b; }
 
 protected:
 
     void finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize = SIZE_NONE);
     void xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture);
-    void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU*& cu, uint32_t depth, bool bInsidePicture, uint32_t partitionIndex, uint8_t minDepth);
+    void xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, bool bInsidePicture, uint32_t partitionIndex, uint8_t minDepth);
     void xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture);
     void xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
 
@@ -176,8 +176,7 @@ protected:
     void xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
     void xCheckDQP(TComDataCU* cu);
 
-    void xCheckIntraPCM(TComDataCU*& outBestCU, TComDataCU*& outTempCU);
-    void xCopyYuv2Pic(TComPic* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
+    void xCopyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void xCopyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);
 
     bool getdQPFlag()        { return m_bEncodeDQP; }
@@ -187,7 +186,7 @@ protected:
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
 
-    void xFillPCMBuffer(TComDataCU* outCU, TComYuv* origYuv);
+    void xFillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
 }
 //! \}

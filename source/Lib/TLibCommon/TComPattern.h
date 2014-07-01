@@ -38,7 +38,8 @@
 #ifndef X265_TCOMPATTERN_H
 #define X265_TCOMPATTERN_H
 
-#include "CommonDef.h"
+#include "common.h"
+#include "TComRom.h"
 
 //! \ingroup TLibCommon
 //! \{

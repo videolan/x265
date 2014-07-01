@@ -24,6 +24,71 @@
 #ifndef X265_BITSTREAM_H
 #define X265_BITSTREAM_H 1
 
+namespace x265 {
+// private namespace
+
+class BitInterface
+{
+public:
+
+    virtual void     write(uint32_t val, uint32_t numBits)  = 0;
+    virtual void     writeByte(uint32_t val)                = 0;
+    virtual void     resetBits()                            = 0;
+    virtual uint32_t getNumberOfWrittenBits() const         = 0;
+    virtual void     writeAlignOne()                        = 0;
+    virtual void     writeAlignZero()                       = 0;
+    virtual ~BitInterface() {}
+};
+
+class BitCounter : public BitInterface
+{
+protected:
+
+    uint32_t  m_bitCounter;
+
+public:
+
+    BitCounter() : m_bitCounter(0) {}
+
+    void     write(uint32_t, uint32_t num)  { m_bitCounter += num; }
+    void     writeByte(uint32_t)            { m_bitCounter += 8;   }
+    void     resetBits()                    { m_bitCounter = 0;    }
+    uint32_t getNumberOfWrittenBits() const { return m_bitCounter; }
+    void     writeAlignOne()                { }
+    void     writeAlignZero()               { }
+};
+
+
+class Bitstream : public BitInterface
+{
+public:
+
+    Bitstream();
+    ~Bitstream()                             { X265_FREE(m_fifo); }
+
+    void     resetBits()                     { m_partialByteBits = m_byteOccupancy = 0; m_partialByte = 0; }
+    uint32_t getNumberOfWrittenBytes() const { return m_byteOccupancy; }
+    uint32_t getNumberOfWrittenBits()  const { return m_byteOccupancy * 8 + m_partialByteBits; }
+    const uint8_t* getFIFO() const           { return m_fifo; }
+
+    void     write(uint32_t val, uint32_t numBits);
+    void     writeByte(uint32_t val);
+
+    void     writeAlignOne();      // insert one bits until the bitstream is byte-aligned
+    void     writeAlignZero();     // insert zero bits until the bitstream is byte-aligned
+    void     writeByteAlignment(); // insert 1 bit, then pad to byte-align with zero
+
+private:
+
+    uint8_t *m_fifo;
+    uint32_t m_byteAlloc;
+    uint32_t m_byteOccupancy;
+    uint32_t m_partialByteBits;
+    uint8_t  m_partialByte;
+
+    void     push_back(uint8_t val);
+};
+
 static const uint8_t bitSize[256] =
 {
     1, 1, 3, 3, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7,
@@ -66,6 +131,8 @@ static inline int bs_size_se(int val)
         return bitSize[tmp];
     else
         return bitSize[tmp >> 8] + 16;
+}
+
 }
 
 #endif // ifndef X265_BITSTREAM_H

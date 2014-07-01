@@ -511,7 +511,7 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-void TEncSampleAdaptiveOffset::startSaoEnc(TComPic* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
+void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
 {
     m_pic = pic;
     m_entropyCoder = entropyCoder;
@@ -813,11 +813,10 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     }
 }
 
-void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int idxY)
+void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
 {
-    int addr, yCbCr;
+    int addr;
     int x, y;
-    TComSPS *pTmpSPS =  pic->getSlice()->getSPS();
 
     pixel* fenc;
     pixel* pRec;
@@ -837,7 +836,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     int endY;
     int firstX, firstY;
 
-    int idxX;
     int frameWidthInCU  = m_numCuInWidth;
 
     int isChroma;
@@ -848,11 +846,12 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     pixel* pTableBo;
     int32_t *tmp_swap;
 
+    // NOTE: Row
     {
-        for (idxX = 0; idxX < frameWidthInCU; idxX++)
+        // NOTE: Col
         {
-            lcuHeight = pTmpSPS->getMaxCUSize();
-            lcuWidth  = pTmpSPS->getMaxCUSize();
+            lcuHeight = g_maxCUSize;
+            lcuWidth  = g_maxCUSize;
             addr     = idxX  + frameWidthInCU * idxY;
             pTmpCu = pic->getCU(addr);
             lPelX   = pTmpCu->getCUPelX();
@@ -860,7 +859,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
 
             memset(m_countPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
             memset(m_offsetOrgPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
-            for (yCbCr = 0; yCbCr < 3; yCbCr++)
+            for (int yCbCr = 0; yCbCr < 3; yCbCr++)
             {
                 isChroma = (yCbCr != 0) ? 1 : 0;
 
@@ -1116,9 +1115,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsRowCus_BeforeDblk(TComPic* pic, int i
     }
 }
 
-/** get SAO statistics
- * \param  *psQTPart,  yCbCr
- */
 void TEncSampleAdaptiveOffset::getSaoStats(SAOQTPart *psQTPart, int yCbCr)
 {
     int levelIdx, partIdx, typeIdx, classIdx;
@@ -1439,11 +1435,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             m_rdGoOnSbacCoder->load(m_rdSbacCoders[0][CI_CURR_BEST]);
             if (allowMergeLeft)
             {
-                m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
             }
             if (allowMergeUp)
             {
-                m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
             }
             m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_TEMP_BEST]);
             // reset stats Y, Cb, Cr
@@ -1486,11 +1482,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 m_rdGoOnSbacCoder->resetBits();
                 if (allowMergeLeft)
                 {
-                    m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                    m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
                 }
                 if (allowMergeUp)
                 {
-                    m_entropyCoder->m_entropyCoderIf->codeSaoMerge(0);
+                    m_entropyCoder->m_entropyCoder->codeSaoMerge(0);
                 }
                 for (compIdx = 0; compIdx < 3; compIdx++)
                 {
@@ -1513,11 +1509,11 @@ void TEncSampleAdaptiveOffset::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                         m_rdGoOnSbacCoder->resetBits();
                         if (allowMergeLeft)
                         {
-                            m_entropyCoder->m_entropyCoderIf->codeSaoMerge(1 - mergeUp);
+                            m_entropyCoder->m_entropyCoder->codeSaoMerge(1 - mergeUp);
                         }
                         if (allowMergeUp && (mergeUp == 1))
                         {
-                            m_entropyCoder->m_entropyCoderIf->codeSaoMerge(1);
+                            m_entropyCoder->m_entropyCoder->codeSaoMerge(1);
                         }
 
                         rate = m_entropyCoder->getNumberOfWrittenBits();

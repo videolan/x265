@@ -25,12 +25,13 @@
 #define X265_ENCODER_H
 
 #include "x265.h"
-
 #include "TLibCommon/TComSlice.h"
-
-#include "piclist.h"
+#include "nal.h"
 
 struct x265_encoder {};
+
+namespace x265 {
+// private namespace
 
 struct EncStats
 {
@@ -59,15 +60,12 @@ struct EncStats
     void addSsim(double ssim);
 };
 
-namespace x265 {
-// private namespace
-
 class FrameEncoder;
 class DPB;
-struct Lookahead;
-struct RateControl;
+class Lookahead;
+class RateControl;
 class ThreadPool;
-struct NALUnitEBSP;
+struct ThreadLocalData;
 
 class Encoder : public x265_encoder
 {
@@ -76,19 +74,19 @@ private:
     bool               m_aborted;          // fatal error detected
     int                m_pocLast;          ///< time index (POC)
     int                m_outputCount;
-    PicList            m_freeList;
 
     int                m_bframeDelay;
     int64_t            m_firstPts;
     int64_t            m_bframeDelayTime;
     int64_t            m_prevReorderedPts[2];
-    int64_t            m_encodedFrameNum;
 
     ThreadPool*        m_threadPool;
     Lookahead*         m_lookahead;
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
-    /* frame parallelism */
+
+    Frame*             m_exportedPic;
+
     int                m_curEncoder;
 
 
@@ -113,6 +111,7 @@ public:
 
     int                m_conformanceMode;
     TComVPS            m_vps;
+    NALList            m_nalList;
 
     /* profile & level */
     Profile::Name      m_profile;
@@ -139,28 +138,12 @@ public:
     int                m_loopFilterTcOffsetDiv2;
     int                m_maxNumOffsetsPerPic;
 
-    //====== Lossless ========
-    bool               m_useLossless;
-
     //====== Quality control ========
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
     //====== Tool list ========
-    bool               m_usePCM;
-    uint32_t           m_pcmLog2MaxSize;
-    uint32_t           m_pcmLog2MinSize;
-
-    bool               m_bPCMInputBitDepthFlag; //unused field
-    uint32_t           m_pcmBitDepthLuma;  // unused field, TComSPS has it's own version defaulted to 8
-    uint32_t           m_pcmBitDepthChroma; // unused field, TComSPS has it's own version defaulted to 8
-
-    bool               m_bPCMFilterDisableFlag;
-    bool               m_loopFilterAcrossTilesEnabledFlag;
-
-    int                m_bufferingPeriodSEIEnabled;
-    int                m_displayOrientationSEIAngle;
-    int                m_gradualDecodingRefreshInfoEnabled;
-    int                m_decodingUnitInfoSEIEnabled;
+    int64_t            m_encodedFrameNum;
+    int                m_lastBPSEI;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
 
@@ -168,7 +151,6 @@ public:
 
     bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
     bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-    int                m_activeParameterSetsSEIEnabled; ///< enable active parameter set SEI message
 
     bool               m_neutralChromaIndicationFlag;
     bool               m_pocProportionalToTimingFlag;
@@ -182,19 +164,19 @@ public:
     int                m_log2MaxMvLengthHorizontal;
     int                m_log2MaxMvLengthVertical;
 
-    x265_param*        param;
+    x265_param*        m_param;
     RateControl*       m_rateControl;
+    static ThreadLocalData*   m_threadLocalData;
 
-    bool               bEnableRDOQ;
-    bool               bEnableRDOQTS;
+    bool               m_bEnableRDOQ;
 
     int                m_pad[2];
     Window             m_conformanceWindow;
     Window             m_defaultDisplayWindow;
 
-    x265_nal*          m_nals;
-    char*              m_packetData;
     int                m_totalFrameThreads;
+
+    uint32_t           m_numDelayedPic;
 
     Encoder();
 
@@ -207,9 +189,9 @@ public:
     void initSPS(TComSPS *sps);
     void initPPS(TComPPS *pps);
 
-    int encode(bool bEos, const x265_picture* pic, x265_picture *pic_out, NALUnitEBSP **nalunits);
+    int encode(const x265_picture* pic, x265_picture *pic_out);
 
-    int getStreamHeaders(NALUnitEBSP **nalunits);
+    void getStreamHeaders();
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -225,13 +207,11 @@ public:
 
     void configure(x265_param *param);
 
-    int  extractNalData(NALUnitEBSP **nalunits, int& memsize);
-
     void updateVbvPlan(RateControl* rc);
 
 protected:
 
-    void finishFrameStats(TComPic* pic, FrameEncoder *curEncoder, uint64_t bits);
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };
 }
 

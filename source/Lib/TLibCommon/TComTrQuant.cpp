@@ -35,10 +35,11 @@
     \brief    transform and quantization class
 */
 
-#include "TComTrQuant.h"
-#include "TComPic.h"
-#include "ContextTables.h"
+#include "common.h"
 #include "primitives.h"
+#include "frame.h"
+#include "TComTrQuant.h"
+#include "ContextTables.h"
 
 using namespace x265;
 
@@ -57,8 +58,6 @@ typedef struct
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
-
-#define RDOQ_CHROMA 1  ///< use of RDOQ in chroma
 
 inline static int x265_min_fast(int x, int y)
 {
@@ -125,6 +124,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
     if (ttype == TEXT_LUMA)
     {
         qpScaled = qpy + qpBdOffset;
+        qpScaled = Clip3(0, MAX_QP + QP_BD_OFFSET, qpScaled);
     }
     else
     {
@@ -264,53 +264,35 @@ void TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* delta
 }
 
 uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, int trSize,
-                             TextType ttype, uint32_t absPartIdx, int32_t *lastPos, bool curUseRDOQ)
+                             TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
-    uint32_t acSum = 0;
-    int add = 0;
-    bool useRDOQ = (cu->getTransformSkip(absPartIdx, ttype) ? m_useRDOQTS : m_useRDOQ) && curUseRDOQ;
+    const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
+    TUEntropyCodingParameters codingParameters;
+    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
+    int deltaU[32 * 32];
 
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif
-    if (useRDOQ && (ttype == TEXT_LUMA || RDOQ_CHROMA))
+    int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
+    X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
+    int32_t *quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
+
+    int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
+    int add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
+
+    int numCoeff = 1 << log2TrSize * 2;
+    uint32_t acSum = primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
+
+    if (acSum >= 2 && cu->getSlice()->getPPS()->getSignHideFlag())
     {
-        acSum = xRateDistOptQuant(cu, coef, qCoef, trSize, ttype, absPartIdx, lastPos);
-    }
-    else
-    {
-        const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
-        TUEntropyCodingParameters codingParameters;
-        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
-        int deltaU[32 * 32];
-
-        int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
-        X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
-        int32_t *quantCoeff = 0;
-        quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-
-        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-
-        int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
-        add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
-
-        int numCoeff = 1 << log2TrSize * 2;
-        acSum += primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff, lastPos);
-
-        if (cu->getSlice()->getPPS()->getSignHideFlag() && acSum >= 2)
-        {
-            signBitHidingHDQ(qCoef, coef, deltaU, codingParameters);
-        }
+        signBitHidingHDQ(qCoef, coef, deltaU, codingParameters);
     }
     return acSum;
 }
 
-void TComTrQuant::init(uint32_t maxTrSize, bool useRDOQ, bool useRDOQTS, bool useTransformSkipFast)
+void TComTrQuant::init(bool useRDOQ)
 {
-    m_maxTrSize            = maxTrSize;
-    m_useRDOQ              = useRDOQ;
-    m_useRDOQTS            = useRDOQTS;
-    m_useTransformSkipFast = useTransformSkipFast;
+    m_useRDOQ = useRDOQ;
 }
 
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
@@ -369,7 +351,12 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
             }
         }
     }
-    return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos, curUseRDOQ);
+
+    if (m_useRDOQ && curUseRDOQ)
+    {
+        return xRateDistOptQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos);
+    }
+    return xQuant(cu, m_tmpCoeff, coeff, trSize, ttype, absPartIdx, lastPos);
 }
 
 void TComTrQuant::invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip, int lastPos)
@@ -521,6 +508,9 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
 uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
+    x265_emms();
+    selectLambda(ttype);
+
     const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -531,10 +521,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
     int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
-    double *errScaleOrg = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
-    int32_t *qCoefOrg = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
-    int32_t *qCoef = qCoefOrg;
-    double *errScale = errScaleOrg;
+    int add = (1 << (qbits - 1));
+    double *errScale = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
+    int32_t *qCoef = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
     double costCoeff[32 * 32];
     double costSig[32 * 32];
@@ -581,9 +570,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
             int Q = qCoef[blkPos];
             double scaleFactor = errScale[blkPos];
             int levelDouble    = srcCoeff[blkPos];
-            levelDouble        = (int)std::min<int64_t>((int64_t)abs((int)levelDouble) * Q, MAX_INT - (1 << (qbits - 1)));
+            levelDouble        = (int)std::min<int64_t>((int64_t)abs((int)levelDouble) * Q, MAX_INT - add);
 
-            uint32_t maxAbsLevel = (levelDouble + (1 << (qbits - 1))) >> qbits;
+            uint32_t maxAbsLevel = (levelDouble + add) >> qbits;
 
             costCoeff0[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
             blockUncodedCost   += costCoeff0[scanPos];
@@ -605,11 +594,6 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 3\n");
                 X265_CHECK(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 4\n");
 
-                rateIncUp[blkPos] = 0;
-                rateIncDown[blkPos] = 0;
-                deltaU[blkPos] = 0;
-                sigRateDelta[blkPos] = 0;
-
                 //===== coefficient level estimation =====
                 uint32_t level;
                 const uint32_t oneCtx = 4 * ctxSet + c1;
@@ -624,6 +608,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                     level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
                                            levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
                                            c1c2Idx, qbits, scaleFactor, 1);
+                    sigRateDelta[blkPos] = 0;
                 }
                 else
                 {
@@ -657,6 +642,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 else // level == 0
                 {
                     rateIncUp[blkPos] = greaterOneBits[0];
+                    rateIncDown[blkPos] = 0;
                 }
                 dstCoeff[blkPos] = level;
                 baseCost           += costCoeff[scanPos];
@@ -875,7 +861,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     {
         int64_t rdFactor = (int64_t)(
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
-                / m_lambda / 16 / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)))
+                / (m_lambda * (16 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8))))
                 + 0.5);
         int lastCG = 1;
 

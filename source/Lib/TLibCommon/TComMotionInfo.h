@@ -39,7 +39,6 @@
 #ifndef X265_TCOMMOTIONINFO_H
 #define X265_TCOMMOTIONINFO_H
 
-#include "CommonDef.h"
 #include "common.h"
 #include "mv.h"
 
@@ -59,6 +58,13 @@ struct AMVPInfo
     MV  m_mvCand[AMVP_MAX_NUM_CANDS_MEM];  ///< array of motion vector predictor candidates
     int m_num;                             ///< number of motion vector predictor candidates
 };
+
+typedef struct
+{
+    MV*   m_mvMemBlock    ;
+    MV*   m_mvdMemBlock   ;
+    char* m_refIdxMemBlock;
+} MVFieldMemPool;
 
 // ====================================================================================================================
 // Class definition
@@ -89,7 +95,7 @@ public:
     MV* m_mv;
     MV* m_mvd;
     char*     m_refIdx;
-    uint32_t      m_numPartitions;
+    uint32_t  m_numPartitions;
 
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
@@ -99,10 +105,13 @@ public:
     ~TComCUMvField() {}
 
     // ------------------------------------------------------------------------------------------------------------------
-    // create / destroy
+    // initialize / create / destroy
     // ------------------------------------------------------------------------------------------------------------------
 
-    bool create(uint32_t numPartition);
+    MVFieldMemPool m_MVFieldMemPool;
+
+    bool initialize(uint32_t numPartition, uint32_t numBlocks);
+    void create(TComCUMvField *p, uint32_t numPartition, int index, int idx);
     void destroy();
 
     // ------------------------------------------------------------------------------------------------------------------

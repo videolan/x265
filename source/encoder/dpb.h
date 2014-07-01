@@ -29,8 +29,8 @@
 namespace x265 {
 // private namespace for x265
 
-class FrameEncoder;
-class TComPic;
+class Frame;
+class TComPicSym;
 class TComSlice;
 class Encoder;
 
@@ -41,26 +41,29 @@ public:
     int                m_lastIDR;
     int                m_pocCRA;
     bool               m_bRefreshPending;
-    PicList            m_picList;
     int                m_maxRefL0;
     int                m_maxRefL1;
     int                m_bOpenGOP;
+    PicList            m_picList;
+    PicList            m_freeList;
+    TComPicSym*        m_picSymFreeList;
 
-    DPB(Encoder *cfg)
+    DPB(x265_param *param)
     {
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bRefreshPending = false;
-        m_maxRefL0 = cfg->param->maxNumReferences;
-        m_maxRefL1 = cfg->param->bBPyramid ? 2 : 1;
-        m_bOpenGOP = cfg->param->bOpenGOP;
+        m_picSymFreeList = NULL;
+        m_maxRefL0 = param->maxNumReferences;
+        m_maxRefL1 = param->bBPyramid ? 2 : 1;
+        m_bOpenGOP = param->bOpenGOP;
     }
 
     ~DPB();
 
-    void prepareEncode(TComPic*);
+    void prepareEncode(Frame*);
 
-    void recycleUnreferenced(PicList& freeList);
+    void recycleUnreferenced();
 
 protected:
 
@@ -71,7 +74,7 @@ protected:
 
     void arrangeLongtermPicturesInRPS(TComSlice *);
 
-    NalUnitType getNalUnitType(int curPoc, int lastIdr, TComPic* pic);
+    NalUnitType getNalUnitType(int curPoc, int lastIdr, Frame* pic);
 };
 }
 

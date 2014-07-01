@@ -38,7 +38,7 @@
 #ifndef X265_TCOMPICYUV_H
 #define X265_TCOMPICYUV_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComRom.h"
 #include "x265.h"
 #include "md5.h"

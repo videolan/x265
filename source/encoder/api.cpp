@@ -21,11 +21,12 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/CommonDef.h"
+#include "common.h"
 #include "param.h"
 #include "encoder.h"
 #include "frameencoder.h"
 #include "level.h"
+#include "nal.h"
 
 using namespace x265;
 
@@ -70,35 +71,16 @@ x265_encoder *x265_encoder_open(x265_param *p)
 extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
-    if (!pp_nal || !enc)
-        return -1;
-
-    Encoder *encoder = static_cast<Encoder*>(enc);
-
-    int ret = 0;
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
-    if (encoder->getStreamHeaders(nalunits) > 0)
+    if (pp_nal && enc)
     {
-        int nalcount = encoder->extractNalData(nalunits, ret);
-        *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
-    }
-    else if (pi_nal)
-    {
-        *pi_nal = 0;
-        ret = -1;
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        encoder->getStreamHeaders();
+        *pp_nal = &encoder->m_nalList.m_nal[0];
+        if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
+        return encoder->m_nalList.m_occupancy;
     }
 
-    for (int i = 0; i < MAX_NAL_UNITS; i++)
-    {
-        if (nalunits[i])
-        {
-            free(nalunits[i]->m_nalUnitData);
-            X265_FREE(nalunits[i]);
-        }
-    }
-
-    return ret;
+    return -1;
 }
 
 extern "C"
@@ -107,7 +89,7 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
     if (enc && out)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        memcpy(out, encoder->param, sizeof(x265_param));
+        memcpy(out, encoder->m_param, sizeof(x265_param));
     }
 }
 
@@ -118,27 +100,22 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
-    NALUnitEBSP *nalunits[MAX_NAL_UNITS] = { 0, 0, 0, 0, 0 };
-    int numEncoded = encoder->encode(!pic_in, pic_in, pic_out, nalunits);
+    int numEncoded;
+
+    // While flushing, we cannot return 0 until the entire stream is flushed
+    do
+    {
+        numEncoded = encoder->encode(pic_in, pic_out);
+    }
+    while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic);
 
     if (pp_nal && numEncoded > 0)
     {
-        int memsize;
-        int nalcount = encoder->extractNalData(nalunits, memsize);
-        *pp_nal = &encoder->m_nals[0];
-        if (pi_nal) *pi_nal = nalcount;
+        *pp_nal = &encoder->m_nalList.m_nal[0];
+        if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
     }
     else if (pi_nal)
         *pi_nal = 0;
-
-    for (int i = 0; i < MAX_NAL_UNITS; i++)
-    {
-        if (nalunits[i])
-        {
-            free(nalunits[i]->m_nalUnitData);
-            X265_FREE(nalunits[i]);
-        }
-    }
 
     return numEncoded;
 }

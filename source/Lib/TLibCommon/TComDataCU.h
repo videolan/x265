@@ -39,13 +39,16 @@
 #ifndef X265_TCOMDATACU_H
 #define X265_TCOMDATACU_H
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComMotionInfo.h"
 #include "TComSlice.h"
 #include "TComPattern.h"
 
 namespace x265 {
 // private namespace
+
+class Frame;
+class TComSlice;
 
 //! \ingroup TLibCommon
 //! \{
@@ -68,6 +71,29 @@ enum NDBFBlockBorderTag
     NUM_SGU_BORDER
 };
 
+
+typedef struct
+{
+    char*    qpMemBlock;
+    uint8_t* depthMemBlock;
+    uint8_t* cuSizeMemBlock;
+    bool*    skipFlagMemBlock;
+    char*    partSizeMemBlock;
+    char*    predModeMemBlock;
+    bool*    cuTQBypassMemBlock;
+    bool*    mergeFlagMemBlock;
+    uint8_t* lumaIntraDirMemBlock;
+    uint8_t* chromaIntraDirMemBlock;
+    uint8_t* interDirMemBlock;
+    uint8_t* trIdxMemBlock;
+    uint8_t* transformSkipMemBlock;
+    uint8_t* cbfMemBlock;
+    uint8_t* mvpIdxMemBlock;
+    coeff_t* trCoeffMemBlock;
+    pixel*   m_tqBypassYuvMemBlock;
+} DataCUMemPool;
+
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -81,7 +107,7 @@ private:
     // class pointers
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      m_pic;            ///< picture class pointer
+    Frame*        m_pic;            ///< picture class pointer
     TComSlice*    m_slice;          ///< slice header pointer
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -113,10 +139,7 @@ private:
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
-
-    pixel*        m_iPCMSampleY;        ///< PCM sample buffer (Y)
-    pixel*        m_iPCMSampleCb;       ///< PCM sample buffer (Cb)
-    pixel*        m_iPCMSampleCr;       ///< PCM sample buffer (Cr)
+    pixel*        m_tqBypassOrigYuv[3]; ///< Original Lossless YUV buffer (Y/Cb/Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -136,11 +159,13 @@ private:
     uint8_t*      m_chromaIntraDir;   ///< array of intra directions (chroma)
     uint8_t*      m_interDir;         ///< array of inter directions
     uint8_t*      m_mvpIdx[2];        ///< array of motion vector predictor candidates or merge candidate indices [0]
-    bool*         m_iPCMFlags;        ///< array of intra_pcm flags
 
     // -------------------------------------------------------------------------------------------------------------------
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
+
+    DataCUMemPool m_DataCUMemPool;
+    TComCUMvField m_cuMvFieldMemPool;
 
 protected:
 
@@ -172,17 +197,20 @@ public:
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
     double        m_baseQp;          //Qp of Cu set from RateControl/Vbv.
+    uint32_t      m_mvBits;         // Mv bits + Ref + block type
+    uint32_t      m_coeffBits;        // Texture bits (DCT Coeffs)
+
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
+    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index, bool isLossLess);
 
-    bool          create(uint32_t numPartition, uint32_t cuSize, int unitSize, int csp);
+    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
+
     void          destroy();
 
-    void          initCU(TComPic* pic, uint32_t cuAddr);
-    void          initEstData(uint32_t depth);
-    void          initEstData(uint32_t depth, int qp);
-    void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth);
+    void          initCU(Frame* pic, uint32_t cuAddr);
+    void          initEstData();
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
 
     void          copyToSubCU(TComDataCU* lcu, uint32_t partUnitIdx, uint32_t depth);
@@ -196,7 +224,7 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComPic*      getPic()                         { return m_pic; }
+    Frame*        getPic()                         { return m_pic; }
 
     TComSlice*    getSlice()                       { return m_slice; }
 
@@ -222,7 +250,7 @@ public:
 
     char*         getPartitionSize()                      { return m_partSizes; }
 
-    PartSize      getPartitionSize(uint32_t idx)              { return static_cast<PartSize>(m_partSizes[idx]); }
+    PartSize      getPartitionSize(uint32_t idx)          { return static_cast<PartSize>(m_partSizes[idx]); }
 
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
     void          setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, uint32_t depth);
@@ -235,23 +263,23 @@ public:
 
     char*         getPredictionMode()                 { return m_predModes; }
 
-    PredMode      getPredictionMode(uint32_t idx)         { return static_cast<PredMode>(m_predModes[idx]); }
+    PredMode      getPredictionMode(uint32_t idx)     { return static_cast<PredMode>(m_predModes[idx]); }
 
     bool*         getCUTransquantBypass()             { return m_cuTransquantBypass; }
 
-    bool          getCUTransquantBypass(uint32_t idx)     { return m_cuTransquantBypass[idx]; }
+    bool          getCUTransquantBypass(uint32_t idx) { return m_cuTransquantBypass[idx]; }
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t*      getCUSize()                     { return m_cuSize; }
 
-    uint8_t       getCUSize(uint32_t idx)            { return m_cuSize[idx]; }
+    uint8_t       getCUSize(uint32_t idx)         { return m_cuSize[idx]; }
 
-    char*         getQP()                        { return m_qp; }
+    char*         getQP()                         { return m_qp; }
 
-    char          getQP(uint32_t idx)                { return m_qp[idx]; }
+    char          getQP(uint32_t idx)             { return m_qp[idx]; }
 
-    void          setQP(uint32_t idx, char value)    { m_qp[idx] =  value; }
+    void          setQP(uint32_t idx, char value) { m_qp[idx] =  value; }
 
     void          setQPSubParts(int qp,   uint32_t absPartIdx, uint32_t depth);
     int           getLastValidPartIdx(int absPartIdx);
@@ -285,11 +313,9 @@ public:
 
     coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
-    pixel*&       getPCMSampleY()             { return m_iPCMSampleY; }
+    pixel*&       getLumaOrigYuv()             { return m_tqBypassOrigYuv[0]; }
 
-    pixel*&       getPCMSampleCb()            { return m_iPCMSampleCb; }
-
-    pixel*&       getPCMSampleCr()            { return m_iPCMSampleCr; }
+    pixel*&       getChromaOrigYuv(uint32_t chromaId) { return m_tqBypassOrigYuv[chromaId]; }
 
     uint8_t       getCbf(uint32_t idx, TextType ttype) { return m_cbf[ttype][idx]; }
 
@@ -343,14 +369,6 @@ public:
 
     void          setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
-    bool*         getIPCMFlag()             { return m_iPCMFlags; }
-
-    bool          getIPCMFlag(uint32_t idx)             { return m_iPCMFlags[idx]; }
-
-    void          setIPCMFlag(uint32_t idx, bool b)     { m_iPCMFlags[idx] = b; }
-
-    void          setIPCMFlagSubParts(bool bIpcmFlag, uint32_t absPartIdx, uint32_t depth);
-
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for accessing partition information
     // -------------------------------------------------------------------------------------------------------------------
@@ -388,22 +406,15 @@ public:
 
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
 
-    TComDataCU*   getPULeft(uint32_t& lPartUnitIdx,
-                            uint32_t  curPartUnitIdx,
-                            bool      bEnforceSliceRestriction = true,
-                            bool      bEnforceTileRestriction = true);
-    TComDataCU*   getPUAbove(uint32_t& uiAPartUnitIdx,
-                             uint32_t  curPartUnitIdx,
-                             bool      bEnforceSliceRestriction = true,
-                             bool      planarAtLCUBoundary = false,
-                             bool      bEnforceTileRestriction = true);
-    TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
-    TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, bool bEnforceSliceRestriction = true);
+    TComDataCU*   getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtLCUBoundary = false);
+    TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx);
+    TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx);
 
-    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t uiCurrAbsIdxInLCU);
+    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInLCU);
     TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInLCU);
-    char          getRefQP(uint32_t uiCurrAbsIdxInLCU);
+    char          getRefQP(uint32_t currAbsIdxInLCU);
 
     TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
     TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
@@ -447,7 +458,7 @@ public:
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
 
-    uint32_t&     getTotalNumPart()               { return m_numPartitions; }
+    uint32_t&     getTotalNumPart()     { return m_numPartitions; }
 
     uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
 

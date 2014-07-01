@@ -19,7 +19,7 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 21)
+set(X265_BUILD 24)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -183,12 +183,7 @@ if(WARNINGS_AS_ERRORS)
     endif()
 endif(WARNINGS_AS_ERRORS)
 
-option(LOG_CU_STATISTICS "Log Mode Decision Statistics at the CU Level" OFF)
-if(LOG_CU_STATISTICS)
-    add_definitions(-DLOG_CU_STATISTICS=1)
-else(LOG_CU_STATISTICS)
-    add_definitions(-DLOG_CU_STATISTICS=0)
-endif(LOG_CU_STATISTICS)
+
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)

@@ -1,11 +1,9 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComBitStream.cpp
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComLoopFilter.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComPattern.cpp
-    ../Lib/TLibCommon/TComPic.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
@@ -17,18 +15,13 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/NAL.h
-    ../Lib/TLibCommon/SEI.h
-    ../Lib/TLibCommon/TComBitCounter.h
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComBitStream.h
     ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComPattern.h
-    ../Lib/TLibCommon/TComPic.h
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComPrediction.h
@@ -148,10 +141,12 @@ add_library(common OBJECT
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
-    bitstream.h mv.h
+    bitstream.h bitstream.cpp
+    mv.h
     shortyuv.cpp shortyuv.h
     common.cpp common.h
     param.cpp param.h
+    frame.cpp frame.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
     loopfilter.cpp)

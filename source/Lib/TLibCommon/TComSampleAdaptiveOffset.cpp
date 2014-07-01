@@ -66,13 +66,12 @@ TComSampleAdaptiveOffset::TComSampleAdaptiveOffset()
     m_upBuff1 = NULL;
     m_upBuff2 = NULL;
     m_upBufft = NULL;
-
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
     m_tmpU1[2] = NULL;
     m_tmpU2[0] = NULL;
-    m_tmpU2[0] = NULL;
-    m_tmpU2[0] = NULL;
+    m_tmpU2[1] = NULL;
+    m_tmpU2[2] = NULL;
     m_tmpL1 = NULL;
     m_tmpL2 = NULL;
 }
@@ -503,7 +502,7 @@ inline int xSign(int x)
 /** initialize variables for SAO process
  * \param  pic picture data pointer
  */
-void TComSampleAdaptiveOffset::createPicSaoInfo(TComPic* pic)
+void TComSampleAdaptiveOffset::createPicSaoInfo(Frame* pic)
 {
     m_pic = pic;
 }
@@ -519,8 +518,8 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     int  stride;
     int  lcuWidth  = m_maxCUWidth;
     int  lcuHeight = m_maxCUHeight;
-    uint32_t lpelx     = tmpCu->getCUPelX();
-    uint32_t tpely     = tmpCu->getCUPelY();
+    uint32_t lpelx = tmpCu->getCUPelX();
+    uint32_t tpely = tmpCu->getCUPelY();
     uint32_t rpelx;
     uint32_t bpely;
     int  edgeType;
@@ -840,12 +839,12 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
 
     if (yCbCr == 0)
     {
-        rec        = m_pic->getPicYuvRec()->getLumaAddr();
+        rec         = m_pic->getPicYuvRec()->getLumaAddr();
         picWidthTmp = m_picWidth;
     }
     else
     {
-        rec        = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
+        rec         = m_pic->getPicYuvRec()->getChromaAddr(yCbCr);
         picWidthTmp = m_picWidth >> m_hChromaShift;
     }
 
@@ -1155,7 +1154,7 @@ void TComSampleAdaptiveOffset::resetLcuPart(SaoLcuParam* saoLcuParam)
  */
 void TComSampleAdaptiveOffset::convertQT2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int yCbCr)
 {
-    SAOQTPart*  saoPart = &(saoParam->saoPart[yCbCr][partIdx]);
+    SAOQTPart* saoPart = &(saoParam->saoPart[yCbCr][partIdx]);
 
     if (!saoPart->bSplit)
     {
@@ -1246,48 +1245,36 @@ void TComSampleAdaptiveOffset::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam*
     }
 }
 
-static void xPCMRestoration(TComPic* pic);
-static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, TextType ttText);
+static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
 
-/** PCM LF disable process.
+/** Original Lossless YUV LF disable process.
  * \param pic picture (TComPic) pointer
  * \returns void
  *
- * \note Replace filtered sample values of PCM mode blocks with the transmitted and reconstructed ones.
+ * \note Replace filtered sample values of Lossless mode blocks with the transmitted and reconstructed ones.
  */
-void PCMLFDisableProcess(TComPic* pic)
+void restoreLFDisabledOrigYuv(Frame* pic)
 {
-    xPCMRestoration(pic);
-}
-
-/** Picture-level PCM restoration.
- * \param pic picture (TComPic) pointer
- * \returns void
- */
-static void xPCMRestoration(TComPic* pic)
-{
-    bool  bPCMFilter = (pic->getSlice()->getSPS()->getUsePCM() && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) ? true : false;
-
-    if (bPCMFilter || pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
         for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
         {
             TComDataCU* cu = pic->getCU(cuAddr);
 
-            xPCMCURestoration(cu, 0, 0);
+            xOrigCUSampleRestoration(cu, 0, 0);
         }
     }
 }
 
-/** PCM CU restoration.
+/** Original YUV restoration for CU in lossless coding.
  * \param cu pointer to current CU
  * \param absPartIdx part index
  * \param depth CU depth
  * \returns void
  */
-void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
+void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPic* pic     = cu->getPic();
+    Frame* pic = cu->getPic();
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -1296,100 +1283,80 @@ void xPCMCURestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
     {
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
-            uint32_t lpelx   = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely   = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
+            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
             if ((lpelx < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (tpely < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
-                xPCMCURestoration(cu, absZOrderIdx, depth + 1);
+                xOrigCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 
         return;
     }
 
-    // restore PCM samples
-    if ((cu->getIPCMFlag(absZOrderIdx) && pic->getSlice()->getSPS()->getPCMFilterDisableFlag()) || cu->isLosslessCoded(absZOrderIdx))
+    // restore original YUV samples
+    if (cu->isLosslessCoded(absZOrderIdx))
     {
-        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_LUMA);
-        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_CHROMA_U);
-        xPCMSampleRestoration(cu, absZOrderIdx, depth, TEXT_CHROMA_V);
+        restoreOrigLosslessYuv(cu, absZOrderIdx, depth);
     }
 }
 
-/** PCM sample restoration.
+/** Original Lossless YUV  sample restoration.
  * \param cu pointer to current CU
  * \param absPartIdx part index
  * \param depth CU depth
  * \param ttText texture component type
  * \returns void
  */
-static void xPCMSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, TextType ttText)
+static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
     TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
-    pixel* src;
-    pixel* pcm;
-    uint32_t stride;
-    uint32_t width;
-    uint32_t height;
-    uint32_t pcmLeftShiftBit;
-    uint32_t x, y;
     int hChromaShift = cu->getHorzChromaShift();
     int vChromaShift = cu->getVertChromaShift();
     uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
-    if (ttText == TEXT_LUMA)
-    {
-        src = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
-        pcm = cu->getPCMSampleY() + lumaOffset;
-        stride  = pcPicYuvRec->getStride();
-        width  = (g_maxCUSize >> depth);
-        height = (g_maxCUSize >> depth);
-        if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
-        {
-            pcmLeftShiftBit = 0;
-        }
-        else
-        {
-            pcmLeftShiftBit = X265_DEPTH - cu->getSlice()->getSPS()->getPCMBitDepthLuma();
-        }
-    }
-    else
-    {
-        if (ttText == TEXT_CHROMA_U)
-        {
-            src = pcPicYuvRec->getCbAddr(cu->getAddr(), absZOrderIdx);
-            pcm = cu->getPCMSampleCb() + chromaOffset;
-        }
-        else
-        {
-            src = pcPicYuvRec->getCrAddr(cu->getAddr(), absZOrderIdx);
-            pcm = cu->getPCMSampleCr() + chromaOffset;
-        }
-
-        stride = pcPicYuvRec->getCStride();
-        width  = ((g_maxCUSize >> depth) >> hChromaShift);
-        height = ((g_maxCUSize >> depth) >> vChromaShift);
-
-        if (cu->isLosslessCoded(absZOrderIdx) && !cu->getIPCMFlag(absZOrderIdx))
-        {
-            pcmLeftShiftBit = 0;
-        }
-        else
-        {
-            pcmLeftShiftBit = X265_DEPTH - cu->getSlice()->getSPS()->getPCMBitDepthChroma();
-        }
-    }
+    pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
+    pixel* src = cu->getLumaOrigYuv() + lumaOffset;
+    uint32_t stride = pcPicYuvRec->getStride();
+    uint32_t width  = (g_maxCUSize >> depth);
+    uint32_t height = (g_maxCUSize >> depth);
 
     //TODO Optimized Primitives
-    for (y = 0; y < height; y++)
+    for (uint32_t y = 0; y < height; y++)
     {
-        for (x = 0; x < width; x++)
+        for (uint32_t x = 0; x < width; x++)
         {
-            src[x] = (pcm[x] << pcmLeftShiftBit);
+            dst[x] = src[x];
         }
 
-        pcm += width;
-        src += stride;
+        src += width;
+        dst += stride;
+    }
+
+    pixel* dstCb = pcPicYuvRec->getChromaAddr(1, cu->getAddr(), absZOrderIdx);
+    pixel* srcCb = cu->getChromaOrigYuv(1) + chromaOffset;
+
+    pixel* dstCr = pcPicYuvRec->getChromaAddr(2, cu->getAddr(), absZOrderIdx);
+    pixel* srcCr = cu->getChromaOrigYuv(2) + chromaOffset;
+
+    stride = pcPicYuvRec->getCStride();
+    width  = ((g_maxCUSize >> depth) >> hChromaShift);
+    height = ((g_maxCUSize >> depth) >> vChromaShift);
+
+    //TODO Optimized Primitives
+    for (uint32_t y = 0; y < height; y++)
+    {
+        for (uint32_t x = 0; x < width; x++)
+        {
+            dstCb[x] = srcCb[x];
+            dstCr[x] = srcCr[x];
+        }
+
+        srcCb += width;
+        dstCb += stride;
+        srcCr += width;
+        dstCr += stride;
     }
 }
+
 }
 //! \}

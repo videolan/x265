@@ -39,7 +39,7 @@
 #define X265_TCOMPICSYM_H
 
 // Include files
-#include "CommonDef.h"
+#include "common.h"
 #include "TComSlice.h"
 #include "TComDataCU.h"
 
@@ -48,6 +48,7 @@ namespace x265 {
 
 struct SAOParam;
 class TComSampleAdaptiveOffset;
+class TComPicYuv;
 
 //! \ingroup TLibCommon
 //! \{
@@ -64,23 +65,24 @@ private:
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
 
-    uint32_t      m_maxCUSize;
     uint32_t      m_unitSize;
     uint32_t      m_log2UnitSize;
 
-    uint8_t       m_totalDepth;
     uint32_t      m_numPartitions;
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
 
     TComSlice*    m_slice;
-    TComDataCU**  m_cuData;
+    TComDataCU*   m_cuData;
 
     SAOParam*     m_saoParam;
 
 public:
 
-    bool        create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxDepth);
+    TComPicSym*   m_freeListNext;
+    TComPicYuv*   m_reconPicYuv;
+
+    bool        create(x265_param *param);
     void        destroy();
 
     TComPicSym();
@@ -97,7 +99,7 @@ public:
 
     uint32_t    getNumberOfCUsInFrame() const { return m_numCUsInFrame; }
 
-    TComDataCU*&  getCU(uint32_t cuAddr)  { return m_cuData[cuAddr]; }
+    TComDataCU* getCU(uint32_t cuAddr)    { return &m_cuData[cuAddr]; }
 
     uint32_t    getNumPartition() const   { return m_numPartitions; }
 

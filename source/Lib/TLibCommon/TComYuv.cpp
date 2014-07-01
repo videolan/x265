@@ -36,7 +36,7 @@
     \todo     this should be merged with TComPicYuv
 */
 
-#include "CommonDef.h"
+#include "common.h"
 #include "TComYuv.h"
 #include "TComPrediction.h"
 #include "shortyuv.h"
@@ -195,21 +195,6 @@ void TComYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t
     uint32_t dststride = dstPicYuv->m_width;
 
     primitives.luma_copy_ps[part](dst, dststride, getLumaAddr(partIdx), getStride());
-}
-
-void TComYuv::copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId, const bool splitIntoSubTUs)
-{
-    X265_CHECK(chromaId == 1 || chromaId == 2, "invalid chroma id");
-
-    int part = splitIntoSubTUs ? NUM_CHROMA_PARTITIONS422 : partitionFromSize(lumaSize);
-
-    pixel*   src = getChromaAddr(chromaId, partIdx);
-    int16_t* dst = dstPicYuv->getChromaAddr(chromaId, partIdx);
-
-    uint32_t srcstride = getCStride();
-    uint32_t dststride = dstPicYuv->m_cwidth;
-
-    primitives.chroma[m_csp].copy_ps[part](dst, dststride, src, srcstride);
 }
 
 void TComYuv::addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize)
