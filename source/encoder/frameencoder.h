@@ -54,6 +54,20 @@ enum SCALING_LIST_PARAMETER
 class ThreadPool;
 class Encoder;
 
+/* Current frame stats for 2 pass */
+struct FrameStats
+{
+    /* MV bits (MV+Ref+Block Type) */
+    int         mvBits;
+    /* Texture bits (DCT coefs) */
+    int         coeffBits;
+    int         miscBits;
+    /* CU type counts */
+    int         cuCount_i;
+    int         cuCount_p;
+    int         cuCount_skip;
+};
+
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
 {
@@ -132,7 +146,7 @@ public:
     uint32_t                 m_checksum[3];
     double                   m_elapsedCompressTime; // elapsed time spent in worker threads
     double                   m_frameTime;           // wall time from frame start to finish
-
+    FrameStats               m_frameStats;          // stats of current frame for multipass encodes
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
 

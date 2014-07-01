@@ -48,6 +48,7 @@ FrameEncoder::FrameEncoder()
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
+    memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
@@ -143,6 +144,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         ok = false;
     }
 
+    memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
     memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
     memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0][0]) * 4 * 8);
@@ -704,9 +706,9 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
             getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
 
         // Collect Frame Stats for 2 pass
-        m_frame->m_stats.mvBits += cu->m_mvBits;
-        m_frame->m_stats.coeffBits += cu->m_coeffBits;
-        m_frame->m_stats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
+        m_frameStats.mvBits += cu->m_mvBits;
+        m_frameStats.coeffBits += cu->m_coeffBits;
+        m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
     }
 
     if (slice->getPPS()->getCabacInitPresentFlag())

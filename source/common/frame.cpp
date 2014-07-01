@@ -45,7 +45,6 @@ Frame::Frame()
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
-    memset(&m_stats, 0, sizeof(m_stats));
     m_next = NULL;
     m_prev = NULL;
     m_qpaAq = NULL;
@@ -144,7 +143,6 @@ void Frame::reinit(x265_param *param)
     }
     if (param->rc.aqMode)
         memset(m_qpaAq, 0, numRows * sizeof(double));
-    memset(&m_stats, 0, sizeof(m_stats));
 }
 
 void Frame::destroy()
