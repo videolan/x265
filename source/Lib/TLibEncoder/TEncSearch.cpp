@@ -2559,7 +2559,7 @@ void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMv
     int mvBitsOrig = m_me.bitcost(mv) + MVP_IDX_BITS;
     int bestMvBits = mvBitsOrig;
 
-    for (int mvpIdx = 0; mvpIdx < AMVP_MAX_NUM_CANDS; mvpIdx++)
+    for (int mvpIdx = 0; mvpIdx < amvpInfo->m_num; mvpIdx++)
     {
         if (mvpIdx == outMvpIdx)
             continue;
