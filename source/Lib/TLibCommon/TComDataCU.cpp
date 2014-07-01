@@ -405,14 +405,8 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
     }
 }
 
-/** initialize prediction data with enabling sub-LCU-level delta QP
-*\param  depth  depth of the current CU
-*\param  qp     qp for the current CU
-*- set CU width and CU height according to depth
-*- set qp value according to input qp
-*- set last-coded qp value according to input last-coded qp
-*/
-void TComDataCU::initEstData(uint32_t depth, int qp)
+// initialize prediction data
+void TComDataCU::initEstData()
 {
     m_psyEnergy        = 0;
     m_totalPsyCost     = MAX_INT64;
@@ -422,68 +416,6 @@ void TComDataCU::initEstData(uint32_t depth, int qp)
     m_totalBits        = 0;
     m_mvBits           = 0;
     m_coeffBits        = 0;
-
-    uint8_t cuSize = g_maxCUSize >> depth;
-
-    for (uint32_t i = 0; i < m_numPartitions; i++)
-    {
-        m_depth[i] = depth;
-        m_cuSize[i] = cuSize;
-        m_trIdx[i] = 0;
-        m_transformSkip[0][i] = 0;
-        m_transformSkip[1][i] = 0;
-        m_transformSkip[2][i] = 0;
-        m_skipFlag[i]   = false;
-        m_partSizes[i] = SIZE_NONE;
-        m_predModes[i] = MODE_NONE;
-        m_cuTransquantBypass[i] = false;
-        m_qp[i] = qp;
-        m_bMergeFlags[i] = 0;
-        m_lumaIntraDir[i] = DC_IDX;
-        m_chromaIntraDir[i] = 0;
-        m_interDir[i] = 0;
-        m_cbf[0][i] = 0;
-        m_cbf[1][i] = 0;
-        m_cbf[2][i] = 0;
-    }
-
-    m_cuMvField[0].clearMvField();
-    m_cuMvField[1].clearMvField();
-}
-
-void TComDataCU::initEstData(uint32_t depth)
-{
-    m_psyEnergy        = 0;
-    m_totalPsyCost     = MAX_INT64;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
-
-    uint8_t cuSize = g_maxCUSize >> depth;
-
-    for (uint32_t i = 0; i < m_numPartitions; i++)
-    {
-        m_depth[i] = depth;
-        m_cuSize[i] = cuSize;
-        m_trIdx[i] = 0;
-        m_transformSkip[0][i] = 0;
-        m_transformSkip[1][i] = 0;
-        m_transformSkip[2][i] = 0;
-        m_skipFlag[i]   = false;
-        m_partSizes[i] = SIZE_NONE;
-        m_predModes[i] = MODE_NONE;
-        m_cuTransquantBypass[i] = false;
-        m_bMergeFlags[i] = 0;
-        m_lumaIntraDir[i] = DC_IDX;
-        m_chromaIntraDir[i] = 0;
-        m_interDir[i] = 0;
-        m_cbf[0][i] = 0;
-        m_cbf[1][i] = 0;
-        m_cbf[2][i] = 0;
-    }
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
@@ -493,7 +425,7 @@ void TComDataCU::initEstData(uint32_t depth)
 void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-
+    uint8_t cuSize = g_maxCUSize >> depth;
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
     m_pic              = cu->getPic();
@@ -501,8 +433,8 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuAddr           = cu->getAddr();
     m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
 
-    m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx &  1);
-    m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
+    m_cuPelX           = cu->getCUPelX() + cuSize * (partUnitIdx &  1);
+    m_cuPelY           = cu->getCUPelY() + cuSize * (partUnitIdx >> 1);
 
     m_psyEnergy        = 0;
     m_totalPsyCost     = MAX_INT64;
@@ -523,101 +455,32 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
 
     int sizeInBool = sizeof(bool) * m_numPartitions;
     int sizeInChar = sizeof(char) * m_numPartitions;
-    memset(m_qp, qp, sizeInChar);
 
-    memset(m_bMergeFlags,     0, sizeInBool);
-    memset(m_lumaIntraDir,    DC_IDX, sizeInChar);
-    memset(m_chromaIntraDir,  0, sizeInChar);
-    memset(m_interDir,        0, sizeInChar);
-    memset(m_trIdx,           0, sizeInChar);
-    memset(m_transformSkip[0], 0, sizeInChar);
-    memset(m_transformSkip[1], 0, sizeInChar);
-    memset(m_transformSkip[2], 0, sizeInChar);
-    memset(m_cbf[0],          0, sizeInChar);
-    memset(m_cbf[1],          0, sizeInChar);
-    memset(m_cbf[2],          0, sizeInChar);
-    memset(m_depth, depth, sizeInChar);
+    memset(m_qp,                 qp,     sizeInChar);
+    memset(m_lumaIntraDir,       DC_IDX, sizeInChar);
+    memset(m_chromaIntraDir,     0,      sizeInChar);
+    memset(m_trIdx,              0,      sizeInChar);
+    memset(m_transformSkip[0],   0,      sizeInChar);
+    memset(m_transformSkip[1],   0,      sizeInChar);
+    memset(m_transformSkip[2],   0,      sizeInChar);
+    memset(m_cbf[0],             0,      sizeInChar);
+    memset(m_cbf[1],             0,      sizeInChar);
+    memset(m_cbf[2],             0,      sizeInChar);
+    memset(m_depth,              depth,  sizeInChar);
+    memset(m_cuSize,             cuSize, sizeInChar);
+    memset(m_partSizes,          SIZE_NONE, sizeInChar);
+    memset(m_predModes,          MODE_NONE, sizeInChar);
+    memset(m_skipFlag,           false, sizeInBool);
+    memset(m_cuTransquantBypass, false, sizeInBool);
 
-    uint8_t cuSize = g_maxCUSize >> depth;
-    memset(m_cuSize,    cuSize,  sizeInChar);
-    for (uint32_t i = 0; i < m_numPartitions; i++)
+    if (getSlice()->getSliceType() != I_SLICE)
     {
-        m_skipFlag[i]   = false;
-        m_partSizes[i] = SIZE_NONE;
-        m_predModes[i] = MODE_NONE;
-        m_cuTransquantBypass[i] = false;
+        memset(m_bMergeFlags,      0, sizeInBool);
+        memset(m_interDir,         0, sizeInChar);
+
+        m_cuMvField[0].clearMvField();
+        m_cuMvField[1].clearMvField();
     }
-
-    m_cuMvField[0].clearMvField();
-    m_cuMvField[1].clearMvField();
-
-    m_cuLeft        = cu->getCULeft();
-    m_cuAbove       = cu->getCUAbove();
-    m_cuAboveLeft   = cu->getCUAboveLeft();
-    m_cuAboveRight  = cu->getCUAboveRight();
-}
-
-// initialize Sub partition
-void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
-{
-    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-
-    uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
-
-    m_pic              = cu->getPic();
-    m_slice            = m_pic->getSlice();
-    m_cuAddr           = cu->getAddr();
-    m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
-
-    m_cuPelX           = cu->getCUPelX() + (g_maxCUSize >> depth) * (partUnitIdx &  1);
-    m_cuPelY           = cu->getCUPelY() + (g_maxCUSize >> depth) * (partUnitIdx >> 1);
-
-    m_psyEnergy        = 0;
-    m_totalPsyCost     = MAX_INT64;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
-    m_numPartitions    = cu->getTotalNumPart() >> 2;
-
-    for (int i = 0; i < 4; i++)
-    {
-        m_avgCost[i] = cu->m_avgCost[i];
-        m_count[i] = cu->m_count[i];
-    }
-
-    int sizeInBool = sizeof(bool) * m_numPartitions;
-    int sizeInChar = sizeof(char) * m_numPartitions;
-
-    memcpy(m_qp, cu->getQP() + partOffset, sizeInChar);
-    memset(m_bMergeFlags,     0, sizeInBool);
-    memset(m_lumaIntraDir,    DC_IDX, sizeInChar);
-    memset(m_chromaIntraDir,  0, sizeInChar);
-    memset(m_interDir,        0, sizeInChar);
-    memset(m_trIdx,           0, sizeInChar);
-    memset(m_transformSkip[0], 0, sizeInChar);
-    memset(m_transformSkip[1], 0, sizeInChar);
-    memset(m_transformSkip[2], 0, sizeInChar);
-    memset(m_cbf[0],          0, sizeInChar);
-    memset(m_cbf[1],          0, sizeInChar);
-    memset(m_cbf[2],          0, sizeInChar);
-    memset(m_depth, depth, sizeInChar);
-
-    uint8_t cuSize = g_maxCUSize >> depth;
-    memset(m_cuSize, cuSize, sizeInChar);
-
-    for (uint32_t i = 0; i < m_numPartitions; i++)
-    {
-        m_skipFlag[i]   = false;
-        m_partSizes[i] = SIZE_NONE;
-        m_predModes[i] = MODE_NONE;
-        m_cuTransquantBypass[i] = false;
-    }
-
-    m_cuMvField[0].clearMvField();
-    m_cuMvField[1].clearMvField();
 
     m_cuLeft        = cu->getCULeft();
     m_cuAbove       = cu->getCUAbove();
@@ -1457,24 +1320,24 @@ bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)
 void TComDataCU::setPartSizeSubParts(PartSize mode, uint32_t absPartIdx, uint32_t depth)
 {
     X265_CHECK(sizeof(*m_partSizes) == 1, "size check failure\n");
-    memset(m_partSizes + absPartIdx, mode, m_pic->getNumPartInCU() >> (2 * depth));
+    memset(m_partSizes + absPartIdx, mode, m_pic->getNumPartInCU() >> (depth << 1));
 }
 
 void TComDataCU::setCUTransquantBypassSubParts(bool flag, uint32_t absPartIdx, uint32_t depth)
 {
-    memset(m_cuTransquantBypass + absPartIdx, flag, m_pic->getNumPartInCU() >> (2 * depth));
+    memset(m_cuTransquantBypass + absPartIdx, flag, m_pic->getNumPartInCU() >> (depth << 1));
 }
 
 void TComDataCU::setSkipFlagSubParts(bool skip, uint32_t absPartIdx, uint32_t depth)
 {
     X265_CHECK(sizeof(*m_skipFlag) == 1, "size check failure\n");
-    memset(m_skipFlag + absPartIdx, skip, m_pic->getNumPartInCU() >> (2 * depth));
+    memset(m_skipFlag + absPartIdx, skip, m_pic->getNumPartInCU() >> (depth << 1));
 }
 
 void TComDataCU::setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth)
 {
     X265_CHECK(sizeof(*m_predModes) == 1, "size check failure\n");
-    memset(m_predModes + absPartIdx, eMode, m_pic->getNumPartInCU() >> (2 * depth));
+    memset(m_predModes + absPartIdx, eMode, m_pic->getNumPartInCU() >> (depth << 1));
 }
 
 void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf)

@@ -291,7 +291,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     if (bestMergeCand < 0)
     {
         outBestCU->setMergeFlag(0, false);
-        outBestCU->initEstData(depth, outBestCU->getQP(0));
+        outBestCU->setQPSubParts(outBestCU->getQP(0), 0, depth);
     }
     else
     {
@@ -732,7 +732,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
             }
         }
 #endif // if EARLY_EXIT
-        outTempCU->initEstData(depth, qp);
+        outTempCU->setQPSubParts(qp, 0, depth);
         uint8_t     nextDepth = (uint8_t)(depth + 1);
         TComDataCU* subBestPartCU;
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
