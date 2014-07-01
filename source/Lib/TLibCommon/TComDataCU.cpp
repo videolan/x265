@@ -2290,8 +2290,6 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
 int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info, MV *mvc)
 {
     info->m_num = 0;
-    if (refIdx < 0)
-        return 0;
 
     //-- Get Spatial MV
     uint32_t partIdxLT, partIdxRT, partIdxLB;
