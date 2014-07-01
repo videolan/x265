@@ -45,17 +45,13 @@ protected:
 
     uint32_t depth;
 
-    uint32_t pixelbytes;
-
     uint32_t framesize;
 
     bool threadActive;
 
-    ThreadSafeInteger head;
+    ThreadSafeInteger readCount;
 
-    ThreadSafeInteger tail;
-
-    bool frameStat[QUEUE_SIZE];
+    ThreadSafeInteger writeCount;
 
     char* buf[QUEUE_SIZE];
 

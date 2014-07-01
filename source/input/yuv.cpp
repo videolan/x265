@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "yuv.h"
-#include "PPA/ppa.h"
 #include "common.h"
 
 #include <iostream>
@@ -43,20 +42,25 @@ using namespace std;
 YUVInput::YUVInput(InputFileInfo& info)
 {
     for (int i = 0; i < QUEUE_SIZE; i++)
-    {
         buf[i] = NULL;
-        frameStat[i] = false;
-    }
 
-    head.set(0);
-    tail.set(0);
-    framesize = 0;
+    readCount.set(0);
+    writeCount.set(0);
     depth = info.depth;
     width = info.width;
     height = info.height;
     colorSpace = info.csp;
     threadActive = false;
     ifs = NULL;
+
+    uint32_t pixelbytes = depth > 8 ? 2 : 1;
+    framesize = 0;
+    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
+    {
+        uint32_t w = width >> x265_cli_csps[colorSpace].width[i];
+        uint32_t h = height >> x265_cli_csps[colorSpace].height[i];
+        framesize += w * h * pixelbytes;
+    }
 
     if (width == 0 || height == 0 || info.fpsNum == 0 || info.fpsDenom == 0)
     {
@@ -84,17 +88,9 @@ YUVInput::YUVInput(InputFileInfo& info)
         return;
     }
 
-    pixelbytes = depth > 8 ? 2 : 1;
-    for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
-        uint32_t w = width >> x265_cli_csps[colorSpace].width[i];
-        uint32_t h = height >> x265_cli_csps[colorSpace].height[i];
-        framesize += w * h * pixelbytes;
-    }
-
     for (uint32_t i = 0; i < QUEUE_SIZE; i++)
     {
-        buf[i] = new char[framesize];
+        buf[i] = X265_MALLOC(char, framesize);
         if (buf[i] == NULL)
         {
             x265_log(NULL, X265_LOG_ERROR, "yuv: buffer allocation failure, aborting\n");
@@ -140,9 +136,7 @@ YUVInput::YUVInput(InputFileInfo& info)
         ifs->seekg((uint64_t)framesize * info.skipFrames, ios::cur);
 #else
         for (int i = 0; i < info.skipFrames; i++)
-        {
             ifs->ignore(framesize);
-        }
 #endif
     }
 }
@@ -152,15 +146,13 @@ YUVInput::~YUVInput()
     if (ifs && ifs != &cin)
         delete ifs;
     for (int i = 0; i < QUEUE_SIZE; i++)
-    {
-        delete[] buf[i];
-    }
+        X265_FREE(buf[i]);
 }
 
 void YUVInput::release()
 {
     threadActive = false;
-    head.set(QUEUE_SIZE);
+    readCount.set(readCount.get()); // unblock read thread
     stop();
     delete this;
 }
@@ -168,7 +160,7 @@ void YUVInput::release()
 void YUVInput::startReader()
 {
 #if ENABLE_THREADING
-    if (ifs && threadActive)
+    if (threadActive)
         start();
 #endif
 }
@@ -182,43 +174,45 @@ void YUVInput::threadMain()
     }
 
     threadActive = false;
-    tail.set(QUEUE_SIZE);
+    writeCount.set(writeCount.get()); // unblock readPicture
 }
 
 bool YUVInput::populateFrameQueue()
 {
-    int curTail = tail.get();
-    int curHead = head.get();
+    if (!ifs || ifs->fail())
+        return false;
 
-    while ((curTail + 1) % QUEUE_SIZE == curHead)
+    /* wait for room in the ring buffer */
+    int written = writeCount.get();
+    int read = readCount.get();
+    while (written - read > QUEUE_SIZE - 2)
     {
-        curHead = head.waitForChange(curHead);
+        read = readCount.waitForChange(read);
         if (!threadActive)
+            // release() has been called
             return false;
     }
 
-    PPAStartCpuEventFunc(read_yuv);
-    ifs->read(buf[curTail], framesize);
-    frameStat[curTail] = !ifs->fail();
-    tail.set((curTail + 1) % QUEUE_SIZE);
-    PPAStopCpuEventFunc(read_yuv);
-
-    return !ifs->fail();
+    ifs->read(buf[written % QUEUE_SIZE], framesize);
+    if (ifs->good())
+    {
+        writeCount.incr();
+        return true;
+    }
+    else
+        return false;
 }
 
 bool YUVInput::readPicture(x265_picture& pic)
 {
-    int curHead = head.get();
-    int curTail = tail.get();
+    int read = readCount.get();
+    int written = writeCount.get();
 
 #if ENABLE_THREADING
 
-    while (curHead == curTail)
-    {
-        curTail = tail.waitForChange(curTail);
-        if (!threadActive)
-            break;
-    }
+    /* only wait if the read thread is still active */
+    while (threadActive && read == written)
+        written = writeCount.waitForChange(written);
 
 #else
 
@@ -226,20 +220,20 @@ bool YUVInput::readPicture(x265_picture& pic)
 
 #endif // if ENABLE_THREADING
 
-    if (!frameStat[curHead])
+    if (read < written)
+    {
+        uint32_t pixelbytes = depth > 8 ? 2 : 1;
+        pic.colorSpace = colorSpace;
+        pic.bitDepth = depth;
+        pic.stride[0] = width * pixelbytes;
+        pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
+        pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];
+        pic.planes[0] = buf[read % QUEUE_SIZE];
+        pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
+        pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
+        readCount.incr();
+        return true;
+    }
+    else
         return false;
-    frameStat[curHead] = false;
-
-    pic.colorSpace = colorSpace;
-    pic.bitDepth = depth;
-    pic.stride[0] = width * pixelbytes;
-    pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
-    pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];
-    pic.planes[0] = buf[curHead];
-    pic.planes[1] = (char*)pic.planes[0] + pic.stride[0] * height;
-    pic.planes[2] = (char*)pic.planes[1] + pic.stride[1] * (height >> x265_cli_csps[colorSpace].height[1]);
-
-    head.set((curHead + 1) % QUEUE_SIZE);
-
-    return true;
 }

@@ -45,6 +45,8 @@ protected:
 
     uint32_t sarHeight;
 
+    size_t framesize;
+
     int depth;
 
     int width;
@@ -53,19 +55,13 @@ protected:
 
     int colorSpace;
 
-    uint32_t plane_size[3];
-
-    uint32_t plane_stride[3];
-
     bool threadActive;
 
-    ThreadSafeInteger head;
+    ThreadSafeInteger readCount;
 
-    ThreadSafeInteger tail;
+    ThreadSafeInteger writeCount;
 
-    bool frameStat[QUEUE_SIZE];
-
-    char* plane[QUEUE_SIZE][3];
+    char* buf[QUEUE_SIZE];
 
     std::istream *ifs;
 
