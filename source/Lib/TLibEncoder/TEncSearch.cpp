@@ -2421,7 +2421,7 @@ void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMv
         outMvpIdx = bestMvpIdx;
         uint32_t origOutBits = outBits;
         outBits = origOutBits - mvBitsOrig + bestMvBits;
-        outCost = (outCost - m_rdCost->getCost(origOutBits))  + m_rdCost->getCost(outBits);
+        outCost = (outCost - m_rdCost->getCost(origOutBits)) + m_rdCost->getCost(outBits);
     }
 }
 
