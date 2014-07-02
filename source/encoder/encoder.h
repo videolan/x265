@@ -166,7 +166,7 @@ public:
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
-    static ThreadLocalData*   m_threadLocalData;
+    ThreadLocalData*   m_threadLocalData;
 
     bool               m_bEnableRDOQ;
 

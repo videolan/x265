@@ -121,15 +121,13 @@ void FrameFilter::start(Frame *pic)
     }
 }
 
-void FrameFilter::processRow(int row, const int threadId)
+void FrameFilter::processRow(int row, ThreadLocalData& tld)
 {
     PPAScopeEvent(Thread_filterCU);
-    assert(threadId >= 0);
-    ThreadLocalData& tld = Encoder::m_threadLocalData[threadId];
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
-        processRowPost(row, threadId);
+        processRowPost(row);
         return;
     }
 
@@ -177,7 +175,7 @@ void FrameFilter::processRow(int row, const int threadId)
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
         {
-            processSao(row - m_saoRowDelay, threadId);
+            processSao(row - m_saoRowDelay);
         }
     }
 
@@ -189,7 +187,7 @@ void FrameFilter::processRow(int row, const int threadId)
 
     if (row > 0)
     {
-        processRowPost(row - 1, threadId);
+        processRowPost(row - 1);
     }
 
     if (row == m_numRows - 1)
@@ -200,15 +198,15 @@ void FrameFilter::processRow(int row, const int threadId)
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
             {
-                processSao(i, threadId);
+                processSao(i);
             }
         }
 
-        processRowPost(row, threadId);
+        processRowPost(row);
     }
 }
 
-void FrameFilter::processRowPost(int row, const int /*threadId*/)
+void FrameFilter::processRowPost(int row)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
@@ -501,7 +499,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     return ssim;
 }
 
-void FrameFilter::processSao(int row, const int /*threadId*/)
+void FrameFilter::processSao(int row)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;

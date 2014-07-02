@@ -50,9 +50,9 @@ public:
 
     void start(Frame *pic);
 
-    void processRow(int row, const int threadId);
-    void processRowPost(int row, const int threadId);
-    void processSao(int row, const int threadId);
+    void processRow(int row, ThreadLocalData& tld);
+    void processRowPost(int row);
+    void processSao(int row);
 
 protected:
 

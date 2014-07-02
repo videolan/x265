@@ -69,61 +69,21 @@ public:
 
     void destroy();
 
-    void processRowEncoder(int row, const int threadId);
+    /* Called by WaveFront::findJob() */
+    void processRow(int row, const int threadId);
 
-    void processRowFilter(int row, const int threadId)
-    {
-        m_frameFilter.processRow(row, threadId);
-    }
+    void processRowEncoder(int row, ThreadLocalData& tld);
 
-    void enqueueRowEncoder(int row)
-    {
-        WaveFront::enqueueRow(row * 2 + 0);
-    }
+    void processRowFilter(int row, ThreadLocalData& tld) { m_frameFilter.processRow(row, tld); }
 
-    void enqueueRowFilter(int row)
-    {
-        WaveFront::enqueueRow(row * 2 + 1);
-    }
-
-    void enableRowEncoder(int row)
-    {
-        WaveFront::enableRow(row * 2 + 0);
-    }
-
-    void enableRowFilter(int row)
-    {
-        WaveFront::enableRow(row * 2 + 1);
-    }
-
-    void processRow(int row, int threadId)
-    {
-        const int realRow = row >> 1;
-        const int typeNum = row & 1;
-
-        // TODO: use switch when more type
-        if (typeNum == 0)
-        {
-            processRowEncoder(realRow, threadId);
-        }
-        else
-        {
-            processRowFilter(realRow, threadId);
-
-            // NOTE: Active next row
-            if (realRow != m_numRows - 1)
-                enqueueRowFilter(realRow + 1);
-            else
-                m_completionEvent.trigger();
-        }
-    }
+    void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
+    void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
+    void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
+    void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
     TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
-
     TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
-
     TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
-
     TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
 
     /* Frame singletons, last the life of the encoder */
@@ -139,9 +99,10 @@ public:
     /* called by compressFrame to perform wave-front compression analysis */
     void compressCTURows();
 
+    /* called by compressFrame to generate final per-row bitstreams */
     void encodeSlice(Bitstream* substreams);
 
-    /* blocks until worker thread is done, returns encoded picture and bitstream */
+    /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
 
     void setLambda(int qp, ThreadLocalData& tld);

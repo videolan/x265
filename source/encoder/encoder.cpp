@@ -42,7 +42,6 @@
 #include "x265.h"
 
 using namespace x265;
-ThreadLocalData* Encoder::m_threadLocalData;
 
 Encoder::Encoder()
 {

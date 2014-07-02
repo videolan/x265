@@ -507,9 +507,7 @@ void FrameEncoder::compressFrame()
 
             // Extend border after whole-frame SAO is finished
             for (int row = 0; row < m_numRows; row++)
-            {
-                m_frameFilter.processRowPost(row, 0);
-            }
+                m_frameFilter.processRowPost(row);
         }
 
         slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
@@ -831,8 +829,29 @@ void FrameEncoder::compressCTURows()
     m_totalTime = 0;
 }
 
+void FrameEncoder::processRow(int row, const int threadId)
+{
+    const int realRow = row >> 1;
+    const int typeNum = row & 1;
+
+    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
+
+    if (!typeNum)
+        processRowEncoder(realRow, tld);
+    else
+    {
+        processRowFilter(realRow, tld);
+
+        // NOTE: Active next row
+        if (realRow != m_numRows - 1)
+            enqueueRowFilter(realRow + 1);
+        else
+            m_completionEvent.trigger();
+    }
+}
+
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row, const int threadId)
+void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
@@ -860,7 +879,6 @@ void FrameEncoder::processRowEncoder(int row, const int threadId)
     }
 
     // setup thread-local data
-    ThreadLocalData& tld = threadId >= 0 ? Encoder::m_threadLocalData[threadId] : m_tld;
     tld.m_trQuant.m_nr = &m_nr;
     tld.m_search.m_mref = m_mref;
     codeRow.setThreadLocalData(tld);
