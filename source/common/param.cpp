@@ -1292,16 +1292,16 @@ char *x265_param2string(x265_param *p)
     return buf;
 }
 
-void parseLambdaFile(x265_param *param)
+bool parseLambdaFile(x265_param *param)
 {
     if (!param->rc.lambdaFileName)
-        return;
+        return false;
 
     FILE *lfn = fopen(param->rc.lambdaFileName, "r");
     if (!lfn)
     {
-        x265_log(param, X265_LOG_WARNING, "unable to read lambda file <%s>\n", param->rc.lambdaFileName);
-        return;
+        x265_log(param, X265_LOG_ERROR, "unable to read lambda file <%s>\n", param->rc.lambdaFileName);
+        return true;
     }
 
     char line[2048];
@@ -1322,10 +1322,15 @@ void parseLambdaFile(x265_param *param)
                     /* consume a line of text file */
                     if (!fgets(line, sizeof(line), lfn))
                     {
-                        if (t < 2)
-                            x265_log(param, X265_LOG_WARNING, "lambda file is incomplete\n");
                         fclose(lfn);
-                        return;
+
+                        if (t < 2)
+                        {
+                            x265_log(param, X265_LOG_ERROR, "lambda file is incomplete\n");
+                            return true;
+                        }
+                        else
+                            return false;
                     }
 
                     /* truncate at first hash */
@@ -1343,8 +1348,8 @@ void parseLambdaFile(x265_param *param)
 
             if (t == 2)
             {
-                x265_log(param, X265_LOG_WARNING, "lambda file contains too many values\n");
-                return;
+                x265_log(param, X265_LOG_ERROR, "lambda file contains too many values\n");
+                return true;
             }
             else
                 x265_log(param, X265_LOG_DEBUG, "lambda%c[%d] = %lf\n", t ? '2' : ' ', i, value);
@@ -1353,6 +1358,7 @@ void parseLambdaFile(x265_param *param)
     }
 
     fclose(lfn);
+    return false;
 }
 
 }

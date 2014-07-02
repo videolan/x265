@@ -143,7 +143,7 @@ void Encoder::create()
         }
     }
 
-    parseLambdaFile(m_param);
+    m_aborted |= parseLambdaFile(m_param);
 }
 
 void Encoder::destroy()
