@@ -1307,7 +1307,7 @@ void parseLambdaFile(x265_param *param)
     char line[2048];
     char *toksave, *tok = NULL, *buf;
 
-    for (int t = 0; t < 2; t++)
+    for (int t = 0; t < 3; t++)
     {
         double *table = t ? x265_lambda2_tab : x265_lambda_tab;
 
@@ -1322,7 +1322,8 @@ void parseLambdaFile(x265_param *param)
                     /* consume a line of text file */
                     if (!fgets(line, sizeof(line), lfn))
                     {
-                        x265_log(param, X265_LOG_WARNING, "lambda file is incomplete\n");
+                        if (t < 2)
+                            x265_log(param, X265_LOG_WARNING, "lambda file is incomplete\n");
                         fclose(lfn);
                         return;
                     }
@@ -1340,7 +1341,13 @@ void parseLambdaFile(x265_param *param)
             }
             while (1);
 
-            x265_log(param, X265_LOG_DEBUG, "lambda%c[%d] = %lf\n", t ? '2' : ' ', i, value);
+            if (t == 2)
+            {
+                x265_log(param, X265_LOG_WARNING, "lambda file contains too many values\n");
+                return;
+            }
+            else
+                x265_log(param, X265_LOG_DEBUG, "lambda%c[%d] = %lf\n", t ? '2' : ' ', i, value);
             table[i] = value;
         }
     }
