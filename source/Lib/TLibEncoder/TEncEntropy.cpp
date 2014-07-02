@@ -113,8 +113,8 @@ void TEncEntropy::xEncodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
     const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
-    uint32_t hChromaShift        = cu->getHorzChromaShift();
-    uint32_t vChromaShift        = cu->getVertChromaShift();
+    uint32_t hChromaShift = cu->getHorzChromaShift();
+    uint32_t vChromaShift = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
     uint32_t cbfU = cu->getCbf(absPartIdx, TEXT_CHROMA_U, trIdx);
     uint32_t cbfV = cu->getCbf(absPartIdx, TEXT_CHROMA_V, trIdx);
