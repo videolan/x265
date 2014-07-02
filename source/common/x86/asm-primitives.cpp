@@ -1061,6 +1061,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
         p.quant = x265_quant_sse4;
+        p.nquant = x265_nquant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
         p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
@@ -1257,6 +1258,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse4;
         p.calcresidual[BLOCK_32x32] = x265_getResidual32_sse4;
         p.quant = x265_quant_sse4;
+        p.nquant = x265_nquant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;

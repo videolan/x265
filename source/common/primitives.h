@@ -147,6 +147,7 @@ typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intp
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
 typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
+typedef uint32_t (*nquant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *scaledCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
 typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 typedef int  (*count_nonzero_t)(const int32_t *quantCoeff, int numCoeff);
@@ -242,6 +243,7 @@ struct EncoderPrimitives
     dct_t           dct[NUM_DCTS];
     idct_t          idct[NUM_IDCTS];
     quant_t         quant;
+    nquant_t        nquant;
     dequant_scaling_t dequant_scaling;
     dequant_normal_t dequant_normal;
     count_nonzero_t count_nonzero;

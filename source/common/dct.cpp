@@ -780,10 +780,8 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos++)
     {
-        int level;
-        int sign;
-        level = coef[blockpos];
-        sign  = (level < 0 ? -1 : 1);
+        int level = coef[blockpos];
+        int sign  = (level < 0 ? -1 : 1);
 
         int tmplevel = abs(level) * quantCoeff[blockpos];
         level = ((tmplevel + add) >> qBits);
@@ -796,6 +794,27 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
     }
 
     return acSum;
+}
+
+uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* scaledCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)
+{
+    uint32_t numSig = 0;
+
+    for (int blockpos = 0; blockpos < numCoeff; blockpos++)
+    {
+        int level = coef[blockpos];
+        int sign  = (level < 0 ? -1 : 1);
+
+        int tmplevel = abs(level) * quantCoeff[blockpos];
+        scaledCoeff[blockpos] = tmplevel;
+        level = ((tmplevel + add) >> qBits);
+        if (level)
+            ++numSig;
+        level *= sign;
+        qCoef[blockpos] = Clip3(-32768, 32767, level);
+    }
+
+    return numSig;
 }
 
 int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
@@ -822,6 +841,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dequant_scaling = dequant_scaling_c;
     p.dequant_normal = dequant_normal_c;
     p.quant = quant_c;
+    p.nquant = nquant_c;
     p.dct[DST_4x4] = dst4_c;
     p.dct[DCT_4x4] = dct4_c;
     p.dct[DCT_8x8] = dct8_c;

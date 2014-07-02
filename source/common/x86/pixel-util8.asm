@@ -879,7 +879,7 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
   %define qbits8    [rsp + 2 * mmsize]
 %endif
 
-    ; fill qbits-8
+    ; fill qbits
     movd        m0, r4d
     mova        qbits, m0
 
@@ -974,6 +974,81 @@ cglobal quant, 5,6,8, 0-(3*mmsize)
     phaddd      m7, m7
     phaddd      m7, m7
     movd        eax, m7
+
+    RET
+
+
+;-----------------------------------------------------------------------------
+; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *scaledCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal nquant, 5,6,8
+
+    ; fill qbits
+    movd        m5, r4d         ; m5 = qbits
+
+    ; fill offset
+    movd        m6, r5m
+    pshufd      m6, m6, 0       ; m6 = add
+
+    mov         r4d, r6m
+    shr         r4d, 3
+    pxor        m7, m7          ; m7 = numZero
+.loop:
+    ; 4 coeff
+    movu        m0, [r0]        ; m0 = level
+    pxor        m1, m1
+    pcmpgtd     m1, m0          ; m1 = sign
+    movu        m2, [r1]        ; m2 = qcoeff
+    pabsd       m0, m0
+    pmulld      m0, m2          ; m0 = tmpLevel1
+    movu        [r2], m0        ; m0 = scaledCoeff
+    paddd       m2, m0, m6
+    psrad       m2, m5          ; m2 = level1
+    pxor        m4, m4
+    pcmpeqd     m4, m2          ; m4 = mask4
+
+    pxor        m2, m1
+    psubd       m2, m1
+    packssdw    m2, m2
+    pmovsxwd    m2, m2
+    movu        [r3], m2
+    ; 4 coeff
+    movu        m0, [r0 + 16]   ; m0 = level
+    pxor        m1, m1
+    pcmpgtd     m1, m0          ; m1 = sign
+    movu        m2, [r1 + 16]   ; m2 = qcoeff
+    pabsd       m0, m0
+    pmulld      m0, m2          ; m0 = tmpLevel1
+    movu        [r2 + 16], m0   ; m0 = scaledCoeff
+    paddd       m2, m0, m6
+    psrad       m2, m5          ; m2 = level1
+    pxor        m0, m0
+    pcmpeqd     m0, m2          ; m0 = mask4
+
+    pxor        m2, m1
+    psubd       m2, m1
+    packssdw    m2, m2
+    pmovsxwd    m2, m2
+    movu        [r3 + 16], m2
+
+    packssdw    m4, m0          ; m4 = mask8
+    psubw       m7, m4          ; m7 = numZero
+
+    add         r0, 32
+    add         r1, 32
+    add         r2, 32
+    add         r3, 32
+
+    dec         r4d
+    jnz        .loop
+
+    packuswb    m7, m7
+    pxor        m0, m0
+    psadbw      m0, m7
+    mov         eax, r6m
+    movd        r4d, m0
+    sub         eax, r4d        ; numSig
 
     RET
 

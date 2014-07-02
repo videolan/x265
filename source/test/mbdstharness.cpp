@@ -327,6 +327,50 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
     return true;
 }
 
+bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
+{
+    int j = 0;
+
+    for (int i = 0; i <= ITERS; i++)
+    {
+        int width = (rand() % 4 + 1) * 4;
+
+        if (width == 12)
+        {
+            width = 32;
+        }
+        int height = width;
+
+        uint32_t optReturnValue = 0;
+        uint32_t refReturnValue = 0;
+
+        int bits = rand() % 32;
+        int valueToAdd = rand() % (32 * 1024);
+        int cmp_size = sizeof(int) * height * width;
+        int numCoeff = height * width;
+
+        int index1 = rand() % TEST_CASES;
+        int index2 = rand() % TEST_CASES;
+
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
+
+        if (memcmp(mintbuf3, mintbuf5, cmp_size))
+            return false;
+
+        if (memcmp(mintbuf4, mintbuf6, cmp_size))
+            return false;
+
+        if (optReturnValue != refReturnValue)
+            return false;
+
+        reportfail();
+        j += 16;
+    }
+
+    return true;
+}
+
 bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
 {
     ALIGN_VAR_32(int32_t, qcoeff[32 * 32]);
@@ -409,6 +453,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.nquant)
+    {
+        if (!check_nquant_primitive(ref.nquant, opt.nquant))
+        {
+            printf("nquant: Failed!\n");
+            return false;
+        }
+    }
+
     if (opt.count_nonzero)
     {
         if (!check_count_nonzero_primitive(ref.count_nonzero, opt.count_nonzero))
@@ -458,6 +511,12 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         printf("quant\t\t");
         int dummy = -1;
         REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32, &dummy);
+    }
+
+    if (opt.nquant)
+    {
+        printf("nquant\t\t");
+        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
     }
 
     if (opt.count_nonzero)

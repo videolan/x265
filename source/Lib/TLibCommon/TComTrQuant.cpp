@@ -508,23 +508,30 @@ void TComTrQuant::xITransformSkip(int32_t* coef, int16_t* residual, uint32_t str
 uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize,
                                         TextType ttype, uint32_t absPartIdx, int32_t *lastPos)
 {
-    x265_emms();
-    selectLambda(ttype);
-
     const uint32_t log2TrSize = g_convertToBit[trSize] + 2;
-    uint32_t absSum = 0;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-    uint32_t goRiceParam = 0;
-    double blockUncodedCost = 0;
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
     int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
     int add = (1 << (qbits - 1));
-    double *errScale = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
     int32_t *qCoef = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
 
+    int numCoeff = 1 << log2TrSize * 2;
+    int scaledCoeff[32 * 32];
+    uint32_t numSig = primitives.nquant(srcCoeff, qCoef, scaledCoeff, dstCoeff, qbits, add, numCoeff);
+
+    X265_CHECK(numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
+    if (numSig == 0)
+        return 0;
+
+    x265_emms();
+    selectLambda(ttype);
+
+    double *errScale = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
+
+    double blockUncodedCost = 0;
     double costCoeff[32 * 32];
     double costSig[32 * 32];
     double costCoeff0[32 * 32];
@@ -544,6 +551,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     int    c2            = 0;
     double baseCost      = 0;
     int    lastScanPos   = -1;
+    uint32_t goRiceParam = 0;
     uint32_t c1Idx       = 0;
     uint32_t c2Idx       = 0;
     int cgLastScanPos    = -1;
@@ -567,16 +575,13 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
             //===== quantization =====
             uint32_t blkPos = codingParameters.scan[scanPos];
             // set coeff
-            int Q = qCoef[blkPos];
             double scaleFactor = errScale[blkPos];
-            int levelDouble    = srcCoeff[blkPos];
-            levelDouble        = (int)std::min<int64_t>((int64_t)abs((int)levelDouble) * Q, MAX_INT - add);
 
-            uint32_t maxAbsLevel = (levelDouble + add) >> qbits;
+            int levelDouble      = scaledCoeff[blkPos];
+            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);
 
             costCoeff0[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
             blockUncodedCost   += costCoeff0[scanPos];
-            dstCoeff[blkPos]    = maxAbsLevel;
 
             if (maxAbsLevel > 0 && lastScanPos < 0)
             {
@@ -776,7 +781,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     //===== estimate last position =====
     if (lastScanPos < 0)
     {
-        return absSum;
+        return 0;
     }
 
     double bestCost = 0;
@@ -840,6 +845,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
         } // end if (sigCoeffGroupFlag[ cgBlkPos ])
     } // end for
 
+    uint32_t absSum = 0;
     for (int pos = 0; pos < bestLastIdxp1; pos++)
     {
         int blkPos = codingParameters.scan[pos];
