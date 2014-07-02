@@ -529,6 +529,13 @@ void FrameEncoder::compressFrame()
     entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
     entropyCoder->resetEntropy();
     entropyCoder->setBitstream(&m_bs);
+
+    if (slice->getSPS()->getUseSAO())
+    {
+        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
+        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
+    }
     entropyCoder->encodeSliceHeader(slice);
 
     // re-encode each row of CUs for the final time (TODO: get rid of this second pass)

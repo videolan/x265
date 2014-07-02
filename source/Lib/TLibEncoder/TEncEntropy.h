@@ -87,7 +87,7 @@ public:
     void determineCabacInitIdx()        { m_entropyCoder->determineCabacInitIdx(); }
     uint32_t getNumberOfWrittenBits()   { return m_entropyCoder->getNumberOfWrittenBits(); }
 
-    void encodeSliceHeader(TComSlice* slice);
+    void encodeSliceHeader(TComSlice* slice)         { m_entropyCoder->codeSliceHeader(slice); }
     void encodeTilesWPPEntryPoint(TComSlice* slice)  { m_entropyCoder->codeTilesWPPEntryPoint(slice); }
     void encodeTerminatingBit(uint32_t isLast)       { m_entropyCoder->codeTerminatingBit(isLast); }
     void encodeSliceFinish()                         { m_entropyCoder->codeSliceFinish(); }

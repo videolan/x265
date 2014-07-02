@@ -44,18 +44,6 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-void TEncEntropy::encodeSliceHeader(TComSlice* slice)
-{
-    if (slice->getSPS()->getUseSAO())
-    {
-        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
-        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
-    }
-
-    m_entropyCoder->codeSliceHeader(slice);
-}
-
 void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (cu->getSlice()->isIntra())
