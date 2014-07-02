@@ -351,10 +351,10 @@ void TEncCu::compressCU(TComDataCU* cu)
                 else
                 {
                     m_log->cntIntra[part]++;
-                    if (cu->getLumaIntraDir()[i] > 1)
+                    if (cu->getLumaIntraDir(i) > 1)
                         m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
                     else
-                        m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[i]]++;
+                        m_log->cuIntraDistribution[part][cu->getLumaIntraDir(i)]++;
                 }
                 i += next;
             }
@@ -408,10 +408,10 @@ void TEncCu::compressCU(TComDataCU* cu)
                         else
                         {
                             m_log->cntIntra[part]++;
-                            if (cu->getLumaIntraDir()[0] > 1)
+                            if (cu->getLumaIntraDir(0) > 1)
                                 m_log->cuIntraDistribution[part][ANGULAR_MODE_ID]++;
                             else
-                                m_log->cuIntraDistribution[part][cu->getLumaIntraDir()[0]]++;
+                                m_log->cuIntraDistribution[part][cu->getLumaIntraDir(0)]++;
                         }
                     }
                 }
