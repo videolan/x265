@@ -59,7 +59,8 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     {
         m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
     }
-    m_entropyCoder->encodeSkipFlag(cu, 0);
+    if (!cu->getSlice()->isIntra())
+        m_entropyCoder->encodeSkipFlag(cu, 0);
     m_entropyCoder->encodePredMode(cu, 0);
     m_entropyCoder->encodePartSize(cu, 0, depth);
     m_entropyCoder->encodePredInfo(cu, 0);

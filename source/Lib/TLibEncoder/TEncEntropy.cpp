@@ -44,15 +44,6 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-void TEncEntropy::encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
-{
-    if (cu->getSlice()->isIntra())
-    {
-        return;
-    }
-    m_entropyCoder->codeSkipFlag(cu, absPartIdx);
-}
-
 void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (cu->getSlice()->isIntra())
