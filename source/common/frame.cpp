@@ -109,8 +109,17 @@ bool Frame::allocPicSym(x265_param *param)
     if (m_picSym && m_reconPicYuv)
     {
         m_picSym->m_reconPicYuv = m_reconPicYuv;
-        return m_picSym->create(param) &&
-          m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxCUDepth);
+        bool ok = m_picSym->create(param) &&
+             m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxCUDepth);
+        if (ok)
+        {
+            // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels
+            int maxHeight = m_reconPicYuv->m_numCuInHeight * g_maxCUSize;
+            memset(m_reconPicYuv->m_picOrg[0], 0, m_reconPicYuv->m_stride * maxHeight);
+            memset(m_reconPicYuv->m_picOrg[1], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
+            memset(m_reconPicYuv->m_picOrg[2], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
+        }
+        return ok;
     }
     else
         return false;
