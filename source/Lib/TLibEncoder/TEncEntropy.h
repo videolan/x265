@@ -101,6 +101,7 @@ public:
     void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)              { m_entropyCoder->codeMergeFlag(cu, absPartIdx); }
     void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)             { m_entropyCoder->codeMergeIndex(cu, absPartIdx); }
     void encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)        { m_entropyCoder->codeMvd(cu, absPartIdx, list); }
+    void encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)     { m_entropyCoder->codeMVPIdx(cu->getMVPIdx(list, absPartIdx)); }
     void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx)     { m_entropyCoder->codeIntraDirChroma(cu, absPartIdx); }
     void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)          { m_entropyCoder->codeTransformSubdivFlag(symbol, ctx); }
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)              { m_entropyCoder->codeQtRootCbf(cu, absPartIdx); }
@@ -111,7 +112,6 @@ public:
 
     void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) { m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth); }
     void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)  { m_entropyCoder->codePartSize(cu, absPartIdx, depth); }
-    void encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)        { m_entropyCoder->codeMVPIdx(cu->getMVPIdx(list, absPartIdx)); }
 
     void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false)
     {
