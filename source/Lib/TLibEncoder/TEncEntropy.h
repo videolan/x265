@@ -132,7 +132,6 @@ public:
     }
 
     void encodePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeInterDirPU(TComDataCU* subCU, uint32_t absPartIdx);
     void encodeRefFrmIdxPU(TComDataCU* subCU, uint32_t absPartIdx, int eRefList);
     void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
 

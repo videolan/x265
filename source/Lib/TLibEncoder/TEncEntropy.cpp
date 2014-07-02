@@ -44,16 +44,6 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-void TEncEntropy::encodeInterDirPU(TComDataCU* cu, uint32_t absPartIdx)
-{
-    if (!cu->getSlice()->isInterB())
-    {
-        return;
-    }
-
-    m_entropyCoder->codeInterDir(cu, absPartIdx);
-}
-
 bool TEncEntropy::isNextTUSection(TComTURecurse *tuIterator)
 {
     if (tuIterator->m_splitMode == DONT_SPLIT)
@@ -331,7 +321,8 @@ void TEncEntropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
         else
         {
             uint32_t interDir = cu->getInterDir(subPartIdx);
-            encodeInterDirPU(cu, subPartIdx);
+            if (cu->getSlice()->isInterB())
+                m_entropyCoder->codeInterDir(cu, subPartIdx);
             for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
             {
                 if (interDir & (1 << refListIdx))
