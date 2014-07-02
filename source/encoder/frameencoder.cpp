@@ -950,7 +950,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         if (m_param->rc.bStatWrite)
         {
             double scale = pow(2, g_maxCUSize / 16);
-            for (int part = 0; part < g_maxCUDepth ; part++, scale /= 4)
+            for (uint32_t part = 0; part < g_maxCUDepth ; part++, scale /= 4)
             {
                 curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[part];
                 curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[part];

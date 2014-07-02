@@ -59,7 +59,7 @@ struct RateControlEntry
     int mvBits;
     int bframes;
     int poc;
-    uint64_t encodeOrder;
+    int encodeOrder;
     int64_t leadingNoBSatd;
     bool bLastMiniGopBFrame;
     double blurredComplexity;
