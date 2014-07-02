@@ -766,6 +766,14 @@ typedef struct x265_param
 
         /* temporally blur complexity */
         double    complexityBlur;
+
+        /* specify a text file which contains MAX_MAX_QP + 1 floating point
+         * values to be copied into x265_lambda_tab and a second set of
+         * MAX_MAX_QP + 1 floating point values for x265_lambda2_tab. All values
+         * are separated by comma, space or newline. Text after a hash (#) is
+         * ignored. The lambda tables are process-global, so these new lambda
+         * values will affect all encoders in the same process */
+        const char* lambdaFileName;
     } rc;
 
     /*== Video Usability Information ==*/

@@ -185,6 +185,7 @@ static const struct option long_options[] =
     { "aud",                  no_argument, NULL, 0 },
     { "no-aud",               no_argument, NULL, 0 },
     { "qpfile",         required_argument, NULL, 0 },
+    { "lambda-file",    required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },
     { "nr",             required_argument, NULL, 0 },
@@ -336,6 +337,10 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 Format of each line: framenumber frametype QP\n");
     H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
     H0("                                 QPs are restricted by qpmin/qpmax.\n");
+    H0("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
+    H0("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
+    H0("                                 Blank lines and lines starting with hash(#) are ignored\n");
+    H0("                                 Comma is considered to be white-space\n");
     H0("\nPresets:\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");

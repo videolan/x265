@@ -270,8 +270,8 @@ extern const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 
-extern const double x265_lambda_tab[MAX_MAX_QP + 1];
-extern const double x265_lambda2_tab[MAX_MAX_QP + 1];
+extern double x265_lambda_tab[MAX_MAX_QP + 1];
+extern double x265_lambda2_tab[MAX_MAX_QP + 1];
 extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1];
 
 // CABAC tables

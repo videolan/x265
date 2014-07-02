@@ -31,6 +31,7 @@
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks
 #pragma warning(disable: 4706) // assignment within conditional
+#pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
 #if _WIN32
@@ -103,6 +104,7 @@ void x265_param_default(x265_param *param)
     param->frameNumThreads = 0;
     param->poolNumThreads = 0;
     param->csvfn = NULL;
+    param->rc.lambdaFileName = NULL;
     param->bLogCuStats = 0;
 
     /* Source specifications */
@@ -541,6 +543,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         }
     }
     OPT("csv") p->csvfn = value;
+    OPT("lambda-file") p->rc.lambdaFileName = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
     OPT2("level-idc", "level")
@@ -1288,4 +1291,61 @@ char *x265_param2string(x265_param *p)
 #undef BOOL
     return buf;
 }
+
+void parseLambdaFile(x265_param *param)
+{
+    if (!param->rc.lambdaFileName)
+        return;
+
+    FILE *lfn = fopen(param->rc.lambdaFileName, "r");
+    if (!lfn)
+    {
+        x265_log(param, X265_LOG_WARNING, "unable to read lambda file <%s>\n", param->rc.lambdaFileName);
+        return;
+    }
+
+    char line[2048];
+    char *toksave, *tok = NULL, *buf;
+
+    for (int t = 0; t < 2; t++)
+    {
+        double *table = t ? x265_lambda2_tab : x265_lambda_tab;
+
+        for (int i = 0; i < MAX_MAX_QP + 1; i++)
+        {
+            double value;
+
+            do
+            {
+                if (!tok)
+                {
+                    /* consume a line of text file */
+                    if (!fgets(line, sizeof(line), lfn))
+                    {
+                        x265_log(param, X265_LOG_WARNING, "lambda file is incomplete\n");
+                        fclose(lfn);
+                        return;
+                    }
+
+                    /* truncate at first hash */
+                    char *hash = strchr(line, '#');
+                    if (hash) *hash = 0;
+                    buf = line;
+                }
+
+                tok = strtok_r(buf, " ,", &toksave);
+                buf = NULL;
+                if (tok && sscanf(tok, "%lf", &value) == 1)
+                    break;
+            }
+            while (1);
+
+            x265_log(param, X265_LOG_DEBUG, "lambda%c[%d] = %lf\n", t ? '2' : ' ', i, value);
+            table[i] = value;
+        }
+    }
+
+    fclose(lfn);
+}
+
 }

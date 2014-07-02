@@ -274,6 +274,26 @@ Input Options
 	Specifying QP (integer) is optional, and if specified they are
 	clamped within the encoder to qpmin/qpmax.
 
+.. option:: --lambda-file <filename>
+
+	Specify a text file containing values for x265_lambda_tab and
+	x265_lambda2_tab. Each table requires MAX_MAX_QP+1 (70) float
+	values.
+	
+	The text file syntax is simple. Comma is considered to be
+	white-space. All white-space is ignored. Lines must be less than 2k
+	bytes in length. Content following hash (#) characters are ignored.
+	The values read from the file are logged at :option:`--log-level`
+	debug.
+
+	Note that the lambda tables are process-global and so the new values
+	affect all encoders running in the same process. 
+	
+	Lambda values affect encoder mode decisions, the lower the lambda
+	the more bits it will try to spend on signaling information (motion
+	vectors and splits) and less on residual. This feature is intended
+	for experimentation.
+
 Quad-Tree analysis
 ==================
 
