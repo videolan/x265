@@ -4041,8 +4041,10 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
             m_entropyCoder->encodeCUTransquantBypassFlag(cu, 0);
         }
         if (!cu->getSlice()->isIntra())
+        {
             m_entropyCoder->encodeSkipFlag(cu, 0);
-        m_entropyCoder->encodePredMode(cu, 0);
+            m_entropyCoder->encodePredMode(cu, 0);
+        }
         m_entropyCoder->encodePartSize(cu, 0, cu->getDepth(0));
         m_entropyCoder->encodePredInfo(cu, 0);
         bool bDummy = false;

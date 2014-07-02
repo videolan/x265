@@ -109,6 +109,7 @@ public:
     void encodeQP(TComDataCU* cu, uint32_t absPartIdx)                     { m_entropyCoder->codeDeltaQP(cu, absPartIdx); }
     void encodeScalingList(TComScalingList* scalingList)                   { m_entropyCoder->codeScalingList(scalingList); }
     void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)               { m_entropyCoder->codeSkipFlag(cu, absPartIdx); }
+    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx)               { m_entropyCoder->codePredMode(cu, absPartIdx); }
 
     void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) { m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth); }
     void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)  { m_entropyCoder->codePartSize(cu, absPartIdx, depth); }
@@ -133,7 +134,6 @@ public:
     void encodePUWise(TComDataCU* cu, uint32_t absPartIdx);
     void encodeInterDirPU(TComDataCU* subCU, uint32_t absPartIdx);
     void encodeRefFrmIdxPU(TComDataCU* subCU, uint32_t absPartIdx, int eRefList);
-    void encodePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
 
     void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);

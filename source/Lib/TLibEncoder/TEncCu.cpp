@@ -1162,7 +1162,9 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         finishCU(cu, absPartIdx, depth);
         return;
     }
-    m_entropyCoder->encodePredMode(cu, absPartIdx);
+
+    if (!slice->isIntra())
+        m_entropyCoder->encodePredMode(cu, absPartIdx);
 
     m_entropyCoder->encodePartSize(cu, absPartIdx, depth);
 
@@ -1345,8 +1347,10 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
         m_entropyCoder->encodeCUTransquantBypassFlag(outTempCU, 0);
     }
     if (!outTempCU->getSlice()->isIntra())
+    {
         m_entropyCoder->encodeSkipFlag(outTempCU, 0);
-    m_entropyCoder->encodePredMode(outTempCU, 0);
+        m_entropyCoder->encodePredMode(outTempCU, 0);
+    }
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
     outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
@@ -1394,8 +1398,10 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
         m_entropyCoder->encodeCUTransquantBypassFlag(outTempCU, 0);
     }
     if (!outTempCU->getSlice()->isIntra())
+    {
         m_entropyCoder->encodeSkipFlag(outTempCU, 0);
-    m_entropyCoder->encodePredMode(outTempCU, 0);
+        m_entropyCoder->encodePredMode(outTempCU, 0);
+    }
     m_entropyCoder->encodePartSize(outTempCU, 0, depth);
     m_entropyCoder->encodePredInfo(outTempCU, 0);
     outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();

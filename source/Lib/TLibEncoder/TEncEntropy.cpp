@@ -44,16 +44,6 @@ using namespace x265;
 //! \ingroup TLibEncoder
 //! \{
 
-void TEncEntropy::encodePredMode(TComDataCU* cu, uint32_t absPartIdx)
-{
-    if (cu->getSlice()->isIntra())
-    {
-        return;
-    }
-
-    m_entropyCoder->codePredMode(cu, absPartIdx);
-}
-
 void TEncEntropy::encodeInterDirPU(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (!cu->getSlice()->isInterB())
