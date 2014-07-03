@@ -949,7 +949,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
-            double scale = pow((double)2, g_maxCUSize / 16);
+            double scale = (double)(1 << (g_maxCUSize / 16));
             for (uint32_t part = 0; part < g_maxCUDepth ; part++, scale /= 4)
             {
                 curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[part];
