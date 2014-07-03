@@ -1299,7 +1299,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                 {
                     uint8_t sliceType = (uint8_t)rce->sliceType;
                     for (int i = 0; i < m_ncu; i++)
-                         m_cuTreeStats.qpBuffer[0][i] = ((uint16_t)pic->m_lowres.qpCuTreeOffset[i]) * 256.0;
+                         m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(pic->m_lowres.qpCuTreeOffset[i] * 256.0);
                     if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
                         goto writeFailure;
                     if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
