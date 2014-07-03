@@ -1349,6 +1349,7 @@ bool parseLambdaFile(x265_param *param)
             if (t == 2)
             {
                 x265_log(param, X265_LOG_ERROR, "lambda file contains too many values\n");
+                fclose(lfn);
                 return true;
             }
             else
