@@ -110,7 +110,7 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     info.depth = depth;
     info.frameCount = -1;
 
-    int estFrameSize = framesize + strlen(header) + 1; /* assume basic FRAME\n headers */
+    size_t estFrameSize = framesize + strlen(header) + 1; /* assume basic FRAME\n headers */
 
     /* try to estimate frame count, if this is not stdin */
     if (ifs != &cin)
