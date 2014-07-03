@@ -1305,7 +1305,7 @@ bool parseLambdaFile(x265_param *param)
     }
 
     char line[2048];
-    char *toksave, *tok = NULL, *buf;
+    char *toksave = NULL, *tok = NULL, *buf;
 
     for (int t = 0; t < 3; t++)
     {
