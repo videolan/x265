@@ -84,7 +84,7 @@ public:
     void destroy();
 
     /* Called by WaveFront::findJob() */
-    void processRow(int row, const int threadId);
+    void processRow(int row, int threadId);
 
     void processRowEncoder(int row, ThreadLocalData& tld);
 

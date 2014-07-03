@@ -840,7 +840,7 @@ void FrameEncoder::compressCTURows()
     m_totalTime = 0;
 }
 
-void FrameEncoder::processRow(int row, const int threadId)
+void FrameEncoder::processRow(int row, int threadId)
 {
     const int realRow = row >> 1;
     const int typeNum = row & 1;
