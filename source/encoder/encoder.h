@@ -73,6 +73,7 @@ private:
 
     bool               m_aborted;          // fatal error detected
     int                m_pocLast;          ///< time index (POC)
+    int                m_encodedFrameNum;
     int                m_outputCount;
 
     int                m_bframeDelay;
@@ -142,7 +143,6 @@ public:
     int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
 
     //====== Tool list ========
-    int64_t            m_encodedFrameNum;
     int                m_lastBPSEI;
 
     uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region

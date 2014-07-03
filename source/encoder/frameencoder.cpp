@@ -324,7 +324,7 @@ void FrameEncoder::compressFrame()
     int64_t      startCompressTime = x265_mdate();
     TEncEntropy* entropyCoder      = getEntropyCoder(0);
     TComSlice*   slice             = m_frame->getSlice();
-    int          totalCoded        = (int)m_top->m_encodedFrameNum - 1;
+    int          totalCoded        = m_rce.encodeOrder;
 
     entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
 
