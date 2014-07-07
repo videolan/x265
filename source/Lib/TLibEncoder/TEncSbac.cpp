@@ -2046,7 +2046,7 @@ void TEncSbac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx,
     DTRACE_CABAC_T("\n")
 #endif // if ENC_DEC_TRACE
 
-    X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
+    X265_CHECK(log2TrSize <= m_slice->getSPS()->getQuadtreeTULog2MaxSize(), "transform size out of range\n");
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));

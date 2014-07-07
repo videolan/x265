@@ -118,8 +118,6 @@
 #define LOG2_MAX_COLUMN_WIDTH       13
 #define LOG2_MAX_ROW_HEIGHT         13
 
-#define REG_DCT                     65535
-
 #define CABAC_INIT_PRESENT_FLAG     1
 
 #define MAX_GOP                     64          ///< max. value of hierarchical GOP size
