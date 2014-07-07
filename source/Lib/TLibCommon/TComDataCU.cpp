@@ -350,7 +350,6 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
     memset(m_transformSkip[1],   0,             m_numPartitions * sizeof(*m_transformSkip[1]));
     memset(m_transformSkip[2],   0,             m_numPartitions * sizeof(*m_transformSkip[2]));
     memset(m_cuSize,             g_maxCUSize,   m_numPartitions * sizeof(*m_cuSize));
-    memcpy(m_qp,                 qp,            m_numPartitions * sizeof(*m_qp));
     memset(m_bMergeFlags,        false,         m_numPartitions * sizeof(*m_bMergeFlags));
     memset(m_lumaIntraDir,       DC_IDX,        m_numPartitions * sizeof(*m_lumaIntraDir));
     memset(m_chromaIntraDir,     0,             m_numPartitions * sizeof(*m_chromaIntraDir));
@@ -358,6 +357,8 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
     memset(m_cbf[0],             0,             m_numPartitions * sizeof(*m_cbf[0]));
     memset(m_cbf[1],             0,             m_numPartitions * sizeof(*m_cbf[1]));
     memset(m_cbf[2],             0,             m_numPartitions * sizeof(*m_cbf[2]));
+    if (qp != m_qp)
+        memcpy(m_qp,             qp,            m_numPartitions * sizeof(*m_qp));
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
