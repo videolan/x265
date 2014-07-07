@@ -75,8 +75,8 @@ struct RateControlEntry
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
     bool isActive;
 
-    SEIPictureTiming picTimingSEI;
-    HRDTiming        hrdTiming;
+    SEIPictureTiming *picTimingSEI;
+    HRDTiming        *hrdTiming;
 };
 
 class RateControl

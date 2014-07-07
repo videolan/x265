@@ -74,6 +74,12 @@ void FrameEncoder::destroy()
         delete[] m_rows;
     }
 
+    if (m_param->bEmitHRDSEI)
+    {
+        delete m_rce.picTimingSEI;
+        delete m_rce.hrdTiming;
+    }
+
     delete[] m_outStreams;
     m_frameFilter.destroy();
 
@@ -95,8 +101,12 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 
     m_rows = new CTURow[m_numRows];
     for (int i = 0; i < m_numRows; ++i)
-    {
         ok &= m_rows[i].create();
+
+    if (m_param->bEmitHRDSEI)
+    {
+        m_rce.picTimingSEI = new SEIPictureTiming;
+        m_rce.hrdTiming = new HRDTiming;
     }
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -391,7 +401,7 @@ void FrameEncoder::compressFrame()
 
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
-        SEIPictureTiming *sei = &m_rce.picTimingSEI;
+        SEIPictureTiming *sei = m_rce.picTimingSEI;
         TComVUI *vui = slice->getSPS()->getVuiParameters();
         TComHRD *hrd = vui->getHrdParameters();
         int poc = slice->getPOC();

@@ -43,6 +43,8 @@ public:
      * second time for the real encode. */
     virtual void write(Bitstream& bs, TComSPS& sps);
 
+    virtual ~SEI() {}
+
 protected:
 
     enum PayloadType
