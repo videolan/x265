@@ -338,71 +338,44 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
         m_count[i] = 0;
     }
 
-    // CHECK_ME: why partStartIdx always negative
-    int numElements = m_numPartitions;
-    X265_CHECK(numElements > 0, "unexpected partition count\n");
+    X265_CHECK(m_numPartitions > 0, "unexpected partition count\n");
 
+    memset(m_skipFlag,           false,         m_numPartitions * sizeof(*m_skipFlag));
+    memset(m_predModes,          MODE_NONE,     m_numPartitions * sizeof(*m_predModes));
+    memset(m_partSizes,          SIZE_NONE,     m_numPartitions * sizeof(*m_partSizes));
+    memset(m_cuTransquantBypass, false,         m_numPartitions * sizeof(*m_cuTransquantBypass));
+    memset(m_depth,              0,             m_numPartitions * sizeof(*m_depth));
+    memset(m_trIdx,              0,             m_numPartitions * sizeof(*m_trIdx));
+    memset(m_transformSkip[0],   0,             m_numPartitions * sizeof(*m_transformSkip[0]));
+    memset(m_transformSkip[1],   0,             m_numPartitions * sizeof(*m_transformSkip[1]));
+    memset(m_transformSkip[2],   0,             m_numPartitions * sizeof(*m_transformSkip[2]));
+    memset(m_cuSize,             g_maxCUSize,   m_numPartitions * sizeof(*m_cuSize));
+    memcpy(m_qp,                 qp,            m_numPartitions * sizeof(*m_qp));
+    memset(m_bMergeFlags,        false,         m_numPartitions * sizeof(*m_bMergeFlags));
+    memset(m_lumaIntraDir,       DC_IDX,        m_numPartitions * sizeof(*m_lumaIntraDir));
+    memset(m_chromaIntraDir,     0,             m_numPartitions * sizeof(*m_chromaIntraDir));
+    memset(m_interDir,           0,             m_numPartitions * sizeof(*m_interDir));
+    memset(m_cbf[0],             0,             m_numPartitions * sizeof(*m_cbf[0]));
+    memset(m_cbf[1],             0,             m_numPartitions * sizeof(*m_cbf[1]));
+    memset(m_cbf[2],             0,             m_numPartitions * sizeof(*m_cbf[2]));
+
+    m_cuMvField[0].clearMvField();
+    m_cuMvField[1].clearMvField();
+
+    if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
     {
-        memset(m_skipFlag,           false,         numElements * sizeof(*m_skipFlag));
-        memset(m_predModes,          MODE_NONE,     numElements * sizeof(*m_predModes));
-        memset(m_partSizes,          SIZE_NONE,     numElements * sizeof(*m_partSizes));
-        memset(m_cuTransquantBypass, false,         numElements * sizeof(*m_cuTransquantBypass));
-        memset(m_depth,              0,             numElements * sizeof(*m_depth));
-        memset(m_trIdx,              0,             numElements * sizeof(*m_trIdx));
-        memset(m_transformSkip[0],   0,             numElements * sizeof(*m_transformSkip[0]));
-        memset(m_transformSkip[1],   0,             numElements * sizeof(*m_transformSkip[1]));
-        memset(m_transformSkip[2],   0,             numElements * sizeof(*m_transformSkip[2]));
-        memset(m_cuSize,             g_maxCUSize,   numElements * sizeof(*m_cuSize));
-        memcpy(m_qp,                 qp,            numElements * sizeof(*m_qp));
-        memset(m_bMergeFlags,        false,         numElements * sizeof(*m_bMergeFlags));
-        memset(m_lumaIntraDir,       DC_IDX,        numElements * sizeof(*m_lumaIntraDir));
-        memset(m_chromaIntraDir,     0,             numElements * sizeof(*m_chromaIntraDir));
-        memset(m_interDir,           0,             numElements * sizeof(*m_interDir));
-        memset(m_cbf[0],             0,             numElements * sizeof(*m_cbf[0]));
-        memset(m_cbf[1],             0,             numElements * sizeof(*m_cbf[1]));
-        memset(m_cbf[2],             0,             numElements * sizeof(*m_cbf[2]));
+        uint32_t y_tmp = g_maxCUSize * g_maxCUSize;
+        uint32_t c_tmp = g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift);
+        memset(m_tqBypassOrigYuv[0], 0, sizeof(pixel) * y_tmp);
+        memset(m_tqBypassOrigYuv[1], 0, sizeof(pixel) * c_tmp);
+        memset(m_tqBypassOrigYuv[2], 0, sizeof(pixel) * c_tmp);
     }
 
-    {
-        m_cuMvField[0].clearMvField();
-        m_cuMvField[1].clearMvField();
-
-        if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
-        {
-            uint32_t y_tmp = g_maxCUSize * g_maxCUSize;
-            uint32_t c_tmp = g_maxCUSize * g_maxCUSize >> (m_hChromaShift + m_vChromaShift);
-            memset(m_tqBypassOrigYuv[0], 0, sizeof(pixel) * y_tmp);
-            memset(m_tqBypassOrigYuv[1], 0, sizeof(pixel) * c_tmp);
-            memset(m_tqBypassOrigYuv[2], 0, sizeof(pixel) * c_tmp);
-        }
-    }
-
-    // Setting neighbor CU
-    m_cuLeft        = NULL;
-    m_cuAbove       = NULL;
-    m_cuAboveLeft   = NULL;
-    m_cuAboveRight  = NULL;
-
-    uint32_t uiWidthInCU = pic->getFrameWidthInCU();
-    if (m_cuAddr % uiWidthInCU)
-    {
-        m_cuLeft = pic->getCU(m_cuAddr - 1);
-    }
-
-    if (m_cuAddr / uiWidthInCU)
-    {
-        m_cuAbove = pic->getCU(m_cuAddr - uiWidthInCU);
-    }
-
-    if (m_cuLeft && m_cuAbove)
-    {
-        m_cuAboveLeft = pic->getCU(m_cuAddr - uiWidthInCU - 1);
-    }
-
-    if (m_cuAbove && ((m_cuAddr % uiWidthInCU) < (uiWidthInCU - 1)))
-    {
-        m_cuAboveRight = pic->getCU(m_cuAddr - uiWidthInCU + 1);
-    }
+    uint32_t widthInCU = pic->getFrameWidthInCU();
+    m_cuLeft = (m_cuAddr % widthInCU) ? pic->getCU(m_cuAddr - 1) : NULL;
+    m_cuAbove = (m_cuAddr / widthInCU) ? pic->getCU(m_cuAddr - widthInCU) : NULL;
+    m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? pic->getCU(m_cuAddr - widthInCU - 1) : NULL;
+    m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? pic->getCU(m_cuAddr - widthInCU + 1) : NULL;
 }
 
 // initialize prediction data
