@@ -1049,13 +1049,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         // NOTE: do CU level Filter
+        if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
         {
             // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-            if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
-            {
-                // TODO: seems dead code, DEBUG IT!
-                m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
-            }
+            m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
         }
 
         // NOTE: active next row
