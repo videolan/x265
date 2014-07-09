@@ -60,7 +60,7 @@ const uint8_t g_nextState[128][2] =
     { 122, 74 }, { 75, 123 }, { 124, 76 }, { 77, 125 }, { 124, 76 }, { 77, 125 }, { 126, 126 }, { 127, 127 }
 };
 
-bool Entropy::isNextTUSection(TURecurse *tuIterator)
+bool SBac::isNextTUSection(TURecurse *tuIterator) // TODO: TURecurse method
 {
     if (tuIterator->m_splitMode == DONT_SPLIT)
     {
@@ -76,7 +76,7 @@ bool Entropy::isNextTUSection(TURecurse *tuIterator)
     }
 }
 
-void Entropy::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU)
+void SBac::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU) // TODO: TURecurse method
 {
     tuIterator->m_section           = 0;
     tuIterator->m_absPartIdxTURelCU = absPartIdxTU;
@@ -84,7 +84,7 @@ void Entropy::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, ui
     tuIterator->m_absPartIdxStep    = absPartIdxStep >> partIdxStepShift[splitMode];
 }
 
-void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
+void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
@@ -143,7 +143,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     else
     {
         X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
-        m_entropyCoder->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
+        codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
     const uint32_t trDepthCurr = depth - cu->getDepth(absPartIdx);
@@ -157,9 +157,9 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     if (bFirstCbfOfCU || mCodeAll)
     {
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1))
-            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
+            codeQtCbf(cu, absPartIdx, TEXT_CHROMA_U, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1))
-            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
+            codeQtCbf(cu, absPartIdx, TEXT_CHROMA_V, trDepthCurr, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), (subdiv == 0));
     }
     else
     {
@@ -211,7 +211,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         }
         else
         {
-            m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx));
+            codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx));
         }
 
         if (cbfY || cbfU || cbfV)
@@ -221,13 +221,13 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
             {
                 if (bCodeDQP)
                 {
-                    encodeQP(cu, state.bakAbsPartIdxCU);
+                    codeDeltaQP(cu, state.bakAbsPartIdxCU);
                     bCodeDQP = false;
                 }
             }
         }
         if (cbfY)
-            m_entropyCoder->codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, log2TrSize, TEXT_LUMA);
+            codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, log2TrSize, TEXT_LUMA);
 
         int chFmt = cu->getChromaFormat();
         if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
@@ -251,7 +251,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
                         if (cbf)
                         {
                             uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
-                            m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + state.bakChromaOffset + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                            codeCoeffNxN(cu, (coeffChroma + state.bakChromaOffset + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -274,7 +274,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
                     if (cbf)
                     {
                         uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
-                        m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                        codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
                     }
                 }
                 while (isNextTUSection(&tuIterator));
@@ -283,33 +283,33 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     }
 }
 
-void Entropy::encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)
+void SBac::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (cu->isIntra(absPartIdx)) // If it is intra mode, encode intra prediction mode.
     {
-        encodeIntraDirModeLuma(cu, absPartIdx, true);
+        codeIntraDirLumaAng(cu, absPartIdx, true);
         int chFmt = cu->getChromaFormat();
         if (chFmt != CHROMA_400)
         {
-            encodeIntraDirModeChroma(cu, absPartIdx);
+            codeIntraDirChroma(cu, absPartIdx);
 
             if ((chFmt == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
                 uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 2);
-                encodeIntraDirModeChroma(cu, absPartIdx + partOffset * 3);
+                codeIntraDirChroma(cu, absPartIdx + partOffset);
+                codeIntraDirChroma(cu, absPartIdx + partOffset * 2);
+                codeIntraDirChroma(cu, absPartIdx + partOffset * 3);
             }
         }
     }
     else                        // if it is inter mode, encode motion vector and reference index
     {
-        encodePUWise(cu, absPartIdx);
+        codePUWise(cu, absPartIdx);
     }
 }
 
 /** encode motion information for every PU block */
-void Entropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
+void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 {
     PartSize partSize = cu->getPartitionSize(absPartIdx);
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
@@ -318,25 +318,25 @@ void Entropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
 
     for (uint32_t partIdx = 0, subPartIdx = absPartIdx; partIdx < numPU; partIdx++, subPartIdx += puOffset)
     {
-        encodeMergeFlag(cu, subPartIdx);
+        codeMergeFlag(cu, subPartIdx);
         if (cu->getMergeFlag(subPartIdx))
         {
-            encodeMergeIndex(cu, subPartIdx);
+            codeMergeIndex(cu, subPartIdx);
         }
         else
         {
             uint32_t interDir = cu->getInterDir(subPartIdx);
             if (cu->getSlice()->isInterB())
-                m_entropyCoder->codeInterDir(cu, subPartIdx);
+                codeInterDir(cu, subPartIdx);
             for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
             {
                 if (interDir & (1 << refListIdx))
                 {
                     X265_CHECK(cu->getSlice()->getNumRefIdx(refListIdx) > 0, "numRefs should have been > 0\n");
 
-                    encodeRefFrmIdxPU(cu, subPartIdx, refListIdx);
-                    encodeMvdPU(cu, subPartIdx, refListIdx);
-                    encodeMVPIdxPU(cu, subPartIdx, refListIdx);
+                    codeRefFrmIdxPU(cu, subPartIdx, refListIdx);
+                    codeMvd(cu, subPartIdx, refListIdx);
+                    codeMVPIdx(cu->getMVPIdx(refListIdx, subPartIdx));
                 }
             }
         }
@@ -344,17 +344,17 @@ void Entropy::encodePUWise(TComDataCU* cu, uint32_t absPartIdx)
 }
 
 /** encode reference frame index for a PU block */
-void Entropy::encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
+void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
     if ((cu->getSlice()->getNumRefIdx(list) == 1))
         return;
 
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
-    m_entropyCoder->codeRefFrmIdx(cu, absPartIdx, list);
+    codeRefFrmIdx(cu, absPartIdx, list);
 }
 
-void Entropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP)
+void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP)
 {
     uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
@@ -370,7 +370,7 @@ void Entropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, u
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
         {
-            m_entropyCoder->codeQtRootCbf(cu, absPartIdx);
+            codeQtRootCbf(cu, absPartIdx);
         }
         if (!cu->getQtRootCbf(absPartIdx))
         {
@@ -383,14 +383,14 @@ void Entropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, u
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, cuSize, 0, bCodeDQP);
 }
 
-void Entropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
+void SBac::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
 {
     uint32_t symbol;
     int i;
 
     symbol = saoLcuParam->typeIdx + 1;
     if (compIdx != 2)
-        m_entropyCoder->codeSaoTypeIdx(symbol);
+        codeSaoTypeIdx(symbol);
 
     if (symbol)
     {
@@ -404,7 +404,7 @@ void Entropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
             for (i = 0; i < saoLcuParam->length; i++)
             {
                 uint32_t absOffset = ((saoLcuParam->offset[i] < 0) ? -saoLcuParam->offset[i] : saoLcuParam->offset[i]);
-                m_entropyCoder->codeSaoMaxUvlc(absOffset, offsetTh - 1);
+                codeSaoMaxUvlc(absOffset, offsetTh - 1);
             }
 
             for (i = 0; i < saoLcuParam->length; i++)
@@ -412,46 +412,46 @@ void Entropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
                 if (saoLcuParam->offset[i] != 0)
                 {
                     uint32_t sign = (saoLcuParam->offset[i] < 0) ? 1 : 0;
-                    m_entropyCoder->codeSAOSign(sign);
+                    codeSAOSign(sign);
                 }
             }
 
             symbol = (uint32_t)(saoLcuParam->subTypeIdx);
-            m_entropyCoder->codeSaoUflc(5, symbol);
+            codeSaoUflc(5, symbol);
         }
         else if (saoLcuParam->typeIdx < 4)
         {
-            m_entropyCoder->codeSaoMaxUvlc(saoLcuParam->offset[0], offsetTh - 1);
-            m_entropyCoder->codeSaoMaxUvlc(saoLcuParam->offset[1], offsetTh - 1);
-            m_entropyCoder->codeSaoMaxUvlc(-saoLcuParam->offset[2], offsetTh - 1);
-            m_entropyCoder->codeSaoMaxUvlc(-saoLcuParam->offset[3], offsetTh - 1);
+            codeSaoMaxUvlc(saoLcuParam->offset[0], offsetTh - 1);
+            codeSaoMaxUvlc(saoLcuParam->offset[1], offsetTh - 1);
+            codeSaoMaxUvlc(-saoLcuParam->offset[2], offsetTh - 1);
+            codeSaoMaxUvlc(-saoLcuParam->offset[3], offsetTh - 1);
             if (compIdx != 2)
             {
                 symbol = (uint32_t)(saoLcuParam->subTypeIdx);
-                m_entropyCoder->codeSaoUflc(2, symbol);
+                codeSaoUflc(2, symbol);
             }
         }
     }
 }
 
-void Entropy::encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
+void SBac::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
 {
     if (saoFlag)
     {
         if (rx > 0 && cuAddrInSlice != 0 && allowMergeLeft)
-            m_entropyCoder->codeSaoMerge(saoLcuParam->mergeLeftFlag);
+            codeSaoMerge(saoLcuParam->mergeLeftFlag);
         else
             saoLcuParam->mergeLeftFlag = 0;
 
         if (!saoLcuParam->mergeLeftFlag)
         {
             if ((ry > 0) && (cuAddrUpInSlice >= 0) && allowMergeUp)
-                m_entropyCoder->codeSaoMerge(saoLcuParam->mergeUpFlag);
+                codeSaoMerge(saoLcuParam->mergeUpFlag);
             else
                 saoLcuParam->mergeUpFlag = 0;
 
             if (!saoLcuParam->mergeUpFlag)
-                encodeSaoOffset(saoLcuParam, compIdx);
+                codeSaoOffset(saoLcuParam, compIdx);
         }
     }
 }

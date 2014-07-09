@@ -147,7 +147,26 @@ public:
 
     bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 
+    void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
+    void codeRefFrmIdxPU(TComDataCU* subCU, uint32_t absPartIdx, int eRefList);
+    void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
+    void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
+    void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
+    void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+
 private:
+
+    struct CoeffCodeState
+    {
+        uint32_t  bakAbsPartIdx;
+        uint32_t  bakChromaOffset;
+        uint32_t  bakAbsPartIdxCU;
+    };
+
+    void initTUEntropySection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU);
+    bool isNextTUSection(TURecurse *TUIterator);
+    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
+
     void codePredWeightTable(TComSlice* slice);
     void writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
@@ -164,13 +183,6 @@ class Entropy
 public:
 
     SBac*     m_entropyCoder;
-
-    struct CoeffCodeState
-    {
-        uint32_t  bakAbsPartIdx;
-        uint32_t  bakChromaOffset;
-        uint32_t  bakAbsPartIdxCU;
-    };
 
     void setEntropyCoder(SBac* e, TComSlice* slice) { m_entropyCoder = e; m_entropyCoder->setSlice(slice); }
     void setBitstream(BitInterface* p)  { m_entropyCoder->setBitstream(p); }
@@ -202,6 +214,10 @@ public:
     void encodeScalingList(TComScalingList* scalingList)                   { m_entropyCoder->codeScalingList(scalingList); }
     void encodeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)               { m_entropyCoder->codeSkipFlag(cu, absPartIdx); }
     void encodePredMode(TComDataCU* cu, uint32_t absPartIdx)               { m_entropyCoder->codePredMode(cu, absPartIdx); }
+    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx)                 { m_entropyCoder->codePUWise(cu, absPartIdx); }
+    void encodeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)  { m_entropyCoder->codeRefFrmIdxPU(cu, absPartIdx, list); }
+    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx)               { m_entropyCoder->codePredInfo(cu, absPartIdx); }
+    void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)       { m_entropyCoder->codeSaoOffset(saoLcuParam, compIdx); }
 
     void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) { m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth); }
     void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)  { m_entropyCoder->codePartSize(cu, absPartIdx, depth); }
@@ -223,11 +239,6 @@ public:
         m_entropyCoder->codeQtCbfZero(cu, ttype, trDepth);
     }
 
-    void encodePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void encodeRefFrmIdxPU(TComDataCU* subCU, uint32_t absPartIdx, int eRefList);
-    void encodePredInfo(TComDataCU* cu, uint32_t absPartIdx);
-
-    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
     void encodeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
     {
         m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, ttype);
@@ -238,14 +249,15 @@ public:
         m_entropyCoder->estBit(estBitsSbac, trSize, ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA);
     }
 
-    void encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
-    void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP)
+    {
+        m_entropyCoder->codeCoeff(cu, absPartIdx, depth, cuSize, bCodeDQP);
+    }
 
-private:
-
-    void initTUEntropySection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU);
-    bool isNextTUSection(TURecurse *TUIterator);
-    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
+    void encodeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
+    {
+        m_entropyCoder->codeSaoUnitInterleaving(compIdx, saoFlag, rx, ry, saoLcuParam, cuAddrInSlice, cuAddrUpInSlice, allowMergeLeft, allowMergeUp);
+    }
 };
 }
 
