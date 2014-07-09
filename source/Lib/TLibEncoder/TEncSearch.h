@@ -128,8 +128,6 @@ public:
     // ME parameters
     int             m_refLagPixels;
 
-    void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
-
     void setQP(int qp, int qpCb, int qpCr);
 
     TEncSearch();

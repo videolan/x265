@@ -143,9 +143,6 @@ public:
     void encodeCU(TComDataCU* cu, bool bIsCounting);
 
     void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
-
-    void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
-
     void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
     void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
 
