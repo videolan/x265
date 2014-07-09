@@ -71,7 +71,6 @@ public:
     int                         m_saoRowDelay;
 
     // SAO
-    Entropy                     m_entropyCoder;
     SBac                        m_rdGoOnSbacCoder;
     TEncBinCABAC                m_rdGoOnBinCodersCABAC;
     BitCounter                  m_bitCounter;

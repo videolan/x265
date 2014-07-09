@@ -59,7 +59,6 @@ class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
 
-    Entropy*        m_entropyCoder;
     SBac***         m_rdSbacCoders;           ///< for CABAC
     SBac*           m_rdGoOnSbacCoder;
     TEncBinCABAC*** m_binCoderCABAC;          ///< temporal CABAC state storage for RD computation
@@ -89,7 +88,7 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    void startSaoEnc(Frame* pic, Entropy* entropyCoder, SBac* rdGoOnSbacCoder);
+    void startSaoEnc(Frame* pic, SBac* rdGoOnSbacCoder);
     void endSaoEnc();
     void resetStats();
     void SAOProcess(SAOParam *saoParam);

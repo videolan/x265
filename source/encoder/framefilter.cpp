@@ -98,8 +98,8 @@ void FrameFilter::start(Frame *pic)
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
-    m_entropyCoder.setBitstream(&m_bitCounter);
+    m_rdGoOnSbacCoder.setSlice(pic->getSlice());
+    m_rdGoOnSbacCoder.setBitstream(&m_bitCounter);
     m_rdGoOnBinCodersCABAC.m_fracBits = 0;
 
     if (m_param->bEnableSAO)
@@ -136,7 +136,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
         m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((SBac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
-        m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
+        m_sao.startSaoEnc(m_pic, &m_rdGoOnSbacCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
