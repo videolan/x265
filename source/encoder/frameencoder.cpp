@@ -683,9 +683,8 @@ void FrameEncoder::encodeSlice()
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
         
-        Entropy entropyCoder; // TEMPORARY HACK
-        entropyCoder.setEntropyCoder(&m_sbacCoder);
-        m_tld.m_cuCoder.setEntropyCoder(&entropyCoder);
+        m_tld.m_search.m_sbacCoder = &m_sbacCoder;
+        m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.encodeCU(cu);
 
 #if ENC_DEC_TRACE

@@ -89,7 +89,7 @@ class SBac;
 /// CU encoder class
 class TEncCu
 {
-private:
+public:
 
     static const int MAX_PRED_TYPES = 6;
 
@@ -119,10 +119,10 @@ private:
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
-    Entropy*     m_entropyCoder;
+    SBac*        m_sbacCoder;
     bool         m_bBitCounting;
 
-    // SBAC RD
+    // RD SBac pointers
     SBac***      m_rdSbacCoders;
     SBac*        m_rdGoOnSbacCoder;
 
@@ -130,8 +130,6 @@ private:
 
     bool         m_bEncodeDQP;
     bool         m_CUTransquantBypass;
-
-public:
 
     StatisticLog  m_sliceTypeLog[3];
     StatisticLog* m_log;
@@ -145,8 +143,6 @@ public:
     void encodeCU(TComDataCU* cu);
 
     void setRDSbacCoder(SBac*** rdSbacCoder) { m_rdSbacCoders = rdSbacCoder; }
-
-    void setEntropyCoder(Entropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
     void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
 

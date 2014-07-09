@@ -93,41 +93,37 @@ bool CTURow::create()
 void CTURow::setThreadLocalData(ThreadLocalData& tld)
 {
     tld.m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
-    tld.m_cuCoder.setEntropyCoder(&m_entropyCoder);
     tld.m_search.setRDSbacCoder(m_rdSbacCoders);
-    tld.m_search.setEntropyCoder(&m_entropyCoder);
     tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 }
 
 void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
-    {
         // Load SBAC coder context from previous row.
         m_rdSbacCoders[0][CI_CURR_BEST]->loadContexts(bufferSbac);
-    }
 
     BitCounter bc;
 
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder);
-    m_entropyCoder.setBitstream(&bc);
-    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+    m_rdGoOnSbacCoder.setBitstream(&bc);
+    tld.m_search.m_sbacCoder = &m_rdGoOnSbacCoder;
+    tld.m_cuCoder.m_sbacCoder = &m_rdGoOnSbacCoder;
+    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder); // TODO: looks redundant, same in SAO
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
     // restore entropy coder to an initial state
-    m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST]);
-    m_entropyCoder.setBitstream(&bc);
+    tld.m_search.m_sbacCoder = m_rdSbacCoders[0][CI_CURR_BEST];
+    tld.m_cuCoder.m_sbacCoder = m_rdSbacCoders[0][CI_CURR_BEST];
+    m_rdSbacCoders[0][CI_CURR_BEST]->setBitstream(&bc);
     tld.m_cuCoder.setBitCounting(true);
     bc.resetBits();
 
     tld.m_cuCoder.encodeCU(cu);  // Count bits
 
     if (bSaveSBac)
-    {
         // Save CABAC state for next row
         m_bufferSbacCoder.loadContexts(m_rdSbacCoders[0][CI_CURR_BEST]);
-    }
 }
 
 void CTURow::destroy()

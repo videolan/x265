@@ -69,7 +69,6 @@ public:
     SBac            m_bufferSbacCoder;
     TEncBinCABAC    m_binCoderCABAC;
     TEncBinCABAC    m_rdGoOnBinCodersCABAC;
-    Entropy         m_entropyCoder;
     SBac         ***m_rdSbacCoders;
     TEncBinCABAC ***m_binCodersCABAC;
 

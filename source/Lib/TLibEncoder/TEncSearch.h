@@ -108,8 +108,6 @@ public:
     SBac*           m_rdGoOnSbacCoder;
     bool            m_bFrameParallel;
 
-protected:
-
     ShortYuv*       m_qtTempShortYuv;
 
     coeff_t**       m_qtTempCoeff[3];
@@ -118,11 +116,10 @@ protected:
 
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
-public:
     // interface to classes
     TComTrQuant*    m_trQuant;
     RDCost*         m_rdCost;
-    Entropy*        m_entropyCoder;
+    SBac*           m_sbacCoder;
     x265_param*     m_param;
 
     bool            m_bEnableRDOQ;
@@ -131,11 +128,7 @@ public:
     // ME parameters
     int             m_refLagPixels;
 
-public:
-
     void setRDSbacCoder(SBac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
-
-    void setEntropyCoder(Entropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
     void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
