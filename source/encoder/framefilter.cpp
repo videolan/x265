@@ -98,7 +98,6 @@ void FrameFilter::start(Frame *pic)
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_rdGoOnSbacCoder.setSlice(pic->getSlice());
     m_rdGoOnSbacCoder.setBitstream(&m_bitCounter);
     m_rdGoOnBinCodersCABAC.m_fracBits = 0;
 

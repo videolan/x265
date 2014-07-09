@@ -214,19 +214,18 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
 {
     /* headers for start of bitstream */
     bs.resetBits();
-    m_sbacCoder.setSlice(NULL);
     m_sbacCoder.setBitstream(&bs);
     m_sbacCoder.codeVPS(&m_top->m_vps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    m_sbacCoder.codeSPS(&m_sps);
+    m_sbacCoder.codeSPS(&m_sps, m_top->getScalingList());
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    m_sbacCoder.codePPS(&m_pps);
+    m_sbacCoder.codePPS(&m_pps, m_top->getScalingList());
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -334,7 +333,7 @@ void FrameEncoder::compressFrame()
     TComSlice*   slice             = m_frame->getSlice();
     int          totalCoded        = m_rce.encodeOrder;
 
-    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
+    entropyCoder->setEntropyCoder(&m_sbacCoder);
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -534,9 +533,9 @@ void FrameEncoder::compressFrame()
 
     m_bs.resetBits();
     m_sbacCoder.init(&m_binCoderCABAC);
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-    entropyCoder->resetEntropy();
-    entropyCoder->setBitstream(&m_bs);
+    m_sbacCoder.resetEntropy(slice);
+    m_sbacCoder.setBitstream(&m_bs);
+    entropyCoder->setEntropyCoder(&m_sbacCoder);
 
     if (slice->getSPS()->getUseSAO())
     {
@@ -544,13 +543,13 @@ void FrameEncoder::compressFrame()
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
         slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
-    entropyCoder->encodeSliceHeader(slice);
+    m_sbacCoder.codeSliceHeader(slice);
 
     // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
     for (int i = 0; i < m_numRows; i++)
     {
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder, slice);
-        m_rows[i].m_entropyCoder.resetEntropy();
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder);
+        m_rows[i].m_sbacCoder.resetEntropy(slice);
 
         // accumulate intra,inter,skip cu count per frame for 2 pass
         if (m_param->rc.bStatWrite)
@@ -565,10 +564,10 @@ void FrameEncoder::compressFrame()
     // flush per-row streams
     for (uint32_t i = 0; i < numSubstreams; i++)
     {
-        entropyCoder->setEntropyCoder(getSbacCoder(i), slice);
+        entropyCoder->setEntropyCoder(getSbacCoder(i));
         entropyCoder->setBitstream(&m_outStreams[i]);
         entropyCoder->encodeTerminatingBit(1);
-        entropyCoder->encodeSliceFinish();
+        getSbacCoder(i)->codeSliceFinish();
         m_outStreams[i].writeByteAlignment();
     }
 
@@ -576,9 +575,9 @@ void FrameEncoder::compressFrame()
     m_nalList.serializeSubstreams(slice->getSubstreamSizes(), numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
-    entropyCoder->setBitstream(&m_bs);
-    entropyCoder->encodeTilesWPPEntryPoint(slice);
+    entropyCoder->setEntropyCoder(&m_sbacCoder);
+    m_sbacCoder.setBitstream(&m_bs);
+    m_sbacCoder.codeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->getNalUnitType(), m_bs);
@@ -649,7 +648,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
 
     // Initialize slice singletons
     m_sbacCoder.init(&m_binCoderCABAC);
-    entropyCoder->setEntropyCoder(&m_sbacCoder, slice);
+    entropyCoder->setEntropyCoder(&m_sbacCoder);
     entropyCoder->setBitstream(&m_outStreams[0]);
     m_tld.m_cuCoder.setBitCounting(false);
 
@@ -728,9 +727,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
     }
 
     if (slice->getPPS()->getCabacInitPresentFlag())
-    {
-        entropyCoder->determineCabacInitIdx();
-    }
+        m_sbacCoder.determineCabacInitIdx(slice);
 }
 
 void FrameEncoder::compressCTURows()
@@ -740,11 +737,11 @@ void FrameEncoder::compressCTURows()
 
     // reset entropy coders
     m_sbacCoder.init(&m_binCoderCABAC);
+    m_sbacCoder.resetEntropy(slice);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init(slice);
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder, slice);
-        m_rows[i].m_entropyCoder.resetEntropy();
+        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder); // TODO: redundant?
 
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
@@ -948,9 +945,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         SBac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
-        codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_frame->getSlice());
-        codeRow.m_entropyCoder.resetEntropy();
-        codeRow.processCU(cu, m_frame->getSlice(), bufSbac, tld, m_param->bEnableWavefront && col == 1);
+        codeRow.processCU(cu, bufSbac, tld, m_param->bEnableWavefront && col == 1);
         // Completed CU processing
         curRow.m_completed++;
 

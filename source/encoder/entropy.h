@@ -38,6 +38,8 @@
 namespace x265 {
 // private namespace
 
+class TComScalingList;
+
 #define DONT_SPLIT            0
 #define VERTICAL_SPLIT        1
 #define QUAD_SPLIT            2
@@ -60,8 +62,6 @@ public:
 
     uint64_t      m_pad;
     ContextModel  m_contextModels[MAX_OFF_CTX_MOD];
-
-    TComSlice*    m_slice;
     TEncBinCABAC* m_cabac;
 
     SBac();
@@ -70,14 +70,12 @@ public:
     void  init(TEncBinCABAC* p)       { m_cabac = p; }
     TEncBinCABAC* getEncBinIf()       { return m_cabac; }
 
-    void  setSlice(TComSlice* p)      { m_slice = p; }
-
     void  resetBits()                 { m_cabac->resetBits(); m_bitIf->resetBits(); }
 
     uint32_t getNumberOfWrittenBits() { return m_cabac->getNumWrittenBits(); }
 
-    void resetEntropy();
-    void determineCabacInitIdx();
+    void resetEntropy(TComSlice *slice);
+    void determineCabacInitIdx(TComSlice *slice);
     void setBitstream(BitInterface* p);
 
     // SBAC RD
@@ -87,8 +85,8 @@ public:
     void loadContexts(SBac* src);
 
     void codeVPS(TComVPS* vps);
-    void codeSPS(TComSPS* sps);
-    void codePPS(TComPPS* pps);
+    void codeSPS(TComSPS* sps, TComScalingList *scalingList);
+    void codePPS(TComPPS* pps, TComScalingList *scalingList);
     void codeVUI(TComVUI* vui, TComSPS* sps);
     void codeAUD(TComSlice *slice);
     void codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
@@ -193,22 +191,12 @@ public:
 
     SBac*     m_entropyCoder;
 
-    void setEntropyCoder(SBac* e, TComSlice* slice) { m_entropyCoder = e; m_entropyCoder->setSlice(slice); }
+    void setEntropyCoder(SBac* e)       { m_entropyCoder = e; }
     void setBitstream(BitInterface* p)  { m_entropyCoder->setBitstream(p); }
     void resetBits()                    { m_entropyCoder->resetBits();     }
-    void resetEntropy()                 { m_entropyCoder->resetEntropy();  }
-    void determineCabacInitIdx()        { m_entropyCoder->determineCabacInitIdx(); }
     uint32_t getNumberOfWrittenBits()   { return m_entropyCoder->getNumberOfWrittenBits(); }
 
-    void encodeSliceHeader(TComSlice* slice)         { m_entropyCoder->codeSliceHeader(slice); }
-    void encodeTilesWPPEntryPoint(TComSlice* slice)  { m_entropyCoder->codeTilesWPPEntryPoint(slice); }
     void encodeTerminatingBit(uint32_t isLast)       { m_entropyCoder->codeTerminatingBit(isLast); }
-    void encodeSliceFinish()                         { m_entropyCoder->codeSliceFinish(); }
-
-    void encodeVPS(TComVPS* vps)                     { m_entropyCoder->codeVPS(vps); }
-    void encodeSPS(TComSPS* sps)                     { m_entropyCoder->codeSPS(sps); }
-    void encodePPS(TComPPS* pps)                     { m_entropyCoder->codePPS(pps); }
-    void encodeAUD(TComSlice* slice)                 { m_entropyCoder->codeAUD(slice); }
 
     void encodeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx) { m_entropyCoder->codeCUTransquantBypassFlag(cu, absPartIdx); }
     void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)              { m_entropyCoder->codeMergeFlag(cu, absPartIdx); }

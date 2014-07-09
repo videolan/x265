@@ -99,7 +99,7 @@ void CTURow::setThreadLocalData(ThreadLocalData& tld)
     tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 }
 
-void CTURow::processCU(TComDataCU *cu, TComSlice *slice, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
+void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
     {
@@ -109,14 +109,14 @@ void CTURow::processCU(TComDataCU *cu, TComSlice *slice, SBac *bufferSbac, Threa
 
     BitCounter bc;
 
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, slice);
+    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder);
     m_entropyCoder.setBitstream(&bc);
     tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
     // restore entropy coder to an initial state
-    m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
+    m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST]);
     m_entropyCoder.setBitstream(&bc);
     tld.m_cuCoder.setBitCounting(true);
     bc.resetBits();

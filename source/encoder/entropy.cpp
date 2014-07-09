@@ -518,20 +518,19 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
 }
 
 SBac::SBac()
-    : m_slice(NULL)
-    , m_cabac(NULL)
+    : m_cabac(NULL)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
 
-void SBac::resetEntropy()
+void SBac::resetEntropy(TComSlice *slice)
 {
-    int  qp              = m_slice->getSliceQp();
-    SliceType sliceType  = m_slice->getSliceType();
+    int  qp              = slice->getSliceQp();
+    SliceType sliceType  = slice->getSliceType();
 
-    int encCABACTableIdx = m_slice->getPPS()->getEncCABACTableIdx();
+    int encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
 
-    if (!m_slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && m_slice->getPPS()->getCabacInitPresentFlag())
+    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->getCabacInitPresentFlag())
         sliceType = (SliceType)encCABACTableIdx;
 
     initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
@@ -570,9 +569,11 @@ void SBac::resetEntropy()
  * index of the closest table.  This index is used for the next P/B slice when
  * cabac_init_present_flag is true.
  */
-void SBac::determineCabacInitIdx() { int qp = m_slice->getSliceQp();
+void SBac::determineCabacInitIdx(TComSlice *slice)
+{
+    int qp = slice->getSliceQp();
 
-    if (!m_slice->isIntra())
+    if (!slice->isIntra())
     {
         SliceType aSliceTypeChoices[] = { B_SLICE, P_SLICE };
 
@@ -616,11 +617,11 @@ void SBac::determineCabacInitIdx() { int qp = m_slice->getSliceQp();
             }
         }
 
-        m_slice->getPPS()->setEncCABACTableIdx(bestSliceType);
+        slice->getPPS()->setEncCABACTableIdx(bestSliceType);
     }
     else
     {
-        m_slice->getPPS()->setEncCABACTableIdx(I_SLICE);
+        slice->getPPS()->setEncCABACTableIdx(I_SLICE);
     }
 }
 
@@ -741,7 +742,7 @@ void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromS
     }
 }
 
-void SBac::codeSPS(TComSPS* sps)
+void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
 {
 #if ENC_DEC_TRACE
     fprintf(g_hTrace, "=========== Sequence Parameter Set ID: %d ===========\n", sps->getSPSId());
@@ -795,9 +796,9 @@ void SBac::codeSPS(TComSPS* sps)
     if (sps->getScalingListFlag())
     {
         WRITE_FLAG(sps->getScalingListPresentFlag() ? 1 : 0, "sps_scaling_list_data_present_flag");
-        if (sps->getScalingListPresentFlag())
+        if (sps->getScalingListPresentFlag() && scalingList)
         {
-            codeScalingList(m_slice->getScalingList());
+            codeScalingList(scalingList);
         }
     }
     WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
@@ -840,7 +841,7 @@ void SBac::codeSPS(TComSPS* sps)
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void SBac::codePPS(TComPPS* pps)
+void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 {
 #if ENC_DEC_TRACE
     fprintf(g_hTrace, "=========== Picture Parameter Set ID: %d ===========\n", pps->getPPSId());
@@ -888,9 +889,9 @@ void SBac::codePPS(TComPPS* pps)
         }
     }
     WRITE_FLAG(pps->getScalingListPresentFlag() ? 1 : 0,         "pps_scaling_list_data_present_flag");
-    if (pps->getScalingListPresentFlag())
+    if (pps->getScalingListPresentFlag() && scalingList)
     {
-        codeScalingList(m_slice->getScalingList());
+        codeScalingList(scalingList);
     }
     WRITE_FLAG(pps->getListsModificationPresentFlag(), "lists_modification_present_flag");
     WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");

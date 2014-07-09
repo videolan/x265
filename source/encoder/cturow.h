@@ -91,20 +91,18 @@ public:
         {
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
             {
-                m_rdSbacCoders[depth][ciIdx]->setSlice(slice);
-                m_rdSbacCoders[depth][ciIdx]->resetEntropy();
+                m_rdSbacCoders[depth][ciIdx]->resetEntropy(slice);
                 m_binCodersCABAC[depth][ciIdx]->m_fracBits = 0;
             }
         }
 
-        m_rdGoOnSbacCoder.setSlice(slice);
-        m_rdGoOnSbacCoder.resetEntropy();
+        m_rdGoOnSbacCoder.resetEntropy(slice);
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
     void setThreadLocalData(ThreadLocalData& tld);
 
-    void processCU(TComDataCU *cu, TComSlice *slice, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
+    void processCU(TComDataCU *cu, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 
