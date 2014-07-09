@@ -1254,8 +1254,26 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->setSkipFlagSubParts(!outTempCU->getQtRootCbf(0), 0, depth);
                     int origQP = outTempCU->getQP(0);
                     xCheckDQP(outTempCU);
-                    xCheckBestMode(outBestCU, outTempCU, depth);
+                    uint64_t tempCost = m_rdCost->psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
+                    uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                    if (tempCost < bestCost)
+                    {
+                        TComDataCU* tmp = outTempCU;
+                        outTempCU = outBestCU;
+                        outBestCU = tmp;
 
+                        // Change Prediction data
+                        TComYuv* yuv = NULL;
+                        yuv = outBestPredYuv;
+                        outBestPredYuv = m_tmpPredYuv[depth];
+                        m_tmpPredYuv[depth] = yuv;
+
+                        yuv = rpcYuvReconBest;
+                        rpcYuvReconBest = m_tmpRecoYuv[depth];
+                        m_tmpRecoYuv[depth] = yuv;
+                        
+                        m_rdSbacCoders[depth][CI_TEMP_BEST]->store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                    }                    
                     outTempCU->setQPSubParts(origQP, 0, depth);
                     outTempCU->setSkipFlagSubParts(false, 0, depth);
                     if (!bestIsSkip)
