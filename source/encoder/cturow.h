@@ -61,7 +61,8 @@ class CTURow
 {
 public:
 
-    SBac            m_sbacCoder;
+    SBac            m_rowEntropyCoder; /* only used by frameEncoder::encodeSlice() */
+
     SBac            m_rdGoOnSbacCoder;
     SBac            m_bufferSbacCoder;
     SBac            m_rdSbacCoders[MAX_CU_DEPTH + 1][CI_NUM];

@@ -616,7 +616,7 @@ void FrameEncoder::encodeSlice()
 
     m_tld.m_cuCoder.setBitCounting(false);
     for (int i = 0; i < m_numRows; i++)
-        m_rows[i].m_sbacCoder.resetEntropy(slice);
+        m_rows[i].m_rowEntropyCoder.resetEntropy(slice);
 
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
@@ -634,10 +634,10 @@ void FrameEncoder::encodeSlice()
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            getSbacCoder(subStrm)->loadContexts(*getBufferSBac(lin - 1));
+            getRowCoder(subStrm)->loadContexts(*getBufferSBac(lin - 1));
 
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
-        m_sbacCoder.load(*getSbacCoder(subStrm));
+        m_sbacCoder.load(*getRowCoder(subStrm));
 
         if (slice->getSPS()->getUseSAO())
         {
@@ -680,11 +680,11 @@ void FrameEncoder::encodeSlice()
 #endif
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        getSbacCoder(subStrm)->load(m_sbacCoder);
+        getRowCoder(subStrm)->load(m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            getBufferSBac(lin)->loadContexts(*getSbacCoder(subStrm));
+            getBufferSBac(lin)->loadContexts(*getRowCoder(subStrm));
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
@@ -699,9 +699,9 @@ void FrameEncoder::encodeSlice()
     // flush lines
     for (int i = 0; i < numSubstreams; i++)
     {
-        getSbacCoder(i)->setBitstream(&m_outStreams[i]);
-        getSbacCoder(i)->codeTerminatingBit(1);
-        getSbacCoder(i)->codeSliceFinish();
+        getRowCoder(i)->setBitstream(&m_outStreams[i]);
+        getRowCoder(i)->codeTerminatingBit(1);
+        getRowCoder(i)->codeSliceFinish();
         m_outStreams[i].writeByteAlignment();
     }
 }

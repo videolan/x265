@@ -94,7 +94,7 @@ public:
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
-    SBac* getSbacCoder(int row)       { return &this->m_rows[row].m_sbacCoder; }
+    SBac* getRowCoder(int row)        { return &this->m_rows[row].m_rowEntropyCoder; }
     SBac* getRDGoOnSbacCoder(int row) { return &this->m_rows[row].m_rdGoOnSbacCoder; }
     SBac* getBufferSBac(int row)      { return &this->m_rows[row].m_bufferSbacCoder; }
 
