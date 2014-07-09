@@ -535,12 +535,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     int isChroma = (yCbCr != 0) ? 1 : 0;
     int shift;
     int cuHeightTmp;
-    pixel* tmpLSwap;
     pixel* tmpL;
     pixel* tmpU;
     pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
-    int32_t *tmp_swap;
 
     picWidthTmp  = (isChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
     picHeightTmp = (isChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
@@ -707,9 +705,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
             m_upBufft[startX] = signDown2;
 
-            tmp_swap  = m_upBuff1;
-            m_upBuff1 = m_upBufft;
-            m_upBufft = tmp_swap;
+            std::swap(m_upBuff1, m_upBufft);
 
             rec += stride;
         }
@@ -775,9 +771,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        tmpLSwap = m_tmpL1;
-        m_tmpL1  = m_tmpL2;
-        m_tmpL2  = tmpLSwap;
+        std::swap(m_tmpL1, m_tmpL2);
     }
 }
 
@@ -864,7 +858,6 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int frameHeightInCU = m_pic->getFrameHeightInCU();
     int stride;
-    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -976,9 +969,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
             }
         }
 
-        tmpUSwap       = m_tmpU1[yCbCr];
-        m_tmpU1[yCbCr] = m_tmpU2[yCbCr];
-        m_tmpU2[yCbCr] = tmpUSwap;
+        std::swap(m_tmpU1[yCbCr], m_tmpU2[yCbCr]);
     }
 }
 
@@ -1018,7 +1009,6 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -1122,9 +1112,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
             }
         }
 
-        tmpUSwap       = m_tmpU1[yCbCr];
-        m_tmpU1[yCbCr] = m_tmpU2[yCbCr];
-        m_tmpU2[yCbCr] = tmpUSwap;
+        std::swap(m_tmpU1[yCbCr], m_tmpU2[yCbCr]);
     }
 }
 

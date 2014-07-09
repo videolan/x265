@@ -1252,19 +1252,9 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     uint64_t bestCost = m_rdCost->psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                     if (tempCost < bestCost)
                     {
-                        TComDataCU* tmp = outTempCU;
-                        outTempCU = outBestCU;
-                        outBestCU = tmp;
-
-                        // Change Prediction data
-                        TComYuv* yuv = NULL;
-                        yuv = outBestPredYuv;
-                        outBestPredYuv = m_tmpPredYuv[depth];
-                        m_tmpPredYuv[depth] = yuv;
-
-                        yuv = rpcYuvReconBest;
-                        rpcYuvReconBest = m_tmpRecoYuv[depth];
-                        m_tmpRecoYuv[depth] = yuv;
+                        std::swap(outBestCU, outTempCU);
+                        std::swap(outBestPredYuv, m_tmpPredYuv[depth]);
+                        std::swap(rpcYuvReconBest, m_tmpRecoYuv[depth]);
                         
                         m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
                     }                    
@@ -1438,21 +1428,14 @@ void TEncCu::xCheckBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint
 
     if (tempCost < bestCost)
     {
-        TComYuv* yuv;
         // Change Information data
-        TComDataCU* cu = outBestCU;
-        outBestCU = outTempCU;
-        outTempCU = cu;
+        std::swap(outBestCU, outTempCU);
 
         // Change Prediction data
-        yuv = m_bestPredYuv[depth];
-        m_bestPredYuv[depth] = m_tmpPredYuv[depth];
-        m_tmpPredYuv[depth] = yuv;
+        std::swap(m_bestPredYuv[depth], m_tmpPredYuv[depth]);
 
         // Change Reconstruction data
-        yuv = m_bestRecoYuv[depth];
-        m_bestRecoYuv[depth] = m_tmpRecoYuv[depth];
-        m_tmpRecoYuv[depth] = yuv;
+        std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
 
         m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
     }

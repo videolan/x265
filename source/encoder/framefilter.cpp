@@ -471,9 +471,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     {
         for (; z <= y; z++)
         {
-            void* swap = sum0;
-            sum0 = sum1;
-            sum1 = (int(*)[4])swap;
+            std::swap(sum0, sum1);
             for (int x = 0; x < width; x += 2)
             {
                 primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);

@@ -524,7 +524,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int iEndX;
     int iEndY;
     pixel* pTableBo = (yCbCr == 0) ? m_lumaTableBo : m_chromaTableBo;
-    int32_t *tmp_swap;
 
     int iIsChroma = (yCbCr != 0) ? 1 : 0;
     int numSkipLine = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
@@ -714,9 +713,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
                 }
 
                 m_upBufft[iStartX] = iSignDown2;
-                tmp_swap  = m_upBuff1;
-                m_upBuff1 = m_upBufft;
-                m_upBufft = tmp_swap;
+                std::swap(m_upBuff1, m_upBufft);
 
                 pRec += stride;
                 fenc += stride;
@@ -802,7 +799,6 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
     uint32_t lPelX, tPelY;
     TComDataCU *pTmpCu;
     pixel* pTableBo;
-    int32_t *tmp_swap;
 
     // NOTE: Row
     {
@@ -1012,9 +1008,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                     }
 
                     m_upBufft[firstX] = signDown2;
-                    tmp_swap  = m_upBuff1;
-                    m_upBuff1 = m_upBufft;
-                    m_upBufft = tmp_swap;
+                    std::swap(m_upBuff1, m_upBufft);
 
                     pRec += stride;
                     fenc += stride;
