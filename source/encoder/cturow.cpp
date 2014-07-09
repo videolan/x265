@@ -60,36 +60,32 @@ ThreadLocalData::~ThreadLocalData()
     m_cuCoder.destroy();
 }
 
-void CTURow::setThreadLocalData(ThreadLocalData& tld)
-{
-    tld.m_cuCoder.m_rdSbacCoders = m_rdSbacCoders;
-    tld.m_search.m_rdSbacCoders = m_rdSbacCoders;
-    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-    tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-}
-
 void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
         // Load SBAC coder context from previous row.
         m_rdSbacCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
 
-    BitCounter bc;
 
-    m_rdGoOnSbacCoder.setBitstream(&bc);
+    // setup thread local data structures to use this row's CABAC state
     tld.m_search.m_sbacCoder = &m_rdGoOnSbacCoder;
+    tld.m_search.m_rdSbacCoders = m_rdSbacCoders;
+    tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
     tld.m_cuCoder.m_sbacCoder = &m_rdGoOnSbacCoder;
-    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder); // TODO: looks redundant, same in SAO
+    tld.m_cuCoder.m_rdSbacCoders = m_rdSbacCoders;
+    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+
+    BitCounter bc;
+    m_rdGoOnSbacCoder.setBitstream(&bc);
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
-    // restore entropy coder to an initial state
     tld.m_search.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
     tld.m_cuCoder.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
     m_rdSbacCoders[0][CI_CURR_BEST].setBitstream(&bc);
-    tld.m_cuCoder.setBitCounting(true);
     bc.resetBits();
 
+    tld.m_cuCoder.setBitCounting(true);
     tld.m_cuCoder.encodeCU(cu);  // Count bits
 
     if (bSaveSBac)

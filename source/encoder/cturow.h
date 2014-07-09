@@ -98,8 +98,6 @@ public:
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
-    void setThreadLocalData(ThreadLocalData& tld);
-
     void processCU(TComDataCU *cu, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
