@@ -1052,8 +1052,6 @@ void Encoder::initSPS(TComSPS *sps)
 
     sps->setTMVPFlagsPresent(false);
 
-    sps->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
-
     for (uint32_t i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
         sps->setAMPAcc(i, m_param->bEnableAMP);

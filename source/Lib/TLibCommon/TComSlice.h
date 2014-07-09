@@ -825,9 +825,6 @@ private:
     uint32_t    m_ltRefPicPocLsbSps[33];
     bool        m_usedByCurrPicLtSPSFlag[33];
 
-    // Max physical transform size
-    uint32_t    m_maxTrSize;
-
     int m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
 
@@ -953,11 +950,6 @@ public:
     bool      getTMVPFlagsPresent() const   { return m_TMVPFlagsPresent; }
 
     void      setTMVPFlagsPresent(bool b)   { m_TMVPFlagsPresent = b; }
-
-    // physical transform
-    void setMaxTrSize(uint32_t u)   { m_maxTrSize = u; }
-
-    uint32_t getMaxTrSize() const   { return m_maxTrSize; }
 
     // AMP accuracy
     int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }

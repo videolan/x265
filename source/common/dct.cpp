@@ -773,10 +773,10 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
     }
 }
 
-uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff, int32_t* lastPos)
+uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff)
 {
     int qBits8 = qBits - 8;
-    uint32_t acSum = 0;
+    uint32_t numSig = 0;
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos++)
     {
@@ -785,15 +785,14 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
 
         int tmplevel = abs(level) * quantCoeff[blockpos];
         level = ((tmplevel + add) >> qBits);
-        if (level)
-            *lastPos = blockpos;
         deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
-        acSum += level;
+        if (level)
+            ++numSig;
         level *= sign;
         qCoef[blockpos] = Clip3(-32768, 32767, level);
     }
 
-    return acSum;
+    return numSig;
 }
 
 uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* scaledCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)

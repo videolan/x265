@@ -127,10 +127,10 @@ public:
     void init(bool useRDOQ);
 
     // transform & inverse transform functions
-    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize,
-                          TextType ttype, uint32_t absPartIdx, int32_t* lastPos, bool useTransformSkip = false, bool curUseRDOQ = true);
+    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
+                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip = false, bool curUseRDOQ = true);
 
-    void invtransformNxN(bool transQuantBypass, uint32_t mode, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t trSize, int scalingListType, bool useTransformSkip = false, int lastPos = MAX_INT);
+    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     // Misc functions
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
@@ -219,12 +219,13 @@ protected:
 
 private:
 
-    void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, int trSize);
-    void signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, int trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
+    void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+    void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, uint32_t log2TrSize);
+    uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     // RDOQ functions
-    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t trSize, TextType ttype, uint32_t absPartIdx, int32_t *lastPos);
+    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
                                    uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
@@ -243,8 +244,6 @@ private:
     inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
 
     inline uint32_t xGetIEPRate() const        { return 32768; }           ///< Get the cost of an equal probable bit
-
-    void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, int trSize);
 };
 }
 //! \}
