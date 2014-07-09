@@ -30,7 +30,6 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncBinCoderCABAC.h"
 
 #include "rdcost.h"
 #include "entropy.h"
@@ -62,15 +61,12 @@ class CTURow
 {
 public:
 
-    CTURow() : m_rdGoOnBinCodersCABAC(true) {}
+    CTURow() {}
 
     SBac            m_sbacCoder;
     SBac            m_rdGoOnSbacCoder;
     SBac            m_bufferSbacCoder;
-    TEncBinCABAC    m_binCoderCABAC;
-    TEncBinCABAC    m_rdGoOnBinCodersCABAC;
     SBac         ***m_rdSbacCoders;
-    TEncBinCABAC ***m_binCodersCABAC;
 
     // to compute stats for 2 pass
     double          m_iCuCnt;
@@ -84,6 +80,7 @@ public:
     void init(TComSlice *slice)
     {
         m_active = 0;
+        m_rdGoOnSbacCoder.resetEntropy(slice);
 
         // Note: Reset status to avoid frame parallelism output mistake on different thread number
         for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
@@ -91,11 +88,10 @@ public:
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
             {
                 m_rdSbacCoders[depth][ciIdx]->resetEntropy(slice);
-                m_binCodersCABAC[depth][ciIdx]->m_fracBits = 0;
+                m_rdSbacCoders[depth][ciIdx]->zeroFract();
             }
         }
 
-        m_rdGoOnSbacCoder.resetEntropy(slice);
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 

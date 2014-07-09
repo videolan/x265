@@ -33,8 +33,6 @@
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
-#include "TLibEncoder/TEncBinCoderCabac.h"
-
 namespace x265 {
 // private namespace
 
@@ -56,23 +54,63 @@ struct TURecurse
     uint32_t m_absPartIdxStep;
 };
 
+class CABAC
+{
+public:
+
+    BitInterface* m_bitIf;
+    uint32_t   m_low;
+    uint32_t   m_range;
+    uint32_t   m_bufferedByte;
+    int        m_numBufferedBytes;
+    int        m_bitsLeft;
+    uint64_t   m_fracBits;
+    bool       m_bIsCounter;
+
+    CABAC();
+
+    void  init(BitInterface* bitIf);
+
+    void  start();
+    void  finish();
+    void  copyState(CABAC* binIf);
+    void  flush();
+
+    void  resetBac();
+    void  resetBits();
+
+    uint32_t getNumWrittenBits()
+    {
+        X265_CHECK(m_bIsCounter && !m_bitIf->getNumberOfWrittenBits(), "counter mode expected\n");
+        return uint32_t(m_fracBits >> 15);
+    }
+
+    void  encodeBin(uint32_t binValue, ContextModel& ctxModel);
+    void  encodeBinEP(uint32_t binValue);
+    void  encodeBinsEP(uint32_t binValues, int numBins);
+    void  encodeBinTrm(uint32_t binValue);
+
+protected:
+
+    void writeOut();
+
+};
+
 class SBac : public SyntaxElementWriter
 {
 public:
 
     uint64_t      m_pad;
     ContextModel  m_contextModels[MAX_OFF_CTX_MOD];
-    TEncBinCABAC* m_cabac;
+    CABAC         m_cabac;
 
-    SBac();
-    virtual ~SBac() {}
+    SBac()                            { memset(m_contextModels, 0, sizeof(m_contextModels)); }
 
-    void  init(TEncBinCABAC* p)       { m_cabac = p; }
-    TEncBinCABAC* getEncBinIf()       { return m_cabac; }
+    CABAC* getEncBinIf()              { return &m_cabac; }
+    void  zeroFract()                 { m_cabac.m_fracBits = 0;  }
+    void  resetBits()                 { m_cabac.resetBits(); m_bitIf->resetBits(); }
 
-    void  resetBits()                 { m_cabac->resetBits(); m_bitIf->resetBits(); }
-
-    uint32_t getNumberOfWrittenBits() { return m_cabac->getNumWrittenBits(); }
+    uint32_t getNumberOfWrittenBits() { return m_cabac.getNumWrittenBits(); }
 
     void resetEntropy(TComSlice *slice);
     void determineCabacInitIdx(TComSlice *slice);
@@ -103,7 +141,7 @@ public:
     void codeSaoMerge(uint32_t code);
     void codeSaoTypeIdx(uint32_t code);
     void codeSaoUflc(uint32_t length, uint32_t code);
-    void codeSAOSign(uint32_t code) { m_cabac->encodeBinEP(code); }
+    void codeSAOSign(uint32_t code) { m_cabac.encodeBinEP(code); }
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
 
@@ -142,10 +180,7 @@ public:
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // for RD-optimizatioon
-    // -------------------------------------------------------------------------------------------------------------------
-
+    // RDO functions
     void estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estCBFBit(estBitsSbacStruct* estBitsSbac);
     void estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype);

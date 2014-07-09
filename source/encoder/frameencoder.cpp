@@ -538,7 +538,6 @@ void FrameEncoder::compressFrame()
     slice->allocSubstreamSizes(numSubstreams);
 
     m_bs.resetBits();
-    m_sbacCoder.init(&m_binCoderCABAC);
     m_sbacCoder.resetEntropy(slice);
     m_sbacCoder.setBitstream(&m_bs);
 
@@ -724,13 +723,12 @@ void FrameEncoder::compressCTURows()
     TComSlice* slice = m_frame->getSlice();
 
     // reset entropy coders
-    m_sbacCoder.init(&m_binCoderCABAC);
     m_sbacCoder.resetEntropy(slice);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init(slice);
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-        m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->zeroFract();
         m_rows[i].m_completed = 0;
         m_rows[i].m_busy = false;
     }

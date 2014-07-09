@@ -32,7 +32,6 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncBinCoderCABAC.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 #include "entropy.h"
@@ -159,7 +158,6 @@ protected:
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     SBac                     m_sbacCoder;
-    TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;

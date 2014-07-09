@@ -59,9 +59,8 @@ class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
 
-    SBac***         m_rdSbacCoders;           ///< for CABAC
-    SBac*           m_rdGoOnSbacCoder;
-    TEncBinCABAC*** m_binCoderCABAC;          ///< temporal CABAC state storage for RD computation
+    SBac***   m_rdSbacCoders;
+    SBac*     m_rdGoOnSbacCoder;
 
     int64_t ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     int64_t ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];

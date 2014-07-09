@@ -72,9 +72,9 @@ public:
 
     // SAO
     SBac                        m_rdGoOnSbacCoder;
-    TEncBinCABAC                m_rdGoOnBinCodersCABAC;
     BitCounter                  m_bitCounter;
     SBac*                       m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
+    
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;
 };

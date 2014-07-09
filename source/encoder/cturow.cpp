@@ -62,32 +62,33 @@ ThreadLocalData::~ThreadLocalData()
 
 bool CTURow::create()
 {
-    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_sbacCoder.init(&m_binCoderCABAC);
-    m_rdSbacCoders = new SBac * *[g_maxCUDepth + 1];
-    m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
-    if (!m_rdSbacCoders || !m_binCodersCABAC)
+    m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
+
+    // TODO: Allocate a multi-dimensional array instead of array of pointers
+    m_rdSbacCoders = X265_MALLOC(SBac**, g_maxCUDepth + 1);
+    if (!m_rdSbacCoders)
         return false;
 
+    bool ok = true;
     for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
-        m_rdSbacCoders[depth] = new SBac*[CI_NUM];
-        m_binCodersCABAC[depth] = new TEncBinCABAC*[CI_NUM];
-        if (!m_rdSbacCoders[depth] || !m_rdSbacCoders[depth])
-            return false;
-
-        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+        m_rdSbacCoders[depth] = X265_MALLOC(SBac*, CI_NUM);
+        if (m_rdSbacCoders[depth])
         {
-            m_rdSbacCoders[depth][ciIdx] = new SBac;
-            m_binCodersCABAC[depth][ciIdx] = new TEncBinCABAC(true);
-            if (m_rdSbacCoders[depth][ciIdx] && m_binCodersCABAC[depth][ciIdx])
-                m_rdSbacCoders[depth][ciIdx]->init(m_binCodersCABAC[depth][ciIdx]);
-            else
-                return false;
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+            {
+                m_rdSbacCoders[depth][ciIdx] = new SBac;
+                if (m_rdSbacCoders[depth][ciIdx])
+                    m_rdSbacCoders[depth][ciIdx]->m_cabac.m_bIsCounter = true;
+                else
+                    ok = false;
+            }
         }
+        else
+            ok = false;
     }
 
-    return true;
+    return ok;
 }
 
 void CTURow::setThreadLocalData(ThreadLocalData& tld)
@@ -128,21 +129,18 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
 
 void CTURow::destroy()
 {
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
+    if (m_rdSbacCoders)
     {
-        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+        for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
         {
-            delete m_rdSbacCoders[depth][ciIdx];
-            delete m_binCodersCABAC[depth][ciIdx];
+            if (m_rdSbacCoders[depth])
+            {
+                for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+                    delete m_rdSbacCoders[depth][ciIdx];
+                X265_FREE(m_rdSbacCoders[depth]);
+            }
         }
-    }
 
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-    {
-        delete [] m_rdSbacCoders[depth];
-        delete [] m_binCodersCABAC[depth];
+        X265_FREE(m_rdSbacCoders);
     }
-
-    delete[] m_rdSbacCoders;
-    delete[] m_binCodersCABAC;
 }

@@ -1,13 +1,11 @@
 # vim: syntax=cmake
 set(LIBENCODER_HDR
     ../Lib/TLibEncoder/SyntaxElementWriter.h
-    ../Lib/TLibEncoder/TEncBinCoderCABAC.h
     ../Lib/TLibEncoder/TEncCu.h
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
     ../Lib/TLibEncoder/TEncSearch.h)
 set(LIBENCODER_SRC
     ../Lib/TLibEncoder/SyntaxElementWriter.cpp
-    ../Lib/TLibEncoder/TEncBinCoderCABAC.cpp
     ../Lib/TLibEncoder/TEncCu.cpp
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
     ../Lib/TLibEncoder/TEncSearch.cpp)

@@ -47,7 +47,6 @@ using namespace x265;
 TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
     : m_rdSbacCoders(NULL)
     , m_rdGoOnSbacCoder(NULL)
-    , m_binCoderCABAC(NULL)
     , m_count(NULL)
     , m_offset(NULL)
     , m_offsetOrg(NULL)
@@ -428,23 +427,18 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
     m_offsetOrgPreDblk = NULL;
 
     int maxDepth = 4;
-    for (int d = 0; d < maxDepth + 1; d++)
+    if (m_rdSbacCoders)
     {
-        for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
+        for (int d = 0; d < maxDepth + 1; d++)
         {
-            X265_FREE(m_rdSbacCoders[d][iCIIdx]);
-            X265_FREE(m_binCoderCABAC[d][iCIIdx]);
+            if (m_rdSbacCoders[d])
+                for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
+                    delete m_rdSbacCoders[d][iCIIdx];
+            X265_FREE(m_rdSbacCoders[d]);
         }
-    }
 
-    for (int d = 0; d < maxDepth + 1; d++)
-    {
-        X265_FREE(m_rdSbacCoders[d]);
-        X265_FREE(m_binCoderCABAC[d]);
+        X265_FREE(m_rdSbacCoders);
     }
-
-    X265_FREE(m_rdSbacCoders);
-    X265_FREE(m_binCoderCABAC);
 }
 
 /** create Encoder Buffer for SAO
@@ -492,17 +486,14 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 
     int maxDepth = 4;
     m_rdSbacCoders = X265_MALLOC(SBac * *, maxDepth + 1);
-    m_binCoderCABAC = X265_MALLOC(TEncBinCABAC * *, maxDepth + 1);
-
-    for (int d = 0; d < maxDepth + 1; d++)
+    if (m_rdSbacCoders)
     {
-        m_rdSbacCoders[d] = X265_MALLOC(SBac*, CI_NUM_SAO);
-        m_binCoderCABAC[d] = X265_MALLOC(TEncBinCABAC*, CI_NUM_SAO);
-        for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
+        for (int d = 0; d < maxDepth + 1; d++)
         {
-            m_rdSbacCoders[d][ciIdx] = X265_MALLOC(SBac, 1);
-            m_binCoderCABAC[d][ciIdx] = X265_MALLOC(TEncBinCABAC, true);
-            m_rdSbacCoders[d][ciIdx]->init(m_binCoderCABAC[d][ciIdx]);
+            m_rdSbacCoders[d] = X265_MALLOC(SBac*, CI_NUM_SAO);
+            if (m_rdSbacCoders[d])
+                for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
+                    m_rdSbacCoders[d][ciIdx] = new SBac;
         }
     }
 }

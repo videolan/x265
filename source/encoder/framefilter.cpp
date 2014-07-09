@@ -33,24 +33,19 @@ using namespace x265;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
 
-// **************************************************************************
-// * LoopFilter
-// **************************************************************************
 FrameFilter::FrameFilter()
     : m_param(NULL)
-    , m_rdGoOnBinCodersCABAC(true)
+    , m_pic(NULL)
+    , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_pic = NULL;
-    m_frame = NULL;
+    m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
 }
 
 void FrameFilter::destroy()
 {
     if (m_param->bEnableLoopFilter)
-    {
         m_loopFilter.destroy();
-    }
 
     if (m_param->bEnableSAO)
     {
@@ -75,9 +70,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* rdG
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
     if (m_param->bEnableLoopFilter)
-    {
         m_loopFilter.create(g_maxCUDepth);
-    }
 
     if (m_param->bEnableSAO)
     {
@@ -97,9 +90,8 @@ void FrameFilter::start(Frame *pic)
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_rdGoOnSbacCoder.setBitstream(&m_bitCounter);
-    m_rdGoOnBinCodersCABAC.m_fracBits = 0;
+    m_rdGoOnSbacCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
@@ -134,7 +126,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((SBac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
+        m_rdGoOnSbacCoder.m_cabac.m_fracBits = m_rdGoOnSbacCoderRow0->m_cabac.m_fracBits;
         m_sao.startSaoEnc(m_pic, &m_rdGoOnSbacCoder);
     }
 
