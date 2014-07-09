@@ -72,7 +72,7 @@ bool SBac::isNextTUSection(TURecurse *tuIterator) // TODO: TURecurse method
         tuIterator->m_absPartIdxTURelCU += tuIterator->m_absPartIdxStep;
 
         tuIterator->m_section++;
-        return tuIterator->m_section < (1 << tuIterator->m_splitMode);
+        return tuIterator->m_section < (uint32_t)(1 << tuIterator->m_splitMode);
     }
 }
 
@@ -87,7 +87,7 @@ void SBac::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, uint3
 void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
-    const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
+    const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
     const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift = cu->getHorzChromaShift();
     uint32_t vChromaShift = cu->getVertChromaShift();
@@ -465,9 +465,9 @@ uint8_t sbacInit(int qp, int initValue)
     int  offset     = ((initValue & 15) << 3) - 16;
     int  initState  =  X265_MIN(X265_MAX(1, (((slope * qp) >> 4) + offset)), 126);
     uint32_t mpState = (initState >= 64);
-    uint8_t m_state = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
+    uint32_t state = ((mpState ? (initState - 64) : (63 - initState)) << 1) + mpState;
 
-    return m_state;
+    return (uint8_t)state;
 }
 
 static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
@@ -1407,7 +1407,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
             numLtrpInSH -= numLtrpInSPS;
 
             int bitsForLtrpInSPS = 0;
-            while (slice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
+            while (slice->getSPS()->getNumLongTermRefPicSPS() > (uint32_t)(1 << bitsForLtrpInSPS))
             {
                 bitsForLtrpInSPS++;
             }
@@ -2327,8 +2327,6 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     DTRACE_CABAC_T("\n")
 #endif // if ENC_DEC_TRACE
 
-    X265_CHECK(trSize <= m_slice->getSPS()->getMaxTrSize(), "transform size out of range\n");
-
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
@@ -2358,7 +2356,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     uint32_t posLast;
     uint64_t sigCoeffGroupFlag64 = 0;
     const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
-    assert(((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1));
+    assert((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1));
     do
     {
         posLast = codingParameters.scan[scanPosLast++];
