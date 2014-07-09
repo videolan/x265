@@ -64,15 +64,7 @@ void FrameEncoder::destroy()
     m_threadActive = false;
     m_enable.trigger();
 
-    if (m_rows)
-    {
-        for (int i = 0; i < m_numRows; ++i)
-        {
-            m_rows[i].destroy();
-        }
-
-        delete[] m_rows;
-    }
+    delete[] m_rows;
 
     if (m_param->bEmitHRDSEI)
     {
@@ -89,8 +81,6 @@ void FrameEncoder::destroy()
 
 bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 {
-    bool ok = true;
-
     m_top = top;
     m_param = top->m_param;
     m_numRows = numRows;
@@ -100,14 +90,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_filterRowDelayCus = m_filterRowDelay * numCols;
 
     m_rows = new CTURow[m_numRows];
-    for (int i = 0; i < m_numRows; ++i)
-        ok &= m_rows[i].create();
-
-    if (m_param->bEmitHRDSEI)
-    {
-        m_rce.picTimingSEI = new SEIPictureTiming;
-        m_rce.hrdTiming = new HRDTiming;
-    }
+    bool ok = !!m_numRows;
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
@@ -132,8 +115,14 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI)
     {
-        m_top->m_rateControl->initHRD(&m_sps);
+        m_rce.picTimingSEI = new SEIPictureTiming;
+        m_rce.hrdTiming = new HRDTiming;
+
+        ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
+        if (ok)
+            m_top->m_rateControl->initHRD(&m_sps);
     }
+
 
     m_sps.setTMVPFlagsPresent(true);
 
@@ -645,10 +634,10 @@ void FrameEncoder::encodeSlice()
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            getSbacCoder(subStrm)->loadContexts(getBufferSBac(lin - 1));
+            getSbacCoder(subStrm)->loadContexts(*getBufferSBac(lin - 1));
 
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
-        m_sbacCoder.load(getSbacCoder(subStrm));
+        m_sbacCoder.load(*getSbacCoder(subStrm));
 
         if (slice->getSPS()->getUseSAO())
         {
@@ -691,11 +680,11 @@ void FrameEncoder::encodeSlice()
 #endif
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        getSbacCoder(subStrm)->load(&m_sbacCoder);
+        getSbacCoder(subStrm)->load(m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            getBufferSBac(lin)->loadContexts(getSbacCoder(subStrm));
+            getBufferSBac(lin)->loadContexts(*getSbacCoder(subStrm));
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
@@ -727,8 +716,8 @@ void FrameEncoder::compressCTURows()
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init(slice);
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->zeroFract();
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST].load(m_sbacCoder);
+        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST].zeroFract();
         m_rows[i].m_completed = 0;
         m_rows[i].m_busy = false;
     }

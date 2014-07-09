@@ -1722,28 +1722,28 @@ void  SBac::setBitstream(BitInterface* p)
 }
 
 // SBAC RD
-void  SBac::load(SBac* src)
+void  SBac::load(SBac& src)
 {
     this->copyFrom(src);
 }
 
-void  SBac::loadIntraDirModeLuma(SBac* src)
+void  SBac::loadIntraDirModeLuma(SBac& src)
 {
-    m_cabac.copyState(&src->m_cabac);
+    m_cabac.copyState(src.m_cabac);
 
-    ::memcpy(&this->m_contextModels[OFF_ADI_CTX], &src->m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
+    ::memcpy(&m_contextModels[OFF_ADI_CTX], &src.m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
 
-void  SBac::store(SBac* pDest)
+void  SBac::store(SBac& dest)
 {
-    pDest->copyFrom(this);
+    dest.copyFrom(*this);
 }
 
-void SBac::copyFrom(SBac* src)
+void SBac::copyFrom(SBac& src)
 {
-    m_cabac.copyState(&src->m_cabac);
+    m_cabac.copyState(src.m_cabac);
 
-    memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
+    memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
 void SBac::codeMVPIdx(uint32_t symbol)
@@ -2711,14 +2711,14 @@ void SBac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextTyp
 }
 
 /* Initialize our context information from the nominated source */
-void SBac::copyContextsFrom(SBac* src)
+void SBac::copyContextsFrom(SBac& src)
 {
-    memcpy(m_contextModels, src->m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
+    memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
 }
 
-void SBac::loadContexts(SBac* src)
+void SBac::loadContexts(SBac& src)
 {
-    this->copyContextsFrom(src);
+    copyContextsFrom(src);
 }
 
 CABAC::CABAC()
@@ -2794,14 +2794,14 @@ void CABAC::resetBac()
     start();
 }
 
-void CABAC::copyState(CABAC* binCABAC)
+void CABAC::copyState(CABAC& binCABAC)
 {
-    m_low = binCABAC->m_low;
-    m_range = binCABAC->m_range;
-    m_bitsLeft = binCABAC->m_bitsLeft;
-    m_bufferedByte = binCABAC->m_bufferedByte;
-    m_numBufferedBytes = binCABAC->m_numBufferedBytes;
-    m_fracBits = binCABAC->m_fracBits;
+    m_low = binCABAC.m_low;
+    m_range = binCABAC.m_range;
+    m_bitsLeft = binCABAC.m_bitsLeft;
+    m_bufferedByte = binCABAC.m_bufferedByte;
+    m_numBufferedBytes = binCABAC.m_numBufferedBytes;
+    m_fracBits = binCABAC.m_fracBits;
 }
 
 void CABAC::resetBits()

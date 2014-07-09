@@ -60,41 +60,11 @@ ThreadLocalData::~ThreadLocalData()
     m_cuCoder.destroy();
 }
 
-bool CTURow::create()
-{
-    m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
-
-    // TODO: Allocate a multi-dimensional array instead of array of pointers
-    m_rdSbacCoders = X265_MALLOC(SBac**, g_maxCUDepth + 1);
-    if (!m_rdSbacCoders)
-        return false;
-
-    bool ok = true;
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-    {
-        m_rdSbacCoders[depth] = X265_MALLOC(SBac*, CI_NUM);
-        if (m_rdSbacCoders[depth])
-        {
-            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-            {
-                m_rdSbacCoders[depth][ciIdx] = new SBac;
-                if (m_rdSbacCoders[depth][ciIdx])
-                    m_rdSbacCoders[depth][ciIdx]->m_cabac.m_bIsCounter = true;
-                else
-                    ok = false;
-            }
-        }
-        else
-            ok = false;
-    }
-
-    return ok;
-}
-
 void CTURow::setThreadLocalData(ThreadLocalData& tld)
 {
-    tld.m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
-    tld.m_search.setRDSbacCoder(m_rdSbacCoders);
+    tld.m_cuCoder.m_rdSbacCoders = m_rdSbacCoders;
+    tld.m_search.m_rdSbacCoders = m_rdSbacCoders;
+    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
     tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 }
 
@@ -102,7 +72,7 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
 {
     if (bufferSbac)
         // Load SBAC coder context from previous row.
-        m_rdSbacCoders[0][CI_CURR_BEST]->loadContexts(bufferSbac);
+        m_rdSbacCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
 
     BitCounter bc;
 
@@ -114,9 +84,9 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
     // restore entropy coder to an initial state
-    tld.m_search.m_sbacCoder = m_rdSbacCoders[0][CI_CURR_BEST];
-    tld.m_cuCoder.m_sbacCoder = m_rdSbacCoders[0][CI_CURR_BEST];
-    m_rdSbacCoders[0][CI_CURR_BEST]->setBitstream(&bc);
+    tld.m_search.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
+    tld.m_cuCoder.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
+    m_rdSbacCoders[0][CI_CURR_BEST].setBitstream(&bc);
     tld.m_cuCoder.setBitCounting(true);
     bc.resetBits();
 
@@ -125,22 +95,4 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
     if (bSaveSBac)
         // Save CABAC state for next row
         m_bufferSbacCoder.loadContexts(m_rdSbacCoders[0][CI_CURR_BEST]);
-}
-
-void CTURow::destroy()
-{
-    if (m_rdSbacCoders)
-    {
-        for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-        {
-            if (m_rdSbacCoders[depth])
-            {
-                for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-                    delete m_rdSbacCoders[depth][ciIdx];
-                X265_FREE(m_rdSbacCoders[depth]);
-            }
-        }
-
-        X265_FREE(m_rdSbacCoders);
-    }
 }

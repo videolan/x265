@@ -59,7 +59,7 @@ class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
 
-    SBac***   m_rdSbacCoders;
+    SBac      m_rdSbacCoders[5][CI_NUM_SAO];
     SBac*     m_rdGoOnSbacCoder;
 
     int64_t ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];

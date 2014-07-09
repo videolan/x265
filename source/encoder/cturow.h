@@ -61,21 +61,23 @@ class CTURow
 {
 public:
 
-    CTURow() {}
-
     SBac            m_sbacCoder;
     SBac            m_rdGoOnSbacCoder;
     SBac            m_bufferSbacCoder;
-    SBac         ***m_rdSbacCoders;
+    SBac            m_rdSbacCoders[MAX_CU_DEPTH + 1][CI_NUM];
 
     // to compute stats for 2 pass
     double          m_iCuCnt;
     double          m_pCuCnt;
     double          m_skipCuCnt;
 
-    bool create();
-
-    void destroy();
+    CTURow()
+    {
+        m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
+        for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+                m_rdSbacCoders[depth][ciIdx].m_cabac.m_bIsCounter = true;
+    }
 
     void init(TComSlice *slice)
     {
@@ -87,8 +89,8 @@ public:
         {
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
             {
-                m_rdSbacCoders[depth][ciIdx]->resetEntropy(slice);
-                m_rdSbacCoders[depth][ciIdx]->zeroFract();
+                m_rdSbacCoders[depth][ciIdx].resetEntropy(slice);
+                m_rdSbacCoders[depth][ciIdx].zeroFract();
             }
         }
 

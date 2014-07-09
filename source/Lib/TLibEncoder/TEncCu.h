@@ -123,7 +123,7 @@ public:
     bool         m_bBitCounting;
 
     // RD SBac pointers
-    SBac***      m_rdSbacCoders;
+    SBac       (*m_rdSbacCoders)[CI_NUM];
     SBac*        m_rdGoOnSbacCoder;
 
     uint8_t      m_totalDepth;
@@ -141,8 +141,6 @@ public:
     void destroy();
     void compressCU(TComDataCU* cu);
     void encodeCU(TComDataCU* cu);
-
-    void setRDSbacCoder(SBac*** rdSbacCoder) { m_rdSbacCoders = rdSbacCoder; }
 
     void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
 

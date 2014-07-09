@@ -104,7 +104,7 @@ public:
     MotionEstimate   m_me;
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
-    SBac***         m_rdSbacCoders;
+    SBac          (*m_rdSbacCoders)[CI_NUM];
     SBac*           m_rdGoOnSbacCoder;
     bool            m_bFrameParallel;
 
@@ -127,8 +127,6 @@ public:
 
     // ME parameters
     int             m_refLagPixels;
-
-    void setRDSbacCoder(SBac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
     void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 

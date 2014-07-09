@@ -73,7 +73,7 @@ public:
 
     void  start();
     void  finish();
-    void  copyState(CABAC* binIf);
+    void  copyState(CABAC& binIf);
     void  flush();
 
     void  resetBac();
@@ -117,10 +117,10 @@ public:
     void setBitstream(BitInterface* p);
 
     // SBAC RD
-    void load(SBac* src);
-    void loadIntraDirModeLuma(SBac* src);
-    void store(SBac* dest);
-    void loadContexts(SBac* src);
+    void load(SBac& src);
+    void loadIntraDirModeLuma(SBac& src);
+    void store(SBac& dest);
+    void loadContexts(SBac& src);
 
     void codeVPS(TComVPS* vps);
     void codeSPS(TComSPS* sps, TComScalingList *scalingList);
@@ -214,8 +214,8 @@ private:
 
     void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
-    void copyFrom(SBac* src);
-    void copyContextsFrom(SBac* src);
+    void copyFrom(SBac& src);
+    void copyContextsFrom(SBac& src);
     void codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
 };
 }

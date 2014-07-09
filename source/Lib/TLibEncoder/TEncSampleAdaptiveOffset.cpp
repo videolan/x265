@@ -45,8 +45,7 @@ using namespace x265;
 //! \{
 
 TEncSampleAdaptiveOffset::TEncSampleAdaptiveOffset()
-    : m_rdSbacCoders(NULL)
-    , m_rdGoOnSbacCoder(NULL)
+    : m_rdGoOnSbacCoder(NULL)
     , m_count(NULL)
     , m_offset(NULL)
     , m_offsetOrg(NULL)
@@ -343,15 +342,15 @@ void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partId
         {
             if (0 == i) //initialize RD with previous depth buffer
             {
-                m_rdSbacCoders[nextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[onePart->partLevel][CI_CURR_BEST]);
+                m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[onePart->partLevel][CI_CURR_BEST]);
             }
             else
             {
-                m_rdSbacCoders[nextDepth][CI_CURR_BEST]->load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
+                m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
             }
             runQuadTreeDecision(qtPart, onePart->downPartsIdx[i], costFinal, maxLevel, lambda, yCbCr);
             costSplit += costFinal;
-            m_rdSbacCoders[nextDepth][CI_NEXT_BEST]->load(m_rdSbacCoders[nextDepth][CI_TEMP_BEST]);
+            m_rdSbacCoders[nextDepth][CI_NEXT_BEST].load(m_rdSbacCoders[nextDepth][CI_TEMP_BEST]);
         }
 
         if (costSplit < costNotSplit)
@@ -360,7 +359,7 @@ void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partId
             onePart->bSplit   = true;
             onePart->length   =  0;
             onePart->bestType = -1;
-            m_rdSbacCoders[onePart->partLevel][CI_NEXT_BEST]->load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
+            m_rdSbacCoders[onePart->partLevel][CI_NEXT_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
         }
         else
         {
@@ -371,7 +370,7 @@ void TEncSampleAdaptiveOffset::runQuadTreeDecision(SAOQTPart *qtPart, int partId
                 disablePartTree(qtPart, onePart->downPartsIdx[i]);
             }
 
-            m_rdSbacCoders[onePart->partLevel][CI_NEXT_BEST]->load(m_rdSbacCoders[onePart->partLevel][CI_TEMP_BEST]);
+            m_rdSbacCoders[onePart->partLevel][CI_NEXT_BEST].load(m_rdSbacCoders[onePart->partLevel][CI_TEMP_BEST]);
         }
     }
     else
@@ -425,20 +424,6 @@ void TEncSampleAdaptiveOffset::destroyEncBuffer()
 
     delete[] m_offsetOrgPreDblk;
     m_offsetOrgPreDblk = NULL;
-
-    int maxDepth = 4;
-    if (m_rdSbacCoders)
-    {
-        for (int d = 0; d < maxDepth + 1; d++)
-        {
-            if (m_rdSbacCoders[d])
-                for (int iCIIdx = 0; iCIIdx < CI_NUM_SAO; iCIIdx++)
-                    delete m_rdSbacCoders[d][iCIIdx];
-            X265_FREE(m_rdSbacCoders[d]);
-        }
-
-        X265_FREE(m_rdSbacCoders);
-    }
 }
 
 /** create Encoder Buffer for SAO
@@ -483,19 +468,6 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
         m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
         m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     }
-
-    int maxDepth = 4;
-    m_rdSbacCoders = X265_MALLOC(SBac * *, maxDepth + 1);
-    if (m_rdSbacCoders)
-    {
-        for (int d = 0; d < maxDepth + 1; d++)
-        {
-            m_rdSbacCoders[d] = X265_MALLOC(SBac*, CI_NUM_SAO);
-            if (m_rdSbacCoders[d])
-                for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
-                    m_rdSbacCoders[d][ciIdx] = new SBac;
-        }
-    }
 }
 
 /** Start SAO encoder
@@ -509,7 +481,7 @@ void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, SBac* rdGoOnSbacCoder)
     m_rdGoOnSbacCoder->resetEntropy(pic->getSlice());
     m_rdGoOnSbacCoder->resetBits();
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_NEXT_BEST]);
-    m_rdSbacCoders[0][CI_CURR_BEST]->load(m_rdSbacCoders[0][CI_NEXT_BEST]);
+    m_rdSbacCoders[0][CI_CURR_BEST].load(m_rdSbacCoders[0][CI_NEXT_BEST]);
 }
 
 /** End SAO encoder
