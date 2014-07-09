@@ -100,7 +100,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     m_tld.init(*top);
-    m_frameFilter.init(top, this, numRows, getRDGoOnSbacCoder(0));
+    m_frameFilter.init(top, this, numRows, &m_rows[0].m_rdGoOnSbacCoder);
 
     // initialize SPS
     top->initSPS(&m_sps);
