@@ -336,7 +336,7 @@ void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
     {
         if (absPartIdx == 0)
         {
-            m_entropyCoder->encodeIntraDirModeLuma(cu, 0);
+            m_entropyCoder->encodeIntraDirModeLuma(cu, 0, false);
         }
     }
     else
@@ -347,12 +347,12 @@ void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
             X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
             for (uint32_t part = 0; part < 4; part++)
             {
-                m_entropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts);
+                m_entropyCoder->encodeIntraDirModeLuma(cu, part * qtNumParts, false);
             }
         }
         else if ((absPartIdx & (qtNumParts - 1)) == 0)
         {
-            m_entropyCoder->encodeIntraDirModeLuma(cu, absPartIdx);
+            m_entropyCoder->encodeIntraDirModeLuma(cu, absPartIdx, false);
         }
     }
 }
@@ -3910,7 +3910,7 @@ uint32_t TEncSearch::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t part
     cu->getLumaIntraDir()[partOffset] = (uint8_t)mode;
 
     m_entropyCoder->resetBits();
-    m_entropyCoder->encodeIntraDirModeLuma(cu, partOffset);
+    m_entropyCoder->encodeIntraDirModeLuma(cu, partOffset, false);
 
     return m_entropyCoder->getNumberOfWrittenBits();
 }

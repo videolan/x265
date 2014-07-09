@@ -222,7 +222,7 @@ public:
     void encodeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth) { m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth); }
     void encodePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)  { m_entropyCoder->codePartSize(cu, absPartIdx, depth); }
 
-    void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU = false)
+    void encodeIntraDirModeLuma(TComDataCU* cu, uint32_t absPartIdx, bool isMultiplePU)
     {
         m_entropyCoder->codeIntraDirLumaAng(cu, absPartIdx, isMultiplePU);
     }
