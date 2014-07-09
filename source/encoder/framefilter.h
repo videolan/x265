@@ -71,7 +71,7 @@ public:
     int                         m_saoRowDelay;
 
     // SAO
-    SBac                        m_rdGoOnSbacCoder;
+    SBac                        m_sbacCoder;
     BitCounter                  m_bitCounter;
     SBac*                       m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
     

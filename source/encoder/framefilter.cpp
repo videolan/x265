@@ -39,7 +39,7 @@ FrameFilter::FrameFilter()
     , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
+    m_sbacCoder.m_cabac.m_bIsCounter = true;
 }
 
 void FrameFilter::destroy()
@@ -90,8 +90,8 @@ void FrameFilter::start(Frame *pic)
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_rdGoOnSbacCoder.setBitstream(&m_bitCounter);
-    m_rdGoOnSbacCoder.zeroFract();
+    m_sbacCoder.setBitstream(&m_bitCounter);
+    m_sbacCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
@@ -126,8 +126,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnSbacCoder.m_cabac.m_fracBits = m_rdGoOnSbacCoderRow0->m_cabac.m_fracBits;
-        m_sao.startSaoEnc(m_pic, &m_rdGoOnSbacCoder);
+        m_sbacCoder.m_cabac.m_fracBits = m_rdGoOnSbacCoderRow0->m_cabac.m_fracBits;
+        m_sao.startSaoEnc(m_pic, &m_sbacCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
