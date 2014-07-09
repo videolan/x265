@@ -329,11 +329,8 @@ void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t      startCompressTime = x265_mdate();
-    Entropy*     entropyCoder      = getEntropyCoder(0);
     TComSlice*   slice             = m_frame->getSlice();
     int          totalCoded        = m_rce.encodeOrder;
-
-    entropyCoder->setEntropyCoder(&m_sbacCoder);
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -503,6 +500,15 @@ void FrameEncoder::compressFrame()
     // wave-front behind the CU compression and reconstruction
     compressCTURows();
 
+    if (m_param->rc.bStatWrite)
+        // accumulate intra,inter,skip cu count per frame for 2 pass
+        for (int i = 0; i < m_numRows; i++)
+        {
+            m_frameStats.cuCount_i += m_rows[i].m_iCuCnt;
+            m_frameStats.cuCount_p += m_rows[i].m_pCuCnt;
+            m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
+        }
+
     if (m_sps.getUseSAO())
     {
         SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
@@ -535,7 +541,6 @@ void FrameEncoder::compressFrame()
     m_sbacCoder.init(&m_binCoderCABAC);
     m_sbacCoder.resetEntropy(slice);
     m_sbacCoder.setBitstream(&m_bs);
-    entropyCoder->setEntropyCoder(&m_sbacCoder);
 
     if (slice->getSPS()->getUseSAO())
     {
@@ -546,36 +551,12 @@ void FrameEncoder::compressFrame()
     m_sbacCoder.codeSliceHeader(slice);
 
     // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
-    for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_rows[i].m_sbacCoder);
-        m_rows[i].m_sbacCoder.resetEntropy(slice);
-
-        // accumulate intra,inter,skip cu count per frame for 2 pass
-        if (m_param->rc.bStatWrite)
-        {
-            m_frameStats.cuCount_i += m_rows[i].m_iCuCnt;
-            m_frameStats.cuCount_p += m_rows[i].m_pCuCnt;
-            m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
-        }
-    }
     encodeSlice();
-
-    // flush per-row streams
-    for (uint32_t i = 0; i < numSubstreams; i++)
-    {
-        entropyCoder->setEntropyCoder(getSbacCoder(i));
-        entropyCoder->setBitstream(&m_outStreams[i]);
-        entropyCoder->encodeTerminatingBit(1);
-        getSbacCoder(i)->codeSliceFinish();
-        m_outStreams[i].writeByteAlignment();
-    }
 
     // serialize each row, record final lengths in slice header
     m_nalList.serializeSubstreams(slice->getSubstreamSizes(), numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
-    entropyCoder->setEntropyCoder(&m_sbacCoder);
     m_sbacCoder.setBitstream(&m_bs);
     m_sbacCoder.codeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
@@ -634,7 +615,6 @@ void FrameEncoder::compressFrame()
 void FrameEncoder::encodeSlice()
 {
     // choose entropy coder
-    Entropy *entropyCoder = getEntropyCoder(0);
     TComSlice* slice = m_frame->getSlice();
 
 #if ENC_DEC_TRACE
@@ -646,16 +626,13 @@ void FrameEncoder::encodeSlice()
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-    // Initialize slice singletons
-    m_sbacCoder.init(&m_binCoderCABAC);
-    entropyCoder->setEntropyCoder(&m_sbacCoder);
-    entropyCoder->setBitstream(&m_outStreams[0]);
     m_tld.m_cuCoder.setBitCounting(false);
+    for (int i = 0; i < m_numRows; i++)
+        m_rows[i].m_sbacCoder.resetEntropy(slice);
 
-    const uint32_t heightInLCUs = m_frame->getPicSym()->getFrameHeightInCU();
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
-    const int numSubstreams = m_param->bEnableWavefront ? heightInLCUs : 1;
+    const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
 
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
@@ -665,7 +642,7 @@ void FrameEncoder::encodeSlice()
         uint32_t subStrm = lin % numSubstreams;
         TComDataCU* cu = m_frame->getCU(cuAddr);
 
-        entropyCoder->setBitstream(&m_outStreams[subStrm]);
+        m_sbacCoder.setBitstream(&m_outStreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
@@ -681,17 +658,17 @@ void FrameEncoder::encodeSlice()
                 int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
                 int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
                 if (col)
-                    entropyCoder->m_entropyCoder->codeSaoMerge(mergeLeft);
+                    m_sbacCoder.codeSaoMerge(mergeLeft);
                 if (lin && !mergeLeft)
-                    entropyCoder->m_entropyCoder->codeSaoMerge(mergeUp);
+                    m_sbacCoder.codeSaoMerge(mergeUp);
                 if (!mergeLeft && !mergeUp)
                 {
                     if (saoParam->bSaoFlag[0])
-                        entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
+                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
                     if (saoParam->bSaoFlag[1])
                     {
-                        entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
-                        entropyCoder->encodeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
+                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
+                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
                     }
                 }
             }
@@ -705,8 +682,10 @@ void FrameEncoder::encodeSlice()
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-
-        m_tld.m_cuCoder.setEntropyCoder(entropyCoder);
+        
+        Entropy entropyCoder; // TEMPORARY HACK
+        entropyCoder.setEntropyCoder(&m_sbacCoder);
+        m_tld.m_cuCoder.setEntropyCoder(&entropyCoder);
         m_tld.m_cuCoder.encodeCU(cu);
 
 #if ENC_DEC_TRACE
@@ -726,8 +705,18 @@ void FrameEncoder::encodeSlice()
         m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
     }
 
+    // when frame parallelism is disabled, we can tweak the initial CABAC state of P and B frames
     if (slice->getPPS()->getCabacInitPresentFlag())
         m_sbacCoder.determineCabacInitIdx(slice);
+
+    // flush lines
+    for (int i = 0; i < numSubstreams; i++)
+    {
+        getSbacCoder(i)->setBitstream(&m_outStreams[i]);
+        getSbacCoder(i)->codeTerminatingBit(1);
+        getSbacCoder(i)->codeSliceFinish();
+        m_outStreams[i].writeByteAlignment();
+    }
 }
 
 void FrameEncoder::compressCTURows()
@@ -741,8 +730,6 @@ void FrameEncoder::compressCTURows()
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init(slice);
-        m_rows[i].m_entropyCoder.setEntropyCoder(&m_sbacCoder); // TODO: redundant?
-
         m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST]->load(&m_sbacCoder);
         m_rows[i].m_rdGoOnBinCodersCABAC.m_fracBits = 0;
         m_rows[i].m_completed = 0;
@@ -752,9 +739,9 @@ void FrameEncoder::compressCTURows()
     bool bUseWeightP = slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE;
     bool bUseWeightB = slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE;
     int range = m_param->searchRange; /* fpel search */
-    range    += 1;                        /* diamond search range check lag */
-    range    += 2;                        /* subpel refine */
-    range    += NTAPS_LUMA / 2;           /* subpel filter half-length */
+    range    += 1;                    /* diamond search range check lag */
+    range    += 2;                    /* subpel refine */
+    range    += NTAPS_LUMA / 2;       /* subpel filter half-length */
     int refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 

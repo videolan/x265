@@ -95,10 +95,9 @@ public:
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
-    Entropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
-    SBac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
-    SBac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
-    SBac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
+    SBac* getSbacCoder(int row)       { return &this->m_rows[row].m_sbacCoder; }
+    SBac* getRDGoOnSbacCoder(int row) { return &this->m_rows[row].m_rdGoOnSbacCoder; }
+    SBac* getBufferSBac(int row)      { return &this->m_rows[row].m_bufferSbacCoder; }
 
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
