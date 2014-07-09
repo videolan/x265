@@ -142,10 +142,6 @@ public:
     void compressCU(TComDataCU* cu);
     void encodeCU(TComDataCU* cu, bool bIsCounting);
 
-    void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
-    void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
-    void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
-
 protected:
 
     void finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);

@@ -49,9 +49,9 @@ void ThreadLocalData::init(Encoder& enc)
     m_search.init(&enc, &m_rdCost, &m_trQuant);
 
     m_cuCoder.init(&enc);
-    m_cuCoder.setPredSearch(&m_search);
-    m_cuCoder.setTrQuant(&m_trQuant);
-    m_cuCoder.setRdCost(&m_rdCost);
+    m_cuCoder.m_search = &m_search;
+    m_cuCoder.m_trQuant = &m_trQuant;
+    m_cuCoder.m_rdCost = &m_rdCost;
     m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
 
