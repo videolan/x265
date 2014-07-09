@@ -140,17 +140,14 @@ public:
     bool create(uint8_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);
-    void encodeCU(TComDataCU* cu);
+    void encodeCU(TComDataCU* cu, bool bIsCounting);
 
     void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
 
     void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
     void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
-
     void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
-
-    void setBitCounting(bool b) { m_bBitCounting = b; }
 
 protected:
 

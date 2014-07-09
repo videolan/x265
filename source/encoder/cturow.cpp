@@ -85,8 +85,7 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
     m_rdSbacCoders[0][CI_CURR_BEST].setBitstream(&bc);
     bc.resetBits();
 
-    tld.m_cuCoder.setBitCounting(true);
-    tld.m_cuCoder.encodeCU(cu);  // Count bits
+    tld.m_cuCoder.encodeCU(cu, true);  // Count bits
 
     if (bSaveSBac)
         // Save CABAC state for next row

@@ -617,7 +617,6 @@ void FrameEncoder::encodeSlice()
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
 
-    m_tld.m_cuCoder.setBitCounting(false);
     for (int i = 0; i < numSubstreams; i++)
     {
         m_rows[i].m_rowEntropyCoder.resetEntropy(slice);
@@ -674,7 +673,7 @@ void FrameEncoder::encodeSlice()
         
         m_tld.m_search.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
-        m_tld.m_cuCoder.encodeCU(cu);
+        m_tld.m_cuCoder.encodeCU(cu, false);
 
 #if ENC_DEC_TRACE
         g_bJustDoIt = g_bEncDecTraceDisable;
