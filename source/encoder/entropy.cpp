@@ -84,7 +84,8 @@ void Entropy::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, ui
     tuIterator->m_absPartIdxStep    = absPartIdxStep >> partIdxStepShift[splitMode];
 }
 
-void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
+void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
+                              uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const uint32_t subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > depth;
     const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
@@ -95,20 +96,20 @@ void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offs
     uint32_t cbfV = cu->getCbf(absPartIdx, TEXT_CHROMA_V, trIdx);
 
     if (!trIdx)
-        m_bakAbsPartIdxCU = absPartIdx;
+        state.bakAbsPartIdxCU = absPartIdx;
 
     if ((log2TrSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
         uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
         if ((absPartIdx & (partNum - 1)) == 0)
         {
-            m_bakAbsPartIdx   = absPartIdx;
-            m_bakChromaOffset = offsetChroma;
+            state.bakAbsPartIdx   = absPartIdx;
+            state.bakChromaOffset = offsetChroma;
         }
         else if ((absPartIdx & (partNum - 1)) == (partNum - 1))
         {
-            cbfU = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_U, trIdx);
-            cbfV = cu->getCbf(m_bakAbsPartIdx, TEXT_CHROMA_V, trIdx);
+            cbfU = cu->getCbf(state.bakAbsPartIdx, TEXT_CHROMA_U, trIdx);
+            cbfV = cu->getCbf(state.bakAbsPartIdx, TEXT_CHROMA_V, trIdx);
         }
     }
 
@@ -176,22 +177,22 @@ void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offs
         absPartIdxStep >>= 2;
         const uint32_t partNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
 
-        encodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
     }
     else
     {
@@ -220,7 +221,7 @@ void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offs
             {
                 if (bCodeDQP)
                 {
-                    encodeQP(cu, m_bakAbsPartIdxCU);
+                    encodeQP(cu, state.bakAbsPartIdxCU);
                     bCodeDQP = false;
                 }
             }
@@ -242,7 +243,7 @@ void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offs
                 for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
                 {
                     TURecurse tuIterator;
-                    initTUEntropySection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, m_bakAbsPartIdx);
+                    initTUEntropySection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, state.bakAbsPartIdx);
                     coeff_t* coeffChroma = cu->getCoeff((TextType)chromaId);
                     do
                     {
@@ -250,7 +251,7 @@ void Entropy::encodeTransform(TComDataCU* cu, uint32_t offsetLuma, uint32_t offs
                         if (cbf)
                         {
                             uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
-                            m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + m_bakChromaOffset + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                            m_entropyCoder->codeCoeffNxN(cu, (coeffChroma + state.bakChromaOffset + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -378,7 +379,8 @@ void Entropy::encodeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, u
     }
 
     uint32_t absPartIdxStep = cu->getPic()->getNumPartInCU() >> (depth << 1);
-    encodeTransform(cu, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, cuSize, 0, bCodeDQP);
+    CoeffCodeState state;
+    encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, cuSize, 0, bCodeDQP);
 }
 
 void Entropy::encodeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)

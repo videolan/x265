@@ -164,9 +164,13 @@ class Entropy
 public:
 
     SBac*     m_entropyCoder;
-    uint32_t  m_bakAbsPartIdx;
-    uint32_t  m_bakChromaOffset;
-    uint32_t  m_bakAbsPartIdxCU;
+
+    struct CoeffCodeState
+    {
+        uint32_t  bakAbsPartIdx;
+        uint32_t  bakChromaOffset;
+        uint32_t  bakAbsPartIdxCU;
+    };
 
     void setEntropyCoder(SBac* e, TComSlice* slice) { m_entropyCoder = e; m_entropyCoder->setSlice(slice); }
     void setBitstream(BitInterface* p)  { m_entropyCoder->setBitstream(p); }
@@ -241,7 +245,7 @@ private:
 
     void initTUEntropySection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU);
     bool isNextTUSection(TURecurse *TUIterator);
-    void encodeTransform(TComDataCU* cu, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
+    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 };
 }
 
