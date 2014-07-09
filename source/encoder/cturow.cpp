@@ -66,7 +66,6 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
         // Load SBAC coder context from previous row.
         m_rdSbacCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
 
-
     // setup thread local data structures to use this row's CABAC state
     tld.m_search.m_sbacCoder = &m_rdGoOnSbacCoder;
     tld.m_search.m_rdSbacCoders = m_rdSbacCoders;

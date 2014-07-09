@@ -427,9 +427,7 @@ void TEncCu::compressCU(TComDataCU* cu)
 void TEncCu::encodeCU(TComDataCU* cu, bool bIsCounting)
 {
     if (cu->getSlice()->getPPS()->getUseDQP())
-    {
         setdQPFlag(true);
-    }
 
     // Encode CU data
     m_bBitCounting = bIsCounting;
