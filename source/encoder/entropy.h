@@ -124,7 +124,7 @@ public:
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
-    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth, uint32_t absPartIdxStep, uint32_t width, uint32_t height, bool lowestLevel);
+    void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
@@ -153,6 +153,12 @@ public:
     void estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
     void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
+
+    // temporary helper function
+    void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
+    {
+        estBit(estBitsSbac, trSize, ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA);
+    }
 
 private:
 
@@ -208,7 +214,9 @@ public:
     void encodeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)              { m_entropyCoder->codeMergeFlag(cu, absPartIdx); }
     void encodeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)             { m_entropyCoder->codeMergeIndex(cu, absPartIdx); }
     void encodeMvdPU(TComDataCU* cu, uint32_t absPartIdx, int list)        { m_entropyCoder->codeMvd(cu, absPartIdx, list); }
+
     void encodeMVPIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)     { m_entropyCoder->codeMVPIdx(cu->getMVPIdx(list, absPartIdx)); }
+    
     void encodeIntraDirModeChroma(TComDataCU* cu, uint32_t absPartIdx)     { m_entropyCoder->codeIntraDirChroma(cu, absPartIdx); }
     void encodeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)          { m_entropyCoder->codeTransformSubdivFlag(symbol, ctx); }
     void encodeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)              { m_entropyCoder->codeQtRootCbf(cu, absPartIdx); }
@@ -231,7 +239,7 @@ public:
     }
     void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
     {
-        m_entropyCoder->codeQtCbf(cu, absPartIdx, ttype, trDepth, absPartIdxStep, width, height, lowestLevel);
+        m_entropyCoder->codeQtCbf(cu, absPartIdx, absPartIdxStep, width, height, ttype, trDepth, lowestLevel);
     }
     void encodeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
     {
