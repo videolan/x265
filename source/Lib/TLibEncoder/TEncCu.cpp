@@ -322,9 +322,8 @@ void TEncCu::init(Encoder* top)
 void TEncCu::compressCU(TComDataCU* cu)
 {
     if (cu->getSlice()->getPPS()->getUseDQP())
-    {
-        setdQPFlag(true);
-    }
+        m_bEncodeDQP = true;
+
     // initialize CU data
     m_bestCU[0]->initCU(cu->getPic(), cu->getAddr());
     m_tempCU[0]->initCU(cu->getPic(), cu->getAddr());
@@ -427,7 +426,7 @@ void TEncCu::compressCU(TComDataCU* cu)
 void TEncCu::encodeCU(TComDataCU* cu, bool bIsCounting)
 {
     if (cu->getSlice()->getPPS()->getUseDQP())
-        setdQPFlag(true);
+        m_bEncodeDQP = true;
 
     // Encode CU data
     m_bBitCounting = bIsCounting;
@@ -1118,9 +1117,7 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     if ((g_maxCUSize >> depth) >= slice->getPPS()->getMinCuDQPSize() && slice->getPPS()->getUseDQP())
-    {
-        setdQPFlag(true);
-    }
+        m_bEncodeDQP = true;
 
     if (!bInsidePicture)
     {
@@ -1174,10 +1171,8 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
     m_sbacCoder->codePredInfo(cu, absPartIdx);
 
-    // Encode Coefficients
-    bool bCodeDQP = getdQPFlag();
-    m_sbacCoder->codeCoeff(cu, absPartIdx, depth, cu->getCUSize(absPartIdx), bCodeDQP);
-    setdQPFlag(bCodeDQP);
+    // Encode Coefficients, allow codeCoeff() to modify m_bEncodeDQP
+    m_sbacCoder->codeCoeff(cu, absPartIdx, depth, cu->getCUSize(absPartIdx), m_bEncodeDQP);
 
     // --- write terminating bit ---
     finishCU(cu, absPartIdx, depth);
@@ -1361,8 +1356,8 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->m_mvBits = m_sbacCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
-    bool bCodeDQP = getdQPFlag();
-    m_sbacCoder->codeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
+    bool bEncodeDQP = m_bEncodeDQP;
+    m_sbacCoder->codeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bEncodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
@@ -1410,7 +1405,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     outTempCU->m_mvBits = m_sbacCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
-    bool bCodeDQP = getdQPFlag();
+    bool bCodeDQP = m_bEncodeDQP;
     m_sbacCoder->codeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();

@@ -69,9 +69,8 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     cu->m_mvBits += m_sbacCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
-    bool bCodeDQP = getdQPFlag();
+    bool bCodeDQP = m_bEncodeDQP;
     m_sbacCoder->codeCoeff(cu, 0, depth, cu->getCUSize(0), bCodeDQP);
-
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
