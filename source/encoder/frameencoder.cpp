@@ -602,9 +602,6 @@ void FrameEncoder::compressFrame()
 
 void FrameEncoder::encodeSlice()
 {
-    // choose entropy coder
-    TComSlice* slice = m_frame->getSlice();
-
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
     DTRACE_CABAC_VL(g_nSymbolCounter++);
@@ -614,14 +611,18 @@ void FrameEncoder::encodeSlice()
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-    m_tld.m_cuCoder.setBitCounting(false);
-    for (int i = 0; i < m_numRows; i++)
-        m_rows[i].m_rowEntropyCoder.resetEntropy(slice);
-
+    TComSlice* slice = m_frame->getSlice();
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+
+    m_tld.m_cuCoder.setBitCounting(false);
+    for (int i = 0; i < numSubstreams; i++)
+    {
+        m_rows[i].m_rowEntropyCoder.resetEntropy(slice);
+        m_rows[i].m_rowEntropyCoder.setBitstream(&m_outStreams[i]);
+    }
 
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
@@ -634,10 +635,10 @@ void FrameEncoder::encodeSlice()
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            getRowCoder(subStrm)->loadContexts(*getBufferSBac(lin - 1));
+            m_rows[subStrm].m_rowEntropyCoder.loadContexts(m_rows[lin - 1].m_bufferSbacCoder);
 
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
-        m_sbacCoder.load(*getRowCoder(subStrm));
+        m_sbacCoder.load(m_rows[subStrm].m_rowEntropyCoder);
 
         if (slice->getSPS()->getUseSAO())
         {
@@ -680,11 +681,11 @@ void FrameEncoder::encodeSlice()
 #endif
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        getRowCoder(subStrm)->load(m_sbacCoder);
+        m_rows[subStrm].m_rowEntropyCoder.load(m_sbacCoder);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            getBufferSBac(lin)->loadContexts(*getRowCoder(subStrm));
+            m_rows[lin].m_bufferSbacCoder.loadContexts(m_rows[subStrm].m_rowEntropyCoder);
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
@@ -699,9 +700,8 @@ void FrameEncoder::encodeSlice()
     // flush lines
     for (int i = 0; i < numSubstreams; i++)
     {
-        getRowCoder(i)->setBitstream(&m_outStreams[i]);
-        getRowCoder(i)->codeTerminatingBit(1);
-        getRowCoder(i)->codeSliceFinish();
+        m_rows[i].m_rowEntropyCoder.codeTerminatingBit(1);
+        m_rows[i].m_rowEntropyCoder.codeSliceFinish();
         m_outStreams[i].writeByteAlignment();
     }
 }
