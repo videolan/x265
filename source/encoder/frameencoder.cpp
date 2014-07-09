@@ -212,23 +212,21 @@ void FrameEncoder::noiseReductionUpdate()
 
 void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
 {
-    Entropy* entropyCoder = getEntropyCoder(0);
-
     /* headers for start of bitstream */
     bs.resetBits();
-    entropyCoder->setEntropyCoder(&m_sbacCoder, NULL);
-    entropyCoder->setBitstream(&bs);
-    entropyCoder->encodeVPS(&m_top->m_vps);
+    m_sbacCoder.setSlice(NULL);
+    m_sbacCoder.setBitstream(&bs);
+    m_sbacCoder.codeVPS(&m_top->m_vps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    entropyCoder->encodeSPS(&m_sps);
+    m_sbacCoder.codeSPS(&m_sps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    entropyCoder->encodePPS(&m_pps);
+    m_sbacCoder.codePPS(&m_pps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -344,8 +342,8 @@ void FrameEncoder::compressFrame()
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->getPOC() || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
-        entropyCoder->setBitstream(&m_bs);
-        entropyCoder->encodeAUD(slice);
+        m_sbacCoder.setBitstream(&m_bs);
+        m_sbacCoder.codeAUD(slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
