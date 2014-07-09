@@ -114,7 +114,7 @@ public:
     void compressCTURows();
 
     /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice(Bitstream* substreams);
+    void encodeSlice();
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);

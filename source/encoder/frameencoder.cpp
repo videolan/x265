@@ -559,7 +559,7 @@ void FrameEncoder::compressFrame()
             m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
         }
     }
-    encodeSlice(m_outStreams);
+    encodeSlice();
 
     // flush per-row streams
     for (uint32_t i = 0; i < numSubstreams; i++)
@@ -631,7 +631,7 @@ void FrameEncoder::compressFrame()
     m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
 }
 
-void FrameEncoder::encodeSlice(Bitstream* substreams)
+void FrameEncoder::encodeSlice()
 {
     // choose entropy coder
     Entropy *entropyCoder = getEntropyCoder(0);
@@ -665,7 +665,7 @@ void FrameEncoder::encodeSlice(Bitstream* substreams)
         uint32_t subStrm = lin % numSubstreams;
         TComDataCU* cu = m_frame->getCU(cuAddr);
 
-        entropyCoder->setBitstream(&substreams[subStrm]);
+        entropyCoder->setBitstream(&m_outStreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
