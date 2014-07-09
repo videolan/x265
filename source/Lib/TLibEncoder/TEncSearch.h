@@ -44,10 +44,10 @@
 #include "TLibCommon/TComPattern.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
-#include "TEncEntropy.h"
-#include "TEncSbac.h"
 #include "bitcost.h"
 #include "motion.h"
+
+#include "entropy.h"
 
 #define MVP_IDX_BITS 1
 
@@ -104,8 +104,8 @@ public:
     MotionEstimate   m_me;
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
-    TEncSbac***     m_rdSbacCoders;
-    TEncSbac*       m_rdGoOnSbacCoder;
+    SBac***         m_rdSbacCoders;
+    SBac*           m_rdGoOnSbacCoder;
     bool            m_bFrameParallel;
 
 protected:
@@ -122,7 +122,7 @@ public:
     // interface to classes
     TComTrQuant*    m_trQuant;
     RDCost*         m_rdCost;
-    TEncEntropy*    m_entropyCoder;
+    Entropy*        m_entropyCoder;
     x265_param*     m_param;
 
     bool            m_bEnableRDOQ;
@@ -133,11 +133,11 @@ public:
 
 public:
 
-    void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
+    void setRDSbacCoder(SBac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
 
-    void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
+    void setEntropyCoder(Entropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
-    void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
+    void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
     void setQP(int qp, int qpCb, int qpCr);
 
@@ -182,9 +182,9 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t xSymbolBitsInter(TComDataCU* cu);
-    bool isNextSection(TComTURecurse *TUIterator);
-    bool isLastSection(TComTURecurse *TUIterator);
-    void initSection(TComTURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU = 0);
+    bool isNextSection(TURecurse *TUIterator);
+    bool isLastSection(TURecurse *TUIterator);
+    void initSection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU = 0);
     void offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
 protected:

@@ -32,10 +32,10 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
+#include "entropy.h"
 #include "framefilter.h"
 #include "cturow.h"
 #include "ratecontrol.h"
@@ -95,10 +95,10 @@ public:
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
-    TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
-    TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
-    TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
-    TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
+    Entropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
+    SBac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
+    SBac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
+    SBac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
 
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
@@ -159,7 +159,7 @@ protected:
     x265_param*              m_param;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
-    TEncSbac                 m_sbacCoder;
+    SBac                     m_sbacCoder;
     TEncBinCABAC             m_binCoderCABAC;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;

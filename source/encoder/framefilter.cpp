@@ -61,7 +61,7 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* rdGoOnSbacCoder)
 {
     m_param = top->m_param;
     m_frame = frame;
@@ -135,7 +135,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
+        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((SBac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
         m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
     }
 

@@ -492,16 +492,16 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
     }
 
     int maxDepth = 4;
-    m_rdSbacCoders = X265_MALLOC(TEncSbac * *, maxDepth + 1);
+    m_rdSbacCoders = X265_MALLOC(SBac * *, maxDepth + 1);
     m_binCoderCABAC = X265_MALLOC(TEncBinCABAC * *, maxDepth + 1);
 
     for (int d = 0; d < maxDepth + 1; d++)
     {
-        m_rdSbacCoders[d] = X265_MALLOC(TEncSbac*, CI_NUM_SAO);
+        m_rdSbacCoders[d] = X265_MALLOC(SBac*, CI_NUM_SAO);
         m_binCoderCABAC[d] = X265_MALLOC(TEncBinCABAC*, CI_NUM_SAO);
         for (int ciIdx = 0; ciIdx < CI_NUM_SAO; ciIdx++)
         {
-            m_rdSbacCoders[d][ciIdx] = X265_MALLOC(TEncSbac, 1);
+            m_rdSbacCoders[d][ciIdx] = X265_MALLOC(SBac, 1);
             m_binCoderCABAC[d][ciIdx] = X265_MALLOC(TEncBinCABAC, true);
             m_rdSbacCoders[d][ciIdx]->init(m_binCoderCABAC[d][ciIdx]);
         }
@@ -511,7 +511,7 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder)
+void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, Entropy* entropyCoder, SBac* rdGoOnSbacCoder)
 {
     m_pic = pic;
     m_entropyCoder = entropyCoder;

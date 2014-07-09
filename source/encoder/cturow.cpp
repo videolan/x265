@@ -64,21 +64,21 @@ bool CTURow::create()
 {
     m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
     m_sbacCoder.init(&m_binCoderCABAC);
-    m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
+    m_rdSbacCoders = new SBac * *[g_maxCUDepth + 1];
     m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
     if (!m_rdSbacCoders || !m_binCodersCABAC)
         return false;
 
     for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
     {
-        m_rdSbacCoders[depth] = new TEncSbac*[CI_NUM];
+        m_rdSbacCoders[depth] = new SBac*[CI_NUM];
         m_binCodersCABAC[depth] = new TEncBinCABAC*[CI_NUM];
         if (!m_rdSbacCoders[depth] || !m_rdSbacCoders[depth])
             return false;
 
         for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
         {
-            m_rdSbacCoders[depth][ciIdx] = new TEncSbac;
+            m_rdSbacCoders[depth][ciIdx] = new SBac;
             m_binCodersCABAC[depth][ciIdx] = new TEncBinCABAC(true);
             if (m_rdSbacCoders[depth][ciIdx] && m_binCodersCABAC[depth][ciIdx])
                 m_rdSbacCoders[depth][ciIdx]->init(m_binCodersCABAC[depth][ciIdx]);
@@ -99,7 +99,7 @@ void CTURow::setThreadLocalData(ThreadLocalData& tld)
     tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
 }
 
-void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
+void CTURow::processCU(TComDataCU *cu, TComSlice *slice, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
     {

@@ -1115,7 +1115,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         uint32_t singlePsyEnergy = 0;
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) +  trDepthC) << 1);
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
 
@@ -1372,7 +1372,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepthC) << 1);
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
 
@@ -1810,7 +1810,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
     cu->setChromIntraDirSubParts(bestMode, 0, depth);
 }
 
-bool TEncSearch::isNextSection(TComTURecurse *tuIterator)
+bool TEncSearch::isNextSection(TURecurse *tuIterator)
 {
     if (tuIterator->m_splitMode == DONT_SPLIT)
     {
@@ -1826,12 +1826,12 @@ bool TEncSearch::isNextSection(TComTURecurse *tuIterator)
     }
 }
 
-bool TEncSearch::isLastSection(TComTURecurse *tuIterator)
+bool TEncSearch::isLastSection(TURecurse *tuIterator)
 {
     return (tuIterator->m_section + 1) >= (1 << tuIterator->m_splitMode);
 }
 
-void TEncSearch::initSection(TComTURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU)
+void TEncSearch::initSection(TURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU)
 {
     tuIterator->m_section           = 0;
     tuIterator->m_absPartIdxTURelCU = m_absPartIdxTU;
@@ -1854,7 +1854,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
     int chFmt = cu->getChromaFormat();
     int part = partitionFromSize(tuSize);
 
-    TComTURecurse tuIterator;
+    TURecurse tuIterator;
 
     initSection(&tuIterator, splitMode, absPartIdx);
 
@@ -2721,7 +2721,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
         if (bCodeChroma)
         {
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
             do
@@ -2912,7 +2912,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         if (bCodeChroma)
         {
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
             do
@@ -3072,7 +3072,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         uint32_t psyEnergyV = 0;
         if (bCodeChroma)
         {
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
             int partSizeC = partitionFromSize(trSizeC);
@@ -3352,7 +3352,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
             m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
 
-            TComTURecurse tuIterator;
+            TURecurse tuIterator;
             initSection(&tuIterator, splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
             int partSizeC = partitionFromSize(trSizeC);

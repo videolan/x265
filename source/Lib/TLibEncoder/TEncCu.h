@@ -50,7 +50,7 @@
 #include "TLibCommon/TComDataCU.h"
 #include "shortyuv.h"
 
-#include "TEncEntropy.h"
+#include "entropy.h"
 #include "TEncSearch.h"
 
 //! \ingroup TLibEncoder
@@ -80,8 +80,7 @@ namespace x265 {
 // private namespace
 
 class Encoder;
-class TEncSbac;
-class TEncCavlc;
+class SBac;
 
 // ====================================================================================================================
 // Class definition
@@ -120,12 +119,12 @@ private:
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
-    TEncEntropy* m_entropyCoder;
+    Entropy*     m_entropyCoder;
     bool         m_bBitCounting;
 
     // SBAC RD
-    TEncSbac***  m_rdSbacCoders;
-    TEncSbac*    m_rdGoOnSbacCoder;
+    SBac***      m_rdSbacCoders;
+    SBac*        m_rdGoOnSbacCoder;
 
     uint8_t      m_totalDepth;
 
@@ -145,13 +144,13 @@ public:
     void compressCU(TComDataCU* cu);
     void encodeCU(TComDataCU* cu);
 
-    void setRDSbacCoder(TEncSbac*** rdSbacCoder) { m_rdSbacCoders = rdSbacCoder; }
+    void setRDSbacCoder(SBac*** rdSbacCoder) { m_rdSbacCoders = rdSbacCoder; }
 
-    void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
+    void setEntropyCoder(Entropy* entropyCoder) { m_entropyCoder = entropyCoder; }
 
     void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
 
-    void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
+    void setRDGoOnSbacCoder(SBac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
 
     void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
 

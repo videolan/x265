@@ -43,8 +43,7 @@
 #include "frame.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
-#include "TEncEntropy.h"
-#include "TEncSbac.h"
+#include "entropy.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -60,25 +59,25 @@ class TEncSampleAdaptiveOffset : public TComSampleAdaptiveOffset
 {
 private:
 
-    TEncEntropy*      m_entropyCoder;
-    TEncSbac***       m_rdSbacCoders;            ///< for CABAC
-    TEncSbac*         m_rdGoOnSbacCoder;
-    TEncBinCABAC***   m_binCoderCABAC;          ///< temporal CABAC state storage for RD computation
+    Entropy*        m_entropyCoder;
+    SBac***         m_rdSbacCoders;           ///< for CABAC
+    SBac*           m_rdGoOnSbacCoder;
+    TEncBinCABAC*** m_binCoderCABAC;          ///< temporal CABAC state storage for RD computation
 
-    int64_t  ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    int64_t  ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    int64_t  ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    int64_t ***m_count;    //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t ***m_offset;   //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    int64_t ***m_offsetOrg; //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
     int64_t(*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];    //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     int64_t(*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; //[LCU][YCbCr][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    int64_t  **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    int64_t  **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    double **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
-    double *m_costPartBest; //[MAX_NUM_SAO_PART];
-    int64_t  *m_distOrg;    //[MAX_NUM_SAO_PART];
-    int    *m_typePartBest; //[MAX_NUM_SAO_PART];
-    int     m_offsetThY;
-    int     m_offsetThC;
-    double  m_depthSaoRate[2][4];
+    int64_t **m_rate;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    int64_t **m_dist;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    double  **m_cost;      //[MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE];
+    double  *m_costPartBest; //[MAX_NUM_SAO_PART];
+    int64_t *m_distOrg;    //[MAX_NUM_SAO_PART];
+    int     *m_typePartBest; //[MAX_NUM_SAO_PART];
+    int      m_offsetThY;
+    int      m_offsetThC;
+    double   m_depthSaoRate[2][4];
 
 public:
 
@@ -90,7 +89,7 @@ public:
     TEncSampleAdaptiveOffset();
     virtual ~TEncSampleAdaptiveOffset();
 
-    void startSaoEnc(Frame* pic, TEncEntropy* entropyCoder, TEncSbac* rdGoOnSbacCoder);
+    void startSaoEnc(Frame* pic, Entropy* entropyCoder, SBac* rdGoOnSbacCoder);
     void endSaoEnc();
     void resetStats();
     void SAOProcess(SAOParam *saoParam);

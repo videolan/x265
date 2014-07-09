@@ -30,10 +30,10 @@
 
 #include "TLibEncoder/TEncCu.h"
 #include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncSbac.h"
 #include "TLibEncoder/TEncBinCoderCABAC.h"
 
 #include "rdcost.h"
+#include "entropy.h"
 
 namespace x265 {
 // private x265 namespace
@@ -64,19 +64,19 @@ public:
 
     CTURow() : m_rdGoOnBinCodersCABAC(true) {}
 
-    TEncSbac               m_sbacCoder;
-    TEncSbac               m_rdGoOnSbacCoder;
-    TEncSbac               m_bufferSbacCoder;
-    TEncBinCABAC           m_binCoderCABAC;
-    TEncBinCABAC           m_rdGoOnBinCodersCABAC;
-    TEncEntropy            m_entropyCoder;
-    TEncSbac            ***m_rdSbacCoders;
-    TEncBinCABAC        ***m_binCodersCABAC;
+    SBac            m_sbacCoder;
+    SBac            m_rdGoOnSbacCoder;
+    SBac            m_bufferSbacCoder;
+    TEncBinCABAC    m_binCoderCABAC;
+    TEncBinCABAC    m_rdGoOnBinCodersCABAC;
+    Entropy         m_entropyCoder;
+    SBac         ***m_rdSbacCoders;
+    TEncBinCABAC ***m_binCodersCABAC;
 
     // to compute stats for 2 pass
-    double                 m_iCuCnt;
-    double                 m_pCuCnt;
-    double                 m_skipCuCnt;
+    double          m_iCuCnt;
+    double          m_pCuCnt;
+    double          m_skipCuCnt;
 
     bool create();
 
@@ -104,7 +104,7 @@ public:
 
     void setThreadLocalData(ThreadLocalData& tld);
 
-    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
+    void processCU(TComDataCU *cu, TComSlice *slice, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 

@@ -212,7 +212,7 @@ void FrameEncoder::noiseReductionUpdate()
 
 void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
 {
-    TEncEntropy* entropyCoder = getEntropyCoder(0);
+    Entropy* entropyCoder = getEntropyCoder(0);
 
     /* headers for start of bitstream */
     bs.resetBits();
@@ -332,7 +332,7 @@ void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t      startCompressTime = x265_mdate();
-    TEncEntropy* entropyCoder      = getEntropyCoder(0);
+    Entropy*     entropyCoder      = getEntropyCoder(0);
     TComSlice*   slice             = m_frame->getSlice();
     int          totalCoded        = m_rce.encodeOrder;
 
@@ -637,7 +637,7 @@ void FrameEncoder::compressFrame()
 void FrameEncoder::encodeSlice(Bitstream* substreams)
 {
     // choose entropy coder
-    TEncEntropy *entropyCoder = getEntropyCoder(0);
+    Entropy *entropyCoder = getEntropyCoder(0);
     TComSlice* slice = m_frame->getSlice();
 
 #if ENC_DEC_TRACE
@@ -949,7 +949,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 m_frame->m_qpaAq[row] += qp;
         }
 
-        TEncSbac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        SBac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
         codeRow.m_entropyCoder.setEntropyCoder(&m_sbacCoder, m_frame->getSlice());
         codeRow.m_entropyCoder.resetEntropy();
         codeRow.processCU(cu, m_frame->getSlice(), bufSbac, tld, m_param->bEnableWavefront && col == 1);

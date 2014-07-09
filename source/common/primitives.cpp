@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
-#include "TLibEncoder/TEncSbac.h"
 #include "primitives.h"
 #include "common.h"
 
