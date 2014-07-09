@@ -2472,8 +2472,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_entropyCoder->encodeMergeIndex(cu, 0);
 
         bits = m_entropyCoder->getNumberOfWrittenBits();
-        m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
-
+        
         cu->m_totalBits       = bits;
         cu->m_totalDistortion = distortion;
         if (m_rdCost->psyRdEnabled())
