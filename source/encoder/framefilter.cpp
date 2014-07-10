@@ -56,7 +56,7 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* rdGoOnSbacCoder)
 {
     m_param = top->m_param;
     m_frame = frame;

@@ -473,7 +473,7 @@ void TEncSampleAdaptiveOffset::createEncBuffer()
 /** Start SAO encoder
  * \param pic, entropyCoder, rdSbacCoder, rdGoOnSbacCoder
  */
-void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, SBac* rdGoOnSbacCoder)
+void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, Entropy* rdGoOnSbacCoder)
 {
     m_pic = pic;
 

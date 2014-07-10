@@ -84,7 +84,7 @@ struct TURecurse
     }
 };
 
-class SBac : public SyntaxElementWriter
+class Entropy : public SyntaxElementWriter
 {
 public:
 
@@ -100,7 +100,7 @@ public:
     uint64_t      m_fracBits;
     bool          m_bIsCounter;
 
-    SBac();
+    Entropy();
 
     void setBitstream(BitInterface* p) { m_bitIf = p; }
 
@@ -115,10 +115,10 @@ public:
     void resetEntropy(TComSlice *slice);
 
     // SBAC RD
-    void load(SBac& src);
-    void loadIntraDirModeLuma(SBac& src);
-    void store(SBac& dest);
-    void loadContexts(SBac& src)       { copyContextsFrom(src); }
+    void load(Entropy& src);
+    void loadIntraDirModeLuma(Entropy& src);
+    void store(Entropy& dest);
+    void loadContexts(Entropy& src)       { copyContextsFrom(src); }
 
     void codeVPS(TComVPS* vps);
     void codeSPS(TComSPS* sps, TComScalingList *scalingList);
@@ -173,7 +173,7 @@ private:
     /* CABAC private methods */
     void start();
     void finish();
-    void copyState(SBac& other);
+    void copyState(Entropy& other);
     void flush();
 
     void encodeBin(uint32_t binValue, ContextModel& ctxModel);
@@ -217,8 +217,8 @@ private:
 
     void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
-    void copyFrom(SBac& src);
-    void copyContextsFrom(SBac& src);
+    void copyFrom(Entropy& src);
+    void copyContextsFrom(Entropy& src);
 
     static bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 };

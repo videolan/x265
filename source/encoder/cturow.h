@@ -61,11 +61,11 @@ class CTURow
 {
 public:
 
-    SBac            m_rowEntropyCoder; /* only used by frameEncoder::encodeSlice() */
+    Entropy         m_rowEntropyCoder; /* only used by frameEncoder::encodeSlice() */
 
-    SBac            m_rdGoOnSbacCoder;
-    SBac            m_bufferSbacCoder;
-    SBac            m_rdSbacCoders[MAX_CU_DEPTH + 1][CI_NUM];
+    Entropy         m_rdGoOnSbacCoder;
+    Entropy         m_bufferSbacCoder;
+    Entropy         m_rdSbacCoders[MAX_CU_DEPTH + 1][CI_NUM];
 
     // to compute stats for 2 pass
     double          m_iCuCnt;
@@ -98,7 +98,7 @@ public:
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
-    void processCU(TComDataCU *cu, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
+    void processCU(TComDataCU *cu, Entropy *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 
