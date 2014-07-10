@@ -95,7 +95,7 @@ typedef struct _SaoQTPart
     //---- encoder only end -----//
 } SAOQTPart;
 
-typedef struct _SaoLcuParam
+struct SaoLcuParam
 {
     bool       mergeUpFlag;
     bool       mergeLeftFlag;
@@ -117,7 +117,7 @@ typedef struct _SaoLcuParam
         offset[2]     = 0;
         offset[3]     = 0;
     }
-} SaoLcuParam;
+};
 
 struct SAOParam
 {

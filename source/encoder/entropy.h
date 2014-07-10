@@ -30,12 +30,11 @@
 
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/ContextTables.h"
-#include "TLibCommon/TComSampleAdaptiveOffset.h"
 
 namespace x265 {
 // private namespace
 
-class TComScalingList;
+struct SaoLcuParam;
 struct EstBitsSbac;
 
 enum SplitType
