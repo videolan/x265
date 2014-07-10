@@ -201,6 +201,8 @@ public:
 
     char* statsString(EncStats&, char*);
 
+    char* statsCSVString(EncStats& stat, char* buffer);
+
     TComScalingList* getScalingList() { return &m_scalingList; }
 
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }

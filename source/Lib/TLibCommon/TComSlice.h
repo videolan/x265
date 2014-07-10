@@ -170,14 +170,14 @@ public:
 
     void     setUseTransformSkip(bool b)                        { m_useTransformSkip = b; }
 
-    int32_t*     getScalingListAddress(uint32_t sizeId, uint32_t listId)    { return m_scalingListCoef[sizeId][listId]; }          //!< get matrix coefficient
+    int32_t* getScalingListAddress(uint32_t sizeId, uint32_t listId)    { return m_scalingListCoef[sizeId][listId]; }          //!< get matrix coefficient
 
-    bool     checkPredMode(uint32_t sizeId, uint32_t listId);
+    bool     checkPredMode(uint32_t sizeId, int listId);
     void     setRefMatrixId(uint32_t sizeId, uint32_t listId, uint32_t u)   { m_refMatrixId[sizeId][listId] = u;    }                    //!< set reference matrix ID
 
-    uint32_t     getRefMatrixId(uint32_t sizeId, uint32_t listId)           { return m_refMatrixId[sizeId][listId]; }                    //!< get reference matrix ID
+    uint32_t getRefMatrixId(uint32_t sizeId, uint32_t listId)           { return m_refMatrixId[sizeId][listId]; }                    //!< get reference matrix ID
 
-    int32_t*     getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);                                                         //!< get default matrix coefficient
+    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);                                                         //!< get default matrix coefficient
     void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
     void     setScalingListDC(uint32_t sizeId, uint32_t listId, uint32_t u) { m_scalingListDC[sizeId][listId] = u; }                   //!< set DC value
 
@@ -825,9 +825,6 @@ private:
     uint32_t    m_ltRefPicPocLsbSps[33];
     bool        m_usedByCurrPicLtSPSFlag[33];
 
-    // Max physical transform size
-    uint32_t    m_maxTrSize;
-
     int m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
 
@@ -953,11 +950,6 @@ public:
     bool      getTMVPFlagsPresent() const   { return m_TMVPFlagsPresent; }
 
     void      setTMVPFlagsPresent(bool b)   { m_TMVPFlagsPresent = b; }
-
-    // physical transform
-    void setMaxTrSize(uint32_t u)   { m_maxTrSize = u; }
-
-    uint32_t getMaxTrSize() const   { return m_maxTrSize; }
 
     // AMP accuracy
     int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }

@@ -50,7 +50,7 @@
 #include "TLibCommon/TComDataCU.h"
 #include "shortyuv.h"
 
-#include "TEncEntropy.h"
+#include "entropy.h"
 #include "TEncSearch.h"
 
 //! \ingroup TLibEncoder
@@ -80,8 +80,7 @@ namespace x265 {
 // private namespace
 
 class Encoder;
-class TEncSbac;
-class TEncCavlc;
+class SBac;
 
 // ====================================================================================================================
 // Class definition
@@ -90,7 +89,7 @@ class TEncCavlc;
 /// CU encoder class
 class TEncCu
 {
-private:
+public:
 
     static const int MAX_PRED_TYPES = 6;
 
@@ -120,19 +119,17 @@ private:
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
-    TEncEntropy* m_entropyCoder;
+    SBac*        m_sbacCoder;
     bool         m_bBitCounting;
 
-    // SBAC RD
-    TEncSbac***  m_rdSbacCoders;
-    TEncSbac*    m_rdGoOnSbacCoder;
+    // RD SBac pointers
+    SBac       (*m_rdSbacCoders)[CI_NUM];
+    SBac*        m_rdGoOnSbacCoder;
 
     uint8_t      m_totalDepth;
 
     bool         m_bEncodeDQP;
     bool         m_CUTransquantBypass;
-
-public:
 
     StatisticLog  m_sliceTypeLog[3];
     StatisticLog* m_log;
@@ -143,21 +140,7 @@ public:
     bool create(uint8_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);
-    void encodeCU(TComDataCU* cu);
-
-    void setRDSbacCoder(TEncSbac*** rdSbacCoder) { m_rdSbacCoders = rdSbacCoder; }
-
-    void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
-
-    void setPredSearch(TEncSearch* predSearch) { m_search = predSearch; }
-
-    void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
-
-    void setTrQuant(TComTrQuant* trQuant) { m_trQuant = trQuant; }
-
-    void setRdCost(RDCost* rdCost) { m_rdCost = rdCost; }
-
-    void setBitCounting(bool b) { m_bBitCounting = b; }
+    void encodeCU(TComDataCU* cu, bool bIsCounting);
 
 protected:
 
@@ -182,10 +165,6 @@ protected:
 
     void xCopyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void xCopyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);
-
-    bool getdQPFlag()        { return m_bEncodeDQP; }
-
-    void setdQPFlag(bool b)  { m_bEncodeDQP = b; }
 
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);

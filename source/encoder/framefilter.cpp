@@ -33,24 +33,19 @@ using namespace x265;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
 
-// **************************************************************************
-// * LoopFilter
-// **************************************************************************
 FrameFilter::FrameFilter()
     : m_param(NULL)
-    , m_rdGoOnBinCodersCABAC(true)
+    , m_pic(NULL)
+    , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_pic = NULL;
-    m_frame = NULL;
+    m_sbacCoder.m_cabac.m_bIsCounter = true;
 }
 
 void FrameFilter::destroy()
 {
     if (m_param->bEnableLoopFilter)
-    {
         m_loopFilter.destroy();
-    }
 
     if (m_param->bEnableSAO)
     {
@@ -61,7 +56,7 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* rdGoOnSbacCoder)
 {
     m_param = top->m_param;
     m_frame = frame;
@@ -75,9 +70,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac*
     m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
 
     if (m_param->bEnableLoopFilter)
-    {
         m_loopFilter.create(g_maxCUDepth);
-    }
 
     if (m_param->bEnableSAO)
     {
@@ -97,10 +90,8 @@ void FrameFilter::start(Frame *pic)
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
-    m_entropyCoder.setBitstream(&m_bitCounter);
-    m_rdGoOnBinCodersCABAC.m_fracBits = 0;
+    m_sbacCoder.setBitstream(&m_bitCounter);
+    m_sbacCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
@@ -135,8 +126,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
-        m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
+        m_sbacCoder.m_cabac.m_fracBits = m_rdGoOnSbacCoderRow0->m_cabac.m_fracBits;
+        m_sao.startSaoEnc(m_pic, &m_sbacCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();

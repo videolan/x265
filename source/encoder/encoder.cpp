@@ -41,6 +41,14 @@
 
 #include "x265.h"
 
+static const char *summaryCSVHeader = 
+    "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
+    "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
+    "I count, I ave-QP, I kpbs, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
+    "P count, P ave-QP, P kpbs, P-PSNR Y, P-PSNR U, P-PSNR V, P-SSIM (dB), "
+    "B count, B ave-QP, B kpbs, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
+    "Version\n";
+
 using namespace x265;
 
 Encoder::Encoder()
@@ -135,10 +143,11 @@ void Encoder::create()
                     fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, ");
                     if (m_param->rc.rateControlMode == X265_RC_CRF)
                         fprintf(m_csvfpt, "RateFactor, ");
-                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), Encoding time, Elapsed time, List 0, List 1\n");
+                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), "
+                                      "Encoding time, Elapsed time, List 0, List 1\n");
                 }
                 else
-                    fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
+                    fputs(summaryCSVHeader, m_csvfpt);
             }
         }
     }
@@ -500,12 +509,44 @@ void EncStats::addQP(double aveQp)
     m_totalQp += aveQp;
 }
 
+char* Encoder::statsCSVString(EncStats& stat, char* buffer)
+{
+    if (!stat.m_numPics)
+    {
+        sprintf(buffer, "-, -, -, -, -, -, -, ");
+        return buffer;
+    }
+
+    double fps = (double)m_param->fpsNum / m_param->fpsDenom;
+    double scale = fps / 1000 / (double)stat.m_numPics;
+
+    int len = sprintf(buffer, "%-6d ", stat.m_numPics);
+
+    len += sprintf(buffer + len, "%2.2lf, ", stat.m_totalQp / (double)stat.m_numPics);
+    len += sprintf(buffer + len, "%-8.2lf, ", stat.m_accBits * scale);
+    if (m_param->bEnablePsnr)
+    {
+        len += sprintf(buffer + len, "%.3lf, %.3lf, %.3lf, ",
+                       stat.m_psnrSumY / (double)stat.m_numPics,
+                       stat.m_psnrSumU / (double)stat.m_numPics,
+                       stat.m_psnrSumV / (double)stat.m_numPics);
+    }
+    else
+        len += sprintf(buffer + len, "-, -, -, ");
+
+    if (m_param->bEnableSsim)
+        sprintf(buffer + len, "%.3lf, ", x265_ssim2dB(stat.m_globalSsim / (double)stat.m_numPics));
+    else
+        sprintf(buffer + len, "-, ");
+    return buffer;
+}
+
 char* Encoder::statsString(EncStats& stat, char* buffer)
 {
     double fps = (double)m_param->fpsNum / m_param->fpsDenom;
     double scale = fps / 1000 / (double)stat.m_numPics;
 
-    int len = sprintf(buffer, "%-6d ", stat.m_numPics);
+    int len = sprintf(buffer, "%6d, ", stat.m_numPics);
 
     len += sprintf(buffer + len, "Avg QP:%2.2lf", stat.m_totalQp / (double)stat.m_numPics);
     len += sprintf(buffer + len, "  kb/s: %-8.2lf", stat.m_accBits * scale);
@@ -761,8 +802,9 @@ void Encoder::writeLog(int argc, char **argv)
     {
         if (m_param->logLevel >= X265_LOG_DEBUG)
         {
-            fprintf(m_csvfpt, "Summary\n");
-            fprintf(m_csvfpt, "Command, Date/Time, Elapsed Time, FPS, Bitrate, Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), Version\n");
+            // adding summary to a per-frame csv log file needs a summary header
+            fprintf(m_csvfpt, "\nSummary\n");
+            fputs(summaryCSVHeader, m_csvfpt);
         }
         // CLI arguments or other
         for (int i = 1; i < argc; i++)
@@ -776,7 +818,7 @@ void Encoder::writeLog(int argc, char **argv)
         struct tm* timeinfo;
         time(&now);
         timeinfo = localtime(&now);
-        char buffer[128];
+        char buffer[200];
         strftime(buffer, 128, "%c", timeinfo);
         fprintf(m_csvfpt, ", %s, ", buffer);
 
@@ -798,6 +840,9 @@ void Encoder::writeLog(int argc, char **argv)
         else
             fprintf(m_csvfpt, " -, -,");
 
+        fputs(statsCSVString(m_analyzeI, buffer), m_csvfpt);
+        fputs(statsCSVString(m_analyzeP, buffer), m_csvfpt);
+        fputs(statsCSVString(m_analyzeB, buffer), m_csvfpt);
         fprintf(m_csvfpt, " %s\n", x265_version_str);
     }
 }
@@ -1051,8 +1096,6 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQuadtreeTUMaxDepthIntra(m_param->tuQTMaxIntraDepth);
 
     sps->setTMVPFlagsPresent(false);
-
-    sps->setMaxTrSize(1 << m_quadtreeTULog2MaxSize);
 
     for (uint32_t i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
     {
