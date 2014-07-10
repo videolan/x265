@@ -44,7 +44,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(Encoder *top, FrameEncoder *frame, int numRows, SBac* rdGoOnSbacCoder);
+    void init(Encoder *top, FrameEncoder *frame, int numRows, SBac* row0Coder);
 
     void destroy();
 
@@ -73,7 +73,7 @@ public:
     // SAO
     SBac                        m_sbacCoder;
     BitCounter                  m_bitCounter;
-    SBac*                       m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
+    SBac*                       m_sbacCoderRow0;  // to mimic HM behavior
     
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;
