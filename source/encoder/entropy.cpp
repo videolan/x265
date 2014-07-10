@@ -2476,19 +2476,6 @@ void SBac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
     }
 }
 
-/** Code SAO EO class or BO band position */
-void SBac::codeSaoUflc(uint32_t length, uint32_t code)
-{
-    encodeBinsEP(code, length);
-}
-
-/** Code SAO merge flags */
-void SBac::codeSaoMerge(uint32_t code)
-{
-    X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
-    encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
-}
-
 /** Code SAO type index */
 void SBac::codeSaoTypeIdx(uint32_t code)
 {
@@ -2663,11 +2650,6 @@ void SBac::copyContextsFrom(SBac& src)
     memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
 }
 
-void SBac::loadContexts(SBac& src)
-{
-    copyContextsFrom(src);
-}
-
 void SBac::start()
 {
     m_low = 0;
@@ -2719,12 +2701,6 @@ void SBac::flush()
     m_bitIf->write(1, 1);
     m_bitIf->writeAlignZero();
 
-    start();
-}
-
-/** Reset BAC register and counter values */
-void SBac::resetBac()
-{
     start();
 }
 

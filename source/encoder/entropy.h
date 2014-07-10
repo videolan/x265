@@ -117,7 +117,7 @@ public:
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
 
-    void resetBac();
+    void resetBac()                    { start(); }
     void resetBits();
     void zeroFract()                   { m_fracBits = 0;  }
 
@@ -129,7 +129,7 @@ public:
     void load(SBac& src);
     void loadIntraDirModeLuma(SBac& src);
     void store(SBac& dest);
-    void loadContexts(SBac& src);
+    void loadContexts(SBac& src)       { copyContextsFrom(src); }
 
     void codeVPS(TComVPS* vps);
     void codeSPS(TComSPS* sps, TComScalingList *scalingList);
@@ -147,10 +147,10 @@ public:
     void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
 
     void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol);
-    void codeSaoMerge(uint32_t code);
     void codeSaoTypeIdx(uint32_t code);
-    void codeSaoUflc(uint32_t length, uint32_t code);
-    void codeSAOSign(uint32_t code) { encodeBinEP(code); }
+    void codeSaoMerge(uint32_t code)                 { encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]); }
+    void codeSaoUflc(uint32_t length, uint32_t code) { encodeBinsEP(code, length); }
+    void codeSAOSign(uint32_t code)                  { encodeBinEP(code); }
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
 
