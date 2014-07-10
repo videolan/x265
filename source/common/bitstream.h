@@ -133,6 +133,25 @@ static inline int bs_size_se(int val)
         return bitSize[tmp >> 8] + 16;
 }
 
+#define WRITE_CODE(code, length, name) writeCode(code, length)
+#define WRITE_UVLC(code,         name) writeUvlc(code)
+#define WRITE_SVLC(code,         name) writeSvlc(code)
+#define WRITE_FLAG(code,         name) writeFlag(code)
+
+class SyntaxElementWriter
+{
+public:
+
+    BitInterface* m_bitIf;
+
+    SyntaxElementWriter() : m_bitIf(NULL) {}
+
+    void writeCode(uint32_t code, uint32_t length);
+    void writeUvlc(uint32_t code);
+    void writeSvlc(int32_t code);
+    void writeFlag(uint32_t code);
+};
+
 }
 
 #endif // ifndef X265_BITSTREAM_H

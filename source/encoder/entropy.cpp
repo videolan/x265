@@ -180,23 +180,12 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
     }
     else
     {
-        DTRACE_CABAC_VL(g_nSymbolCounter++);
-        DTRACE_CABAC_T("\tTrIdx: abspart=");
-        DTRACE_CABAC_V(absPartIdx);
-        DTRACE_CABAC_T("\tdepth=");
-        DTRACE_CABAC_V(depth);
-        DTRACE_CABAC_T("\ttrdepth=");
-        DTRACE_CABAC_V(cu->getTransformIdx(absPartIdx));
-        DTRACE_CABAC_T("\n");
-
         if (cu->getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu->getDepth(absPartIdx) && !cu->getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu->getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
             X265_CHECK(cu->getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
         else
-        {
             codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu->getTransformIdx(absPartIdx));
-        }
 
         if (cbfY || cbfU || cbfV)
         {
@@ -341,14 +330,7 @@ void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32
     uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
 
-    if (cu->isIntra(absPartIdx))
-    {
-        DTRACE_CABAC_VL(g_nSymbolCounter++)
-        DTRACE_CABAC_T("\tdecodeTransformIdx()\tCUDepth=")
-        DTRACE_CABAC_V(depth)
-        DTRACE_CABAC_T("\n")
-    }
-    else
+    if (!cu->isIntra(absPartIdx))
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
             codeQtRootCbf(cu, absPartIdx);
@@ -716,10 +698,6 @@ void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromS
 
 void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
 {
-#if ENC_DEC_TRACE
-    fprintf(g_hTrace, "=========== Sequence Parameter Set ID: %d ===========\n", sps->getSPSId());
-#endif
-
     WRITE_CODE(sps->getVPSId(),          4,       "sps_video_parameter_set_id");
     WRITE_CODE(sps->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1");
     WRITE_FLAG(sps->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag");
@@ -813,10 +791,6 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
 
 void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 {
-#if ENC_DEC_TRACE
-    fprintf(g_hTrace, "=========== Picture Parameter Set ID: %d ===========\n", pps->getPPSId());
-#endif
-
     WRITE_UVLC(pps->getPPSId(),                            "pps_pic_parameter_set_id");
     WRITE_UVLC(pps->getSPSId(),                            "pps_seq_parameter_set_id");
     WRITE_FLAG(0,                                          "dependent_slice_segments_enabled_flag");
@@ -870,9 +844,6 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 
 void SBac::codeVUI(TComVUI *vui, TComSPS* sps)
 {
-#if ENC_DEC_TRACE
-    fprintf(g_hTrace, "----------- vui_parameters -----------\n");
-#endif
     WRITE_FLAG(vui->getAspectRatioInfoPresentFlag(),  "aspect_ratio_info_present_flag");
     if (vui->getAspectRatioInfoPresentFlag())
     {
@@ -1273,10 +1244,6 @@ bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
 
 void SBac::codeSliceHeader(TComSlice* slice)
 {
-#if ENC_DEC_TRACE
-    fprintf(g_hTrace, "=========== Slice ===========\n");
-#endif
-
     //calculate number of bits required for slice address
     int maxSliceSegmentAddress = slice->getPic()->getNumCUsInFrame();
     int bitsSliceSegmentAddress = 0;
@@ -1790,13 +1757,6 @@ void SBac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
     encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
-    DTRACE_CABAC_VL(g_nSymbolCounter++);
-    DTRACE_CABAC_T("\tSkipFlag");
-    DTRACE_CABAC_T("\tuiCtxSkip: ");
-    DTRACE_CABAC_V(ctxSkip);
-    DTRACE_CABAC_T("\tuiSymbol: ");
-    DTRACE_CABAC_V(symbol);
-    DTRACE_CABAC_T("\n");
 }
 
 void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
@@ -1804,15 +1764,6 @@ void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
     encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
-
-    DTRACE_CABAC_VL(g_nSymbolCounter++);
-    DTRACE_CABAC_T("\tMergeFlag: ");
-    DTRACE_CABAC_V(symbol);
-    DTRACE_CABAC_T("\tAddress: ");
-    DTRACE_CABAC_V(cu->getAddr());
-    DTRACE_CABAC_T("\tuiAbsPartIdx: ");
-    DTRACE_CABAC_V(absPartIdx);
-    DTRACE_CABAC_T("\n");
 }
 
 void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
@@ -1833,11 +1784,6 @@ void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
             encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
-    DTRACE_CABAC_VL(g_nSymbolCounter++);
-    DTRACE_CABAC_T("\tparseMergeIndex()");
-    DTRACE_CABAC_T("\tuiMRGIdx= ");
-    DTRACE_CABAC_V(cu->getMergeIndex(absPartIdx));
-    DTRACE_CABAC_T("\n");
 }
 
 void SBac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1850,20 +1796,11 @@ void SBac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
     encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tSplitFlag\n")
 }
 
 void SBac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
     encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tparseTransformSubdivFlag()")
-    DTRACE_CABAC_T("\tsymbol=")
-    DTRACE_CABAC_V(symbol)
-    DTRACE_CABAC_T("\tctx=")
-    DTRACE_CABAC_V(ctx)
-    DTRACE_CABAC_T("\n")
 }
 
 void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
@@ -2066,19 +2003,6 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxSte
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
             encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
-            DTRACE_CABAC_VL(g_nSymbolCounter++)
-            DTRACE_CABAC_T("\tparseQtCbf()")
-            DTRACE_CABAC_T("\tsub-TU=")
-            DTRACE_CABAC_V(subTU)
-            DTRACE_CABAC_T("\tsymbol=")
-            DTRACE_CABAC_V(cbf)
-            DTRACE_CABAC_T("\tctx=")
-            DTRACE_CABAC_V(ctx)
-            DTRACE_CABAC_T("\tetype=")
-            DTRACE_CABAC_V(ttype)
-            DTRACE_CABAC_T("\tuiAbsPartIdx=")
-            DTRACE_CABAC_V(subTUAbsPartIdx)
-            DTRACE_CABAC_T("\n")
         }
     }
     else
@@ -2086,17 +2010,6 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxSte
         uint32_t cbf = cu->getCbf(absPartIdx, ttype, lowestTUDepth);
 
         encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
-        DTRACE_CABAC_VL(g_nSymbolCounter++)
-        DTRACE_CABAC_T("\tparseQtCbf()")
-        DTRACE_CABAC_T("\tsymbol=")
-        DTRACE_CABAC_V(cbf)
-        DTRACE_CABAC_T("\tctx=")
-        DTRACE_CABAC_V(ctx)
-        DTRACE_CABAC_T("\tetype=")
-        DTRACE_CABAC_V(ttype)
-        DTRACE_CABAC_T("\tuiAbsPartIdx=")
-        DTRACE_CABAC_V(absPartIdx)
-        DTRACE_CABAC_T("\n")
     }
 }
 
@@ -2105,18 +2018,6 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
-
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tparseQtCbf()")
-    DTRACE_CABAC_T("\tsymbol=")
-    DTRACE_CABAC_V(cbf)
-    DTRACE_CABAC_T("\tctx=")
-    DTRACE_CABAC_V(ctx)
-    DTRACE_CABAC_T("\tetype=")
-    DTRACE_CABAC_V(ttype)
-    DTRACE_CABAC_T("\tuiAbsPartIdx=")
-    DTRACE_CABAC_V(absPartIdx)
-    DTRACE_CABAC_T("\n")
 }
 
 void SBac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
@@ -2128,17 +2029,6 @@ void SBac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t 
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
     encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tparseTransformSkip()");
-    DTRACE_CABAC_T("\tsymbol=")
-    DTRACE_CABAC_V(useTransformSkip)
-    DTRACE_CABAC_T("\tAddr=")
-    DTRACE_CABAC_V(cu->getAddr())
-    DTRACE_CABAC_T("\tetype=")
-    DTRACE_CABAC_V(ttype)
-    DTRACE_CABAC_T("\tuiAbsPartIdx=")
-    DTRACE_CABAC_V(absPartIdx)
-    DTRACE_CABAC_T("\n")
 }
 
 void SBac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
@@ -2147,15 +2037,6 @@ void SBac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t ctx = 0;
 
     encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tparseQtRootCbf()")
-    DTRACE_CABAC_T("\tsymbol=")
-    DTRACE_CABAC_V(cbf)
-    DTRACE_CABAC_T("\tctx=")
-    DTRACE_CABAC_V(ctx)
-    DTRACE_CABAC_T("\tuiAbsPartIdx=")
-    DTRACE_CABAC_V(absPartIdx)
-    DTRACE_CABAC_T("\n")
 }
 
 void SBac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
@@ -2236,37 +2117,11 @@ void SBac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSi
 void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
-#if ENC_DEC_TRACE
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tparseCoeffNxN()\teType=")
-    DTRACE_CABAC_V(ttype)
-    DTRACE_CABAC_T("\twidth=")
-    DTRACE_CABAC_V(trSize)
-    DTRACE_CABAC_T("\theight=")
-    DTRACE_CABAC_V(trSize)
-    DTRACE_CABAC_T("\tabspartidx=")
-    DTRACE_CABAC_V(absPartIdx)
-    DTRACE_CABAC_T("\ttoCU-X=")
-    DTRACE_CABAC_V(cu->getCUPelX())
-    DTRACE_CABAC_T("\ttoCU-Y=")
-    DTRACE_CABAC_V(cu->getCUPelY())
-    DTRACE_CABAC_T("\tCU-addr=")
-    DTRACE_CABAC_V(cu->getAddr())
-    DTRACE_CABAC_T("\tinCU-X=")
-    DTRACE_CABAC_V(g_rasterToPelX[g_zscanToRaster[absPartIdx]])
-    DTRACE_CABAC_T("\tinCU-Y=")
-    DTRACE_CABAC_V(g_rasterToPelY[g_zscanToRaster[absPartIdx]])
-    DTRACE_CABAC_T("\tpredmode=")
-    DTRACE_CABAC_V(cu->getPredictionMode(absPartIdx))
-    DTRACE_CABAC_T("\n")
-#endif // if ENC_DEC_TRACE
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
-#if CHECKED_BUILD || _DEBUG
     X265_CHECK(numSig > 0, "cbf check fail\n");
-#endif
 
     bool beValid;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -2714,13 +2569,6 @@ void SBac::resetBits()
 /** Encode bin */
 void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 {
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tstate=")
-    DTRACE_CABAC_V((ctxModel.m_state << 1) + sbacGetMps(ctxModel.m_state))
-    DTRACE_CABAC_T("\tsymbol=")
-    DTRACE_CABAC_V(binValue)
-    DTRACE_CABAC_T("\n")
-
     uint32_t mstate = ctxModel.m_state;
 
     ctxModel.m_state = sbacNext(mstate, binValue);
@@ -2771,11 +2619,6 @@ void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 /** Encode equiprobable bin */
 void SBac::encodeBinEP(uint32_t binValue)
 {
-    DTRACE_CABAC_VL(g_nSymbolCounter++)
-    DTRACE_CABAC_T("\tEPsymbol=")
-    DTRACE_CABAC_V(binValue)
-    DTRACE_CABAC_T("\n")
-
     if (m_bIsCounter)
     {
         m_fracBits += 32768;
@@ -2797,14 +2640,6 @@ void SBac::encodeBinsEP(uint32_t binValues, int numBins)
     {
         m_fracBits += 32768 * numBins;
         return;
-    }
-
-    for (int i = 0; i < numBins; i++)
-    {
-        DTRACE_CABAC_VL(g_nSymbolCounter++)
-        DTRACE_CABAC_T("\tEPsymbol=")
-        DTRACE_CABAC_V((binValues >> (numBins - 1 - i)) & 1)
-        DTRACE_CABAC_T("\n")
     }
 
     while (numBins > 8)

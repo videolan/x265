@@ -73,19 +73,10 @@ Encoder::Encoder()
     m_outputCount = 0;
     m_csvfpt = NULL;
     m_param = NULL;
-
-#if ENC_DEC_TRACE
-    g_hTrace = fopen("TraceEnc.txt", "wb");
-    g_bJustDoIt = g_bEncDecTraceDisable;
-    g_nSymbolCounter = 0;
-#endif
 }
 
 Encoder::~Encoder()
 {
-#if ENC_DEC_TRACE
-    fclose(g_hTrace);
-#endif
 }
 
 void Encoder::create()

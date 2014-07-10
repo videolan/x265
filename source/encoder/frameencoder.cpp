@@ -602,15 +602,6 @@ void FrameEncoder::compressFrame()
 
 void FrameEncoder::encodeSlice()
 {
-#if ENC_DEC_TRACE
-    g_bJustDoIt = g_bEncDecTraceEnable;
-    DTRACE_CABAC_VL(g_nSymbolCounter++);
-    DTRACE_CABAC_T("\tPOC: ");
-    DTRACE_CABAC_V(m_frame->getPOC());
-    DTRACE_CABAC_T("\n");
-    g_bJustDoIt = g_bEncDecTraceDisable;
-#endif
-
     TComSlice* slice = m_frame->getSlice();
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
@@ -667,17 +658,10 @@ void FrameEncoder::encodeSlice()
             }
         }
 
-#if ENC_DEC_TRACE
-        g_bJustDoIt = g_bEncDecTraceEnable;
-#endif
-        
+        // final coding (bitstream generation) for this CU
         m_tld.m_search.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.encodeCU(cu, false);
-
-#if ENC_DEC_TRACE
-        g_bJustDoIt = g_bEncDecTraceDisable;
-#endif
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
         m_rows[subStrm].m_rowEntropyCoder.load(m_sbacCoder);

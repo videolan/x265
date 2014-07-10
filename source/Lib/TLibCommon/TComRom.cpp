@@ -459,20 +459,7 @@ const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
 const uint8_t g_chroma422IntraAngleMappingTable[36] =
 { 0, 1, 2, 2, 2, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 23, 24, 24, 25, 25, 26, 27, 27, 28, 28, 29, 29, 30, 31, DM_CHROMA_IDX };
 
-// ====================================================================================================================
-// Misc.
-// ====================================================================================================================
-
 uint8_t g_convertToBit[MAX_CU_SIZE + 1];
-
-#if ENC_DEC_TRACE
-FILE*  g_hTrace = NULL;
-const bool g_bEncDecTraceEnable  = true;
-const bool g_bEncDecTraceDisable = false;
-bool   g_HLSTraceEnable = true;
-bool   g_bJustDoIt = false;
-uint64_t g_nSymbolCounter = 0;
-#endif
 
 // ====================================================================================================================
 // Scanning order & context model mapping
