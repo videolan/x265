@@ -48,10 +48,10 @@ static const uint32_t NUMBER_OF_SECTIONS[NUMBER_OF_SPLIT_MODES] = { 1, 2, 4 };
 
 struct TURecurse
 {
-    uint32_t m_section;
-    uint32_t m_splitMode;
-    uint32_t m_absPartIdxTURelCU;
-    uint32_t m_absPartIdxStep;
+    uint32_t section;
+    uint32_t splitMode;
+    uint32_t absPartIdxTURelCU;
+    uint32_t absPartIdxStep;
 };
 
 class CABAC

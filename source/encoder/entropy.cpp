@@ -62,26 +62,26 @@ const uint8_t g_nextState[128][2] =
 
 bool SBac::isNextTUSection(TURecurse *tuIterator) // TODO: TURecurse method
 {
-    if (tuIterator->m_splitMode == DONT_SPLIT)
+    if (tuIterator->splitMode == DONT_SPLIT)
     {
-        tuIterator->m_section++;
+        tuIterator->section++;
         return false;
     }
     else
     {
-        tuIterator->m_absPartIdxTURelCU += tuIterator->m_absPartIdxStep;
+        tuIterator->absPartIdxTURelCU += tuIterator->absPartIdxStep;
 
-        tuIterator->m_section++;
-        return tuIterator->m_section < (uint32_t)(1 << tuIterator->m_splitMode);
+        tuIterator->section++;
+        return tuIterator->section < (uint32_t)(1 << tuIterator->splitMode);
     }
 }
 
 void SBac::initTUEntropySection(TURecurse *tuIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU) // TODO: TURecurse method
 {
-    tuIterator->m_section           = 0;
-    tuIterator->m_absPartIdxTURelCU = absPartIdxTU;
-    tuIterator->m_splitMode         = splitMode;
-    tuIterator->m_absPartIdxStep    = absPartIdxStep >> partIdxStepShift[splitMode];
+    tuIterator->section           = 0;
+    tuIterator->absPartIdxTURelCU = absPartIdxTU;
+    tuIterator->splitMode         = splitMode;
+    tuIterator->absPartIdxStep    = absPartIdxStep >> partIdxStepShift[splitMode];
 }
 
 void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
@@ -247,11 +247,11 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
                     coeff_t* coeffChroma = cu->getCoeff((TextType)chromaId);
                     do
                     {
-                        uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
+                        uint32_t cbf = cu->getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
                         if (cbf)
                         {
-                            uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
-                            codeCoeffNxN(cu, (coeffChroma + state.bakChromaOffset + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                            uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
+                            codeCoeffNxN(cu, (coeffChroma + state.bakChromaOffset + subTUOffset), tuIterator.absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
                         }
                     }
                     while (isNextTUSection(&tuIterator));
@@ -270,11 +270,11 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
                 coeff_t* coeffChroma = cu->getCoeff((TextType)chromaId);
                 do
                 {
-                    uint32_t cbf = cu->getCbf(tuIterator.m_absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
+                    uint32_t cbf = cu->getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, trIdx + splitIntoSubTUs);
                     if (cbf)
                     {
-                        uint32_t subTUOffset = tuIterator.m_section << (log2TrSizeC * 2);
-                        codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUOffset), tuIterator.m_absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                        uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
+                        codeCoeffNxN(cu, (coeffChroma + offsetChroma + subTUOffset), tuIterator.absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
                     }
                 }
                 while (isNextTUSection(&tuIterator));
