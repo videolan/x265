@@ -44,7 +44,6 @@
 
 #include "common.h"
 #include "primitives.h"
-#include "PPA/ppa.h"
 
 using namespace x265;
 

@@ -22,8 +22,6 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "PPA/ppa.h"
-#include "common.h"
 #include "output.h"
 #include "y4m.h"
 
@@ -61,7 +59,6 @@ Y4MOutput::~Y4MOutput()
 
 bool Y4MOutput::writePicture(const x265_picture& pic)
 {
-    PPAStartCpuEventFunc(write_yuv);
     std::ofstream::pos_type outPicPos = header;
     outPicPos += (uint64_t)pic.poc * (6 + frameSize);
     ofs.seekp(outPicPos);
@@ -116,6 +113,5 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 
 #endif // if HIGH_BIT_DEPTH
 
-    PPAStopCpuEventFunc(write_yuv);
     return true;
 }

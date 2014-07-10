@@ -510,7 +510,7 @@ void TEncCu::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, bool 
 
 void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture)
 {
-    //PPAScopeEvent(TEncCu_xCompressIntraCU + depth);
+    //PPAScopeEvent(CompressIntraCU + depth);
 
     Frame* pic = outBestCU->getPic();
 
@@ -674,7 +674,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
 
 void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, PartSize parentSize)
 {
-    //PPAScopeEvent(TEncCu_xCompressCU + depth);
+    //PPAScopeEvent(CompressCU + depth);
 
     Frame* pic = outBestCU->getPic();
 
@@ -1318,7 +1318,7 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
 
 void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize)
 {
-    //PPAScopeEvent(TEncCU_xCheckRDCostIntra + depth);
+    //PPAScopeEvent(CheckRDCostIntra + depth);
     uint32_t depth = outTempCU->getDepth(0);
 
     outTempCU->setSkipFlagSubParts(false, 0, depth);
@@ -1370,7 +1370,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
 {
     uint32_t depth = outTempCU->getDepth(0);
 
-    PPAScopeEvent(TEncCU_xCheckRDCostIntra + depth);
+    PPAScopeEvent(CheckRDCostIntra + depth);
 
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
