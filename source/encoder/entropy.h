@@ -38,13 +38,13 @@ namespace x265 {
 
 class TComScalingList;
 
-#define DONT_SPLIT            0
-#define VERTICAL_SPLIT        1
-#define QUAD_SPLIT            2
-#define NUMBER_OF_SPLIT_MODES 3
-
-static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
-static const uint32_t NUMBER_OF_SECTIONS[NUMBER_OF_SPLIT_MODES] = { 1, 2, 4 };
+enum SplitType
+{
+    DONT_SPLIT            = 0,
+    VERTICAL_SPLIT        = 1,
+    QUAD_SPLIT            = 2,
+    NUMBER_OF_SPLIT_MODES = 3
+};
 
 struct TURecurse
 {
@@ -52,6 +52,36 @@ struct TURecurse
     uint32_t splitMode;
     uint32_t absPartIdxTURelCU;
     uint32_t absPartIdxStep;
+
+    void initSection(SplitType splitType, uint32_t _absPartIdxStep, uint32_t _absPartIdxTU = 0)
+    {
+        static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
+        section           = 0;
+        absPartIdxTURelCU = _absPartIdxTU;
+        splitMode         = (uint32_t)splitType;
+        absPartIdxStep    = _absPartIdxStep >> partIdxStepShift[splitMode];
+    }
+
+    bool isNextSection()
+    {
+        if (splitMode == DONT_SPLIT)
+        {
+            section++;
+            return false;
+        }
+        else
+        {
+            absPartIdxTURelCU += absPartIdxStep;
+
+            section++;
+            return section < (uint32_t)(1 << splitMode);
+        }
+    }
+
+    bool isLastSection() const
+    {
+        return (section + 1) >= (uint32_t)(1 << splitMode);
+    }
 };
 
 class CABAC
@@ -192,9 +222,6 @@ private:
     void writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
-
-    void initTUEntropySection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t absPartIdxTU);
-    bool isNextTUSection(TURecurse *TUIterator);
 
     bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
     void codePredWeightTable(TComSlice* slice);

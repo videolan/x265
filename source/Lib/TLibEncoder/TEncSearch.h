@@ -171,9 +171,6 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t xSymbolBitsInter(TComDataCU* cu);
-    bool isNextSection(TURecurse *TUIterator);
-    bool isLastSection(TURecurse *TUIterator);
-    void initSection(TURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU = 0);
     void offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
 protected:
