@@ -67,13 +67,13 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
         m_rdSbacCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
 
     // setup thread local data structures to use this row's CABAC state
-    tld.m_search.m_sbacCoder = &m_rdGoOnSbacCoder;
+    tld.m_search.m_sbacCoder = &m_sbacCoder;
     tld.m_search.m_rdSbacCoders = m_rdSbacCoders;
-    tld.m_cuCoder.m_sbacCoder = &m_rdGoOnSbacCoder;
+    tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
     tld.m_cuCoder.m_rdSbacCoders = m_rdSbacCoders;
 
     BitCounter bc;
-    m_rdGoOnSbacCoder.setBitstream(&bc);
+    m_sbacCoder.setBitstream(&bc);
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
