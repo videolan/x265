@@ -31,7 +31,6 @@
 #include "frame.h"
 
 #include "TLibEncoder/TEncCu.h"
-#include "TLibEncoder/TEncSearch.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 #include "entropy.h"
