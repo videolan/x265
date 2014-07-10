@@ -1070,7 +1070,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
             TURecurse tuIterator;
-            uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) +  trDepthC) << 1);
+            uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((cu->getDepth(0) + trDepthC) << 1);
             tuIterator.initSection(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
 
             do
@@ -1752,9 +1752,9 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
     {
         uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
 
-        uint32_t bestMode           = 0;
-        uint32_t bestDist           = 0;
-        uint64_t bestCost           = MAX_INT64;
+        uint32_t bestMode = 0;
+        uint32_t bestDist = 0;
+        uint64_t bestCost = MAX_INT64;
 
         //----- init mode list -----
         uint32_t minMode = 0;
