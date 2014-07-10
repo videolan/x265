@@ -36,6 +36,7 @@ namespace x265 {
 
 struct SaoLcuParam;
 struct EstBitsSbac;
+class TComDataCU;
 
 enum SplitType
 {
@@ -90,6 +91,7 @@ public:
     uint64_t      m_pad;
     ContextModel  m_contextModels[MAX_OFF_CTX_MOD];
 
+    /* CABAC state */
     uint32_t      m_low;
     uint32_t      m_range;
     uint32_t      m_bufferedByte;
@@ -100,10 +102,7 @@ public:
 
     SBac();
 
-    void start();
-    void finish();
-    void copyState(SBac& other);
-    void flush();
+    void setBitstream(BitInterface* p) { m_bitIf = p; }
 
     uint32_t getNumberOfWrittenBits()
     {
@@ -111,18 +110,9 @@ public:
         return uint32_t(m_fracBits >> 15);
     }
 
-    void encodeBin(uint32_t binValue, ContextModel& ctxModel);
-    void encodeBinEP(uint32_t binValue);
-    void encodeBinsEP(uint32_t binValues, int numBins);
-    void encodeBinTrm(uint32_t binValue);
-
-    void resetBac()                    { start(); }
+    void zeroFract()                   { m_fracBits = 0; }
     void resetBits();
-    void zeroFract()                   { m_fracBits = 0;  }
-
-    void setBitstream(BitInterface* p) { m_bitIf = p; }
     void resetEntropy(TComSlice *slice);
-    void determineCabacInitIdx(TComSlice *slice);
 
     // SBAC RD
     void load(SBac& src);
@@ -136,57 +126,40 @@ public:
     void codeVUI(TComVUI* vui, TComSPS* sps);
     void codeAUD(TComSlice *slice);
     void codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
-    void codeProfileTier(ProfileTierLevel* ptl);
+    void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
 
     void codeSliceHeader(TComSlice* slice);
     void codeTilesWPPEntryPoint(TComSlice* slice);
     void codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromSliceHeader, int idx);
     void codeSliceFinish();
+    void codeTerminatingBit(uint32_t lsLast);
+    void determineCabacInitIdx(TComSlice *slice);
 
-    void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
-
-    void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol);
-    void codeSaoTypeIdx(uint32_t code);
-    void codeSaoMerge(uint32_t code)                 { encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]); }
-    void codeSaoUflc(uint32_t length, uint32_t code) { encodeBinsEP(code, length); }
-    void codeSAOSign(uint32_t code)                  { encodeBinEP(code); }
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
-
-    void codeTerminatingBit(uint32_t lsLast);
-    void codeScalingList(TComScalingList*);
+    void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]); }
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
     void codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list);
     void codeMVPIdx(uint32_t symbol);
     void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list);
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
-    void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
-
-    void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void codeRefFrmIdxPU(TComDataCU* subCU, uint32_t absPartIdx, int list);
-    void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
+    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
     void codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx);
-    void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
-
-    void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
-    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
-    void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
-    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // RDO functions
     void estBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype);
@@ -197,27 +170,57 @@ public:
 
 private:
 
+    /* CABAC private methods */
+    void start();
+    void finish();
+    void copyState(SBac& other);
+    void flush();
+
+    void encodeBin(uint32_t binValue, ContextModel& ctxModel);
+    void encodeBinEP(uint32_t binValue);
+    void encodeBinsEP(uint32_t binValues, int numBins);
+    void encodeBinTrm(uint32_t binValue);
+
     void writeOut();
 
+    /* SBac private methods */
     void writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
-    bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
+    void codeProfileTier(ProfileTierLevel* ptl);
+    void codeScalingList(TComScalingList*);
+    void codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
+
     void codePredWeightTable(TComSlice* slice);
+    void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
+    void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
+    void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
+    void codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list);
+    void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list);
+
+    void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol);
+    void codeSaoTypeIdx(uint32_t code);
+    void codeSaoUflc(uint32_t length, uint32_t code) { encodeBinsEP(code, length); }
+    void codeSAOSign(uint32_t code)                  { encodeBinEP(code); }
+
+    void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
+    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
+    void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     struct CoeffCodeState
     {
-        uint32_t  bakAbsPartIdx;
-        uint32_t  bakChromaOffset;
-        uint32_t  bakAbsPartIdxCU;
+        uint32_t bakAbsPartIdx;
+        uint32_t bakChromaOffset;
+        uint32_t bakAbsPartIdxCU;
     };
 
     void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
     void copyFrom(SBac& src);
     void copyContextsFrom(SBac& src);
-    void codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
+
+    static bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 };
 }
 
