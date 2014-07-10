@@ -147,10 +147,10 @@ public:
     inline void WRITE_SVLC(int32_t  code,                  const char *) { writeSvlc(code); }
     inline void WRITE_FLAG(uint32_t code,                  const char *) { writeFlag(code); }
 
-    void writeCode(uint32_t code, uint32_t length);
+    void writeCode(uint32_t code, uint32_t length) { m_bitIf->write(code, length); }
     void writeUvlc(uint32_t code);
-    void writeSvlc(int32_t code);
-    void writeFlag(uint32_t code);
+    void writeSvlc(int32_t code)                   { uint32_t ucode = (code <= 0) ? -code << 1 : (code << 1) - 1; writeUvlc(ucode); }
+    void writeFlag(uint32_t code)                  { m_bitIf->write(code, 1); }
 };
 
 }

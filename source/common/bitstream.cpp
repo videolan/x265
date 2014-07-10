@@ -106,12 +106,6 @@ void Bitstream::writeByteAlignment()
     writeAlignZero();
 }
 
-void SyntaxElementWriter::writeCode(uint32_t code, uint32_t length)
-{
-    X265_CHECK(length, "wrote zero length code\n");
-    m_bitIf->write(code, length);
-}
-
 void SyntaxElementWriter::writeUvlc(uint32_t code)
 {
     uint32_t length = 1;
@@ -128,16 +122,4 @@ void SyntaxElementWriter::writeUvlc(uint32_t code)
     // Take care of cases where length > 32
     m_bitIf->write(0, length >> 1);
     m_bitIf->write(code, (length + 1) >> 1);
-}
-
-void SyntaxElementWriter::writeSvlc(int32_t code)
-{
-    uint32_t ucode = (code <= 0) ? -code << 1 : (code << 1) - 1;
-
-    writeUvlc(ucode);
-}
-
-void SyntaxElementWriter::writeFlag(uint32_t code)
-{
-    m_bitIf->write(code, 1);
 }
