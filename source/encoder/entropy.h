@@ -53,7 +53,7 @@ struct TURecurse
     uint32_t absPartIdxTURelCU;
     uint32_t absPartIdxStep;
 
-    void initSection(SplitType splitType, uint32_t _absPartIdxStep, uint32_t _absPartIdxTU = 0)
+    TURecurse(SplitType splitType, uint32_t _absPartIdxStep, uint32_t _absPartIdxTU)
     {
         static const uint32_t partIdxStepShift[NUMBER_OF_SPLIT_MODES] = { 0, 1, 2 };
         section           = 0;
