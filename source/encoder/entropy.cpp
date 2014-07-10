@@ -769,9 +769,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
     {
         WRITE_FLAG(sps->getScalingListPresentFlag() ? 1 : 0, "sps_scaling_list_data_present_flag");
         if (sps->getScalingListPresentFlag() && scalingList)
-        {
             codeScalingList(scalingList);
-        }
     }
     WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
     WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
@@ -862,9 +860,8 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     }
     WRITE_FLAG(pps->getScalingListPresentFlag() ? 1 : 0,         "pps_scaling_list_data_present_flag");
     if (pps->getScalingListPresentFlag() && scalingList)
-    {
         codeScalingList(scalingList);
-    }
+
     WRITE_FLAG(pps->getListsModificationPresentFlag(), "lists_modification_present_flag");
     WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
     WRITE_FLAG(pps->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
@@ -1203,13 +1200,9 @@ void SBac::codeScalingList(TComScalingList* scalingList)
             scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
             if (!scalingListPredModeFlag) // Copy Mode
-            {
                 WRITE_UVLC((int)listId - (int)scalingList->getRefMatrixId(sizeId, listId), "scaling_list_pred_matrix_id_delta");
-            }
             else // DPCM Mode
-            {
                 codeScalingList(scalingList, sizeId, listId);
-            }
         }
     }
 }
