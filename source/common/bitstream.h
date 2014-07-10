@@ -133,11 +133,6 @@ static inline int bs_size_se(int val)
         return bitSize[tmp >> 8] + 16;
 }
 
-#define WRITE_CODE(code, length, name) writeCode(code, length)
-#define WRITE_UVLC(code,         name) writeUvlc(code)
-#define WRITE_SVLC(code,         name) writeSvlc(code)
-#define WRITE_FLAG(code,         name) writeFlag(code)
-
 class SyntaxElementWriter
 {
 public:
@@ -145,6 +140,12 @@ public:
     BitInterface* m_bitIf;
 
     SyntaxElementWriter() : m_bitIf(NULL) {}
+
+    /* silently discard the name of the syntax element */
+    inline void WRITE_CODE(uint32_t code, uint32_t length, const char *) { writeCode(code, length); }
+    inline void WRITE_UVLC(uint32_t code,                  const char *) { writeUvlc(code); }
+    inline void WRITE_SVLC(int32_t  code,                  const char *) { writeSvlc(code); }
+    inline void WRITE_FLAG(uint32_t code,                  const char *) { writeFlag(code); }
 
     void writeCode(uint32_t code, uint32_t length);
     void writeUvlc(uint32_t code);
