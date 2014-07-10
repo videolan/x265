@@ -187,12 +187,6 @@ public:
     void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
     void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
 
-    // temporary helper function
-    void estimateBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
-    {
-        estBit(estBitsSbac, trSize, ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA);
-    }
-
 private:
 
     void writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
