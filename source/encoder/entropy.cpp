@@ -2351,15 +2351,14 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
         if (subSet == lastScanSet || subSet == 0)
-        {
             sigCoeffGroupFlag64 |= cgBlkPosMask;
-        }
         else
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
             uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
+
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
         {
@@ -2371,7 +2370,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
+                    ctxSig = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
@@ -2386,9 +2385,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
             }
         }
         else
-        {
             scanPosSig = subPos - 1;
-        }
 
         if (numNonZero > 0)
         {
@@ -2444,14 +2441,10 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
                     {
                         writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
                         if (absCoeff[idx] > 3 * (1 << goRiceParam))
-                        {
                             goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
-                        }
                     }
                     if (absCoeff[idx] >= 2)
-                    {
                         firstCoeff2 = 0;
-                    }
                 }
             }
         }
