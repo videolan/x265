@@ -369,13 +369,9 @@ void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32
     else
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
-        {
             codeQtRootCbf(cu, absPartIdx);
-        }
         if (!cu->getQtRootCbf(absPartIdx))
-        {
             return;
-        }
     }
 
     uint32_t absPartIdxStep = cu->getPic()->getNumPartInCU() >> (depth << 1);
