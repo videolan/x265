@@ -39,7 +39,7 @@ FrameFilter::FrameFilter()
     , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_sbacCoder.m_cabac.m_bIsCounter = true;
+    m_sbacCoder.m_bIsCounter = true;
 }
 
 void FrameFilter::destroy()
@@ -126,7 +126,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_sbacCoder.m_cabac.m_fracBits = m_rdGoOnSbacCoderRow0->m_cabac.m_fracBits;
+        m_sbacCoder.m_fracBits = m_rdGoOnSbacCoderRow0->m_fracBits;
         m_sao.startSaoEnc(m_pic, &m_sbacCoder);
     }
 

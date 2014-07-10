@@ -60,6 +60,13 @@ const uint8_t g_nextState[128][2] =
     { 122, 74 }, { 75, 123 }, { 124, 76 }, { 77, 125 }, { 124, 76 }, { 77, 125 }, { 126, 126 }, { 127, 127 }
 };
 
+SBac::SBac()
+    : m_fracBits(0)
+    , m_bIsCounter(false)
+{
+    memset(m_contextModels, 0, sizeof(m_contextModels));
+}
+
 void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
 {
@@ -525,7 +532,7 @@ void SBac::resetEntropy(TComSlice *slice)
     initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
 
-    m_cabac.start();
+    start();
 }
 
 /* If current slice type is P/B then it determines the distance of
@@ -1598,36 +1605,30 @@ void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
 
 void SBac::codeTerminatingBit(uint32_t lsLast)
 {
-    m_cabac.encodeBinTrm(lsLast);
+    encodeBinTrm(lsLast);
 }
 
 void SBac::codeSliceFinish()
 {
-    m_cabac.finish();
+    finish();
 }
 
 void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
-    m_cabac.encodeBin(symbol ? 1 : 0, scmModel[0]);
+    encodeBin(symbol ? 1 : 0, scmModel[0]);
 
     if (symbol == 0)
-    {
         return;
-    }
 
     bool bCodeLast = (maxSymbol > symbol);
 
     while (--symbol)
-    {
-        m_cabac.encodeBin(1, scmModel[offset]);
-    }
+        encodeBin(1, scmModel[offset]);
 
     if (bCodeLast)
-    {
-        m_cabac.encodeBin(0, scmModel[offset]);
-    }
+        encodeBin(0, scmModel[offset]);
 }
 
 void SBac::writeEpExGolomb(uint32_t symbol, uint32_t count)
@@ -1650,7 +1651,7 @@ void SBac::writeEpExGolomb(uint32_t symbol, uint32_t count)
     numBins += count;
 
     X265_CHECK(numBins <= 32, "numBins too large\n");
-    m_cabac.encodeBinsEP(bins, numBins);
+    encodeBinsEP(bins, numBins);
 }
 
 /** Coding of coeff_abs_level_minus3 */
@@ -1665,7 +1666,7 @@ void SBac::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 
         X265_CHECK(codeNumber - (length << absGoRice) == (codeNumber & ((1 << absGoRice) - 1)), "codeNumber failure\n");
         X265_CHECK(length + 1 + absGoRice < 32, "length failure\n");
-        m_cabac.encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
+        encodeBinsEP((((1 << (length + 1)) - 2) << absGoRice) + codeRemain, length + 1 + absGoRice);
     }
     else
     {
@@ -1680,15 +1681,9 @@ void SBac::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
         }
         codeNumber = (codeNumber << absGoRice) + codeRemain;
 
-        m_cabac.encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
-        m_cabac.encodeBinsEP(codeNumber, length + absGoRice);
+        encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
+        encodeBinsEP(codeNumber, length + absGoRice);
     }
-}
-
-void  SBac::setBitstream(BitInterface* p)
-{
-    m_bitIf = p;
-    m_cabac.init(p);
 }
 
 // SBAC RD
@@ -1699,7 +1694,7 @@ void  SBac::load(SBac& src)
 
 void  SBac::loadIntraDirModeLuma(SBac& src)
 {
-    m_cabac.copyState(src.m_cabac);
+    copyState(src);
 
     ::memcpy(&m_contextModels[OFF_ADI_CTX], &src.m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
@@ -1711,14 +1706,14 @@ void  SBac::store(SBac& dest)
 
 void SBac::copyFrom(SBac& src)
 {
-    m_cabac.copyState(src.m_cabac);
+    copyState(src);
 
     memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
 void SBac::codeMVPIdx(uint32_t symbol)
 {
-    m_cabac.encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
+    encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
 }
 
 void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1728,56 +1723,50 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     if (cu->isIntra(absPartIdx))
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
-            m_cabac.encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
+            encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
         return;
     }
 
     switch (partSize)
     {
     case SIZE_2Nx2N:
-        m_cabac.encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
+        encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
         break;
 
     case SIZE_2NxN:
     case SIZE_2NxnU:
     case SIZE_2NxnD:
-        m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_cabac.encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_cabac.encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
-            {
-                m_cabac.encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
-            }
+                encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
         }
         break;
 
     case SIZE_Nx2N:
     case SIZE_nLx2N:
     case SIZE_nRx2N:
-        m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
-        {
-            m_cabac.encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
-        }
+            encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
-            m_cabac.encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
-            {
-                m_cabac.encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
-            }
+                encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
         }
         break;
 
     case SIZE_NxN:
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
         {
-            m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-            m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-            m_cabac.encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
+            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         }
         break;
 
@@ -1791,15 +1780,13 @@ void SBac::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
 {
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
-
-    m_cabac.encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
+    encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
 }
 
 void SBac::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
-
-    m_cabac.encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
+    encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
 void SBac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
@@ -1808,7 +1795,7 @@ void SBac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
     uint32_t ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
-    m_cabac.encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
+    encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tSkipFlag");
     DTRACE_CABAC_T("\tuiCtxSkip: ");
@@ -1822,7 +1809,7 @@ void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
-    m_cabac.encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
+    encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
 
     DTRACE_CABAC_VL(g_nSymbolCounter++);
     DTRACE_CABAC_T("\tMergeFlag: ");
@@ -1841,7 +1828,7 @@ void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
     if (numCand > 1)
     {
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
-        m_cabac.encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
+        encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
 
         X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
@@ -1849,7 +1836,7 @@ void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
         {
             uint32_t mask = (1 << unaryIdx) - 2;
             mask >>= (unaryIdx == numCand - 1) ? 1 : 0;
-            m_cabac.encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
+            encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
     DTRACE_CABAC_VL(g_nSymbolCounter++);
@@ -1868,14 +1855,14 @@ void SBac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
-    m_cabac.encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
+    encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tSplitFlag\n")
 }
 
 void SBac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
-    m_cabac.encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
+    encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSubdivFlag()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -1907,7 +1894,7 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
             }
         }
 
-        m_cabac.encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
+        encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
     }
 
     for (j = 0; j < partNum; j++)
@@ -1920,7 +1907,7 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
             //       1 = 10
             //       2 = 11
             int nonzero = (!!predIdx[j]);
-            m_cabac.encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
+            encodeBinsEP(predIdx[j] + nonzero, 1 + nonzero);
         }
         else
         {
@@ -1940,7 +1927,7 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
             dir[j] += (dir[j] > preds[j][1]) ? -1 : 0;
             dir[j] += (dir[j] > preds[j][0]) ? -1 : 0;
 
-            m_cabac.encodeBinsEP(dir[j], 5);
+            encodeBinsEP(dir[j], 5);
         }
     }
 }
@@ -1950,9 +1937,7 @@ void SBac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t intraDirChroma = cu->getChromaIntraDir(absPartIdx);
 
     if (intraDirChroma == DM_CHROMA_IDX)
-    {
-        m_cabac.encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
-    }
+        encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
     else
     {
         uint32_t allowedChromaDir[NUM_CHROMA_MODE];
@@ -1967,9 +1952,8 @@ void SBac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
             }
         }
 
-        m_cabac.encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
-
-        m_cabac.encodeBinsEP(intraDirChroma, 2);
+        encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        encodeBinsEP(intraDirChroma, 2);
     }
 }
 
@@ -1979,35 +1963,30 @@ void SBac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
 
     if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getCUSize(absPartIdx) != 8)
-    {
-        m_cabac.encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
-    }
+        encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     if (interDir < 2)
-    {
-        m_cabac.encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
-    }
+        encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
 }
 
 void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     uint32_t refFrame = cu->getCUMvField(list)->getRefIdx(absPartIdx);
 
-    m_cabac.encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
+    encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
 
     if (refFrame > 0)
     {
         uint32_t refNum = cu->getSlice()->getNumRefIdx(list) - 2;
         if (refNum == 0)
-        {
             return;
-        }
+
         refFrame--;
-        m_cabac.encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
+        encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
         if (refFrame > 0)
         {
             uint32_t mask = (1 << refFrame) - 2;
             mask >>= (refFrame == refNum) ? 1 : 0;
-            m_cabac.encodeBinsEP(mask, refFrame - (refFrame == refNum));
+            encodeBinsEP(mask, refFrame - (refFrame == refNum));
         }
     }
 }
@@ -2015,16 +1994,14 @@ void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     if (list == REF_PIC_LIST_1 && cu->getSlice()->getMvdL1ZeroFlag() && cu->getInterDir(absPartIdx) == 3)
-    {
         return;
-    }
 
     const TComCUMvField* cuMvField = cu->getCUMvField(list);
     const int hor = cuMvField->getMvd(absPartIdx).x;
     const int ver = cuMvField->getMvd(absPartIdx).y;
 
-    m_cabac.encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
-    m_cabac.encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
 
     const bool bHorAbsGr0 = hor != 0;
     const bool bVerAbsGr0 = ver != 0;
@@ -2032,17 +2009,17 @@ void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     const uint32_t verAbs   = 0 > ver ? -ver : ver;
 
     if (bHorAbsGr0)
-        m_cabac.encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
 
     if (bVerAbsGr0)
-        m_cabac.encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
 
     if (bHorAbsGr0)
     {
         if (horAbs > 1)
             writeEpExGolomb(horAbs - 2, 1);
 
-        m_cabac.encodeBinEP(0 > hor ? 1 : 0);
+        encodeBinEP(0 > hor ? 1 : 0);
     }
 
     if (bVerAbsGr0)
@@ -2050,7 +2027,7 @@ void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
         if (verAbs > 1)
             writeEpExGolomb(verAbs - 2, 1);
 
-        m_cabac.encodeBinEP(0 > ver ? 1 : 0);
+        encodeBinEP(0 > ver ? 1 : 0);
     }
 }
 
@@ -2072,7 +2049,7 @@ void SBac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
     if (absDQp > 0)
     {
         uint32_t sign = (dqp > 0 ? 0 : 1);
-        m_cabac.encodeBinEP(sign);
+        encodeBinEP(sign);
     }
 }
 
@@ -2094,7 +2071,7 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxSte
             uint32_t subTUAbsPartIdx = absPartIdx + (subTU * partIdxesPerSubTU);
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
-            m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+            encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
             DTRACE_CABAC_VL(g_nSymbolCounter++)
             DTRACE_CABAC_T("\tparseQtCbf()")
             DTRACE_CABAC_T("\tsub-TU=")
@@ -2114,7 +2091,7 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxSte
     {
         uint32_t cbf = cu->getCbf(absPartIdx, ttype, lowestTUDepth);
 
-        m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+        encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
         DTRACE_CABAC_VL(g_nSymbolCounter++)
         DTRACE_CABAC_T("\tparseQtCbf()")
         DTRACE_CABAC_T("\tsymbol=")
@@ -2133,7 +2110,7 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32
 {
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
-    m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtCbf()")
@@ -2156,7 +2133,7 @@ void SBac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t 
         return;
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    m_cabac.encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
+    encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseTransformSkip()");
     DTRACE_CABAC_T("\tsymbol=")
@@ -2175,7 +2152,7 @@ void SBac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t cbf = cu->getQtRootCbf(absPartIdx);
     uint32_t ctx = 0;
 
-    m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tparseQtRootCbf()")
     DTRACE_CABAC_T("\tsymbol=")
@@ -2194,7 +2171,7 @@ void SBac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     uint32_t cbf = 0;
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 }
 
 void SBac::codeQtRootCbfZero(TComDataCU*)
@@ -2204,7 +2181,7 @@ void SBac::codeQtRootCbfZero(TComDataCU*)
     uint32_t cbf = 0;
     uint32_t ctx = 0;
 
-    m_cabac.encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -2235,30 +2212,30 @@ void SBac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSi
     // posX
     ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
     for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
-        m_cabac.encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
 
     if (groupIdxX < maxGroupIdx)
-        m_cabac.encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
+        encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
 
     // posY
     ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
     for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
-        m_cabac.encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
 
     if (groupIdxY < maxGroupIdx)
-        m_cabac.encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
+        encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
 
     if (groupIdxX > 3)
     {
         uint32_t count = (groupIdxX - 2) >> 1;
         posx = posx - g_minInGroup[groupIdxX];
-        m_cabac.encodeBinsEP(posx, count);
+        encodeBinsEP(posx, count);
     }
     if (groupIdxY > 3)
     {
         uint32_t count = (groupIdxY - 2) >> 1;
         posy = posy - g_minInGroup[groupIdxY];
-        m_cabac.encodeBinsEP(posy, count);
+        encodeBinsEP(posy, count);
     }
 }
 
@@ -2381,7 +2358,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
             uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-            m_cabac.encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
+            encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
@@ -2395,7 +2372,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
                     ctxSig  = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
-                    m_cabac.encodeBin(sig, baseCtx[ctxSig]);
+                    encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
                 {
@@ -2429,7 +2406,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
             for (int idx = 0; idx < numC1Flag; idx++)
             {
                 uint32_t symbol = absCoeff[idx] > 1;
-                m_cabac.encodeBin(symbol, baseCtxMod[c1]);
+                encodeBin(symbol, baseCtxMod[c1]);
                 if (symbol)
                 {
                     c1 = 0;
@@ -2447,14 +2424,14 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
                 if (firstC2FlagIdx != -1)
                 {
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                    m_cabac.encodeBin(symbol, baseCtxMod[0]);
+                    encodeBin(symbol, baseCtxMod[0]);
                 }
             }
 
             if (beValid && signHidden)
-                m_cabac.encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
+                encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
             else
-                m_cabac.encodeBinsEP(coeffSigns, numNonZero);
+                encodeBinsEP(coeffSigns, numNonZero);
 
             int firstCoeff2 = 1;
             if (c1 == 0 || numNonZero > C1FLAG_NUMBER)
@@ -2488,36 +2465,36 @@ void SBac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
     uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
     uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
 
-    m_cabac.encodeBinEP(isCodeNonZero);
+    encodeBinEP(isCodeNonZero);
     if (isCodeNonZero)
     {
         uint32_t mask = (1 << (code - 1)) - 1;
         uint32_t len = code - 1 + isCodeLast;
         mask <<= isCodeLast;
 
-        m_cabac.encodeBinsEP(mask, len);
+        encodeBinsEP(mask, len);
     }
 }
 
 /** Code SAO EO class or BO band position */
 void SBac::codeSaoUflc(uint32_t length, uint32_t code)
 {
-    m_cabac.encodeBinsEP(code, length);
+    encodeBinsEP(code, length);
 }
 
 /** Code SAO merge flags */
 void SBac::codeSaoMerge(uint32_t code)
 {
     X265_CHECK((code == 0) || (code == 1), "SAO code out of range\n");
-    m_cabac.encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
+    encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]);
 }
 
 /** Code SAO type index */
 void SBac::codeSaoTypeIdx(uint32_t code)
 {
-    m_cabac.encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
+    encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
     if (code)
-        m_cabac.encodeBinEP(code <= 4 ? 1 : 0);
+        encodeBinEP(code <= 4 ? 1 : 0);
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
@@ -2691,19 +2668,7 @@ void SBac::loadContexts(SBac& src)
     copyContextsFrom(src);
 }
 
-CABAC::CABAC()
-    : m_bitIf(0)
-    , m_fracBits(0)
-    , m_bIsCounter(false)
-{
-}
-
-void CABAC::init(BitInterface* bitIf)
-{
-    m_bitIf = bitIf;
-}
-
-void CABAC::start()
+void SBac::start()
 {
     m_low = 0;
     m_range = 510;
@@ -2712,7 +2677,7 @@ void CABAC::start()
     m_bufferedByte = 0xff;
 }
 
-void CABAC::finish()
+void SBac::finish()
 {
     if (m_bIsCounter)
     {
@@ -2736,9 +2701,8 @@ void CABAC::finish()
     else
     {
         if (m_numBufferedBytes > 0)
-        {
             m_bitIf->writeByte(m_bufferedByte);
-        }
+
         while (m_numBufferedBytes > 1)
         {
             m_bitIf->writeByte(0xff);
@@ -2748,7 +2712,7 @@ void CABAC::finish()
     m_bitIf->write(m_low >> 8, 13 + m_bitsLeft);
 }
 
-void CABAC::flush()
+void SBac::flush()
 {
     encodeBinTrm(1);
     finish();
@@ -2759,32 +2723,33 @@ void CABAC::flush()
 }
 
 /** Reset BAC register and counter values */
-void CABAC::resetBac()
+void SBac::resetBac()
 {
     start();
 }
 
-void CABAC::copyState(CABAC& binCABAC)
+void SBac::copyState(SBac& other)
 {
-    m_low = binCABAC.m_low;
-    m_range = binCABAC.m_range;
-    m_bitsLeft = binCABAC.m_bitsLeft;
-    m_bufferedByte = binCABAC.m_bufferedByte;
-    m_numBufferedBytes = binCABAC.m_numBufferedBytes;
-    m_fracBits = binCABAC.m_fracBits;
+    m_low = other.m_low;
+    m_range = other.m_range;
+    m_bitsLeft = other.m_bitsLeft;
+    m_bufferedByte = other.m_bufferedByte;
+    m_numBufferedBytes = other.m_numBufferedBytes;
+    m_fracBits = other.m_fracBits;
 }
 
-void CABAC::resetBits()
+void SBac::resetBits()
 {
     m_low = 0;
     m_bitsLeft = -12;
     m_numBufferedBytes = 0;
     m_bufferedByte = 0xff;
     m_fracBits &= 32767;
+    m_bitIf->resetBits();
 }
 
 /** Encode bin */
-void CABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
+void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 {
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tstate=")
@@ -2841,7 +2806,7 @@ void CABAC::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 }
 
 /** Encode equiprobable bin */
-void CABAC::encodeBinEP(uint32_t binValue)
+void SBac::encodeBinEP(uint32_t binValue)
 {
     DTRACE_CABAC_VL(g_nSymbolCounter++)
     DTRACE_CABAC_T("\tEPsymbol=")
@@ -2855,19 +2820,15 @@ void CABAC::encodeBinEP(uint32_t binValue)
     }
     m_low <<= 1;
     if (binValue)
-    {
         m_low += m_range;
-    }
     m_bitsLeft++;
 
     if (m_bitsLeft >= 0)
-    {
         writeOut();
-    }
 }
 
 /** Encode equiprobable bins */
-void CABAC::encodeBinsEP(uint32_t binValues, int numBins)
+void SBac::encodeBinsEP(uint32_t binValues, int numBins)
 {
     if (m_bIsCounter)
     {
@@ -2893,9 +2854,7 @@ void CABAC::encodeBinsEP(uint32_t binValues, int numBins)
         m_bitsLeft += 8;
 
         if (m_bitsLeft >= 0)
-        {
             writeOut();
-        }
     }
 
     m_low <<= numBins;
@@ -2903,13 +2862,11 @@ void CABAC::encodeBinsEP(uint32_t binValues, int numBins)
     m_bitsLeft += numBins;
 
     if (m_bitsLeft >= 0)
-    {
         writeOut();
-    }
 }
 
 /** Encode terminating bin */
-void CABAC::encodeBinTrm(uint32_t binValue)
+void SBac::encodeBinTrm(uint32_t binValue)
 {
     if (m_bIsCounter)
     {
@@ -2926,9 +2883,7 @@ void CABAC::encodeBinTrm(uint32_t binValue)
         m_bitsLeft += 7;
     }
     else if (m_range >= 256)
-    {
         return;
-    }
     else
     {
         m_low <<= 1;
@@ -2937,13 +2892,11 @@ void CABAC::encodeBinTrm(uint32_t binValue)
     }
 
     if (m_bitsLeft >= 0)
-    {
         writeOut();
-    }
 }
 
 /** Move bits from register into bitstream */
-void CABAC::writeOut()
+void SBac::writeOut()
 {
     uint32_t leadByte = m_low >> (13 + m_bitsLeft);
     uint32_t low_mask = (uint32_t)(~0) >> (11 + 8 - m_bitsLeft);

@@ -74,10 +74,10 @@ public:
 
     CTURow()
     {
-        m_rdGoOnSbacCoder.m_cabac.m_bIsCounter = true;
+        m_rdGoOnSbacCoder.m_bIsCounter = true;
         for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-                m_rdSbacCoders[depth][ciIdx].m_cabac.m_bIsCounter = true;
+                m_rdSbacCoders[depth][ciIdx].m_bIsCounter = true;
     }
 
     void init(TComSlice *slice)
