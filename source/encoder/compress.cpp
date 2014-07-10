@@ -42,7 +42,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
     // set context models
-    m_search->m_rdGoOnSbacCoder->load(m_search->m_rdSbacCoders[depth][CI_CURR_BEST]);
+    m_sbacCoder->load(m_search->m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     m_search->xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost);
     m_search->xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
@@ -71,7 +71,7 @@ void TEncCu::xEncodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pred
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
     m_sbacCoder->codeCoeff(cu, 0, depth, cu->getCUSize(0), bCodeDQP);
-    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
     cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;

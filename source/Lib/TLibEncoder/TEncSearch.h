@@ -104,8 +104,6 @@ public:
     MotionEstimate   m_me;
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
-    SBac          (*m_rdSbacCoders)[CI_NUM];
-    SBac*           m_rdGoOnSbacCoder;
     bool            m_bFrameParallel;
 
     ShortYuv*       m_qtTempShortYuv;
@@ -121,6 +119,8 @@ public:
     RDCost*         m_rdCost;
     SBac*           m_sbacCoder;
     x265_param*     m_param;
+
+    SBac          (*m_rdSbacCoders)[CI_NUM];
 
     bool            m_bEnableRDOQ;
     int             m_numLayers;

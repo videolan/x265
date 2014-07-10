@@ -124,7 +124,6 @@ public:
 
     // RD SBac pointers
     SBac       (*m_rdSbacCoders)[CI_NUM];
-    SBac*        m_rdGoOnSbacCoder;
 
     uint8_t      m_totalDepth;
 

@@ -68,7 +68,6 @@ TEncSearch::TEncSearch()
     m_trQuant = NULL;
     m_sbacCoder = NULL;
     m_rdSbacCoders = NULL;
-    m_rdGoOnSbacCoder = NULL;
     m_numLayers = 0;
 }
 
@@ -636,7 +635,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         if (checkTransformSkip || checkTQbypass)
         {
             //----- store original entropy coding status -----
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
             uint32_t  singleDistYTmp = 0;
             uint32_t  singlePsyEnergyYTmp = 0;
@@ -694,10 +693,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                     bestTQbypass = singleTQbypass;
                     bestModeId   = modeId;
                     if (bestModeId == firstCheckId)
-                        m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
+                        m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
                 }
                 if (modeId == firstCheckId)
-                    m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+                    m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
             }
 
             cu->setTransformSkipSubParts(checkTransformSkip ? bestModeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
@@ -708,7 +707,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             {
                 xLoadIntraResultQT(cu, absPartIdx, log2TrSize, reconQt, reconQtStride);
                 cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-                m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
+                m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
             }
             else
             {
@@ -719,7 +718,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         }
         else
         {
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
             //----- code luma block with given intra prediction mode and store Cbf-----
             cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
@@ -748,11 +747,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         //----- store full entropy coding status, load original entropy coding status -----
         if (bCheckFull)
         {
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_TEST]);
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_TEST]);
+            m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
         }
         else
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
         //----- code splitted block -----
         uint64_t splitCost     = 0;
@@ -776,7 +775,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             cu->getCbf(TEXT_LUMA)[absPartIdx + offs] |= (splitCbfY << trDepth);
 
         //----- restore context states -----
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+        m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
         //----- determine rate and r-d cost -----
         uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx);
@@ -798,7 +797,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             cu->m_psyEnergy = singlePsyEnergyY;
 
         //----- set entropy coding status -----
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_TEST]);
+        m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_TEST]);
 
         //--- set transform index and Cbf values ---
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
@@ -1103,7 +1102,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                 if (checkTransformSkip)
                 {
                     // use RDO to decide whether Cr/Cb takes TS
-                    m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+                    m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
                     uint64_t singleCost     = MAX_INT64;
                     int      bestModeId     = 0;
@@ -1154,17 +1153,17 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                             singleCbfC  = singleCbfCTmp;
                             singlePsyEnergy = singlePsyEnergyTmp;
                             if (bestModeId == firstCheckId)
-                                m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
+                                m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
                         }
                         if (chromaModeId == firstCheckId)
-                            m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+                            m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
                     }
 
                     if (bestModeId == firstCheckId)
                     {
                         xLoadIntraResultChromaQT(cu, absPartIdxC, log2TrSizeC, chromaId, reconQt, reconQtStride);
                         cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
-                        m_rdGoOnSbacCoder->load(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
+                        m_sbacCoder->load(m_rdSbacCoders[fullDepth][CI_TEMP_BEST]);
                     }
                     else
                     {
@@ -1178,7 +1177,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                     outDist += singleDistC;
 
                     if (chromaId == 1)
-                        m_rdGoOnSbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
+                        m_sbacCoder->store(m_rdSbacCoders[fullDepth][CI_QT_TRAFO_ROOT]);
                 }
                 else
                 {
@@ -1578,7 +1577,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             cu->setLumaIntraDirSubParts(origMode, partOffset, depth + initTrDepth);
 
             // set context models
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
             // determine residual for partition
             uint32_t puDistY = 0;
@@ -1607,7 +1606,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             cu->setLumaIntraDirSubParts(origMode, partOffset, depth + initTrDepth);
 
             // set context models
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
             // determine residual for partition
             uint32_t puDistY = 0;
@@ -1664,7 +1663,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     }
 
     //===== reset context models =====
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+    m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     //===== set distortion (rate and r-d costs are determined later) =====
     cu->m_totalDistortion = overallDistY;
@@ -1764,7 +1763,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
         for (uint32_t mode = minMode; mode < maxMode; mode++)
         {
             //----- restore context models -----
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
             //----- chroma coding -----
             uint32_t dist = 0;
@@ -1774,7 +1773,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
             xRecurIntraChromaCodingQT(cu, initTrDepth, absPartIdxC, fencYuv, predYuv, resiYuv, dist);
 
             if (cu->getSlice()->getPPS()->getUseTransformSkip())
-                m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+                m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
             uint32_t bits = xGetIntraBitsQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep);
             uint64_t cost = 0; 
@@ -1841,7 +1840,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
         }
     }
     //----- restore context models -----
-    m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+    m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 }
 
 /** estimation of best merge coding
@@ -2339,7 +2338,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
         distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
         m_sbacCoder->resetBits();
         if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
             m_sbacCoder->codeCUTransquantBypassFlag(cu, 0);
@@ -2360,7 +2359,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         else
             cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 
-        m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+        m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
         cu->clearCbf(0, depth);
         cu->setTrIdxSubParts(0, 0, depth);
@@ -2394,7 +2393,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         bits = 0;
         distortion = 0;
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
         xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, curUseRDOQ);
 
         m_sbacCoder->resetBits();
@@ -2435,7 +2434,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         else
             xSetResidualQTData(cu, 0, NULL, depth, false);
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
         bits = xSymbolBitsInter(cu);
 
@@ -2451,7 +2450,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
             bestBits = bits;
             bestCost = cost;
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+            m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
         }
 
         X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
@@ -2714,7 +2713,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
     uint32_t bestCBF[MAX_NUM_COMPONENT];
     uint32_t bestsubTUCBF[MAX_NUM_COMPONENT][2];
-    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+    m_sbacCoder->store(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
 
     uint32_t trSize = 1 << log2TrSize;
     const bool splitIntoSubTUs = (chFmt == CHROMA_422);
@@ -3107,7 +3106,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             ALIGN_VAR_32(coeff_t, tsCoeffY[MAX_TS_SIZE * MAX_TS_SIZE]);
             ALIGN_VAR_32(int16_t, tsResiY[MAX_TS_SIZE * MAX_TS_SIZE]);
 
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
 
             cu->setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
@@ -3172,7 +3171,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             uint64_t singleCostU = MAX_INT64;
             uint64_t singleCostV = MAX_INT64;
 
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
 
             TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
@@ -3304,7 +3303,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             while (tuIterator.isNextSection());
         }
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
 
         m_sbacCoder->resetBits();
 
@@ -3388,8 +3387,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     {
         if (bCheckFull)
         {
-            m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_QT_TRAFO_TEST]);
-            m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+            m_sbacCoder->store(m_rdSbacCoders[depth][CI_QT_TRAFO_TEST]);
+            m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
         }
         uint32_t subdivDist = 0;
         uint32_t subdivBits = 0;
@@ -3435,7 +3434,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             cu->getCbf(TEXT_CHROMA_V)[absPartIdx + i] |= vcbf << trMode;
         }
 
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_ROOT]);
         m_sbacCoder->resetBits();
 
         xEncodeResidualQT(cu, absPartIdx, depth, true,  TEXT_LUMA);
@@ -3479,7 +3478,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             }
         }
         X265_CHECK(bCheckFull, "check-full must be set\n");
-        m_rdGoOnSbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_TEST]);
+        m_sbacCoder->load(m_rdSbacCoders[depth][CI_QT_TRAFO_TEST]);
     }
 
     rdCost += singleCost;
@@ -3691,7 +3690,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYu
 uint32_t TEncSearch::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
 {
     // Reload only contexts required for coding intra mode information
-    m_rdGoOnSbacCoder->loadIntraDirModeLuma(m_rdSbacCoders[depth][CI_CURR_BEST]);
+    m_sbacCoder->loadIntraDirModeLuma(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
     cu->getLumaIntraDir()[partOffset] = (uint8_t)mode;
 

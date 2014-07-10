@@ -75,7 +75,6 @@ TEncCu::TEncCu()
     m_rdCost          = NULL;
     m_sbacCoder       = NULL;
     m_rdSbacCoders    = NULL;
-    m_rdGoOnSbacCoder = NULL;
     m_bBitCounting    = false;
 }
 
@@ -1348,7 +1347,7 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     // Encode Coefficients
     bool bEncodeDQP = m_bEncodeDQP;
     m_sbacCoder->codeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bEncodeDQP);
-    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
@@ -1397,7 +1396,7 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
     m_sbacCoder->codeCoeff(outTempCU, 0, depth, outTempCU->getCUSize(0), bCodeDQP);
-    m_rdGoOnSbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
