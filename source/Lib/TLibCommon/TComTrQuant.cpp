@@ -77,7 +77,7 @@ TComTrQuant::TComTrQuant()
     m_tmpCoeff = X265_MALLOC(int32_t, MAX_CU_SIZE * MAX_CU_SIZE);
 
     // allocate bit estimation class (for RDOQ)
-    m_estBitsSbac = new estBitsSbacStruct;
+    m_estBitsSbac = new EstBitsSbac;
     initScalingList();
 }
 

@@ -24,6 +24,7 @@
 #include "common.h"
 #include "entropy.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
+#include "TLibCommon/TComTrQuant.h"
 
 namespace x265 {
 
@@ -2478,7 +2479,7 @@ void SBac::codeSaoTypeIdx(uint32_t code)
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
-void SBac::estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
+void SBac::estBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype)
 {
     estCBFBit(estBitsSbac);
 
@@ -2492,7 +2493,7 @@ void SBac::estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
 }
 
 /* estimate bit cost for each CBP bit */
-void SBac::estCBFBit(estBitsSbacStruct* estBitsSbac)
+void SBac::estCBFBit(EstBitsSbac* estBitsSbac)
 {
     ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
@@ -2512,7 +2513,7 @@ void SBac::estCBFBit(estBitsSbacStruct* estBitsSbac)
 }
 
 /* estimate SAMBAC bit cost for significant coefficient group map */
-void SBac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
+void SBac::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype)
 {
     X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
@@ -2523,7 +2524,7 @@ void SBac::estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextTy
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
-void SBac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype)
+void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype)
 {
     int firstCtx = 1, numCtx = 8;
 
@@ -2599,7 +2600,7 @@ void SBac::estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, Text
 }
 
 /* estimate bit cost of significant coefficient */
-void SBac::estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype)
+void SBac::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype)
 {
     if (ttype == TEXT_LUMA)
     {

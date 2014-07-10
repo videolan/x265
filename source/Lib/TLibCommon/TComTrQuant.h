@@ -59,7 +59,7 @@ namespace x265 {
 // Type definition
 // ====================================================================================================================
 
-typedef struct
+struct EstBitsSbac
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
     uint32_t significantBits[NUM_SIG_FLAG_CTX][2];
@@ -70,7 +70,7 @@ typedef struct
 
     int blockCbpBits[NUM_QT_CBF_CTX][2];
     int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
-} estBitsSbacStruct;
+};
 
 // ====================================================================================================================
 // Class definition
@@ -197,7 +197,7 @@ public:
         }
     }
 
-    estBitsSbacStruct* m_estBitsSbac;
+    EstBitsSbac*    m_estBitsSbac;
 
     NoiseReduction* m_nr;
 

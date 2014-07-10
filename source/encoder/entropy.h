@@ -29,14 +29,14 @@
 #include "frame.h"
 
 #include "TLibCommon/TComSlice.h"
-#include "TLibCommon/TComDataCU.h"
-#include "TLibCommon/TComTrQuant.h"
+#include "TLibCommon/ContextTables.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
 namespace x265 {
 // private namespace
 
 class TComScalingList;
+struct EstBitsSbac;
 
 enum SplitType
 {
@@ -190,11 +190,11 @@ public:
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     // RDO functions
-    void estBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
-    void estCBFBit(estBitsSbacStruct* estBitsSbac);
-    void estSignificantCoeffGroupMapBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
-    void estSignificantMapBit(estBitsSbacStruct* estBitsSbac, int trSize, TextType ttype);
-    void estSignificantCoefficientsBit(estBitsSbacStruct* estBitsSbac, TextType ttype);
+    void estBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype);
+    void estCBFBit(EstBitsSbac* estBitsSbac);
+    void estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype);
+    void estSignificantMapBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype);
+    void estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype);
 
 private:
 
