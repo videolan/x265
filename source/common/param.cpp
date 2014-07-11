@@ -1276,10 +1276,10 @@ char *x265_param2string(x265_param *p)
                           p->rc.complexityBlur, p->rc.qblur);
         if (p->rc.vbvBufferSize)
         {
-            s += sprintf(s, " vbv_maxrate=%d vbv_bufsize=%d",
+            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d",
                           p->rc.vbvMaxBitrate, p->rc.vbvBufferSize);
             if (p->rc.rateControlMode == X265_RC_CRF)
-                s += sprintf(s, " crf_max=%.1f", p->rc.rfConstantMax);
+                s += sprintf(s, " crfmax=%.1f", p->rc.rfConstantMax);
         }
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)
