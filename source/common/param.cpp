@@ -1279,7 +1279,7 @@ char *x265_param2string(x265_param *p)
             s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d",
                           p->rc.vbvMaxBitrate, p->rc.vbvBufferSize);
             if (p->rc.rateControlMode == X265_RC_CRF)
-                s += sprintf(s, " crfmax=%.1f", p->rc.rfConstantMax);
+                s += sprintf(s, " crf-max=%.1f", p->rc.rfConstantMax);
         }
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)
