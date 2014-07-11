@@ -527,6 +527,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                             outBestCU = m_intraInInterCU[depth];
                             std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
                             std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
+                            if (m_param->rdLevel > 2)
+                            {
+                                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                            }
                         }
                     }
                 }
