@@ -480,6 +480,12 @@ typedef struct x265_param
      * maximum is 16 */
     int       bframes;
 
+    /* Total Number of frames to be encoded, caclulated from the user input
+     * (--frames) and (--seek). In case, the input is read from a pipe, this can
+     * remain as 0. It is later used in 2 pass RateControl, hence storing the
+     * value in param */
+    int       totalFrames;
+
     /* When enabled, the encoder will use the B frame in the middle of each
      * mini-GOP larger than 2 B frames as a motion reference for the surrounding
      * B frames.  This improves compression efficiency for a small performance

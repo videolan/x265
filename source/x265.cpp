@@ -642,9 +642,10 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     }
     if (!param->vui.aspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
-
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
         this->framesToBeEncoded = info.frameCount - seek;
+    param->totalFrames = this->framesToBeEncoded;
+
     if (param->logLevel >= X265_LOG_INFO)
     {
         char buf[128];
