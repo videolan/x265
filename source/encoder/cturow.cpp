@@ -32,21 +32,7 @@ using namespace x265;
 
 void ThreadLocalData::init(Encoder& enc)
 {
-    m_trQuant.init(enc.m_bEnableRDOQ);
-    if (enc.m_useScalingListId == SCALING_LIST_OFF)
-    {
-        m_trQuant.setFlatScalingList();
-        m_trQuant.setUseScalingList(false);
-    }
-    else if (enc.m_useScalingListId == SCALING_LIST_DEFAULT)
-    {
-        m_trQuant.setScalingList(enc.getScalingList());
-        m_trQuant.setUseScalingList(true);
-    }
-
-    m_rdCost.setPsyRdScale(enc.m_param->psyRd);
-
-    m_cuCoder.init(&enc, &m_rdCost, &m_trQuant);
+    m_cuCoder.init(&enc);
     m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
 

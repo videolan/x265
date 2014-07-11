@@ -125,7 +125,7 @@ public:
 
     TEncCu();
 
-    bool init(Encoder* top, RDCost* rdCost, TComTrQuant* trQuant);
+    bool init(Encoder* top);
     bool create(uint8_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);

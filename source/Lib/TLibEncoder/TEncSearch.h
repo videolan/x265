@@ -48,6 +48,7 @@
 #include "motion.h"
 
 #include "entropy.h"
+#include "rdcost.h"
 
 #define MVP_IDX_BITS 1
 
@@ -115,11 +116,11 @@ public:
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
     // interface to classes
-    TComTrQuant*    m_trQuant;
-    RDCost*         m_rdCost;
+    TComTrQuant     m_trQuant;
+    RDCost          m_rdCost;
+
     SBac*           m_sbacCoder;
     x265_param*     m_param;
-
     SBac          (*m_rdSbacCoders)[CI_NUM];
 
     bool            m_bEnableRDOQ;

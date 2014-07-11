@@ -41,8 +41,6 @@ class Encoder;
 struct ThreadLocalData
 {
     TEncCu      m_cuCoder;
-    RDCost      m_rdCost;
-    TComTrQuant m_trQuant;
 
     // NOTE: the maximum LCU 64x64 have 256 partitions
     bool        m_edgeFilter[256];

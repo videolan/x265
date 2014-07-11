@@ -43,12 +43,6 @@
 namespace x265 {
 // private x265 namespace
 
-enum SCALING_LIST_PARAMETER
-{
-    SCALING_LIST_OFF,
-    SCALING_LIST_DEFAULT,
-};
-
 class ThreadPool;
 class Encoder;
 

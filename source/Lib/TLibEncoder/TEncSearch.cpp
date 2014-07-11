@@ -62,12 +62,10 @@ TEncSearch::TEncSearch()
         m_qtTempCbf[i] = NULL;
     }
 
+    m_numLayers = 0;
     m_param = NULL;
-    m_rdCost = NULL;
-    m_trQuant = NULL;
     m_sbacCoder = NULL;
     m_rdSbacCoders = NULL;
-    m_numLayers = 0;
 }
 
 TEncSearch::~TEncSearch()
@@ -132,14 +130,14 @@ void TEncSearch::setQP(int qp, int qpCb, int qpCr)
     double lambdaCr = x265_lambda2_tab[qpCr];
 
     m_me.setQP(qp);
-    m_trQuant->setLambdas(lambda2, lambdaCb, lambdaCr);
-    m_rdCost->setLambda(lambda2, x265_lambda_tab[qp]);
+    m_trQuant.setLambdas(lambda2, lambdaCb, lambdaCr);
+    m_rdCost.setLambda(lambda2, x265_lambda_tab[qp]);
     int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    double lambdaOffset = m_rdCost->psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
-    m_rdCost->setCbDistortionWeight(lambdaOffset);
+    double lambdaOffset = m_rdCost.psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    m_rdCost.setCbDistortionWeight(lambdaOffset);
     chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    lambdaOffset = m_rdCost->psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
-    m_rdCost->setCrDistortionWeight(lambdaOffset);
+    lambdaOffset = m_rdCost.psyRdEnabled() ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    m_rdCost.setCrDistortionWeight(lambdaOffset);
 }
 
 void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
@@ -434,12 +432,12 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
     if (m_bEnableRDOQ)
-        m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, tuSize, TEXT_LUMA);
+        m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, tuSize, TEXT_LUMA);
 
     //--- transform and quantization ---
     int chFmt = cu->getChromaFormat();
-    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-    uint32_t numSig = m_trQuant->transformNxN(cu, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
+    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+    uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
 
     //--- set coded block flag ---
     cbf = numSig ? 1 : 0;
@@ -447,7 +445,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
     if (numSig)
     {
         //--- inverse transform ---
-        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTransformSkip, numSig);
+        m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTransformSkip, numSig);
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large %d\n", log2TrSize);
         //===== reconstruction =====
         primitives.calcrecon[sizeIdx](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
@@ -503,7 +501,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     //===== transform and quantization =====
     //--- init rate estimation arrays for RDOQ ---
     if (m_bEnableRDOQ)
-        m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, tuSize, TEXT_CHROMA);
+        m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, tuSize, TEXT_CHROMA);
 
     //--- transform and quantization ---
     int chFmt = cu->getChromaFormat();
@@ -513,8 +511,8 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     else
         curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
 
-    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-    uint32_t numSig = m_trQuant->transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdx, useTransformSkipC);
+    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+    uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdx, useTransformSkipC);
 
     //--- set coded block flag ---
     cbf = numSig ? 1 : 0;
@@ -523,7 +521,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
     if (numSig)
     {
         //--- inverse transform ---
-        m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
+        m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
         X265_CHECK(log2TrSizeC <= 5, "log2TrSizeC is too large %d\n", log2TrSizeC);
         //===== reconstruction =====
         primitives.calcrecon[sizeIdxC](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
@@ -544,9 +542,9 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
     if (ttype == TEXT_CHROMA_U)
-        outDist += m_rdCost->scaleChromaDistCb(dist);
+        outDist += m_rdCost.scaleChromaDistCb(dist);
     else
-        outDist += m_rdCost->scaleChromaDistCr(dist);
+        outDist += m_rdCost.scaleChromaDistCr(dist);
 }
 
 void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
@@ -655,10 +653,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
                 //----- code luma block with given intra prediction mode and store Cbf-----
                 xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfYTmp, singleDistYTmp);
-                if (m_rdCost->psyRdEnabled())
+                if (m_rdCost.psyRdEnabled())
                 {
                     uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
-                    singlePsyEnergyYTmp = m_rdCost->psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                    singlePsyEnergyYTmp = m_rdCost.psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                         cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
                 }
                 cu->setCbfSubParts(singleCbfYTmp << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -670,10 +668,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                 else
                 {
                     uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff);
-                    if (m_rdCost->psyRdEnabled())
-                        singleCostTmp = m_rdCost->calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
+                    if (m_rdCost.psyRdEnabled())
+                        singleCostTmp = m_rdCost.calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
                     else
-                        singleCostTmp = m_rdCost->calcRdCost(singleDistYTmp, singleBits);
+                        singleCostTmp = m_rdCost.calcRdCost(singleDistYTmp, singleBits);
                 }
 
                 if (singleCostTmp < singleCost)
@@ -715,10 +713,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             //----- code luma block with given intra prediction mode and store Cbf-----
             cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
             xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffY, singleCbfY, singleDistY);
-            if (m_rdCost->psyRdEnabled())
+            if (m_rdCost.psyRdEnabled())
             {
                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
-                singlePsyEnergyY = m_rdCost->psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                singlePsyEnergyY = m_rdCost.psyCost(log2TrSize - 2, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                     cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -727,10 +725,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
-            if (m_rdCost->psyRdEnabled())
-                singleCost = m_rdCost->calcPsyRdCost(singleDistY, singleBits, singlePsyEnergyY);
+            if (m_rdCost.psyRdEnabled())
+                singleCost = m_rdCost.calcPsyRdCost(singleDistY, singleBits, singlePsyEnergyY);
             else
-                singleCost = m_rdCost->calcRdCost(singleDistY, singleBits);
+                singleCost = m_rdCost.calcRdCost(singleDistY, singleBits);
         }
     }
 
@@ -771,10 +769,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
         //----- determine rate and r-d cost -----
         uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx);
-        if (m_rdCost->psyRdEnabled())
-            splitCost = m_rdCost->calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
+        if (m_rdCost.psyRdEnabled())
+            splitCost = m_rdCost.calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
         else
-            splitCost = m_rdCost->calcRdCost(splitDistY, splitBits);
+            splitCost = m_rdCost.calcRdCost(splitDistY, splitBits);
 
         //===== compare and set best =====
         if (splitCost < singleCost)
@@ -871,8 +869,8 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
 
         //===== transform and quantization =====
-        m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-        uint32_t numSig = m_trQuant->transformNxN(cu, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
+        m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+        uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
 
         //--- set coded block flag ---
         cu->setCbfSubParts((numSig ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -882,7 +880,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         if (numSig)
         {
             //--- inverse transform ---
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTransformSkip, numSig);
+            m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTransformSkip, numSig);
 
             // Generate Recon
             primitives.luma_add_ps[part](recon, stride, pred, residual, stride, stride);
@@ -1126,15 +1124,15 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                         else
                         {
                             uint32_t bitsTmp = singleCbfCTmp ? xGetIntraBitsChroma(cu, absPartIdxC, log2TrSizeC, chromaId, coeff) : 0;
-                            if (m_rdCost->psyRdEnabled())
+                            if (m_rdCost.psyRdEnabled())
                             {
                                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
-                                singlePsyEnergyTmp = m_rdCost->psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
+                                singlePsyEnergyTmp = m_rdCost.psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
                                     cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
-                                singleCostTmp = m_rdCost->calcPsyRdCost(singleDistCTmp, bitsTmp, singlePsyEnergyTmp);
+                                singleCostTmp = m_rdCost.calcPsyRdCost(singleDistCTmp, bitsTmp, singlePsyEnergyTmp);
                             }
                             else
-                                singleCostTmp = m_rdCost->calcRdCost(singleDistCTmp, bitsTmp);
+                                singleCostTmp = m_rdCost.calcRdCost(singleDistCTmp, bitsTmp);
                         }
 
                         if (singleCostTmp < singleCost)
@@ -1175,10 +1173,10 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                 {
                     cu->setTransformSkipPartRange(0, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
                     xIntraCodingChromaBlk(cu, absPartIdxC, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffC, singleCbfC, outDist, chromaId, log2TrSizeC);
-                    if (m_rdCost->psyRdEnabled())
+                    if (m_rdCost.psyRdEnabled())
                     {
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
-                        singlePsyEnergyTmp = m_rdCost->psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
+                        singlePsyEnergyTmp = m_rdCost.psyCost(log2TrSizeC - 2, fencYuv->getChromaAddr(chromaId, absPartIdxC), fencYuv->getCStride(),
                             cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
                     }
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
@@ -1349,8 +1347,8 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
                 else
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                uint32_t numSig = m_trQuant->transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC);
 
                 //--- set coded block flag ---
                 cu->setCbfPartRange((((numSig > 0) ? 1 : 0) << origTrDepth), ttype, absPartIdxC, tuIterator.absPartIdxStep);
@@ -1358,7 +1356,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 if (numSig)
                 {
                     //--- inverse transform ---
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
 
                     //===== reconstruction =====
                     // use square primitives
@@ -1528,7 +1526,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             {
                 uint32_t sad = modeCosts[mode];
                 uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
-                uint64_t cost = m_rdCost->calcRdSADCost(sad, bits);
+                uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
                 candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
             }
 
@@ -1769,10 +1767,10 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
 
             uint32_t bits = xGetIntraBitsQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep);
             uint64_t cost = 0; 
-            if (m_rdCost->psyRdEnabled())
-                cost = m_rdCost->calcPsyRdCost(dist, bits, cu->m_psyEnergy);
+            if (m_rdCost.psyRdEnabled())
+                cost = m_rdCost.calcPsyRdCost(dist, bits, cu->m_psyEnergy);
             else
-                cost = m_rdCost->calcRdCost(dist, bits);
+                cost = m_rdCost.calcRdCost(dist, bits);
             //----- compare -----
             if (cost < bestCost)
             {
@@ -1891,7 +1889,7 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
         motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, puIdx, true, false);
         uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.getStride());
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
-        costCand = costCand + m_rdCost->getCost(bitsCand);
+        costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
         {
             outCost = costCand;
@@ -2006,7 +2004,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(l, ref)->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
-                    cost = m_rdCost->calcRdSADCost(cost, MVP_IDX_BITS);
+                    cost = m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
                     if (bestCost > cost)
                     {
@@ -2023,7 +2021,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
-                uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost->getCost(bits);
+                uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
                 xCheckBestMVP(&amvpInfo[l][ref], outmv, mvp, mvpIdx, bits, cost);
@@ -2062,7 +2060,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             int satdCost = m_me.bufSATD(avg, roiWidth);
 
             bidirBits = list[0].bits + list[1].bits + listSelBits[2] - (listSelBits[0] + listSelBits[1]);
-            bidirCost = satdCost + m_rdCost->getCost(bidirBits);
+            bidirCost = satdCost + m_rdCost.getCost(bidirBits);
 
             MV mvzero(0, 0);
             bool bTryZero = list[0].mv.notZero() || list[1].mv.notZero();
@@ -2100,7 +2098,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 m_me.setMVP(mvp1);
                 uint32_t bits1 = list[1].bits - m_me.bitcost(list[1].mv) + m_me.bitcost(mvzero);
 
-                uint32_t cost = satdCost + m_rdCost->getCost(bits0) + m_rdCost->getCost(bits1);
+                uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
                 /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
                 xCheckBestMVP(&amvpInfo[0][list[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
@@ -2271,7 +2269,7 @@ void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMv
         outMvpIdx = bestMvpIdx;
         uint32_t origOutBits = outBits;
         outBits = origOutBits - mvBitsOrig + bestMvBits;
-        outCost = (outCost - m_rdCost->getCost(origOutBits)) + m_rdCost->getCost(outBits);
+        outCost = (outCost - m_rdCost.getCost(origOutBits)) + m_rdCost.getCost(outBits);
     }
 }
 
@@ -2327,8 +2325,8 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
         // Chroma
         part = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-        distortion += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-        distortion += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+        distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+        distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
         m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
         m_sbacCoder->resetBits();
@@ -2341,15 +2339,15 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         
         cu->m_totalBits       = bits;
         cu->m_totalDistortion = distortion;
-        if (m_rdCost->psyRdEnabled())
+        if (m_rdCost.psyRdEnabled())
         {
             int size = g_convertToBit[cuSize];
-            cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
+            cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
                                                    outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
+            cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
         }
         else
-            cu->m_totalRDCost = m_rdCost->calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+            cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 
         m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
 
@@ -2393,15 +2391,15 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         uint32_t zeroResiBits = m_sbacCoder->getNumberOfWrittenBits();
         uint64_t zeroCost = 0;
         uint32_t zeroPsyEnergyY = 0;
-        if (m_rdCost->psyRdEnabled())
+        if (m_rdCost.psyRdEnabled())
         {
+            // need to check whether zero distortion is similar to psyenergy of fenc
             int size = g_convertToBit[cuSize];
-            zeroPsyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                (pixel*)RDCost::zeroPel, MAX_CU_SIZE); // need to check whether zero distortion is similar to psyenergy of fenc
-            zeroCost = m_rdCost->calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
+            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), (pixel*)RDCost::zeroPel, MAX_CU_SIZE);
+            zeroCost = m_rdCost.calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
         }
         else
-            zeroCost = m_rdCost->calcRdCost(zeroDistortion, zeroResiBits);
+            zeroCost = m_rdCost.calcRdCost(zeroDistortion, zeroResiBits);
 
         if (cu->isLosslessCoded(0))
             zeroCost = cost + 1;
@@ -2430,10 +2428,10 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         bits = xSymbolBitsInter(cu);
 
-        if (m_rdCost->psyRdEnabled())
-            cost = m_rdCost->calcPsyRdCost(distortion, bits, cu->m_psyEnergy);
+        if (m_rdCost.psyRdEnabled())
+            cost = m_rdCost.calcPsyRdCost(distortion, bits, cu->m_psyEnergy);
         else
-            cost = m_rdCost->calcRdCost(distortion, bits);
+            cost = m_rdCost.calcRdCost(distortion, bits);
 
         if (cost < bestCost)
         {
@@ -2456,17 +2454,17 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         int part = partitionFromSize(cuSize);
         bestDist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
         part = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-        bestDist += m_rdCost->scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-        bestDist += m_rdCost->scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
-        if (m_rdCost->psyRdEnabled())
+        bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+        bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+        if (m_rdCost.psyRdEnabled())
         {
             int size = g_convertToBit[cuSize];
-            cu->m_psyEnergy = m_rdCost->psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                                                   outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalPsyCost = m_rdCost->calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
+            cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
+                                               outReconYuv->getLumaAddr(), outReconYuv->getStride());
+            cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
         }
         else
-            cu->m_totalRDCost = m_rdCost->calcRdCost(bestDist, bestBits);
+            cu->m_totalRDCost = m_rdCost.calcRdCost(bestDist, bestBits);
         cu->m_totalBits       = bestBits;
         cu->m_totalDistortion = bestDist;
 
@@ -2555,16 +2553,16 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
         const uint32_t strideResiY = resiYuv->m_width;
         const uint32_t strideResiC = resiYuv->m_cwidth;
 
-        m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-        uint32_t numSigY = m_trQuant->transformNxN(cu, curResiY, strideResiY, coeffCurY,
-                                                   log2TrSize, TEXT_LUMA, absPartIdx, false, curuseRDOQ);
+        m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+        uint32_t numSigY = m_trQuant.transformNxN(cu, curResiY, strideResiY, coeffCurY,
+                                                  log2TrSize, TEXT_LUMA, absPartIdx, false, curuseRDOQ);
 
         cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
         if (numSigY)
         {
-            m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY);
+            m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+            m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY);
         }
         else
             primitives.blockfill_s[sizeIdx](curResiY, strideResiY, 0);
@@ -2585,14 +2583,14 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                uint32_t numSigU = m_trQuant->transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUOffset,
-                                                           log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                uint32_t numSigU = m_trQuant.transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUOffset,
+                                                          log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
 
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                uint32_t numSigV = m_trQuant->transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUOffset,
-                                                           log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                uint32_t numSigV = m_trQuant.transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUOffset,
+                                                          log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
 
                 cu->setCbfPartRange(numSigU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigV ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -2600,8 +2598,8 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 if (numSigU)
                 {
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU);
                 }
                 else
                     primitives.blockfill_s[sizeIdxC](curResiU, strideResiC, 0);
@@ -2609,8 +2607,8 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 if (numSigV)
                 {
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV);
                 }
                 else
                     primitives.blockfill_s[sizeIdxC](curResiV, strideResiC, 0);
@@ -2734,11 +2732,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
 
         if (m_bEnableRDOQ && curuseRDOQ)
-            m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, trSize, TEXT_LUMA);
+            m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, trSize, TEXT_LUMA);
 
-        m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-        numSigY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, coeffCurY,
-                                          log2TrSize, TEXT_LUMA, absPartIdx, false, curuseRDOQ);
+        m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+        numSigY = m_trQuant.transformNxN(cu, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, coeffCurY,
+                                         log2TrSize, TEXT_LUMA, absPartIdx, false, curuseRDOQ);
 
         cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -2763,18 +2761,18 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
                 if (m_bEnableRDOQ && curuseRDOQ)
-                    m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, trSizeC, TEXT_CHROMA);
+                    m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, trSizeC, TEXT_CHROMA);
 
                 //Cb transform
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                numSigU[tuIterator.section] = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUOffset,
-                                                                        log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                numSigU[tuIterator.section] = m_trQuant.transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUOffset,
+                                                                     log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
                 //Cr transform
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                numSigV[tuIterator.section] = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUOffset,
-                                                                        log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                numSigV[tuIterator.section] = m_trQuant.transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUOffset,
+                                                                     log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
 
                 cu->setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -2787,6 +2785,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_sbacCoder->codeQtCbf(cu, absPartIdxC, TEXT_CHROMA_V, trMode);
                 if (numSigV[tuIterator.section])
                     m_sbacCoder->codeCoeffNxN(cu, coeffCurV + subTUOffset, absPartIdxC, log2TrSizeC, TEXT_CHROMA_V);
+
                 uint32_t newBits = m_sbacCoder->getNumberOfWrittenBits();
                 singleBitsComp[TEXT_CHROMA_V][tuIterator.section] = newBits - (singleBitsPrev + singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
 
@@ -2808,11 +2807,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         int partSize = partitionFromSize(trSize);
         uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, (pixel*)RDCost::zeroPel, trSize);
         uint32_t psyEnergyY = 0;
-        if (m_rdCost->psyRdEnabled())
+        if (m_rdCost.psyRdEnabled())
         {
+            // need to check whether zero distortion is similar to psyenergy of fenc
             int size = g_convertToBit[trSize];
-            psyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
-                (pixel*)RDCost::zeroPel, trSize); // need to check whether zero distortion is similar to psyenergy of fenc
+            psyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), (pixel*)RDCost::zeroPel, trSize);
         }
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width not full CU\n");
@@ -2824,12 +2823,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         if (numSigY)
         {
-            m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-            m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY); //this is for inter mode only
+            m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+            m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY); //this is for inter mode only
 
             const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, curResiY, strideResiY);
             uint32_t nonZeroPsyEnergyY = 0;
-            if (m_rdCost->psyRdEnabled())
+            if (m_rdCost.psyRdEnabled())
             {
                 pixel*   pred = predYuv->getLumaAddr(absPartIdx);
                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
@@ -2839,7 +2838,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 //===== reconstruction =====
                 primitives.luma_add_ps[partSize](reconIPred, reconIPredStride, pred, curResiY, stride, strideResiY);
                 int size = g_convertToBit[trSize];
-                nonZeroPsyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                nonZeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                     cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
             }
             if (cu->isLosslessCoded(0))
@@ -2850,18 +2849,18 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             else
             {
                 uint64_t singleCostY = 0;
-                if (m_rdCost->psyRdEnabled())
-                    singleCostY = m_rdCost->calcPsyRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0], nonZeroPsyEnergyY);
+                if (m_rdCost.psyRdEnabled())
+                    singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0], nonZeroPsyEnergyY);
                 else
-                    singleCostY = m_rdCost->calcRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0]);
+                    singleCostY = m_rdCost.calcRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0]);
                 m_sbacCoder->resetBits();
                 m_sbacCoder->codeQtCbfZero(cu, TEXT_LUMA, trMode);
                 const uint32_t nullBitsY = m_sbacCoder->getNumberOfWrittenBits();
                 uint64_t nullCostY = 0;
-                if (m_rdCost->psyRdEnabled())
-                    nullCostY = m_rdCost->calcPsyRdCost(distY, nullBitsY, psyEnergyY);
+                if (m_rdCost.psyRdEnabled())
+                    nullCostY = m_rdCost.calcPsyRdCost(distY, nullBitsY, psyEnergyY);
                 else
-                    nullCostY = m_rdCost->calcRdCost(distY, nullBitsY);
+                    nullCostY = m_rdCost.calcRdCost(distY, nullBitsY);
                 if (nullCostY < singleCostY)
                 {
                     numSigY = 0;
@@ -2885,10 +2884,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             m_sbacCoder->resetBits();
             m_sbacCoder->codeQtCbfZero(cu, TEXT_LUMA, trMode);
             const uint32_t nullBitsY = m_sbacCoder->getNumberOfWrittenBits();
-            if (m_rdCost->psyRdEnabled())
-                minCost[TEXT_LUMA][0] = m_rdCost->calcPsyRdCost(distY, nullBitsY, psyEnergyY);
+            if (m_rdCost.psyRdEnabled())
+                minCost[TEXT_LUMA][0] = m_rdCost.calcPsyRdCost(distY, nullBitsY, psyEnergyY);
             else
-                minCost[TEXT_LUMA][0] = m_rdCost->calcRdCost(distY, nullBitsY);
+                minCost[TEXT_LUMA][0] = m_rdCost.calcRdCost(distY, nullBitsY);
         }
 
         singleDistComp[TEXT_LUMA][0] = distY;
@@ -2915,7 +2914,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
                 int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
 
-                distU = m_rdCost->scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, trSizeC));
+                distU = m_rdCost.scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, trSizeC));
 
                 if (outZeroDist)
                 {
@@ -2924,15 +2923,15 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 if (numSigU[tuIterator.section])
                 {
                     int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset,
-                                               log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU[tuIterator.section]);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset,
+                                              log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU[tuIterator.section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiU, strideResiC);
-                    const uint32_t nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
+                    const uint32_t nonZeroDistU = m_rdCost.scaleChromaDistCb(dist);
                     uint32_t nonZeroPsyEnergyU = 0;
 
-                    if (m_rdCost->psyRdEnabled())
+                    if (m_rdCost.psyRdEnabled())
                     {
                         pixel*   pred = predYuv->getCbAddr(absPartIdxC);
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
@@ -2942,8 +2941,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         //===== reconstruction =====
                         primitives.luma_add_ps[partSizeC](reconIPred, reconIPredStride, pred, curResiU, stride, strideResiC);
                         int size = g_convertToBit[trSizeC];
-                        nonZeroPsyEnergyU = m_rdCost->psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
-                            cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
+                        nonZeroPsyEnergyU = m_rdCost.psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
+                                                             cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder),
+                                                             cu->getPic()->getPicYuvRec()->getCStride());
                     }
                     if (cu->isLosslessCoded(0))
                     {
@@ -2953,18 +2953,18 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     else
                     {
                         uint64_t singleCostU = 0;
-                        if (m_rdCost->psyRdEnabled())
-                            singleCostU = m_rdCost->calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
+                        if (m_rdCost.psyRdEnabled())
+                            singleCostU = m_rdCost.calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
                         else
-                            singleCostU = m_rdCost->calcRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
+                            singleCostU = m_rdCost.calcRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
                         m_sbacCoder->resetBits();
                         m_sbacCoder->codeQtCbfZero(cu, TEXT_CHROMA_U, trMode);
                         const uint32_t nullBitsU = m_sbacCoder->getNumberOfWrittenBits();
                         uint64_t nullCostU = 0;
-                        if (m_rdCost->psyRdEnabled())
-                            nullCostU = m_rdCost->calcPsyRdCost(distU, nullBitsU, psyEnergyU);
+                        if (m_rdCost.psyRdEnabled())
+                            nullCostU = m_rdCost.calcPsyRdCost(distU, nullBitsU, psyEnergyU);
                         else
-                            nullCostU = m_rdCost->calcRdCost(distU, nullBitsU);
+                            nullCostU = m_rdCost.calcRdCost(distU, nullBitsU);
                         if (nullCostU < singleCostU)
                         {
                             numSigU[tuIterator.section] = 0;
@@ -2988,10 +2988,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_sbacCoder->resetBits();
                     m_sbacCoder->codeQtCbfZero(cu, TEXT_CHROMA_U, trModeC);
                     const uint32_t nullBitsU = m_sbacCoder->getNumberOfWrittenBits();
-                    if (m_rdCost->psyRdEnabled())
-                        minCost[TEXT_CHROMA_U][tuIterator.section] = m_rdCost->calcPsyRdCost(distU, nullBitsU, psyEnergyU);
+                    if (m_rdCost.psyRdEnabled())
+                        minCost[TEXT_CHROMA_U][tuIterator.section] = m_rdCost.calcPsyRdCost(distU, nullBitsU, psyEnergyU);
                     else
-                        minCost[TEXT_CHROMA_U][tuIterator.section] = m_rdCost->calcRdCost(distU, nullBitsU);
+                        minCost[TEXT_CHROMA_U][tuIterator.section] = m_rdCost.calcRdCost(distU, nullBitsU);
                 }
 
                 singleDistComp[TEXT_CHROMA_U][tuIterator.section] = distU;
@@ -3000,22 +3000,22 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 if (!numSigU[tuIterator.section])
                     primitives.blockfill_s[sizeIdxC](curResiU, strideResiC, 0);
 
-                distV = m_rdCost->scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, trSizeC));
+                distV = m_rdCost.scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, trSizeC));
                 if (outZeroDist)
                     *outZeroDist += distV;
 
                 if (numSigV[tuIterator.section])
                 {
                     int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset,
-                                               log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV[tuIterator.section]);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset,
+                                              log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV[tuIterator.section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiV, strideResiC);
-                    const uint32_t nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
+                    const uint32_t nonZeroDistV = m_rdCost.scaleChromaDistCr(dist);
                     uint32_t nonZeroPsyEnergyV = 0;
 
-                    if (m_rdCost->psyRdEnabled())
+                    if (m_rdCost.psyRdEnabled())
                     {
                         pixel*   pred = predYuv->getCrAddr(absPartIdxC);
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
@@ -3025,8 +3025,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         //===== reconstruction =====
                         primitives.luma_add_ps[partSizeC](reconIPred, reconIPredStride, pred, curResiV, stride, strideResiC);
                         int size = g_convertToBit[trSizeC];
-                        nonZeroPsyEnergyV = m_rdCost->psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
-                            cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
+                        nonZeroPsyEnergyV = m_rdCost.psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
+                                                             cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder),
+                                                             cu->getPic()->getPicYuvRec()->getCStride());
                     }
                     if (cu->isLosslessCoded(0))
                     {
@@ -3036,18 +3037,18 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     else
                     {
                         uint64_t singleCostV = 0;
-                        if (m_rdCost->psyRdEnabled())
-                            singleCostV = m_rdCost->calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
+                        if (m_rdCost.psyRdEnabled())
+                            singleCostV = m_rdCost.calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
                         else
-                            singleCostV = m_rdCost->calcRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section]);
+                            singleCostV = m_rdCost.calcRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section]);
                         m_sbacCoder->resetBits();
                         m_sbacCoder->codeQtCbfZero(cu, TEXT_CHROMA_V, trMode);
                         const uint32_t nullBitsV = m_sbacCoder->getNumberOfWrittenBits();
                         uint64_t nullCostV = 0;
-                        if (m_rdCost->psyRdEnabled())
-                            nullCostV = m_rdCost->calcPsyRdCost(distV, nullBitsV, psyEnergyV);
+                        if (m_rdCost.psyRdEnabled())
+                            nullCostV = m_rdCost.calcPsyRdCost(distV, nullBitsV, psyEnergyV);
                         else
-                            nullCostV = m_rdCost->calcRdCost(distV, nullBitsV);
+                            nullCostV = m_rdCost.calcRdCost(distV, nullBitsV);
                         if (nullCostV < singleCostV)
                         {
                             numSigV[tuIterator.section] = 0;
@@ -3071,10 +3072,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_sbacCoder->resetBits();
                     m_sbacCoder->codeQtCbfZero(cu, TEXT_CHROMA_V, trModeC);
                     const uint32_t nullBitsV = m_sbacCoder->getNumberOfWrittenBits();
-                    if (m_rdCost->psyRdEnabled())
-                        minCost[TEXT_CHROMA_V][tuIterator.section] = m_rdCost->calcPsyRdCost(distV, nullBitsV, psyEnergyV);
+                    if (m_rdCost.psyRdEnabled())
+                        minCost[TEXT_CHROMA_V][tuIterator.section] = m_rdCost.calcPsyRdCost(distV, nullBitsV, psyEnergyV);
                     else
-                        minCost[TEXT_CHROMA_V][tuIterator.section] = m_rdCost->calcRdCost(distV, nullBitsV);
+                        minCost[TEXT_CHROMA_V][tuIterator.section] = m_rdCost.calcRdCost(distV, nullBitsV);
                 }
 
                 singleDistComp[TEXT_CHROMA_V][tuIterator.section] = distV;
@@ -3103,11 +3104,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             cu->setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
             if (m_bEnableRDOQ)
-                m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, trSize, TEXT_LUMA);
+                m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, trSize, TEXT_LUMA);
 
-            m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-            uint32_t numSigTSkipY = m_trQuant->transformNxN(cu, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, tsCoeffY,
-                                                            log2TrSize, TEXT_LUMA, absPartIdx, true, curuseRDOQ);
+            m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+            uint32_t numSigTSkipY = m_trQuant.transformNxN(cu, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, tsCoeffY,
+                                                           log2TrSize, TEXT_LUMA, absPartIdx, true, curuseRDOQ);
             cu->setCbfSubParts(numSigTSkipY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
             if (numSigTSkipY)
@@ -3117,13 +3118,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_sbacCoder->codeCoeffNxN(cu, tsCoeffY, absPartIdx, log2TrSize, TEXT_LUMA);
                 const uint32_t skipSingleBitsY = m_sbacCoder->getNumberOfWrittenBits();
 
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
-                m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdx), tsResiY, trSize, tsCoeffY, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_LUMA, QP_BD_OFFSET, 0, chFmt);
+                m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), tsResiY, trSize, tsCoeffY, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
 
-                nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width,
-                                                           tsResiY, trSize);
+                nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, tsResiY, trSize);
 
-                if (m_rdCost->psyRdEnabled())
+                if (m_rdCost.psyRdEnabled())
                 {
                     pixel*   pred = predYuv->getLumaAddr(absPartIdx);
                     uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
@@ -3133,12 +3133,13 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     //===== reconstruction =====
                     primitives.luma_add_ps[partSize](reconIPred, reconIPredStride, pred, tsResiY, stride, trSize);
                     int size = g_convertToBit[trSize];
-                    nonZeroPsyEnergyY = m_rdCost->psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
-                        cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getStride());
-                    singleCostY = m_rdCost->calcPsyRdCost(nonZeroDistY, skipSingleBitsY, nonZeroPsyEnergyY);
+                    nonZeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
+                                                         cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder),
+                                                         cu->getPic()->getPicYuvRec()->getStride());
+                    singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, skipSingleBitsY, nonZeroPsyEnergyY);
                 }
                 else
-                    singleCostY = m_rdCost->calcRdCost(nonZeroDistY, skipSingleBitsY);
+                    singleCostY = m_rdCost.calcRdCost(nonZeroDistY, skipSingleBitsY);
             }
 
             if (!numSigTSkipY || minCost[TEXT_LUMA][0] < singleCostY)
@@ -3186,16 +3187,16 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 cu->setTransformSkipPartRange(1, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
                 if (m_bEnableRDOQ)
-                    m_sbacCoder->estBit(m_trQuant->m_estBitsSbac, trSizeC, TEXT_CHROMA);
+                    m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, trSizeC, TEXT_CHROMA);
 
                 int curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                uint32_t numSigTSkipU = m_trQuant->transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffU,
-                                                                log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                uint32_t numSigTSkipU = m_trQuant.transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffU,
+                                                               log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true, curuseRDOQ);
                 curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                uint32_t numSigTSkipV = m_trQuant->transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffV,
-                                                                log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, true, curuseRDOQ);
+                m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                uint32_t numSigTSkipV = m_trQuant.transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffV,
+                                                               log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, true, curuseRDOQ);
 
                 cu->setCbfPartRange(numSigTSkipU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigTSkipV ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -3210,13 +3211,13 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     singleBitsComp[TEXT_CHROMA_U][tuIterator.section] = m_sbacCoder->getNumberOfWrittenBits();
 
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCbQpOffset() + cu->getSlice()->getSliceQpDeltaCb();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiU, trSizeC, tsCoeffU,
-                                               log2TrSizeC, TEXT_CHROMA_U, false, true, numSigTSkipU);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiU, trSizeC, tsCoeffU,
+                                              log2TrSizeC, TEXT_CHROMA_U, false, true, numSigTSkipU);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  tsResiU, trSizeC);
-                    nonZeroDistU = m_rdCost->scaleChromaDistCb(dist);
-                    if (m_rdCost->psyRdEnabled())
+                    nonZeroDistU = m_rdCost.scaleChromaDistCb(dist);
+                    if (m_rdCost.psyRdEnabled())
                     {
                         pixel*   pred = predYuv->getCbAddr(absPartIdxC);
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
@@ -3226,12 +3227,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         //===== reconstruction =====
                         primitives.luma_add_ps[partSizeC](reconIPred, reconIPredStride, pred, tsResiU, stride, trSizeC);
                         int size = g_convertToBit[trSizeC];
-                        nonZeroPsyEnergyU = m_rdCost->psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
+                        nonZeroPsyEnergyU = m_rdCost.psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
                             cu->getPic()->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
-                        singleCostU = m_rdCost->calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
+                        singleCostU = m_rdCost.calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
                     }
                     else
-                        singleCostU = m_rdCost->calcRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
+                        singleCostU = m_rdCost.calcRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
                 }
 
                 if (!numSigTSkipU || minCost[TEXT_CHROMA_U][tuIterator.section] < singleCostU)
@@ -3253,13 +3254,13 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     singleBitsComp[TEXT_CHROMA_V][tuIterator.section] = m_sbacCoder->getNumberOfWrittenBits() - singleBitsComp[TEXT_CHROMA_U][tuIterator.section];
 
                     curChromaQpOffset = cu->getSlice()->getPPS()->getChromaCrQpOffset() + cu->getSlice()->getSliceQpDeltaCr();
-                    m_trQuant->setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
-                    m_trQuant->invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiV, trSizeC, tsCoeffV,
-                                               log2TrSizeC, TEXT_CHROMA_V, false, true, numSigTSkipV);
+                    m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, cu->getSlice()->getSPS()->getQpBDOffsetC(), curChromaQpOffset, chFmt);
+                    m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiV, trSizeC, tsCoeffV,
+                                              log2TrSizeC, TEXT_CHROMA_V, false, true, numSigTSkipV);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  tsResiV, trSizeC);
-                    nonZeroDistV = m_rdCost->scaleChromaDistCr(dist);
-                    if (m_rdCost->psyRdEnabled())
+                    nonZeroDistV = m_rdCost.scaleChromaDistCr(dist);
+                    if (m_rdCost.psyRdEnabled())
                     {
                         pixel*   pred = predYuv->getCrAddr(absPartIdxC);
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
@@ -3269,12 +3270,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         //===== reconstruction =====
                         primitives.luma_add_ps[partSizeC](reconIPred, reconIPredStride, pred, tsResiV, stride, trSizeC);
                         int size = g_convertToBit[trSizeC];
-                        nonZeroPsyEnergyV = m_rdCost->psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
+                        nonZeroPsyEnergyV = m_rdCost.psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
                             cu->getPic()->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder), cu->getPic()->getPicYuvRec()->getCStride());
-                        singleCostV = m_rdCost->calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
+                        singleCostV = m_rdCost.calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
                     }
                     else
-                        singleCostV = m_rdCost->calcRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section]);
+                        singleCostV = m_rdCost.calcRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section]);
                 }
 
                 if (!numSigTSkipV || minCost[TEXT_CHROMA_V][tuIterator.section] < singleCostV)
@@ -3353,10 +3354,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
 
         singleBits = m_sbacCoder->getNumberOfWrittenBits();
-        if (m_rdCost->psyRdEnabled())
-            singleCost = m_rdCost->calcPsyRdCost(singleDist, singleBits, singlePsyEnergy);
+        if (m_rdCost.psyRdEnabled())
+            singleCost = m_rdCost.calcPsyRdCost(singleDist, singleBits, singlePsyEnergy);
         else
-            singleCost = m_rdCost->calcRdCost(singleDist, singleBits);
+            singleCost = m_rdCost.calcRdCost(singleDist, singleBits);
 
         bestCBF[TEXT_LUMA] = cu->getCbf(absPartIdx, TEXT_LUMA, trMode);
         if (bCodeChroma)
@@ -3436,10 +3437,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         subdivBits = m_sbacCoder->getNumberOfWrittenBits();
 
-        if (m_rdCost->psyRdEnabled())
-            subDivCost = m_rdCost->calcPsyRdCost(subdivDist, subdivBits, subDivPsyEnergy);
+        if (m_rdCost.psyRdEnabled())
+            subDivCost = m_rdCost.calcPsyRdCost(subdivDist, subdivBits, subDivPsyEnergy);
         else
-            subDivCost = m_rdCost->calcRdCost(subdivDist, subdivBits);
+            subDivCost = m_rdCost.calcRdCost(subdivDist, subdivBits);
 
         if (ycbf || ucbf || vcbf || !bCheckFull)
         {
