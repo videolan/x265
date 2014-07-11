@@ -87,7 +87,7 @@ class SBac;
 // ====================================================================================================================
 
 /// CU encoder class
-class TEncCu
+class TEncCu : public TEncSearch
 {
 public:
 
@@ -115,15 +115,6 @@ public:
     TComYuv**    m_bestMergeRecoYuv;
     TComYuv**    m_origYuv;     ///< Original Yuv at each depth
 
-    x265_param*  m_param;
-    TEncSearch*  m_search;
-    TComTrQuant* m_trQuant;
-    RDCost*      m_rdCost;
-    SBac*        m_sbacCoder;
-
-    // RD SBac pointers
-    SBac       (*m_rdSbacCoders)[CI_NUM];
-
     uint8_t      m_totalDepth;
 
     bool         m_bEncodeDQP;
@@ -134,7 +125,7 @@ public:
 
     TEncCu();
 
-    void init(Encoder* top);
+    bool init(Encoder* top, RDCost* rdCost, TComTrQuant* trQuant);
     bool create(uint8_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);

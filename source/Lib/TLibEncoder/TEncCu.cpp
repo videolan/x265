@@ -66,15 +66,24 @@ TEncCu::TEncCu()
     m_bestMergeRecoYuv = NULL;
     m_origYuv         = NULL;
     for (int i = 0; i < MAX_PRED_TYPES; i++)
-    {
         m_modePredYuv[i] = NULL;
-    }
 
-    m_search          = NULL;
-    m_trQuant         = NULL;
-    m_rdCost          = NULL;
     m_sbacCoder       = NULL;
     m_rdSbacCoders    = NULL;
+}
+
+bool TEncCu::init(Encoder* top, RDCost* rdCost, TComTrQuant* trQuant)
+{
+    m_trQuant = trQuant;
+    m_rdCost  = rdCost;
+
+    m_CUTransquantBypass = top->m_CUTransquantBypassFlagValue;
+    m_param = top->m_param;
+    m_bEnableRDOQ = top->m_bEnableRDOQ;
+    m_bFrameParallel = top->m_totalFrameThreads > 1;
+    m_numLayers = top->m_quadtreeTULog2MaxSize - top->m_quadtreeTULog2MinSize + 1;
+
+    return initSearch();
 }
 
 /**
@@ -300,14 +309,6 @@ void TEncCu::destroy()
     m_tmpRecoYuv = NULL;
     delete [] m_origYuv;
     m_origYuv = NULL;
-}
-
-/** \param    pcEncTop      pointer of encoder class
- */
-void TEncCu::init(Encoder* top)
-{
-    m_param = top->m_param;
-    m_CUTransquantBypass = top->m_CUTransquantBypassFlagValue;
 }
 
 // ====================================================================================================================
@@ -1202,7 +1203,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
     {
         for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
         {
-            if (m_search->m_bFrameParallel &&
+            if (m_bFrameParallel &&
                 (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
                  mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             {
@@ -1223,16 +1224,16 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                     outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
 
                     // do MC
-                    m_search->motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0);
+                    motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0);
                     // estimate residual and encode everything
-                    m_search->encodeResAndCalcRdInterCU(outTempCU,
-                                                        m_origYuv[depth],
-                                                        m_tmpPredYuv[depth],
-                                                        m_tmpResiYuv[depth],
-                                                        m_bestResiYuv[depth],
-                                                        m_tmpRecoYuv[depth],
-                                                        !!noResidual,
-                                                        true);
+                    encodeResAndCalcRdInterCU(outTempCU,
+                                              m_origYuv[depth],
+                                              m_tmpPredYuv[depth],
+                                              m_tmpResiYuv[depth],
+                                              m_bestResiYuv[depth],
+                                              m_tmpRecoYuv[depth],
+                                              !!noResidual,
+                                              true);
 
                     /* Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !outTempCU->getQtRootCbf(0))
@@ -1302,9 +1303,9 @@ void TEncCu::xCheckRDCostInter(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
-    if (m_search->predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
+    if (predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
     {
-        m_search->encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
+        encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
         xCheckDQP(outTempCU);
         xCheckBestMode(outBestCU, outTempCU, depth);
     }
@@ -1320,9 +1321,9 @@ void TEncCu::xCheckRDCostIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, P
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
-    m_search->estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
-    m_search->estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
     if (outTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
@@ -1371,9 +1372,9 @@ void TEncCu::xCheckRDCostIntraInInter(TComDataCU*& outBestCU, TComDataCU*& outTe
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(m_CUTransquantBypass, 0, depth);
 
-    m_search->estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
-    m_search->estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
     if (outTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())

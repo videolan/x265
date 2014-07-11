@@ -86,23 +86,16 @@ TEncSearch::~TEncSearch()
     delete[] m_qtTempShortYuv;
 }
 
-bool TEncSearch::init(Encoder* top, RDCost* rdCost, TComTrQuant* trQuant)
+bool TEncSearch::initSearch()
 {
-    m_param   = top->m_param;
-    m_trQuant = trQuant;
-    m_rdCost  = rdCost;
-    m_bEnableRDOQ = top->m_bEnableRDOQ;
-
     initTempBuff(m_param->internalCsp);
     m_me.setSearchMethod(m_param->searchMethod);
     m_me.setSubpelRefine(m_param->subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_bFrameParallel = top->m_totalFrameThreads > 1;
     m_refLagPixels = m_bFrameParallel ? m_param->searchRange : m_param->sourceHeight;
 
-    m_numLayers = top->m_quadtreeTULog2MaxSize - top->m_quadtreeTULog2MinSize + 1;
     m_qtTempCoeff[0] = new coeff_t*[m_numLayers * 3];
     m_qtTempCoeff[1] = m_qtTempCoeff[0] + m_numLayers;
     m_qtTempCoeff[2] = m_qtTempCoeff[0] + m_numLayers * 2;

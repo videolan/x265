@@ -133,7 +133,7 @@ public:
     TEncSearch();
     virtual ~TEncSearch();
 
-    bool init(Encoder* top, RDCost* rdCost, TComTrQuant *trQuant);
+    bool initSearch();
 
     uint32_t xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t xModeBitsRemIntra(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t & mpms);

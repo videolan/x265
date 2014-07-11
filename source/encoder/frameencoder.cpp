@@ -311,7 +311,7 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
     chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
     int qpCr = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
-    tld.m_search.setQP(qp, qpCb, qpCr);
+    tld.m_cuCoder.setQP(qp, qpCb, qpCr);
 }
 
 void FrameEncoder::compressFrame()
@@ -659,7 +659,6 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_tld.m_search.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.encodeCU(cu);
 
@@ -851,13 +850,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     }
 
     // setup thread-local data
-    tld.m_trQuant.m_nr = &m_nr;
-    tld.m_search.m_mref = m_mref;
-
-    setLambda(m_frame->getSlice()->getSliceQp(), tld);
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
-    tld.m_search.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+    tld.m_trQuant.m_nr = &m_nr;
+    tld.m_cuCoder.m_mref = m_mref;
+    tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->getSliceType()];
+    setLambda(m_frame->getSlice()->getSliceQp(), tld);
 
     int64_t startTime = x265_mdate();
     assert(m_frame->getPicSym()->getFrameWidthInCU() == m_numCols);

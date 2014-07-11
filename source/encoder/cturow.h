@@ -29,7 +29,6 @@
 #include "frame.h"
 
 #include "TLibEncoder/TEncCu.h"
-#include "TLibEncoder/TEncSearch.h"
 
 #include "rdcost.h"
 #include "entropy.h"
@@ -41,7 +40,6 @@ class Encoder;
 
 struct ThreadLocalData
 {
-    TEncSearch  m_search;
     TEncCu      m_cuCoder;
     RDCost      m_rdCost;
     TComTrQuant m_trQuant;
