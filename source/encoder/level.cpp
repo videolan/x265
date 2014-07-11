@@ -93,7 +93,8 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
     tier = Level::MAIN;
     const char *levelName = "(none)";
 
-    for (int i = 1; levels[i].maxLumaSamples; i++)
+    int i;
+    for (i = 1; levels[i].maxLumaSamples; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
             continue;
@@ -132,6 +133,17 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
             tier = Level::MAIN;
         /* TODO: The value of NumPocTotalCurr shall be less than or equal to 8 */
         break;
+    }
+
+    /* if the user supplied no bitrate, but supplied a level which is higher
+     * than the current detected level, assume the user knows that the bitrate
+     * will be high and use their specified level */
+    if (!param.rc.bitrate && levels[i].levelIdc < param.levelIdc)
+    {
+        while (levels[i].levelIdc < param.levelIdc && levels[i].levelIdc)
+            i++;
+        levelName = levels[i].name;
+        level = levels[i].levelEnum;
     }
 
     static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
