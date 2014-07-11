@@ -54,7 +54,7 @@ struct FrameStats
     /* Texture bits (DCT coefs) */
     int         coeffBits;
     int         miscBits;
-    /* CU type counts */
+    /* CU type counts stored as percentage */
     double      cuCount_i;
     double      cuCount_p;
     double      cuCount_skip;

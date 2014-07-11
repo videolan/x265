@@ -490,6 +490,7 @@ void FrameEncoder::compressFrame()
     compressCTURows();
 
     if (m_param->rc.bStatWrite)
+    {
         // accumulate intra,inter,skip cu count per frame for 2 pass
         for (int i = 0; i < m_numRows; i++)
         {
@@ -497,7 +498,11 @@ void FrameEncoder::compressFrame()
             m_frameStats.cuCount_p += m_rows[i].m_pCuCnt;
             m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
         }
-
+        double totalCuCount = m_frameStats.cuCount_i + m_frameStats.cuCount_p + m_frameStats.cuCount_skip;
+        m_frameStats.cuCount_i /= totalCuCount;
+        m_frameStats.cuCount_p /= totalCuCount;
+        m_frameStats.cuCount_skip /= totalCuCount;
+    }
     if (m_sps.getUseSAO())
     {
         SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
