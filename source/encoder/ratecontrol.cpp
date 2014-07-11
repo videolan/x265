@@ -437,7 +437,7 @@ bool RateControl::init(TComSPS *sps)
                 if (!tmpFile)
                     return false;
                 m_cutreeStatFileIn = fopen(tmpFile, "rb");
-                x265_free(tmpFile);
+                X265_FREE(tmpFile);
                 if (!m_cutreeStatFileIn)
                 {
                     x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", tmpFile);

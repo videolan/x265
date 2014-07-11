@@ -87,7 +87,7 @@ struct RateControlEntry
     int mvBits;
     int miscBits;
     int coeffBits;
-    uint64_t expectedBits; /*total expected bits up to the current frame (current one excluded)*/
+    uint64_t expectedBits; /* total expected bits up to the current frame (current one excluded) */
 };
 
 class RateControl
