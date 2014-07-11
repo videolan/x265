@@ -488,6 +488,10 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
                         std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                     }
+                    else
+                    {
+                        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                    }
                 }
 
                 /* Check for Intra in inter frames only if its a P-slice*/
