@@ -320,8 +320,8 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             {
                 //No-residue mode
                 m_search->encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
-
                 std::swap(yuvReconBest, m_tmpRecoYuv[depth]);
+                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
             }
 
             //Encode with residue
@@ -333,6 +333,7 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             {
                 std::swap(outBestCU, outTempCU);
                 std::swap(yuvReconBest, m_tmpRecoYuv[depth]);
+                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
             }
         }
     }
