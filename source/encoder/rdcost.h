@@ -45,7 +45,7 @@ private:
 
 public:
 
-    static const pixel zeroPel[MAX_CU_SIZE * MAX_CU_SIZE];
+    static const pixel zeroPel[MAX_CU_SIZE];
 
     void setLambda(double lambda2, double lambda)
     {
