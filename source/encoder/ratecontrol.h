@@ -50,13 +50,10 @@ struct Predictor
     double decay;
     double offset;
 };
-
 struct RateControlEntry
 {
-    int64_t coeffBits;  /* Required in 2-pass rate control */
     int64_t lastSatd; /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
     int sliceType;
-    int mvBits;
     int bframes;
     int poc;
     int encodeOrder;
@@ -64,19 +61,33 @@ struct RateControlEntry
     bool bLastMiniGopBFrame;
     double blurredComplexity;
     double qpaRc;
+    double qpAq;
     double qRceq;
     double frameSizePlanned;  /* frame Size decided by RateCotrol before encoding the frame */
     double bufferRate;
     double movingAvgSum;
     double qpNoVbv;
     double bufferFill;
+    double frameDuration;
     Predictor rowPreds[3][2];
     Predictor* rowPred[2];
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
     bool isActive;
-
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;
+    /* Required in 2-pass rate control */
+    double iCuCount;
+    double pCuCount;
+    double skipCuCount;
+    bool keptAsRef;
+    double expectedVbv;
+    double qScale;
+    double newQScale;
+    double newQp;
+    int mvBits;
+    int miscBits;
+    int coeffBits;
+    uint64_t expectedBits; /*total expected bits up to the current frame (current one excluded)*/
 };
 
 class RateControl
@@ -131,10 +142,9 @@ public:
     double   m_shortTermCplxCount;
     double   m_lastRceq;
     double   m_qCompress;
-
     int64_t  m_totalBits;        /* total bits used for already encoded frames */
     int      m_framesDone;       /* # of frames passed through RateCotrol already */
-
+    double   m_fps;
     /* hrd stuff */
     SEIBufferingPeriod m_bufPeriodSEI;
     double   m_nominalRemovalTime;
@@ -145,7 +155,9 @@ public:
     FILE*    m_statFileOut;
     FILE*    m_cutreeStatFileOut;
     FILE*    m_cutreeStatFileIn;
-
+    int      m_numEntries;
+    RateControlEntry *m_rce2Pass;
+    double   m_lastAccumPNorm;
     struct
     {
         uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
@@ -184,6 +196,12 @@ protected:
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
+    bool initPass2();
+    double getDiffLimitedQScale(RateControlEntry *rce, double q);
+    double countExpectedBits();
+    bool vbv2Pass(uint64_t allAvailableBits);
+    bool findUnderflow(double *fills, int *t0, int *t1, int over);
+    bool fixUnderflow(int t0, int t1, double adjustment, double qscaleMin, double qscaleMax);
 };
 }
 #endif // ifndef X265_RATECONTROL_H
