@@ -754,6 +754,9 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    /* get the encoder parameters post-initialization */
+    x265_encoder_parameters(encoder, param);
+
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
         x265_log(param, X265_LOG_ERROR, "Unable to register CTRL+C handler: %s\n", strerror(errno));
