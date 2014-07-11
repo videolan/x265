@@ -118,7 +118,6 @@ public:
     uint8_t      m_totalDepth;
 
     bool         m_bEncodeDQP;
-    bool         m_CUTransquantBypass;
 
     StatisticLog  m_sliceTypeLog[3];
     StatisticLog* m_log;

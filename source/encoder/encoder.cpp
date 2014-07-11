@@ -62,8 +62,6 @@ Encoder::Encoder()
     m_numChromaWPFrames = 0;
     m_numLumaWPBiFrames = 0;
     m_numChromaWPBiFrames = 0;
-    m_TransquantBypassEnableFlag = false;
-    m_CUTransquantBypassFlagValue = false;
     m_lookahead = NULL;
     m_frameEncoder = NULL;
     m_rateControl = NULL;
@@ -1212,7 +1210,7 @@ void Encoder::initPPS(TComPPS *pps)
     pps->setNumRefIdxL0DefaultActive(1);
     pps->setNumRefIdxL1DefaultActive(1);
 
-    pps->setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
+    pps->setTransquantBypassEnableFlag(m_param->bCULossless || m_param->bLossless);
     pps->setUseTransformSkip(m_param->bEnableTransformSkip);
 }
 
@@ -1310,19 +1308,12 @@ void Encoder::configure(x265_param *p)
 
     if (p->bLossless)
     {
-        m_TransquantBypassEnableFlag  = true;
-        m_CUTransquantBypassFlagValue = true; 
         p->rc.rateControlMode = X265_RC_CQP;
         p->rc.qp = 4; // An oddity, QP=4 is more lossless than QP=0 and gives better lambdas
         p->bEnableSsim = 0;
         p->bEnablePsnr = 0;
     }
     
-    if (p->bCULossless)
-    {
-        m_TransquantBypassEnableFlag  = true;
-    }
-
     if (p->rc.rateControlMode == X265_RC_CQP)
     {
         p->rc.aqMode = X265_AQ_NONE;
