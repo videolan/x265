@@ -353,9 +353,7 @@ void TEncCu::compressCU(TComDataCU* cu)
                 int next = numPartition >> (part * 2);
                 m_log->qTreeIntraCnt[part]++;
                 if (part == g_maxCUDepth - 1 && cu->getPartitionSize(i) != SIZE_2Nx2N)
-                {
                     m_log->cntIntraNxN++;
-                }
                 else
                 {
                     m_log->cntIntra[part]++;
@@ -524,15 +522,11 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
     Frame* pic = outBestCU->getPic();
 
     if (depth == 0)
-    {
         // get original YUV data from picture
         m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
-    }
     else
-    {
         // copy partition YUV from depth 0 CTU cache
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
-    }
 
     uint32_t cuSize = outTempCU->getCUSize(0);
     TComSlice* slice = outTempCU->getSlice();
@@ -672,15 +666,11 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
     Frame* pic = outBestCU->getPic();
 
     if (depth == 0)
-    {
         // get original YUV data from picture
         m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
-    }
     else
-    {
         // copy partition YUV from depth 0 CTU cache
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
-    }
 
     // variable for Early CU determination
     bool bSubBranch = true;
@@ -724,9 +714,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                 xCheckRDCostInter(outBestCU, outTempCU, SIZE_2Nx2N);
                 outTempCU->initEstData();
                 if (m_param->bEnableCbfFastMode)
-                {
                     doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                }
             }
         }
 
@@ -755,18 +743,14 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                         xCheckRDCostInter(outBestCU, outTempCU, SIZE_Nx2N);
                         outTempCU->initEstData();
                         if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_Nx2N)
-                        {
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
                     }
                     if (doNotBlockPu)
                     {
                         xCheckRDCostInter(outBestCU, outTempCU, SIZE_2NxN);
                         outTempCU->initEstData();
                         if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxN)
-                        {
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
                     }
                 }
 
@@ -786,18 +770,14 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_2NxnU);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                         if (doNotBlockPu)
                         {
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_2NxnD);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                     }
                     else if (bTestMergeAMP_Hor)
@@ -807,18 +787,14 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_2NxnU, true);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                         if (doNotBlockPu)
                         {
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_2NxnD, true);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                     }
 
@@ -830,9 +806,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_nLx2N);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                         if (doNotBlockPu)
                         {
@@ -847,9 +821,7 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                             xCheckRDCostInter(outBestCU, outTempCU, SIZE_nLx2N, true);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
-                            {
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                            }
                         }
                         if (doNotBlockPu)
                         {
@@ -918,14 +890,11 @@ void TEncCu::xCompressCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_
                  (subBestPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples())))
             {
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
+
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
-                {
                     m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[depth][CI_CURR_BEST]);
-                }
                 else
-                {
                     m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
-                }
 
                 xCompressCU(subBestPartCU, subTempPartCU, nextDepth, bInsidePicture);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
@@ -1088,9 +1057,7 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
     // We need to split, so don't try these modes.
     if (bInsidePicture)
-    {
         m_sbacCoder->codeSplitFlag(cu, absPartIdx, depth);
-    }
 
     if ((g_maxCUSize >> depth) >= slice->getPPS()->getMinCuDQPSize() && slice->getPPS()->getUseDQP())
         m_bEncodeDQP = true;
@@ -1118,17 +1085,13 @@ void TEncCu::xEncodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
-        {
             xEncodeCU(cu, absPartIdx, depth + 1, bInsidePicture);
-        }
-
         return;
     }
 
     if (slice->getPPS()->getTransquantBypassEnableFlag())
-    {
         m_sbacCoder->codeCUTransquantBypassFlag(cu, absPartIdx);
-    }
+
     if (!slice->isIntra())
         m_sbacCoder->codeSkipFlag(cu, absPartIdx);
 
@@ -1173,9 +1136,7 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
 
     int mergeCandBuffer[MRG_MAX_NUM_CANDS];
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
-    {
         mergeCandBuffer[i] = 0;
-    }
 
     bool bestIsSkip = false;
 

@@ -2297,7 +2297,7 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
  * \param fencYuv
  * \param predYuv
  * \param outResiYuv
- * \param rpcYuvResiBest
+ * \param outBestResiYuv
  * \param outReconYuv
  * \param bSkipRes
  * \returns void
