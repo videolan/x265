@@ -117,6 +117,7 @@ public:
 
     int                      m_numRows;
     uint32_t                 m_numCols;
+    int                      m_refLagRows;
     CTURow*                  m_rows;
     TComSPS                  m_sps;
     TComPPS                  m_pps;

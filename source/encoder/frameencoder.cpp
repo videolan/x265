@@ -92,6 +92,12 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_rows = new CTURow[m_numRows];
     bool ok = !!m_numRows;
 
+    int range = m_param->searchRange; /* fpel search */
+    range    += 1;                    /* diamond search range check lag */
+    range    += 2;                    /* subpel refine */
+    range    += NTAPS_LUMA / 2;       /* subpel filter half-length */
+    m_refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
+
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
     {
@@ -711,11 +717,6 @@ void FrameEncoder::compressCTURows()
 
     bool bUseWeightP = slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE;
     bool bUseWeightB = slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE;
-    int range = m_param->searchRange; /* fpel search */
-    range    += 1;                    /* diamond search range check lag */
-    range    += 2;                    /* subpel refine */
-    range    += NTAPS_LUMA / 2;       /* subpel filter half-length */
-    int refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_SSDY = m_SSDU = m_SSDV = 0;
@@ -740,14 +741,14 @@ void FrameEncoder::compressCTURows()
                     Frame *refpic = slice->getRefPic(l, ref);
 
                     int reconRowCount = refpic->m_reconRowCount.get();
-                    while ((reconRowCount != m_numRows) && (reconRowCount < row + refLagRows))
+                    while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
                     {
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
                     }
 
                     if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                     {
-                        m_mref[l][ref].applyWeight(row + refLagRows, m_numRows);
+                        m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows);
                     }
                 }
             }
@@ -779,14 +780,14 @@ void FrameEncoder::compressCTURows()
                         Frame *refpic = slice->getRefPic(list, ref);
 
                         int reconRowCount = refpic->m_reconRowCount.get();
-                        while ((reconRowCount != m_numRows) && (reconRowCount < i + refLagRows))
+                        while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
                         {
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
                         }
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                         {
-                            m_mref[list][ref].applyWeight(i + refLagRows, m_numRows);
+                            m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows);
                         }
                     }
                 }
