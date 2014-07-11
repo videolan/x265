@@ -72,17 +72,13 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
     tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
     tld.m_cuCoder.m_rdSbacCoders = m_rdSbacCoders;
 
-    BitCounter bc;
-    m_sbacCoder.setBitstream(&bc);
-
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
     tld.m_search.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
     tld.m_cuCoder.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
-    m_rdSbacCoders[0][CI_CURR_BEST].setBitstream(&bc);
-    bc.resetBits();
+    m_rdSbacCoders[0][CI_CURR_BEST].resetBits();
 
-    tld.m_cuCoder.encodeCU(cu, true);  // Count bits
+    tld.m_cuCoder.encodeCU(cu);
 
     if (bSaveSBac)
         // Save CABAC state for next row

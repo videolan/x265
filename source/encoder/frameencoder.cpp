@@ -661,7 +661,7 @@ void FrameEncoder::encodeSlice()
         // final coding (bitstream generation) for this CU
         m_tld.m_search.m_sbacCoder = &m_sbacCoder;
         m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
-        m_tld.m_cuCoder.encodeCU(cu, false);
+        m_tld.m_cuCoder.encodeCU(cu);
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
         m_rows[subStrm].m_rowEntropyCoder.load(m_sbacCoder);

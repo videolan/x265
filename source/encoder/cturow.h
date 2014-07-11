@@ -72,14 +72,6 @@ public:
     double          m_pCuCnt;
     double          m_skipCuCnt;
 
-    CTURow()
-    {
-        m_sbacCoder.m_bIsCounter = true;
-        for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-                m_rdSbacCoders[depth][ciIdx].m_bIsCounter = true;
-    }
-
     void init(TComSlice *slice)
     {
         m_active = 0;

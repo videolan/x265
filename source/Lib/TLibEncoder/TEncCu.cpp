@@ -75,7 +75,6 @@ TEncCu::TEncCu()
     m_rdCost          = NULL;
     m_sbacCoder       = NULL;
     m_rdSbacCoders    = NULL;
-    m_bBitCounting    = false;
 }
 
 /**
@@ -422,13 +421,12 @@ void TEncCu::compressCU(TComDataCU* cu)
 
 /** \param  cu  pointer of CU data class
  */
-void TEncCu::encodeCU(TComDataCU* cu, bool bIsCounting)
+void TEncCu::encodeCU(TComDataCU* cu)
 {
     if (cu->getSlice()->getPPS()->getUseDQP())
         m_bEncodeDQP = true;
 
     // Encode CU data
-    m_bBitCounting = bIsCounting;
     xEncodeCU(cu, 0, 0, false);
 }
 
@@ -1072,19 +1070,15 @@ void TEncCu::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 
     int numberOfWrittenBits = 0;
-    if (m_bBitCounting)
-    {
+    if (m_sbacCoder->isBitCounter())
         numberOfWrittenBits = m_sbacCoder->getNumberOfWrittenBits();
-    }
 
     if (granularityBoundary)
     {
         slice->setSliceBits((uint32_t)(slice->getSliceBits() + numberOfWrittenBits));
         slice->setSliceSegmentBits(slice->getSliceSegmentBits() + numberOfWrittenBits);
-        if (m_bBitCounting)
-        {
+        if (m_sbacCoder->isBitCounter())
             m_sbacCoder->resetBits();
-        }
     }
 }
 

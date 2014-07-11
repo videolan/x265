@@ -72,7 +72,6 @@ public:
 
     // SAO
     SBac                        m_sbacCoder;
-    BitCounter                  m_bitCounter;
     SBac*                       m_sbacCoderRow0;  // to mimic HM behavior
     
     /* Temp storage for ssim computation that doesn't need repeated malloc */

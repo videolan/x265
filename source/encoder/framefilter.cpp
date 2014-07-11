@@ -39,7 +39,6 @@ FrameFilter::FrameFilter()
     , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_sbacCoder.m_bIsCounter = true;
 }
 
 void FrameFilter::destroy()
@@ -90,7 +89,6 @@ void FrameFilter::start(Frame *pic)
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_sbacCoder.setBitstream(&m_bitCounter);
     m_sbacCoder.zeroFract();
 
     if (m_param->bEnableSAO)

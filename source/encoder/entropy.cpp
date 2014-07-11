@@ -63,7 +63,6 @@ const uint8_t g_nextState[128][2] =
 
 SBac::SBac()
     : m_fracBits(0)
-    , m_bIsCounter(false)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
@@ -2503,14 +2502,6 @@ void SBac::start()
 
 void SBac::finish()
 {
-    if (m_bIsCounter)
-    {
-        // TODO: why write 0 bits?
-        m_bitIf->write(0, uint32_t(m_fracBits >> 15));
-        m_fracBits &= 32767;
-        X265_CHECK(0, "should not get here\n");
-    }
-
     if (m_low >> (21 + m_bitsLeft))
     {
         m_bitIf->writeByte(m_bufferedByte + 1);
@@ -2563,7 +2554,8 @@ void SBac::resetBits()
     m_numBufferedBytes = 0;
     m_bufferedByte = 0xff;
     m_fracBits &= 32767;
-    m_bitIf->resetBits();
+    if (m_bitIf)
+        m_bitIf->resetBits();
 }
 
 /** Encode bin */
@@ -2573,7 +2565,7 @@ void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 
     ctxModel.m_state = sbacNext(mstate, binValue);
 
-    if (m_bIsCounter)
+    if (!m_bitIf)
     {
         m_fracBits += sbacGetEntropyBits(mstate, binValue);
         return;
@@ -2619,7 +2611,7 @@ void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 /** Encode equiprobable bin */
 void SBac::encodeBinEP(uint32_t binValue)
 {
-    if (m_bIsCounter)
+    if (!m_bitIf)
     {
         m_fracBits += 32768;
         return;
@@ -2636,7 +2628,7 @@ void SBac::encodeBinEP(uint32_t binValue)
 /** Encode equiprobable bins */
 void SBac::encodeBinsEP(uint32_t binValues, int numBins)
 {
-    if (m_bIsCounter)
+    if (!m_bitIf)
     {
         m_fracBits += 32768 * numBins;
         return;
@@ -2666,7 +2658,7 @@ void SBac::encodeBinsEP(uint32_t binValues, int numBins)
 /** Encode terminating bin */
 void SBac::encodeBinTrm(uint32_t binValue)
 {
-    if (m_bIsCounter)
+    if (!m_bitIf)
     {
         m_fracBits += sbacGetEntropyBitsTrm(binValue);
         return;

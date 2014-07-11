@@ -120,7 +120,6 @@ public:
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
     SBac*        m_sbacCoder;
-    bool         m_bBitCounting;
 
     // RD SBac pointers
     SBac       (*m_rdSbacCoders)[CI_NUM];
@@ -139,7 +138,7 @@ public:
     bool create(uint8_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);
-    void encodeCU(TComDataCU* cu, bool bIsCounting);
+    void encodeCU(TComDataCU* cu);
 
 protected:
 

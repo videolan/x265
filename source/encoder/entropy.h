@@ -98,15 +98,15 @@ public:
     int           m_numBufferedBytes;
     int           m_bitsLeft;
     uint64_t      m_fracBits;
-    bool          m_bIsCounter;
 
     SBac();
 
-    void setBitstream(BitInterface* p) { m_bitIf = p; }
+    void setBitstream(Bitstream* p)    { m_bitIf = p; }
+    bool isBitCounter() const          { return !m_bitIf; }
 
     uint32_t getNumberOfWrittenBits()
     {
-        X265_CHECK(m_bIsCounter && !m_bitIf->getNumberOfWrittenBits(), "counter mode expected\n");
+        X265_CHECK(!m_bitIf, "bit counting mode expected\n");
         return uint32_t(m_fracBits >> 15);
     }
 
