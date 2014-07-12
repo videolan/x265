@@ -25,6 +25,7 @@
 
 #include "PPA/ppa.h"
 #include "wavefront.h"
+#include "param.h"
 
 #include "encoder.h"
 #include "frameencoder.h"
@@ -222,6 +223,32 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     m_sbacCoder.codePPS(&m_pps, m_top->getScalingList());
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
+
+    char *opts = x265_param2string(m_param);
+    if (opts)
+    {
+        char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
+                                         strlen(x265_build_info_str) + 200);
+        if (buffer)
+        {
+            sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
+                    "Copyright 2013-2014 (c) Multicoreware Inc - "
+                    "http://x265.org - options: %s",
+                    X265_BUILD, x265_version_str, x265_build_info_str, opts);
+            
+            bs.resetBits();
+            SEIuserDataUnregistered idsei;
+            idsei.m_userData = (uint8_t*)buffer;
+            idsei.m_userDataLength = strlen(buffer);
+            idsei.write(bs, m_sps);
+            bs.writeByteAlignment();
+            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+
+            X265_FREE(buffer);
+        }
+
+        X265_FREE(opts);
+    }
 
     if (m_param->bEmitHRDSEI)
     {

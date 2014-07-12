@@ -80,6 +80,37 @@ protected:
     void writeByteAlign();
 };
 
+class SEIuserDataUnregistered : public SEI
+{
+public:
+
+    PayloadType payloadType() const { return USER_DATA_UNREGISTERED; }
+
+    SEIuserDataUnregistered() : m_userData(NULL) {}
+
+    static const uint8_t m_uuid_iso_iec_11578[16];
+    uint32_t m_userDataLength;
+    uint8_t *m_userData;
+
+    void write(Bitstream& bs, TComSPS&)
+    {
+        m_bitIf = &bs;
+
+        WRITE_CODE(USER_DATA_UNREGISTERED, 8, "payload_type");
+
+        uint32_t payloadSize = 16 + m_userDataLength;
+        for (; payloadSize >= 0xff; payloadSize -= 0xff)
+            WRITE_CODE(0xff, 8, "payload_size");
+        WRITE_CODE(payloadSize, 8, "payload_size");
+
+        for (uint32_t i = 0; i < 16; i++)
+            WRITE_CODE(m_uuid_iso_iec_11578[i], 8, "sei.uuid_iso_iec_11578[i]");
+
+        for (uint32_t i = 0; i < m_userDataLength; i++)
+            WRITE_CODE(m_userData[i], 8, "user_data");
+    }
+};
+
 class SEIDecodedPictureHash : public SEI
 {
 public:

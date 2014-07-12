@@ -28,6 +28,12 @@
 
 using namespace x265;
 
+/* x265's identifying GUID */
+const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
+    0x2C, 0xA2, 0xDE, 0x09, 0xB5, 0x17, 0x47, 0xDB,
+    0xBB, 0x55, 0xA4, 0xFE, 0x7F, 0xC2, 0xFC, 0x4E
+};
+
 /* marshal a single SEI message sei, storing the marshalled representation
  * in bitstream bs */
 void SEI::write(Bitstream& bs, TComSPS& sps)
