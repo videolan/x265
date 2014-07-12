@@ -157,7 +157,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_nr.offset = m_nr.offsetDenoise;
     m_nr.residualSum = m_nr.residualSumBuf[0];
     m_nr.count = m_nr.countBuf[0];
-
     m_nr.bNoiseReduction = !!m_param->noiseReduction;
 
     start();
