@@ -88,12 +88,8 @@ void Encoder::create()
 
     m_frameEncoder = new FrameEncoder[m_param->frameNumThreads];
     if (m_frameEncoder)
-    {
         for (int i = 0; i < m_param->frameNumThreads; i++)
-        {
             m_frameEncoder[i].setThreadPool(m_threadPool);
-        }
-    }
 
     /* Allocate thread local data shared by all frame encoders */
     ThreadPool *pool = ThreadPool::getThreadPool();
@@ -608,8 +604,7 @@ void Encoder::printSummary()
     if (!m_param->bLogCuStats)
         return;
 
-    ThreadPool *pool = ThreadPool::getThreadPool();
-    const int poolThreadCount = pool ? pool->getThreadCount() : 1;
+    const int poolThreadCount = m_threadPool ? m_threadPool->getThreadCount() : 1;
 
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
