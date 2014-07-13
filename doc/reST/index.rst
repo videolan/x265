@@ -8,3 +8,4 @@ x265 Documentation
    api
    threading
    presets
+   lossless

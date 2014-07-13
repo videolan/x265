@@ -1,6 +1,8 @@
-*******
+Preset Options
+--------------
+
 Presets
-*******
+=======
 
 .. _preset-tune-ref:
 
