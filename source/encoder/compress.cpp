@@ -197,7 +197,7 @@ void TEncCu::xComputeCostIntraInInter(TComDataCU* cu, PartSize partSize)
 
     cu->m_totalBits = bbits;
     cu->m_totalDistortion = bsad;
-    cu->m_totalRDCost = bcost;
+    cu->m_sa8dCost = bcost;
 
     // generate predYuv for the best mode
     cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
@@ -501,8 +501,8 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                         }
                         else
                         {
-                            intraInInterCost = m_intraInInterCU[depth]->m_totalRDCost;
-                            bestCost = outBestCU->m_totalRDCost;
+                            intraInInterCost = m_intraInInterCU[depth]->m_sa8dCost;
+                            bestCost = outBestCU->m_sa8dCost;
 
                         }
                         if (intraInInterCost < bestCost)
