@@ -269,9 +269,9 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
             outTempCU->m_totalBits = bitsCand;
             outTempCU->m_totalDistortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                                     m_tmpPredYuv[depth]->getLumaAddr(), m_tmpPredYuv[depth]->getStride());
-            outTempCU->m_totalRDCost = m_rdCost.calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
+            outTempCU->m_sa8dCost = m_rdCost.calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
-            if (outTempCU->m_totalRDCost < outBestCU->m_totalRDCost)
+            if (outTempCU->m_sa8dCost < outBestCU->m_sa8dCost)
             {
                 bestMergeCand = mergeCand;
                 std::swap(outBestCU, outTempCU);
@@ -294,10 +294,8 @@ void TEncCu::xComputeCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
         outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[bestMergeCand][1], SIZE_2Nx2N, 0, 0);
         outTempCU->m_totalBits = outBestCU->m_totalBits;
         outTempCU->m_totalDistortion = outBestCU->m_totalDistortion;
-        outTempCU->m_totalBits = 0;
-        outTempCU->m_totalRDCost = m_rdCost.calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
-        outTempCU->m_sa8dCost = outTempCU->m_totalRDCost;
-        outBestCU->m_sa8dCost = outTempCU->m_sa8dCost;
+        outTempCU->m_sa8dCost = outBestCU->m_sa8dCost;
+
         if (m_param->rdLevel >= 1)
         {
             //calculate the motion compensation for chroma for the best mode selected
