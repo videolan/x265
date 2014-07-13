@@ -220,7 +220,7 @@ void TEncCu::xComputeCostInter(TComDataCU* outTempCU, TComYuv* outPredYuv, PartS
         uint32_t distortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
                                                        outPredYuv->getLumaAddr(), outPredYuv->getStride());
         outTempCU->m_totalDistortion = distortion;
-        outTempCU->m_totalRDCost = m_rdCost.calcRdSADCost(distortion, outTempCU->m_totalBits);
+        outTempCU->m_sa8dCost = m_rdCost.calcRdSADCost(distortion, outTempCU->m_totalBits);
     }
     else
     {
@@ -442,12 +442,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 {
                     xComputeCostInter(m_interCU_Nx2N[depth], m_modePredYuv[1][depth], SIZE_Nx2N);
                     xComputeCostInter(m_interCU_2NxN[depth], m_modePredYuv[2][depth], SIZE_2NxN);
-                    if (m_interCU_Nx2N[depth]->m_totalRDCost < outBestCU->m_totalRDCost)
+                    if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
                     {
                         outBestCU = m_interCU_Nx2N[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
                     }
-                    if (m_interCU_2NxN[depth]->m_totalRDCost < outBestCU->m_totalRDCost)
+                    if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
                     {
                         outBestCU = m_interCU_2NxN[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
@@ -519,7 +519,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
                 if (m_param->rdLevel == 2)
                 {
-                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
+                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                     {
                         outBestCU = m_bestMergeCU[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
@@ -541,7 +541,7 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 }
                 else if (m_param->rdLevel == 1)
                 {
-                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
+                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                     {
                         outBestCU = m_bestMergeCU[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
