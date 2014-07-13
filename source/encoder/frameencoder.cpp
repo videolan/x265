@@ -239,7 +239,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
             bs.resetBits();
             SEIuserDataUnregistered idsei;
             idsei.m_userData = (uint8_t*)buffer;
-            idsei.m_userDataLength = strlen(buffer);
+            idsei.m_userDataLength = (uint32_t)strlen(buffer);
             idsei.write(bs, m_sps);
             bs.writeByteAlignment();
             list.serialize(NAL_UNIT_PREFIX_SEI, bs);
