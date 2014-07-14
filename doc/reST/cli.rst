@@ -519,15 +519,18 @@ Mode decision / Analysis
 
 .. option:: --cu-lossless, --no-cu-lossless
 
-    For each CU, evaluate lossless encode (transform and quant bypass)
-    as a potential rate distortion optimization. If the global option
-    :option:`--lossless` has been specified, all CUs will be encoded
-    this way unconditionally regardless of whether this option was
-    enabled. Default disabled.
+	For each CU, evaluate lossless encode (transform and quant bypass)
+	as a potential rate distortion optimization. If the global option
+	:option:`--lossless` has been specified, all CUs will be encoded
+	this way unconditionally regardless of whether this option was
+	enabled. Default disabled.
 
 .. option:: --signhide, --no-signhide
 
-	Hide sign bit of one coeff per TU (rdo). Default enabled
+	Hide sign bit of one coeff per TU (rdo). The last sign is implied.
+	This requires analyzing all the coefficients to determine if a sign
+	must be toggled, and then to determine which one can be toggled with
+	the least amount of distortion. Default enabled
  
 
 Slice decision options
