@@ -442,12 +442,12 @@ void TEncCu::xCompressInterCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TC
                 {
                     xComputeCostInter(m_interCU_Nx2N[depth], m_modePredYuv[1][depth], SIZE_Nx2N);
                     xComputeCostInter(m_interCU_2NxN[depth], m_modePredYuv[2][depth], SIZE_2NxN);
-                    if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
+                    if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                     {
                         outBestCU = m_interCU_Nx2N[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
                     }
-                    if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_totalRDCost)
+                    if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                     {
                         outBestCU = m_interCU_2NxN[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
