@@ -153,7 +153,7 @@ protected:
     x265_param*              m_param;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
-    Entropy                  m_sbacCoder;
+    SBac                     m_sbacCoder;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;

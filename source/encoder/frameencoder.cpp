@@ -915,7 +915,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 m_frame->m_qpaAq[row] += qp;
         }
 
-        Entropy *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        SBac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
         codeRow.processCU(cu, bufSbac, tld, m_param->bEnableWavefront && col == 1);
         // Completed CU processing
         curRow.m_completed++;

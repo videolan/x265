@@ -60,7 +60,7 @@ ThreadLocalData::~ThreadLocalData()
     m_cuCoder.destroy();
 }
 
-void CTURow::processCU(TComDataCU *cu, Entropy *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
+void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
         // Load SBAC coder context from previous row.

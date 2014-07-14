@@ -80,6 +80,7 @@ namespace x265 {
 // private namespace
 
 class Encoder;
+class SBac;
 
 // ====================================================================================================================
 // Class definition
@@ -118,12 +119,12 @@ public:
     TEncSearch*  m_search;
     TComTrQuant* m_trQuant;
     RDCost*      m_rdCost;
-    Entropy*     m_sbacCoder;
+    SBac*        m_sbacCoder;
     bool         m_bBitCounting;
 
     // RD SBac pointers
-    Entropy    (*m_rdSbacCoders)[CI_NUM];
-    Entropy*     m_rdGoOnSbacCoder;
+    SBac       (*m_rdSbacCoders)[CI_NUM];
+    SBac*        m_rdGoOnSbacCoder;
 
     uint8_t      m_totalDepth;
 
