@@ -606,7 +606,7 @@ void TEncCu::xCompressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, ui
             m_sbacCoder->codeSplitFlag(outTempCU, 0, depth);
             outTempCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
         }
-        
+
         if (m_rdCost.psyRdEnabled())
             outTempCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits, outTempCU->m_psyEnergy);
         else
@@ -1191,9 +1191,9 @@ void TEncCu::xCheckRDCostMerge2Nx2N(TComDataCU*& outBestCU, TComDataCU*& outTemp
                         std::swap(outBestCU, outTempCU);
                         std::swap(outBestPredYuv, m_tmpPredYuv[depth]);
                         std::swap(rpcYuvReconBest, m_tmpRecoYuv[depth]);
-                        
+
                         m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
-                    }                    
+                    }
                     outTempCU->setQPSubParts(origQP, 0, depth);
                     outTempCU->setSkipFlagSubParts(false, 0, depth);
                     if (!bestIsSkip)
