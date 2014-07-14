@@ -660,6 +660,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.qp = atoi(value);
         p->rc.rateControlMode = X265_RC_CQP;
     }
+    OPT("input-res") bError |= sscanf(optarg, "%dx%d", &p->sourceWidth, &p->sourceHeight) != 2;
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, bError);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("cutree")    p->rc.cuTree = atobool(value);
