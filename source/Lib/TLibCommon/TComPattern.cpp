@@ -68,7 +68,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
 
-    bool bUseFilteredPredictions = (dirMode == ALL_IDX || TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize));
+    bool bUseFilteredPredictions = (dirMode == ALL_IDX || TComPrediction::filteringIntraReferenceSamples(dirMode, intraNeighbors.log2TrSize));
 
     if (bUseFilteredPredictions && 8 <= tuSize && tuSize <= 32)
     {
@@ -104,7 +104,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
             if (bilinearLeft && bilinearAbove)
             {
-                int shift = g_convertToBit[tuSize] + 3; // log2(tuSize2)
+                int shift = intraNeighbors.log2TrSize + 1;
                 filterBufN[0] = filterBuf[0];
                 filterBufN[tuSize2] = filterBuf[tuSize2];
                 filterBufN[bufSize - 1] = filterBuf[bufSize - 1];
@@ -183,16 +183,15 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
 
 void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, TextType cType, IntraNeighbors *intraNeighbors)
 {
-    uint32_t tuSize  = cu->getCUSize(0) >> partDepth;
-    int baseUnitSize = g_maxCUSize >> g_maxCUDepth;
-    int unitWidth    = baseUnitSize;
-    int unitHeight   = baseUnitSize;
+    uint32_t log2TrSize = cu->getLog2CUSize(0) - partDepth;
+    int log2UnitWidth  = g_log2UnitSize;
+    int log2UnitHeight = g_log2UnitSize;
 
     if (cType != TEXT_LUMA)
     {
-        tuSize     >>= cu->getHorzChromaShift();
-        unitWidth  >>= cu->getHorzChromaShift();
-        unitHeight >>= cu->getVertChromaShift();
+        log2TrSize     -= cu->getHorzChromaShift();
+        log2UnitWidth  -= cu->getHorzChromaShift();
+        log2UnitHeight -= cu->getVertChromaShift();
     }
 
     int   numIntraNeighbor = 0;
@@ -202,11 +201,12 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
 
     cu->deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
 
-    int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
-    int  tuHeightInUnits = tuSize / unitHeight;
-    int  tuWidthInUnits  = tuSize / unitWidth;
+    uint32_t tuSize  = 1 << log2TrSize;
+    int  tuWidthInUnits  = tuSize >> log2UnitWidth;
+    int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits      = tuWidthInUnits << 1;
     int  leftUnits       = tuHeightInUnits << 1;
+    int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     if (!cu->getSlice()->getPPS()->getConstrainedIntraPred())
@@ -231,9 +231,10 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
     intraNeighbors->totalUnits       = aboveUnits + leftUnits + 1;
     intraNeighbors->aboveUnits       = aboveUnits;
     intraNeighbors->leftUnits        = leftUnits;
+    intraNeighbors->unitWidth        = 1 << log2UnitWidth;
+    intraNeighbors->unitHeight       = 1 << log2UnitHeight;
     intraNeighbors->tuSize           = tuSize;
-    intraNeighbors->unitWidth        = unitWidth;
-    intraNeighbors->unitHeight       = unitHeight;
+    intraNeighbors->log2TrSize       = log2TrSize;
 }
 
 void TComPattern::fillReferenceSamples(pixel* roiOrigin, int picStride, pixel* adiTemp, const IntraNeighbors& intraNeighbors)

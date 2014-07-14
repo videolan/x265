@@ -1365,7 +1365,7 @@ void TComTrQuant::setScalingList(TComScalingList *scalingList)
  */
 void TComTrQuant::setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp)
 {
-    uint32_t log2TrSize = g_convertToBit[g_scalingListSizeX[size]] + 2;
+    uint32_t log2TrSize = size + 2;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
     uint32_t i, maxNumCoeff = g_scalingListSize[size];

@@ -113,29 +113,28 @@ void TComPrediction::initTempBuff(int csp)
 // Public member functions
 // ====================================================================================================================
 
-bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t tuSize)
+bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize)
 {
     bool bFilter;
 
-    if (dirMode == DC_IDX || tuSize <= 4)
+    if (dirMode == DC_IDX || log2TrSize <= 2)
     {
         bFilter = false; // no smoothing for DC
     }
     else
     {
         int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
-        uint32_t sizeIdx = g_convertToBit[tuSize];
+        uint32_t sizeIdx = log2TrSize - 2;
         bFilter = diff > intraFilterThreshold[sizeIdx];
     }
 
     return bFilter;
 }
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize)
+void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
-    X265_CHECK(tuSize >= 4 && tuSize <= 64, "intra block size is out of range\n");
-    int sizeIdx = g_convertToBit[tuSize];
-    bool bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize);
+    int tuSize = 1 << log2TrSize;
+    bool bUseFilteredPredictions = filteringIntraReferenceSamples(dirMode, log2TrSize);
 
     pixel *refLft, *refAbv;
     refLft = m_refLeft + tuSize - 1;
@@ -147,31 +146,23 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t str
         refAbv = m_refAboveFlt + tuSize - 1;
     }
 
-    bool bFilter = tuSize <= 16 && dirMode != PLANAR_IDX;
+    bool bFilter = log2TrSize <= 4 && dirMode != PLANAR_IDX;
+    int sizeIdx = log2TrSize - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
 // Angular chroma
-void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, int tuSize, int chFmt)
+void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
 {
-    int sizeIdx = g_convertToBit[tuSize];
+    int tuSize = 1 << log2TrSizeC;
     uint32_t tuSize2 = tuSize << 1;
 
     // Create the prediction
     pixel refAbv[3 * MAX_CU_SIZE];
     pixel refLft[3 * MAX_CU_SIZE];
 
-    bool bUseFilteredPredictions = true;
-
-    if (chFmt != CHROMA_444)
-    {
-        bUseFilteredPredictions = false;
-    }
-    else
-    {
-        X265_CHECK(tuSize >= 4 && tuSize < 128, "intra prediction size is out of range\n");
-        bUseFilteredPredictions = TComPrediction::filteringIntraReferenceSamples(dirMode, tuSize);
-    }
+    bool bUseFilteredPredictions = (chFmt == CHROMA_444 && filteringIntraReferenceSamples(dirMode, log2TrSizeC));
 
     if (bUseFilteredPredictions)
     {
@@ -222,6 +213,8 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
         }
     }
 
+    int sizeIdx = log2TrSizeC - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
 }
 

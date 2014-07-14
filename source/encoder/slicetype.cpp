@@ -1605,7 +1605,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     }
     if (!fenc->bIntraCalculated)
     {
-        int sizeIdx = g_convertToBit[cuSize]; // partition size
+        const int sizeIdx = X265_LOWRES_CU_BITS - 2; // partition size
 
         pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const above0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
         pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const above1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
@@ -1653,7 +1653,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // calculate 35 satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         primitives.transpose[sizeIdx](buf_trans, m_me.fenc, FENC_STRIDE);
-        pixelcmp_t satd = primitives.satd[partitionFromSize(cuSize)];
+        pixelcmp_t satd = primitives.satd[partitionFromLog2Size(X265_LOWRES_CU_BITS)];
         int icost = m_me.COST_MAX, cost;
         for (uint32_t mode = 0; mode < 35; mode++)
         {

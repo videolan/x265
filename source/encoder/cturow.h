@@ -61,7 +61,7 @@ public:
 
     SBac            m_sbacCoder;
     SBac            m_bufferSbacCoder;
-    SBac            m_rdSbacCoders[MAX_CU_DEPTH + 1][CI_NUM];
+    SBac            m_rdSbacCoders[MAX_FULL_DEPTH + 1][CI_NUM];
 
     // to compute stats for 2 pass
     double          m_iCuCnt;

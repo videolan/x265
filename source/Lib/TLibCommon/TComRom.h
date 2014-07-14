@@ -50,12 +50,19 @@ namespace x265 {
 // Macros
 // ====================================================================================================================
 
-#define MAX_CU_DEPTH            6                           // log2(LCUSize)
-#define MAX_CU_SIZE             (1 << (MAX_CU_DEPTH))       // maximum allowable size of CU
+#define MAX_CU_DEPTH            4                           // maximun CU depth
+#define MAX_FULL_DEPTH          5                           // maximun full depth
+#define MAX_LOG2_CU_SIZE        6                           // log2(LCUSize)
+#define MAX_CU_SIZE             (1 << MAX_LOG2_CU_SIZE)     // maximum allowable size of CU
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
 #define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
 #define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
+
+#define MAX_LOG2_TR_SIZE 5
+#define MAX_LOG2_TS_SIZE 2 // TODO: RExt
+#define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
+#define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
 // ====================================================================================================================
 // Initialize / destroy functions
@@ -75,7 +82,7 @@ extern const uint8_t g_chroma422IntraAngleMappingTable[36];
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern uint16_t*  g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
+extern uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_LOG2_TR_SIZE + 1];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
 
@@ -86,12 +93,11 @@ extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxCUDepth);
 
 // global variable (LCU width/height, max. CU depth)
+extern uint32_t g_maxLog2CUSize;
 extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
 extern uint32_t g_addCUDepth;
-
-#define LOG2_MAX_TS_SIZE 2 // TODO: RExt
-#define MAX_TS_SIZE (1 << LOG2_MAX_TS_SIZE)
+extern uint32_t g_log2UnitSize;
 
 extern const uint32_t g_puOffset[8];
 

@@ -155,17 +155,17 @@ public:
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
     void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
-    void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP);
+    void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP);
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
     void codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     // RDO functions
-    void estBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype);
+    void estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype);
     void estCBFBit(EstBitsSbac* estBitsSbac);
     void estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype);
-    void estSignificantMapBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype);
+    void estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype);
     void estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype);
 
 private:
@@ -215,7 +215,7 @@ private:
         uint32_t bakAbsPartIdxCU;
     };
 
-    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t uiTrIdx, bool& bCodeDQP);
+    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t uiTrIdx, bool& bCodeDQP);
 
     void copyFrom(SBac& src);
     void copyContextsFrom(SBac& src);

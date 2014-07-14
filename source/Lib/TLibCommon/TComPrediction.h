@@ -103,9 +103,9 @@ public:
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);
 
     // Angular Intra
-    void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, int tuSize);
-    void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, int tuSize, int chFmt);
-    static bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t tuSize);
+    void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
+    void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
+    static bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize);
 };
 }
 //! \}

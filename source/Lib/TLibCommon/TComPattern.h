@@ -59,9 +59,10 @@ struct IntraNeighbors
     int  totalUnits;
     int  aboveUnits;
     int  leftUnits;
-    int  tuSize;
     int  unitWidth;
     int  unitHeight;
+    int  tuSize;
+    uint32_t log2TrSize;
     bool bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
 };
 

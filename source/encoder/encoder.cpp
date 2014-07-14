@@ -1063,16 +1063,10 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setMaxCUSize(g_maxCUSize);
     sps->setMaxCUDepth(g_maxCUDepth);
 
-    int minCUSize = sps->getMaxCUSize() >> (sps->getMaxCUDepth() - g_addCUDepth);
-    int log2MinCUSize = 0;
-    while (minCUSize > 1)
-    {
-        minCUSize >>= 1;
-        log2MinCUSize++;
-    }
+    int log2MinCUSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
 
     sps->setLog2MinCodingBlockSize(log2MinCUSize);
-    sps->setLog2DiffMaxMinCodingBlockSize(sps->getMaxCUDepth() - g_addCUDepth);
+    sps->setLog2DiffMaxMinCodingBlockSize(g_maxCUDepth - g_addCUDepth);
 
     sps->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
     sps->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
@@ -1219,7 +1213,8 @@ void Encoder::configure(x265_param *p)
 
     setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
     int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-    int rows = (p->sourceHeight + p->maxCUSize - 1) / p->maxCUSize;
+    uint32_t maxLog2CUSize = g_convertToBit[p->maxCUSize] + 2;
+    int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
 
     if (p->frameNumThreads == 0)
     {
@@ -1362,7 +1357,7 @@ void Encoder::configure(x265_param *p)
 
     //====== Coding Tools ========
 
-    uint32_t tuQTMaxLog2Size = g_convertToBit[p->maxCUSize] + 2 - 1;
+    uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;

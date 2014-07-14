@@ -68,10 +68,10 @@ SBac::SBac()
 }
 
 void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
-                              uint32_t absPartIdxStep, uint32_t depth, uint32_t tuSize, uint32_t trIdx, bool& bCodeDQP)
+                              uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
-    const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
+//    const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift = cu->getHorzChromaShift();
     uint32_t vChromaShift = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -133,12 +133,13 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
     const bool bFirstCbfOfCU = trDepthCurr == 0;
 
     bool mCodeAll = true;
-    const uint32_t numPels = (tuSize * tuSize) >> (hChromaShift + vChromaShift);
+    const uint32_t numPels = 1 << (log2TrSize * 2 - hChromaShift - vChromaShift);
     if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
         mCodeAll = false;
 
     if (bFirstCbfOfCU || mCodeAll)
     {
+        uint32_t tuSize = 1 << log2TrSize;
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepthCurr - 1))
             codeQtCbf(cu, absPartIdx, absPartIdxStep, (tuSize >> hChromaShift), (tuSize >> vChromaShift), TEXT_CHROMA_U, trDepthCurr, (subdiv == 0));
         if (bFirstCbfOfCU || cu->getCbf(absPartIdx, TEXT_CHROMA_V, trDepthCurr - 1))
@@ -152,30 +153,30 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
 
     if (subdiv)
     {
-        tuSize >>= 1;
-        uint32_t numCoeff  = tuSize * tuSize;
+        log2TrSize--;
+        uint32_t numCoeff  = 1 << (log2TrSize * 2);
         uint32_t numCoeffC = (numCoeff >> (hChromaShift + vChromaShift));
         trIdx++;
         ++depth;
         absPartIdxStep >>= 2;
         const uint32_t partNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
 
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, tuSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
     }
     else
     {
@@ -324,11 +325,8 @@ void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
     codeRefFrmIdx(cu, absPartIdx, list);
 }
 
-void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32_t cuSize, bool& bCodeDQP)
+void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP)
 {
-    uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
-    uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
-
     if (!cu->isIntra(absPartIdx))
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
@@ -337,9 +335,12 @@ void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, uint32
             return;
     }
 
+    uint32_t log2CUSize   = cu->getLog2CUSize(absPartIdx);
+    uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
+    uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
     uint32_t absPartIdxStep = cu->getPic()->getNumPartInCU() >> (depth << 1);
     CoeffCodeState state;
-    encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, cuSize, 0, bCodeDQP);
+    encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP);
 }
 
 void SBac::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
@@ -1711,7 +1712,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_nRx2N:
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
             encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
         if (cu->getSlice()->getSPS()->getAMPAcc(depth))
         {
@@ -1722,7 +1723,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         break;
 
     case SIZE_NxN:
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getCUSize(absPartIdx) == 8))
+        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
         {
             encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
             encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
@@ -1892,7 +1893,7 @@ void SBac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t interDir = cu->getInterDir(absPartIdx) - 1;
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
 
-    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getCUSize(absPartIdx) != 8)
+    if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getLog2CUSize(absPartIdx) != 3)
         encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
     if (interDir < 2)
         encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
@@ -2326,14 +2327,14 @@ void SBac::codeSaoTypeIdx(uint32_t code)
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
-void SBac::estBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype)
+void SBac::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     estCBFBit(estBitsSbac);
 
     estSignificantCoeffGroupMapBit(estBitsSbac, ttype);
 
     // encode significance map
-    estSignificantMapBit(estBitsSbac, trSize, ttype);
+    estSignificantMapBit(estBitsSbac, log2TrSize, ttype);
 
     // encode significant coefficients
     estSignificantCoefficientsBit(estBitsSbac, ttype);
@@ -2371,16 +2372,16 @@ void SBac::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType tty
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
-void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, int trSize, TextType ttype)
+void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     int firstCtx = 1, numCtx = 8;
 
-    if (trSize >= 16)
+    if (log2TrSize >= 4)
     {
         firstCtx = (ttype == TEXT_LUMA) ? 21 : 12;
         numCtx = (ttype == TEXT_LUMA) ? 6 : 3;
     }
-    else if (trSize == 8)
+    else if (log2TrSize == 3)
     {
         firstCtx = 9;
         numCtx = (ttype == TEXT_LUMA) ? 12 : 3;
@@ -2418,7 +2419,6 @@ void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, int trSize, TextType t
     }
     int bitsX = 0, bitsY = 0;
 
-    uint32_t log2TrSize = g_convertToBit[trSize] + 2;
     int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
     int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;

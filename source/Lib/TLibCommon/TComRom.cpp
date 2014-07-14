@@ -43,7 +43,7 @@ namespace x265 {
 //! \ingroup TLibCommon
 //! \{
 // scanning order table
-uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
+uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_LOG2_TR_SIZE + 1];
 
 class ScanGenerator
 {
@@ -192,7 +192,7 @@ void initROM()
     }
 
     // initialise scan orders
-    for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
+    for (uint32_t log2BlockSize = 0; log2BlockSize <= MAX_LOG2_TR_SIZE; log2BlockSize++)
     {
         const uint32_t blockWidth  = 1 << log2BlockSize;
         const uint32_t blockHeight = 1 << log2BlockSize;
@@ -259,7 +259,7 @@ void destroyROM()
     {
         for (uint32_t scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
         {
-            for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
+            for (uint32_t log2BlockSize = 0; log2BlockSize <= MAX_LOG2_TR_SIZE; log2BlockSize++)
             {
                 X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockSize]);
             }
@@ -271,9 +271,11 @@ void destroyROM()
 // Data structure related table & variable
 // ====================================================================================================================
 
+uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
 uint32_t g_maxCUSize   = MAX_CU_SIZE;
-uint32_t g_maxCUDepth  = MAX_CU_DEPTH;
-uint32_t g_addCUDepth  = 0;
+uint32_t g_maxCUDepth  = MAX_FULL_DEPTH;
+uint32_t g_addCUDepth  = 1;
+uint32_t g_log2UnitSize = 2;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };

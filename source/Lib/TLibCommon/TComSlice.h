@@ -954,7 +954,7 @@ public:
     // AMP accuracy
     int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }
 
-    void      setAMPAcc(uint32_t depth, int iAccu) { X265_CHECK(depth < g_maxCUDepth, "AMP Acc depth\n");  m_iAMPAcc[depth] = iAccu; }
+    void      setAMPAcc(uint32_t depth, int iAccu) { X265_CHECK(depth < MAX_CU_DEPTH, "AMP Acc depth\n");  m_iAMPAcc[depth] = iAccu; }
 
     // Bit-depth
     int      getBitDepthY() const { return m_bitDepthY; }

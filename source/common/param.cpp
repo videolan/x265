@@ -875,7 +875,8 @@ int x265_check_params(x265_param *param)
         return check_failed;
 
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
-    uint32_t tuQTMaxLog2Size = maxCUDepth + 2 - 1;
+    uint32_t maxLog2CUSize = maxCUDepth + 2;
+    uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     CHECK((param->maxCUSize >> maxCUDepth) < 4,
@@ -947,16 +948,16 @@ int x265_check_params(x265_param *param)
     CHECK(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
     CHECK(param->crQpOffset >  12, "Max. Chroma Cr QP Offset is  12");
 
-    CHECK((1u << tuQTMaxLog2Size) > param->maxCUSize,
+    CHECK(tuQTMaxLog2Size > maxLog2CUSize,
           "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
 
     CHECK(param->tuQTMaxInterDepth < 1 || param->tuQTMaxInterDepth > 4,
           "QuadtreeTUMaxDepthInter must be greater than 0 and less than 5");
-    CHECK(param->maxCUSize < (1u << (tuQTMinLog2Size + param->tuQTMaxInterDepth - 1)),
+    CHECK(maxLog2CUSize < tuQTMinLog2Size + param->tuQTMaxInterDepth - 1,
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
     CHECK(param->tuQTMaxIntraDepth < 1 || param->tuQTMaxIntraDepth > 4,
           "QuadtreeTUMaxDepthIntra must be greater 0 and less than 5");
-    CHECK(param->maxCUSize < (1u << (tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1)),
+    CHECK(maxLog2CUSize < tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1,
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
 
     CHECK(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
@@ -1087,17 +1088,15 @@ int x265_set_globals(x265_param *param)
     {
         // set max CU width & height
         g_maxCUSize = param->maxCUSize;
+        g_maxLog2CUSize = maxCUDepth + 2;
 
         // compute actual CU depth with respect to config depth and max transform size
-        g_addCUDepth = 0;
-        while ((param->maxCUSize >> maxCUDepth) > (1u << (tuQTMinLog2Size + g_addCUDepth)))
-        {
-            g_addCUDepth++;
-        }
+        g_addCUDepth = g_maxLog2CUSize - maxCUDepth - tuQTMinLog2Size;
 
         maxCUDepth += g_addCUDepth;
         g_addCUDepth++;
         g_maxCUDepth = maxCUDepth;
+        g_log2UnitSize = g_maxLog2CUSize - g_maxCUDepth;
 
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];

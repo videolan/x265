@@ -66,13 +66,13 @@ bool TComPicSym::create(x265_param *param)
     m_saoParam        = NULL;
     m_numPartitions   = 1 << (g_maxCUDepth << 1);
 
-    m_unitSize        = g_maxCUSize >> g_maxCUDepth;
-    m_log2UnitSize    = g_convertToBit[m_unitSize] + 2;
+    m_log2UnitSize    = g_log2UnitSize;
+    m_unitSize        = 1 << m_log2UnitSize;
 
     m_numPartInCUSize = g_maxCUSize >> m_log2UnitSize;
 
-    m_widthInCU       = (param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-    m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    m_widthInCU       = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
@@ -84,7 +84,7 @@ bool TComPicSym::create(x265_param *param)
     bool tqBypass = param->bCULossless || param->bLossless;
     for (i = 0; i < m_numCUsInFrame; i++)
     {
-        uint32_t sizeL = g_maxCUSize * g_maxCUSize;
+        uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
         if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
             return false;

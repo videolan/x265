@@ -120,6 +120,13 @@ inline int partitionFromSize(int size)
     return part;
 }
 
+inline int partitionFromLog2Size(int log2Size)
+{
+    X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
+    extern const uint8_t lumaPartitionsFromSquareBlocksTable[];
+    return (int)lumaPartitionsFromSquareBlocksTable[log2Size - 2];
+}
+
 typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref, intptr_t frefstride);
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);

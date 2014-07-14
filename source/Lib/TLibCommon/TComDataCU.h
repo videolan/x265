@@ -76,7 +76,7 @@ typedef struct
 {
     char*    qpMemBlock;
     uint8_t* depthMemBlock;
-    uint8_t* cuSizeMemBlock;
+    uint8_t* log2CUSizeMemBlock;
     bool*    skipFlagMemBlock;
     char*    partSizeMemBlock;
     char*    predModeMemBlock;
@@ -119,7 +119,7 @@ private:
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
-    uint8_t*      m_cuSize;          ///< array of cu width/height
+    uint8_t*      m_log2CUSize;      ///< array of cu width/height
     uint8_t*      m_depth;           ///< array of depths
     int           m_chromaFormat;
     int           m_hChromaShift;
@@ -271,9 +271,9 @@ public:
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getCUSize()                     { return m_cuSize; }
+    uint8_t*      getLog2CUSize()                     { return m_log2CUSize; }
 
-    uint8_t       getCUSize(uint32_t idx)         { return m_cuSize[idx]; }
+    uint8_t       getLog2CUSize(uint32_t idx) const   { return m_log2CUSize[idx]; }
 
     char*         getQP()                         { return m_qp; }
 
