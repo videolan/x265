@@ -41,7 +41,7 @@
 
 #include "x265.h"
 
-static const char *summaryCSVHeader = 
+static const char *summaryCSVHeader =
     "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
     "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
     "I count, I ave-QP, I kpbs, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
@@ -600,7 +600,7 @@ void Encoder::printSummary()
 
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
     }
-    
+
     if (!m_param->bLogCuStats)
         return;
 
@@ -1308,7 +1308,7 @@ void Encoder::configure(x265_param *p)
         p->bEnableSsim = 0;
         p->bEnablePsnr = 0;
     }
-    
+
     if (p->rc.rateControlMode == X265_RC_CQP)
     {
         p->rc.aqMode = X265_AQ_NONE;
