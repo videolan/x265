@@ -91,7 +91,8 @@ public:
     int  m_numberOfLongtermPictures;          // Zero when disabled
 
     TComReferencePictureSet();
-    virtual ~TComReferencePictureSet();
+    ~TComReferencePictureSet();
+
     int   getPocLSBLT(int i)                       { return m_pocLSBLT[i]; }
 
     void  setPocLSBLT(int i, int x)                { m_pocLSBLT[i] = x; }
@@ -146,7 +147,7 @@ private:
 public:
 
     TComRPSList();
-    virtual ~TComRPSList();
+    ~TComRPSList();
 
     void  create(int numberOfEntries);
     void  destroy();
@@ -161,7 +162,8 @@ class TComScalingList
 public:
 
     TComScalingList();
-    virtual ~TComScalingList();
+    ~TComScalingList();
+
     void     setScalingListPresentFlag(bool b)                  { m_scalingListPresentFlag = b; }
 
     bool     getScalingListPresentFlag()                        { return m_scalingListPresentFlag; }
@@ -324,7 +326,7 @@ public:
         , m_dpbOutputDelayLengthMinus1(0)
     {}
 
-    virtual ~TComHRD() {}
+    ~TComHRD() {}
 
     void setNalHrdParametersPresentFlag(bool flag) { m_nalHrdParametersPresentFlag = flag; }
 
@@ -494,7 +496,7 @@ private:
 public:
 
     TComVPS();
-    virtual ~TComVPS();
+    ~TComVPS();
 
     void    createHrdParamBuffer()
     {
@@ -653,7 +655,7 @@ public:
         , m_log2MaxMvLengthVertical(15)
     {}
 
-    virtual ~TComVUI() {}
+    ~TComVUI() {}
 
     bool getAspectRatioInfoPresentFlag() { return m_aspectRatioInfoPresentFlag; }
 
@@ -846,7 +848,7 @@ private:
 public:
 
     TComSPS();
-    virtual ~TComSPS();
+    ~TComSPS();
 
     int  getVPSId()         { return m_VPSId; }
 
@@ -1071,7 +1073,7 @@ private:
 public:
 
     TComPPS();
-    virtual ~TComPPS();
+    ~TComPPS();
 
     int       getPPSId() const { return m_PPSId; }
 
@@ -1301,7 +1303,8 @@ public:
     wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     TComSlice();
-    virtual ~TComSlice();
+    ~TComSlice();
+
     void      initSlice();
 
     void      setVPS(TComVPS* vps)            { m_vps = vps; }
