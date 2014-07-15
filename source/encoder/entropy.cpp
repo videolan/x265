@@ -602,14 +602,15 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
         WRITE_CODE(timingInfo.getTimeScale(),      32,           "vps_time_scale");
         WRITE_FLAG(timingInfo.getPocProportionalToTimingFlag(),  "vps_poc_proportional_to_timing_flag");
         if (timingInfo.getPocProportionalToTimingFlag())
-            WRITE_UVLC(timingInfo.getNumTicksPocDiffOneMinus1(),   "vps_num_ticks_poc_diff_one_minus1");
+            WRITE_UVLC(timingInfo.getNumTicksPocDiffOneMinus1(), "vps_num_ticks_poc_diff_one_minus1");
 
         // TODO: Should we be consistent with the SPS->VUI here?
         WRITE_UVLC(0, "vps_num_hrd_parameters");
         //WRITE_UVLC(0, "hrd_op_set_idx");
         //codeHrdParameters(&vps->m_hrdParameters);
     }
-    WRITE_FLAG(0,                     "vps_extension_flag");
+
+    WRITE_FLAG(0, "vps_extension_flag");
 
     //future extensions here..
 }
@@ -887,9 +888,8 @@ void SBac::codeHrdParameters(TComHRD *hrd)
         WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
         WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");
         if (hrd->getSubPicHrdParamsPresentFlag())
-        {
             WRITE_CODE(hrd->getDuCpbSizeScale(), 4,                "du_cpb_size_scale");
-        }
+
         WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
         WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
         WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
@@ -953,18 +953,14 @@ void SBac::codeProfileTier(ProfileTierLevel& ptl)
 /* code explicit wp tables */
 void SBac::codePredWeightTable(TComSlice* slice)
 {
-    wpScalingParam  *wp;
+    wpScalingParam *wp;
     bool            bChroma      = true; // color always present in HEVC ?
-    int             numRefDirs   = (slice->getSliceType() == B_SLICE) ? (2) : (1);
+    int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
     bool            bDenomCoded  = false;
-    uint32_t        mode = 0;
     uint32_t        totalSignalledWeightFlags = 0;
 
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) || (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
-    {
-        mode = 1; // explicit
-    }
-    if (mode == 1)
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
     {
         for (int picList = 0; picList < numRefDirs; picList++)
         {
