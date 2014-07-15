@@ -498,13 +498,6 @@ TComSPS::TComSPS()
 TComSPS::~TComSPS()
 {
     delete m_scalingList;
-    m_RPSList.destroy();
-}
-
-void  TComSPS::createRPSList(int numRPS)
-{
-    m_RPSList.destroy();
-    m_RPSList.create(numRPS);
 }
 
 TComPPS::TComPPS()
@@ -671,37 +664,6 @@ void TComReferencePictureSet::printDeltaPOC()
         }
     }
     printf("}\n");
-}
-
-TComRPSList::TComRPSList()
-    : m_numberOfReferencePictureSets(0)
-    , m_referencePictureSets(NULL)
-{}
-
-TComRPSList::~TComRPSList()
-{}
-
-void TComRPSList::create(int numberOfReferencePictureSets)
-{
-    m_numberOfReferencePictureSets = numberOfReferencePictureSets;
-    m_referencePictureSets = new TComReferencePictureSet[numberOfReferencePictureSets];
-}
-
-void TComRPSList::destroy()
-{
-    delete [] m_referencePictureSets;
-    m_numberOfReferencePictureSets = 0;
-    m_referencePictureSets = NULL;
-}
-
-TComReferencePictureSet* TComRPSList::getReferencePictureSet(int referencePictureSetNum)
-{
-    return &m_referencePictureSets[referencePictureSetNum];
-}
-
-int TComRPSList::getNumberOfReferencePictureSets() const
-{
-    return m_numberOfReferencePictureSets;
 }
 
 TComScalingList::TComScalingList()

@@ -648,51 +648,24 @@ void SBac::codeVPS(TComVPS* vps)
     //future extensions here..
 }
 
-void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromSliceHeader, int idx)
+void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
 {
-    if (idx > 0)
-        WRITE_FLAG(rps->getInterRPSPrediction(), "inter_ref_pic_set_prediction_flag"); // inter_RPS_prediction_flag
-
-    if (rps->getInterRPSPrediction())
+    WRITE_UVLC(rps->getNumberOfNegativePictures(), "num_negative_pics");
+    WRITE_UVLC(rps->getNumberOfPositivePictures(), "num_positive_pics");
+    int prev = 0;
+    for (int j = 0; j < rps->getNumberOfNegativePictures(); j++)
     {
-        int deltaRPS = rps->getDeltaRPS();
-        if (calledFromSliceHeader)
-        {
-            WRITE_UVLC(rps->getDeltaRIdxMinus1(), "delta_idx_minus1"); // delta index of the Reference Picture Set used for prediction minus 1
-        }
-
-        WRITE_CODE((deltaRPS >= 0 ? 0 : 1), 1, "delta_rps_sign"); //delta_rps_sign
-        WRITE_UVLC(abs(deltaRPS) - 1, "abs_delta_rps_minus1"); // absolute delta RPS minus 1
-
-        for (int j = 0; j < rps->getNumRefIdc(); j++)
-        {
-            int refIdc = rps->getRefIdc(j);
-            WRITE_CODE((refIdc == 1 ? 1 : 0), 1, "used_by_curr_pic_flag"); //first bit is "1" if Idc is 1
-            if (refIdc != 1)
-            {
-                WRITE_CODE(refIdc >> 1, 1, "use_delta_flag"); //second bit is "1" if Idc is 2, "0" otherwise.
-            }
-        }
+        WRITE_UVLC(prev - rps->getDeltaPOC(j) - 1, "delta_poc_s0_minus1");
+        prev = rps->getDeltaPOC(j);
+        WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s0_flag");
     }
-    else
-    {
-        WRITE_UVLC(rps->getNumberOfNegativePictures(), "num_negative_pics");
-        WRITE_UVLC(rps->getNumberOfPositivePictures(), "num_positive_pics");
-        int prev = 0;
-        for (int j = 0; j < rps->getNumberOfNegativePictures(); j++)
-        {
-            WRITE_UVLC(prev - rps->getDeltaPOC(j) - 1, "delta_poc_s0_minus1");
-            prev = rps->getDeltaPOC(j);
-            WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s0_flag");
-        }
 
-        prev = 0;
-        for (int j = rps->getNumberOfNegativePictures(); j < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); j++)
-        {
-            WRITE_UVLC(rps->getDeltaPOC(j) - prev - 1, "delta_poc_s1_minus1");
-            prev = rps->getDeltaPOC(j);
-            WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s1_flag");
-        }
+    prev = 0;
+    for (int j = rps->getNumberOfNegativePictures(); j < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); j++)
+    {
+        WRITE_UVLC(rps->getDeltaPOC(j) - prev - 1, "delta_poc_s1_minus1");
+        prev = rps->getDeltaPOC(j);
+        WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s1_flag");
     }
 }
 
@@ -752,19 +725,11 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
     WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
     WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
 
-    WRITE_FLAG(0, "pcm_enabled_flag"); //PCM mode disabled
+    WRITE_FLAG(0, "pcm_enabled_flag");
 
     X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
 
-    TComRPSList* rpsList = sps->getRPSList();
-    TComReferencePictureSet* rps;
-
-    WRITE_UVLC(rpsList->getNumberOfReferencePictureSets(), "num_short_term_ref_pic_sets");
-    for (int i = 0; i < rpsList->getNumberOfReferencePictureSets(); i++)
-    {
-        rps = rpsList->getReferencePictureSet(i);
-        codeShortTermRefPicSet(rps, false, i);
-    }
+    WRITE_UVLC(0, "num_short_term_ref_pic_sets");
 
     WRITE_FLAG(sps->getLongTermRefsPresent() ? 1 : 0,      "long_term_ref_pics_present_flag");
     if (sps->getLongTermRefsPresent())
@@ -1287,36 +1252,18 @@ void SBac::codeSliceHeader(TComSlice* slice)
         WRITE_CODE(picOrderCntLSB, slice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
         TComReferencePictureSet* rps = slice->getRPS();
 
+#if _DEBUG || CHECKED_BUILD
         // check for bitstream restriction stating that:
         // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
         // Ideally this process should not be repeated for each slice in a picture
         if (slice->isIRAP())
-        {
             for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
-            {
                 X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
-            }
-        }
+#endif
 
-        if (slice->getRPSidx() < 0)
-        {
-            WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-            codeShortTermRefPicSet(rps, true, slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
-        }
-        else
-        {
-            WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
-            int numBits = 0;
-            while ((1 << numBits) < slice->getSPS()->getRPSList()->getNumberOfReferencePictureSets())
-            {
-                numBits++;
-            }
+        WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+        codeShortTermRefPicSet(rps);
 
-            if (numBits > 0)
-            {
-                WRITE_CODE(slice->getRPSidx(), numBits, "short_term_ref_pic_set_idx");
-            }
-        }
         if (slice->getSPS()->getLongTermRefsPresent())
         {
             int numLtrpInSH = rps->getNumberOfLongtermPictures();

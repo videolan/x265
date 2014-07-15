@@ -134,26 +134,6 @@ public:
     void printDeltaPOC();
 };
 
-/// Reference Picture Set set class
-class TComRPSList
-{
-private:
-
-    int  m_numberOfReferencePictureSets;
-    TComReferencePictureSet* m_referencePictureSets;
-
-public:
-
-    TComRPSList();
-    ~TComRPSList();
-
-    void  create(int numberOfEntries);
-    void  destroy();
-
-    TComReferencePictureSet* getReferencePictureSet(int referencePictureSetNum);
-    int getNumberOfReferencePictureSets() const;
-};
-
 /// SCALING_LIST class
 class TComScalingList
 {
@@ -802,7 +782,6 @@ private:
 
     Window      m_conformanceWindow;
 
-    TComRPSList m_RPSList;
     bool        m_bLongTermRefsPresent;
     bool        m_TMVPFlagsPresent;
     int         m_numReorderPics[MAX_TLAYER];
@@ -935,10 +914,6 @@ public:
     void setNumReorderPics(int i, uint32_t tlayer) { m_numReorderPics[tlayer] = i; }
 
     int  getNumReorderPics(uint32_t tlayer) const  { return m_numReorderPics[tlayer]; }
-
-    void createRPSList(int numRPS);
-
-    TComRPSList* getRPSList()                  { return &m_RPSList; }
 
     bool      getLongTermRefsPresent() const   { return m_bLongTermRefsPresent; }
 

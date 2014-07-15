@@ -130,7 +130,7 @@ public:
 
     void codeSliceHeader(TComSlice* slice);
     void codeTilesWPPEntryPoint(TComSlice* slice);
-    void codeShortTermRefPicSet(TComReferencePictureSet* rps, bool calledFromSliceHeader, int idx);
+    void codeShortTermRefPicSet(TComReferencePictureSet* rps);
     void codeSliceFinish();
     void codeTerminatingBit(uint32_t lsLast);
     void determineCabacInitIdx(TComSlice *slice);
