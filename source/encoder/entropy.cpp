@@ -588,7 +588,7 @@ void SBac::codeVPS(TComVPS* vps)
     WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
     X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
-    codePTL(vps->getPTL(), vps->getMaxTLayers() - 1);
+    codeProfileTier(vps->getPTL()->m_generalPTL);
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
     for (uint32_t i = 0; i <= vps->getMaxTLayers() - 1; i++)
     {
@@ -674,7 +674,9 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
     WRITE_CODE(sps->getVPSId(),          4,       "sps_video_parameter_set_id");
     WRITE_CODE(sps->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1");
     WRITE_FLAG(sps->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag");
-    codePTL(sps->getPTL(), sps->getMaxTLayers() - 1);
+
+    codeProfileTier(sps->getPTL()->m_generalPTL);
+
     WRITE_UVLC(sps->getSPSId(),                   "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
 
@@ -985,46 +987,24 @@ void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t m
     }
 }
 
-void SBac::codePTL(TComPTL* ptl, int maxNumSubLayersMinus1)
+void SBac::codeProfileTier(ProfileTierLevel& ptl)
 {
-    codeProfileTier(&ptl->m_generalPTL); // general_...
-
-    WRITE_CODE(ptl->m_generalPTL.m_levelIdc, 8, "general_level_idc");
-
-    for (int i = 0; i < maxNumSubLayersMinus1; i++)
-    {
-        WRITE_FLAG(ptl->m_subLayerProfilePresentFlag[i], "sub_layer_profile_present_flag[i]");
-        WRITE_FLAG(ptl->m_subLayerLevelPresentFlag[i], "sub_layer_level_present_flag[i]");
-    }
-
-    if (maxNumSubLayersMinus1 > 0)
-        for (int i = maxNumSubLayersMinus1; i < 8; i++)
-            WRITE_CODE(0, 2, "reserved_zero_2bits");
-
-    for (int i = 0; i < maxNumSubLayersMinus1; i++)
-    {
-        codeProfileTier(&ptl->m_subLayerPTL[i]); // sub_layer_...
-        if (ptl->m_subLayerLevelPresentFlag[i])
-            WRITE_CODE(ptl->m_subLayerPTL[i].m_levelIdc, 8, "sub_layer_level_idc[i]");
-    }
-}
-
-void SBac::codeProfileTier(ProfileTierLevel* ptl)
-{
-    WRITE_CODE(ptl->m_profileSpace, 2, "XXX_profile_space[]");
-    WRITE_FLAG(ptl->m_tierFlag,        "XXX_tier_flag[]");
-    WRITE_CODE(ptl->m_profileIdc, 5,   "XXX_profile_idc[]");
+    WRITE_CODE(ptl.m_profileSpace, 2, "XXX_profile_space[]");
+    WRITE_FLAG(ptl.m_tierFlag,        "XXX_tier_flag[]");
+    WRITE_CODE(ptl.m_profileIdc, 5,   "XXX_profile_idc[]");
     for (int j = 0; j < 32; j++)
-        WRITE_FLAG(ptl->m_profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
+        WRITE_FLAG(ptl.m_profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
 
-    WRITE_FLAG(ptl->m_progressiveSourceFlag,   "general_progressive_source_flag");
-    WRITE_FLAG(ptl->m_interlacedSourceFlag,    "general_interlaced_source_flag");
-    WRITE_FLAG(ptl->m_nonPackedConstraintFlag, "general_non_packed_constraint_flag");
-    WRITE_FLAG(ptl->m_frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
+    WRITE_FLAG(ptl.m_progressiveSourceFlag,   "general_progressive_source_flag");
+    WRITE_FLAG(ptl.m_interlacedSourceFlag,    "general_interlaced_source_flag");
+    WRITE_FLAG(ptl.m_nonPackedConstraintFlag, "general_non_packed_constraint_flag");
+    WRITE_FLAG(ptl.m_frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
 
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
     WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+
+    WRITE_CODE(ptl.m_levelIdc, 8, "general_level_idc");
 }
 
 /* code explicit wp tables */

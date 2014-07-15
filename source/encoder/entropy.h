@@ -125,7 +125,6 @@ public:
     void codePPS(TComPPS* pps, TComScalingList *scalingList);
     void codeVUI(TComVUI* vui, TComSPS* sps);
     void codeAUD(TComSlice *slice);
-    void codePTL(TComPTL* ptl, int maxNumSubLayersMinus1);
     void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
 
     void codeSliceHeader(TComSlice* slice);
@@ -188,7 +187,7 @@ private:
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
-    void codeProfileTier(ProfileTierLevel* ptl);
+    void codeProfileTier(ProfileTierLevel& ptl);
     void codeScalingList(TComScalingList*);
     void codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
 
