@@ -1337,6 +1337,32 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
     }
 }
 
+void RateControl::rateControlUpdateStats(RateControlEntry* rce)
+{
+    if (rce->sliceType == I_SLICE)
+    {
+        /* previous I still had a residual; roll it into the new loan */
+        if (m_residualFrames)
+            rce->rowTotalBits += m_residualCost * m_residualFrames;
+
+        m_residualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
+        m_residualCost = (int)((rce->rowTotalBits * s_amortizeFraction) / m_residualFrames);
+        rce->rowTotalBits -= m_residualCost * m_residualFrames;
+    }
+    else if (m_residualFrames)
+    {
+         rce->rowTotalBits += m_residualCost;
+    }
+
+    if (rce->sliceType != B_SLICE)
+        rce->rowCplxrSum =  rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
+    else
+        rce->rowCplxrSum = rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor));
+
+    m_cplxrSum += rce->rowCplxrSum;
+    m_totalBits += rce->rowTotalBits;
+}
+
 void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 {
     double abrBuffer = 2 * m_param->rc.rateTolerance * m_bitrate;

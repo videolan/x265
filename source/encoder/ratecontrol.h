@@ -66,6 +66,8 @@ struct RateControlEntry
     double frameSizePlanned;  /* frame Size decided by RateCotrol before encoding the frame */
     double bufferRate;
     double movingAvgSum;
+    double   rowCplxrSum;
+    int64_t  rowTotalBits;  /* update cplxrsum and totalbits at the end of 2 rows */
     double qpNoVbv;
     double bufferFill;
     double frameDuration;
@@ -170,6 +172,7 @@ public:
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(Frame *pic);
+    void rateControlUpdateStats(RateControlEntry* rce);
     int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);
     int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
