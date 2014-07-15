@@ -954,67 +954,66 @@ void SBac::codeProfileTier(ProfileTierLevel& ptl)
 void SBac::codePredWeightTable(TComSlice* slice)
 {
     wpScalingParam *wp;
-    bool            bChroma      = true; // color always present in HEVC ?
-    int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
+    bool            bChroma      = true; // 4:0:0 not yet supported
     bool            bDenomCoded  = false;
+    int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;
 
     if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
         (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
     {
-        for (int picList = 0; picList < numRefDirs; picList++)
+        for (int list = 0; list < numRefDirs; list++)
         {
-            for (int refIdx = 0; refIdx < slice->getNumRefIdx(picList); refIdx++)
+            for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
             {
-                slice->getWpScaling(picList, refIdx, wp);
+                slice->getWpScaling(list, ref, wp);
                 if (!bDenomCoded)
                 {
-                    int iDeltaDenom;
-                    WRITE_UVLC(wp[0].log2WeightDenom, "luma_log2_weight_denom"); // ue(v): luma_log2_weight_denom
+                    WRITE_UVLC(wp[0].log2WeightDenom, "luma_log2_weight_denom");
 
                     if (bChroma)
                     {
-                        iDeltaDenom = (wp[1].log2WeightDenom - wp[0].log2WeightDenom);
-                        WRITE_SVLC(iDeltaDenom, "delta_chroma_log2_weight_denom"); // se(v): delta_chroma_log2_weight_denom
+                        int deltaDenom = wp[1].log2WeightDenom - wp[0].log2WeightDenom;
+                        WRITE_SVLC(deltaDenom, "delta_chroma_log2_weight_denom");
                     }
                     bDenomCoded = true;
                 }
-                WRITE_FLAG(wp[0].bPresentFlag, "luma_weight_lX_flag");         // u(1): luma_weight_lX_flag
+                WRITE_FLAG(wp[0].bPresentFlag, "luma_weight_lX_flag");
                 totalSignalledWeightFlags += wp[0].bPresentFlag;
             }
 
             if (bChroma)
             {
-                for (int refIdx = 0; refIdx < slice->getNumRefIdx(picList); refIdx++)
+                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
-                    slice->getWpScaling(picList, refIdx, wp);
-                    WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");   // u(1): chroma_weight_lX_flag
+                    slice->getWpScaling(list, ref, wp);
+                    WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");
                     totalSignalledWeightFlags += 2 * wp[1].bPresentFlag;
                 }
             }
 
-            for (int refIdx = 0; refIdx < slice->getNumRefIdx(picList); refIdx++)
+            for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
             {
-                slice->getWpScaling(picList, refIdx, wp);
+                slice->getWpScaling(list, ref, wp);
                 if (wp[0].bPresentFlag)
                 {
-                    int iDeltaWeight = (wp[0].inputWeight - (1 << wp[0].log2WeightDenom));
-                    WRITE_SVLC(iDeltaWeight, "delta_luma_weight_lX");          // se(v): delta_luma_weight_lX
-                    WRITE_SVLC(wp[0].inputOffset, "luma_offset_lX");           // se(v): luma_offset_lX
+                    int deltaWeight = (wp[0].inputWeight - (1 << wp[0].log2WeightDenom));
+                    WRITE_SVLC(deltaWeight, "delta_luma_weight_lX");
+                    WRITE_SVLC(wp[0].inputOffset, "luma_offset_lX");
                 }
 
                 if (bChroma)
                 {
                     if (wp[1].bPresentFlag)
                     {
-                        for (int j = 1; j < 3; j++)
+                        for (int plane = 1; plane < 3; plane++)
                         {
-                            int iDeltaWeight = (wp[j].inputWeight - (1 << wp[1].log2WeightDenom));
-                            WRITE_SVLC(iDeltaWeight, "delta_chroma_weight_lX"); // se(v): delta_chroma_weight_lX
+                            int deltaWeight = (wp[plane].inputWeight - (1 << wp[1].log2WeightDenom));
+                            WRITE_SVLC(deltaWeight, "delta_chroma_weight_lX");
 
-                            int pred = (128 - ((128 * wp[j].inputWeight) >> (wp[j].log2WeightDenom)));
-                            int iDeltaChroma = (wp[j].inputOffset - pred);
-                            WRITE_SVLC(iDeltaChroma, "delta_chroma_offset_lX"); // se(v): delta_chroma_offset_lX
+                            int pred = (128 - ((128 * wp[plane].inputWeight) >> (wp[plane].log2WeightDenom)));
+                            int deltaChroma = (wp[plane].inputOffset - pred);
+                            WRITE_SVLC(deltaChroma, "delta_chroma_offset_lX");
                         }
                     }
                 }
