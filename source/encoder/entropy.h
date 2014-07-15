@@ -130,8 +130,8 @@ public:
     void codeSliceHeader(TComSlice* slice);
     void codeTilesWPPEntryPoint(TComSlice* slice);
     void codeShortTermRefPicSet(TComReferencePictureSet* rps);
-    void codeSliceFinish();
-    void codeTerminatingBit(uint32_t lsLast);
+    void codeSliceFinish()                   { finish(); }
+    void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }
     void determineCabacInitIdx(TComSlice *slice);
 
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);

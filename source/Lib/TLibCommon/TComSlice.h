@@ -62,7 +62,7 @@ class PicList;
 /// Reference Picture Set class
 class TComReferencePictureSet
 {
-private:
+public:
 
     // Parameters for inter RPS prediction
     int  m_deltaRIdxMinus1;
@@ -76,8 +76,6 @@ private:
     int  m_deltaPOCMSBCycleLT[MAX_NUM_REF_PICS];
     bool m_deltaPocMSBPresentFlag[MAX_NUM_REF_PICS];
 
-public:
-
     int  m_numberOfPictures;
     int  m_numberOfNegativePictures;
     int  m_numberOfPositivePictures;
@@ -90,8 +88,6 @@ public:
 
     TComReferencePictureSet();
     ~TComReferencePictureSet();
-
-    int  getPocLSBLT(int i)                       { return m_pocLSBLT[i]; }
 
     void setPocLSBLT(int i, int x)                { m_pocLSBLT[i] = x; }
 

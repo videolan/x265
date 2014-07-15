@@ -469,9 +469,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
         }
 
         if (contextModel[n].bBinsCoded > 0)
-        {
             cost += (uint32_t)(prob0 * sbacGetEntropyBits(tmpContextModel.m_state, 0) + prob1 * sbacGetEntropyBits(tmpContextModel.m_state, 1));
-        }
     }
 
     return cost;
@@ -574,9 +572,7 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
         slice->getPPS()->setEncCABACTableIdx(bestSliceType);
     }
     else
-    {
         slice->getPPS()->setEncCABACTableIdx(I_SLICE);
-    }
 }
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
@@ -683,9 +679,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
 
     if (sps->getChromaFormatIdc() == CHROMA_444)
-    {
         WRITE_FLAG(0,                             "separate_colour_plane_flag");
-    }
 
     WRITE_UVLC(sps->getPicWidthInLumaSamples(),   "pic_width_in_luma_samples");
     WRITE_UVLC(sps->getPicHeightInLumaSamples(),  "pic_height_in_luma_samples");
@@ -751,9 +745,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
 
     WRITE_FLAG(sps->getVuiParametersPresentFlag(),         "vui_parameters_present_flag");
     if (sps->getVuiParametersPresentFlag())
-    {
         codeVUI(sps->getVuiParameters(), sps);
-    }
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -1175,19 +1167,16 @@ bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
 
 void SBac::codeSliceHeader(TComSlice* slice)
 {
-    //calculate number of bits required for slice address
+    // calculate number of bits required for slice address
     int maxSliceSegmentAddress = slice->getPic()->getNumCUsInFrame();
     int bitsSliceSegmentAddress = 0;
     while (maxSliceSegmentAddress > (1 << bitsSliceSegmentAddress))
-    {
         bitsSliceSegmentAddress++;
-    }
 
     WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
-    {
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
-    }
+
     WRITE_UVLC(slice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
 
     /* x265 does not use dependent slices, so always write all this data */
@@ -1205,11 +1194,11 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
     if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
     {
-        //In this version separate_color_plane_flag is 0
+        // In this version separate_color_plane_flag is 0
         if (slice->getSPS()->getSeparateColorPlaneFlag())
         {
-            //plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
-            //WRITE_FLAG(0, "colour_plane_id");
+            // plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
+            // WRITE_FLAG(0, "colour_plane_id");
         }
     }
     if (!slice->getIdrPicFlag())
@@ -1245,23 +1234,17 @@ void SBac::codeSliceHeader(TComSlice* slice)
                     numLtrpInSPS++;
                 }
                 else
-                {
                     counter++;
-                }
             }
 
             numLtrpInSH -= numLtrpInSPS;
 
             int bitsForLtrpInSPS = 0;
             while (slice->getSPS()->getNumLongTermRefPicSPS() > (uint32_t)(1 << bitsForLtrpInSPS))
-            {
                 bitsForLtrpInSPS++;
-            }
 
             if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
-            {
                 WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
-            }
             WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
             // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
             // Not sorted here because LT ref indices will be used in setRefPicList()
@@ -1272,55 +1255,39 @@ void SBac::codeSliceHeader(TComSlice* slice)
                 if (counter < numLtrpInSPS)
                 {
                     if (bitsForLtrpInSPS > 0)
-                    {
                         WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
-                    }
                 }
                 else
                 {
-                    WRITE_CODE(rps->getPocLSBLT(i), slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
+                    WRITE_CODE(rps->m_pocLSBLT[i], slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
                     WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
                 }
                 WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
 
                 if (rps->getDeltaPocMSBPresentFlag(i))
                 {
-                    bool deltaFlag = false;
                     //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
-                    if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->getPocLSBLT(i) != prevLSB))
-                    {
-                        deltaFlag = true;
-                    }
-                    if (deltaFlag)
-                    {
+                    if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->m_pocLSBLT[i] != prevLSB))
                         WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
-                    }
                     else
                     {
                         int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
                         X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
                         WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
                     }
-                    prevLSB = rps->getPocLSBLT(i);
+                    prevLSB = rps->m_pocLSBLT[i];
                     prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
                 }
             }
         }
         if (slice->getSPS()->getTMVPFlagsPresent())
-        {
             WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
-        }
     }
     if (slice->getSPS()->getUseSAO())
     {
-        if (slice->getSPS()->getUseSAO())
-        {
-            WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
-            {
-                SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
-                WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
-            }
-        }
+        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+        WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
+        WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
     // check if numrefidxes match the defaults. If not, override
@@ -1334,13 +1301,9 @@ void SBac::codeSliceHeader(TComSlice* slice)
         {
             WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,     "num_ref_idx_l0_active_minus1");
             if (slice->isInterB())
-            {
                 WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1, "num_ref_idx_l1_active_minus1");
-            }
             else
-            {
                 slice->setNumRefIdx(REF_PIC_LIST_1, 0);
-            }
         }
     }
     else
@@ -1350,9 +1313,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
 
     if (slice->isInterB())
-    {
         WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
-    }
 
     if (!slice->isIntra())
     {
@@ -1369,9 +1330,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     if (slice->getEnableTMVPFlag())
     {
         if (slice->getSliceType() == B_SLICE)
-        {
             WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
-        }
 
         if (slice->getSliceType() != I_SLICE &&
             ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
@@ -1381,14 +1340,12 @@ void SBac::codeSliceHeader(TComSlice* slice)
         }
     }
     if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
-    {
         codePredWeightTable(slice);
-    }
+
     X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
     if (!slice->isIntra())
-    {
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
-    }
+
     int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
     WRITE_SVLC(code, "slice_qp_delta");
     if (slice->getPPS()->getSliceChromaQpFlag())
@@ -1401,9 +1358,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {
         if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
-        {
             WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
-        }
+
         if (slice->getDeblockingFilterOverrideFlag())
         {
             WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
@@ -1419,23 +1375,19 @@ void SBac::codeSliceHeader(TComSlice* slice)
     bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
 
     if (isSAOEnabled || isDBFEnabled)
-    {
         WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
-    }
 
     if (slice->getPPS()->getSliceHeaderExtensionPresentFlag())
-    {
         WRITE_UVLC(0, "slice_header_extension_length");
-    }
 }
 
 /** write wavefront substreams sizes for the slice header */
 void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
 {
+    // TODO: hoist check to caller, pass offset to this function
     if (!slice->getPPS()->getEntropyCodingSyncEnabledFlag())
-    {
         return;
-    }
+
     uint32_t numEntryPointOffsets = 0, offsetLenMinus1 = 0, maxOffset = 0;
     uint32_t *entryPointOffset = NULL;
     if (slice->getPPS()->getEntropyCodingSyncEnabledFlag())
@@ -1450,9 +1402,7 @@ void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
         {
             entryPointOffset[idx] = (substreamSizes[idx] >> 3);
             if (entryPointOffset[idx] > maxOffset)
-            {
                 maxOffset = entryPointOffset[idx];
-            }
         }
     }
     // Determine number of bits "offsetLenMinus1+1" required for entry point information
@@ -1465,26 +1415,12 @@ void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
 
     WRITE_UVLC(numEntryPointOffsets, "num_entry_point_offsets");
     if (numEntryPointOffsets > 0)
-    {
         WRITE_UVLC(offsetLenMinus1, "offset_len_minus1");
-    }
 
     for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
-    {
         WRITE_CODE(entryPointOffset[idx] - 1, offsetLenMinus1 + 1, "entry_point_offset_minus1");
-    }
 
     delete [] entryPointOffset;
-}
-
-void SBac::codeTerminatingBit(uint32_t lsLast)
-{
-    encodeBinTrm(lsLast);
-}
-
-void SBac::codeSliceFinish()
-{
-    finish();
 }
 
 void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
@@ -1493,7 +1429,7 @@ void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offs
 
     encodeBin(symbol ? 1 : 0, scmModel[0]);
 
-    if (symbol == 0)
+    if (!symbol)
         return;
 
     bool bCodeLast = (maxSymbol > symbol);
@@ -1756,17 +1692,14 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
         else
         {
             if (preds[j][0] > preds[j][1])
-            {
                 std::swap(preds[j][0], preds[j][1]);
-            }
+
             if (preds[j][0] > preds[j][2])
-            {
                 std::swap(preds[j][0], preds[j][2]);
-            }
+
             if (preds[j][1] > preds[j][2])
-            {
                 std::swap(preds[j][1], preds[j][2]);
-            }
+
             dir[j] += (dir[j] > preds[j][2]) ? -1 : 0;
             dir[j] += (dir[j] > preds[j][1]) ? -1 : 0;
             dir[j] += (dir[j] > preds[j][0]) ? -1 : 0;
@@ -2303,32 +2236,20 @@ void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, T
     if (ttype == TEXT_LUMA)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-        {
             estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX].m_state, bin);
-        }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
-        {
             for (uint32_t bin = 0; bin < 2; bin++)
-            {
                 estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].m_state, bin);
-            }
-        }
     }
     else
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-        {
             estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].m_state, bin);
-        }
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
-        {
             for (uint32_t bin = 0; bin < 2; bin++)
-            {
                 estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].m_state, bin);
-            }
-        }
     }
     int bitsX = 0, bitsY = 0;
 
