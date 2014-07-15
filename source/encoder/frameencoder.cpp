@@ -427,17 +427,11 @@ void FrameEncoder::compressFrame()
         if (vui->getFrameFieldInfoPresentFlag())
         {
             if (m_param->interlaceMode == 2)
-            {
                 sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
-            }
             else if (m_param->interlaceMode == 1)
-            {
                 sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
-            }
             else
-            {
                 sei->m_picStruct = 0;
-            }
             sei->m_sourceScanType = 0;
             sei->m_duplicateFlag = false;
         }
