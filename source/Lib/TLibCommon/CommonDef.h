@@ -51,11 +51,6 @@
 // Common constants
 // ====================================================================================================================
 
-#define MAX_NUM_PICS_IN_SOP         1024
-
-#define MAX_NESTING_NUM_OPS         1024
-#define MAX_NESTING_NUM_LAYER       64
-
 #define MAX_VPS_NUM_HRD_PARAMETERS  1
 #define MAX_VPS_OP_SETS_PLUS1       1024
 #define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
@@ -64,8 +59,7 @@
 #define MAX_NUM_LAYER_IDS           64
 
 #define COEF_REMAIN_BIN_REDUCTION   3 ///< indicates the level at which the VLC
-
-///< transitions from Golomb-Rice to TU+EG(k)
+                                      ///< transitions from Golomb-Rice to TU+EG(k)
 
 #define CU_DQP_TU_CMAX              5 ///< max number bins for truncated unary
 #define CU_DQP_EG_k                 0 ///< exp-golomb order
