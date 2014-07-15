@@ -617,22 +617,10 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
         if (timingInfo->getPocProportionalToTimingFlag())
             WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vps_num_ticks_poc_diff_one_minus1");
 
-        vps->setNumHrdParameters(0);
-        WRITE_UVLC(vps->getNumHrdParameters(),                 "vps_num_hrd_parameters");
-
-        if (vps->getNumHrdParameters() > 0)
-            vps->createHrdParamBuffer();
-
-        for (uint32_t i = 0; i < vps->getNumHrdParameters(); i++)
-        {
-            // Only applicable for version 1
-            vps->setHrdOpSetIdx(0, i);
-            WRITE_UVLC(vps->getHrdOpSetIdx(i),                "hrd_op_set_idx");
-            if (i > 0)
-                WRITE_FLAG(vps->getCprmsPresentFlag(i) ? 1 : 0, "cprms_present_flag[i]");
-
-            codeHrdParameters(vps->getHrdParameters(i), vps->getCprmsPresentFlag(i));
-        }
+        // TODO: Should we be consistent with the SPS->VUI here?
+        WRITE_UVLC(0, "vps_num_hrd_parameters");
+        //WRITE_UVLC(0, "hrd_op_set_idx");
+        //codeHrdParameters(vps->getHrdParameters());
     }
     WRITE_FLAG(0,                     "vps_extension_flag");
 
@@ -855,7 +843,7 @@ void SBac::codeVUI(TComVUI *vui)
 
         WRITE_FLAG(vui->getHrdParametersPresentFlag(),              "hrd_parameters_present_flag");
         if (vui->getHrdParametersPresentFlag())
-            codeHrdParameters(vui->getHrdParameters(), 1);
+            codeHrdParameters(vui->getHrdParameters());
     }
 
     WRITE_FLAG(vui->getBitstreamRestrictionFlag(),                "bitstream_restriction_flag");
@@ -895,33 +883,31 @@ void SBac::codeAUD(TComSlice* slice)
     WRITE_CODE(picType, 3, "pic_type");
 }
 
-void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag)
+void SBac::codeHrdParameters(TComHRD *hrd)
 {
-    if (commonInfPresentFlag)
+    WRITE_FLAG(hrd->getNalHrdParametersPresentFlag() ? 1 : 0,  "nal_hrd_parameters_present_flag");
+    WRITE_FLAG(hrd->getVclHrdParametersPresentFlag() ? 1 : 0,  "vcl_hrd_parameters_present_flag");
+    if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
     {
-        WRITE_FLAG(hrd->getNalHrdParametersPresentFlag() ? 1 : 0,  "nal_hrd_parameters_present_flag");
-        WRITE_FLAG(hrd->getVclHrdParametersPresentFlag() ? 1 : 0,  "vcl_hrd_parameters_present_flag");
-        if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
+        WRITE_FLAG(hrd->getSubPicHrdParamsPresentFlag() ? 1 : 0,  "sub_pic_hrd_params_present_flag");
+        if (hrd->getSubPicHrdParamsPresentFlag())
         {
-            WRITE_FLAG(hrd->getSubPicHrdParamsPresentFlag() ? 1 : 0,  "sub_pic_hrd_params_present_flag");
-            if (hrd->getSubPicHrdParamsPresentFlag())
-            {
-                WRITE_CODE(hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2");
-                WRITE_CODE(hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1");
-                WRITE_FLAG(hrd->getSubPicCpbParamsInPicTimingSEIFlag() ? 1 : 0, "sub_pic_cpb_params_in_pic_timing_sei_flag");
-                WRITE_CODE(hrd->getDpbOutputDelayDuLengthMinus1(), 5,   "dpb_output_delay_du_length_minus1");
-            }
-            WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
-            WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");
-            if (hrd->getSubPicHrdParamsPresentFlag())
-            {
-                WRITE_CODE(hrd->getDuCpbSizeScale(), 4,                "du_cpb_size_scale");
-            }
-            WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
-            WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
-            WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
+            WRITE_CODE(hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2");
+            WRITE_CODE(hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1");
+            WRITE_FLAG(hrd->getSubPicCpbParamsInPicTimingSEIFlag() ? 1 : 0, "sub_pic_cpb_params_in_pic_timing_sei_flag");
+            WRITE_CODE(hrd->getDpbOutputDelayDuLengthMinus1(), 5,   "dpb_output_delay_du_length_minus1");
         }
+        WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
+        WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");
+        if (hrd->getSubPicHrdParamsPresentFlag())
+        {
+            WRITE_CODE(hrd->getDuCpbSizeScale(), 4,                "du_cpb_size_scale");
+        }
+        WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
+        WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
+        WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
     }
+
     int nalOrVcl;
     WRITE_FLAG(hrd->getFixedPicRateFlag() ? 1 : 0,          "fixed_pic_rate_general_flag");
     if (!hrd->getFixedPicRateFlag())

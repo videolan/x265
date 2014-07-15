@@ -125,7 +125,7 @@ public:
     void codePPS(TComPPS* pps, TComScalingList *scalingList);
     void codeVUI(TComVUI* vui);
     void codeAUD(TComSlice *slice);
-    void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag);
+    void codeHrdParameters(TComHRD* hrd);
 
     void codeSliceHeader(TComSlice* slice);
     void codeTilesWPPEntryPoint(TComSlice* slice);

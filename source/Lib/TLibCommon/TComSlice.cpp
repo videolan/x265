@@ -420,29 +420,6 @@ void  TComSlice::initWpScaling()
 }
 
 // ------------------------------------------------------------------------------------------------
-// Video parameter set (VPS)
-// ------------------------------------------------------------------------------------------------
-TComVPS::TComVPS()
-    : m_VPSId(0)
-    , m_numHrdParameters(0)
-    , m_maxNuhReservedZeroLayerId(0)
-    , m_hrdParameters(NULL)
-    , m_hrdOpSetIdx(NULL)
-    , m_cprmsPresentFlag(NULL)
-{
-    m_numReorderPics = 0;
-    m_maxDecPicBuffering = 1;
-    m_maxLatencyIncrease = 0;
-}
-
-TComVPS::~TComVPS()
-{
-    delete[] m_hrdParameters;
-    delete[] m_hrdOpSetIdx;
-    delete[] m_cprmsPresentFlag;
-}
-
-// ------------------------------------------------------------------------------------------------
 // Sequence parameter set (SPS)
 // ------------------------------------------------------------------------------------------------
 

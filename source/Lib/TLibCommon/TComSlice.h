@@ -407,35 +407,23 @@ public:
     uint32_t    m_maxDecPicBuffering;
     uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
 
-    uint32_t    m_numHrdParameters;
     uint32_t    m_maxNuhReservedZeroLayerId;
-    TComHRD*    m_hrdParameters;
-    uint32_t*   m_hrdOpSetIdx;
-    bool*       m_cprmsPresentFlag;
+    TComHRD     m_hrdParameters;
     uint32_t    m_numOpSets;
-    bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
+    bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1]; // TODO: nukeme
 
     TimingInfo  m_timingInfo;
 
-    TComVPS();
-    ~TComVPS();
-
-    void    createHrdParamBuffer()
+    TComVPS::TComVPS()
+        : m_VPSId(0)
+        , m_maxNuhReservedZeroLayerId(0)
     {
-        m_hrdParameters    = new TComHRD[getNumHrdParameters()];
-        m_hrdOpSetIdx      = new uint32_t[getNumHrdParameters()];
-        m_cprmsPresentFlag = new bool[getNumHrdParameters()];
+        m_numReorderPics = 0;
+        m_maxDecPicBuffering = 1;
+        m_maxLatencyIncrease = 0;
     }
 
-    TComHRD* getHrdParameters(uint32_t i)              { return &m_hrdParameters[i]; }
-
-    uint32_t getHrdOpSetIdx(uint32_t i)                { return m_hrdOpSetIdx[i]; }
-
-    void     setHrdOpSetIdx(uint32_t val, uint32_t i)  { m_hrdOpSetIdx[i] = val; }
-
-    bool     getCprmsPresentFlag(uint32_t i)           { return m_cprmsPresentFlag[i]; }
-
-    void     setCprmsPresentFlag(bool val, uint32_t i) { m_cprmsPresentFlag[i] = val; }
+    TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
 
     int      getVPSId()                                { return m_VPSId; }
 
@@ -452,10 +440,6 @@ public:
     void     setMaxLatencyIncrease(uint32_t v)         { m_maxLatencyIncrease = v; }
 
     uint32_t getMaxLatencyIncrease()                   { return m_maxLatencyIncrease; }
-
-    uint32_t getNumHrdParameters()                     { return m_numHrdParameters; }
-
-    void     setNumHrdParameters(uint32_t v)           { m_numHrdParameters = v; }
 
     uint32_t getMaxNuhReservedZeroLayerId()            { return m_maxNuhReservedZeroLayerId; }
 
