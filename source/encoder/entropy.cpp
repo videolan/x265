@@ -591,7 +591,6 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     WRITE_UVLC(vps->getNumReorderPics(),         "vps_num_reorder_pics[i]");
     WRITE_UVLC(vps->getMaxLatencyIncrease(),     "vps_max_latency_increase_plus1[i]");
 
-    X265_CHECK(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS, "invalid HRD param\n");
     X265_CHECK(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1, "invalid layer\n");
     WRITE_CODE(vps->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id");
     vps->setMaxOpSets(1);
