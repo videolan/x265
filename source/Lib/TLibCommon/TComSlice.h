@@ -406,8 +406,6 @@ public:
     uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
 
     TComHRD     m_hrdParameters;
-    bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1]; // TODO: nukeme
-
     TimingInfo  m_timingInfo;
 
     TComVPS::TComVPS()
@@ -416,8 +414,6 @@ public:
         m_maxDecPicBuffering = 1;
         m_maxLatencyIncrease = 0;
     }
-
-    TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
 
     void     setNumReorderPics(uint32_t v)             { m_numReorderPics = v; }
 
@@ -431,11 +427,9 @@ public:
 
     uint32_t getMaxLatencyIncrease()                   { return m_maxLatencyIncrease; }
 
-    bool     getLayerIdIncludedFlag(uint32_t opsIdx, uint32_t id)         { return m_layerIdIncludedFlag[opsIdx][id]; }
+    TimingInfo* getTimingInfo()                        { return &m_timingInfo; }
 
-    void     setLayerIdIncludedFlag(bool v, uint32_t opsIdx, uint32_t id) { m_layerIdIncludedFlag[opsIdx][id] = v; }
-
-    TimingInfo* getTimingInfo() { return &m_timingInfo; }
+    TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
 };
 
 class Window
