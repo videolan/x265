@@ -206,7 +206,7 @@ public:
 
 /// VPS class
 
-struct HrdSubLayerInfo
+struct HrdLayerInfo
 {
     bool fixedPicRateFlag;
     bool fixedPicRateWithinCvsFlag;
@@ -237,7 +237,7 @@ private:
     uint32_t m_initialCpbRemovalDelayLengthMinus1;
     uint32_t m_cpbRemovalDelayLengthMinus1;
     uint32_t m_dpbOutputDelayLengthMinus1;
-    HrdSubLayerInfo m_HRD[MAX_TLAYER];
+    HrdLayerInfo m_HRD;
 
 public:
 
@@ -310,45 +310,46 @@ public:
 
     uint32_t getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
 
-    void setFixedPicRateFlag(int layer, bool flag) { m_HRD[layer].fixedPicRateFlag = flag; }
 
-    bool getFixedPicRateFlag(int layer) { return m_HRD[layer].fixedPicRateFlag; }
+    void setFixedPicRateFlag(bool flag) { m_HRD.fixedPicRateFlag = flag; }
 
-    void setFixedPicRateWithinCvsFlag(int layer, bool flag) { m_HRD[layer].fixedPicRateWithinCvsFlag = flag; }
+    bool getFixedPicRateFlag() { return m_HRD.fixedPicRateFlag; }
 
-    bool getFixedPicRateWithinCvsFlag(int layer) { return m_HRD[layer].fixedPicRateWithinCvsFlag; }
+    void setFixedPicRateWithinCvsFlag(bool flag) { m_HRD.fixedPicRateWithinCvsFlag = flag; }
 
-    void setPicDurationInTcMinus1(int layer, uint32_t value) { m_HRD[layer].picDurationInTcMinus1 = value; }
+    bool getFixedPicRateWithinCvsFlag() { return m_HRD.fixedPicRateWithinCvsFlag; }
 
-    uint32_t getPicDurationInTcMinus1(int layer) { return m_HRD[layer].picDurationInTcMinus1; }
+    void setPicDurationInTcMinus1(uint32_t value) { m_HRD.picDurationInTcMinus1 = value; }
 
-    void setLowDelayHrdFlag(int layer, bool flag) { m_HRD[layer].lowDelayHrdFlag = flag; }
+    uint32_t getPicDurationInTcMinus1() { return m_HRD.picDurationInTcMinus1; }
 
-    bool getLowDelayHrdFlag(int layer) { return m_HRD[layer].lowDelayHrdFlag; }
+    void setLowDelayHrdFlag(bool flag) { m_HRD.lowDelayHrdFlag = flag; }
 
-    void setCpbCntMinus1(int layer, uint32_t value) { m_HRD[layer].cpbCntMinus1 = value; }
+    bool getLowDelayHrdFlag() { return m_HRD.lowDelayHrdFlag; }
 
-    uint32_t getCpbCntMinus1(int layer) { return m_HRD[layer].cpbCntMinus1; }
+    void setCpbCntMinus1(uint32_t value) { m_HRD.cpbCntMinus1 = value; }
 
-    void setBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
+    uint32_t getCpbCntMinus1() { return m_HRD.cpbCntMinus1; }
 
-    uint32_t getBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].bitRateValueMinus1[cpbcnt][nalOrVcl]; }
+    void setBitRateValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
 
-    void setCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    uint32_t getBitRateValueMinus1(int cpbcnt, int nalOrVcl) { return m_HRD.bitRateValueMinus1[cpbcnt][nalOrVcl]; }
 
-    uint32_t getCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl]; }
+    void setCpbSizeValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.cpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    void setDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    uint32_t getCpbSizeValueMinus1(int cpbcnt, int nalOrVcl)  { return m_HRD.cpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    uint32_t getDuCpbSizeValueMinus1(int layer, int cpbcnt, int nalOrVcl)  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl]; }
+    void setDuCpbSizeValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
 
-    void setDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value; }
+    uint32_t getDuCpbSizeValueMinus1(int cpbcnt, int nalOrVcl)  { return m_HRD.ducpbSizeValue[cpbcnt][nalOrVcl]; }
 
-    uint32_t getDuBitRateValueMinus1(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl]; }
+    void setDuBitRateValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.duBitRateValue[cpbcnt][nalOrVcl] = value; }
 
-    void setCbrFlag(int layer, int cpbcnt, int nalOrVcl, bool value) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value; }
+    uint32_t getDuBitRateValueMinus1(int cpbcnt, int nalOrVcl) { return m_HRD.duBitRateValue[cpbcnt][nalOrVcl]; }
 
-    bool getCbrFlag(int layer, int cpbcnt, int nalOrVcl) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl]; }
+    void setCbrFlag(int cpbcnt, int nalOrVcl, bool value) { m_HRD.cbrFlag[cpbcnt][nalOrVcl] = value; }
+
+    bool getCbrFlag(int cpbcnt, int nalOrVcl) { return m_HRD.cbrFlag[cpbcnt][nalOrVcl]; }
 
     bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 };
@@ -404,13 +405,10 @@ class TComVPS
 public:
 
     int         m_VPSId;
-    uint32_t    m_maxTLayers;
-    uint32_t    m_maxLayers;
-    bool        m_bTemporalIdNestingFlag;
 
-    uint32_t    m_numReorderPics[MAX_TLAYER];
-    uint32_t    m_maxDecPicBuffering[MAX_TLAYER];
-    uint32_t    m_maxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t    m_numReorderPics;
+    uint32_t    m_maxDecPicBuffering;
+    uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
 
     uint32_t    m_numHrdParameters;
     uint32_t    m_maxNuhReservedZeroLayerId;
@@ -446,29 +444,17 @@ public:
 
     void     setVPSId(int i)                           { m_VPSId = i; }
 
-    uint32_t getMaxTLayers()                           { return m_maxTLayers; }
+    void     setNumReorderPics(uint32_t v)             { m_numReorderPics = v; }
 
-    void     setMaxTLayers(uint32_t t)                 { m_maxTLayers = t; }
+    uint32_t getNumReorderPics()                       { return m_numReorderPics; }
 
-    uint32_t getMaxLayers()                            { return m_maxLayers; }
+    void     setMaxDecPicBuffering(uint32_t v)         { m_maxDecPicBuffering = v; }
 
-    void     setMaxLayers(uint32_t l)                  { m_maxLayers = l; }
+    uint32_t getMaxDecPicBuffering()                   { return m_maxDecPicBuffering; }
 
-    bool     getTemporalNestingFlag()                  { return m_bTemporalIdNestingFlag; }
+    void     setMaxLatencyIncrease(uint32_t v)         { m_maxLatencyIncrease = v; }
 
-    void     setTemporalNestingFlag(bool t)            { m_bTemporalIdNestingFlag = t; }
-
-    void     setNumReorderPics(uint32_t v, uint32_t tLayer) { m_numReorderPics[tLayer] = v; }
-
-    uint32_t getNumReorderPics(uint32_t tLayer)        { return m_numReorderPics[tLayer]; }
-
-    void     setMaxDecPicBuffering(uint32_t v, uint32_t tLayer) { m_maxDecPicBuffering[tLayer] = v; }
-
-    uint32_t getMaxDecPicBuffering(uint32_t tLayer)    { return m_maxDecPicBuffering[tLayer]; }
-
-    void     setMaxLatencyIncrease(uint32_t v, uint32_t tLayer) { m_maxLatencyIncrease[tLayer] = v; }
-
-    uint32_t getMaxLatencyIncrease(uint32_t tLayer)    { return m_maxLatencyIncrease[tLayer]; }
+    uint32_t getMaxLatencyIncrease()                   { return m_maxLatencyIncrease; }
 
     uint32_t getNumHrdParameters()                     { return m_numHrdParameters; }
 
@@ -716,7 +702,6 @@ public:
     int         m_VPSId;
     int         m_chromaFormatIdc;
     bool        m_colorPlaneFlag;
-    uint32_t    m_maxTLayers;         // maximum number of temporal layers
 
     // Structure
     uint32_t    m_picWidthInLumaSamples;
@@ -731,7 +716,7 @@ public:
 
     bool        m_bLongTermRefsPresent;
     bool        m_TMVPFlagsPresent;
-    int         m_numReorderPics[MAX_TLAYER];
+    int         m_numReorderPics;
 
     // Tool list
     uint32_t    m_quadtreeTULog2MaxSize;
@@ -754,14 +739,12 @@ public:
     int         m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
 
-    bool        m_bTemporalIdNestingFlag; // temporal_id_nesting_flag
-
     bool        m_scalingListEnabledFlag;
     bool        m_scalingListPresentFlag;
     TComScalingList* m_scalingList; //!< ScalingList class pointer
 
-    uint32_t    m_maxDecPicBuffering[MAX_TLAYER];
-    uint32_t    m_maxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t    m_maxDecPicBuffering;
+    uint32_t    m_maxLatencyIncrease; // Really max latency increase plus 1 (value 0 expresses no limit)
 
     bool        m_useDF;
     bool        m_useStrongIntraSmoothing;
@@ -855,10 +838,6 @@ public:
 
     uint32_t getQuadtreeTUMaxDepthIntra() const    { return m_quadtreeTUMaxDepthIntra; }
 
-    void setNumReorderPics(int i, uint32_t tlayer) { m_numReorderPics[tlayer] = i; }
-
-    int  getNumReorderPics(uint32_t tlayer) const  { return m_numReorderPics[tlayer]; }
-
     bool      getLongTermRefsPresent() const   { return m_bLongTermRefsPresent; }
 
     void      setLongTermRefsPresent(bool b)   { m_bLongTermRefsPresent = b; }
@@ -893,14 +872,6 @@ public:
 
     bool      getUseSAO() const { return m_bUseSAO; }
 
-    uint32_t  getMaxTLayers() const { return m_maxTLayers; }
-
-    void      setMaxTLayers(uint32_t maxTLayers)    { m_maxTLayers = maxTLayers; }
-
-    bool      getTemporalIdNestingFlag() const      { return m_bTemporalIdNestingFlag; }
-
-    void      setTemporalIdNestingFlag(bool bValue) { m_bTemporalIdNestingFlag = bValue; }
-
     bool getScalingListFlag() const { return m_scalingListEnabledFlag; }
 
     void setScalingListFlag(bool b) { m_scalingListEnabledFlag = b; }
@@ -911,13 +882,17 @@ public:
 
     TComScalingList* getScalingList() { return m_scalingList; } //!< get ScalingList class pointer in SPS
 
-    uint32_t getMaxDecPicBuffering(uint32_t tlayer) { return m_maxDecPicBuffering[tlayer]; }
+    uint32_t getMaxDecPicBuffering() { return m_maxDecPicBuffering; }
 
-    void setMaxDecPicBuffering(uint32_t ui, uint32_t tlayer) { m_maxDecPicBuffering[tlayer] = ui; }
+    void setMaxDecPicBuffering(uint32_t ui) { m_maxDecPicBuffering = ui; }
 
-    uint32_t getMaxLatencyIncrease(uint32_t tlayer) { return m_maxLatencyIncrease[tlayer]; }
+    uint32_t getMaxLatencyIncrease() { return m_maxLatencyIncrease; }
 
-    void setMaxLatencyIncrease(uint32_t ui, uint32_t tlayer) { m_maxLatencyIncrease[tlayer] = ui; }
+    void setMaxLatencyIncrease(uint32_t ui) { m_maxLatencyIncrease = ui; }
+
+    void setNumReorderPics(int i) { m_numReorderPics = i; }
+
+    int  getNumReorderPics() const  { return m_numReorderPics; }
 
     void setUseStrongIntraSmoothing(bool bVal) { m_useStrongIntraSmoothing = bVal; }
 

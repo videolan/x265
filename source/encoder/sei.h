@@ -243,7 +243,7 @@ public:
             if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
                 ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
             {
-                for (uint32_t i = 0; i < (hrd->getCpbCntMinus1(0) + 1); i++)
+                for (uint32_t i = 0; i < (hrd->getCpbCntMinus1() + 1); i++)
                 {
                     WRITE_CODE(m_initialCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),           "initial_cpb_removal_delay");
                     WRITE_CODE(m_initialCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),      "initial_cpb_removal_delay_offset");

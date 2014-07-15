@@ -123,9 +123,9 @@ public:
     void codeVPS(TComVPS* vps, ProfileTierLevel *ptl);
     void codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl);
     void codePPS(TComPPS* pps, TComScalingList *scalingList);
-    void codeVUI(TComVUI* vui, TComSPS* sps);
+    void codeVUI(TComVUI* vui);
     void codeAUD(TComSlice *slice);
-    void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
+    void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag);
 
     void codeSliceHeader(TComSlice* slice);
     void codeTilesWPPEntryPoint(TComSlice* slice);

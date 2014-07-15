@@ -148,9 +148,6 @@
 #define AMVP_MAX_NUM_CANDS_MEM      3 ///< max number of candidates
 #define MRG_MAX_NUM_CANDS           5
 
-// Explicit temporal layer QP offset
-#define MAX_TLAYER                  8 ///< max number of temporal layer
-
 // Adaptive search range depending on POC difference
 #define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
 

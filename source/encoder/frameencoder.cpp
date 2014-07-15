@@ -450,7 +450,7 @@ void FrameEncoder::compressFrame()
             // buffering period SEI message
             int cpbDelayLength = hrd->getCpbRemovalDelayLengthMinus1() + 1;
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
-            sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(0) + poc - totalCoded;
+            sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics() + poc - totalCoded;
         }
 
         m_bs.resetBits();

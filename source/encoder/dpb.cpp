@@ -128,7 +128,7 @@ void DPB::prepareEncode(Frame *pic)
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->getNalUnitType());
 
-    computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->getSPS()->getMaxDecPicBuffering(0));
+    computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->getSPS()->getMaxDecPicBuffering());
     slice->setRPS(slice->getLocalRPS());
     slice->setRPSidx(-1); // Force use of RPS from slice, rather than from SPS
 

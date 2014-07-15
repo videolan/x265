@@ -1063,18 +1063,14 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQuadtreeTUMaxDepthIntra(m_param->tuQTMaxIntraDepth);
 
     sps->setTMVPFlagsPresent(false);
-
-    for (uint32_t i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
-    {
-        sps->setAMPAcc(i, m_param->bEnableAMP);
-    }
-
+    sps->setUseSAO(m_param->bEnableSAO);
     sps->setUseAMP(m_param->bEnableAMP);
 
+    // TODO: change this from an array to a depth level indicator
+    for (uint32_t i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
+        sps->setAMPAcc(i, m_param->bEnableAMP);
     for (uint32_t i = g_maxCUDepth - g_addCUDepth; i < g_maxCUDepth; i++)
-    {
         sps->setAMPAcc(i, 0);
-    }
 
     sps->setBitDepthY(X265_DEPTH);
     sps->setBitDepthC(X265_DEPTH);
@@ -1082,21 +1078,13 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQpBDOffsetY(QP_BD_OFFSET);
     sps->setQpBDOffsetC(QP_BD_OFFSET);
 
-    sps->setUseSAO(m_param->bEnableSAO);
-
-    // TODO: hard-code these values in SPS code
-    sps->setMaxTLayers(1);
-    sps->setTemporalIdNestingFlag(true);
-    for (uint32_t i = 0; i < sps->getMaxTLayers(); i++)
-    {
-        sps->setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-        sps->setNumReorderPics(m_numReorderPics[i], i);
-    }
+    sps->setMaxDecPicBuffering(m_maxDecPicBuffering);
+    sps->setNumReorderPics(m_numReorderPics);
 
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
 
-    sps->setVuiParametersPresentFlag(true);
+    sps->setVuiParametersPresentFlag(true); // TODO: this is redundant, hard-code it
     TComVUI* vui = sps->getVuiParameters();
     vui->setAspectRatioInfoPresentFlag(!!m_param->vui.aspectRatioIdc);
     vui->setAspectRatioIdc(m_param->vui.aspectRatioIdc);
@@ -1132,7 +1120,7 @@ void Encoder::initSPS(TComSPS *sps)
     vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
     vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
 
-    vui->setBitstreamRestrictionFlag(false);
+    vui->setBitstreamRestrictionFlag(false); // TODO: clean these up if we're not signaling them
     vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
     vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
     vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
@@ -1154,9 +1142,7 @@ void Encoder::initPPS(TComPPS *pps)
     int lowestQP = -QP_BD_OFFSET;
 
     if ((m_maxCuDQPDepth == 0) && (m_param->rc.qp == lowestQP))
-    {
         bUseDQP = false;
-    }
 
     if (bUseDQP)
     {
@@ -1394,18 +1380,12 @@ void Encoder::configure(x265_param *p)
     m_loopFilterBetaOffsetDiv2 = 0;
     m_loopFilterTcOffsetDiv2 = 0;
 
-    m_vps.setMaxTLayers(1);
-    m_vps.setTemporalNestingFlag(true);
-    m_vps.setMaxLayers(1);
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        /* Increase the DPB size and reorder picture if bpyramid is enabled */
-        m_numReorderPics[i] = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
-        m_maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics[i] + 1, p->maxNumReferences) + m_numReorderPics[i]);
-
-        m_vps.setNumReorderPics(m_numReorderPics[i], i);
-        m_vps.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
-    }
+    /* Increase the DPB size and reorder picture if bpyramid is enabled */
+    m_numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
+    m_maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_numReorderPics + 1, p->maxNumReferences) + m_numReorderPics);
+    // TDDO: remove these member variables
+    m_vps.setNumReorderPics(m_numReorderPics);
+    m_vps.setMaxDecPicBuffering(m_maxDecPicBuffering);
 
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;

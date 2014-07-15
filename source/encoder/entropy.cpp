@@ -577,23 +577,19 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
 {
-    WRITE_CODE(vps->getVPSId(),                    4,        "vps_video_parameter_set_id");
-    WRITE_CODE(3,                                  2,        "vps_reserved_three_2bits");
-    WRITE_CODE(0,                                  6,        "vps_reserved_zero_6bits");
-    WRITE_CODE(vps->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1");
-    WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
-    X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
-    WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
+    WRITE_CODE(vps->getVPSId(), 4,        "vps_video_parameter_set_id");
+    WRITE_CODE(3,               2,        "vps_reserved_three_2bits");
+    WRITE_CODE(0,               6,        "vps_reserved_zero_6bits");
+    WRITE_CODE(0,               3,        "vps_max_sub_layers_minus1");
+    WRITE_FLAG(1,                         "vps_temporal_id_nesting_flag");
+    WRITE_CODE(0xffff,         16,        "vps_reserved_ffff_16bits");
 
     codeProfileTier(*ptl);
 
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
-    for (uint32_t i = 0; i <= vps->getMaxTLayers() - 1; i++)
-    {
-        WRITE_UVLC(vps->getMaxDecPicBuffering(i) - 1,       "vps_max_dec_pic_buffering_minus1[i]");
-        WRITE_UVLC(vps->getNumReorderPics(i),               "vps_num_reorder_pics[i]");
-        WRITE_UVLC(vps->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]");
-    }
+    WRITE_UVLC(vps->getMaxDecPicBuffering() - 1, "vps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(vps->getNumReorderPics(),         "vps_num_reorder_pics[i]");
+    WRITE_UVLC(vps->getMaxLatencyIncrease(),     "vps_max_latency_increase_plus1[i]");
 
     X265_CHECK(vps->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS, "invalid HRD param\n");
     X265_CHECK(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1, "invalid layer\n");
@@ -612,33 +608,30 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     }
 
     TimingInfo *timingInfo = vps->getTimingInfo();
-    WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),          "vps_timing_info_present_flag");
+    WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),            "vps_timing_info_present_flag");
     if (timingInfo->getTimingInfoPresentFlag())
     {
         WRITE_CODE(timingInfo->getNumUnitsInTick(), 32,           "vps_num_units_in_tick");
         WRITE_CODE(timingInfo->getTimeScale(),      32,           "vps_time_scale");
         WRITE_FLAG(timingInfo->getPocProportionalToTimingFlag(),  "vps_poc_proportional_to_timing_flag");
         if (timingInfo->getPocProportionalToTimingFlag())
-        {
             WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vps_num_ticks_poc_diff_one_minus1");
-        }
+
         vps->setNumHrdParameters(0);
         WRITE_UVLC(vps->getNumHrdParameters(),                 "vps_num_hrd_parameters");
 
         if (vps->getNumHrdParameters() > 0)
-        {
             vps->createHrdParamBuffer();
-        }
+
         for (uint32_t i = 0; i < vps->getNumHrdParameters(); i++)
         {
             // Only applicable for version 1
             vps->setHrdOpSetIdx(0, i);
             WRITE_UVLC(vps->getHrdOpSetIdx(i),                "hrd_op_set_idx");
             if (i > 0)
-            {
                 WRITE_FLAG(vps->getCprmsPresentFlag(i) ? 1 : 0, "cprms_present_flag[i]");
-            }
-            codeHrdParameters(vps->getHrdParameters(i), vps->getCprmsPresentFlag(i), vps->getMaxTLayers() - 1);
+
+            codeHrdParameters(vps->getHrdParameters(i), vps->getCprmsPresentFlag(i));
         }
     }
     WRITE_FLAG(0,                     "vps_extension_flag");
@@ -669,23 +662,23 @@ void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
 
 void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl)
 {
-    WRITE_CODE(sps->getVPSId(),          4,       "sps_video_parameter_set_id");
-    WRITE_CODE(sps->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1");
-    WRITE_FLAG(sps->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag");
+    WRITE_CODE(sps->getVPSId(), 4, "sps_video_parameter_set_id"); // TODO: hard-code
+    WRITE_CODE(0,               3, "sps_max_sub_layers_minus1");
+    WRITE_FLAG(1,                  "sps_temporal_id_nesting_flag");
 
     codeProfileTier(*ptl);
 
-    WRITE_UVLC(sps->getSPSId(),                   "sps_seq_parameter_set_id");
-    WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
+    WRITE_UVLC(sps->getSPSId(),           "sps_seq_parameter_set_id"); // TODO: hard-code
+    WRITE_UVLC(sps->getChromaFormatIdc(), "chroma_format_idc");
 
-    if (sps->getChromaFormatIdc() == CHROMA_444)
+    if (sps->getChromaFormatIdc() == CHROMA_444) // TODO: this flag is not signaled consistently?
         WRITE_FLAG(0,                             "separate_colour_plane_flag");
 
     WRITE_UVLC(sps->getPicWidthInLumaSamples(),   "pic_width_in_luma_samples");
     WRITE_UVLC(sps->getPicHeightInLumaSamples(),  "pic_height_in_luma_samples");
     Window conf = sps->getConformanceWindow();
 
-    WRITE_FLAG(conf.m_enabledFlag,          "conformance_window_flag");
+    WRITE_FLAG(conf.m_enabledFlag, "conformance_window_flag");
     if (conf.m_enabledFlag)
     {
         WRITE_UVLC(conf.m_winLeftOffset   / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_left_offset");
@@ -694,18 +687,14 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
         WRITE_UVLC(conf.m_winBottomOffset / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_bottom_offset");
     }
 
-    WRITE_UVLC(sps->getBitDepthY() - 8,             "bit_depth_luma_minus8");
-    WRITE_UVLC(sps->getBitDepthC() - 8,             "bit_depth_chroma_minus8");
-
-    WRITE_UVLC(sps->getBitsForPOC() - 4,            "log2_max_pic_order_cnt_lsb_minus4");
+    WRITE_UVLC(sps->getBitDepthY() - 8,  "bit_depth_luma_minus8");
+    WRITE_UVLC(sps->getBitDepthC() - 8,  "bit_depth_chroma_minus8");
+    WRITE_UVLC(sps->getBitsForPOC() - 4, "log2_max_pic_order_cnt_lsb_minus4");
 
     WRITE_FLAG(true,     "sps_sub_layer_ordering_info_present_flag");
-    for (uint32_t i = 0; i <= sps->getMaxTLayers() - 1; i++)
-    {
-        WRITE_UVLC(sps->getMaxDecPicBuffering(i) - 1, "sps_max_dec_pic_buffering_minus1[i]");
-        WRITE_UVLC(sps->getNumReorderPics(i),       "sps_num_reorder_pics[i]");
-        WRITE_UVLC(sps->getMaxLatencyIncrease(i),   "sps_max_latency_increase_plus1[i]");
-    }
+    WRITE_UVLC(sps->getMaxDecPicBuffering() - 1, "sps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(sps->getNumReorderPics(),         "sps_num_reorder_pics[i]");
+    WRITE_UVLC(sps->getMaxLatencyIncrease(),     "sps_max_latency_increase_plus1[i]");
 
     WRITE_UVLC(sps->getLog2MinCodingBlockSize() - 3,    "log2_min_coding_block_size_minus3");
     WRITE_UVLC(sps->getLog2DiffMaxMinCodingBlockSize(), "log2_diff_max_min_coding_block_size");
@@ -740,12 +729,11 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
         }
     }
     WRITE_FLAG(sps->getTMVPFlagsPresent()  ? 1 : 0,        "sps_temporal_mvp_enable_flag");
-
     WRITE_FLAG(sps->getUseStrongIntraSmoothing(),          "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(sps->getVuiParametersPresentFlag(),         "vui_parameters_present_flag");
     if (sps->getVuiParametersPresentFlag())
-        codeVUI(sps->getVuiParameters(), sps);
+        codeVUI(sps->getVuiParameters());
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -765,11 +753,11 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_SVLC(pps->getPicInitQPMinus26(),                 "init_qp_minus26");
     WRITE_FLAG(pps->getConstrainedIntraPred() ? 1 : 0,     "constrained_intra_pred_flag");
     WRITE_FLAG(pps->getUseTransformSkip() ? 1 : 0,         "transform_skip_enabled_flag");
+
     WRITE_FLAG(pps->getUseDQP() ? 1 : 0,                   "cu_qp_delta_enabled_flag");
     if (pps->getUseDQP())
-    {
         WRITE_UVLC(pps->getMaxCuDQPDepth(),                "diff_cu_qp_delta_depth");
-    }
+
     WRITE_SVLC(pps->getChromaCbQpOffset(),                 "pps_cb_qp_offset");
     WRITE_SVLC(pps->getChromaCrQpOffset(),                 "pps_cr_qp_offset");
     WRITE_FLAG(pps->getSliceChromaQpFlag() ? 1 : 0,        "pps_slice_chroma_qp_offsets_present_flag");
@@ -803,7 +791,7 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
-void SBac::codeVUI(TComVUI *vui, TComSPS* sps)
+void SBac::codeVUI(TComVUI *vui)
 {
     WRITE_FLAG(vui->getAspectRatioInfoPresentFlag(),  "aspect_ratio_info_present_flag");
     if (vui->getAspectRatioInfoPresentFlag())
@@ -815,11 +803,11 @@ void SBac::codeVUI(TComVUI *vui, TComSPS* sps)
             WRITE_CODE(vui->getSarHeight(), 16,       "sar_height");
         }
     }
+
     WRITE_FLAG(vui->getOverscanInfoPresentFlag(),     "overscan_info_present_flag");
     if (vui->getOverscanInfoPresentFlag())
-    {
         WRITE_FLAG(vui->getOverscanAppropriateFlag(), "overscan_appropriate_flag");
-    }
+
     WRITE_FLAG(vui->getVideoSignalTypePresentFlag(),  "video_signal_type_present_flag");
     if (vui->getVideoSignalTypePresentFlag())
     {
@@ -854,6 +842,7 @@ void SBac::codeVUI(TComVUI *vui, TComSPS* sps)
         WRITE_UVLC(defaultDisplayWindow.m_winTopOffset,      "def_disp_win_top_offset");
         WRITE_UVLC(defaultDisplayWindow.m_winBottomOffset,   "def_disp_win_bottom_offset");
     }
+
     TimingInfo *timingInfo = vui->getTimingInfo();
     WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),       "vui_timing_info_present_flag");
     if (timingInfo->getTimingInfoPresentFlag())
@@ -862,15 +851,13 @@ void SBac::codeVUI(TComVUI *vui, TComSPS* sps)
         WRITE_CODE(timingInfo->getTimeScale(),      32,      "vui_time_scale");
         WRITE_FLAG(timingInfo->getPocProportionalToTimingFlag(),  "vui_poc_proportional_to_timing_flag");
         if (timingInfo->getPocProportionalToTimingFlag())
-        {
             WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vui_num_ticks_poc_diff_one_minus1");
-        }
+
         WRITE_FLAG(vui->getHrdParametersPresentFlag(),              "hrd_parameters_present_flag");
         if (vui->getHrdParametersPresentFlag())
-        {
-            codeHrdParameters(vui->getHrdParameters(), 1, sps->getMaxTLayers() - 1);
-        }
+            codeHrdParameters(vui->getHrdParameters(), 1);
     }
+
     WRITE_FLAG(vui->getBitstreamRestrictionFlag(),                "bitstream_restriction_flag");
     if (vui->getBitstreamRestrictionFlag())
     {
@@ -908,7 +895,7 @@ void SBac::codeAUD(TComSlice* slice)
     WRITE_CODE(picType, 3, "pic_type");
 }
 
-void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1)
+void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag)
 {
     if (commonInfPresentFlag)
     {
@@ -936,46 +923,35 @@ void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t m
         }
     }
     int nalOrVcl;
-    for (uint32_t i = 0; i <= maxNumSubLayersMinus1; i++)
-    {
-        WRITE_FLAG(hrd->getFixedPicRateFlag(i) ? 1 : 0,          "fixed_pic_rate_general_flag");
-        if (!hrd->getFixedPicRateFlag(i))
-        {
-            WRITE_FLAG(hrd->getFixedPicRateWithinCvsFlag(i) ? 1 : 0, "fixed_pic_rate_within_cvs_flag");
-        }
-        else
-        {
-            hrd->setFixedPicRateWithinCvsFlag(i, true);
-        }
-        if (hrd->getFixedPicRateWithinCvsFlag(i))
-        {
-            WRITE_UVLC(hrd->getPicDurationInTcMinus1(i), "elemental_duration_in_tc_minus1");
-        }
-        else
-        {
-            WRITE_FLAG(hrd->getLowDelayHrdFlag(i) ? 1 : 0, "low_delay_hrd_flag");
-        }
-        if (!hrd->getLowDelayHrdFlag(i))
-        {
-            WRITE_UVLC(hrd->getCpbCntMinus1(i), "cpb_cnt_minus1");
-        }
+    WRITE_FLAG(hrd->getFixedPicRateFlag() ? 1 : 0,          "fixed_pic_rate_general_flag");
+    if (!hrd->getFixedPicRateFlag())
+        WRITE_FLAG(hrd->getFixedPicRateWithinCvsFlag() ? 1 : 0, "fixed_pic_rate_within_cvs_flag");
+    else
+        hrd->setFixedPicRateWithinCvsFlag(true);
 
-        for (nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
+    if (hrd->getFixedPicRateWithinCvsFlag())
+        WRITE_UVLC(hrd->getPicDurationInTcMinus1(), "elemental_duration_in_tc_minus1");
+    else
+        WRITE_FLAG(hrd->getLowDelayHrdFlag() ? 1 : 0, "low_delay_hrd_flag");
+
+    if (!hrd->getLowDelayHrdFlag())
+        WRITE_UVLC(hrd->getCpbCntMinus1(), "cpb_cnt_minus1");
+
+    for (nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
+    {
+        if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
+            ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
         {
-            if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
-                ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
+            for (uint32_t j = 0; j <= (hrd->getCpbCntMinus1()); j++)
             {
-                for (uint32_t j = 0; j <= (hrd->getCpbCntMinus1(i)); j++)
+                WRITE_UVLC(hrd->getBitRateValueMinus1(j, nalOrVcl), "bit_rate_value_minus1");
+                WRITE_UVLC(hrd->getCpbSizeValueMinus1(j, nalOrVcl), "cpb_size_value_minus1");
+                if (hrd->getSubPicHrdParamsPresentFlag())
                 {
-                    WRITE_UVLC(hrd->getBitRateValueMinus1(i, j, nalOrVcl), "bit_rate_value_minus1");
-                    WRITE_UVLC(hrd->getCpbSizeValueMinus1(i, j, nalOrVcl), "cpb_size_value_minus1");
-                    if (hrd->getSubPicHrdParamsPresentFlag())
-                    {
-                        WRITE_UVLC(hrd->getDuCpbSizeValueMinus1(i, j, nalOrVcl), "cpb_size_du_value_minus1");
-                        WRITE_UVLC(hrd->getDuBitRateValueMinus1(i, j, nalOrVcl), "bit_rate_du_value_minus1");
-                    }
-                    WRITE_FLAG(hrd->getCbrFlag(i, j, nalOrVcl) ? 1 : 0, "cbr_flag");
+                    WRITE_UVLC(hrd->getDuCpbSizeValueMinus1(j, nalOrVcl), "cpb_size_du_value_minus1");
+                    WRITE_UVLC(hrd->getDuBitRateValueMinus1(j, nalOrVcl), "bit_rate_du_value_minus1");
                 }
+                WRITE_FLAG(hrd->getCbrFlag(j, nalOrVcl) ? 1 : 0, "cbr_flag");
             }
         }
     }

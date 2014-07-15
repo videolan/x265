@@ -424,21 +424,15 @@ void  TComSlice::initWpScaling()
 // ------------------------------------------------------------------------------------------------
 TComVPS::TComVPS()
     : m_VPSId(0)
-    , m_maxTLayers(1)
-    , m_maxLayers(1)
-    , m_bTemporalIdNestingFlag(false)
     , m_numHrdParameters(0)
     , m_maxNuhReservedZeroLayerId(0)
     , m_hrdParameters(NULL)
     , m_hrdOpSetIdx(NULL)
     , m_cprmsPresentFlag(NULL)
 {
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        m_numReorderPics[i] = 0;
-        m_maxDecPicBuffering[i] = 1;
-        m_maxLatencyIncrease[i] = 0;
-    }
+    m_numReorderPics = 0;
+    m_maxDecPicBuffering = 1;
+    m_maxLatencyIncrease = 0;
 }
 
 TComVPS::~TComVPS()
@@ -456,7 +450,6 @@ TComSPS::TComSPS()
     : m_SPSId(0)
     , m_VPSId(0)
     , m_chromaFormatIdc(X265_CSP_I420)
-    , m_maxTLayers(1)
 // Structure
     , m_picWidthInLumaSamples(352)
     , m_picHeightInLumaSamples(288)
@@ -477,18 +470,14 @@ TComSPS::TComSPS()
     , m_bitsForPOC(8)
     , m_numLongTermRefPicSPS(0)
     , m_bUseSAO(false)
-    , m_bTemporalIdNestingFlag(false)
     , m_scalingListEnabledFlag(false)
     , m_useStrongIntraSmoothing(false)
     , m_vuiParametersPresentFlag(false)
     , m_vuiParameters()
 {
-    for (int i = 0; i < MAX_TLAYER; i++)
-    {
-        m_maxLatencyIncrease[i] = 0;
-        m_maxDecPicBuffering[i] = 1;
-        m_numReorderPics[i]       = 0;
-    }
+    m_maxLatencyIncrease = 0;
+    m_maxDecPicBuffering = 1;
+    m_numReorderPics     = 0;
 
     m_scalingList = new TComScalingList;
     ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));

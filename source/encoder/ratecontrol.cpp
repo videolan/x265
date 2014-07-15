@@ -651,8 +651,8 @@ bool RateControl::init(TComSPS *sps)
             TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
             if (!hrd && hrd->getNalHrdParametersPresentFlag())
             {
-                vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
-                vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+                vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+                vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
             }
         }
         m_bufferRate = vbvMaxBitrate / m_fps;
@@ -698,27 +698,27 @@ void RateControl::initHRD(TComSPS *sps)
 
     // Init HRD
     TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
-    hrd->setCpbCntMinus1(0, 0);
-    hrd->setLowDelayHrdFlag(0, false);
-    hrd->setFixedPicRateFlag(0, 1);
-    hrd->setPicDurationInTcMinus1(0, 0);
-    hrd->setCbrFlag(0, 0, 0, m_isCbr);
+    hrd->setCpbCntMinus1(0);
+    hrd->setLowDelayHrdFlag(false);
+    hrd->setFixedPicRateFlag(1);
+    hrd->setPicDurationInTcMinus1(0);
+    hrd->setCbrFlag(0, 0, m_isCbr);
 
     // normalize HRD size and rate to the value / scale notation
     hrd->setBitRateScale(Clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT));
-    hrd->setBitRateValueMinus1(0, 0, 0, (vbvMaxBitrate >> (hrd->getBitRateScale() + BR_SHIFT)) - 1);
+    hrd->setBitRateValueMinus1(0, 0, (vbvMaxBitrate >> (hrd->getBitRateScale() + BR_SHIFT)) - 1);
 
     hrd->setCpbSizeScale(Clip3(0, 15, calcScale(vbvBufferSize) - CPB_SHIFT));
-    hrd->setCpbSizeValueMinus1(0, 0, 0, (vbvBufferSize >> (hrd->getCpbSizeScale() + CPB_SHIFT)) - 1);
-    int bitRateUnscale = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
-    int cpbSizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+    hrd->setCpbSizeValueMinus1(0, 0, (vbvBufferSize >> (hrd->getCpbSizeScale() + CPB_SHIFT)) - 1);
+    int bitRateUnscale = (hrd->getBitRateValueMinus1(0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+    int cpbSizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
 
     // arbitrary
     #define MAX_DURATION 0.5
 
     TimingInfo *time = sps->getVuiParameters()->getTimingInfo();
     int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick(), INT_MAX));
-    int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering(0) * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick());
+    int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering() * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick());
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
 
     hrd->setInitialCpbRemovalDelayLengthMinus1(2 + Clip3(4, 22, 32 - calcLength(maxDelay)) - 1);
@@ -1377,10 +1377,10 @@ void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
     TComVUI* vui = m_curSlice->getSPS()->getVuiParameters();
     TComHRD* hrd = vui->getHrdParameters();
     int num = 90000;
-    int denom = (hrd->getBitRateValueMinus1(0, 0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
+    int denom = (hrd->getBitRateValueMinus1(0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
     reduceFraction(&num, &denom);
     int64_t cpbState = (int64_t)m_bufferFillFinal;
-    int64_t cpbSize = (int64_t)((hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT));
+    int64_t cpbSize = (int64_t)((hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT));
 
     if (cpbState < 0 || cpbState > cpbSize)
     {
@@ -1935,7 +1935,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             TimingInfo *time = vui->getTimingInfo();
             if (pic->getSlice()->getPOC() == 0)
             {
-                // access unit initialises the HRD
+                // access unit initializes the HRD
                 rce->hrdTiming->cpbInitialAT = 0;
                 rce->hrdTiming->cpbRemovalTime = m_nominalRemovalTime = (double)m_bufPeriodSEI.m_initialCpbRemovalDelay[0][0] / 90000;
             }
@@ -1948,13 +1948,13 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                     cpbEarliestAT -= (double)m_bufPeriodSEI.m_initialCpbRemovalDelayOffset[0][0] / 90000;
                 }
 
-                if (hrd->getCbrFlag(0, 0, 0))
+                if (hrd->getCbrFlag(0, 0))
                     rce->hrdTiming->cpbInitialAT = m_prevCpbFinalAT;
                 else
                     rce->hrdTiming->cpbInitialAT = X265_MAX(m_prevCpbFinalAT, cpbEarliestAT);
             }
 
-            uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+            uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
             rce->hrdTiming->cpbFinalAT = m_prevCpbFinalAT = rce->hrdTiming->cpbInitialAT + actualBits / cpbsizeUnscale;
             rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + rce->hrdTiming->cpbRemovalTime;
         }
