@@ -55,7 +55,6 @@
 namespace x265 {
 // private namespace
 
-class TEncCu;
 class Encoder;
 class RDCost;
 

@@ -30,7 +30,7 @@
 #include "bitstream.h"
 #include "frame.h"
 
-#include "TLibEncoder/TEncCu.h"
+#include "analysis.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 #include "entropy.h"

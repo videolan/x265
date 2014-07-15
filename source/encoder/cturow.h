@@ -28,7 +28,7 @@
 #include "common.h"
 #include "frame.h"
 
-#include "TLibEncoder/TEncCu.h"
+#include "analysis.h"
 
 #include "rdcost.h"
 #include "entropy.h"
@@ -40,7 +40,7 @@ class Encoder;
 
 struct ThreadLocalData
 {
-    TEncCu      m_cuCoder;
+    Analysis      m_cuCoder;
 
     // NOTE: the maximum LCU 64x64 have 256 partitions
     bool        m_edgeFilter[256];

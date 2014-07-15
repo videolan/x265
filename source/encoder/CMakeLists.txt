@@ -1,10 +1,8 @@
 # vim: syntax=cmake
 set(LIBENCODER_HDR
-    ../Lib/TLibEncoder/TEncCu.h
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
     ../Lib/TLibEncoder/TEncSearch.h)
 set(LIBENCODER_SRC
-    ../Lib/TLibEncoder/TEncCu.cpp
     ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
     ../Lib/TLibEncoder/TEncSearch.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_HDR} ${LIBENCODER_SRC})
@@ -24,6 +22,7 @@ endif(MSVC)
 
 add_library(encoder OBJECT ../x265.h
     ${LIBENCODER_SRC} ${LIBENCODER_HDR}
+    analysis.cpp analysis.h
     bitcost.cpp bitcost.h rdcost.h
     motion.cpp motion.h
     slicetype.cpp slicetype.h
@@ -36,7 +35,6 @@ add_library(encoder OBJECT ../x265.h
     entropy.cpp entropy.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
-    compress.cpp
     reference.cpp reference.h
     encoder.cpp encoder.h
     api.cpp
