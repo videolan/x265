@@ -1026,29 +1026,24 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 
 void Encoder::initSPS(TComSPS *sps)
 {
-    ProfileTierLevel& profileTierLevel = sps->getPTL()->m_generalPTL;
-
-    profileTierLevel.m_levelIdc = m_level;
-    profileTierLevel.m_tierFlag = m_levelTier ? true : false;
-    profileTierLevel.m_profileIdc = m_profile;
-    profileTierLevel.m_profileCompatibilityFlag[m_profile] = true;
-    profileTierLevel.m_progressiveSourceFlag = !m_param->interlaceMode;
-    profileTierLevel.m_interlacedSourceFlag = !!m_param->interlaceMode;
-    profileTierLevel.m_nonPackedConstraintFlag = false;
-    profileTierLevel.m_frameOnlyConstraintFlag = false;
+    m_ptl.m_levelIdc = m_level;
+    m_ptl.m_tierFlag = m_levelTier ? true : false;
+    m_ptl.m_profileIdc = m_profile;
+    m_ptl.m_profileCompatibilityFlag[m_profile] = true;
+    m_ptl.m_progressiveSourceFlag = !m_param->interlaceMode;
+    m_ptl.m_interlacedSourceFlag = !!m_param->interlaceMode;
+    m_ptl.m_nonPackedConstraintFlag = false;
+    m_ptl.m_frameOnlyConstraintFlag = false;
 
     if (m_profile == Profile::MAIN10 && X265_DEPTH == 8)
         /* The above constraint is equal to Profile::MAIN */
-        profileTierLevel.m_profileCompatibilityFlag[Profile::MAIN] = true;
+        m_ptl.m_profileCompatibilityFlag[Profile::MAIN] = true;
     if (m_profile == Profile::MAIN)
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
-        profileTierLevel.m_profileCompatibilityFlag[Profile::MAIN10] = true;
+        m_ptl.m_profileCompatibilityFlag[Profile::MAIN10] = true;
 
     /* TODO: Range extension profiles */
     /* TODO: check final spec for compatibility rules here */
-
-    /* set the VPS profile information */
-    *m_vps.getPTL() = *sps->getPTL();
 
     sps->setPicWidthInLumaSamples(m_param->sourceWidth);
     sps->setPicHeightInLumaSamples(m_param->sourceHeight);

@@ -888,23 +888,4 @@ void TComScalingList::checkDcOfMatrix()
     }
 }
 
-ProfileTierLevel::ProfileTierLevel()
-    : m_profileSpace(0)
-    , m_tierFlag(false)
-    , m_profileIdc(0)
-    , m_levelIdc(0)
-    , m_progressiveSourceFlag(false)
-    , m_interlacedSourceFlag(false)
-    , m_nonPackedConstraintFlag(false)
-    , m_frameOnlyConstraintFlag(false)
-{
-    ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
-}
-
-TComPTL::TComPTL()
-{
-    ::memset(m_subLayerProfilePresentFlag, 0, sizeof(m_subLayerProfilePresentFlag));
-    ::memset(m_subLayerLevelPresentFlag,   0, sizeof(m_subLayerLevelPresentFlag));
-}
-
 //! \}

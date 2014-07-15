@@ -210,12 +210,12 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     /* headers for start of bitstream */
     bs.resetBits();
     m_sbacCoder.setBitstream(&bs);
-    m_sbacCoder.codeVPS(&m_top->m_vps);
+    m_sbacCoder.codeVPS(&m_top->m_vps, &m_top->m_ptl);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    m_sbacCoder.codeSPS(&m_sps, m_top->getScalingList());
+    m_sbacCoder.codeSPS(&m_sps, m_top->getScalingList(), &m_top->m_ptl);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 

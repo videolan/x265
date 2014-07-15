@@ -194,19 +194,18 @@ public:
     bool    m_nonPackedConstraintFlag;
     bool    m_frameOnlyConstraintFlag;
 
-    ProfileTierLevel();
-};
-
-class TComPTL
-{
-public:
-
-    ProfileTierLevel m_generalPTL;
-    ProfileTierLevel m_subLayerPTL[6];    // max. value of max_sub_layers_minus1 is 6
-    bool m_subLayerProfilePresentFlag[6];
-    bool m_subLayerLevelPresentFlag[6];
-
-    TComPTL();
+    ProfileTierLevel()
+        : m_profileSpace(0)
+        , m_tierFlag(false)
+        , m_profileIdc(0)
+        , m_levelIdc(0)
+        , m_progressiveSourceFlag(false)
+        , m_interlacedSourceFlag(false)
+        , m_nonPackedConstraintFlag(false)
+        , m_frameOnlyConstraintFlag(false)
+    {
+        ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
+    }
 };
 
 /// VPS class
@@ -406,7 +405,7 @@ struct HRDTiming
 
 class TComVPS
 {
-private:
+public:
 
     int         m_VPSId;
     uint32_t    m_maxTLayers;
@@ -425,10 +424,7 @@ private:
     uint32_t    m_numOpSets;
     bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 
-    TComPTL     m_ptl;
     TimingInfo  m_timingInfo;
-
-public:
 
     TComVPS();
     ~TComVPS();
@@ -493,8 +489,6 @@ public:
     bool     getLayerIdIncludedFlag(uint32_t opsIdx, uint32_t id)         { return m_layerIdIncludedFlag[opsIdx][id]; }
 
     void     setLayerIdIncludedFlag(bool v, uint32_t opsIdx, uint32_t id) { m_layerIdIncludedFlag[opsIdx][id] = v; }
-
-    TComPTL* getPTL()           { return &m_ptl; }
 
     TimingInfo* getTimingInfo() { return &m_timingInfo; }
 };
@@ -720,7 +714,7 @@ public:
 /// SPS class
 class TComSPS
 {
-private:
+public:
 
     int         m_SPSId;
     int         m_VPSId;
@@ -778,9 +772,6 @@ private:
 
     bool        m_vuiParametersPresentFlag;
     TComVUI     m_vuiParameters;
-    TComPTL     m_ptl;
-
-public:
 
     TComSPS();
     ~TComSPS();
@@ -943,8 +934,6 @@ public:
     TComVUI* getVuiParameters() { return &m_vuiParameters; }
 
     void setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numDU, uint32_t bitRate, bool randomAccess);
-
-    TComPTL* getPTL() { return &m_ptl; }
 };
 
 /// PPS class

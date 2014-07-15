@@ -113,6 +113,7 @@ public:
     int                m_conformanceMode;
     TComVPS            m_vps;
     NALList            m_nalList;
+    ProfileTierLevel   m_ptl;
 
     /* profile & level */
     Profile::Name      m_profile;

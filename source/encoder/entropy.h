@@ -120,8 +120,8 @@ public:
     void store(SBac& dest);
     void loadContexts(SBac& src)       { copyContextsFrom(src); }
 
-    void codeVPS(TComVPS* vps);
-    void codeSPS(TComSPS* sps, TComScalingList *scalingList);
+    void codeVPS(TComVPS* vps, ProfileTierLevel *ptl);
+    void codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl);
     void codePPS(TComPPS* pps, TComScalingList *scalingList);
     void codeVUI(TComVUI* vui, TComSPS* sps);
     void codeAUD(TComSlice *slice);

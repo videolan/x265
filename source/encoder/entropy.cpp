@@ -579,7 +579,7 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
     }
 }
 
-void SBac::codeVPS(TComVPS* vps)
+void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
 {
     WRITE_CODE(vps->getVPSId(),                    4,        "vps_video_parameter_set_id");
     WRITE_CODE(3,                                  2,        "vps_reserved_three_2bits");
@@ -588,7 +588,9 @@ void SBac::codeVPS(TComVPS* vps)
     WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
     X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
-    codeProfileTier(vps->getPTL()->m_generalPTL);
+
+    codeProfileTier(*ptl);
+
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
     for (uint32_t i = 0; i <= vps->getMaxTLayers() - 1; i++)
     {
@@ -669,13 +671,13 @@ void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
     }
 }
 
-void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
+void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl)
 {
     WRITE_CODE(sps->getVPSId(),          4,       "sps_video_parameter_set_id");
     WRITE_CODE(sps->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1");
     WRITE_FLAG(sps->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag");
 
-    codeProfileTier(sps->getPTL()->m_generalPTL);
+    codeProfileTier(*ptl);
 
     WRITE_UVLC(sps->getSPSId(),                   "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
