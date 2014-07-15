@@ -199,23 +199,14 @@ public:
 
 class TComPTL
 {
+public:
+
     ProfileTierLevel m_generalPTL;
     ProfileTierLevel m_subLayerPTL[6];    // max. value of max_sub_layers_minus1 is 6
     bool m_subLayerProfilePresentFlag[6];
     bool m_subLayerLevelPresentFlag[6];
 
-public:
-
     TComPTL();
-    bool getSubLayerProfilePresentFlag(int i) const { return m_subLayerProfilePresentFlag[i]; }
-
-    void setSubLayerProfilePresentFlag(int i, bool x) { m_subLayerProfilePresentFlag[i] = x; }
-
-    bool getSubLayerLevelPresentFlag(int i) const { return m_subLayerLevelPresentFlag[i]; }
-
-    ProfileTierLevel* getGeneralPTL() { return &m_generalPTL; }
-
-    ProfileTierLevel* getSubLayerPTL(int i) { return &m_subLayerPTL[i]; }
 };
 
 /// VPS class

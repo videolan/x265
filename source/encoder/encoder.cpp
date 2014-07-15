@@ -1026,7 +1026,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 
 void Encoder::initSPS(TComSPS *sps)
 {
-    ProfileTierLevel& profileTierLevel = *sps->getPTL()->getGeneralPTL();
+    ProfileTierLevel& profileTierLevel = sps->getPTL()->m_generalPTL;
 
     profileTierLevel.m_levelIdc = m_level;
     profileTierLevel.m_tierFlag = m_levelTier ? true : false;

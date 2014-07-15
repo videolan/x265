@@ -988,16 +988,16 @@ void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t m
 void SBac::codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1)
 {
     if (profilePresentFlag)
-        codeProfileTier(ptl->getGeneralPTL()); // general_...
+        codeProfileTier(&ptl->m_generalPTL); // general_...
 
-    WRITE_CODE(ptl->getGeneralPTL()->m_levelIdc, 8, "general_level_idc");
+    WRITE_CODE(ptl->m_generalPTL.m_levelIdc, 8, "general_level_idc");
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
         if (profilePresentFlag)
-            WRITE_FLAG(ptl->getSubLayerProfilePresentFlag(i), "sub_layer_profile_present_flag[i]");
+            WRITE_FLAG(ptl->m_subLayerProfilePresentFlag[i], "sub_layer_profile_present_flag[i]");
 
-        WRITE_FLAG(ptl->getSubLayerLevelPresentFlag(i), "sub_layer_level_present_flag[i]");
+        WRITE_FLAG(ptl->m_subLayerLevelPresentFlag[i], "sub_layer_level_present_flag[i]");
     }
 
     if (maxNumSubLayersMinus1 > 0)
@@ -1006,11 +1006,11 @@ void SBac::codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMin
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
-        if (profilePresentFlag && ptl->getSubLayerProfilePresentFlag(i))
-            codeProfileTier(ptl->getSubLayerPTL(i)); // sub_layer_...
+        if (profilePresentFlag && ptl->m_subLayerProfilePresentFlag[i])
+            codeProfileTier(&ptl->m_subLayerPTL[i]); // sub_layer_...
 
-        if (ptl->getSubLayerLevelPresentFlag(i))
-            WRITE_CODE(ptl->getSubLayerPTL(i)->m_levelIdc, 8, "sub_layer_level_idc[i]");
+        if (ptl->m_subLayerLevelPresentFlag[i])
+            WRITE_CODE(ptl->m_subLayerPTL[i].m_levelIdc, 8, "sub_layer_level_idc[i]");
     }
 }
 
