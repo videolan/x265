@@ -1065,12 +1065,7 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setTMVPFlagsPresent(false);
     sps->setUseSAO(m_param->bEnableSAO);
     sps->setUseAMP(m_param->bEnableAMP);
-
-    // TODO: change this from an array to a depth level indicator
-    for (uint32_t i = 0; i < g_maxCUDepth - g_addCUDepth; i++)
-        sps->setAMPAcc(i, m_param->bEnableAMP);
-    for (uint32_t i = g_maxCUDepth - g_addCUDepth; i < g_maxCUDepth; i++)
-        sps->setAMPAcc(i, 0);
+    sps->setAMPAcc(g_maxCUDepth - g_addCUDepth);
 
     sps->setBitDepthY(X265_DEPTH);
     sps->setBitDepthC(X265_DEPTH);

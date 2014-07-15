@@ -723,7 +723,6 @@ public:
     uint32_t    m_quadtreeTULog2MinSize;
     uint32_t    m_quadtreeTUMaxDepthInter;
     uint32_t    m_quadtreeTUMaxDepthIntra;
-    bool        m_useAMP;
 
     // Parameter
     int         m_bitDepthY;
@@ -736,8 +735,9 @@ public:
     uint32_t    m_ltRefPicPocLsbSps[33];
     bool        m_usedByCurrPicLtSPSFlag[33];
 
-    int         m_iAMPAcc[MAX_CU_DEPTH];
     bool        m_bUseSAO;
+    bool        m_useAMP;
+    uint32_t    m_maxAMPDepth;
 
     bool        m_scalingListEnabledFlag;
     bool        m_scalingListPresentFlag;
@@ -847,9 +847,9 @@ public:
     void      setTMVPFlagsPresent(bool b)   { m_TMVPFlagsPresent = b; }
 
     // AMP accuracy
-    int       getAMPAcc(uint32_t depth) const { return m_iAMPAcc[depth]; }
+    int       getAMPAcc(uint32_t depth) const { return m_maxAMPDepth > depth && m_useAMP; }
 
-    void      setAMPAcc(uint32_t depth, int iAccu) { X265_CHECK(depth < MAX_CU_DEPTH, "AMP Acc depth\n");  m_iAMPAcc[depth] = iAccu; }
+    void      setAMPAcc(uint32_t depth) { m_maxAMPDepth = depth; }
 
     // Bit-depth
     int       getBitDepthY() const { return m_bitDepthY; }
