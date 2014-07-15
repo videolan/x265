@@ -933,21 +933,21 @@ void SBac::codeHrdParameters(TComHRD *hrd)
 void SBac::codeProfileTier(ProfileTierLevel& ptl)
 {
     WRITE_CODE(0, 2,                  "XXX_profile_space[]");
-    WRITE_FLAG(ptl.m_tierFlag,        "XXX_tier_flag[]");
-    WRITE_CODE(ptl.m_profileIdc, 5,   "XXX_profile_idc[]");
+    WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
+    WRITE_CODE(ptl.profileIdc, 5,   "XXX_profile_idc[]");
     for (int j = 0; j < 32; j++)
-        WRITE_FLAG(ptl.m_profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
+        WRITE_FLAG(ptl.profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
 
-    WRITE_FLAG(ptl.m_progressiveSourceFlag,   "general_progressive_source_flag");
-    WRITE_FLAG(ptl.m_interlacedSourceFlag,    "general_interlaced_source_flag");
-    WRITE_FLAG(ptl.m_nonPackedConstraintFlag, "general_non_packed_constraint_flag");
-    WRITE_FLAG(ptl.m_frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
+    WRITE_FLAG(ptl.progressiveSourceFlag,   "general_progressive_source_flag");
+    WRITE_FLAG(ptl.interlacedSourceFlag,    "general_interlaced_source_flag");
+    WRITE_FLAG(ptl.nonPackedConstraintFlag, "general_non_packed_constraint_flag");
+    WRITE_FLAG(ptl.frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
 
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
     WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
 
-    WRITE_CODE(ptl.m_levelIdc, 8, "general_level_idc");
+    WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
 }
 
 /* code explicit wp tables */

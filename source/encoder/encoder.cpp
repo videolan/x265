@@ -1026,21 +1026,21 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 
 void Encoder::initSPS(TComSPS *sps)
 {
-    m_ptl.m_levelIdc = m_level;
-    m_ptl.m_tierFlag = m_levelTier ? true : false;
-    m_ptl.m_profileIdc = m_profile;
-    m_ptl.m_profileCompatibilityFlag[m_profile] = true;
-    m_ptl.m_progressiveSourceFlag = !m_param->interlaceMode;
-    m_ptl.m_interlacedSourceFlag = !!m_param->interlaceMode;
-    m_ptl.m_nonPackedConstraintFlag = false;
-    m_ptl.m_frameOnlyConstraintFlag = false;
+    m_ptl.levelIdc = m_level;
+    m_ptl.tierFlag = m_levelTier ? true : false;
+    m_ptl.profileIdc = m_profile;
+    m_ptl.profileCompatibilityFlag[m_profile] = true;
+    m_ptl.progressiveSourceFlag = !m_param->interlaceMode;
+    m_ptl.interlacedSourceFlag = !!m_param->interlaceMode;
+    m_ptl.nonPackedConstraintFlag = false;
+    m_ptl.frameOnlyConstraintFlag = false;
 
     if (m_profile == Profile::MAIN10 && X265_DEPTH == 8)
         /* The above constraint is equal to Profile::MAIN */
-        m_ptl.m_profileCompatibilityFlag[Profile::MAIN] = true;
+        m_ptl.profileCompatibilityFlag[Profile::MAIN] = true;
     if (m_profile == Profile::MAIN)
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
-        m_ptl.m_profileCompatibilityFlag[Profile::MAIN10] = true;
+        m_ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
 
     /* TODO: Range extension profiles */
     /* TODO: check final spec for compatibility rules here */

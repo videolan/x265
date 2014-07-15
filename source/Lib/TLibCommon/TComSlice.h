@@ -173,29 +173,27 @@ private:
     bool     m_useTransformSkip;                                                    //!< transform skipping flag for setting default scaling matrix for 4x4
 };
 
-class ProfileTierLevel
+struct ProfileTierLevel
 {
-public:
-
-    bool    m_tierFlag;
-    int     m_profileIdc;
-    bool    m_profileCompatibilityFlag[32];
-    int     m_levelIdc;
-    bool    m_progressiveSourceFlag;
-    bool    m_interlacedSourceFlag;
-    bool    m_nonPackedConstraintFlag;
-    bool    m_frameOnlyConstraintFlag;
+    bool    tierFlag;
+    int     profileIdc;
+    bool    profileCompatibilityFlag[32];
+    int     levelIdc;
+    bool    progressiveSourceFlag;
+    bool    interlacedSourceFlag;
+    bool    nonPackedConstraintFlag;
+    bool    frameOnlyConstraintFlag;
 
     ProfileTierLevel()
-        : m_tierFlag(false)
-        , m_profileIdc(0)
-        , m_levelIdc(0)
-        , m_progressiveSourceFlag(false)
-        , m_interlacedSourceFlag(false)
-        , m_nonPackedConstraintFlag(false)
-        , m_frameOnlyConstraintFlag(false)
+        : tierFlag(false)
+        , profileIdc(0)
+        , levelIdc(0)
+        , progressiveSourceFlag(false)
+        , interlacedSourceFlag(false)
+        , nonPackedConstraintFlag(false)
+        , frameOnlyConstraintFlag(false)
     {
-        ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
+        ::memset(profileCompatibilityFlag, 0, sizeof(profileCompatibilityFlag));
     }
 };
 
