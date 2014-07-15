@@ -40,10 +40,6 @@
 
 #include "common.h"
 #include "TComRom.h"
-#include "x265.h"  // NAL type enums
-
-//! \ingroup TLibCommon
-//! \{
 
 namespace x265 {
 // private namespace
@@ -51,15 +47,6 @@ namespace x265 {
 class Frame;
 class PicList;
 
-// ====================================================================================================================
-// Constants
-// ====================================================================================================================
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// Reference Picture Set class
 class TComReferencePictureSet
 {
 public:
@@ -127,7 +114,6 @@ public:
     void printDeltaPOC();
 };
 
-/// SCALING_LIST class
 class TComScalingList
 {
 public:
@@ -135,26 +121,26 @@ public:
     TComScalingList();
     ~TComScalingList();
 
-    void     setScalingListPresentFlag(bool b)                  { m_scalingListPresentFlag = b; }
+    void     setScalingListPresentFlag(bool b)                              { m_scalingListPresentFlag = b; }
 
-    bool     getScalingListPresentFlag()                        { return m_scalingListPresentFlag; }
+    bool     getScalingListPresentFlag()                                    { return m_scalingListPresentFlag; }
 
-    bool     getUseTransformSkip()                              { return m_useTransformSkip; }
+    bool     getUseTransformSkip()                                          { return m_useTransformSkip; }
 
-    void     setUseTransformSkip(bool b)                        { m_useTransformSkip = b; }
+    void     setUseTransformSkip(bool b)                                    { m_useTransformSkip = b; }
 
-    int32_t* getScalingListAddress(uint32_t sizeId, uint32_t listId)    { return m_scalingListCoef[sizeId][listId]; }
+    int32_t* getScalingListAddress(uint32_t sizeId, uint32_t listId)        { return m_scalingListCoef[sizeId][listId]; }
 
     bool     checkPredMode(uint32_t sizeId, int listId);
-    void     setRefMatrixId(uint32_t sizeId, uint32_t listId, uint32_t u) { m_refMatrixId[sizeId][listId] = u; }
+    void     setRefMatrixId(uint32_t sizeId, uint32_t listId, uint32_t u)   { m_refMatrixId[sizeId][listId] = u; }
 
-    uint32_t getRefMatrixId(uint32_t sizeId, uint32_t listId)           { return m_refMatrixId[sizeId][listId]; }
+    uint32_t getRefMatrixId(uint32_t sizeId, uint32_t listId)               { return m_refMatrixId[sizeId][listId]; }
 
     int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
     void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
     void     setScalingListDC(uint32_t sizeId, uint32_t listId, uint32_t u) { m_scalingListDC[sizeId][listId] = u; }
 
-    int      getScalingListDC(uint32_t sizeId, uint32_t listId)         { return m_scalingListDC[sizeId][listId]; }
+    int      getScalingListDC(uint32_t sizeId, uint32_t listId)             { return m_scalingListDC[sizeId][listId]; }
 
     void     checkDcOfMatrix();
     void     processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId);
@@ -165,11 +151,11 @@ private:
     void     init();
     void     destroy();
     int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              //!< the DC value of the matrix coefficient for 16x16
-    bool     m_useDefaultScalingMatrixFlag[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< UseDefaultScalingMatrixFlag
+    bool     m_useDefaultScalingMatrixFlag[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];//!< UseDefaultScalingMatrixFlag
     uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
     bool     m_scalingListPresentFlag;                                              //!< flag for using default matrix
     uint32_t m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
-    int      *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];           //!< quantization matrix
+    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];            //!< quantization matrix
     bool     m_useTransformSkip;                                                    //!< transform skipping flag for setting default scaling matrix for 4x4
 };
 
@@ -197,19 +183,18 @@ struct ProfileTierLevel
     }
 };
 
-/// VPS class
-
 struct HrdLayerInfo
 {
-    bool fixedPicRateFlag;
-    bool fixedPicRateWithinCvsFlag;
+    bool     fixedPicRateFlag;
+    bool     lowDelayHrdFlag;
+    bool     fixedPicRateWithinCvsFlag;
     uint32_t picDurationInTcMinus1;
-    bool lowDelayHrdFlag;
     uint32_t cpbCntMinus1;
+
+    bool     cbrFlag[MAX_CPB_CNT][2];
     uint32_t bitRateValueMinus1[MAX_CPB_CNT][2];
     uint32_t cpbSizeValue[MAX_CPB_CNT][2];
     uint32_t ducpbSizeValue[MAX_CPB_CNT][2];
-    bool cbrFlag[MAX_CPB_CNT][2];
     uint32_t duBitRateValue[MAX_CPB_CNT][2];
 };
 
@@ -217,12 +202,12 @@ class TComHRD
 {
 private:
 
-    bool m_nalHrdParametersPresentFlag;
-    bool m_vclHrdParametersPresentFlag;
-    bool m_subPicHrdParamsPresentFlag;
+    bool     m_nalHrdParametersPresentFlag;
+    bool     m_vclHrdParametersPresentFlag;
+    bool     m_subPicHrdParamsPresentFlag;
     uint32_t m_tickDivisorMinus2;
     uint32_t m_duCpbRemovalDelayLengthMinus1;
-    bool m_subPicCpbParamsInPicTimingSEIFlag;
+    bool     m_subPicCpbParamsInPicTimingSEIFlag;
     uint32_t m_dpbOutputDelayDuLengthMinus1;
     uint32_t m_bitRateScale;
     uint32_t m_cpbSizeScale;
@@ -303,7 +288,6 @@ public:
 
     uint32_t getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
 
-
     void setFixedPicRateFlag(bool flag) { m_HRD.fixedPicRateFlag = flag; }
 
     bool getFixedPicRateFlag() { return m_HRD.fixedPicRateFlag; }
@@ -349,11 +333,11 @@ public:
 
 class TimingInfo
 {
-    bool m_timingInfoPresentFlag;
+    bool     m_timingInfoPresentFlag;
     uint32_t m_numUnitsInTick;
     uint32_t m_timeScale;
-    bool m_pocProportionalToTimingFlag;
-    int  m_numTicksPocDiffOneMinus1;
+    bool     m_pocProportionalToTimingFlag;
+    int      m_numTicksPocDiffOneMinus1;
 
 public:
 
