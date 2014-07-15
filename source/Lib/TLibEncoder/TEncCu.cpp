@@ -104,8 +104,6 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 {
     X265_CHECK(totalDepth <= MAX_CU_DEPTH, "invalid totalDepth\n");
 
-    m_totalDepth     = totalDepth;
-
     m_bestPredYuv = new TComYuv*[totalDepth];
     m_bestResiYuv = new ShortYuv*[totalDepth];
     m_bestRecoYuv = new TComYuv*[totalDepth];
@@ -203,7 +201,7 @@ bool TEncCu::create(uint8_t totalDepth, uint32_t maxWidth)
 
 void TEncCu::destroy()
 {
-    for (int i = 0; i < m_totalDepth; i++)
+    for (int i = 0; i < g_maxCUDepth; i++)
     {
         m_memPool[i].destroy();
 

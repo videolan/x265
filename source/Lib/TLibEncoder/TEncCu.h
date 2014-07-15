@@ -115,8 +115,6 @@ public:
     TComYuv**    m_bestMergeRecoYuv;
     TComYuv**    m_origYuv;     ///< Original Yuv at each depth
 
-    uint8_t      m_totalDepth;
-
     bool         m_bEncodeDQP;
 
     StatisticLog  m_sliceTypeLog[3];
