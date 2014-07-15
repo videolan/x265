@@ -182,6 +182,8 @@ private:
 
 class ProfileTierLevel
 {
+public:
+
     int     m_profileSpace;
     bool    m_tierFlag;
     int     m_profileIdc;
@@ -192,43 +194,7 @@ class ProfileTierLevel
     bool    m_nonPackedConstraintFlag;
     bool    m_frameOnlyConstraintFlag;
 
-public:
-
     ProfileTierLevel();
-
-    int getProfileSpace() const { return m_profileSpace; }
-
-    bool getTierFlag() const    { return m_tierFlag; }
-
-    void setTierFlag(bool x)    { m_tierFlag = x; }
-
-    int getProfileIdc() const   { return m_profileIdc; }
-
-    void setProfileIdc(int x)   { m_profileIdc = x; }
-
-    bool getProfileCompatibilityFlag(int i) const   { return m_profileCompatibilityFlag[i]; }
-
-    void setProfileCompatibilityFlag(int i, bool x) { m_profileCompatibilityFlag[i] = x; }
-
-    int getLevelIdc() const                 { return m_levelIdc; }
-
-    void setLevelIdc(int x)                 { m_levelIdc = x; }
-
-    bool getProgressiveSourceFlag() const   { return m_progressiveSourceFlag; }
-
-    void setProgressiveSourceFlag(bool b)   { m_progressiveSourceFlag = b; }
-
-    bool getInterlacedSourceFlag() const    { return m_interlacedSourceFlag; }
-
-    void setInterlacedSourceFlag(bool b)    { m_interlacedSourceFlag = b; }
-
-    bool getNonPackedConstraintFlag() const { return m_nonPackedConstraintFlag; }
-
-    void setNonPackedConstraintFlag(bool b) { m_nonPackedConstraintFlag = b; }
-
-    bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
-
-    void setFrameOnlyConstraintFlag(bool b) { m_frameOnlyConstraintFlag = b; }
 };
 
 class TComPTL

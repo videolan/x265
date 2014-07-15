@@ -990,53 +990,42 @@ void SBac::codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMin
     if (profilePresentFlag)
         codeProfileTier(ptl->getGeneralPTL()); // general_...
 
-    WRITE_CODE(ptl->getGeneralPTL()->getLevelIdc(), 8, "general_level_idc");
+    WRITE_CODE(ptl->getGeneralPTL()->m_levelIdc, 8, "general_level_idc");
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
         if (profilePresentFlag)
-        {
             WRITE_FLAG(ptl->getSubLayerProfilePresentFlag(i), "sub_layer_profile_present_flag[i]");
-        }
 
         WRITE_FLAG(ptl->getSubLayerLevelPresentFlag(i), "sub_layer_level_present_flag[i]");
     }
 
     if (maxNumSubLayersMinus1 > 0)
-    {
         for (int i = maxNumSubLayersMinus1; i < 8; i++)
-        {
             WRITE_CODE(0, 2, "reserved_zero_2bits");
-        }
-    }
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
         if (profilePresentFlag && ptl->getSubLayerProfilePresentFlag(i))
-        {
             codeProfileTier(ptl->getSubLayerPTL(i)); // sub_layer_...
-        }
+
         if (ptl->getSubLayerLevelPresentFlag(i))
-        {
-            WRITE_CODE(ptl->getSubLayerPTL(i)->getLevelIdc(), 8, "sub_layer_level_idc[i]");
-        }
+            WRITE_CODE(ptl->getSubLayerPTL(i)->m_levelIdc, 8, "sub_layer_level_idc[i]");
     }
 }
 
 void SBac::codeProfileTier(ProfileTierLevel* ptl)
 {
-    WRITE_CODE(ptl->getProfileSpace(), 2, "XXX_profile_space[]");
-    WRITE_FLAG(ptl->getTierFlag(),        "XXX_tier_flag[]");
-    WRITE_CODE(ptl->getProfileIdc(), 5,   "XXX_profile_idc[]");
+    WRITE_CODE(ptl->m_profileSpace, 2, "XXX_profile_space[]");
+    WRITE_FLAG(ptl->m_tierFlag,        "XXX_tier_flag[]");
+    WRITE_CODE(ptl->m_profileIdc, 5,   "XXX_profile_idc[]");
     for (int j = 0; j < 32; j++)
-    {
-        WRITE_FLAG(ptl->getProfileCompatibilityFlag(j), "XXX_profile_compatibility_flag[][j]");
-    }
+        WRITE_FLAG(ptl->m_profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
 
-    WRITE_FLAG(ptl->getProgressiveSourceFlag(),   "general_progressive_source_flag");
-    WRITE_FLAG(ptl->getInterlacedSourceFlag(),    "general_interlaced_source_flag");
-    WRITE_FLAG(ptl->getNonPackedConstraintFlag(), "general_non_packed_constraint_flag");
-    WRITE_FLAG(ptl->getFrameOnlyConstraintFlag(), "general_frame_only_constraint_flag");
+    WRITE_FLAG(ptl->m_progressiveSourceFlag,   "general_progressive_source_flag");
+    WRITE_FLAG(ptl->m_interlacedSourceFlag,    "general_interlaced_source_flag");
+    WRITE_FLAG(ptl->m_nonPackedConstraintFlag, "general_non_packed_constraint_flag");
+    WRITE_FLAG(ptl->m_frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
 
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
     WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");

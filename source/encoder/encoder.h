@@ -119,9 +119,6 @@ public:
     Level::Tier        m_levelTier;
     Level::Name        m_level;
 
-    bool               m_nonPackedConstraintFlag;
-    bool               m_frameOnlyConstraintFlag;
-
     //====== Coding Structure ========
     int                m_maxDecPicBuffering[MAX_TLAYER];
     int                m_numReorderPics[MAX_TLAYER];

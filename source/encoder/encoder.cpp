@@ -1028,30 +1028,24 @@ void Encoder::initSPS(TComSPS *sps)
 {
     ProfileTierLevel& profileTierLevel = *sps->getPTL()->getGeneralPTL();
 
-    profileTierLevel.setLevelIdc(m_level);
-    profileTierLevel.setTierFlag(m_levelTier ? true : false);
-    profileTierLevel.setProfileIdc(m_profile);
-    profileTierLevel.setProfileCompatibilityFlag(m_profile, 1);
-    profileTierLevel.setProgressiveSourceFlag(!m_param->interlaceMode);
-    profileTierLevel.setInterlacedSourceFlag(!!m_param->interlaceMode);
-    profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
-    profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
+    profileTierLevel.m_levelIdc = m_level;
+    profileTierLevel.m_tierFlag = m_levelTier ? true : false;
+    profileTierLevel.m_profileIdc = m_profile;
+    profileTierLevel.m_profileCompatibilityFlag[m_profile] = true;
+    profileTierLevel.m_progressiveSourceFlag = !m_param->interlaceMode;
+    profileTierLevel.m_interlacedSourceFlag = !!m_param->interlaceMode;
+    profileTierLevel.m_nonPackedConstraintFlag = false;
+    profileTierLevel.m_frameOnlyConstraintFlag = false;
 
     if (m_profile == Profile::MAIN10 && X265_DEPTH == 8)
-    {
         /* The above constraint is equal to Profile::MAIN */
-        profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN, 1);
-    }
+        profileTierLevel.m_profileCompatibilityFlag[Profile::MAIN] = true;
     if (m_profile == Profile::MAIN)
-    {
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
-        profileTierLevel.setProfileCompatibilityFlag(Profile::MAIN10, 1);
-    }
+        profileTierLevel.m_profileCompatibilityFlag[Profile::MAIN10] = true;
 
-    /* XXX: should Main be marked as compatible with still picture? */
-
-    /* XXX: may be a good idea to refactor the above into a function
-     * that chooses the actual compatibility based upon options */
+    /* TODO: Range extension profiles */
+    /* TODO: check final spec for compatibility rules here */
 
     /* set the VPS profile information */
     *m_vps.getPTL() = *sps->getPTL();
@@ -1422,8 +1416,6 @@ void Encoder::configure(x265_param *p)
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
 
-    m_nonPackedConstraintFlag = false;
-    m_frameOnlyConstraintFlag = false;
     m_useScalingListId = 0;
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;
