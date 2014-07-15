@@ -185,10 +185,6 @@ struct ProfileTierLevel
 
 struct TComHRD
 {
-    uint32_t m_tickDivisorMinus2;
-    uint32_t m_duCpbRemovalDelayLengthMinus1;
-    bool     m_subPicCpbParamsInPicTimingSEIFlag;
-    uint32_t m_dpbOutputDelayDuLengthMinus1;
     uint32_t m_bitRateScale;
     uint32_t m_cpbSizeScale;
     uint32_t m_ducpbSizeScale;
@@ -208,11 +204,7 @@ struct TComHRD
     uint32_t duBitRateValue;
 
     TComHRD()
-        : m_tickDivisorMinus2(0)
-        , m_duCpbRemovalDelayLengthMinus1(0)
-        , m_subPicCpbParamsInPicTimingSEIFlag(false)
-        , m_dpbOutputDelayDuLengthMinus1(0)
-        , m_bitRateScale(0)
+        : m_bitRateScale(0)
         , m_cpbSizeScale(0)
         , m_initialCpbRemovalDelayLengthMinus1(0)
         , m_cpbRemovalDelayLengthMinus1(0)
@@ -220,22 +212,6 @@ struct TComHRD
     {}
 
     ~TComHRD() {}
-
-    void setTickDivisorMinus2(uint32_t value) { m_tickDivisorMinus2 = value; }
-
-    uint32_t getTickDivisorMinus2() { return m_tickDivisorMinus2; }
-
-    void setDuCpbRemovalDelayLengthMinus1(uint32_t value) { m_duCpbRemovalDelayLengthMinus1 = value; }
-
-    uint32_t getDuCpbRemovalDelayLengthMinus1() { return m_duCpbRemovalDelayLengthMinus1; }
-
-    void setSubPicCpbParamsInPicTimingSEIFlag(bool flag) { m_subPicCpbParamsInPicTimingSEIFlag = flag; }
-
-    bool getSubPicCpbParamsInPicTimingSEIFlag() { return m_subPicCpbParamsInPicTimingSEIFlag; }
-
-    void setDpbOutputDelayDuLengthMinus1(uint32_t value) { m_dpbOutputDelayDuLengthMinus1 = value; }
-
-    uint32_t getDpbOutputDelayDuLengthMinus1() { return m_dpbOutputDelayDuLengthMinus1; }
 
     void setBitRateScale(uint32_t value) { m_bitRateScale = value; }
 
