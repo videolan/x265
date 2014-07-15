@@ -873,30 +873,20 @@ void SBac::codeHrdParameters(TComHRD *hrd)
     WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
     WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
 
-    WRITE_CODE(hrd->getBitRateScale(), 4, "bit_rate_scale");
-    WRITE_CODE(hrd->getCpbSizeScale(), 4, "cpb_size_scale");
+    WRITE_CODE(hrd->m_bitRateScale, 4, "bit_rate_scale");
+    WRITE_CODE(hrd->m_cpbSizeScale, 4, "cpb_size_scale");
 
-    WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
+    WRITE_CODE(hrd->m_initialCpbRemovalDelayLengthMinus1, 5, "initial_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->m_cpbRemovalDelayLengthMinus1,        5, "au_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->m_dpbOutputDelayLengthMinus1,         5, "dpb_output_delay_length_minus1");
 
-    WRITE_FLAG(hrd->getFixedPicRateFlag() ? 1 : 0,          "fixed_pic_rate_general_flag");
-    if (!hrd->getFixedPicRateFlag())
-        WRITE_FLAG(hrd->getFixedPicRateWithinCvsFlag() ? 1 : 0, "fixed_pic_rate_within_cvs_flag");
-    else
-        hrd->setFixedPicRateWithinCvsFlag(true);
+    WRITE_FLAG(1, "fixed_pic_rate_general_flag");
+    WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
+    WRITE_UVLC(0, "cpb_cnt_minus1");
 
-    if (hrd->getFixedPicRateWithinCvsFlag())
-        WRITE_UVLC(hrd->getPicDurationInTcMinus1(), "elemental_duration_in_tc_minus1");
-    else
-        WRITE_FLAG(hrd->getLowDelayHrdFlag() ? 1 : 0, "low_delay_hrd_flag");
-
-    if (!hrd->getLowDelayHrdFlag())
-        WRITE_UVLC(0, "cpb_cnt_minus1");
-
-    WRITE_UVLC(hrd->getBitRateValueMinus1(), "bit_rate_value_minus1");
-    WRITE_UVLC(hrd->getCpbSizeValueMinus1(), "cpb_size_value_minus1");
-    WRITE_FLAG(hrd->getCbrFlag() ? 1 : 0, "cbr_flag");
+    WRITE_UVLC(hrd->bitRateValueMinus1, "bit_rate_value_minus1");
+    WRITE_UVLC(hrd->cpbSizeValue, "cpb_size_value_minus1");
+    WRITE_FLAG(hrd->cbrFlag ? 1 : 0, "cbr_flag");
 }
 
 void SBac::codeProfileTier(ProfileTierLevel& ptl)

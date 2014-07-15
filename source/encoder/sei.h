@@ -219,9 +219,9 @@ public:
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
         WRITE_FLAG(0, "concatenation_flag");
-        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   (hrd->getCpbRemovalDelayLengthMinus1() + 1),       "au_cpb_removal_delay_delta_minus1");
-        WRITE_CODE(m_initialCpbRemovalDelay,       (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),        "initial_cpb_removal_delay");
-        WRITE_CODE(m_initialCpbRemovalDelayOffset, (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_cpb_removal_delay_offset");
+        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   (hrd->m_cpbRemovalDelayLengthMinus1 + 1),       "au_cpb_removal_delay_delta_minus1");
+        WRITE_CODE(m_initialCpbRemovalDelay,       (hrd->m_initialCpbRemovalDelayLengthMinus1 + 1),        "initial_cpb_removal_delay");
+        WRITE_CODE(m_initialCpbRemovalDelayOffset, (hrd->m_initialCpbRemovalDelayLengthMinus1 + 1), "initial_cpb_removal_delay_offset");
 
         writeByteAlign();
     }
@@ -254,8 +254,8 @@ public:
 
         if (vui->getHrdParametersPresentFlag())
         {
-            WRITE_CODE(m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_minus1");
-            WRITE_CODE(m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1), "pic_dpb_output_delay");
+            WRITE_CODE(m_auCpbRemovalDelay - 1, (hrd->m_cpbRemovalDelayLengthMinus1 + 1), "au_cpb_removal_delay_minus1");
+            WRITE_CODE(m_picDpbOutputDelay, (hrd->m_dpbOutputDelayLengthMinus1 + 1), "pic_dpb_output_delay");
             /* Removed sub-pic signaling June 2014 */
         }
         writeByteAlign();
