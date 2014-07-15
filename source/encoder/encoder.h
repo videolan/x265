@@ -121,8 +121,6 @@ public:
     Level::Name        m_level;
 
     //====== Coding Structure ========
-    int                m_maxDecPicBuffering;
-    int                m_numReorderPics;
     int                m_maxRefPicNum;
 
     //======= Transform =============
