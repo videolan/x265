@@ -932,7 +932,7 @@ void SBac::codeHrdParameters(TComHRD *hrd)
 
 void SBac::codeProfileTier(ProfileTierLevel& ptl)
 {
-    WRITE_CODE(ptl.m_profileSpace, 2, "XXX_profile_space[]");
+    WRITE_CODE(0, 2,                  "XXX_profile_space[]");
     WRITE_FLAG(ptl.m_tierFlag,        "XXX_tier_flag[]");
     WRITE_CODE(ptl.m_profileIdc, 5,   "XXX_profile_idc[]");
     for (int j = 0; j < 32; j++)

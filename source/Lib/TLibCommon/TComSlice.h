@@ -177,7 +177,6 @@ class ProfileTierLevel
 {
 public:
 
-    int     m_profileSpace;
     bool    m_tierFlag;
     int     m_profileIdc;
     bool    m_profileCompatibilityFlag[32];
@@ -188,8 +187,7 @@ public:
     bool    m_frameOnlyConstraintFlag;
 
     ProfileTierLevel()
-        : m_profileSpace(0)
-        , m_tierFlag(false)
+        : m_tierFlag(false)
         , m_profileIdc(0)
         , m_levelIdc(0)
         , m_progressiveSourceFlag(false)
