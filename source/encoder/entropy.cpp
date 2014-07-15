@@ -894,11 +894,11 @@ void SBac::codeHrdParameters(TComHRD *hrd)
     if (!hrd->getLowDelayHrdFlag())
         WRITE_UVLC(hrd->getCpbCntMinus1(), "cpb_cnt_minus1");
 
-    for (uint32_t j = 0; j <= (hrd->getCpbCntMinus1()); j++)
+    for (uint32_t j = 0; j <= hrd->getCpbCntMinus1(); j++)
     {
-        WRITE_UVLC(hrd->getBitRateValueMinus1(j, 0), "bit_rate_value_minus1");
-        WRITE_UVLC(hrd->getCpbSizeValueMinus1(j, 0), "cpb_size_value_minus1");
-        WRITE_FLAG(hrd->getCbrFlag(j, 0) ? 1 : 0, "cbr_flag");
+        WRITE_UVLC(hrd->getBitRateValueMinus1(j), "bit_rate_value_minus1");
+        WRITE_UVLC(hrd->getCpbSizeValueMinus1(j), "cpb_size_value_minus1");
+        WRITE_FLAG(hrd->getCbrFlag(j) ? 1 : 0, "cbr_flag");
     }
 }
 

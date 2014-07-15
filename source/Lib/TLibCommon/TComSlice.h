@@ -183,25 +183,8 @@ struct ProfileTierLevel
     }
 };
 
-struct HrdLayerInfo
+struct TComHRD
 {
-    bool     fixedPicRateFlag;
-    bool     lowDelayHrdFlag;
-    bool     fixedPicRateWithinCvsFlag;
-    uint32_t picDurationInTcMinus1;
-    uint32_t cpbCntMinus1;
-
-    bool     cbrFlag[MAX_CPB_CNT][2];
-    uint32_t bitRateValueMinus1[MAX_CPB_CNT][2];
-    uint32_t cpbSizeValue[MAX_CPB_CNT][2];
-    uint32_t ducpbSizeValue[MAX_CPB_CNT][2];
-    uint32_t duBitRateValue[MAX_CPB_CNT][2];
-};
-
-class TComHRD
-{
-private:
-
     uint32_t m_tickDivisorMinus2;
     uint32_t m_duCpbRemovalDelayLengthMinus1;
     bool     m_subPicCpbParamsInPicTimingSEIFlag;
@@ -212,9 +195,18 @@ private:
     uint32_t m_initialCpbRemovalDelayLengthMinus1;
     uint32_t m_cpbRemovalDelayLengthMinus1;
     uint32_t m_dpbOutputDelayLengthMinus1;
-    HrdLayerInfo m_HRD;
 
-public:
+    bool     fixedPicRateFlag;
+    bool     lowDelayHrdFlag;
+    bool     fixedPicRateWithinCvsFlag;
+    uint32_t picDurationInTcMinus1;
+    uint32_t cpbCntMinus1;
+
+    bool     cbrFlag[MAX_CPB_CNT];
+    uint32_t bitRateValueMinus1[MAX_CPB_CNT];
+    uint32_t cpbSizeValue[MAX_CPB_CNT];
+    uint32_t ducpbSizeValue[MAX_CPB_CNT];
+    uint32_t duBitRateValue[MAX_CPB_CNT];
 
     TComHRD()
         : m_tickDivisorMinus2(0)
@@ -270,45 +262,45 @@ public:
 
     uint32_t getDpbOutputDelayLengthMinus1() { return m_dpbOutputDelayLengthMinus1; }
 
-    void setFixedPicRateFlag(bool flag) { m_HRD.fixedPicRateFlag = flag; }
+    void setFixedPicRateFlag(bool flag) { fixedPicRateFlag = flag; }
 
-    bool getFixedPicRateFlag() { return m_HRD.fixedPicRateFlag; }
+    bool getFixedPicRateFlag() { return fixedPicRateFlag; }
 
-    void setFixedPicRateWithinCvsFlag(bool flag) { m_HRD.fixedPicRateWithinCvsFlag = flag; }
+    void setFixedPicRateWithinCvsFlag(bool flag) { fixedPicRateWithinCvsFlag = flag; }
 
-    bool getFixedPicRateWithinCvsFlag() { return m_HRD.fixedPicRateWithinCvsFlag; }
+    bool getFixedPicRateWithinCvsFlag() { return fixedPicRateWithinCvsFlag; }
 
-    void setPicDurationInTcMinus1(uint32_t value) { m_HRD.picDurationInTcMinus1 = value; }
+    void setPicDurationInTcMinus1(uint32_t value) { picDurationInTcMinus1 = value; }
 
-    uint32_t getPicDurationInTcMinus1() { return m_HRD.picDurationInTcMinus1; }
+    uint32_t getPicDurationInTcMinus1() { return picDurationInTcMinus1; }
 
-    void setLowDelayHrdFlag(bool flag) { m_HRD.lowDelayHrdFlag = flag; }
+    void setLowDelayHrdFlag(bool flag) { lowDelayHrdFlag = flag; }
 
-    bool getLowDelayHrdFlag() { return m_HRD.lowDelayHrdFlag; }
+    bool getLowDelayHrdFlag() { return lowDelayHrdFlag; }
 
-    void setCpbCntMinus1(uint32_t value) { m_HRD.cpbCntMinus1 = value; }
+    void setCpbCntMinus1(uint32_t value) { cpbCntMinus1 = value; }
 
-    uint32_t getCpbCntMinus1() { return m_HRD.cpbCntMinus1; }
+    uint32_t getCpbCntMinus1() { return cpbCntMinus1; }
 
-    void setBitRateValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.bitRateValueMinus1[cpbcnt][nalOrVcl] = value; }
+    void setBitRateValueMinus1(int cpbcnt, uint32_t value) { bitRateValueMinus1[cpbcnt] = value; }
 
-    uint32_t getBitRateValueMinus1(int cpbcnt, int nalOrVcl) { return m_HRD.bitRateValueMinus1[cpbcnt][nalOrVcl]; }
+    uint32_t getBitRateValueMinus1(int cpbcnt) { return bitRateValueMinus1[cpbcnt]; }
 
-    void setCpbSizeValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.cpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    void setCpbSizeValueMinus1(int cpbcnt, uint32_t value) { cpbSizeValue[cpbcnt] = value; }
 
-    uint32_t getCpbSizeValueMinus1(int cpbcnt, int nalOrVcl)  { return m_HRD.cpbSizeValue[cpbcnt][nalOrVcl]; }
+    uint32_t getCpbSizeValueMinus1(int cpbcnt)  { return cpbSizeValue[cpbcnt]; }
 
-    void setDuCpbSizeValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.ducpbSizeValue[cpbcnt][nalOrVcl] = value; }
+    void setDuCpbSizeValueMinus1(int cpbcnt, uint32_t value) { ducpbSizeValue[cpbcnt] = value; }
 
-    uint32_t getDuCpbSizeValueMinus1(int cpbcnt, int nalOrVcl)  { return m_HRD.ducpbSizeValue[cpbcnt][nalOrVcl]; }
+    uint32_t getDuCpbSizeValueMinus1(int cpbcnt)  { return ducpbSizeValue[cpbcnt]; }
 
-    void setDuBitRateValueMinus1(int cpbcnt, int nalOrVcl, uint32_t value) { m_HRD.duBitRateValue[cpbcnt][nalOrVcl] = value; }
+    void setDuBitRateValueMinus1(int cpbcnt, uint32_t value) { duBitRateValue[cpbcnt] = value; }
 
-    uint32_t getDuBitRateValueMinus1(int cpbcnt, int nalOrVcl) { return m_HRD.duBitRateValue[cpbcnt][nalOrVcl]; }
+    uint32_t getDuBitRateValueMinus1(int cpbcnt) { return duBitRateValue[cpbcnt]; }
 
-    void setCbrFlag(int cpbcnt, int nalOrVcl, bool value) { m_HRD.cbrFlag[cpbcnt][nalOrVcl] = value; }
+    void setCbrFlag(int cpbcnt, bool value) { cbrFlag[cpbcnt] = value; }
 
-    bool getCbrFlag(int cpbcnt, int nalOrVcl) { return m_HRD.cbrFlag[cpbcnt][nalOrVcl]; }
+    bool getCbrFlag(int cpbcnt) { return cbrFlag[cpbcnt]; }
 };
 
 struct TimingInfo
