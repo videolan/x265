@@ -577,16 +577,16 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
 {
-    WRITE_CODE(vps->getVPSId(), 4,        "vps_video_parameter_set_id");
-    WRITE_CODE(3,               2,        "vps_reserved_three_2bits");
-    WRITE_CODE(0,               6,        "vps_reserved_zero_6bits");
-    WRITE_CODE(0,               3,        "vps_max_sub_layers_minus1");
-    WRITE_FLAG(1,                         "vps_temporal_id_nesting_flag");
-    WRITE_CODE(0xffff,         16,        "vps_reserved_ffff_16bits");
+    WRITE_CODE(0,       4, "vps_video_parameter_set_id");
+    WRITE_CODE(3,       2, "vps_reserved_three_2bits");
+    WRITE_CODE(0,       6, "vps_reserved_zero_6bits");
+    WRITE_CODE(0,       3, "vps_max_sub_layers_minus1");
+    WRITE_FLAG(1,          "vps_temporal_id_nesting_flag");
+    WRITE_CODE(0xffff, 16, "vps_reserved_ffff_16bits");
 
     codeProfileTier(*ptl);
 
-    WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
+    WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
     WRITE_UVLC(vps->getMaxDecPicBuffering() - 1, "vps_max_dec_pic_buffering_minus1[i]");
     WRITE_UVLC(vps->getNumReorderPics(),         "vps_num_reorder_pics[i]");
     WRITE_UVLC(vps->getMaxLatencyIncrease(),     "vps_max_latency_increase_plus1[i]");

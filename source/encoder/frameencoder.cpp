@@ -256,7 +256,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     if (m_param->bEmitHRDSEI)
     {
         SEIActiveParameterSets sei;
-        sei.m_activeVPSId = m_top->m_vps.getVPSId();
+        sei.m_activeVPSId = 0;
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.m_numSpsIdsMinus1 = 0;

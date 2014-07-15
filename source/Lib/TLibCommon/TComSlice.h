@@ -401,8 +401,6 @@ class TComVPS
 {
 public:
 
-    int         m_VPSId;
-
     uint32_t    m_numReorderPics;
     uint32_t    m_maxDecPicBuffering;
     uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
@@ -415,19 +413,14 @@ public:
     TimingInfo  m_timingInfo;
 
     TComVPS::TComVPS()
-        : m_VPSId(0)
-        , m_maxNuhReservedZeroLayerId(0)
     {
         m_numReorderPics = 0;
         m_maxDecPicBuffering = 1;
         m_maxLatencyIncrease = 0;
+        m_maxNuhReservedZeroLayerId = 0;
     }
 
     TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
-
-    int      getVPSId()                                { return m_VPSId; }
-
-    void     setVPSId(int i)                           { m_VPSId = i; }
 
     void     setNumReorderPics(uint32_t v)             { m_numReorderPics = v; }
 
