@@ -649,13 +649,13 @@ void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
 
 void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl)
 {
-    WRITE_CODE(sps->getVPSId(), 4, "sps_video_parameter_set_id"); // TODO: hard-code
-    WRITE_CODE(0,               3, "sps_max_sub_layers_minus1");
-    WRITE_FLAG(1,                  "sps_temporal_id_nesting_flag");
+    WRITE_CODE(0, 4, "sps_video_parameter_set_id");
+    WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
+    WRITE_FLAG(1,    "sps_temporal_id_nesting_flag");
 
     codeProfileTier(*ptl);
 
-    WRITE_UVLC(sps->getSPSId(),           "sps_seq_parameter_set_id"); // TODO: hard-code
+    WRITE_UVLC(0, "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(), "chroma_format_idc");
 
     if (sps->getChromaFormatIdc() == CHROMA_444) // TODO: this flag is not signaled consistently?

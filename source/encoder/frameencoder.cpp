@@ -260,7 +260,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
         sei.m_fullRandomAccessFlag = false;
         sei.m_noParamSetUpdateFlag = false;
         sei.m_numSpsIdsMinus1 = 0;
-        sei.m_activeSeqParamSetId = m_sps.getSPSId();
+        sei.m_activeSeqParamSetId = 0;
 
         bs.resetBits();
         sei.write(bs, m_sps);
@@ -375,7 +375,7 @@ void FrameEncoder::compressFrame()
         if (m_param->bEmitHRDSEI)
         {
             SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
-            bpSei->m_bpSeqParameterSetId = m_sps.getSPSId();
+            bpSei->m_bpSeqParameterSetId = 0;
             bpSei->m_rapCpbParamsPresentFlag = 0;
 
             // for the concatenation, it can be set to one during splicing.

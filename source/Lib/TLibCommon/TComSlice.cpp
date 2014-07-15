@@ -424,9 +424,7 @@ void  TComSlice::initWpScaling()
 // ------------------------------------------------------------------------------------------------
 
 TComSPS::TComSPS()
-    : m_SPSId(0)
-    , m_VPSId(0)
-    , m_chromaFormatIdc(X265_CSP_I420)
+    : m_chromaFormatIdc(X265_CSP_I420)
 // Structure
     , m_picWidthInLumaSamples(352)
     , m_picHeightInLumaSamples(288)

@@ -672,8 +672,6 @@ class TComSPS
 {
 public:
 
-    int         m_SPSId;
-    int         m_VPSId;
     int         m_chromaFormatIdc;
     bool        m_colorPlaneFlag;
 
@@ -728,14 +726,6 @@ public:
 
     TComSPS();
     ~TComSPS();
-
-    int  getVPSId()         { return m_VPSId; }
-
-    void setVPSId(int i)    { m_VPSId = i; }
-
-    int  getSPSId()         { return m_SPSId; }
-
-    void setSPSId(int i)    { m_SPSId = i; }
 
     int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
 
