@@ -146,8 +146,6 @@ public:
     int                m_useScalingListId; ///< Using quantization matrix i.e. 0=off, 1=default.
 
     bool               m_neutralChromaIndicationFlag;
-    bool               m_pocProportionalToTimingFlag;
-    int                m_numTicksPocDiffOneMinus1;
     bool               m_tilesFixedStructureFlag;
     bool               m_motionVectorsOverPicBoundariesFlag;
     bool               m_restrictedRefPicListsFlag;

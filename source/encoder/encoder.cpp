@@ -1106,14 +1106,12 @@ void Encoder::initSPS(TComSPS *sps)
     vui->setFieldSeqFlag(!!m_param->interlaceMode);
 
     vui->setHrdParametersPresentFlag(m_param->bEmitHRDSEI);
-    vui->getHrdParameters()->setNalHrdParametersPresentFlag(m_param->bEmitHRDSEI);
+    vui->getHrdParameters()->setNalHrdParametersPresentFlag(m_param->bEmitHRDSEI); // TODO: reduce this and next
     vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
 
-    vui->getTimingInfo()->setTimingInfoPresentFlag(true);
-    vui->getTimingInfo()->setNumUnitsInTick(m_param->fpsDenom);
-    vui->getTimingInfo()->setTimeScale(m_param->fpsNum);
-    vui->getTimingInfo()->setPocProportionalToTimingFlag(m_pocProportionalToTimingFlag);
-    vui->getTimingInfo()->setNumTicksPocDiffOneMinus1(m_numTicksPocDiffOneMinus1);
+    vui->getTimingInfo()->timingInfoPresentFlag = true;
+    vui->getTimingInfo()->numUnitsInTick = m_param->fpsDenom;
+    vui->getTimingInfo()->timeScale = m_param->fpsNum;
 
     vui->setBitstreamRestrictionFlag(false); // TODO: clean these up if we're not signaling them
     vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
@@ -1386,8 +1384,6 @@ void Encoder::configure(x265_param *p)
     m_useScalingListId = 0;
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;
-    m_pocProportionalToTimingFlag = false;
-    m_numTicksPocDiffOneMinus1 = 0;
     m_motionVectorsOverPicBoundariesFlag = false;
     m_maxBytesPerPicDenom = 2;
     m_maxBitsPerMinCuDenom = 1;

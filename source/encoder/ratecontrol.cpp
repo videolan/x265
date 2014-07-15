@@ -717,8 +717,8 @@ void RateControl::initHRD(TComSPS *sps)
     #define MAX_DURATION 0.5
 
     TimingInfo *time = sps->getVuiParameters()->getTimingInfo();
-    int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick(), INT_MAX));
-    int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering() * MAX_DURATION * time->getTimeScale() / time->getNumUnitsInTick());
+    int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->timeScale / time->numUnitsInTick, INT_MAX));
+    int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering() * MAX_DURATION * time->timeScale / time->numUnitsInTick);
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
 
     hrd->setInitialCpbRemovalDelayLengthMinus1(2 + Clip3(4, 22, 32 - calcLength(maxDelay)) - 1);
@@ -1941,7 +1941,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             }
             else
             {
-                rce->hrdTiming->cpbRemovalTime = m_nominalRemovalTime + (double)rce->picTimingSEI->m_auCpbRemovalDelay * time->getNumUnitsInTick() / time->getTimeScale();
+                rce->hrdTiming->cpbRemovalTime = m_nominalRemovalTime + (double)rce->picTimingSEI->m_auCpbRemovalDelay * time->numUnitsInTick / time->timeScale;
                 double cpbEarliestAT = rce->hrdTiming->cpbRemovalTime - (double)m_bufPeriodSEI.m_initialCpbRemovalDelay[0][0] / 90000;
                 if (!pic->m_lowres.bKeyframe)
                 {
@@ -1956,7 +1956,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 
             uint32_t cpbsizeUnscale = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
             rce->hrdTiming->cpbFinalAT = m_prevCpbFinalAT = rce->hrdTiming->cpbInitialAT + actualBits / cpbsizeUnscale;
-            rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->getNumUnitsInTick() / time->getTimeScale() + rce->hrdTiming->cpbRemovalTime;
+            rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->numUnitsInTick / time->timeScale + rce->hrdTiming->cpbRemovalTime;
         }
     }
     rce->isActive = false;

@@ -331,42 +331,18 @@ public:
     bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 };
 
-class TimingInfo
+struct TimingInfo
 {
-    bool     m_timingInfoPresentFlag;
-    uint32_t m_numUnitsInTick;
-    uint32_t m_timeScale;
-    bool     m_pocProportionalToTimingFlag;
-    int      m_numTicksPocDiffOneMinus1;
-
-public:
+    bool     timingInfoPresentFlag;
+    uint32_t numUnitsInTick;
+    uint32_t timeScale;
 
     TimingInfo()
-        : m_timingInfoPresentFlag(false)
-        , m_numUnitsInTick(1001)
-        , m_timeScale(60000)
-        , m_pocProportionalToTimingFlag(false)
-        , m_numTicksPocDiffOneMinus1(0) {}
-
-    void setTimingInfoPresentFlag(bool flag)    { m_timingInfoPresentFlag = flag; }
-
-    bool getTimingInfoPresentFlag()             { return m_timingInfoPresentFlag; }
-
-    void setNumUnitsInTick(uint32_t value)      { m_numUnitsInTick = value; }
-
-    uint32_t getNumUnitsInTick()                { return m_numUnitsInTick; }
-
-    void setTimeScale(uint32_t value)           { m_timeScale = value; }
-
-    uint32_t getTimeScale()                     { return m_timeScale; }
-
-    bool getPocProportionalToTimingFlag()       { return m_pocProportionalToTimingFlag; }
-
-    void setPocProportionalToTimingFlag(bool x) { m_pocProportionalToTimingFlag = x; }
-
-    int  getNumTicksPocDiffOneMinus1()          { return m_numTicksPocDiffOneMinus1; }
-
-    void setNumTicksPocDiffOneMinus1(int x)     { m_numTicksPocDiffOneMinus1 = x; }
+        : timingInfoPresentFlag(false)
+        , numUnitsInTick(1001)
+        , timeScale(60000)
+    {
+    }
 };
 
 struct HRDTiming

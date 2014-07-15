@@ -595,14 +595,12 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     WRITE_UVLC(0, "vps_max_op_sets_minus1");
 
     TimingInfo &timingInfo = vps->m_timingInfo;
-    WRITE_FLAG(timingInfo.getTimingInfoPresentFlag(),            "vps_timing_info_present_flag");
-    if (timingInfo.getTimingInfoPresentFlag())
+    WRITE_FLAG(timingInfo.timingInfoPresentFlag,     "vps_timing_info_present_flag");
+    if (timingInfo.timingInfoPresentFlag)
     {
-        WRITE_CODE(timingInfo.getNumUnitsInTick(), 32,           "vps_num_units_in_tick");
-        WRITE_CODE(timingInfo.getTimeScale(),      32,           "vps_time_scale");
-        WRITE_FLAG(timingInfo.getPocProportionalToTimingFlag(),  "vps_poc_proportional_to_timing_flag");
-        if (timingInfo.getPocProportionalToTimingFlag())
-            WRITE_UVLC(timingInfo.getNumTicksPocDiffOneMinus1(), "vps_num_ticks_poc_diff_one_minus1");
+        WRITE_CODE(timingInfo.numUnitsInTick,    32, "vps_num_units_in_tick");
+        WRITE_CODE(timingInfo.timeScale,         32, "vps_time_scale");
+        WRITE_FLAG(0,                                "vps_poc_proportional_to_timing_flag");
 
         // TODO: Should we be consistent with the SPS->VUI here?
         WRITE_UVLC(0, "vps_num_hrd_parameters");
@@ -820,16 +818,14 @@ void SBac::codeVUI(TComVUI *vui)
     }
 
     TimingInfo *timingInfo = vui->getTimingInfo();
-    WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),       "vui_timing_info_present_flag");
-    if (timingInfo->getTimingInfoPresentFlag())
+    WRITE_FLAG(timingInfo->timingInfoPresentFlag,     "vui_timing_info_present_flag");
+    if (timingInfo->timingInfoPresentFlag)
     {
-        WRITE_CODE(timingInfo->getNumUnitsInTick(), 32,      "vui_num_units_in_tick");
-        WRITE_CODE(timingInfo->getTimeScale(),      32,      "vui_time_scale");
-        WRITE_FLAG(timingInfo->getPocProportionalToTimingFlag(),  "vui_poc_proportional_to_timing_flag");
-        if (timingInfo->getPocProportionalToTimingFlag())
-            WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vui_num_ticks_poc_diff_one_minus1");
+        WRITE_CODE(timingInfo->numUnitsInTick,    32, "vui_num_units_in_tick");
+        WRITE_CODE(timingInfo->timeScale,         32, "vui_time_scale");
+        WRITE_FLAG(0,                                 "vui_poc_proportional_to_timing_flag");
 
-        WRITE_FLAG(vui->getHrdParametersPresentFlag(),              "hrd_parameters_present_flag");
+        WRITE_FLAG(vui->getHrdParametersPresentFlag(), "hrd_parameters_present_flag");
         if (vui->getHrdParametersPresentFlag())
             codeHrdParameters(vui->getHrdParameters());
     }
