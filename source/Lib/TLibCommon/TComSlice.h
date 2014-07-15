@@ -405,9 +405,7 @@ public:
     uint32_t    m_maxDecPicBuffering;
     uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
 
-    uint32_t    m_maxNuhReservedZeroLayerId;
     TComHRD     m_hrdParameters;
-    uint32_t    m_numOpSets;
     bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1]; // TODO: nukeme
 
     TimingInfo  m_timingInfo;
@@ -417,7 +415,6 @@ public:
         m_numReorderPics = 0;
         m_maxDecPicBuffering = 1;
         m_maxLatencyIncrease = 0;
-        m_maxNuhReservedZeroLayerId = 0;
     }
 
     TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
@@ -433,14 +430,6 @@ public:
     void     setMaxLatencyIncrease(uint32_t v)         { m_maxLatencyIncrease = v; }
 
     uint32_t getMaxLatencyIncrease()                   { return m_maxLatencyIncrease; }
-
-    uint32_t getMaxNuhReservedZeroLayerId()            { return m_maxNuhReservedZeroLayerId; }
-
-    void     setMaxNuhReservedZeroLayerId(uint32_t v)  { m_maxNuhReservedZeroLayerId = v; }
-
-    uint32_t getMaxOpSets()                            { return m_numOpSets; }
-
-    void     setMaxOpSets(uint32_t v)                  { m_numOpSets = v; }
 
     bool     getLayerIdIncludedFlag(uint32_t opsIdx, uint32_t id)         { return m_layerIdIncludedFlag[opsIdx][id]; }
 

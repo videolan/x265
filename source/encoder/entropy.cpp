@@ -591,20 +591,8 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     WRITE_UVLC(vps->getNumReorderPics(),         "vps_num_reorder_pics[i]");
     WRITE_UVLC(vps->getMaxLatencyIncrease(),     "vps_max_latency_increase_plus1[i]");
 
-    X265_CHECK(vps->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1, "invalid layer\n");
-    WRITE_CODE(vps->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id");
-    vps->setMaxOpSets(1);
-    WRITE_UVLC(vps->getMaxOpSets() - 1,                    "vps_max_op_sets_minus1");
-    for (uint32_t opsIdx = 1; opsIdx <= (vps->getMaxOpSets() - 1); opsIdx++)
-    {
-        // Operation point set
-        for (uint32_t i = 0; i <= vps->getMaxNuhReservedZeroLayerId(); i++)
-        {
-            // Only applicable for version 1
-            vps->setLayerIdIncludedFlag(true, opsIdx, i);
-            WRITE_FLAG(vps->getLayerIdIncludedFlag(opsIdx, i) ? 1 : 0, "layer_id_included_flag[opsIdx][i]");
-        }
-    }
+    WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
+    WRITE_UVLC(0, "vps_max_op_sets_minus1");
 
     TimingInfo *timingInfo = vps->getTimingInfo();
     WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),            "vps_timing_info_present_flag");
