@@ -1106,8 +1106,6 @@ void Encoder::initSPS(TComSPS *sps)
     vui->setFieldSeqFlag(!!m_param->interlaceMode);
 
     vui->setHrdParametersPresentFlag(m_param->bEmitHRDSEI);
-    vui->getHrdParameters()->setNalHrdParametersPresentFlag(m_param->bEmitHRDSEI); // TODO: reduce this and next
-    vui->getHrdParameters()->setSubPicHrdParamsPresentFlag(false);
 
     vui->getTimingInfo()->timingInfoPresentFlag = true;
     vui->getTimingInfo()->numUnitsInTick = m_param->fpsDenom;

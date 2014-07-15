@@ -199,26 +199,18 @@ public:
     PayloadType payloadType() const { return BUFFERING_PERIOD; }
 
     SEIBufferingPeriod()
-        : m_bpSeqParameterSetId(0)
-        , m_rapCpbParamsPresentFlag(false)
-        , m_cpbDelayOffset(0)
+        : m_cpbDelayOffset(0)
         , m_dpbDelayOffset(0)
+        , m_auCpbRemovalDelayDelta(1)
     {
         ::memset(m_initialCpbRemovalDelay, 0, sizeof(m_initialCpbRemovalDelay));
         ::memset(m_initialCpbRemovalDelayOffset, 0, sizeof(m_initialCpbRemovalDelayOffset));
-        ::memset(m_initialAltCpbRemovalDelay, 0, sizeof(m_initialAltCpbRemovalDelay));
-        ::memset(m_initialAltCpbRemovalDelayOffset, 0, sizeof(m_initialAltCpbRemovalDelayOffset));
     }
 
-    uint32_t m_bpSeqParameterSetId;
-    bool     m_rapCpbParamsPresentFlag;
     bool     m_cpbDelayOffset;
     bool     m_dpbDelayOffset;
     uint32_t m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
     uint32_t m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    uint32_t m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
-    uint32_t m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    bool     m_concatenationFlag;
     uint32_t m_auCpbRemovalDelayDelta;
 
     void writeSEI(TComSPS& sps)
@@ -226,34 +218,14 @@ public:
         TComVUI *vui = sps.getVuiParameters();
         TComHRD *hrd = vui->getHrdParameters();
 
-        WRITE_UVLC(m_bpSeqParameterSetId, "bp_seq_parameter_set_id");
-        if (!hrd->getSubPicHrdParamsPresentFlag())
-        {
-            WRITE_FLAG(m_rapCpbParamsPresentFlag, "rap_cpb_params_present_flag");
-        }
-        WRITE_FLAG(m_concatenationFlag, "concatenation_flag");
+        WRITE_UVLC(0, "bp_seq_parameter_set_id");
+        WRITE_FLAG(0, "rap_cpb_params_present_flag");
+        WRITE_FLAG(0, "concatenation_flag");
         WRITE_CODE(m_auCpbRemovalDelayDelta - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_delta_minus1");
-        if (m_rapCpbParamsPresentFlag)
+        for (uint32_t i = 0; i < (hrd->getCpbCntMinus1() + 1); i++)
         {
-            WRITE_CODE(m_cpbDelayOffset, hrd->getCpbRemovalDelayLengthMinus1() + 1, "cpb_delay_offset");
-            WRITE_CODE(m_dpbDelayOffset, hrd->getDpbOutputDelayLengthMinus1()  + 1, "dpb_delay_offset");
-        }
-        for (int nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
-        {
-            if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
-                ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
-            {
-                for (uint32_t i = 0; i < (hrd->getCpbCntMinus1() + 1); i++)
-                {
-                    WRITE_CODE(m_initialCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),           "initial_cpb_removal_delay");
-                    WRITE_CODE(m_initialCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),      "initial_cpb_removal_delay_offset");
-                    if (hrd->getSubPicHrdParamsPresentFlag() || m_rapCpbParamsPresentFlag)
-                    {
-                        WRITE_CODE(m_initialAltCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),     "initial_alt_cpb_removal_delay");
-                        WRITE_CODE(m_initialAltCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_alt_cpb_removal_delay_offset");
-                    }
-                }
-            }
+            WRITE_CODE(m_initialCpbRemovalDelay[i][0], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),       "initial_cpb_removal_delay");
+            WRITE_CODE(m_initialCpbRemovalDelayOffset[i][0], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_cpb_removal_delay_offset");
         }
 
         writeByteAlign();
@@ -285,7 +257,7 @@ public:
             WRITE_FLAG(m_duplicateFlag ? 1 : 0, "duplicate_flag");
         }
 
-        if (hrd->getCpbDpbDelaysPresentFlag())
+        if (vui->getHrdParametersPresentFlag())
         {
             WRITE_CODE(m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_minus1");
             WRITE_CODE(m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1), "pic_dpb_output_delay");

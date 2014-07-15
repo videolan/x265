@@ -649,11 +649,8 @@ bool RateControl::init(TComSPS *sps)
         if (m_param->bEmitHRDSEI)
         {
             TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
-            if (!hrd && hrd->getNalHrdParametersPresentFlag())
-            {
-                vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
-                vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
-            }
+            vbvBufferSize = (hrd->getCpbSizeValueMinus1(0, 0) + 1) << (hrd->getCpbSizeScale() + CPB_SHIFT);
+            vbvMaxBitrate = (hrd->getBitRateValueMinus1(0, 0) + 1) << (hrd->getBitRateScale() + BR_SHIFT);
         }
         m_bufferRate = vbvMaxBitrate / m_fps;
         m_vbvMaxRate = vbvMaxBitrate;

@@ -202,9 +202,6 @@ class TComHRD
 {
 private:
 
-    bool     m_nalHrdParametersPresentFlag;
-    bool     m_vclHrdParametersPresentFlag;
-    bool     m_subPicHrdParamsPresentFlag;
     uint32_t m_tickDivisorMinus2;
     uint32_t m_duCpbRemovalDelayLengthMinus1;
     bool     m_subPicCpbParamsInPicTimingSEIFlag;
@@ -220,10 +217,7 @@ private:
 public:
 
     TComHRD()
-        : m_nalHrdParametersPresentFlag(false)
-        , m_vclHrdParametersPresentFlag(false)
-        , m_subPicHrdParamsPresentFlag(false)
-        , m_tickDivisorMinus2(0)
+        : m_tickDivisorMinus2(0)
         , m_duCpbRemovalDelayLengthMinus1(0)
         , m_subPicCpbParamsInPicTimingSEIFlag(false)
         , m_dpbOutputDelayDuLengthMinus1(0)
@@ -235,18 +229,6 @@ public:
     {}
 
     ~TComHRD() {}
-
-    void setNalHrdParametersPresentFlag(bool flag) { m_nalHrdParametersPresentFlag = flag; }
-
-    bool getNalHrdParametersPresentFlag() { return m_nalHrdParametersPresentFlag; }
-
-    void setVclHrdParametersPresentFlag(bool flag) { m_vclHrdParametersPresentFlag = flag; }
-
-    bool getVclHrdParametersPresentFlag() { return m_vclHrdParametersPresentFlag; }
-
-    void setSubPicHrdParamsPresentFlag(bool flag) { m_subPicHrdParamsPresentFlag = flag; }
-
-    bool getSubPicHrdParamsPresentFlag() { return m_subPicHrdParamsPresentFlag; }
 
     void setTickDivisorMinus2(uint32_t value) { m_tickDivisorMinus2 = value; }
 
@@ -327,8 +309,6 @@ public:
     void setCbrFlag(int cpbcnt, int nalOrVcl, bool value) { m_HRD.cbrFlag[cpbcnt][nalOrVcl] = value; }
 
     bool getCbrFlag(int cpbcnt, int nalOrVcl) { return m_HRD.cbrFlag[cpbcnt][nalOrVcl]; }
-
-    bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 };
 
 struct TimingInfo

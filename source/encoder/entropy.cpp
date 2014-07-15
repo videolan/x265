@@ -869,29 +869,17 @@ void SBac::codeAUD(TComSlice* slice)
 
 void SBac::codeHrdParameters(TComHRD *hrd)
 {
-    WRITE_FLAG(hrd->getNalHrdParametersPresentFlag() ? 1 : 0,  "nal_hrd_parameters_present_flag");
-    WRITE_FLAG(hrd->getVclHrdParametersPresentFlag() ? 1 : 0,  "vcl_hrd_parameters_present_flag");
-    if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
-    {
-        WRITE_FLAG(hrd->getSubPicHrdParamsPresentFlag() ? 1 : 0,  "sub_pic_hrd_params_present_flag");
-        if (hrd->getSubPicHrdParamsPresentFlag())
-        {
-            WRITE_CODE(hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2");
-            WRITE_CODE(hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1");
-            WRITE_FLAG(hrd->getSubPicCpbParamsInPicTimingSEIFlag() ? 1 : 0, "sub_pic_cpb_params_in_pic_timing_sei_flag");
-            WRITE_CODE(hrd->getDpbOutputDelayDuLengthMinus1(), 5,   "dpb_output_delay_du_length_minus1");
-        }
-        WRITE_CODE(hrd->getBitRateScale(), 4,                     "bit_rate_scale");
-        WRITE_CODE(hrd->getCpbSizeScale(), 4,                     "cpb_size_scale");
-        if (hrd->getSubPicHrdParamsPresentFlag())
-            WRITE_CODE(hrd->getDuCpbSizeScale(), 4,                "du_cpb_size_scale");
+    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
 
-        WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
-    }
+    WRITE_CODE(hrd->getBitRateScale(), 4, "bit_rate_scale");
+    WRITE_CODE(hrd->getCpbSizeScale(), 4, "cpb_size_scale");
 
-    int nalOrVcl;
+    WRITE_CODE(hrd->getInitialCpbRemovalDelayLengthMinus1(), 5, "initial_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->getCpbRemovalDelayLengthMinus1(),        5, "au_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->getDpbOutputDelayLengthMinus1(),         5, "dpb_output_delay_length_minus1");
+
     WRITE_FLAG(hrd->getFixedPicRateFlag() ? 1 : 0,          "fixed_pic_rate_general_flag");
     if (!hrd->getFixedPicRateFlag())
         WRITE_FLAG(hrd->getFixedPicRateWithinCvsFlag() ? 1 : 0, "fixed_pic_rate_within_cvs_flag");
@@ -906,29 +894,17 @@ void SBac::codeHrdParameters(TComHRD *hrd)
     if (!hrd->getLowDelayHrdFlag())
         WRITE_UVLC(hrd->getCpbCntMinus1(), "cpb_cnt_minus1");
 
-    for (nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
+    for (uint32_t j = 0; j <= (hrd->getCpbCntMinus1()); j++)
     {
-        if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
-            ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
-        {
-            for (uint32_t j = 0; j <= (hrd->getCpbCntMinus1()); j++)
-            {
-                WRITE_UVLC(hrd->getBitRateValueMinus1(j, nalOrVcl), "bit_rate_value_minus1");
-                WRITE_UVLC(hrd->getCpbSizeValueMinus1(j, nalOrVcl), "cpb_size_value_minus1");
-                if (hrd->getSubPicHrdParamsPresentFlag())
-                {
-                    WRITE_UVLC(hrd->getDuCpbSizeValueMinus1(j, nalOrVcl), "cpb_size_du_value_minus1");
-                    WRITE_UVLC(hrd->getDuBitRateValueMinus1(j, nalOrVcl), "bit_rate_du_value_minus1");
-                }
-                WRITE_FLAG(hrd->getCbrFlag(j, nalOrVcl) ? 1 : 0, "cbr_flag");
-            }
-        }
+        WRITE_UVLC(hrd->getBitRateValueMinus1(j, 0), "bit_rate_value_minus1");
+        WRITE_UVLC(hrd->getCpbSizeValueMinus1(j, 0), "cpb_size_value_minus1");
+        WRITE_FLAG(hrd->getCbrFlag(j, 0) ? 1 : 0, "cbr_flag");
     }
 }
 
 void SBac::codeProfileTier(ProfileTierLevel& ptl)
 {
-    WRITE_CODE(0, 2,                  "XXX_profile_space[]");
+    WRITE_CODE(0, 2,                "XXX_profile_space[]");
     WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
     WRITE_CODE(ptl.profileIdc, 5,   "XXX_profile_idc[]");
     for (int j = 0; j < 32; j++)

@@ -375,11 +375,6 @@ void FrameEncoder::compressFrame()
         if (m_param->bEmitHRDSEI)
         {
             SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
-            bpSei->m_bpSeqParameterSetId = 0;
-            bpSei->m_rapCpbParamsPresentFlag = 0;
-
-            // for the concatenation, it can be set to one during splicing.
-            bpSei->m_concatenationFlag = 0;
 
             // since the temporal layer HRD is not ready, we assumed it is fixed
             bpSei->m_auCpbRemovalDelayDelta = 1;
@@ -436,7 +431,7 @@ void FrameEncoder::compressFrame()
             sei->m_duplicateFlag = false;
         }
 
-        if (hrd->getCpbDpbDelaysPresentFlag())
+        if (vui->getHrdParametersPresentFlag())
         {
             // The m_aucpbremoval delay specifies how many clock ticks the
             // access unit associated with the picture timing SEI message has to
