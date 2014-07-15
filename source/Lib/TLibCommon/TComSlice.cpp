@@ -528,7 +528,6 @@ TComReferencePictureSet::TComReferencePictureSet()
     , m_numberOfPictures(0)
     , m_numberOfNegativePictures(0)
     , m_numberOfPositivePictures(0)
-    , m_interRPSPrediction(0)
     , m_numberOfLongtermPictures(0)
 {
     ::memset(m_deltaPOC, 0, sizeof(m_deltaPOC));
@@ -642,15 +641,6 @@ void TComReferencePictureSet::printDeltaPOC()
     for (int j = 0; j < getNumberOfPictures(); j++)
     {
         printf("%d%s ", getDeltaPOC(j), (getUsed(j) == 1) ? "*" : "");
-    }
-
-    if (getInterRPSPrediction())
-    {
-        printf("}, RefIdc = { ");
-        for (int j = 0; j < getNumRefIdc(); j++)
-        {
-            printf("%d ", getRefIdc(j));
-        }
     }
     printf("}\n");
 }

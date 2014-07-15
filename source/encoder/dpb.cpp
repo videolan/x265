@@ -237,7 +237,6 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
     rps->m_numberOfPositivePictures = numPos;
     rps->m_numberOfNegativePictures = numNeg;
     rps->m_numberOfLongtermPictures = 0;
-    rps->m_interRPSPrediction = false;          // To be changed later when needed
 
     rps->sortDeltaPOC();
 }

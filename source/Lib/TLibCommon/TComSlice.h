@@ -83,7 +83,6 @@ public:
     bool m_used[MAX_NUM_REF_PICS];
     int  m_POC[MAX_NUM_REF_PICS];
 
-    bool m_interRPSPrediction;
     int  m_numberOfLongtermPictures;          // Zero when disabled
 
     TComReferencePictureSet();
@@ -115,8 +114,6 @@ public:
     int  getNumberOfPositivePictures() const      { return m_numberOfPositivePictures; }
 
     int  getNumberOfLongtermPictures() const      { return m_numberOfLongtermPictures; }
-
-    bool getInterRPSPrediction() const            { return m_interRPSPrediction; }
 
     int  getDeltaRIdxMinus1() const               { return m_deltaRIdxMinus1; }
 
