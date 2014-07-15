@@ -437,8 +437,7 @@ void FrameEncoder::compressFrame()
             // access unit associated with the picture timing SEI message has to
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
-            int cpbDelayLength = hrd->m_cpbRemovalDelayLengthMinus1 + 1;
-            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << cpbDelayLength));
+            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics() + poc - totalCoded;
         }
 

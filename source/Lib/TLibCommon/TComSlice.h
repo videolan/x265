@@ -185,22 +185,22 @@ struct ProfileTierLevel
 
 struct TComHRD
 {
-    uint32_t m_bitRateScale;
-    uint32_t m_cpbSizeScale;
-    uint32_t m_initialCpbRemovalDelayLengthMinus1;
-    uint32_t m_cpbRemovalDelayLengthMinus1;
-    uint32_t m_dpbOutputDelayLengthMinus1;
-
-    bool     cbrFlag;
-    uint32_t bitRateValueMinus1;
+    uint32_t bitRateScale;
+    uint32_t cpbSizeScale;
+    uint32_t initialCpbRemovalDelayLength;
+    uint32_t cpbRemovalDelayLength;
+    uint32_t dpbOutputDelayLength;
+    uint32_t bitRateValue;
     uint32_t cpbSizeValue;
+    bool     cbrFlag;
 
     TComHRD()
-        : m_bitRateScale(0)
-        , m_cpbSizeScale(0)
-        , m_initialCpbRemovalDelayLengthMinus1(0)
-        , m_cpbRemovalDelayLengthMinus1(0)
-        , m_dpbOutputDelayLengthMinus1(0)
+        : bitRateScale(0)
+        , cpbSizeScale(0)
+        , initialCpbRemovalDelayLength(1)
+        , cpbRemovalDelayLength(1)
+        , dpbOutputDelayLength(1)
+        , cbrFlag(false)
     {}
 };
 
