@@ -971,9 +971,9 @@ int x265_check_params(x265_param *param)
           "Picture size must be at least one CTU");
     CHECK(param->internalCsp < X265_CSP_I420 || X265_CSP_I444 < param->internalCsp,
           "Color space must be i420, i422, or i444");
-    CHECK(param->sourceWidth % TComSPS::getWinUnitX(param->internalCsp) != 0,
+    CHECK(param->sourceWidth % g_winUnitX[param->internalCsp] != 0,
           "Picture width must be an integer multiple of the specified chroma subsampling");
-    CHECK(param->sourceHeight % TComSPS::getWinUnitY(param->internalCsp) != 0,
+    CHECK(param->sourceHeight % g_winUnitY[param->internalCsp] != 0,
           "Picture height must be an integer multiple of the specified chroma subsampling");
 
     CHECK(param->rc.rateControlMode > X265_RC_CRF || param->rc.rateControlMode < X265_RC_ABR,

@@ -717,10 +717,10 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
     WRITE_FLAG(conf.m_enabledFlag,          "conformance_window_flag");
     if (conf.m_enabledFlag)
     {
-        WRITE_UVLC(conf.m_winLeftOffset   / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_left_offset");
-        WRITE_UVLC(conf.m_winRightOffset  / TComSPS::getWinUnitX(sps->getChromaFormatIdc()), "conf_win_right_offset");
-        WRITE_UVLC(conf.m_winTopOffset    / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_top_offset");
-        WRITE_UVLC(conf.m_winBottomOffset / TComSPS::getWinUnitY(sps->getChromaFormatIdc()), "conf_win_bottom_offset");
+        WRITE_UVLC(conf.m_winLeftOffset   / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_left_offset");
+        WRITE_UVLC(conf.m_winRightOffset  / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_right_offset");
+        WRITE_UVLC(conf.m_winTopOffset    / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_top_offset");
+        WRITE_UVLC(conf.m_winBottomOffset / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_bottom_offset");
     }
 
     WRITE_UVLC(sps->getBitDepthY() - 8,             "bit_depth_luma_minus8");
