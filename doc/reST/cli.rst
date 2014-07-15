@@ -904,6 +904,14 @@ Bitstream options
 	to keep the stream headers for you and you want keyframes to be
 	random access points. Default disabled
 
+.. option:: --info, --no-info
+
+	Emit an informational SEI with the stream headers which describes
+	the encoder version, build info, and encode parameters. This is very
+	helpful for debugging purposes but encoding version numbers and
+	build info could make your bitstreams diverge and interfere with
+	regression testing. Default enabled
+
 .. option:: --hrd, --no-hrd
 
 	Enable the signalling of HRD parameters to the decoder. The HRD

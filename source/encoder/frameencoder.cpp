@@ -224,30 +224,33 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
-    char *opts = x265_param2string(m_param);
-    if (opts)
+    if (m_param->bEmitInfoSEI)
     {
-        char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
-                                         strlen(x265_build_info_str) + 200);
-        if (buffer)
+        char *opts = x265_param2string(m_param);
+        if (opts)
         {
-            sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                    "Copyright 2013-2014 (c) Multicoreware Inc - "
-                    "http://x265.org - options: %s",
-                    X265_BUILD, x265_version_str, x265_build_info_str, opts);
-            
-            bs.resetBits();
-            SEIuserDataUnregistered idsei;
-            idsei.m_userData = (uint8_t*)buffer;
-            idsei.m_userDataLength = (uint32_t)strlen(buffer);
-            idsei.write(bs, m_sps);
-            bs.writeByteAlignment();
-            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+            char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
+                                            strlen(x265_build_info_str) + 200);
+            if (buffer)
+            {
+                sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
+                        "Copyright 2013-2014 (c) Multicoreware Inc - "
+                        "http://x265.org - options: %s",
+                        X265_BUILD, x265_version_str, x265_build_info_str, opts);
+                
+                bs.resetBits();
+                SEIuserDataUnregistered idsei;
+                idsei.m_userData = (uint8_t*)buffer;
+                idsei.m_userDataLength = (uint32_t)strlen(buffer);
+                idsei.write(bs, m_sps);
+                bs.writeByteAlignment();
+                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
 
-            X265_FREE(buffer);
+                X265_FREE(buffer);
+            }
+
+            X265_FREE(opts);
         }
-
-        X265_FREE(opts);
     }
 
     if (m_param->bEmitHRDSEI)

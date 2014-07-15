@@ -418,6 +418,11 @@ typedef struct x265_param
      * parameteres. Default is disabled */
     int       bEmitHRDSEI;
 
+    /* Enables the emission of a user data SEI with the stream headers which
+     * describes the encoder version, build info, and parameters. This is
+     * very helpful for debugging, but may interfere with regression tests. */
+    int       bEmitInfoSEI;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.

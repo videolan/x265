@@ -106,6 +106,7 @@ void x265_param_default(x265_param *param)
     param->csvfn = NULL;
     param->rc.lambdaFileName = NULL;
     param->bLogCuStats = 0;
+    param->bEmitInfoSEI = 1;
 
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
@@ -634,6 +635,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
     OPT("aud") p->bEnableAccessUnitDelimiters = atobool(value);
+    OPT("info") p->bEmitInfoSEI = atobool(value);
     OPT("b-pyramid") p->bBPyramid = atobool(value);
     OPT("hrd") p->bEmitHRDSEI = atobool(value);
     OPT2("ipratio", "ip-factor") p->rc.ipFactor = atof(value);
