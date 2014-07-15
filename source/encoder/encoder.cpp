@@ -232,6 +232,19 @@ void Encoder::updateVbvPlan(RateControl* rc)
     }
 }
 
+/** set default quantization matrix to array
+*/
+void Encoder::setDefaultScalingList()
+{
+    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    {
+        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        {
+            getScalingList()->processDefaultMarix(sizeId, listId);
+        }
+    }
+}
+
 /**
  \param   pic_in              input original YUV picture or NULL
  \param   pic_out             pointer to reconstructed picture struct
@@ -1379,6 +1392,10 @@ void Encoder::configure(x265_param *p)
     m_log2ParallelMergeLevelMinus2 = 0;
 
     m_useScalingListId = 0;
+    if (m_useScalingListId == SCALING_LIST_DEFAULT)
+        // set default quantization matrix to array
+        setDefaultScalingList();
+
     m_minSpatialSegmentationIdc = 0;
     m_neutralChromaIndicationFlag = false;
     m_motionVectorsOverPicBoundariesFlag = false;

@@ -196,6 +196,8 @@ public:
 
     TComScalingList* getScalingList() { return &m_scalingList; }
 
+    void  setDefaultScalingList();
+
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
     void configure(x265_param *param);

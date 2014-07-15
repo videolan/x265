@@ -629,18 +629,6 @@ TComScalingList::~TComScalingList()
     destroy();
 }
 
-/** set default quantization matrix to array
-*/
-void TComSlice::setDefaultScalingList()
-{
-    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
-    {
-        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
-        {
-            getScalingList()->processDefaultMarix(sizeId, listId);
-        }
-    }
-}
 
 /** check if use default quantization matrix
  * \returns true if use default quantization matrix in all size

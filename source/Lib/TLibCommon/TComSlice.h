@@ -1101,7 +1101,6 @@ public:
 
     TComScalingList*   getScalingList()        { return m_scalingList; }
 
-    void  setDefaultScalingList();
     bool  checkDefaultScalingList();
     void  setCabacInitFlag(bool val)   { m_cabacInitFlag = val; }   //!< set CABAC initial flag
 
