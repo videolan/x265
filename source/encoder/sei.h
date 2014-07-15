@@ -203,14 +203,12 @@ public:
         , m_dpbDelayOffset(0)
         , m_auCpbRemovalDelayDelta(1)
     {
-        ::memset(m_initialCpbRemovalDelay, 0, sizeof(m_initialCpbRemovalDelay));
-        ::memset(m_initialCpbRemovalDelayOffset, 0, sizeof(m_initialCpbRemovalDelayOffset));
     }
 
     bool     m_cpbDelayOffset;
     bool     m_dpbDelayOffset;
-    uint32_t m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
-    uint32_t m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
+    uint32_t m_initialCpbRemovalDelay;
+    uint32_t m_initialCpbRemovalDelayOffset;
     uint32_t m_auCpbRemovalDelayDelta;
 
     void writeSEI(TComSPS& sps)
@@ -221,12 +219,9 @@ public:
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
         WRITE_FLAG(0, "concatenation_flag");
-        WRITE_CODE(m_auCpbRemovalDelayDelta - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_delta_minus1");
-        for (uint32_t i = 0; i < (hrd->getCpbCntMinus1() + 1); i++)
-        {
-            WRITE_CODE(m_initialCpbRemovalDelay[i][0], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),       "initial_cpb_removal_delay");
-            WRITE_CODE(m_initialCpbRemovalDelayOffset[i][0], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_cpb_removal_delay_offset");
-        }
+        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   (hrd->getCpbRemovalDelayLengthMinus1() + 1),       "au_cpb_removal_delay_delta_minus1");
+        WRITE_CODE(m_initialCpbRemovalDelay,       (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),        "initial_cpb_removal_delay");
+        WRITE_CODE(m_initialCpbRemovalDelayOffset, (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_cpb_removal_delay_offset");
 
         writeByteAlign();
     }

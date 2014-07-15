@@ -892,14 +892,11 @@ void SBac::codeHrdParameters(TComHRD *hrd)
         WRITE_FLAG(hrd->getLowDelayHrdFlag() ? 1 : 0, "low_delay_hrd_flag");
 
     if (!hrd->getLowDelayHrdFlag())
-        WRITE_UVLC(hrd->getCpbCntMinus1(), "cpb_cnt_minus1");
+        WRITE_UVLC(0, "cpb_cnt_minus1");
 
-    for (uint32_t j = 0; j <= hrd->getCpbCntMinus1(); j++)
-    {
-        WRITE_UVLC(hrd->getBitRateValueMinus1(j), "bit_rate_value_minus1");
-        WRITE_UVLC(hrd->getCpbSizeValueMinus1(j), "cpb_size_value_minus1");
-        WRITE_FLAG(hrd->getCbrFlag(j) ? 1 : 0, "cbr_flag");
-    }
+    WRITE_UVLC(hrd->getBitRateValueMinus1(), "bit_rate_value_minus1");
+    WRITE_UVLC(hrd->getCpbSizeValueMinus1(), "cpb_size_value_minus1");
+    WRITE_FLAG(hrd->getCbrFlag() ? 1 : 0, "cbr_flag");
 }
 
 void SBac::codeProfileTier(ProfileTierLevel& ptl)

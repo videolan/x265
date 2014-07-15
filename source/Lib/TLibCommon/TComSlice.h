@@ -200,13 +200,12 @@ struct TComHRD
     bool     lowDelayHrdFlag;
     bool     fixedPicRateWithinCvsFlag;
     uint32_t picDurationInTcMinus1;
-    uint32_t cpbCntMinus1;
 
-    bool     cbrFlag[MAX_CPB_CNT];
-    uint32_t bitRateValueMinus1[MAX_CPB_CNT];
-    uint32_t cpbSizeValue[MAX_CPB_CNT];
-    uint32_t ducpbSizeValue[MAX_CPB_CNT];
-    uint32_t duBitRateValue[MAX_CPB_CNT];
+    bool     cbrFlag;
+    uint32_t bitRateValueMinus1;
+    uint32_t cpbSizeValue;
+    uint32_t ducpbSizeValue;
+    uint32_t duBitRateValue;
 
     TComHRD()
         : m_tickDivisorMinus2(0)
@@ -278,29 +277,25 @@ struct TComHRD
 
     bool getLowDelayHrdFlag() { return lowDelayHrdFlag; }
 
-    void setCpbCntMinus1(uint32_t value) { cpbCntMinus1 = value; }
+    void setBitRateValueMinus1(uint32_t value) { bitRateValueMinus1 = value; }
 
-    uint32_t getCpbCntMinus1() { return cpbCntMinus1; }
+    uint32_t getBitRateValueMinus1() { return bitRateValueMinus1; }
 
-    void setBitRateValueMinus1(int cpbcnt, uint32_t value) { bitRateValueMinus1[cpbcnt] = value; }
+    void setCpbSizeValueMinus1(uint32_t value) { cpbSizeValue = value; }
 
-    uint32_t getBitRateValueMinus1(int cpbcnt) { return bitRateValueMinus1[cpbcnt]; }
+    uint32_t getCpbSizeValueMinus1()  { return cpbSizeValue; }
 
-    void setCpbSizeValueMinus1(int cpbcnt, uint32_t value) { cpbSizeValue[cpbcnt] = value; }
+    void setDuCpbSizeValueMinus1(uint32_t value) { ducpbSizeValue = value; }
 
-    uint32_t getCpbSizeValueMinus1(int cpbcnt)  { return cpbSizeValue[cpbcnt]; }
+    uint32_t getDuCpbSizeValueMinus1()  { return ducpbSizeValue; }
 
-    void setDuCpbSizeValueMinus1(int cpbcnt, uint32_t value) { ducpbSizeValue[cpbcnt] = value; }
+    void setDuBitRateValueMinus1(uint32_t value) { duBitRateValue = value; }
 
-    uint32_t getDuCpbSizeValueMinus1(int cpbcnt)  { return ducpbSizeValue[cpbcnt]; }
+    uint32_t getDuBitRateValueMinus1() { return duBitRateValue; }
 
-    void setDuBitRateValueMinus1(int cpbcnt, uint32_t value) { duBitRateValue[cpbcnt] = value; }
+    void setCbrFlag(bool value) { cbrFlag = value; }
 
-    uint32_t getDuBitRateValueMinus1(int cpbcnt) { return duBitRateValue[cpbcnt]; }
-
-    void setCbrFlag(int cpbcnt, bool value) { cbrFlag[cpbcnt] = value; }
-
-    bool getCbrFlag(int cpbcnt) { return cbrFlag[cpbcnt]; }
+    bool getCbrFlag() { return cbrFlag; }
 };
 
 struct TimingInfo
