@@ -587,27 +587,27 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     codeProfileTier(*ptl);
 
     WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
-    WRITE_UVLC(vps->getMaxDecPicBuffering() - 1, "vps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(vps->getNumReorderPics(),         "vps_num_reorder_pics[i]");
-    WRITE_UVLC(vps->getMaxLatencyIncrease(),     "vps_max_latency_increase_plus1[i]");
+    WRITE_UVLC(vps->m_maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(vps->m_numReorderPics,         "vps_num_reorder_pics[i]");
+    WRITE_UVLC(vps->m_maxLatencyIncrease,     "vps_max_latency_increase_plus1[i]");
 
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
     WRITE_UVLC(0, "vps_max_op_sets_minus1");
 
-    TimingInfo *timingInfo = vps->getTimingInfo();
-    WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),            "vps_timing_info_present_flag");
-    if (timingInfo->getTimingInfoPresentFlag())
+    TimingInfo &timingInfo = vps->m_timingInfo;
+    WRITE_FLAG(timingInfo.getTimingInfoPresentFlag(),            "vps_timing_info_present_flag");
+    if (timingInfo.getTimingInfoPresentFlag())
     {
-        WRITE_CODE(timingInfo->getNumUnitsInTick(), 32,           "vps_num_units_in_tick");
-        WRITE_CODE(timingInfo->getTimeScale(),      32,           "vps_time_scale");
-        WRITE_FLAG(timingInfo->getPocProportionalToTimingFlag(),  "vps_poc_proportional_to_timing_flag");
-        if (timingInfo->getPocProportionalToTimingFlag())
-            WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vps_num_ticks_poc_diff_one_minus1");
+        WRITE_CODE(timingInfo.getNumUnitsInTick(), 32,           "vps_num_units_in_tick");
+        WRITE_CODE(timingInfo.getTimeScale(),      32,           "vps_time_scale");
+        WRITE_FLAG(timingInfo.getPocProportionalToTimingFlag(),  "vps_poc_proportional_to_timing_flag");
+        if (timingInfo.getPocProportionalToTimingFlag())
+            WRITE_UVLC(timingInfo.getNumTicksPocDiffOneMinus1(),   "vps_num_ticks_poc_diff_one_minus1");
 
         // TODO: Should we be consistent with the SPS->VUI here?
         WRITE_UVLC(0, "vps_num_hrd_parameters");
         //WRITE_UVLC(0, "hrd_op_set_idx");
-        //codeHrdParameters(vps->getHrdParameters());
+        //codeHrdParameters(&vps->m_hrdParameters);
     }
     WRITE_FLAG(0,                     "vps_extension_flag");
 

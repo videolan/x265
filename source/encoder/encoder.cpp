@@ -1073,8 +1073,8 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQpBDOffsetY(QP_BD_OFFSET);
     sps->setQpBDOffsetC(QP_BD_OFFSET);
 
-    sps->setMaxDecPicBuffering(m_vps.getMaxDecPicBuffering());
-    sps->setNumReorderPics(m_vps.getNumReorderPics());
+    sps->setMaxDecPicBuffering(m_vps.m_maxDecPicBuffering);
+    sps->setNumReorderPics(m_vps.m_numReorderPics);
 
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
@@ -1376,10 +1376,8 @@ void Encoder::configure(x265_param *p)
     m_loopFilterTcOffsetDiv2 = 0;
 
     /* Increase the DPB size and reorder picture if bpyramid is enabled */
-    int numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
-    int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, p->maxNumReferences) + numReorderPics);
-    m_vps.setNumReorderPics(numReorderPics);
-    m_vps.setMaxDecPicBuffering(maxDecPicBuffering);
+    m_vps.m_numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
+    m_vps.m_maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.m_numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.m_numReorderPics);
 
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;

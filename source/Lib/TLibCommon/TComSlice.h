@@ -414,22 +414,6 @@ public:
         m_maxDecPicBuffering = 1;
         m_maxLatencyIncrease = 0;
     }
-
-    void     setNumReorderPics(uint32_t v)             { m_numReorderPics = v; }
-
-    uint32_t getNumReorderPics()                       { return m_numReorderPics; }
-
-    void     setMaxDecPicBuffering(uint32_t v)         { m_maxDecPicBuffering = v; }
-
-    uint32_t getMaxDecPicBuffering()                   { return m_maxDecPicBuffering; }
-
-    void     setMaxLatencyIncrease(uint32_t v)         { m_maxLatencyIncrease = v; }
-
-    uint32_t getMaxLatencyIncrease()                   { return m_maxLatencyIncrease; }
-
-    TimingInfo* getTimingInfo()                        { return &m_timingInfo; }
-
-    TComHRD* getHrdParameters()                        { return &m_hrdParameters; }
 };
 
 class Window
