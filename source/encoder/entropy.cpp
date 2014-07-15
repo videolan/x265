@@ -71,7 +71,6 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
-//    const uint32_t log2TrSize = cu->getSlice()->getSPS()->getLog2MaxCodingBlockSize() - depth;
     uint32_t hChromaShift = cu->getHorzChromaShift();
     uint32_t vChromaShift = cu->getVertChromaShift();
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -100,7 +99,8 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&  (cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1))
+    else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&
+             (cu->getSlice()->getSPS()->getQuadtreeTUMaxDepthInter() == 1))
     {
         if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
