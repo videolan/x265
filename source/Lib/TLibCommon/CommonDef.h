@@ -51,12 +51,6 @@
 // Common constants
 // ====================================================================================================================
 
-#define MAX_VPS_OP_SETS_PLUS1       1024
-#define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
-
-#define MAX_CPB_CNT                 32 ///< Upper bound of (cpb_cnt_minus1 + 1)
-#define MAX_NUM_LAYER_IDS           64
-
 #define COEF_REMAIN_BIN_REDUCTION   3 ///< indicates the level at which the VLC
                                       ///< transitions from Golomb-Rice to TU+EG(k)
 
@@ -71,18 +65,9 @@
 #define SAO_ENCODING_RATE           0.75
 #define SAO_ENCODING_RATE_CHROMA    0.5
 
-#define MAX_NUM_VPS                 16
-#define MAX_NUM_SPS                 16
-#define MAX_NUM_PPS                 64
-
-#define MIN_SCAN_POS_CROSS          4
-
 #define MLS_GRP_NUM                 64 ///< G644 : Max number of coefficient groups, max(16, 64)
 #define MLS_CG_SIZE                 4 ///< G644 : Coefficient group size of 4x4
 #define MLS_CG_LOG2_SIZE            2
-
-#define ARL_C_PRECISION             7 ///< G382: 7-bit arithmetic precision
-#define LEVEL_RANGE                 30 ///< G382: max coefficient level in statistics collection
 
 #define AMVP_DECIMATION_FACTOR      4
 
@@ -105,15 +90,6 @@
 #else
 # define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
 #endif
-
-#define LOG2_MAX_NUM_COLUMNS_MINUS1 7
-#define LOG2_MAX_NUM_ROWS_MINUS1    7
-#define LOG2_MAX_COLUMN_WIDTH       13
-#define LOG2_MAX_ROW_HEIGHT         13
-
-#define CABAC_INIT_PRESENT_FLAG     1
-
-#define MAX_GOP                     64          ///< max. value of hierarchical GOP size
 
 #define MAX_NUM_REF_PICS            16          ///< max. number of pictures used for reference
 #define MAX_NUM_REF                 16          ///< max. number of entries in picture reference list
@@ -138,13 +114,9 @@
 
 // AMVP: advanced motion vector prediction
 #define AMVP_MAX_NUM_CANDS          2 ///< max number of final candidates
-#define AMVP_MAX_NUM_CANDS_MEM      3 ///< max number of candidates
 #define MRG_MAX_NUM_CANDS           5
 
-// Adaptive search range depending on POC difference
-#define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
-
-#define MAX_CHROMA_FORMAT_IDC       3
+#define MAX_CHROMA_FORMAT_IDC       3 //  TODO: Remove me
 
 //! \}
 
