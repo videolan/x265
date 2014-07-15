@@ -466,7 +466,6 @@ class TComSPS
 public:
 
     int         m_chromaFormatIdc;
-    bool        m_colorPlaneFlag;
 
     // Structure
     uint32_t    m_picWidthInLumaSamples;
@@ -523,10 +522,6 @@ public:
     int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
 
     void setChromaFormatIdc(int i)    { m_chromaFormatIdc = i; }
-
-    void setSeparateColorPlaneFlag(bool c) { m_colorPlaneFlag = c; }
-
-    bool getSeparateColorPlaneFlag()       { return m_colorPlaneFlag; }
 
     // structure
     void setPicWidthInLumaSamples(uint32_t u) { m_picWidthInLumaSamples = u; }
@@ -669,8 +664,6 @@ class TComPPS
 {
 private:
 
-    int      m_PPSId;                  // pic_parameter_set_id
-    int      m_SPSId;                  // seq_parameter_set_id
     int      m_picInitQPMinus26;
     bool     m_useDQP;
     bool     m_bConstrainedIntraPred;  // constrained_intra_pred_flag
@@ -689,7 +682,6 @@ private:
 
     bool     m_bUseWeightPred;         // Use of Weighting Prediction (P_SLICE)
     bool     m_useWeightedBiPred;      // Use of Weighting Bi-Prediction (B_SLICE)
-    bool     m_outputFlagPresentFlag; // Indicates the presence of output_flag in slice header
 
     bool     m_transquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
     bool     m_useTransformSkip;
@@ -717,14 +709,6 @@ public:
 
     TComPPS();
     ~TComPPS();
-
-    int       getPPSId() const { return m_PPSId; }
-
-    void      setPPSId(int i) { m_PPSId = i; }
-
-    int       getSPSId() const{ return m_SPSId; }
-
-    void      setSPSId(int i) { m_SPSId = i; }
 
     int       getPicInitQPMinus26() const { return m_picInitQPMinus26; }
 
@@ -777,10 +761,6 @@ public:
     void setUseWP(bool b)    { m_bUseWeightPred = b; }
 
     void setWPBiPred(bool b) { m_useWeightedBiPred = b; }
-
-    void     setOutputFlagPresentFlag(bool b)  { m_outputFlagPresentFlag = b; }
-
-    bool     getOutputFlagPresentFlag() const  { return m_outputFlagPresentFlag; }
 
     void     setTransquantBypassEnableFlag(bool b) { m_transquantBypassEnableFlag = b; }
 
@@ -886,7 +866,6 @@ private:
     bool        m_saoEnabledFlag;
     bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
     int         m_ppsId;                ///< picture parameter set ID
-    bool        m_picOutputFlag;        ///< pic_output_flag
     int         m_poc;
     int         m_lastIDR;
 
@@ -956,17 +935,13 @@ public:
 
     TComSPS*  getSPS()                        { return m_sps; }
 
-    void      setPPS(TComPPS* pps)            { m_pps = pps; m_ppsId = pps->getPPSId(); }
+    void      setPPS(TComPPS* pps)            { m_pps = pps; }
 
     TComPPS*  getPPS()                        { return m_pps; }
 
     void      setPPSId(int ppsid)             { m_ppsId = ppsid; }
 
     int       getPPSId()                      { return m_ppsId; }
-
-    void      setPicOutputFlag(bool b)        { m_picOutputFlag = b; }
-
-    bool      getPicOutputFlag()              { return m_picOutputFlag; }
 
     void      setSaoEnabledFlag(bool s)       { m_saoEnabledFlag = s; }
 

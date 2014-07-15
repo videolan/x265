@@ -1154,7 +1154,6 @@ void Encoder::initPPS(TComPPS *pps)
     pps->setEntropyCodingSyncEnabledFlag(m_param->bEnableWavefront);
     pps->setUseWP(m_param->bEnableWeightedPred);
     pps->setWPBiPred(m_param->bEnableWeightedBiPred);
-    pps->setOutputFlagPresentFlag(false);
     pps->setSignHideFlag(m_param->bEnableSignHiding);
     pps->setDeblockingFilterControlPresentFlag(!m_param->bEnableLoopFilter);
     pps->setDeblockingFilterOverrideEnabledFlag(!m_loopFilterOffsetInPPS);

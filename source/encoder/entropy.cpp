@@ -645,7 +645,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(0, "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(), "chroma_format_idc");
 
-    if (sps->getChromaFormatIdc() == CHROMA_444) // TODO: this flag is not signaled consistently?
+    if (sps->getChromaFormatIdc() == CHROMA_444)
         WRITE_FLAG(0,                             "separate_colour_plane_flag");
 
     WRITE_UVLC(sps->getPicWidthInLumaSamples(),   "pic_width_in_luma_samples");
@@ -714,10 +714,10 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
 
 void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 {
-    WRITE_UVLC(pps->getPPSId(),                            "pps_pic_parameter_set_id");
-    WRITE_UVLC(pps->getSPSId(),                            "pps_seq_parameter_set_id");
+    WRITE_UVLC(0,                                          "pps_pic_parameter_set_id");
+    WRITE_UVLC(0,                                          "pps_seq_parameter_set_id");
     WRITE_FLAG(0,                                          "dependent_slice_segments_enabled_flag");
-    WRITE_FLAG(pps->getOutputFlagPresentFlag() ? 1 : 0,    "output_flag_present_flag");
+    WRITE_FLAG(0,                                          "output_flag_present_flag"); // we do not signal the output flag
     WRITE_CODE(pps->getNumExtraSliceHeaderBits(), 3,       "num_extra_slice_header_bits");
     WRITE_FLAG(pps->getSignHideFlag(),                     "sign_data_hiding_flag");
     WRITE_FLAG(pps->getCabacInitPresentFlag() ? 1 : 0,     "cabac_init_present_flag");
@@ -1080,7 +1080,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     if (slice->getRapPicFlag())
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
 
-    WRITE_UVLC(slice->getPPS()->getPPSId(), "slice_pic_parameter_set_id");
+    WRITE_UVLC(0, "slice_pic_parameter_set_id");
 
     /* x265 does not use dependent slices, so always write all this data */
     for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
@@ -1091,19 +1091,6 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     WRITE_UVLC(slice->getSliceType(),       "slice_type");
 
-    if (slice->getPPS()->getOutputFlagPresentFlag())
-    {
-        WRITE_FLAG(slice->getPicOutputFlag() ? 1 : 0, "pic_output_flag");
-    }
-    if (slice->getSPS()->getChromaFormatIdc() == CHROMA_444)
-    {
-        // In this version separate_color_plane_flag is 0
-        if (slice->getSPS()->getSeparateColorPlaneFlag())
-        {
-            // plane_id values 0, 1, and 2 correspond to the Y, Cb, and Cr planes, respectively.
-            // WRITE_FLAG(0, "colour_plane_id");
-        }
-    }
     if (!slice->getIdrPicFlag())
     {
         int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << slice->getSPS()->getBitsForPOC())) % (1 << slice->getSPS()->getBitsForPOC());

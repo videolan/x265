@@ -465,9 +465,7 @@ TComSPS::~TComSPS()
 }
 
 TComPPS::TComPPS()
-    : m_PPSId(0)
-    , m_SPSId(0)
-    , m_picInitQPMinus26(0)
+    : m_picInitQPMinus26(0)
     , m_useDQP(false)
     , m_bConstrainedIntraPred(false)
     , m_bSliceChromaQpFlag(false)
