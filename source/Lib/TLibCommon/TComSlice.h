@@ -403,8 +403,6 @@ public:
 
     uint32_t    m_numReorderPics;
     uint32_t    m_maxDecPicBuffering;
-    uint32_t    m_maxLatencyIncrease;  // Really max latency increase plus 1 (value 0 expresses no limit)
-
     TComHRD     m_hrdParameters;
     TimingInfo  m_timingInfo;
 
@@ -412,7 +410,6 @@ public:
     {
         m_numReorderPics = 0;
         m_maxDecPicBuffering = 1;
-        m_maxLatencyIncrease = 0;
     }
 };
 
