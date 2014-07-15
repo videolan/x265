@@ -588,7 +588,7 @@ void SBac::codeVPS(TComVPS* vps)
     WRITE_FLAG(vps->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag");
     X265_CHECK(vps->getMaxTLayers() > 1 || vps->getTemporalNestingFlag(), "layer flags not matchin\n");
     WRITE_CODE(0xffff,                            16,        "vps_reserved_ffff_16bits");
-    codePTL(vps->getPTL(), true, vps->getMaxTLayers() - 1);
+    codePTL(vps->getPTL(), vps->getMaxTLayers() - 1);
     WRITE_FLAG(true,             "vps_sub_layer_ordering_info_present_flag");
     for (uint32_t i = 0; i <= vps->getMaxTLayers() - 1; i++)
     {
@@ -674,7 +674,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList)
     WRITE_CODE(sps->getVPSId(),          4,       "sps_video_parameter_set_id");
     WRITE_CODE(sps->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1");
     WRITE_FLAG(sps->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag");
-    codePTL(sps->getPTL(), 1, sps->getMaxTLayers() - 1);
+    codePTL(sps->getPTL(), sps->getMaxTLayers() - 1);
     WRITE_UVLC(sps->getSPSId(),                   "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->getChromaFormatIdc(),         "chroma_format_idc");
 
@@ -985,18 +985,15 @@ void SBac::codeHrdParameters(TComHRD *hrd, bool commonInfPresentFlag, uint32_t m
     }
 }
 
-void SBac::codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1)
+void SBac::codePTL(TComPTL* ptl, int maxNumSubLayersMinus1)
 {
-    if (profilePresentFlag)
-        codeProfileTier(&ptl->m_generalPTL); // general_...
+    codeProfileTier(&ptl->m_generalPTL); // general_...
 
     WRITE_CODE(ptl->m_generalPTL.m_levelIdc, 8, "general_level_idc");
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
-        if (profilePresentFlag)
-            WRITE_FLAG(ptl->m_subLayerProfilePresentFlag[i], "sub_layer_profile_present_flag[i]");
-
+        WRITE_FLAG(ptl->m_subLayerProfilePresentFlag[i], "sub_layer_profile_present_flag[i]");
         WRITE_FLAG(ptl->m_subLayerLevelPresentFlag[i], "sub_layer_level_present_flag[i]");
     }
 
@@ -1006,9 +1003,7 @@ void SBac::codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMin
 
     for (int i = 0; i < maxNumSubLayersMinus1; i++)
     {
-        if (profilePresentFlag && ptl->m_subLayerProfilePresentFlag[i])
-            codeProfileTier(&ptl->m_subLayerPTL[i]); // sub_layer_...
-
+        codeProfileTier(&ptl->m_subLayerPTL[i]); // sub_layer_...
         if (ptl->m_subLayerLevelPresentFlag[i])
             WRITE_CODE(ptl->m_subLayerPTL[i].m_levelIdc, 8, "sub_layer_level_idc[i]");
     }

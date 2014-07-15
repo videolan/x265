@@ -125,7 +125,7 @@ public:
     void codePPS(TComPPS* pps, TComScalingList *scalingList);
     void codeVUI(TComVUI* vui, TComSPS* sps);
     void codeAUD(TComSlice *slice);
-    void codePTL(TComPTL* ptl, bool profilePresentFlag, int maxNumSubLayersMinus1);
+    void codePTL(TComPTL* ptl, int maxNumSubLayersMinus1);
     void codeHrdParameters(TComHRD* hrd, bool commonInfPresentFlag, uint32_t maxNumSubLayersMinus1);
 
     void codeSliceHeader(TComSlice* slice);
