@@ -510,7 +510,6 @@ public:
     uint32_t    m_maxDecPicBuffering;
     uint32_t    m_maxLatencyIncrease; // Really max latency increase plus 1 (value 0 expresses no limit)
 
-    bool        m_useDF;
     bool        m_useStrongIntraSmoothing;
 
     bool        m_vuiParametersPresentFlag;
