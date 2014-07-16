@@ -265,12 +265,8 @@ void FrameEncoder::initSlice(Frame* pic)
     if (sliceType != B_SLICE)
         m_isReferenced = true;
     else
-    {
-        if (pic->m_lowres.sliceType == X265_TYPE_BREF)
-            m_isReferenced = true;
-        else
-            m_isReferenced = false;
-    }
+        m_isReferenced = (pic->m_lowres.sliceType == X265_TYPE_BREF);
+
     slice->setReferenced(m_isReferenced);
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())

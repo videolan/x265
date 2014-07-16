@@ -141,7 +141,8 @@ struct TComHRD
         , cpbRemovalDelayLength(1)
         , dpbOutputDelayLength(1)
         , cbrFlag(false)
-    {}
+    {
+    }
 };
 
 struct TimingInfo
@@ -192,7 +193,10 @@ public:
     int           topOffset;
     int           bottomOffset;
 
-    Window() : bEnabled(false) {}
+    Window()
+        : bEnabled(false)
+    {
+    }
 };
 
 struct TComVUI
