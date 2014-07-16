@@ -1849,7 +1849,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
  */
 uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
 {
-    assert(cu->getPartitionSize(0) != SIZE_2Nx2N);
+    X265_CHECK(cu->getPartitionSize(0) != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
     if (cu->getLog2CUSize(0) <= 3 && cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2())
     {
@@ -2814,7 +2814,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
 
         int partSize = partitionFromLog2Size(log2TrSize);
-        assert(log2TrSize <= 5);
+        X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
         uint32_t distY = primitives.ssd_s[log2TrSize - 2](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width);
         uint32_t psyEnergyY = 0;
         if (m_rdCost.psyRdEnabled())
