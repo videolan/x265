@@ -429,7 +429,6 @@ private:
     int      m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
     int      m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
 
-    uint32_t m_log2ParallelMergeLevelMinus2;
     int      m_numExtraSliceHeaderBits;
 
 public:
@@ -531,10 +530,6 @@ public:
     void     setDeblockingFilterTcOffsetDiv2(int val)         { m_deblockingFilterTcOffsetDiv2 = val; }       //!< set tc offset for deblocking filter
 
     int      getDeblockingFilterTcOffsetDiv2()                { return m_deblockingFilterTcOffsetDiv2; }      //!< get tc offset for deblocking filter
-
-    uint32_t getLog2ParallelMergeLevelMinus2() const { return m_log2ParallelMergeLevelMinus2; }
-
-    void setLog2ParallelMergeLevelMinus2(uint32_t mrgLevel) { m_log2ParallelMergeLevelMinus2 = mrgLevel; }
 
     int getNumExtraSliceHeaderBits() const { return m_numExtraSliceHeaderBits; }
 

@@ -2177,16 +2177,12 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
  */
 bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP)
 {
-    uint32_t plevel = this->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() + 2;
+    uint32_t plevel = 2;
 
     if ((xN >> plevel) != (xP >> plevel))
-    {
         return true;
-    }
     if ((yN >> plevel) != (yP >> plevel))
-    {
         return true;
-    }
     return false;
 }
 

@@ -1851,20 +1851,7 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
 {
     X265_CHECK(cu->getPartitionSize(0) != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
-    if (cu->getLog2CUSize(0) <= 3 && cu->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2())
-    {
-        if (puIdx == 0)
-        {
-            PartSize partSize = cu->getPartitionSize(0);
-            cu->getPartitionSize()[0] = SIZE_2Nx2N;
-            cu->getInterMergeCandidates(0, 0, m.mvFieldNeighbours, m.interDirNeighbours, m.maxNumMergeCand);
-            cu->getPartitionSize()[0] = partSize;
-        }
-    }
-    else
-    {
-        cu->getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours, m.maxNumMergeCand);
-    }
+    cu->getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours, m.maxNumMergeCand);
 
     /* convert bidir merge candidates into unidir
      * TODO: why did the HM do this?, why use MV pairs below? */

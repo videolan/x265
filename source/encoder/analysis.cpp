@@ -52,14 +52,15 @@ bool Analysis::init(Encoder* top)
 {
     m_param = top->m_param;
     m_trQuant.init(top->m_bEnableRDOQ);
-    if (top->m_useScalingListId == SCALING_LIST_OFF)
+
+    if (!top->m_scalingList.m_bEnabled)
     {
         m_trQuant.setFlatScalingList();
         m_trQuant.setUseScalingList(false);
     }
-    else if (top->m_useScalingListId == SCALING_LIST_DEFAULT)
+    else
     {
-        m_trQuant.setScalingList(top->getScalingList());
+        m_trQuant.setScalingList(&top->m_scalingList);
         m_trQuant.setUseScalingList(true);
     }
 

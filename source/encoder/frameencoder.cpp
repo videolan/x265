@@ -196,12 +196,12 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    m_sbacCoder.codeSPS(&m_sps, m_top->getScalingList(), &m_top->m_ptl);
+    m_sbacCoder.codeSPS(&m_sps, &m_top->m_scalingList, &m_top->m_ptl);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    m_sbacCoder.codePPS(&m_pps, m_top->getScalingList());
+    m_sbacCoder.codePPS(&m_pps, &m_top->m_scalingList);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -211,7 +211,7 @@ void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
         if (opts)
         {
             char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
-                                            strlen(x265_build_info_str) + 200);
+                                             strlen(x265_build_info_str) + 200);
             if (buffer)
             {
                 sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "

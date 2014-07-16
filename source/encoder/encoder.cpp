@@ -1148,7 +1148,6 @@ void Encoder::initPPS(TComPPS *pps)
     pps->setDeblockingFilterControlPresentFlag(!m_param->bEnableLoopFilter);
     pps->setDeblockingFilterOverrideEnabledFlag(!m_loopFilterOffsetInPPS);
     pps->setPicDisableDeblockingFilterFlag(!m_param->bEnableLoopFilter);
-    pps->setLog2ParallelMergeLevelMinus2(m_log2ParallelMergeLevelMinus2);
     pps->setCabacInitPresentFlag(m_param->frameNumThreads == 1);
 
     pps->setNumRefIdxL0DefaultActive(1);
@@ -1364,8 +1363,8 @@ void Encoder::configure(x265_param *p)
     m_vps.m_numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
     m_vps.m_maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.m_numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.m_numReorderPics);
 
-    m_useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
-    switch (m_useScalingListId)
+    int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
+    switch (useScalingListId)
     {
     case SCALING_LIST_DEFAULT:
         m_scalingList.setDefaultScalingList();
@@ -1385,5 +1384,4 @@ void Encoder::configure(x265_param *p)
 
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;
-    m_log2ParallelMergeLevelMinus2 = 0;
 }

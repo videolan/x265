@@ -744,7 +744,7 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     if (scalingList->m_bDataPresent)
         codeScalingList(scalingList);
     WRITE_FLAG(0,  "lists_modification_present_flag");
-    WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(),    "log2_parallel_merge_level_minus2");
+    WRITE_UVLC(0,  "log2_parallel_merge_level_minus2");
     WRITE_FLAG(0, "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }
@@ -962,7 +962,6 @@ void SBac::codeScalingList(TComScalingList* scalingList)
     uint32_t listId, sizeId;
     bool scalingListPredModeFlag;
 
-    //for each size
     for (sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
         for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)

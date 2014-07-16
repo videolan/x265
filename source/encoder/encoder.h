@@ -99,9 +99,6 @@ private:
     FILE*              m_csvfpt;
     int64_t            m_encodeStartTime;
 
-    // quality control
-    TComScalingList    m_scalingList;      ///< quantization matrix information
-
     // weighted prediction
     int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
@@ -114,6 +111,8 @@ public:
     TComVPS            m_vps;
     NALList            m_nalList;
     ProfileTierLevel   m_ptl;
+    TComScalingList    m_scalingList;      // quantization matrix information
+
 
     /* profile & level */
     Profile::Name      m_profile;
@@ -140,10 +139,6 @@ public:
 
     //====== Tool list ========
     int                m_lastBPSEI;
-
-    uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
-
-    int                m_useScalingListId; ///< Using quantization matrix i.e. 0=off, 1=default.
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
@@ -183,8 +178,6 @@ public:
     char* statsString(EncStats&, char*);
 
     char* statsCSVString(EncStats& stat, char* buffer);
-
-    TComScalingList* getScalingList() { return &m_scalingList; }
 
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
