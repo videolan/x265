@@ -235,7 +235,7 @@ public:
     TComHRD     m_hrdParameters;
     TimingInfo  m_timingInfo;
 
-    TComVPS::TComVPS()
+    TComVPS()
     {
         m_numReorderPics = 0;
         m_maxDecPicBuffering = 1;
