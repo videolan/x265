@@ -72,8 +72,6 @@ protected:
     void applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc);
     void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
 
-    void arrangeLongtermPicturesInRPS(TComSlice *);
-
     NalUnitType getNalUnitType(int curPoc, int lastIdr, Frame* pic);
 };
 }

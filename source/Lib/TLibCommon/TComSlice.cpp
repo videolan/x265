@@ -153,59 +153,11 @@ Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
     return pic;
 }
 
-Frame* TComSlice::xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb)
-{
-    Frame* iterPic = picList.first();
-    Frame* pic = iterPic;
-    Frame* stPic = pic;
-
-    int pocCycle = 1 << getSPS()->getBitsForPOC();
-
-    if (!pocHasMsb)
-    {
-        poc = poc % pocCycle;
-    }
-
-    while (iterPic)
-    {
-        pic = iterPic;
-        if (pic && pic->getPOC() != this->getPOC() && pic->getSlice()->isReferenced())
-        {
-            int picPoc = pic->getPOC();
-            if (!pocHasMsb)
-            {
-                picPoc = picPoc % pocCycle;
-            }
-
-            if (poc == picPoc)
-            {
-                if (pic->getIsLongTerm())
-                {
-                    return pic;
-                }
-                else
-                {
-                    stPic = pic;
-                }
-                break;
-            }
-        }
-
-        iterPic = iterPic->m_next;
-    }
-
-    return stPic;
-}
-
 void TComSlice::setRefPOCList()
 {
     for (int dir = 0; dir < 2; dir++)
-    {
         for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
-        {
             m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
-        }
-    }
 }
 
 void TComSlice::setRefPicList(PicList& picList)
@@ -214,7 +166,6 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         ::memset(m_refPicList, 0, sizeof(m_refPicList));
         ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
-
         return;
     }
 
@@ -230,43 +181,28 @@ void TComSlice::setRefPicList(PicList& picList)
     uint32_t numPocLtCurr = 0;
     int i;
 
-    for (i = 0; i < m_rps->getNumberOfNegativePictures(); i++)
+    for (i = 0; i < m_rps->m_numberOfNegativePictures; i++)
     {
-        if (m_rps->getUsed(i))
+        if (m_rps->m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps->getDeltaPOC(i));
-            refPic->setIsLongTerm(0);
+            refPic = xGetRefPic(picList, getPOC() + m_rps->m_deltaPOC[i]);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
     }
 
-    for (; i < m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures(); i++)
+    for (; i < m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures; i++)
     {
-        if (m_rps->getUsed(i))
+        if (m_rps->m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps->getDeltaPOC(i));
-            refPic->setIsLongTerm(0);
+            refPic = xGetRefPic(picList, getPOC() + m_rps->m_deltaPOC[i]);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }
     }
 
-    for (i = m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() + m_rps->getNumberOfLongtermPictures() - 1;
-         i > m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() - 1; i--)
-    {
-        if (m_rps->getUsed(i))
-        {
-            refPic = xGetLongTermRefPic(picList, m_rps->getPOC(i), m_rps->getCheckLTMSBPresent(i));
-            refPic->setIsLongTerm(1);
-            refPicSetLtCurr[numPocLtCurr] = refPic;
-            numPocLtCurr++;
-        }
-        if (refPic == NULL)
-        {
-            refPic = xGetLongTermRefPic(picList, m_rps->getPOC(i), m_rps->getCheckLTMSBPresent(i));
-        }
-    }
+    X265_CHECK(m_rps->m_numberOfPictures == m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures,
+               "unexpected picture in RPS\n");
 
     // ref_pic_list_init
     Frame* rpsCurrList0[MAX_NUM_REF + 1];
@@ -312,14 +248,11 @@ void TComSlice::setRefPicList(PicList& picList)
         X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
 
-    ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
-
     for (int rIdx = 0; rIdx < m_numRefIdx[0]; rIdx++)
     {
         cIdx = rIdx % numPocTotalCurr;
         X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
         m_refPicList[0][rIdx] = rpsCurrList0[cIdx];
-        m_bIsUsedAsLongTerm[0][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
     }
 
     if (m_sliceType != B_SLICE)
@@ -334,26 +267,19 @@ void TComSlice::setRefPicList(PicList& picList)
             cIdx = rIdx % numPocTotalCurr;
             X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
             m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
-            m_bIsUsedAsLongTerm[1][rIdx] = (cIdx >= numPocStCurr0 + numPocStCurr1);
         }
     }
 }
 
 int TComSlice::getNumRpsCurrTempList()
 {
-    int numRpsCurrTempList = 0;
-
     if (m_sliceType == I_SLICE)
-    {
         return 0;
-    }
-    for (uint32_t i = 0; i < m_rps->getNumberOfNegativePictures() + m_rps->getNumberOfPositivePictures() + m_rps->getNumberOfLongtermPictures(); i++)
-    {
-        if (m_rps->getUsed(i))
-        {
+
+    int numRpsCurrTempList = 0;
+    for (uint32_t i = 0; i < m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures; i++)
+        if (m_rps->m_used[i])
             numRpsCurrTempList++;
-        }
-    }
 
     return numRpsCurrTempList;
 }
@@ -432,7 +358,6 @@ TComSPS::TComSPS()
     , m_log2DiffMaxMinCodingBlockSize(0)
     , m_maxCUSize(32)
     , m_maxCUDepth(3)
-    , m_bLongTermRefsPresent(false)
     , m_quadtreeTULog2MaxSize(0)
     , m_quadtreeTULog2MinSize(0)
     , m_quadtreeTUMaxDepthInter(0)
@@ -443,7 +368,6 @@ TComSPS::TComSPS()
     , m_qpBDOffsetY(0)
     , m_qpBDOffsetC(0)
     , m_bitsForPOC(8)
-    , m_numLongTermRefPicSPS(0)
     , m_bUseSAO(false)
     , m_scalingListEnabledFlag(false)
     , m_useStrongIntraSmoothing(false)
@@ -453,10 +377,7 @@ TComSPS::TComSPS()
     m_maxLatencyIncrease = 0;
     m_maxDecPicBuffering = 1;
     m_numReorderPics     = 0;
-
     m_scalingList = new TComScalingList;
-    ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
-    ::memset(m_usedByCurrPicLtSPSFlag, 0, sizeof(m_usedByCurrPicLtSPSFlag));
 }
 
 TComSPS::~TComSPS()
@@ -494,78 +415,6 @@ TComPPS::~TComPPS()
     delete m_scalingList;
 }
 
-TComReferencePictureSet::TComReferencePictureSet()
-    : m_deltaRIdxMinus1(0)
-    , m_deltaRPS(0)
-    , m_numRefIdc(0)
-    , m_numberOfPictures(0)
-    , m_numberOfNegativePictures(0)
-    , m_numberOfPositivePictures(0)
-    , m_numberOfLongtermPictures(0)
-{
-    ::memset(m_deltaPOC, 0, sizeof(m_deltaPOC));
-    ::memset(m_POC, 0, sizeof(m_POC));
-    ::memset(m_used, 0, sizeof(m_used));
-    ::memset(m_refIdc, 0, sizeof(m_refIdc));
-}
-
-TComReferencePictureSet::~TComReferencePictureSet()
-{}
-
-void TComReferencePictureSet::setUsed(int bufferNum, bool used)
-{
-    m_used[bufferNum] = used;
-}
-
-void TComReferencePictureSet::setDeltaPOC(int bufferNum, int deltaPOC)
-{
-    m_deltaPOC[bufferNum] = deltaPOC;
-}
-
-bool TComReferencePictureSet::getUsed(int bufferNum) const
-{
-    return m_used[bufferNum];
-}
-
-int TComReferencePictureSet::getDeltaPOC(int bufferNum) const
-{
-    return m_deltaPOC[bufferNum];
-}
-
-int TComReferencePictureSet::getNumberOfPictures() const
-{
-    return m_numberOfPictures;
-}
-
-int TComReferencePictureSet::getPOC(int bufferNum) const
-{
-    return m_POC[bufferNum];
-}
-
-void TComReferencePictureSet::setPOC(int bufferNum, int POC)
-{
-    m_POC[bufferNum] = POC;
-}
-
-bool TComReferencePictureSet::getCheckLTMSBPresent(int bufferNum)
-{
-    return m_bCheckLTMSB[bufferNum];
-}
-
-void TComReferencePictureSet::setCheckLTMSBPresent(int bufferNum, bool b)
-{
-    m_bCheckLTMSB[bufferNum] = b;
-}
-
-/** get the reference idc value at uiBufferNum
- * \param uiBufferNum
- * \returns int
- */
-int  TComReferencePictureSet::getRefIdc(int bufferNum) const
-{
-    return m_refIdc[bufferNum];
-}
-
 /** Sorts the deltaPOC and Used by current values in the RPS based on the deltaPOC values.
  *  deltaPOC values are sorted with -ve values before the +ve values.  -ve values are in decreasing order.
  *  +ve values are in increasing order.
@@ -576,46 +425,32 @@ void TComReferencePictureSet::sortDeltaPOC()
     // sort in increasing order (smallest first)
     for (int j = 1; j < getNumberOfPictures(); j++)
     {
-        int deltaPOC = getDeltaPOC(j);
-        bool used = getUsed(j);
+        int deltaPOC = m_deltaPOC[j];
+        bool used = m_used[j];
         for (int k = j - 1; k >= 0; k--)
         {
-            int temp = getDeltaPOC(k);
+            int temp = m_deltaPOC[k];
             if (deltaPOC < temp)
             {
-                setDeltaPOC(k + 1, temp);
-                setUsed(k + 1, getUsed(k));
-                setDeltaPOC(k, deltaPOC);
-                setUsed(k, used);
+                m_deltaPOC[k + 1] = temp;
+                m_used[k + 1] = m_used[k];
+                m_deltaPOC[k] = deltaPOC;
+                m_used[k] = used;
             }
         }
     }
 
     // flip the negative values to largest first
-    int numNegPics = getNumberOfNegativePictures();
+    int numNegPics = m_numberOfNegativePictures;
     for (int j = 0, k = numNegPics - 1; j < numNegPics >> 1; j++, k--)
     {
-        int deltaPOC = getDeltaPOC(j);
-        bool used = getUsed(j);
-        setDeltaPOC(j, getDeltaPOC(k));
-        setUsed(j, getUsed(k));
-        setDeltaPOC(k, deltaPOC);
-        setUsed(k, used);
+        int deltaPOC = m_deltaPOC[j];
+        bool used = m_used[j];
+        m_deltaPOC[j] = m_deltaPOC[k];
+        m_used[j] = m_used[k];
+        m_deltaPOC[k] = deltaPOC;
+        m_used[k] = used;
     }
-}
-
-/** Prints the deltaPOC and RefIdc (if available) values in the RPS.
- *  A "*" is added to the deltaPOC value if it is Used bu current.
- * \returns void
- */
-void TComReferencePictureSet::printDeltaPOC()
-{
-    printf("DeltaPOC = { ");
-    for (int j = 0; j < getNumberOfPictures(); j++)
-    {
-        printf("%d%s ", getDeltaPOC(j), (getUsed(j) == 1) ? "*" : "");
-    }
-    printf("}\n");
 }
 
 TComScalingList::TComScalingList()

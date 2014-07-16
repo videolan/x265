@@ -2572,36 +2572,19 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     int neibPOC = curPOC;
     int neibRefPOC;
 
-    bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, refIdx)->getIsLongTerm();
-    bool bIsNeibRefLongTerm = false;
-
     //---------------  V1 (END) ------------------//
     if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0)
     {
         neibRefPOC = tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx));
         MV mvp = tmpCU->getCUMvField(picList)->getMv(idx);
 
-        bIsNeibRefLongTerm = tmpCU->getSlice()->getRefPic(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx))->getIsLongTerm();
-        if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
-        {
-            if (bIsCurrRefLongTerm || bIsNeibRefLongTerm)
-            {
-                outMV = mvp;
-            }
-            else
-            {
-                int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
-                if (scale == 4096)
-                {
-                    outMV = mvp;
-                }
-                else
-                {
-                    outMV = scaleMv(mvp, scale);
-                }
-            }
-            return true;
-        }
+        int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
+        if (scale == 4096)
+            outMV = mvp;
+        else
+            outMV = scaleMv(mvp, scale);
+
+        return true;
     }
 
     //---------------------- V2(END) --------------------//
@@ -2610,27 +2593,13 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
         neibRefPOC = tmpCU->getSlice()->getRefPOC(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx));
         MV mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
 
-        bIsNeibRefLongTerm = tmpCU->getSlice()->getRefPic(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx))->getIsLongTerm();
-        if (bIsCurrRefLongTerm == bIsNeibRefLongTerm)
-        {
-            if (bIsCurrRefLongTerm || bIsNeibRefLongTerm)
-            {
-                outMV = mvp;
-            }
-            else
-            {
-                int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
-                if (scale == 4096)
-                {
-                    outMV = mvp;
-                }
-                else
-                {
-                    outMV = scaleMv(mvp, scale);
-                }
-            }
-            return true;
-        }
+        int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
+        if (scale == 4096)
+            outMV = mvp;
+        else
+            outMV = scaleMv(mvp, scale);
+
+        return true;
     }
     //---------------------- V3(END) --------------------//
     return false;
@@ -2686,30 +2655,13 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
 
     curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
-    bool bIsCurrRefLongTerm = m_slice->getRefPic(picList, outRefIdx)->getIsLongTerm();
-    bool bIsColRefLongTerm = colCU->getSlice()->getIsUsedAsLongTerm(colRefPicList, colRefIdx);
 
-    if (bIsCurrRefLongTerm != bIsColRefLongTerm)
-    {
-        return false;
-    }
-
-    if (bIsCurrRefLongTerm || bIsColRefLongTerm)
-    {
+    scale = xGetDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
+    if (scale == 4096)
         outMV = colmv;
-    }
     else
-    {
-        scale = xGetDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
-        if (scale == 4096)
-        {
-            outMV = colmv;
-        }
-        else
-        {
-            outMV = scaleMv(colmv, scale);
-        }
-    }
+        outMV = scaleMv(colmv, scale);
+
     return true;
 }
 

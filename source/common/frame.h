@@ -46,8 +46,6 @@ public:
     Window            m_conformanceWindow;
     Window            m_defaultDisplayWindow;
 
-    bool              m_bIsLongTerm;
-
     TComPicSym*       m_picSym;
     TComPicYuv*       m_reconPicYuv;
     int               m_POC;
@@ -92,10 +90,6 @@ public:
     bool        allocPicSym(x265_param *param);
     void        reinit(x265_param *param);
     void        destroy();
-
-    bool        getIsLongTerm()            { return m_bIsLongTerm; }
-
-    void        setIsLongTerm(bool lt)     { m_bIsLongTerm = lt; }
 
     int         getPOC()                   { return m_POC; }
 

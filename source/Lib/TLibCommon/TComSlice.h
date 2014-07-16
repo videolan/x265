@@ -51,67 +51,29 @@ class TComReferencePictureSet
 {
 public:
 
-    // Parameters for inter RPS prediction
-    int  m_deltaRIdxMinus1;
-    int  m_deltaRPS;
-    int  m_numRefIdc;
-    int  m_refIdc[MAX_NUM_REF_PICS + 1];
-
-    // Parameters for long term references
-    bool m_bCheckLTMSB[MAX_NUM_REF_PICS];
-    int  m_pocLSBLT[MAX_NUM_REF_PICS];
-    int  m_deltaPOCMSBCycleLT[MAX_NUM_REF_PICS];
-    bool m_deltaPocMSBPresentFlag[MAX_NUM_REF_PICS];
-
     int  m_numberOfPictures;
     int  m_numberOfNegativePictures;
     int  m_numberOfPositivePictures;
+
     int  m_deltaPOC[MAX_NUM_REF_PICS];
     bool m_used[MAX_NUM_REF_PICS];
     int  m_POC[MAX_NUM_REF_PICS];
 
-    int  m_numberOfLongtermPictures;          // Zero when disabled
-
-    TComReferencePictureSet();
-    ~TComReferencePictureSet();
-
-    void setPocLSBLT(int i, int x)                { m_pocLSBLT[i] = x; }
-
-    int  getDeltaPocMSBCycleLT(int i)             { return m_deltaPOCMSBCycleLT[i]; }
-
-    void setDeltaPocMSBCycleLT(int i, int x)      { m_deltaPOCMSBCycleLT[i] = x; }
-
-    bool getDeltaPocMSBPresentFlag(int i)         { return m_deltaPocMSBPresentFlag[i]; }
-
-    void setDeltaPocMSBPresentFlag(int i, bool x) { m_deltaPocMSBPresentFlag[i] = x; }
-
-    void setUsed(int bufferNum, bool used);
-    void setDeltaPOC(int bufferNum, int deltaPOC);
-    void setPOC(int bufferNum, int deltaPOC);
-    void setCheckLTMSBPresent(int bufferNum, bool b);
-    bool getCheckLTMSBPresent(int bufferNum);
-
-    bool getUsed(int bufferNum) const;
-    int  getDeltaPOC(int bufferNum) const;
-    int  getPOC(int bufferNum) const;
-    int  getNumberOfPictures() const;
-
-    int  getNumberOfNegativePictures() const      { return m_numberOfNegativePictures; }
-
-    int  getNumberOfPositivePictures() const      { return m_numberOfPositivePictures; }
-
-    int  getNumberOfLongtermPictures() const      { return m_numberOfLongtermPictures; }
-
-    int  getDeltaRIdxMinus1() const               { return m_deltaRIdxMinus1; }
-
-    int  getDeltaRPS() const                      { return m_deltaRPS; }
-
-    int  getNumRefIdc() const                     { return m_numRefIdc; }
-
-    int  getRefIdc(int bufferNum) const;
+    TComReferencePictureSet()
+        : m_numberOfPictures(0)
+        , m_numberOfNegativePictures(0)
+        , m_numberOfPositivePictures(0)
+    {
+        ::memset(m_deltaPOC, 0, sizeof(m_deltaPOC));
+        ::memset(m_POC, 0, sizeof(m_POC));
+        ::memset(m_used, 0, sizeof(m_used));
+    }
 
     void sortDeltaPOC();
-    void printDeltaPOC();
+
+    int  getNumberOfPictures() const { return m_numberOfPictures; }
+
+    int  getPOC(int bufferNum) const { return m_POC[bufferNum]; }
 };
 
 class TComScalingList
@@ -478,7 +440,6 @@ public:
 
     Window      m_conformanceWindow;
 
-    bool        m_bLongTermRefsPresent;
     bool        m_TMVPFlagsPresent;
     int         m_numReorderPics;
 
@@ -495,9 +456,6 @@ public:
     int         m_qpBDOffsetC;
 
     uint32_t    m_bitsForPOC;
-    uint32_t    m_numLongTermRefPicSPS;
-    uint32_t    m_ltRefPicPocLsbSps[33];
-    bool        m_usedByCurrPicLtSPSFlag[33];
 
     bool        m_bUseSAO;
     bool        m_useAMP;
@@ -534,18 +492,6 @@ public:
     Window& getConformanceWindow() { return m_conformanceWindow; }
 
     void    setConformanceWindow(Window& conformanceWindow) { m_conformanceWindow = conformanceWindow; }
-
-    uint32_t getNumLongTermRefPicSPS() const { return m_numLongTermRefPicSPS; }
-
-    void     setNumLongTermRefPicSPS(uint32_t val) { m_numLongTermRefPicSPS = val; }
-
-    uint32_t getLtRefPicPocLsbSps(uint32_t index) const { return m_ltRefPicPocLsbSps[index]; }
-
-    void  setLtRefPicPocLsbSps(uint32_t index, uint32_t val) { m_ltRefPicPocLsbSps[index] = val; }
-
-    bool getUsedByCurrPicLtSPSFlag(int i) const { return m_usedByCurrPicLtSPSFlag[i]; }
-
-    void setUsedByCurrPicLtSPSFlag(int i, bool x) { m_usedByCurrPicLtSPSFlag[i] = x; }
 
     int  getLog2MinCodingBlockSize() const { return m_log2MinCodingBlockSize; }
 
@@ -588,10 +534,6 @@ public:
     uint32_t getQuadtreeTUMaxDepthInter() const   { return m_quadtreeTUMaxDepthInter; }
 
     uint32_t getQuadtreeTUMaxDepthIntra() const    { return m_quadtreeTUMaxDepthIntra; }
-
-    bool      getLongTermRefsPresent() const   { return m_bLongTermRefsPresent; }
-
-    void      setLongTermRefsPresent(bool b)   { m_bLongTermRefsPresent = b; }
 
     bool      getTMVPFlagsPresent() const   { return m_TMVPFlagsPresent; }
 
@@ -888,7 +830,6 @@ private:
     int         m_sliceQpDeltaCr;
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
-    bool        m_bIsUsedAsLongTerm[2][MAX_NUM_REF + 1];
 
     // referenced slice?
     bool        m_bReferenced;
@@ -998,8 +939,6 @@ public:
 
     uint32_t  getColRefIdx()                      { return m_colRefIdx; }
 
-    bool      getIsUsedAsLongTerm(int i, int j)   { return m_bIsUsedAsLongTerm[i][j]; }
-
     bool      getCheckLDC()                       { return m_bCheckLDC; }
 
     bool      getMvdL1ZeroFlag()                  { return m_bLMvdL1Zero; }
@@ -1069,8 +1008,6 @@ public:
 
     bool      isInterP()                    { return m_sliceType == P_SLICE; }
 
-    void setTLayerInfo(uint32_t tlayer);
-
     void setMaxNumMergeCand(uint32_t val)      { m_maxNumMergeCand = val; }
 
     uint32_t getMaxNumMergeCand()              { return m_maxNumMergeCand; }
@@ -1122,7 +1059,6 @@ protected:
 
     Frame*  xGetRefPic(PicList& picList, int poc);
 
-    Frame*  xGetLongTermRefPic(PicList& picList, int poc, bool pocHasMsb);
 }; // END CLASS DEFINITION TComSlice
 }
 //! \}

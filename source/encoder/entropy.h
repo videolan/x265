@@ -218,8 +218,6 @@ private:
 
     void copyFrom(SBac& src);
     void copyContextsFrom(SBac& src);
-
-    static bool findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag);
 };
 }
 

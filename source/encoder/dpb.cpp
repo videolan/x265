@@ -134,9 +134,8 @@ void DPB::prepareEncode(Frame *pic)
 
     applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
 
-    arrangeLongtermPicturesInRPS(slice);
-    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->getNumberOfNegativePictures())); // Ensuring L0 contains just the -ve POC
-    slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->getNumberOfPositivePictures()));
+    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->m_numberOfNegativePictures)); // Ensuring L0 contains just the -ve POC
+    slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->m_numberOfPositivePictures));
 
     slice->setRefPicList(m_picList);
 
@@ -236,7 +235,6 @@ void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsi
     rps->m_numberOfPictures = poci;
     rps->m_numberOfPositivePictures = numPos;
     rps->m_numberOfNegativePictures = numNeg;
-    rps->m_numberOfLongtermPictures = 0;
 
     rps->sortDeltaPOC();
 }
@@ -327,42 +325,16 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
         isReference = 0;
         // loop through all pictures in the Reference Picture Set
         // to see if the picture should be kept as reference picture
-        for (i = 0; i < rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures(); i++)
+        for (i = 0; i < rps->m_numberOfPositivePictures + rps->m_numberOfNegativePictures; i++)
         {
-            if (!outPic->getIsLongTerm() && outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->getDeltaPOC(i))
-            {
+            if (outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->m_deltaPOC[i])
                 isReference = 1;
-                outPic->setIsLongTerm(0);
-            }
-        }
-
-        for (; i < rps->getNumberOfPictures(); i++)
-        {
-            if (rps->getCheckLTMSBPresent(i) == true)
-            {
-                if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC()) == rps->getPOC(i))
-                {
-                    isReference = 1;
-                }
-            }
-            else
-            {
-                if (outPic->getIsLongTerm() && (outPic->getPicSym()->getSlice()->getPOC() %
-                                                (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC())) == rps->getPOC(i) %
-                    (1 << outPic->getPicSym()->getSlice()->getSPS()->getBitsForPOC()))
-                {
-                    isReference = 1;
-                }
-            }
         }
 
         // mark the picture as "unused for reference" if it is not in
         // the Reference Picture Set
         if (outPic->getPicSym()->getSlice()->getPOC() != curPoc && isReference == 0)
-        {
             outPic->getSlice()->setReferenced(false);
-            outPic->setIsLongTerm(0);
-        }
     }
 }
 
@@ -408,124 +380,4 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, Frame* pic)
         }
     }
     return NAL_UNIT_CODED_SLICE_TRAIL_R;
-}
-
-static inline int getLSB(int poc, int maxLSB)
-{
-    if (poc >= 0)
-    {
-        return poc % maxLSB;
-    }
-    else
-    {
-        return (maxLSB - ((-poc) % maxLSB)) % maxLSB;
-    }
-}
-
-// Function will arrange the long-term pictures in the decreasing order of poc_lsb_lt,
-// and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
-void DPB::arrangeLongtermPicturesInRPS(TComSlice *slice)
-{
-    TComReferencePictureSet *rps = slice->getRPS();
-
-    if (!rps->getNumberOfLongtermPictures())
-    {
-        return;
-    }
-
-    // Arrange long-term reference pictures in the correct order of LSB and MSB,
-    // and assign values for pocLSBLT and MSB present flag
-    int longtermPicsPoc[MAX_NUM_REF_PICS], longtermPicsLSB[MAX_NUM_REF_PICS], indices[MAX_NUM_REF_PICS];
-    int longtermPicsMSB[MAX_NUM_REF_PICS];
-    bool mSBPresentFlag[MAX_NUM_REF_PICS];
-    ::memset(longtermPicsPoc, 0, sizeof(longtermPicsPoc));  // Store POC values of LTRP
-    ::memset(longtermPicsLSB, 0, sizeof(longtermPicsLSB));  // Store POC LSB values of LTRP
-    ::memset(longtermPicsMSB, 0, sizeof(longtermPicsMSB));  // Store POC LSB values of LTRP
-    ::memset(indices, 0, sizeof(indices));                  // Indices to aid in tracking sorted LTRPs
-    ::memset(mSBPresentFlag, 0, sizeof(mSBPresentFlag));    // Indicate if MSB needs to be present
-
-    // Get the long-term reference pictures
-    int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
-    int i, ctr = 0;
-    int maxPicOrderCntLSB = 1 << slice->getSPS()->getBitsForPOC();
-    for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
-    {
-        longtermPicsPoc[ctr] = rps->getPOC(i);                                  // LTRP POC
-        longtermPicsLSB[ctr] = getLSB(longtermPicsPoc[ctr], maxPicOrderCntLSB); // LTRP POC LSB
-        indices[ctr] = i;
-        longtermPicsMSB[ctr] = longtermPicsPoc[ctr] - longtermPicsLSB[ctr];
-    }
-
-    int numLongPics = rps->getNumberOfLongtermPictures();
-    X265_CHECK(ctr == numLongPics, "\n");
-
-    // Arrange pictures in decreasing order of MSB;
-    for (i = 0; i < numLongPics; i++)
-    {
-        for (int j = 0; j < numLongPics - 1; j++)
-        {
-            if (longtermPicsMSB[j] < longtermPicsMSB[j + 1])
-            {
-                std::swap(longtermPicsPoc[j], longtermPicsPoc[j + 1]);
-                std::swap(longtermPicsLSB[j], longtermPicsLSB[j + 1]);
-                std::swap(longtermPicsMSB[j], longtermPicsMSB[j + 1]);
-                std::swap(indices[j], indices[j + 1]);
-            }
-        }
-    }
-
-    for (i = 0; i < numLongPics; i++)
-    {
-        // Check if MSB present flag should be enabled.
-        // Check if the buffer contains any pictures that have the same LSB.
-        Frame* iterPic = m_picList.first();
-        while (iterPic)
-        {
-            if ((getLSB(iterPic->getPOC(), maxPicOrderCntLSB) == longtermPicsLSB[i])   && // Same LSB
-                (iterPic->getSlice()->isReferenced()) &&                                  // Reference picture
-                (iterPic->getPOC() != longtermPicsPoc[i]))                                // Not the LTRP itself
-            {
-                mSBPresentFlag[i] = true;
-                break;
-            }
-            iterPic = iterPic->m_next;
-        }
-    }
-
-    // tempArray for usedByCurr flag
-    bool tempArray[MAX_NUM_REF_PICS];
-    ::memset(tempArray, 0, sizeof(tempArray));
-    for (i = 0; i < numLongPics; i++)
-    {
-        tempArray[i] = rps->getUsed(indices[i]) ? true : false;
-    }
-
-    // Now write the final values;
-    ctr = 0;
-    int currMSB = 0, currLSB = 0;
-    // currPicPoc = currMSB + currLSB
-    currLSB = getLSB(slice->getPOC(), maxPicOrderCntLSB);
-    currMSB = slice->getPOC() - currLSB;
-
-    for (i = rps->getNumberOfPictures() - 1; i >= offset; i--, ctr++)
-    {
-        rps->setPOC(i, longtermPicsPoc[ctr]);
-        rps->setDeltaPOC(i, -slice->getPOC() + longtermPicsPoc[ctr]);
-        rps->setUsed(i, tempArray[ctr]);
-        rps->setPocLSBLT(i, longtermPicsLSB[ctr]);
-        rps->setDeltaPocMSBCycleLT(i, (currMSB - (longtermPicsPoc[ctr] - longtermPicsLSB[ctr])) / maxPicOrderCntLSB);
-        rps->setDeltaPocMSBPresentFlag(i, mSBPresentFlag[ctr]);
-
-        X265_CHECK(rps->getDeltaPocMSBCycleLT(i) >= 0, "delta POC MSB must be positive\n"); // Non-negative value
-    }
-
-    for (i = rps->getNumberOfPictures() - 1, ctr = 1; i >= offset; i--, ctr++)
-    {
-        for (int j = rps->getNumberOfPictures() - 1 - ctr; j >= offset; j--)
-        {
-            // Here at the encoder we know that we have set the full POC value for the LTRPs, hence we
-            // don't have to check the MSB present flag values for this constraint.
-            X265_CHECK(rps->getPOC(i) != rps->getPOC(j), "LTRP releated in RPS\n");
-        }
-    }
 }

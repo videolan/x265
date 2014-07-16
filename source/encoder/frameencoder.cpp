@@ -117,8 +117,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 
     top->initPPS(&m_pps);
 
-    m_sps.setNumLongTermRefPicSPS(0);
-
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI)
     {

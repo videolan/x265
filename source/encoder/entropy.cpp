@@ -613,22 +613,22 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
 
 void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
 {
-    WRITE_UVLC(rps->getNumberOfNegativePictures(), "num_negative_pics");
-    WRITE_UVLC(rps->getNumberOfPositivePictures(), "num_positive_pics");
+    WRITE_UVLC(rps->m_numberOfNegativePictures, "num_negative_pics");
+    WRITE_UVLC(rps->m_numberOfPositivePictures, "num_positive_pics");
     int prev = 0;
-    for (int j = 0; j < rps->getNumberOfNegativePictures(); j++)
+    for (int j = 0; j < rps->m_numberOfNegativePictures; j++)
     {
-        WRITE_UVLC(prev - rps->getDeltaPOC(j) - 1, "delta_poc_s0_minus1");
-        prev = rps->getDeltaPOC(j);
-        WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s0_flag");
+        WRITE_UVLC(prev - rps->m_deltaPOC[j] - 1, "delta_poc_s0_minus1");
+        prev = rps->m_deltaPOC[j];
+        WRITE_FLAG(rps->m_used[j], "used_by_curr_pic_s0_flag");
     }
 
     prev = 0;
-    for (int j = rps->getNumberOfNegativePictures(); j < rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures(); j++)
+    for (int j = rps->m_numberOfNegativePictures; j < rps->m_numberOfNegativePictures + rps->m_numberOfPositivePictures; j++)
     {
-        WRITE_UVLC(rps->getDeltaPOC(j) - prev - 1, "delta_poc_s1_minus1");
-        prev = rps->getDeltaPOC(j);
-        WRITE_FLAG(rps->getUsed(j), "used_by_curr_pic_s1_flag");
+        WRITE_UVLC(rps->m_deltaPOC[j] - prev - 1, "delta_poc_s1_minus1");
+        prev = rps->m_deltaPOC[j];
+        WRITE_FLAG(rps->m_used[j], "used_by_curr_pic_s1_flag");
     }
 }
 
@@ -686,17 +686,8 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
 
     WRITE_FLAG(0, "pcm_enabled_flag");
     WRITE_UVLC(0, "num_short_term_ref_pic_sets");
+    WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
-    WRITE_FLAG(sps->getLongTermRefsPresent() ? 1 : 0,      "long_term_ref_pics_present_flag");
-    if (sps->getLongTermRefsPresent())
-    {
-        WRITE_UVLC(sps->getNumLongTermRefPicSPS(), "num_long_term_ref_pic_sps");
-        for (uint32_t k = 0; k < sps->getNumLongTermRefPicSPS(); k++)
-        {
-            WRITE_CODE(sps->getLtRefPicPocLsbSps(k), sps->getBitsForPOC(), "lt_ref_pic_poc_lsb_sps");
-            WRITE_FLAG(sps->getUsedByCurrPicLtSPSFlag(k), "used_by_curr_pic_lt_sps_flag");
-        }
-    }
     WRITE_FLAG(sps->getTMVPFlagsPresent()  ? 1 : 0,        "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps->getUseStrongIntraSmoothing(),          "sps_strong_intra_smoothing_enable_flag");
 
@@ -1029,23 +1020,6 @@ void SBac::codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32
     }
 }
 
-bool SBac::findMatchingLTRP(TComSlice* slice, uint32_t *ltrpsIndex, int ltrpPOC, bool usedFlag)
-{
-    // bool state = true, state2 = false;
-    uint32_t lsb = ltrpPOC % (1 << slice->getSPS()->getBitsForPOC());
-
-    for (uint32_t k = 0; k < slice->getSPS()->getNumLongTermRefPicSPS(); k++)
-    {
-        if ((lsb == slice->getSPS()->getLtRefPicPocLsbSps(k)) && (usedFlag == slice->getSPS()->getUsedByCurrPicLtSPSFlag(k)))
-        {
-            *ltrpsIndex = k;
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
 {
     for (int predListIdx = listId; predListIdx >= 0; predListIdx--)
@@ -1097,74 +1071,13 @@ void SBac::codeSliceHeader(TComSlice* slice)
         // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
         // Ideally this process should not be repeated for each slice in a picture
         if (slice->isIRAP())
-            for (int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
-                X265_CHECK(!rps->getUsed(picIdx), "pic unused failure\n");
+            for (int picIdx = 0; picIdx < rps->m_numberOfPictures; picIdx++)
+                X265_CHECK(!rps->m_used[picIdx], "pic unused failure\n");
 #endif
 
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
         codeShortTermRefPicSet(rps);
 
-        if (slice->getSPS()->getLongTermRefsPresent())
-        {
-            int numLtrpInSH = rps->getNumberOfLongtermPictures();
-            int ltrpInSPS[MAX_NUM_REF_PICS];
-            int numLtrpInSPS = 0;
-            uint32_t ltrpIndex;
-            int counter = 0;
-            for (int k = rps->getNumberOfPictures() - 1; k > rps->getNumberOfPictures() - rps->getNumberOfLongtermPictures() - 1; k--)
-            {
-                if (findMatchingLTRP(slice, &ltrpIndex, rps->getPOC(k), rps->getUsed(k)))
-                {
-                    ltrpInSPS[numLtrpInSPS] = ltrpIndex;
-                    numLtrpInSPS++;
-                }
-                else
-                    counter++;
-            }
-
-            numLtrpInSH -= numLtrpInSPS;
-
-            int bitsForLtrpInSPS = 0;
-            while (slice->getSPS()->getNumLongTermRefPicSPS() > (uint32_t)(1 << bitsForLtrpInSPS))
-                bitsForLtrpInSPS++;
-
-            if (slice->getSPS()->getNumLongTermRefPicSPS() > 0)
-                WRITE_UVLC(numLtrpInSPS, "num_long_term_sps");
-            WRITE_UVLC(numLtrpInSH, "num_long_term_pics");
-            // Note that the LSBs of the LT ref. pic. POCs must be sorted before.
-            // Not sorted here because LT ref indices will be used in setRefPicList()
-            int prevDeltaMSB = 0, prevLSB = 0;
-            int offset = rps->getNumberOfNegativePictures() + rps->getNumberOfPositivePictures();
-            for (int i = rps->getNumberOfPictures() - 1; i > offset - 1; i--)
-            {
-                if (counter < numLtrpInSPS)
-                {
-                    if (bitsForLtrpInSPS > 0)
-                        WRITE_CODE(ltrpInSPS[counter], bitsForLtrpInSPS, "lt_idx_sps[i]");
-                }
-                else
-                {
-                    WRITE_CODE(rps->m_pocLSBLT[i], slice->getSPS()->getBitsForPOC(), "poc_lsb_lt");
-                    WRITE_FLAG(rps->getUsed(i), "used_by_curr_pic_lt_flag");
-                }
-                WRITE_FLAG(rps->getDeltaPocMSBPresentFlag(i), "delta_poc_msb_present_flag");
-
-                if (rps->getDeltaPocMSBPresentFlag(i))
-                {
-                    //  First LTRP from SPS                 ||  First LTRP from SH                              || curr LSB            != prev LSB
-                    if ((i == rps->getNumberOfPictures() - 1) || (i == rps->getNumberOfPictures() - 1 - numLtrpInSPS) || (rps->m_pocLSBLT[i] != prevLSB))
-                        WRITE_UVLC(rps->getDeltaPocMSBCycleLT(i), "delta_poc_msb_cycle_lt[i]");
-                    else
-                    {
-                        int differenceInDeltaMSB = rps->getDeltaPocMSBCycleLT(i) - prevDeltaMSB;
-                        X265_CHECK(differenceInDeltaMSB >= 0, "delta MSB must be positive\n");
-                        WRITE_UVLC(differenceInDeltaMSB, "delta_poc_msb_cycle_lt[i]");
-                    }
-                    prevLSB = rps->m_pocLSBLT[i];
-                    prevDeltaMSB = rps->getDeltaPocMSBCycleLT(i);
-                }
-            }
-        }
         if (slice->getSPS()->getTMVPFlagsPresent())
             WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
     }

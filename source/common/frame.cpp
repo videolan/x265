@@ -29,7 +29,6 @@ using namespace x265;
 
 Frame::Frame()
     : m_origPicYuv(NULL)
-    , m_bIsLongTerm(false)
     , m_reconPicYuv(NULL)
     , m_rowDiagQp(NULL)
     , m_rowDiagQScale(NULL)
