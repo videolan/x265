@@ -285,7 +285,7 @@ void TComSlice::getWpScaling(int l, int refIdx, wpScalingParam *&wp)
  * \param wpScalingParam
  * \returns void
  */
-void  TComSlice::resetWpScaling()
+void TComSlice::resetWpScaling()
 {
     for (int e = 0; e < 2; e++)
     {
@@ -306,7 +306,7 @@ void  TComSlice::resetWpScaling()
 /** init WP table
  * \returns void
  */
-void  TComSlice::initWpScaling()
+void TComSlice::initWpScaling()
 {
     for (int e = 0; e < 2; e++)
     {
