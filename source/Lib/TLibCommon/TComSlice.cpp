@@ -402,15 +402,14 @@ TComPPS::~TComPPS()
     delete m_scalingList;
 }
 
-/** Sorts the deltaPOC and Used by current values in the RPS based on the deltaPOC values.
- *  deltaPOC values are sorted with -ve values before the +ve values.  -ve values are in decreasing order.
- *  +ve values are in increasing order.
- * \returns void
- */
+/* Sorts the deltaPOC and Used by current values in the RPS based on the
+ * deltaPOC values.  deltaPOC values are sorted with -ve values before the +ve
+ * values.  -ve values are in decreasing order.  +ve values are in increasing
+ * order */
 void TComReferencePictureSet::sortDeltaPOC()
 {
     // sort in increasing order (smallest first)
-    for (int j = 1; j < getNumberOfPictures(); j++)
+    for (int j = 1; j < m_numberOfPictures; j++)
     {
         int deltaPOC = m_deltaPOC[j];
         bool used = m_used[j];

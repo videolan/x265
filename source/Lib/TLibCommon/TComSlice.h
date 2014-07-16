@@ -70,10 +70,6 @@ public:
     }
 
     void sortDeltaPOC();
-
-    int  getNumberOfPictures() const { return m_numberOfPictures; }
-
-    int  getPOC(int bufferNum) const { return m_POC[bufferNum]; }
 };
 
 class TComScalingList
