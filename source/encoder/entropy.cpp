@@ -590,9 +590,9 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     WRITE_UVLC(vps->m_maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
     WRITE_UVLC(vps->m_numReorderPics,         "vps_num_reorder_pics[i]");
 
-    WRITE_UVLC(0, "vps_max_latency_increase_plus1[i]");
+    WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
-    WRITE_UVLC(0, "vps_max_op_sets_minus1");
+    WRITE_UVLC(0,    "vps_max_op_sets_minus1");
 
     TimingInfo &timingInfo = vps->m_timingInfo;
     WRITE_FLAG(timingInfo.timingInfoPresentFlag,     "vps_timing_info_present_flag");
@@ -609,8 +609,6 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     }
 
     WRITE_FLAG(0, "vps_extension_flag");
-
-    //future extensions here..
 }
 
 void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
