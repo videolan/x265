@@ -667,7 +667,6 @@ private:
 
     bool       m_bLMvdL1Zero;
     int        m_numEntryPointOffsets;
-    bool       m_temporalLayerNonReferenceFlag;
 
     bool       m_enableTMVPFlag;
 
@@ -855,10 +854,6 @@ public:
     void  setNumEntryPointOffsets(int val)  { m_numEntryPointOffsets = val; }
 
     int   getNumEntryPointOffsets()         { return m_numEntryPointOffsets; }
-
-    bool  getTemporalLayerNonReferenceFlag()       { return m_temporalLayerNonReferenceFlag; }
-
-    void  setTemporalLayerNonReferenceFlag(bool x) { m_temporalLayerNonReferenceFlag = x; }
 
     void  setEnableTMVPFlag(bool b)    { m_enableTMVPFlag = b; }
 

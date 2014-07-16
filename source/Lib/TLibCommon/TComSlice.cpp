@@ -73,7 +73,6 @@ TComSlice::TComSlice()
     , m_cabacInitFlag(false)
     , m_bLMvdL1Zero(false)
     , m_numEntryPointOffsets(0)
-    , m_temporalLayerNonReferenceFlag(false)
     , m_enableTMVPFlag(true)
 {
     m_numRefIdx[0] = m_numRefIdx[1] = 0;

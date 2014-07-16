@@ -102,12 +102,11 @@ void DPB::prepareEncode(Frame *pic)
         m_lastIDR = pocCurr;
     }
     slice->setLastIDR(m_lastIDR);
-    slice->setTemporalLayerNonReferenceFlag(!slice->isReferenced());
     // Set the nal unit type
     slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR, pic));
 
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
-    if (slice->getTemporalLayerNonReferenceFlag())
+    if (!slice->isReferenced())
     {
         switch (slice->getNalUnitType())
         {
