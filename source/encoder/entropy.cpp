@@ -687,9 +687,6 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
 
     WRITE_FLAG(0, "pcm_enabled_flag");
-
-    X265_CHECK(sps->getMaxTLayers() > 0, "max layers must be positive\n");
-
     WRITE_UVLC(0, "num_short_term_ref_pic_sets");
 
     WRITE_FLAG(sps->getLongTermRefsPresent() ? 1 : 0,      "long_term_ref_pics_present_flag");
