@@ -2559,13 +2559,9 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
 
     int refPicList2nd = REF_PIC_LIST_0;
     if (picList == REF_PIC_LIST_0)
-    {
         refPicList2nd = REF_PIC_LIST_1;
-    }
     else if (picList == REF_PIC_LIST_1)
-    {
         refPicList2nd = REF_PIC_LIST_0;
-    }
 
     int curPOC = m_slice->getPOC();
     int curRefPOC = m_slice->getRefPic(picList, refIdx)->getPOC();
@@ -2601,6 +2597,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
 
         return true;
     }
+
     //---------------------- V3(END) --------------------//
     return false;
 }
@@ -2632,9 +2629,8 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     colPOC = colCU->getSlice()->getPOC();
 
     if (colCU->isIntra(absPartAddr))
-    {
         return false;
-    }
+
     colRefPicList = getSlice()->getCheckLDC() ? picList : getSlice()->getColFromL0Flag();
 
     int colRefIdx = colCU->getCUMvField(colRefPicList)->getRefIdx(absPartAddr);
@@ -2645,9 +2641,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
         colRefIdx = colCU->getCUMvField(colRefPicList)->getRefIdx(absPartAddr);
 
         if (colRefIdx < 0)
-        {
             return false;
-        }
     }
 
     // Scale the vector.

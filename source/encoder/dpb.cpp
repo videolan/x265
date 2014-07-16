@@ -303,7 +303,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
     }
 }
 
-/** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet */
+/** Function for applying picture marking based on the Reference Picture Set */
 void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 {
     Frame* outPic;
@@ -318,9 +318,7 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
         iterPic = iterPic->m_next;
 
         if (!outPic->getSlice()->isReferenced())
-        {
             continue;
-        }
 
         isReference = 0;
         // loop through all pictures in the Reference Picture Set
@@ -346,19 +344,14 @@ void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
 NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, Frame* pic)
 {
     if (curPOC == 0)
-    {
         return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-    }
+
     if (pic->m_lowres.bKeyframe)
     {
         if (m_bOpenGOP)
-        {
             return NAL_UNIT_CODED_SLICE_CRA;
-        }
         else
-        {
             return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-        }
     }
     if (m_pocCRA > 0)
     {
@@ -375,9 +368,7 @@ NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, Frame* pic)
     if (lastIDR > 0)
     {
         if (curPOC < lastIDR)
-        {
             return NAL_UNIT_CODED_SLICE_RADL_R;
-        }
     }
     return NAL_UNIT_CODED_SLICE_TRAIL_R;
 }

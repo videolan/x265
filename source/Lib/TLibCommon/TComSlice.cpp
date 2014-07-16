@@ -211,19 +211,13 @@ void TComSlice::setRefPicList(PicList& picList)
 
     int cIdx = 0;
     for (i = 0; i < numPocStCurr0; i++, cIdx++)
-    {
         rpsCurrList0[cIdx] = refPicSetStCurr0[i];
-    }
 
     for (i = 0; i < numPocStCurr1; i++, cIdx++)
-    {
         rpsCurrList0[cIdx] = refPicSetStCurr1[i];
-    }
 
     for (i = 0; i < numPocLtCurr; i++, cIdx++)
-    {
         rpsCurrList0[cIdx] = refPicSetLtCurr[i];
-    }
 
     X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
 
@@ -231,19 +225,13 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         cIdx = 0;
         for (i = 0; i < numPocStCurr1; i++, cIdx++)
-        {
             rpsCurrList1[cIdx] = refPicSetStCurr1[i];
-        }
 
         for (i = 0; i < numPocStCurr0; i++, cIdx++)
-        {
             rpsCurrList1[cIdx] = refPicSetStCurr0[i];
-        }
 
         for (i = 0; i < numPocLtCurr; i++, cIdx++)
-        {
             rpsCurrList1[cIdx] = refPicSetLtCurr[i];
-        }
 
         X265_CHECK(cIdx == numPocTotalCurr, "RPS index check fail\n");
     }
