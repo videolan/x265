@@ -971,7 +971,7 @@ void SBac::codeScalingList(TComScalingList* scalingList)
             scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
             if (!scalingListPredModeFlag) // Copy Mode
-                WRITE_UVLC((int)listId - (int)scalingList->getRefMatrixId(sizeId, listId), "scaling_list_pred_matrix_id_delta");
+                WRITE_UVLC((int)listId - (int)scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
             else // DPCM Mode
                 codeScalingList(scalingList, sizeId, listId);
         }
@@ -984,45 +984,24 @@ void SBac::codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32
     const uint16_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
     int nextCoef = SCALING_LIST_START_VALUE;
     int data;
-    int32_t *src = scalingList->getScalingListAddress(sizeId, listId);
+    int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
 
     if (sizeId > SCALING_LIST_8x8)
     {
-        WRITE_SVLC(scalingList->getScalingListDC(sizeId, listId) - 8, "scaling_list_dc_coef_minus8");
-        nextCoef = scalingList->getScalingListDC(sizeId, listId);
+        WRITE_SVLC(scalingList->m_scalingListDC[sizeId][listId] - 8, "scaling_list_dc_coef_minus8");
+        nextCoef = scalingList->m_scalingListDC[sizeId][listId];
     }
     for (int i = 0; i < coefNum; i++)
     {
         data = src[scan[i]] - nextCoef;
         nextCoef = src[scan[i]];
         if (data > 127)
-        {
             data = data - 256;
-        }
         if (data < -128)
-        {
             data = data + 256;
-        }
 
         WRITE_SVLC(data,  "scaling_list_delta_coef");
     }
-}
-
-bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
-{
-    for (int predListIdx = listId; predListIdx >= 0; predListIdx--)
-    {
-        if (!memcmp(getScalingListAddress(sizeId, listId),
-                    ((listId == predListIdx) ? getScalingListDefaultAddress(sizeId, predListIdx) : getScalingListAddress(sizeId, predListIdx)),
-                    sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
-            && ((sizeId < SCALING_LIST_16x16) || (getScalingListDC(sizeId, listId) == getScalingListDC(sizeId, predListIdx)))) // check DC value
-        {
-            setRefMatrixId(sizeId, listId, predListIdx);
-            return false;
-        }
-    }
-
-    return true;
 }
 
 void SBac::codeSliceHeader(TComSlice* slice)

@@ -289,9 +289,7 @@ void FrameEncoder::initSlice(Frame* pic)
             m_isReferenced = false;
     }
     slice->setReferenced(m_isReferenced);
-
     slice->setScalingList(m_top->getScalingList());
-    slice->getScalingList()->setUseTransformSkip(m_pps.getUseTransformSkip());
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {

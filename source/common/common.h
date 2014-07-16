@@ -196,6 +196,7 @@ enum SCALING_LIST_PARAMETER
 {
     SCALING_LIST_OFF,
     SCALING_LIST_DEFAULT,
+    SCALING_LIST_FILE,
 };
 
 /* defined in common.cpp */

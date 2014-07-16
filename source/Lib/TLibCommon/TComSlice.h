@@ -76,40 +76,26 @@ class TComScalingList
 {
 public:
 
-    int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              //!< the DC value of the matrix coefficient for 16x16
-    bool     m_useDefaultScalingMatrixFlag[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];//!< UseDefaultScalingMatrixFlag
-    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                //!< RefMatrixID
-    bool     m_scalingListPresentFlag;                                              //!< flag for using default matrix
-    uint32_t m_predMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];               //!< reference list index
-    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];            //!< quantization matrix
-    bool     m_useTransformSkip;                                                    //!< transform skipping flag for setting default scaling matrix for 4x4
+    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                // used during coding
+    int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              // the DC value of the matrix coefficient for 16x16
+    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];            // quantization matrix
+    bool     m_scalingListPresentFlag;                                              // flag indicating this list is not default
 
     TComScalingList();
     ~TComScalingList();
 
-    void     init();
-    void     destroy();
+    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
+    void     processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId);
 
-    bool     getUseTransformSkip()                                          { return m_useTransformSkip; }
-
-    void     setUseTransformSkip(bool b)                                    { m_useTransformSkip = b; }
-
-    int32_t* getScalingListAddress(uint32_t sizeId, uint32_t listId)        { return m_scalingListCoef[sizeId][listId]; }
+    bool     checkDefaultScalingList();
+    void     checkDcOfMatrix();
+    void     setDefaultScalingList();
 
     bool     checkPredMode(uint32_t sizeId, int listId);
-    void     setRefMatrixId(uint32_t sizeId, uint32_t listId, uint32_t u)   { m_refMatrixId[sizeId][listId] = u; }
+    bool     parseScalingList(char* filename);
 
-    uint32_t getRefMatrixId(uint32_t sizeId, uint32_t listId)               { return m_refMatrixId[sizeId][listId]; }
-
-    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
+protected:
     void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
-    void     setScalingListDC(uint32_t sizeId, uint32_t listId, uint32_t u) { m_scalingListDC[sizeId][listId] = u; }
-
-    int      getScalingListDC(uint32_t sizeId, uint32_t listId)             { return m_scalingListDC[sizeId][listId]; }
-
-    void     checkDcOfMatrix();
-    void     processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId);
-    bool     xParseScalingList(char* pchFile);
 };
 
 struct ProfileTierLevel
@@ -846,7 +832,6 @@ public:
 
     TComScalingList*   getScalingList()        { return m_scalingList; }
 
-    bool  checkDefaultScalingList();
     void  setCabacInitFlag(bool val)   { m_cabacInitFlag = val; }   //!< set CABAC initial flag
 
     bool  getCabacInitFlag()           { return m_cabacInitFlag; }  //!< get CABAC initial flag
