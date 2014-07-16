@@ -674,11 +674,11 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(sps->getQuadtreeTULog2MaxSize() - sps->getQuadtreeTULog2MinSize(), "log2_diff_max_min_transform_block_size");
     WRITE_UVLC(sps->getQuadtreeTUMaxDepthInter() - 1,   "max_transform_hierarchy_depth_inter");
     WRITE_UVLC(sps->getQuadtreeTUMaxDepthIntra() - 1,   "max_transform_hierarchy_depth_intra");
-    WRITE_FLAG(sps->getScalingListFlag(),               "scaling_list_enabled_flag");
-    if (sps->getScalingListFlag())
+    WRITE_FLAG(scalingList->m_bEnabled,                 "scaling_list_enabled_flag");
+    if (scalingList->m_bEnabled)
     {
-        WRITE_FLAG(sps->getScalingListPresentFlag(),    "sps_scaling_list_data_present_flag");
-        if (sps->getScalingListPresentFlag() && scalingList)
+        WRITE_FLAG(scalingList->m_bDataPresent,         "sps_scaling_list_data_present_flag");
+        if (scalingList->m_bDataPresent)
             codeScalingList(scalingList);
     }
     WRITE_FLAG(sps->getUseAMP(), "amp_enabled_flag");
@@ -740,12 +740,11 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
             WRITE_SVLC(pps->getDeblockingFilterTcOffsetDiv2(),   "pps_tc_offset_div2");
         }
     }
-    WRITE_FLAG(pps->getScalingListPresentFlag(),         "pps_scaling_list_data_present_flag");
-    if (pps->getScalingListPresentFlag() && scalingList)
+    WRITE_FLAG(scalingList->m_bDataPresent,               "pps_scaling_list_data_present_flag");
+    if (scalingList->m_bDataPresent)
         codeScalingList(scalingList);
-
-    WRITE_FLAG(pps->getListsModificationPresentFlag(), "lists_modification_present_flag");
-    WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
+    WRITE_FLAG(0,                                         "lists_modification_present_flag");
+    WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(),    "log2_parallel_merge_level_minus2");
     WRITE_FLAG(pps->getSliceHeaderExtensionPresentFlag(), "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }

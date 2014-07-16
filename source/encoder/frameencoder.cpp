@@ -131,23 +131,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 
     m_sps.setTMVPFlagsPresent(true);
 
-    // set default slice level flag to the same as SPS level flag
-    if (m_top->m_useScalingListId == SCALING_LIST_OFF)
-    {
-        m_sps.setScalingListPresentFlag(false);
-        m_pps.setScalingListPresentFlag(false);
-    }
-    else if (m_top->m_useScalingListId == SCALING_LIST_DEFAULT)
-    {
-        m_sps.setScalingListPresentFlag(false);
-        m_pps.setScalingListPresentFlag(false);
-    }
-    else
-    {
-        x265_log(m_param, X265_LOG_ERROR, "ScalingList == %d not supported\n", m_top->m_useScalingListId);
-        ok = false;
-    }
-
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
     memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
@@ -289,7 +272,6 @@ void FrameEncoder::initSlice(Frame* pic)
             m_isReferenced = false;
     }
     slice->setReferenced(m_isReferenced);
-    slice->setScalingList(m_top->getScalingList());
 
     if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
     {

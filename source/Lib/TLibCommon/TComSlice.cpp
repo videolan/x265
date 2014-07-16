@@ -355,18 +355,11 @@ TComSPS::TComSPS()
     , m_qpBDOffsetC(0)
     , m_bitsForPOC(8)
     , m_bUseSAO(false)
-    , m_scalingListEnabledFlag(false)
     , m_useStrongIntraSmoothing(false)
 {
     m_maxLatencyIncrease = 0;
     m_maxDecPicBuffering = 1;
     m_numReorderPics     = 0;
-    m_scalingList = new TComScalingList;
-}
-
-TComSPS::~TComSPS()
-{
-    delete m_scalingList;
 }
 
 TComPPS::TComPPS()
@@ -388,15 +381,8 @@ TComPPS::TComPPS()
     , m_cabacInitPresentFlag(false)
     , m_encCABACTableIdx(I_SLICE)
     , m_sliceHeaderExtensionPresentFlag(false)
-    , m_listsModificationPresentFlag(0)
     , m_numExtraSliceHeaderBits(0)
 {
-    m_scalingList = new TComScalingList;
-}
-
-TComPPS::~TComPPS()
-{
-    delete m_scalingList;
 }
 
 /* Sorts the deltaPOC and Used by current values in the RPS based on the

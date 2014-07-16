@@ -1076,7 +1076,6 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setMaxDecPicBuffering(m_vps.m_maxDecPicBuffering);
     sps->setNumReorderPics(m_vps.m_numReorderPics);
 
-    sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
 
     TComVUI* vui = sps->getVuiParameters();
@@ -1365,11 +1364,26 @@ void Encoder::configure(x265_param *p)
     m_vps.m_numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
     m_vps.m_maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.m_numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.m_numReorderPics);
 
+    m_useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
+    switch (m_useScalingListId)
+    {
+    case SCALING_LIST_DEFAULT:
+        m_scalingList.setDefaultScalingList();
+        m_scalingList.m_bEnabled = true;
+        m_scalingList.m_bDataPresent = false;
+        break;
+    case SCALING_LIST_OFF:
+        m_scalingList.m_bEnabled = false;
+        m_scalingList.m_bDataPresent = false;
+        break;
+    case SCALING_LIST_FILE:
+        //m_scalingList.parseScalingList(filename);
+        m_scalingList.m_bEnabled = true;
+        m_scalingList.m_bDataPresent = m_scalingList.checkDefaultScalingList();
+        break;
+    }
+
     m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;
     m_log2ParallelMergeLevelMinus2 = 0;
-
-    m_useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
-    if (m_useScalingListId == SCALING_LIST_DEFAULT)
-        m_scalingList.setDefaultScalingList();
 }

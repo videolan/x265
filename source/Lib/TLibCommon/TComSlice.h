@@ -76,10 +76,11 @@ class TComScalingList
 {
 public:
 
-    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];                // used during coding
-    int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];              // the DC value of the matrix coefficient for 16x16
-    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];            // quantization matrix
-    bool     m_scalingListPresentFlag;                                              // flag indicating this list is not default
+    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];     // used during coding
+    int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];   // the DC value of the matrix coefficient for 16x16
+    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; // quantization matrix
+    bool     m_bEnabled;
+    bool     m_bDataPresent; // non-default scaling lists must be signaled
 
     TComScalingList();
     ~TComScalingList();
@@ -266,10 +267,6 @@ public:
     bool        m_useAMP;
     uint32_t    m_maxAMPDepth;
 
-    bool        m_scalingListEnabledFlag;
-    bool        m_scalingListPresentFlag;
-    TComScalingList* m_scalingList; //!< ScalingList class pointer
-
     uint32_t    m_maxDecPicBuffering;
     uint32_t    m_maxLatencyIncrease; // Really max latency increase plus 1 (value 0 expresses no limit)
 
@@ -278,7 +275,6 @@ public:
     TComVUI     m_vuiParameters;
 
     TComSPS();
-    ~TComSPS();
 
     int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
 
@@ -369,16 +365,6 @@ public:
 
     bool      getUseSAO() const { return m_bUseSAO; }
 
-    bool getScalingListFlag() const { return m_scalingListEnabledFlag; }
-
-    void setScalingListFlag(bool b) { m_scalingListEnabledFlag = b; }
-
-    bool getScalingListPresentFlag() const { return m_scalingListPresentFlag; }
-
-    void setScalingListPresentFlag(bool b) { m_scalingListPresentFlag = b; }
-
-    TComScalingList* getScalingList() { return m_scalingList; } //!< get ScalingList class pointer in SPS
-
     uint32_t getMaxDecPicBuffering() { return m_maxDecPicBuffering; }
 
     void setMaxDecPicBuffering(uint32_t ui) { m_maxDecPicBuffering = ui; }
@@ -439,17 +425,13 @@ private:
     bool     m_picDisableDeblockingFilterFlag;
     int      m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
     int      m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
-    bool     m_scalingListPresentFlag;
-    TComScalingList* m_scalingList; //!< ScalingList class pointer
 
-    bool     m_listsModificationPresentFlag;
     uint32_t m_log2ParallelMergeLevelMinus2;
     int      m_numExtraSliceHeaderBits;
 
 public:
 
     TComPPS();
-    ~TComPPS();
 
     int       getPicInitQPMinus26() const { return m_picInitQPMinus26; }
 
@@ -547,16 +529,6 @@ public:
 
     int      getDeblockingFilterTcOffsetDiv2()                { return m_deblockingFilterTcOffsetDiv2; }      //!< get tc offset for deblocking filter
 
-    bool     getScalingListPresentFlag() const { return m_scalingListPresentFlag; }
-
-    void     setScalingListPresentFlag(bool b) { m_scalingListPresentFlag = b; }
-
-    const TComScalingList* getScalingList() const { return m_scalingList; } //!< get ScalingList class pointer in PPS
-
-    bool getListsModificationPresentFlag() const { return m_listsModificationPresentFlag; }
-
-    void setListsModificationPresentFlag(bool b) { m_listsModificationPresentFlag = b; }
-
     uint32_t getLog2ParallelMergeLevelMinus2() const { return m_log2ParallelMergeLevelMinus2; }
 
     void setLog2ParallelMergeLevelMinus2(uint32_t mrgLevel) { m_log2ParallelMergeLevelMinus2 = mrgLevel; }
@@ -648,7 +620,6 @@ private:
     uint32_t    m_sliceSegmentBits;
 
     uint32_t*   m_substreamSizes;
-    TComScalingList* m_scalingList; //!< pointer of quantization matrix
     bool        m_cabacInitFlag;
 
     bool       m_bLMvdL1Zero;
@@ -827,10 +798,6 @@ public:
 
     void allocSubstreamSizes(uint32_t numStreams);
     uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
-
-    void  setScalingList(TComScalingList* scalingList) { m_scalingList = scalingList; }
-
-    TComScalingList*   getScalingList()        { return m_scalingList; }
 
     void  setCabacInitFlag(bool val)   { m_cabacInitFlag = val; }   //!< set CABAC initial flag
 
