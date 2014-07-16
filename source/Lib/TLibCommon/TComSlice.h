@@ -423,7 +423,6 @@ private:
     bool     m_cabacInitPresentFlag;
     uint32_t m_encCABACTableIdx;         // Used to transmit table selection across slices
 
-    bool     m_sliceHeaderExtensionPresentFlag;
     bool     m_deblockingFilterControlPresentFlag;
     bool     m_deblockingFilterOverrideEnabledFlag;
     bool     m_picDisableDeblockingFilterFlag;
@@ -540,10 +539,6 @@ public:
     int getNumExtraSliceHeaderBits() const { return m_numExtraSliceHeaderBits; }
 
     void setNumExtraSliceHeaderBits(int i) { m_numExtraSliceHeaderBits = i; }
-
-    bool getSliceHeaderExtensionPresentFlag() const    { return m_sliceHeaderExtensionPresentFlag; }
-
-    void setSliceHeaderExtensionPresentFlag(bool val)  { m_sliceHeaderExtensionPresentFlag = val; }
 };
 
 typedef struct wpScalingParam

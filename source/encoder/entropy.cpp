@@ -743,9 +743,9 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(scalingList->m_bDataPresent,               "pps_scaling_list_data_present_flag");
     if (scalingList->m_bDataPresent)
         codeScalingList(scalingList);
-    WRITE_FLAG(0,                                         "lists_modification_present_flag");
+    WRITE_FLAG(0,  "lists_modification_present_flag");
     WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(),    "log2_parallel_merge_level_minus2");
-    WRITE_FLAG(pps->getSliceHeaderExtensionPresentFlag(), "slice_segment_header_extension_present_flag");
+    WRITE_FLAG(0, "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
@@ -1140,9 +1140,6 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (isSAOEnabled || isDBFEnabled)
         WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
-
-    if (slice->getPPS()->getSliceHeaderExtensionPresentFlag())
-        WRITE_UVLC(0, "slice_header_extension_length");
 }
 
 /** write wavefront substreams sizes for the slice header */

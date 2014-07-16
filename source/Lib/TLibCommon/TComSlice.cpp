@@ -380,7 +380,6 @@ TComPPS::TComPPS()
     , m_signHideFlag(0)
     , m_cabacInitPresentFlag(false)
     , m_encCABACTableIdx(I_SLICE)
-    , m_sliceHeaderExtensionPresentFlag(false)
     , m_numExtraSliceHeaderBits(0)
 {
 }
