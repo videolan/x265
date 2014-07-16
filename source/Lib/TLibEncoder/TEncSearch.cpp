@@ -2814,7 +2814,8 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         }
 
         int partSize = partitionFromLog2Size(log2TrSize);
-        uint32_t distY = primitives.sse_sp[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, (pixel*)RDCost::zeroPel, 0);
+        assert(log2TrSize <= 5);
+        uint32_t distY = primitives.ssd_s[log2TrSize - 2](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width);
         uint32_t psyEnergyY = 0;
         if (m_rdCost.psyRdEnabled())
         {
@@ -2923,7 +2924,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
                 int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
 
-                distU = m_rdCost.scaleChromaDistCb(primitives.sse_sp[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, 0));
+                distU = m_rdCost.scaleChromaDistCb(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth));
 
                 if (outZeroDist)
                     *outZeroDist += distU;
@@ -3008,7 +3009,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 if (!numSigU[tuIterator.section])
                     primitives.blockfill_s[sizeIdxC](curResiU, strideResiC, 0);
 
-                distV = m_rdCost.scaleChromaDistCr(primitives.sse_sp[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, (pixel*)RDCost::zeroPel, 0));
+                distV = m_rdCost.scaleChromaDistCr(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth));
                 if (outZeroDist)
                     *outZeroDist += distV;
 

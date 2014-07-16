@@ -375,6 +375,21 @@ int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return cost;
 }
 
+template<int size>
+int pixel_ssd_s_c(short *a, intptr_t dstride)
+{
+    int sum = 0;
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            sum += a[x] * a[x];
+        }
+        a += dstride;
+    }
+    return sum;
+}
+
 void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
@@ -1199,6 +1214,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[BLOCK_16x16] = transpose<16>;
     p.transpose[BLOCK_32x32] = transpose<32>;
     p.transpose[BLOCK_64x64] = transpose<64>;
+
+    p.ssd_s[BLOCK_4x4] = pixel_ssd_s_c<4>;
+    p.ssd_s[BLOCK_8x8] = pixel_ssd_s_c<8>;
+    p.ssd_s[BLOCK_16x16] = pixel_ssd_s_c<16>;
+    p.ssd_s[BLOCK_32x32] = pixel_ssd_s_c<32>;
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;

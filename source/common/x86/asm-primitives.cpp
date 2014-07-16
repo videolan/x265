@@ -1024,6 +1024,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
         p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
 
+        // TODO: overflow on 12-bits mode!
+        p.ssd_s[BLOCK_4x4] = x265_pixel_ssd_s_4_sse2;
+        p.ssd_s[BLOCK_8x8] = x265_pixel_ssd_s_8_sse2;
+        p.ssd_s[BLOCK_16x16] = x265_pixel_ssd_s_16_sse2;
+        p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_sse2;
+
         p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;
         p.calcresidual[BLOCK_8x8] = x265_getResidual8_sse2;
         p.calcresidual[BLOCK_16x16] = x265_getResidual16_sse2;
@@ -1155,6 +1161,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.blockfill_s[BLOCK_8x8] = x265_blockfill_s_8x8_sse2;
         p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_sse2;
         p.blockfill_s[BLOCK_32x32] = x265_blockfill_s_32x32_sse2;
+
+        p.ssd_s[BLOCK_4x4] = x265_pixel_ssd_s_4_sse2;
+        p.ssd_s[BLOCK_8x8] = x265_pixel_ssd_s_8_sse2;
+        p.ssd_s[BLOCK_16x16] = x265_pixel_ssd_s_16_sse2;
+        p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_sse2;
 
         p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
         SA8D_INTER_FROM_BLOCK(sse2);
@@ -1315,6 +1326,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT2_NAME(sse_pp, ssd, _avx2);
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx2;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
+        p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }

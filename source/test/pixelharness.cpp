@@ -394,6 +394,28 @@ bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
     return true;
 }
 
+bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
+{
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        // NOTE: stride must be multiple of 16, because minimum block is 4x4
+        int stride = (STRIDE + (rand() % STRIDE)) & ~15;
+        int cres = ref(sbuf1 + j, stride);
+        int vres = (int)checked(opt, sbuf1 + j, (intptr_t)stride);
+
+        if (cres != vres)
+        {
+            return false;
+        }
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1312,6 +1334,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
+        if ((i <= BLOCK_32x32) && opt.ssd_s[i])
+        {
+            if (!check_ssd_s(ref.ssd_s[i], opt.ssd_s[i]))
+            {
+                printf("ssd_s[%dx%d]: failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
         if (opt.blockfill_s[i])
         {
             if (!check_blockfill_s(ref.blockfill_s[i], opt.blockfill_s[i]))
@@ -1656,6 +1687,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
+        if ((i <= BLOCK_32x32) && opt.ssd_s[i])
+        {
+            HEADER("ssd_s[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.ssd_s[i], ref.ssd_s[i], sbuf1, STRIDE);
+        }
         if (opt.sa8d[i])
         {
             HEADER("sa8d[%dx%d]", 4 << i, 4 << i);
