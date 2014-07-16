@@ -1332,11 +1332,11 @@ void Encoder::configure(x265_param *p)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
-    m_defaultDisplayWindow.m_enabledFlag = p->vui.bEnableDefaultDisplayWindowFlag;
-    m_defaultDisplayWindow.m_winRightOffset = p->vui.defDispWinRightOffset;
-    m_defaultDisplayWindow.m_winTopOffset = p->vui.defDispWinTopOffset;
-    m_defaultDisplayWindow.m_winBottomOffset = p->vui.defDispWinBottomOffset;
-    m_defaultDisplayWindow.m_winLeftOffset = p->vui.defDispWinLeftOffset;
+    m_defaultDisplayWindow.bEnabled = p->vui.bEnableDefaultDisplayWindowFlag;
+    m_defaultDisplayWindow.rightOffset = p->vui.defDispWinRightOffset;
+    m_defaultDisplayWindow.topOffset = p->vui.defDispWinTopOffset;
+    m_defaultDisplayWindow.bottomOffset = p->vui.defDispWinBottomOffset;
+    m_defaultDisplayWindow.leftOffset = p->vui.defDispWinLeftOffset;
     m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
@@ -1351,8 +1351,8 @@ void Encoder::configure(x265_param *p)
         m_pad[0] = padsize; //pad width
 
         /* set the confirmation window offsets  */
-        m_conformanceWindow.m_enabledFlag = true;
-        m_conformanceWindow.m_winRightOffset = m_pad[0];
+        m_conformanceWindow.bEnabled = true;
+        m_conformanceWindow.rightOffset += m_pad[0];
     }
 
     //======== set pad size if height is not multiple of the minimum CU size =========
@@ -1365,8 +1365,8 @@ void Encoder::configure(x265_param *p)
         m_pad[1] = padsize; //pad height
 
         /* set the confirmation window offsets  */
-        m_conformanceWindow.m_enabledFlag = true;
-        m_conformanceWindow.m_winBottomOffset = m_pad[1];
+        m_conformanceWindow.bEnabled = true;
+        m_conformanceWindow.bottomOffset += m_pad[1];
     }
 
     //====== HM Settings not exposed for configuration ======

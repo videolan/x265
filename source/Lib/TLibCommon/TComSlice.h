@@ -200,23 +200,17 @@ public:
     }
 };
 
-class Window
+struct Window
 {
 public:
 
-    bool          m_enabledFlag;
-    int           m_winLeftOffset;
-    int           m_winRightOffset;
-    int           m_winTopOffset;
-    int           m_winBottomOffset;
+    bool          bEnabled;
+    int           leftOffset;
+    int           rightOffset;
+    int           topOffset;
+    int           bottomOffset;
 
-    Window()
-        : m_enabledFlag(false)
-        , m_winLeftOffset(0)
-        , m_winRightOffset(0)
-        , m_winTopOffset(0)
-        , m_winBottomOffset(0)
-    {}
+    Window() : bEnabled(false) {}
 };
 
 struct TComVUI

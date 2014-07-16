@@ -650,13 +650,13 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(sps->getPicHeightInLumaSamples(),  "pic_height_in_luma_samples");
     Window conf = sps->getConformanceWindow();
 
-    WRITE_FLAG(conf.m_enabledFlag, "conformance_window_flag");
-    if (conf.m_enabledFlag)
+    WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
+    if (conf.bEnabled)
     {
-        WRITE_UVLC(conf.m_winLeftOffset   / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_left_offset");
-        WRITE_UVLC(conf.m_winRightOffset  / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_right_offset");
-        WRITE_UVLC(conf.m_winTopOffset    / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_top_offset");
-        WRITE_UVLC(conf.m_winBottomOffset / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_bottom_offset");
+        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_left_offset");
+        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps->getChromaFormatIdc()], "conf_win_right_offset");
+        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_top_offset");
+        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps->getChromaFormatIdc()], "conf_win_bottom_offset");
     }
 
     WRITE_UVLC(sps->getBitDepthY() - 8,  "bit_depth_luma_minus8");
@@ -793,13 +793,13 @@ void SBac::codeVUI(TComVUI *vui)
     WRITE_FLAG(vui->frameFieldInfoPresentFlag,          "frame_field_info_present_flag");
 
     Window defaultDisplayWindow = vui->defaultDisplayWindow;
-    WRITE_FLAG(defaultDisplayWindow.m_enabledFlag,           "default_display_window_flag");
-    if (defaultDisplayWindow.m_enabledFlag)
+    WRITE_FLAG(defaultDisplayWindow.bEnabled,           "default_display_window_flag");
+    if (defaultDisplayWindow.bEnabled)
     {
-        WRITE_UVLC(defaultDisplayWindow.m_winLeftOffset,     "def_disp_win_left_offset");
-        WRITE_UVLC(defaultDisplayWindow.m_winRightOffset,    "def_disp_win_right_offset");
-        WRITE_UVLC(defaultDisplayWindow.m_winTopOffset,      "def_disp_win_top_offset");
-        WRITE_UVLC(defaultDisplayWindow.m_winBottomOffset,   "def_disp_win_bottom_offset");
+        WRITE_UVLC(defaultDisplayWindow.leftOffset,     "def_disp_win_left_offset");
+        WRITE_UVLC(defaultDisplayWindow.rightOffset,    "def_disp_win_right_offset");
+        WRITE_UVLC(defaultDisplayWindow.topOffset,      "def_disp_win_top_offset");
+        WRITE_UVLC(defaultDisplayWindow.bottomOffset,   "def_disp_win_bottom_offset");
     }
 
     TimingInfo *timingInfo = &vui->timingInfo;
