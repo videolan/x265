@@ -145,16 +145,6 @@ public:
 
     int                m_useScalingListId; ///< Using quantization matrix i.e. 0=off, 1=default.
 
-    bool               m_neutralChromaIndicationFlag;
-    bool               m_tilesFixedStructureFlag;
-    bool               m_motionVectorsOverPicBoundariesFlag;
-    bool               m_restrictedRefPicListsFlag;
-    int                m_minSpatialSegmentationIdc;
-    int                m_maxBytesPerPicDenom;
-    int                m_maxBitsPerMinCuDenom;
-    int                m_log2MaxMvLengthHorizontal;
-    int                m_log2MaxMvLengthVertical;
-
     x265_param*        m_param;
     RateControl*       m_rateControl;
     ThreadLocalData*   m_threadLocalData;

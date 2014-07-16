@@ -219,206 +219,40 @@ public:
     {}
 };
 
-class TComVUI
+struct TComVUI
 {
-private:
+    bool       aspectRatioInfoPresentFlag;
+    int        aspectRatioIdc;
+    int        sarWidth;
+    int        sarHeight;
 
-    bool m_aspectRatioInfoPresentFlag;
-    int  m_aspectRatioIdc;
-    int  m_sarWidth;
-    int  m_sarHeight;
-    bool m_overscanInfoPresentFlag;
-    bool m_overscanAppropriateFlag;
-    bool m_videoSignalTypePresentFlag;
-    int  m_videoFormat;
-    bool m_videoFullRangeFlag;
-    bool m_colourDescriptionPresentFlag;
-    int  m_colourPrimaries;
-    int  m_transferCharacteristics;
-    int  m_matrixCoefficients;
-    bool m_chromaLocInfoPresentFlag;
-    int  m_chromaSampleLocTypeTopField;
-    int  m_chromaSampleLocTypeBottomField;
-    bool m_neutralChromaIndicationFlag;
-    bool m_fieldSeqFlag;
+    bool       overscanInfoPresentFlag;
+    bool       overscanAppropriateFlag;
 
-    Window m_defaultDisplayWindow;
-    bool m_frameFieldInfoPresentFlag;
-    bool m_hrdParametersPresentFlag;
-    bool m_bitstreamRestrictionFlag;
-    bool m_tilesFixedStructureFlag;
-    bool m_motionVectorsOverPicBoundariesFlag;
-    bool m_restrictedRefPicListsFlag;
-    int  m_minSpatialSegmentationIdc;
-    int  m_maxBytesPerPicDenom;
-    int  m_maxBitsPerMinCuDenom;
-    int  m_log2MaxMvLengthHorizontal;
-    int  m_log2MaxMvLengthVertical;
-    TComHRD m_hrdParameters;
-    TimingInfo m_timingInfo;
+    bool       videoSignalTypePresentFlag;
+    int        videoFormat;
+    bool       videoFullRangeFlag;
 
-public:
+    bool       colourDescriptionPresentFlag;
+    int        colourPrimaries;
+    int        transferCharacteristics;
+    int        matrixCoefficients;
 
-    TComVUI()
-        : m_aspectRatioInfoPresentFlag(false)
-        , m_aspectRatioIdc(0)
-        , m_sarWidth(0)
-        , m_sarHeight(0)
-        , m_overscanInfoPresentFlag(false)
-        , m_overscanAppropriateFlag(false)
-        , m_videoSignalTypePresentFlag(false)
-        , m_videoFormat(5)
-        , m_videoFullRangeFlag(false)
-        , m_colourDescriptionPresentFlag(false)
-        , m_colourPrimaries(2)
-        , m_transferCharacteristics(2)
-        , m_matrixCoefficients(2)
-        , m_chromaLocInfoPresentFlag(false)
-        , m_chromaSampleLocTypeTopField(0)
-        , m_chromaSampleLocTypeBottomField(0)
-        , m_neutralChromaIndicationFlag(false)
-        , m_fieldSeqFlag(false)
-        , m_frameFieldInfoPresentFlag(false)
-        , m_hrdParametersPresentFlag(false)
-        , m_bitstreamRestrictionFlag(false)
-        , m_tilesFixedStructureFlag(false)
-        , m_motionVectorsOverPicBoundariesFlag(true)
-        , m_restrictedRefPicListsFlag(1)
-        , m_minSpatialSegmentationIdc(0)
-        , m_maxBytesPerPicDenom(2)
-        , m_maxBitsPerMinCuDenom(1)
-        , m_log2MaxMvLengthHorizontal(15)
-        , m_log2MaxMvLengthVertical(15)
-    {}
+    bool       chromaLocInfoPresentFlag;
+    int        chromaSampleLocTypeTopField;
+    int        chromaSampleLocTypeBottomField;
 
-    ~TComVUI() {}
+    Window     defaultDisplayWindow;
 
-    bool getAspectRatioInfoPresentFlag() { return m_aspectRatioInfoPresentFlag; }
+    bool       frameFieldInfoPresentFlag;
+    bool       fieldSeqFlag;
 
-    void setAspectRatioInfoPresentFlag(bool i) { m_aspectRatioInfoPresentFlag = i; }
+    bool       hrdParametersPresentFlag;
+    TComHRD    hrdParameters;
 
-    int getAspectRatioIdc() { return m_aspectRatioIdc; }
-
-    void setAspectRatioIdc(int i) { m_aspectRatioIdc = i; }
-
-    int getSarWidth() { return m_sarWidth; }
-
-    void setSarWidth(int i) { m_sarWidth = i; }
-
-    int getSarHeight() { return m_sarHeight; }
-
-    void setSarHeight(int i) { m_sarHeight = i; }
-
-    bool getOverscanInfoPresentFlag() { return m_overscanInfoPresentFlag; }
-
-    void setOverscanInfoPresentFlag(bool i) { m_overscanInfoPresentFlag = i; }
-
-    bool getOverscanAppropriateFlag() { return m_overscanAppropriateFlag; }
-
-    void setOverscanAppropriateFlag(bool i) { m_overscanAppropriateFlag = i; }
-
-    bool getVideoSignalTypePresentFlag() { return m_videoSignalTypePresentFlag; }
-
-    void setVideoSignalTypePresentFlag(bool i) { m_videoSignalTypePresentFlag = i; }
-
-    int getVideoFormat() { return m_videoFormat; }
-
-    void setVideoFormat(int i) { m_videoFormat = i; }
-
-    bool getVideoFullRangeFlag() { return m_videoFullRangeFlag; }
-
-    void setVideoFullRangeFlag(bool i) { m_videoFullRangeFlag = i; }
-
-    bool getColourDescriptionPresentFlag() { return m_colourDescriptionPresentFlag; }
-
-    void setColourDescriptionPresentFlag(bool i) { m_colourDescriptionPresentFlag = i; }
-
-    int getColourPrimaries() { return m_colourPrimaries; }
-
-    void setColourPrimaries(int i) { m_colourPrimaries = i; }
-
-    int getTransferCharacteristics() { return m_transferCharacteristics; }
-
-    void setTransferCharacteristics(int i) { m_transferCharacteristics = i; }
-
-    int getMatrixCoefficients() { return m_matrixCoefficients; }
-
-    void setMatrixCoefficients(int i) { m_matrixCoefficients = i; }
-
-    bool getChromaLocInfoPresentFlag() { return m_chromaLocInfoPresentFlag; }
-
-    void setChromaLocInfoPresentFlag(bool i) { m_chromaLocInfoPresentFlag = i; }
-
-    int getChromaSampleLocTypeTopField() { return m_chromaSampleLocTypeTopField; }
-
-    void setChromaSampleLocTypeTopField(int i) { m_chromaSampleLocTypeTopField = i; }
-
-    int getChromaSampleLocTypeBottomField() { return m_chromaSampleLocTypeBottomField; }
-
-    void setChromaSampleLocTypeBottomField(int i) { m_chromaSampleLocTypeBottomField = i; }
-
-    bool getNeutralChromaIndicationFlag() { return m_neutralChromaIndicationFlag; }
-
-    void setNeutralChromaIndicationFlag(bool i) { m_neutralChromaIndicationFlag = i; }
-
-    bool getFieldSeqFlag() { return m_fieldSeqFlag; }
-
-    void setFieldSeqFlag(bool i) { m_fieldSeqFlag = i; }
-
-    bool getFrameFieldInfoPresentFlag() { return m_frameFieldInfoPresentFlag; }
-
-    void setFrameFieldInfoPresentFlag(bool i) { m_frameFieldInfoPresentFlag = i; }
-
-    Window& getDefaultDisplayWindow() { return m_defaultDisplayWindow; }
-
-    void setDefaultDisplayWindow(Window& defaultDisplayWindow) { m_defaultDisplayWindow = defaultDisplayWindow; }
-
-    bool getHrdParametersPresentFlag() { return m_hrdParametersPresentFlag; }
-
-    void setHrdParametersPresentFlag(bool i) { m_hrdParametersPresentFlag = i; }
-
-    bool getBitstreamRestrictionFlag() { return m_bitstreamRestrictionFlag; }
-
-    void setBitstreamRestrictionFlag(bool i) { m_bitstreamRestrictionFlag = i; }
-
-    bool getTilesFixedStructureFlag() { return m_tilesFixedStructureFlag; }
-
-    void setTilesFixedStructureFlag(bool i) { m_tilesFixedStructureFlag = i; }
-
-    bool getMotionVectorsOverPicBoundariesFlag() { return m_motionVectorsOverPicBoundariesFlag; }
-
-    void setMotionVectorsOverPicBoundariesFlag(bool i) { m_motionVectorsOverPicBoundariesFlag = i; }
-
-    bool getRestrictedRefPicListsFlag() { return m_restrictedRefPicListsFlag; }
-
-    void setRestrictedRefPicListsFlag(bool b) { m_restrictedRefPicListsFlag = b; }
-
-    int getMinSpatialSegmentationIdc() { return m_minSpatialSegmentationIdc; }
-
-    void setMinSpatialSegmentationIdc(int i) { m_minSpatialSegmentationIdc = i; }
-
-    int getMaxBytesPerPicDenom() { return m_maxBytesPerPicDenom; }
-
-    void setMaxBytesPerPicDenom(int i) { m_maxBytesPerPicDenom = i; }
-
-    int getMaxBitsPerMinCuDenom() { return m_maxBitsPerMinCuDenom; }
-
-    void setMaxBitsPerMinCuDenom(int i) { m_maxBitsPerMinCuDenom = i; }
-
-    int getLog2MaxMvLengthHorizontal() { return m_log2MaxMvLengthHorizontal; }
-
-    void setLog2MaxMvLengthHorizontal(int i) { m_log2MaxMvLengthHorizontal = i; }
-
-    int getLog2MaxMvLengthVertical() { return m_log2MaxMvLengthVertical; }
-
-    void setLog2MaxMvLengthVertical(int i) { m_log2MaxMvLengthVertical = i; }
-
-    TComHRD* getHrdParameters() { return &m_hrdParameters; }
-
-    TimingInfo* getTimingInfo() { return &m_timingInfo; }
+    TimingInfo timingInfo;
 };
 
-/// SPS class
 class TComSPS
 {
 public:
@@ -466,7 +300,6 @@ public:
 
     bool        m_useStrongIntraSmoothing;
 
-    bool        m_vuiParametersPresentFlag;
     TComVUI     m_vuiParameters;
 
     TComSPS();
@@ -586,10 +419,6 @@ public:
     void setUseStrongIntraSmoothing(bool bVal) { m_useStrongIntraSmoothing = bVal; }
 
     bool getUseStrongIntraSmoothing() const { return m_useStrongIntraSmoothing; }
-
-    bool getVuiParametersPresentFlag() { return m_vuiParametersPresentFlag; }
-
-    void setVuiParametersPresentFlag(bool b) { m_vuiParametersPresentFlag = b; }
 
     TComVUI* getVuiParameters() { return &m_vuiParameters; }
 

@@ -413,10 +413,10 @@ void FrameEncoder::compressFrame()
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
         TComVUI *vui = slice->getSPS()->getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
+        TComHRD *hrd = &vui->hrdParameters;
         int poc = slice->getPOC();
 
-        if (vui->getFrameFieldInfoPresentFlag())
+        if (vui->frameFieldInfoPresentFlag)
         {
             if (m_param->interlaceMode == 2)
                 sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
@@ -428,7 +428,7 @@ void FrameEncoder::compressFrame()
             sei->m_duplicateFlag = false;
         }
 
-        if (vui->getHrdParametersPresentFlag())
+        if (vui->hrdParametersPresentFlag)
         {
             // The m_aucpbremoval delay specifies how many clock ticks the
             // access unit associated with the picture timing SEI message has to

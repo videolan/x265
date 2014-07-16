@@ -648,7 +648,7 @@ bool RateControl::init(TComSPS *sps)
 
         if (m_param->bEmitHRDSEI)
         {
-            TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
+            TComHRD* hrd = &sps->getVuiParameters()->hrdParameters;
             vbvBufferSize = 1 << (hrd->cpbSizeScale + CPB_SHIFT);
             vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
         }
@@ -694,7 +694,7 @@ void RateControl::initHRD(TComSPS *sps)
     int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
 
     // Init HRD
-    TComHRD* hrd = sps->getVuiParameters()->getHrdParameters();
+    TComHRD* hrd = &sps->getVuiParameters()->hrdParameters;
     hrd->cbrFlag = m_isCbr;
 
     // normalize HRD size and rate to the value / scale notation
@@ -709,7 +709,7 @@ void RateControl::initHRD(TComSPS *sps)
     // arbitrary
     #define MAX_DURATION 0.5
 
-    TimingInfo *time = sps->getVuiParameters()->getTimingInfo();
+    TimingInfo *time = &sps->getVuiParameters()->timingInfo;
     int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->timeScale / time->numUnitsInTick, INT_MAX));
     int maxDpbOutputDelay = (int)(sps->getMaxDecPicBuffering() * MAX_DURATION * time->timeScale / time->numUnitsInTick);
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
@@ -1394,7 +1394,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
 {
     TComVUI* vui = m_curSlice->getSPS()->getVuiParameters();
-    TComHRD* hrd = vui->getHrdParameters();
+    TComHRD* hrd = &vui->hrdParameters;
     int num = 90000;
     int denom = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
     reduceFraction(&num, &denom);
@@ -1950,8 +1950,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
         if (m_param->bEmitHRDSEI)
         {
             TComVUI *vui = pic->getSlice()->getSPS()->getVuiParameters();
-            TComHRD *hrd = vui->getHrdParameters();
-            TimingInfo *time = vui->getTimingInfo();
+            TComHRD *hrd = &vui->hrdParameters;
+            TimingInfo *time = &vui->timingInfo;
             if (pic->getSlice()->getPOC() == 0)
             {
                 // first access unit initializes the HRD

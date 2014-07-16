@@ -1092,47 +1092,38 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setScalingListFlag((m_useScalingListId == 0) ? 0 : 1);
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
 
-    sps->setVuiParametersPresentFlag(true); // TODO: this is redundant, hard-code it
     TComVUI* vui = sps->getVuiParameters();
-    vui->setAspectRatioInfoPresentFlag(!!m_param->vui.aspectRatioIdc);
-    vui->setAspectRatioIdc(m_param->vui.aspectRatioIdc);
-    vui->setSarWidth(m_param->vui.sarWidth);
-    vui->setSarHeight(m_param->vui.sarHeight);
+    vui->aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
+    vui->aspectRatioIdc = m_param->vui.aspectRatioIdc;
+    vui->sarWidth = m_param->vui.sarWidth;
+    vui->sarHeight = m_param->vui.sarHeight;
 
-    vui->setOverscanInfoPresentFlag(m_param->vui.bEnableOverscanInfoPresentFlag);
-    vui->setOverscanAppropriateFlag(m_param->vui.bEnableOverscanAppropriateFlag);
+    vui->overscanInfoPresentFlag = m_param->vui.bEnableOverscanInfoPresentFlag;
+    vui->overscanAppropriateFlag = m_param->vui.bEnableOverscanAppropriateFlag;
 
-    vui->setVideoSignalTypePresentFlag(m_param->vui.bEnableVideoSignalTypePresentFlag);
-    vui->setVideoFormat(m_param->vui.videoFormat);
-    vui->setVideoFullRangeFlag(m_param->vui.bEnableVideoFullRangeFlag);
-    vui->setColourDescriptionPresentFlag(m_param->vui.bEnableColorDescriptionPresentFlag);
-    vui->setColourPrimaries(m_param->vui.colorPrimaries);
-    vui->setTransferCharacteristics(m_param->vui.transferCharacteristics);
-    vui->setMatrixCoefficients(m_param->vui.matrixCoeffs);
-    vui->setChromaLocInfoPresentFlag(m_param->vui.bEnableChromaLocInfoPresentFlag);
-    vui->setChromaSampleLocTypeTopField(m_param->vui.chromaSampleLocTypeTopField);
-    vui->setChromaSampleLocTypeBottomField(m_param->vui.chromaSampleLocTypeBottomField);
-    vui->setNeutralChromaIndicationFlag(m_neutralChromaIndicationFlag);
-    vui->setDefaultDisplayWindow(m_defaultDisplayWindow);
+    vui->videoSignalTypePresentFlag = m_param->vui.bEnableVideoSignalTypePresentFlag;
+    vui->videoFormat = m_param->vui.videoFormat;
+    vui->videoFullRangeFlag = m_param->vui.bEnableVideoFullRangeFlag;
 
-    vui->setFrameFieldInfoPresentFlag(!!m_param->interlaceMode);
-    vui->setFieldSeqFlag(!!m_param->interlaceMode);
+    vui->colourDescriptionPresentFlag = m_param->vui.bEnableColorDescriptionPresentFlag;
+    vui->colourPrimaries = m_param->vui.colorPrimaries;
+    vui->transferCharacteristics = m_param->vui.transferCharacteristics;
+    vui->matrixCoefficients = m_param->vui.matrixCoeffs;
 
-    vui->setHrdParametersPresentFlag(m_param->bEmitHRDSEI);
+    vui->chromaLocInfoPresentFlag = m_param->vui.bEnableChromaLocInfoPresentFlag;
+    vui->chromaSampleLocTypeTopField = m_param->vui.chromaSampleLocTypeTopField;
+    vui->chromaSampleLocTypeBottomField = m_param->vui.chromaSampleLocTypeBottomField;
 
-    vui->getTimingInfo()->timingInfoPresentFlag = true;
-    vui->getTimingInfo()->numUnitsInTick = m_param->fpsDenom;
-    vui->getTimingInfo()->timeScale = m_param->fpsNum;
+    vui->defaultDisplayWindow = m_defaultDisplayWindow;
 
-    vui->setBitstreamRestrictionFlag(false); // TODO: clean these up if we're not signaling them
-    vui->setTilesFixedStructureFlag(m_tilesFixedStructureFlag);
-    vui->setMotionVectorsOverPicBoundariesFlag(m_motionVectorsOverPicBoundariesFlag);
-    vui->setRestrictedRefPicListsFlag(m_restrictedRefPicListsFlag);
-    vui->setMinSpatialSegmentationIdc(m_minSpatialSegmentationIdc);
-    vui->setMaxBytesPerPicDenom(m_maxBytesPerPicDenom);
-    vui->setMaxBitsPerMinCuDenom(m_maxBitsPerMinCuDenom);
-    vui->setLog2MaxMvLengthHorizontal(m_log2MaxMvLengthHorizontal);
-    vui->setLog2MaxMvLengthVertical(m_log2MaxMvLengthVertical);
+    vui->frameFieldInfoPresentFlag = !!m_param->interlaceMode;
+    vui->fieldSeqFlag = !!m_param->interlaceMode;
+
+    vui->hrdParametersPresentFlag = m_param->bEmitHRDSEI;
+
+    vui->timingInfo.timingInfoPresentFlag = true;
+    vui->timingInfo.numUnitsInTick = m_param->fpsDenom;
+    vui->timingInfo.timeScale = m_param->fpsNum;
 }
 
 void Encoder::initPPS(TComPPS *pps)
@@ -1395,12 +1386,4 @@ void Encoder::configure(x265_param *p)
     if (m_useScalingListId == SCALING_LIST_DEFAULT)
         // set default quantization matrix to array
         setDefaultScalingList();
-
-    m_minSpatialSegmentationIdc = 0;
-    m_neutralChromaIndicationFlag = false;
-    m_motionVectorsOverPicBoundariesFlag = false;
-    m_maxBytesPerPicDenom = 2;
-    m_maxBitsPerMinCuDenom = 1;
-    m_log2MaxMvLengthHorizontal = 15;
-    m_log2MaxMvLengthVertical = 15;
 }

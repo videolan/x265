@@ -691,9 +691,8 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_FLAG(sps->getTMVPFlagsPresent()  ? 1 : 0,        "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps->getUseStrongIntraSmoothing(),          "sps_strong_intra_smoothing_enable_flag");
 
-    WRITE_FLAG(sps->getVuiParametersPresentFlag(),         "vui_parameters_present_flag");
-    if (sps->getVuiParametersPresentFlag())
-        codeVUI(sps->getVuiParameters());
+    WRITE_FLAG(1, "vui_parameters_present_flag");
+    codeVUI(sps->getVuiParameters());
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -753,47 +752,47 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 
 void SBac::codeVUI(TComVUI *vui)
 {
-    WRITE_FLAG(vui->getAspectRatioInfoPresentFlag(),  "aspect_ratio_info_present_flag");
-    if (vui->getAspectRatioInfoPresentFlag())
+    WRITE_FLAG(vui->aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
+    if (vui->aspectRatioInfoPresentFlag)
     {
-        WRITE_CODE(vui->getAspectRatioIdc(), 8,       "aspect_ratio_idc");
-        if (vui->getAspectRatioIdc() == 255)
+        WRITE_CODE(vui->aspectRatioIdc, 8,       "aspect_ratio_idc");
+        if (vui->aspectRatioIdc == 255)
         {
-            WRITE_CODE(vui->getSarWidth(), 16,        "sar_width");
-            WRITE_CODE(vui->getSarHeight(), 16,       "sar_height");
+            WRITE_CODE(vui->sarWidth, 16,        "sar_width");
+            WRITE_CODE(vui->sarHeight, 16,       "sar_height");
         }
     }
 
-    WRITE_FLAG(vui->getOverscanInfoPresentFlag(),     "overscan_info_present_flag");
-    if (vui->getOverscanInfoPresentFlag())
-        WRITE_FLAG(vui->getOverscanAppropriateFlag(), "overscan_appropriate_flag");
+    WRITE_FLAG(vui->overscanInfoPresentFlag,     "overscan_info_present_flag");
+    if (vui->overscanInfoPresentFlag)
+        WRITE_FLAG(vui->overscanAppropriateFlag, "overscan_appropriate_flag");
 
-    WRITE_FLAG(vui->getVideoSignalTypePresentFlag(),  "video_signal_type_present_flag");
-    if (vui->getVideoSignalTypePresentFlag())
+    WRITE_FLAG(vui->videoSignalTypePresentFlag,  "video_signal_type_present_flag");
+    if (vui->videoSignalTypePresentFlag)
     {
-        WRITE_CODE(vui->getVideoFormat(), 3,          "video_format");
-        WRITE_FLAG(vui->getVideoFullRangeFlag(),      "video_full_range_flag");
-        WRITE_FLAG(vui->getColourDescriptionPresentFlag(), "colour_description_present_flag");
-        if (vui->getColourDescriptionPresentFlag())
+        WRITE_CODE(vui->videoFormat, 3,          "video_format");
+        WRITE_FLAG(vui->videoFullRangeFlag,      "video_full_range_flag");
+        WRITE_FLAG(vui->colourDescriptionPresentFlag, "colour_description_present_flag");
+        if (vui->colourDescriptionPresentFlag)
         {
-            WRITE_CODE(vui->getColourPrimaries(), 8,         "colour_primaries");
-            WRITE_CODE(vui->getTransferCharacteristics(), 8, "transfer_characteristics");
-            WRITE_CODE(vui->getMatrixCoefficients(), 8,      "matrix_coefficients");
+            WRITE_CODE(vui->colourPrimaries, 8,         "colour_primaries");
+            WRITE_CODE(vui->transferCharacteristics, 8, "transfer_characteristics");
+            WRITE_CODE(vui->matrixCoefficients, 8,      "matrix_coefficients");
         }
     }
 
-    WRITE_FLAG(vui->getChromaLocInfoPresentFlag(),           "chroma_loc_info_present_flag");
-    if (vui->getChromaLocInfoPresentFlag())
+    WRITE_FLAG(vui->chromaLocInfoPresentFlag,           "chroma_loc_info_present_flag");
+    if (vui->chromaLocInfoPresentFlag)
     {
-        WRITE_UVLC(vui->getChromaSampleLocTypeTopField(),    "chroma_sample_loc_type_top_field");
-        WRITE_UVLC(vui->getChromaSampleLocTypeBottomField(), "chroma_sample_loc_type_bottom_field");
+        WRITE_UVLC(vui->chromaSampleLocTypeTopField,    "chroma_sample_loc_type_top_field");
+        WRITE_UVLC(vui->chromaSampleLocTypeBottomField, "chroma_sample_loc_type_bottom_field");
     }
 
-    WRITE_FLAG(vui->getNeutralChromaIndicationFlag(),        "neutral_chroma_indication_flag");
-    WRITE_FLAG(vui->getFieldSeqFlag(),                       "field_seq_flag");
-    WRITE_FLAG(vui->getFrameFieldInfoPresentFlag(),          "frame_field_info_present_flag");
+    WRITE_FLAG(0,                                         "neutral_chroma_indication_flag");
+    WRITE_FLAG(vui->fieldSeqFlag,                       "field_seq_flag");
+    WRITE_FLAG(vui->frameFieldInfoPresentFlag,          "frame_field_info_present_flag");
 
-    Window defaultDisplayWindow = vui->getDefaultDisplayWindow();
+    Window defaultDisplayWindow = vui->defaultDisplayWindow;
     WRITE_FLAG(defaultDisplayWindow.m_enabledFlag,           "default_display_window_flag");
     if (defaultDisplayWindow.m_enabledFlag)
     {
@@ -803,7 +802,7 @@ void SBac::codeVUI(TComVUI *vui)
         WRITE_UVLC(defaultDisplayWindow.m_winBottomOffset,   "def_disp_win_bottom_offset");
     }
 
-    TimingInfo *timingInfo = vui->getTimingInfo();
+    TimingInfo *timingInfo = &vui->timingInfo;
     WRITE_FLAG(timingInfo->timingInfoPresentFlag,     "vui_timing_info_present_flag");
     if (timingInfo->timingInfoPresentFlag)
     {
@@ -811,23 +810,12 @@ void SBac::codeVUI(TComVUI *vui)
         WRITE_CODE(timingInfo->timeScale,         32, "vui_time_scale");
         WRITE_FLAG(0,                                 "vui_poc_proportional_to_timing_flag");
 
-        WRITE_FLAG(vui->getHrdParametersPresentFlag(), "hrd_parameters_present_flag");
-        if (vui->getHrdParametersPresentFlag())
-            codeHrdParameters(vui->getHrdParameters());
+        WRITE_FLAG(vui->hrdParametersPresentFlag,   "hrd_parameters_present_flag");
+        if (vui->hrdParametersPresentFlag)
+            codeHrdParameters(&vui->hrdParameters);
     }
 
-    WRITE_FLAG(vui->getBitstreamRestrictionFlag(),                "bitstream_restriction_flag");
-    if (vui->getBitstreamRestrictionFlag())
-    {
-        WRITE_FLAG(vui->getTilesFixedStructureFlag(),             "tiles_fixed_structure_flag");
-        WRITE_FLAG(vui->getMotionVectorsOverPicBoundariesFlag(),  "motion_vectors_over_pic_boundaries_flag");
-        WRITE_FLAG(vui->getRestrictedRefPicListsFlag(),           "restricted_ref_pic_lists_flag");
-        WRITE_UVLC(vui->getMinSpatialSegmentationIdc(),           "min_spatial_segmentation_idc");
-        WRITE_UVLC(vui->getMaxBytesPerPicDenom(),                 "max_bytes_per_pic_denom");
-        WRITE_UVLC(vui->getMaxBitsPerMinCuDenom(),                "max_bits_per_mincu_denom");
-        WRITE_UVLC(vui->getLog2MaxMvLengthHorizontal(),           "log2_max_mv_length_horizontal");
-        WRITE_UVLC(vui->getLog2MaxMvLengthVertical(),             "log2_max_mv_length_vertical");
-    }
+    WRITE_FLAG(0, "bitstream_restriction_flag");
 }
 
 void SBac::codeAUD(TComSlice* slice)

@@ -358,8 +358,6 @@ TComSPS::TComSPS()
     , m_bUseSAO(false)
     , m_scalingListEnabledFlag(false)
     , m_useStrongIntraSmoothing(false)
-    , m_vuiParametersPresentFlag(false)
-    , m_vuiParameters()
 {
     m_maxLatencyIncrease = 0;
     m_maxDecPicBuffering = 1;

@@ -214,7 +214,7 @@ public:
     void writeSEI(TComSPS& sps)
     {
         TComVUI *vui = sps.getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
+        TComHRD *hrd = &vui->hrdParameters;
 
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
@@ -243,16 +243,16 @@ public:
     void writeSEI(TComSPS& sps)
     {
         TComVUI *vui = sps.getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
+        TComHRD *hrd = &vui->hrdParameters;
 
-        if (vui->getFrameFieldInfoPresentFlag())
+        if (vui->frameFieldInfoPresentFlag)
         {
             WRITE_CODE(m_picStruct, 4,          "pic_struct");
             WRITE_CODE(m_sourceScanType, 2,     "source_scan_type");
             WRITE_FLAG(m_duplicateFlag ? 1 : 0, "duplicate_flag");
         }
 
-        if (vui->getHrdParametersPresentFlag())
+        if (vui->hrdParametersPresentFlag)
         {
             WRITE_CODE(m_auCpbRemovalDelay - 1, hrd->cpbRemovalDelayLength, "au_cpb_removal_delay_minus1");
             WRITE_CODE(m_picDpbOutputDelay, hrd->dpbOutputDelayLength, "pic_dpb_output_delay");
