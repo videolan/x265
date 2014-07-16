@@ -806,7 +806,6 @@ private:
     //  Bitstream writing
     bool        m_saoEnabledFlag;
     bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
-    int         m_ppsId;                ///< picture parameter set ID
     int         m_poc;
     int         m_lastIDR;
 
@@ -878,10 +877,6 @@ public:
     void      setPPS(TComPPS* pps)            { m_pps = pps; }
 
     TComPPS*  getPPS()                        { return m_pps; }
-
-    void      setPPSId(int ppsid)             { m_ppsId = ppsid; }
-
-    int       getPPSId()                      { return m_ppsId; }
 
     void      setSaoEnabledFlag(bool s)       { m_saoEnabledFlag = s; }
 

@@ -46,8 +46,7 @@ using namespace x265;
 //! \{
 
 TComSlice::TComSlice()
-    : m_ppsId(-1)
-    , m_poc(0)
+    : m_poc(0)
     , m_lastIDR(0)
     , m_nalUnitType(NAL_UNIT_CODED_SLICE_IDR_W_RADL)
     , m_sliceType(I_SLICE)
