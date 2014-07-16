@@ -674,22 +674,22 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(sps->getQuadtreeTULog2MaxSize() - sps->getQuadtreeTULog2MinSize(), "log2_diff_max_min_transform_block_size");
     WRITE_UVLC(sps->getQuadtreeTUMaxDepthInter() - 1,   "max_transform_hierarchy_depth_inter");
     WRITE_UVLC(sps->getQuadtreeTUMaxDepthIntra() - 1,   "max_transform_hierarchy_depth_intra");
-    WRITE_FLAG(sps->getScalingListFlag() ? 1 : 0,       "scaling_list_enabled_flag");
+    WRITE_FLAG(sps->getScalingListFlag(),               "scaling_list_enabled_flag");
     if (sps->getScalingListFlag())
     {
-        WRITE_FLAG(sps->getScalingListPresentFlag() ? 1 : 0, "sps_scaling_list_data_present_flag");
+        WRITE_FLAG(sps->getScalingListPresentFlag(),    "sps_scaling_list_data_present_flag");
         if (sps->getScalingListPresentFlag() && scalingList)
             codeScalingList(scalingList);
     }
-    WRITE_FLAG(sps->getUseAMP() ? 1 : 0, "amp_enabled_flag");
-    WRITE_FLAG(sps->getUseSAO() ? 1 : 0, "sample_adaptive_offset_enabled_flag");
+    WRITE_FLAG(sps->getUseAMP(), "amp_enabled_flag");
+    WRITE_FLAG(sps->getUseSAO(), "sample_adaptive_offset_enabled_flag");
 
     WRITE_FLAG(0, "pcm_enabled_flag");
     WRITE_UVLC(0, "num_short_term_ref_pic_sets");
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
-    WRITE_FLAG(sps->getTMVPFlagsPresent()  ? 1 : 0,        "sps_temporal_mvp_enable_flag");
-    WRITE_FLAG(sps->getUseStrongIntraSmoothing(),          "sps_strong_intra_smoothing_enable_flag");
+    WRITE_FLAG(sps->getTMVPFlagsPresent(),        "sps_temporal_mvp_enable_flag");
+    WRITE_FLAG(sps->getUseStrongIntraSmoothing(), "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
     codeVUI(sps->getVuiParameters());
@@ -705,48 +705,48 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(0,                                          "output_flag_present_flag"); // we do not signal the output flag
     WRITE_CODE(pps->getNumExtraSliceHeaderBits(), 3,       "num_extra_slice_header_bits");
     WRITE_FLAG(pps->getSignHideFlag(),                     "sign_data_hiding_flag");
-    WRITE_FLAG(pps->getCabacInitPresentFlag() ? 1 : 0,     "cabac_init_present_flag");
+    WRITE_FLAG(pps->getCabacInitPresentFlag(),             "cabac_init_present_flag");
     WRITE_UVLC(pps->getNumRefIdxL0DefaultActive() - 1,     "num_ref_idx_l0_default_active_minus1");
     WRITE_UVLC(pps->getNumRefIdxL1DefaultActive() - 1,     "num_ref_idx_l1_default_active_minus1");
 
-    WRITE_SVLC(pps->getPicInitQPMinus26(),                 "init_qp_minus26");
-    WRITE_FLAG(pps->getConstrainedIntraPred() ? 1 : 0,     "constrained_intra_pred_flag");
-    WRITE_FLAG(pps->getUseTransformSkip() ? 1 : 0,         "transform_skip_enabled_flag");
+    WRITE_SVLC(pps->getPicInitQPMinus26(),     "init_qp_minus26");
+    WRITE_FLAG(pps->getConstrainedIntraPred(), "constrained_intra_pred_flag");
+    WRITE_FLAG(pps->getUseTransformSkip(),     "transform_skip_enabled_flag");
 
-    WRITE_FLAG(pps->getUseDQP() ? 1 : 0,                   "cu_qp_delta_enabled_flag");
+    WRITE_FLAG(pps->getUseDQP(),               "cu_qp_delta_enabled_flag");
     if (pps->getUseDQP())
-        WRITE_UVLC(pps->getMaxCuDQPDepth(),                "diff_cu_qp_delta_depth");
+        WRITE_UVLC(pps->getMaxCuDQPDepth(),    "diff_cu_qp_delta_depth");
 
-    WRITE_SVLC(pps->getChromaCbQpOffset(),                 "pps_cb_qp_offset");
-    WRITE_SVLC(pps->getChromaCrQpOffset(),                 "pps_cr_qp_offset");
-    WRITE_FLAG(pps->getSliceChromaQpFlag() ? 1 : 0,        "pps_slice_chroma_qp_offsets_present_flag");
+    WRITE_SVLC(pps->getChromaCbQpOffset(),           "pps_cb_qp_offset");
+    WRITE_SVLC(pps->getChromaCrQpOffset(),           "pps_cr_qp_offset");
+    WRITE_FLAG(pps->getSliceChromaQpFlag(),          "pps_slice_chroma_qp_offsets_present_flag");
 
-    WRITE_FLAG(pps->getUseWP() ? 1 : 0,                    "weighted_pred_flag");   // Use of Weighting Prediction (P_SLICE)
-    WRITE_FLAG(pps->getWPBiPred() ? 1 : 0,                 "weighted_bipred_flag");  // Use of Weighting Bi-Prediction (B_SLICE)
-    WRITE_FLAG(pps->getTransquantBypassEnableFlag() ? 1 : 0, "transquant_bypass_enable_flag");
-    WRITE_FLAG(0,                                          "tiles_enabled_flag");
-    WRITE_FLAG(pps->getEntropyCodingSyncEnabledFlag() ? 1 : 0, "entropy_coding_sync_enabled_flag");
-    WRITE_FLAG(1,                                          "loop_filter_across_slices_enabled_flag");
+    WRITE_FLAG(pps->getUseWP(),                      "weighted_pred_flag");   // Use of Weighting Prediction (P_SLICE)
+    WRITE_FLAG(pps->getWPBiPred(),                   "weighted_bipred_flag");  // Use of Weighting Bi-Prediction (B_SLICE)
+    WRITE_FLAG(pps->getTransquantBypassEnableFlag(), "transquant_bypass_enable_flag");
+    WRITE_FLAG(0,                                    "tiles_enabled_flag");
+    WRITE_FLAG(pps->getEntropyCodingSyncEnabledFlag(), "entropy_coding_sync_enabled_flag");
+    WRITE_FLAG(1,                                    "loop_filter_across_slices_enabled_flag");
 
     // TODO: Here have some time sequence problem, we set below field in initEncSlice(), but use them in getStreamHeaders() early
-    WRITE_FLAG(pps->getDeblockingFilterControlPresentFlag() ? 1 : 0, "deblocking_filter_control_present_flag");
+    WRITE_FLAG(pps->getDeblockingFilterControlPresentFlag(), "deblocking_filter_control_present_flag");
     if (pps->getDeblockingFilterControlPresentFlag())
     {
-        WRITE_FLAG(pps->getDeblockingFilterOverrideEnabledFlag() ? 1 : 0,  "deblocking_filter_override_enabled_flag");
-        WRITE_FLAG(pps->getPicDisableDeblockingFilterFlag() ? 1 : 0,       "pps_disable_deblocking_filter_flag");
+        WRITE_FLAG(pps->getDeblockingFilterOverrideEnabledFlag(),  "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->getPicDisableDeblockingFilterFlag(),       "pps_disable_deblocking_filter_flag");
         if (!pps->getPicDisableDeblockingFilterFlag())
         {
             WRITE_SVLC(pps->getDeblockingFilterBetaOffsetDiv2(), "pps_beta_offset_div2");
             WRITE_SVLC(pps->getDeblockingFilterTcOffsetDiv2(),   "pps_tc_offset_div2");
         }
     }
-    WRITE_FLAG(pps->getScalingListPresentFlag() ? 1 : 0,         "pps_scaling_list_data_present_flag");
+    WRITE_FLAG(pps->getScalingListPresentFlag(),         "pps_scaling_list_data_present_flag");
     if (pps->getScalingListPresentFlag() && scalingList)
         codeScalingList(scalingList);
 
     WRITE_FLAG(pps->getListsModificationPresentFlag(), "lists_modification_present_flag");
     WRITE_UVLC(pps->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
-    WRITE_FLAG(pps->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
+    WRITE_FLAG(pps->getSliceHeaderExtensionPresentFlag(), "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
@@ -860,7 +860,7 @@ void SBac::codeHrdParameters(TComHRD *hrd)
 
     WRITE_UVLC(hrd->bitRateValue - 1, "bit_rate_value_minus1");
     WRITE_UVLC(hrd->cpbSizeValue - 1, "cpb_size_value_minus1");
-    WRITE_FLAG(hrd->cbrFlag ? 1 : 0, "cbr_flag");
+    WRITE_FLAG(hrd->cbrFlag, "cbr_flag");
 }
 
 void SBac::codeProfileTier(ProfileTierLevel& ptl)
@@ -1067,7 +1067,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         codeShortTermRefPicSet(rps);
 
         if (slice->getSPS()->getTMVPFlagsPresent())
-            WRITE_FLAG(slice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag");
+            WRITE_FLAG(slice->getEnableTMVPFlag(), "slice_temporal_mvp_enable_flag");
     }
     if (slice->getSPS()->getUseSAO())
     {
@@ -1082,7 +1082,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     {
         bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != (int)slice->getPPS()->getNumRefIdxL0DefaultActive() ||
                             (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != (int)slice->getPPS()->getNumRefIdxL1DefaultActive()));
-        WRITE_FLAG(overrideFlag ? 1 : 0,                            "num_ref_idx_active_override_flag");
+        WRITE_FLAG(overrideFlag,                            "num_ref_idx_active_override_flag");
         if (overrideFlag)
         {
             WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,     "num_ref_idx_l0_active_minus1");
@@ -1099,7 +1099,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
 
     if (slice->isInterB())
-        WRITE_FLAG(slice->getMvdL1ZeroFlag() ? 1 : 0,   "mvd_l1_zero_flag");
+        WRITE_FLAG(slice->getMvdL1ZeroFlag(),   "mvd_l1_zero_flag");
 
     if (!slice->isIntra())
     {
@@ -1109,7 +1109,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
             int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
             slice->setCabacInitFlag(encCabacInitFlag);
-            WRITE_FLAG(encCabacInitFlag ? 1 : 0, "cabac_init_flag");
+            WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
         }
     }
 
@@ -1759,7 +1759,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     if (cu->getCUTransquantBypass(absPartIdx))
         beValid = false;
     else
-        beValid = cu->getSlice()->getPPS()->getSignHideFlag() > 0;
+        beValid = cu->getSlice()->getPPS()->getSignHideFlag();
 
     if (cu->getSlice()->getPPS()->getUseTransformSkip())
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);

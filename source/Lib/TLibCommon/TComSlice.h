@@ -453,7 +453,7 @@ private:
     bool     m_useTransformSkip;
     bool     m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
 
-    int      m_signHideFlag;
+    bool     m_signHideFlag;
 
     bool     m_cabacInitPresentFlag;
     uint32_t m_encCABACTableIdx;         // Used to transmit table selection across slices
@@ -540,9 +540,9 @@ public:
 
     void     setEntropyCodingSyncEnabledFlag(bool val)  { m_entropyCodingSyncEnabledFlag = val; }
 
-    void     setSignHideFlag(int signHideFlag)       { m_signHideFlag = signHideFlag; }
+    void     setSignHideFlag(bool signHideFlag)      { m_signHideFlag = signHideFlag; }
 
-    int      getSignHideFlag() const                 { return m_signHideFlag; }
+    bool     getSignHideFlag() const                 { return m_signHideFlag; }
 
     void     setCabacInitPresentFlag(bool flag)     { m_cabacInitPresentFlag = flag; }
 
@@ -663,7 +663,7 @@ private:
     TComPPS*    m_pps;
     TComVPS*    m_vps;
     Frame*      m_pic;
-    uint32_t    m_colFromL0Flag; // collocated picture from List0 flag
+    bool        m_colFromL0Flag; // collocated picture from List0 flag
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
@@ -755,7 +755,7 @@ public:
 
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
 
-    uint32_t  getColFromL0Flag()                  { return m_colFromL0Flag; }
+    bool      getColFromL0Flag()                  { return m_colFromL0Flag; }
 
     uint32_t  getColRefIdx()                      { return m_colRefIdx; }
 
@@ -814,7 +814,7 @@ public:
 
     void      setRefPOCList();
 
-    void      setColFromL0Flag(uint32_t colFromL0) { m_colFromL0Flag = colFromL0; }
+    void      setColFromL0Flag(bool colFromL0) { m_colFromL0Flag = colFromL0; }
 
     void      setColRefIdx(uint32_t refIdx)     { m_colRefIdx = refIdx; }
 

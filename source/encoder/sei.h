@@ -249,7 +249,7 @@ public:
         {
             WRITE_CODE(m_picStruct, 4,          "pic_struct");
             WRITE_CODE(m_sourceScanType, 2,     "source_scan_type");
-            WRITE_FLAG(m_duplicateFlag ? 1 : 0, "duplicate_flag");
+            WRITE_FLAG(m_duplicateFlag,         "duplicate_flag");
         }
 
         if (vui->hrdParametersPresentFlag)
