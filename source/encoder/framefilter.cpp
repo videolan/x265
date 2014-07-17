@@ -505,7 +505,7 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
     }
 
-    if (m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (m_pic->getSlice()->getPPS()->m_transquantBypassEnableFlag)
     {
         for (uint32_t col = 0; col < numCols; col++)
         {

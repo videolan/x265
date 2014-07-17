@@ -209,7 +209,7 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
     int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
-    if (!cu->getSlice()->getPPS()->getConstrainedIntraPred())
+    if (!cu->getSlice()->getPPS()->m_bConstrainedIntraPred)
     {
         bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
         numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);

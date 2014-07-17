@@ -253,147 +253,33 @@ struct TComSPS
 
 class TComPPS
 {
-private:
+public:
 
-    int      m_picInitQPMinus26;
-    bool     m_useDQP;
-    bool     m_bConstrainedIntraPred;  // constrained_intra_pred_flag
-    bool     m_bSliceChromaQpFlag;     // slicelevel_chroma_qp_flag
-
-    // access channel
-    TComSPS* m_sps;
     uint32_t m_maxCuDQPDepth;
     uint32_t m_minCuDQPSize;
 
-    int      m_chromaCbQpOffset;
-    int      m_chromaCrQpOffset;
+    bool     m_bSliceChromaQpFlag;     // enable chroma QP signaling in slice header
+    int      m_chromaCbQpOffset;       // use param
+    int      m_chromaCrQpOffset;       // use param
 
-    uint32_t m_numRefIdxL0DefaultActive;
-    uint32_t m_numRefIdxL1DefaultActive;
+    bool     m_bUseWeightPred;         // use param
+    bool     m_useWeightedBiPred;      // use param
+    bool     m_useDQP;
+    bool     m_bConstrainedIntraPred;  // use param
 
-    bool     m_bUseWeightPred;         // Use of Weighting Prediction (P_SLICE)
-    bool     m_useWeightedBiPred;      // Use of Weighting Bi-Prediction (B_SLICE)
-
-    bool     m_transquantBypassEnableFlag; // Indicates presence of cu_transquant_bypass_flag in CUs.
-    bool     m_useTransformSkip;
-    bool     m_entropyCodingSyncEnabledFlag; //!< Indicates the presence of wavefronts
-
-    bool     m_signHideFlag;
+    bool     m_transquantBypassEnableFlag;   // Indicates presence of cu_transquant_bypass_flag in CUs.
+    bool     m_useTransformSkip;             // use param
+    bool     m_entropyCodingSyncEnabledFlag; // use param
+    bool     m_signHideFlag;                 // use param
 
     bool     m_cabacInitPresentFlag;
-    uint32_t m_encCABACTableIdx;         // Used to transmit table selection across slices
+    uint32_t m_encCABACTableIdx;     // Used to transmit table selection across slices
 
     bool     m_deblockingFilterControlPresentFlag;
     bool     m_deblockingFilterOverrideEnabledFlag;
     bool     m_picDisableDeblockingFilterFlag;
     int      m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
     int      m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
-
-    int      m_numExtraSliceHeaderBits;
-
-public:
-
-    TComPPS();
-
-    int       getPicInitQPMinus26() const { return m_picInitQPMinus26; }
-
-    void      setPicInitQPMinus26(int i)  { m_picInitQPMinus26 = i; }
-
-    bool      getUseDQP() const           { return m_useDQP; }
-
-    void      setUseDQP(bool b)           { m_useDQP = b; }
-
-    bool      getConstrainedIntraPred() const { return m_bConstrainedIntraPred; }
-
-    void      setConstrainedIntraPred(bool b) { m_bConstrainedIntraPred = b; }
-
-    bool      getSliceChromaQpFlag() const { return m_bSliceChromaQpFlag; }
-
-    void      setSliceChromaQpFlag(bool b) { m_bSliceChromaQpFlag = b; }
-
-    void      setSPS(TComSPS* sps) { m_sps = sps; }
-
-    TComSPS*  getSPS() { return m_sps; }
-
-    void      setMaxCuDQPDepth(uint32_t u) { m_maxCuDQPDepth = u; }
-
-    uint32_t  getMaxCuDQPDepth() const { return m_maxCuDQPDepth; }
-
-    void      setMinCuDQPSize(uint32_t u) { m_minCuDQPSize = u; }
-
-    uint32_t  getMinCuDQPSize() const { return m_minCuDQPSize; }
-
-    void      setChromaCbQpOffset(int i) { m_chromaCbQpOffset = i; }
-
-    int       getChromaCbQpOffset() const { return m_chromaCbQpOffset; }
-
-    void      setChromaCrQpOffset(int i) { m_chromaCrQpOffset = i; }
-
-    int       getChromaCrQpOffset() const { return m_chromaCrQpOffset; }
-
-    void      setNumRefIdxL0DefaultActive(uint32_t i) { m_numRefIdxL0DefaultActive = i; }
-
-    uint32_t  getNumRefIdxL0DefaultActive() const     { return m_numRefIdxL0DefaultActive; }
-
-    void      setNumRefIdxL1DefaultActive(uint32_t i) { m_numRefIdxL1DefaultActive = i; }
-
-    uint32_t  getNumRefIdxL1DefaultActive() const     { return m_numRefIdxL1DefaultActive; }
-
-    bool getUseWP() const    { return m_bUseWeightPred; }
-
-    bool getWPBiPred() const { return m_useWeightedBiPred; }
-
-    void setUseWP(bool b)    { m_bUseWeightPred = b; }
-
-    void setWPBiPred(bool b) { m_useWeightedBiPred = b; }
-
-    void     setTransquantBypassEnableFlag(bool b) { m_transquantBypassEnableFlag = b; }
-
-    bool     getTransquantBypassEnableFlag() const { return m_transquantBypassEnableFlag; }
-
-    bool     getUseTransformSkip() const { return m_useTransformSkip; }
-
-    void     setUseTransformSkip(bool b) { m_useTransformSkip = b; }
-
-    bool     getEntropyCodingSyncEnabledFlag() const    { return m_entropyCodingSyncEnabledFlag; }
-
-    void     setEntropyCodingSyncEnabledFlag(bool val)  { m_entropyCodingSyncEnabledFlag = val; }
-
-    void     setSignHideFlag(bool signHideFlag)      { m_signHideFlag = signHideFlag; }
-
-    bool     getSignHideFlag() const                 { return m_signHideFlag; }
-
-    void     setCabacInitPresentFlag(bool flag)     { m_cabacInitPresentFlag = flag; }
-
-    void     setEncCABACTableIdx(int idx)           { m_encCABACTableIdx = idx; }
-
-    bool     getCabacInitPresentFlag() const        { return m_cabacInitPresentFlag; }
-
-    uint32_t getEncCABACTableIdx() const            { return m_encCABACTableIdx; }
-
-    void     setDeblockingFilterControlPresentFlag(bool val)  { m_deblockingFilterControlPresentFlag = val; }
-
-    bool     getDeblockingFilterControlPresentFlag() const    { return m_deblockingFilterControlPresentFlag; }
-
-    void     setDeblockingFilterOverrideEnabledFlag(bool val) { m_deblockingFilterOverrideEnabledFlag = val; }
-
-    bool     getDeblockingFilterOverrideEnabledFlag() const   { return m_deblockingFilterOverrideEnabledFlag; }
-
-    void     setPicDisableDeblockingFilterFlag(bool val)      { m_picDisableDeblockingFilterFlag = val; }     //!< set offset for deblocking filter disabled
-
-    bool     getPicDisableDeblockingFilterFlag() const        { return m_picDisableDeblockingFilterFlag; }    //!< get offset for deblocking filter disabled
-
-    void     setDeblockingFilterBetaOffsetDiv2(int val)       { m_deblockingFilterBetaOffsetDiv2 = val; }     //!< set beta offset for deblocking filter
-
-    int      getDeblockingFilterBetaOffsetDiv2() const        { return m_deblockingFilterBetaOffsetDiv2; }    //!< get beta offset for deblocking filter
-
-    void     setDeblockingFilterTcOffsetDiv2(int val)         { m_deblockingFilterTcOffsetDiv2 = val; }       //!< set tc offset for deblocking filter
-
-    int      getDeblockingFilterTcOffsetDiv2()                { return m_deblockingFilterTcOffsetDiv2; }      //!< get tc offset for deblocking filter
-
-    int getNumExtraSliceHeaderBits() const { return m_numExtraSliceHeaderBits; }
-
-    void setNumExtraSliceHeaderBits(int i) { m_numExtraSliceHeaderBits = i; }
 };
 
 typedef struct wpScalingParam

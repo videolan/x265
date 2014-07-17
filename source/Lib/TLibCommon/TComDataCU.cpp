@@ -363,7 +363,7 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
 
-    if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (getSlice()->getPPS()->m_transquantBypassEnableFlag)
     {
         uint32_t y_tmp = 1 << (g_maxLog2CUSize * 2);
         uint32_t c_tmp = 1 << (g_maxLog2CUSize * 2 - m_hChromaShift - m_vChromaShift);
@@ -566,7 +566,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     memcpy(m_trCoeff[1] + tmpC2, cu->m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(m_trCoeff[2] + tmpC2, cu->m_trCoeff[2], sizeof(coeff_t) * tmpC);
 
-    if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (getSlice()->getPPS()->m_transquantBypassEnableFlag)
     {
         memcpy(m_tqBypassOrigYuv[0] + tmp2, cu->getLumaOrigYuv(), sizeof(pixel) * tmp);
 
@@ -630,7 +630,7 @@ void TComDataCU::copyToPic(uint8_t depth)
     memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
 
-    if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (getSlice()->getPPS()->m_transquantBypassEnableFlag)
     {
         uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
         uint32_t tmp2 = m_absIdxInLCU << m_pic->getLog2UnitSize() * 2;
@@ -721,7 +721,7 @@ void TComDataCU::copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
 
-    if (getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (getSlice()->getPPS()->m_transquantBypassEnableFlag)
     {
         memcpy(cu->getLumaOrigYuv() + tmpY2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmpY);
 
@@ -1004,8 +1004,8 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
 TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInLCU)
 {
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
-    uint32_t absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) <<
-        ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+    uint32_t absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->m_maxCuDQPDepth) << 1)) <<
+        ((g_maxCUDepth - getSlice()->getPPS()->m_maxCuDQPDepth) << 1);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for left LCU boundary
@@ -1029,8 +1029,8 @@ TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsId
 TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInLCU)
 {
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
-    uint32_t absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) <<
-        ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1);
+    uint32_t absZorderQpMinCUIdx = (curAbsIdxInLCU >> ((g_maxCUDepth - getSlice()->getPPS()->m_maxCuDQPDepth) << 1)) <<
+        ((g_maxCUDepth - getSlice()->getPPS()->m_maxCuDQPDepth) << 1);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for top LCU boundary
@@ -1074,7 +1074,7 @@ int TComDataCU::getLastValidPartIdx(int absPartIdx)
 
 char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
 {
-    uint32_t quPartIdxMask = ~((1 << ((g_maxCUDepth - getSlice()->getPPS()->getMaxCuDQPDepth()) << 1)) - 1);
+    uint32_t quPartIdxMask = ~((1 << ((g_maxCUDepth - getSlice()->getPPS()->m_maxCuDQPDepth) << 1)) - 1);
     int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
 
     if (lastValidPartIdx >= 0)
@@ -1087,7 +1087,7 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
         {
             return getPic()->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
         }
-        else if (getAddr() > 0 && !(getSlice()->getPPS()->getEntropyCodingSyncEnabledFlag() &&
+        else if (getAddr() > 0 && !(getSlice()->getPPS()->m_entropyCodingSyncEnabledFlag &&
                                     getAddr() % getPic()->getFrameWidthInCU() == 0))
         {
             return getPic()->getCU(getAddr() - 1)->getLastCodedQP(getPic()->getNumPartInCU());
@@ -1105,7 +1105,7 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
  */
 bool TComDataCU::isLosslessCoded(uint32_t absPartIdx)
 {
-    return getSlice()->getPPS()->getTransquantBypassEnableFlag() && getCUTransquantBypass(absPartIdx);
+    return getSlice()->getPPS()->m_transquantBypassEnableFlag && getCUTransquantBypass(absPartIdx);
 }
 
 /** Get allowed chroma intra modes

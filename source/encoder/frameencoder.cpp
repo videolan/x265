@@ -109,12 +109,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_tld.init(*top);
     m_frameFilter.init(top, this, numRows, &m_rows[0].m_sbacCoder);
 
-    // initialize SPS
     top->initSPS(&m_sps);
-
-    // initialize PPS
-    m_pps.setSPS(&m_sps);
-
     top->initPPS(&m_pps);
 
     // initialize HRD parameters of SPS
@@ -267,16 +262,12 @@ void FrameEncoder::initSlice(Frame* pic)
 
     slice->setReferenced(m_isReferenced);
 
-    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    if (slice->getPPS()->m_deblockingFilterControlPresentFlag)
     {
-        slice->getPPS()->setDeblockingFilterOverrideEnabledFlag(!m_top->m_loopFilterOffsetInPPS);
         slice->setDeblockingFilterOverrideFlag(!m_top->m_loopFilterOffsetInPPS);
-        slice->getPPS()->setPicDisableDeblockingFilterFlag(!m_param->bEnableLoopFilter);
         slice->setDeblockingFilterDisable(!m_param->bEnableLoopFilter);
         if (!slice->getDeblockingFilterDisable())
         {
-            slice->getPPS()->setDeblockingFilterBetaOffsetDiv2(m_top->m_loopFilterBetaOffset);
-            slice->getPPS()->setDeblockingFilterTcOffsetDiv2(m_top->m_loopFilterTcOffset);
             slice->setDeblockingFilterBetaOffsetDiv2(m_top->m_loopFilterBetaOffset);
             slice->setDeblockingFilterTcOffsetDiv2(m_top->m_loopFilterTcOffset);
         }
@@ -311,10 +302,10 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
     TComSlice*  slice = m_frame->getSlice();
   
-    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    int chromaQPOffset = slice->getPPS()->m_chromaCbQpOffset + slice->getSliceQpDeltaCb();
     int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
-    chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
+    chromaQPOffset = slice->getPPS()->m_chromaCrQpOffset + slice->getSliceQpDeltaCr();
     int qpCr = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
     tld.m_cuCoder.setQP(qp, qpCb, qpCr);
@@ -419,7 +410,7 @@ void FrameEncoder::compressFrame()
 
     int qp = slice->getSliceQp();
 
-    int chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
+    int chromaQPOffset = slice->getPPS()->m_chromaCbQpOffset + slice->getSliceQpDeltaCb();
     int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
     double lambda = x265_lambda2_tab[qp];
@@ -455,8 +446,8 @@ void FrameEncoder::compressFrame()
     slice->setSliceCurEndCUAddr(m_frame->getNumCUsInFrame() * m_frame->getNumPartInCU());
 
     // Weighted Prediction parameters estimation.
-    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP();
-    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred();
+    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->getPPS()->m_bUseWeightPred;
+    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->getPPS()->m_useWeightedBiPred;
     if (bUseWeightP || bUseWeightB)
         weightAnalyse(*slice, *m_param);
     else
@@ -545,7 +536,8 @@ void FrameEncoder::compressFrame()
 
     // complete the slice header by writing WPP row-starts
     m_sbacCoder.setBitstream(&m_bs);
-    m_sbacCoder.codeTilesWPPEntryPoint(slice);
+    if (slice->getPPS()->m_entropyCodingSyncEnabledFlag)
+        m_sbacCoder.codeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->getNalUnitType(), m_bs);
@@ -675,7 +667,7 @@ void FrameEncoder::encodeSlice()
     }
 
     // when frame parallelism is disabled, we can tweak the initial CABAC state of P and B frames
-    if (slice->getPPS()->getCabacInitPresentFlag())
+    if (slice->getPPS()->m_cabacInitPresentFlag)
         m_sbacCoder.determineCabacInitIdx(slice);
 
     // flush lines
@@ -703,8 +695,8 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_busy = false;
     }
 
-    bool bUseWeightP = slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE;
-    bool bUseWeightB = slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE;
+    bool bUseWeightP = slice->getPPS()->m_bUseWeightPred && slice->getSliceType() == P_SLICE;
+    bool bUseWeightB = slice->getPPS()->m_useWeightedBiPred && slice->getSliceType() == B_SLICE;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_SSDY = m_SSDU = m_SSDV = 0;

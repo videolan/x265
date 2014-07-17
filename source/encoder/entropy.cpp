@@ -190,7 +190,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         if (cbfY || cbfU || cbfV)
         {
             // dQP: only for LCU once
-            if (cu->getSlice()->getPPS()->getUseDQP())
+            if (cu->getSlice()->getPPS()->m_useDQP)
             {
                 if (bCodeDQP)
                 {
@@ -480,9 +480,9 @@ void SBac::resetEntropy(TComSlice *slice)
     int  qp              = slice->getSliceQp();
     SliceType sliceType  = slice->getSliceType();
 
-    int encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
+    int encCABACTableIdx = slice->getPPS()->m_encCABACTableIdx;
 
-    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->getCabacInitPresentFlag())
+    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->m_cabacInitPresentFlag)
         sliceType = (SliceType)encCABACTableIdx;
 
     initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
@@ -569,10 +569,10 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
             }
         }
 
-        slice->getPPS()->setEncCABACTableIdx(bestSliceType);
+        slice->getPPS()->m_encCABACTableIdx = bestSliceType;
     }
     else
-        slice->getPPS()->setEncCABACTableIdx(I_SLICE);
+        slice->getPPS()->m_encCABACTableIdx = I_SLICE;
 }
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
@@ -703,48 +703,49 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_UVLC(0,                                          "pps_seq_parameter_set_id");
     WRITE_FLAG(0,                                          "dependent_slice_segments_enabled_flag");
     WRITE_FLAG(0,                                          "output_flag_present_flag"); // we do not signal the output flag
-    WRITE_CODE(pps->getNumExtraSliceHeaderBits(), 3,       "num_extra_slice_header_bits");
-    WRITE_FLAG(pps->getSignHideFlag(),                     "sign_data_hiding_flag");
-    WRITE_FLAG(pps->getCabacInitPresentFlag(),             "cabac_init_present_flag");
-    WRITE_UVLC(pps->getNumRefIdxL0DefaultActive() - 1,     "num_ref_idx_l0_default_active_minus1");
-    WRITE_UVLC(pps->getNumRefIdxL1DefaultActive() - 1,     "num_ref_idx_l1_default_active_minus1");
+    WRITE_CODE(0, 3,                                       "num_extra_slice_header_bits");
+    WRITE_FLAG(pps->m_signHideFlag,                     "sign_data_hiding_flag");
+    WRITE_FLAG(pps->m_cabacInitPresentFlag,             "cabac_init_present_flag");
+    WRITE_UVLC(0,                                          "num_ref_idx_l0_default_active_minus1");
+    WRITE_UVLC(0,                                          "num_ref_idx_l1_default_active_minus1");
 
-    WRITE_SVLC(pps->getPicInitQPMinus26(),     "init_qp_minus26");
-    WRITE_FLAG(pps->getConstrainedIntraPred(), "constrained_intra_pred_flag");
-    WRITE_FLAG(pps->getUseTransformSkip(),     "transform_skip_enabled_flag");
+    WRITE_SVLC(0, "init_qp_minus26");
+    WRITE_FLAG(pps->m_bConstrainedIntraPred, "constrained_intra_pred_flag");
+    WRITE_FLAG(pps->m_useTransformSkip,      "transform_skip_enabled_flag");
 
-    WRITE_FLAG(pps->getUseDQP(),               "cu_qp_delta_enabled_flag");
-    if (pps->getUseDQP())
-        WRITE_UVLC(pps->getMaxCuDQPDepth(),    "diff_cu_qp_delta_depth");
+    WRITE_FLAG(pps->m_useDQP,               "cu_qp_delta_enabled_flag");
+    if (pps->m_useDQP)
+        WRITE_UVLC(pps->m_maxCuDQPDepth,    "diff_cu_qp_delta_depth");
 
-    WRITE_SVLC(pps->getChromaCbQpOffset(),           "pps_cb_qp_offset");
-    WRITE_SVLC(pps->getChromaCrQpOffset(),           "pps_cr_qp_offset");
-    WRITE_FLAG(pps->getSliceChromaQpFlag(),          "pps_slice_chroma_qp_offsets_present_flag");
+    WRITE_SVLC(pps->m_chromaCbQpOffset,           "pps_cb_qp_offset");
+    WRITE_SVLC(pps->m_chromaCrQpOffset,           "pps_cr_qp_offset");
+    WRITE_FLAG(pps->m_bSliceChromaQpFlag,         "pps_slice_chroma_qp_offsets_present_flag");
 
-    WRITE_FLAG(pps->getUseWP(),                      "weighted_pred_flag");   // Use of Weighting Prediction (P_SLICE)
-    WRITE_FLAG(pps->getWPBiPred(),                   "weighted_bipred_flag");  // Use of Weighting Bi-Prediction (B_SLICE)
-    WRITE_FLAG(pps->getTransquantBypassEnableFlag(), "transquant_bypass_enable_flag");
+    WRITE_FLAG(pps->m_bUseWeightPred,                "weighted_pred_flag");
+    WRITE_FLAG(pps->m_useWeightedBiPred,             "weighted_bipred_flag");
+    WRITE_FLAG(pps->m_transquantBypassEnableFlag,    "transquant_bypass_enable_flag");
     WRITE_FLAG(0,                                    "tiles_enabled_flag");
-    WRITE_FLAG(pps->getEntropyCodingSyncEnabledFlag(), "entropy_coding_sync_enabled_flag");
+    WRITE_FLAG(pps->m_entropyCodingSyncEnabledFlag,  "entropy_coding_sync_enabled_flag");
     WRITE_FLAG(1,                                    "loop_filter_across_slices_enabled_flag");
 
-    // TODO: Here have some time sequence problem, we set below field in initEncSlice(), but use them in getStreamHeaders() early
-    WRITE_FLAG(pps->getDeblockingFilterControlPresentFlag(), "deblocking_filter_control_present_flag");
-    if (pps->getDeblockingFilterControlPresentFlag())
+    WRITE_FLAG(pps->m_deblockingFilterControlPresentFlag, "deblocking_filter_control_present_flag");
+    if (pps->m_deblockingFilterControlPresentFlag)
     {
-        WRITE_FLAG(pps->getDeblockingFilterOverrideEnabledFlag(),  "deblocking_filter_override_enabled_flag");
-        WRITE_FLAG(pps->getPicDisableDeblockingFilterFlag(),       "pps_disable_deblocking_filter_flag");
-        if (!pps->getPicDisableDeblockingFilterFlag())
+        WRITE_FLAG(pps->m_deblockingFilterControlPresentFlag,  "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->m_picDisableDeblockingFilterFlag,      "pps_disable_deblocking_filter_flag");
+        if (!pps->m_picDisableDeblockingFilterFlag)
         {
-            WRITE_SVLC(pps->getDeblockingFilterBetaOffsetDiv2(), "pps_beta_offset_div2");
-            WRITE_SVLC(pps->getDeblockingFilterTcOffsetDiv2(),   "pps_tc_offset_div2");
+            WRITE_SVLC(pps->m_deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
+            WRITE_SVLC(pps->m_deblockingFilterTcOffsetDiv2,   "pps_tc_offset_div2");
         }
     }
-    WRITE_FLAG(scalingList->m_bDataPresent,               "pps_scaling_list_data_present_flag");
+
+    WRITE_FLAG(scalingList->m_bDataPresent, "pps_scaling_list_data_present_flag");
     if (scalingList->m_bDataPresent)
         codeScalingList(scalingList);
-    WRITE_FLAG(0,  "lists_modification_present_flag");
-    WRITE_UVLC(0,  "log2_parallel_merge_level_minus2");
+
+    WRITE_FLAG(0, "lists_modification_present_flag");
+    WRITE_UVLC(0, "log2_parallel_merge_level_minus2");
     WRITE_FLAG(0, "slice_segment_header_extension_present_flag");
     WRITE_FLAG(0, "pps_extension_flag");
 }
@@ -891,8 +892,8 @@ void SBac::codePredWeightTable(TComSlice* slice)
     int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;
 
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->getUseWP()) ||
-        (slice->getSliceType() == B_SLICE && slice->getPPS()->getWPBiPred()))
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->m_bUseWeightPred) ||
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->m_useWeightedBiPred))
     {
         for (int list = 0; list < numRefDirs; list++)
         {
@@ -1004,12 +1005,6 @@ void SBac::codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32
 
 void SBac::codeSliceHeader(TComSlice* slice)
 {
-    // calculate number of bits required for slice address
-    int maxSliceSegmentAddress = slice->getPic()->getNumCUsInFrame();
-    int bitsSliceSegmentAddress = 0;
-    while (maxSliceSegmentAddress > (1 << bitsSliceSegmentAddress))
-        bitsSliceSegmentAddress++;
-
     WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
@@ -1017,11 +1012,6 @@ void SBac::codeSliceHeader(TComSlice* slice)
     WRITE_UVLC(0, "slice_pic_parameter_set_id");
 
     /* x265 does not use dependent slices, so always write all this data */
-    for (int i = 0; i < slice->getPPS()->getNumExtraSliceHeaderBits(); i++)
-    {
-        X265_CHECK(0, "slice_reserved_undetermined_flag[]");
-        WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
-    }
 
     WRITE_UVLC(slice->getSliceType(), "slice_type");
 
@@ -1052,13 +1042,14 @@ void SBac::codeSliceHeader(TComSlice* slice)
         WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
-    // check if numrefidxes match the defaults. If not, override
+    // check if numrefidxes match the defaults (1, hard-coded above). If not, override
+    // TODO: this might be a place to optimize a few bits per slice, by using param->refs for L0 default
 
     if (!slice->isIntra())
     {
-        bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != (int)slice->getPPS()->getNumRefIdxL0DefaultActive() ||
-                            (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != (int)slice->getPPS()->getNumRefIdxL1DefaultActive()));
-        WRITE_FLAG(overrideFlag,                            "num_ref_idx_active_override_flag");
+        bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != 1 ||
+                            (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != 1));
+        WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
         if (overrideFlag)
         {
             WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,     "num_ref_idx_l0_active_minus1");
@@ -1079,10 +1070,10 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->isIntra())
     {
-        if (!slice->isIntra() && slice->getPPS()->getCabacInitPresentFlag())
+        if (!slice->isIntra() && slice->getPPS()->m_cabacInitPresentFlag)
         {
             SliceType sliceType   = slice->getSliceType();
-            int  encCABACTableIdx = slice->getPPS()->getEncCABACTableIdx();
+            int  encCABACTableIdx = slice->getPPS()->m_encCABACTableIdx;
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
             slice->setCabacInitFlag(encCabacInitFlag);
             WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
@@ -1101,25 +1092,25 @@ void SBac::codeSliceHeader(TComSlice* slice)
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }
     }
-    if ((slice->getPPS()->getUseWP() && slice->getSliceType() == P_SLICE) || (slice->getPPS()->getWPBiPred() && slice->getSliceType() == B_SLICE))
+    if ((slice->getPPS()->m_bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->getPPS()->m_useWeightedBiPred && slice->getSliceType() == B_SLICE))
         codePredWeightTable(slice);
 
     X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
     if (!slice->isIntra())
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
 
-    int code = slice->getSliceQp() - (slice->getPPS()->getPicInitQPMinus26() + 26);
+    int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
-    if (slice->getPPS()->getSliceChromaQpFlag())
+    if (slice->getPPS()->m_bSliceChromaQpFlag)
     {
         code = slice->getSliceQpDeltaCb();
         WRITE_SVLC(code, "slice_qp_delta_cb");
         code = slice->getSliceQpDeltaCr();
         WRITE_SVLC(code, "slice_qp_delta_cr");
     }
-    if (slice->getPPS()->getDeblockingFilterControlPresentFlag())
+    if (slice->getPPS()->m_deblockingFilterControlPresentFlag)
     {
-        if (slice->getPPS()->getDeblockingFilterOverrideEnabledFlag())
+        if (slice->getPPS()->m_deblockingFilterControlPresentFlag)
             WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
 
         if (slice->getDeblockingFilterOverrideFlag())
@@ -1143,26 +1134,23 @@ void SBac::codeSliceHeader(TComSlice* slice)
 /** write wavefront substreams sizes for the slice header */
 void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
 {
-    // TODO: hoist check to caller, pass offset to this function
-    if (!slice->getPPS()->getEntropyCodingSyncEnabledFlag())
-        return;
-
     uint32_t numEntryPointOffsets = 0, offsetLenMinus1 = 0, maxOffset = 0;
     uint32_t *entryPointOffset = NULL;
-    if (slice->getPPS()->getEntropyCodingSyncEnabledFlag())
+    
+    uint32_t* substreamSizes = slice->getSubstreamSizes(); // TODO: pass as argument
+    int maxNumParts = slice->getPic()->getNumPartInCU();
+
+    int numZeroSubstreamsAtEndOfSlice = slice->getPic()->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->getPic()->getFrameWidthInCU());
+    numEntryPointOffsets = slice->getPic()->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
+
+    /* WTF? we can store byte sizes and avoid all this */
+    slice->setNumEntryPointOffsets(numEntryPointOffsets);
+    entryPointOffset = new uint32_t[numEntryPointOffsets];
+    for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
     {
-        uint32_t* substreamSizes          = slice->getSubstreamSizes();
-        int maxNumParts                   = slice->getPic()->getNumPartInCU();
-        int numZeroSubstreamsAtEndOfSlice = slice->getPic()->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->getPic()->getFrameWidthInCU());
-        numEntryPointOffsets              = slice->getPic()->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
-        slice->setNumEntryPointOffsets(numEntryPointOffsets);
-        entryPointOffset = new uint32_t[numEntryPointOffsets];
-        for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
-        {
-            entryPointOffset[idx] = (substreamSizes[idx] >> 3);
-            if (entryPointOffset[idx] > maxOffset)
-                maxOffset = entryPointOffset[idx];
-        }
+        entryPointOffset[idx] = (substreamSizes[idx] >> 3);
+        if (entryPointOffset[idx] > maxOffset)
+            maxOffset = entryPointOffset[idx];
     }
     // Determine number of bits "offsetLenMinus1+1" required for entry point information
     offsetLenMinus1 = 0;
@@ -1732,9 +1720,9 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     if (cu->getCUTransquantBypass(absPartIdx))
         beValid = false;
     else
-        beValid = cu->getSlice()->getPPS()->getSignHideFlag();
+        beValid = cu->getSlice()->getPPS()->m_signHideFlag;
 
-    if (cu->getSlice()->getPPS()->getUseTransformSkip())
+    if (cu->getSlice()->getPPS()->m_useTransformSkip)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;

@@ -225,7 +225,7 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
 bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, uint32_t partAddr)
 {
     X265_CHECK(cu->getSlice()->isInterB(), "identical motion check in P frame\n");
-    if (!cu->getSlice()->getPPS()->getWPBiPred())
+    if (!cu->getSlice()->getPPS()->m_useWeightedBiPred)
     {
         int refIdxL0 = cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partAddr);
         int refIdxL1 = cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partAddr);
@@ -255,7 +255,7 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int li
             list = REF_PIC_LIST_0;
         if (list != REF_PIC_LIST_X)
         {
-            if (cu->getSlice()->getPPS()->getUseWP())
+            if (cu->getSlice()->getPPS()->m_bUseWeightPred)
             {
                 ShortYuv* shortYuv = &m_predShortYuv[0];
                 int refId = cu->getCUMvField(list)->getRefIdx(partAddr);
@@ -337,7 +337,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
             xPredInterUni(cu, partAddr, width, height, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
-        if (cu->getSlice()->getPPS()->getWPBiPred())
+        if (cu->getSlice()->getPPS()->m_useWeightedBiPred)
         {
             xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], partAddr, width, height, outPredYuv, bLuma, bChroma);
         }
@@ -346,7 +346,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
             outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], partAddr, width, height, bLuma, bChroma);
         }
     }
-    else if (cu->getSlice()->getPPS()->getWPBiPred())
+    else if (cu->getSlice()->getPPS()->m_useWeightedBiPred)
     {
         for (int list = 0; list < 2; list++)
         {

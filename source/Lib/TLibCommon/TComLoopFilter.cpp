@@ -519,7 +519,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
                 int dq = dq0 + dq3;
                 int d =  d0 + d3;
 
-                if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+                if (cu->getSlice()->getPPS()->m_transquantBypassEnableFlag)
                 {
                     // check if each of PUs is lossless coded
                     bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -627,7 +627,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             qpP = cuP->getQP(partP);
 
-            if (cu->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+            if (cu->getSlice()->getPPS()->m_transquantBypassEnableFlag)
             {
                 // check if each of PUs is lossless coded
                 bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -636,7 +636,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
             {
-                int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->getPPS()->getChromaCbQpOffset() : cu->getSlice()->getPPS()->getChromaCrQpOffset();
+                int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->getPPS()->m_chromaCbQpOffset : cu->getSlice()->getPPS()->m_chromaCrQpOffset;
                 pixel* piTmpSrcChroma = (chromaIdx == 0) ? tmpSrcCb : tmpSrcCr;
                 qp = QpUV((((qpP + qpQ + 1) >> 1) + chromaQPOffset), cu->getChromaFormat());
                 int iBitdepthScale = 1 << (X265_DEPTH - 8);

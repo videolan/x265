@@ -501,7 +501,7 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
 {
     TComSlice*      slice = cu->getSlice();
     const TComPPS*  pps     = cu->getSlice()->getPPS();
-    bool            wpBiPred = pps->getWPBiPred();
+    bool            wpBiPred = pps->m_useWeightedBiPred;
     wpScalingParam* pwp;
     bool            bBiDir   = (refIdx0 >= 0 && refIdx1 >= 0);
     bool            bUniDir  = !bBiDir;

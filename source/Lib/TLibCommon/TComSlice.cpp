@@ -330,28 +330,6 @@ void TComSlice::initWpScaling()
     }
 }
 
-TComPPS::TComPPS()
-    : m_picInitQPMinus26(0)
-    , m_useDQP(false)
-    , m_bConstrainedIntraPred(false)
-    , m_bSliceChromaQpFlag(false)
-    , m_sps(NULL)
-    , m_maxCuDQPDepth(0)
-    , m_minCuDQPSize(0)
-    , m_chromaCbQpOffset(0)
-    , m_chromaCrQpOffset(0)
-    , m_numRefIdxL0DefaultActive(1)
-    , m_numRefIdxL1DefaultActive(1)
-    , m_transquantBypassEnableFlag(false)
-    , m_useTransformSkip(false)
-    , m_entropyCodingSyncEnabledFlag(false)
-    , m_signHideFlag(0)
-    , m_cabacInitPresentFlag(false)
-    , m_encCABACTableIdx(I_SLICE)
-    , m_numExtraSliceHeaderBits(0)
-{
-}
-
 /* Sorts the deltaPOC and Used by current values in the RPS based on the
  * deltaPOC values.  deltaPOC values are sorted with -ve values before the +ve
  * values.  -ve values are in decreasing order.  +ve values are in increasing
