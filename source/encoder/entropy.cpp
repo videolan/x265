@@ -587,14 +587,14 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     codeProfileTier(*ptl);
 
     WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
-    WRITE_UVLC(vps->m_maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(vps->m_numReorderPics,         "vps_num_reorder_pics[i]");
+    WRITE_UVLC(vps->maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(vps->numReorderPics,         "vps_num_reorder_pics[i]");
 
     WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
     WRITE_UVLC(0,    "vps_max_op_sets_minus1");
 
-    TimingInfo &timingInfo = vps->m_timingInfo;
+    TimingInfo &timingInfo = vps->timingInfo;
     WRITE_FLAG(timingInfo.timingInfoPresentFlag,     "vps_timing_info_present_flag");
     if (timingInfo.timingInfoPresentFlag)
     {

@@ -167,26 +167,22 @@ struct HRDTiming
     double cpbRemovalTime;
 };
 
-class TComVPS
+struct TComVPS
 {
-public:
-
-    uint32_t    m_numReorderPics;
-    uint32_t    m_maxDecPicBuffering;
-    TComHRD     m_hrdParameters;
-    TimingInfo  m_timingInfo;
+    uint32_t    numReorderPics;
+    uint32_t    maxDecPicBuffering;
+    TComHRD     hrdParameters;
+    TimingInfo  timingInfo;
 
     TComVPS()
     {
-        m_numReorderPics = 0;
-        m_maxDecPicBuffering = 1;
+        numReorderPics = 0;
+        maxDecPicBuffering = 1;
     }
 };
 
 struct Window
 {
-public:
-
     bool          bEnabled;
     int           leftOffset;
     int           rightOffset;
@@ -194,8 +190,8 @@ public:
     int           bottomOffset;
 
     Window()
-        : bEnabled(false)
     {
+        bEnabled = false;
     }
 };
 

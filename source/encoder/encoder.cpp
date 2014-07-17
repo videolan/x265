@@ -1073,8 +1073,8 @@ void Encoder::initSPS(TComSPS *sps)
     sps->setQpBDOffsetY(QP_BD_OFFSET);
     sps->setQpBDOffsetC(QP_BD_OFFSET);
 
-    sps->setMaxDecPicBuffering(m_vps.m_maxDecPicBuffering);
-    sps->setNumReorderPics(m_vps.m_numReorderPics);
+    sps->setMaxDecPicBuffering(m_vps.maxDecPicBuffering);
+    sps->setNumReorderPics(m_vps.numReorderPics);
 
     sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
 
@@ -1360,8 +1360,8 @@ void Encoder::configure(x265_param *p)
     m_loopFilterTcOffsetDiv2 = 0;
 
     /* Increase the DPB size and reorder picture if bpyramid is enabled */
-    m_vps.m_numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
-    m_vps.m_maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.m_numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.m_numReorderPics);
+    m_vps.numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
+    m_vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.numReorderPics);
 
     int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
     switch (useScalingListId)
@@ -1378,7 +1378,7 @@ void Encoder::configure(x265_param *p)
     case SCALING_LIST_FILE:
         //m_scalingList.parseScalingList(filename);
         m_scalingList.m_bEnabled = true;
-        m_scalingList.m_bDataPresent = m_scalingList.checkDefaultScalingList();
+        m_scalingList.m_bDataPresent = !m_scalingList.checkDefaultScalingList();
         break;
     }
 
