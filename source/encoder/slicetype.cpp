@@ -215,7 +215,7 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
     int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
     int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
 
-    switch (pic->getSlice()->getSliceType())
+    switch (pic->getSlice()->m_sliceType)
     {
     case I_SLICE:
         frames[p0] = &pic->m_lowres;

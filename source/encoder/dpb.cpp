@@ -136,11 +136,11 @@ void DPB::prepareEncode(Frame *pic)
 
     slice->setRefPicList(m_picList);
 
-    // Slice type refinement
-    if ((slice->getSliceType() == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
-        slice->setSliceType(P_SLICE);
+    // Slice type refinement:  TODO: does this ever happen?
+    if ((slice->m_sliceType == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
+        slice->m_sliceType = P_SLICE;
 
-    if (slice->getSliceType() == B_SLICE)
+    if (slice->m_sliceType == B_SLICE)
     {
         // TODO: Can we estimate this from lookahead?
         slice->setColFromL0Flag(0);
@@ -165,7 +165,7 @@ void DPB::prepareEncode(Frame *pic)
     slice->setRefPOCList();
 
     bool bGPBcheck = false;
-    if (slice->getSliceType() == B_SLICE)
+    if (slice->m_sliceType == B_SLICE)
     {
         if (slice->getNumRefIdx(REF_PIC_LIST_0) == slice->getNumRefIdx(REF_PIC_LIST_1))
         {

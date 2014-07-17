@@ -400,8 +400,6 @@ public:
 
     int       getLastIDR()                        { return m_lastIDR; }
 
-    SliceType getSliceType()                      { return m_sliceType; }
-
     int       getSliceQp()                        { return m_sliceQp; }
 
     int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
@@ -425,8 +423,6 @@ public:
     void      setReferenced(bool b)            { m_bReferenced = b; }
 
     bool      isReferenced()                   { return m_bReferenced; }
-
-    void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
 

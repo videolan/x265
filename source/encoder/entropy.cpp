@@ -478,7 +478,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
 void SBac::resetEntropy(TComSlice *slice)
 {
     int  qp              = slice->getSliceQp();
-    SliceType sliceType  = slice->getSliceType();
+    SliceType sliceType  = slice->m_sliceType;
 
     int encCABACTableIdx = slice->m_pps->encCABACTableIdx;
 
@@ -822,7 +822,7 @@ void SBac::codeAUD(TComSlice* slice)
 {
     int picType;
 
-    switch (slice->getSliceType())
+    switch (slice->m_sliceType)
     {
     case I_SLICE:
         picType = 0;
@@ -889,11 +889,11 @@ void SBac::codePredWeightTable(TComSlice* slice)
     WeightParam *wp;
     bool            bChroma      = true; // 4:0:0 not yet supported
     bool            bDenomCoded  = false;
-    int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
+    int             numRefDirs   = slice->m_sliceType == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;
 
-    if ((slice->getSliceType() == P_SLICE && slice->m_pps->bUseWeightPred) ||
-        (slice->getSliceType() == B_SLICE && slice->m_pps->bUseWeightedBiPred))
+    if ((slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred) ||
+        (slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred))
     {
         for (int list = 0; list < numRefDirs; list++)
         {
@@ -1013,7 +1013,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     /* x265 does not use dependent slices, so always write all this data */
 
-    WRITE_UVLC(slice->getSliceType(), "slice_type");
+    WRITE_UVLC(slice->m_sliceType, "slice_type");
 
     if (!slice->getIdrPicFlag())
     {
@@ -1071,7 +1071,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     {
         if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
         {
-            SliceType sliceType   = slice->getSliceType();
+            SliceType sliceType   = slice->m_sliceType;
             int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
             WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
@@ -1080,17 +1080,17 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     // TMVP always enabled
     {
-        if (slice->getSliceType() == B_SLICE)
+        if (slice->m_sliceType == B_SLICE)
             WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
 
-        if (slice->getSliceType() != I_SLICE &&
+        if (slice->m_sliceType != I_SLICE &&
             ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
                 (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
         {
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }
     }
-    if ((slice->m_pps->bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->getSliceType() == B_SLICE))
+    if ((slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE))
         codePredWeightTable(slice);
 
     X265_CHECK(slice->m_maxNumMergeCand <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");

@@ -447,7 +447,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     memset(m_skipFlag,           false, sizeInBool);
     memset(m_cuTransquantBypass, false, sizeInBool);
 
-    if (getSlice()->getSliceType() != I_SLICE)
+    if (getSlice()->m_sliceType != I_SLICE)
     {
         memset(m_bMergeFlags,      0, sizeInBool);
         memset(m_interDir,         0, sizeInChar);

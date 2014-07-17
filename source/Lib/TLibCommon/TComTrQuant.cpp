@@ -284,7 +284,7 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, uint
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
     int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
-    int add = (cu->getSlice()->getSliceType() == I_SLICE ? 171 : 85) << (qbits - 9);
+    int add = (cu->getSlice()->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
 
     int numCoeff = 1 << log2TrSize * 2;
     uint32_t numSig = primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);

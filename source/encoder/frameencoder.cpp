@@ -184,10 +184,9 @@ void FrameEncoder::initSlice(Frame* pic)
     slice->initSlice();
 
     int type = pic->m_lowres.sliceType;
-    SliceType sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
-    slice->setSliceType(sliceType);
+    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
 
-    if (sliceType != B_SLICE)
+    if (slice->m_sliceType != B_SLICE)
         m_isReferenced = true;
     else
         m_isReferenced = (pic->m_lowres.sliceType == X265_TYPE_BREF);
@@ -335,7 +334,7 @@ void FrameEncoder::compressFrame()
     slice->setSliceQp(qp);
     m_frame->m_avgQpAq = qp;
 
-    switch (slice->getSliceType())
+    switch (slice->m_sliceType)
     {
     case I_SLICE:
         m_frameFilter.m_sao.depth = 0;
@@ -351,8 +350,8 @@ void FrameEncoder::compressFrame()
     slice->setSliceCurEndCUAddr(m_frame->getNumCUsInFrame() * m_frame->getNumPartInCU());
 
     // Weighted Prediction parameters estimation.
-    bool bUseWeightP = slice->getSliceType() == P_SLICE && slice->m_pps->bUseWeightPred;
-    bool bUseWeightB = slice->getSliceType() == B_SLICE && slice->m_pps->bUseWeightedBiPred;
+    bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
+    bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
     if (bUseWeightP || bUseWeightB)
         weightAnalyse(*slice, *m_param);
     else
@@ -595,8 +594,8 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_busy = false;
     }
 
-    bool bUseWeightP = slice->m_pps->bUseWeightPred && slice->getSliceType() == P_SLICE;
-    bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->getSliceType() == B_SLICE;
+    bool bUseWeightP = slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE;
+    bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_SSDY = m_SSDU = m_SSDV = 0;
@@ -740,7 +739,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.m_cuCoder.m_trQuant.m_nr = &m_nr;
     tld.m_cuCoder.m_mref = m_mref;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->getSliceType()];
+    tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->m_sliceType];
     setLambda(m_frame->getSlice()->getSliceQp(), tld);
 
     int64_t startTime = x265_mdate();

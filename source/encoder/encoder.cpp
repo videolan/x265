@@ -346,7 +346,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             pic_out->pts = out->m_pts;
             pic_out->dts = out->m_dts;
 
-            switch (out->getSlice()->getSliceType())
+            switch (out->getSlice()->m_sliceType)
             {
             case I_SLICE:
                 pic_out->sliceType = out->m_lowres.bKeyframe ? X265_TYPE_IDR : X265_TYPE_I;
@@ -367,7 +367,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
         }
 
-        if (out->getSlice()->getSliceType() == P_SLICE)
+        if (out->getSlice()->m_sliceType == P_SLICE)
         {
             if (out->getSlice()->m_weightPredTable[0][0][0].bPresentFlag)
                 m_numLumaWPFrames++;
@@ -375,7 +375,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
                 out->getSlice()->m_weightPredTable[0][0][2].bPresentFlag)
                 m_numChromaWPFrames++;
         }
-        else if (out->getSlice()->getSliceType() == B_SLICE)
+        else if (out->getSlice()->m_sliceType == B_SLICE)
         {
             bool bLuma = false, bChroma = false;
             for (int l = 0; l < 2; l++)

@@ -564,7 +564,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
     int maxTuSize = cu->getSlice()->m_sps->quadtreeTULog2MaxSize;
-    int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
+    int isIntraSlice = (cu->getSlice()->m_sliceType == I_SLICE);
 
     // don't check split if TU size is less or equal to max TU size
     bool noSplitIntraMaxTuSize = bCheckFull;
@@ -827,7 +827,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
     int maxTuSize = cu->getSlice()->m_sps->quadtreeTULog2MaxSize;
-    int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
+    int isIntraSlice = (cu->getSlice()->m_sliceType == I_SLICE);
 
     if (m_param->rdPenalty == 2 && !isIntraSlice)
         // if maximum RD-penalty don't check TU size 32x32

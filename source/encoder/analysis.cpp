@@ -271,7 +271,7 @@ void Analysis::compressCU(TComDataCU* cu)
     // analysis of CU
     uint32_t numPartition = cu->getTotalNumPart();
 
-    if (m_bestCU[0]->getSlice()->getSliceType() == I_SLICE)
+    if (m_bestCU[0]->getSlice()->m_sliceType == I_SLICE)
     {
         compressIntraCU(m_bestCU[0], m_tempCU[0], 0, false);
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
@@ -703,7 +703,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 }
 
                 /* Check for Intra in inter frames only if its a P-slice*/
-                if (slice->getSliceType() == P_SLICE)
+                if (slice->m_sliceType == P_SLICE)
                 {
                     /* compute intra cost */
                     bool bdoIntra = true;
@@ -1076,7 +1076,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     if (bInsidePicture)
     {
         // do inter modes, SKIP and 2Nx2N
-        if (slice->getSliceType() != I_SLICE)
+        if (slice->m_sliceType != I_SLICE)
         {
             // 2Nx2N
             if (m_param->bEnableEarlySkip)
@@ -1104,7 +1104,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             outTempCU->initEstData();
 
             // do inter modes, NxN, 2NxN, and Nx2N
-            if (slice->getSliceType() != I_SLICE)
+            if (slice->m_sliceType != I_SLICE)
             {
                 // 2Nx2N, NxN
                 if (!(log2CUSize == 3))
@@ -1214,7 +1214,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
 
             // speedup for inter frames, avoid intra in special cases
-            bool doIntra = slice->getSliceType() == B_SLICE ? !!m_param->bIntraInBFrames : true;
+            bool doIntra = slice->m_sliceType == B_SLICE ? !!m_param->bIntraInBFrames : true;
             if ((outBestCU->getCbf(0, TEXT_LUMA)     != 0   ||
                  outBestCU->getCbf(0, TEXT_CHROMA_U) != 0   ||
                  outBestCU->getCbf(0, TEXT_CHROMA_V) != 0)  && doIntra)
@@ -1348,7 +1348,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
 void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
 {
-    X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "Evaluating merge in I slice\n");
+    X265_CHECK(outTempCU->getSlice()->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;
@@ -1447,7 +1447,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
 void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
 {
-    X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "I slice not expected\n");
+    X265_CHECK(outTempCU->getSlice()->m_sliceType != I_SLICE, "I slice not expected\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;

@@ -980,7 +980,7 @@ fail:
 void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
     m_curSlice = pic->getSlice();
-    m_sliceType = m_curSlice->getSliceType();
+    m_sliceType = m_curSlice->m_sliceType;
     rce->sliceType = m_sliceType;
     rce->isActive = true;
     if (m_sliceType == B_SLICE)
@@ -1194,24 +1194,24 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         TComSlice* nextRefSlice = m_curSlice->getRefPic(REF_PIC_LIST_1, 0)->getSlice();
         double q0 = m_curSlice->getRefPic(REF_PIC_LIST_0, 0)->m_avgQpRc;
         double q1 = m_curSlice->getRefPic(REF_PIC_LIST_1, 0)->m_avgQpRc;
-        bool i0 = prevRefSlice->getSliceType() == I_SLICE;
-        bool i1 = nextRefSlice->getSliceType() == I_SLICE;
+        bool i0 = prevRefSlice->m_sliceType == I_SLICE;
+        bool i1 = nextRefSlice->m_sliceType == I_SLICE;
         int dt0 = abs(m_curSlice->m_poc - prevRefSlice->m_poc);
         int dt1 = abs(m_curSlice->m_poc - nextRefSlice->m_poc);
 
         // Skip taking a reference frame before the Scenecut if ABR has been reset.
         if (m_lastAbrResetPoc >= 0)
         {
-            if (prevRefSlice->getSliceType() == P_SLICE && prevRefSlice->m_poc < m_lastAbrResetPoc)
+            if (prevRefSlice->m_sliceType == P_SLICE && prevRefSlice->m_poc < m_lastAbrResetPoc)
             {
                 i0 = i1;
                 dt0 = dt1;
                 q0 = q1;
             }
         }
-        if (prevRefSlice->getSliceType() == B_SLICE && prevRefSlice->isReferenced())
+        if (prevRefSlice->m_sliceType == B_SLICE && prevRefSlice->isReferenced())
             q0 -= m_pbOffset / 2;
-        if (nextRefSlice->getSliceType() == B_SLICE && nextRefSlice->isReferenced())
+        if (nextRefSlice->m_sliceType == B_SLICE && nextRefSlice->isReferenced())
             q1 -= m_pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + m_ipOffset;
@@ -1562,7 +1562,7 @@ double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double
 
     encodedBitsSoFar = 0;
     double qScale = x265_qp2qScale(qpVbv);
-    int picType = pic->getSlice()->getSliceType();
+    int picType = pic->getSlice()->m_sliceType;
     Frame* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
     int maxRows = pic->getPicSym()->getFrameHeightInCU();
     for (int row = 0; row < maxRows; row++)
@@ -1594,7 +1594,7 @@ double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double
             if (picType == I_SLICE || qScale >= refQScale)
             {
                 if (picType == P_SLICE
-                    && refPic->getSlice()->getSliceType() == picType
+                    && refPic->getSlice()->m_sliceType == picType
                     && refQScale > 0
                     && refRowSatdCost > 0)
                 {
@@ -1634,7 +1634,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
-    if (pic->getSlice()->getSliceType() == P_SLICE)
+    if (pic->getSlice()->m_sliceType == P_SLICE)
     {
         Frame* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
         if (qpVbv < refSlice->m_rowDiagQp[row])
