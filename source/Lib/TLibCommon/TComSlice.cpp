@@ -62,7 +62,6 @@ TComSlice::TComSlice()
     , m_bReferenced(false)
     , m_sps(NULL)
     , m_pps(NULL)
-    , m_vps(NULL)
     , m_pic(NULL)
     , m_colFromL0Flag(1)
     , m_colRefIdx(0)
@@ -329,37 +328,6 @@ void TComSlice::initWpScaling()
             }
         }
     }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Sequence parameter set (SPS)
-// ------------------------------------------------------------------------------------------------
-
-TComSPS::TComSPS()
-    : m_chromaFormatIdc(X265_CSP_I420)
-// Structure
-    , m_picWidthInLumaSamples(352)
-    , m_picHeightInLumaSamples(288)
-    , m_log2MinCodingBlockSize(0)
-    , m_log2DiffMaxMinCodingBlockSize(0)
-    , m_maxCUSize(32)
-    , m_maxCUDepth(3)
-    , m_quadtreeTULog2MaxSize(0)
-    , m_quadtreeTULog2MinSize(0)
-    , m_quadtreeTUMaxDepthInter(0)
-    , m_quadtreeTUMaxDepthIntra(0)
-// Tool list
-    , m_bitDepthY(8)
-    , m_bitDepthC(8)
-    , m_qpBDOffsetY(0)
-    , m_qpBDOffsetC(0)
-    , m_bitsForPOC(8)
-    , m_bUseSAO(false)
-    , m_useStrongIntraSmoothing(false)
-{
-    m_maxLatencyIncrease = 0;
-    m_maxDecPicBuffering = 1;
-    m_numReorderPics     = 0;
 }
 
 TComPPS::TComPPS()

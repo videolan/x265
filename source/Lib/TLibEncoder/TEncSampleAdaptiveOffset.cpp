@@ -503,13 +503,12 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
 {
     int x, y;
     TComDataCU *pTmpCu = m_pic->getCU(addr);
-    TComSPS *pTmpSPS =  m_pic->getSlice()->getSPS();
 
     pixel* fenc;
     pixel* pRec;
     int stride;
-    int iLcuHeight = pTmpSPS->getMaxCUSize();
-    int iLcuWidth  = pTmpSPS->getMaxCUSize();
+    int iLcuHeight = g_maxCUSize;
+    int iLcuWidth  = g_maxCUSize;
     uint32_t lpelx   = pTmpCu->getCUPelX();
     uint32_t tpely   = pTmpCu->getCUPelY();
     uint32_t rpelx;

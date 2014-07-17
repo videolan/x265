@@ -1045,71 +1045,61 @@ void Encoder::initSPS(TComSPS *sps)
     /* TODO: Range extension profiles */
     /* TODO: check final spec for compatibility rules here */
 
-    sps->setPicWidthInLumaSamples(m_param->sourceWidth);
-    sps->setPicHeightInLumaSamples(m_param->sourceHeight);
-    sps->setConformanceWindow(m_conformanceWindow);
-    sps->setChromaFormatIdc(m_param->internalCsp);
-    sps->setMaxCUSize(g_maxCUSize);
-    sps->setMaxCUDepth(g_maxCUDepth);
+    sps->m_conformanceWindow = m_conformanceWindow;
+    sps->m_chromaFormatIdc = m_param->internalCsp;
+    sps->m_picWidthInLumaSamples = m_param->sourceWidth;
+    sps->m_picHeightInLumaSamples = m_param->sourceHeight;
 
-    int log2MinCUSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
+    sps->m_log2MinCodingBlockSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
+    sps->m_log2DiffMaxMinCodingBlockSize = g_maxCUDepth - g_addCUDepth;
 
-    sps->setLog2MinCodingBlockSize(log2MinCUSize);
-    sps->setLog2DiffMaxMinCodingBlockSize(g_maxCUDepth - g_addCUDepth);
+    sps->m_quadtreeTULog2MaxSize = m_quadtreeTULog2MaxSize;
+    sps->m_quadtreeTULog2MinSize = m_quadtreeTULog2MinSize;
+    sps->m_quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
+    sps->m_quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
 
-    sps->setQuadtreeTULog2MaxSize(m_quadtreeTULog2MaxSize);
-    sps->setQuadtreeTULog2MinSize(m_quadtreeTULog2MinSize);
-    sps->setQuadtreeTUMaxDepthInter(m_param->tuQTMaxInterDepth);
-    sps->setQuadtreeTUMaxDepthIntra(m_param->tuQTMaxIntraDepth);
+    sps->m_bUseSAO = m_param->bEnableSAO;
 
-    sps->setTMVPFlagsPresent(false);
-    sps->setUseSAO(m_param->bEnableSAO);
-    sps->setUseAMP(m_param->bEnableAMP);
-    sps->setAMPAcc(g_maxCUDepth - g_addCUDepth);
+    sps->m_bUseAMP = m_param->bEnableAMP;
+    sps->m_maxAMPDepth = g_maxCUDepth - g_addCUDepth;
 
-    sps->setBitDepthY(X265_DEPTH);
-    sps->setBitDepthC(X265_DEPTH);
+    sps->m_maxDecPicBuffering = m_vps.maxDecPicBuffering;
+    sps->m_numReorderPics = m_vps.numReorderPics;
 
-    sps->setQpBDOffsetY(QP_BD_OFFSET);
-    sps->setQpBDOffsetC(QP_BD_OFFSET);
+    sps->m_useStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
 
-    sps->setMaxDecPicBuffering(m_vps.maxDecPicBuffering);
-    sps->setNumReorderPics(m_vps.numReorderPics);
+    TComVUI& vui = sps->m_vuiParameters;
+    vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
+    vui.aspectRatioIdc = m_param->vui.aspectRatioIdc;
+    vui.sarWidth = m_param->vui.sarWidth;
+    vui.sarHeight = m_param->vui.sarHeight;
 
-    sps->setUseStrongIntraSmoothing(m_param->bEnableStrongIntraSmoothing);
+    vui.overscanInfoPresentFlag = m_param->vui.bEnableOverscanInfoPresentFlag;
+    vui.overscanAppropriateFlag = m_param->vui.bEnableOverscanAppropriateFlag;
 
-    TComVUI* vui = sps->getVuiParameters();
-    vui->aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
-    vui->aspectRatioIdc = m_param->vui.aspectRatioIdc;
-    vui->sarWidth = m_param->vui.sarWidth;
-    vui->sarHeight = m_param->vui.sarHeight;
+    vui.videoSignalTypePresentFlag = m_param->vui.bEnableVideoSignalTypePresentFlag;
+    vui.videoFormat = m_param->vui.videoFormat;
+    vui.videoFullRangeFlag = m_param->vui.bEnableVideoFullRangeFlag;
 
-    vui->overscanInfoPresentFlag = m_param->vui.bEnableOverscanInfoPresentFlag;
-    vui->overscanAppropriateFlag = m_param->vui.bEnableOverscanAppropriateFlag;
+    vui.colourDescriptionPresentFlag = m_param->vui.bEnableColorDescriptionPresentFlag;
+    vui.colourPrimaries = m_param->vui.colorPrimaries;
+    vui.transferCharacteristics = m_param->vui.transferCharacteristics;
+    vui.matrixCoefficients = m_param->vui.matrixCoeffs;
 
-    vui->videoSignalTypePresentFlag = m_param->vui.bEnableVideoSignalTypePresentFlag;
-    vui->videoFormat = m_param->vui.videoFormat;
-    vui->videoFullRangeFlag = m_param->vui.bEnableVideoFullRangeFlag;
+    vui.chromaLocInfoPresentFlag = m_param->vui.bEnableChromaLocInfoPresentFlag;
+    vui.chromaSampleLocTypeTopField = m_param->vui.chromaSampleLocTypeTopField;
+    vui.chromaSampleLocTypeBottomField = m_param->vui.chromaSampleLocTypeBottomField;
 
-    vui->colourDescriptionPresentFlag = m_param->vui.bEnableColorDescriptionPresentFlag;
-    vui->colourPrimaries = m_param->vui.colorPrimaries;
-    vui->transferCharacteristics = m_param->vui.transferCharacteristics;
-    vui->matrixCoefficients = m_param->vui.matrixCoeffs;
+    vui.defaultDisplayWindow = m_defaultDisplayWindow;
 
-    vui->chromaLocInfoPresentFlag = m_param->vui.bEnableChromaLocInfoPresentFlag;
-    vui->chromaSampleLocTypeTopField = m_param->vui.chromaSampleLocTypeTopField;
-    vui->chromaSampleLocTypeBottomField = m_param->vui.chromaSampleLocTypeBottomField;
+    vui.frameFieldInfoPresentFlag = !!m_param->interlaceMode;
+    vui.fieldSeqFlag = !!m_param->interlaceMode;
 
-    vui->defaultDisplayWindow = m_defaultDisplayWindow;
+    vui.hrdParametersPresentFlag = m_param->bEmitHRDSEI;
 
-    vui->frameFieldInfoPresentFlag = !!m_param->interlaceMode;
-    vui->fieldSeqFlag = !!m_param->interlaceMode;
-
-    vui->hrdParametersPresentFlag = m_param->bEmitHRDSEI;
-
-    vui->timingInfo.timingInfoPresentFlag = true;
-    vui->timingInfo.numUnitsInTick = m_param->fpsDenom;
-    vui->timingInfo.timeScale = m_param->fpsNum;
+    vui.timingInfo.timingInfoPresentFlag = true;
+    vui.timingInfo.numUnitsInTick = m_param->fpsDenom;
+    vui.timingInfo.timeScale = m_param->fpsNum;
 }
 
 void Encoder::initPPS(TComPPS *pps)
@@ -1129,13 +1119,13 @@ void Encoder::initPPS(TComPPS *pps)
     {
         pps->setUseDQP(true);
         pps->setMaxCuDQPDepth(m_maxCuDQPDepth);
-        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUSize() >> (pps->getMaxCuDQPDepth()));
+        pps->setMinCuDQPSize(g_maxCUSize >> pps->getMaxCuDQPDepth());
     }
     else
     {
         pps->setUseDQP(false);
         pps->setMaxCuDQPDepth(0);
-        pps->setMinCuDQPSize(pps->getSPS()->getMaxCUSize() >> (pps->getMaxCuDQPDepth()));
+        pps->setMinCuDQPSize(g_maxCUSize >> pps->getMaxCuDQPDepth());
     }
 
     pps->setChromaCbQpOffset(m_param->cbQpOffset);

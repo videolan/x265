@@ -213,15 +213,14 @@ public:
 
     void writeSEI(TComSPS& sps)
     {
-        TComVUI *vui = sps.getVuiParameters();
-        TComHRD *hrd = &vui->hrdParameters;
+        TComHRD& hrd = sps.m_vuiParameters.hrdParameters;
 
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
         WRITE_FLAG(0, "concatenation_flag");
-        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   hrd->cpbRemovalDelayLength,       "au_cpb_removal_delay_delta_minus1");
-        WRITE_CODE(m_initialCpbRemovalDelay,       hrd->initialCpbRemovalDelayLength,        "initial_cpb_removal_delay");
-        WRITE_CODE(m_initialCpbRemovalDelayOffset, hrd->initialCpbRemovalDelayLength, "initial_cpb_removal_delay_offset");
+        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   hrd.cpbRemovalDelayLength,       "au_cpb_removal_delay_delta_minus1");
+        WRITE_CODE(m_initialCpbRemovalDelay,       hrd.initialCpbRemovalDelayLength,        "initial_cpb_removal_delay");
+        WRITE_CODE(m_initialCpbRemovalDelayOffset, hrd.initialCpbRemovalDelayLength, "initial_cpb_removal_delay_offset");
 
         writeByteAlign();
     }
@@ -242,7 +241,7 @@ public:
 
     void writeSEI(TComSPS& sps)
     {
-        TComVUI *vui = sps.getVuiParameters();
+        TComVUI *vui = &sps.m_vuiParameters;
         TComHRD *hrd = &vui->hrdParameters;
 
         if (vui->frameFieldInfoPresentFlag)

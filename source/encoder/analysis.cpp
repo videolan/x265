@@ -381,8 +381,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         uint32_t tpely = outBestCU->getCUPelY();
         uint32_t rpelx = lpelx + cuSize;
         uint32_t bpely = tpely + cuSize;
-        bInsidePicture = (rpelx <= slice->getSPS()->getPicWidthInLumaSamples() &&
-                          bpely <= slice->getSPS()->getPicHeightInLumaSamples());
+        bInsidePicture = (rpelx <= slice->getSPS()->m_picWidthInLumaSamples &&
+                          bpely <= slice->getSPS()->m_picHeightInLumaSamples);
     }
 
     // We need to split, so don't try these modes.
@@ -392,7 +392,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 
         if (depth == g_maxCUDepth - g_addCUDepth)
         {
-            if (log2CUSize > slice->getSPS()->getQuadtreeTULog2MinSize())
+            if (log2CUSize > slice->getSPS()->m_quadtreeTULog2MinSize)
                 checkIntra(outBestCU, outTempCU, SIZE_NxN);
         }
 
@@ -422,8 +422,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
             subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
             if (bInsidePicture ||
-                ((subBestPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
-                 (subBestPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples())))
+                ((subBestPartCU->getCUPelX() < slice->getSPS()->m_picWidthInLumaSamples) &&
+                 (subBestPartCU->getCUPelY() < slice->getSPS()->m_picHeightInLumaSamples)))
             {
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
@@ -580,8 +580,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         uint32_t tpely = outTempCU->getCUPelY();
         uint32_t rpelx = lpelx + cuSize;
         uint32_t bpely = tpely + cuSize;
-        bInsidePicture = (rpelx <= slice->getSPS()->getPicWidthInLumaSamples() &&
-                          bpely <= slice->getSPS()->getPicHeightInLumaSamples());
+        bInsidePicture = (rpelx <= slice->getSPS()->m_picWidthInLumaSamples &&
+                          bpely <= slice->getSPS()->m_picHeightInLumaSamples);
     }
 
     if (depth == 0 && m_param->rdLevel == 0)
@@ -900,8 +900,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             subTempPartCU->initSubCU(outTempCU, nextDepth_partIndex, nextDepth, qp); // clear sub partition datas or init.
 
             if (bInsidePicture ||
-                ((subTempPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
-                 (subTempPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples())))
+                ((subTempPartCU->getCUPelX() < slice->getSPS()->m_picWidthInLumaSamples) &&
+                 (subTempPartCU->getCUPelY() < slice->getSPS()->m_picHeightInLumaSamples)))
             {
                 if (0 == nextDepth_partIndex) // initialize RD with previous depth buffer
                     m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[depth][CI_CURR_BEST]);
@@ -1068,8 +1068,8 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
         uint32_t tpely = outBestCU->getCUPelY();
         uint32_t rpelx = lpelx + cuSize;
         uint32_t bpely = tpely + cuSize;
-        bInsidePicture = (rpelx <= slice->getSPS()->getPicWidthInLumaSamples() &&
-                          bpely <= slice->getSPS()->getPicHeightInLumaSamples());
+        bInsidePicture = (rpelx <= slice->getSPS()->m_picWidthInLumaSamples &&
+                          bpely <= slice->getSPS()->m_picHeightInLumaSamples);
     }
 
     // We need to split, so don't try these modes.
@@ -1224,7 +1224,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                 if (depth == g_maxCUDepth - g_addCUDepth)
                 {
-                    if (log2CUSize > slice->getSPS()->getQuadtreeTULog2MinSize())
+                    if (log2CUSize > slice->getSPS()->m_quadtreeTULog2MinSize)
                     {
                         checkIntraInInter_rd5_6(outBestCU, outTempCU, SIZE_NxN);
                         outTempCU->initEstData();
@@ -1267,8 +1267,8 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
             if (bInsidePicture ||
-                ((subBestPartCU->getCUPelX() < slice->getSPS()->getPicWidthInLumaSamples()) &&
-                 (subBestPartCU->getCUPelY() < slice->getSPS()->getPicHeightInLumaSamples())))
+                ((subBestPartCU->getCUPelX() < slice->getSPS()->m_picWidthInLumaSamples) &&
+                 (subBestPartCU->getCUPelY() < slice->getSPS()->m_picHeightInLumaSamples)))
             {
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
@@ -1830,8 +1830,8 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
         {
             uint32_t lpelx = lcu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
             uint32_t tpely = lcu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-            if ((lpelx < slice->getSPS()->getPicWidthInLumaSamples()) &&
-                (tpely < slice->getSPS()->getPicHeightInLumaSamples()))
+            if ((lpelx < slice->getSPS()->m_picWidthInLumaSamples) &&
+                (tpely < slice->getSPS()->m_picHeightInLumaSamples))
             {
                 subTempPartCU->copyToSubCU(cu, partUnitIdx, depth + 1);
                 encodeResidue(lcu, subTempPartCU, absPartIdx, depth + 1);
@@ -1949,8 +1949,8 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
         uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
         uint32_t rpelx = lpelx + (g_maxCUSize >> depth);
         uint32_t bpely = tpely + (g_maxCUSize >> depth);
-        bInsidePicture = (rpelx <= slice->getSPS()->getPicWidthInLumaSamples() &&
-                          bpely <= slice->getSPS()->getPicHeightInLumaSamples());
+        bInsidePicture = (rpelx <= slice->getSPS()->m_picWidthInLumaSamples &&
+                          bpely <= slice->getSPS()->m_picHeightInLumaSamples);
     }
 
     // We need to split, so don't try these modes.
@@ -1968,8 +1968,8 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-            if ((lpelx < slice->getSPS()->getPicWidthInLumaSamples()) &&
-                (tpely < slice->getSPS()->getPicHeightInLumaSamples()))
+            if ((lpelx < slice->getSPS()->m_picWidthInLumaSamples) &&
+                (tpely < slice->getSPS()->m_picHeightInLumaSamples))
             {
                 encodeCU(cu, absPartIdx, depth + 1, bInsidePicture);
             }
@@ -2175,8 +2175,8 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     uint32_t externalAddress = (slice->getSliceCurEndCUAddr() - 1) / pic->getNumPartInCU();
     uint32_t posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelX[g_zscanToRaster[internalAddress]];
     uint32_t posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-    uint32_t width = slice->getSPS()->getPicWidthInLumaSamples();
-    uint32_t height = slice->getSPS()->getPicHeightInLumaSamples();
+    uint32_t width = slice->getSPS()->m_picWidthInLumaSamples;
+    uint32_t height = slice->getSPS()->m_picHeightInLumaSamples;
     uint32_t cuSize = 1 << cu->getLog2CUSize(absPartIdx);
 
     while (posx >= width || posy >= height)

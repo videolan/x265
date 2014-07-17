@@ -233,157 +233,32 @@ class TComSPS
 {
 public:
 
-    int         m_chromaFormatIdc;
-
-    // Structure
-    uint32_t    m_picWidthInLumaSamples;
-    uint32_t    m_picHeightInLumaSamples;
+    int         m_chromaFormatIdc;        // use param
+    uint32_t    m_picWidthInLumaSamples;  // use param
+    uint32_t    m_picHeightInLumaSamples; // use param
 
     int         m_log2MinCodingBlockSize;
     int         m_log2DiffMaxMinCodingBlockSize;
-    uint32_t    m_maxCUSize;
-    uint32_t    m_maxCUDepth;
 
-    Window      m_conformanceWindow;
-
-    bool        m_TMVPFlagsPresent;
-    int         m_numReorderPics;
-
-    // Tool list
     uint32_t    m_quadtreeTULog2MaxSize;
     uint32_t    m_quadtreeTULog2MinSize;
-    uint32_t    m_quadtreeTUMaxDepthInter;
-    uint32_t    m_quadtreeTUMaxDepthIntra;
 
-    // Parameter
-    int         m_bitDepthY;
-    int         m_bitDepthC;
-    int         m_qpBDOffsetY;
-    int         m_qpBDOffsetC;
+    uint32_t    m_quadtreeTUMaxDepthInter; // use param
+    uint32_t    m_quadtreeTUMaxDepthIntra; // use param
 
-    uint32_t    m_bitsForPOC;
-
-    bool        m_bUseSAO;
-    bool        m_useAMP;
+    bool        m_bUseSAO; // use param
+    bool        m_bUseAMP; // use param
     uint32_t    m_maxAMPDepth;
 
-    uint32_t    m_maxDecPicBuffering;
-    uint32_t    m_maxLatencyIncrease; // Really max latency increase plus 1 (value 0 expresses no limit)
+    uint32_t    m_maxDecPicBuffering; // these are dups of VPS values
+    int         m_numReorderPics;
 
-    bool        m_useStrongIntraSmoothing;
+    bool        m_useStrongIntraSmoothing; // use param
 
+    Window      m_conformanceWindow;
     TComVUI     m_vuiParameters;
 
-    TComSPS();
-
-    int  getChromaFormatIdc()         { return m_chromaFormatIdc; }
-
-    void setChromaFormatIdc(int i)    { m_chromaFormatIdc = i; }
-
-    // structure
-    void setPicWidthInLumaSamples(uint32_t u) { m_picWidthInLumaSamples = u; }
-
-    uint32_t getPicWidthInLumaSamples() const { return m_picWidthInLumaSamples; }
-
-    void setPicHeightInLumaSamples(uint32_t u) { m_picHeightInLumaSamples = u; }
-
-    uint32_t getPicHeightInLumaSamples() const { return m_picHeightInLumaSamples; }
-
-    Window& getConformanceWindow() { return m_conformanceWindow; }
-
-    void    setConformanceWindow(Window& conformanceWindow) { m_conformanceWindow = conformanceWindow; }
-
-    int  getLog2MinCodingBlockSize() const { return m_log2MinCodingBlockSize; }
-
-    void setLog2MinCodingBlockSize(int val) { m_log2MinCodingBlockSize = val; }
-
-    int  getLog2DiffMaxMinCodingBlockSize() const { return m_log2DiffMaxMinCodingBlockSize; }
-
-    void setLog2DiffMaxMinCodingBlockSize(int val) { m_log2DiffMaxMinCodingBlockSize = val; }
-
-    int  getLog2MaxCodingBlockSize() const { return m_log2MinCodingBlockSize + m_log2DiffMaxMinCodingBlockSize; }
-
-    void setMaxCUSize(uint32_t u) { m_maxCUSize = u; }
-
-    uint32_t getMaxCUSize() const  { return m_maxCUSize; }
-
-    void setMaxCUDepth(uint32_t u) { m_maxCUDepth = u; }
-
-    uint32_t getMaxCUDepth() const { return m_maxCUDepth; }
-
-    void setBitsForPOC(uint32_t u) { m_bitsForPOC = u; }
-
-    uint32_t getBitsForPOC() const { return m_bitsForPOC; }
-
-    bool getUseAMP() { return m_useAMP; }
-
-    void setUseAMP(bool b) { m_useAMP = b; }
-
-    void setQuadtreeTULog2MaxSize(uint32_t u)   { m_quadtreeTULog2MaxSize = u; }
-
-    uint32_t getQuadtreeTULog2MaxSize() const   { return m_quadtreeTULog2MaxSize; }
-
-    void setQuadtreeTULog2MinSize(uint32_t u)   { m_quadtreeTULog2MinSize = u; }
-
-    uint32_t getQuadtreeTULog2MinSize() const   { return m_quadtreeTULog2MinSize; }
-
-    void setQuadtreeTUMaxDepthInter(uint32_t u) { m_quadtreeTUMaxDepthInter = u; }
-
-    void setQuadtreeTUMaxDepthIntra(uint32_t u) { m_quadtreeTUMaxDepthIntra = u; }
-
-    uint32_t getQuadtreeTUMaxDepthInter() const   { return m_quadtreeTUMaxDepthInter; }
-
-    uint32_t getQuadtreeTUMaxDepthIntra() const    { return m_quadtreeTUMaxDepthIntra; }
-
-    bool      getTMVPFlagsPresent() const   { return m_TMVPFlagsPresent; }
-
-    void      setTMVPFlagsPresent(bool b)   { m_TMVPFlagsPresent = b; }
-
-    // AMP accuracy
-    int       getAMPAcc(uint32_t depth) const { return m_maxAMPDepth > depth && m_useAMP; }
-
-    void      setAMPAcc(uint32_t depth) { m_maxAMPDepth = depth; }
-
-    // Bit-depth
-    int       getBitDepthY() const { return m_bitDepthY; }
-
-    void      setBitDepthY(int u) { m_bitDepthY = u; }
-
-    int       getBitDepthC() const { return m_bitDepthC; }
-
-    void      setBitDepthC(int u) { m_bitDepthC = u; }
-
-    int       getQpBDOffsetY() const { return m_qpBDOffsetY; }
-
-    void      setQpBDOffsetY(int value) { m_qpBDOffsetY = value; }
-
-    int       getQpBDOffsetC() const { return m_qpBDOffsetC; }
-
-    void      setQpBDOffsetC(int value) { m_qpBDOffsetC = value; }
-
-    void      setUseSAO(bool bVal)  { m_bUseSAO = bVal; }
-
-    bool      getUseSAO() const { return m_bUseSAO; }
-
-    uint32_t getMaxDecPicBuffering() { return m_maxDecPicBuffering; }
-
-    void setMaxDecPicBuffering(uint32_t ui) { m_maxDecPicBuffering = ui; }
-
-    uint32_t getMaxLatencyIncrease() { return m_maxLatencyIncrease; }
-
-    void setMaxLatencyIncrease(uint32_t ui) { m_maxLatencyIncrease = ui; }
-
-    void setNumReorderPics(int i) { m_numReorderPics = i; }
-
-    int  getNumReorderPics() const  { return m_numReorderPics; }
-
-    void setUseStrongIntraSmoothing(bool bVal) { m_useStrongIntraSmoothing = bVal; }
-
-    bool getUseStrongIntraSmoothing() const { return m_useStrongIntraSmoothing; }
-
-    TComVUI* getVuiParameters() { return &m_vuiParameters; }
-
-    void setHrdParameters(uint32_t fpsNum, uint32_t fpsDenom, uint32_t numDU, uint32_t bitRate, bool randomAccess);
+    int  getAMPAcc(uint32_t depth) const { return m_maxAMPDepth > depth && m_bUseAMP; }
 };
 
 /// PPS class
@@ -598,7 +473,6 @@ private:
     // access channel
     TComSPS*    m_sps;
     TComPPS*    m_pps;
-    TComVPS*    m_vps;
     Frame*      m_pic;
     bool        m_colFromL0Flag; // collocated picture from List0 flag
 
@@ -625,10 +499,6 @@ public:
     ~TComSlice();
 
     void      initSlice();
-
-    void      setVPS(TComVPS* vps)            { m_vps = vps; }
-
-    TComVPS*  getVPS()                        { return m_vps; }
 
     void      setSPS(TComSPS* sps)            { m_sps = sps; }
 

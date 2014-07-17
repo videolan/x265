@@ -129,8 +129,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
 
-    m_sps.setTMVPFlagsPresent(true);
-
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
     memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
@@ -388,7 +386,7 @@ void FrameEncoder::compressFrame()
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
-        TComVUI *vui = slice->getSPS()->getVuiParameters();
+        TComVUI *vui = &slice->getSPS()->m_vuiParameters;
         TComHRD *hrd = &vui->hrdParameters;
         int poc = slice->getPOC();
 
@@ -411,7 +409,7 @@ void FrameEncoder::compressFrame()
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
-            sei->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics() + poc - totalCoded;
+            sei->m_picDpbOutputDelay = slice->getSPS()->m_numReorderPics + poc - totalCoded;
         }
 
         m_bs.resetBits();
@@ -499,7 +497,7 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
-    if (m_sps.getUseSAO())
+    if (m_sps.m_bUseSAO)
     {
         SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
 
@@ -531,7 +529,7 @@ void FrameEncoder::compressFrame()
     m_sbacCoder.resetEntropy(slice);
     m_sbacCoder.setBitstream(&m_bs);
 
-    if (slice->getSPS()->getUseSAO())
+    if (slice->getSPS()->m_bUseSAO)
     {
         SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
@@ -631,7 +629,7 @@ void FrameEncoder::encodeSlice()
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
         m_sbacCoder.load(m_rows[subStrm].m_rowEntropyCoder);
 
-        if (slice->getSPS()->getUseSAO())
+        if (slice->getSPS()->m_bUseSAO)
         {
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {

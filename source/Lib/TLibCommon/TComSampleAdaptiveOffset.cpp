@@ -1273,7 +1273,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (tpely < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
+            if ((lpelx < cu->getSlice()->getSPS()->m_picWidthInLumaSamples) && (tpely < cu->getSlice()->getSPS()->m_picHeightInLumaSamples))
                 xOrigCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 
@@ -1282,9 +1282,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
 
     // restore original YUV samples
     if (cu->isLosslessCoded(absZOrderIdx))
-    {
         restoreOrigLosslessYuv(cu, absZOrderIdx, depth);
-    }
 }
 
 /** Original Lossless YUV  sample restoration.

@@ -103,6 +103,8 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
+#define BITS_FOR_POC 8
+
 template<typename T>
 inline pixel Clip(T x)
 {

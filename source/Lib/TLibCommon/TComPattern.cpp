@@ -93,7 +93,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
         // above border from left to right
         memcpy(&filterBuf[l], &adiTemp[1], tuSize2 * sizeof(*filterBuf));
 
-        if (tuSize >= 32 && cu->getSlice()->getSPS()->getUseStrongIntraSmoothing())
+        if (tuSize >= 32 && cu->getSlice()->getSPS()->m_useStrongIntraSmoothing)
         {
             int bottomLeft = filterBuf[0];
             int topLeft = filterBuf[tuSize2];
