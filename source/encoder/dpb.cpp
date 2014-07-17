@@ -101,7 +101,7 @@ void DPB::prepareEncode(Frame *pic)
     {
         m_lastIDR = pocCurr;
     }
-    slice->setLastIDR(m_lastIDR);
+    slice->m_lastIDR = m_lastIDR;
     slice->m_nalUnitType = getNalUnitType(pocCurr, m_lastIDR, pic);
 
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type

@@ -939,7 +939,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 
         char buf[1024];
         int p;
-        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->getSliceQp(), (int)bits);
+        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->m_sliceQp, (int)bits);
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             p += sprintf(buf + p, " RF:%.3lf", pic->m_rateFactor);
         if (m_param->bEnablePsnr)
@@ -955,7 +955,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
                 p += sprintf(buf + p, " [L%d ", list);
                 for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                 {
-                    int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
+                    int k = slice->getRefPOC(list, ref) - slice->m_lastIDR;
                     p += sprintf(buf + p, "%d ", k);
                 }
 
@@ -987,7 +987,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
                     fprintf(m_csvfpt, ", ");
                     for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
                     {
-                        int k = slice->getRefPOC(list, ref) - slice->getLastIDR();
+                        int k = slice->getRefPOC(list, ref) - slice->m_lastIDR;
                         fprintf(m_csvfpt, " %d", k);
                     }
                 }

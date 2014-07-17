@@ -477,7 +477,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
 
 void SBac::resetEntropy(TComSlice *slice)
 {
-    int  qp              = slice->getSliceQp();
+    int  qp              = slice->m_sliceQp;
     SliceType sliceType  = slice->m_sliceType;
 
     int encCABACTableIdx = slice->m_pps->encCABACTableIdx;
@@ -523,7 +523,7 @@ void SBac::resetEntropy(TComSlice *slice)
  */
 void SBac::determineCabacInitIdx(TComSlice *slice, TComPPS *pps)
 {
-    int qp = slice->getSliceQp();
+    int qp = slice->m_sliceQp;
 
     if (!slice->isIntra())
     {
@@ -1017,7 +1017,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->getIdrPicFlag())
     {
-        int picOrderCntLSB = (slice->m_poc - slice->getLastIDR() + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
+        int picOrderCntLSB = (slice->m_poc - slice->m_lastIDR + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
         WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
 
 #if _DEBUG || CHECKED_BUILD
@@ -1097,7 +1097,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     if (!slice->isIntra())
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->m_maxNumMergeCand, "five_minus_max_num_merge_cand");
 
-    int code = slice->getSliceQp() - 26;
+    int code = slice->m_sliceQp - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
     bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[0] : false;

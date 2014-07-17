@@ -1094,7 +1094,7 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
         }
         else
         {
-            return getSlice()->getSliceQp();
+            return getSlice()->m_sliceQp;
         }
     }
 }

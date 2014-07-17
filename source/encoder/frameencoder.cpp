@@ -311,7 +311,7 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
-    int qp = slice->getSliceQp();
+    int qp = slice->m_sliceQp;
 
     int chromaQPOffset = slice->m_pps->chromaCbQpOffset;
     int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
@@ -326,7 +326,7 @@ void FrameEncoder::compressFrame()
 
     // Clip qps back to 0-51 range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->setSliceQp(qp);
+    slice->m_sliceQp = qp;
     m_frame->m_avgQpAq = qp;
 
     switch (slice->m_sliceType)
@@ -735,7 +735,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.m_cuCoder.m_mref = m_mref;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->m_sliceType];
-    setLambda(m_frame->getSlice()->getSliceQp(), tld);
+    setLambda(m_frame->getSlice()->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();
     assert(m_frame->getPicSym()->getFrameWidthInCU() == m_numCols);
@@ -749,7 +749,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_frame->getCU(cuAddr);
         cu->initCU(m_frame, cuAddr);
-        cu->setQPSubParts(m_frame->getSlice()->getSliceQp(), 0, 0);
+        cu->setQPSubParts(m_frame->getSlice()->m_sliceQp, 0, 0);
 
         if (bIsVbv)
         {

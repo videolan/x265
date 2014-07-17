@@ -1046,7 +1046,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     }
     m_framesDone++;
     /* set the final QP to slice structure */
-    m_curSlice->setSliceQp(m_qp);
+    m_curSlice->m_sliceQp = m_qp;
 }
 
 void RateControl::accumPQpUpdate()
@@ -1829,7 +1829,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
         }
         if (m_param->rc.rateControlMode == X265_RC_CRF)
         {
-            if (int(pic->m_avgQpRc + 0.5) == pic->getSlice()->getSliceQp())
+            if (int(pic->m_avgQpRc + 0.5) == pic->getSlice()->m_sliceQp)
                 pic->m_rateFactor = m_rateFactorConstant;
             else
             {

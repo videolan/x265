@@ -396,12 +396,6 @@ public:
         return m_nalUnitType >= 16 && m_nalUnitType <= 23;
     }
 
-    void      setLastIDR(int idrPoc)              { m_lastIDR = idrPoc; }
-
-    int       getLastIDR()                        { return m_lastIDR; }
-
-    int       getSliceQp()                        { return m_sliceQp; }
-
     int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
 
     const int* getNumRefIdx() const               { return m_numRefIdx; }
@@ -419,8 +413,6 @@ public:
     bool      getMvdL1ZeroFlag()                  { return m_bLMvdL1Zero; }
 
     int       getNumRpsCurrTempList();
-
-    void      setSliceQp(int i)                       { m_sliceQp = i; }
 
     void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 
