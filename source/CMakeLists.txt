@@ -285,7 +285,8 @@ if(ENABLE_SHARED)
         set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG})
         install(TARGETS x265-shared
                 LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-                ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+                ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+                RUNTIME DESTINATION ${BIN_INSTALL_DIR})
     endif()
 endif()
 
