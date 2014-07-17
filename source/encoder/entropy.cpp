@@ -1109,28 +1109,25 @@ void SBac::codeSliceHeader(TComSlice* slice)
 }
 
 /** write wavefront substreams sizes for the slice header */
-void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
+void SBac::codeTilesWPPEntryPoint(TComSlice* slice)
 {
-    uint32_t numEntryPointOffsets = 0, offsetLenMinus1 = 0, maxOffset = 0;
-    uint32_t *entryPointOffset = NULL;
-    
     uint32_t* substreamSizes = slice->getSubstreamSizes(); // TODO: pass as argument
     int maxNumParts = slice->m_pic->getNumPartInCU();
 
     int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
-    numEntryPointOffsets = slice->m_pic->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
+    uint32_t numEntryPointOffsets = slice->m_pic->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
+    uint32_t *entryPointOffset = new uint32_t[numEntryPointOffsets];
 
-    /* WTF? we can store byte sizes and avoid all this */
-    slice->setNumEntryPointOffsets(numEntryPointOffsets);
-    entryPointOffset = new uint32_t[numEntryPointOffsets];
+    uint32_t maxOffset = 0;
     for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
     {
         entryPointOffset[idx] = (substreamSizes[idx] >> 3);
         if (entryPointOffset[idx] > maxOffset)
             maxOffset = entryPointOffset[idx];
     }
+
     // Determine number of bits "offsetLenMinus1+1" required for entry point information
-    offsetLenMinus1 = 0;
+    uint32_t offsetLenMinus1 = 0;
     while (maxOffset >= (1u << (offsetLenMinus1 + 1)))
     {
         offsetLenMinus1++;

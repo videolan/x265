@@ -337,7 +337,6 @@ public:
     uint32_t    m_sliceCurEndCUAddr;
 
     uint32_t*   m_substreamSizes;
-    int         m_numEntryPointOffsets;
 
     bool        m_cabacInitFlag;
 
@@ -355,7 +354,6 @@ public:
         m_substreamSizes = NULL;
         m_cabacInitFlag = false;
         m_bLMvdL1Zero = false;
-        m_numEntryPointOffsets = 0;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
         for (int i = 0; i < MAX_NUM_REF; i++)
@@ -379,7 +377,6 @@ public:
         m_colRefIdx = 0;
         m_bCheckLDC = false;
         m_cabacInitFlag = false;
-        m_numEntryPointOffsets = 0;
     }
 
     bool getRapPicFlag() const
@@ -478,10 +475,6 @@ public:
     void  setCabacInitFlag(bool val)   { m_cabacInitFlag = val; }   //!< set CABAC initial flag
 
     bool  getCabacInitFlag()           { return m_cabacInitFlag; }  //!< get CABAC initial flag
-
-    void  setNumEntryPointOffsets(int val)  { m_numEntryPointOffsets = val; }
-
-    int   getNumEntryPointOffsets()         { return m_numEntryPointOffsets; }
 
 protected:
 
