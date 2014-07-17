@@ -309,35 +309,29 @@ struct WeightParam
 class TComSlice
 {
 public:
+
     const TComSPS* m_sps;
     const TComPPS* m_pps;
     Frame*         m_pic;
+    WeightParam    m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
+    RPS            m_rps;
 
-    //  Bitstream writing
-    bool        m_saoEnabledFlag;
-    bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
-    int         m_poc;
-    int         m_lastIDR;
-
-    RPS         m_rps;
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
     int         m_sliceQp;
-    bool        m_deblockingFilterDisable;
-    bool        m_deblockingFilterOverrideFlag;    //< offsets for deblocking filter inherit from PPS
-    int         m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
-    int         m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
-    int         m_numRefIdx[2];     //  for multiple reference of current slice
-
+    int         m_poc;
+    int         m_lastIDR;
     bool        m_bCheckLDC;
 
+    int         m_numRefIdx[2];     //  for multiple reference of current slice
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
-    // referenced slice?
     bool        m_bReferenced;
-
     bool        m_colFromL0Flag; // collocated picture from List0 flag
+    bool        m_saoEnabledFlag;
+    bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
+    bool        m_enableTMVPFlag;
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
@@ -352,45 +346,38 @@ public:
     bool       m_bLMvdL1Zero;
     int        m_numEntryPointOffsets;
 
-    bool       m_enableTMVPFlag;
-
-    WeightParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     TComSlice()
-        : m_poc(0)
-        , m_lastIDR(0)
-        , m_nalUnitType(NAL_UNIT_CODED_SLICE_IDR_W_RADL)
-        , m_sliceType(I_SLICE)
-        , m_sliceQp(0)
-        , m_deblockingFilterDisable(false)
-        , m_deblockingFilterOverrideFlag(false)
-        , m_deblockingFilterBetaOffsetDiv2(0)
-        , m_deblockingFilterTcOffsetDiv2(0)
-        , m_bCheckLDC(false)
-        , m_bReferenced(false)
-        , m_colFromL0Flag(1)
-        , m_colRefIdx(0)
-        , m_sliceCurEndCUAddr(0)
-        , m_sliceBits(0)
-        , m_sliceSegmentBits(0)
-        , m_substreamSizes(NULL)
-        , m_cabacInitFlag(false)
-        , m_bLMvdL1Zero(false)
-        , m_numEntryPointOffsets(0)
-        , m_enableTMVPFlag(true)
     {
+        m_poc = 0;
+        m_lastIDR = 0;
+        m_nalUnitType = NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+        m_sliceType = I_SLICE;
+        m_sliceQp = 0;
+        m_bCheckLDC = false;
+        m_bReferenced = false;
+        m_colFromL0Flag = 1;
+        m_colRefIdx = 0;
+        m_sliceCurEndCUAddr = 0;
+        m_sliceBits = 0;
+        m_sliceSegmentBits = 0;
+        m_substreamSizes = NULL;
+        m_cabacInitFlag = false;
+        m_bLMvdL1Zero = false;
+        m_numEntryPointOffsets = 0;
+        m_enableTMVPFlag = true;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
+        m_saoEnabledFlag = false;
 
-        for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
+        for (int i = 0; i < MAX_NUM_REF; i++)
         {
-            m_refPicList[0][numCount] = NULL;
-            m_refPicList[1][numCount] = NULL;
-            m_refPOCList[0][numCount] = 0;
-            m_refPOCList[1][numCount] = 0;
+            m_refPicList[0][i] = NULL;
+            m_refPicList[1][i] = NULL;
+            m_refPOCList[0][i] = 0;
+            m_refPOCList[1][i] = 0;
         }
 
         resetWpScaling();
-        m_saoEnabledFlag = false;
     }
 
     ~TComSlice();
@@ -414,14 +401,6 @@ public:
     int       getPOC()                            { return m_poc; }
 
     int       getSliceQp()                        { return m_sliceQp; }
-
-    bool      getDeblockingFilterDisable()        { return m_deblockingFilterDisable; }
-
-    bool      getDeblockingFilterOverrideFlag()   { return m_deblockingFilterOverrideFlag; }
-
-    int       getDeblockingFilterBetaOffsetDiv2() { return m_deblockingFilterBetaOffsetDiv2; }
-
-    int       getDeblockingFilterTcOffsetDiv2()   { return m_deblockingFilterTcOffsetDiv2; }
 
     int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
 
@@ -465,14 +444,6 @@ public:
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
-
-    void      setDeblockingFilterDisable(bool b)      { m_deblockingFilterDisable = b; }
-
-    void      setDeblockingFilterOverrideFlag(bool b) { m_deblockingFilterOverrideFlag = b; }
-
-    void      setDeblockingFilterBetaOffsetDiv2(int i) { m_deblockingFilterBetaOffsetDiv2 = i; }
-
-    void      setDeblockingFilterTcOffsetDiv2(int i)   { m_deblockingFilterTcOffsetDiv2 = i; }
 
     void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 

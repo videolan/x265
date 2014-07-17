@@ -1102,7 +1102,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     WRITE_SVLC(code, "slice_qp_delta");
 
     bool isSAOEnabled = (!slice->m_sps->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
-    bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
+    bool isDBFEnabled = (!slice->m_pps->bPicDisableDeblockingFilter);
 
     if (isSAOEnabled || isDBFEnabled)
         WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");

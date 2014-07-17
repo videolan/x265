@@ -272,9 +272,6 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
     TComDataCU* tempCU;
     uint32_t    tempPartIdx;
 
-    // We can't here when DeblockingDisable flag is true
-    X265_CHECK(!cu->getSlice()->getDeblockingFilterDisable(), "internal deblock state failure\n");
-
     if (x == 0)
     {
         lfcuParam->bLeftEdge = false;
@@ -459,8 +456,8 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     uint32_t  partQ = 0;
     TComDataCU* cuP = cu;
     TComDataCU* cuQ = cu;
-    int  betaOffsetDiv2 = cuQ->getSlice()->getDeblockingFilterBetaOffsetDiv2();
-    int  tcOffsetDiv2 = cuQ->getSlice()->getDeblockingFilterTcOffsetDiv2();
+    int  betaOffsetDiv2 = cuQ->getSlice()->m_pps->deblockingFilterBetaOffsetDiv2;
+    int  tcOffsetDiv2 = cuQ->getSlice()->m_pps->deblockingFilterTcOffsetDiv2;
 
     if (dir == EDGE_VER)
     {
@@ -567,7 +564,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t  partQ;
     TComDataCU* cuP;
     TComDataCU* cuQ = cu;
-    int tcOffsetDiv2 = cu->getSlice()->getDeblockingFilterTcOffsetDiv2();
+    int tcOffsetDiv2 = cu->getSlice()->m_pps->deblockingFilterTcOffsetDiv2;
 
     // Vertical Position
     uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
