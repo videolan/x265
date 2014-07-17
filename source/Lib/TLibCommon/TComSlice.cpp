@@ -45,49 +45,6 @@ using namespace x265;
 //! \ingroup TLibCommon
 //! \{
 
-TComSlice::TComSlice()
-    : m_poc(0)
-    , m_lastIDR(0)
-    , m_nalUnitType(NAL_UNIT_CODED_SLICE_IDR_W_RADL)
-    , m_sliceType(I_SLICE)
-    , m_sliceQp(0)
-    , m_deblockingFilterDisable(false)
-    , m_deblockingFilterOverrideFlag(false)
-    , m_deblockingFilterBetaOffsetDiv2(0)
-    , m_deblockingFilterTcOffsetDiv2(0)
-    , m_bCheckLDC(false)
-    , m_sliceQpDelta(0)
-    , m_sliceQpDeltaCb(0)
-    , m_sliceQpDeltaCr(0)
-    , m_bReferenced(false)
-    , m_sps(NULL)
-    , m_pps(NULL)
-    , m_pic(NULL)
-    , m_colFromL0Flag(1)
-    , m_colRefIdx(0)
-    , m_sliceCurEndCUAddr(0)
-    , m_sliceBits(0)
-    , m_sliceSegmentBits(0)
-    , m_substreamSizes(NULL)
-    , m_cabacInitFlag(false)
-    , m_bLMvdL1Zero(false)
-    , m_numEntryPointOffsets(0)
-    , m_enableTMVPFlag(true)
-{
-    m_numRefIdx[0] = m_numRefIdx[1] = 0;
-
-    for (int numCount = 0; numCount < MAX_NUM_REF; numCount++)
-    {
-        m_refPicList[0][numCount] = NULL;
-        m_refPicList[1][numCount] = NULL;
-        m_refPOCList[0][numCount] = 0;
-        m_refPOCList[1][numCount] = 0;
-    }
-
-    resetWpScaling();
-    m_saoEnabledFlag = false;
-}
-
 TComSlice::~TComSlice()
 {
     delete[] m_substreamSizes;
