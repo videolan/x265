@@ -127,14 +127,13 @@ void DPB::prepareEncode(Frame *pic)
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->getNalUnitType());
 
-    computeRPS(pocCurr, slice->isIRAP(), slice->getLocalRPS(), slice->m_sps->maxDecPicBuffering);
-    slice->setRPS(slice->getLocalRPS());
-    slice->setRPSidx(-1); // Force use of RPS from slice, rather than from SPS
+    computeRPS(pocCurr, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering);
 
-    applyReferencePictureSet(slice->getRPS(), pocCurr); // Mark pictures in m_piclist as unreferenced if they are not included in RPS
+    // Mark pictures in m_piclist as unreferenced if they are not included in RPS
+    applyReferencePictureSet(&slice->m_rps, pocCurr);
 
-    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->getRPS()->m_numberOfNegativePictures)); // Ensuring L0 contains just the -ve POC
-    slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->getRPS()->m_numberOfPositivePictures));
+    slice->setNumRefIdx(REF_PIC_LIST_0, X265_MIN(m_maxRefL0, slice->m_rps.m_numberOfNegativePictures)); // Ensuring L0 contains just the -ve POC
+    slice->setNumRefIdx(REF_PIC_LIST_1, X265_MIN(m_maxRefL1, slice->m_rps.m_numberOfPositivePictures));
 
     slice->setRefPicList(m_picList);
 

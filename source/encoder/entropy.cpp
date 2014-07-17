@@ -1019,19 +1019,18 @@ void SBac::codeSliceHeader(TComSlice* slice)
     {
         int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
         WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
-        RPS* rps = slice->getRPS();
 
 #if _DEBUG || CHECKED_BUILD
         // check for bitstream restriction stating that:
         // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
         // Ideally this process should not be repeated for each slice in a picture
         if (slice->isIRAP())
-            for (int picIdx = 0; picIdx < rps->m_numberOfPictures; picIdx++)
-                X265_CHECK(!rps->m_used[picIdx], "pic unused failure\n");
+            for (int picIdx = 0; picIdx < slice->m_rps.m_numberOfPictures; picIdx++)
+                X265_CHECK(!slice->m_rps.m_used[picIdx], "pic unused failure\n");
 #endif
 
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-        codeShortTermRefPicSet(rps);
+        codeShortTermRefPicSet(&slice->m_rps);
 
         WRITE_FLAG(slice->getEnableTMVPFlag(), "slice_temporal_mvp_enable_flag");
     }

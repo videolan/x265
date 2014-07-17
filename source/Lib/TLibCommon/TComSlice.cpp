@@ -135,27 +135,27 @@ void TComSlice::setRefPicList(PicList& picList)
     uint32_t numPocLtCurr = 0;
     int i;
 
-    for (i = 0; i < m_rps->m_numberOfNegativePictures; i++)
+    for (i = 0; i < m_rps.m_numberOfNegativePictures; i++)
     {
-        if (m_rps->m_used[i])
+        if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps->m_deltaPOC[i]);
+            refPic = xGetRefPic(picList, getPOC() + m_rps.m_deltaPOC[i]);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
     }
 
-    for (; i < m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures; i++)
+    for (; i < m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures; i++)
     {
-        if (m_rps->m_used[i])
+        if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps->m_deltaPOC[i]);
+            refPic = xGetRefPic(picList, getPOC() + m_rps.m_deltaPOC[i]);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }
     }
 
-    X265_CHECK(m_rps->m_numberOfPictures == m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures,
+    X265_CHECK(m_rps.m_numberOfPictures == m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures,
                "unexpected picture in RPS\n");
 
     // ref_pic_list_init
@@ -219,8 +219,8 @@ int TComSlice::getNumRpsCurrTempList()
         return 0;
 
     int numRpsCurrTempList = 0;
-    for (uint32_t i = 0; i < m_rps->m_numberOfNegativePictures + m_rps->m_numberOfPositivePictures; i++)
-        if (m_rps->m_used[i])
+    for (uint32_t i = 0; i < m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures; i++)
+        if (m_rps.m_used[i])
             numRpsCurrTempList++;
 
     return numRpsCurrTempList;

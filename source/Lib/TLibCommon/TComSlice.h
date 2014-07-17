@@ -319,9 +319,7 @@ public:
     int         m_poc;
     int         m_lastIDR;
 
-    RPS*        m_rps;
-    RPS         m_localRPS;
-    int         m_bdIdx;
+    RPS         m_rps;
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
     int         m_sliceQp;
@@ -413,16 +411,6 @@ public:
     void      setSaoEnabledFlagChroma(bool s) { m_saoEnabledFlagChroma = s; }
 
     bool      getSaoEnabledFlagChroma()       { return m_saoEnabledFlagChroma; }
-
-    void      setRPS(RPS *rps) { m_rps = rps; }
-
-    RPS*  getRPS()            { return m_rps; }
-
-    RPS*  getLocalRPS()       { return &m_localRPS; }
-
-    void      setRPSidx(int bdidx)                { m_bdIdx = bdidx; }
-
-    int       getRPSidx()                         { return m_bdIdx; }
 
     void      setLastIDR(int idrPoc)              { m_lastIDR = idrPoc; }
 
