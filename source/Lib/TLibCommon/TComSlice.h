@@ -173,12 +173,6 @@ struct TComVPS
     uint32_t    maxDecPicBuffering;
     TComHRD     hrdParameters;
     TimingInfo  timingInfo;
-
-    TComVPS()
-    {
-        numReorderPics = 0;
-        maxDecPicBuffering = 1;
-    }
 };
 
 struct Window
