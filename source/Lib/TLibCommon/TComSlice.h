@@ -169,19 +169,19 @@ struct HRDTiming
 
 struct TComVPS
 {
-    uint32_t    numReorderPics;
-    uint32_t    maxDecPicBuffering;
-    TComHRD     hrdParameters;
-    TimingInfo  timingInfo;
+    uint32_t   numReorderPics;
+    uint32_t   maxDecPicBuffering;
+    TComHRD    hrdParameters;
+    TimingInfo timingInfo;
 };
 
 struct Window
 {
-    bool          bEnabled;
-    int           leftOffset;
-    int           rightOffset;
-    int           topOffset;
-    int           bottomOffset;
+    bool bEnabled;
+    int  leftOffset;
+    int  rightOffset;
+    int  topOffset;
+    int  bottomOffset;
 
     Window()
     {
@@ -225,33 +225,32 @@ struct TComVUI
 
 struct TComSPS
 {
-    int         chromaFormatIdc;        // use param
-    uint32_t    picWidthInLumaSamples;  // use param
-    uint32_t    picHeightInLumaSamples; // use param
+    int      chromaFormatIdc;        // use param
+    uint32_t picWidthInLumaSamples;  // use param
+    uint32_t picHeightInLumaSamples; // use param
 
-    int         log2MinCodingBlockSize;
-    int         log2DiffMaxMinCodingBlockSize;
+    int      log2MinCodingBlockSize;
+    int      log2DiffMaxMinCodingBlockSize;
 
-    uint32_t    quadtreeTULog2MaxSize;
-    uint32_t    quadtreeTULog2MinSize;
+    uint32_t quadtreeTULog2MaxSize;
+    uint32_t quadtreeTULog2MinSize;
 
-    uint32_t    quadtreeTUMaxDepthInter; // use param
-    uint32_t    quadtreeTUMaxDepthIntra; // use param
+    uint32_t quadtreeTUMaxDepthInter; // use param
+    uint32_t quadtreeTUMaxDepthIntra; // use param
 
-    bool        bUseSAO; // use param
-    bool        bUseAMP; // use param
-    uint32_t    maxAMPDepth;
+    bool     bUseSAO; // use param
+    bool     bUseAMP; // use param
+    uint32_t maxAMPDepth;
 
-    uint32_t    maxDecPicBuffering; // these are dups of VPS values
-    int         numReorderPics;
+    uint32_t maxDecPicBuffering; // these are dups of VPS values
+    int      numReorderPics;
 
-    bool        useStrongIntraSmoothing; // use param
+    bool     useStrongIntraSmoothing; // use param
 
-    Window      conformanceWindow;
-    TComVUI     vuiParameters;
+    Window   conformanceWindow;
+    TComVUI  vuiParameters;
 };
 
-/// PPS class
 class TComPPS
 {
 private:
