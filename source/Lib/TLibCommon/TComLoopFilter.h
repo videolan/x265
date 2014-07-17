@@ -82,7 +82,7 @@ protected:
     void xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_t partIdx, uint8_t blockingStrength[]);
     uint32_t xCalcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int dir, int edgeIdx, int baseUnitIdx)
     {
-        Frame* const pic = cu->getPic();
+        Frame* const pic = cu->m_pic;
         const uint32_t lcuWidthInBaseUnits = pic->getNumPartInCUSize();
 
         if (dir == 0)

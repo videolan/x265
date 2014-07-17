@@ -265,8 +265,8 @@ void Analysis::compressCU(TComDataCU* cu)
         m_bEncodeDQP = true;
 
     // initialize CU data
-    m_bestCU[0]->initCU(cu->getPic(), cu->getAddr());
-    m_tempCU[0]->initCU(cu->getPic(), cu->getAddr());
+    m_bestCU[0]->initCU(cu->m_pic, cu->getAddr());
+    m_tempCU[0]->initCU(cu->m_pic, cu->getAddr());
 
     // analysis of CU
     uint32_t numPartition = cu->getTotalNumPart();
@@ -363,7 +363,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 {
     //PPAScopeEvent(CompressIntraCU + depth);
 
-    Frame* pic = outBestCU->getPic();
+    Frame* pic = outBestCU->m_pic;
 
     if (depth == 0)
         // get original YUV data from picture
@@ -554,7 +554,7 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
 
 void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint8_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint8_t minDepth)
 {
-    Frame* pic = outTempCU->getPic();
+    Frame* pic = outTempCU->m_pic;
     uint32_t absPartIdx = outTempCU->getZorderIdxInCU();
 
     if (depth == 0)
@@ -1043,7 +1043,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 {
     //PPAScopeEvent(CompressCU + depth);
 
-    Frame* pic = outBestCU->getPic();
+    Frame* pic = outBestCU->m_pic;
 
     if (depth == 0)
         // get original YUV data from picture
@@ -1820,7 +1820,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 {
     uint8_t nextDepth = (uint8_t)(depth + 1);
     TComDataCU* subTempPartCU = m_tempCU[nextDepth];
-    Frame* pic = cu->getPic();
+    Frame* pic = cu->m_pic;
     TComSlice* slice = cu->getSlice();
 
     if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))
@@ -1940,7 +1940,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 /* encode a CU block recursively */
 void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture)
 {
-    Frame* pic = cu->getPic();
+    Frame* pic = cu->m_pic;
 
     TComSlice* slice = cu->getSlice();
     if (!bInsidePicture)
@@ -2165,8 +2165,8 @@ void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
 /* finish encoding a cu and handle end-of-slice conditions */
 void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    Frame* pic = cu->getPic();
-    TComSlice* slice = cu->getPic()->getSlice();
+    Frame* pic = cu->m_pic;
+    TComSlice* slice = cu->m_pic->getSlice();
 
     //Calculate end address
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
@@ -2187,7 +2187,7 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 
     internalAddress++;
-    if (internalAddress == cu->getPic()->getNumPartInCU())
+    if (internalAddress == cu->m_pic->getNumPartInCU())
     {
         internalAddress = 0;
         externalAddress = (externalAddress + 1);
@@ -2196,7 +2196,7 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 
     // Encode slice finish
     bool bTerminateSlice = false;
-    if (cuAddr + (cu->getPic()->getNumPartInCU() >> (depth << 1)) == realEndAddress)
+    if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
     {
         bTerminateSlice = true;
     }

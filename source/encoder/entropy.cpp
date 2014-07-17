@@ -82,7 +82,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
 
     if ((log2TrSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
     {
-        uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
+        uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
         if ((absPartIdx & (partNum - 1)) == 0)
         {
             state.bakAbsPartIdx   = absPartIdx;
@@ -159,7 +159,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         trIdx++;
         ++depth;
         absPartIdxStep >>= 2;
-        const uint32_t partNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
+        const uint32_t partNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
 
         encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
 
@@ -205,13 +205,13 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         int chFmt = cu->getChromaFormat();
         if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
         {
-            uint32_t partNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
+            uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
                 const uint32_t log2TrSizeC = 2;
                 const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
-                uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> ((depth - 1) << 1);
+                uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
 
                 for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
                 {
@@ -234,7 +234,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         {
             uint32_t log2TrSizeC = log2TrSize - hChromaShift;
             const bool splitIntoSubTUs = (chFmt == CHROMA_422);
-            uint32_t curPartNum = cu->getPic()->getNumPartInCU() >> (depth << 1);
+            uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
             {
                 TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
@@ -266,7 +266,7 @@ void SBac::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 
             if ((chFmt == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
-                uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
+                uint32_t partOffset = (cu->m_pic->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 codeIntraDirChroma(cu, absPartIdx + partOffset);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 2);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 3);
@@ -336,9 +336,9 @@ void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& 
     }
 
     uint32_t log2CUSize   = cu->getLog2CUSize(absPartIdx);
-    uint32_t lumaOffset   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
+    uint32_t lumaOffset   = absPartIdx << cu->m_pic->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
-    uint32_t absPartIdxStep = cu->getPic()->getNumPartInCU() >> (depth << 1);
+    uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> (depth << 1);
     CoeffCodeState state;
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP);
 }
@@ -1036,7 +1036,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
     if (slice->m_sps->bUseSAO)
     {
-        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+        SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
         WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
         WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
@@ -1115,10 +1115,10 @@ void  SBac::codeTilesWPPEntryPoint(TComSlice* slice)
     uint32_t *entryPointOffset = NULL;
     
     uint32_t* substreamSizes = slice->getSubstreamSizes(); // TODO: pass as argument
-    int maxNumParts = slice->getPic()->getNumPartInCU();
+    int maxNumParts = slice->m_pic->getNumPartInCU();
 
-    int numZeroSubstreamsAtEndOfSlice = slice->getPic()->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->getPic()->getFrameWidthInCU());
-    numEntryPointOffsets = slice->getPic()->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
+    int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
+    numEntryPointOffsets = slice->m_pic->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
 
     /* WTF? we can store byte sizes and avoid all this */
     slice->setNumEntryPointOffsets(numEntryPointOffsets);
@@ -1383,7 +1383,7 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
     int predIdx[4];
     PartSize mode = cu->getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
-    uint32_t partOffset = (cu->getPic()->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
+    uint32_t partOffset = (cu->m_pic->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
 
     for (j = 0; j < partNum; j++)
     {

@@ -55,7 +55,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     pixel* roiOrigin;
     pixel* adiTemp;
 
-    int picStride = cu->getPic()->getStride();
+    int picStride = cu->m_pic->getStride();
 
     IntraNeighbors intraNeighbors;
 
@@ -63,7 +63,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t tuSize2 = tuSize << 1;
 
-    roiOrigin = cu->getPic()->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    roiOrigin = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = adiBuf;
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
@@ -168,14 +168,14 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     pixel*  roiOrigin;
     pixel*  adiTemp;
 
-    int picStride = cu->getPic()->getCStride();
+    int picStride = cu->m_pic->getCStride();
 
     IntraNeighbors intraNeighbors;
 
     initIntraNeighbors(cu, zOrderIdxInPart, partDepth, TEXT_CHROMA, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    roiOrigin = cu->getPic()->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    roiOrigin = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
     adiTemp   = getAdiChromaBuf(chromaId, tuSize, adiBuf);
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
@@ -206,7 +206,7 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits      = tuWidthInUnits << 1;
     int  leftUnits       = tuHeightInUnits << 1;
-    int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
+    int  partIdxStride   = cu->m_pic->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     if (!cu->getSlice()->m_pps->bConstrainedIntraPred)
@@ -455,7 +455,7 @@ int TComPattern::isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t pa
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu->getPic()->getNumPartInCUSize();
+    const uint32_t idxStep = cu->m_pic->getNumPartInCUSize();
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -505,7 +505,7 @@ int TComPattern::isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint3
 
 int TComPattern::isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->getPic()->getNumPartInCUSize() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->m_pic->getNumPartInCUSize() + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -567,7 +567,7 @@ int TComPattern::isLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu->getPic()->getNumPartInCUSize();
+    const uint32_t idxStep = cu->m_pic->getNumPartInCUSize();
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -617,7 +617,7 @@ int TComPattern::isAboveRightAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, ui
 
 int TComPattern::isBelowLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->getPic()->getNumPartInCUSize() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->m_pic->getNumPartInCUSize() + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 

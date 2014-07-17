@@ -554,7 +554,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     lcuWidth     = rpelx - lpelx;
     lcuHeight    = bpely - tpely;
 
-    if (tmpCu->getPic() == 0)
+    if (tmpCu->m_pic == 0)
     {
         return;
     }
@@ -1262,7 +1262,7 @@ void restoreLFDisabledOrigYuv(Frame* pic)
  */
 void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    Frame* pic = cu->getPic();
+    Frame* pic = cu->m_pic;
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -1294,10 +1294,10 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
  */
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
+    TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
     int hChromaShift = cu->getHorzChromaShift();
     int vChromaShift = cu->getVertChromaShift();
-    uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
+    uint32_t lumaOffset   = absZOrderIdx << cu->m_pic->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);

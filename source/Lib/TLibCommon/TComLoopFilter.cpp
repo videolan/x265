@@ -106,11 +106,11 @@ void TComLoopFilter::loopFilterCU(TComDataCU* cu, int dir, bool edgeFilter[], ui
 */
 void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, const int dir, bool edgeFilter[], uint8_t blockingStrength[])
 {
-    if (cu->getPic() == 0 || cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
+    if (cu->m_pic == 0 || cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
     {
         return;
     }
-    Frame* pic = cu->getPic();
+    Frame* pic = cu->m_pic;
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -174,7 +174,7 @@ void TComLoopFilter::xSetEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, ui
 {
     if (widthInBaseUnits == 0)
     {
-        widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
+        widthInBaseUnits  = cu->m_pic->getNumPartInCUSize() >> depth;
     }
     const uint32_t numElem = widthInBaseUnits;
     X265_CHECK(numElem > 0, "numElem edge filter check\n");
@@ -193,7 +193,7 @@ void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uin
 {
     if (cu->getTransformIdx(absZOrderIdx) + cu->getDepth(absZOrderIdx) > depth)
     {
-        const uint32_t curNumParts = cu->getPic()->getNumPartInCU() >> (depth << 1);
+        const uint32_t curNumParts = cu->m_pic->getNumPartInCU() >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
@@ -212,7 +212,7 @@ void TComLoopFilter::xSetEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uin
 void TComLoopFilter::xSetEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int dir, LFCUParam *lfcuParam, bool edgeFilter[], uint8_t blockingStrength[])
 {
     const uint32_t depth = cu->getDepth(absZOrderIdx);
-    const uint32_t widthInBaseUnits  = cu->getPic()->getNumPartInCUSize() >> depth;
+    const uint32_t widthInBaseUnits  = cu->m_pic->getNumPartInCUSize() >> depth;
     const uint32_t hWidthInBaseUnits  = widthInBaseUnits  >> 1;
     const uint32_t qWidthInBaseUnits  = widthInBaseUnits  >> 2;
 
@@ -435,7 +435,7 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
 
 void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge, uint8_t blockingStrength[])
 {
-    TComPicYuv* reconYuv = cu->getPic()->getPicYuvRec();
+    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
     pixel* src = reconYuv->getLumaAddr(cu->getAddr(), absZOrderIdx);
     pixel* tmpsrc = src;
 
@@ -443,7 +443,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     int qp = 0;
     int qpP = 0;
     int qpQ = 0;
-    uint32_t numParts = cu->getPic()->getNumPartInCUSize() >> depth;
+    uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
 
     uint32_t log2UnitSize = g_log2UnitSize;
     uint32_t blocksInPart = (log2UnitSize - 2) > 0 ? 1 << (log2UnitSize - 2) : 1;
@@ -543,7 +543,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
 
 void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge, uint8_t blockingStrength[])
 {
-    TComPicYuv* reconYuv = cu->getPic()->getPicYuvRec();
+    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
     int stride = reconYuv->getCStride();
     pixel* srcCb = reconYuv->getCbAddr(cu->getAddr(), absZOrderIdx);
     pixel* srcCr = reconYuv->getCrAddr(cu->getAddr(), absZOrderIdx);
@@ -556,7 +556,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t unitSizeChromaV = 1 << log2UnitSizeV;
     int   offset, srcStep;
 
-    const uint32_t lcuWidthInBaseUnits = cu->getPic()->getNumPartInCUSize();
+    const uint32_t lcuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
 
     bool  bPartPNoFilter = false;
     bool  bPartQNoFilter = false;
@@ -577,7 +577,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
         return;
     }
 
-    uint32_t numParts = cu->getPic()->getNumPartInCUSize() >> depth;
+    uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
 
     uint32_t bsAbsIdx;
     uint8_t bs;

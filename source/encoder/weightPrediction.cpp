@@ -232,8 +232,8 @@ namespace x265 {
 void weightAnalyse(TComSlice& slice, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    TComPicYuv *fencYuv = slice.getPic()->getPicYuvOrg();
-    Lowres& fenc        = slice.getPic()->m_lowres;
+    TComPicYuv *fencYuv = slice.m_pic->getPicYuvOrg();
+    Lowres& fenc        = slice.m_pic->m_lowres;
 
     Cache cache;
 

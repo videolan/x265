@@ -178,7 +178,7 @@ void FrameEncoder::initSlice(Frame* pic)
     m_frame = pic;
     TComSlice* slice = pic->getSlice();
 
-    slice->setPic(pic);
+    slice->m_pic = pic;
     slice->initSlice();
     slice->setSliceBits(0);
 
@@ -427,7 +427,7 @@ void FrameEncoder::compressFrame()
 
     if (slice->m_sps->bUseSAO)
     {
-        SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+        SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
         slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
@@ -502,7 +502,7 @@ void FrameEncoder::encodeSlice()
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
+    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
 
     for (int i = 0; i < numSubstreams; i++)
     {

@@ -404,8 +404,6 @@ public:
 
     const int* getNumRefIdx() const               { return m_numRefIdx; }
 
-    Frame*    getPic()                            { return m_pic; }
-
     Frame*    getRefPic(int e, int refIdx)        { return m_refPicList[e][refIdx]; }
 
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
@@ -448,8 +446,6 @@ public:
     void      setRefPOC(int i, int e, int refIdx) { m_refPOCList[e][refIdx] = i; }
 
     void      setNumRefIdx(int e, int i) { m_numRefIdx[e] = i; }
-
-    void      setPic(Frame* p)           { m_pic = p; }
 
     void      setRefPicList(PicList& picList);
 

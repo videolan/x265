@@ -402,7 +402,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     uint8_t log2CUSize = g_maxLog2CUSize - depth;
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
-    m_pic              = cu->getPic();
+    m_pic              = cu->m_pic;
     m_slice            = m_pic->getSlice();
     m_cuAddr           = cu->getAddr();
     m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
@@ -468,7 +468,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
 
     uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
-    m_pic              = cu->getPic();
+    m_pic              = cu->m_pic;
     m_slice            = m_pic->getSlice();
     m_cuAddr           = cu->getAddr();
     m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
@@ -806,7 +806,7 @@ TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPart
                 return this;
             }
         }
-        alPartUnitIdx = g_rasterToZscan[absPartIdx + getPic()->getNumPartInCU() - numPartInCUSize - 1];
+        alPartUnitIdx = g_rasterToZscan[absPartIdx + m_pic->getNumPartInCU() - numPartInCUSize - 1];
         return m_cuAbove;
     }
 
@@ -1085,12 +1085,12 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
     {
         if (getZorderIdxInCU() > 0)
         {
-            return getPic()->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
+            return m_pic->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
         }
         else if (getAddr() > 0 && !(getSlice()->m_pps->bEntropyCodingSyncEnabled &&
-                                    getAddr() % getPic()->getFrameWidthInCU() == 0))
+                                    getAddr() % m_pic->getFrameWidthInCU() == 0))
         {
-            return getPic()->getCU(getAddr() - 1)->getLastCodedQP(getPic()->getNumPartInCU());
+            return m_pic->getCU(getAddr() - 1)->getLastCodedQP(m_pic->getNumPartInCU());
         }
         else
         {
@@ -2615,7 +2615,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     Frame *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0, getSlice()->getColRefIdx());
     TComDataCU *colCU = colPic->getCU(cuAddr);
 
-    if (colCU->getPic() == 0 || colCU->getPartitionSize(partUnitIdx) == SIZE_NONE)
+    if (colCU->m_pic == 0 || colCU->getPartitionSize(partUnitIdx) == SIZE_NONE)
     {
         return false;
     }
