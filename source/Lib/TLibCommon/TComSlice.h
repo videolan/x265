@@ -229,36 +229,32 @@ struct TComVUI
     TimingInfo timingInfo;
 };
 
-class TComSPS
+struct TComSPS
 {
-public:
+    int         chromaFormatIdc;        // use param
+    uint32_t    picWidthInLumaSamples;  // use param
+    uint32_t    picHeightInLumaSamples; // use param
 
-    int         m_chromaFormatIdc;        // use param
-    uint32_t    m_picWidthInLumaSamples;  // use param
-    uint32_t    m_picHeightInLumaSamples; // use param
+    int         log2MinCodingBlockSize;
+    int         log2DiffMaxMinCodingBlockSize;
 
-    int         m_log2MinCodingBlockSize;
-    int         m_log2DiffMaxMinCodingBlockSize;
+    uint32_t    quadtreeTULog2MaxSize;
+    uint32_t    quadtreeTULog2MinSize;
 
-    uint32_t    m_quadtreeTULog2MaxSize;
-    uint32_t    m_quadtreeTULog2MinSize;
+    uint32_t    quadtreeTUMaxDepthInter; // use param
+    uint32_t    quadtreeTUMaxDepthIntra; // use param
 
-    uint32_t    m_quadtreeTUMaxDepthInter; // use param
-    uint32_t    m_quadtreeTUMaxDepthIntra; // use param
+    bool        bUseSAO; // use param
+    bool        bUseAMP; // use param
+    uint32_t    maxAMPDepth;
 
-    bool        m_bUseSAO; // use param
-    bool        m_bUseAMP; // use param
-    uint32_t    m_maxAMPDepth;
+    uint32_t    maxDecPicBuffering; // these are dups of VPS values
+    int         numReorderPics;
 
-    uint32_t    m_maxDecPicBuffering; // these are dups of VPS values
-    int         m_numReorderPics;
+    bool        useStrongIntraSmoothing; // use param
 
-    bool        m_useStrongIntraSmoothing; // use param
-
-    Window      m_conformanceWindow;
-    TComVUI     m_vuiParameters;
-
-    int  getAMPAcc(uint32_t depth) const { return m_maxAMPDepth > depth && m_bUseAMP; }
+    Window      conformanceWindow;
+    TComVUI     vuiParameters;
 };
 
 /// PPS class

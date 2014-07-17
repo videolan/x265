@@ -32,7 +32,7 @@ namespace x265 {
 class Lookahead;
 class Encoder;
 class Frame;
-class TComSPS;
+struct TComSPS;
 class SEIBufferingPeriod;
 struct FrameStats;
 #define BASE_FRAME_DURATION 0.04

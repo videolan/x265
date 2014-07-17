@@ -1045,30 +1045,30 @@ void Encoder::initSPS(TComSPS *sps)
     /* TODO: Range extension profiles */
     /* TODO: check final spec for compatibility rules here */
 
-    sps->m_conformanceWindow = m_conformanceWindow;
-    sps->m_chromaFormatIdc = m_param->internalCsp;
-    sps->m_picWidthInLumaSamples = m_param->sourceWidth;
-    sps->m_picHeightInLumaSamples = m_param->sourceHeight;
+    sps->conformanceWindow = m_conformanceWindow;
+    sps->chromaFormatIdc = m_param->internalCsp;
+    sps->picWidthInLumaSamples = m_param->sourceWidth;
+    sps->picHeightInLumaSamples = m_param->sourceHeight;
 
-    sps->m_log2MinCodingBlockSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
-    sps->m_log2DiffMaxMinCodingBlockSize = g_maxCUDepth - g_addCUDepth;
+    sps->log2MinCodingBlockSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
+    sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth - g_addCUDepth;
 
-    sps->m_quadtreeTULog2MaxSize = m_quadtreeTULog2MaxSize;
-    sps->m_quadtreeTULog2MinSize = m_quadtreeTULog2MinSize;
-    sps->m_quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
-    sps->m_quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
+    sps->quadtreeTULog2MaxSize = m_quadtreeTULog2MaxSize;
+    sps->quadtreeTULog2MinSize = m_quadtreeTULog2MinSize;
+    sps->quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
+    sps->quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
 
-    sps->m_bUseSAO = m_param->bEnableSAO;
+    sps->bUseSAO = m_param->bEnableSAO;
 
-    sps->m_bUseAMP = m_param->bEnableAMP;
-    sps->m_maxAMPDepth = g_maxCUDepth - g_addCUDepth;
+    sps->bUseAMP = m_param->bEnableAMP;
+    sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth - g_addCUDepth : 0;
 
-    sps->m_maxDecPicBuffering = m_vps.maxDecPicBuffering;
-    sps->m_numReorderPics = m_vps.numReorderPics;
+    sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
+    sps->numReorderPics = m_vps.numReorderPics;
 
-    sps->m_useStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
+    sps->useStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
 
-    TComVUI& vui = sps->m_vuiParameters;
+    TComVUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
     vui.aspectRatioIdc = m_param->vui.aspectRatioIdc;
     vui.sarWidth = m_param->vui.sarWidth;

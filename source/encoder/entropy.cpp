@@ -100,7 +100,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&
-             (cu->getSlice()->getSPS()->m_quadtreeTUMaxDepthInter == 1))
+             (cu->getSlice()->getSPS()->quadtreeTUMaxDepthInter == 1))
     {
         if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
@@ -111,11 +111,11 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrSize > cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize)
+    else if (log2TrSize > cu->getSlice()->getSPS()->quadtreeTULog2MaxSize)
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (log2TrSize == cu->getSlice()->getSPS()->m_quadtreeTULog2MinSize)
+    else if (log2TrSize == cu->getSlice()->getSPS()->quadtreeTULog2MinSize)
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
@@ -641,22 +641,22 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     codeProfileTier(*ptl);
 
     WRITE_UVLC(0, "sps_seq_parameter_set_id");
-    WRITE_UVLC(sps->m_chromaFormatIdc, "chroma_format_idc");
+    WRITE_UVLC(sps->chromaFormatIdc, "chroma_format_idc");
 
-    if (sps->m_chromaFormatIdc == CHROMA_444)
+    if (sps->chromaFormatIdc == CHROMA_444)
         WRITE_FLAG(0,                          "separate_colour_plane_flag");
 
-    WRITE_UVLC(sps->m_picWidthInLumaSamples,   "pic_width_in_luma_samples");
-    WRITE_UVLC(sps->m_picHeightInLumaSamples,  "pic_height_in_luma_samples");
-    Window& conf = sps->m_conformanceWindow;
+    WRITE_UVLC(sps->picWidthInLumaSamples,   "pic_width_in_luma_samples");
+    WRITE_UVLC(sps->picHeightInLumaSamples,  "pic_height_in_luma_samples");
+    Window& conf = sps->conformanceWindow;
 
     WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
     if (conf.bEnabled)
     {
-        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps->m_chromaFormatIdc], "conf_win_left_offset");
-        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps->m_chromaFormatIdc], "conf_win_right_offset");
-        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps->m_chromaFormatIdc], "conf_win_top_offset");
-        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps->m_chromaFormatIdc], "conf_win_bottom_offset");
+        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps->chromaFormatIdc], "conf_win_left_offset");
+        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps->chromaFormatIdc], "conf_win_right_offset");
+        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps->chromaFormatIdc], "conf_win_top_offset");
+        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps->chromaFormatIdc], "conf_win_bottom_offset");
     }
 
     WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_luma_minus8");
@@ -664,16 +664,16 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_UVLC(BITS_FOR_POC - 4, "log2_max_pic_order_cnt_lsb_minus4");
     WRITE_FLAG(true,             "sps_sub_layer_ordering_info_present_flag");
 
-    WRITE_UVLC(sps->m_maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(sps->m_numReorderPics,         "sps_num_reorder_pics[i]");
+    WRITE_UVLC(sps->maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(sps->numReorderPics,         "sps_num_reorder_pics[i]");
     WRITE_UVLC(0,                             "sps_max_latency_increase_plus1[i]");
 
-    WRITE_UVLC(sps->m_log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
-    WRITE_UVLC(sps->m_log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
-    WRITE_UVLC(sps->m_quadtreeTULog2MinSize - 2,     "log2_min_transform_block_size_minus2");
-    WRITE_UVLC(sps->m_quadtreeTULog2MaxSize - sps->m_quadtreeTULog2MinSize, "log2_diff_max_min_transform_block_size");
-    WRITE_UVLC(sps->m_quadtreeTUMaxDepthInter - 1,   "max_transform_hierarchy_depth_inter");
-    WRITE_UVLC(sps->m_quadtreeTUMaxDepthIntra - 1,   "max_transform_hierarchy_depth_intra");
+    WRITE_UVLC(sps->log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
+    WRITE_UVLC(sps->log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
+    WRITE_UVLC(sps->quadtreeTULog2MinSize - 2,     "log2_min_transform_block_size_minus2");
+    WRITE_UVLC(sps->quadtreeTULog2MaxSize - sps->quadtreeTULog2MinSize, "log2_diff_max_min_transform_block_size");
+    WRITE_UVLC(sps->quadtreeTUMaxDepthInter - 1,   "max_transform_hierarchy_depth_inter");
+    WRITE_UVLC(sps->quadtreeTUMaxDepthIntra - 1,   "max_transform_hierarchy_depth_intra");
     WRITE_FLAG(scalingList->m_bEnabled,              "scaling_list_enabled_flag");
     if (scalingList->m_bEnabled)
     {
@@ -681,18 +681,18 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
         if (scalingList->m_bDataPresent)
             codeScalingList(scalingList);
     }
-    WRITE_FLAG(sps->m_bUseAMP, "amp_enabled_flag");
-    WRITE_FLAG(sps->m_bUseSAO, "sample_adaptive_offset_enabled_flag");
+    WRITE_FLAG(sps->bUseAMP, "amp_enabled_flag");
+    WRITE_FLAG(sps->bUseSAO, "sample_adaptive_offset_enabled_flag");
 
     WRITE_FLAG(0, "pcm_enabled_flag");
     WRITE_UVLC(0, "num_short_term_ref_pic_sets");
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
     WRITE_FLAG(1, "sps_temporal_mvp_enable_flag");
-    WRITE_FLAG(sps->m_useStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
+    WRITE_FLAG(sps->useStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(&sps->m_vuiParameters);
+    codeVUI(&sps->vuiParameters);
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -1045,7 +1045,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
         WRITE_FLAG(slice->getEnableTMVPFlag(), "slice_temporal_mvp_enable_flag");
     }
-    if (slice->getSPS()->m_bUseSAO)
+    if (slice->getSPS()->bUseSAO)
     {
         SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
         WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
@@ -1133,7 +1133,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         }
     }
 
-    bool isSAOEnabled = (!slice->getSPS()->m_bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
+    bool isSAOEnabled = (!slice->getSPS()->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
     bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
 
     if (isSAOEnabled || isDBFEnabled)
@@ -1307,7 +1307,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_2NxnD:
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (cu->getSlice()->getSPS()->getAMPAcc(depth))
+        if (cu->getSlice()->getSPS()->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
@@ -1322,7 +1322,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
             encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
-        if (cu->getSlice()->getSPS()->getAMPAcc(depth))
+        if (cu->getSlice()->getSPS()->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)

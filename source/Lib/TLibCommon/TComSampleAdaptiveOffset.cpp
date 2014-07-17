@@ -1273,7 +1273,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->getSPS()->m_picWidthInLumaSamples) && (tpely < cu->getSlice()->getSPS()->m_picHeightInLumaSamples))
+            if ((lpelx < cu->getSlice()->getSPS()->picWidthInLumaSamples) && (tpely < cu->getSlice()->getSPS()->picHeightInLumaSamples))
                 xOrigCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 

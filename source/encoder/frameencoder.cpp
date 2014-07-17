@@ -386,7 +386,7 @@ void FrameEncoder::compressFrame()
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
-        TComVUI *vui = &slice->getSPS()->m_vuiParameters;
+        TComVUI *vui = &slice->getSPS()->vuiParameters;
         TComHRD *hrd = &vui->hrdParameters;
         int poc = slice->getPOC();
 
@@ -409,7 +409,7 @@ void FrameEncoder::compressFrame()
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
-            sei->m_picDpbOutputDelay = slice->getSPS()->m_numReorderPics + poc - totalCoded;
+            sei->m_picDpbOutputDelay = slice->getSPS()->numReorderPics + poc - totalCoded;
         }
 
         m_bs.resetBits();
@@ -497,7 +497,7 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
-    if (m_sps.m_bUseSAO)
+    if (m_sps.bUseSAO)
     {
         SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
 
@@ -529,7 +529,7 @@ void FrameEncoder::compressFrame()
     m_sbacCoder.resetEntropy(slice);
     m_sbacCoder.setBitstream(&m_bs);
 
-    if (slice->getSPS()->m_bUseSAO)
+    if (slice->getSPS()->bUseSAO)
     {
         SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
@@ -629,7 +629,7 @@ void FrameEncoder::encodeSlice()
         // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
         m_sbacCoder.load(m_rows[subStrm].m_rowEntropyCoder);
 
-        if (slice->getSPS()->m_bUseSAO)
+        if (slice->getSPS()->bUseSAO)
         {
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {

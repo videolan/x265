@@ -213,7 +213,7 @@ public:
 
     void writeSEI(TComSPS& sps)
     {
-        TComHRD& hrd = sps.m_vuiParameters.hrdParameters;
+        TComHRD& hrd = sps.vuiParameters.hrdParameters;
 
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
@@ -241,7 +241,7 @@ public:
 
     void writeSEI(TComSPS& sps)
     {
-        TComVUI *vui = &sps.m_vuiParameters;
+        TComVUI *vui = &sps.vuiParameters;
         TComHRD *hrd = &vui->hrdParameters;
 
         if (vui->frameFieldInfoPresentFlag)

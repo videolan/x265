@@ -151,11 +151,11 @@ void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
     {
         X265_CHECK(subdiv, "subdivision not present\n");
     }
-    else if (log2TrSize > cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize)
+    else if (log2TrSize > cu->getSlice()->getSPS()->quadtreeTULog2MaxSize)
     {
         X265_CHECK(subdiv, "subdivision not present\n");
     }
-    else if (log2TrSize == cu->getSlice()->getSPS()->m_quadtreeTULog2MinSize)
+    else if (log2TrSize == cu->getSlice()->getSPS()->quadtreeTULog2MinSize)
     {
         X265_CHECK(!subdiv, "subdivision present\n");
     }
@@ -237,7 +237,7 @@ void TEncSearch::xEncCoeffQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absP
     }
 
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-    uint32_t qtLayer    = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+    uint32_t qtLayer    = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
     uint32_t log2UnitSize = cu->getPic()->getLog2UnitSize();
     uint32_t coeffOffset = absPartIdx << (log2UnitSize * 2);
     coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
@@ -264,7 +264,7 @@ void TEncSearch::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     }
 
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-    uint32_t qtLayer    = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+    uint32_t qtLayer    = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
     uint32_t log2UnitSize = cu->getPic()->getLog2UnitSize();
 
     uint32_t trDepthC = trDepth;
@@ -564,10 +564,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = (log2TrSize <= cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize);
+    bool     bCheckFull  = (log2TrSize <= cu->getSlice()->getSPS()->quadtreeTULog2MaxSize);
     bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
-    int maxTuSize = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize;
+    int maxTuSize = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize;
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
     // don't check split if TU size is less or equal to max TU size
@@ -620,7 +620,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
-        uint32_t qtLayer        = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        uint32_t qtLayer        = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
         uint32_t coeffOffsetY   = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         coeff_t* coeffY         = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
         int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
@@ -800,7 +800,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         cu->setTransformSkipSubParts(bestModeId, TEXT_LUMA, absPartIdx, fullDepth);
 
         //--- set reconstruction for next intra prediction blocks ---
-        uint32_t qtLayer   = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        uint32_t qtLayer   = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
         uint32_t zorder    = cu->getZorderIdxInCU() + absPartIdx;
         int16_t* reconQt   = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width is not max CU size\n");
@@ -827,10 +827,10 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = (log2TrSize <= cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize);
+    bool     bCheckFull  = (log2TrSize <= cu->getSlice()->getSPS()->quadtreeTULog2MaxSize);
     bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
 
-    int maxTuSize = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize;
+    int maxTuSize = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize;
     int isIntraSlice = (cu->getSlice()->getSliceType() == I_SLICE);
 
     if (m_param->rdPenalty == 2 && !isIntraSlice)
@@ -932,7 +932,7 @@ void TEncSearch::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     if (trMode == trDepth)
     {
         uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-        uint32_t qtLayer    = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        uint32_t qtLayer    = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
 
         //===== copy transform coefficients =====
         uint32_t coeffOffsetY = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
@@ -1049,7 +1049,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                                    log2TrSizeC <= MAX_LOG2_TS_SIZE &&
                                    !cu->getCUTransquantBypass(0));
 
-        uint32_t qtLayer = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        uint32_t qtLayer = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
 
         if (m_param->bEnableTSkipFast)
         {
@@ -1232,7 +1232,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         int      chFmt      = cu->getChromaFormat();
         uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
-        uint32_t qtLayer    = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        uint32_t qtLayer    = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
 
         if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
         {
@@ -2507,12 +2507,12 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
     const uint32_t setCbf     = 1 << trMode;
     int chFmt                 = cu->getChromaFormat();
 
-    bool bSplitFlag = ((cu->getSlice()->getSPS()->m_quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
+    bool bSplitFlag = ((cu->getSlice()->getSPS()->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx)))
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize);
+        bCheckFull = (log2TrSize <= cu->getSlice()->getSPS()->quadtreeTULog2MaxSize);
     const bool bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
@@ -2665,12 +2665,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     const uint32_t setCbf     = 1 << trMode;
     int chFmt                 = cu->getChromaFormat();
 
-    bool bSplitFlag = ((cu->getSlice()->getSPS()->m_quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
+    bool bSplitFlag = ((cu->getSlice()->getSPS()->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx)))
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize);
+        bCheckFull = (log2TrSize <= cu->getSlice()->getSPS()->quadtreeTULog2MaxSize);
     const bool bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
@@ -2713,7 +2713,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         uint32_t trSizeC = 1 << log2TrSizeC;
         int sizeIdx  = log2TrSize - 2;
         int sizeIdxC = log2TrSizeC - 2;
-        const uint32_t qtLayer = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        const uint32_t qtLayer = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
         uint32_t coeffOffsetY = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
         coeff_t *coeffCurY = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
@@ -3512,7 +3512,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     int            chFmt       = cu->getChromaFormat();
     const bool splitIntoSubTUs = (chFmt == CHROMA_422);
 
-    if (bSubdivAndCbf && log2TrSize <= cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize && log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+    if (bSubdivAndCbf && log2TrSize <= cu->getSlice()->getSPS()->quadtreeTULog2MaxSize && log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         m_sbacCoder->codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
 
     X265_CHECK(cu->getPredictionMode(absPartIdx) != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
@@ -3546,7 +3546,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     if (!bSubdiv)
     {
         //Luma
-        const uint32_t qtLayer = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        const uint32_t qtLayer = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
         uint32_t coeffOffsetY = absPartIdx << cu->getPic()->getLog2UnitSize() * 2;
         coeff_t *coeffCurY = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
 
@@ -3624,7 +3624,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYu
     {
         int            chFmt      = cu->getChromaFormat();
         const uint32_t log2TrSize = g_maxLog2CUSize - depth;
-        const uint32_t qtLayer    = cu->getSlice()->getSPS()->m_quadtreeTULog2MaxSize - log2TrSize;
+        const uint32_t qtLayer    = cu->getSlice()->getSPS()->quadtreeTULog2MaxSize - log2TrSize;
 
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
         bool bCodeChroma = true;
