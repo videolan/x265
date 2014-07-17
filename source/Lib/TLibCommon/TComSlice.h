@@ -331,7 +331,6 @@ public:
     bool        m_colFromL0Flag; // collocated picture from List0 flag
     bool        m_saoEnabledFlag;
     bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
-    bool        m_enableTMVPFlag;
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
@@ -365,7 +364,6 @@ public:
         m_cabacInitFlag = false;
         m_bLMvdL1Zero = false;
         m_numEntryPointOffsets = 0;
-        m_enableTMVPFlag = true;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
         m_saoEnabledFlag = false;
 
@@ -504,10 +502,6 @@ public:
     void  setNumEntryPointOffsets(int val)  { m_numEntryPointOffsets = val; }
 
     int   getNumEntryPointOffsets()         { return m_numEntryPointOffsets; }
-
-    void  setEnableTMVPFlag(bool b)    { m_enableTMVPFlag = b; }
-
-    bool  getEnableTMVPFlag()          { return m_enableTMVPFlag; }
 
 protected:
 

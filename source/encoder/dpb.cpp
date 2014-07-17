@@ -164,7 +164,6 @@ void DPB::prepareEncode(Frame *pic)
         slice->setCheckLDC(true);
 
     slice->setRefPOCList();
-    slice->setEnableTMVPFlag(1);
 
     bool bGPBcheck = false;
     if (slice->getSliceType() == B_SLICE)

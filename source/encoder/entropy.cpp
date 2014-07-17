@@ -1032,7 +1032,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
         codeShortTermRefPicSet(&slice->m_rps);
 
-        WRITE_FLAG(slice->getEnableTMVPFlag(), "slice_temporal_mvp_enable_flag");
+        WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
     if (slice->m_sps->bUseSAO)
     {
@@ -1079,7 +1079,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         }
     }
 
-    if (slice->getEnableTMVPFlag())
+    // TMVP always enabled
     {
         if (slice->getSliceType() == B_SLICE)
             WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");

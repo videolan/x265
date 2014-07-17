@@ -2016,7 +2016,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             }
         }
     }
-    if (getSlice()->getEnableTMVPFlag())
+    // TMVP always enabled
     {
         //>> MTK colocated-RightBottom
         uint32_t partIdxRB;
@@ -2349,7 +2349,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         }
     }
 
-    if (getSlice()->getEnableTMVPFlag())
+    // TMVP always enabled
     {
         // Get Temporal Motion Predictor
         int refIdxCol = refIdx;
