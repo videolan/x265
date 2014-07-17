@@ -886,7 +886,7 @@ void SBac::codeProfileTier(ProfileTierLevel& ptl)
 /* code explicit wp tables */
 void SBac::codePredWeightTable(TComSlice* slice)
 {
-    wpScalingParam *wp;
+    WeightParam *wp;
     bool            bChroma      = true; // 4:0:0 not yet supported
     bool            bDenomCoded  = false;
     int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;

@@ -275,7 +275,7 @@ int TComSlice::getNumRpsCurrTempList()
  * \param *&wpScalingParam
  * \returns void
  */
-void TComSlice::getWpScaling(int l, int refIdx, wpScalingParam *&wp)
+void TComSlice::getWpScaling(int l, int refIdx, WeightParam *&wp)
 {
     wp = m_weightPredTable[l][refIdx];
 }
@@ -292,7 +292,7 @@ void TComSlice::resetWpScaling()
         {
             for (int yuv = 0; yuv < 3; yuv++)
             {
-                wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
+                WeightParam  *pwp = &(m_weightPredTable[e][i][yuv]);
                 pwp->bPresentFlag    = false;
                 pwp->log2WeightDenom = 0;
                 pwp->inputWeight     = 1;
@@ -313,7 +313,7 @@ void TComSlice::initWpScaling()
         {
             for (int yuv = 0; yuv < 3; yuv++)
             {
-                wpScalingParam  *pwp = &(m_weightPredTable[e][i][yuv]);
+                WeightParam  *pwp = &(m_weightPredTable[e][i][yuv]);
                 if (!pwp->bPresentFlag)
                 {
                     // Inferring values not present :

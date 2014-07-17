@@ -278,7 +278,7 @@ struct TComPPS
     int      deblockingFilterTcOffsetDiv2;
 };
 
-typedef struct wpScalingParam
+struct WeightParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
@@ -304,7 +304,7 @@ typedef struct wpScalingParam
 
         inputWeight = X265_MIN(inputWeight, 127);
     }
-} wpScalingParam;
+};
 
 /// slice header class
 class TComSlice
@@ -364,7 +364,7 @@ private:
 
 public:
 
-    wpScalingParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
+    WeightParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     TComSlice();
     ~TComSlice();
@@ -520,9 +520,9 @@ public:
 
     uint32_t getSliceSegmentBits()             { return m_sliceSegmentBits; }
 
-    void  setWpScaling(wpScalingParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam) * 2 * MAX_NUM_REF * 3); }
+    void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
 
-    void  getWpScaling(int e, int refIdx, wpScalingParam *&wp);
+    void  getWpScaling(int e, int refIdx, WeightParam *&wp);
 
     void  resetWpScaling();
     void  initWpScaling();

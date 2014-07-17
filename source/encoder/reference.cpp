@@ -36,7 +36,7 @@ MotionReference::MotionReference()
     m_weightBuffer = NULL;
 }
 
-int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
+int MotionReference::init(TComPicYuv* pic, WeightParam *w)
 {
     m_reconPic = pic;
     lumaStride = pic->getStride();

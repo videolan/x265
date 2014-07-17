@@ -1335,7 +1335,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
     return score;
 }
 
-uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *wp)
+uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightParam *wp)
 {
     Lowres *fenc = frames[b];
     Lowres *ref  = frames[p0];

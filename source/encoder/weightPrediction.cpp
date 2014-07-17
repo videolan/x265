@@ -43,7 +43,7 @@ struct Cache
     int         lowresHeightInCU;
 };
 
-int sliceHeaderCost(wpScalingParam *w, int lambda, int bChroma)
+int sliceHeaderCost(WeightParam *w, int lambda, int bChroma)
 {
     /* 4 times higher, because chroma is analyzed at full resolution. */
     if (bChroma)
@@ -172,7 +172,7 @@ uint32_t weightCost(pixel *         fenc,
                     const Cache &   cache,
                     int             width,
                     int             height,
-                    wpScalingParam *w,
+                    WeightParam *w,
                     bool            bLuma)
 {
     if (w)
@@ -231,7 +231,7 @@ uint32_t weightCost(pixel *         fenc,
 namespace x265 {
 void weightAnalyse(TComSlice& slice, x265_param& param)
 {
-    wpScalingParam wp[2][MAX_NUM_REF][3];
+    WeightParam wp[2][MAX_NUM_REF][3];
     TComPicYuv *fencYuv = slice.getPic()->getPicYuvOrg();
     Lowres& fenc        = slice.getPic()->m_lowres;
 
@@ -269,7 +269,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     for (int list = 0; list < cache.numPredDir; list++)
     {
-        wpScalingParam *weights = wp[list][0];
+        WeightParam *weights = wp[list][0];
         Frame *refPic = slice.getRefPic(list, 0);
         Lowres& refLowres = refPic->m_lowres;
         int diffPoc = abs(curPoc - refPic->getPOC());
@@ -453,7 +453,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 int endOffset   = Clip3(-128, 127, curOffset + offsetDist);
                 for (int off = startOffset; off <= endOffset; off++)
                 {
-                    wpScalingParam wsp;
+                    WeightParam wsp;
                     SET_WEIGHT(wsp, true, curScale, mindenom, off);
                     uint32_t s = weightCost(orig, fref, weightTemp, stride, cache, width, height, &wsp, !plane) +
                         sliceHeaderCost(&wsp, lambda, !!plane);
@@ -523,7 +523,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         int numPredDir = slice.isInterP() ? 1 : 2;
         for (int list = 0; list < numPredDir; list++)
         {
-            wpScalingParam* w = &wp[list][0][0];
+            WeightParam* w = &wp[list][0][0];
             if (w[0].bPresentFlag || w[1].bPresentFlag || w[2].bPresentFlag)
             {
                 bWeighted = true;

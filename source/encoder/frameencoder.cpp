@@ -368,7 +368,7 @@ void FrameEncoder::compressFrame()
     {
         for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
         {
-            wpScalingParam *w = NULL;
+            WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
             m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
