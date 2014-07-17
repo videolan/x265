@@ -39,7 +39,6 @@ typedef struct
 
 LevelSpec levels[] =
 {
-    { MAX_UINT, MAX_UINT,   MAX_UINT, MAX_UINT, 0, Level::NONE,     "none", 0 },
     { 36864,    552960,     128,      MAX_UINT, 2, Level::LEVEL1,   "1",   10 },
     { 122880,   3686400,    1500,     MAX_UINT, 2, Level::LEVEL2,   "2",   20 },
     { 245760,   7372800,    3000,     MAX_UINT, 2, Level::LEVEL2_1, "2.1", 21 },
@@ -53,7 +52,6 @@ LevelSpec levels[] =
     { 35651584, 1069547520, 60000,    240000,   8, Level::LEVEL6,   "6",   60 },
     { 35651584, 2139095040, 120000,   480000,   8, Level::LEVEL6_1, "6.1", 61 },
     { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2", 62 },
-    { 0, 0, 0, 0, 0, Level::NONE, "\0", 0 }
 };
 
 /* determine minimum decoder level requiremented to decode the described video */
@@ -93,8 +91,9 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
     tier = Level::MAIN;
     const char *levelName = "(none)";
 
-    int i;
-    for (i = 1; levels[i].maxLumaSamples; i++)
+    const size_t NumLevels = sizeof(levels) / sizeof(levels[0]);
+    uint32_t i;
+    for (i = 0; i < NumLevels; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
             continue;
@@ -138,9 +137,9 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
     /* if the user supplied no bitrate, but supplied a level which is higher
      * than the current detected level, assume the user knows that the bitrate
      * will be high and use their specified level */
-    if (!param.rc.bitrate && levels[i].levelIdc < param.levelIdc)
+    if (!param.rc.bitrate && i + 1 < NumLevels && levels[i].levelIdc < param.levelIdc)
     {
-        while (levels[i].levelIdc < param.levelIdc && levels[i].levelIdc)
+        while (i + 1 < NumLevels && levels[i].levelIdc < param.levelIdc)
             i++;
         levelName = levels[i].name;
         level = levels[i].levelEnum;
