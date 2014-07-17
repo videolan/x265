@@ -173,6 +173,7 @@ void FrameEncoder::noiseReductionUpdate()
     }
 }
 
+// TODO: combine with DPB::prepareEncode
 void FrameEncoder::initSlice(Frame* pic)
 {
     m_frame = pic;
@@ -184,14 +185,8 @@ void FrameEncoder::initSlice(Frame* pic)
     slice->initSlice();
 
     int type = pic->m_lowres.sliceType;
-    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
-
-    if (slice->m_sliceType != B_SLICE)
-        m_isReferenced = true;
-    else
-        m_isReferenced = (pic->m_lowres.sliceType == X265_TYPE_BREF);
-
-    slice->setReferenced(m_isReferenced);
+    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
+    slice->m_bReferenced = m_isReferenced = type != X265_TYPE_B;
     slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
 }
 

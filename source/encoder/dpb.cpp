@@ -69,7 +69,7 @@ void DPB::recycleUnreferenced()
     {
         Frame *pic = iterPic;
         iterPic = iterPic->m_next;
-        if (pic->getSlice()->isReferenced() == false && pic->m_countRefEncoders == 0)
+        if (pic->getSlice()->m_bReferenced == false && pic->m_countRefEncoders == 0)
         {
             pic->m_reconRowCount.set(0);
             pic->m_bChromaPlanesExtended = false;
@@ -105,7 +105,7 @@ void DPB::prepareEncode(Frame *pic)
     slice->m_nalUnitType = getNalUnitType(pocCurr, m_lastIDR, pic);
 
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
-    if (!slice->isReferenced())
+    if (!slice->m_bReferenced)
     {
         switch (slice->m_nalUnitType)
         {
@@ -205,7 +205,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
 
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
-        if ((iterPic->getPOC() != curPoc) && (iterPic->getSlice()->isReferenced()))
+        if ((iterPic->getPOC() != curPoc) && (iterPic->getSlice()->m_bReferenced))
         {
             rps->m_POC[poci] = iterPic->getPOC();
             rps->m_deltaPOC[poci] = rps->m_POC[poci] - curPoc;
@@ -254,7 +254,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
         while (iterPic)
         {
             if (iterPic->getPOC() != pocCurr)
-                iterPic->getSlice()->setReferenced(false);
+                iterPic->getSlice()->m_bReferenced = false;
             iterPic = iterPic->m_next;
         }
 
@@ -273,7 +273,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
             while (iterPic)
             {
                 if (iterPic->getPOC() != pocCurr && iterPic->getPOC() != m_pocCRA)
-                    iterPic->getSlice()->setReferenced(false);
+                    iterPic->getSlice()->m_bReferenced = false;
                 iterPic = iterPic->m_next;
             }
 
@@ -301,7 +301,7 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         outPic = iterPic;
         iterPic = iterPic->m_next;
 
-        if (!outPic->getSlice()->isReferenced())
+        if (!outPic->getSlice()->m_bReferenced)
             continue;
 
         isReference = 0;
@@ -316,7 +316,7 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         // mark the picture as "unused for reference" if it is not in
         // the Reference Picture Set
         if (outPic->getPicSym()->getSlice()->m_poc != curPoc && isReference == 0)
-            outPic->getSlice()->setReferenced(false);
+            outPic->getSlice()->m_bReferenced = false;
     }
 }
 

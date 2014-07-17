@@ -420,10 +420,6 @@ public:
 
     int       getNumRpsCurrTempList();
 
-    void      setReferenced(bool b)            { m_bReferenced = b; }
-
-    bool      isReferenced()                   { return m_bReferenced; }
-
     void      setSliceQp(int i)                       { m_sliceQp = i; }
 
     void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }

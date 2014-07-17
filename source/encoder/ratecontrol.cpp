@@ -1026,7 +1026,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     }
     else //CQP
     {
-        if (m_sliceType == B_SLICE && m_curSlice->isReferenced())
+        if (m_sliceType == B_SLICE && m_curSlice->m_bReferenced)
             m_qp = (m_qpConstant[B_SLICE] + m_qpConstant[P_SLICE]) / 2;
         else
             m_qp = m_qpConstant[m_sliceType];
@@ -1209,9 +1209,9 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                 q0 = q1;
             }
         }
-        if (prevRefSlice->m_sliceType == B_SLICE && prevRefSlice->isReferenced())
+        if (prevRefSlice->m_sliceType == B_SLICE && prevRefSlice->m_bReferenced)
             q0 -= m_pbOffset / 2;
-        if (nextRefSlice->m_sliceType == B_SLICE && nextRefSlice->isReferenced())
+        if (nextRefSlice->m_sliceType == B_SLICE && nextRefSlice->m_bReferenced)
             q1 -= m_pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + m_ipOffset;
@@ -1222,7 +1222,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         else
             q = (q0 * dt1 + q1 * dt0) / (dt0 + dt1);
 
-        if (m_curSlice->isReferenced())
+        if (m_curSlice->m_bReferenced)
             q += m_pbOffset / 2;
         else
             q += m_pbOffset;
@@ -1871,8 +1871,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             if (m_param->rc.bStatWrite)
             {
                 char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
-                            : rce->sliceType == P_SLICE ? (pic->getSlice()->isReferenced()? 'P' : 'p')
-                            : pic->getSlice()->isReferenced()? 'B' : 'b';
+                            : rce->sliceType == P_SLICE ? (pic->getSlice()->m_bReferenced? 'P' : 'p')
+                            : pic->getSlice()->m_bReferenced? 'B' : 'b';
                 if (fprintf(m_statFileOut,
                          "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
                          rce->poc, rce->encodeOrder,
@@ -1888,7 +1888,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                 if (fprintf(m_statFileOut, ";\n") < 0)
                     goto writeFailure;
                 /* Don't re-write the data in multi-pass mode. */
-                if (m_param->rc.cuTree && pic->getSlice()->isReferenced() && !m_param->rc.bStatRead)
+                if (m_param->rc.cuTree && pic->getSlice()->m_bReferenced && !m_param->rc.bStatRead)
                 {
                     uint8_t sliceType = (uint8_t)rce->sliceType;
                     for (int i = 0; i < m_ncu; i++)

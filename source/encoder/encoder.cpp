@@ -443,6 +443,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             fenc->allocPicSym(m_param);
             fenc->getSlice()->m_sps = &m_sps;
             fenc->getSlice()->m_pps = &m_pps;
+
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
@@ -933,7 +934,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->m_poc;
-        if (!slice->isReferenced())
+        if (!slice->m_bReferenced)
             c += 32; // lower case if unreferenced
 
         char buf[1024];
