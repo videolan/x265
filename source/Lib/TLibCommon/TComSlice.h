@@ -412,8 +412,6 @@ public:
 
     bool      getMvdL1ZeroFlag()                  { return m_bLMvdL1Zero; }
 
-    int       getNumRpsCurrTempList();
-
     void      setRefPic(Frame* p, int e, int refIdx) { m_refPicList[e][refIdx] = p; }
 
     void      setRefPOC(int i, int e, int refIdx) { m_refPOCList[e][refIdx] = i; }

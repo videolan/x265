@@ -185,19 +185,6 @@ void TComSlice::setRefPicList(PicList& picList)
     }
 }
 
-int TComSlice::getNumRpsCurrTempList()
-{
-    if (m_sliceType == I_SLICE)
-        return 0;
-
-    int numRpsCurrTempList = 0;
-    for (uint32_t i = 0; i < m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures; i++)
-        if (m_rps.m_used[i])
-            numRpsCurrTempList++;
-
-    return numRpsCurrTempList;
-}
-
 /** get WP tables for weighted pred
  * \param int
  * \param refIdx
