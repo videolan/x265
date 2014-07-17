@@ -382,6 +382,27 @@ public:
 
     void      initSlice();
 
+    bool getRapPicFlag() const
+    {
+        return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA;
+    }
+
+    bool getIdrPicFlag() const
+    {
+        return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+            || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP;
+    }
+
+    bool isIRAP() const
+    {
+        return m_nalUnitType >= 16 && m_nalUnitType <= 23;
+    }
+
     void      setSaoEnabledFlag(bool s)       { m_saoEnabledFlag = s; }
 
     bool      getSaoEnabledFlag()             { return m_saoEnabledFlag; }
@@ -423,19 +444,6 @@ public:
     bool      isReferenced()                   { return m_bReferenced; }
 
     void      setPOC(int i)                    { m_poc = i; }
-
-    void      setNalUnitType(NalUnitType e)    { m_nalUnitType = e; }
-
-    NalUnitType getNalUnitType() const         { return m_nalUnitType; }
-
-    bool      getRapPicFlag();
-    bool      getIdrPicFlag()
-    {
-        return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-               getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP;
-    }
-
-    bool      isIRAP() const                   { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }
 
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 

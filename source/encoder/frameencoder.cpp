@@ -445,7 +445,7 @@ void FrameEncoder::compressFrame()
         m_sbacCoder.codeTilesWPPEntryPoint(slice);
     m_bs.writeByteAlignment();
 
-    m_nalList.serialize(slice->getNalUnitType(), m_bs);
+    m_nalList.serialize(slice->m_nalUnitType, m_bs);
 
     if (m_param->decodedPictureHashSEI)
     {

@@ -65,16 +65,6 @@ void TComSlice::initSlice()
     m_numEntryPointOffsets = 0;
 }
 
-bool TComSlice::getRapPicFlag()
-{
-    return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-           || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
-           || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-           || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-           || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-           || getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
-}
-
 /**
  - allocate table to contain substream sizes to be written to the slice header.
  .

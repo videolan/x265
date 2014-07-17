@@ -102,22 +102,21 @@ void DPB::prepareEncode(Frame *pic)
         m_lastIDR = pocCurr;
     }
     slice->setLastIDR(m_lastIDR);
-    // Set the nal unit type
-    slice->setNalUnitType(getNalUnitType(pocCurr, m_lastIDR, pic));
+    slice->m_nalUnitType = getNalUnitType(pocCurr, m_lastIDR, pic);
 
     // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
     if (!slice->isReferenced())
     {
-        switch (slice->getNalUnitType())
+        switch (slice->m_nalUnitType)
         {
         case NAL_UNIT_CODED_SLICE_TRAIL_R:
-            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N);
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TRAIL_N;
             break;
         case NAL_UNIT_CODED_SLICE_RADL_R:
-            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RADL_N);
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
             break;
         case NAL_UNIT_CODED_SLICE_RASL_R:
-            slice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N);
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RASL_N;
             break;
         default:
             break;
@@ -125,7 +124,7 @@ void DPB::prepareEncode(Frame *pic)
     }
 
     // Do decoding refresh marking if any
-    decodingRefreshMarking(pocCurr, slice->getNalUnitType());
+    decodingRefreshMarking(pocCurr, slice->m_nalUnitType);
 
     computeRPS(pocCurr, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering);
 
