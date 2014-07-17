@@ -273,7 +273,6 @@ struct TComPPS
     uint32_t encCABACTableIdx;          // Used to transmit table selection across slices
 
     bool     bDeblockingFilterControlPresent;
-    bool     bDeblockingFilterOverrideEnabled;
     bool     bPicDisableDeblockingFilter;
     int      deblockingFilterBetaOffsetDiv2;
     int      deblockingFilterTcOffsetDiv2;

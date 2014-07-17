@@ -130,12 +130,6 @@ public:
     uint32_t           m_quadtreeTULog2MaxSize;
     uint32_t           m_quadtreeTULog2MinSize;
 
-    //====== Loop/Deblock Filter ========
-    bool               m_loopFilterOffsetInPPS;
-    int                m_loopFilterBetaOffset;
-    int                m_loopFilterBetaOffsetDiv2;
-    int                m_loopFilterTcOffset;
-    int                m_loopFilterTcOffsetDiv2;
     int                m_maxNumOffsetsPerPic;
     int                m_maxCuDQPDepth;
 

@@ -1206,15 +1206,13 @@ void Encoder::initPPS(TComPPS *pps)
     pps->bTransformSkipEnabled = m_param->bEnableTransformSkip;
     pps->bSignHideEnabled = m_param->bEnableSignHiding;
 
-    m_loopFilterOffsetInPPS = 0;
-    m_loopFilterBetaOffsetDiv2 = 0;
-    m_loopFilterTcOffsetDiv2 = 0;
-
-    pps->bDeblockingFilterControlPresent = !m_param->bEnableLoopFilter;
+    /* If offsets are ever configured, enable bDeblockingFilterControlPresent and set
+     * deblockingFilterBetaOffsetDiv2 / deblockingFilterTcOffsetDiv2 */
+    bool bDeblockOffsetInPPS = 0;
+    pps->bDeblockingFilterControlPresent = !m_param->bEnableLoopFilter || bDeblockOffsetInPPS;
     pps->bPicDisableDeblockingFilter = !m_param->bEnableLoopFilter;
-    pps->bDeblockingFilterOverrideEnabled = !m_loopFilterOffsetInPPS;
-    pps->deblockingFilterBetaOffsetDiv2 = m_loopFilterBetaOffset;
-    pps->deblockingFilterTcOffsetDiv2 = m_loopFilterTcOffset;
+    pps->deblockingFilterBetaOffsetDiv2 = 0;
+    pps->deblockingFilterTcOffsetDiv2 = 0;
 
     // options affected by parallelization
     pps->bEntropyCodingSyncEnabled = m_param->bEnableWavefront;

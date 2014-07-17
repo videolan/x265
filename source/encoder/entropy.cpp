@@ -731,8 +731,8 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(pps->bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
     if (pps->bDeblockingFilterControlPresent)
     {
-        WRITE_FLAG(pps->bDeblockingFilterOverrideEnabled, "deblocking_filter_override_enabled_flag");
-        WRITE_FLAG(pps->bPicDisableDeblockingFilter,      "pps_disable_deblocking_filter_flag");
+        WRITE_FLAG(0,                                "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->bPicDisableDeblockingFilter, "pps_disable_deblocking_filter_flag");
         if (!pps->bPicDisableDeblockingFilter)
         {
             WRITE_SVLC(pps->deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
@@ -1101,22 +1101,6 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
-
-    if (slice->getPPS()->bDeblockingFilterControlPresent)
-    {
-        if (slice->getPPS()->bDeblockingFilterOverrideEnabled)
-            WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
-
-        if (slice->getDeblockingFilterOverrideFlag())
-        {
-            WRITE_FLAG(slice->getDeblockingFilterDisable(), "slice_disable_deblocking_filter_flag");
-            if (!slice->getDeblockingFilterDisable())
-            {
-                WRITE_SVLC(slice->getDeblockingFilterBetaOffsetDiv2(), "slice_beta_offset_div2");
-                WRITE_SVLC(slice->getDeblockingFilterTcOffsetDiv2(),   "slice_tc_offset_div2");
-            }
-        }
-    }
 
     bool isSAOEnabled = (!slice->getSPS()->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
     bool isDBFEnabled = (!slice->getDeblockingFilterDisable());

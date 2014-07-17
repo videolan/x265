@@ -190,25 +190,6 @@ void FrameEncoder::initSlice(Frame* pic)
         m_isReferenced = (pic->m_lowres.sliceType == X265_TYPE_BREF);
 
     slice->setReferenced(m_isReferenced);
-
-    if (slice->getPPS()->bDeblockingFilterControlPresent)
-    {
-        slice->setDeblockingFilterOverrideFlag(!m_top->m_loopFilterOffsetInPPS);
-        slice->setDeblockingFilterDisable(!m_param->bEnableLoopFilter);
-        if (!slice->getDeblockingFilterDisable())
-        {
-            slice->setDeblockingFilterBetaOffsetDiv2(m_top->m_loopFilterBetaOffset);
-            slice->setDeblockingFilterTcOffsetDiv2(m_top->m_loopFilterTcOffset);
-        }
-    }
-    else
-    {
-        slice->setDeblockingFilterOverrideFlag(false);
-        slice->setDeblockingFilterDisable(false);
-        slice->setDeblockingFilterBetaOffsetDiv2(0);
-        slice->setDeblockingFilterTcOffsetDiv2(0);
-    }
-
     slice->setMaxNumMergeCand(m_param->maxNumMergeCand);
 }
 
