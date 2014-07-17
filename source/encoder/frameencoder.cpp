@@ -409,7 +409,7 @@ void FrameEncoder::compressFrame()
                 m_frameFilter.processRowPost(row);
         }
 
-        slice->setSaoEnabledFlag((saoParam->bSaoFlag[0] == 1) ? true : false);
+        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
     }
 
     /* start slice NALunit */
