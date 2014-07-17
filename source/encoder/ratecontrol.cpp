@@ -649,7 +649,7 @@ bool RateControl::init(const TComSPS *sps)
         if (m_param->bEmitHRDSEI)
         {
             const TComHRD* hrd = &sps->vuiParameters.hrdParameters;
-            vbvBufferSize = 1 << (hrd->cpbSizeScale + CPB_SHIFT);
+            vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
             vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
         }
         m_bufferRate = vbvMaxBitrate / m_fps;
