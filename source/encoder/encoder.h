@@ -33,6 +33,8 @@ struct x265_encoder {};
 namespace x265 {
 // private namespace
 
+class SBac;
+
 struct EncStats
 {
     double        m_psnrSumY;
@@ -109,6 +111,8 @@ public:
 
     int                m_conformanceMode;
     TComVPS            m_vps;
+    TComSPS            m_sps;
+    TComPPS            m_pps;
     NALList            m_nalList;
     ProfileTierLevel   m_ptl;
     TComScalingList    m_scalingList;      // quantization matrix information
@@ -162,12 +166,9 @@ public:
     void destroy();
     void init();
 
-    void initSPS(TComSPS *sps);
-    void initPPS(TComPPS *pps);
-
     int encode(const x265_picture* pic, x265_picture *pic_out);
 
-    void getStreamHeaders();
+    void getStreamHeaders(NALList& list, SBac& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -186,6 +187,9 @@ public:
     void updateVbvPlan(RateControl* rc);
 
 protected:
+
+    void initSPS(TComSPS *sps);
+    void initPPS(TComPPS *pps);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };

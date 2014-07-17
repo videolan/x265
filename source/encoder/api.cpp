@@ -74,7 +74,9 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     if (pp_nal && enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        encoder->getStreamHeaders();
+        SBac sbacCoder;
+        Bitstream bs;
+        encoder->getStreamHeaders(encoder->m_nalList, sbacCoder, bs);
         *pp_nal = &encoder->m_nalList.m_nal[0];
         if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
         return encoder->m_nalList.m_occupancy;

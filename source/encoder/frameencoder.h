@@ -90,8 +90,6 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
-    void getStreamHeaders(NALList& list, Bitstream& bs);
-
     void initSlice(Frame* pic);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
@@ -119,8 +117,6 @@ public:
     uint32_t                 m_numCols;
     int                      m_refLagRows;
     CTURow*                  m_rows;
-    TComSPS                  m_sps;
-    TComPPS                  m_pps;
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 

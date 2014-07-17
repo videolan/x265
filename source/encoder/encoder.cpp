@@ -107,6 +107,13 @@ void Encoder::create()
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 
+    /* Increase the DPB size and reorder picture if bpyramid is enabled */
+    m_vps.numReorderPics = (m_param->bBPyramid && m_param->bframes > 1) ? 2 : 1;
+    m_vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.numReorderPics + 1, (uint32_t)m_param->maxNumReferences) + m_vps.numReorderPics);
+
+    initSPS(&m_sps);
+    initPPS(&m_pps);
+
     /* Try to open CSV file handle */
     if (m_param->csvfn)
     {
@@ -200,16 +207,12 @@ void Encoder::init()
             }
         }
     }
-    if (!m_rateControl->init(&m_frameEncoder[0].m_sps))
+    if (!m_rateControl->init(&m_sps))
         m_aborted = true;
+    else if (m_param->bEmitHRDSEI)
+        m_rateControl->initHRD(&m_sps);
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
-}
-
-void Encoder::getStreamHeaders()
-{
-    Bitstream bs;
-    m_frameEncoder->getStreamHeaders(m_nalList, bs);
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)
@@ -438,6 +441,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
         {
             fenc->allocPicSym(m_param);
+            fenc->getSlice()->setSPS(&m_sps);
+            fenc->getSlice()->setPPS(&m_pps);
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
@@ -1024,6 +1029,70 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
+void Encoder::getStreamHeaders(NALList& list, SBac& sbacCoder, Bitstream& bs)
+{
+    sbacCoder.setBitstream(&bs);
+
+    /* headers for start of bitstream */
+    bs.resetBits();
+    sbacCoder.codeVPS(&m_vps, &m_ptl);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_VPS, bs);
+
+    bs.resetBits();
+    sbacCoder.codeSPS(&m_sps, &m_scalingList, &m_ptl);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_SPS, bs);
+
+    bs.resetBits();
+    sbacCoder.codePPS(&m_pps, &m_scalingList);
+    bs.writeByteAlignment();
+    list.serialize(NAL_UNIT_PPS, bs);
+
+    if (m_param->bEmitInfoSEI)
+    {
+        char *opts = x265_param2string(m_param);
+        if (opts)
+        {
+            char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
+                                             strlen(x265_build_info_str) + 200);
+            if (buffer)
+            {
+                sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
+                        "Copyright 2013-2014 (c) Multicoreware Inc - "
+                        "http://x265.org - options: %s",
+                        X265_BUILD, x265_version_str, x265_build_info_str, opts);
+                
+                bs.resetBits();
+                SEIuserDataUnregistered idsei;
+                idsei.m_userData = (uint8_t*)buffer;
+                idsei.m_userDataLength = (uint32_t)strlen(buffer);
+                idsei.write(bs, m_sps);
+                bs.writeByteAlignment();
+                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+
+                X265_FREE(buffer);
+            }
+
+            X265_FREE(opts);
+        }
+    }
+
+    if (m_param->bEmitHRDSEI)
+    {
+        SEIActiveParameterSets sei;
+        sei.m_activeVPSId = 0;
+        sei.m_fullRandomAccessFlag = false;
+        sei.m_noParamSetUpdateFlag = false;
+        sei.m_numSpsIdsMinus1 = 0;
+        sei.m_activeSeqParamSetId = 0;
+
+        bs.resetBits();
+        sei.write(bs, m_sps);
+        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+    }
+}
+
 void Encoder::initSPS(TComSPS *sps)
 {
     m_ptl.levelIdc = m_level;
@@ -1349,10 +1418,6 @@ void Encoder::configure(x265_param *p)
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.bottomOffset += m_pad[1];
     }
-
-    /* Increase the DPB size and reorder picture if bpyramid is enabled */
-    m_vps.numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
-    m_vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.numReorderPics);
 
     int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
     switch (useScalingListId)

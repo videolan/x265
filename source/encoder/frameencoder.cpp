@@ -109,9 +109,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_tld.init(*top);
     m_frameFilter.init(top, this, numRows, &m_rows[0].m_sbacCoder);
 
-    top->initSPS(&m_sps);
-    top->initPPS(&m_pps);
-
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI)
     {
@@ -119,10 +116,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         m_rce.hrdTiming = new HRDTiming;
 
         ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
-        if (ok)
-            m_top->m_rateControl->initHRD(&m_sps);
     }
-
 
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
@@ -179,75 +173,10 @@ void FrameEncoder::noiseReductionUpdate()
     }
 }
 
-void FrameEncoder::getStreamHeaders(NALList& list, Bitstream& bs)
-{
-    /* headers for start of bitstream */
-    bs.resetBits();
-    m_sbacCoder.setBitstream(&bs);
-    m_sbacCoder.codeVPS(&m_top->m_vps, &m_top->m_ptl);
-    bs.writeByteAlignment();
-    list.serialize(NAL_UNIT_VPS, bs);
-
-    bs.resetBits();
-    m_sbacCoder.codeSPS(&m_sps, &m_top->m_scalingList, &m_top->m_ptl);
-    bs.writeByteAlignment();
-    list.serialize(NAL_UNIT_SPS, bs);
-
-    bs.resetBits();
-    m_sbacCoder.codePPS(&m_pps, &m_top->m_scalingList);
-    bs.writeByteAlignment();
-    list.serialize(NAL_UNIT_PPS, bs);
-
-    if (m_param->bEmitInfoSEI)
-    {
-        char *opts = x265_param2string(m_param);
-        if (opts)
-        {
-            char *buffer = X265_MALLOC(char, strlen(opts) + strlen(x265_version_str) +
-                                             strlen(x265_build_info_str) + 200);
-            if (buffer)
-            {
-                sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                        "Copyright 2013-2014 (c) Multicoreware Inc - "
-                        "http://x265.org - options: %s",
-                        X265_BUILD, x265_version_str, x265_build_info_str, opts);
-                
-                bs.resetBits();
-                SEIuserDataUnregistered idsei;
-                idsei.m_userData = (uint8_t*)buffer;
-                idsei.m_userDataLength = (uint32_t)strlen(buffer);
-                idsei.write(bs, m_sps);
-                bs.writeByteAlignment();
-                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-
-                X265_FREE(buffer);
-            }
-
-            X265_FREE(opts);
-        }
-    }
-
-    if (m_param->bEmitHRDSEI)
-    {
-        SEIActiveParameterSets sei;
-        sei.m_activeVPSId = 0;
-        sei.m_fullRandomAccessFlag = false;
-        sei.m_noParamSetUpdateFlag = false;
-        sei.m_numSpsIdsMinus1 = 0;
-        sei.m_activeSeqParamSetId = 0;
-
-        bs.resetBits();
-        sei.write(bs, m_sps);
-        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-    }
-}
-
 void FrameEncoder::initSlice(Frame* pic)
 {
     m_frame = pic;
     TComSlice* slice = pic->getSlice();
-    slice->setSPS(&m_sps);
-    slice->setPPS(&m_pps);
     slice->setSliceBits(0);
     slice->setPic(pic);
     slice->initSlice();
@@ -324,7 +253,6 @@ void FrameEncoder::compressFrame()
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->getPOC() || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
-        m_sbacCoder.setBitstream(&m_bs);
         m_sbacCoder.codeAUD(slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
@@ -332,7 +260,7 @@ void FrameEncoder::compressFrame()
     if (m_frame->m_lowres.bKeyframe)
     {
         if (m_param->bRepeatHeaders)
-            getStreamHeaders(m_nalList, m_bs);
+            m_top->getStreamHeaders(m_nalList, m_sbacCoder, m_bs);
 
         if (m_param->bEmitHRDSEI)
         {
@@ -347,7 +275,7 @@ void FrameEncoder::compressFrame()
             m_top->m_rateControl->hrdFullness(bpSei);
 
             m_bs.resetBits();
-            bpSei->write(m_bs, m_sps);
+            bpSei->write(m_bs, *slice->getSPS());
 
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
@@ -404,7 +332,7 @@ void FrameEncoder::compressFrame()
         }
 
         m_bs.resetBits();
-        sei->write(m_bs, m_sps);
+        sei->write(m_bs, *slice->getSPS());
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
@@ -488,7 +416,7 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
-    if (m_sps.bUseSAO)
+    if (slice->getSPS()->bUseSAO)
     {
         SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
 
