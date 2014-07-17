@@ -261,7 +261,7 @@ void Analysis::destroy()
 
 void Analysis::compressCU(TComDataCU* cu)
 {
-    if (cu->getSlice()->getPPS()->m_useDQP)
+    if (cu->getSlice()->getPPS()->bUseDQP)
         m_bEncodeDQP = true;
 
     // initialize CU data
@@ -458,7 +458,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         else
             outTempCU->m_totalRDCost = m_rdCost.calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
-        if ((g_maxCUSize >> depth) == slice->getPPS()->m_minCuDQPSize && slice->getPPS()->m_useDQP)
+        if ((g_maxCUSize >> depth) == slice->getPPS()->minCuDQPSize && slice->getPPS()->bUseDQP)
         {
             bool hasResidual = false;
             for (uint32_t blkIdx = 0; blkIdx < outTempCU->getTotalNumPart(); blkIdx++)
@@ -519,7 +519,7 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
-    if (outTempCU->getSlice()->getPPS()->m_transquantBypassEnableFlag)
+    if (outTempCU->getSlice()->getPPS()->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
     if (!outTempCU->getSlice()->isIntra())
@@ -956,7 +956,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         else
             outTempCU->m_sa8dCost = m_rdCost.calcRdSADCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
-        if ((g_maxCUSize >> depth) == slice->getPPS()->m_minCuDQPSize && slice->getPPS()->m_useDQP)
+        if ((g_maxCUSize >> depth) == slice->getPPS()->minCuDQPSize && slice->getPPS()->bUseDQP)
         {
             bool hasResidual = false;
             for (uint32_t blkIdx = 0; blkIdx < outTempCU->getTotalNumPart(); blkIdx++)
@@ -1300,7 +1300,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
         else
             outTempCU->m_totalRDCost = m_rdCost.calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
-        if ((g_maxCUSize >> depth) == slice->getPPS()->m_minCuDQPSize && slice->getPPS()->m_useDQP)
+        if ((g_maxCUSize >> depth) == slice->getPPS()->minCuDQPSize && slice->getPPS()->bUseDQP)
         {
             bool hasResidual = false;
             for (uint32_t blkIdx = 0; blkIdx < outTempCU->getTotalNumPart(); blkIdx++)
@@ -1732,7 +1732,7 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
-    if (outTempCU->getSlice()->getPPS()->m_transquantBypassEnableFlag)
+    if (outTempCU->getSlice()->getPPS()->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
     if (!outTempCU->getSlice()->isIntra())
@@ -1786,7 +1786,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 
     estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv);
     m_sbacCoder->resetBits();
-    if (cu->getSlice()->getPPS()->m_transquantBypassEnableFlag)
+    if (cu->getSlice()->getPPS()->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(cu, 0);
 
     if (!cu->getSlice()->isIntra())
@@ -1957,7 +1957,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     if (bInsidePicture)
         m_sbacCoder->codeSplitFlag(cu, absPartIdx, depth);
 
-    if ((g_maxCUSize >> depth) >= slice->getPPS()->m_minCuDQPSize && slice->getPPS()->m_useDQP)
+    if ((g_maxCUSize >> depth) >= slice->getPPS()->minCuDQPSize && slice->getPPS()->bUseDQP)
         m_bEncodeDQP = true;
 
     if (!bInsidePicture)
@@ -1987,7 +1987,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
         return;
     }
 
-    if (slice->getPPS()->m_transquantBypassEnableFlag)
+    if (slice->getPPS()->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(cu, absPartIdx);
 
     if (!slice->isIntra())
@@ -2017,7 +2017,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 
 void Analysis::encodeCU(TComDataCU* cu)
 {
-    if (cu->getSlice()->getPPS()->m_useDQP)
+    if (cu->getSlice()->getPPS()->bUseDQP)
         m_bEncodeDQP = true;
 
     // Encode CU data
@@ -2099,7 +2099,7 @@ void Analysis::checkDQP(TComDataCU* cu)
 {
     uint32_t depth = cu->getDepth(0);
 
-    if (cu->getSlice()->getPPS()->m_useDQP && (g_maxCUSize >> depth) >= cu->getSlice()->getPPS()->m_minCuDQPSize)
+    if (cu->getSlice()->getPPS()->bUseDQP && (g_maxCUSize >> depth) >= cu->getSlice()->getPPS()->minCuDQPSize)
     {
         if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
             cu->setQPSubParts(cu->getRefQP(0), 0, depth); // set QP to default QP

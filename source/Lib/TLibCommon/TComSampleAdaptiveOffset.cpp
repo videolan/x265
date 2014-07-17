@@ -1243,7 +1243,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
  */
 void restoreLFDisabledOrigYuv(Frame* pic)
 {
-    if (pic->getSlice()->getPPS()->m_transquantBypassEnableFlag)
+    if (pic->getSlice()->getPPS()->bTransquantBypassEnabled)
     {
         for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
         {

@@ -190,7 +190,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         if (cbfY || cbfU || cbfV)
         {
             // dQP: only for LCU once
-            if (cu->getSlice()->getPPS()->m_useDQP)
+            if (cu->getSlice()->getPPS()->bUseDQP)
             {
                 if (bCodeDQP)
                 {
@@ -480,9 +480,9 @@ void SBac::resetEntropy(TComSlice *slice)
     int  qp              = slice->getSliceQp();
     SliceType sliceType  = slice->getSliceType();
 
-    int encCABACTableIdx = slice->getPPS()->m_encCABACTableIdx;
+    int encCABACTableIdx = slice->getPPS()->encCABACTableIdx;
 
-    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->m_cabacInitPresentFlag)
+    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->bCabacInitPresent)
         sliceType = (SliceType)encCABACTableIdx;
 
     initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
@@ -569,10 +569,10 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
             }
         }
 
-        slice->getPPS()->m_encCABACTableIdx = bestSliceType;
+        slice->getPPS()->encCABACTableIdx = bestSliceType;
     }
     else
-        slice->getPPS()->m_encCABACTableIdx = I_SLICE;
+        slice->getPPS()->encCABACTableIdx = I_SLICE;
 }
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
@@ -699,44 +699,44 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
 
 void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 {
-    WRITE_UVLC(0,                                          "pps_pic_parameter_set_id");
-    WRITE_UVLC(0,                                          "pps_seq_parameter_set_id");
-    WRITE_FLAG(0,                                          "dependent_slice_segments_enabled_flag");
-    WRITE_FLAG(0,                                          "output_flag_present_flag"); // we do not signal the output flag
-    WRITE_CODE(0, 3,                                       "num_extra_slice_header_bits");
-    WRITE_FLAG(pps->m_signHideFlag,                     "sign_data_hiding_flag");
-    WRITE_FLAG(pps->m_cabacInitPresentFlag,             "cabac_init_present_flag");
-    WRITE_UVLC(0,                                          "num_ref_idx_l0_default_active_minus1");
-    WRITE_UVLC(0,                                          "num_ref_idx_l1_default_active_minus1");
+    WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
+    WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
+    WRITE_FLAG(0,                          "dependent_slice_segments_enabled_flag");
+    WRITE_FLAG(0,                          "output_flag_present_flag");
+    WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
+    WRITE_FLAG(pps->bSignHideEnabled,      "sign_data_hiding_flag");
+    WRITE_FLAG(pps->bCabacInitPresent,     "cabac_init_present_flag");
+    WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
+    WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
 
     WRITE_SVLC(0, "init_qp_minus26");
-    WRITE_FLAG(pps->m_bConstrainedIntraPred, "constrained_intra_pred_flag");
-    WRITE_FLAG(pps->m_useTransformSkip,      "transform_skip_enabled_flag");
+    WRITE_FLAG(pps->bConstrainedIntraPred, "constrained_intra_pred_flag");
+    WRITE_FLAG(pps->bTransformSkipEnabled, "transform_skip_enabled_flag");
 
-    WRITE_FLAG(pps->m_useDQP,               "cu_qp_delta_enabled_flag");
-    if (pps->m_useDQP)
-        WRITE_UVLC(pps->m_maxCuDQPDepth,    "diff_cu_qp_delta_depth");
+    WRITE_FLAG(pps->bUseDQP,               "cu_qp_delta_enabled_flag");
+    if (pps->bUseDQP)
+        WRITE_UVLC(pps->maxCuDQPDepth,     "diff_cu_qp_delta_depth");
 
-    WRITE_SVLC(pps->m_chromaCbQpOffset,           "pps_cb_qp_offset");
-    WRITE_SVLC(pps->m_chromaCrQpOffset,           "pps_cr_qp_offset");
-    WRITE_FLAG(pps->m_bSliceChromaQpFlag,         "pps_slice_chroma_qp_offsets_present_flag");
+    WRITE_SVLC(pps->chromaCbQpOffset,      "pps_cb_qp_offset");
+    WRITE_SVLC(pps->chromaCrQpOffset,      "pps_cr_qp_offset");
+    WRITE_FLAG(pps->bSliceChromaQpFlag,    "pps_slice_chroma_qp_offsets_present_flag");
 
-    WRITE_FLAG(pps->m_bUseWeightPred,                "weighted_pred_flag");
-    WRITE_FLAG(pps->m_useWeightedBiPred,             "weighted_bipred_flag");
-    WRITE_FLAG(pps->m_transquantBypassEnableFlag,    "transquant_bypass_enable_flag");
-    WRITE_FLAG(0,                                    "tiles_enabled_flag");
-    WRITE_FLAG(pps->m_entropyCodingSyncEnabledFlag,  "entropy_coding_sync_enabled_flag");
-    WRITE_FLAG(1,                                    "loop_filter_across_slices_enabled_flag");
+    WRITE_FLAG(pps->bUseWeightPred,            "weighted_pred_flag");
+    WRITE_FLAG(pps->bUseWeightedBiPred,        "weighted_bipred_flag");
+    WRITE_FLAG(pps->bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
+    WRITE_FLAG(0,                              "tiles_enabled_flag");
+    WRITE_FLAG(pps->bEntropyCodingSyncEnabled, "entropy_coding_sync_enabled_flag");
+    WRITE_FLAG(1,                              "loop_filter_across_slices_enabled_flag");
 
-    WRITE_FLAG(pps->m_deblockingFilterControlPresentFlag, "deblocking_filter_control_present_flag");
-    if (pps->m_deblockingFilterControlPresentFlag)
+    WRITE_FLAG(pps->bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
+    if (pps->bDeblockingFilterControlPresent)
     {
-        WRITE_FLAG(pps->m_deblockingFilterControlPresentFlag,  "deblocking_filter_override_enabled_flag");
-        WRITE_FLAG(pps->m_picDisableDeblockingFilterFlag,      "pps_disable_deblocking_filter_flag");
-        if (!pps->m_picDisableDeblockingFilterFlag)
+        WRITE_FLAG(pps->bDeblockingFilterControlPresent,  "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->bPicDisableDeblockingFilter,      "pps_disable_deblocking_filter_flag");
+        if (!pps->bPicDisableDeblockingFilter)
         {
-            WRITE_SVLC(pps->m_deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
-            WRITE_SVLC(pps->m_deblockingFilterTcOffsetDiv2,   "pps_tc_offset_div2");
+            WRITE_SVLC(pps->deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
+            WRITE_SVLC(pps->deblockingFilterTcOffsetDiv2,   "pps_tc_offset_div2");
         }
     }
 
@@ -892,8 +892,8 @@ void SBac::codePredWeightTable(TComSlice* slice)
     int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;
 
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->m_bUseWeightPred) ||
-        (slice->getSliceType() == B_SLICE && slice->getPPS()->m_useWeightedBiPred))
+    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->bUseWeightPred) ||
+        (slice->getSliceType() == B_SLICE && slice->getPPS()->bUseWeightedBiPred))
     {
         for (int list = 0; list < numRefDirs; list++)
         {
@@ -1070,10 +1070,10 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->isIntra())
     {
-        if (!slice->isIntra() && slice->getPPS()->m_cabacInitPresentFlag)
+        if (!slice->isIntra() && slice->getPPS()->bCabacInitPresent)
         {
             SliceType sliceType   = slice->getSliceType();
-            int  encCABACTableIdx = slice->getPPS()->m_encCABACTableIdx;
+            int  encCABACTableIdx = slice->getPPS()->encCABACTableIdx;
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
             slice->setCabacInitFlag(encCabacInitFlag);
             WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
@@ -1092,7 +1092,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }
     }
-    if ((slice->getPPS()->m_bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->getPPS()->m_useWeightedBiPred && slice->getSliceType() == B_SLICE))
+    if ((slice->getPPS()->bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->getPPS()->bUseWeightedBiPred && slice->getSliceType() == B_SLICE))
         codePredWeightTable(slice);
 
     X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
@@ -1101,16 +1101,16 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
-    if (slice->getPPS()->m_bSliceChromaQpFlag)
+    if (slice->getPPS()->bSliceChromaQpFlag)
     {
         code = slice->getSliceQpDeltaCb();
         WRITE_SVLC(code, "slice_qp_delta_cb");
         code = slice->getSliceQpDeltaCr();
         WRITE_SVLC(code, "slice_qp_delta_cr");
     }
-    if (slice->getPPS()->m_deblockingFilterControlPresentFlag)
+    if (slice->getPPS()->bDeblockingFilterControlPresent)
     {
-        if (slice->getPPS()->m_deblockingFilterControlPresentFlag)
+        if (slice->getPPS()->bDeblockingFilterControlPresent)
             WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
 
         if (slice->getDeblockingFilterOverrideFlag())
@@ -1720,9 +1720,9 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     if (cu->getCUTransquantBypass(absPartIdx))
         beValid = false;
     else
-        beValid = cu->getSlice()->getPPS()->m_signHideFlag;
+        beValid = cu->getSlice()->getPPS()->bSignHideEnabled;
 
-    if (cu->getSlice()->getPPS()->m_useTransformSkip)
+    if (cu->getSlice()->getPPS()->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;

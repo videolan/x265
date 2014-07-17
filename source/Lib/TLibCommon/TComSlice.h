@@ -251,35 +251,33 @@ struct TComSPS
     TComVUI  vuiParameters;
 };
 
-class TComPPS
+struct TComPPS
 {
-public:
+    uint32_t maxCuDQPDepth;
+    uint32_t minCuDQPSize;
 
-    uint32_t m_maxCuDQPDepth;
-    uint32_t m_minCuDQPSize;
+    bool     bSliceChromaQpFlag;     // enable chroma QP signaling in slice header
+    int      chromaCbQpOffset;       // use param
+    int      chromaCrQpOffset;       // use param
 
-    bool     m_bSliceChromaQpFlag;     // enable chroma QP signaling in slice header
-    int      m_chromaCbQpOffset;       // use param
-    int      m_chromaCrQpOffset;       // use param
+    bool     bUseWeightPred;         // use param
+    bool     bUseWeightedBiPred;     // use param
+    bool     bUseDQP;
+    bool     bConstrainedIntraPred;  // use param
 
-    bool     m_bUseWeightPred;         // use param
-    bool     m_useWeightedBiPred;      // use param
-    bool     m_useDQP;
-    bool     m_bConstrainedIntraPred;  // use param
+    bool     bTransquantBypassEnabled;  // Indicates presence of cu_transquant_bypass_flag in CUs.
+    bool     bTransformSkipEnabled;     // use param
+    bool     bEntropyCodingSyncEnabled; // use param
+    bool     bSignHideEnabled;          // use param
 
-    bool     m_transquantBypassEnableFlag;   // Indicates presence of cu_transquant_bypass_flag in CUs.
-    bool     m_useTransformSkip;             // use param
-    bool     m_entropyCodingSyncEnabledFlag; // use param
-    bool     m_signHideFlag;                 // use param
+    bool     bCabacInitPresent;
+    uint32_t encCABACTableIdx;          // Used to transmit table selection across slices
 
-    bool     m_cabacInitPresentFlag;
-    uint32_t m_encCABACTableIdx;     // Used to transmit table selection across slices
-
-    bool     m_deblockingFilterControlPresentFlag;
-    bool     m_deblockingFilterOverrideEnabledFlag;
-    bool     m_picDisableDeblockingFilterFlag;
-    int      m_deblockingFilterBetaOffsetDiv2;  //< beta offset for deblocking filter
-    int      m_deblockingFilterTcOffsetDiv2;    //< tc offset for deblocking filter
+    bool     bDeblockingFilterControlPresent;
+    bool     bDeblockingFilterOverrideEnabled;
+    bool     bPicDisableDeblockingFilter;
+    int      deblockingFilterBetaOffsetDiv2;
+    int      deblockingFilterTcOffsetDiv2;
 };
 
 typedef struct wpScalingParam

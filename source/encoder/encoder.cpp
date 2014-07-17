@@ -1114,38 +1114,38 @@ void Encoder::initPPS(TComPPS *pps)
 
     if (bUseDQP)
     {
-        pps->m_useDQP = true;
-        pps->m_maxCuDQPDepth = m_maxCuDQPDepth;
-        pps->m_minCuDQPSize = g_maxCUSize >> pps->m_maxCuDQPDepth;
+        pps->bUseDQP = true;
+        pps->maxCuDQPDepth = m_maxCuDQPDepth;
+        pps->minCuDQPSize = g_maxCUSize >> pps->maxCuDQPDepth;
     }
     else
     {
-        pps->m_useDQP = false;
-        pps->m_maxCuDQPDepth = 0;
-        pps->m_minCuDQPSize = g_maxCUSize >> pps->m_maxCuDQPDepth;
+        pps->bUseDQP = false;
+        pps->maxCuDQPDepth = 0;
+        pps->minCuDQPSize = g_maxCUSize >> pps->maxCuDQPDepth;
     }
 
-    pps->m_chromaCbQpOffset = m_param->cbQpOffset;
-    pps->m_chromaCrQpOffset = m_param->crQpOffset;
-    pps->m_bSliceChromaQpFlag = m_param->cbQpOffset || m_param->crQpOffset;
+    pps->chromaCbQpOffset = m_param->cbQpOffset;
+    pps->chromaCrQpOffset = m_param->crQpOffset;
+    pps->bSliceChromaQpFlag = m_param->cbQpOffset || m_param->crQpOffset;
 
-    pps->m_bConstrainedIntraPred = m_param->bEnableConstrainedIntra;
-    pps->m_bUseWeightPred = m_param->bEnableWeightedPred;
-    pps->m_useWeightedBiPred = m_param->bEnableWeightedBiPred;
-    pps->m_transquantBypassEnableFlag = m_param->bCULossless || m_param->bLossless;
-    pps->m_useTransformSkip = m_param->bEnableTransformSkip;
-    pps->m_signHideFlag = m_param->bEnableSignHiding;
+    pps->bConstrainedIntraPred = m_param->bEnableConstrainedIntra;
+    pps->bUseWeightPred = m_param->bEnableWeightedPred;
+    pps->bUseWeightedBiPred = m_param->bEnableWeightedBiPred;
+    pps->bTransquantBypassEnabled = m_param->bCULossless || m_param->bLossless;
+    pps->bTransformSkipEnabled = m_param->bEnableTransformSkip;
+    pps->bSignHideEnabled = m_param->bEnableSignHiding;
 
-    pps->m_deblockingFilterControlPresentFlag = !m_param->bEnableLoopFilter;
-    pps->m_picDisableDeblockingFilterFlag = !m_param->bEnableLoopFilter;
-    pps->m_deblockingFilterOverrideEnabledFlag = !m_loopFilterOffsetInPPS;
-    pps->m_deblockingFilterBetaOffsetDiv2 = m_loopFilterBetaOffset;
-    pps->m_deblockingFilterTcOffsetDiv2 = m_loopFilterTcOffset;
+    pps->bDeblockingFilterControlPresent = !m_param->bEnableLoopFilter;
+    pps->bPicDisableDeblockingFilter = !m_param->bEnableLoopFilter;
+    pps->bDeblockingFilterOverrideEnabled = !m_loopFilterOffsetInPPS;
+    pps->deblockingFilterBetaOffsetDiv2 = m_loopFilterBetaOffset;
+    pps->deblockingFilterTcOffsetDiv2 = m_loopFilterTcOffset;
 
     // options affected by parallelization
-    pps->m_entropyCodingSyncEnabledFlag = m_param->bEnableWavefront;
-    pps->m_cabacInitPresentFlag = m_param->frameNumThreads == 1; // only deterministic with one frame thread
-    pps->m_encCABACTableIdx = I_SLICE;
+    pps->bEntropyCodingSyncEnabled = m_param->bEnableWavefront;
+    pps->bCabacInitPresent = m_param->frameNumThreads == 1; // only deterministic with one frame thread
+    pps->encCABACTableIdx = I_SLICE;
 }
 
 void Encoder::configure(x265_param *p)
