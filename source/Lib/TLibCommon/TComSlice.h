@@ -329,8 +329,6 @@ public:
 
     bool        m_bReferenced;
     bool        m_colFromL0Flag;        // collocated picture from List0 flag
-    bool        m_saoEnabledFlag;
-    bool        m_saoEnabledFlagChroma; // SAO Cb&Cr enabled flag
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
@@ -364,7 +362,6 @@ public:
         m_bLMvdL1Zero = false;
         m_numEntryPointOffsets = 0;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
-        m_saoEnabledFlag = false;
 
         for (int i = 0; i < MAX_NUM_REF; i++)
         {
@@ -379,7 +376,20 @@ public:
 
     ~TComSlice();
 
-    void      initSlice();
+    void initSlice()
+    {
+        m_numRefIdx[0] = 0;
+        m_numRefIdx[1] = 0;
+
+        m_colFromL0Flag = 1;
+
+        m_colRefIdx = 0;
+        m_bCheckLDC = false;
+        m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
+
+        m_cabacInitFlag = false;
+        m_numEntryPointOffsets = 0;
+    }
 
     bool getRapPicFlag() const
     {
@@ -401,14 +411,6 @@ public:
     {
         return m_nalUnitType >= 16 && m_nalUnitType <= 23;
     }
-
-    void      setSaoEnabledFlag(bool s)       { m_saoEnabledFlag = s; }
-
-    bool      getSaoEnabledFlag()             { return m_saoEnabledFlag; }
-
-    void      setSaoEnabledFlagChroma(bool s) { m_saoEnabledFlagChroma = s; }
-
-    bool      getSaoEnabledFlagChroma()       { return m_saoEnabledFlagChroma; }
 
     void      setLastIDR(int idrPoc)              { m_lastIDR = idrPoc; }
 

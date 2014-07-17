@@ -50,21 +50,6 @@ TComSlice::~TComSlice()
     delete[] m_substreamSizes;
 }
 
-void TComSlice::initSlice()
-{
-    m_numRefIdx[0] = 0;
-    m_numRefIdx[1] = 0;
-
-    m_colFromL0Flag = 1;
-
-    m_colRefIdx = 0;
-    m_bCheckLDC = false;
-    m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
-
-    m_cabacInitFlag = false;
-    m_numEntryPointOffsets = 0;
-}
-
 /**
  - allocate table to contain substream sizes to be written to the slice header.
  .

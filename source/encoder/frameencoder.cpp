@@ -408,9 +408,6 @@ void FrameEncoder::compressFrame()
             for (int row = 0; row < m_numRows; row++)
                 m_frameFilter.processRowPost(row);
         }
-
-        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
-        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
 
     /* start slice NALunit */

@@ -1034,10 +1034,10 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
         WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
+    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
     if (slice->m_sps->bUseSAO)
     {
-        SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
-        WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
+        WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
         WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
@@ -1101,8 +1101,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
-    bool isSAOEnabled = (!slice->m_sps->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
-    bool isDBFEnabled = (!slice->m_pps->bPicDisableDeblockingFilter);
+    bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[0] : false;
+    bool isDBFEnabled = !slice->m_pps->bPicDisableDeblockingFilter;
 
     if (isSAOEnabled || isDBFEnabled)
         WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
