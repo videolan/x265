@@ -291,7 +291,7 @@ void TComSlice::initWpScaling()
  * deltaPOC values.  deltaPOC values are sorted with -ve values before the +ve
  * values.  -ve values are in decreasing order.  +ve values are in increasing
  * order */
-void TComReferencePictureSet::sortDeltaPOC()
+void RPS::sortDeltaPOC()
 {
     // sort in increasing order (smallest first)
     for (int j = 1; j < m_numberOfPictures; j++)

@@ -611,7 +611,7 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
     WRITE_FLAG(0, "vps_extension_flag");
 }
 
-void SBac::codeShortTermRefPicSet(TComReferencePictureSet* rps)
+void SBac::codeShortTermRefPicSet(RPS* rps)
 {
     WRITE_UVLC(rps->m_numberOfNegativePictures, "num_negative_pics");
     WRITE_UVLC(rps->m_numberOfPositivePictures, "num_positive_pics");
@@ -1019,7 +1019,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     {
         int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
         WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
-        TComReferencePictureSet* rps = slice->getRPS();
+        RPS* rps = slice->getRPS();
 
 #if _DEBUG || CHECKED_BUILD
         // check for bitstream restriction stating that:

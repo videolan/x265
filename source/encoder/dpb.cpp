@@ -212,7 +212,7 @@ void DPB::prepareEncode(Frame *pic)
     }
 }
 
-void DPB::computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer)
+void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer)
 {
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
@@ -303,7 +303,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 }
 
 /** Function for applying picture marking based on the Reference Picture Set */
-void DPB::applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc)
+void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
 {
     Frame* outPic;
     int i, isReference;

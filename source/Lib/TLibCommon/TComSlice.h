@@ -47,7 +47,7 @@ namespace x265 {
 class Frame;
 class PicList;
 
-class TComReferencePictureSet
+class RPS
 {
 public:
 
@@ -59,7 +59,7 @@ public:
     bool m_used[MAX_NUM_REF_PICS];
     int  m_POC[MAX_NUM_REF_PICS];
 
-    TComReferencePictureSet()
+    RPS()
         : m_numberOfPictures(0)
         , m_numberOfNegativePictures(0)
         , m_numberOfPositivePictures(0)
@@ -319,8 +319,8 @@ public:
     int         m_poc;
     int         m_lastIDR;
 
-    TComReferencePictureSet *m_rps;
-    TComReferencePictureSet m_localRPS;
+    RPS*        m_rps;
+    RPS         m_localRPS;
     int         m_bdIdx;
     NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
     SliceType   m_sliceType;
@@ -414,11 +414,11 @@ public:
 
     bool      getSaoEnabledFlagChroma()       { return m_saoEnabledFlagChroma; }
 
-    void      setRPS(TComReferencePictureSet *rps) { m_rps = rps; }
+    void      setRPS(RPS *rps) { m_rps = rps; }
 
-    TComReferencePictureSet*  getRPS()            { return m_rps; }
+    RPS*  getRPS()            { return m_rps; }
 
-    TComReferencePictureSet*  getLocalRPS()       { return &m_localRPS; }
+    RPS*  getLocalRPS()       { return &m_localRPS; }
 
     void      setRPSidx(int bdidx)                { m_bdIdx = bdidx; }
 
