@@ -137,11 +137,8 @@ public:
     int                m_loopFilterTcOffset;
     int                m_loopFilterTcOffsetDiv2;
     int                m_maxNumOffsetsPerPic;
+    int                m_maxCuDQPDepth;
 
-    //====== Quality control ========
-    int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
-
-    //====== Tool list ========
     int                m_lastBPSEI;
 
     x265_param*        m_param;
