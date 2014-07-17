@@ -93,7 +93,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
         // above border from left to right
         memcpy(&filterBuf[l], &adiTemp[1], tuSize2 * sizeof(*filterBuf));
 
-        if (tuSize >= 32 && cu->getSlice()->getSPS()->useStrongIntraSmoothing)
+        if (tuSize >= 32 && cu->getSlice()->m_sps->useStrongIntraSmoothing)
         {
             int bottomLeft = filterBuf[0];
             int topLeft = filterBuf[tuSize2];
@@ -209,7 +209,7 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
     int  partIdxStride   = cu->getPic()->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
-    if (!cu->getSlice()->getPPS()->bConstrainedIntraPred)
+    if (!cu->getSlice()->m_pps->bConstrainedIntraPred)
     {
         bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
         numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);

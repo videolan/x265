@@ -36,7 +36,7 @@ const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
 
 /* marshal a single SEI message sei, storing the marshalled representation
  * in bitstream bs */
-void SEI::write(Bitstream& bs, TComSPS& sps)
+void SEI::write(Bitstream& bs, const TComSPS& sps)
 {
     BitCounter count;
     m_bitIf = &count;

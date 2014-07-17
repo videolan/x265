@@ -415,7 +415,7 @@ RateControl::RateControl(x265_param *p)
         m_cuTreeStats.qpBuffer[i] = NULL;
 }
 
-bool RateControl::init(TComSPS *sps)
+bool RateControl::init(const TComSPS *sps)
 {
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
@@ -648,7 +648,7 @@ bool RateControl::init(TComSPS *sps)
 
         if (m_param->bEmitHRDSEI)
         {
-            TComHRD* hrd = &sps->vuiParameters.hrdParameters;
+            const TComHRD* hrd = &sps->vuiParameters.hrdParameters;
             vbvBufferSize = 1 << (hrd->cpbSizeScale + CPB_SHIFT);
             vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
         }
@@ -1376,7 +1376,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             double underflow = 1.0 + (m_totalBits - m_wantedBitsWindow) / abrBuffer;
             if (underflow < 0.9 && !isFrameDone)
             {
-                init(m_curSlice->getSPS());
+                init(m_curSlice->m_sps);
                 m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
                 m_shortTermCplxCount = 1;
                 m_isAbrReset = true;
@@ -1393,8 +1393,8 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 
 void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
 {
-    TComVUI* vui = &m_curSlice->getSPS()->vuiParameters;
-    TComHRD* hrd = &vui->hrdParameters;
+    const TComVUI* vui = &m_curSlice->m_sps->vuiParameters;
+    const TComHRD* hrd = &vui->hrdParameters;
     int num = 90000;
     int denom = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
     reduceFraction(&num, &denom);
@@ -1949,9 +1949,9 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 
         if (m_param->bEmitHRDSEI)
         {
-            TComVUI *vui = &pic->getSlice()->getSPS()->vuiParameters;
-            TComHRD *hrd = &vui->hrdParameters;
-            TimingInfo *time = &vui->timingInfo;
+            const TComVUI *vui = &pic->getSlice()->m_sps->vuiParameters;
+            const TComHRD *hrd = &vui->hrdParameters;
+            const TimingInfo *time = &vui->timingInfo;
             if (pic->getSlice()->getPOC() == 0)
             {
                 // first access unit initializes the HRD

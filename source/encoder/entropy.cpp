@@ -100,7 +100,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&
-             (cu->getSlice()->getSPS()->quadtreeTUMaxDepthInter == 1))
+             (cu->getSlice()->m_sps->quadtreeTUMaxDepthInter == 1))
     {
         if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
@@ -111,11 +111,11 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrSize > cu->getSlice()->getSPS()->quadtreeTULog2MaxSize)
+    else if (log2TrSize > cu->getSlice()->m_sps->quadtreeTULog2MaxSize)
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (log2TrSize == cu->getSlice()->getSPS()->quadtreeTULog2MinSize)
+    else if (log2TrSize == cu->getSlice()->m_sps->quadtreeTULog2MinSize)
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
@@ -190,7 +190,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         if (cbfY || cbfU || cbfV)
         {
             // dQP: only for LCU once
-            if (cu->getSlice()->getPPS()->bUseDQP)
+            if (cu->getSlice()->m_pps->bUseDQP)
             {
                 if (bCodeDQP)
                 {
@@ -480,9 +480,9 @@ void SBac::resetEntropy(TComSlice *slice)
     int  qp              = slice->getSliceQp();
     SliceType sliceType  = slice->getSliceType();
 
-    int encCABACTableIdx = slice->getPPS()->encCABACTableIdx;
+    int encCABACTableIdx = slice->m_pps->encCABACTableIdx;
 
-    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->getPPS()->bCabacInitPresent)
+    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->m_pps->bCabacInitPresent)
         sliceType = (SliceType)encCABACTableIdx;
 
     initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
@@ -517,11 +517,11 @@ void SBac::resetEntropy(TComSlice *slice)
 }
 
 /* If current slice type is P/B then it determines the distance of
- * initialisation type 1 and 2 from the current CABAC states and stores the
+ * initialization type 1 and 2 from the current CABAC states and stores the
  * index of the closest table.  This index is used for the next P/B slice when
  * cabac_init_present_flag is true.
  */
-void SBac::determineCabacInitIdx(TComSlice *slice)
+void SBac::determineCabacInitIdx(TComSlice *slice, TComPPS *pps)
 {
     int qp = slice->getSliceQp();
 
@@ -569,10 +569,10 @@ void SBac::determineCabacInitIdx(TComSlice *slice)
             }
         }
 
-        slice->getPPS()->encCABACTableIdx = bestSliceType;
+        pps->encCABACTableIdx = bestSliceType;
     }
     else
-        slice->getPPS()->encCABACTableIdx = I_SLICE;
+        pps->encCABACTableIdx = I_SLICE;
 }
 
 void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
@@ -892,8 +892,8 @@ void SBac::codePredWeightTable(TComSlice* slice)
     int             numRefDirs   = slice->getSliceType() == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;
 
-    if ((slice->getSliceType() == P_SLICE && slice->getPPS()->bUseWeightPred) ||
-        (slice->getSliceType() == B_SLICE && slice->getPPS()->bUseWeightedBiPred))
+    if ((slice->getSliceType() == P_SLICE && slice->m_pps->bUseWeightPred) ||
+        (slice->getSliceType() == B_SLICE && slice->m_pps->bUseWeightedBiPred))
     {
         for (int list = 0; list < numRefDirs; list++)
         {
@@ -1035,7 +1035,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
         WRITE_FLAG(slice->getEnableTMVPFlag(), "slice_temporal_mvp_enable_flag");
     }
-    if (slice->getSPS()->bUseSAO)
+    if (slice->m_sps->bUseSAO)
     {
         SAOParam *saoParam = slice->getPic()->getPicSym()->getSaoParam();
         WRITE_FLAG(slice->getSaoEnabledFlag(), "slice_sao_luma_flag");
@@ -1070,10 +1070,10 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->isIntra())
     {
-        if (!slice->isIntra() && slice->getPPS()->bCabacInitPresent)
+        if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
         {
             SliceType sliceType   = slice->getSliceType();
-            int  encCABACTableIdx = slice->getPPS()->encCABACTableIdx;
+            int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
             slice->setCabacInitFlag(encCabacInitFlag);
             WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
@@ -1092,7 +1092,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }
     }
-    if ((slice->getPPS()->bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->getPPS()->bUseWeightedBiPred && slice->getSliceType() == B_SLICE))
+    if ((slice->m_pps->bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->getSliceType() == B_SLICE))
         codePredWeightTable(slice);
 
     X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
@@ -1102,7 +1102,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
-    bool isSAOEnabled = (!slice->getSPS()->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
+    bool isSAOEnabled = (!slice->m_sps->bUseSAO) ? (false) : (slice->getSaoEnabledFlag() || slice->getSaoEnabledFlagChroma());
     bool isDBFEnabled = (!slice->getDeblockingFilterDisable());
 
     if (isSAOEnabled || isDBFEnabled)
@@ -1273,7 +1273,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_2NxnD:
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (cu->getSlice()->getSPS()->maxAMPDepth > depth)
+        if (cu->getSlice()->m_sps->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
@@ -1288,7 +1288,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
             encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
-        if (cu->getSlice()->getSPS()->maxAMPDepth > depth)
+        if (cu->getSlice()->m_sps->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
@@ -1698,9 +1698,9 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     if (cu->getCUTransquantBypass(absPartIdx))
         beValid = false;
     else
-        beValid = cu->getSlice()->getPPS()->bSignHideEnabled;
+        beValid = cu->getSlice()->m_pps->bSignHideEnabled;
 
-    if (cu->getSlice()->getPPS()->bTransformSkipEnabled)
+    if (cu->getSlice()->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;

@@ -441,8 +441,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
         {
             fenc->allocPicSym(m_param);
-            fenc->getSlice()->setSPS(&m_sps);
-            fenc->getSlice()->setPPS(&m_pps);
+            fenc->getSlice()->m_sps = &m_sps;
+            fenc->getSlice()->m_pps = &m_pps;
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());

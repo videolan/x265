@@ -306,10 +306,9 @@ struct WeightParam
     }
 };
 
-/// slice header class
 class TComSlice
 {
-private:
+public:
 
     //  Bitstream writing
     bool        m_saoEnabledFlag;
@@ -341,10 +340,10 @@ private:
     // referenced slice?
     bool        m_bReferenced;
 
-    // access channel
-    TComSPS*    m_sps;
-    TComPPS*    m_pps;
-    Frame*      m_pic;
+    const TComSPS* m_sps;
+    const TComPPS* m_pps;
+    Frame*         m_pic;
+
     bool        m_colFromL0Flag; // collocated picture from List0 flag
 
     uint32_t    m_colRefIdx;
@@ -362,22 +361,12 @@ private:
 
     bool       m_enableTMVPFlag;
 
-public:
-
     WeightParam  m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
 
     TComSlice();
     ~TComSlice();
 
     void      initSlice();
-
-    void      setSPS(TComSPS* sps)            { m_sps = sps; }
-
-    TComSPS*  getSPS()                        { return m_sps; }
-
-    void      setPPS(TComPPS* pps)            { m_pps = pps; }
-
-    TComPPS*  getPPS()                        { return m_pps; }
 
     void      setSaoEnabledFlag(bool s)       { m_saoEnabledFlag = s; }
 

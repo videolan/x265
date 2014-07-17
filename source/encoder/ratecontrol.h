@@ -176,7 +176,7 @@ public:
     int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);
     int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
-    bool init(TComSPS* sps);
+    bool init(const TComSPS* sps);
     void initHRD(TComSPS* sps);
 protected:
 

@@ -120,7 +120,7 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->getSPS()->picWidthInLumaSamples) && (tpely < cu->getSlice()->getSPS()->picHeightInLumaSamples))
+            if ((lpelx < cu->getSlice()->m_sps->picWidthInLumaSamples) && (tpely < cu->getSlice()->m_sps->picHeightInLumaSamples))
             {
                 xDeblockCU(cu, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
             }
@@ -519,7 +519,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
                 int dq = dq0 + dq3;
                 int d =  d0 + d3;
 
-                if (cu->getSlice()->getPPS()->bTransquantBypassEnabled)
+                if (cu->getSlice()->m_pps->bTransquantBypassEnabled)
                 {
                     // check if each of PUs is lossless coded
                     bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -627,7 +627,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             qpP = cuP->getQP(partP);
 
-            if (cu->getSlice()->getPPS()->bTransquantBypassEnabled)
+            if (cu->getSlice()->m_pps->bTransquantBypassEnabled)
             {
                 // check if each of PUs is lossless coded
                 bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -636,7 +636,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
             {
-                int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->getPPS()->chromaCbQpOffset : cu->getSlice()->getPPS()->chromaCrQpOffset;
+                int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->m_pps->chromaCbQpOffset : cu->getSlice()->m_pps->chromaCrQpOffset;
                 pixel* piTmpSrcChroma = (chromaIdx == 0) ? tmpSrcCb : tmpSrcCr;
                 qp = QpUV((((qpP + qpQ + 1) >> 1) + chromaQPOffset), cu->getChromaFormat());
                 int iBitdepthScale = 1 << (X265_DEPTH - 8);
