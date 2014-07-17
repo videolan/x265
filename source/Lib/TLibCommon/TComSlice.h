@@ -472,7 +472,7 @@ protected:
 
     Frame*  xGetRefPic(PicList& picList, int poc);
 
-}; // END CLASS DEFINITION TComSlice
+};
 }
 //! \}
 
