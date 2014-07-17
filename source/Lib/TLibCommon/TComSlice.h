@@ -320,27 +320,27 @@ public:
     SliceType   m_sliceType;
     int         m_sliceQp;
     int         m_poc;
+    
     int         m_lastIDR;
+    bool        m_bReferenced;
+
     bool        m_bCheckLDC;
+    bool        m_colFromL0Flag; // collocated picture from List0 flag
+    bool        m_bLMvdL1Zero;
+    uint32_t    m_colRefIdx;
+    uint32_t    m_maxNumMergeCand; // use param
 
     int         m_numRefIdx[2];
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
-    bool        m_bReferenced;
-    bool        m_colFromL0Flag;        // collocated picture from List0 flag
-
-    uint32_t    m_colRefIdx;
-    uint32_t    m_maxNumMergeCand;
-
     uint32_t    m_sliceCurEndCUAddr;
     uint32_t    m_sliceBits;
 
     uint32_t*   m_substreamSizes;
-    bool        m_cabacInitFlag;
+    int         m_numEntryPointOffsets;
 
-    bool       m_bLMvdL1Zero;
-    int        m_numEntryPointOffsets;
+    bool        m_cabacInitFlag;
 
     TComSlice()
     {
@@ -378,9 +378,7 @@ public:
     {
         m_numRefIdx[0] = 0;
         m_numRefIdx[1] = 0;
-
         m_colFromL0Flag = 1;
-
         m_colRefIdx = 0;
         m_bCheckLDC = false;
         m_cabacInitFlag = false;
