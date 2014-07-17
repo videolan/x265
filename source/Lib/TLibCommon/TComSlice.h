@@ -313,24 +313,24 @@ public:
     const TComSPS* m_sps;
     const TComPPS* m_pps;
     Frame*         m_pic;
-    WeightParam    m_weightPredTable[2][MAX_NUM_REF][3]; // [REF_PIC_LIST_0 or REF_PIC_LIST_1][refIdx][0:Y, 1:U, 2:V]
+    WeightParam    m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
     RPS            m_rps;
 
-    NalUnitType m_nalUnitType;       ///< Nal unit type for the slice
+    NalUnitType m_nalUnitType;
     SliceType   m_sliceType;
     int         m_sliceQp;
     int         m_poc;
     int         m_lastIDR;
     bool        m_bCheckLDC;
 
-    int         m_numRefIdx[2];     //  for multiple reference of current slice
+    int         m_numRefIdx[2];
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
     bool        m_bReferenced;
-    bool        m_colFromL0Flag; // collocated picture from List0 flag
+    bool        m_colFromL0Flag;        // collocated picture from List0 flag
     bool        m_saoEnabledFlag;
-    bool        m_saoEnabledFlagChroma; ///< SAO Cb&Cr enabled flag
+    bool        m_saoEnabledFlagChroma; // SAO Cb&Cr enabled flag
 
     uint32_t    m_colRefIdx;
     uint32_t    m_maxNumMergeCand;
@@ -344,7 +344,6 @@ public:
 
     bool       m_bLMvdL1Zero;
     int        m_numEntryPointOffsets;
-
 
     TComSlice()
     {
