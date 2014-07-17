@@ -410,6 +410,7 @@ void FrameEncoder::compressFrame()
         }
 
         slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
+        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
     }
 
     /* start slice NALunit */
@@ -424,13 +425,6 @@ void FrameEncoder::compressFrame()
     m_bs.resetBits();
     m_sbacCoder.resetEntropy(slice);
     m_sbacCoder.setBitstream(&m_bs);
-
-    if (slice->m_sps->bUseSAO)
-    {
-        SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
-        slice->setSaoEnabledFlag(saoParam->bSaoFlag[0]);
-        slice->setSaoEnabledFlagChroma(saoParam->bSaoFlag[1]);
-    }
     m_sbacCoder.codeSliceHeader(slice);
 
     // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
