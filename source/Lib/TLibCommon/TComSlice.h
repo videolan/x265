@@ -256,7 +256,6 @@ struct TComPPS
     uint32_t maxCuDQPDepth;
     uint32_t minCuDQPSize;
 
-    bool     bSliceChromaQpFlag;     // enable chroma QP signaling in slice header
     int      chromaCbQpOffset;       // use param
     int      chromaCrQpOffset;       // use param
 

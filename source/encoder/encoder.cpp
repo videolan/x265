@@ -1129,7 +1129,6 @@ void Encoder::initPPS(TComPPS *pps)
 
     pps->chromaCbQpOffset = m_param->cbQpOffset;
     pps->chromaCrQpOffset = m_param->crQpOffset;
-    pps->bSliceChromaQpFlag = m_param->cbQpOffset || m_param->crQpOffset;
 
     pps->bConstrainedIntraPred = m_param->bEnableConstrainedIntra;
     pps->bUseWeightPred = m_param->bEnableWeightedPred;

@@ -719,7 +719,7 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
 
     WRITE_SVLC(pps->chromaCbQpOffset,      "pps_cb_qp_offset");
     WRITE_SVLC(pps->chromaCrQpOffset,      "pps_cr_qp_offset");
-    WRITE_FLAG(pps->bSliceChromaQpFlag,    "pps_slice_chroma_qp_offsets_present_flag");
+    WRITE_FLAG(0,                          "pps_slice_chroma_qp_offsets_present_flag");
 
     WRITE_FLAG(pps->bUseWeightPred,            "weighted_pred_flag");
     WRITE_FLAG(pps->bUseWeightedBiPred,        "weighted_bipred_flag");
@@ -1101,13 +1101,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
-    if (slice->getPPS()->bSliceChromaQpFlag)
-    {
-        code = slice->getSliceQpDeltaCb();
-        WRITE_SVLC(code, "slice_qp_delta_cb");
-        code = slice->getSliceQpDeltaCr();
-        WRITE_SVLC(code, "slice_qp_delta_cr");
-    }
+
     if (slice->getPPS()->bDeblockingFilterControlPresent)
     {
         if (slice->getPPS()->bDeblockingFilterOverrideEnabled)
