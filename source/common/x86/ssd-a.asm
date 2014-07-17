@@ -2412,14 +2412,10 @@ cglobal pixel_ssd_s_4, 2,2,2
 
     pmaddwd m0, m0
     pmaddwd m1, m1
-
-    ; calculate sum
-    paddd   m0, m1
-    movhlps m1, m0
-    paddd   m0, m1
-    pshufd  m1, m0, 1
     paddd   m0, m1
 
+    ; calculate sum and return
+    HADDD   m0, m1
     movd    eax, m0
     RET
 
@@ -2454,14 +2450,10 @@ cglobal pixel_ssd_s_8, 2,3,5
     paddd   m4, m1
     paddd   m2, m3
     paddd   m4, m2
-
-    ; calculate sum
     paddd   m0, m4
-    movhlps m1, m0
-    paddd   m0, m1
-    pshufd  m1, m0, 1
-    paddd   m0, m1
 
+    ; calculate sum and return
+    HADDD   m0, m1
     movd    eax, m0
     RET
 
@@ -2506,12 +2498,8 @@ cglobal pixel_ssd_s_16, 2,3,5
     dec     r2d
     jnz    .loop
 
-    ; calculate sum
-    movhlps m1, m0
-    paddd   m0, m1
-    pshufd  m1, m0, 1
-    paddd   m0, m1
-
+    ; calculate sum and return
+    HADDD   m0, m1
     movd    eax, m0
     RET
 
@@ -2556,12 +2544,8 @@ cglobal pixel_ssd_s_32, 2,3,5
     dec     r2d
     jnz    .loop
 
-    ; calculate sum
-    movhlps m1, m0
-    paddd   m0, m1
-    pshufd  m1, m0, 1
-    paddd   m0, m1
-
+    ; calculate sum and return
+    HADDD   m0, m1
     movd    eax, m0
     RET
 
@@ -2606,13 +2590,7 @@ cglobal pixel_ssd_s_32, 2,4,5
     dec     r2d
     jnz    .loop
 
-    ; calculate sum
-    vextracti128 xm1, m0, 1
-    paddd   xm0, xm1
-    movhlps xm1, xm0
-    paddd   xm0, xm1
-    pshufd  xm1, xm0, 1
-    paddd   xm0, xm1
-
+    ; calculate sum and return
+    HADDD   m0, m1
     movd    eax, xm0
     RET
