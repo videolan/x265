@@ -2166,9 +2166,9 @@ void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
 void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     Frame* pic = cu->m_pic;
-    TComSlice* slice = cu->m_pic->getSlice();
+    TComSlice* slice = cu->getSlice();
 
-    //Calculate end address
+    // Calculate end address
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
 
     uint32_t internalAddress = (slice->getSliceCurEndCUAddr() - 1) % pic->getNumPartInCU();
@@ -2197,29 +2197,20 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     // Encode slice finish
     bool bTerminateSlice = false;
     if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
-    {
         bTerminateSlice = true;
-    }
-    uint32_t uiGranularityWidth = g_maxCUSize;
+
+    uint32_t granularityWidth = g_maxCUSize;
     posx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
     posy = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-    bool granularityBoundary = ((posx + cuSize) % uiGranularityWidth == 0 || (posx + cuSize == width))
-        && ((posy + cuSize) % uiGranularityWidth == 0 || (posy + cuSize == height));
+    bool granularityBoundary = ((posx + cuSize) % granularityWidth == 0 || (posx + cuSize == width))
+                            && ((posy + cuSize) % granularityWidth == 0 || (posy + cuSize == height));
 
     if (granularityBoundary)
     {
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
             m_sbacCoder->codeTerminatingBit(bTerminateSlice ? 1 : 0);
-    }
 
-    int numberOfWrittenBits = 0;
-    if (m_sbacCoder->isBitCounter())
-        numberOfWrittenBits = m_sbacCoder->getNumberOfWrittenBits();
-
-    if (granularityBoundary)
-    {
-        slice->setSliceBits((uint32_t)(slice->getSliceBits() + numberOfWrittenBits));
         if (m_sbacCoder->isBitCounter())
             m_sbacCoder->resetBits();
     }

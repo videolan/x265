@@ -56,6 +56,7 @@ void CTURow::processCU(TComDataCU *cu, SBac *bufferSbac, ThreadLocalData& tld, b
     tld.m_cuCoder.m_sbacCoder = &m_rdSbacCoders[0][CI_CURR_BEST];
     m_rdSbacCoders[0][CI_CURR_BEST].resetBits();
 
+    // TODO: still necessary?
     tld.m_cuCoder.encodeCU(cu);
 
     if (bSaveSBac)

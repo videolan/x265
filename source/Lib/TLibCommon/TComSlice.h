@@ -335,7 +335,6 @@ public:
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
     uint32_t    m_sliceCurEndCUAddr;
-    uint32_t    m_sliceBits;
 
     uint32_t*   m_substreamSizes;
     int         m_numEntryPointOffsets;
@@ -353,7 +352,6 @@ public:
         m_colFromL0Flag = 1;
         m_colRefIdx = 0;
         m_sliceCurEndCUAddr = 0;
-        m_sliceBits = 0;
         m_substreamSizes = NULL;
         m_cabacInitFlag = false;
         m_bLMvdL1Zero = false;
@@ -466,10 +464,6 @@ public:
     void setSliceCurEndCUAddr(uint32_t uiAddr) { m_sliceCurEndCUAddr = uiAddr; }
 
     uint32_t getSliceCurEndCUAddr()            { return m_sliceCurEndCUAddr; }
-
-    void setSliceBits(uint32_t val)            { m_sliceBits = val; }
-
-    uint32_t getSliceBits()                    { return m_sliceBits; }
 
     void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
 
