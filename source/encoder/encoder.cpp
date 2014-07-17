@@ -207,10 +207,10 @@ void Encoder::init()
             }
         }
     }
+    if (m_param->bEmitHRDSEI)
+        m_rateControl->initHRD(&m_sps);
     if (!m_rateControl->init(&m_sps))
         m_aborted = true;
-    else if (m_param->bEmitHRDSEI)
-        m_rateControl->initHRD(&m_sps);
     m_lookahead->init();
     m_encodeStartTime = x265_mdate();
 }
