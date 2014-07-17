@@ -990,7 +990,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
 
     rce->bLastMiniGopBFrame = pic->m_lowres.bLastMiniGopBFrame;
     rce->bufferRate = m_bufferRate;
-    rce->poc = m_curSlice->getPOC();
+    rce->poc = m_curSlice->m_poc;
     if (m_isVbv)
     {
         if (rce->rowPreds[0][0].count == 0)
@@ -1196,13 +1196,13 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         double q1 = m_curSlice->getRefPic(REF_PIC_LIST_1, 0)->m_avgQpRc;
         bool i0 = prevRefSlice->getSliceType() == I_SLICE;
         bool i1 = nextRefSlice->getSliceType() == I_SLICE;
-        int dt0 = abs(m_curSlice->getPOC() - prevRefSlice->getPOC());
-        int dt1 = abs(m_curSlice->getPOC() - nextRefSlice->getPOC());
+        int dt0 = abs(m_curSlice->m_poc - prevRefSlice->m_poc);
+        int dt1 = abs(m_curSlice->m_poc - nextRefSlice->m_poc);
 
         // Skip taking a reference frame before the Scenecut if ABR has been reset.
         if (m_lastAbrResetPoc >= 0)
         {
-            if (prevRefSlice->getSliceType() == P_SLICE && prevRefSlice->getPOC() < m_lastAbrResetPoc)
+            if (prevRefSlice->getSliceType() == P_SLICE && prevRefSlice->m_poc < m_lastAbrResetPoc)
             {
                 i0 = i1;
                 dt0 = dt1;
@@ -1324,7 +1324,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         rce->qpNoVbv = x265_qScale2qp(q);
         q = clipQscale(pic, q);
         m_lastQScaleFor[m_sliceType] = q;
-        if (m_curSlice->getPOC() == 0 || m_lastQScaleFor[P_SLICE] < q)
+        if (m_curSlice->m_poc == 0 || m_lastQScaleFor[P_SLICE] < q)
             m_lastQScaleFor[P_SLICE] = q * fabs(m_param->rc.ipFactor);
 
         rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
@@ -1952,7 +1952,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             const TComVUI *vui = &pic->getSlice()->m_sps->vuiParameters;
             const TComHRD *hrd = &vui->hrdParameters;
             const TimingInfo *time = &vui->timingInfo;
-            if (pic->getSlice()->getPOC() == 0)
+            if (!pic->getSlice()->m_poc)
             {
                 // first access unit initializes the HRD
                 rce->hrdTiming->cpbInitialAT = 0;

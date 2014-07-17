@@ -2557,7 +2557,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     else if (picList == REF_PIC_LIST_1)
         refPicList2nd = REF_PIC_LIST_0;
 
-    int curPOC = m_slice->getPOC();
+    int curPOC = m_slice->m_poc;
     int curRefPOC = m_slice->getRefPic(picList, refIdx)->getPOC();
     int neibPOC = curPOC;
     int neibRefPOC;
@@ -2619,8 +2619,8 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     {
         return false;
     }
-    curPOC = m_slice->getPOC();
-    colPOC = colCU->getSlice()->getPOC();
+    curPOC = m_slice->m_poc;
+    colPOC = colCU->getSlice()->m_poc;
 
     if (colCU->isIntra(absPartAddr))
         return false;

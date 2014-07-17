@@ -338,7 +338,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         if (pic_out)
         {
             TComPicYuv *recpic = out->getPicYuvRec();
-            pic_out->poc = out->getSlice()->getPOC();
+            pic_out->poc = out->getSlice()->m_poc;
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
             pic_out->colorSpace = m_param->internalCsp;
@@ -447,7 +447,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             if (m_param->bEnableSAO)
                 fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
         }
-        fenc->getSlice()->setPOC(fenc->m_POC);
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
         {
@@ -933,7 +932,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     if (m_param->logLevel >= X265_LOG_DEBUG)
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
-        int poc = slice->getPOC();
+        int poc = slice->m_poc;
         if (!slice->isReferenced())
             c += 32; // lower case if unreferenced
 

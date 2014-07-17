@@ -1017,7 +1017,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->getIdrPicFlag())
     {
-        int picOrderCntLSB = (slice->getPOC() - slice->getLastIDR() + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
+        int picOrderCntLSB = (slice->m_poc - slice->getLastIDR() + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
         WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
 
 #if _DEBUG || CHECKED_BUILD

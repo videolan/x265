@@ -344,7 +344,6 @@ public:
 
     TComSlice()
     {
-        m_poc = 0;
         m_lastIDR = 0;
         m_nalUnitType = NAL_UNIT_CODED_SLICE_IDR_W_RADL;
         m_sliceType = I_SLICE;
@@ -412,8 +411,6 @@ public:
 
     SliceType getSliceType()                      { return m_sliceType; }
 
-    int       getPOC()                            { return m_poc; }
-
     int       getSliceQp()                        { return m_sliceQp; }
 
     int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
@@ -437,8 +434,6 @@ public:
     void      setReferenced(bool b)            { m_bReferenced = b; }
 
     bool      isReferenced()                   { return m_bReferenced; }
-
-    void      setPOC(int i)                    { m_poc = i; }
 
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 

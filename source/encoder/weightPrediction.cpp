@@ -256,7 +256,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
 
     int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
-    int curPoc = slice.getPOC();
+    int curPoc = slice.m_poc;
     const float epsilon = 1.f / 128.f;
 
     int chromaDenom, lumaDenom, denom;
@@ -519,7 +519,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         int p = 0;
         bool bWeighted = false;
 
-        p = sprintf(buf, "poc: %d weights:", slice.getPOC());
+        p = sprintf(buf, "poc: %d weights:", slice.m_poc);
         int numPredDir = slice.isInterP() ? 1 : 2;
         for (int list = 0; list < numPredDir; list++)
         {

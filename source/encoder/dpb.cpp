@@ -91,7 +91,7 @@ void DPB::prepareEncode(Frame *pic)
 {
     PPAScopeEvent(DPB_prepareEncode);
 
-    int pocCurr = pic->getSlice()->getPOC();
+    int pocCurr = pic->getSlice()->m_poc;
 
     m_picList.pushFront(*pic);
 
@@ -146,7 +146,7 @@ void DPB::prepareEncode(Frame *pic)
         slice->setColFromL0Flag(0);
 
         bool bLowDelay = true;
-        int curPOC = slice->getPOC();
+        int curPOC = slice->m_poc;
         int refIdx = 0;
 
         for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_0) && bLowDelay; refIdx++)
@@ -309,13 +309,13 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         // to see if the picture should be kept as reference picture
         for (i = 0; i < rps->m_numberOfPositivePictures + rps->m_numberOfNegativePictures; i++)
         {
-            if (outPic->getPicSym()->getSlice()->getPOC() == curPoc + rps->m_deltaPOC[i])
+            if (outPic->getPicSym()->getSlice()->m_poc == curPoc + rps->m_deltaPOC[i])
                 isReference = 1;
         }
 
         // mark the picture as "unused for reference" if it is not in
         // the Reference Picture Set
-        if (outPic->getPicSym()->getSlice()->getPOC() != curPoc && isReference == 0)
+        if (outPic->getPicSym()->getSlice()->m_poc != curPoc && isReference == 0)
             outPic->getSlice()->setReferenced(false);
     }
 }

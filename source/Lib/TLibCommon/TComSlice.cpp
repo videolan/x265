@@ -111,7 +111,7 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps.m_deltaPOC[i]);
+            refPic = xGetRefPic(picList, m_poc + m_rps.m_deltaPOC[i]);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
@@ -121,7 +121,7 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, getPOC() + m_rps.m_deltaPOC[i]);
+            refPic = xGetRefPic(picList, m_poc + m_rps.m_deltaPOC[i]);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }

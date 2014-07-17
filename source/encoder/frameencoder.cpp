@@ -179,6 +179,8 @@ void FrameEncoder::initSlice(Frame* pic)
     TComSlice* slice = pic->getSlice();
 
     slice->m_pic = pic;
+    slice->m_poc = pic->m_POC;
+
     slice->initSlice();
     slice->setSliceBits(0);
 
@@ -287,7 +289,7 @@ void FrameEncoder::compressFrame()
         SEIPictureTiming *sei = m_rce.picTimingSEI;
         const TComVUI *vui = &slice->m_sps->vuiParameters;
         const TComHRD *hrd = &vui->hrdParameters;
-        int poc = slice->getPOC();
+        int poc = slice->m_poc;
 
         if (vui->frameFieldInfoPresentFlag)
         {
