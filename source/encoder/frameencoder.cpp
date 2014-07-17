@@ -177,9 +177,11 @@ void FrameEncoder::initSlice(Frame* pic)
 {
     m_frame = pic;
     TComSlice* slice = pic->getSlice();
-    slice->setSliceBits(0);
+
     slice->setPic(pic);
     slice->initSlice();
+    slice->setSliceBits(0);
+
     int type = pic->m_lowres.sliceType;
     SliceType sliceType = IS_X265_TYPE_B(type) ? B_SLICE : ((type == X265_TYPE_P) ? P_SLICE : I_SLICE);
     slice->setSliceType(sliceType);
