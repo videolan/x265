@@ -1351,7 +1351,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "Evaluating merge in I slice\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = outTempCU->getSlice()->getMaxNumMergeCand();
+    uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
@@ -1450,7 +1450,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     X265_CHECK(outTempCU->getSlice()->getSliceType() != I_SLICE, "I slice not expected\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = outTempCU->getSlice()->getMaxNumMergeCand();
+    uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
@@ -2220,7 +2220,6 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     if (granularityBoundary)
     {
         slice->setSliceBits((uint32_t)(slice->getSliceBits() + numberOfWrittenBits));
-        slice->setSliceSegmentBits(slice->getSliceSegmentBits() + numberOfWrittenBits);
         if (m_sbacCoder->isBitCounter())
             m_sbacCoder->resetBits();
     }

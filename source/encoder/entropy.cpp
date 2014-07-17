@@ -1094,9 +1094,9 @@ void SBac::codeSliceHeader(TComSlice* slice)
     if ((slice->m_pps->bUseWeightPred && slice->getSliceType() == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->getSliceType() == B_SLICE))
         codePredWeightTable(slice);
 
-    X265_CHECK(slice->getMaxNumMergeCand() <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
+    X265_CHECK(slice->m_maxNumMergeCand <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
     if (!slice->isIntra())
-        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->getMaxNumMergeCand(), "five_minus_max_num_merge_cand");
+        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->m_maxNumMergeCand, "five_minus_max_num_merge_cand");
 
     int code = slice->getSliceQp() - 26;
     WRITE_SVLC(code, "slice_qp_delta");
@@ -1341,7 +1341,7 @@ void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 
 void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
-    uint32_t numCand = cu->getSlice()->getMaxNumMergeCand();
+    uint32_t numCand = cu->getSlice()->m_maxNumMergeCand;
 
     if (numCand > 1)
     {

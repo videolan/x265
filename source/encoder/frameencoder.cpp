@@ -192,7 +192,7 @@ void FrameEncoder::initSlice(Frame* pic)
         m_isReferenced = (pic->m_lowres.sliceType == X265_TYPE_BREF);
 
     slice->setReferenced(m_isReferenced);
-    slice->setMaxNumMergeCand(m_param->maxNumMergeCand);
+    slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
 }
 
 void FrameEncoder::threadMain()
@@ -347,7 +347,6 @@ void FrameEncoder::compressFrame()
         break;
     }
 
-    slice->setSliceSegmentBits(0);
     slice->setSliceCurEndCUAddr(m_frame->getNumCUsInFrame() * m_frame->getNumPartInCU());
 
     // Weighted Prediction parameters estimation.

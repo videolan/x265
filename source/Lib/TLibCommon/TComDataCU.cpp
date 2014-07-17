@@ -1866,7 +1866,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     uint32_t absPartAddr = m_absIdxInLCU + absPartIdx;
     const bool isInterB = getSlice()->isInterB();
 
-    maxNumMergeCand = getSlice()->getMaxNumMergeCand();
+    maxNumMergeCand = getSlice()->m_maxNumMergeCand;
 
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {

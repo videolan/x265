@@ -335,7 +335,6 @@ public:
 
     uint32_t    m_sliceCurEndCUAddr;
     uint32_t    m_sliceBits;
-    uint32_t    m_sliceSegmentBits;
 
     uint32_t*   m_substreamSizes;
     bool        m_cabacInitFlag;
@@ -356,7 +355,6 @@ public:
         m_colRefIdx = 0;
         m_sliceCurEndCUAddr = 0;
         m_sliceBits = 0;
-        m_sliceSegmentBits = 0;
         m_substreamSizes = NULL;
         m_cabacInitFlag = false;
         m_bLMvdL1Zero = false;
@@ -385,8 +383,6 @@ public:
 
         m_colRefIdx = 0;
         m_bCheckLDC = false;
-        m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
-
         m_cabacInitFlag = false;
         m_numEntryPointOffsets = 0;
     }
@@ -474,10 +470,6 @@ public:
 
     bool      isInterP()                    { return m_sliceType == P_SLICE; }
 
-    void setMaxNumMergeCand(uint32_t val)      { m_maxNumMergeCand = val; }
-
-    uint32_t getMaxNumMergeCand()              { return m_maxNumMergeCand; }
-
     void setSliceCurEndCUAddr(uint32_t uiAddr) { m_sliceCurEndCUAddr = uiAddr; }
 
     uint32_t getSliceCurEndCUAddr()            { return m_sliceCurEndCUAddr; }
@@ -485,10 +477,6 @@ public:
     void setSliceBits(uint32_t val)            { m_sliceBits = val; }
 
     uint32_t getSliceBits()                    { return m_sliceBits; }
-
-    void setSliceSegmentBits(uint32_t val)     { m_sliceSegmentBits = val; }
-
-    uint32_t getSliceSegmentBits()             { return m_sliceSegmentBits; }
 
     void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
 
