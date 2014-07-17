@@ -327,7 +327,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         return numSig;
     }
 
-    X265_CHECK((cu->getSlice()->getSPS()->getQuadtreeTULog2MaxSize() >= log2TrSize), "transform size too large\n");
+    X265_CHECK((cu->getSlice()->getSPS()->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (!useTransformSkip)
     {
         // TODO: this may need larger data types for X265_DEPTH > 8
