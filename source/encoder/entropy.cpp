@@ -731,7 +731,7 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(pps->bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
     if (pps->bDeblockingFilterControlPresent)
     {
-        WRITE_FLAG(pps->bDeblockingFilterControlPresent,  "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->bDeblockingFilterOverrideEnabled, "deblocking_filter_override_enabled_flag");
         WRITE_FLAG(pps->bPicDisableDeblockingFilter,      "pps_disable_deblocking_filter_flag");
         if (!pps->bPicDisableDeblockingFilter)
         {
@@ -1110,7 +1110,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
     if (slice->getPPS()->bDeblockingFilterControlPresent)
     {
-        if (slice->getPPS()->bDeblockingFilterControlPresent)
+        if (slice->getPPS()->bDeblockingFilterOverrideEnabled)
             WRITE_FLAG(slice->getDeblockingFilterOverrideFlag(), "deblocking_filter_override_flag");
 
         if (slice->getDeblockingFilterOverrideFlag())

@@ -1106,6 +1106,8 @@ void Encoder::initPPS(TComPPS *pps)
 {
     bool isVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
+    m_maxCuDQPDepth = 0;
+
     /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
     bool bUseDQP = (m_maxCuDQPDepth > 0 || m_param->rc.aqMode || isVbv) ? true : false;
 
@@ -1135,6 +1137,10 @@ void Encoder::initPPS(TComPPS *pps)
     pps->bTransquantBypassEnabled = m_param->bCULossless || m_param->bLossless;
     pps->bTransformSkipEnabled = m_param->bEnableTransformSkip;
     pps->bSignHideEnabled = m_param->bEnableSignHiding;
+
+    m_loopFilterOffsetInPPS = 0;
+    m_loopFilterBetaOffsetDiv2 = 0;
+    m_loopFilterTcOffsetDiv2 = 0;
 
     pps->bDeblockingFilterControlPresent = !m_param->bEnableLoopFilter;
     pps->bPicDisableDeblockingFilter = !m_param->bEnableLoopFilter;
@@ -1345,11 +1351,6 @@ void Encoder::configure(x265_param *p)
         m_conformanceWindow.bottomOffset += m_pad[1];
     }
 
-    //====== HM Settings not exposed for configuration ======
-    m_loopFilterOffsetInPPS = 0;
-    m_loopFilterBetaOffsetDiv2 = 0;
-    m_loopFilterTcOffsetDiv2 = 0;
-
     /* Increase the DPB size and reorder picture if bpyramid is enabled */
     m_vps.numReorderPics = (p->bBPyramid && p->bframes > 1) ? 2 : 1;
     m_vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.numReorderPics + 1, (uint32_t)p->maxNumReferences) + m_vps.numReorderPics);
@@ -1373,6 +1374,5 @@ void Encoder::configure(x265_param *p)
         break;
     }
 
-    m_maxCuDQPDepth = 0;
     m_maxNumOffsetsPerPic = 2048;
 }
