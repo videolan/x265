@@ -331,10 +331,6 @@ public:
 
     bool        m_bCheckLDC;
 
-    //  Data
-    int         m_sliceQpDelta;
-    int         m_sliceQpDeltaCb;
-    int         m_sliceQpDeltaCr;
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
@@ -371,9 +367,6 @@ public:
         , m_deblockingFilterBetaOffsetDiv2(0)
         , m_deblockingFilterTcOffsetDiv2(0)
         , m_bCheckLDC(false)
-        , m_sliceQpDelta(0)
-        , m_sliceQpDeltaCb(0)
-        , m_sliceQpDeltaCr(0)
         , m_bReferenced(false)
         , m_colFromL0Flag(1)
         , m_colRefIdx(0)
@@ -421,12 +414,6 @@ public:
     int       getPOC()                            { return m_poc; }
 
     int       getSliceQp()                        { return m_sliceQp; }
-
-    int       getSliceQpDelta()                   { return m_sliceQpDelta; }
-
-    int       getSliceQpDeltaCb()                 { return m_sliceQpDeltaCb; }
-
-    int       getSliceQpDeltaCr()                 { return m_sliceQpDeltaCr; }
 
     bool      getDeblockingFilterDisable()        { return m_deblockingFilterDisable; }
 
@@ -478,12 +465,6 @@ public:
     void      setSliceType(SliceType e)               { m_sliceType = e; }
 
     void      setSliceQp(int i)                       { m_sliceQp = i; }
-
-    void      setSliceQpDelta(int i)                  { m_sliceQpDelta = i; }
-
-    void      setSliceQpDeltaCb(int i)                { m_sliceQpDeltaCb = i; }
-
-    void      setSliceQpDeltaCr(int i)                { m_sliceQpDeltaCr = i; }
 
     void      setDeblockingFilterDisable(bool b)      { m_deblockingFilterDisable = b; }
 

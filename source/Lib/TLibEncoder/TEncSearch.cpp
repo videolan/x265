@@ -510,11 +510,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
 
     //--- transform and quantization ---
     int chFmt = cu->getChromaFormat();
-    int curChromaQpOffset;
-    if (ttype == TEXT_CHROMA_U)
-        curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
-    else
-        curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+    int curChromaQpOffset = (ttype == TEXT_CHROMA_U) ? cu->getSlice()->m_pps->chromaCbQpOffset : cu->getSlice()->m_pps->chromaCrQpOffset;
 
     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
     uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdx, useTransformSkipC);
@@ -1348,11 +1344,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
 
                 //--- transform and quantization ---
-                int curChromaQpOffset;
-                if (ttype == TEXT_CHROMA_U)
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
-                else
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                int curChromaQpOffset = (ttype == TEXT_CHROMA_U) ? cu->getSlice()->m_pps->chromaCbQpOffset : cu->getSlice()->m_pps->chromaCrQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 uint32_t numSig = m_trQuant.transformNxN(cu, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC);
 
@@ -2578,12 +2570,12 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
-                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 uint32_t numSigU = m_trQuant.transformNxN(cu, curResiU, strideResiC, coeffCurU + subTUOffset,
                                                           log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
 
-                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 uint32_t numSigV = m_trQuant.transformNxN(cu, curResiV, strideResiC, coeffCurV + subTUOffset,
                                                           log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
@@ -2593,7 +2585,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                 if (numSigU)
                 {
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU);
                 }
@@ -2602,7 +2594,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
                 if (numSigV)
                 {
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV);
                 }
@@ -2760,12 +2752,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, log2TrSizeC, TEXT_CHROMA);
 
                 //Cb transform
-                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 numSigU[tuIterator.section] = m_trQuant.transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUOffset,
                                                                      log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, curuseRDOQ);
                 //Cr transform
-                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 numSigV[tuIterator.section] = m_trQuant.transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUOffset,
                                                                      log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, curuseRDOQ);
@@ -2918,7 +2910,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 if (numSigU[tuIterator.section])
                 {
-                    int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                    int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiU, strideResiC, coeffCurU + subTUOffset,
                                               log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU[tuIterator.section]);
@@ -3002,7 +2994,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 if (numSigV[tuIterator.section])
                 {
-                    int curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                    int curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), curResiV, strideResiC, coeffCurV + subTUOffset,
                                               log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV[tuIterator.section]);
@@ -3185,11 +3177,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 if (m_bEnableRDOQ)
                     m_sbacCoder->estBit(m_trQuant.m_estBitsSbac, log2TrSizeC, TEXT_CHROMA);
 
-                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                int curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 uint32_t numSigTSkipU = m_trQuant.transformNxN(cu, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffU,
                                                                log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true, curuseRDOQ);
-                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                 m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                 uint32_t numSigTSkipV = m_trQuant.transformNxN(cu, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffV,
                                                                log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, true, curuseRDOQ);
@@ -3206,7 +3198,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_sbacCoder->codeCoeffNxN(cu, tsCoeffU, absPartIdxC, log2TrSizeC, TEXT_CHROMA_U);
                     singleBitsComp[TEXT_CHROMA_U][tuIterator.section] = m_sbacCoder->getNumberOfWrittenBits();
 
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset + cu->getSlice()->getSliceQpDeltaCb();
+                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCbQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiU, trSizeC, tsCoeffU,
                                               log2TrSizeC, TEXT_CHROMA_U, false, true, numSigTSkipU);
@@ -3249,7 +3241,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_sbacCoder->codeCoeffNxN(cu, tsCoeffV, absPartIdxC, log2TrSizeC, TEXT_CHROMA_V);
                     singleBitsComp[TEXT_CHROMA_V][tuIterator.section] = m_sbacCoder->getNumberOfWrittenBits() - singleBitsComp[TEXT_CHROMA_U][tuIterator.section];
 
-                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset + cu->getSlice()->getSliceQpDeltaCr();
+                    curChromaQpOffset = cu->getSlice()->m_pps->chromaCrQpOffset;
                     m_trQuant.setQPforQuant(cu->getQP(0), TEXT_CHROMA, QP_BD_OFFSET, curChromaQpOffset, chFmt);
                     m_trQuant.invtransformNxN(cu->getCUTransquantBypass(absPartIdxC), tsResiV, trSizeC, tsCoeffV,
                                               log2TrSizeC, TEXT_CHROMA_V, false, true, numSigTSkipV);

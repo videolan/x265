@@ -214,11 +214,8 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
     TComSlice*  slice = m_frame->getSlice();
   
-    int chromaQPOffset = slice->m_pps->chromaCbQpOffset + slice->getSliceQpDeltaCb();
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    
-    chromaQPOffset = slice->m_pps->chromaCrQpOffset + slice->getSliceQpDeltaCr();
-    int qpCr = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
+    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
+    int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
     
     tld.m_cuCoder.setQP(qp, qpCb, qpCr);
 }
@@ -321,7 +318,7 @@ void FrameEncoder::compressFrame()
 
     int qp = slice->getSliceQp();
 
-    int chromaQPOffset = slice->m_pps->chromaCbQpOffset + slice->getSliceQpDeltaCb();
+    int chromaQPOffset = slice->m_pps->chromaCbQpOffset;
     int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
     
     double lambda = x265_lambda2_tab[qp];
@@ -336,9 +333,6 @@ void FrameEncoder::compressFrame()
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
     slice->setSliceQp(qp);
     m_frame->m_avgQpAq = qp;
-    slice->setSliceQpDelta(0);
-    slice->setSliceQpDeltaCb(0);
-    slice->setSliceQpDeltaCr(0);
 
     switch (slice->getSliceType())
     {

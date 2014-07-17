@@ -59,8 +59,6 @@ void TComSlice::initSlice()
 
     m_colRefIdx = 0;
     m_bCheckLDC = false;
-    m_sliceQpDeltaCb = 0;
-    m_sliceQpDeltaCr = 0;
     m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
 
     m_cabacInitFlag = false;
