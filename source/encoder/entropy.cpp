@@ -1074,7 +1074,6 @@ void SBac::codeSliceHeader(TComSlice* slice)
             SliceType sliceType   = slice->getSliceType();
             int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
             bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-            slice->setCabacInitFlag(encCabacInitFlag);
             WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
         }
     }

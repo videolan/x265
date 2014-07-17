@@ -338,8 +338,6 @@ public:
 
     uint32_t*   m_substreamSizes;
 
-    bool        m_cabacInitFlag;
-
     TComSlice()
     {
         m_lastIDR = 0;
@@ -352,7 +350,6 @@ public:
         m_colRefIdx = 0;
         m_sliceCurEndCUAddr = 0;
         m_substreamSizes = NULL;
-        m_cabacInitFlag = false;
         m_bLMvdL1Zero = false;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
@@ -376,7 +373,6 @@ public:
         m_colFromL0Flag = 1;
         m_colRefIdx = 0;
         m_bCheckLDC = false;
-        m_cabacInitFlag = false;
     }
 
     bool getRapPicFlag() const
@@ -471,10 +467,6 @@ public:
 
     void allocSubstreamSizes(uint32_t numStreams);
     uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
-
-    void  setCabacInitFlag(bool val)   { m_cabacInitFlag = val; }   //!< set CABAC initial flag
-
-    bool  getCabacInitFlag()           { return m_cabacInitFlag; }  //!< get CABAC initial flag
 
 protected:
 
