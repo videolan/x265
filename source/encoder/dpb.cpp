@@ -139,9 +139,7 @@ void DPB::prepareEncode(Frame *pic)
 
     // Slice type refinement
     if ((slice->getSliceType() == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
-    {
         slice->setSliceType(P_SLICE);
-    }
 
     if (slice->getSliceType() == B_SLICE)
     {
@@ -153,27 +151,17 @@ void DPB::prepareEncode(Frame *pic)
         int refIdx = 0;
 
         for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_0) && bLowDelay; refIdx++)
-        {
             if (slice->getRefPic(REF_PIC_LIST_0, refIdx)->getPOC() > curPOC)
-            {
                 bLowDelay = false;
-            }
-        }
 
         for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_1) && bLowDelay; refIdx++)
-        {
             if (slice->getRefPic(REF_PIC_LIST_1, refIdx)->getPOC() > curPOC)
-            {
                 bLowDelay = false;
-            }
-        }
 
         slice->setCheckLDC(bLowDelay);
     }
     else
-    {
         slice->setCheckLDC(true);
-    }
 
     slice->setRefPOCList();
     slice->setEnableTMVPFlag(1);

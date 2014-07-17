@@ -1041,7 +1041,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
-    // check if numrefidxes match the defaults (1, hard-coded above). If not, override
+    // check if numRefIdx match the defaults (1, hard-coded above). If not, override
     // TODO: this might be a place to optimize a few bits per slice, by using param->refs for L0 default
 
     if (!slice->isIntra())
