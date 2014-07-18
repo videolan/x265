@@ -318,7 +318,7 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
-    if ((cu->getSlice()->m_numRefIdx[list] == 1))
+    if (cu->getSlice()->m_numRefIdx[list] == 1)
         return;
 
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
