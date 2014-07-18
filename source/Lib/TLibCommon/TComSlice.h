@@ -324,16 +324,15 @@ public:
     int         m_lastIDR;
     bool        m_bReferenced;
 
-    bool        m_bCheckLDC;       // TODO: What is this for?
+    bool        m_bCheckLDC;       // TODO: is this necessary?
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
     uint32_t    m_colRefIdx;       // never modified
     
-    uint32_t    m_maxNumMergeCand; // use param
-
     int         m_numRefIdx[2];
     Frame*      m_refPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
+    uint32_t    m_maxNumMergeCand; // use param
     uint32_t    m_sliceCurEndCUAddr;
 
     TComSlice()
@@ -344,7 +343,7 @@ public:
         m_sliceQp = 0;
         m_bCheckLDC = false;
         m_bReferenced = false;
-        m_colFromL0Flag = 1;
+        m_colFromL0Flag = true;
         m_sliceCurEndCUAddr = 0;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
@@ -363,7 +362,7 @@ public:
     {
         m_numRefIdx[0] = 0;
         m_numRefIdx[1] = 0;
-        m_colFromL0Flag = 1;
+        m_colFromL0Flag = true;
         m_colRefIdx = 0;
         m_bCheckLDC = false;
     }

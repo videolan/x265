@@ -1084,8 +1084,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
             WRITE_FLAG(slice->m_colFromL0Flag, "collocated_from_l0_flag");
 
         if (slice->m_sliceType != I_SLICE &&
-            ((slice->m_colFromL0Flag == 1 && slice->m_numRefIdx[0] > 1) ||
-             (slice->m_colFromL0Flag == 0 && slice->m_numRefIdx[1] > 1)))
+            ((slice->m_colFromL0Flag && slice->m_numRefIdx[0] > 1) ||
+            (!slice->m_colFromL0Flag && slice->m_numRefIdx[1] > 1)))
         {
             WRITE_UVLC(slice->m_colRefIdx, "collocated_ref_idx");
         }
