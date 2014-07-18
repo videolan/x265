@@ -1054,13 +1054,14 @@ void SBac::codeSliceHeader(TComSlice* slice)
             if (slice->isInterB())
                 WRITE_UVLC(slice->m_numRefIdx[1] - 1, "num_ref_idx_l1_active_minus1");
             else
-                slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+                slice->m_numRefIdx[1] = 0;
         }
     }
     else
     {
-        slice->setNumRefIdx(REF_PIC_LIST_0, 0);
-        slice->setNumRefIdx(REF_PIC_LIST_1, 0);
+        // TODO: why reset these here and above?
+        slice->m_numRefIdx[0] = 0;
+        slice->m_numRefIdx[1] = 0;
     }
 
     if (slice->isInterB())

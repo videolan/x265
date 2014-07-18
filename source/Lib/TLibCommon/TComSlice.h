@@ -375,6 +375,8 @@ public:
         m_bCheckLDC = false;
     }
 
+    void setRefPicList(PicList& picList);
+
     void setRefPOCList();
 
     bool getRapPicFlag() const
@@ -407,10 +409,6 @@ public:
     Frame*    getRefPic(int e, int refIdx)        { return m_refPicList[e][refIdx]; }
 
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
-
-    void      setNumRefIdx(int e, int i) { m_numRefIdx[e] = i; }
-
-    void      setRefPicList(PicList& picList);
 
     void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
 
