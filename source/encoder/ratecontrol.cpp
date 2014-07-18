@@ -984,7 +984,8 @@ bool RateControl::vbv2Pass(uint64_t allAvailableBits)
         }
 
         expectedBits = countExpectedBits();
-    } while ((expectedBits < .995 * allAvailableBits) && ((int64_t)(expectedBits+.5) > (int64_t)(prevBits+.5)));
+    }
+    while ((expectedBits < .995 * allAvailableBits) && ((int64_t)(expectedBits+.5) > (int64_t)(prevBits+.5)));
 
     if (!adjMax)
         x265_log(m_param, X265_LOG_WARNING, "vbv-maxrate issue, qpmax or vbv-maxrate too low\n");
@@ -1269,6 +1270,48 @@ bool RateControl::fixUnderflow(int t0, int t1, double adjustment, double qscaleM
         adjusted = adjusted || (qscaleNew != qscaleOrig);
     }
     return adjusted;
+}
+
+bool RateControl::cuTreeReadFor2Pass(Frame* frame)
+{
+    uint8_t sliceTypeActual = m_rce2Pass[frame->m_POC].sliceType;
+
+    if (m_rce2Pass[frame->m_POC].keptAsRef)
+    {
+        uint8_t type;
+        if (m_cuTreeStats.qpBufPos < 0)
+        {
+            do
+            {
+                m_cuTreeStats.qpBufPos++;
+
+                if (!fread(&type, 1, 1, m_cutreeStatFileIn))
+                    goto fail;
+                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != m_ncu)
+                    goto fail;
+
+                if (type != sliceTypeActual && m_cuTreeStats.qpBufPos == 1)
+                {
+                    x265_log(m_param, X265_LOG_ERROR, "CU-tree frametype %d doesn't match actual frametype %d.\n", type, sliceTypeActual);
+                    return false;
+                }
+            }
+            while(type != sliceTypeActual);
+        }
+        for (int i = 0; i < m_ncu; i++)
+        {
+            int16_t qpFix8 = m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos][i];
+            frame->m_lowres.qpCuTreeOffset[i] = (double)(qpFix8) / 256.0;
+            frame->m_lowres.invQscaleFactor[i] = x265_exp2fix8(frame->m_lowres.qpCuTreeOffset[i]);
+        }
+        m_cuTreeStats.qpBufPos--;
+    }
+    else
+        calcAdaptiveQuantFrame(frame);
+    return true;
+fail:
+   x265_log(m_param, X265_LOG_ERROR, "Incomplete CU-tree stats file.\n");
+    return false;
 }
 
 double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)

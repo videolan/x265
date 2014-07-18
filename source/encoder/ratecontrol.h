@@ -206,6 +206,7 @@ public:
     bool init(const SPS* sps);
     void initHRD(SPS* sps);
     int rateControlSliceType(int frameNum);
+    bool cuTreeReadFor2Pass(Frame* frame);
 protected:
 
     static const double s_amortizeFraction;

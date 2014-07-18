@@ -309,7 +309,18 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         ATOMIC_INC(&pic->m_countRefEncoders);
         bool bEnableWP = m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
         if (m_param->rc.aqMode || bEnableWP)
-            m_rateControl->calcAdaptiveQuantFrame(pic);
+        {
+            if (m_param->rc.cuTree && m_param->rc.bStatRead)
+            {
+                if (!m_rateControl->cuTreeReadFor2Pass(pic))
+                {
+                    m_aborted = 1;
+                    return -1;
+                }
+            }
+            else
+                m_rateControl->calcAdaptiveQuantFrame(pic);
+        }
         m_lookahead->addPicture(pic, pic_in->sliceType);
         m_numDelayedPic++;
     }
