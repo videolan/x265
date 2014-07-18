@@ -188,6 +188,7 @@ void FrameEncoder::initSlice(Frame* pic)
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
     slice->m_bReferenced = m_isReferenced = type != X265_TYPE_B;
     slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
+    slice->m_sliceCurEndCUAddr = pic->getNumCUsInFrame() * pic->getNumPartInCU();
 }
 
 void FrameEncoder::threadMain()
@@ -342,8 +343,6 @@ void FrameEncoder::compressFrame()
         break;
     }
 
-    slice->setSliceCurEndCUAddr(m_frame->getNumCUsInFrame() * m_frame->getNumPartInCU());
-
     // Weighted Prediction parameters estimation.
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
@@ -485,7 +484,7 @@ void FrameEncoder::encodeSlice()
 {
     TComSlice* slice = m_frame->getSlice();
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
-    const uint32_t lastCUAddr = (slice->getSliceCurEndCUAddr() + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
+    const uint32_t lastCUAddr = (slice->m_sliceCurEndCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
 

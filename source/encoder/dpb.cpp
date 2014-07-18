@@ -157,10 +157,10 @@ void DPB::prepareEncode(Frame *pic)
             if (slice->getRefPic(REF_PIC_LIST_1, refIdx)->getPOC() > curPOC)
                 bLowDelay = false;
 
-        slice->setCheckLDC(bLowDelay);
+        slice->m_bCheckLDC = bLowDelay;
     }
     else
-        slice->setCheckLDC(true);
+        slice->m_bCheckLDC = true;
 
     slice->setRefPOCList();
 

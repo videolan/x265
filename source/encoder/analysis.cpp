@@ -2171,8 +2171,8 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     // Calculate end address
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
 
-    uint32_t internalAddress = (slice->getSliceCurEndCUAddr() - 1) % pic->getNumPartInCU();
-    uint32_t externalAddress = (slice->getSliceCurEndCUAddr() - 1) / pic->getNumPartInCU();
+    uint32_t internalAddress = (slice->m_sliceCurEndCUAddr - 1) % pic->getNumPartInCU();
+    uint32_t externalAddress = (slice->m_sliceCurEndCUAddr - 1) / pic->getNumPartInCU();
     uint32_t posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelX[g_zscanToRaster[internalAddress]];
     uint32_t posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelY[g_zscanToRaster[internalAddress]];
     uint32_t width = slice->m_sps->picWidthInLumaSamples;

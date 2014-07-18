@@ -1086,7 +1086,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
             ((slice->m_colFromL0Flag == 1 && slice->m_numRefIdx[0] > 1) ||
              (slice->m_colFromL0Flag == 0 && slice->m_numRefIdx[1] > 1)))
         {
-            WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
+            WRITE_UVLC(slice->m_colRefIdx, "collocated_ref_idx");
         }
     }
     if ((slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE))
@@ -1112,7 +1112,7 @@ void SBac::codeTilesWPPEntryPoint(TComSlice* slice)
     uint32_t* substreamSizes = slice->getSubstreamSizes(); // TODO: pass as argument
     int maxNumParts = slice->m_pic->getNumPartInCU();
 
-    int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->getSliceCurEndCUAddr() - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
+    int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->m_sliceCurEndCUAddr - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
     uint32_t numEntryPointOffsets = slice->m_pic->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
     uint32_t *entryPointOffset = new uint32_t[numEntryPointOffsets];
 

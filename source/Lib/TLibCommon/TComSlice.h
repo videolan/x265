@@ -324,10 +324,11 @@ public:
     int         m_lastIDR;
     bool        m_bReferenced;
 
-    bool        m_bCheckLDC;
-    bool        m_colFromL0Flag; // collocated picture from List0 flag
-    bool        m_bLMvdL1Zero;
-    uint32_t    m_colRefIdx;
+    bool        m_bCheckLDC;       // TODO: What is this for?
+    bool        m_bLMvdL1Zero;     // TODOD: what is mvd_l1_zero_flag?
+    bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
+    uint32_t    m_colRefIdx;       // never modified
+    
     uint32_t    m_maxNumMergeCand; // use param
 
     int         m_numRefIdx[2];
@@ -347,7 +348,6 @@ public:
         m_bCheckLDC = false;
         m_bReferenced = false;
         m_colFromL0Flag = 1;
-        m_colRefIdx = 0;
         m_sliceCurEndCUAddr = 0;
         m_substreamSizes = NULL;
         m_bLMvdL1Zero = false;
@@ -374,6 +374,8 @@ public:
         m_colRefIdx = 0;
         m_bCheckLDC = false;
     }
+
+    void setRefPOCList();
 
     bool getRapPicFlag() const
     {
@@ -406,23 +408,9 @@ public:
 
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
 
-    uint32_t  getColRefIdx()                      { return m_colRefIdx; }
-
-    bool      getCheckLDC()                       { return m_bCheckLDC; }
-
     void      setNumRefIdx(int e, int i) { m_numRefIdx[e] = i; }
 
     void      setRefPicList(PicList& picList);
-
-    void      setRefPOCList();
-
-    void      setColRefIdx(uint32_t refIdx)     { m_colRefIdx = refIdx; }
-
-    void      setCheckLDC(bool b)           { m_bCheckLDC = b; }
-
-    void setSliceCurEndCUAddr(uint32_t uiAddr) { m_sliceCurEndCUAddr = uiAddr; }
-
-    uint32_t getSliceCurEndCUAddr()            { return m_sliceCurEndCUAddr; }
 
     void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
 
