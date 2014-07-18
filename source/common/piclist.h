@@ -58,6 +58,9 @@ public:
     /** Pop picture from beginning of the list */
     Frame* popFront();
 
+    /** Find frame with specified POC */
+    Frame* getPOC(int poc);
+
     /** Remove picture from list */
     void remove(Frame& pic);
 

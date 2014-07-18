@@ -388,16 +388,10 @@ public:
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
 
-    void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
-
-    void  getWpScaling(int e, int refIdx, WeightParam *&wp);
-
-    void  resetWpScaling();
-    void  initWpScaling();
-
-protected:
-
-    Frame*  xGetRefPic(PicList& picList, int poc);
+    void setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
+    void getWpScaling(int list, int refIdx, WeightParam *&wp);
+    void resetWpScaling();
+    void initWpScaling();
 };
 }
 //! \}

@@ -42,24 +42,6 @@
 
 using namespace x265;
 
-Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
-{
-    Frame *iterPic = picList.first();
-    Frame* pic = NULL;
-
-    while (iterPic)
-    {
-        pic = iterPic;
-        if (pic->getPOC() == poc)
-        {
-            break;
-        }
-        iterPic = iterPic->m_next;
-    }
-
-    return pic;
-}
-
 void TComSlice::setRefPicList(PicList& picList)
 {
     if (m_sliceType == I_SLICE)
@@ -82,7 +64,7 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, m_poc + m_rps.m_deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.m_deltaPOC[i]);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
@@ -92,7 +74,7 @@ void TComSlice::setRefPicList(PicList& picList)
     {
         if (m_rps.m_used[i])
         {
-            refPic = xGetRefPic(picList, m_poc + m_rps.m_deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.m_deltaPOC[i]);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }
