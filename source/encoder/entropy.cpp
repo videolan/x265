@@ -899,7 +899,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
         {
             for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
             {
-                slice->getWpScaling(list, ref, wp);
+                wp = slice->m_weightPredTable[list][ref];
                 if (!bDenomCoded)
                 {
                     WRITE_UVLC(wp[0].log2WeightDenom, "luma_log2_weight_denom");
@@ -919,7 +919,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
             {
                 for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                 {
-                    slice->getWpScaling(list, ref, wp);
+                    wp = slice->m_weightPredTable[list][ref];
                     WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");
                     totalSignalledWeightFlags += 2 * wp[1].bPresentFlag;
                 }
@@ -927,7 +927,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
 
             for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
             {
-                slice->getWpScaling(list, ref, wp);
+                wp = slice->m_weightPredTable[list][ref];
                 if (wp[0].bPresentFlag)
                 {
                     int deltaWeight = (wp[0].inputWeight - (1 << wp[0].log2WeightDenom));

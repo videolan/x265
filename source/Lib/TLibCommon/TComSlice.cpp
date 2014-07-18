@@ -142,17 +142,6 @@ void TComSlice::setRefPicList(PicList& picList)
             m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
 }
 
-/** get WP tables for weighted pred
- * \param int
- * \param refIdx
- * \param *&wpScalingParam
- * \returns void
- */
-void TComSlice::getWpScaling(int l, int refIdx, WeightParam *&wp)
-{
-    wp = m_weightPredTable[l][refIdx];
-}
-
 /** reset Default WP tables settings : no weight.
  * \param wpScalingParam
  * \returns void

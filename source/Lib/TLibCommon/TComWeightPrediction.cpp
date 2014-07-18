@@ -499,40 +499,30 @@ void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx,
  */
 void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1)
 {
-    TComSlice*      slice = cu->getSlice();
-    const TComPPS*  pps     = cu->getSlice()->m_pps;
-    bool            wpBiPred = pps->bUseWeightedBiPred;
-    WeightParam* pwp;
-    bool            bBiDir   = (refIdx0 >= 0 && refIdx1 >= 0);
-    bool            bUniDir  = !bBiDir;
+    TComSlice* slice = cu->getSlice();
+    bool wpBiPred = slice->m_pps->bUseWeightedBiPred;
+    bool bBiDir  = (refIdx0 >= 0 && refIdx1 >= 0);
+    bool bUniDir = !bBiDir;
 
     if (bUniDir || wpBiPred)
-    { // explicit --------------------
+    {
         if (refIdx0 >= 0)
-        {
-            slice->getWpScaling(REF_PIC_LIST_0, refIdx0, wp0);
-        }
+            wp0 = slice->m_weightPredTable[0][refIdx0];
+
         if (refIdx1 >= 0)
-        {
-            slice->getWpScaling(REF_PIC_LIST_1, refIdx1, wp1);
-        }
+            wp1 = slice->m_weightPredTable[1][refIdx1];
     }
     else
-    {
         X265_CHECK(0, "unexpected wpScaling configuration\n");
-    }
 
     if (refIdx0 < 0)
-    {
         wp0 = NULL;
-    }
+
     if (refIdx1 < 0)
-    {
         wp1 = NULL;
-    }
 
     if (bBiDir)
-    { // Bi-Dir case
+    {
         for (int yuv = 0; yuv < 3; yuv++)
         {
             wp0[yuv].w      = wp0[yuv].inputWeight;
@@ -546,8 +536,8 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
         }
     }
     else
-    { // Unidir
-        pwp = (refIdx0 >= 0) ? wp0 : wp1;
+    {
+        WeightParam* pwp = (refIdx0 >= 0) ? wp0 : wp1;
         for (int yuv = 0; yuv < 3; yuv++)
         {
             pwp[yuv].w      = pwp[yuv].inputWeight;
