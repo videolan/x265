@@ -133,12 +133,9 @@ void DPB::prepareEncode(Frame *pic)
 
     slice->m_numRefIdx[0] = X265_MIN(m_maxRefL0, slice->m_rps.m_numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
     slice->m_numRefIdx[1] = X265_MIN(m_maxRefL1, slice->m_rps.m_numberOfPositivePictures);
-
     slice->setRefPicList(m_picList);
 
-    // Slice type refinement:  TODO: does this ever happen?
-    if ((slice->m_sliceType == B_SLICE) && (slice->m_numRefIdx[1] == 0))
-        slice->m_sliceType = P_SLICE;
+    X265_CHECK(slice->m_sliceType != B_SLICE || slice->m_numRefIdx[1], "B slice without L1 references (non-fatal)\n");
 
     if (slice->m_sliceType == B_SLICE)
     {
