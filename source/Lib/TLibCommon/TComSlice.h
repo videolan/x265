@@ -338,14 +338,7 @@ public:
     TComSlice()
     {
         m_lastIDR = 0;
-        m_nalUnitType = NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-        m_sliceType = I_SLICE;
-        m_sliceQp = 0;
-        m_bCheckLDC = false;
-        m_bReferenced = false;
-        m_colFromL0Flag = true;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
-
         for (int i = 0; i < MAX_NUM_REF; i++)
         {
             m_refPicList[0][i] = NULL;
