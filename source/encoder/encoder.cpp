@@ -41,6 +41,10 @@
 
 #include "x265.h"
 
+namespace x265 {
+const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
+}
+
 static const char *summaryCSVHeader =
     "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
     "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
@@ -230,6 +234,8 @@ void Encoder::updateVbvPlan(RateControl* rc)
             rc->m_bufferFill = X265_MAX(rc->m_bufferFill, 0);
             rc->m_bufferFill += encoder->m_rce.bufferRate;
             rc->m_bufferFill = X265_MIN(rc->m_bufferFill, rc->m_bufferSize);
+            if (rc->m_2pass)
+                rc->m_predictedBits += (int64_t)encoder->m_rce.frameSizeEstimated;
         }
         encIdx = (encIdx + 1) % m_param->frameNumThreads;
     }

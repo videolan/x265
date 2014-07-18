@@ -185,6 +185,8 @@ public:
     int      m_numEntries;
     RateControlEntry *m_rce2Pass;
     double   m_lastAccumPNorm;
+    int64_t  m_predictedBits;
+    double   m_expectedBitsSum;   /* sum of qscale2bits after rceq, ratefactor, and overflow, only includes finished frames */
     struct
     {
         uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */

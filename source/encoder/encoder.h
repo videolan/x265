@@ -34,6 +34,7 @@ struct x265_encoder {};
 
 namespace x265 {
 // private namespace
+extern const char g_sliceTypeToChar[3];
 
 class SBac;
 
