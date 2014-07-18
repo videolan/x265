@@ -1951,7 +1951,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             const VUI *vui = &pic->m_picSym->m_slice->m_sps->vuiParameters;
             const HRDInfo *hrd = &vui->hrdParameters;
             const TimingInfo *time = &vui->timingInfo;
-            if (!pic->m_picSym->m_slice->m_poc)
+            if (!pic->m_POC)
             {
                 // first access unit initializes the HRD
                 rce->hrdTiming->cpbInitialAT = 0;
