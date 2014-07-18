@@ -139,29 +139,19 @@ void DPB::prepareEncode(Frame *pic)
 
     if (slice->m_sliceType == B_SLICE)
     {
-        // TODO: Can we estimate this from lookahead?
-        slice->m_colFromL0Flag = 0;
-
-        bool bLowDelay = true;
-        int curPOC = slice->m_poc;
-        int refIdx = 0;
-
-        for (refIdx = 0; refIdx < slice->m_numRefIdx[0] && bLowDelay; refIdx++)
-            if (slice->m_refPOCList[0][refIdx] > curPOC)
-                bLowDelay = false;
-
-        for (refIdx = 0; refIdx < slice->m_numRefIdx[1] && bLowDelay; refIdx++)
-            if (slice->m_refPOCList[1][refIdx] > curPOC)
-                bLowDelay = false;
-
-        slice->m_bCheckLDC = bLowDelay;
+        /* TODO: the lookahead should be able to tell which reference picture
+         * had the least motion residual.  We should be able to use that here to
+         * select a colocation reference list and index */
+        slice->m_colFromL0Flag = false;
+        slice->m_colRefIdx = 0;
+        slice->m_bCheckLDC = false;
     }
     else
         slice->m_bCheckLDC = true;
 
-    /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
-     * it prevents the frame from being recycled, and second the referenced frames know how many
-     * other FrameEncoders are using them for motion reference */
+    /* Increment reference count of all motion-referenced frames to prevent them
+     * from being recycled. These counts are decremented at the end of
+     * compressFrame() */
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
