@@ -171,7 +171,7 @@ void DPB::prepareEncode(Frame *pic)
             bGPBcheck = true;
             for (int i = 0; i < slice->m_numRefIdx[1]; i++)
             {
-                if (slice->getRefPOC(REF_PIC_LIST_1, i) != slice->getRefPOC(REF_PIC_LIST_0, i))
+                if (slice->m_refPOCList[1][i] != slice->m_refPOCList[0][i])
                 {
                     bGPBcheck = false;
                     break;

@@ -2124,8 +2124,8 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
                 // get Mv from cand[i] and cand[j]
                 int refIdxL0 = mvFieldNeighbours[i][0].refIdx;
                 int refIdxL1 = mvFieldNeighbours[j][1].refIdx;
-                int refPOCL0 = m_slice->getRefPOC(REF_PIC_LIST_0, refIdxL0);
-                int refPOCL1 = m_slice->getRefPOC(REF_PIC_LIST_1, refIdxL1);
+                int refPOCL0 = m_slice->m_refPOCList[0][refIdxL0];
+                int refPOCL1 = m_slice->m_refPOCList[1][refIdxL1];
                 if (!(refPOCL0 == refPOCL1 && mvFieldNeighbours[i][0].mv == mvFieldNeighbours[j][1].mv))
                 {
                     mvFieldNeighbours[arrayAddr][0].setMvField(mvFieldNeighbours[i][0].mv, refIdxL0);
@@ -2482,7 +2482,9 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
     if (!tmpCU)
         return false;
 
-    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && m_slice->m_refPicList[picList][refIdx]->getPOC() == tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx)))
+    int refPOC = m_slice->m_refPicList[picList][refIdx]->getPOC();
+    int otherPOC = tmpCU->getSlice()->m_refPOCList[picList][tmpCU->getCUMvField(picList)->getRefIdx(idx)];
+    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && refPOC == otherPOC)
     {
         mvp = tmpCU->getCUMvField(picList)->getMv(idx);
         return true;
@@ -2499,7 +2501,7 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
 
     if (tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->getSlice()->getRefPOC(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx));
+        neibRefPOC = tmpCU->getSlice()->m_refPOCList[refPicList2nd][tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx)];
         if (neibRefPOC == curRefPOC)
         {
             // Same reference frame but different list
@@ -2561,7 +2563,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     //---------------  V1 (END) ------------------//
     if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx));
+        neibRefPOC = tmpCU->getSlice()->m_refPOCList[picList][tmpCU->getCUMvField(picList)->getRefIdx(idx)];
         MV mvp = tmpCU->getCUMvField(picList)->getMv(idx);
 
         int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
@@ -2576,7 +2578,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     //---------------------- V2(END) --------------------//
     if (tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->getSlice()->getRefPOC(refPicList2nd, tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx));
+        neibRefPOC = tmpCU->getSlice()->m_refPOCList[refPicList2nd][tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx)];
         MV mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
 
         int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
@@ -2634,7 +2636,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     }
 
     // Scale the vector.
-    colRefPOC = colCU->getSlice()->getRefPOC(colRefPicList, colRefIdx);
+    colRefPOC = colCU->getSlice()->m_refPOCList[colRefPicList][colRefIdx];
     colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
 
     curRefPOC = m_slice->m_refPicList[picList][outRefIdx]->getPOC();

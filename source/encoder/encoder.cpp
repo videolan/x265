@@ -955,7 +955,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
                 p += sprintf(buf + p, " [L%d ", list);
                 for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                 {
-                    int k = slice->getRefPOC(list, ref) - slice->m_lastIDR;
+                    int k = slice->m_refPOCList[list][ref] - slice->m_lastIDR;
                     p += sprintf(buf + p, "%d ", k);
                 }
 
@@ -987,7 +987,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
                     fprintf(m_csvfpt, ", ");
                     for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
-                        int k = slice->getRefPOC(list, ref) - slice->m_lastIDR;
+                        int k = slice->m_refPOCList[list][ref] - slice->m_lastIDR;
                         fprintf(m_csvfpt, " %d", k);
                     }
                 }

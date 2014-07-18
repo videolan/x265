@@ -212,8 +212,8 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
     // POC distances to each reference
     int p0 = 0, p1, b;
     int poc = pic->getSlice()->m_poc;
-    int l0poc = pic->getSlice()->getRefPOC(0, 0);
-    int l1poc = pic->getSlice()->getRefPOC(1, 0);
+    int l0poc = pic->getSlice()->m_refPOCList[0][0];
+    int l1poc = pic->getSlice()->m_refPOCList[1][0];
 
     switch (pic->getSlice()->m_sliceType)
     {
