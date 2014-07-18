@@ -227,8 +227,8 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, uint32_t partAddr)
     X265_CHECK(cu->getSlice()->isInterB(), "identical motion check in P frame\n");
     if (!cu->getSlice()->m_pps->bUseWeightedBiPred)
     {
-        int refIdxL0 = cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partAddr);
-        int refIdxL1 = cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partAddr);
+        int refIdxL0 = cu->getCUMvField(0)->getRefIdx(partAddr);
+        int refIdxL1 = cu->getCUMvField(1)->getRefIdx(partAddr);
         if (refIdxL0 >= 0 && refIdxL1 >= 0)
         {
             int refPOCL0 = cu->getSlice()->m_refPOCList[0][refIdxL0];
