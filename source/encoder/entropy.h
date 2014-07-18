@@ -128,7 +128,7 @@ public:
     void codeHrdParameters(TComHRD* hrd);
 
     void codeSliceHeader(TComSlice* slice);
-    void codeTilesWPPEntryPoint(TComSlice* slice, uint32_t *substreamSizes);
+    void codeSliceHeaderWPPEntryPoints(TComSlice* slice, uint32_t *substreamSizes, uint32_t maxOffset);
     void codeShortTermRefPicSet(RPS* rps);
     void codeSliceFinish()                   { finish(); }
     void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }

@@ -56,7 +56,7 @@ public:
 
     void serialize(NalUnitType nalUnitType, const Bitstream& bs);
 
-    void serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams);
+    uint32_t serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams);
 };
 
 }

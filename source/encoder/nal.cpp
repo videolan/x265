@@ -156,8 +156,9 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
 
 /* concatenate and escape WPP sub-streams, return escaped row lengths.
  * These streams will be appended to the next serialized NAL */
-void NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams)
+uint32_t NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams)
 {
+    uint32_t maxStreamSize = 0;
     uint32_t estSize = 0;
     for (uint32_t s = 0; s < streamCount; s++)
         estSize += streams[s].getNumberOfWrittenBytes();
@@ -175,7 +176,7 @@ void NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCoun
         else
         {
             x265_log(NULL, X265_LOG_ERROR, "Unable to realloc WPP substream concatenation buffer\n");
-            return;
+            return 0;
         }
     }
 
@@ -205,8 +206,13 @@ void NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCoun
         }
 
         if (s < streamCount - 1)
-            streamSizeBytes[s] = (bytes - prevBufSize) << 3;
+        {
+            streamSizeBytes[s] = bytes - prevBufSize;
+            if (streamSizeBytes[s] > maxStreamSize)
+                maxStreamSize = streamSizeBytes[s];
+        }
     }
 
     m_extraOccupancy = bytes;
+    return maxStreamSize;
 }

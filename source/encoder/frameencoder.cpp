@@ -425,12 +425,12 @@ void FrameEncoder::compressFrame()
     encodeSlice();
 
     // serialize each row, record final lengths in slice header
-    m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
+    uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
     m_sbacCoder.setBitstream(&m_bs);
     if (slice->m_pps->bEntropyCodingSyncEnabled)
-        m_sbacCoder.codeTilesWPPEntryPoint(slice, m_substreamSizes);
+        m_sbacCoder.codeSliceHeaderWPPEntryPoints(slice, m_substreamSizes, maxStreamSize);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);

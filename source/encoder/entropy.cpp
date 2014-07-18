@@ -1108,38 +1108,22 @@ void SBac::codeSliceHeader(TComSlice* slice)
 }
 
 /** write wavefront substreams sizes for the slice header */
-void SBac::codeTilesWPPEntryPoint(TComSlice* slice, uint32_t *substreamSizes)
+void SBac::codeSliceHeaderWPPEntryPoints(TComSlice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
 {
-    int maxNumParts = slice->m_pic->getNumPartInCU();
-
-    int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->m_sliceCurEndCUAddr - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
-    uint32_t numEntryPointOffsets = slice->m_pic->getFrameHeightInCU() - numZeroSubstreamsAtEndOfSlice - 1;
-    uint32_t *entryPointOffset = new uint32_t[numEntryPointOffsets];
-
-    uint32_t maxOffset = 0;
-    for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
+    uint32_t offsetLen = 1;
+    while (maxOffset >= (1U << offsetLen))
     {
-        entryPointOffset[idx] = (substreamSizes[idx] >> 3);
-        if (entryPointOffset[idx] > maxOffset)
-            maxOffset = entryPointOffset[idx];
+        offsetLen++;
+        X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
     }
 
-    // Determine number of bits "offsetLenMinus1+1" required for entry point information
-    uint32_t offsetLenMinus1 = 0;
-    while (maxOffset >= (1u << (offsetLenMinus1 + 1)))
-    {
-        offsetLenMinus1++;
-        X265_CHECK(offsetLenMinus1 + 1 < 32, "offsetLenMinus1 is too large\n");
-    }
+    uint32_t numRows = slice->m_pic->getFrameHeightInCU() - 1;
+    WRITE_UVLC(numRows, "num_entry_point_offsets");
+    if (numRows > 0)
+        WRITE_UVLC(offsetLen - 1, "offset_len_minus1");
 
-    WRITE_UVLC(numEntryPointOffsets, "num_entry_point_offsets");
-    if (numEntryPointOffsets > 0)
-        WRITE_UVLC(offsetLenMinus1, "offset_len_minus1");
-
-    for (uint32_t idx = 0; idx < numEntryPointOffsets; idx++)
-        WRITE_CODE(entryPointOffset[idx] - 1, offsetLenMinus1 + 1, "entry_point_offset_minus1");
-
-    delete [] entryPointOffset;
+    for (uint32_t i = 0; i < numRows; i++)
+        WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 
 void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
