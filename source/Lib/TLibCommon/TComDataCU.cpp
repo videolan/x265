@@ -1590,117 +1590,6 @@ void TComDataCU::getMvField(TComDataCU* cu, uint32_t absPartIdx, int picList, TC
     outMvField.setMvField(cuMvField->getMv(absPartIdx), cuMvField->getRefIdx(absPartIdx));
 }
 
-void TComDataCU::deriveLeftRightTopIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& outPartIdxLT, uint32_t& outPartIdxRT)
-{
-    outPartIdxLT = m_absIdxInLCU + absPartIdx;
-    uint32_t cuSize = 1 << m_log2CUSize[absPartIdx];
-    uint32_t puWidth = 0;
-
-    switch (m_partSizes[absPartIdx])
-    {
-    case SIZE_2Nx2N: puWidth = cuSize;
-        break;
-    case SIZE_2NxN:  puWidth = cuSize;
-        break;
-    case SIZE_Nx2N:  puWidth = cuSize  >> 1;
-        break;
-    case SIZE_NxN:   puWidth = cuSize  >> 1;
-        break;
-    case SIZE_2NxnU: puWidth = cuSize;
-        break;
-    case SIZE_2NxnD: puWidth = cuSize;
-        break;
-    case SIZE_nLx2N:
-        if (partIdx == 0)
-        {
-            puWidth = cuSize  >> 2;
-        }
-        else if (partIdx == 1)
-        {
-            puWidth = (cuSize  >> 1) + (cuSize  >> 2);
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part index\n");
-        }
-        break;
-    case SIZE_nRx2N:
-        if (partIdx == 0)
-        {
-            puWidth = (cuSize  >> 1) + (cuSize  >> 2);
-        }
-        else if (partIdx == 1)
-        {
-            puWidth = cuSize  >> 2;
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part index\n");
-        }
-        break;
-    default:
-        X265_CHECK(0, "unexpected part type\n");
-        break;
-    }
-
-    outPartIdxRT = g_rasterToZscan[g_zscanToRaster[outPartIdxLT] + (puWidth >> m_pic->getLog2UnitSize()) - 1];
-}
-
-void TComDataCU::deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& outPartIdxLB)
-{
-    uint32_t cuSize = 1 << m_log2CUSize[absPartIdx];
-    uint32_t puHeight = 0;
-
-    switch (m_partSizes[absPartIdx])
-    {
-    case SIZE_2Nx2N: puHeight = cuSize;
-        break;
-    case SIZE_2NxN:  puHeight = cuSize >> 1;
-        break;
-    case SIZE_Nx2N:  puHeight = cuSize;
-        break;
-    case SIZE_NxN:   puHeight = cuSize >> 1;
-        break;
-    case SIZE_2NxnU:
-        if (partIdx == 0)
-        {
-            puHeight = cuSize >> 2;
-        }
-        else if (partIdx == 1)
-        {
-            puHeight = (cuSize >> 1) + (cuSize >> 2);
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part index\n");
-        }
-        break;
-    case SIZE_2NxnD:
-        if (partIdx == 0)
-        {
-            puHeight = (cuSize >> 1) + (cuSize >> 2);
-        }
-        else if (partIdx == 1)
-        {
-            puHeight = cuSize >> 2;
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part index\n");
-        }
-        break;
-    case SIZE_nLx2N: puHeight = cuSize;
-        break;
-    case SIZE_nRx2N: puHeight = cuSize;
-        break;
-    default:
-        X265_CHECK(0, "unexpected part type\n");
-        break;
-    }
-
-    outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInLCU + absPartIdx] + ((puHeight >> m_pic->getLog2UnitSize()) - 1) * m_pic->getNumPartInCUSize()];
-}
-
 void TComDataCU::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& ruiPartIdxLT, uint32_t& ruiPartIdxRT)
 {
     ruiPartIdxLT = m_absIdxInLCU;
@@ -1882,7 +1771,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     uint32_t partIdxLT, partIdxRT, partIdxLB;
     PartSize curPS = getPartitionSize(absPartIdx);
-    deriveLeftBottomIdxGeneral(absPartIdx, puIdx, partIdxLB);
+    deriveLeftBottomIdx(puIdx, partIdxLB);
 
     //left
     uint32_t leftPartIdx = 0;
@@ -1910,7 +1799,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         }
     }
 
-    deriveLeftRightTopIdxGeneral(absPartIdx, puIdx, partIdxLT, partIdxRT);
+    deriveLeftRightTopIdx(puIdx, partIdxLT, partIdxRT);
 
     // above
     uint32_t abovePartIdx = 0;
