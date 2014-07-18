@@ -271,13 +271,13 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         // to see if the picture should be kept as reference picture
         for (i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
         {
-            if (outPic->getPicSym()->getSlice()->m_poc == curPoc + rps->deltaPOC[i])
+            if (outPic->getSlice()->m_poc == curPoc + rps->deltaPOC[i])
                 isReference = 1;
         }
 
         // mark the picture as "unused for reference" if it is not in
         // the Reference Picture Set
-        if (outPic->getPicSym()->getSlice()->m_poc != curPoc && isReference == 0)
+        if (outPic->getSlice()->m_poc != curPoc && isReference == 0)
             outPic->getSlice()->m_bReferenced = false;
     }
 }

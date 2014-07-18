@@ -60,7 +60,7 @@ class TComPicYuv;
 /// picture symbol class
 class TComPicSym
 {
-private:
+public:
 
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
@@ -77,8 +77,6 @@ private:
 
     SAOParam*     m_saoParam;
 
-public:
-
     TComPicSym*   m_freeListNext;
     TComPicYuv*   m_reconPicYuv;
 
@@ -86,8 +84,6 @@ public:
     void        destroy();
 
     TComPicSym();
-
-    Slice*      getSlice()                { return m_slice; }
 
     uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
 
