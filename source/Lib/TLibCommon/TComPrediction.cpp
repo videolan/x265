@@ -332,19 +332,15 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
     {
         for (int list = 0; list < 2; list++)
         {
-            X265_CHECK(refIdx[list] < cu->getSlice()->getNumRefIdx(list), "refidx out of range\n");
+            X265_CHECK(refIdx[list] < cu->getSlice()->m_numRefIdx[list], "refidx out of range\n");
 
             xPredInterUni(cu, partAddr, width, height, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
         if (cu->getSlice()->m_pps->bUseWeightedBiPred)
-        {
             xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], partAddr, width, height, outPredYuv, bLuma, bChroma);
-        }
         else
-        {
             outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], partAddr, width, height, bLuma, bChroma);
-        }
     }
     else if (cu->getSlice()->m_pps->bUseWeightedBiPred)
     {
@@ -352,7 +348,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
         {
             if (refIdx[list] < 0) continue;
 
-            X265_CHECK(refIdx[list] < cu->getSlice()->getNumRefIdx(list), "refidx out of range\n");
+            X265_CHECK(refIdx[list] < cu->getSlice()->m_numRefIdx[list], "refidx out of range\n");
 
             xPredInterUni(cu, partAddr, width, height, list, &m_predShortYuv[list], bLuma, bChroma);
         }
@@ -363,7 +359,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
     {
         const int list = 0;
 
-        X265_CHECK(refIdx[list] < cu->getSlice()->getNumRefIdx(list), "refidx out of range\n");
+        X265_CHECK(refIdx[list] < cu->getSlice()->m_numRefIdx[list], "refidx out of range\n");
 
         xPredInterUni(cu, partAddr, width, height, list, outPredYuv, bLuma, bChroma);
     }
@@ -373,7 +369,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 
         const int list = 1;
 
-        X265_CHECK(refIdx[list] < cu->getSlice()->getNumRefIdx(list), "refidx out of range\n");
+        X265_CHECK(refIdx[list] < cu->getSlice()->m_numRefIdx[list], "refidx out of range\n");
 
         xPredInterUni(cu, partAddr, width, height, list, outPredYuv, bLuma, bChroma);
     }

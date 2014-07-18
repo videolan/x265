@@ -1910,7 +1910,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     uint32_t lastMode = 0;
     int      totalmebits = 0;
 
-    const int* numRefIdx = cu->getSlice()->getNumRefIdx();
+    const int* numRefIdx = cu->getSlice()->m_numRefIdx;
 
     MergeData merge;
 

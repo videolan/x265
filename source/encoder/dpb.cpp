@@ -137,7 +137,7 @@ void DPB::prepareEncode(Frame *pic)
     slice->setRefPicList(m_picList);
 
     // Slice type refinement:  TODO: does this ever happen?
-    if ((slice->m_sliceType == B_SLICE) && (slice->getNumRefIdx(REF_PIC_LIST_1) == 0))
+    if ((slice->m_sliceType == B_SLICE) && (slice->m_numRefIdx[1] == 0))
         slice->m_sliceType = P_SLICE;
 
     if (slice->m_sliceType == B_SLICE)
@@ -149,11 +149,11 @@ void DPB::prepareEncode(Frame *pic)
         int curPOC = slice->m_poc;
         int refIdx = 0;
 
-        for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_0) && bLowDelay; refIdx++)
+        for (refIdx = 0; refIdx < slice->m_numRefIdx[0] && bLowDelay; refIdx++)
             if (slice->getRefPic(REF_PIC_LIST_0, refIdx)->getPOC() > curPOC)
                 bLowDelay = false;
 
-        for (refIdx = 0; refIdx < slice->getNumRefIdx(REF_PIC_LIST_1) && bLowDelay; refIdx++)
+        for (refIdx = 0; refIdx < slice->m_numRefIdx[1] && bLowDelay; refIdx++)
             if (slice->getRefPic(REF_PIC_LIST_1, refIdx)->getPOC() > curPOC)
                 bLowDelay = false;
 
@@ -167,10 +167,10 @@ void DPB::prepareEncode(Frame *pic)
     bool bGPBcheck = false;
     if (slice->m_sliceType == B_SLICE)
     {
-        if (slice->getNumRefIdx(REF_PIC_LIST_0) == slice->getNumRefIdx(REF_PIC_LIST_1))
+        if (slice->m_numRefIdx[0] == slice->m_numRefIdx[1])
         {
             bGPBcheck = true;
-            for (int i = 0; i < slice->getNumRefIdx(REF_PIC_LIST_1); i++)
+            for (int i = 0; i < slice->m_numRefIdx[1]; i++)
             {
                 if (slice->getRefPOC(REF_PIC_LIST_1, i) != slice->getRefPOC(REF_PIC_LIST_0, i))
                 {
@@ -189,7 +189,7 @@ void DPB::prepareEncode(Frame *pic)
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
+        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
             Frame *refpic = slice->getRefPic(l, ref);
             ATOMIC_INC(&refpic->m_countRefEncoders);

@@ -501,7 +501,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         chromaDenom = weights[1].log2WeightDenom;
 
         /* reset weight states */
-        for (int ref = 1; ref < slice.getNumRefIdx(list); ref++)
+        for (int ref = 1; ref < slice.m_numRefIdx[list]; ref++)
         {
             SET_WEIGHT(wp[list][ref][0], false, 1 << lumaDenom, lumaDenom, 0);
             SET_WEIGHT(wp[list][ref][1], false, 1 << chromaDenom, chromaDenom, 0);

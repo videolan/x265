@@ -592,8 +592,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 #if TOPSKIP
     if (bInsidePicture && !bInsidePictureParent)
     {
-        TComDataCU* colocated0 = slice->getNumRefIdx(REF_PIC_LIST_0) > 0 ? slice->getRefPic(REF_PIC_LIST_0, 0)->getCU(outTempCU->getAddr()) : NULL;
-        TComDataCU* colocated1 = slice->getNumRefIdx(REF_PIC_LIST_1) > 0 ? slice->getRefPic(REF_PIC_LIST_1, 0)->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->getRefPic(0, 0)->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated1 = slice->m_numRefIdx[1] > 0 ? slice->getRefPic(1, 0)->getCU(outTempCU->getAddr()) : NULL;
         char currentQP = outTempCU->getQP(0);
         char previousQP = colocated0->getQP(0);
         uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
@@ -1537,7 +1537,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     int mvsum = 0;
                     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
                     {
-                        if (outBestCU->getSlice()->getNumRefIdx(refListIdx) > 0)
+                        if (outBestCU->getSlice()->m_numRefIdx[refListIdx] > 0)
                         {
                             TComCUMvField* pcCUMvField = outBestCU->getCUMvField(refListIdx);
                             int hor = abs(pcCUMvField->getMvd(0).x);

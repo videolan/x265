@@ -396,9 +396,11 @@ public:
         return m_nalUnitType >= 16 && m_nalUnitType <= 23;
     }
 
-    int       getNumRefIdx(int e)                 { return m_numRefIdx[e]; }
+    bool isIntra()  const { return m_sliceType == I_SLICE; }
 
-    const int* getNumRefIdx() const               { return m_numRefIdx; }
+    bool isInterB() const { return m_sliceType == B_SLICE; }
+
+    bool isInterP() const { return m_sliceType == P_SLICE; }
 
     Frame*    getRefPic(int e, int refIdx)        { return m_refPicList[e][refIdx]; }
 
@@ -426,12 +428,6 @@ public:
 
     void      setMvdL1ZeroFlag(bool b)      { m_bLMvdL1Zero = b; }
 
-    bool      isIntra()                     { return m_sliceType == I_SLICE; }
-
-    bool      isInterB()                    { return m_sliceType == B_SLICE; }
-
-    bool      isInterP()                    { return m_sliceType == P_SLICE; }
-
     void setSliceCurEndCUAddr(uint32_t uiAddr) { m_sliceCurEndCUAddr = uiAddr; }
 
     uint32_t getSliceCurEndCUAddr()            { return m_sliceCurEndCUAddr; }
@@ -449,7 +445,6 @@ public:
 protected:
 
     Frame*  xGetRefPic(PicList& picList, int poc);
-
 };
 }
 //! \}

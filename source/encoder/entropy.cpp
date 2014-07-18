@@ -299,15 +299,15 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
             uint32_t interDir = cu->getInterDir(subPartIdx);
             if (cu->getSlice()->isInterB())
                 codeInterDir(cu, subPartIdx);
-            for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
+            for (uint32_t list = 0; list < 2; list++)
             {
-                if (interDir & (1 << refListIdx))
+                if (interDir & (1 << list))
                 {
-                    X265_CHECK(cu->getSlice()->getNumRefIdx(refListIdx) > 0, "numRefs should have been > 0\n");
+                    X265_CHECK(cu->getSlice()->m_numRefIdx[list] > 0, "numRefs should have been > 0\n");
 
-                    codeRefFrmIdxPU(cu, subPartIdx, refListIdx);
-                    codeMvd(cu, subPartIdx, refListIdx);
-                    codeMVPIdx(cu->getMVPIdx(refListIdx, subPartIdx));
+                    codeRefFrmIdxPU(cu, subPartIdx, list);
+                    codeMvd(cu, subPartIdx, list);
+                    codeMVPIdx(cu->getMVPIdx(list, subPartIdx));
                 }
             }
         }
@@ -318,7 +318,7 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
-    if ((cu->getSlice()->getNumRefIdx(list) == 1))
+    if ((cu->getSlice()->m_numRefIdx[list] == 1))
         return;
 
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
@@ -897,7 +897,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
     {
         for (int list = 0; list < numRefDirs; list++)
         {
-            for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+            for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
             {
                 slice->getWpScaling(list, ref, wp);
                 if (!bDenomCoded)
@@ -917,7 +917,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
 
             if (bChroma)
             {
-                for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                 {
                     slice->getWpScaling(list, ref, wp);
                     WRITE_FLAG(wp[1].bPresentFlag, "chroma_weight_lX_flag");
@@ -925,7 +925,7 @@ void SBac::codePredWeightTable(TComSlice* slice)
                 }
             }
 
-            for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+            for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
             {
                 slice->getWpScaling(list, ref, wp);
                 if (wp[0].bPresentFlag)
@@ -1046,14 +1046,13 @@ void SBac::codeSliceHeader(TComSlice* slice)
 
     if (!slice->isIntra())
     {
-        bool overrideFlag = (slice->getNumRefIdx(REF_PIC_LIST_0) != 1 ||
-                            (slice->isInterB() && slice->getNumRefIdx(REF_PIC_LIST_1) != 1));
+        bool overrideFlag = (slice->m_numRefIdx[0] != 1 || (slice->isInterB() && slice->m_numRefIdx[1] != 1));
         WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
         if (overrideFlag)
         {
-            WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_0) - 1,     "num_ref_idx_l0_active_minus1");
+            WRITE_UVLC(slice->m_numRefIdx[0] - 1, "num_ref_idx_l0_active_minus1");
             if (slice->isInterB())
-                WRITE_UVLC(slice->getNumRefIdx(REF_PIC_LIST_1) - 1, "num_ref_idx_l1_active_minus1");
+                WRITE_UVLC(slice->m_numRefIdx[1] - 1, "num_ref_idx_l1_active_minus1");
             else
                 slice->setNumRefIdx(REF_PIC_LIST_1, 0);
         }
@@ -1084,8 +1083,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
             WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
 
         if (slice->m_sliceType != I_SLICE &&
-            ((slice->getColFromL0Flag() == 1 && slice->getNumRefIdx(REF_PIC_LIST_0) > 1) ||
-                (slice->getColFromL0Flag() == 0 && slice->getNumRefIdx(REF_PIC_LIST_1) > 1)))
+            ((slice->getColFromL0Flag() == 1 && slice->m_numRefIdx[0] > 1) ||
+            (slice->getColFromL0Flag() == 0 && slice->m_numRefIdx[1] > 1)))
         {
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }
@@ -1473,7 +1472,7 @@ void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 
     if (refFrame > 0)
     {
-        uint32_t refNum = cu->getSlice()->getNumRefIdx(list) - 2;
+        uint32_t refNum = cu->getSlice()->m_numRefIdx[list] - 2;
         if (refNum == 0)
             return;
 

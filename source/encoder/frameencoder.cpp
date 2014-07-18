@@ -356,7 +356,7 @@ void FrameEncoder::compressFrame()
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
     {
-        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
+        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
@@ -469,7 +469,7 @@ void FrameEncoder::compressFrame()
     // Decrement referenced frame reference counts, allow them to be recycled
     for (int l = 0; l < numPredDir; l++)
     {
-        for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
+        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
             Frame *refpic = slice->getRefPic(l, ref);
             ATOMIC_DEC(&refpic->m_countRefEncoders);
@@ -610,7 +610,7 @@ void FrameEncoder::compressCTURows()
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
             {
-                for (int ref = 0; ref < slice->getNumRefIdx(l); ref++)
+                for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
                 {
                     Frame *refpic = slice->getRefPic(l, ref);
 
@@ -649,7 +649,7 @@ void FrameEncoder::compressCTURows()
                 for (int l = 0; l < numPredDir; l++)
                 {
                     int list = l;
-                    for (int ref = 0; ref < slice->getNumRefIdx(list); ref++)
+                    for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
                         Frame *refpic = slice->getRefPic(list, ref);
 

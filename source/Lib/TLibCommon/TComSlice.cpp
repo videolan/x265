@@ -95,9 +95,6 @@ void TComSlice::setRefPicList(PicList& picList)
         return;
     }
 
-    m_numRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-    m_numRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
-
     Frame* refPic = NULL;
     Frame* refPicSetStCurr0[MAX_NUM_REF];
     Frame* refPicSetStCurr1[MAX_NUM_REF];
