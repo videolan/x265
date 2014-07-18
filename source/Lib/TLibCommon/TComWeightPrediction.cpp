@@ -36,10 +36,12 @@
 */
 
 // Include files
-#include "TComSlice.h"
+
+#include "common.h"
+#include "primitives.h"
+#include "slice.h"
 #include "TComWeightPrediction.h"
 #include "TComPrediction.h"
-#include "primitives.h"
 
 using namespace x265;
 
@@ -499,7 +501,7 @@ void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx,
  */
 void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1)
 {
-    TComSlice* slice = cu->getSlice();
+    Slice* slice = cu->getSlice();
     bool wpBiPred = slice->m_pps->bUseWeightedBiPred;
     bool bBiDir  = (refIdx0 >= 0 && refIdx1 >= 0);
     bool bUniDir = !bBiDir;

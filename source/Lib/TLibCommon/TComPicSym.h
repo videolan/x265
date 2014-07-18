@@ -40,7 +40,7 @@
 
 // Include files
 #include "common.h"
-#include "TComSlice.h"
+#include "slice.h"
 #include "TComDataCU.h"
 
 namespace x265 {
@@ -72,7 +72,7 @@ private:
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
 
-    TComSlice*    m_slice;
+    Slice*        m_slice;
     TComDataCU*   m_cuData;
 
     SAOParam*     m_saoParam;
@@ -87,7 +87,7 @@ public:
 
     TComPicSym();
 
-    TComSlice*  getSlice()                { return m_slice; }
+    Slice*      getSlice()                { return m_slice; }
 
     uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
 

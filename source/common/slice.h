@@ -1,45 +1,30 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
+/*****************************************************************************
+ * Copyright (C) 2014 x265 project
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
+ * Authors: Steve Borho <steve@borho.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+ *
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at license @ x265.com.
+ *****************************************************************************/
 
-/** \file     TComSlice.h
-    \brief    slice header and SPS class (header)
-*/
-
-#ifndef X265_TCOMSLICE_H
-#define X265_TCOMSLICE_H
+#ifndef X265_SLICE_H
+#define X265_SLICE_H
 
 #include "common.h"
-#include "TComRom.h"
 
 namespace x265 {
 // private namespace
@@ -47,56 +32,72 @@ namespace x265 {
 class Frame;
 class PicList;
 
-class RPS
+class ScalingList
 {
 public:
 
-    int  m_numberOfPictures;
-    int  m_numberOfNegativePictures;
-    int  m_numberOfPositivePictures;
+    static const int NUM_LISTS = 6;            // list number for quantization matrix
+    static const int NUM_REM = 6;              // remainder of QP/6
+    static const int START_VALUE = 8;          // start value for dpcm mode
+    static const int MAX_MATRIX_COEF_NUM = 64; // max coefficient number for quantization matrix
+    static const int MAX_MATRIX_SIZE_NUM = 8;  // max size number for quantization matrix
 
-    int  m_deltaPOC[MAX_NUM_REF_PICS];
-    bool m_used[MAX_NUM_REF_PICS];
-    int  m_POC[MAX_NUM_REF_PICS];
-
-    RPS()
-        : m_numberOfPictures(0)
-        , m_numberOfNegativePictures(0)
-        , m_numberOfPositivePictures(0)
+    enum Size
     {
-        ::memset(m_deltaPOC, 0, sizeof(m_deltaPOC));
-        ::memset(m_POC, 0, sizeof(m_POC));
-        ::memset(m_used, 0, sizeof(m_used));
-    }
+        SIZE_4x4 = 0,
+        SIZE_8x8,
+        SIZE_16x16,
+        SIZE_32x32,
+        NUM_SIZES
+    };
 
-    void sortDeltaPOC();
-};
-
-class TComScalingList
-{
-public:
-
-    uint32_t m_refMatrixId[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];     // used during coding
-    int      m_scalingListDC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];   // the DC value of the matrix coefficient for 16x16
-    int     *m_scalingListCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; // quantization matrix
+    uint32_t m_refMatrixId[NUM_SIZES][NUM_LISTS];     // used during coding
+    int      m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
+    int     *m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix
     bool     m_bEnabled;
     bool     m_bDataPresent; // non-default scaling lists must be signaled
 
-    TComScalingList();
-    ~TComScalingList();
-
-    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
-    void     processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId);
+    ScalingList();
+    ~ScalingList();
 
     bool     checkDefaultScalingList();
-    void     checkDcOfMatrix();
     void     setDefaultScalingList();
-
     bool     checkPredMode(uint32_t sizeId, int listId);
     bool     parseScalingList(char* filename);
 
 protected:
+
+    static const int SCALING_LIST_DC = 16;    // default DC value
+
+    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
     void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
+};
+
+extern const uint32_t g_scalingListSize[ScalingList::NUM_SIZES];
+extern const uint32_t g_scalingListSizeX[ScalingList::NUM_SIZES];
+extern const uint32_t g_scalingListNum[ScalingList::NUM_SIZES];
+
+struct RPS
+{
+    int  numberOfPictures;
+    int  numberOfNegativePictures;
+    int  numberOfPositivePictures;
+
+    int  poc[MAX_NUM_REF_PICS];
+    int  deltaPOC[MAX_NUM_REF_PICS];
+    bool bUsed[MAX_NUM_REF_PICS];
+
+    RPS()
+        : numberOfPictures(0)
+        , numberOfNegativePictures(0)
+        , numberOfPositivePictures(0)
+    {
+        ::memset(deltaPOC, 0, sizeof(deltaPOC));
+        ::memset(poc, 0, sizeof(poc));
+        ::memset(bUsed, 0, sizeof(bUsed));
+    }
+
+    void sortDeltaPOC();
 };
 
 struct ProfileTierLevel
@@ -111,19 +112,12 @@ struct ProfileTierLevel
     bool    frameOnlyConstraintFlag;
 
     ProfileTierLevel()
-        : tierFlag(false)
-        , profileIdc(0)
-        , levelIdc(0)
-        , progressiveSourceFlag(false)
-        , interlacedSourceFlag(false)
-        , nonPackedConstraintFlag(false)
-        , frameOnlyConstraintFlag(false)
     {
         ::memset(profileCompatibilityFlag, 0, sizeof(profileCompatibilityFlag));
     }
 };
 
-struct TComHRD
+struct HRDInfo
 {
     uint32_t bitRateScale;
     uint32_t cpbSizeScale;
@@ -134,7 +128,7 @@ struct TComHRD
     uint32_t cpbSizeValue;
     bool     cbrFlag;
 
-    TComHRD()
+    HRDInfo()
         : bitRateScale(0)
         , cpbSizeScale(0)
         , initialCpbRemovalDelayLength(1)
@@ -159,19 +153,11 @@ struct TimingInfo
     }
 };
 
-struct HRDTiming
-{
-    double cpbInitialAT;
-    double cpbFinalAT;
-    double dpbOutputTime;
-    double cpbRemovalTime;
-};
-
-struct TComVPS
+struct VPS
 {
     uint32_t   numReorderPics;
     uint32_t   maxDecPicBuffering;
-    TComHRD    hrdParameters;
+    HRDInfo    hrdParameters;
     TimingInfo timingInfo;
 };
 
@@ -189,7 +175,7 @@ struct Window
     }
 };
 
-struct TComVUI
+struct VUI
 {
     bool       aspectRatioInfoPresentFlag;
     int        aspectRatioIdc;
@@ -218,12 +204,12 @@ struct TComVUI
     bool       fieldSeqFlag;
 
     bool       hrdParametersPresentFlag;
-    TComHRD    hrdParameters;
+    HRDInfo    hrdParameters;
 
     TimingInfo timingInfo;
 };
 
-struct TComSPS
+struct SPS
 {
     int      chromaFormatIdc;        // use param
     uint32_t picWidthInLumaSamples;  // use param
@@ -245,13 +231,13 @@ struct TComSPS
     uint32_t maxDecPicBuffering; // these are dups of VPS values
     int      numReorderPics;
 
-    bool     useStrongIntraSmoothing; // use param
+    bool     bUseStrongIntraSmoothing; // use param
 
     Window   conformanceWindow;
-    TComVUI  vuiParameters;
+    VUI      vuiParameters;
 };
 
-struct TComPPS
+struct PPS
 {
     uint32_t maxCuDQPDepth;
     uint32_t minCuDQPSize;
@@ -282,13 +268,13 @@ struct WeightParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
     // or Implicit weighted prediction parameters (8 bits depth values).
-    bool        bPresentFlag;
-    uint32_t    log2WeightDenom;
-    int         inputWeight;
-    int         inputOffset;
+    bool     bPresentFlag;
+    uint32_t log2WeightDenom;
+    int      inputWeight;
+    int      inputOffset;
 
     // Weighted prediction scaling values built from above parameters (bitdepth scaled):
-    int         w, o, offset, shift, round;
+    int      w, o, offset, shift, round;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
     void setFromWeightAndOffset(int weight, int _offset, int denom, bool bNormalize)
@@ -306,15 +292,15 @@ struct WeightParam
     }
 };
 
-class TComSlice
+class Slice
 {
 public:
 
-    const TComSPS* m_sps;
-    const TComPPS* m_pps;
-    Frame*         m_pic;
-    WeightParam    m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
-    RPS            m_rps;
+    const SPS*  m_sps;
+    const PPS*  m_pps;
+    Frame*      m_pic;
+    WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
+    RPS         m_rps;
 
     NalUnitType m_nalUnitType;
     SliceType   m_sliceType;
@@ -333,9 +319,9 @@ public:
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
     uint32_t    m_maxNumMergeCand; // use param
-    uint32_t    m_sliceCurEndCUAddr;
+    uint32_t    m_endCUAddr;
 
-    TComSlice()
+    Slice()
     {
         m_lastIDR = 0;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
@@ -347,7 +333,7 @@ public:
             m_refPOCList[1][i] = 0;
         }
 
-        resetWpScaling();
+        disableWeights();
     }
 
     void initSlice()
@@ -358,6 +344,8 @@ public:
         m_colRefIdx = 0;
         m_bCheckLDC = false;
     }
+
+    void disableWeights();
 
     void setRefPicList(PicList& picList);
 
@@ -377,21 +365,14 @@ public:
             || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP;
     }
 
-    bool isIRAP() const
-    {
-        return m_nalUnitType >= 16 && m_nalUnitType <= 23;
-    }
+    bool isIRAP() const   { return m_nalUnitType >= 16 && m_nalUnitType <= 23; }
 
     bool isIntra()  const { return m_sliceType == I_SLICE; }
 
     bool isInterB() const { return m_sliceType == B_SLICE; }
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
-
-    void setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
-    void resetWpScaling();
 };
 }
-//! \}
 
-#endif // ifndef X265_TCOMSLICE_H
+#endif // ifndef X265_SLICE_H

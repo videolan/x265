@@ -32,7 +32,7 @@ namespace x265 {
 class Lookahead;
 class Encoder;
 class Frame;
-struct TComSPS;
+struct SPS;
 class SEIBufferingPeriod;
 struct FrameStats;
 #define BASE_FRAME_DURATION 0.04
@@ -50,6 +50,15 @@ struct Predictor
     double decay;
     double offset;
 };
+
+struct HRDTiming
+{
+    double cpbInitialAT;
+    double cpbFinalAT;
+    double dpbOutputTime;
+    double cpbRemovalTime;
+};
+
 struct RateControlEntry
 {
     int64_t lastSatd; /* Contains the picture cost of the previous frame, required for resetAbr and VBV */
@@ -96,8 +105,8 @@ class RateControl
 {
 public:
 
-    TComSlice*  m_curSlice;      /* all info about the current frame */
     x265_param* m_param;
+    Slice*      m_curSlice;      /* all info about the current frame */
     SliceType   m_sliceType;     /* Current frame type */
     int         m_ncu;           /* number of CUs in a frame */
     int         m_qp;            /* updated qp for current frame */
@@ -176,8 +185,8 @@ public:
     int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);
     int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
-    bool init(const TComSPS* sps);
-    void initHRD(TComSPS* sps);
+    bool init(const SPS* sps);
+    void initHRD(SPS* sps);
 protected:
 
     static const double s_amortizeFraction;

@@ -505,9 +505,6 @@ int g_quantInterDefault8x8[64] =
     20, 24, 25, 28, 33, 41, 54, 71,
     24, 25, 28, 33, 41, 54, 71, 91
 };
-const uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
-const uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
-const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 6 };
 
 const int g_winUnitX[] = { 1, 2, 2, 1 };
 const int g_winUnitY[] = { 1, 2, 1, 1 };

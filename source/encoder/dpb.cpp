@@ -23,9 +23,7 @@
 
 #include "common.h"
 #include "frame.h"
-#include "TLibCommon/TComSlice.h"
-
-#include "PPA/ppa.h"
+#include "slice.h"
 
 #include "encoder.h"
 #include "dpb.h"
@@ -89,13 +87,11 @@ void DPB::recycleUnreferenced()
 
 void DPB::prepareEncode(Frame *pic)
 {
-    PPAScopeEvent(DPB_prepareEncode);
-
     int pocCurr = pic->getSlice()->m_poc;
 
     m_picList.pushFront(*pic);
 
-    TComSlice* slice = pic->getSlice();
+    Slice* slice = pic->getSlice();
     if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
         getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
     {
@@ -131,8 +127,8 @@ void DPB::prepareEncode(Frame *pic)
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
     applyReferencePictureSet(&slice->m_rps, pocCurr);
 
-    slice->m_numRefIdx[0] = X265_MIN(m_maxRefL0, slice->m_rps.m_numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
-    slice->m_numRefIdx[1] = X265_MIN(m_maxRefL1, slice->m_rps.m_numberOfPositivePictures);
+    slice->m_numRefIdx[0] = X265_MIN(m_maxRefL0, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
+    slice->m_numRefIdx[1] = X265_MIN(m_maxRefL1, slice->m_rps.numberOfPositivePictures);
     slice->setRefPicList(m_picList);
 
     X265_CHECK(slice->m_sliceType != B_SLICE || slice->m_numRefIdx[1], "B slice without L1 references (non-fatal)\n");
@@ -173,18 +169,18 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
     {
         if ((iterPic->getPOC() != curPoc) && (iterPic->getSlice()->m_bReferenced))
         {
-            rps->m_POC[poci] = iterPic->getPOC();
-            rps->m_deltaPOC[poci] = rps->m_POC[poci] - curPoc;
-            (rps->m_deltaPOC[poci] < 0) ? numNeg++ : numPos++;
-            rps->m_used[poci] = !isRAP;
+            rps->poc[poci] = iterPic->getPOC();
+            rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
+            (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;
+            rps->bUsed[poci] = !isRAP;
             poci++;
         }
         iterPic = iterPic->m_next;
     }
 
-    rps->m_numberOfPictures = poci;
-    rps->m_numberOfPositivePictures = numPos;
-    rps->m_numberOfNegativePictures = numNeg;
+    rps->numberOfPictures = poci;
+    rps->numberOfPositivePictures = numPos;
+    rps->numberOfNegativePictures = numNeg;
 
     rps->sortDeltaPOC();
 }
@@ -273,9 +269,9 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         isReference = 0;
         // loop through all pictures in the Reference Picture Set
         // to see if the picture should be kept as reference picture
-        for (i = 0; i < rps->m_numberOfPositivePictures + rps->m_numberOfNegativePictures; i++)
+        for (i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
         {
-            if (outPic->getPicSym()->getSlice()->m_poc == curPoc + rps->m_deltaPOC[i])
+            if (outPic->getPicSym()->getSlice()->m_poc == curPoc + rps->deltaPOC[i])
                 isReference = 1;
         }
 

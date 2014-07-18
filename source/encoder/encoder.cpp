@@ -444,7 +444,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             fenc->getSlice()->m_sps = &m_sps;
             fenc->getSlice()->m_pps = &m_pps;
             fenc->getSlice()->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            fenc->getSlice()->m_sliceCurEndCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
+            fenc->getSlice()->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
 
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
@@ -886,7 +886,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    TComSlice*  slice = pic->getSlice();
+    Slice*  slice = pic->getSlice();
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);
@@ -1095,7 +1095,7 @@ void Encoder::getStreamHeaders(NALList& list, SBac& sbacCoder, Bitstream& bs)
     }
 }
 
-void Encoder::initSPS(TComSPS *sps)
+void Encoder::initSPS(SPS *sps)
 {
     m_ptl.levelIdc = m_level;
     m_ptl.tierFlag = m_levelTier ? true : false;
@@ -1137,9 +1137,9 @@ void Encoder::initSPS(TComSPS *sps)
     sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
     sps->numReorderPics = m_vps.numReorderPics;
 
-    sps->useStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
+    sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
 
-    TComVUI& vui = sps->vuiParameters;
+    VUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
     vui.aspectRatioIdc = m_param->vui.aspectRatioIdc;
     vui.sarWidth = m_param->vui.sarWidth;
@@ -1173,7 +1173,7 @@ void Encoder::initSPS(TComSPS *sps)
     vui.timingInfo.timeScale = m_param->fpsNum;
 }
 
-void Encoder::initPPS(TComPPS *pps)
+void Encoder::initPPS(PPS *pps)
 {
     bool isVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 

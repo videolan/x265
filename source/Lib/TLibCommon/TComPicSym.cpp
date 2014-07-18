@@ -76,7 +76,7 @@ bool TComPicSym::create(x265_param *param)
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
 
-    m_slice = new TComSlice;
+    m_slice = new Slice;
     m_cuData = new TComDataCU[m_numCUsInFrame];
     if (!m_slice || !m_cuData)
         return false;

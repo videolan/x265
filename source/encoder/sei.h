@@ -26,7 +26,7 @@
 
 #include "common.h"
 #include "bitstream.h"
-#include "TLibCommon/TComSlice.h"
+#include "slice.h"
 
 namespace x265 {
 // private namespace
@@ -40,7 +40,7 @@ public:
      * method which calls writeSEI() with a bitcounter to determine
      * the size, then it encodes the header and calls writeSEI a
      * second time for the real encode. */
-    virtual void write(Bitstream& bs, const TComSPS& sps);
+    virtual void write(Bitstream& bs, const SPS& sps);
 
     virtual ~SEI() {}
 
@@ -75,7 +75,7 @@ protected:
 
     virtual PayloadType payloadType() const = 0;
 
-    virtual void writeSEI(const TComSPS&) { X265_CHECK(0, "empty writeSEI method called\n");  }
+    virtual void writeSEI(const SPS&) { X265_CHECK(0, "empty writeSEI method called\n");  }
 
     void writeByteAlign();
 };
@@ -92,7 +92,7 @@ public:
     uint32_t m_userDataLength;
     uint8_t *m_userData;
 
-    void write(Bitstream& bs, const TComSPS&)
+    void write(Bitstream& bs, const SPS&)
     {
         m_bitIf = &bs;
 
@@ -126,7 +126,7 @@ public:
 
     uint8_t m_digest[3][16];
 
-    void write(Bitstream& bs, const TComSPS&)
+    void write(Bitstream& bs, const SPS&)
     {
         m_bitIf = &bs;
 
@@ -181,7 +181,7 @@ public:
     bool m_fullRandomAccessFlag;
     bool m_noParamSetUpdateFlag;
 
-    void writeSEI(const TComSPS&)
+    void writeSEI(const SPS&)
     {
         WRITE_CODE(m_activeVPSId,     4,   "active_vps_id");
         WRITE_FLAG(m_fullRandomAccessFlag, "full_random_access_flag");
@@ -211,9 +211,9 @@ public:
     uint32_t m_initialCpbRemovalDelayOffset;
     uint32_t m_auCpbRemovalDelayDelta;
 
-    void writeSEI(const TComSPS& sps)
+    void writeSEI(const SPS& sps)
     {
-        const TComHRD& hrd = sps.vuiParameters.hrdParameters;
+        const HRDInfo& hrd = sps.vuiParameters.hrdParameters;
 
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
@@ -239,10 +239,10 @@ public:
     uint32_t  m_auCpbRemovalDelay;
     uint32_t  m_picDpbOutputDelay;
 
-    void writeSEI(const TComSPS& sps)
+    void writeSEI(const SPS& sps)
     {
-        const TComVUI *vui = &sps.vuiParameters;
-        const TComHRD *hrd = &vui->hrdParameters;
+        const VUI *vui = &sps.vuiParameters;
+        const HRDInfo *hrd = &vui->hrdParameters;
 
         if (vui->frameFieldInfoPresentFlag)
         {
@@ -271,7 +271,7 @@ public:
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;
 
-    void writeSEI(const TComSPS&)
+    void writeSEI(const SPS&)
     {
         WRITE_SVLC(m_recoveryPocCnt,    "recovery_poc_cnt");
         WRITE_FLAG(m_exactMatchingFlag, "exact_matching_flag");

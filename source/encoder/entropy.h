@@ -27,8 +27,8 @@
 #include "common.h"
 #include "bitstream.h"
 #include "frame.h"
+#include "slice.h"
 
-#include "TLibCommon/TComSlice.h"
 #include "TLibCommon/ContextTables.h"
 
 namespace x265 {
@@ -112,7 +112,7 @@ public:
 
     void zeroFract()                   { m_fracBits = 0; }
     void resetBits();
-    void resetEntropy(TComSlice *slice);
+    void resetEntropy(Slice *slice);
 
     // SBAC RD
     void load(SBac& src);
@@ -120,19 +120,19 @@ public:
     void store(SBac& dest);
     void loadContexts(SBac& src)       { copyContextsFrom(src); }
 
-    void codeVPS(TComVPS* vps, ProfileTierLevel *ptl);
-    void codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl);
-    void codePPS(TComPPS* pps, TComScalingList *scalingList);
-    void codeVUI(TComVUI* vui);
-    void codeAUD(TComSlice *slice);
-    void codeHrdParameters(TComHRD* hrd);
+    void codeVPS(VPS* vps, ProfileTierLevel *ptl);
+    void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
+    void codePPS(PPS* pps, ScalingList *scalingList);
+    void codeVUI(VUI* vui);
+    void codeAUD(Slice *slice);
+    void codeHrdParameters(HRDInfo* hrd);
 
-    void codeSliceHeader(TComSlice* slice);
-    void codeSliceHeaderWPPEntryPoints(TComSlice* slice, uint32_t *substreamSizes, uint32_t maxOffset);
+    void codeSliceHeader(Slice* slice);
+    void codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset);
     void codeShortTermRefPicSet(RPS* rps);
     void codeSliceFinish()                   { finish(); }
     void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }
-    void determineCabacInitIdx(TComSlice *slice, TComPPS *pps);
+    void determineCabacInitIdx(Slice *slice, PPS *pps);
 
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
@@ -188,10 +188,10 @@ private:
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
     void codeProfileTier(ProfileTierLevel& ptl);
-    void codeScalingList(TComScalingList*);
-    void codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId);
+    void codeScalingList(ScalingList*);
+    void codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId);
 
-    void codePredWeightTable(TComSlice* slice);
+    void codePredWeightTable(Slice* slice);
     void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
     void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
     void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);

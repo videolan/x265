@@ -415,7 +415,7 @@ RateControl::RateControl(x265_param *p)
         m_cuTreeStats.qpBuffer[i] = NULL;
 }
 
-bool RateControl::init(const TComSPS *sps)
+bool RateControl::init(const SPS *sps)
 {
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
@@ -648,7 +648,7 @@ bool RateControl::init(const TComSPS *sps)
 
         if (m_param->bEmitHRDSEI)
         {
-            const TComHRD* hrd = &sps->vuiParameters.hrdParameters;
+            const HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
             vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
             vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
         }
@@ -688,13 +688,13 @@ bool RateControl::init(const TComSPS *sps)
     return true;
 }
 
-void RateControl::initHRD(TComSPS *sps)
+void RateControl::initHRD(SPS *sps)
 {
     int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
     int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
 
     // Init HRD
-    TComHRD* hrd = &sps->vuiParameters.hrdParameters;
+    HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
     hrd->cbrFlag = m_isCbr;
 
     // normalize HRD size and rate to the value / scale notation
@@ -1190,8 +1190,8 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
     {
         /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
-        TComSlice* prevRefSlice = m_curSlice->m_refPicList[0][0]->getSlice();
-        TComSlice* nextRefSlice = m_curSlice->m_refPicList[1][0]->getSlice();
+        Slice* prevRefSlice = m_curSlice->m_refPicList[0][0]->getSlice();
+        Slice* nextRefSlice = m_curSlice->m_refPicList[1][0]->getSlice();
         double q0 = m_curSlice->m_refPicList[0][0]->m_avgQpRc;
         double q1 = m_curSlice->m_refPicList[1][0]->m_avgQpRc;
         bool i0 = prevRefSlice->m_sliceType == I_SLICE;
@@ -1393,8 +1393,8 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 
 void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
 {
-    const TComVUI* vui = &m_curSlice->m_sps->vuiParameters;
-    const TComHRD* hrd = &vui->hrdParameters;
+    const VUI* vui = &m_curSlice->m_sps->vuiParameters;
+    const HRDInfo* hrd = &vui->hrdParameters;
     int num = 90000;
     int denom = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
     reduceFraction(&num, &denom);
@@ -1948,8 +1948,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 
         if (m_param->bEmitHRDSEI)
         {
-            const TComVUI *vui = &pic->getSlice()->m_sps->vuiParameters;
-            const TComHRD *hrd = &vui->hrdParameters;
+            const VUI *vui = &pic->getSlice()->m_sps->vuiParameters;
+            const HRDInfo *hrd = &vui->hrdParameters;
             const TimingInfo *time = &vui->timingInfo;
             if (!pic->getSlice()->m_poc)
             {

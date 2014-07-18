@@ -373,7 +373,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
 
     uint32_t log2CUSize = outTempCU->getLog2CUSize(0);
-    TComSlice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->getSlice();
     if (!bInsidePicture)
     {
         uint32_t cuSize = 1 << log2CUSize;
@@ -572,7 +572,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     bool bInsidePictureParent = bInsidePicture;
 #endif
 
-    TComSlice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->getSlice();
     if (!bInsidePicture)
     {
         int cuSize = 1 << outTempCU->getLog2CUSize(0);
@@ -1060,7 +1060,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     bool earlyDetectionSkipMode = false;
 
     uint32_t log2CUSize = outTempCU->getLog2CUSize(0);
-    TComSlice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->getSlice();
     if (!bInsidePicture)
     {
         uint32_t cuSize = 1 << log2CUSize;
@@ -1821,7 +1821,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
     uint8_t nextDepth = (uint8_t)(depth + 1);
     TComDataCU* subTempPartCU = m_tempCU[nextDepth];
     Frame* pic = cu->m_pic;
-    TComSlice* slice = cu->getSlice();
+    Slice* slice = cu->getSlice();
 
     if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))
     {
@@ -1942,7 +1942,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 {
     Frame* pic = cu->m_pic;
 
-    TComSlice* slice = cu->getSlice();
+    Slice* slice = cu->getSlice();
     if (!bInsidePicture)
     {
         uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
@@ -2166,13 +2166,13 @@ void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
 void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     Frame* pic = cu->m_pic;
-    TComSlice* slice = cu->getSlice();
+    Slice* slice = cu->getSlice();
 
     // Calculate end address
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
 
-    uint32_t internalAddress = (slice->m_sliceCurEndCUAddr - 1) % pic->getNumPartInCU();
-    uint32_t externalAddress = (slice->m_sliceCurEndCUAddr - 1) / pic->getNumPartInCU();
+    uint32_t internalAddress = (slice->m_endCUAddr - 1) % pic->getNumPartInCU();
+    uint32_t externalAddress = (slice->m_endCUAddr - 1) / pic->getNumPartInCU();
     uint32_t posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelX[g_zscanToRaster[internalAddress]];
     uint32_t posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelY[g_zscanToRaster[internalAddress]];
     uint32_t width = slice->m_sps->picWidthInLumaSamples;

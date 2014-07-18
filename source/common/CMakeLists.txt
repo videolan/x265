@@ -10,7 +10,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComPrediction.cpp
     ../Lib/TLibCommon/TComRom.cpp
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
-    ../Lib/TLibCommon/TComSlice.cpp
     ../Lib/TLibCommon/TComTrQuant.cpp
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
@@ -27,7 +26,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPrediction.h
     ../Lib/TLibCommon/TComRom.h
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComSlice.h
     ../Lib/TLibCommon/TComTrQuant.h
     ../Lib/TLibCommon/TComWeightPrediction.h
     ../Lib/TLibCommon/TComYuv.h)
@@ -147,6 +145,7 @@ add_library(common OBJECT
     common.cpp common.h
     param.cpp param.h
     frame.cpp frame.h
+    slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
     loopfilter.cpp)

@@ -24,8 +24,10 @@
 #ifndef X265_ENCODER_H
 #define X265_ENCODER_H
 
+#include "common.h"
+#include "slice.h"
 #include "x265.h"
-#include "TLibCommon/TComSlice.h"
+
 #include "nal.h"
 
 struct x265_encoder {};
@@ -110,12 +112,12 @@ private:
 public:
 
     int                m_conformanceMode;
-    TComVPS            m_vps;
-    TComSPS            m_sps;
-    TComPPS            m_pps;
+    VPS                m_vps;
+    SPS                m_sps;
+    PPS                m_pps;
     NALList            m_nalList;
     ProfileTierLevel   m_ptl;
-    TComScalingList    m_scalingList;      // quantization matrix information
+    ScalingList        m_scalingList;      // quantization matrix information
 
 
     /* profile & level */
@@ -179,8 +181,8 @@ public:
 
 protected:
 
-    void initSPS(TComSPS *sps);
-    void initPPS(TComPPS *pps);
+    void initSPS(SPS *sps);
+    void initPPS(PPS *pps);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };

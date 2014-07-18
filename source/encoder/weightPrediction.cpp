@@ -229,7 +229,7 @@ uint32_t weightCost(pixel *         fenc,
 }
 
 namespace x265 {
-void weightAnalyse(TComSlice& slice, x265_param& param)
+void weightAnalyse(Slice& slice, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
     TComPicYuv *fencYuv = slice.m_pic->getPicYuvOrg();
@@ -250,7 +250,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
     if (!mcbuf)
     {
-        slice.resetWpScaling();
+        slice.disableWeights();
         return;
     }
     pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
@@ -410,7 +410,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 break;
 
             default:
-                slice.resetWpScaling();
+                slice.disableWeights();
                 X265_FREE(mcbuf);
                 return;
             }
@@ -511,7 +511,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     X265_FREE(mcbuf);
 
-    slice.setWpScaling(wp);
+    memcpy(slice.m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3);
 
     if (param.logLevel >= X265_LOG_FULL)
     {

@@ -153,9 +153,9 @@ public:
 
     void setFlatScalingList();
     void xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t qp);
-    void xSetScalingListEnc(TComScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
-    void xSetScalingListDec(TComScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
-    void setScalingList(TComScalingList *scalingList);
+    void xSetScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
+    void xSetScalingListDec(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
+    void setScalingList(ScalingList *scalingList);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
@@ -212,10 +212,10 @@ protected:
     bool     m_scalingListEnabledFlag;
 
     int32_t* m_tmpCoeff;
-    int32_t* m_quantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];     ///< array of quantization matrix coefficient 4x4
-    int32_t* m_dequantCoef[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];   ///< array of dequantization matrix coefficient 4x4
+    int32_t* m_quantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];     ///< array of quantization matrix coefficient 4x4
+    int32_t* m_dequantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];   ///< array of dequantization matrix coefficient 4x4
 
-    double  *m_errScale[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM];
+    double  *m_errScale[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];
 
 private:
 

@@ -35,8 +35,9 @@
     \brief    deblocking filter
 */
 
+#include "common.h"
 #include "TComLoopFilter.h"
-#include "TComSlice.h"
+#include "slice.h"
 #include "mv.h"
 
 using namespace x265;
@@ -309,7 +310,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
 
 void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_t absPartIdx, uint8_t blockingStrength[])
 {
-    TComSlice* const slice = cu->getSlice();
+    Slice* const slice = cu->getSlice();
 
     const uint32_t partQ = absPartIdx;
     TComDataCU* const cuQ = cu;

@@ -40,15 +40,15 @@
 #define X265_TCOMDATACU_H
 
 #include "common.h"
+#include "slice.h"
 #include "TComMotionInfo.h"
-#include "TComSlice.h"
 #include "TComPattern.h"
 
 namespace x265 {
 // private namespace
 
 class Frame;
-class TComSlice;
+class Slice;
 
 //! \ingroup TLibCommon
 //! \{
@@ -108,7 +108,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     Frame*        m_pic;            ///< picture class pointer
-    TComSlice*    m_slice;          ///< slice header pointer
+    Slice*        m_slice;          ///< slice header pointer
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU description
@@ -224,7 +224,7 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    TComSlice*    getSlice()                       { return m_slice; }
+    Slice*        getSlice()                       { return m_slice; }
 
     uint32_t&     getAddr()                        { return m_cuAddr; }
 

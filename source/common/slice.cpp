@@ -1,48 +1,36 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
+/*****************************************************************************
+ * Copyright (C) 2014 x265 project
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
+ * Authors: Steve Borho <steve@borho.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/** \file     TComSlice.cpp
-    \brief    slice header and SPS class
-*/
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+ *
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at license @ x265.com.
+ *****************************************************************************/
 
 #include "common.h"
 #include "frame.h"
 #include "piclist.h"
-#include "TComSlice.h"
+#include "slice.h"
 
-using namespace x265;
+namespace x265 {
+// private namespace
 
-void TComSlice::setRefPicList(PicList& picList)
+
+void Slice::setRefPicList(PicList& picList)
 {
     if (m_sliceType == I_SLICE)
     {
@@ -55,32 +43,32 @@ void TComSlice::setRefPicList(PicList& picList)
     Frame* refPicSetStCurr0[MAX_NUM_REF];
     Frame* refPicSetStCurr1[MAX_NUM_REF];
     Frame* refPicSetLtCurr[MAX_NUM_REF];
-    uint32_t numPocStCurr0 = 0;
-    uint32_t numPocStCurr1 = 0;
-    uint32_t numPocLtCurr = 0;
+    int numPocStCurr0 = 0;
+    int numPocStCurr1 = 0;
+    int numPocLtCurr = 0;
     int i;
 
-    for (i = 0; i < m_rps.m_numberOfNegativePictures; i++)
+    for (i = 0; i < m_rps.numberOfNegativePictures; i++)
     {
-        if (m_rps.m_used[i])
+        if (m_rps.bUsed[i])
         {
-            refPic = picList.getPOC(m_poc + m_rps.m_deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i]);
             refPicSetStCurr0[numPocStCurr0] = refPic;
             numPocStCurr0++;
         }
     }
 
-    for (; i < m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures; i++)
+    for (; i < m_rps.numberOfNegativePictures + m_rps.numberOfPositivePictures; i++)
     {
-        if (m_rps.m_used[i])
+        if (m_rps.bUsed[i])
         {
-            refPic = picList.getPOC(m_poc + m_rps.m_deltaPOC[i]);
+            refPic = picList.getPOC(m_poc + m_rps.deltaPOC[i]);
             refPicSetStCurr1[numPocStCurr1] = refPic;
             numPocStCurr1++;
         }
     }
 
-    X265_CHECK(m_rps.m_numberOfPictures == m_rps.m_numberOfNegativePictures + m_rps.m_numberOfPositivePictures,
+    X265_CHECK(m_rps.numberOfPictures == m_rps.numberOfNegativePictures + m_rps.numberOfPositivePictures,
                "unexpected picture in RPS\n");
 
     // ref_pic_list_init
@@ -142,26 +130,18 @@ void TComSlice::setRefPicList(PicList& picList)
             m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
 }
 
-/** reset Default WP tables settings : no weight.
- * \param wpScalingParam
- * \returns void
- */
-void TComSlice::resetWpScaling()
+void Slice::disableWeights()
 {
-    for (int e = 0; e < 2; e++)
-    {
+    for (int l = 0; l < 2; l++)
         for (int i = 0; i < MAX_NUM_REF; i++)
-        {
             for (int yuv = 0; yuv < 3; yuv++)
             {
-                WeightParam  *pwp = &(m_weightPredTable[e][i][yuv]);
-                pwp->bPresentFlag    = false;
-                pwp->log2WeightDenom = 0;
-                pwp->inputWeight     = 1;
-                pwp->inputOffset     = 0;
+                WeightParam& wp = m_weightPredTable[l][i][yuv];
+                wp.bPresentFlag = false;
+                wp.log2WeightDenom = 0;
+                wp.inputWeight = 1;
+                wp.inputOffset = 0;
             }
-        }
-    }
 }
 
 /* Sorts the deltaPOC and Used by current values in the RPS based on the
@@ -171,59 +151,59 @@ void TComSlice::resetWpScaling()
 void RPS::sortDeltaPOC()
 {
     // sort in increasing order (smallest first)
-    for (int j = 1; j < m_numberOfPictures; j++)
+    for (int j = 1; j < numberOfPictures; j++)
     {
-        int deltaPOC = m_deltaPOC[j];
-        bool used = m_used[j];
+        int dPOC = deltaPOC[j];
+        bool used = bUsed[j];
         for (int k = j - 1; k >= 0; k--)
         {
-            int temp = m_deltaPOC[k];
-            if (deltaPOC < temp)
+            int temp = deltaPOC[k];
+            if (dPOC < temp)
             {
-                m_deltaPOC[k + 1] = temp;
-                m_used[k + 1] = m_used[k];
-                m_deltaPOC[k] = deltaPOC;
-                m_used[k] = used;
+                deltaPOC[k + 1] = temp;
+                bUsed[k + 1] = bUsed[k];
+                deltaPOC[k] = dPOC;
+                bUsed[k] = used;
             }
         }
     }
 
     // flip the negative values to largest first
-    int numNegPics = m_numberOfNegativePictures;
+    int numNegPics = numberOfNegativePictures;
     for (int j = 0, k = numNegPics - 1; j < numNegPics >> 1; j++, k--)
     {
-        int deltaPOC = m_deltaPOC[j];
-        bool used = m_used[j];
-        m_deltaPOC[j] = m_deltaPOC[k];
-        m_used[j] = m_used[k];
-        m_deltaPOC[k] = deltaPOC;
-        m_used[k] = used;
+        int dPOC = deltaPOC[j];
+        bool used = bUsed[j];
+        deltaPOC[j] = deltaPOC[k];
+        bUsed[j] = bUsed[k];
+        deltaPOC[k] = dPOC;
+        bUsed[k] = used;
     }
 }
 
-TComScalingList::TComScalingList()
+ScalingList::ScalingList()
 {
-    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
         for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
             m_scalingListCoef[sizeId][listId] = new int[X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])];
 }
 
-TComScalingList::~TComScalingList()
+ScalingList::~ScalingList()
 {
-    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
         for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
             delete [] m_scalingListCoef[sizeId][listId];
 }
 
   
-bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
+bool ScalingList::checkPredMode(uint32_t sizeId, int listId)
 {
     for (int predListIdx = listId; predListIdx >= 0; predListIdx--)
     {
         if (!memcmp(m_scalingListCoef[sizeId][listId],
                     ((listId == predListIdx) ? getScalingListDefaultAddress(sizeId, predListIdx) : m_scalingListCoef[sizeId][predListIdx]),
                     sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId])) // check value of matrix
-            && ((sizeId < SCALING_LIST_16x16) || (m_scalingListDC[sizeId][listId] == m_scalingListDC[sizeId][predListIdx]))) // check DC value
+            && ((sizeId < SIZE_16x16) || (m_scalingListDC[sizeId][listId] == m_scalingListDC[sizeId][predListIdx]))) // check DC value
         {
             m_refMatrixId[sizeId][listId] = predListIdx;
             return false;
@@ -235,39 +215,32 @@ bool TComScalingList::checkPredMode(uint32_t sizeId, int listId)
 
 /* check if use default quantization matrix
  * returns true if default quantization matrix is used in all sizes */
-bool TComScalingList::checkDefaultScalingList()
+bool ScalingList::checkDefaultScalingList()
 {
     uint32_t defaultCounter = 0;
 
-    for (uint32_t s = 0; s < SCALING_LIST_SIZE_NUM; s++)
+    for (uint32_t s = 0; s < ScalingList::NUM_SIZES; s++)
         for (uint32_t l = 0; l < g_scalingListNum[s]; l++)
             if (!memcmp(m_scalingListCoef[s][l], getScalingListDefaultAddress(s, l),
                         sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[s])) &&
-                ((s < SCALING_LIST_16x16) || (m_scalingListDC[s][l] == 16)))
+                ((s < SIZE_16x16) || (m_scalingListDC[s][l] == 16)))
                 defaultCounter++;
 
-    return (defaultCounter == (SCALING_LIST_NUM * SCALING_LIST_SIZE_NUM - 4)) ? false : true; // -4 for 32x32
-}
-
-/* get scaling matrix from reference list id */
-void TComScalingList::processRefMatrix(uint32_t sizeId, uint32_t listId, uint32_t refListId)
-{
-    int32_t *src = listId == refListId ? getScalingListDefaultAddress(sizeId, refListId) : m_scalingListCoef[sizeId][refListId];
-    ::memcpy(m_scalingListCoef[sizeId][listId], src, sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
+    return (defaultCounter == (NUM_LISTS * ScalingList::NUM_SIZES - 4)) ? false : true; // -4 for 32x32
 }
 
 /* get address of default quantization matrix */
-int32_t* TComScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId)
+int32_t* ScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId)
 {
     switch (sizeId)
     {
-    case SCALING_LIST_4x4:
+    case SIZE_4x4:
         return g_quantTSDefault4x4;
-    case SCALING_LIST_8x8:
+    case SIZE_8x8:
         return (listId < 3) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
-    case SCALING_LIST_16x16:
+    case SIZE_16x16:
         return (listId < 3) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
-    case SCALING_LIST_32x32:
+    case SIZE_32x32:
         return (listId < 1) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
     default:
         break;
@@ -277,29 +250,20 @@ int32_t* TComScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t
     return NULL;
 }
 
-void TComScalingList::processDefaultMarix(uint32_t sizeId, uint32_t listId)
+void ScalingList::processDefaultMarix(uint32_t sizeId, uint32_t listId)
 {
     ::memcpy(m_scalingListCoef[sizeId][listId], getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]));
     m_scalingListDC[sizeId][listId] = SCALING_LIST_DC;
 }
 
-/* check DC value of matrix for default matrix signaling */
-void TComScalingList::checkDcOfMatrix()
+void ScalingList::setDefaultScalingList()
 {
-    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
-        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
-            if (!m_scalingListDC[sizeId][listId])
-                processDefaultMarix(sizeId, listId);
-}
-
-void TComScalingList::setDefaultScalingList()
-{
-    for (uint32_t sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
         for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
             processDefaultMarix(sizeId, listId);
 }
 
-bool TComScalingList::parseScalingList(char* filename)
+bool ScalingList::parseScalingList(char* filename)
 {
     FILE *fp;
     char line[1024];
@@ -315,7 +279,7 @@ bool TComScalingList::parseScalingList(char* filename)
         return true;
     }
 
-    for (sizeIdc = 0; sizeIdc < SCALING_LIST_SIZE_NUM; sizeIdc++)
+    for (sizeIdc = 0; sizeIdc < ScalingList::NUM_SIZES; sizeIdc++)
     {
         size = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
         for (listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
@@ -347,7 +311,7 @@ bool TComScalingList::parseScalingList(char* filename)
             // set DC value for default matrix check
             m_scalingListDC[sizeIdc][listIdc] = src[0];
 
-            if (sizeIdc > SCALING_LIST_8x8)
+            if (sizeIdc > SIZE_8x8)
             {
                 fseek(fp, 0, 0);
                 do
@@ -376,4 +340,7 @@ bool TComScalingList::parseScalingList(char* filename)
     return false;
 }
 
-//! \}
+const uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
+const uint32_t g_scalingListSizeX[4] = { 4, 8, 16, 32 };
+const uint32_t g_scalingListNum[ScalingList::NUM_SIZES] = { 6, 6, 6, 6 };
+}

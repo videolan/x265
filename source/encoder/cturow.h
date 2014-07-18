@@ -68,7 +68,7 @@ public:
     double          m_pCuCnt;
     double          m_skipCuCnt;
 
-    void init(TComSlice *slice)
+    void init(Slice *slice)
     {
         m_active = 0;
         m_sbacCoder.resetEntropy(slice);

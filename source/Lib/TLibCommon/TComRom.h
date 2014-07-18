@@ -163,22 +163,6 @@ extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice c
 
 extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
-#define SCALING_LIST_NUM 6         ///< list number for quantization matrix
-#define SCALING_LIST_NUM_32x32 2   ///< list number for quantization matrix 32x32
-#define SCALING_LIST_REM_NUM 6     ///< remainder of QP/6
-#define SCALING_LIST_START_VALUE 8 ///< start value for dpcm mode
-#define MAX_MATRIX_COEF_NUM 64     ///< max coefficient number for quantization matrix
-#define MAX_MATRIX_SIZE_NUM 8      ///< max size number for quantization matrix
-#define SCALING_LIST_DC 16         ///< default DC value
-enum ScalingListSize
-{
-    SCALING_LIST_4x4 = 0,
-    SCALING_LIST_8x8,
-    SCALING_LIST_16x16,
-    SCALING_LIST_32x32,
-    SCALING_LIST_SIZE_NUM
-};
-
 static const char MatrixType[4][6][20] =
 {
     {
@@ -234,9 +218,6 @@ extern int g_quantInterDefault8x8[64];
 extern int g_quantInterDefault16x16[256];
 extern int g_quantInterDefault32x32[1024];
 extern int g_quantTSDefault4x4[16];
-extern const uint32_t g_scalingListSize[SCALING_LIST_SIZE_NUM];
-extern const uint32_t g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
-extern const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM];
 
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];

@@ -35,7 +35,7 @@
 #include "nal.h"
 
 namespace x265 {
-void weightAnalyse(TComSlice& slice, x265_param& param);
+void weightAnalyse(Slice& slice, x265_param& param);
 
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
@@ -179,7 +179,7 @@ void FrameEncoder::noiseReductionUpdate()
 void FrameEncoder::initSlice(Frame* pic)
 {
     m_frame = pic;
-    TComSlice* slice = pic->getSlice();
+    Slice* slice = pic->getSlice();
 
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
@@ -208,7 +208,7 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
-    TComSlice*  slice = m_frame->getSlice();
+    Slice* slice = m_frame->getSlice();
   
     int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
     int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
@@ -219,9 +219,9 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
-    int64_t      startCompressTime = x265_mdate();
-    TComSlice*   slice             = m_frame->getSlice();
-    int          totalCoded        = m_rce.encodeOrder;
+    int64_t startCompressTime = x265_mdate();
+    Slice* slice = m_frame->getSlice();
+    int totalCoded = m_rce.encodeOrder;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -281,8 +281,8 @@ void FrameEncoder::compressFrame()
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
-        const TComVUI *vui = &slice->m_sps->vuiParameters;
-        const TComHRD *hrd = &vui->hrdParameters;
+        const VUI *vui = &slice->m_sps->vuiParameters;
+        const HRDInfo *hrd = &vui->hrdParameters;
         int poc = slice->m_poc;
 
         if (vui->frameFieldInfoPresentFlag)
@@ -349,7 +349,7 @@ void FrameEncoder::compressFrame()
     if (bUseWeightP || bUseWeightB)
         weightAnalyse(*slice, *m_param);
     else
-        slice->resetWpScaling();
+        slice->disableWeights();
 
     // Generate motion references
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
@@ -484,9 +484,9 @@ void FrameEncoder::compressFrame()
 
 void FrameEncoder::encodeSlice()
 {
-    TComSlice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->getSlice();
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
-    const uint32_t lastCUAddr = (slice->m_sliceCurEndCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
+    const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
 
@@ -577,7 +577,7 @@ void FrameEncoder::encodeSlice()
 void FrameEncoder::compressCTURows()
 {
     PPAScopeEvent(FrameEncoder_compressRows);
-    TComSlice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->getSlice();
 
     // reset entropy coders
     m_sbacCoder.resetEntropy(slice);

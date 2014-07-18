@@ -475,7 +475,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
     return cost;
 }
 
-void SBac::resetEntropy(TComSlice *slice)
+void SBac::resetEntropy(Slice *slice)
 {
     int  qp              = slice->m_sliceQp;
     SliceType sliceType  = slice->m_sliceType;
@@ -521,7 +521,7 @@ void SBac::resetEntropy(TComSlice *slice)
  * index of the closest table.  This index is used for the next P/B slice when
  * cabac_init_present_flag is true.
  */
-void SBac::determineCabacInitIdx(TComSlice *slice, TComPPS *pps)
+void SBac::determineCabacInitIdx(Slice *slice, PPS *pps)
 {
     int qp = slice->m_sliceQp;
 
@@ -575,7 +575,7 @@ void SBac::determineCabacInitIdx(TComSlice *slice, TComPPS *pps)
         pps->encCABACTableIdx = I_SLICE;
 }
 
-void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
+void SBac::codeVPS(VPS* vps, ProfileTierLevel *ptl)
 {
     WRITE_CODE(0,       4, "vps_video_parameter_set_id");
     WRITE_CODE(3,       2, "vps_reserved_three_2bits");
@@ -613,26 +613,26 @@ void SBac::codeVPS(TComVPS* vps, ProfileTierLevel *ptl)
 
 void SBac::codeShortTermRefPicSet(RPS* rps)
 {
-    WRITE_UVLC(rps->m_numberOfNegativePictures, "num_negative_pics");
-    WRITE_UVLC(rps->m_numberOfPositivePictures, "num_positive_pics");
+    WRITE_UVLC(rps->numberOfNegativePictures, "num_negative_pics");
+    WRITE_UVLC(rps->numberOfPositivePictures, "num_positive_pics");
     int prev = 0;
-    for (int j = 0; j < rps->m_numberOfNegativePictures; j++)
+    for (int j = 0; j < rps->numberOfNegativePictures; j++)
     {
-        WRITE_UVLC(prev - rps->m_deltaPOC[j] - 1, "delta_poc_s0_minus1");
-        prev = rps->m_deltaPOC[j];
-        WRITE_FLAG(rps->m_used[j], "used_by_curr_pic_s0_flag");
+        WRITE_UVLC(prev - rps->deltaPOC[j] - 1, "delta_poc_s0_minus1");
+        prev = rps->deltaPOC[j];
+        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s0_flag");
     }
 
     prev = 0;
-    for (int j = rps->m_numberOfNegativePictures; j < rps->m_numberOfNegativePictures + rps->m_numberOfPositivePictures; j++)
+    for (int j = rps->numberOfNegativePictures; j < rps->numberOfNegativePictures + rps->numberOfPositivePictures; j++)
     {
-        WRITE_UVLC(rps->m_deltaPOC[j] - prev - 1, "delta_poc_s1_minus1");
-        prev = rps->m_deltaPOC[j];
-        WRITE_FLAG(rps->m_used[j], "used_by_curr_pic_s1_flag");
+        WRITE_UVLC(rps->deltaPOC[j] - prev - 1, "delta_poc_s1_minus1");
+        prev = rps->deltaPOC[j];
+        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s1_flag");
     }
 }
 
-void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel *ptl)
+void SBac::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
 {
     WRITE_CODE(0, 4, "sps_video_parameter_set_id");
     WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
@@ -689,7 +689,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
     WRITE_FLAG(1, "sps_temporal_mvp_enable_flag");
-    WRITE_FLAG(sps->useStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
+    WRITE_FLAG(sps->bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
     codeVUI(&sps->vuiParameters);
@@ -697,7 +697,7 @@ void SBac::codeSPS(TComSPS* sps, TComScalingList *scalingList, ProfileTierLevel 
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
+void SBac::codePPS(PPS* pps, ScalingList* scalingList)
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -750,7 +750,7 @@ void SBac::codePPS(TComPPS* pps, TComScalingList* scalingList)
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
-void SBac::codeVUI(TComVUI *vui)
+void SBac::codeVUI(VUI *vui)
 {
     WRITE_FLAG(vui->aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
     if (vui->aspectRatioInfoPresentFlag)
@@ -818,7 +818,7 @@ void SBac::codeVUI(TComVUI *vui)
     WRITE_FLAG(0, "bitstream_restriction_flag");
 }
 
-void SBac::codeAUD(TComSlice* slice)
+void SBac::codeAUD(Slice* slice)
 {
     int picType;
 
@@ -841,7 +841,7 @@ void SBac::codeAUD(TComSlice* slice)
     WRITE_CODE(picType, 3, "pic_type");
 }
 
-void SBac::codeHrdParameters(TComHRD *hrd)
+void SBac::codeHrdParameters(HRDInfo *hrd)
 {
     WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
     WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
@@ -884,7 +884,7 @@ void SBac::codeProfileTier(ProfileTierLevel& ptl)
 }
 
 /* code explicit wp tables */
-void SBac::codePredWeightTable(TComSlice* slice)
+void SBac::codePredWeightTable(Slice* slice)
 {
     WeightParam *wp;
     bool            bChroma      = true; // 4:0:0 not yet supported
@@ -958,12 +958,12 @@ void SBac::codePredWeightTable(TComSlice* slice)
 }
 
 /** code quantization matrix */
-void SBac::codeScalingList(TComScalingList* scalingList)
+void SBac::codeScalingList(ScalingList* scalingList)
 {
     uint32_t listId, sizeId;
     bool scalingListPredModeFlag;
 
-    for (sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+    for (sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
         for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
@@ -977,15 +977,15 @@ void SBac::codeScalingList(TComScalingList* scalingList)
     }
 }
 
-void SBac::codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32_t listId)
+void SBac::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
-    int coefNum = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
+    int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
     const uint16_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
-    int nextCoef = SCALING_LIST_START_VALUE;
-    int data;
+    int nextCoef = ScalingList::START_VALUE;
     int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
+    int data;
 
-    if (sizeId > SCALING_LIST_8x8)
+    if (sizeId > ScalingList::SIZE_8x8)
     {
         WRITE_SVLC(scalingList->m_scalingListDC[sizeId][listId] - 8, "scaling_list_dc_coef_minus8");
         nextCoef = scalingList->m_scalingListDC[sizeId][listId];
@@ -1003,7 +1003,7 @@ void SBac::codeScalingList(TComScalingList* scalingList, uint32_t sizeId, uint32
     }
 }
 
-void SBac::codeSliceHeader(TComSlice* slice)
+void SBac::codeSliceHeader(Slice* slice)
 {
     WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
@@ -1025,8 +1025,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
         // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
         // Ideally this process should not be repeated for each slice in a picture
         if (slice->isIRAP())
-            for (int picIdx = 0; picIdx < slice->m_rps.m_numberOfPictures; picIdx++)
-                X265_CHECK(!slice->m_rps.m_used[picIdx], "pic unused failure\n");
+            for (int picIdx = 0; picIdx < slice->m_rps.numberOfPictures; picIdx++)
+                X265_CHECK(!slice->m_rps.bUsed[picIdx], "pic unused failure\n");
 #endif
 
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
@@ -1041,7 +1041,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
         WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
-    // check if numRefIdx match the defaults (1, hard-coded above). If not, override
+    // check if numRefIdx match the defaults (1, hard-coded in PPS). If not, override
     // TODO: this might be a place to optimize a few bits per slice, by using param->refs for L0 default
 
     if (!slice->isIntra())
@@ -1108,7 +1108,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
 }
 
 /** write wavefront substreams sizes for the slice header */
-void SBac::codeSliceHeaderWPPEntryPoints(TComSlice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
+void SBac::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
 {
     uint32_t offsetLen = 1;
     while (maxOffset >= (1U << offsetLen))
