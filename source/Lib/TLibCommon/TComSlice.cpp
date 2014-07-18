@@ -42,25 +42,6 @@
 
 using namespace x265;
 
-//! \ingroup TLibCommon
-//! \{
-
-TComSlice::~TComSlice()
-{
-    delete[] m_substreamSizes;
-}
-
-/**
- - allocate table to contain substream sizes to be written to the slice header.
- .
- \param uiNumSubstreams Number of substreams -- the allocation will be this value - 1.
- */
-void  TComSlice::allocSubstreamSizes(uint32_t numSubstreams)
-{
-    delete[] m_substreamSizes;
-    m_substreamSizes = new uint32_t[numSubstreams > 0 ? numSubstreams - 1 : 0];
-}
-
 Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
 {
     Frame *iterPic = picList.first();

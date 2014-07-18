@@ -337,8 +337,6 @@ public:
 
     uint32_t    m_sliceCurEndCUAddr;
 
-    uint32_t*   m_substreamSizes;
-
     TComSlice()
     {
         m_lastIDR = 0;
@@ -349,7 +347,6 @@ public:
         m_bReferenced = false;
         m_colFromL0Flag = 1;
         m_sliceCurEndCUAddr = 0;
-        m_substreamSizes = NULL;
         m_bLMvdL1Zero = false;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
@@ -363,8 +360,6 @@ public:
 
         resetWpScaling();
     }
-
-    ~TComSlice();
 
     void initSlice()
     {
@@ -410,9 +405,6 @@ public:
 
     void  resetWpScaling();
     void  initWpScaling();
-
-    void allocSubstreamSizes(uint32_t numStreams);
-    uint32_t* getSubstreamSizes()              { return m_substreamSizes; }
 
 protected:
 

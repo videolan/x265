@@ -49,6 +49,7 @@ FrameEncoder::FrameEncoder()
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
+    m_substreamSizes = NULL;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
@@ -74,6 +75,7 @@ void FrameEncoder::destroy()
     }
 
     delete[] m_outStreams;
+    X265_FREE(m_substreamSizes);
     m_frameFilter.destroy();
 
     // wait for worker thread to exit
@@ -406,11 +408,13 @@ void FrameEncoder::compressFrame()
     /* start slice NALunit */
     uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     if (!m_outStreams)
+    {
         m_outStreams = new Bitstream[numSubstreams];
+        m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
+    }
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
             m_outStreams[i].resetBits();
-    slice->allocSubstreamSizes(numSubstreams);
 
     m_bs.resetBits();
     m_sbacCoder.resetEntropy(slice);
@@ -421,12 +425,12 @@ void FrameEncoder::compressFrame()
     encodeSlice();
 
     // serialize each row, record final lengths in slice header
-    m_nalList.serializeSubstreams(slice->getSubstreamSizes(), numSubstreams, m_outStreams);
+    m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
     m_sbacCoder.setBitstream(&m_bs);
     if (slice->m_pps->bEntropyCodingSyncEnabled)
-        m_sbacCoder.codeTilesWPPEntryPoint(slice);
+        m_sbacCoder.codeTilesWPPEntryPoint(slice, m_substreamSizes);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);

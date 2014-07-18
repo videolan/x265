@@ -147,6 +147,7 @@ protected:
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;
+    uint32_t*                m_substreamSizes;
     NoiseReduction           m_nr;
     NALList                  m_nalList;
     ThreadLocalData          m_tld;

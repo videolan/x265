@@ -1108,9 +1108,8 @@ void SBac::codeSliceHeader(TComSlice* slice)
 }
 
 /** write wavefront substreams sizes for the slice header */
-void SBac::codeTilesWPPEntryPoint(TComSlice* slice)
+void SBac::codeTilesWPPEntryPoint(TComSlice* slice, uint32_t *substreamSizes)
 {
-    uint32_t* substreamSizes = slice->getSubstreamSizes(); // TODO: pass as argument
     int maxNumParts = slice->m_pic->getNumPartInCU();
 
     int numZeroSubstreamsAtEndOfSlice = slice->m_pic->getFrameHeightInCU() - 1 - ((slice->m_sliceCurEndCUAddr - 1) / maxNumParts / slice->m_pic->getFrameWidthInCU());
