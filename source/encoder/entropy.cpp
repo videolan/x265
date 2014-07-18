@@ -1064,7 +1064,7 @@ void SBac::codeSliceHeader(TComSlice* slice)
     }
 
     if (slice->isInterB())
-        WRITE_FLAG(slice->getMvdL1ZeroFlag(),   "mvd_l1_zero_flag");
+        WRITE_FLAG(slice->m_bLMvdL1Zero, "mvd_l1_zero_flag");
 
     if (!slice->isIntra())
     {
@@ -1489,7 +1489,7 @@ void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 
 void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    if (list == REF_PIC_LIST_1 && cu->getSlice()->getMvdL1ZeroFlag() && cu->getInterDir(absPartIdx) == 3)
+    if (list == REF_PIC_LIST_1 && cu->getSlice()->m_bLMvdL1Zero && cu->getInterDir(absPartIdx) == 3)
         return;
 
     const TComCUMvField* cuMvField = cu->getCUMvField(list);

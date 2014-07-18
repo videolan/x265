@@ -410,8 +410,6 @@ public:
 
     bool      getCheckLDC()                       { return m_bCheckLDC; }
 
-    bool      getMvdL1ZeroFlag()                  { return m_bLMvdL1Zero; }
-
     void      setNumRefIdx(int e, int i) { m_numRefIdx[e] = i; }
 
     void      setRefPicList(PicList& picList);
@@ -421,8 +419,6 @@ public:
     void      setColRefIdx(uint32_t refIdx)     { m_colRefIdx = refIdx; }
 
     void      setCheckLDC(bool b)           { m_bCheckLDC = b; }
-
-    void      setMvdL1ZeroFlag(bool b)      { m_bLMvdL1Zero = b; }
 
     void setSliceCurEndCUAddr(uint32_t uiAddr) { m_sliceCurEndCUAddr = uiAddr; }
 
