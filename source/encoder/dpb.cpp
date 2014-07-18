@@ -162,25 +162,6 @@ void DPB::prepareEncode(Frame *pic)
     else
         slice->m_bCheckLDC = true;
 
-    bool bGPBcheck = false;
-    if (slice->m_sliceType == B_SLICE)
-    {
-        if (slice->m_numRefIdx[0] == slice->m_numRefIdx[1])
-        {
-            bGPBcheck = true;
-            for (int i = 0; i < slice->m_numRefIdx[1]; i++)
-            {
-                if (slice->m_refPOCList[1][i] != slice->m_refPOCList[0][i])
-                {
-                    bGPBcheck = false;
-                    break;
-                }
-            }
-        }
-    }
-
-    slice->m_bLMvdL1Zero = bGPBcheck;
-
     /* Increment reference count of all motion-referenced frames.  This serves two purposes. First
      * it prevents the frame from being recycled, and second the referenced frames know how many
      * other FrameEncoders are using them for motion reference */

@@ -325,7 +325,6 @@ public:
     bool        m_bReferenced;
 
     bool        m_bCheckLDC;       // TODO: What is this for?
-    bool        m_bLMvdL1Zero;     // TODOD: what is mvd_l1_zero_flag?
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
     uint32_t    m_colRefIdx;       // never modified
     
@@ -347,7 +346,6 @@ public:
         m_bReferenced = false;
         m_colFromL0Flag = 1;
         m_sliceCurEndCUAddr = 0;
-        m_bLMvdL1Zero = false;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
         for (int i = 0; i < MAX_NUM_REF; i++)
