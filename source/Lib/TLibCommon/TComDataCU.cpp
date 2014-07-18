@@ -2612,7 +2612,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     MV colmv;
 
     // use coldir.
-    Frame *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->getColFromL0Flag() : 0, getSlice()->getColRefIdx());
+    Frame *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->m_colFromL0Flag : 0, getSlice()->getColRefIdx());
     TComDataCU *colCU = colPic->getCU(cuAddr);
 
     if (colCU->m_pic == 0 || colCU->getPartitionSize(partUnitIdx) == SIZE_NONE)
@@ -2625,7 +2625,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     if (colCU->isIntra(absPartAddr))
         return false;
 
-    colRefPicList = getSlice()->getCheckLDC() ? picList : getSlice()->getColFromL0Flag();
+    colRefPicList = getSlice()->getCheckLDC() ? picList : getSlice()->m_colFromL0Flag;
 
     int colRefIdx = colCU->getCUMvField(colRefPicList)->getRefIdx(absPartAddr);
 

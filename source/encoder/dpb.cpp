@@ -143,7 +143,7 @@ void DPB::prepareEncode(Frame *pic)
     if (slice->m_sliceType == B_SLICE)
     {
         // TODO: Can we estimate this from lookahead?
-        slice->setColFromL0Flag(0);
+        slice->m_colFromL0Flag = 0;
 
         bool bLowDelay = true;
         int curPOC = slice->m_poc;

@@ -1080,11 +1080,11 @@ void SBac::codeSliceHeader(TComSlice* slice)
     // TMVP always enabled
     {
         if (slice->m_sliceType == B_SLICE)
-            WRITE_FLAG(slice->getColFromL0Flag(), "collocated_from_l0_flag");
+            WRITE_FLAG(slice->m_colFromL0Flag, "collocated_from_l0_flag");
 
         if (slice->m_sliceType != I_SLICE &&
-            ((slice->getColFromL0Flag() == 1 && slice->m_numRefIdx[0] > 1) ||
-            (slice->getColFromL0Flag() == 0 && slice->m_numRefIdx[1] > 1)))
+            ((slice->m_colFromL0Flag == 1 && slice->m_numRefIdx[0] > 1) ||
+             (slice->m_colFromL0Flag == 0 && slice->m_numRefIdx[1] > 1)))
         {
             WRITE_UVLC(slice->getColRefIdx(), "collocated_ref_idx");
         }

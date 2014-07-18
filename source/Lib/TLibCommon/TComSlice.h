@@ -406,8 +406,6 @@ public:
 
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
 
-    bool      getColFromL0Flag()                  { return m_colFromL0Flag; }
-
     uint32_t  getColRefIdx()                      { return m_colRefIdx; }
 
     bool      getCheckLDC()                       { return m_bCheckLDC; }
@@ -419,8 +417,6 @@ public:
     void      setRefPicList(PicList& picList);
 
     void      setRefPOCList();
-
-    void      setColFromL0Flag(bool colFromL0) { m_colFromL0Flag = colFromL0; }
 
     void      setColRefIdx(uint32_t refIdx)     { m_colRefIdx = refIdx; }
 
