@@ -39,6 +39,7 @@
 #define X265_TCOMTRQUANT_H
 
 #include "common.h"
+#include "scalinglist.h"
 #include "TComYuv.h"
 #include "TComDataCU.h"
 #include "ContextTables.h"

@@ -22,9 +22,10 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "entropy.h"
+#include "scalinglist.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 #include "TLibCommon/TComTrQuant.h"
+#include "entropy.h"
 
 namespace x265 {
 

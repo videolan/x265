@@ -26,8 +26,8 @@
 
 #include "common.h"
 #include "slice.h"
+#include "scalinglist.h"
 #include "x265.h"
-
 #include "nal.h"
 
 struct x265_encoder {};

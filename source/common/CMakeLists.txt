@@ -148,4 +148,5 @@ add_library(common OBJECT
     slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
+    scalinglist.cpp scalinglist.h
     loopfilter.cpp)
