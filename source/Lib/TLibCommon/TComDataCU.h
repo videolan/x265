@@ -93,6 +93,40 @@ typedef struct
     pixel*   m_tqBypassYuvMemBlock;
 } DataCUMemPool;
 
+// Partition count table, index represents partitioning mode.
+const uint8_t nbPartsTable[8] = { 1, 2, 2, 4, 2, 2, 2, 2 };
+
+// Partition table.
+// First index is partitioning mode. Second index is partition index.
+// Third index is 0 for partition sizes, 1 for partition offsets. The 
+// sizes and offsets are encoded as two packed 4-bit values (X,Y). 
+// X and Y represent 1/4 fractions of the block size.
+const uint8_t partTable[8][4][2] =
+{
+//        XY
+    { { 0x44, 0x00 }, { 0x00, 0x00 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2Nx2N.
+    { { 0x42, 0x00 }, { 0x42, 0x02 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxN.
+    { { 0x24, 0x00 }, { 0x24, 0x20 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_Nx2N.
+    { { 0x22, 0x00 }, { 0x22, 0x20 }, { 0x22, 0x02 }, { 0x22, 0x22 } }, // SIZE_NxN.
+    { { 0x41, 0x00 }, { 0x43, 0x01 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxnU.
+    { { 0x43, 0x00 }, { 0x41, 0x03 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxnD.
+    { { 0x14, 0x00 }, { 0x34, 0x10 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_nLx2N.
+    { { 0x34, 0x00 }, { 0x14, 0x30 }, { 0x00, 0x00 }, { 0x00, 0x00 } }  // SIZE_nRx2N.
+};
+
+// Partition Address table.
+// First index is partitioning mode. Second index is partition address.
+const uint8_t partAddrTable[8][4] =
+{
+    { 0x00, 0x00, 0x00, 0x00 }, // SIZE_2Nx2N.
+    { 0x00, 0x08, 0x08, 0x08 }, // SIZE_2NxN.
+    { 0x00, 0x04, 0x04, 0x04 }, // SIZE_Nx2N.
+    { 0x00, 0x04, 0x08, 0x0C }, // SIZE_NxN.
+    { 0x00, 0x02, 0x02, 0x02 }, // SIZE_2NxnU.
+    { 0x00, 0x0A, 0x0A, 0x0A }, // SIZE_2NxnD.
+    { 0x00, 0x01, 0x01, 0x01 }, // SIZE_nLx2N.
+    { 0x00, 0x05, 0x05, 0x05 }  // SIZE_nRx2N.
+};
 
 // ====================================================================================================================
 // Class definition
@@ -370,7 +404,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     void          getPartIndexAndSize(uint32_t partIdx, uint32_t& ruiPartAddr, int& riWidth, int& riHeight);
-    uint8_t       getNumPartInter();
+    uint8_t       getNumPartInter() { return nbPartsTable[(int)m_partSizes[0]]; }
     bool          isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------

@@ -1498,83 +1498,16 @@ void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType t
     memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
 }
 
-uint8_t TComDataCU::getNumPartInter()
-{
-    uint8_t numPart = 0;
-
-    switch (m_partSizes[0])
-    {
-    case SIZE_2Nx2N:    numPart = 1;
-        break;
-    case SIZE_2NxN:     numPart = 2;
-        break;
-    case SIZE_Nx2N:     numPart = 2;
-        break;
-    case SIZE_NxN:      numPart = 4;
-        break;
-    case SIZE_2NxnU:    numPart = 2;
-        break;
-    case SIZE_2NxnD:    numPart = 2;
-        break;
-    case SIZE_nLx2N:    numPart = 2;
-        break;
-    case SIZE_nRx2N:    numPart = 2;
-        break;
-    default:            X265_CHECK(0, "unexpected part type\n");
-        break;
-    }
-
-    return numPart;
-}
-
 void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight)
 {
     int cuSize = 1 << getLog2CUSize(0);
+    int part_mode = m_partSizes[0];
+    int part_idx  = partIdx;
 
-    switch (m_partSizes[0])
-    {
-    case SIZE_2NxN:
-        outWidth = cuSize;
-        outHeight = cuSize >> 1;
-        outPartAddr = (partIdx == 0) ? 0 : m_numPartitions >> 1;
-        break;
-    case SIZE_Nx2N:
-        outWidth = cuSize >> 1;
-        outHeight = cuSize;
-        outPartAddr = (partIdx == 0) ? 0 : m_numPartitions >> 2;
-        break;
-    case SIZE_NxN:
-        outWidth = cuSize >> 1;
-        outHeight = cuSize >> 1;
-        outPartAddr = (m_numPartitions >> 2) * partIdx;
-        break;
-    case SIZE_2NxnU:
-        outWidth    = cuSize;
-        outHeight   = (partIdx == 0) ?  cuSize >> 2 : (cuSize >> 2) + (cuSize >> 1);
-        outPartAddr = (partIdx == 0) ? 0 : m_numPartitions >> 3;
-        break;
-    case SIZE_2NxnD:
-        outWidth    = cuSize;
-        outHeight   = (partIdx == 0) ?  (cuSize >> 2) + (cuSize >> 1) : cuSize >> 2;
-        outPartAddr = (partIdx == 0) ? 0 : (m_numPartitions >> 1) + (m_numPartitions >> 3);
-        break;
-    case SIZE_nLx2N:
-        outWidth    = (partIdx == 0) ? cuSize >> 2 : (cuSize >> 2) + (cuSize >> 1);
-        outHeight   = cuSize;
-        outPartAddr = (partIdx == 0) ? 0 : m_numPartitions >> 4;
-        break;
-    case SIZE_nRx2N:
-        outWidth    = (partIdx == 0) ? (cuSize >> 2) + (cuSize >> 1) : cuSize >> 2;
-        outHeight   = cuSize;
-        outPartAddr = (partIdx == 0) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
-        break;
-    default:
-        X265_CHECK(m_partSizes[0] == SIZE_2Nx2N, "unexpected part type\n");
-        outWidth = cuSize;
-        outHeight = cuSize;
-        outPartAddr = 0;
-        break;
-    }
+    int tmp = partTable[part_mode][part_idx][0];
+    outWidth = ((tmp >> 4) * cuSize) >> 2;
+    outHeight = ((tmp & 0xF) * cuSize) >> 2;
+    outPartAddr = (partAddrTable[part_mode][part_idx] * m_numPartitions) >> 4;
 }
 
 void TComDataCU::getMvField(TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField)
@@ -2081,63 +2014,17 @@ bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP)
  */
 void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH)
 {
-    uint32_t col = m_cuPelX;
-    uint32_t row = m_cuPelY;
-    uint32_t cuSize = 1 << getLog2CUSize(0);
+    int cuSize = 1 << getLog2CUSize(0);
+    int part_mode = m_partSizes[0];
+    int part_idx  = partIdx;
 
-    switch (m_partSizes[0])
-    {
-    case SIZE_2NxN:
-        nPSW = cuSize;
-        nPSH = cuSize >> 1;
-        xP   = col;
-        yP   = (partIdx == 0) ? row : row + nPSH;
-        break;
-    case SIZE_Nx2N:
-        nPSW = cuSize >> 1;
-        nPSH = cuSize;
-        xP   = (partIdx == 0) ? col : col + nPSW;
-        yP   = row;
-        break;
-    case SIZE_NxN:
-        nPSW = cuSize >> 1;
-        nPSH = cuSize >> 1;
-        xP   = col + (partIdx & 0x1) * nPSW;
-        yP   = row + (partIdx >> 1) * nPSH;
-        break;
-    case SIZE_2NxnU:
-        nPSW = cuSize;
-        nPSH = (partIdx == 0) ?  cuSize >> 2 : (cuSize >> 2) + (cuSize >> 1);
-        xP   = col;
-        yP   = (partIdx == 0) ? row : row + cuSize - nPSH;
-        break;
-    case SIZE_2NxnD:
-        nPSW = cuSize;
-        nPSH = (partIdx == 0) ?  (cuSize >> 2) + (cuSize >> 1) : cuSize >> 2;
-        xP   = col;
-        yP   = (partIdx == 0) ? row : row + cuSize - nPSH;
-        break;
-    case SIZE_nLx2N:
-        nPSW = (partIdx == 0) ? cuSize >> 2 : (cuSize >> 2) + (cuSize >> 1);
-        nPSH = cuSize;
-        xP   = (partIdx == 0) ? col : col + cuSize - nPSW;
-        yP   = row;
-        break;
-    case SIZE_nRx2N:
-        nPSW = (partIdx == 0) ? (cuSize >> 2) + (cuSize >> 1) : cuSize >> 2;
-        nPSH = cuSize;
-        xP   = (partIdx == 0) ? col : col + cuSize - nPSW;
-        yP   = row;
-        break;
-    default:
-        X265_CHECK(m_partSizes[0] == SIZE_2Nx2N, "unexpected part type\n");
-        nPSW = cuSize;
-        nPSH = cuSize;
-        xP   = col;
-        yP   = row;
+    int tmp = partTable[part_mode][part_idx][0];
+    nPSW = ((tmp >> 4) * cuSize) >> 2;
+    nPSH = ((tmp & 0xF) * cuSize) >> 2;
 
-        break;
-    }
+    tmp = partTable[part_mode][part_idx][1];
+    xP = ((tmp >> 4) * cuSize) >> 2;
+    yP = ((tmp & 0xF) * cuSize) >> 2;
 }
 
 /** Constructs a list of candidates for AMVP
