@@ -164,34 +164,6 @@ void TComSlice::resetWpScaling()
     }
 }
 
-/** init WP table
- * \returns void
- */
-void TComSlice::initWpScaling()
-{
-    for (int e = 0; e < 2; e++)
-    {
-        for (int i = 0; i < MAX_NUM_REF; i++)
-        {
-            for (int yuv = 0; yuv < 3; yuv++)
-            {
-                WeightParam  *pwp = &(m_weightPredTable[e][i][yuv]);
-                if (!pwp->bPresentFlag)
-                {
-                    // Inferring values not present :
-                    pwp->inputWeight = (1 << pwp->log2WeightDenom);
-                    pwp->inputOffset = 0;
-                }
-
-                pwp->w      = pwp->inputWeight;
-                pwp->o      = pwp->inputOffset << (X265_DEPTH - 8);
-                pwp->shift  = pwp->log2WeightDenom;
-                pwp->round  = (pwp->log2WeightDenom >= 1) ? (1 << (pwp->log2WeightDenom - 1)) : (0);
-            }
-        }
-    }
-}
-
 /* Sorts the deltaPOC and Used by current values in the RPS based on the
  * deltaPOC values.  deltaPOC values are sorted with -ve values before the +ve
  * values.  -ve values are in decreasing order.  +ve values are in increasing

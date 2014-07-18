@@ -390,7 +390,6 @@ public:
 
     void setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }
     void resetWpScaling();
-    void initWpScaling();
 };
 }
 //! \}
