@@ -79,19 +79,12 @@ Frame* TComSlice::xGetRefPic(PicList& picList, int poc)
     return pic;
 }
 
-void TComSlice::setRefPOCList()
-{
-    for (int dir = 0; dir < 2; dir++)
-        for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
-            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
-}
-
 void TComSlice::setRefPicList(PicList& picList)
 {
     if (m_sliceType == I_SLICE)
     {
         ::memset(m_refPicList, 0, sizeof(m_refPicList));
-        ::memset(m_numRefIdx,  0, sizeof(m_numRefIdx));
+        m_numRefIdx[1] = m_numRefIdx[0] = 0;
         return;
     }
 
@@ -180,6 +173,10 @@ void TComSlice::setRefPicList(PicList& picList)
             m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
         }
     }
+
+    for (int dir = 0; dir < 2; dir++)
+        for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
+            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
 }
 
 /** get WP tables for weighted pred

@@ -377,8 +377,6 @@ public:
 
     void setRefPicList(PicList& picList);
 
-    void setRefPOCList();
-
     bool getRapPicFlag() const
     {
         return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL

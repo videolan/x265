@@ -135,7 +135,6 @@ void DPB::prepareEncode(Frame *pic)
     slice->m_numRefIdx[1] = X265_MIN(m_maxRefL1, slice->m_rps.m_numberOfPositivePictures);
 
     slice->setRefPicList(m_picList);
-    slice->setRefPOCList();
 
     // Slice type refinement:  TODO: does this ever happen?
     if ((slice->m_sliceType == B_SLICE) && (slice->m_numRefIdx[1] == 0))
