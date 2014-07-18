@@ -150,11 +150,11 @@ void DPB::prepareEncode(Frame *pic)
         int refIdx = 0;
 
         for (refIdx = 0; refIdx < slice->m_numRefIdx[0] && bLowDelay; refIdx++)
-            if (slice->m_refPicList[0][refIdx]->getPOC() > curPOC)
+            if (slice->m_refPOCList[0][refIdx] > curPOC)
                 bLowDelay = false;
 
         for (refIdx = 0; refIdx < slice->m_numRefIdx[1] && bLowDelay; refIdx++)
-            if (slice->m_refPicList[1][refIdx]->getPOC() > curPOC)
+            if (slice->m_refPOCList[1][refIdx] > curPOC)
                 bLowDelay = false;
 
         slice->m_bCheckLDC = bLowDelay;

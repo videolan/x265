@@ -231,9 +231,9 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, uint32_t partAddr)
         int refIdxL1 = cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partAddr);
         if (refIdxL0 >= 0 && refIdxL1 >= 0)
         {
-            int refPOCL0 = cu->getSlice()->m_refPicList[0][refIdxL0]->getPOC();
-            int refPOCL1 = cu->getSlice()->m_refPicList[1][refIdxL1]->getPOC();
-            if (refPOCL0 == refPOCL1 && cu->getCUMvField(REF_PIC_LIST_0)->getMv(partAddr) == cu->getCUMvField(REF_PIC_LIST_1)->getMv(partAddr))
+            int refPOCL0 = cu->getSlice()->m_refPOCList[0][refIdxL0];
+            int refPOCL1 = cu->getSlice()->m_refPOCList[1][refIdxL1];
+            if (refPOCL0 == refPOCL1 && cu->getCUMvField(0)->getMv(partAddr) == cu->getCUMvField(1)->getMv(partAddr))
                 return true;
         }
     }
