@@ -125,7 +125,7 @@ class Lookahead : public JobProvider
 {
 public:
 
-    Lookahead(x265_param *param, ThreadPool *pool);
+    Lookahead(x265_param *param, ThreadPool *pool, Encoder* enc);
     ~Lookahead();
     void init();
     void destroy();
@@ -158,7 +158,7 @@ protected:
     volatile int  m_bReady;
     volatile bool m_bFilling;
     volatile bool m_bFlushed;
-
+    Encoder      *m_top;
     bool findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */

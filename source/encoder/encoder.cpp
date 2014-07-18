@@ -107,7 +107,7 @@ void Encoder::create()
     else
         m_aborted = true;
 
-    m_lookahead = new Lookahead(m_param, m_threadPool);
+    m_lookahead = new Lookahead(m_param, m_threadPool, this);
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 

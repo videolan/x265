@@ -205,6 +205,7 @@ public:
     void hrdFullness(SEIBufferingPeriod* sei);
     bool init(const SPS* sps);
     void initHRD(SPS* sps);
+    int rateControlSliceType(int frameNum);
 protected:
 
     static const double s_amortizeFraction;
