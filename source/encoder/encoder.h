@@ -75,7 +75,6 @@ class Encoder : public x265_encoder
 {
 private:
 
-    bool               m_aborted;          // fatal error detected
     int                m_pocLast;          ///< time index (POC)
     int                m_encodedFrameNum;
     int                m_outputCount;
@@ -86,7 +85,6 @@ private:
     int64_t            m_prevReorderedPts[2];
 
     ThreadPool*        m_threadPool;
-    Lookahead*         m_lookahead;
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
 
@@ -119,6 +117,9 @@ public:
     ProfileTierLevel   m_ptl;
     ScalingList        m_scalingList;      // quantization matrix information
 
+    Lookahead*         m_lookahead;
+
+    bool               m_aborted;         // fatal error detected
 
     /* profile & level */
     Profile::Name      m_profile;
@@ -146,8 +147,6 @@ public:
     int                m_pad[2];
     Window             m_conformanceWindow;
     Window             m_defaultDisplayWindow;
-
-    int                m_totalFrameThreads;
 
     uint32_t           m_numDelayedPic;
 

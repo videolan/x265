@@ -312,24 +312,6 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
-    int qp = slice->m_sliceQp;
-
-    int chromaQPOffset = slice->m_pps->chromaCbQpOffset;
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    
-    double lambda = x265_lambda2_tab[qp];
-    /* Assuming qpCb and qpCr are the same, since SAO takes only a single chroma lambda. TODO: Check why */
-    double chromaLambda = x265_lambda2_tab[qpCb];
-
-    // NOTE: set SAO lambda every Frame
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
-
-    // Clip qps back to 0-51 range before encoding
-    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->m_sliceQp = qp;
-    m_frame->m_avgQpAq = qp;
-
     switch (slice->m_sliceType)
     {
     case I_SLICE:
@@ -477,6 +459,23 @@ void FrameEncoder::compressFrame()
         }
     }
 
+    uint64_t bytes = 0;
+    for (uint32_t i = 0; i < m_nalList.m_numNal; i++)
+    {
+        int type = m_nalList.m_nal[i].type;
+
+        // exclude SEI
+        if (type != NAL_UNIT_PREFIX_SEI && type != NAL_UNIT_SUFFIX_SEI)
+        {
+            bytes += m_nalList.m_nal[i].sizeBytes;
+            // and exclude start code prefix
+            bytes -= (!i || type == NAL_UNIT_SPS || type == NAL_UNIT_PPS) ? 4 : 3;
+        }
+    }
+    m_accessUnitBits = bytes << 3;
+    if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
+        m_top->m_aborted = true;
+
     noiseReductionUpdate();
 
     m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
@@ -578,6 +577,27 @@ void FrameEncoder::compressCTURows()
 {
     PPAScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_picSym->m_slice;
+
+    // set slice QP
+    m_top->m_rateControl->rateControlStart(m_frame, m_top->m_lookahead, &m_rce, m_top);
+
+    int qp = slice->m_sliceQp;
+
+    int chromaQPOffset = slice->m_pps->chromaCbQpOffset;
+    int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
+    
+    double lambda = x265_lambda2_tab[qp];
+    /* Assuming qpCb and qpCr are the same, since SAO takes only a single chroma lambda. TODO: Check why */
+    double chromaLambda = x265_lambda2_tab[qpCb];
+
+    // NOTE: set SAO lambda every Frame
+    m_frameFilter.m_sao.lumaLambda = lambda;
+    m_frameFilter.m_sao.chromaLambda = chromaLambda;
+
+    // Clip qps back to 0-51 range before encoding
+    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+    slice->m_sliceQp = qp;
+    m_frame->m_avgQpAq = qp;
 
     // reset entropy coders
     m_sbacCoder.resetEntropy(slice);
@@ -906,7 +926,34 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
     }
 
-    // this row of CTUs has been encoded
+    /* *this row of CTUs has been encoded* */
+
+    /* If encoding with ABR, update update bits and complexity in rate control
+     * after a number of rows so the next frame's rateControlStart has more
+     * accurate data for estimation. At the start of the encode we update stats
+     * after half the frame is encoded, but after this initial period we update
+     * after refLagRows (the number of rows reference frames must have completed
+     * before referencees may begin encoding) */
+    int rowCount = 0;
+    if (m_param->rc.rateControlMode == X265_RC_ABR)
+    {
+        if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
+            rowCount = m_numRows/2;
+        else
+            rowCount = m_refLagRows;
+    }
+    if (row == rowCount)
+    {
+        int64_t bits = 0;
+        for (uint32_t col = 0; col < rowCount * numCols; col++)
+        {
+            TComDataCU* cu = m_frame->getCU(col);
+            bits += cu->m_totalBits;
+        }
+
+        m_rce.rowTotalBits = bits;
+        m_top->m_rateControl->rateControlUpdateStats(&m_rce);
+    }
 
     // trigger row-wise loop filters
     if (row >= m_filterRowDelay)
@@ -920,9 +967,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     if (row == m_numRows - 1)
     {
         for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
-        {
             enableRowFilter(i);
-        }
     }
 
     m_totalTime += x265_mdate() - startTime;

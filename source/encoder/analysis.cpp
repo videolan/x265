@@ -66,7 +66,7 @@ bool Analysis::init(Encoder* top)
 
     m_rdCost.setPsyRdScale(m_param->psyRd);
     m_bEnableRDOQ = top->m_bEnableRDOQ;
-    m_bFrameParallel = top->m_totalFrameThreads > 1;
+    m_bFrameParallel = m_param->frameNumThreads > 1;
     m_numLayers = top->m_quadtreeTULog2MaxSize - top->m_quadtreeTULog2MinSize + 1;
 
     return initSearch();

@@ -296,10 +296,13 @@ RateControl::RateControl(x265_param *p)
 
     // validate for param->rc, maybe it is need to add a function like x265_parameters_valiate()
     m_residualFrames = 0;
+    m_partialResidualFrames = 0;
     m_residualCost = 0;
+    m_partialResidualCost = 0;
     m_rateFactorMaxIncrement = 0;
     m_rateFactorMaxDecrement = 0;
     m_fps = m_param->fpsNum / m_param->fpsDenom;
+    m_startEndOrder.set(0);
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -666,6 +669,7 @@ bool RateControl::init(const SPS *sps)
     m_totalBits = 0;
     m_framesDone = 0;
     m_residualCost = 0;
+    m_partialResidualCost = 0;
 
     /* 720p videos seem to be a good cutoff for cplxrSum */
     double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
@@ -979,6 +983,19 @@ fail:
 
 void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
+    int orderValue = m_startEndOrder.get();
+    int startOrdinal = rce->encodeOrder * 2;
+
+    while (orderValue != startOrdinal && pic)
+       orderValue = m_startEndOrder.waitForChange(orderValue);
+
+    if (!pic)
+    {
+        // faked rateControlStart calls when the encoder is flushing
+        m_startEndOrder.incr();
+        return;
+    }
+
     m_curSlice = pic->m_picSym->m_slice;
     m_sliceType = m_curSlice->m_sliceType;
     rce->sliceType = m_sliceType;
@@ -991,6 +1008,8 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     rce->bLastMiniGopBFrame = pic->m_lowres.bLastMiniGopBFrame;
     rce->bufferRate = m_bufferRate;
     rce->poc = m_curSlice->m_poc;
+    rce->rowCplxrSum = 0.0;
+    rce->rowTotalBits = 0;
     if (m_isVbv)
     {
         if (rce->rowPreds[0][0].count == 0)
@@ -1044,6 +1063,8 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
         m_qp = Clip3(MIN_QP, MAX_MAX_QP, m_qp);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = m_qp;
     }
+    // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
+    // to wait until rateControlUpdateStats of this frame is called
     m_framesDone++;
     /* set the final QP to slice structure */
     m_curSlice->m_sliceQp = m_qp;
@@ -1278,7 +1299,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                 /* use framesDone instead of POC as poc count is not serial with bframes enabled */
                 double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
                 wantedBits = timeDone * m_bitrate;
-                if (wantedBits > 0 && m_totalBits > 0 && !m_residualFrames)
+                if (wantedBits > 0 && m_totalBits > 0 && !m_partialResidualFrames)
                 {
                     abrBuffer *= X265_MAX(1, sqrt(timeDone));
                     overflow = Clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
@@ -1300,7 +1321,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                 double lqmin = 0, lqmax = 0;
                 lqmin = m_lastQScaleFor[m_sliceType] / m_lstep;
                 lqmax = m_lastQScaleFor[m_sliceType] * m_lstep;
-                if (!m_residualFrames)
+                if (!m_partialResidualFrames)
                 {
                     if (overflow > 1.1 && m_framesDone > 3)
                         lqmax *= m_lstep;
@@ -1342,16 +1363,17 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
     if (rce->sliceType == I_SLICE)
     {
         /* previous I still had a residual; roll it into the new loan */
-        if (m_residualFrames)
-            rce->rowTotalBits += m_residualCost * m_residualFrames;
+        if (m_partialResidualFrames)
+            rce->rowTotalBits += m_partialResidualCost * m_partialResidualFrames;
 
-        m_residualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
-        m_residualCost = (int)((rce->rowTotalBits * s_amortizeFraction) / m_residualFrames);
-        rce->rowTotalBits -= m_residualCost * m_residualFrames;
+        m_partialResidualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
+        m_partialResidualCost = (int)((rce->rowTotalBits * s_amortizeFraction) /m_partialResidualFrames);
+        rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
     }
-    else if (m_residualFrames)
+    else if (m_partialResidualFrames)
     {
-         rce->rowTotalBits += m_residualCost;
+         rce->rowTotalBits += m_partialResidualCost;
+         m_partialResidualFrames--;
     }
 
     if (rce->sliceType != B_SLICE)
@@ -1361,6 +1383,13 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
 
     m_cplxrSum += rce->rowCplxrSum;
     m_totalBits += rce->rowTotalBits;
+
+    /* do not allow the next frame to enter rateControlStart() until this
+     * frame has updated its mid-frame statistics */
+    m_startEndOrder.incr();
+
+    if (rce->encodeOrder < m_param->frameNumThreads - 1)
+        m_startEndOrder.incr(); // faked rateControlEnd calls for negative frames
 }
 
 void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
@@ -1819,6 +1848,11 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 /* After encoding one frame, update rate control state */
 int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats)
 {
+    int orderValue = m_startEndOrder.get();
+    int endOrdinal = (rce->encodeOrder + m_param->frameNumThreads) * 2 - 1;
+    while (orderValue != endOrdinal)
+        orderValue = m_startEndOrder.waitForChange(orderValue);
+
     int64_t actualBits = bits;
     if (m_isAbr)
     {
@@ -1918,17 +1952,19 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                 }
             }
             if (rce->sliceType != B_SLICE)
+            {
                 /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
                  * to improve short term compensation for next frame. */
-                m_cplxrSum += bits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
+                m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / rce->qRceq) - (rce->rowCplxrSum);
+            }
             else
             {
                 /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
                  * Not perfectly accurate with B-refs, but good enough. */
-                m_cplxrSum += bits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor));
+                m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor))) - (rce->rowCplxrSum);
             }
             m_wantedBitsWindow += m_frameDuration * m_bitrate;
-            m_totalBits += bits;
+            m_totalBits += bits - rce->rowTotalBits;
         }
     }
 
@@ -1972,6 +2008,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->numUnitsInTick / time->timeScale + rce->hrdTiming->cpbRemovalTime;
         }
     }
+    // Allow rateControlStart of next frame only when rateControlEnd of previous frame is over
+    m_startEndOrder.incr();
     rce->isActive = false;
     return 0;
 

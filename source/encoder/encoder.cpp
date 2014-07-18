@@ -157,7 +157,7 @@ void Encoder::destroy()
 
     if (m_frameEncoder)
     {
-        for (int i = 0; i < m_totalFrameThreads; i++)
+        for (int i = 0; i < m_param->frameNumThreads; i++)
         {
             // Ensure frame encoder is idle before destroying it
             m_frameEncoder[i].getEncodedPicture(m_nalList);
@@ -310,20 +310,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
     else
         m_lookahead->flush();
 
-    if (m_param->rc.rateControlMode == X265_RC_ABR)
-    {
-        // delay frame parallelism for non-VBV ABR
-        if (m_pocLast == 0 && !m_param->rc.vbvBufferSize && !m_param->rc.vbvMaxBitrate)
-            m_param->frameNumThreads = 1;
-        else if (m_param->frameNumThreads != m_totalFrameThreads)
-        {
-            // re-enable frame parallelism after the first few P frames are encoded
-            uint32_t frameCnt = (uint32_t)((0.5 * m_param->fpsNum / m_param->fpsDenom) / (m_param->bframes + 1));
-            if (m_analyzeP.m_numPics > frameCnt)
-                m_param->frameNumThreads = m_totalFrameThreads;
-        }
-    }
-
     FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
     m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
     int ret = 0;
@@ -393,26 +379,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             if (bChroma)
                 m_numChromaWPBiFrames++;
         }
-
-        uint64_t bytes = 0;
-        for (uint32_t i = 0; i < m_nalList.m_numNal; i++)
+        if (m_aborted == true)
         {
-            int type = m_nalList.m_nal[i].type;
-
-            // exclude SEI
-            if (type != NAL_UNIT_PREFIX_SEI && type != NAL_UNIT_SUFFIX_SEI)
-            {
-                bytes += m_nalList.m_nal[i].sizeBytes;
-                // and exclude start code prefix
-                bytes -= (!i || type == NAL_UNIT_SPS || type == NAL_UNIT_PPS) ? 4 : 3;
-            }
-        }
-        if (m_rateControl->rateControlEnd(out, bytes << 3, &curEncoder->m_rce, &curEncoder->m_frameStats) < 0)
-        {
-            m_aborted = true;
             return -1;
         }
-        finishFrameStats(out, curEncoder, bytes << 3);
+        finishFrameStats(out, curEncoder, curEncoder->m_accessUnitBits);
         // Allow this frame to be recycled if no frame encoders are using it for reference
         if (!pic_out)
         {
@@ -469,11 +440,16 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
 
-        // set slice QP
-        m_rateControl->rateControlStart(fenc, m_lookahead, &curEncoder->m_rce, this);
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->m_enable.trigger();
+    }
+    else if (!fenc && m_encodedFrameNum > 0)
+    {
+        // faked rateControlStart calls to avoid rateControlEnd of last frameNumThreads parallel frames from waiting
+        RateControlEntry rce;
+        rce.encodeOrder = m_encodedFrameNum++;
+        m_rateControl->rateControlStart(NULL, m_lookahead, &rce, this);
     }
 
     return ret;
@@ -1271,7 +1247,6 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-    m_totalFrameThreads = m_param->frameNumThreads;
 
     if (p->keyframeMax < 0)
     {

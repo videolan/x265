@@ -133,6 +133,7 @@ public:
     FrameStats               m_frameStats;          // stats of current frame for multipass encodes
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
+    uint64_t                 m_accessUnitBits;
 
 protected:
 
@@ -141,6 +142,7 @@ protected:
 
     Encoder*                 m_top;
     x265_param*              m_param;
+    Frame*                   m_frame;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     SBac                     m_sbacCoder;
@@ -152,7 +154,6 @@ protected:
     NALList                  m_nalList;
     ThreadLocalData          m_tld;
 
-    Frame*                   m_frame;
 
     int                      m_filterRowDelay;
     int                      m_filterRowDelayCus;
