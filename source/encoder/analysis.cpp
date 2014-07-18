@@ -261,7 +261,7 @@ void Analysis::destroy()
 
 void Analysis::compressCU(TComDataCU* cu)
 {
-    if (cu->getSlice()->m_pps->bUseDQP)
+    if (cu->m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
 
     // initialize CU data
@@ -271,7 +271,7 @@ void Analysis::compressCU(TComDataCU* cu)
     // analysis of CU
     uint32_t numPartition = cu->getTotalNumPart();
 
-    if (m_bestCU[0]->getSlice()->m_sliceType == I_SLICE)
+    if (m_bestCU[0]->m_slice->m_sliceType == I_SLICE)
     {
         compressIntraCU(m_bestCU[0], m_tempCU[0], 0, false);
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
@@ -373,7 +373,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
 
     uint32_t log2CUSize = outTempCU->getLog2CUSize(0);
-    Slice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->m_slice;
     if (!bInsidePicture)
     {
         uint32_t cuSize = 1 << log2CUSize;
@@ -519,10 +519,10 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
-    if (outTempCU->getSlice()->m_pps->bTransquantBypassEnabled)
+    if (outTempCU->m_slice->m_pps->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
-    if (!outTempCU->getSlice()->isIntra())
+    if (!outTempCU->m_slice->isIntra())
     {
         m_sbacCoder->codeSkipFlag(outTempCU, 0);
         m_sbacCoder->codePredMode(outTempCU, 0);
@@ -572,7 +572,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     bool bInsidePictureParent = bInsidePicture;
 #endif
 
-    Slice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->m_slice;
     if (!bInsidePicture)
     {
         int cuSize = 1 << outTempCU->getLog2CUSize(0);
@@ -1060,7 +1060,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     bool earlyDetectionSkipMode = false;
 
     uint32_t log2CUSize = outTempCU->getLog2CUSize(0);
-    Slice* slice = outTempCU->getSlice();
+    Slice* slice = outTempCU->m_slice;
     if (!bInsidePicture)
     {
         uint32_t cuSize = 1 << log2CUSize;
@@ -1348,10 +1348,10 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
 void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& yuvReconBest)
 {
-    X265_CHECK(outTempCU->getSlice()->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
+    X265_CHECK(outTempCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;
+    uint32_t maxNumMergeCand = outTempCU->m_slice->m_maxNumMergeCand;
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
@@ -1447,10 +1447,10 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
 void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode, TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest)
 {
-    X265_CHECK(outTempCU->getSlice()->m_sliceType != I_SLICE, "I slice not expected\n");
+    X265_CHECK(outTempCU->m_slice->m_sliceType != I_SLICE, "I slice not expected\n");
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = outTempCU->getSlice()->m_maxNumMergeCand;
+    uint32_t maxNumMergeCand = outTempCU->m_slice->m_maxNumMergeCand;
 
     uint8_t depth = outTempCU->getDepth(0);
     outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
@@ -1537,7 +1537,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     int mvsum = 0;
                     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
                     {
-                        if (outBestCU->getSlice()->m_numRefIdx[refListIdx] > 0)
+                        if (outBestCU->m_slice->m_numRefIdx[refListIdx] > 0)
                         {
                             TComCUMvField* pcCUMvField = outBestCU->getCUMvField(refListIdx);
                             int hor = abs(pcCUMvField->getMvd(0).x);
@@ -1732,10 +1732,10 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
     m_sbacCoder->resetBits();
-    if (outTempCU->getSlice()->m_pps->bTransquantBypassEnabled)
+    if (outTempCU->m_slice->m_pps->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
-    if (!outTempCU->getSlice()->isIntra())
+    if (!outTempCU->m_slice->isIntra())
     {
         m_sbacCoder->codeSkipFlag(outTempCU, 0);
         m_sbacCoder->codePredMode(outTempCU, 0);
@@ -1786,10 +1786,10 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 
     estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv);
     m_sbacCoder->resetBits();
-    if (cu->getSlice()->m_pps->bTransquantBypassEnabled)
+    if (cu->m_slice->m_pps->bTransquantBypassEnabled)
         m_sbacCoder->codeCUTransquantBypassFlag(cu, 0);
 
-    if (!cu->getSlice()->isIntra())
+    if (!cu->m_slice->isIntra())
     {
         m_sbacCoder->codeSkipFlag(cu, 0);
         m_sbacCoder->codePredMode(cu, 0);
@@ -1821,7 +1821,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
     uint8_t nextDepth = (uint8_t)(depth + 1);
     TComDataCU* subTempPartCU = m_tempCU[nextDepth];
     Frame* pic = cu->m_pic;
-    Slice* slice = cu->getSlice();
+    Slice* slice = cu->m_slice;
 
     if (((depth < lcu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth))))
     {
@@ -1942,7 +1942,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 {
     Frame* pic = cu->m_pic;
 
-    Slice* slice = cu->getSlice();
+    Slice* slice = cu->m_slice;
     if (!bInsidePicture)
     {
         uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
@@ -2017,7 +2017,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 
 void Analysis::encodeCU(TComDataCU* cu)
 {
-    if (cu->getSlice()->m_pps->bUseDQP)
+    if (cu->m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
 
     // Encode CU data
@@ -2099,7 +2099,7 @@ void Analysis::checkDQP(TComDataCU* cu)
 {
     uint32_t depth = cu->getDepth(0);
 
-    if (cu->getSlice()->m_pps->bUseDQP && (g_maxCUSize >> depth) >= cu->getSlice()->m_pps->minCuDQPSize)
+    if (cu->m_slice->m_pps->bUseDQP && (g_maxCUSize >> depth) >= cu->m_slice->m_pps->minCuDQPSize)
     {
         if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
             cu->setQPSubParts(cu->getRefQP(0), 0, depth); // set QP to default QP
@@ -2166,7 +2166,7 @@ void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
 void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     Frame* pic = cu->m_pic;
-    Slice* slice = cu->getSlice();
+    Slice* slice = cu->m_slice;
 
     // Calculate end address
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;

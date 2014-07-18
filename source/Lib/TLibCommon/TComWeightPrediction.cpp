@@ -501,7 +501,7 @@ void TComWeightPrediction::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx,
  */
 void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1)
 {
-    Slice* slice = cu->getSlice();
+    Slice* slice = cu->m_slice;
     bool wpBiPred = slice->m_pps->bUseWeightedBiPred;
     bool bBiDir  = (refIdx0 >= 0 && refIdx1 >= 0);
     bool bUniDir = !bBiDir;

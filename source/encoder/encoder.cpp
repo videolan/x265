@@ -335,10 +335,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
 
     if (out)
     {
+        Slice *slice = out->m_picSym->m_slice;
         if (pic_out)
         {
             TComPicYuv *recpic = out->getPicYuvRec();
-            pic_out->poc = out->getSlice()->m_poc;
+            pic_out->poc = slice->m_poc;
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
             pic_out->colorSpace = m_param->internalCsp;
@@ -346,7 +347,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             pic_out->pts = out->m_pts;
             pic_out->dts = out->m_dts;
 
-            switch (out->getSlice()->m_sliceType)
+            switch (slice->m_sliceType)
             {
             case I_SLICE:
                 pic_out->sliceType = out->m_lowres.bKeyframe ? X265_TYPE_IDR : X265_TYPE_I;
@@ -367,23 +368,23 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
         }
 
-        if (out->getSlice()->m_sliceType == P_SLICE)
+        if (slice->m_sliceType == P_SLICE)
         {
-            if (out->getSlice()->m_weightPredTable[0][0][0].bPresentFlag)
+            if (slice->m_weightPredTable[0][0][0].bPresentFlag)
                 m_numLumaWPFrames++;
-            if (out->getSlice()->m_weightPredTable[0][0][1].bPresentFlag ||
-                out->getSlice()->m_weightPredTable[0][0][2].bPresentFlag)
+            if (slice->m_weightPredTable[0][0][1].bPresentFlag ||
+                slice->m_weightPredTable[0][0][2].bPresentFlag)
                 m_numChromaWPFrames++;
         }
-        else if (out->getSlice()->m_sliceType == B_SLICE)
+        else if (slice->m_sliceType == B_SLICE)
         {
             bool bLuma = false, bChroma = false;
             for (int l = 0; l < 2; l++)
             {
-                if (out->getSlice()->m_weightPredTable[l][0][0].bPresentFlag)
+                if (slice->m_weightPredTable[l][0][0].bPresentFlag)
                     bLuma = true;
-                if (out->getSlice()->m_weightPredTable[l][0][1].bPresentFlag ||
-                    out->getSlice()->m_weightPredTable[l][0][2].bPresentFlag)
+                if (slice->m_weightPredTable[l][0][1].bPresentFlag ||
+                    slice->m_weightPredTable[l][0][2].bPresentFlag)
                     bChroma = true;
             }
 
@@ -441,10 +442,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
         {
             fenc->allocPicSym(m_param);
-            fenc->getSlice()->m_sps = &m_sps;
-            fenc->getSlice()->m_pps = &m_pps;
-            fenc->getSlice()->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            fenc->getSlice()->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
+            fenc->m_picSym->m_slice->m_sps = &m_sps;
+            fenc->m_picSym->m_slice->m_pps = &m_pps;
+            fenc->m_picSym->m_slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
+            fenc->m_picSym->m_slice->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
 
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)
@@ -886,7 +887,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    Slice*  slice = pic->getSlice();
+    Slice*  slice = pic->m_picSym->m_slice;
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);

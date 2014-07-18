@@ -224,8 +224,6 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    Slice*        getSlice()                       { return m_slice; }
-
     uint32_t&     getAddr()                        { return m_cuAddr; }
 
     uint32_t&     getZorderIdxInCU()               { return m_absIdxInLCU; }

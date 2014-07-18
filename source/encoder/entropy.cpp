@@ -100,7 +100,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&
-             (cu->getSlice()->m_sps->quadtreeTUMaxDepthInter == 1))
+             (cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
     {
         if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         {
@@ -111,11 +111,11 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrSize > cu->getSlice()->m_sps->quadtreeTULog2MaxSize)
+    else if (log2TrSize > cu->m_slice->m_sps->quadtreeTULog2MaxSize)
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (log2TrSize == cu->getSlice()->m_sps->quadtreeTULog2MinSize)
+    else if (log2TrSize == cu->m_slice->m_sps->quadtreeTULog2MinSize)
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
@@ -190,7 +190,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
         if (cbfY || cbfU || cbfV)
         {
             // dQP: only for LCU once
-            if (cu->getSlice()->m_pps->bUseDQP)
+            if (cu->m_slice->m_pps->bUseDQP)
             {
                 if (bCodeDQP)
                 {
@@ -297,13 +297,13 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
         else
         {
             uint32_t interDir = cu->getInterDir(subPartIdx);
-            if (cu->getSlice()->isInterB())
+            if (cu->m_slice->isInterB())
                 codeInterDir(cu, subPartIdx);
             for (uint32_t list = 0; list < 2; list++)
             {
                 if (interDir & (1 << list))
                 {
-                    X265_CHECK(cu->getSlice()->m_numRefIdx[list] > 0, "numRefs should have been > 0\n");
+                    X265_CHECK(cu->m_slice->m_numRefIdx[list] > 0, "numRefs should have been > 0\n");
 
                     codeRefFrmIdxPU(cu, subPartIdx, list);
                     codeMvd(cu, subPartIdx, list);
@@ -318,7 +318,7 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
-    if (cu->getSlice()->m_numRefIdx[list] == 1)
+    if (cu->m_slice->m_numRefIdx[list] == 1)
         return;
 
     X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
@@ -1251,7 +1251,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_2NxnD:
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
         encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-        if (cu->getSlice()->m_sps->maxAMPDepth > depth)
+        if (cu->m_slice->m_sps->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
@@ -1266,7 +1266,7 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
             encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
-        if (cu->getSlice()->m_sps->maxAMPDepth > depth)
+        if (cu->m_slice->m_sps->maxAMPDepth > depth)
         {
             encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
@@ -1320,7 +1320,7 @@ void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 
 void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
-    uint32_t numCand = cu->getSlice()->m_maxNumMergeCand;
+    uint32_t numCand = cu->m_slice->m_maxNumMergeCand;
 
     if (numCand > 1)
     {
@@ -1456,7 +1456,7 @@ void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 
     if (refFrame > 0)
     {
-        uint32_t refNum = cu->getSlice()->m_numRefIdx[list] - 2;
+        uint32_t refNum = cu->m_slice->m_numRefIdx[list] - 2;
         if (refNum == 0)
             return;
 
@@ -1673,9 +1673,9 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     if (cu->getCUTransquantBypass(absPartIdx))
         beValid = false;
     else
-        beValid = cu->getSlice()->m_pps->bSignHideEnabled;
+        beValid = cu->m_slice->m_pps->bSignHideEnabled;
 
-    if (cu->getSlice()->m_pps->bTransformSkipEnabled)
+    if (cu->m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
 
     ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;

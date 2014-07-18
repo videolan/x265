@@ -1243,7 +1243,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
  */
 void restoreLFDisabledOrigYuv(Frame* pic)
 {
-    if (pic->getSlice()->m_pps->bTransquantBypassEnabled)
+    if (pic->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
         {
@@ -1273,7 +1273,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->m_sps->picWidthInLumaSamples) && (tpely < cu->getSlice()->m_sps->picHeightInLumaSamples))
+            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
                 xOrigCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 

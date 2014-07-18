@@ -108,8 +108,6 @@ public:
     /* Reflector methods for data stored in m_picSym */
     TComPicSym* getPicSym()                { return m_picSym; }
 
-    Slice*      getSlice()                 { return m_picSym->m_slice; }
-
     TComDataCU* getCU(uint32_t cuAddr)     { return m_picSym->getCU(cuAddr); }
 
     uint32_t    getNumCUsInFrame() const   { return m_picSym->getNumberOfCUsInFrame(); }

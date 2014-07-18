@@ -478,7 +478,7 @@ void TEncSampleAdaptiveOffset::startSaoEnc(Frame* pic, SBac* rdGoOnSbacCoder)
     m_pic = pic;
 
     m_rdGoOnSbacCoder = rdGoOnSbacCoder;
-    m_rdGoOnSbacCoder->resetEntropy(pic->getSlice());
+    m_rdGoOnSbacCoder->resetEntropy(pic->m_picSym->m_slice);
     m_rdGoOnSbacCoder->resetBits();
     m_rdGoOnSbacCoder->store(m_rdSbacCoders[0][CI_NEXT_BEST]);
     m_rdSbacCoders[0][CI_CURR_BEST].load(m_rdSbacCoders[0][CI_NEXT_BEST]);

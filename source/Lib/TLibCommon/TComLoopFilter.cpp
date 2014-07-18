@@ -121,7 +121,7 @@ void TComLoopFilter::xDeblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t 
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->m_sps->picWidthInLumaSamples) && (tpely < cu->getSlice()->m_sps->picHeightInLumaSamples))
+            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
             {
                 xDeblockCU(cu, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
             }
@@ -310,7 +310,7 @@ void TComLoopFilter::xSetLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, 
 
 void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_t absPartIdx, uint8_t blockingStrength[])
 {
-    Slice* const slice = cu->getSlice();
+    Slice* const slice = cu->m_slice;
 
     const uint32_t partQ = absPartIdx;
     TComDataCU* const cuQ = cu;
@@ -351,14 +351,14 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
             {
                 cuP = cuQ->getPUAbove(partP, partQ);
             }
-            if (slice->isInterB() || cuP->getSlice()->isInterB())
+            if (slice->isInterB() || cuP->m_slice->isInterB())
             {
                 int refIdx;
                 Frame *refP0, *refP1, *refQ0, *refQ1;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
-                refP0 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[0][refIdx];
+                refP0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partP);
-                refP1 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[1][refIdx];
+                refP1 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[1][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partQ);
                 refQ0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partQ);
@@ -415,7 +415,7 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
                 int refIdx;
                 Frame *refp0, *refq0;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
-                refp0 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[0][refIdx];
+                refp0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partQ);
                 refq0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
                 MV mvp0 = cuP->getCUMvField(REF_PIC_LIST_0)->getMv(partP);
@@ -457,8 +457,8 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     uint32_t  partQ = 0;
     TComDataCU* cuP = cu;
     TComDataCU* cuQ = cu;
-    int  betaOffsetDiv2 = cuQ->getSlice()->m_pps->deblockingFilterBetaOffsetDiv2;
-    int  tcOffsetDiv2 = cuQ->getSlice()->m_pps->deblockingFilterTcOffsetDiv2;
+    int  betaOffsetDiv2 = cuQ->m_slice->m_pps->deblockingFilterBetaOffsetDiv2;
+    int  tcOffsetDiv2 = cuQ->m_slice->m_pps->deblockingFilterTcOffsetDiv2;
 
     if (dir == EDGE_VER)
     {
@@ -517,7 +517,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
                 int dq = dq0 + dq3;
                 int d =  d0 + d3;
 
-                if (cu->getSlice()->m_pps->bTransquantBypassEnabled)
+                if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 {
                     // check if each of PUs is lossless coded
                     bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -565,7 +565,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t  partQ;
     TComDataCU* cuP;
     TComDataCU* cuQ = cu;
-    int tcOffsetDiv2 = cu->getSlice()->m_pps->deblockingFilterTcOffsetDiv2;
+    int tcOffsetDiv2 = cu->m_slice->m_pps->deblockingFilterTcOffsetDiv2;
 
     // Vertical Position
     uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
@@ -625,7 +625,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             qpP = cuP->getQP(partP);
 
-            if (cu->getSlice()->m_pps->bTransquantBypassEnabled)
+            if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {
                 // check if each of PUs is lossless coded
                 bPartPNoFilter = cuP->isLosslessCoded(partP);
@@ -634,7 +634,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
             {
-                int chromaQPOffset  = (chromaIdx == 0) ? cu->getSlice()->m_pps->chromaCbQpOffset : cu->getSlice()->m_pps->chromaCrQpOffset;
+                int chromaQPOffset  = (chromaIdx == 0) ? cu->m_slice->m_pps->chromaCbQpOffset : cu->m_slice->m_pps->chromaCrQpOffset;
                 pixel* piTmpSrcChroma = (chromaIdx == 0) ? tmpSrcCb : tmpSrcCr;
                 qp = QpUV((((qpP + qpQ + 1) >> 1) + chromaQPOffset), cu->getChromaFormat());
                 int iBitdepthScale = 1 << (X265_DEPTH - 8);

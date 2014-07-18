@@ -979,7 +979,7 @@ fail:
 
 void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
-    m_curSlice = pic->getSlice();
+    m_curSlice = pic->m_picSym->m_slice;
     m_sliceType = m_curSlice->m_sliceType;
     rce->sliceType = m_sliceType;
     rce->isActive = true;
@@ -1190,8 +1190,8 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
     {
         /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
-        Slice* prevRefSlice = m_curSlice->m_refPicList[0][0]->getSlice();
-        Slice* nextRefSlice = m_curSlice->m_refPicList[1][0]->getSlice();
+        Slice* prevRefSlice = m_curSlice->m_refPicList[0][0]->m_picSym->m_slice;
+        Slice* nextRefSlice = m_curSlice->m_refPicList[1][0]->m_picSym->m_slice;
         double q0 = m_curSlice->m_refPicList[0][0]->m_avgQpRc;
         double q1 = m_curSlice->m_refPicList[1][0]->m_avgQpRc;
         bool i0 = prevRefSlice->m_sliceType == I_SLICE;
@@ -1562,8 +1562,8 @@ double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double
 
     encodedBitsSoFar = 0;
     double qScale = x265_qp2qScale(qpVbv);
-    int picType = pic->getSlice()->m_sliceType;
-    Frame* refPic = pic->getSlice()->m_refPicList[0][0];
+    int picType = pic->m_picSym->m_slice->m_sliceType;
+    Frame* refPic = pic->m_picSym->m_slice->m_refPicList[0][0];
     int maxRows = pic->getPicSym()->getFrameHeightInCU();
     for (int row = 0; row < maxRows; row++)
     {
@@ -1594,7 +1594,7 @@ double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double
             if (picType == I_SLICE || qScale >= refQScale)
             {
                 if (picType == P_SLICE
-                    && refPic->getSlice()->m_sliceType == picType
+                    && refPic->m_picSym->m_slice->m_sliceType == picType
                     && refQScale > 0
                     && refRowSatdCost > 0)
                 {
@@ -1634,9 +1634,9 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
-    if (pic->getSlice()->m_sliceType == P_SLICE)
+    if (pic->m_picSym->m_slice->m_sliceType == P_SLICE)
     {
-        Frame* refSlice = pic->getSlice()->m_refPicList[0][0];
+        Frame* refSlice = pic->m_picSym->m_slice->m_refPicList[0][0];
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
             uint64_t intraRowSatdCost = pic->m_rowDiagIntraSatd[row];
@@ -1670,8 +1670,8 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
         {
-            Frame* refSlice1 = pic->getSlice()->m_refPicList[0][0];
-            Frame* refSlice2 = pic->getSlice()->m_refPicList[1][0];
+            Frame* refSlice1 = pic->m_picSym->m_slice->m_refPicList[0][0];
+            Frame* refSlice2 = pic->m_picSym->m_slice->m_refPicList[1][0];
             qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_rowDiagQp[row], refSlice2->m_rowDiagQp[row]));
             qpVbv = X265_MAX(qpVbv, qpMin);
         }
@@ -1828,7 +1828,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
         }
         if (m_param->rc.rateControlMode == X265_RC_CRF)
         {
-            if (int(pic->m_avgQpRc + 0.5) == pic->getSlice()->m_sliceQp)
+            if (int(pic->m_avgQpRc + 0.5) == pic->m_picSym->m_slice->m_sliceQp)
                 pic->m_rateFactor = m_rateFactorConstant;
             else
             {
@@ -1870,8 +1870,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             if (m_param->rc.bStatWrite)
             {
                 char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
-                            : rce->sliceType == P_SLICE ? (pic->getSlice()->m_bReferenced? 'P' : 'p')
-                            : pic->getSlice()->m_bReferenced? 'B' : 'b';
+                    : rce->sliceType == P_SLICE ? (pic->m_picSym->m_slice->m_bReferenced ? 'P' : 'p')
+                    : pic->m_picSym->m_slice->m_bReferenced ? 'B' : 'b';
                 if (fprintf(m_statFileOut,
                          "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
                          rce->poc, rce->encodeOrder,
@@ -1887,7 +1887,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                 if (fprintf(m_statFileOut, ";\n") < 0)
                     goto writeFailure;
                 /* Don't re-write the data in multi-pass mode. */
-                if (m_param->rc.cuTree && pic->getSlice()->m_bReferenced && !m_param->rc.bStatRead)
+                if (m_param->rc.cuTree && pic->m_picSym->m_slice->m_bReferenced && !m_param->rc.bStatRead)
                 {
                     uint8_t sliceType = (uint8_t)rce->sliceType;
                     for (int i = 0; i < m_ncu; i++)
@@ -1948,10 +1948,10 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 
         if (m_param->bEmitHRDSEI)
         {
-            const VUI *vui = &pic->getSlice()->m_sps->vuiParameters;
+            const VUI *vui = &pic->m_picSym->m_slice->m_sps->vuiParameters;
             const HRDInfo *hrd = &vui->hrdParameters;
             const TimingInfo *time = &vui->timingInfo;
-            if (!pic->getSlice()->m_poc)
+            if (!pic->m_picSym->m_slice->m_poc)
             {
                 // first access unit initializes the HRD
                 rce->hrdTiming->cpbInitialAT = 0;

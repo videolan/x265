@@ -284,12 +284,12 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, uint
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
     int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
-    int add = (cu->getSlice()->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
+    int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
 
     int numCoeff = 1 << log2TrSize * 2;
     uint32_t numSig = primitives.quant(coef, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
 
-    if (numSig >= 2 && cu->getSlice()->m_pps->bSignHideEnabled)
+    if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
     {
         return signBitHidingHDQ(qCoef, coef, deltaU, numSig, codingParameters);
     }
@@ -327,7 +327,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         return numSig;
     }
 
-    X265_CHECK((cu->getSlice()->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
+    X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (!useTransformSkip)
     {
         // TODO: this may need larger data types for X265_DEPTH > 8
@@ -856,7 +856,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
         dstCoeff[codingParameters.scan[pos]] = 0;
     }
 
-    if (cu->getSlice()->m_pps->bSignHideEnabled && numSig >= 2)
+    if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         int64_t rdFactor = (int64_t)(
                 g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))

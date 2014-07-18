@@ -210,12 +210,13 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
     // POC distances to each reference
+    Slice *slice = pic->m_picSym->m_slice;
     int p0 = 0, p1, b;
-    int poc = pic->getSlice()->m_poc;
-    int l0poc = pic->getSlice()->m_refPOCList[0][0];
-    int l1poc = pic->getSlice()->m_refPOCList[1][0];
+    int poc = slice->m_poc;
+    int l0poc = slice->m_refPOCList[0][0];
+    int l1poc = slice->m_refPOCList[1][0];
 
-    switch (pic->getSlice()->m_sliceType)
+    switch (slice->m_sliceType)
     {
     case I_SLICE:
         frames[p0] = &pic->m_lowres;
@@ -224,16 +225,16 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
 
     case P_SLICE:
         b = p1 = poc - l0poc;
-        frames[p0] = &pic->getSlice()->m_refPicList[0][0]->m_lowres;
+        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
         break;
 
     case B_SLICE:
         b = poc - l0poc;
         p1 = b + l1poc - poc;
-        frames[p0] = &pic->getSlice()->m_refPicList[0][0]->m_lowres;
+        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
-        frames[p1] = &pic->getSlice()->m_refPicList[1][0]->m_lowres;
+        frames[p1] = &slice->m_refPicList[1][0]->m_lowres;
         break;
 
     default:

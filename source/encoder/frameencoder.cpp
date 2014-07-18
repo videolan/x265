@@ -179,7 +179,7 @@ void FrameEncoder::noiseReductionUpdate()
 void FrameEncoder::initSlice(Frame* pic)
 {
     m_frame = pic;
-    Slice* slice = pic->getSlice();
+    Slice* slice = pic->m_picSym->m_slice;
 
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
@@ -208,7 +208,7 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
-    Slice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->m_picSym->m_slice;
   
     int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
     int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
@@ -220,7 +220,7 @@ void FrameEncoder::compressFrame()
 {
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
-    Slice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->m_picSym->m_slice;
     int totalCoded = m_rce.encodeOrder;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
@@ -484,7 +484,7 @@ void FrameEncoder::compressFrame()
 
 void FrameEncoder::encodeSlice()
 {
-    Slice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->m_picSym->m_slice;
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
@@ -577,7 +577,7 @@ void FrameEncoder::encodeSlice()
 void FrameEncoder::compressCTURows()
 {
     PPAScopeEvent(FrameEncoder_compressRows);
-    Slice* slice = m_frame->getSlice();
+    Slice* slice = m_frame->m_picSym->m_slice;
 
     // reset entropy coders
     m_sbacCoder.resetEntropy(slice);
@@ -735,8 +735,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.m_cuCoder.m_trQuant.m_nr = &m_nr;
     tld.m_cuCoder.m_mref = m_mref;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->getSlice()->m_sliceType];
-    setLambda(m_frame->getSlice()->m_sliceQp, tld);
+    tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
+    setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();
     assert(m_frame->getPicSym()->getFrameWidthInCU() == m_numCols);
@@ -750,7 +750,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_frame->getCU(cuAddr);
         cu->initCU(m_frame, cuAddr);
-        cu->setQPSubParts(m_frame->getSlice()->m_sliceQp, 0, 0);
+        cu->setQPSubParts(m_frame->m_picSym->m_slice->m_sliceQp, 0, 0);
 
         if (bIsVbv)
         {
