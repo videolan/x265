@@ -344,7 +344,6 @@ public:
         m_bCheckLDC = false;
         m_bReferenced = false;
         m_colFromL0Flag = true;
-        m_sliceCurEndCUAddr = 0;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
 
         for (int i = 0; i < MAX_NUM_REF; i++)

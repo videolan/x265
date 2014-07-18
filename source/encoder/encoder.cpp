@@ -443,6 +443,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             fenc->allocPicSym(m_param);
             fenc->getSlice()->m_sps = &m_sps;
             fenc->getSlice()->m_pps = &m_pps;
+            fenc->getSlice()->m_maxNumMergeCand = m_param->maxNumMergeCand;
+            fenc->getSlice()->m_sliceCurEndCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
 
             // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
             if (m_param->bEnableSAO)

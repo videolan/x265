@@ -189,8 +189,6 @@ void FrameEncoder::initSlice(Frame* pic)
     int type = pic->m_lowres.sliceType;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
     slice->m_bReferenced = m_isReferenced = type != X265_TYPE_B;
-    slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-    slice->m_sliceCurEndCUAddr = pic->getNumCUsInFrame() * pic->getNumPartInCU();
 }
 
 void FrameEncoder::threadMain()
