@@ -355,13 +355,13 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
                 int refIdx;
                 Frame *refP0, *refP1, *refQ0, *refQ1;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
-                refP0 = (refIdx < 0) ? NULL : cuP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
+                refP0 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[0][refIdx];
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partP);
-                refP1 = (refIdx < 0) ? NULL : cuP->getSlice()->getRefPic(REF_PIC_LIST_1, refIdx);
+                refP1 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[1][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partQ);
-                refQ0 = (refIdx < 0) ? NULL : slice->getRefPic(REF_PIC_LIST_0, refIdx);
+                refQ0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partQ);
-                refQ1 = (refIdx < 0) ? NULL : slice->getRefPic(REF_PIC_LIST_1, refIdx);
+                refQ1 = (refIdx < 0) ? NULL : slice->m_refPicList[1][refIdx];
 
                 MV mvp0 = cuP->getCUMvField(REF_PIC_LIST_0)->getMv(partP);
                 MV mvp1 = cuP->getCUMvField(REF_PIC_LIST_1)->getMv(partP);
@@ -414,9 +414,9 @@ void TComLoopFilter::xGetBoundaryStrengthSingle(TComDataCU* cu, int dir, uint32_
                 int refIdx;
                 Frame *refp0, *refq0;
                 refIdx = cuP->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partP);
-                refp0 = (refIdx < 0) ? NULL : cuP->getSlice()->getRefPic(REF_PIC_LIST_0, refIdx);
+                refp0 = (refIdx < 0) ? NULL : cuP->getSlice()->m_refPicList[0][refIdx];
                 refIdx = cuQ->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partQ);
-                refq0 = (refIdx < 0) ? NULL : slice->getRefPic(REF_PIC_LIST_0, refIdx);
+                refq0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
                 MV mvp0 = cuP->getCUMvField(REF_PIC_LIST_0)->getMv(partP);
                 MV mvq0 = cuQ->getCUMvField(REF_PIC_LIST_0)->getMv(partQ);
 

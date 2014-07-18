@@ -1190,10 +1190,10 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
     {
         /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
-        TComSlice* prevRefSlice = m_curSlice->getRefPic(REF_PIC_LIST_0, 0)->getSlice();
-        TComSlice* nextRefSlice = m_curSlice->getRefPic(REF_PIC_LIST_1, 0)->getSlice();
-        double q0 = m_curSlice->getRefPic(REF_PIC_LIST_0, 0)->m_avgQpRc;
-        double q1 = m_curSlice->getRefPic(REF_PIC_LIST_1, 0)->m_avgQpRc;
+        TComSlice* prevRefSlice = m_curSlice->m_refPicList[0][0]->getSlice();
+        TComSlice* nextRefSlice = m_curSlice->m_refPicList[1][0]->getSlice();
+        double q0 = m_curSlice->m_refPicList[0][0]->m_avgQpRc;
+        double q1 = m_curSlice->m_refPicList[1][0]->m_avgQpRc;
         bool i0 = prevRefSlice->m_sliceType == I_SLICE;
         bool i1 = nextRefSlice->m_sliceType == I_SLICE;
         int dt0 = abs(m_curSlice->m_poc - prevRefSlice->m_poc);
@@ -1563,7 +1563,7 @@ double RateControl::predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double
     encodedBitsSoFar = 0;
     double qScale = x265_qp2qScale(qpVbv);
     int picType = pic->getSlice()->m_sliceType;
-    Frame* refPic = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+    Frame* refPic = pic->getSlice()->m_refPicList[0][0];
     int maxRows = pic->getPicSym()->getFrameHeightInCU();
     for (int row = 0; row < maxRows; row++)
     {
@@ -1636,14 +1636,13 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
     if (pic->getSlice()->m_sliceType == P_SLICE)
     {
-        Frame* refSlice = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
+        Frame* refSlice = pic->getSlice()->m_refPicList[0][0];
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
             uint64_t intraRowSatdCost = pic->m_rowDiagIntraSatd[row];
             if (row == 1)
-            {
                 intraRowSatdCost += pic->m_rowDiagIntraSatd[0];
-            }
+
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
     }
@@ -1671,8 +1670,8 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
         {
-            Frame* refSlice1 = pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0);
-            Frame* refSlice2 = pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0);
+            Frame* refSlice1 = pic->getSlice()->m_refPicList[0][0];
+            Frame* refSlice2 = pic->getSlice()->m_refPicList[1][0];
             qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_rowDiagQp[row], refSlice2->m_rowDiagQp[row]));
             qpVbv = X265_MAX(qpVbv, qpMin);
         }

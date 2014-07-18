@@ -1989,7 +1989,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     // TODO: skip mvCand if Y is > merange and -FN>1
                     cu->clipMv(mvCand);
 
-                    xPredInterLumaBlk(cu, cu->getSlice()->getRefPic(l, ref)->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
+                    xPredInterLumaBlk(cu, cu->getSlice()->m_refPicList[l][ref]->getPicYuvRec(), partAddr, &mvCand, roiWidth, roiHeight, &m_predTempYuv);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
                     cost = m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
@@ -2034,8 +2034,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             bidir[1] = list[1];
 
             // Generate reference subpels
-            TComPicYuv *refPic0 = cu->getSlice()->getRefPic(REF_PIC_LIST_0, list[0].ref)->getPicYuvRec();
-            TComPicYuv *refPic1 = cu->getSlice()->getRefPic(REF_PIC_LIST_1, list[1].ref)->getPicYuvRec();
+            TComPicYuv *refPic0 = cu->getSlice()->m_refPicList[0][list[0].ref]->getPicYuvRec();
+            TComPicYuv *refPic1 = cu->getSlice()->m_refPicList[1][list[1].ref]->getPicYuvRec();
             xPredInterLumaBlk(cu, refPic0, partAddr, &list[0].mv, roiWidth, roiHeight, &m_predYuv[0]);
             xPredInterLumaBlk(cu, refPic1, partAddr, &list[1].mv, roiWidth, roiHeight, &m_predYuv[1]);
 

@@ -212,8 +212,8 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
     // POC distances to each reference
     int p0 = 0, p1, b;
     int poc = pic->getSlice()->m_poc;
-    int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
-    int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
+    int l0poc = pic->getSlice()->getRefPOC(0, 0);
+    int l1poc = pic->getSlice()->getRefPOC(1, 0);
 
     switch (pic->getSlice()->m_sliceType)
     {
@@ -224,16 +224,16 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
 
     case P_SLICE:
         b = p1 = poc - l0poc;
-        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[p0] = &pic->getSlice()->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
         break;
 
     case B_SLICE:
         b = poc - l0poc;
         p1 = b + l1poc - poc;
-        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[p0] = &pic->getSlice()->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
-        frames[p1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
+        frames[p1] = &pic->getSlice()->m_refPicList[1][0]->m_lowres;
         break;
 
     default:

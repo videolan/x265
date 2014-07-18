@@ -150,11 +150,11 @@ void DPB::prepareEncode(Frame *pic)
         int refIdx = 0;
 
         for (refIdx = 0; refIdx < slice->m_numRefIdx[0] && bLowDelay; refIdx++)
-            if (slice->getRefPic(REF_PIC_LIST_0, refIdx)->getPOC() > curPOC)
+            if (slice->m_refPicList[0][refIdx]->getPOC() > curPOC)
                 bLowDelay = false;
 
         for (refIdx = 0; refIdx < slice->m_numRefIdx[1] && bLowDelay; refIdx++)
-            if (slice->getRefPic(REF_PIC_LIST_1, refIdx)->getPOC() > curPOC)
+            if (slice->m_refPicList[1][refIdx]->getPOC() > curPOC)
                 bLowDelay = false;
 
         slice->m_bCheckLDC = bLowDelay;
@@ -191,7 +191,7 @@ void DPB::prepareEncode(Frame *pic)
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
-            Frame *refpic = slice->getRefPic(l, ref);
+            Frame *refpic = slice->m_refPicList[l][ref];
             ATOMIC_INC(&refpic->m_countRefEncoders);
         }
     }

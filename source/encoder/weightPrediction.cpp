@@ -270,7 +270,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     for (int list = 0; list < cache.numPredDir; list++)
     {
         WeightParam *weights = wp[list][0];
-        Frame *refPic = slice.getRefPic(list, 0);
+        Frame *refPic = slice.m_refPicList[list][0];
         Lowres& refLowres = refPic->m_lowres;
         int diffPoc = abs(curPoc - refPic->getPOC());
 

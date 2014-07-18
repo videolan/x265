@@ -406,8 +406,6 @@ public:
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
 
-    Frame*    getRefPic(int e, int refIdx)        { return m_refPicList[e][refIdx]; }
-
     int       getRefPOC(int e, int refIdx)        { return m_refPOCList[e][refIdx]; }
 
     void  setWpScaling(WeightParam wp[2][MAX_NUM_REF][3]) { memcpy(m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3); }

@@ -360,7 +360,7 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->getRefPic(l, ref)->getPicYuvRec(), w);
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->getPicYuvRec(), w);
         }
     }
 
@@ -470,7 +470,7 @@ void FrameEncoder::compressFrame()
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
-            Frame *refpic = slice->getRefPic(l, ref);
+            Frame *refpic = slice->m_refPicList[l][ref];
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
@@ -611,7 +611,7 @@ void FrameEncoder::compressCTURows()
             {
                 for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
                 {
-                    Frame *refpic = slice->getRefPic(l, ref);
+                    Frame *refpic = slice->m_refPicList[l][ref];
 
                     int reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
@@ -650,7 +650,7 @@ void FrameEncoder::compressCTURows()
                     int list = l;
                     for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
-                        Frame *refpic = slice->getRefPic(list, ref);
+                        Frame *refpic = slice->m_refPicList[list][ref];
 
                         int reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))

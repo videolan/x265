@@ -2482,23 +2482,19 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
     if (!tmpCU)
         return false;
 
-    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && m_slice->getRefPic(picList, refIdx)->getPOC() == tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx)))
+    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && m_slice->m_refPicList[picList][refIdx]->getPOC() == tmpCU->getSlice()->getRefPOC(picList, tmpCU->getCUMvField(picList)->getRefIdx(idx)))
     {
         mvp = tmpCU->getCUMvField(picList)->getMv(idx);
         return true;
     }
 
-    int refPicList2nd = REF_PIC_LIST_0;
-    if (picList == REF_PIC_LIST_0)
-    {
-        refPicList2nd = REF_PIC_LIST_1;
-    }
-    else if (picList == REF_PIC_LIST_1)
-    {
-        refPicList2nd = REF_PIC_LIST_0;
-    }
+    int refPicList2nd = 0;
+    if (picList == 0)
+        refPicList2nd = 1;
+    else if (picList == 1)
+        refPicList2nd = 0;
 
-    int curRefPOC = m_slice->getRefPic(picList, refIdx)->getPOC();
+    int curRefPOC = m_slice->m_refPicList[picList][refIdx]->getPOC();
     int neibRefPOC;
 
     if (tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx) >= 0)
@@ -2558,7 +2554,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
         refPicList2nd = REF_PIC_LIST_0;
 
     int curPOC = m_slice->m_poc;
-    int curRefPOC = m_slice->getRefPic(picList, refIdx)->getPOC();
+    int curRefPOC = m_slice->m_refPicList[picList][refIdx]->getPOC();
     int neibPOC = curPOC;
     int neibRefPOC;
 
@@ -2612,7 +2608,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     MV colmv;
 
     // use coldir.
-    Frame *colPic = getSlice()->getRefPic(getSlice()->isInterB() ? 1 - getSlice()->m_colFromL0Flag : 0, getSlice()->m_colRefIdx);
+    Frame *colPic = getSlice()->m_refPicList[getSlice()->isInterB() ? 1 - getSlice()->m_colFromL0Flag : 0][getSlice()->m_colRefIdx];
     TComDataCU *colCU = colPic->getCU(cuAddr);
 
     if (colCU->m_pic == 0 || colCU->getPartitionSize(partUnitIdx) == SIZE_NONE)
@@ -2641,7 +2637,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     colRefPOC = colCU->getSlice()->getRefPOC(colRefPicList, colRefIdx);
     colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
 
-    curRefPOC = m_slice->getRefPic(picList, outRefIdx)->getPOC();
+    curRefPOC = m_slice->m_refPicList[picList][outRefIdx]->getPOC();
 
     scale = xGetDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
     if (scale == 4096)

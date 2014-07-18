@@ -592,8 +592,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 #if TOPSKIP
     if (bInsidePicture && !bInsidePictureParent)
     {
-        TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->getRefPic(0, 0)->getCU(outTempCU->getAddr()) : NULL;
-        TComDataCU* colocated1 = slice->m_numRefIdx[1] > 0 ? slice->getRefPic(1, 0)->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->m_refPicList[0][0]->getCU(outTempCU->getAddr()) : NULL;
+        TComDataCU* colocated1 = slice->m_numRefIdx[1] > 0 ? slice->m_refPicList[1][0]->getCU(outTempCU->getAddr()) : NULL;
         char currentQP = outTempCU->getQP(0);
         char previousQP = colocated0->getQP(0);
         uint8_t delta = 0, minDepth0 = 4, minDepth1 = 4;
