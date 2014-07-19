@@ -165,14 +165,14 @@ public:
     inline static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
     {
         //set the group layout
-        const uint32_t log2TrSizeCG = log2TrSize - MLS_CG_LOG2_SIZE;
+        const uint32_t log2TrSizeCG = log2TrSize - 2;
 
         result.log2TrSizeCG = log2TrSizeCG;
 
         //set the scan orders
-        result.scanType = COEFF_SCAN_TYPE(cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx)));
-        result.scan   = g_scanOrder[SCAN_GROUPED_4x4][result.scanType][log2TrSize];
-        result.scanCG = g_scanOrder[SCAN_UNGROUPED][result.scanType][log2TrSizeCG];
+        result.scanType = cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
+        result.scan   = g_scanOrder[result.scanType][log2TrSize - 2];
+        result.scanCG = g_scanOrderCG[result.scanType][log2TrSizeCG];
 
         //set the significance map context selection parameters
         TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;

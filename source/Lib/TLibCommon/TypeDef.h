@@ -129,12 +129,12 @@ enum MVP_DIR
 };
 
 /// coefficient scanning type used in ACS
-enum COEFF_SCAN_TYPE
+enum ScanType
 {
     SCAN_DIAG = 0,      ///< up-right diagonal scan
     SCAN_HOR  = 1,      ///< horizontal first scan
     SCAN_VER  = 2,      ///< vertical first scan
-    SCAN_NUMBER_OF_TYPES = 3
+    NUM_SCAN_TYPE = 3
 };
 
 enum SignificanceMapContextType
@@ -145,21 +145,14 @@ enum SignificanceMapContextType
     CONTEXT_NUMBER_OF_TYPES = 3
 };
 
-enum COEFF_SCAN_GROUP_TYPE
-{
-    SCAN_UNGROUPED   = 0,
-    SCAN_GROUPED_4x4 = 1,
-    SCAN_NUMBER_OF_GROUP_TYPES = 2
-};
-
 //TU settings for entropy encoding
 struct TUEntropyCodingParameters
 {
-    const uint16_t            *scan;
-    const uint16_t            *scanCG;
-    COEFF_SCAN_TYPE      scanType;
-    uint32_t             log2TrSizeCG;
-    uint32_t             firstSignificanceMapContext;
+    const uint16_t  *scan;
+    const uint16_t  *scanCG;
+    uint32_t        scanType;
+    uint32_t        log2TrSizeCG;
+    uint32_t        firstSignificanceMapContext;
 };
 
 namespace Profile {

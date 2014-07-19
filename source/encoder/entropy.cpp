@@ -981,7 +981,7 @@ void SBac::codeScalingList(ScalingList* scalingList)
 void SBac::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
     int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
-    const uint16_t* scan = g_scanOrder[SCAN_UNGROUPED][SCAN_DIAG][sizeId == 0 ? 2 : 3];
+    const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
     int nextCoef = ScalingList::START_VALUE;
     int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
     int data;

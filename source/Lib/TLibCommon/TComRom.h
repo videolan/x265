@@ -82,7 +82,6 @@ extern const uint8_t g_chroma422IntraAngleMappingTable[36];
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_LOG2_TR_SIZE + 1];
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
 
@@ -132,6 +131,13 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 // ====================================================================================================================
 // Scanning order & context mapping table
 // ====================================================================================================================
+
+#define NUM_SCAN_SIZE 4
+
+extern const uint16_t* const g_scanOrder[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
+extern const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
+extern const uint16_t g_scan8x8diag[8 * 8];
+extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
 
 //extern const uint8_t g_groupIdx[32];
 static inline uint32_t getGroupIdx(const uint32_t idx)
