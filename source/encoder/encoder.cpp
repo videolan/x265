@@ -159,6 +159,9 @@ void Encoder::destroy()
         m_exportedPic = NULL;
     }
 
+    if (m_rateControl)
+        m_rateControl->terminate(); // unblock all blocked RC calls
+
     if (m_frameEncoder)
     {
         for (int i = 0; i < m_param->frameNumThreads; i++)
@@ -461,13 +464,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->m_enable.trigger();
     }
-    else if (!fenc && m_encodedFrameNum > 0)
-    {
-        // faked rateControlStart calls to avoid rateControlEnd of last frameNumThreads parallel frames from waiting
-        RateControlEntry rce;
-        rce.encodeOrder = m_encodedFrameNum++;
-        m_rateControl->rateControlStart(NULL, m_lookahead, &rce, this);
-    }
+    else if (m_encodedFrameNum)
+        m_rateControl->setFinalFrameCount(m_encodedFrameNum);
 
     return ret;
 }

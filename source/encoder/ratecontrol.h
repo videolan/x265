@@ -159,7 +159,7 @@ public:
     double   m_fps;
 
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
-     * sync the calls to these functions.For example
+     * sync the calls to these functions. For example
      * -F2:
      * rceStart  10
      * rceUpdate 10
@@ -170,8 +170,9 @@ public:
      * rceStart  12
      * rceUpdate 12
      * rceEnd    11 */
-
     ThreadSafeInteger m_startEndOrder;
+    int      m_finalFrameCount;   /* set when encoder begins flushing */
+    bool     m_bTerminated;       /* set true when encoder is closing */
 
     /* hrd stuff */
     SEIBufferingPeriod m_bufPeriodSEI;
@@ -196,7 +197,10 @@ public:
     } m_cuTreeStats;
 
     RateControl(x265_param *p);
+    void setFinalFrameCount(int count);
+    void terminate();          /* un-block all waiting functions so encoder may close */
     void destroy();
+
     // to be called for each frame to process RateControl and set QP
     void rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(Frame *pic);
@@ -208,6 +212,7 @@ public:
     void initHRD(SPS* sps);
     int rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* frame);
+
 protected:
 
     static const double s_amortizeFraction;

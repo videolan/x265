@@ -320,6 +320,8 @@ RateControl::RateControl(x265_param *p)
     m_rateFactorMaxDecrement = 0;
     m_fps = m_param->fpsNum / m_param->fpsDenom;
     m_startEndOrder.set(0);
+    m_bTerminated = false;
+    m_finalFrameCount = 0;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -1044,7 +1046,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     int orderValue = m_startEndOrder.get();
     int startOrdinal = rce->encodeOrder * 2;
 
-    while (orderValue != startOrdinal && pic)
+    while (orderValue < startOrdinal && !m_bTerminated)
        orderValue = m_startEndOrder.waitForChange(orderValue);
 
     if (!pic)
@@ -2029,8 +2031,15 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 {
     int orderValue = m_startEndOrder.get();
     int endOrdinal = (rce->encodeOrder + m_param->frameNumThreads) * 2 - 1;
-    while (orderValue != endOrdinal)
+    while (orderValue < endOrdinal && !m_bTerminated)
+    {
+        /* no more frames are being encoded, so fake the start event if we would
+         * have blocked on it. Note that this does not enforce rateControlEnd()
+         * ordering during flush, but this has no impact on the outputs */
+        if (m_finalFrameCount && orderValue >= 2 * m_finalFrameCount)
+            break;
         orderValue = m_startEndOrder.waitForChange(orderValue);
+    }
 
     int64_t actualBits = bits;
     if (m_isAbr)
@@ -2205,6 +2214,25 @@ writeFailure:
 #if defined(_MSC_VER)
 #pragma warning(disable: 4996) // POSIX function names are just fine, thank you
 #endif
+
+/* called when the encoder is flushing, and thus the final frame count is
+ * unambiguously known */
+void RateControl::setFinalFrameCount(int count)
+{
+    m_finalFrameCount = count;
+    /* unblock waiting threads */
+    m_startEndOrder.set(m_startEndOrder.get());
+}
+
+/* called when the encoder is closing, and no more frames will be output.
+ * all blocked functions must finish so the frame encoder threads can be
+ * closed */
+void RateControl::terminate()
+{
+    m_bTerminated = true;
+    /* unblock waiting threads */
+    m_startEndOrder.set(m_startEndOrder.get());
+}
 
 void RateControl::destroy()
 {
