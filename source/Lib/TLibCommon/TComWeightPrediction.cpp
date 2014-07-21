@@ -566,7 +566,7 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
  */
 void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv0, TComYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
-    WeightParam  *pwp0, *pwp1;
+    WeightParam  *pwp0 = NULL, *pwp1 = NULL;
 
     getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 
@@ -602,7 +602,7 @@ void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, TComYuv* srcYuv
  */
 void TComWeightPrediction::xWeightedPredictionBi(TComDataCU* cu, ShortYuv* srcYuv0, ShortYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma)
 {
-    WeightParam  *pwp0, *pwp1;
+    WeightParam  *pwp0 = NULL, *pwp1 = NULL;
 
     getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 
