@@ -111,10 +111,6 @@ void Encoder::create()
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 
-    /* Increase the DPB size and reorder picture if bpyramid is enabled */
-    m_vps.numReorderPics = (m_param->bBPyramid && m_param->bframes > 1) ? 2 : 1;
-    m_vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(m_vps.numReorderPics + 1, (uint32_t)m_param->maxNumReferences) + m_vps.numReorderPics);
-
     initSPS(&m_sps);
     initPPS(&m_pps);
 

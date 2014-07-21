@@ -151,8 +151,11 @@ void determineLevel(const x265_param &param, VPS& vps)
  * decoder meeting this level of requirement.  Some parameters (resolution and
  * frame rate) are non-negotiable and thus this function may fail. In those
  * circumstances it will be quite noisy */
-void enforceLevel(x265_param& param)
+void enforceLevel(x265_param& param, VPS& vps)
 {
+    vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
+    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+
     if (param.levelIdc < 0)
         return;
 
@@ -190,25 +193,20 @@ void enforceLevel(x265_param& param)
         x265_log(&param, X265_LOG_INFO, "Lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
     }
 
-    const int MaxDpbPicBuf = 6;
-    int maxDpbSize = MaxDpbPicBuf;
+    const uint32_t MaxDpbPicBuf = 6;
+    uint32_t maxDpbSize = MaxDpbPicBuf;
     if (lumaSamples <= (l.maxLumaSamples >> 2))
         maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
     else if (lumaSamples <= (l.maxLumaSamples >> 1))
         maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
     else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
         maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+
     int savedRefCount = param.maxNumReferences;
-
-    for (;; )
+    while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
     {
-        int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
-        int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);
-
-        if (maxDecPicBuffering > maxDpbSize)
-            param.maxNumReferences--;
-        else
-            break;
+        param.maxNumReferences--;
+        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
     }
 
     if (param.maxNumReferences != savedRefCount)
