@@ -155,41 +155,6 @@ struct TUEntropyCodingParameters
     uint32_t        firstSignificanceMapContext;
 };
 
-namespace Profile {
-enum Name
-{
-    NONE = 0,
-    MAIN = 1,
-    MAIN10 = 2,
-    MAINSTILLPICTURE = 3,
-};
-}
-
-namespace Level {
-enum Tier
-{
-    MAIN = 0,
-    HIGH = 1,
-};
-
-enum Name
-{
-    NONE     = 0,
-    LEVEL1   = 30,
-    LEVEL2   = 60,
-    LEVEL2_1 = 63,
-    LEVEL3   = 90,
-    LEVEL3_1 = 93,
-    LEVEL4   = 120,
-    LEVEL4_1 = 123,
-    LEVEL5   = 150,
-    LEVEL5_1 = 153,
-    LEVEL5_2 = 156,
-    LEVEL6   = 180,
-    LEVEL6_1 = 183,
-    LEVEL6_2 = 186,
-};
-}
 }
 //! \}
 
