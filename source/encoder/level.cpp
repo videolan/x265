@@ -54,7 +54,7 @@ LevelSpec levels[] =
     { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2", 62 },
 };
 
-/* determine minimum decoder level requiremented to decode the described video */
+/* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier)
 {
     profile = Profile::NONE;
