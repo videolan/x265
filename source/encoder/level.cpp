@@ -210,8 +210,6 @@ void enforceLevel(x265_param& param, VPS& vps)
     }
 
     if (param.maxNumReferences != savedRefCount)
-    {
         x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
-    }
 }
 }
