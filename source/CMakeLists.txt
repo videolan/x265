@@ -276,13 +276,18 @@ if(ENABLE_SHARED)
     else()
         set_target_properties(x265-shared PROPERTIES OUTPUT_NAME x265)
     endif()
-    if(UNIX AND NOT APPLE)
-        set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic,-znoexecstack")
+	if(UNIX)
+		set_target_properties(x265-shared PROPERTIES VERSION ${X265_BUILD})
+        if(NOT APPLE)
+            set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic,-znoexecstack")
+        endif()
     endif()
     set_target_properties(x265-shared PROPERTIES SOVERSION ${X265_BUILD})
     if(X265_LATEST_TAG)
+		if(WINDOWS)
+			set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG})
+		endif()
         # shared library is not installed if a tag is not found
-        set_target_properties(x265-shared PROPERTIES VERSION ${X265_LATEST_TAG})
         install(TARGETS x265-shared
                 LIBRARY DESTINATION ${LIB_INSTALL_DIR}
                 ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
