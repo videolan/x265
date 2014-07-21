@@ -62,13 +62,13 @@ const uint8_t g_nextState[128][2] =
     { 122, 74 }, { 75, 123 }, { 124, 76 }, { 77, 125 }, { 124, 76 }, { 77, 125 }, { 126, 126 }, { 127, 127 }
 };
 
-SBac::SBac()
+Entropy::Entropy()
     : m_fracBits(0)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
 }
 
-void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
+void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP)
 {
     const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
@@ -255,7 +255,7 @@ void SBac::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offse
     }
 }
 
-void SBac::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 {
     if (cu->isIntra(absPartIdx)) // If it is intra mode, encode intra prediction mode.
     {
@@ -281,7 +281,7 @@ void SBac::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 }
 
 /** encode motion information for every PU block */
-void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 {
     PartSize partSize = cu->getPartitionSize(absPartIdx);
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
@@ -316,7 +316,7 @@ void SBac::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 }
 
 /** encode reference frame index for a PU block */
-void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
+void Entropy::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
     if (cu->m_slice->m_numRefIdx[list] == 1)
@@ -326,7 +326,7 @@ void SBac::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
     codeRefFrmIdx(cu, absPartIdx, list);
 }
 
-void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP)
+void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP)
 {
     if (!cu->isIntra(absPartIdx))
     {
@@ -344,7 +344,7 @@ void SBac::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& 
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP);
 }
 
-void SBac::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
+void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
 {
     uint32_t symbol;
     int i;
@@ -395,7 +395,7 @@ void SBac::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
     }
 }
 
-void SBac::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
+void Entropy::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
 {
     if (saoFlag)
     {
@@ -476,7 +476,7 @@ static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp
     return cost;
 }
 
-void SBac::resetEntropy(Slice *slice)
+void Entropy::resetEntropy(Slice *slice)
 {
     int  qp              = slice->m_sliceQp;
     SliceType sliceType  = slice->m_sliceType;
@@ -522,7 +522,7 @@ void SBac::resetEntropy(Slice *slice)
  * index of the closest table.  This index is used for the next P/B slice when
  * cabac_init_present_flag is true.
  */
-void SBac::determineCabacInitIdx(Slice *slice, PPS *pps)
+void Entropy::determineCabacInitIdx(Slice *slice, PPS *pps)
 {
     int qp = slice->m_sliceQp;
 
@@ -576,7 +576,7 @@ void SBac::determineCabacInitIdx(Slice *slice, PPS *pps)
         pps->encCABACTableIdx = I_SLICE;
 }
 
-void SBac::codeVPS(VPS* vps, ProfileTierLevel *ptl)
+void Entropy::codeVPS(VPS* vps, ProfileTierLevel *ptl)
 {
     WRITE_CODE(0,       4, "vps_video_parameter_set_id");
     WRITE_CODE(3,       2, "vps_reserved_three_2bits");
@@ -612,7 +612,7 @@ void SBac::codeVPS(VPS* vps, ProfileTierLevel *ptl)
     WRITE_FLAG(0, "vps_extension_flag");
 }
 
-void SBac::codeShortTermRefPicSet(RPS* rps)
+void Entropy::codeShortTermRefPicSet(RPS* rps)
 {
     WRITE_UVLC(rps->numberOfNegativePictures, "num_negative_pics");
     WRITE_UVLC(rps->numberOfPositivePictures, "num_positive_pics");
@@ -633,7 +633,7 @@ void SBac::codeShortTermRefPicSet(RPS* rps)
     }
 }
 
-void SBac::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
+void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
 {
     WRITE_CODE(0, 4, "sps_video_parameter_set_id");
     WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
@@ -698,7 +698,7 @@ void SBac::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void SBac::codePPS(PPS* pps, ScalingList* scalingList)
+void Entropy::codePPS(PPS* pps, ScalingList* scalingList)
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -751,7 +751,7 @@ void SBac::codePPS(PPS* pps, ScalingList* scalingList)
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
-void SBac::codeVUI(VUI *vui)
+void Entropy::codeVUI(VUI *vui)
 {
     WRITE_FLAG(vui->aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
     if (vui->aspectRatioInfoPresentFlag)
@@ -819,7 +819,7 @@ void SBac::codeVUI(VUI *vui)
     WRITE_FLAG(0, "bitstream_restriction_flag");
 }
 
-void SBac::codeAUD(Slice* slice)
+void Entropy::codeAUD(Slice* slice)
 {
     int picType;
 
@@ -842,7 +842,7 @@ void SBac::codeAUD(Slice* slice)
     WRITE_CODE(picType, 3, "pic_type");
 }
 
-void SBac::codeHrdParameters(HRDInfo *hrd)
+void Entropy::codeHrdParameters(HRDInfo *hrd)
 {
     WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
     WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
@@ -864,7 +864,7 @@ void SBac::codeHrdParameters(HRDInfo *hrd)
     WRITE_FLAG(hrd->cbrFlag, "cbr_flag");
 }
 
-void SBac::codeProfileTier(ProfileTierLevel& ptl)
+void Entropy::codeProfileTier(ProfileTierLevel& ptl)
 {
     WRITE_CODE(0, 2,                "XXX_profile_space[]");
     WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
@@ -885,7 +885,7 @@ void SBac::codeProfileTier(ProfileTierLevel& ptl)
 }
 
 /* code explicit wp tables */
-void SBac::codePredWeightTable(Slice* slice)
+void Entropy::codePredWeightTable(Slice* slice)
 {
     WeightParam *wp;
     bool            bChroma      = true; // 4:0:0 not yet supported
@@ -959,7 +959,7 @@ void SBac::codePredWeightTable(Slice* slice)
 }
 
 /** code quantization matrix */
-void SBac::codeScalingList(ScalingList* scalingList)
+void Entropy::codeScalingList(ScalingList* scalingList)
 {
     uint32_t listId, sizeId;
     bool scalingListPredModeFlag;
@@ -978,7 +978,7 @@ void SBac::codeScalingList(ScalingList* scalingList)
     }
 }
 
-void SBac::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
+void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
     int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
     const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
@@ -1004,7 +1004,7 @@ void SBac::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t l
     }
 }
 
-void SBac::codeSliceHeader(Slice* slice)
+void Entropy::codeSliceHeader(Slice* slice)
 {
     WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
     if (slice->getRapPicFlag())
@@ -1109,7 +1109,7 @@ void SBac::codeSliceHeader(Slice* slice)
 }
 
 /** write wavefront substreams sizes for the slice header */
-void SBac::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
+void Entropy::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
 {
     uint32_t offsetLen = 1;
     while (maxOffset >= (1U << offsetLen))
@@ -1127,7 +1127,7 @@ void SBac::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes,
         WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 
-void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
+void Entropy::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
@@ -1145,7 +1145,7 @@ void SBac::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offs
         encodeBin(0, scmModel[offset]);
 }
 
-void SBac::writeEpExGolomb(uint32_t symbol, uint32_t count)
+void Entropy::writeEpExGolomb(uint32_t symbol, uint32_t count)
 {
     uint32_t bins = 0;
     int numBins = 0;
@@ -1169,7 +1169,7 @@ void SBac::writeEpExGolomb(uint32_t symbol, uint32_t count)
 }
 
 /** Coding of coeff_abs_level_minus3 */
-void SBac::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
+void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 {
     uint32_t length;
     const uint32_t codeRemain = codeNumber & ((1 << absGoRice) - 1);
@@ -1201,36 +1201,36 @@ void SBac::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 }
 
 // SBAC RD
-void  SBac::load(SBac& src)
+void  Entropy::load(Entropy& src)
 {
     this->copyFrom(src);
 }
 
-void  SBac::loadIntraDirModeLuma(SBac& src)
+void  Entropy::loadIntraDirModeLuma(Entropy& src)
 {
     copyState(src);
 
     ::memcpy(&m_contextModels[OFF_ADI_CTX], &src.m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
 }
 
-void  SBac::store(SBac& dest)
+void  Entropy::store(Entropy& dest)
 {
     dest.copyFrom(*this);
 }
 
-void SBac::copyFrom(SBac& src)
+void Entropy::copyFrom(Entropy& src)
 {
     copyState(src);
 
     memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
 }
 
-void SBac::codeMVPIdx(uint32_t symbol)
+void Entropy::codeMVPIdx(uint32_t symbol)
 {
     encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
 }
 
-void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     PartSize partSize = cu->getPartitionSize(absPartIdx);
 
@@ -1290,20 +1290,20 @@ void SBac::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 }
 
-void SBac::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
 {
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
     encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
 }
 
-void SBac::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
     encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
-void SBac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     // get context function is here
     uint32_t symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
@@ -1312,14 +1312,14 @@ void SBac::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
 }
 
-void SBac::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
     encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
 }
 
-void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t numCand = cu->m_slice->m_maxNumMergeCand;
 
@@ -1339,7 +1339,7 @@ void SBac::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-void SBac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     if (depth == g_maxCUDepth - g_addCUDepth)
         return;
@@ -1351,12 +1351,12 @@ void SBac::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
 }
 
-void SBac::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
+void Entropy::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
     encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
 }
 
-void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
+void Entropy::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
 {
     uint32_t dir[4], j;
     uint32_t preds[4][3];
@@ -1413,7 +1413,7 @@ void SBac::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMulti
     }
 }
 
-void SBac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t intraDirChroma = cu->getChromaIntraDir(absPartIdx);
 
@@ -1438,7 +1438,7 @@ void SBac::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-void SBac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t interDir = cu->getInterDir(absPartIdx) - 1;
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
@@ -1449,7 +1449,7 @@ void SBac::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
         encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
 }
 
-void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
+void Entropy::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     uint32_t refFrame = cu->getCUMvField(list)->getRefIdx(absPartIdx);
 
@@ -1472,7 +1472,7 @@ void SBac::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
     }
 }
 
-void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
+void Entropy::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     const TComCUMvField* cuMvField = cu->getCUMvField(list);
     const int hor = cuMvField->getMvd(absPartIdx).x;
@@ -1509,7 +1509,7 @@ void SBac::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     }
 }
 
-void SBac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 {
     int dqp = cu->getQP(absPartIdx) - cu->getRefQP(absPartIdx);
 
@@ -1531,7 +1531,7 @@ void SBac::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
+void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
 {
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
@@ -1560,14 +1560,14 @@ void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxSte
     }
 }
 
-void SBac::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
+void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
 {
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 }
 
-void SBac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
+void Entropy::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu->getCUTransquantBypass(absPartIdx))
         return;
@@ -1578,7 +1578,7 @@ void SBac::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t 
     encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
 }
 
-void SBac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t cbf = cu->getQtRootCbf(absPartIdx);
     uint32_t ctx = 0;
@@ -1586,7 +1586,7 @@ void SBac::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
-void SBac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
+void Entropy::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
@@ -1596,7 +1596,7 @@ void SBac::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
 }
 
-void SBac::codeQtRootCbfZero(TComDataCU*)
+void Entropy::codeQtRootCbfZero(TComDataCU*)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
@@ -1615,7 +1615,7 @@ void SBac::codeQtRootCbfZero(TComDataCU*)
  * \param uiScanIdx scan type (zig-zag, hor, ver)
  * This method encodes the X and Y component within a block of the last significant coefficient.
  */
-void SBac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
+void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
 {
     X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
 
@@ -1661,7 +1661,7 @@ void SBac::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSi
     }
 }
 
-void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
 
@@ -1847,7 +1847,7 @@ void SBac::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, uin
     }
 }
 
-void SBac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
+void Entropy::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
@@ -1866,7 +1866,7 @@ void SBac::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 }
 
 /** Code SAO type index */
-void SBac::codeSaoTypeIdx(uint32_t code)
+void Entropy::codeSaoTypeIdx(uint32_t code)
 {
     encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
     if (code)
@@ -1874,7 +1874,7 @@ void SBac::codeSaoTypeIdx(uint32_t code)
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
-void SBac::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     estCBFBit(estBitsSbac);
 
@@ -1888,7 +1888,7 @@ void SBac::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
 }
 
 /* estimate bit cost for each CBP bit */
-void SBac::estCBFBit(EstBitsSbac* estBitsSbac)
+void Entropy::estCBFBit(EstBitsSbac* estBitsSbac)
 {
     ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
@@ -1908,7 +1908,7 @@ void SBac::estCBFBit(EstBitsSbac* estBitsSbac)
 }
 
 /* estimate SAMBAC bit cost for significant coefficient group map */
-void SBac::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype)
 {
     X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
@@ -1919,7 +1919,7 @@ void SBac::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType tty
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
-void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     int firstCtx = 1, numCtx = 8;
 
@@ -1982,7 +1982,7 @@ void SBac::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, T
 }
 
 /* estimate bit cost of significant coefficient */
-void SBac::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype)
 {
     if (ttype == TEXT_LUMA)
     {
@@ -2021,12 +2021,12 @@ void SBac::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttyp
 }
 
 /* Initialize our context information from the nominated source */
-void SBac::copyContextsFrom(SBac& src)
+void Entropy::copyContextsFrom(Entropy& src)
 {
     memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
 }
 
-void SBac::start()
+void Entropy::start()
 {
     m_low = 0;
     m_range = 510;
@@ -2035,7 +2035,7 @@ void SBac::start()
     m_bufferedByte = 0xff;
 }
 
-void SBac::finish()
+void Entropy::finish()
 {
     if (m_low >> (21 + m_bitsLeft))
     {
@@ -2062,7 +2062,7 @@ void SBac::finish()
     m_bitIf->write(m_low >> 8, 13 + m_bitsLeft);
 }
 
-void SBac::flush()
+void Entropy::flush()
 {
     encodeBinTrm(1);
     finish();
@@ -2072,7 +2072,7 @@ void SBac::flush()
     start();
 }
 
-void SBac::copyState(SBac& other)
+void Entropy::copyState(Entropy& other)
 {
     m_low = other.m_low;
     m_range = other.m_range;
@@ -2082,7 +2082,7 @@ void SBac::copyState(SBac& other)
     m_fracBits = other.m_fracBits;
 }
 
-void SBac::resetBits()
+void Entropy::resetBits()
 {
     m_low = 0;
     m_bitsLeft = -12;
@@ -2094,7 +2094,7 @@ void SBac::resetBits()
 }
 
 /** Encode bin */
-void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
+void Entropy::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 {
     uint32_t mstate = ctxModel.m_state;
 
@@ -2144,7 +2144,7 @@ void SBac::encodeBin(uint32_t binValue, ContextModel &ctxModel)
 }
 
 /** Encode equiprobable bin */
-void SBac::encodeBinEP(uint32_t binValue)
+void Entropy::encodeBinEP(uint32_t binValue)
 {
     if (!m_bitIf)
     {
@@ -2161,7 +2161,7 @@ void SBac::encodeBinEP(uint32_t binValue)
 }
 
 /** Encode equiprobable bins */
-void SBac::encodeBinsEP(uint32_t binValues, int numBins)
+void Entropy::encodeBinsEP(uint32_t binValues, int numBins)
 {
     if (!m_bitIf)
     {
@@ -2191,7 +2191,7 @@ void SBac::encodeBinsEP(uint32_t binValues, int numBins)
 }
 
 /** Encode terminating bin */
-void SBac::encodeBinTrm(uint32_t binValue)
+void Entropy::encodeBinTrm(uint32_t binValue)
 {
     if (!m_bitIf)
     {
@@ -2221,7 +2221,7 @@ void SBac::encodeBinTrm(uint32_t binValue)
 }
 
 /** Move bits from register into bitstream */
-void SBac::writeOut()
+void Entropy::writeOut()
 {
     uint32_t leadByte = m_low >> (13 + m_bitsLeft);
     uint32_t low_mask = (uint32_t)(~0) >> (11 + 8 - m_bitsLeft);

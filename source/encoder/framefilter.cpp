@@ -55,7 +55,7 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* row0Coder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder)
 {
     m_param = top->m_param;
     m_frame = frame;
@@ -66,7 +66,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, SBac* row
     m_pad[1] = top->m_pad[1];
 
     // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
-    m_sbacCoderRow0 = row0Coder;
+    m_row0EntropyCoder = row0Coder;
 
     if (m_param->bEnableLoopFilter)
         m_loopFilter.create(g_maxCUDepth);
@@ -89,7 +89,7 @@ void FrameFilter::start(Frame *pic)
     m_pic = pic;
 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_sbacCoder.zeroFract();
+    m_entropyCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
@@ -124,8 +124,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_sbacCoder.m_fracBits = m_sbacCoderRow0->m_fracBits;
-        m_sao.startSaoEnc(m_pic, &m_sbacCoder);
+        m_entropyCoder.m_fracBits = m_row0EntropyCoder->m_fracBits;
+        m_sao.startSaoEnc(m_pic, &m_entropyCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();

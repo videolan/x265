@@ -36,7 +36,7 @@ namespace x265 {
 // private namespace
 extern const char g_sliceTypeToChar[3];
 
-class SBac;
+class Entropy;
 
 struct EncStats
 {
@@ -161,7 +161,7 @@ public:
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
 
-    void getStreamHeaders(NALList& list, SBac& sbacCoder, Bitstream& bs);
+    void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 

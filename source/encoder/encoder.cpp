@@ -1023,7 +1023,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
-void Encoder::getStreamHeaders(NALList& list, SBac& sbacCoder, Bitstream& bs)
+void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 {
     sbacCoder.setBitstream(&bs);
 

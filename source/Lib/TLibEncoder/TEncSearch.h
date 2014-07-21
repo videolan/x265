@@ -118,9 +118,9 @@ public:
     TComTrQuant     m_trQuant;
     RDCost          m_rdCost;
 
-    SBac*           m_sbacCoder;
+    Entropy*        m_entropyCoder;
     x265_param*     m_param;
-    SBac          (*m_rdSbacCoders)[CI_NUM];
+    Entropy       (*m_rdEntropyCoders)[CI_NUM];
 
     bool            m_bEnableRDOQ;
     int             m_numLayers;

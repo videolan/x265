@@ -145,7 +145,7 @@ protected:
     Frame*                   m_frame;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
-    SBac                     m_sbacCoder;
+    Entropy                  m_entropyCoder;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;

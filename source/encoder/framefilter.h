@@ -44,7 +44,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(Encoder *top, FrameEncoder *frame, int numRows, SBac* row0Coder);
+    void init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder);
 
     void destroy();
 
@@ -71,8 +71,8 @@ public:
     int                         m_saoRowDelay;
 
     // SAO
-    SBac                        m_sbacCoder;
-    SBac*                       m_sbacCoderRow0;  // to mimic HM behavior
+    Entropy                     m_entropyCoder;
+    Entropy*                    m_row0EntropyCoder;  // to mimic HM behavior
     
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;

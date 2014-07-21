@@ -40,7 +40,7 @@ class Encoder;
 
 struct ThreadLocalData
 {
-    Analysis      m_cuCoder;
+    Analysis    m_cuCoder;
 
     // NOTE: the maximum LCU 64x64 have 256 partitions
     bool        m_edgeFilter[256];
@@ -57,11 +57,11 @@ class CTURow
 {
 public:
 
-    SBac            m_rowEntropyCoder; /* only used by frameEncoder::encodeSlice() */
+    Entropy         m_rowEntropyCoder;     /* only used by frameEncoder::encodeSlice() */
 
-    SBac            m_sbacCoder;
-    SBac            m_bufferSbacCoder;
-    SBac            m_rdSbacCoders[MAX_FULL_DEPTH + 1][CI_NUM];
+    Entropy         m_entropyCoder;
+    Entropy         m_bufferEntropyCoder;  /* store context for next row */
+    Entropy         m_rdEntropyCoders[MAX_FULL_DEPTH + 1][CI_NUM];
 
     // to compute stats for 2 pass
     double          m_iCuCnt;
@@ -71,22 +71,22 @@ public:
     void init(Slice *slice)
     {
         m_active = 0;
-        m_sbacCoder.resetEntropy(slice);
+        m_entropyCoder.resetEntropy(slice);
 
         // Note: Reset status to avoid frame parallelism output mistake on different thread number
         for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
         {
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
             {
-                m_rdSbacCoders[depth][ciIdx].resetEntropy(slice);
-                m_rdSbacCoders[depth][ciIdx].zeroFract();
+                m_rdEntropyCoders[depth][ciIdx].resetEntropy(slice);
+                m_rdEntropyCoders[depth][ciIdx].zeroFract();
             }
         }
 
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
-    void processCU(TComDataCU *cu, SBac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
+    void processCU(TComDataCU *cu, Entropy *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 

@@ -64,7 +64,7 @@ namespace x265 {
 // private namespace
 
 class Encoder;
-class SBac;
+class Entropy;
 
 class Analysis : public TEncSearch
 {

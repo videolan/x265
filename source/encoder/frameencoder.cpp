@@ -109,7 +109,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     m_tld.init(*top);
-    m_frameFilter.init(top, this, numRows, &m_rows[0].m_sbacCoder);
+    m_frameFilter.init(top, this, numRows, &m_rows[0].m_entropyCoder);
 
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI)
@@ -229,14 +229,14 @@ void FrameEncoder::compressFrame()
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->getPOC() || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
-        m_sbacCoder.codeAUD(slice);
+        m_entropyCoder.codeAUD(slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
     if (m_frame->m_lowres.bKeyframe)
     {
         if (m_param->bRepeatHeaders)
-            m_top->getStreamHeaders(m_nalList, m_sbacCoder, m_bs);
+            m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
 
         if (m_param->bEmitHRDSEI)
         {
@@ -397,9 +397,9 @@ void FrameEncoder::compressFrame()
             m_outStreams[i].resetBits();
 
     m_bs.resetBits();
-    m_sbacCoder.resetEntropy(slice);
-    m_sbacCoder.setBitstream(&m_bs);
-    m_sbacCoder.codeSliceHeader(slice);
+    m_entropyCoder.resetEntropy(slice);
+    m_entropyCoder.setBitstream(&m_bs);
+    m_entropyCoder.codeSliceHeader(slice);
 
     // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
     encodeSlice();
@@ -408,9 +408,9 @@ void FrameEncoder::compressFrame()
     uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
 
     // complete the slice header by writing WPP row-starts
-    m_sbacCoder.setBitstream(&m_bs);
+    m_entropyCoder.setBitstream(&m_bs);
     if (slice->m_pps->bEntropyCodingSyncEnabled)
-        m_sbacCoder.codeSliceHeaderWPPEntryPoints(slice, m_substreamSizes, maxStreamSize);
+        m_entropyCoder.codeSliceHeaderWPPEntryPoints(slice, m_substreamSizes, maxStreamSize);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);
@@ -502,14 +502,14 @@ void FrameEncoder::encodeSlice()
         uint32_t subStrm = lin % numSubstreams;
         TComDataCU* cu = m_frame->getCU(cuAddr);
 
-        m_sbacCoder.setBitstream(&m_outStreams[subStrm]);
+        m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            m_rows[subStrm].m_rowEntropyCoder.loadContexts(m_rows[lin - 1].m_bufferSbacCoder);
+            m_rows[subStrm].m_rowEntropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
 
-        // this load is used to simplify the code (avoid to change all the call to m_sbacCoder)
-        m_sbacCoder.load(m_rows[subStrm].m_rowEntropyCoder);
+        // this load is used to simplify the code (avoid to change all the call to m_entropyCoder)
+        m_entropyCoder.load(m_rows[subStrm].m_rowEntropyCoder);
 
         if (slice->m_sps->bUseSAO)
         {
@@ -518,17 +518,17 @@ void FrameEncoder::encodeSlice()
                 int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
                 int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
                 if (col)
-                    m_sbacCoder.codeSaoMerge(mergeLeft);
+                    m_entropyCoder.codeSaoMerge(mergeLeft);
                 if (lin && !mergeLeft)
-                    m_sbacCoder.codeSaoMerge(mergeUp);
+                    m_entropyCoder.codeSaoMerge(mergeUp);
                 if (!mergeLeft && !mergeUp)
                 {
                     if (saoParam->bSaoFlag[0])
-                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
+                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
                     if (saoParam->bSaoFlag[1])
                     {
-                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
-                        m_sbacCoder.codeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
+                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
+                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
                     }
                 }
             }
@@ -540,15 +540,15 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_tld.m_cuCoder.m_sbacCoder = &m_sbacCoder;
+        m_tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
         m_tld.m_cuCoder.encodeCU(cu);
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        m_rows[subStrm].m_rowEntropyCoder.load(m_sbacCoder);
+        m_rows[subStrm].m_rowEntropyCoder.load(m_entropyCoder);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            m_rows[lin].m_bufferSbacCoder.loadContexts(m_rows[subStrm].m_rowEntropyCoder);
+            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_rows[subStrm].m_rowEntropyCoder);
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
@@ -561,7 +561,7 @@ void FrameEncoder::encodeSlice()
     {
         X265_CHECK(m_param->frameNumThreads == 1, "bCabacInitPresent enabled with frame parallelism\n");
         // we pass m_top's m_pps instance because this function will modify it
-        m_sbacCoder.determineCabacInitIdx(slice, &m_top->m_pps);
+        m_entropyCoder.determineCabacInitIdx(slice, &m_top->m_pps);
     }
 
     // flush lines
@@ -600,12 +600,12 @@ void FrameEncoder::compressCTURows()
     m_frame->m_avgQpAq = qp;
 
     // reset entropy coders
-    m_sbacCoder.resetEntropy(slice);
+    m_entropyCoder.resetEntropy(slice);
     for (int i = 0; i < this->m_numRows; i++)
     {
         m_rows[i].init(slice);
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST].load(m_sbacCoder);
-        m_rows[i].m_rdSbacCoders[0][CI_CURR_BEST].zeroFract();
+        m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].load(m_entropyCoder);
+        m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].zeroFract();
         m_rows[i].m_completed = 0;
         m_rows[i].m_busy = false;
     }
@@ -798,7 +798,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 m_frame->m_qpaAq[row] += qp;
         }
 
-        SBac *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferSbacCoder : NULL;
+        Entropy *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferEntropyCoder : NULL;
         codeRow.processCU(cu, bufSbac, tld, m_param->bEnableWavefront && col == 1);
         // Completed CU processing
         curRow.m_completed++;

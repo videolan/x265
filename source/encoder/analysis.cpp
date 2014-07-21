@@ -44,8 +44,8 @@ Analysis::Analysis()
     for (int i = 0; i < MAX_PRED_TYPES; i++)
         m_modePredYuv[i] = NULL;
 
-    m_sbacCoder       = NULL;
-    m_rdSbacCoders    = NULL;
+    m_entropyCoder    = NULL;
+    m_rdEntropyCoders = NULL;
 }
 
 bool Analysis::init(Encoder* top)
@@ -398,9 +398,9 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 checkIntra(outBestCU, outTempCU, SIZE_NxN);
         }
 
-        m_sbacCoder->resetBits();
-        m_sbacCoder->codeSplitFlag(outBestCU, 0, depth);
-        outBestCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+        m_entropyCoder->resetBits();
+        m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
+        outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         if (m_rdCost.psyRdEnabled())
             outBestCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
         else
@@ -430,11 +430,11 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
                 {
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
                 }
                 else
                 {
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
                 }
 
                 compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, bInsidePicture);
@@ -450,9 +450,9 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 
         if (bInsidePicture)
         {
-            m_sbacCoder->resetBits();
-            m_sbacCoder->codeSplitFlag(outTempCU, 0, depth);
-            outTempCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+            m_entropyCoder->resetBits();
+            m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
+            outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         }
 
         if (m_rdCost.psyRdEnabled())
@@ -484,7 +484,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 outTempCU->setQPSubParts(outTempCU->getRefQP(targetPartIdx), 0, depth); // set QP to default QP
         }
 
-        m_rdSbacCoders[nextDepth][CI_NEXT_BEST].store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+        m_rdEntropyCoders[nextDepth][CI_NEXT_BEST].store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
         checkBestMode(outBestCU, outTempCU, depth); // RD compare current CU against split
     }
     outBestCU->copyToPic(depth); // Copy Best data to Picture for next partition prediction.
@@ -520,24 +520,24 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
 
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
-    m_sbacCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (outTempCU->m_slice->m_pps->bTransquantBypassEnabled)
-        m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
+        m_entropyCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
     if (!outTempCU->m_slice->isIntra())
     {
-        m_sbacCoder->codeSkipFlag(outTempCU, 0);
-        m_sbacCoder->codePredMode(outTempCU, 0);
+        m_entropyCoder->codeSkipFlag(outTempCU, 0);
+        m_entropyCoder->codePredMode(outTempCU, 0);
     }
-    m_sbacCoder->codePartSize(outTempCU, 0, depth);
-    m_sbacCoder->codePredInfo(outTempCU, 0);
-    outTempCU->m_mvBits = m_sbacCoder->getNumberOfWrittenBits();
+    m_entropyCoder->codePartSize(outTempCU, 0, depth);
+    m_entropyCoder->codePredInfo(outTempCU, 0);
+    outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_sbacCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
-    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
-    outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
+    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
+    m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
+    outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
     if (m_rdCost.psyRdEnabled())
@@ -700,7 +700,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     }
                     else
                     {
-                        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                     }
                 }
 
@@ -739,7 +739,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                             std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
                             if (m_param->rdLevel > 2)
                             {
-                                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                                m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                             }
                         }
                     }
@@ -760,11 +760,11 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                         encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
                                                   m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
-                        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                     }
                     else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
                         encodeIntraInInter(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],  m_bestRecoYuv[depth]);
-                        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                 }
                 else if (m_param->rdLevel == 1)
                 {
@@ -813,9 +813,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
             if (m_param->rdLevel > 1)
             {
-                m_sbacCoder->resetBits();
-                m_sbacCoder->codeSplitFlag(outBestCU, 0, depth);
-                outBestCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+                m_entropyCoder->resetBits();
+                m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
+                outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
                 if (m_rdCost.psyRdEnabled())
                     outBestCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
                 else
@@ -906,9 +906,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                  (subTempPartCU->getCUPelY() < slice->m_sps->picHeightInLumaSamples)))
             {
                 if (0 == nextDepth_partIndex) // initialize RD with previous depth buffer
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
                 else
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
                 compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, bInsidePicture, nextDepth_partIndex, minDepth);
 #if EARLY_EXIT
@@ -943,9 +943,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         {
             if (m_param->rdLevel > 1)
             {
-                m_sbacCoder->resetBits();
-                m_sbacCoder->codeSplitFlag(outTempCU, 0, depth);
-                outTempCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+                m_entropyCoder->resetBits();
+                m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
+                outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
             }
         }
         if (m_param->rdLevel > 1)
@@ -984,7 +984,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
 
-        m_rdSbacCoders[nextDepth][CI_NEXT_BEST].store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+        m_rdEntropyCoders[nextDepth][CI_NEXT_BEST].store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
 
         /* If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
          * Copy recon data from Temp structure to Best structure */
@@ -1236,9 +1236,9 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
 
-        m_sbacCoder->resetBits();
-        m_sbacCoder->codeSplitFlag(outBestCU, 0, depth);
-        outBestCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+        m_entropyCoder->resetBits();
+        m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
+        outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         if (m_rdCost.psyRdEnabled())
             outBestCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
         else
@@ -1276,9 +1276,9 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
                 else
-                    m_rdSbacCoders[nextDepth][CI_CURR_BEST].load(m_rdSbacCoders[nextDepth][CI_NEXT_BEST]);
+                    m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
                 compressInterCU_rd5_6(subBestPartCU, subTempPartCU, nextDepth, bInsidePicture);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
@@ -1293,9 +1293,9 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
         if (bInsidePicture)
         {
-            m_sbacCoder->resetBits();
-            m_sbacCoder->codeSplitFlag(outTempCU, 0, depth);
-            outTempCU->m_totalBits += m_sbacCoder->getNumberOfWrittenBits(); // split bits
+            m_entropyCoder->resetBits();
+            m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
+            outTempCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         }
 
         if (m_rdCost.psyRdEnabled())
@@ -1327,7 +1327,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                 outTempCU->setQPSubParts(outTempCU->getRefQP(targetPartIdx), 0, depth); // set QP to default QP
         }
 
-        m_rdSbacCoders[nextDepth][CI_NEXT_BEST].store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+        m_rdEntropyCoders[nextDepth][CI_NEXT_BEST].store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
         checkBestMode(outBestCU, outTempCU, depth); // RD compare current CU against split
     }
     outBestCU->copyToPic(depth); // Copy Best data to Picture for next partition prediction.
@@ -1430,7 +1430,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 //No-residue mode
                 encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
                 std::swap(yuvReconBest, m_tmpRecoYuv[depth]);
-                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
             }
 
             //Encode with residue
@@ -1442,7 +1442,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             {
                 std::swap(outBestCU, outTempCU);
                 std::swap(yuvReconBest, m_tmpRecoYuv[depth]);
-                m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
             }
         }
     }
@@ -1519,7 +1519,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                         std::swap(outBestPredYuv, m_tmpPredYuv[depth]);
                         std::swap(rpcYuvReconBest, m_tmpRecoYuv[depth]);
 
-                        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                     }
                     outTempCU->setQPSubParts(origQP, 0, depth);
                     outTempCU->setSkipFlagSubParts(false, 0, depth);
@@ -1734,24 +1734,24 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
 
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
-    m_sbacCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (outTempCU->m_slice->m_pps->bTransquantBypassEnabled)
-        m_sbacCoder->codeCUTransquantBypassFlag(outTempCU, 0);
+        m_entropyCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
     if (!outTempCU->m_slice->isIntra())
     {
-        m_sbacCoder->codeSkipFlag(outTempCU, 0);
-        m_sbacCoder->codePredMode(outTempCU, 0);
+        m_entropyCoder->codeSkipFlag(outTempCU, 0);
+        m_entropyCoder->codePredMode(outTempCU, 0);
     }
-    m_sbacCoder->codePartSize(outTempCU, 0, depth);
-    m_sbacCoder->codePredInfo(outTempCU, 0);
-    outTempCU->m_mvBits = m_sbacCoder->getNumberOfWrittenBits();
+    m_entropyCoder->codePartSize(outTempCU, 0, depth);
+    m_entropyCoder->codePredInfo(outTempCU, 0);
+    outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_sbacCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
-    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
-    outTempCU->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
+    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
+    m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
+    outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
     if (m_rdCost.psyRdEnabled())
@@ -1776,7 +1776,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
     // set context models
-    m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
+    m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
     m_trQuant.setQPforQuant(cu);
 
@@ -1790,25 +1790,25 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     cu->m_totalDistortion = puDistY;
 
     estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv);
-    m_sbacCoder->resetBits();
+    m_entropyCoder->resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-        m_sbacCoder->codeCUTransquantBypassFlag(cu, 0);
+        m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
 
     if (!cu->m_slice->isIntra())
     {
-        m_sbacCoder->codeSkipFlag(cu, 0);
-        m_sbacCoder->codePredMode(cu, 0);
+        m_entropyCoder->codeSkipFlag(cu, 0);
+        m_entropyCoder->codePredMode(cu, 0);
     }
-    m_sbacCoder->codePartSize(cu, 0, depth);
-    m_sbacCoder->codePredInfo(cu, 0);
-    cu->m_mvBits += m_sbacCoder->getNumberOfWrittenBits();
+    m_entropyCoder->codePartSize(cu, 0, depth);
+    m_entropyCoder->codePredInfo(cu, 0);
+    cu->m_mvBits += m_entropyCoder->getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_sbacCoder->codeCoeff(cu, 0, depth, bCodeDQP);
-    m_sbacCoder->store(m_rdSbacCoders[depth][CI_TEMP_BEST]);
+    m_entropyCoder->codeCoeff(cu, 0, depth, bCodeDQP);
+    m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
 
-    cu->m_totalBits = m_sbacCoder->getNumberOfWrittenBits();
+    cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;
     if (m_rdCost.psyRdEnabled())
     {
@@ -1963,7 +1963,7 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 
     // We need to split, so don't try these modes.
     if (bInsidePicture)
-        m_sbacCoder->codeSplitFlag(cu, absPartIdx, depth);
+        m_entropyCoder->codeSplitFlag(cu, absPartIdx, depth);
 
     if ((g_maxCUSize >> depth) >= slice->m_pps->minCuDQPSize && slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
@@ -1996,28 +1996,28 @@ void Analysis::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        m_sbacCoder->codeCUTransquantBypassFlag(cu, absPartIdx);
+        m_entropyCoder->codeCUTransquantBypassFlag(cu, absPartIdx);
 
     if (!slice->isIntra())
-        m_sbacCoder->codeSkipFlag(cu, absPartIdx);
+        m_entropyCoder->codeSkipFlag(cu, absPartIdx);
 
     if (cu->isSkipped(absPartIdx))
     {
-        m_sbacCoder->codeMergeIndex(cu, absPartIdx);
+        m_entropyCoder->codeMergeIndex(cu, absPartIdx);
         finishCU(cu, absPartIdx, depth);
         return;
     }
 
     if (!slice->isIntra())
-        m_sbacCoder->codePredMode(cu, absPartIdx);
+        m_entropyCoder->codePredMode(cu, absPartIdx);
 
-    m_sbacCoder->codePartSize(cu, absPartIdx, depth);
+    m_entropyCoder->codePartSize(cu, absPartIdx, depth);
 
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
-    m_sbacCoder->codePredInfo(cu, absPartIdx);
+    m_entropyCoder->codePredInfo(cu, absPartIdx);
 
     // Encode Coefficients, allow codeCoeff() to modify m_bEncodeDQP
-    m_sbacCoder->codeCoeff(cu, absPartIdx, depth, m_bEncodeDQP);
+    m_entropyCoder->codeCoeff(cu, absPartIdx, depth, m_bEncodeDQP);
 
     // --- write terminating bit ---
     finishCU(cu, absPartIdx, depth);
@@ -2049,7 +2049,7 @@ void Analysis::checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uin
         // Change Reconstruction data
         std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
 
-        m_rdSbacCoders[depth][CI_TEMP_BEST].store(m_rdSbacCoders[depth][CI_NEXT_BEST]);
+        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
     }
 }
 
@@ -2217,9 +2217,9 @@ void Analysis::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
-            m_sbacCoder->codeTerminatingBit(bTerminateSlice ? 1 : 0);
+            m_entropyCoder->codeTerminatingBit(bTerminateSlice ? 1 : 0);
 
-        if (m_sbacCoder->isBitCounter())
-            m_sbacCoder->resetBits();
+        if (m_entropyCoder->isBitCounter())
+            m_entropyCoder->resetBits();
     }
 }
