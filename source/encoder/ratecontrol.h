@@ -80,6 +80,7 @@ struct RateControlEntry
     double qpNoVbv;
     double bufferFill;
     double frameDuration;
+    double clippedDuration;
     Predictor rowPreds[3][2];
     Predictor* rowPred[2];
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */

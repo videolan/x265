@@ -354,6 +354,7 @@ RateControl::RateControl(x265_param *p)
     m_lastAbrResetPoc = -1;
     m_statFileOut = NULL;
     m_cutreeStatFileOut = m_cutreeStatFileIn = NULL;
+    m_rce2Pass = NULL;
 
     // vbv initialization
     m_param->rc.vbvBufferSize = Clip3(0, 2000000, m_param->rc.vbvBufferSize);
@@ -785,23 +786,21 @@ bool RateControl::initPass2()
         for (int j = 1; j < cplxBlur * 2 && j < m_numEntries - i; j++)
         {
             RateControlEntry *rcj = &m_rce2Pass[i + j];
-            double frameDuration = CLIP_DURATION(rcj->frameDuration) / BASE_FRAME_DURATION;
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < 0.0001)
                 break;
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / frameDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
         }
         /* weighted average of cplx of past frames */
         weight = 1.0;
         for (int j = 0; j <= cplxBlur * 2 && j <= i; j++)
         {
             RateControlEntry *rcj = &m_rce2Pass[i - j];
-            double frameDuration = CLIP_DURATION(rcj->frameDuration) / BASE_FRAME_DURATION;
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / frameDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < .0001)
                 break;
@@ -1274,7 +1273,7 @@ bool RateControl::fixUnderflow(int t0, int t1, double adjustment, double qscaleM
 
 bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 {
-    uint8_t sliceTypeActual = m_rce2Pass[frame->m_POC].sliceType;
+    uint8_t sliceTypeActual = (uint8_t)m_rce2Pass[frame->m_POC].sliceType;
 
     if (m_rce2Pass[frame->m_POC].keptAsRef)
     {
@@ -1287,7 +1286,7 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 
                 if (!fread(&type, 1, 1, m_cutreeStatFileIn))
                     goto fail;
-                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != m_ncu)
+                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != sizeof(m_ncu))
                     goto fail;
 
                 if (type != sliceTypeActual && m_cuTreeStats.qpBufPos == 1)
