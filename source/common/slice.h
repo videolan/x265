@@ -110,10 +110,11 @@ struct TimingInfo
 
 struct VPS
 {
-    uint32_t   numReorderPics;
-    uint32_t   maxDecPicBuffering;
-    HRDInfo    hrdParameters;
-    TimingInfo timingInfo;
+    uint32_t         numReorderPics;
+    uint32_t         maxDecPicBuffering;
+    HRDInfo          hrdParameters;
+    TimingInfo       timingInfo;
+    ProfileTierLevel ptl;
 };
 
 struct Window

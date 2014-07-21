@@ -121,7 +121,7 @@ public:
     void store(Entropy& dest);
     void loadContexts(Entropy& src)       { copyContextsFrom(src); }
 
-    void codeVPS(VPS* vps, ProfileTierLevel *ptl);
+    void codeVPS(VPS* vps);
     void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
     void codePPS(PPS* pps, ScalingList *scalingList);
     void codeVUI(VUI* vui);

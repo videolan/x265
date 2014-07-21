@@ -576,7 +576,7 @@ void Entropy::determineCabacInitIdx(Slice *slice, PPS *pps)
         pps->encCABACTableIdx = I_SLICE;
 }
 
-void Entropy::codeVPS(VPS* vps, ProfileTierLevel *ptl)
+void Entropy::codeVPS(VPS* vps)
 {
     WRITE_CODE(0,       4, "vps_video_parameter_set_id");
     WRITE_CODE(3,       2, "vps_reserved_three_2bits");
@@ -585,7 +585,7 @@ void Entropy::codeVPS(VPS* vps, ProfileTierLevel *ptl)
     WRITE_FLAG(1,          "vps_temporal_id_nesting_flag");
     WRITE_CODE(0xffff, 16, "vps_reserved_ffff_16bits");
 
-    codeProfileTier(*ptl);
+    codeProfileTier(vps->ptl);
 
     WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
     WRITE_UVLC(vps->maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");

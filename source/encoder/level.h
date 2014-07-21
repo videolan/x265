@@ -28,8 +28,12 @@
 #include "x265.h"
 
 namespace x265 {
-void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier);
+// encoder private namespace
+
+struct VPS;
+void determineLevel(const x265_param &param, VPS& vps);
 void enforceLevel(x265_param& param);
+
 }
 
 #endif // ifndef X265_LEVEL_H

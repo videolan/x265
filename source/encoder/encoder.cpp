@@ -1029,12 +1029,12 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     /* headers for start of bitstream */
     bs.resetBits();
-    sbacCoder.codeVPS(&m_vps, &m_ptl);
+    sbacCoder.codeVPS(&m_vps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    sbacCoder.codeSPS(&m_sps, &m_scalingList, &m_ptl);
+    sbacCoder.codeSPS(&m_sps, &m_scalingList, &m_vps.ptl);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
@@ -1089,21 +1089,18 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
 void Encoder::initSPS(SPS *sps)
 {
-    m_ptl.levelIdc = m_level;
-    m_ptl.tierFlag = m_levelTier ? true : false;
-    m_ptl.profileIdc = m_profile;
-    m_ptl.profileCompatibilityFlag[m_profile] = true;
-    m_ptl.progressiveSourceFlag = !m_param->interlaceMode;
-    m_ptl.interlacedSourceFlag = !!m_param->interlaceMode;
-    m_ptl.nonPackedConstraintFlag = false;
-    m_ptl.frameOnlyConstraintFlag = false;
+    m_vps.ptl.profileCompatibilityFlag[m_vps.ptl.profileIdc] = true;
+    m_vps.ptl.progressiveSourceFlag = !m_param->interlaceMode;
+    m_vps.ptl.interlacedSourceFlag = !!m_param->interlaceMode;
+    m_vps.ptl.nonPackedConstraintFlag = false;
+    m_vps.ptl.frameOnlyConstraintFlag = false;
 
-    if (m_profile == Profile::MAIN10 && X265_DEPTH == 8)
+    if (m_vps.ptl.profileIdc == Profile::MAIN10 && X265_DEPTH == 8)
         /* The above constraint is equal to Profile::MAIN */
-        m_ptl.profileCompatibilityFlag[Profile::MAIN] = true;
-    if (m_profile == Profile::MAIN)
+        m_vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
+    if (m_vps.ptl.profileIdc == Profile::MAIN)
         /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
-        m_ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
+        m_vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
 
     /* TODO: Range extension profiles */
     /* TODO: check final spec for compatibility rules here */

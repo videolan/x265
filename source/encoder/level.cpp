@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "slice.h"
 #include "level.h"
 
 namespace x265 {
@@ -55,9 +56,9 @@ LevelSpec levels[] =
 };
 
 /* determine minimum decoder level required to decode the described video */
-void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier)
+void determineLevel(const x265_param &param, VPS& vps)
 {
-    profile = Profile::NONE;
+    vps.ptl.profileIdc = Profile::NONE;
     if (param.internalCsp == X265_CSP_I420)
     {
         /* other misc requirements that we enforce in other areas:
@@ -70,11 +71,11 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
          * frame */
 
         if (param.internalBitDepth == 8 && param.keyframeMax == 1)
-            profile = Profile::MAINSTILLPICTURE;
+            vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
         if (param.internalBitDepth == 8)
-            profile = Profile::MAIN;
+            vps.ptl.profileIdc = Profile::MAIN;
         else if (param.internalBitDepth == 10)
-            profile = Profile::MAIN10;
+            vps.ptl.profileIdc = Profile::MAIN10;
     }
     /* TODO: Range extension profiles */
 
@@ -82,14 +83,9 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
     uint32_t bitrate = param.rc.bitrate ? param.rc.bitrate : param.rc.vbvMaxBitrate;
 
-    /* TODO; Keep in sync with encoder.cpp, or pass in maxDecPicBuffering */
-    int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
-    int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);
-    const int MaxDpbPicBuf = 6;
-
-    level = Level::NONE;
-    tier = Level::MAIN;
-    const char *levelName = "(none)";
+    const uint32_t MaxDpbPicBuf = 6;
+    vps.ptl.levelIdc = Level::NONE;
+    vps.ptl.tierFlag = Level::MAIN;
 
     const size_t NumLevels = sizeof(levels) / sizeof(levels[0]);
     uint32_t i;
@@ -106,7 +102,7 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
         else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
             continue;
 
-        int maxDpbSize = MaxDpbPicBuf;
+        uint32_t maxDpbSize = MaxDpbPicBuf;
         if (lumaSamples <= (levels[i].maxLumaSamples >> 2))
             maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
         else if (lumaSamples <= (levels[i].maxLumaSamples >> 1))
@@ -116,20 +112,19 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
 
         /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than
          * or equal to MaxDpbSize */
-        if (maxDecPicBuffering > maxDpbSize)
+        if (vps.maxDecPicBuffering > maxDpbSize)
             continue;
 
         /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
         if (levels[i].levelEnum >= Level::LEVEL5 && param.maxCUSize < 32)
             continue;
 
-        level = levels[i].levelEnum;
-        levelName = levels[i].name;
+        vps.ptl.levelIdc = levels[i].levelEnum;
         if (bitrate > levels[i].maxBitrateMain && bitrate <= levels[i].maxBitrateHigh &&
             levels[i].maxBitrateHigh != MAX_UINT)
-            tier = Level::HIGH;
+            vps.ptl.tierFlag = Level::HIGH;
         else
-            tier = Level::MAIN;
+            vps.ptl.tierFlag = Level::MAIN;
         /* TODO: The value of NumPocTotalCurr shall be less than or equal to 8 */
         break;
     }
@@ -141,13 +136,13 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
     {
         while (i + 1 < NumLevels && levels[i].levelIdc < param.levelIdc)
             i++;
-        levelName = levels[i].name;
-        level = levels[i].levelEnum;
+        vps.ptl.levelIdc = levels[i].levelEnum;
     }
 
     static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
     static const char *tiers[]    = { "Main", "High" };
-    x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[profile], levelName, tiers[tier]);
+    x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n",
+             profiles[vps.ptl.profileIdc], levels[i].name, tiers[vps.ptl.tierFlag]);
 }
 
 /* enforce a maximum decoder level requirement, in other words assure that a

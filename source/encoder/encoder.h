@@ -115,17 +115,11 @@ public:
     SPS                m_sps;
     PPS                m_pps;
     NALList            m_nalList;
-    ProfileTierLevel   m_ptl;
     ScalingList        m_scalingList;      // quantization matrix information
 
     Lookahead*         m_lookahead;
 
     bool               m_aborted;         // fatal error detected
-
-    /* profile & level */
-    Profile::Name      m_profile;
-    Level::Tier        m_levelTier;
-    Level::Name        m_level;
 
     //====== Coding Structure ========
     int                m_maxRefPicNum;
