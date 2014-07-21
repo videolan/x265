@@ -515,7 +515,9 @@ void TComWeightPrediction::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1
             wp1 = slice->m_weightPredTable[1][refIdx1];
     }
     else
+    {
         X265_CHECK(0, "unexpected wpScaling configuration\n");
+    }
 
     if (refIdx0 < 0)
         wp0 = NULL;
