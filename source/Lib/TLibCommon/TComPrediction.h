@@ -71,14 +71,15 @@ protected:
     int16_t*  m_immedVals;
     int       m_hChromaShift;
     int       m_vChromaShift;
+    int       m_csp;
 
     // motion compensation functions
     void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
     void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
-    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterLumaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterChromaBlk(TComDataCU *cu, TComPicYuv *refPic, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
+    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
+    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
+    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
 
     void xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, int height, TComYuv* outPredYuv, bool bLuma, bool bChroma);
 
