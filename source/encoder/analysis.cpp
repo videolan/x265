@@ -388,6 +388,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
     // We need to split, so don't try these modes.
     if (bInsidePicture)
     {
+        m_trQuant.setQPforQuant(outTempCU);
+
         checkIntra(outBestCU, outTempCU, SIZE_2Nx2N);
 
         if (depth == g_maxCUDepth - g_addCUDepth)
@@ -1033,7 +1035,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     {
         X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
         X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
-        X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best prediction cost\n");
     }
 
     x265_emms();
@@ -1075,6 +1076,8 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     // We need to split, so don't try these modes.
     if (bInsidePicture)
     {
+        m_trQuant.setQPforQuant(outTempCU);
+
         // do inter modes, SKIP and 2Nx2N
         if (slice->m_sliceType != I_SLICE)
         {
@@ -1775,6 +1778,8 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     // set context models
     m_sbacCoder->load(m_rdSbacCoders[depth][CI_CURR_BEST]);
 
+    m_trQuant.setQPforQuant(cu);
+
     xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost);
     xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
 
@@ -1840,6 +1845,9 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 
         return;
     }
+
+    m_trQuant.setQPforQuant(cu);
+
     if (lcu->getPredictionMode(absPartIdx) == MODE_INTER)
     {
         if (!lcu->getSkipFlag(absPartIdx))

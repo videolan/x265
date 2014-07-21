@@ -70,8 +70,6 @@ inline static int x265_min_fast(int x, int y)
 
 TComTrQuant::TComTrQuant()
 {
-    m_qpParam.clear();
-
     // allocate temporary buffers
     // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
     m_tmpCoeff = X265_MALLOC(int32_t, MAX_CU_SIZE * MAX_CU_SIZE);
@@ -109,37 +107,42 @@ static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int
 
 /** Set qP for Quantization.
  * \param qpy QPy
- * \param bLowpass
- * \param sliceType
  * \param ttype
  * \param qpBdOffset
  * \param chromaQPOffset
  *
  * return void
  */
+
+void TComTrQuant::setQPforQuant(int qpy, int qpBdOffset)
+{
+    m_qpParam[TEXT_LUMA].setQpParam(qpy + qpBdOffset);
+}
+
 void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt)
 {
-    int qpScaled;
+    X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
 
-    if (ttype == TEXT_LUMA)
+    int qp = Clip3(-qpBdOffset, 57, qpy + chromaQPOffset);
+    if (qp >= 30)
     {
-        qpScaled = qpy + qpBdOffset;
-        qpScaled = Clip3(0, MAX_QP + QP_BD_OFFSET, qpScaled);
-    }
-    else
-    {
-        qpScaled = Clip3(-qpBdOffset, 57, qpy + chromaQPOffset);
-
-        if (qpScaled < 0)
-        {
-            qpScaled = qpScaled + qpBdOffset;
-        }
+        if (chFmt == CHROMA_420)
+            qp = g_chromaScale[qp];
         else
-        {
-            qpScaled = g_chromaScale[chFmt][qpScaled] + qpBdOffset;
-        }
+            qp = X265_MIN(qp, 51);
     }
-    m_qpParam.setQpParam(qpScaled);
+    m_qpParam[ttype].setQpParam(qp + qpBdOffset);
+}
+
+void TComTrQuant::setQPforQuant(TComDataCU* cu)
+{
+    int qpy = cu->getQP(0);
+    int chFmt = cu->getChromaFormat();
+    const PPS* pps = cu->m_slice->m_pps;
+
+    setQPforQuant(qpy, QP_BD_OFFSET);
+    setQPforQuant(qpy, TEXT_CHROMA_U, QP_BD_OFFSET, pps->chromaCbQpOffset, chFmt);
+    setQPforQuant(qpy, TEXT_CHROMA_V, QP_BD_OFFSET, pps->chromaCrQpOffset, chFmt);
 }
 
 // To minimize the distortion only. No rate is considered.
@@ -279,11 +282,13 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, uint
 
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
-    int32_t *quantCoeff = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+    int rem = m_qpParam[ttype].m_rem;
+    int per = m_qpParam[ttype].m_per;
+    int32_t *quantCoeff = getQuantCoeff(scalingListType, rem, log2TrSize - 2);
 
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
-    int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift;
+    int qbits = QUANT_SHIFT + per + transformShift;
     int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
 
     int numCoeff = 1 << log2TrSize * 2;
@@ -373,8 +378,8 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     }
 
     // Values need to pass as input parameter in dequant
-    int per = m_qpParam.m_per;
-    int rem = m_qpParam.m_rem;
+    int rem = m_qpParam[ttype].m_rem;
+    int per = m_qpParam[ttype].m_per;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
@@ -390,7 +395,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
         // CHECK_ME: the code is not verify since this is DEAD path
         int scalingListType = (!bIntra ? 3 : 0) + ttype;
         X265_CHECK(scalingListType < 6, "scalingListType invalid %d\n", scalingListType);
-        int32_t *dequantCoef = getDequantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+        int32_t *dequantCoef = getDequantCoeff(scalingListType, rem, log2TrSize - 2);
         primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, numCoeff, per, shift);
     }
 
@@ -509,9 +514,11 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
-    int qbits = QUANT_SHIFT + m_qpParam.m_per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
+    int rem = m_qpParam[ttype].m_rem;
+    int per = m_qpParam[ttype].m_per;
+    int qbits = QUANT_SHIFT + per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
     int add = (1 << (qbits - 1));
-    int32_t *qCoef = getQuantCoeff(scalingListType, m_qpParam.m_rem, log2TrSize - 2);
+    int32_t *qCoef = getQuantCoeff(scalingListType, rem, log2TrSize - 2);
 
     int numCoeff = 1 << log2TrSize * 2;
     int scaledCoeff[32 * 32];
@@ -524,7 +531,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     x265_emms();
     selectLambda(ttype);
 
-    double *errScale = getErrScaleCoeff(scalingListType, log2TrSize - 2, m_qpParam.m_rem);
+    double *errScale = getErrScaleCoeff(scalingListType, log2TrSize - 2, rem);
 
     double blockUncodedCost = 0;
     double costCoeff[32 * 32];
@@ -859,7 +866,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         int64_t rdFactor = (int64_t)(
-                g_invQuantScales[m_qpParam.rem()] * g_invQuantScales[m_qpParam.rem()] * (1 << (2 * m_qpParam.m_per))
+                g_invQuantScales[rem] * g_invQuantScales[rem] * (1 << (2 * per))
                 / (m_lambda * (16 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8))))
                 + 0.5);
         int lastCG = 1;

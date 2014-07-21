@@ -48,7 +48,6 @@ using namespace x265;
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
-#define QpUV(iQpY, chFmt)  (((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY) - 6) : g_chromaScale[chFmt][(iQpY)]))
 #define DEFAULT_INTRA_TC_OFFSET 2 ///< Default intra TC offset
 
 // ====================================================================================================================
@@ -441,9 +440,6 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     pixel* tmpsrc = src;
 
     int stride = reconYuv->getStride();
-    int qp = 0;
-    int qpP = 0;
-    int qpQ = 0;
     uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
 
     uint32_t log2UnitSize = g_log2UnitSize;
@@ -457,8 +453,8 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
     uint32_t  partQ = 0;
     TComDataCU* cuP = cu;
     TComDataCU* cuQ = cu;
-    int  betaOffsetDiv2 = cuQ->m_slice->m_pps->deblockingFilterBetaOffsetDiv2;
-    int  tcOffsetDiv2 = cuQ->m_slice->m_pps->deblockingFilterTcOffsetDiv2;
+    int  betaOffset = cuQ->m_slice->m_pps->deblockingFilterBetaOffsetDiv2 << 1;
+    int  tcOffset = cuQ->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
     if (dir == EDGE_VER)
     {
@@ -480,7 +476,7 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
         bs = blockingStrength[bsAbsIdx];
         if (bs)
         {
-            qpQ = cu->getQP(bsAbsIdx);
+            int qpQ = cu->getQP(bsAbsIdx);
             partQ = bsAbsIdx;
             // Derive neighboring PU index
             if (dir == EDGE_VER)
@@ -492,12 +488,12 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
                 cuP = cuQ->getPUAbove(partP, partQ);
             }
 
-            qpP = cuP->getQP(partP);
-            qp = (qpP + qpQ + 1) >> 1;
+            int qpP = cuP->getQP(partP);
+            int qp = (qpP + qpQ + 1) >> 1;
             int bitdepthScale = 1 << (X265_DEPTH - 8);
 
-            int indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, int(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + (tcOffsetDiv2 << 1)));
-            int indexB = Clip3(0, MAX_QP, qp + (betaOffsetDiv2 << 1));
+            int indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, int(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
+            int indexB = Clip3(0, MAX_QP, qp + betaOffset);
 
             int tc =  sm_tcTable[indexTC] * bitdepthScale;
             int beta = sm_betaTable[indexB] * bitdepthScale;
@@ -544,13 +540,11 @@ void TComLoopFilter::xEdgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint
 
 void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int dir, int edge, uint8_t blockingStrength[])
 {
+    int chFmt = cu->getChromaFormat();
     TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
     int stride = reconYuv->getCStride();
     pixel* srcCb = reconYuv->getCbAddr(cu->getAddr(), absZOrderIdx);
     pixel* srcCr = reconYuv->getCrAddr(cu->getAddr(), absZOrderIdx);
-    int qp = 0;
-    int qpP = 0;
-    int qpQ = 0;
     uint32_t log2UnitSizeH = g_log2UnitSize - cu->getHorzChromaShift();
     uint32_t log2UnitSizeV = g_log2UnitSize - cu->getVertChromaShift();
     uint32_t unitSizeChromaH = 1 << log2UnitSizeH;
@@ -565,7 +559,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
     uint32_t  partQ;
     TComDataCU* cuP;
     TComDataCU* cuQ = cu;
-    int tcOffsetDiv2 = cu->m_slice->m_pps->deblockingFilterTcOffsetDiv2;
+    int tcOffset = cu->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
     // Vertical Position
     uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
@@ -611,7 +605,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
 
         if (bs > 1)
         {
-            qpQ = cu->getQP(bsAbsIdx);
+            int qpQ = cu->getQP(bsAbsIdx);
             partQ = bsAbsIdx;
             // Derive neighboring PU index
             if (dir == EDGE_VER)
@@ -623,7 +617,7 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
                 cuP = cuQ->getPUAbove(partP, partQ);
             }
 
-            qpP = cuP->getQP(partP);
+            int qpP = cuP->getQP(partP);
 
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {
@@ -636,10 +630,17 @@ void TComLoopFilter::xEdgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, ui
             {
                 int chromaQPOffset  = (chromaIdx == 0) ? cu->m_slice->m_pps->chromaCbQpOffset : cu->m_slice->m_pps->chromaCrQpOffset;
                 pixel* piTmpSrcChroma = (chromaIdx == 0) ? tmpSrcCb : tmpSrcCr;
-                qp = QpUV((((qpP + qpQ + 1) >> 1) + chromaQPOffset), cu->getChromaFormat());
+                int qp = ((qpP + qpQ + 1) >> 1) + chromaQPOffset;
+                if (qp >= 30)
+                {
+                    if (chFmt == CHROMA_420)
+                        qp = g_chromaScale[qp];
+                    else
+                        qp = X265_MIN(qp, 51);
+                }
                 int iBitdepthScale = 1 << (X265_DEPTH - 8);
 
-                int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + (tcOffsetDiv2 << 1));
+                int iIndexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset);
                 int iTc =  sm_tcTable[iIndexTC] * iBitdepthScale;
 
                 for (uint32_t uiStep = 0; uiStep < loopLength; uiStep++)

@@ -54,8 +54,6 @@ namespace x265 {
 // Constants
 // ====================================================================================================================
 
-#define QP_BITS 15
-
 // ====================================================================================================================
 // Type definition
 // ====================================================================================================================
@@ -81,39 +79,34 @@ class QpParam
 {
 public:
 
-    QpParam() {}
+    QpParam()
+    {
+        m_rem = 0;
+        m_per = 0;
+        m_qp  = 0;
+    }
 
-    int m_qp;
-    int m_per;
     int m_rem;
-
-    int m_bits;
+    int m_per;
+    int m_qp;
 
 public:
 
     void setQpParam(int qpScaled)
     {
-        m_qp   = qpScaled;
-        m_per  = qpScaled / 6;
-        m_rem  = qpScaled % 6;
-        m_bits = QP_BITS + m_per;
+        if (m_qp != qpScaled)
+        {
+            m_rem  = qpScaled % 6;
+            m_per  = qpScaled / 6;
+            m_qp   = qpScaled;
+        }
     }
-
-    void clear()
-    {
-        m_qp   = 0;
-        m_per  = 0;
-        m_rem  = 0;
-        m_bits = 0;
-    }
-
-    int per()   const { return m_per; }
 
     int rem()   const { return m_rem; }
 
-    int bits()  const { return m_bits; }
+    int per()   const { return m_per; }
 
-    int qp() { return m_qp; }
+    int qp()    const { return m_qp; }
 };
 
 /// transform and quantization class
@@ -134,7 +127,9 @@ public:
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     // Misc functions
+    void setQPforQuant(int qpy, int qpBdOffset);
     void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
+    void setQPforQuant(TComDataCU* cu);
     void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
@@ -204,7 +199,7 @@ public:
 
 protected:
 
-    QpParam  m_qpParam;
+    QpParam  m_qpParam[3];
 
     double   m_lambda;
     double   m_lambdas[3];
