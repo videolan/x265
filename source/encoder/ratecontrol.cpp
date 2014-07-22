@@ -303,7 +303,7 @@ RateControl::RateControl(x265_param *p)
 {
     m_param = p;
     int lowresCuWidth = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int lowresCuHeight = ((m_param->sourceHeight / 2)  + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int lowresCuHeight = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_ncu = lowresCuWidth * lowresCuHeight;
 
     if (m_param->rc.cuTree)
@@ -1288,7 +1288,7 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 
                 if (!fread(&type, 1, 1, m_cutreeStatFileIn))
                     goto fail;
-                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != sizeof(m_ncu))
+                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != (size_t)m_ncu)
                     goto fail;
 
                 if (type != sliceTypeActual && m_cuTreeStats.qpBufPos == 1)
@@ -1432,7 +1432,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
         }
         else
-            {
+        {
             /* 1pass ABR */
 
             /* Calculate the quantizer which would have produced the desired
@@ -1463,7 +1463,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             }
             else
             {
-                if (!m_param->rc.bStatRead)
+                if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
                     checkAndResetABR(rce, false);
                 q = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
 
@@ -1541,22 +1541,24 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
 
 void RateControl::rateControlUpdateStats(RateControlEntry* rce)
 {
-    if (rce->sliceType == I_SLICE)
+    if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
     {
-        /* previous I still had a residual; roll it into the new loan */
-        if (m_partialResidualFrames)
-            rce->rowTotalBits += m_partialResidualCost * m_partialResidualFrames;
+        if (rce->sliceType == I_SLICE)
+        {
+            /* previous I still had a residual; roll it into the new loan */
+            if (m_partialResidualFrames)
+                rce->rowTotalBits += m_partialResidualCost * m_partialResidualFrames;
 
-        m_partialResidualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
-        m_partialResidualCost = (int)((rce->rowTotalBits * s_amortizeFraction) /m_partialResidualFrames);
-        rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
+            m_partialResidualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
+            m_partialResidualCost = (int)((rce->rowTotalBits * s_amortizeFraction) /m_partialResidualFrames);
+            rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
+        }
+        else if (m_partialResidualFrames)
+        {
+             rce->rowTotalBits += m_partialResidualCost;
+             m_partialResidualFrames--;
+        }
     }
-    else if (m_partialResidualFrames)
-    {
-         rce->rowTotalBits += m_partialResidualCost;
-         m_partialResidualFrames--;
-    }
-
     if (rce->sliceType != B_SLICE)
         rce->rowCplxrSum =  rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
     else
@@ -2044,7 +2046,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     int64_t actualBits = bits;
     if (m_isAbr)
     {
-        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
+        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead && !m_param->rc.bStatWrite)
         {
             checkAndResetABR(rce, true);
         }
@@ -2158,7 +2160,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     if (m_2pass)
     {
         m_expectedBitsSum += qScale2bits(rce, x265_qp2qScale(rce->newQp));
-        m_totalBits += bits;
+        m_totalBits += bits - rce->rowTotalBits;
     }
 
     if (m_isVbv)
