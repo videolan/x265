@@ -86,8 +86,6 @@ TComPrediction::~TComPrediction()
 void TComPrediction::initTempBuff(int csp)
 {
     m_csp = csp;
-    m_hChromaShift = CHROMA_H_SHIFT(csp);
-    m_vChromaShift = CHROMA_V_SHIFT(csp);
 
     if (m_predBuf == NULL)
     {
@@ -470,8 +468,11 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     int refStride = refPic->getCStride();
     int dstStride = dstPic->getCStride();
 
-    int shiftHor = (2 + m_hChromaShift);
-    int shiftVer = (2 + m_vChromaShift);
+    int hChromaShift = CHROMA_H_SHIFT(m_csp);
+    int vChromaShift = CHROMA_V_SHIFT(m_csp);
+
+    int shiftHor = (2 + hChromaShift);
+    int shiftVer = (2 + vChromaShift);
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
@@ -493,25 +494,25 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     }
     else if (yFrac == 0)
     {
-        primitives.chroma[m_csp].filter_hpp[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift));
-        primitives.chroma[m_csp].filter_hpp[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift));
+        primitives.chroma[m_csp].filter_hpp[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - hChromaShift));
+        primitives.chroma[m_csp].filter_hpp[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - hChromaShift));
     }
     else if (xFrac == 0)
     {
-        primitives.chroma[m_csp].filter_vpp[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_vpp[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].filter_vpp[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - vChromaShift));
+        primitives.chroma[m_csp].filter_vpp[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - vChromaShift));
     }
     else
     {
-        int extStride = m_width >> m_hChromaShift;
+        int extStride = m_width >> hChromaShift;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - hChromaShift), 1);
+        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - vChromaShift));
 
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - hChromaShift), 1);
+        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - vChromaShift));
     }
 }
 
@@ -520,9 +521,11 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->m_cwidth;
+    int hChromaShift = CHROMA_H_SHIFT(m_csp);
+    int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    int shiftHor = (2 + m_hChromaShift);
-    int shiftVer = (2 + m_vChromaShift);
+    int shiftHor = (2 + hChromaShift);
+    int shiftVer = (2 + vChromaShift);
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
@@ -537,8 +540,8 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 
     int partEnum = partitionFromSizes(m_width, m_height);
     
-    uint32_t cxWidth  = m_width   >> m_hChromaShift;
-    uint32_t cxHeight = m_height >> m_vChromaShift;
+    uint32_t cxWidth  = m_width   >> hChromaShift;
+    uint32_t cxHeight = m_height >> vChromaShift;
 
     X265_CHECK(((cxWidth | cxHeight) % 2) == 0, "chroma block size expected to be multiple of 2\n");
 
@@ -549,23 +552,23 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     }
     else if (yFrac == 0)
     {
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift), 0);
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift), 0);
+        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - hChromaShift), 0);
+        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - hChromaShift), 0);
     }
     else if (xFrac == 0)
     {
-        primitives.chroma[m_csp].filter_vps[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_vps[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].filter_vps[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - vChromaShift));
+        primitives.chroma[m_csp].filter_vps[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - vChromaShift));
     }
     else
     {
         int extStride = cxWidth;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - hChromaShift), 1);
+        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - vChromaShift));
+        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - hChromaShift), 1);
+        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - vChromaShift));
     }
 }
 

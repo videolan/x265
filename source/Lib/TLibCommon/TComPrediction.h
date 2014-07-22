@@ -69,9 +69,10 @@ protected:
     TComYuv   m_predTempYuv;
 
     int16_t*  m_immedVals;
-    int       m_hChromaShift;
-    int       m_vChromaShift;
+
+    /* Slice information */
     int       m_csp;
+    bool      isPSlice;
 
     /* CU information for prediction */
     int       m_width;
