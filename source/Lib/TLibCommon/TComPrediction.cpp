@@ -223,18 +223,18 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
  * \param TComDataCU* cu
  * \param uint32_t PartAddr
  */
-bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, uint32_t partAddr)
+bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu)
 {
     X265_CHECK(cu->m_slice->isInterB(), "identical motion check in P frame\n");
     if (!cu->m_slice->m_pps->bUseWeightedBiPred)
     {
-        int refIdxL0 = cu->getCUMvField(0)->getRefIdx(partAddr);
-        int refIdxL1 = cu->getCUMvField(1)->getRefIdx(partAddr);
+        int refIdxL0 = cu->getCUMvField(0)->getRefIdx(m_partAddr);
+        int refIdxL1 = cu->getCUMvField(1)->getRefIdx(m_partAddr);
         if (refIdxL0 >= 0 && refIdxL1 >= 0)
         {
             int refPOCL0 = cu->m_slice->m_refPOCList[0][refIdxL0];
             int refPOCL1 = cu->m_slice->m_refPOCList[1][refIdxL1];
-            if (refPOCL0 == refPOCL1 && cu->getCUMvField(0)->getMv(partAddr) == cu->getCUMvField(1)->getMv(partAddr))
+            if (refPOCL0 == refPOCL1 && cu->getCUMvField(0)->getMv(m_partAddr) == cu->getCUMvField(1)->getMv(m_partAddr))
                 return true;
         }
     }
@@ -243,89 +243,83 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu, uint32_t partAddr)
 
 void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, int partIdx, bool bLuma, bool bChroma)
 {
-    int  width;
-    int  height;
-    uint32_t partAddr;
-
     X265_CHECK(partIdx >= 0, "partidx is not positive\n");
+    
+    if (cu->m_slice->isInterP())
+        list = REF_PIC_LIST_0;
+    if (list != REF_PIC_LIST_X)
     {
-        cu->getPartIndexAndSize(partIdx, partAddr, width, height);
-        if (cu->m_slice->isInterP())
-            list = REF_PIC_LIST_0;
-        if (list != REF_PIC_LIST_X)
+        if (cu->m_slice->m_pps->bUseWeightPred)
         {
-            if (cu->m_slice->m_pps->bUseWeightPred)
-            {
-                ShortYuv* shortYuv = &m_predShortYuv[0];
-                int refId = cu->getCUMvField(list)->getRefIdx(partAddr);
-                X265_CHECK(refId >= 0, "refidx is not positive\n");
+            ShortYuv* shortYuv = &m_predShortYuv[0];
+            int refId = cu->getCUMvField(list)->getRefIdx(m_partAddr);
+            X265_CHECK(refId >= 0, "refidx is not positive\n");
 
-                MV mv = cu->getCUMvField(list)->getMv(partAddr);
-                cu->clipMv(mv);
-                if (bLuma)
-                    xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(),
-                    partAddr, &mv, width, height, shortYuv);
-                if (bChroma)
-                    xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-                    partAddr, &mv, width, height, shortYuv);
+            MV mv = cu->getCUMvField(list)->getMv(m_partAddr);
+            cu->clipMv(mv);
+            if (bLuma)
+                xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(),
+                &mv, shortYuv);
+            if (bChroma)
+                xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+                &mv, shortYuv);
 
-                xWeightedPredictionUni(cu, shortYuv, partAddr, width, height, list, predYuv, -1, bLuma, bChroma);
-            }
-            else
-                xPredInterUni(cu, partAddr, width, height, list, predYuv, bLuma, bChroma);
+            xWeightedPredictionUni(cu, shortYuv, m_partAddr, m_width, m_height, list, predYuv, -1, bLuma, bChroma);
         }
         else
-        {
-            if (xCheckIdenticalMotion(cu, partAddr))
-                xPredInterUni(cu, partAddr, width, height, REF_PIC_LIST_0, predYuv, bLuma, bChroma);
-            else
-                xPredInterBi(cu, partAddr, width, height, predYuv, bLuma, bChroma);
-        }
+            xPredInterUni(cu, list, predYuv, bLuma, bChroma);
+    }
+    else
+    {
+        if (xCheckIdenticalMotion(cu))
+            xPredInterUni(cu, REF_PIC_LIST_0, predYuv, bLuma, bChroma);
+        else
+            xPredInterBi(cu, predYuv, bLuma, bChroma);
     }
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int list, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterUni(TComDataCU* cu, int list, TComYuv* outPredYuv, bool bLuma, bool bChroma)
 {
-    int refIdx = cu->getCUMvField(list)->getRefIdx(partAddr);
+    int refIdx = cu->getCUMvField(list)->getRefIdx(m_partAddr);
 
     X265_CHECK(refIdx >= 0, "refidx is not positive\n");
 
-    MV mv = cu->getCUMvField(list)->getMv(partAddr);
+    MV mv = cu->getCUMvField(list)->getMv(m_partAddr);
     cu->clipMv(mv);
 
     if (bLuma)
         xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        partAddr, &mv, width, height, outPredYuv);
+        &mv, outPredYuv);
 
     if (bChroma)
         xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        partAddr, &mv, width, height, outPredYuv);
+        &mv, outPredYuv);
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterUni(TComDataCU* cu, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
 {
-    int refIdx = cu->getCUMvField(list)->getRefIdx(partAddr);
+    int refIdx = cu->getCUMvField(list)->getRefIdx(m_partAddr);
 
     X265_CHECK(refIdx >= 0, "refidx is not positive\n");
 
-    MV mv = cu->getCUMvField(list)->getMv(partAddr);
+    MV mv = cu->getCUMvField(list)->getMv(m_partAddr);
     cu->clipMv(mv);
 
     if (bLuma)
         xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        partAddr, &mv, width, height, outPredYuv);
+        &mv, outPredYuv);
     if (bChroma)
         xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        partAddr, &mv, width, height, outPredYuv);
+        &mv, outPredYuv);
 }
 
-void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, int height, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     X265_CHECK(cu->m_slice->isInterB(), "biprediction in P frame\n");
 
     int refIdx[2];
-    refIdx[0] = cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(partAddr);
-    refIdx[1] = cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(partAddr);
+    refIdx[0] = cu->getCUMvField(REF_PIC_LIST_0)->getRefIdx(m_partAddr);
+    refIdx[1] = cu->getCUMvField(REF_PIC_LIST_1)->getRefIdx(m_partAddr);
 
     if (refIdx[0] >= 0 && refIdx[1] >= 0)
     {
@@ -333,13 +327,13 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
         {
             X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-            xPredInterUni(cu, partAddr, width, height, list, &m_predShortYuv[list], bLuma, bChroma);
+            xPredInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
         if (cu->m_slice->m_pps->bUseWeightedBiPred)
-            xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], partAddr, width, height, outPredYuv, bLuma, bChroma);
+            xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
         else
-            outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], partAddr, width, height, bLuma, bChroma);
+            outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
     }
     else if (cu->m_slice->m_pps->bUseWeightedBiPred)
     {
@@ -349,10 +343,10 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 
             X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-            xPredInterUni(cu, partAddr, width, height, list, &m_predShortYuv[list], bLuma, bChroma);
+            xPredInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
-        xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], partAddr, width, height, outPredYuv, bLuma, bChroma);
+        xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
     }
     else if (refIdx[0] >= 0)
     {
@@ -360,7 +354,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 
         X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-        xPredInterUni(cu, partAddr, width, height, list, outPredYuv, bLuma, bChroma);
+        xPredInterUni(cu, list, outPredYuv, bLuma, bChroma);
     }
     else
     {
@@ -370,7 +364,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
 
         X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-        xPredInterUni(cu, partAddr, width, height, list, outPredYuv, bLuma, bChroma);
+        xPredInterUni(cu, list, outPredYuv, bLuma, bChroma);
     }
 }
 
@@ -385,15 +379,15 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, 
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
  */
-void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
+void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
-    pixel *dst    = dstPic->getLumaAddr(partAddr);
+    pixel *dst    = dstPic->getLumaAddr(m_partAddr);
 
     int srcStride = refPic->getStride();
     int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
-    int partEnum = partitionFromSizes(width, height);
-    pixel* src = refPic->getLumaAddr(cuAddr, zOrderIdxinCU + partAddr) + srcOffset;
+    int partEnum = partitionFromSizes(m_width, m_height);
+    pixel* src = refPic->getLumaAddr(cuAddr, zOrderIdxinCU + m_partAddr) + srcOffset;
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
@@ -412,7 +406,7 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
     else
     {
-        int tmpStride = width;
+        int tmpStride = m_width;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.luma_hps[partEnum](src, srcStride, m_immedVals, tmpStride, xFrac, 1);
@@ -421,26 +415,26 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
 }
 
 //Motion compensated block for biprediction
-void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic)
+void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getStride();
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
-    pixel *ref    = refPic->getLumaAddr(cuAddr, zOrderIdxinCU + partAddr) + refOffset;
+    pixel *ref    = refPic->getLumaAddr(cuAddr, zOrderIdxinCU + m_partAddr) + refOffset;
 
     int dstStride = dstPic->m_width;
-    int16_t *dst  = dstPic->getLumaAddr(partAddr);
+    int16_t *dst  = dstPic->getLumaAddr(m_partAddr);
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
 
-    int partEnum = partitionFromSizes(width, height);
+    int partEnum = partitionFromSizes(m_width, m_height);
 
-    X265_CHECK((width % 4) + (height % 4) == 0, "width or height not divisible by 4\n");
+    X265_CHECK((m_width % 4) + (m_height % 4) == 0, "width or height not divisible by 4\n");
     X265_CHECK(dstStride == MAX_CU_SIZE, "stride expected to be max cu size\n");
 
     if ((yFrac | xFrac) == 0)
     {
-        primitives.luma_p2s(ref, refStride, dst, width, height);
+        primitives.luma_p2s(ref, refStride, dst, m_width, m_height);
     }
     else if (yFrac == 0)
     {
@@ -452,7 +446,7 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
     else
     {
-        int tmpStride = width;
+        int tmpStride = m_width;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.luma_hps[partEnum](ref, refStride, m_immedVals, tmpStride, xFrac, 1);
@@ -471,7 +465,7 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
  * \param height   Height of block
  * \param dstPic   Pointer to destination picture
  */
-void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic)
+void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->getCStride();
@@ -481,16 +475,16 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
-    pixel* refCb = refPic->getCbAddr(cuAddr, zOrderIdxinCU + partAddr) + refOffset;
-    pixel* refCr = refPic->getCrAddr(cuAddr, zOrderIdxinCU + partAddr) + refOffset;
+    pixel* refCb = refPic->getCbAddr(cuAddr, zOrderIdxinCU + m_partAddr) + refOffset;
+    pixel* refCr = refPic->getCrAddr(cuAddr, zOrderIdxinCU + m_partAddr) + refOffset;
 
-    pixel* dstCb = dstPic->getCbAddr(partAddr);
-    pixel* dstCr = dstPic->getCrAddr(partAddr);
+    pixel* dstCb = dstPic->getCbAddr(m_partAddr);
+    pixel* dstCr = dstPic->getCrAddr(m_partAddr);
 
     int xFrac = mv->x & ((1 << shiftHor) - 1);
     int yFrac = mv->y & ((1 << shiftVer) - 1);
 
-    int partEnum = partitionFromSizes(width, height);
+    int partEnum = partitionFromSizes(m_width, m_height);
     
     if ((yFrac | xFrac) == 0)
     {
@@ -509,7 +503,7 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     }
     else
     {
-        int extStride = width >> m_hChromaShift;
+        int extStride = m_width >> m_hChromaShift;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
@@ -522,7 +516,7 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 }
 
 // Generate motion compensated block when biprediction
-void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic)
+void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->m_cwidth;
@@ -532,19 +526,19 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 
     int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
-    pixel* refCb = refPic->getCbAddr(cuAddr, zOrderIdxinCU + partAddr) + refOffset;
-    pixel* refCr = refPic->getCrAddr(cuAddr, zOrderIdxinCU + partAddr) + refOffset;
+    pixel* refCb = refPic->getCbAddr(cuAddr, zOrderIdxinCU + m_partAddr) + refOffset;
+    pixel* refCr = refPic->getCrAddr(cuAddr, zOrderIdxinCU + m_partAddr) + refOffset;
 
-    int16_t* dstCb = dstPic->getCbAddr(partAddr);
-    int16_t* dstCr = dstPic->getCrAddr(partAddr);
+    int16_t* dstCb = dstPic->getCbAddr(m_partAddr);
+    int16_t* dstCr = dstPic->getCrAddr(m_partAddr);
 
     int xFrac = mv->x & ((1 << shiftHor) - 1);
     int yFrac = mv->y & ((1 << shiftVer) - 1);
 
-    int partEnum = partitionFromSizes(width, height);
+    int partEnum = partitionFromSizes(m_width, m_height);
     
-    uint32_t cxWidth = width   >> m_hChromaShift;
-    uint32_t cxHeight = height >> m_vChromaShift;
+    uint32_t cxWidth  = m_width   >> m_hChromaShift;
+    uint32_t cxHeight = m_height >> m_vChromaShift;
 
     X265_CHECK(((cxWidth | cxHeight) % 2) == 0, "chroma block size expected to be multiple of 2\n");
 

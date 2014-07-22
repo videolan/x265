@@ -73,19 +73,26 @@ protected:
     int       m_vChromaShift;
     int       m_csp;
 
-    // motion compensation functions
-    void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
-    void xPredInterUni(TComDataCU* cu, uint32_t partAddr, int width, int height, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
-    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
-    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, TComYuv *dstPic);
-    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, uint32_t partAddr, MV *mv, int width, int height, ShortYuv *dstPic);
+    /* CU information for prediction */
+    int       m_width;
+    int       m_height; 
+    uint32_t  m_partAddr;
 
-    void xPredInterBi(TComDataCU* cu, uint32_t partAddr, int width, int height, TComYuv* outPredYuv, bool bLuma, bool bChroma);
+    /* ME information for prediction */
+
+    // motion compensation functions
+    void xPredInterUni(TComDataCU *cu, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
+    void xPredInterUni(TComDataCU *cu, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
+    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic);
+    void xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic);
+    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic);
+    void xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic);
+
+    void xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma);
 
     void xGetLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
-    bool xCheckIdenticalMotion(TComDataCU* cu, uint32_t PartAddr);
+    bool xCheckIdenticalMotion(TComDataCU* cu);
 
 public:
 
