@@ -69,6 +69,7 @@ static const struct option long_options[] =
     { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log-level",      required_argument, NULL, 0 },
+    { "profile",        required_argument, NULL, 0 },
     { "level",          required_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
     { "no-cu-stats",          no_argument, NULL, 0 },
@@ -331,6 +332,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
+    H0("   --profile <string>            Specify the encode profile: main, main10, mainstillpicture\n");
     H0("   --level <integer|float>       Force a minumum required decoder level (as '5.0' or '50')\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
@@ -458,6 +460,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *bitstreamfn = NULL;
     const char *preset = NULL;
     const char *tune = NULL;
+    const char *profile = NULL;
 
     if (argc <= 1)
     {
@@ -547,6 +550,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("dither") this->bDither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("y4m") this->bForceY4m = true;
+            OPT("profile") profile = optarg; /* handled last */
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
             OPT("qpfile")
@@ -583,6 +587,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (argc <= 1 || help)
         showHelp(param);
+
+    if (x265_param_apply_profile(param, profile))
+        return true;
 
     if (inputfn == NULL || bitstreamfn == NULL)
     {
