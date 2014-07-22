@@ -157,7 +157,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     if (param.levelIdc <= 0)
         return true;
 
-    int level = 0;
+    uint32_t level = 0;
     while (levels[level].levelIdc != param.levelIdc && level + 1 < sizeof(levels) / sizeof(levels[0]))
         level++;
     if (levels[level].levelIdc != param.levelIdc)
