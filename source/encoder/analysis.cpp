@@ -43,9 +43,6 @@ Analysis::Analysis()
     m_origYuv         = NULL;
     for (int i = 0; i < MAX_PRED_TYPES; i++)
         m_modePredYuv[i] = NULL;
-
-    m_entropyCoder    = NULL;
-    m_rdEntropyCoders = NULL;
 }
 
 bool Analysis::init(Encoder* top)
