@@ -223,23 +223,42 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     if (!profile)
         return 0;
     if (!strcmp(profile, "main"))
-    {}
-    else if (!strcmp(profile, "main10"))
     {
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
 #if HIGH_BIT_DEPTH
-        param->internalBitDepth = 10;
-#else
-        x265_log(param, X265_LOG_WARNING, "Main10 not supported, not compiled for 16bpp.\n");
+        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
+        x265_log(param, X265_LOG_ERROR, "Main profile not supported, compiled for Main10.\n");
         return -1;
 #endif
     }
+    else if (!strcmp(profile, "main10"))
+    {
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
+        /* SPSs shall have bit_depth_luma_minus8 in the range of 0 to 2, inclusive 
+         * this covers all builds of x265, currently */
+    }
     else if (!strcmp(profile, "mainstillpicture"))
     {
-        /* technically the stream should only have one picture, but we do not
-         * enforce this */
-        param->bRepeatHeaders = 1;
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
+        /* SPSs shall have sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ] equal to 0 only */
+        param->maxNumReferences = 1;
+
+#if HIGH_BIT_DEPTH
+        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
+        x265_log(param, X265_LOG_ERROR, "Mainstillpicture profile not supported, compiled for Main10.\n");
+        return -1;
+#endif
+        /* The bitstream shall contain only one picture (we do not enforce this) */
+        /* just in case the user gives us more than one picture: */
         param->keyframeMax = 1;
         param->bOpenGOP = 0;
+        param->bRepeatHeaders = 1;
     }
     else
     {
