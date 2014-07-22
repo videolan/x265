@@ -112,7 +112,7 @@ void x265_param_default(x265_param *param)
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
-    param->levelIdc = -1;
+    param->levelIdc = 0;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -575,6 +575,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         else
             p->levelIdc = atoi(value);
     }
+    OPT("high-tier") p->bHighTier = atobool(value);
     OPT2("log-level", "log")
     {
         p->logLevel = atoi(value);

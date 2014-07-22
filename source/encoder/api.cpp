@@ -55,9 +55,17 @@ x265_encoder *x265_encoder_open(x265_param *p)
     Encoder *encoder = new Encoder;
     if (encoder)
     {
-        // these may change params for auto-detect, etc
+        // may change params for auto-detect, etc
         encoder->configure(param);
-        enforceLevel(*param, encoder->m_vps);
+        
+        // may change rate control and CPB params
+        if (!enforceLevel(*param, encoder->m_vps))
+        {
+            delete encoder;
+            return NULL;
+        }
+
+        // will detect and set profile/tier/level in VPS
         determineLevel(*param, encoder->m_vps);
 
         x265_print_params(param);

@@ -32,7 +32,7 @@ namespace x265 {
 
 struct VPS;
 void determineLevel(const x265_param &param, VPS& vps);
-void enforceLevel(x265_param& param, VPS& vps);
+bool enforceLevel(x265_param& param, VPS& vps);
 
 }
 

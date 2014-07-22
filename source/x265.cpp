@@ -70,7 +70,9 @@ static const struct option long_options[] =
     { "frame-threads",  required_argument, NULL, 'F' },
     { "log-level",      required_argument, NULL, 0 },
     { "profile",        required_argument, NULL, 0 },
-    { "level",          required_argument, NULL, 0 },
+    { "level-idc",      required_argument, NULL, 0 },
+    { "high-tier",            no_argument, NULL, 0 },
+    { "no-high-tier",         no_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
     { "no-cu-stats",          no_argument, NULL, 0 },
     { "cu-stats",             no_argument, NULL, 0 },
@@ -333,7 +335,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H0("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
     H0("   --profile <string>            Specify the encode profile: main, main10, mainstillpicture\n");
-    H0("   --level <integer|float>       Force a minumum required decoder level (as '5.0' or '50')\n");
+    H0("   --level-idc <integer|float>   Force a minumum required decoder level (as '5.0' or '50')\n");
+    H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H0("   --seek <integer>              First frame to encode\n");
