@@ -594,21 +594,58 @@ Slice decision options
 
 	Use B-frames as references, when possible. Default enabled
 
-.. option:: --level <integer|float>
+.. option:: --profile <string>
 
-	Minimum decoder requirement level. Defaults to -1, which implies
+	Enforce the requirements of the specified profile, ensuring the
+	output stream will be decodable by a decoder which supports that
+	profile.  May abort the encode if the specified profile is
+	impossible to be supported by the compile options chosen for the
+	encoder (a high bit depth encoder will be unable to output
+	bitstreams compliant with Main or Mainstillpicture).
+
+	API users must use x265_param_apply_profile() after configuring
+	their param structure. Any changes made to the param structure after
+	this call might make the encode non-compliant.
+
+	**Values:** main, main10, mainstillpicture
+
+	**CLI ONLY**
+
+.. option:: --level-idc <integer|float>
+
+	Minimum decoder requirement level. Defaults to 0, which implies
 	auto-detection by the encoder. If specified, the encoder will
 	attempt to bring the encode specifications within that specified
 	level. If the encoder is unable to reach the level it issues a
-	warning and emits the actual decoder requirement. If the requested
-	requirement level is higher than the actual level, the actual
-	requirement level is signaled.
+	warning and aborts the encode. If the requested requirement level is
+	higher than the actual level, the actual requirement level is
+	signaled.
+
+	Beware, wpecifying a decoder level will force the encoder to enable
+	VBV for constant rate factor encodes, which may introduce
+	non-determinism.
 
 	The value is specified as a float or as an integer with the level
 	times 10, for example level **5.1** is specified as "5.1" or "51",
 	and level **5.0** is specified as "5.0" or "50".
 
 	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+
+.. option:: --high-tier, --no-high-tier
+
+	If :option:`--level-idc` has been specied, the option adds the
+	intention to support the High tier of that level. If your specified
+	level does not support a High tier, a warning is issued and this
+	modifier flag is ignored.
+
+.. note::
+	:option:`--profile`, :option:`--level-idc`, and
+	:option:`--high-tier` are only intended for use when you are
+	targeting a particular decoder (or decoders) with fixed resource
+	limitations and must constrain the bitstream within those limits.
+	Specifying a profile or level may lower the encode quality
+	parameters to meet those requirements but it will never raise
+	them.
 
 .. option:: --ref <1..16>
 
