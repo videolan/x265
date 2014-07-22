@@ -36,12 +36,18 @@ namespace x265 {
 // x265 private namespace
 
 enum LumaPartitions
-{ // Square     Rectangular             Asymmetrical (0.75, 0.25)
-    LUMA_4x4,
-    LUMA_8x8,   LUMA_8x4,   LUMA_4x8,
-    LUMA_16x16, LUMA_16x8,  LUMA_8x16,  LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
-    LUMA_32x32, LUMA_32x16, LUMA_16x32, LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
-    LUMA_64x64, LUMA_64x32, LUMA_32x64, LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
+{
+    // Square
+    LUMA_4x4,   LUMA_8x8,   LUMA_16x16, LUMA_32x32, LUMA_64x64,
+    // Rectangular
+    LUMA_8x4,   LUMA_4x8,
+    LUMA_16x8,  LUMA_8x16,  
+    LUMA_32x16, LUMA_16x32,
+    LUMA_64x32, LUMA_32x64,
+    // Asymmetrical (0.75, 0.25)
+    LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
+    LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
+    LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
     NUM_LUMA_PARTITIONS
 };
 
@@ -50,21 +56,27 @@ enum LumaPartitions
 // be indexed by the luma partition enum
 enum Chroma420Partitions
 {
-    CHROMA_2x2, // never used by HEVC
-    CHROMA_4x4,   CHROMA_4x2,   CHROMA_2x4,
-    CHROMA_8x8,   CHROMA_8x4,   CHROMA_4x8,   CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
-    CHROMA_16x16, CHROMA_16x8,  CHROMA_8x16,  CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
-    CHROMA_32x32, CHROMA_32x16, CHROMA_16x32, CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
+    CHROMA_2x2,   CHROMA_4x4,   CHROMA_8x8,   CHROMA_16x16, CHROMA_32x32,
+    CHROMA_4x2,   CHROMA_2x4,
+    CHROMA_8x4,   CHROMA_4x8,
+    CHROMA_16x8,  CHROMA_8x16,
+    CHROMA_32x16, CHROMA_16x32,
+    CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
+    CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
+    CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
     NUM_CHROMA_PARTITIONS
 };
 
 enum Chroma422Partitions
 {
-    CHROMA422X_4x8,
-    CHROMA422_4x8,   CHROMA422_4x4,   CHROMA422_2x8,
-    CHROMA422_8x16,  CHROMA422_8x8,   CHROMA422_4x16,  CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
-    CHROMA422_16x32, CHROMA422_16x16, CHROMA422_8x32,  CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
-    CHROMA422_32x64, CHROMA422_32x32, CHROMA422_16x64, CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
+    CHROMA422X_4x8,  CHROMA422_4x8,   CHROMA422_8x16,  CHROMA422_16x32, CHROMA422_32x64,
+    CHROMA422_4x4,   CHROMA422_2x8,
+    CHROMA422_8x8,   CHROMA422_4x16,
+    CHROMA422_16x16, CHROMA422_8x32,
+    CHROMA422_32x32, CHROMA422_16x64,
+    CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
+    CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
+    CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
     NUM_CHROMA_PARTITIONS422
 };
 
@@ -111,20 +123,10 @@ inline int partitionFromSizes(int width, int height)
     return part;
 }
 
-inline int partitionFromSize(int size)
-{
-    X265_CHECK((size & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block size\n");
-    extern const uint8_t lumaSquarePartitionMapTable[];
-    int part = (int)lumaSquarePartitionMapTable[(size >> 2) - 1];
-    X265_CHECK(part != 255, "Invalid block size %d\n", size);
-    return part;
-}
-
 inline int partitionFromLog2Size(int log2Size)
 {
     X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
-    extern const uint8_t lumaPartitionsFromSquareBlocksTable[];
-    return (int)lumaPartitionsFromSquareBlocksTable[log2Size - 2];
+    return log2Size - 2;
 }
 
 typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
@@ -284,8 +286,8 @@ struct EncoderPrimitives
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
-        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS + 1];
-        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS + 1];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
         pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
@@ -302,6 +304,7 @@ extern EncoderPrimitives primitives;
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask);
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask);
+void Setup_Alias_Primitives(EncoderPrimitives &p);
 }
 
 #endif // ifndef X265_PRIMITIVES_H

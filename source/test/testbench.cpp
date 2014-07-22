@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives cprim;
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
+    Setup_Alias_Primitives(cprim);
 
     struct test_arch_t
     {
@@ -186,6 +187,7 @@ int main(int argc, char *argv[])
     memset(&optprim, 0, sizeof(optprim));
     Setup_Instrinsic_Primitives(optprim, cpuid);
     Setup_Assembly_Primitives(optprim, cpuid);
+    Setup_Alias_Primitives(optprim);
 
     printf("\nTest performance improvement with full optimizations\n");
 

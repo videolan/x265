@@ -121,28 +121,25 @@ public:
     //  Copy YUV buffer from picture buffer
     void    copyFromPicYuv(TComPicYuv* srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
 
+    //  Copy from same size YUV buffer
+    void    copyFromYuv(TComYuv* srcYuv);
+
     //  Copy Small YUV buffer to the part of other Big YUV buffer
     void    copyToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx);
 
     //  Copy the part of Big YUV buffer to other Small YUV buffer
     void    copyPartToYuv(TComYuv* dstPicYuv, uint32_t srcPartIdx);
 
-    //  Copy YUV partition buffer to other YUV partition buffer
-    void    copyPartToPartYuv(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
-
-    void    copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize);
-
     // ------------------------------------------------------------------------------------------------------------------
     //  Algebraic operation for YUV buffer
     // ------------------------------------------------------------------------------------------------------------------
 
     //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
-    void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize);
+    void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size);
     void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
     void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
-    void    addAvg(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
     void    addAvg(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     // ------------------------------------------------------------------------------------------------------------------

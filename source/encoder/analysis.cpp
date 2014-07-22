@@ -1867,6 +1867,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 
     if (lcu->getPredictionMode(absPartIdx) == MODE_INTER)
     {
+        int part = partitionFromLog2Size(cu->getLog2CUSize(0));
         if (!lcu->getSkipFlag(absPartIdx))
         {
             // Calculate Residue
@@ -1876,7 +1877,6 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
             uint32_t src2stride = m_bestPredYuv[0]->getStride();
             uint32_t src1stride = m_origYuv[0]->getStride();
             uint32_t dststride = m_tmpResiYuv[depth]->m_width;
-            int part = partitionFromLog2Size(cu->getLog2CUSize(0));
             primitives.luma_sub_ps[part](dst, dststride, src1, src2, src1stride, src2stride);
 
             src2 = m_bestPredYuv[0]->getCbAddr(absPartIdx);
@@ -1935,7 +1935,6 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 
         // Generate Recon
         TComPicYuv* rec = pic->getPicYuvRec();
-        int part = partitionFromLog2Size(cu->getLog2CUSize(0));
         pixel* src = m_bestPredYuv[0]->getLumaAddr(absPartIdx);
         pixel* dst = rec->getLumaAddr(cu->getAddr(), absPartIdx);
         uint32_t srcstride = m_bestPredYuv[0]->getStride();

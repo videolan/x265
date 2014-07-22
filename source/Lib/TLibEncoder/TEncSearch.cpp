@@ -2311,7 +2311,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     {
         cu->setSkipFlagSubParts(true, 0, depth);
 
-        predYuv->copyToPartYuv(outReconYuv, 0);
+        outReconYuv->copyFromYuv(predYuv);
         // Luma
         int part = partitionFromLog2Size(log2CUSize);
         distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
@@ -2442,9 +2442,9 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
 
         if (cu->getQtRootCbf(0))
-            outReconYuv->addClip(predYuv, outBestResiYuv, cuSize);
+            outReconYuv->addClip(predYuv, outBestResiYuv, log2CUSize);
         else
-            predYuv->copyToPartYuv(outReconYuv, 0);
+            outReconYuv->copyFromYuv(predYuv);
 
         // update with clipped distortion and cost (qp estimation loop uses unclipped values)
         int part = partitionFromLog2Size(log2CUSize);
@@ -2475,7 +2475,7 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
 {
     if (skipRes && cu->getPredictionMode(0) == MODE_INTER && cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
     {
-        predYuv->copyToPartYuv(reconYuv, 0);
+        reconYuv->copyFromYuv(predYuv);
         cu->clearCbf(0, cu->getDepth(0));
         return;
     }
@@ -2485,12 +2485,11 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     if (cu->getPredictionMode(0) == MODE_INTER)
     {
         residualTransformQuantInter(cu, 0, resiYuv, cu->getDepth(0), true);
-        uint32_t cuSize = 1 << cu->getLog2CUSize(0);
         if (cu->getQtRootCbf(0))
-            reconYuv->addClip(predYuv, resiYuv, cuSize);
+            reconYuv->addClip(predYuv, resiYuv, cu->getLog2CUSize(0));
         else
         {
-            predYuv->copyToPartYuv(reconYuv, 0);
+            reconYuv->copyFromYuv(predYuv);
             if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
                 cu->setSkipFlagSubParts(true, 0, cu->getDepth(0));
         }

@@ -90,12 +90,9 @@ public:
     int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
 
     void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t log2Size);
-    void addClip(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partSize);
 
     void copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size);
     void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
-    void copyPartToPartShortChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t lumaSize, uint32_t chromaId);
-
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size);
     void copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
 
