@@ -1646,9 +1646,9 @@ double RateControl::clipQscale(Frame* pic, double q)
            /* Lookahead VBV: If lookahead is done, raise the quantizer as necessary
             * such that no frames in the lookahead overflow and such that the buffer
             * is in a reasonable state by the end of the lookahead. */
-            int terminate = 0;
+            int loopTerminate = 0;
             /* Avoid an infinite loop. */
-            for (int iterations = 0; iterations < 1000 && terminate != 3; iterations++)
+            for (int iterations = 0; iterations < 1000 && loopTerminate != 3; iterations++)
             {
                 double frameQ[3];
                 double curBits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
@@ -1677,7 +1677,7 @@ double RateControl::clipQscale(Frame* pic, double q)
                 if (bufferFillCur < targetFill)
                 {
                     q *= 1.01;
-                    terminate |= 1;
+                    loopTerminate |= 1;
                     continue;
                 }
                 /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
@@ -1685,7 +1685,7 @@ double RateControl::clipQscale(Frame* pic, double q)
                 if (m_isCbr && bufferFillCur > targetFill)
                 {
                     q /= 1.01;
-                    terminate |= 2;
+                    loopTerminate |= 2;
                     continue;
                 }
                 break;
