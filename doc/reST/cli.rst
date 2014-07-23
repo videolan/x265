@@ -324,7 +324,7 @@ Profile, Level, Tier
 	higher than the actual level, the actual requirement level is
 	signaled.
 
-	Beware, wpecifying a decoder level will force the encoder to enable
+	Beware, specifying a decoder level will force the encoder to enable
 	VBV for constant rate factor encodes, which may introduce
 	non-determinism.
 
