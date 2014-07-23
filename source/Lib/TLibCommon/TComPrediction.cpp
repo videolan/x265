@@ -219,10 +219,8 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu)
     return false;
 }
 
-void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, int partIdx, bool bLuma, bool bChroma)
+void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, bool bLuma, bool bChroma)
 {
-    X265_CHECK(partIdx >= 0, "partidx is not positive\n");
-    
     if (cu->m_slice->isInterP())
         list = REF_PIC_LIST_0;
     if (list != REF_PIC_LIST_X)

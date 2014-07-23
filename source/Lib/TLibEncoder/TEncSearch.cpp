@@ -1869,7 +1869,7 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].refIdx;
 
-        motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, puIdx, true, false);
+        motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, true, false);
         uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.getStride());
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
@@ -1952,7 +1952,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
                 totalmebits += merge.bits;
 
-                motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
+                motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
                 continue;
             }
         }
@@ -2165,7 +2165,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             totalmebits += list[1].bits;
         }
 
-        motionCompensation(cu, predYuv, REF_PIC_LIST_X, partIdx, true, bChroma);
+        motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
     }
 
     x265_emms();

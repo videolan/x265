@@ -685,7 +685,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     for (int partIdx = 0; partIdx < numPart; partIdx++)
                     {
                         outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-                        motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, partIdx, false, true);
+                        motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                     }
 
                     encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
@@ -758,7 +758,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, partIdx, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
 
                         encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
@@ -783,7 +783,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, partIdx, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
 
                         m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], outBestCU->getLog2CUSize(0));
@@ -800,7 +800,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, partIdx, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
                     }
                 }
@@ -1396,7 +1396,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             // do MC only for Luma part
             /* Set CU parameters for motion compensation */
             outTempCU->getPartIndexAndSize(0, m_partAddr, m_width, m_height);
-            motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0, true, false);
+            motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, false);
             uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
             outTempCU->m_totalBits = bitsCand;
             outTempCU->m_totalDistortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
@@ -1435,7 +1435,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             for (int partIdx = 0; partIdx < numPart; partIdx++)
             {
                 outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-                motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, partIdx, false, true);
+                motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, false, true);
             }
 
             if (outTempCU->isLosslessCoded(0))

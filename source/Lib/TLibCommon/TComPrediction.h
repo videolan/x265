@@ -108,7 +108,7 @@ public:
     void initTempBuff(int csp);
 
     // inter
-    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, int partIdx = -1, bool bLuma = true, bool bChroma = true);
+    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList = REF_PIC_LIST_X, bool bLuma = true, bool bChroma = true);
 
     // Angular Intra
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
