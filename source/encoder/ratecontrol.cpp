@@ -2063,100 +2063,104 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                     x265_qp2qScale(int(pic->m_avgQpRc + 0.5) + mbtree_offset);
             }
         }
-        if (!m_isAbrReset)
+    }
+    if (!m_isAbrReset)
+    {
+        if (m_param->rc.aqMode || m_isVbv)
         {
-            if (m_param->rc.aqMode || m_isVbv)
+            if (pic->m_qpaRc)
             {
-                if (pic->m_qpaRc)
+                for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
                 {
-                    for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                    {
-                        pic->m_avgQpRc += pic->m_qpaRc[i];
-                    }
-
-                    pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
-                    rce->qpaRc = pic->m_avgQpRc;
-                    // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
-                    pic->m_avgQpAq = pic->m_avgQpRc;
+                    pic->m_avgQpRc += pic->m_qpaRc[i];
                 }
 
-                if (pic->m_qpaAq)
-                {
-                    for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                    {
-                        pic->m_avgQpAq += pic->m_qpaAq[i];
-                    }
+                pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
+                rce->qpaRc = pic->m_avgQpRc;
+                // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
+                pic->m_avgQpAq = pic->m_avgQpRc;
+            }
 
-                    pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
-                }
-            }
-            // Write frame stats into the stats file if 2 pass is enabled.
-            if (m_param->rc.bStatWrite)
+            if (pic->m_qpaAq)
             {
-                char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
-                    : rce->sliceType == P_SLICE ? (pic->m_picSym->m_slice->m_bReferenced ? 'P' : 'p')
-                    : pic->m_picSym->m_slice->m_bReferenced ? 'B' : 'b';
-                if (fprintf(m_statFileOut,
-                         "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
-                         rce->poc, rce->encodeOrder,
-                         cType, m_frameDuration,
-                         pic->m_avgQpRc, pic->m_avgQpAq,
-                         stats->coeffBits,
-                         stats->mvBits,
-                         stats->miscBits,
-                         stats->cuCount_i * m_ncu,
-                         stats->cuCount_p * m_ncu,
-                         stats->cuCount_skip * m_ncu) < 0)
-                    goto writeFailure;
-                if (fprintf(m_statFileOut, ";\n") < 0)
-                    goto writeFailure;
-                /* Don't re-write the data in multi-pass mode. */
-                if (m_param->rc.cuTree && pic->m_picSym->m_slice->m_bReferenced && !m_param->rc.bStatRead)
+                for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
                 {
-                    uint8_t sliceType = (uint8_t)rce->sliceType;
-                    for (int i = 0; i < m_ncu; i++)
-                         m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(pic->m_lowres.qpCuTreeOffset[i] * 256.0);
-                    if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
-                        goto writeFailure;
-                    if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
-                        goto writeFailure;
+                    pic->m_avgQpAq += pic->m_qpaAq[i];
                 }
+
+                pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
             }
-            /* amortize part of each I slice over the next several frames, up to
-             * keyint-max, to avoid over-compensating for the large I slice cost */
-            if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
-            {
-                if (rce->sliceType == I_SLICE)
-                {
-                    /* previous I still had a residual; roll it into the new loan */
-                    if (m_residualFrames)
-                        bits += m_residualCost * m_residualFrames;
-                    m_residualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
-                    m_residualCost = (int)((bits * s_amortizeFraction) / m_residualFrames);
-                    bits -= m_residualCost * m_residualFrames;
-                }
-                else if (m_residualFrames)
-                {
-                    bits += m_residualCost;
-                    m_residualFrames--;
-                }
-            }
-            if (rce->sliceType != B_SLICE)
-            {
-                /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
-                 * to improve short term compensation for next frame. */
-                m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / rce->qRceq) - (rce->rowCplxrSum);
-            }
-            else
-            {
-                /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
-                 * Not perfectly accurate with B-refs, but good enough. */
-                m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor))) - (rce->rowCplxrSum);
-            }
-            m_wantedBitsWindow += m_frameDuration * m_bitrate;
-            m_totalBits += bits - rce->rowTotalBits;
         }
     }
+    // Write frame stats into the stats file if 2 pass is enabled.
+    if (m_param->rc.bStatWrite)
+    {
+        char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
+            : rce->sliceType == P_SLICE ? (pic->m_picSym->m_slice->m_bReferenced ? 'P' : 'p')
+            : pic->m_picSym->m_slice->m_bReferenced ? 'B' : 'b';
+        if (fprintf(m_statFileOut,
+                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
+                    rce->poc, rce->encodeOrder,
+                    cType, m_frameDuration,
+                    pic->m_avgQpRc, pic->m_avgQpAq,
+                    stats->coeffBits,
+                    stats->mvBits,
+                    stats->miscBits,
+                    stats->cuCount_i * m_ncu,
+                    stats->cuCount_p * m_ncu,
+                    stats->cuCount_skip * m_ncu) < 0)
+            goto writeFailure;
+        if (fprintf(m_statFileOut, ";\n") < 0)
+            goto writeFailure;
+        /* Don't re-write the data in multi-pass mode. */
+        if (m_param->rc.cuTree && pic->m_picSym->m_slice->m_bReferenced && !m_param->rc.bStatRead)
+        {
+            uint8_t sliceType = (uint8_t)rce->sliceType;
+            for (int i = 0; i < m_ncu; i++)
+                    m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(pic->m_lowres.qpCuTreeOffset[i] * 256.0);
+            if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
+                goto writeFailure;
+            if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
+                goto writeFailure;
+        }
+    }
+    if (m_isAbr && !m_isAbrReset)
+    {
+        /* amortize part of each I slice over the next several frames, up to
+         * keyint-max, to avoid over-compensating for the large I slice cost */
+        if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
+        {
+            if (rce->sliceType == I_SLICE)
+            {
+                /* previous I still had a residual; roll it into the new loan */
+                if (m_residualFrames)
+                    bits += m_residualCost * m_residualFrames;
+                m_residualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
+                m_residualCost = (int)((bits * s_amortizeFraction) / m_residualFrames);
+                bits -= m_residualCost * m_residualFrames;
+            }
+            else if (m_residualFrames)
+            {
+                bits += m_residualCost;
+                m_residualFrames--;
+            }
+        }
+        if (rce->sliceType != B_SLICE)
+        {
+            /* The factor 1.5 is to tune up the actual bits, otherwise the cplxrSum is scaled too low
+                * to improve short term compensation for next frame. */
+            m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / rce->qRceq) - (rce->rowCplxrSum);
+        }
+        else
+        {
+            /* Depends on the fact that B-frame's QP is an offset from the following P-frame's.
+                * Not perfectly accurate with B-refs, but good enough. */
+            m_cplxrSum += (bits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor))) - (rce->rowCplxrSum);
+        }
+        m_wantedBitsWindow += m_frameDuration * m_bitrate;
+        m_totalBits += bits - rce->rowTotalBits;
+    }
+
     if (m_2pass)
     {
         m_expectedBitsSum += qScale2bits(rce, x265_qp2qScale(rce->newQp));
