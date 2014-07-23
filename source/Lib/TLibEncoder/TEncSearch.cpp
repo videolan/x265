@@ -2296,7 +2296,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     if (cu->isIntra(0))
         return;
 
-    uint32_t bits = 0, bestBits = 0;
+    uint32_t bits = 0, bestBits = 0, bestCoeffBits = 0;
     uint32_t distortion = 0, bestDist = 0;
 
     uint32_t log2CUSize = cu->getLog2CUSize(0);
@@ -2328,7 +2328,8 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         m_entropyCoder->codeMergeIndex(cu, 0);
 
         bits = m_entropyCoder->getNumberOfWrittenBits();
-        
+        cu->m_mvBits = bits;
+        cu->m_coeffBits = 0;
         cu->m_totalBits       = bits;
         cu->m_totalDistortion = distortion;
         if (m_rdCost.psyRdEnabled())
@@ -2434,6 +2435,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
             bestBits = bits;
             bestCost = cost;
+            bestCoeffBits = cu->m_coeffBits;
             m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
         }
 
@@ -2461,6 +2463,8 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             cu->m_totalRDCost = m_rdCost.calcRdCost(bestDist, bestBits);
         cu->m_totalBits       = bestBits;
         cu->m_totalDistortion = bestDist;
+        cu->m_coeffBits = bestCoeffBits;
+        cu->m_mvBits = bestBits - bestCoeffBits;
 
         if (cu->isSkipped(0))
             cu->clearCbf(0, depth);
@@ -3707,6 +3711,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
             m_entropyCoder->codeSkipFlag(cu, 0);
         m_entropyCoder->codeMergeIndex(cu, 0);
         cu->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
+        cu->m_coeffBits = 0;
         return m_entropyCoder->getNumberOfWrittenBits();
     }
     else
