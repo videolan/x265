@@ -1509,7 +1509,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                     // do MC
                     outTempCU->getPartIndexAndSize(0, m_partAddr, m_width, m_height);
-                    motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, 0);
+                    motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X);
                     // estimate residual and encode everything
                     encodeResAndCalcRdInterCU(outTempCU,
                                               m_origYuv[depth],
