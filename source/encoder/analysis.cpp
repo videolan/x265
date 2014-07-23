@@ -1740,6 +1740,7 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
 
     PPAScopeEvent(CheckRDCostIntra + depth);
 
+    m_trQuant.setQPforQuant(outTempCU);
     outTempCU->setSkipFlagSubParts(false, 0, depth);
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
