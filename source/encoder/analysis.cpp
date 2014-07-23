@@ -1044,6 +1044,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     {
         X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
         X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
+        X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best prediction cost\n");
+
     }
 
     x265_emms();
