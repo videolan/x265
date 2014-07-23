@@ -31,18 +31,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComPrediction.cpp
-    \brief    prediction class
-*/
-
 #include "TComPrediction.h"
 #include "primitives.h"
 #include "common.h"
 
 using namespace x265;
-
-//! \ingroup TLibCommon
-//! \{
 
 static const uint8_t intraFilterThreshold[5] =
 {
@@ -52,10 +45,6 @@ static const uint8_t intraFilterThreshold[5] =
     0,  //32x32
     10, //64x64
 };
-
-// ====================================================================================================================
-// Constructor / destructor / initialize
-// ====================================================================================================================
 
 TComPrediction::TComPrediction()
 {
@@ -108,10 +97,6 @@ void TComPrediction::initTempBuff(int csp)
     }
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-
 bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize)
 {
     bool bFilter;
@@ -151,7 +136,6 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t str
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
-// Angular chroma
 void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
 {
     int tuSize = 1 << log2TrSizeC;
@@ -217,10 +201,6 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
 }
 
-/** Function for checking identical motion.
- * \param TComDataCU* cu
- * \param uint32_t PartAddr
- */
 bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu)
 {
     X265_CHECK(cu->m_slice->isInterB(), "identical motion check in P frame\n");
@@ -257,10 +237,10 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int li
             cu->clipMv(mv);
             if (bLuma)
                 xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(),
-                &mv, shortYuv);
+                                  &mv, shortYuv);
             if (bChroma)
                 xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-                &mv, shortYuv);
+                                    &mv, shortYuv);
 
             xWeightedPredictionUni(cu, shortYuv, m_partAddr, m_width, m_height, list, predYuv, -1, bLuma, bChroma);
         }
@@ -287,11 +267,11 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, int list, TComYuv* outPredYuv
 
     if (bLuma)
         xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        &mv, outPredYuv);
+                          &mv, outPredYuv);
 
     if (bChroma)
         xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        &mv, outPredYuv);
+                            &mv, outPredYuv);
 }
 
 void TComPrediction::xPredInterUni(TComDataCU* cu, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
@@ -305,10 +285,10 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, int list, ShortYuv* outPredYu
 
     if (bLuma)
         xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        &mv, outPredYuv);
+                          &mv, outPredYuv);
     if (bChroma)
         xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
-        &mv, outPredYuv);
+                            &mv, outPredYuv);
 }
 
 void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma)
@@ -366,17 +346,6 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLum
     }
 }
 
-/**
- * \brief Generate motion-compensated luma block
- *
- * \param cu       Pointer to current CU
- * \param refPic   Pointer to reference picture
- * \param partAddr Address of block within CU
- * \param mv       Motion vector
- * \param width    Width of block
- * \param height   Height of block
- * \param dstPic   Pointer to destination picture
- */
 void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
@@ -412,7 +381,6 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
 }
 
-//Motion compensated block for biprediction
 void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getStride();
@@ -452,17 +420,6 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
 }
 
-/**
- * \brief Generate motion-compensated chroma block
- *
- * \param cu       Pointer to current CU
- * \param refPic   Pointer to reference picture
- * \param partAddr Address of block within CU
- * \param mv       Motion vector
- * \param width    Width of block
- * \param height   Height of block
- * \param dstPic   Pointer to destination picture
- */
 void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int refStride = refPic->getCStride();
@@ -516,7 +473,6 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     }
 }
 
-// Generate motion compensated block when biprediction
 void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getCStride();
@@ -540,7 +496,7 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
 
     int partEnum = partitionFromSizes(m_width, m_height);
     
-    uint32_t cxWidth  = m_width   >> hChromaShift;
+    uint32_t cxWidth  = m_width >> hChromaShift;
     uint32_t cxHeight = m_height >> vChromaShift;
 
     X265_CHECK(((cxWidth | cxHeight) % 2) == 0, "chroma block size expected to be multiple of 2\n");
@@ -571,5 +527,3 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
         primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - vChromaShift));
     }
 }
-
-//! \}

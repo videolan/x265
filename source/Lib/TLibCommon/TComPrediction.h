@@ -72,8 +72,7 @@ protected:
 
     /* Slice information */
     int       m_csp;
-    bool      isPSlice;
-
+    
     /* CU information for prediction */
     int       m_width;
     int       m_height; 
