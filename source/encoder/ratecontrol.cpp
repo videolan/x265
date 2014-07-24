@@ -116,6 +116,7 @@ inline char *strcatFilename(const char *input, const char *suffix)
     strcat(output, suffix);
     return output;
 }
+
 inline double qScale2bits(RateControlEntry *rce, double qScale)
 {
     if (qScale < 0.1)
@@ -769,9 +770,7 @@ bool RateControl::initPass2()
 
     /* find total/average complexity & const_bits */
     for (int i = 0; i < m_numEntries; i++)
-    {
         allConstBits += m_rce2Pass[i].miscBits;
-    }
 
     if (allAvailableBits < allConstBits)
     {
@@ -988,9 +987,7 @@ bool RateControl::vbv2Pass(uint64_t allAvailableBits)
         /* fix underflows -- should be done after overflow, as we'd better undersize target than underflowing VBV */
         adjMax = 1;
         while (adjMax && findUnderflow(fills, &t0, &t1, 0))
-        {
             adjMax = fixUnderflow(t0, t1, 1.001, MIN_QPSCALE, MAX_MAX_QPSCALE );
-        }
 
         expectedBits = countExpectedBits();
     }
@@ -1005,6 +1002,7 @@ bool RateControl::vbv2Pass(uint64_t allAvailableBits)
 
     X265_FREE(fills - 1);
     return true;
+
 fail:
     x265_log(m_param, X265_LOG_ERROR, "malloc failure in two-pass VBV init\n");
     return false;
@@ -2056,9 +2054,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     if (m_isAbr)
     {
         if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead && !m_param->rc.bStatWrite)
-        {
             checkAndResetABR(rce, true);
-        }
+
         if (m_param->rc.rateControlMode == X265_RC_CRF)
         {
             if (int(pic->m_avgQpRc + 0.5) == pic->m_picSym->m_slice->m_sliceQp)
@@ -2080,9 +2077,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             if (pic->m_qpaRc)
             {
                 for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                {
                     pic->m_avgQpRc += pic->m_qpaRc[i];
-                }
 
                 pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
                 rce->qpaRc = pic->m_avgQpRc;
@@ -2093,9 +2088,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             if (pic->m_qpaAq)
             {
                 for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                {
                     pic->m_avgQpAq += pic->m_qpaAq[i];
-                }
 
                 pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
             }
