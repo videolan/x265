@@ -47,8 +47,8 @@ public:
     // return bit cost of motion vector difference, without lambda
     inline uint16_t bitcost(const MV& mv) const
     {
-        return (uint16_t)(s_bitsizes[(abs(mv.x - m_mvp.x) << 1) + !!(mv.x < m_mvp.x)] +
-                          s_bitsizes[(abs(mv.y - m_mvp.y) << 1) + !!(mv.y < m_mvp.y)] + 0.5f);
+        return (uint16_t)(s_bitsizes[abs(mv.x - m_mvp.x)] +
+                          s_bitsizes[abs(mv.y - m_mvp.y)] + 0.5f);
     }
 
     static void destroy();
