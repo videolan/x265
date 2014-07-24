@@ -41,11 +41,11 @@ void BitCost::setQP(unsigned int qp)
             x265_emms(); // just to be safe
 
             CalculateLogs();
-            s_costs[qp] = new uint16_t[2 * BC_MAX_MV] + BC_MAX_MV;
+            s_costs[qp] = new uint16_t[4 * BC_MAX_MV + 1] + 2 * BC_MAX_MV;
             double lambda = x265_lambda_tab[qp];
 
             // estimate same cost for negative and positive MVD
-            for (int i = 0; i < BC_MAX_MV; i++)
+            for (int i = 0; i <= 2 * BC_MAX_MV; i++)
             {
                 s_costs[qp][i] = s_costs[qp][-i] = (uint16_t)X265_MIN(s_bitsizes[i] * lambda + 0.5f, (1 << 16) - 1);
             }
@@ -69,10 +69,10 @@ void BitCost::CalculateLogs()
 {
     if (!s_bitsizes)
     {
-        s_bitsizes = new float[BC_MAX_MV + 1];
+        s_bitsizes = new float[2 * BC_MAX_MV + 1];
         s_bitsizes[0] = 0.718f;
         float log2_2 = 2.0f / log(2.0f);  // 2 x 1/log(2)
-        for (int i = 1; i <= BC_MAX_MV; i++)
+        for (int i = 1; i <= 2 * BC_MAX_MV; i++)
         {
             s_bitsizes[i] = log((float)(i + 1)) * log2_2 + 1.718f;
         }
@@ -85,7 +85,7 @@ void BitCost::destroy()
     {
         if (s_costs[i])
         {
-            delete [] (s_costs[i] - BC_MAX_MV);
+            delete [] (s_costs[i] - 2 * BC_MAX_MV);
 
             s_costs[i] = 0;
         }
