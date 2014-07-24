@@ -123,7 +123,7 @@ public:
 
     void codeVPS(VPS* vps);
     void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
-    void codePPS(PPS* pps, ScalingList *scalingList);
+    void codePPS(PPS* pps);
     void codeVUI(VUI* vui);
     void codeAUD(Slice *slice);
     void codeHrdParameters(HRDInfo* hrd);

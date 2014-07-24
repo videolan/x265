@@ -698,7 +698,7 @@ void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void Entropy::codePPS(PPS* pps, ScalingList* scalingList)
+void Entropy::codePPS(PPS* pps)
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -741,10 +741,7 @@ void Entropy::codePPS(PPS* pps, ScalingList* scalingList)
         }
     }
 
-    WRITE_FLAG(scalingList->m_bDataPresent, "pps_scaling_list_data_present_flag");
-    if (scalingList->m_bDataPresent)
-        codeScalingList(scalingList);
-
+    WRITE_FLAG(0, "pps_scaling_list_data_present_flag");
     WRITE_FLAG(0, "lists_modification_present_flag");
     WRITE_UVLC(0, "log2_parallel_merge_level_minus2");
     WRITE_FLAG(0, "slice_segment_header_extension_present_flag");

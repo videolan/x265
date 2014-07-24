@@ -1035,7 +1035,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS(&m_pps, &m_scalingList);
+    sbacCoder.codePPS(&m_pps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
