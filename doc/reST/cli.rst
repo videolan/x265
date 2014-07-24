@@ -604,7 +604,11 @@ Slice decision options
 
 .. option:: --min-keyint, -i <integer>
 
-	Minimum GOP size. Scenecuts closer together than this are coded as I or P, not IDR. 
+	Minimum GOP size. Scenecuts closer together than this are coded as I
+	or P, not IDR. Minimum keyint is clamped to be at least half of
+	:option:`--keyint`. If you wish to force regular keyframe intervals
+	and disable adaptive I frame placement, you must use
+	:option:`--no-scenecut`.
 
 	**Range of values:** >=0 (0: auto)
 
