@@ -1153,7 +1153,6 @@ void Encoder::initSPS(SPS *sps)
 
     vui.hrdParametersPresentFlag = m_param->bEmitHRDSEI;
 
-    vui.timingInfo.timingInfoPresentFlag = true;
     vui.timingInfo.numUnitsInTick = m_param->fpsDenom;
     vui.timingInfo.timeScale = m_param->fpsNum;
 }

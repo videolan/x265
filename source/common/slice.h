@@ -132,16 +132,8 @@ struct HRDInfo
 
 struct TimingInfo
 {
-    bool     timingInfoPresentFlag;
     uint32_t numUnitsInTick;
     uint32_t timeScale;
-
-    TimingInfo()
-        : timingInfoPresentFlag(false)
-        , numUnitsInTick(1001)
-        , timeScale(60000)
-    {
-    }
 };
 
 struct VPS
@@ -149,7 +141,6 @@ struct VPS
     uint32_t         numReorderPics;
     uint32_t         maxDecPicBuffering;
     HRDInfo          hrdParameters;
-    TimingInfo       timingInfo;
     ProfileTierLevel ptl;
 };
 

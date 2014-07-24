@@ -594,22 +594,8 @@ void Entropy::codeVPS(VPS* vps)
     WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
     WRITE_UVLC(0,    "vps_max_op_sets_minus1");
-
-    TimingInfo &timingInfo = vps->timingInfo;
-    WRITE_FLAG(timingInfo.timingInfoPresentFlag,     "vps_timing_info_present_flag");
-    if (timingInfo.timingInfoPresentFlag)
-    {
-        WRITE_CODE(timingInfo.numUnitsInTick,    32, "vps_num_units_in_tick");
-        WRITE_CODE(timingInfo.timeScale,         32, "vps_time_scale");
-        WRITE_FLAG(0,                                "vps_poc_proportional_to_timing_flag");
-
-        // TODO: Should we be consistent with the SPS->VUI here?
-        WRITE_UVLC(0, "vps_num_hrd_parameters");
-        //WRITE_UVLC(0, "hrd_op_set_idx");
-        //codeHrdParameters(&vps->m_hrdParameters);
-    }
-
-    WRITE_FLAG(0, "vps_extension_flag");
+    WRITE_FLAG(0,    "vps_timing_info_present_flag"); /* we signal timing info in SPS-VUI */
+    WRITE_FLAG(0,    "vps_extension_flag");
 }
 
 void Entropy::codeShortTermRefPicSet(RPS* rps)
@@ -801,17 +787,14 @@ void Entropy::codeVUI(VUI *vui)
     }
 
     TimingInfo *timingInfo = &vui->timingInfo;
-    WRITE_FLAG(timingInfo->timingInfoPresentFlag,     "vui_timing_info_present_flag");
-    if (timingInfo->timingInfoPresentFlag)
-    {
-        WRITE_CODE(timingInfo->numUnitsInTick,    32, "vui_num_units_in_tick");
-        WRITE_CODE(timingInfo->timeScale,         32, "vui_time_scale");
-        WRITE_FLAG(0,                                 "vui_poc_proportional_to_timing_flag");
+    WRITE_FLAG(1,                              "vui_timing_info_present_flag");
+    WRITE_CODE(timingInfo->numUnitsInTick, 32, "vui_num_units_in_tick");
+    WRITE_CODE(timingInfo->timeScale,      32, "vui_time_scale");
+    WRITE_FLAG(0,                              "vui_poc_proportional_to_timing_flag");
 
-        WRITE_FLAG(vui->hrdParametersPresentFlag,     "vui_hrd_parameters_present_flag");
-        if (vui->hrdParametersPresentFlag)
-            codeHrdParameters(&vui->hrdParameters);
-    }
+    WRITE_FLAG(vui->hrdParametersPresentFlag,  "vui_hrd_parameters_present_flag");
+    if (vui->hrdParametersPresentFlag)
+        codeHrdParameters(&vui->hrdParameters);
 
     WRITE_FLAG(0, "bitstream_restriction_flag");
 }
