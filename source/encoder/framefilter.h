@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "frame.h"
-#include "TLibCommon/TComLoopFilter.h"
+#include "deblock.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 namespace x265 {
@@ -65,7 +65,7 @@ protected:
 
 public:
 
-    TComLoopFilter              m_loopFilter;
+    Deblock                     m_deblock;
     TEncSampleAdaptiveOffset    m_sao;
     int                         m_numRows;
     int                         m_saoRowDelay;

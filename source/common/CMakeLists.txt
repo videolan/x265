@@ -1,7 +1,6 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComDataCU.cpp
-    ../Lib/TLibCommon/TComLoopFilter.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComPattern.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
@@ -18,7 +17,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComPattern.h
     ../Lib/TLibCommon/TComPicSym.h
@@ -133,7 +131,7 @@ add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
-    pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
+    pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
@@ -149,4 +147,4 @@ add_library(common OBJECT
     lowres.cpp lowres.h
     piclist.cpp piclist.h
     scalinglist.cpp scalinglist.h
-    loopfilter.cpp)
+    deblock.cpp deblock.h)

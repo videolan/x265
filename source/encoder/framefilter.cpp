@@ -43,9 +43,6 @@ FrameFilter::FrameFilter()
 
 void FrameFilter::destroy()
 {
-    if (m_param->bEnableLoopFilter)
-        m_loopFilter.destroy();
-
     if (m_param->bEnableSAO)
     {
         // NOTE: I don't check sao flag since loopfilter and sao have same control status
@@ -65,11 +62,10 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_pad[0] = top->m_pad[0];
     m_pad[1] = top->m_pad[1];
 
-    // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
+    // NOTE (Min): for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_row0EntropyCoder = row0Coder;
 
-    if (m_param->bEnableLoopFilter)
-        m_loopFilter.create(g_maxCUDepth);
+    m_deblock.init();
 
     if (m_param->bEnableSAO)
     {
@@ -140,18 +136,18 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            m_loopFilter.loopFilterCU(cu, EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
+            m_deblock.deblockCTU(cu, Deblock::EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
-                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+                m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
             }
         }
 
         {
             TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+            m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
         }
     }
 
