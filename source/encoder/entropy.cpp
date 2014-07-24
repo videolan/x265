@@ -667,7 +667,7 @@ void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
 
     WRITE_UVLC(sps->maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
     WRITE_UVLC(sps->numReorderPics,         "sps_num_reorder_pics[i]");
-    WRITE_UVLC(0,                             "sps_max_latency_increase_plus1[i]");
+    WRITE_UVLC(0,                           "sps_max_latency_increase_plus1[i]");
 
     WRITE_UVLC(sps->log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
     WRITE_UVLC(sps->log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
@@ -675,10 +675,10 @@ void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
     WRITE_UVLC(sps->quadtreeTULog2MaxSize - sps->quadtreeTULog2MinSize, "log2_diff_max_min_transform_block_size");
     WRITE_UVLC(sps->quadtreeTUMaxDepthInter - 1,   "max_transform_hierarchy_depth_inter");
     WRITE_UVLC(sps->quadtreeTUMaxDepthIntra - 1,   "max_transform_hierarchy_depth_intra");
-    WRITE_FLAG(scalingList->m_bEnabled,              "scaling_list_enabled_flag");
+    WRITE_FLAG(scalingList->m_bEnabled,            "scaling_list_enabled_flag");
     if (scalingList->m_bEnabled)
     {
-        WRITE_FLAG(scalingList->m_bDataPresent,      "sps_scaling_list_data_present_flag");
+        WRITE_FLAG(scalingList->m_bDataPresent,    "sps_scaling_list_data_present_flag");
         if (scalingList->m_bDataPresent)
             codeScalingList(scalingList);
     }
@@ -786,18 +786,18 @@ void Entropy::codeVUI(VUI *vui)
         WRITE_UVLC(vui->chromaSampleLocTypeBottomField, "chroma_sample_loc_type_bottom_field");
     }
 
-    WRITE_FLAG(0,                                         "neutral_chroma_indication_flag");
-    WRITE_FLAG(vui->fieldSeqFlag,                       "field_seq_flag");
-    WRITE_FLAG(vui->frameFieldInfoPresentFlag,          "frame_field_info_present_flag");
+    WRITE_FLAG(0,                                     "neutral_chroma_indication_flag");
+    WRITE_FLAG(vui->fieldSeqFlag,                     "field_seq_flag");
+    WRITE_FLAG(vui->frameFieldInfoPresentFlag,        "frame_field_info_present_flag");
 
     Window defaultDisplayWindow = vui->defaultDisplayWindow;
-    WRITE_FLAG(defaultDisplayWindow.bEnabled,           "default_display_window_flag");
+    WRITE_FLAG(defaultDisplayWindow.bEnabled,         "default_display_window_flag");
     if (defaultDisplayWindow.bEnabled)
     {
-        WRITE_UVLC(defaultDisplayWindow.leftOffset,     "def_disp_win_left_offset");
-        WRITE_UVLC(defaultDisplayWindow.rightOffset,    "def_disp_win_right_offset");
-        WRITE_UVLC(defaultDisplayWindow.topOffset,      "def_disp_win_top_offset");
-        WRITE_UVLC(defaultDisplayWindow.bottomOffset,   "def_disp_win_bottom_offset");
+        WRITE_UVLC(defaultDisplayWindow.leftOffset,   "def_disp_win_left_offset");
+        WRITE_UVLC(defaultDisplayWindow.rightOffset,  "def_disp_win_right_offset");
+        WRITE_UVLC(defaultDisplayWindow.topOffset,    "def_disp_win_top_offset");
+        WRITE_UVLC(defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
     }
 
     TimingInfo *timingInfo = &vui->timingInfo;
@@ -808,7 +808,7 @@ void Entropy::codeVUI(VUI *vui)
         WRITE_CODE(timingInfo->timeScale,         32, "vui_time_scale");
         WRITE_FLAG(0,                                 "vui_poc_proportional_to_timing_flag");
 
-        WRITE_FLAG(vui->hrdParametersPresentFlag,   "hrd_parameters_present_flag");
+        WRITE_FLAG(vui->hrdParametersPresentFlag,     "vui_hrd_parameters_present_flag");
         if (vui->hrdParametersPresentFlag)
             codeHrdParameters(&vui->hrdParameters);
     }
