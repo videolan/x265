@@ -29,43 +29,466 @@
 
 namespace x265 {
 
-const uint32_t g_entropyBits[128] =
-{
-    // Corrected table, most notably for last state
-    0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,
-    0x04a87, 0x0cbf7, 0x045d6, 0x0d5c3, 0x04144, 0x0e01b, 0x03d88, 0x0e937, 0x039e0, 0x0f2cd, 0x03663, 0x0fc9e, 0x03347, 0x10600, 0x03050, 0x10f95,
-    0x02d4d, 0x11a02, 0x02ad3, 0x12333, 0x0286e, 0x12cad, 0x02604, 0x136df, 0x02425, 0x13f48, 0x021f4, 0x149c4, 0x0203e, 0x1527b, 0x01e4d, 0x15d00,
-    0x01c99, 0x166de, 0x01b18, 0x17017, 0x019a5, 0x17988, 0x01841, 0x18327, 0x016df, 0x18d50, 0x015d9, 0x19547, 0x0147c, 0x1a083, 0x0138e, 0x1a8a3,
-    0x01251, 0x1b418, 0x01166, 0x1bd27, 0x01068, 0x1c77b, 0x00f7f, 0x1d18e, 0x00eda, 0x1d91a, 0x00e19, 0x1e254, 0x00d4f, 0x1ec9a, 0x00c90, 0x1f6e0,
-    0x00c01, 0x1fef8, 0x00b5f, 0x208b1, 0x00ab6, 0x21362, 0x00a15, 0x21e46, 0x00988, 0x2285d, 0x00934, 0x22ea8, 0x008a8, 0x239b2, 0x0081d, 0x24577,
-    0x007c9, 0x24ce6, 0x00763, 0x25663, 0x00710, 0x25e8f, 0x006a0, 0x26a26, 0x00672, 0x26f23, 0x005e8, 0x27ef8, 0x005ba, 0x284b5, 0x0055e, 0x29057,
-    0x0050c, 0x29bab, 0x004c1, 0x2a674, 0x004a7, 0x2aa5e, 0x0046f, 0x2b32f, 0x0041f, 0x2c0ad, 0x003e7, 0x2ca8d, 0x003ba, 0x2d323, 0x0010c, 0x3bfbb
-};
-
-const uint8_t g_nextState[128][2] =
-{
-    { 2, 1 }, { 0, 3 }, { 4, 0 }, { 1, 5 }, { 6, 2 }, { 3, 7 }, { 8, 4 }, { 5, 9 },
-    { 10, 4 }, { 5, 11 }, { 12, 8 }, { 9, 13 }, { 14, 8 }, { 9, 15 }, { 16, 10 }, { 11, 17 },
-    { 18, 12 }, { 13, 19 }, { 20, 14 }, { 15, 21 }, { 22, 16 }, { 17, 23 }, { 24, 18 }, { 19, 25 },
-    { 26, 18 }, { 19, 27 }, { 28, 22 }, { 23, 29 }, { 30, 22 }, { 23, 31 }, { 32, 24 }, { 25, 33 },
-    { 34, 26 }, { 27, 35 }, { 36, 26 }, { 27, 37 }, { 38, 30 }, { 31, 39 }, { 40, 30 }, { 31, 41 },
-    { 42, 32 }, { 33, 43 }, { 44, 32 }, { 33, 45 }, { 46, 36 }, { 37, 47 }, { 48, 36 }, { 37, 49 },
-    { 50, 38 }, { 39, 51 }, { 52, 38 }, { 39, 53 }, { 54, 42 }, { 43, 55 }, { 56, 42 }, { 43, 57 },
-    { 58, 44 }, { 45, 59 }, { 60, 44 }, { 45, 61 }, { 62, 46 }, { 47, 63 }, { 64, 48 }, { 49, 65 },
-    { 66, 48 }, { 49, 67 }, { 68, 50 }, { 51, 69 }, { 70, 52 }, { 53, 71 }, { 72, 52 }, { 53, 73 },
-    { 74, 54 }, { 55, 75 }, { 76, 54 }, { 55, 77 }, { 78, 56 }, { 57, 79 }, { 80, 58 }, { 59, 81 },
-    { 82, 58 }, { 59, 83 }, { 84, 60 }, { 61, 85 }, { 86, 60 }, { 61, 87 }, { 88, 60 }, { 61, 89 },
-    { 90, 62 }, { 63, 91 }, { 92, 64 }, { 65, 93 }, { 94, 64 }, { 65, 95 }, { 96, 66 }, { 67, 97 },
-    { 98, 66 }, { 67, 99 }, { 100, 66 }, { 67, 101 }, { 102, 68 }, { 69, 103 }, { 104, 68 }, { 69, 105 },
-    { 106, 70 }, { 71, 107 }, { 108, 70 }, { 71, 109 }, { 110, 70 }, { 71, 111 }, { 112, 72 }, { 73, 113 },
-    { 114, 72 }, { 73, 115 }, { 116, 72 }, { 73, 117 }, { 118, 74 }, { 75, 119 }, { 120, 74 }, { 75, 121 },
-    { 122, 74 }, { 75, 123 }, { 124, 76 }, { 77, 125 }, { 124, 76 }, { 77, 125 }, { 126, 126 }, { 127, 127 }
-};
-
 Entropy::Entropy()
     : m_fracBits(0)
 {
     memset(m_contextModels, 0, sizeof(m_contextModels));
+}
+
+void Entropy::codeVPS(VPS* vps)
+{
+    WRITE_CODE(0,       4, "vps_video_parameter_set_id");
+    WRITE_CODE(3,       2, "vps_reserved_three_2bits");
+    WRITE_CODE(0,       6, "vps_reserved_zero_6bits");
+    WRITE_CODE(0,       3, "vps_max_sub_layers_minus1");
+    WRITE_FLAG(1,          "vps_temporal_id_nesting_flag");
+    WRITE_CODE(0xffff, 16, "vps_reserved_ffff_16bits");
+
+    codeProfileTier(vps->ptl);
+
+    WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
+    WRITE_UVLC(vps->maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(vps->numReorderPics,         "vps_num_reorder_pics[i]");
+
+    WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
+    WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
+    WRITE_UVLC(0,    "vps_max_op_sets_minus1");
+    WRITE_FLAG(0,    "vps_timing_info_present_flag"); /* we signal timing info in SPS-VUI */
+    WRITE_FLAG(0,    "vps_extension_flag");
+}
+
+void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
+{
+    WRITE_CODE(0, 4, "sps_video_parameter_set_id");
+    WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
+    WRITE_FLAG(1,    "sps_temporal_id_nesting_flag");
+
+    codeProfileTier(*ptl);
+
+    WRITE_UVLC(0, "sps_seq_parameter_set_id");
+    WRITE_UVLC(sps->chromaFormatIdc, "chroma_format_idc");
+
+    if (sps->chromaFormatIdc == CHROMA_444)
+        WRITE_FLAG(0,                          "separate_colour_plane_flag");
+
+    WRITE_UVLC(sps->picWidthInLumaSamples,   "pic_width_in_luma_samples");
+    WRITE_UVLC(sps->picHeightInLumaSamples,  "pic_height_in_luma_samples");
+    Window& conf = sps->conformanceWindow;
+
+    WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
+    if (conf.bEnabled)
+    {
+        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps->chromaFormatIdc], "conf_win_left_offset");
+        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps->chromaFormatIdc], "conf_win_right_offset");
+        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps->chromaFormatIdc], "conf_win_top_offset");
+        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps->chromaFormatIdc], "conf_win_bottom_offset");
+    }
+
+    WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_luma_minus8");
+    WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_chroma_minus8");
+    WRITE_UVLC(BITS_FOR_POC - 4, "log2_max_pic_order_cnt_lsb_minus4");
+    WRITE_FLAG(true,             "sps_sub_layer_ordering_info_present_flag");
+
+    WRITE_UVLC(sps->maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
+    WRITE_UVLC(sps->numReorderPics,         "sps_num_reorder_pics[i]");
+    WRITE_UVLC(0,                           "sps_max_latency_increase_plus1[i]");
+
+    WRITE_UVLC(sps->log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
+    WRITE_UVLC(sps->log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
+    WRITE_UVLC(sps->quadtreeTULog2MinSize - 2,     "log2_min_transform_block_size_minus2");
+    WRITE_UVLC(sps->quadtreeTULog2MaxSize - sps->quadtreeTULog2MinSize, "log2_diff_max_min_transform_block_size");
+    WRITE_UVLC(sps->quadtreeTUMaxDepthInter - 1,   "max_transform_hierarchy_depth_inter");
+    WRITE_UVLC(sps->quadtreeTUMaxDepthIntra - 1,   "max_transform_hierarchy_depth_intra");
+    WRITE_FLAG(scalingList->m_bEnabled,            "scaling_list_enabled_flag");
+    if (scalingList->m_bEnabled)
+    {
+        WRITE_FLAG(scalingList->m_bDataPresent,    "sps_scaling_list_data_present_flag");
+        if (scalingList->m_bDataPresent)
+            codeScalingList(scalingList);
+    }
+    WRITE_FLAG(sps->bUseAMP, "amp_enabled_flag");
+    WRITE_FLAG(sps->bUseSAO, "sample_adaptive_offset_enabled_flag");
+
+    WRITE_FLAG(0, "pcm_enabled_flag");
+    WRITE_UVLC(0, "num_short_term_ref_pic_sets");
+    WRITE_FLAG(0, "long_term_ref_pics_present_flag");
+
+    WRITE_FLAG(1, "sps_temporal_mvp_enable_flag");
+    WRITE_FLAG(sps->bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
+
+    WRITE_FLAG(1, "vui_parameters_present_flag");
+    codeVUI(&sps->vuiParameters);
+
+    WRITE_FLAG(0, "sps_extension_flag");
+}
+
+void Entropy::codePPS(PPS* pps)
+{
+    WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
+    WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
+    WRITE_FLAG(0,                          "dependent_slice_segments_enabled_flag");
+    WRITE_FLAG(0,                          "output_flag_present_flag");
+    WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
+    WRITE_FLAG(pps->bSignHideEnabled,      "sign_data_hiding_flag");
+    WRITE_FLAG(pps->bCabacInitPresent,     "cabac_init_present_flag");
+    WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
+    WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
+
+    WRITE_SVLC(0, "init_qp_minus26");
+    WRITE_FLAG(pps->bConstrainedIntraPred, "constrained_intra_pred_flag");
+    WRITE_FLAG(pps->bTransformSkipEnabled, "transform_skip_enabled_flag");
+
+    WRITE_FLAG(pps->bUseDQP,               "cu_qp_delta_enabled_flag");
+    if (pps->bUseDQP)
+        WRITE_UVLC(pps->maxCuDQPDepth,     "diff_cu_qp_delta_depth");
+
+    WRITE_SVLC(pps->chromaCbQpOffset,      "pps_cb_qp_offset");
+    WRITE_SVLC(pps->chromaCrQpOffset,      "pps_cr_qp_offset");
+    WRITE_FLAG(0,                          "pps_slice_chroma_qp_offsets_present_flag");
+
+    WRITE_FLAG(pps->bUseWeightPred,            "weighted_pred_flag");
+    WRITE_FLAG(pps->bUseWeightedBiPred,        "weighted_bipred_flag");
+    WRITE_FLAG(pps->bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
+    WRITE_FLAG(0,                              "tiles_enabled_flag");
+    WRITE_FLAG(pps->bEntropyCodingSyncEnabled, "entropy_coding_sync_enabled_flag");
+    WRITE_FLAG(1,                              "loop_filter_across_slices_enabled_flag");
+
+    WRITE_FLAG(pps->bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
+    if (pps->bDeblockingFilterControlPresent)
+    {
+        WRITE_FLAG(0,                                "deblocking_filter_override_enabled_flag");
+        WRITE_FLAG(pps->bPicDisableDeblockingFilter, "pps_disable_deblocking_filter_flag");
+        if (!pps->bPicDisableDeblockingFilter)
+        {
+            WRITE_SVLC(pps->deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
+            WRITE_SVLC(pps->deblockingFilterTcOffsetDiv2,   "pps_tc_offset_div2");
+        }
+    }
+
+    WRITE_FLAG(0, "pps_scaling_list_data_present_flag");
+    WRITE_FLAG(0, "lists_modification_present_flag");
+    WRITE_UVLC(0, "log2_parallel_merge_level_minus2");
+    WRITE_FLAG(0, "slice_segment_header_extension_present_flag");
+    WRITE_FLAG(0, "pps_extension_flag");
+}
+
+void Entropy::codeProfileTier(ProfileTierLevel& ptl)
+{
+    WRITE_CODE(0, 2,                "XXX_profile_space[]");
+    WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
+    WRITE_CODE(ptl.profileIdc, 5,   "XXX_profile_idc[]");
+    for (int j = 0; j < 32; j++)
+        WRITE_FLAG(ptl.profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
+
+    WRITE_FLAG(ptl.progressiveSourceFlag,   "general_progressive_source_flag");
+    WRITE_FLAG(ptl.interlacedSourceFlag,    "general_interlaced_source_flag");
+    WRITE_FLAG(ptl.nonPackedConstraintFlag, "general_non_packed_constraint_flag");
+    WRITE_FLAG(ptl.frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
+
+    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
+    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
+    WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+
+    WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
+}
+
+void Entropy::codeVUI(VUI *vui)
+{
+    WRITE_FLAG(vui->aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
+    if (vui->aspectRatioInfoPresentFlag)
+    {
+        WRITE_CODE(vui->aspectRatioIdc, 8,       "aspect_ratio_idc");
+        if (vui->aspectRatioIdc == 255)
+        {
+            WRITE_CODE(vui->sarWidth, 16,        "sar_width");
+            WRITE_CODE(vui->sarHeight, 16,       "sar_height");
+        }
+    }
+
+    WRITE_FLAG(vui->overscanInfoPresentFlag,     "overscan_info_present_flag");
+    if (vui->overscanInfoPresentFlag)
+        WRITE_FLAG(vui->overscanAppropriateFlag, "overscan_appropriate_flag");
+
+    WRITE_FLAG(vui->videoSignalTypePresentFlag,  "video_signal_type_present_flag");
+    if (vui->videoSignalTypePresentFlag)
+    {
+        WRITE_CODE(vui->videoFormat, 3,          "video_format");
+        WRITE_FLAG(vui->videoFullRangeFlag,      "video_full_range_flag");
+        WRITE_FLAG(vui->colourDescriptionPresentFlag, "colour_description_present_flag");
+        if (vui->colourDescriptionPresentFlag)
+        {
+            WRITE_CODE(vui->colourPrimaries, 8,         "colour_primaries");
+            WRITE_CODE(vui->transferCharacteristics, 8, "transfer_characteristics");
+            WRITE_CODE(vui->matrixCoefficients, 8,      "matrix_coefficients");
+        }
+    }
+
+    WRITE_FLAG(vui->chromaLocInfoPresentFlag,           "chroma_loc_info_present_flag");
+    if (vui->chromaLocInfoPresentFlag)
+    {
+        WRITE_UVLC(vui->chromaSampleLocTypeTopField,    "chroma_sample_loc_type_top_field");
+        WRITE_UVLC(vui->chromaSampleLocTypeBottomField, "chroma_sample_loc_type_bottom_field");
+    }
+
+    WRITE_FLAG(0,                                     "neutral_chroma_indication_flag");
+    WRITE_FLAG(vui->fieldSeqFlag,                     "field_seq_flag");
+    WRITE_FLAG(vui->frameFieldInfoPresentFlag,        "frame_field_info_present_flag");
+
+    Window defaultDisplayWindow = vui->defaultDisplayWindow;
+    WRITE_FLAG(defaultDisplayWindow.bEnabled,         "default_display_window_flag");
+    if (defaultDisplayWindow.bEnabled)
+    {
+        WRITE_UVLC(defaultDisplayWindow.leftOffset,   "def_disp_win_left_offset");
+        WRITE_UVLC(defaultDisplayWindow.rightOffset,  "def_disp_win_right_offset");
+        WRITE_UVLC(defaultDisplayWindow.topOffset,    "def_disp_win_top_offset");
+        WRITE_UVLC(defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
+    }
+
+    TimingInfo *timingInfo = &vui->timingInfo;
+    WRITE_FLAG(1,                              "vui_timing_info_present_flag");
+    WRITE_CODE(timingInfo->numUnitsInTick, 32, "vui_num_units_in_tick");
+    WRITE_CODE(timingInfo->timeScale,      32, "vui_time_scale");
+    WRITE_FLAG(0,                              "vui_poc_proportional_to_timing_flag");
+
+    WRITE_FLAG(vui->hrdParametersPresentFlag,  "vui_hrd_parameters_present_flag");
+    if (vui->hrdParametersPresentFlag)
+        codeHrdParameters(&vui->hrdParameters);
+
+    WRITE_FLAG(0, "bitstream_restriction_flag");
+}
+
+void Entropy::codeScalingList(ScalingList* scalingList)
+{
+    uint32_t listId, sizeId;
+    bool scalingListPredModeFlag;
+
+    for (sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
+    {
+        for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        {
+            scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
+            WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
+            if (!scalingListPredModeFlag) // Copy Mode
+                WRITE_UVLC((int)listId - (int)scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
+            else // DPCM Mode
+                codeScalingList(scalingList, sizeId, listId);
+        }
+    }
+}
+
+void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
+{
+    int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
+    const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
+    int nextCoef = ScalingList::START_VALUE;
+    int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
+    int data;
+
+    if (sizeId > ScalingList::SIZE_8x8)
+    {
+        WRITE_SVLC(scalingList->m_scalingListDC[sizeId][listId] - 8, "scaling_list_dc_coef_minus8");
+        nextCoef = scalingList->m_scalingListDC[sizeId][listId];
+    }
+    for (int i = 0; i < coefNum; i++)
+    {
+        data = src[scan[i]] - nextCoef;
+        nextCoef = src[scan[i]];
+        if (data > 127)
+            data = data - 256;
+        if (data < -128)
+            data = data + 256;
+
+        WRITE_SVLC(data,  "scaling_list_delta_coef");
+    }
+}
+
+void Entropy::codeHrdParameters(HRDInfo *hrd)
+{
+    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
+
+    WRITE_CODE(hrd->bitRateScale, 4, "bit_rate_scale");
+    WRITE_CODE(hrd->cpbSizeScale, 4, "cpb_size_scale");
+
+    WRITE_CODE(hrd->initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd->dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
+
+    WRITE_FLAG(1, "fixed_pic_rate_general_flag");
+    WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
+    WRITE_UVLC(0, "cpb_cnt_minus1");
+
+    WRITE_UVLC(hrd->bitRateValue - 1, "bit_rate_value_minus1");
+    WRITE_UVLC(hrd->cpbSizeValue - 1, "cpb_size_value_minus1");
+    WRITE_FLAG(hrd->cbrFlag, "cbr_flag");
+}
+
+void Entropy::codeAUD(Slice* slice)
+{
+    int picType;
+
+    switch (slice->m_sliceType)
+    {
+    case I_SLICE:
+        picType = 0;
+        break;
+    case P_SLICE:
+        picType = 1;
+        break;
+    case B_SLICE:
+        picType = 2;
+        break;
+    default:
+        picType = 7;
+        break;
+    }
+
+    WRITE_CODE(picType, 3, "pic_type");
+}
+
+void Entropy::codeSliceHeader(Slice* slice)
+{
+    WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
+    if (slice->getRapPicFlag())
+        WRITE_FLAG(0, "no_output_of_prior_pics_flag");
+
+    WRITE_UVLC(0, "slice_pic_parameter_set_id");
+
+    /* x265 does not use dependent slices, so always write all this data */
+
+    WRITE_UVLC(slice->m_sliceType, "slice_type");
+
+    if (!slice->getIdrPicFlag())
+    {
+        int picOrderCntLSB = (slice->m_poc - slice->m_lastIDR + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
+        WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
+
+#if _DEBUG || CHECKED_BUILD
+        // check for bitstream restriction stating that:
+        // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+        // Ideally this process should not be repeated for each slice in a picture
+        if (slice->isIRAP())
+            for (int picIdx = 0; picIdx < slice->m_rps.numberOfPictures; picIdx++)
+                X265_CHECK(!slice->m_rps.bUsed[picIdx], "pic unused failure\n");
+#endif
+
+        WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+        codeShortTermRefPicSet(&slice->m_rps);
+
+        WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
+    }
+    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
+    if (slice->m_sps->bUseSAO)
+    {
+        WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
+        WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
+    }
+
+    // check if numRefIdx match the defaults (1, hard-coded in PPS). If not, override
+    // TODO: this might be a place to optimize a few bits per slice, by using param->refs for L0 default
+
+    if (!slice->isIntra())
+    {
+        bool overrideFlag = (slice->m_numRefIdx[0] != 1 || (slice->isInterB() && slice->m_numRefIdx[1] != 1));
+        WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
+        if (overrideFlag)
+        {
+            WRITE_UVLC(slice->m_numRefIdx[0] - 1, "num_ref_idx_l0_active_minus1");
+            if (slice->isInterB())
+                WRITE_UVLC(slice->m_numRefIdx[1] - 1, "num_ref_idx_l1_active_minus1");
+            else
+                slice->m_numRefIdx[1] = 0;
+        }
+    }
+    else
+    {
+        // TODO: why reset these here and above?
+        slice->m_numRefIdx[0] = 0;
+        slice->m_numRefIdx[1] = 0;
+    }
+
+    if (slice->isInterB())
+        WRITE_FLAG(0, "mvd_l1_zero_flag");
+
+    if (!slice->isIntra())
+    {
+        if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
+        {
+            SliceType sliceType   = slice->m_sliceType;
+            int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
+            bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
+            WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
+        }
+    }
+
+    // TMVP always enabled
+    {
+        if (slice->m_sliceType == B_SLICE)
+            WRITE_FLAG(slice->m_colFromL0Flag, "collocated_from_l0_flag");
+
+        if (slice->m_sliceType != I_SLICE &&
+            ((slice->m_colFromL0Flag && slice->m_numRefIdx[0] > 1) ||
+            (!slice->m_colFromL0Flag && slice->m_numRefIdx[1] > 1)))
+        {
+            WRITE_UVLC(slice->m_colRefIdx, "collocated_ref_idx");
+        }
+    }
+    if ((slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE))
+        codePredWeightTable(slice);
+
+    X265_CHECK(slice->m_maxNumMergeCand <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
+    if (!slice->isIntra())
+        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->m_maxNumMergeCand, "five_minus_max_num_merge_cand");
+
+    int code = slice->m_sliceQp - 26;
+    WRITE_SVLC(code, "slice_qp_delta");
+
+    bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[0] : false;
+    bool isDBFEnabled = !slice->m_pps->bPicDisableDeblockingFilter;
+
+    if (isSAOEnabled || isDBFEnabled)
+        WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+}
+
+/** write wavefront substreams sizes for the slice header */
+void Entropy::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
+{
+    uint32_t offsetLen = 1;
+    while (maxOffset >= (1U << offsetLen))
+    {
+        offsetLen++;
+        X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
+    }
+
+    uint32_t numRows = slice->m_pic->getFrameHeightInCU() - 1;
+    WRITE_UVLC(numRows, "num_entry_point_offsets");
+    if (numRows > 0)
+        WRITE_UVLC(offsetLen - 1, "offset_len_minus1");
+
+    for (uint32_t i = 0; i < numRows; i++)
+        WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
+}
+
+void Entropy::codeShortTermRefPicSet(RPS* rps)
+{
+    WRITE_UVLC(rps->numberOfNegativePictures, "num_negative_pics");
+    WRITE_UVLC(rps->numberOfPositivePictures, "num_positive_pics");
+    int prev = 0;
+    for (int j = 0; j < rps->numberOfNegativePictures; j++)
+    {
+        WRITE_UVLC(prev - rps->deltaPOC[j] - 1, "delta_poc_s0_minus1");
+        prev = rps->deltaPOC[j];
+        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s0_flag");
+    }
+
+    prev = 0;
+    for (int j = rps->numberOfNegativePictures; j < rps->numberOfNegativePictures + rps->numberOfPositivePictures; j++)
+    {
+        WRITE_UVLC(rps->deltaPOC[j] - prev - 1, "delta_poc_s1_minus1");
+        prev = rps->deltaPOC[j];
+        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s1_flag");
+    }
 }
 
 void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
@@ -576,294 +999,6 @@ void Entropy::determineCabacInitIdx(Slice *slice, PPS *pps)
         pps->encCABACTableIdx = I_SLICE;
 }
 
-void Entropy::codeVPS(VPS* vps)
-{
-    WRITE_CODE(0,       4, "vps_video_parameter_set_id");
-    WRITE_CODE(3,       2, "vps_reserved_three_2bits");
-    WRITE_CODE(0,       6, "vps_reserved_zero_6bits");
-    WRITE_CODE(0,       3, "vps_max_sub_layers_minus1");
-    WRITE_FLAG(1,          "vps_temporal_id_nesting_flag");
-    WRITE_CODE(0xffff, 16, "vps_reserved_ffff_16bits");
-
-    codeProfileTier(vps->ptl);
-
-    WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
-    WRITE_UVLC(vps->maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(vps->numReorderPics,         "vps_num_reorder_pics[i]");
-
-    WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
-    WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
-    WRITE_UVLC(0,    "vps_max_op_sets_minus1");
-    WRITE_FLAG(0,    "vps_timing_info_present_flag"); /* we signal timing info in SPS-VUI */
-    WRITE_FLAG(0,    "vps_extension_flag");
-}
-
-void Entropy::codeShortTermRefPicSet(RPS* rps)
-{
-    WRITE_UVLC(rps->numberOfNegativePictures, "num_negative_pics");
-    WRITE_UVLC(rps->numberOfPositivePictures, "num_positive_pics");
-    int prev = 0;
-    for (int j = 0; j < rps->numberOfNegativePictures; j++)
-    {
-        WRITE_UVLC(prev - rps->deltaPOC[j] - 1, "delta_poc_s0_minus1");
-        prev = rps->deltaPOC[j];
-        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s0_flag");
-    }
-
-    prev = 0;
-    for (int j = rps->numberOfNegativePictures; j < rps->numberOfNegativePictures + rps->numberOfPositivePictures; j++)
-    {
-        WRITE_UVLC(rps->deltaPOC[j] - prev - 1, "delta_poc_s1_minus1");
-        prev = rps->deltaPOC[j];
-        WRITE_FLAG(rps->bUsed[j], "used_by_curr_pic_s1_flag");
-    }
-}
-
-void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
-{
-    WRITE_CODE(0, 4, "sps_video_parameter_set_id");
-    WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
-    WRITE_FLAG(1,    "sps_temporal_id_nesting_flag");
-
-    codeProfileTier(*ptl);
-
-    WRITE_UVLC(0, "sps_seq_parameter_set_id");
-    WRITE_UVLC(sps->chromaFormatIdc, "chroma_format_idc");
-
-    if (sps->chromaFormatIdc == CHROMA_444)
-        WRITE_FLAG(0,                          "separate_colour_plane_flag");
-
-    WRITE_UVLC(sps->picWidthInLumaSamples,   "pic_width_in_luma_samples");
-    WRITE_UVLC(sps->picHeightInLumaSamples,  "pic_height_in_luma_samples");
-    Window& conf = sps->conformanceWindow;
-
-    WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
-    if (conf.bEnabled)
-    {
-        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps->chromaFormatIdc], "conf_win_left_offset");
-        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps->chromaFormatIdc], "conf_win_right_offset");
-        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps->chromaFormatIdc], "conf_win_top_offset");
-        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps->chromaFormatIdc], "conf_win_bottom_offset");
-    }
-
-    WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_luma_minus8");
-    WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_chroma_minus8");
-    WRITE_UVLC(BITS_FOR_POC - 4, "log2_max_pic_order_cnt_lsb_minus4");
-    WRITE_FLAG(true,             "sps_sub_layer_ordering_info_present_flag");
-
-    WRITE_UVLC(sps->maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(sps->numReorderPics,         "sps_num_reorder_pics[i]");
-    WRITE_UVLC(0,                           "sps_max_latency_increase_plus1[i]");
-
-    WRITE_UVLC(sps->log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
-    WRITE_UVLC(sps->log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
-    WRITE_UVLC(sps->quadtreeTULog2MinSize - 2,     "log2_min_transform_block_size_minus2");
-    WRITE_UVLC(sps->quadtreeTULog2MaxSize - sps->quadtreeTULog2MinSize, "log2_diff_max_min_transform_block_size");
-    WRITE_UVLC(sps->quadtreeTUMaxDepthInter - 1,   "max_transform_hierarchy_depth_inter");
-    WRITE_UVLC(sps->quadtreeTUMaxDepthIntra - 1,   "max_transform_hierarchy_depth_intra");
-    WRITE_FLAG(scalingList->m_bEnabled,            "scaling_list_enabled_flag");
-    if (scalingList->m_bEnabled)
-    {
-        WRITE_FLAG(scalingList->m_bDataPresent,    "sps_scaling_list_data_present_flag");
-        if (scalingList->m_bDataPresent)
-            codeScalingList(scalingList);
-    }
-    WRITE_FLAG(sps->bUseAMP, "amp_enabled_flag");
-    WRITE_FLAG(sps->bUseSAO, "sample_adaptive_offset_enabled_flag");
-
-    WRITE_FLAG(0, "pcm_enabled_flag");
-    WRITE_UVLC(0, "num_short_term_ref_pic_sets");
-    WRITE_FLAG(0, "long_term_ref_pics_present_flag");
-
-    WRITE_FLAG(1, "sps_temporal_mvp_enable_flag");
-    WRITE_FLAG(sps->bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
-
-    WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(&sps->vuiParameters);
-
-    WRITE_FLAG(0, "sps_extension_flag");
-}
-
-void Entropy::codePPS(PPS* pps)
-{
-    WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
-    WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
-    WRITE_FLAG(0,                          "dependent_slice_segments_enabled_flag");
-    WRITE_FLAG(0,                          "output_flag_present_flag");
-    WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
-    WRITE_FLAG(pps->bSignHideEnabled,      "sign_data_hiding_flag");
-    WRITE_FLAG(pps->bCabacInitPresent,     "cabac_init_present_flag");
-    WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
-    WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
-
-    WRITE_SVLC(0, "init_qp_minus26");
-    WRITE_FLAG(pps->bConstrainedIntraPred, "constrained_intra_pred_flag");
-    WRITE_FLAG(pps->bTransformSkipEnabled, "transform_skip_enabled_flag");
-
-    WRITE_FLAG(pps->bUseDQP,               "cu_qp_delta_enabled_flag");
-    if (pps->bUseDQP)
-        WRITE_UVLC(pps->maxCuDQPDepth,     "diff_cu_qp_delta_depth");
-
-    WRITE_SVLC(pps->chromaCbQpOffset,      "pps_cb_qp_offset");
-    WRITE_SVLC(pps->chromaCrQpOffset,      "pps_cr_qp_offset");
-    WRITE_FLAG(0,                          "pps_slice_chroma_qp_offsets_present_flag");
-
-    WRITE_FLAG(pps->bUseWeightPred,            "weighted_pred_flag");
-    WRITE_FLAG(pps->bUseWeightedBiPred,        "weighted_bipred_flag");
-    WRITE_FLAG(pps->bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
-    WRITE_FLAG(0,                              "tiles_enabled_flag");
-    WRITE_FLAG(pps->bEntropyCodingSyncEnabled, "entropy_coding_sync_enabled_flag");
-    WRITE_FLAG(1,                              "loop_filter_across_slices_enabled_flag");
-
-    WRITE_FLAG(pps->bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
-    if (pps->bDeblockingFilterControlPresent)
-    {
-        WRITE_FLAG(0,                                "deblocking_filter_override_enabled_flag");
-        WRITE_FLAG(pps->bPicDisableDeblockingFilter, "pps_disable_deblocking_filter_flag");
-        if (!pps->bPicDisableDeblockingFilter)
-        {
-            WRITE_SVLC(pps->deblockingFilterBetaOffsetDiv2, "pps_beta_offset_div2");
-            WRITE_SVLC(pps->deblockingFilterTcOffsetDiv2,   "pps_tc_offset_div2");
-        }
-    }
-
-    WRITE_FLAG(0, "pps_scaling_list_data_present_flag");
-    WRITE_FLAG(0, "lists_modification_present_flag");
-    WRITE_UVLC(0, "log2_parallel_merge_level_minus2");
-    WRITE_FLAG(0, "slice_segment_header_extension_present_flag");
-    WRITE_FLAG(0, "pps_extension_flag");
-}
-
-void Entropy::codeVUI(VUI *vui)
-{
-    WRITE_FLAG(vui->aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
-    if (vui->aspectRatioInfoPresentFlag)
-    {
-        WRITE_CODE(vui->aspectRatioIdc, 8,       "aspect_ratio_idc");
-        if (vui->aspectRatioIdc == 255)
-        {
-            WRITE_CODE(vui->sarWidth, 16,        "sar_width");
-            WRITE_CODE(vui->sarHeight, 16,       "sar_height");
-        }
-    }
-
-    WRITE_FLAG(vui->overscanInfoPresentFlag,     "overscan_info_present_flag");
-    if (vui->overscanInfoPresentFlag)
-        WRITE_FLAG(vui->overscanAppropriateFlag, "overscan_appropriate_flag");
-
-    WRITE_FLAG(vui->videoSignalTypePresentFlag,  "video_signal_type_present_flag");
-    if (vui->videoSignalTypePresentFlag)
-    {
-        WRITE_CODE(vui->videoFormat, 3,          "video_format");
-        WRITE_FLAG(vui->videoFullRangeFlag,      "video_full_range_flag");
-        WRITE_FLAG(vui->colourDescriptionPresentFlag, "colour_description_present_flag");
-        if (vui->colourDescriptionPresentFlag)
-        {
-            WRITE_CODE(vui->colourPrimaries, 8,         "colour_primaries");
-            WRITE_CODE(vui->transferCharacteristics, 8, "transfer_characteristics");
-            WRITE_CODE(vui->matrixCoefficients, 8,      "matrix_coefficients");
-        }
-    }
-
-    WRITE_FLAG(vui->chromaLocInfoPresentFlag,           "chroma_loc_info_present_flag");
-    if (vui->chromaLocInfoPresentFlag)
-    {
-        WRITE_UVLC(vui->chromaSampleLocTypeTopField,    "chroma_sample_loc_type_top_field");
-        WRITE_UVLC(vui->chromaSampleLocTypeBottomField, "chroma_sample_loc_type_bottom_field");
-    }
-
-    WRITE_FLAG(0,                                     "neutral_chroma_indication_flag");
-    WRITE_FLAG(vui->fieldSeqFlag,                     "field_seq_flag");
-    WRITE_FLAG(vui->frameFieldInfoPresentFlag,        "frame_field_info_present_flag");
-
-    Window defaultDisplayWindow = vui->defaultDisplayWindow;
-    WRITE_FLAG(defaultDisplayWindow.bEnabled,         "default_display_window_flag");
-    if (defaultDisplayWindow.bEnabled)
-    {
-        WRITE_UVLC(defaultDisplayWindow.leftOffset,   "def_disp_win_left_offset");
-        WRITE_UVLC(defaultDisplayWindow.rightOffset,  "def_disp_win_right_offset");
-        WRITE_UVLC(defaultDisplayWindow.topOffset,    "def_disp_win_top_offset");
-        WRITE_UVLC(defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
-    }
-
-    TimingInfo *timingInfo = &vui->timingInfo;
-    WRITE_FLAG(1,                              "vui_timing_info_present_flag");
-    WRITE_CODE(timingInfo->numUnitsInTick, 32, "vui_num_units_in_tick");
-    WRITE_CODE(timingInfo->timeScale,      32, "vui_time_scale");
-    WRITE_FLAG(0,                              "vui_poc_proportional_to_timing_flag");
-
-    WRITE_FLAG(vui->hrdParametersPresentFlag,  "vui_hrd_parameters_present_flag");
-    if (vui->hrdParametersPresentFlag)
-        codeHrdParameters(&vui->hrdParameters);
-
-    WRITE_FLAG(0, "bitstream_restriction_flag");
-}
-
-void Entropy::codeAUD(Slice* slice)
-{
-    int picType;
-
-    switch (slice->m_sliceType)
-    {
-    case I_SLICE:
-        picType = 0;
-        break;
-    case P_SLICE:
-        picType = 1;
-        break;
-    case B_SLICE:
-        picType = 2;
-        break;
-    default:
-        picType = 7;
-        break;
-    }
-
-    WRITE_CODE(picType, 3, "pic_type");
-}
-
-void Entropy::codeHrdParameters(HRDInfo *hrd)
-{
-    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
-    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
-    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
-
-    WRITE_CODE(hrd->bitRateScale, 4, "bit_rate_scale");
-    WRITE_CODE(hrd->cpbSizeScale, 4, "cpb_size_scale");
-
-    WRITE_CODE(hrd->initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd->cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd->dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
-
-    WRITE_FLAG(1, "fixed_pic_rate_general_flag");
-    WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
-    WRITE_UVLC(0, "cpb_cnt_minus1");
-
-    WRITE_UVLC(hrd->bitRateValue - 1, "bit_rate_value_minus1");
-    WRITE_UVLC(hrd->cpbSizeValue - 1, "cpb_size_value_minus1");
-    WRITE_FLAG(hrd->cbrFlag, "cbr_flag");
-}
-
-void Entropy::codeProfileTier(ProfileTierLevel& ptl)
-{
-    WRITE_CODE(0, 2,                "XXX_profile_space[]");
-    WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
-    WRITE_CODE(ptl.profileIdc, 5,   "XXX_profile_idc[]");
-    for (int j = 0; j < 32; j++)
-        WRITE_FLAG(ptl.profileCompatibilityFlag[j], "XXX_profile_compatibility_flag[][j]");
-
-    WRITE_FLAG(ptl.progressiveSourceFlag,   "general_progressive_source_flag");
-    WRITE_FLAG(ptl.interlacedSourceFlag,    "general_interlaced_source_flag");
-    WRITE_FLAG(ptl.nonPackedConstraintFlag, "general_non_packed_constraint_flag");
-    WRITE_FLAG(ptl.frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
-
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
-    WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
-
-    WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
-}
-
 /* code explicit wp tables */
 void Entropy::codePredWeightTable(Slice* slice)
 {
@@ -936,175 +1071,6 @@ void Entropy::codePredWeightTable(Slice* slice)
 
         X265_CHECK(totalSignalledWeightFlags <= 24, "total weights must be <= 24\n");
     }
-}
-
-/** code quantization matrix */
-void Entropy::codeScalingList(ScalingList* scalingList)
-{
-    uint32_t listId, sizeId;
-    bool scalingListPredModeFlag;
-
-    for (sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
-    {
-        for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)
-        {
-            scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
-            WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
-            if (!scalingListPredModeFlag) // Copy Mode
-                WRITE_UVLC((int)listId - (int)scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
-            else // DPCM Mode
-                codeScalingList(scalingList, sizeId, listId);
-        }
-    }
-}
-
-void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
-{
-    int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
-    const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
-    int nextCoef = ScalingList::START_VALUE;
-    int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
-    int data;
-
-    if (sizeId > ScalingList::SIZE_8x8)
-    {
-        WRITE_SVLC(scalingList->m_scalingListDC[sizeId][listId] - 8, "scaling_list_dc_coef_minus8");
-        nextCoef = scalingList->m_scalingListDC[sizeId][listId];
-    }
-    for (int i = 0; i < coefNum; i++)
-    {
-        data = src[scan[i]] - nextCoef;
-        nextCoef = src[scan[i]];
-        if (data > 127)
-            data = data - 256;
-        if (data < -128)
-            data = data + 256;
-
-        WRITE_SVLC(data,  "scaling_list_delta_coef");
-    }
-}
-
-void Entropy::codeSliceHeader(Slice* slice)
-{
-    WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
-    if (slice->getRapPicFlag())
-        WRITE_FLAG(0, "no_output_of_prior_pics_flag");
-
-    WRITE_UVLC(0, "slice_pic_parameter_set_id");
-
-    /* x265 does not use dependent slices, so always write all this data */
-
-    WRITE_UVLC(slice->m_sliceType, "slice_type");
-
-    if (!slice->getIdrPicFlag())
-    {
-        int picOrderCntLSB = (slice->m_poc - slice->m_lastIDR + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
-        WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
-
-#if _DEBUG || CHECKED_BUILD
-        // check for bitstream restriction stating that:
-        // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-        // Ideally this process should not be repeated for each slice in a picture
-        if (slice->isIRAP())
-            for (int picIdx = 0; picIdx < slice->m_rps.numberOfPictures; picIdx++)
-                X265_CHECK(!slice->m_rps.bUsed[picIdx], "pic unused failure\n");
-#endif
-
-        WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-        codeShortTermRefPicSet(&slice->m_rps);
-
-        WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
-    }
-    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
-    if (slice->m_sps->bUseSAO)
-    {
-        WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
-        WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
-    }
-
-    // check if numRefIdx match the defaults (1, hard-coded in PPS). If not, override
-    // TODO: this might be a place to optimize a few bits per slice, by using param->refs for L0 default
-
-    if (!slice->isIntra())
-    {
-        bool overrideFlag = (slice->m_numRefIdx[0] != 1 || (slice->isInterB() && slice->m_numRefIdx[1] != 1));
-        WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
-        if (overrideFlag)
-        {
-            WRITE_UVLC(slice->m_numRefIdx[0] - 1, "num_ref_idx_l0_active_minus1");
-            if (slice->isInterB())
-                WRITE_UVLC(slice->m_numRefIdx[1] - 1, "num_ref_idx_l1_active_minus1");
-            else
-                slice->m_numRefIdx[1] = 0;
-        }
-    }
-    else
-    {
-        // TODO: why reset these here and above?
-        slice->m_numRefIdx[0] = 0;
-        slice->m_numRefIdx[1] = 0;
-    }
-
-    if (slice->isInterB())
-        WRITE_FLAG(0, "mvd_l1_zero_flag");
-
-    if (!slice->isIntra())
-    {
-        if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
-        {
-            SliceType sliceType   = slice->m_sliceType;
-            int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
-            bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-            WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
-        }
-    }
-
-    // TMVP always enabled
-    {
-        if (slice->m_sliceType == B_SLICE)
-            WRITE_FLAG(slice->m_colFromL0Flag, "collocated_from_l0_flag");
-
-        if (slice->m_sliceType != I_SLICE &&
-            ((slice->m_colFromL0Flag && slice->m_numRefIdx[0] > 1) ||
-            (!slice->m_colFromL0Flag && slice->m_numRefIdx[1] > 1)))
-        {
-            WRITE_UVLC(slice->m_colRefIdx, "collocated_ref_idx");
-        }
-    }
-    if ((slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE) || (slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE))
-        codePredWeightTable(slice);
-
-    X265_CHECK(slice->m_maxNumMergeCand <= MRG_MAX_NUM_CANDS, "too many merge candidates\n");
-    if (!slice->isIntra())
-        WRITE_UVLC(MRG_MAX_NUM_CANDS - slice->m_maxNumMergeCand, "five_minus_max_num_merge_cand");
-
-    int code = slice->m_sliceQp - 26;
-    WRITE_SVLC(code, "slice_qp_delta");
-
-    bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[0] : false;
-    bool isDBFEnabled = !slice->m_pps->bPicDisableDeblockingFilter;
-
-    if (isSAOEnabled || isDBFEnabled)
-        WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
-}
-
-/** write wavefront substreams sizes for the slice header */
-void Entropy::codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset)
-{
-    uint32_t offsetLen = 1;
-    while (maxOffset >= (1U << offsetLen))
-    {
-        offsetLen++;
-        X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
-    }
-
-    uint32_t numRows = slice->m_pic->getFrameHeightInCU() - 1;
-    WRITE_UVLC(numRows, "num_entry_point_offsets");
-    if (numRows > 0)
-        WRITE_UVLC(offsetLen - 1, "offset_len_minus1");
-
-    for (uint32_t i = 0; i < numRows; i++)
-        WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 
 void Entropy::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
@@ -2231,5 +2197,38 @@ void Entropy::writeOut()
         m_bufferedByte = (uint8_t)leadByte;
     }
 }
+
+const uint32_t g_entropyBits[128] =
+{
+    // Corrected table, most notably for last state
+    0x07b23, 0x085f9, 0x074a0, 0x08cbc, 0x06ee4, 0x09354, 0x067f4, 0x09c1b, 0x060b0, 0x0a62a, 0x05a9c, 0x0af5b, 0x0548d, 0x0b955, 0x04f56, 0x0c2a9,
+    0x04a87, 0x0cbf7, 0x045d6, 0x0d5c3, 0x04144, 0x0e01b, 0x03d88, 0x0e937, 0x039e0, 0x0f2cd, 0x03663, 0x0fc9e, 0x03347, 0x10600, 0x03050, 0x10f95,
+    0x02d4d, 0x11a02, 0x02ad3, 0x12333, 0x0286e, 0x12cad, 0x02604, 0x136df, 0x02425, 0x13f48, 0x021f4, 0x149c4, 0x0203e, 0x1527b, 0x01e4d, 0x15d00,
+    0x01c99, 0x166de, 0x01b18, 0x17017, 0x019a5, 0x17988, 0x01841, 0x18327, 0x016df, 0x18d50, 0x015d9, 0x19547, 0x0147c, 0x1a083, 0x0138e, 0x1a8a3,
+    0x01251, 0x1b418, 0x01166, 0x1bd27, 0x01068, 0x1c77b, 0x00f7f, 0x1d18e, 0x00eda, 0x1d91a, 0x00e19, 0x1e254, 0x00d4f, 0x1ec9a, 0x00c90, 0x1f6e0,
+    0x00c01, 0x1fef8, 0x00b5f, 0x208b1, 0x00ab6, 0x21362, 0x00a15, 0x21e46, 0x00988, 0x2285d, 0x00934, 0x22ea8, 0x008a8, 0x239b2, 0x0081d, 0x24577,
+    0x007c9, 0x24ce6, 0x00763, 0x25663, 0x00710, 0x25e8f, 0x006a0, 0x26a26, 0x00672, 0x26f23, 0x005e8, 0x27ef8, 0x005ba, 0x284b5, 0x0055e, 0x29057,
+    0x0050c, 0x29bab, 0x004c1, 0x2a674, 0x004a7, 0x2aa5e, 0x0046f, 0x2b32f, 0x0041f, 0x2c0ad, 0x003e7, 0x2ca8d, 0x003ba, 0x2d323, 0x0010c, 0x3bfbb
+};
+
+const uint8_t g_nextState[128][2] =
+{
+    { 2, 1 }, { 0, 3 }, { 4, 0 }, { 1, 5 }, { 6, 2 }, { 3, 7 }, { 8, 4 }, { 5, 9 },
+    { 10, 4 }, { 5, 11 }, { 12, 8 }, { 9, 13 }, { 14, 8 }, { 9, 15 }, { 16, 10 }, { 11, 17 },
+    { 18, 12 }, { 13, 19 }, { 20, 14 }, { 15, 21 }, { 22, 16 }, { 17, 23 }, { 24, 18 }, { 19, 25 },
+    { 26, 18 }, { 19, 27 }, { 28, 22 }, { 23, 29 }, { 30, 22 }, { 23, 31 }, { 32, 24 }, { 25, 33 },
+    { 34, 26 }, { 27, 35 }, { 36, 26 }, { 27, 37 }, { 38, 30 }, { 31, 39 }, { 40, 30 }, { 31, 41 },
+    { 42, 32 }, { 33, 43 }, { 44, 32 }, { 33, 45 }, { 46, 36 }, { 37, 47 }, { 48, 36 }, { 37, 49 },
+    { 50, 38 }, { 39, 51 }, { 52, 38 }, { 39, 53 }, { 54, 42 }, { 43, 55 }, { 56, 42 }, { 43, 57 },
+    { 58, 44 }, { 45, 59 }, { 60, 44 }, { 45, 61 }, { 62, 46 }, { 47, 63 }, { 64, 48 }, { 49, 65 },
+    { 66, 48 }, { 49, 67 }, { 68, 50 }, { 51, 69 }, { 70, 52 }, { 53, 71 }, { 72, 52 }, { 53, 73 },
+    { 74, 54 }, { 55, 75 }, { 76, 54 }, { 55, 77 }, { 78, 56 }, { 57, 79 }, { 80, 58 }, { 59, 81 },
+    { 82, 58 }, { 59, 83 }, { 84, 60 }, { 61, 85 }, { 86, 60 }, { 61, 87 }, { 88, 60 }, { 61, 89 },
+    { 90, 62 }, { 63, 91 }, { 92, 64 }, { 65, 93 }, { 94, 64 }, { 65, 95 }, { 96, 66 }, { 67, 97 },
+    { 98, 66 }, { 67, 99 }, { 100, 66 }, { 67, 101 }, { 102, 68 }, { 69, 103 }, { 104, 68 }, { 69, 105 },
+    { 106, 70 }, { 71, 107 }, { 108, 70 }, { 71, 109 }, { 110, 70 }, { 71, 111 }, { 112, 72 }, { 73, 113 },
+    { 114, 72 }, { 73, 115 }, { 116, 72 }, { 73, 117 }, { 118, 74 }, { 75, 119 }, { 120, 74 }, { 75, 121 },
+    { 122, 74 }, { 75, 123 }, { 124, 76 }, { 77, 125 }, { 124, 76 }, { 77, 125 }, { 126, 126 }, { 127, 127 }
+};
 
 }
