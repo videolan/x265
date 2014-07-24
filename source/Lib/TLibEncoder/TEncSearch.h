@@ -51,6 +51,7 @@
 #include "rdcost.h"
 
 #define MVP_IDX_BITS 1
+#define NUM_LAYERS 4
 
 namespace x265 {
 // private namespace
@@ -108,7 +109,7 @@ public:
 
     ShortYuv*       m_qtTempShortYuv;
 
-    coeff_t**       m_qtTempCoeff[3];
+    coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempTrIdx;
     uint8_t*        m_qtTempCbf[3];
 
