@@ -108,7 +108,10 @@ inline char *strcatFilename(const char *input, const char *suffix)
 {
     char *output = X265_MALLOC(char, strlen(input) + strlen(suffix) + 1);
     if (!output)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "unable to allocate memory for filename\n");
         return NULL;
+    }
     strcpy(output, input);
     strcat(output, suffix);
     return output;
@@ -482,7 +485,10 @@ bool RateControl::init(const SPS *sps)
                 char *opts = statsBuf;
                 statsIn = strchr(statsBuf, '\n');
                 if (!statsIn)
+                {
+                    x265_log(m_param, X265_LOG_ERROR, "Malformed stats file\n");
                     return false;
+                }
                 *statsIn = '\0';
                 statsIn++;
                 if (sscanf(opts, "#options: %dx%d", &i, &j) != 2)
@@ -935,7 +941,9 @@ bool RateControl::initPass2()
     }
 
     return true;
+
 fail:
+    x265_log(m_param, X265_LOG_WARNING, "two-pass ABR initialization failed\n");
     return false;
 }
 
@@ -998,6 +1006,7 @@ bool RateControl::vbv2Pass(uint64_t allAvailableBits)
     X265_FREE(fills - 1);
     return true;
 fail:
+    x265_log(m_param, X265_LOG_ERROR, "malloc failure in two-pass VBV init\n");
     return false;
 }
 
