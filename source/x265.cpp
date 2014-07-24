@@ -194,6 +194,8 @@ static const struct option long_options[] =
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },
     { "nr",             required_argument, NULL, 0 },
+    { "stats",          required_argument, NULL, 0 },
+    { "pass",           required_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -412,6 +414,11 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
     H0("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
     H0("   --[no-]hrd                    Enable HRD parameters signalling. Default %s\n", OPT(param->bEmitHRDSEI));
+    H0("   --stats                       FileName for stats file in multipass pass rate control. Default x265_2pass.log\n");
+    H0("   --pass                        Multi pass rate control.\n"
+       "                                   - 1 : First pass, cretes stats file\n"
+       "                                   - 2 : Last pass, does not overwrite stats file\n"
+       "                                   - 3 : Nth pass, overwrites stats file\n");
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual optimization. Requires slow preset or below. Default %f\n", param->psyRd);
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));

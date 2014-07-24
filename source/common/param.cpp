@@ -755,6 +755,13 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
                          &p->vui.defDispWinBottomOffset) != 4;
     }
     OPT("nr") p->noiseReduction = atoi(value);
+    OPT("pass")
+    {
+        int pass = Clip3(0, 3, atoi(value));
+        p->rc.bStatWrite = pass & 1;
+        p->rc.bStatRead = pass & 2;
+    }
+    OPT("stats") p->rc.statFileName = strdup(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
