@@ -444,6 +444,59 @@ RateControl::RateControl(x265_param *p)
 
 bool RateControl::init(const SPS *sps)
 {
+    if (m_isVbv)
+    {
+        /* We don't support changing the ABR bitrate right now,
+         * so if the stream starts as CBR, keep it CBR. */
+        if (m_param->rc.vbvBufferSize < (int)(m_param->rc.vbvMaxBitrate / m_fps))
+        {
+            m_param->rc.vbvBufferSize = (int)(m_param->rc.vbvMaxBitrate / m_fps);
+            x265_log(m_param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
+                     m_param->rc.vbvBufferSize);
+        }
+        int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
+        int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
+
+        if (m_param->bEmitHRDSEI)
+        {
+            const HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
+            vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
+            vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
+        }
+        m_bufferRate = vbvMaxBitrate / m_fps;
+        m_vbvMaxRate = vbvMaxBitrate;
+        m_bufferSize = vbvBufferSize;
+        m_singleFrameVbv = m_bufferRate * 1.1 > m_bufferSize;
+
+        if (m_param->rc.vbvBufferInit > 1.)
+            m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
+        m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
+        m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
+    }
+
+    m_totalBits = 0;
+    m_framesDone = 0;
+    m_residualCost = 0;
+    m_partialResidualCost = 0;
+
+    /* 720p videos seem to be a good cutoff for cplxrSum */
+    double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
+
+    /* estimated ratio that produces a reasonable QP for the first I-frame */
+    m_cplxrSum = .01 * pow(7.0e5, m_qCompress) * pow(m_ncu, 0.5) * tuneCplxFactor;
+    m_wantedBitsWindow = m_bitrate * m_frameDuration;
+    m_accumPNorm = .01;
+    m_accumPQp = (m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * m_accumPNorm;
+
+    /* Frame Predictors and Row predictors used in vbv */
+    for (int i = 0; i < 5; i++)
+    {
+        m_pred[i].coeff = 2.0;
+        m_pred[i].count = 1.0;
+        m_pred[i].decay = 0.5;
+        m_pred[i].offset = 0.0;
+    }
+    m_predBfromP = m_pred[0];
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
         /* If the user hasn't defined the stat filename, use the default value */
@@ -664,59 +717,6 @@ bool RateControl::init(const SPS *sps)
             m_cuTreeStats.qpBufPos = -1;
         }
     }
-    if (m_isVbv && !m_2pass)
-    {
-        /* We don't support changing the ABR bitrate right now,
-         * so if the stream starts as CBR, keep it CBR. */
-        if (m_param->rc.vbvBufferSize < (int)(m_param->rc.vbvMaxBitrate / m_fps))
-        {
-            m_param->rc.vbvBufferSize = (int)(m_param->rc.vbvMaxBitrate / m_fps);
-            x265_log(m_param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
-                     m_param->rc.vbvBufferSize);
-        }
-        int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
-        int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
-
-        if (m_param->bEmitHRDSEI)
-        {
-            const HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
-            vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
-            vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
-        }
-        m_bufferRate = vbvMaxBitrate / m_fps;
-        m_vbvMaxRate = vbvMaxBitrate;
-        m_bufferSize = vbvBufferSize;
-        m_singleFrameVbv = m_bufferRate * 1.1 > m_bufferSize;
-
-        if (m_param->rc.vbvBufferInit > 1.)
-            m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
-        m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
-        m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
-    }
-
-    m_totalBits = 0;
-    m_framesDone = 0;
-    m_residualCost = 0;
-    m_partialResidualCost = 0;
-
-    /* 720p videos seem to be a good cutoff for cplxrSum */
-    double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
-
-    /* estimated ratio that produces a reasonable QP for the first I-frame */
-    m_cplxrSum = .01 * pow(7.0e5, m_qCompress) * pow(m_ncu, 0.5) * tuneCplxFactor;
-    m_wantedBitsWindow = m_bitrate * m_frameDuration;
-    m_accumPNorm = .01;
-    m_accumPQp = (m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * m_accumPNorm;
-
-    /* Frame Predictors and Row predictors used in vbv */
-    for (int i = 0; i < 5; i++)
-    {
-        m_pred[i].coeff = 2.0;
-        m_pred[i].count = 1.0;
-        m_pred[i].decay = 0.5;
-        m_pred[i].offset = 0.0;
-    }
-    m_predBfromP = m_pred[0];
     return true;
 }
 
@@ -910,7 +910,7 @@ bool RateControl::initPass2()
         X265_FREE(blurredQscale);
 
     if (m_isVbv)
-        if (vbv2Pass(allAvailableBits))
+        if (!vbv2Pass(allAvailableBits))
             return false;
     expectedBits = countExpectedBits();
 
@@ -1525,9 +1525,9 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                 q = X265_MIN(lqmax, q);
             }
             q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
+            rce->qpNoVbv = x265_qScale2qp(q);
+            q = clipQscale(pic, q);
         }
-        rce->qpNoVbv = x265_qScale2qp(q);
-        q = clipQscale(pic, q);
         m_lastQScaleFor[m_sliceType] = q;
         if ((m_curSlice->m_poc == 0 || m_lastQScaleFor[P_SLICE] < q) && !(m_2pass && !m_isVbv))
             m_lastQScaleFor[P_SLICE] = q * fabs(m_param->rc.ipFactor);
