@@ -47,17 +47,6 @@
 namespace x265 {
 // private namespace
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Constants
-// ====================================================================================================================
-
-// ====================================================================================================================
-// Type definition
-// ====================================================================================================================
-
 struct EstBitsSbac
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
@@ -70,10 +59,6 @@ struct EstBitsSbac
     int blockCbpBits[NUM_QT_CBF_CTX][2];
     int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
 };
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
 
 class QpParam
 {
@@ -193,7 +178,7 @@ public:
         }
     }
 
-    EstBitsSbac*    m_estBitsSbac;
+    EstBitsSbac     m_estBitsSbac;
 
     NoiseReduction* m_nr;
 
@@ -233,9 +218,9 @@ private:
 
     inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
 
-    inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+    inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
 
-    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac->significantBits[ctxNumSig][sig]; }
+    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig]; }
 
     inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
 

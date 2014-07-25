@@ -74,8 +74,6 @@ TComTrQuant::TComTrQuant()
     // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
     m_tmpCoeff = X265_MALLOC(int32_t, MAX_CU_SIZE * MAX_CU_SIZE);
 
-    // allocate bit estimation class (for RDOQ)
-    m_estBitsSbac = new EstBitsSbac;
     initScalingList();
 }
 
@@ -87,8 +85,6 @@ TComTrQuant::~TComTrQuant()
         X265_FREE(m_tmpCoeff);
     }
 
-    // delete bit estimation class
-    delete m_estBitsSbac;
     destroyScalingList();
 }
 
@@ -605,8 +601,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                 uint32_t level;
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
-                const int *greaterOneBits = m_estBitsSbac->greaterOneBits[oneCtx];
-                const int *levelAbsBits = m_estBitsSbac->levelAbsBits[absCtx];
+                const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
+                const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
                 double curCostSig = 0;
 
                 costCoeff[scanPos] = MAX_DOUBLE;
@@ -637,7 +633,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                     {
                         level = 0;
                     }
-                    sigRateDelta[blkPos] = m_estBitsSbac->significantBits[ctxSig][1] - m_estBitsSbac->significantBits[ctxSig][0];
+                    sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
                 }
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
@@ -792,14 +788,14 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && cu->getTransformIdx(absPartIdx) == 0)
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockRootCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_estBitsSbac->blockRootCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][0]);
+        baseCost += xGetICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][1]);
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_estBitsSbac->blockCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac.blockCbpBits[ctxCbf][0]);
+        baseCost += xGetICost(m_estBitsSbac.blockCbpBits[ctxCbf][1]);
     }
 
     bool foundLast = false;
@@ -1311,7 +1307,7 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
 {
     uint32_t ctxX = getGroupIdx(posx);
     uint32_t ctxY = getGroupIdx(posy);
-    uint32_t cost = m_estBitsSbac->lastXBits[ctxX] + m_estBitsSbac->lastYBits[ctxY];
+    uint32_t cost = m_estBitsSbac.lastXBits[ctxX] + m_estBitsSbac.lastYBits[ctxY];
 
     int32_t maskX = (int32_t)(2 - posx) >> 31;
     int32_t maskY = (int32_t)(2 - posy) >> 31;

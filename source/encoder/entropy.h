@@ -162,11 +162,11 @@ public:
     void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     // RDO functions
-    void estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype);
-    void estCBFBit(EstBitsSbac* estBitsSbac);
-    void estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype);
-    void estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype);
-    void estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype);
+    void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
+    void estCBFBit(EstBitsSbac& estBitsSbac);
+    void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType ttype);
+    void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
+    void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType ttype);
 
 private:
 

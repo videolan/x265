@@ -1816,7 +1816,7 @@ void Entropy::codeSaoTypeIdx(uint32_t code)
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
-void Entropy::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     estCBFBit(estBitsSbac);
 
@@ -1830,38 +1830,38 @@ void Entropy::estBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType tty
 }
 
 /* estimate bit cost for each CBP bit */
-void Entropy::estCBFBit(EstBitsSbac* estBitsSbac)
+void Entropy::estCBFBit(EstBitsSbac& estBitsSbac)
 {
     ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
 
     for (uint32_t ctxInc = 0; ctxInc < NUM_QT_CBF_CTX; ctxInc++)
     {
-        estBitsSbac->blockCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
-        estBitsSbac->blockCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
+        estBitsSbac.blockCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
+        estBitsSbac.blockCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
     }
 
     ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
 
     for (uint32_t ctxInc = 0; ctxInc < NUM_QT_ROOT_CBF_CTX; ctxInc++)
     {
-        estBitsSbac->blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
-        estBitsSbac->blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
+        estBitsSbac.blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].m_state, 0);
+        estBitsSbac.blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].m_state, 1);
     }
 }
 
 /* estimate SAMBAC bit cost for significant coefficient group map */
-void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac* estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType ttype)
 {
     X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac->significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].m_state, bin);
+            estBitsSbac.significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].m_state, bin);
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
-void Entropy::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype)
 {
     int firstCtx = 1, numCtx = 8;
 
@@ -1879,20 +1879,20 @@ void Entropy::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize
     if (ttype == TEXT_LUMA)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX].m_state, bin);
+            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX].m_state, bin);
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
             for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].m_state, bin);
+                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].m_state, bin);
     }
     else
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac->significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].m_state, bin);
+            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].m_state, bin);
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
             for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac->significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].m_state, bin);
+                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].m_state, bin);
     }
     int bitsX = 0, bitsY = 0;
 
@@ -1906,25 +1906,25 @@ void Entropy::estSignificantMapBit(EstBitsSbac* estBitsSbac, uint32_t log2TrSize
     for (ctx = 0; ctx < maxGroupIdx; ctx++)
     {
         int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac->lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset].m_state, 0);
+        estBitsSbac.lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset].m_state, 0);
         bitsX += sbacGetEntropyBits(ctxX[ctxOffset].m_state, 1);
     }
 
-    estBitsSbac->lastXBits[ctx] = bitsX;
+    estBitsSbac.lastXBits[ctx] = bitsX;
 
     const ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)
     {
         int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac->lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset].m_state, 0);
+        estBitsSbac.lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset].m_state, 0);
         bitsY += sbacGetEntropyBits(ctxY[ctxOffset].m_state, 1);
     }
 
-    estBitsSbac->lastYBits[ctx] = bitsY;
+    estBitsSbac.lastYBits[ctx] = bitsY;
 }
 
 /* estimate bit cost of significant coefficient */
-void Entropy::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType ttype)
 {
     if (ttype == TEXT_LUMA)
     {
@@ -1933,14 +1933,14 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType t
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac->greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
-            estBitsSbac->greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
+            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
+            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac->levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
-            estBitsSbac->levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
+            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
+            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
         }
     }
     else
@@ -1950,14 +1950,14 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac* estBitsSbac, TextType t
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac->greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
-            estBitsSbac->greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
+            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 0);
+            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].m_state, 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac->levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
-            estBitsSbac->levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
+            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 0);
+            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].m_state, 1);
         }
     }
 }
