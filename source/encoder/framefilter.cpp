@@ -61,6 +61,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
     m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
     m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
+    m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
 
     // NOTE (Min): for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_row0EntropyCoder = row0Coder;
@@ -82,8 +83,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
 void FrameFilter::start(Frame *pic)
 {
     m_pic = pic;
-
-    m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_entropyCoder.zeroFract();
 
     if (m_param->bEnableSAO)
