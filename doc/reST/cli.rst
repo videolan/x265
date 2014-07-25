@@ -710,9 +710,16 @@ Quality, rate control and rate distortion options
 
 	Initial buffer occupancy. The portion of the decode buffer which
 	must be full before the decoder will begin decoding.  Determines
-	absolute maximum frame size. Default 0.9
+	absolute maximum frame size. May be specified as a fractional value
+	between 0 and 1, or in kbits. In other words these two option pairs
+	are equivalent::
 
-	**Range of values:** 0 - 1.0
+	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 900
+	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 0.9
+
+	Default 0.9
+
+	**Range of values:** fractional: 0 - 1.0, or kbits: 2 .. bufsize
 
 .. option:: --qp, -q <integer>
 
