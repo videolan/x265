@@ -81,8 +81,27 @@ TEncSearch::~TEncSearch()
     delete[] m_qtTempShortYuv;
 }
 
-bool TEncSearch::initSearch()
+bool TEncSearch::initSearch(Encoder& top)
 {
+    m_param = top.m_param;
+    m_trQuant.init(top.m_bEnableRDOQ);
+
+    if (top.m_scalingList.m_bEnabled)
+    {
+        m_trQuant.setScalingList(&top.m_scalingList);
+        m_trQuant.setUseScalingList(true);
+    }
+    else
+    {
+        m_trQuant.setFlatScalingList();
+        m_trQuant.setUseScalingList(false);
+    }
+
+    m_rdCost.setPsyRdScale(m_param->psyRd);
+    m_bEnableRDOQ = top.m_bEnableRDOQ;
+    m_bFrameParallel = m_param->frameNumThreads > 1;
+    m_numLayers = top.m_quadtreeTULog2MaxSize - 2 + 1;
+
     initTempBuff(m_param->internalCsp);
     m_me.setSearchMethod(m_param->searchMethod);
     m_me.setSubpelRefine(m_param->subpelRefine);

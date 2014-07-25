@@ -32,7 +32,7 @@ using namespace x265;
 
 void ThreadLocalData::init(Encoder& enc)
 {
-    m_cuCoder.init(&enc);
+    m_cuCoder.initSearch(enc);
     m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
 

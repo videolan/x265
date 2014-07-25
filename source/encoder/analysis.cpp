@@ -45,30 +45,6 @@ Analysis::Analysis()
         m_modePredYuv[i] = NULL;
 }
 
-bool Analysis::init(Encoder* top)
-{
-    m_param = top->m_param;
-    m_trQuant.init(top->m_bEnableRDOQ);
-
-    if (!top->m_scalingList.m_bEnabled)
-    {
-        m_trQuant.setFlatScalingList();
-        m_trQuant.setUseScalingList(false);
-    }
-    else
-    {
-        m_trQuant.setScalingList(&top->m_scalingList);
-        m_trQuant.setUseScalingList(true);
-    }
-
-    m_rdCost.setPsyRdScale(m_param->psyRd);
-    m_bEnableRDOQ = top->m_bEnableRDOQ;
-    m_bFrameParallel = m_param->frameNumThreads > 1;
-    m_numLayers = top->m_quadtreeTULog2MaxSize - 2 + 1;
-
-    return initSearch();
-}
-
 bool Analysis::create(uint8_t totalDepth, uint32_t maxWidth)
 {
     X265_CHECK(totalDepth <= MAX_CU_DEPTH, "invalid totalDepth\n");
