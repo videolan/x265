@@ -1264,14 +1264,12 @@ void Encoder::configure(x265_param *p)
         p->keyframeMin = X265_MIN((int)fps, p->keyframeMax / 10);
     }
     p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
+
     if (!p->bEnableRectInter)
-    {
         p->bEnableAMP = false;
-    }
+
     if (p->bBPyramid && !p->bframes)
-    {
         p->bBPyramid = 0;
-    }
 
     // psy-rd is not supported in RD levels below 2
     if (p->rdLevel < 2)
@@ -1316,14 +1314,10 @@ void Encoder::configure(x265_param *p)
     }
 
     if (p->rc.aqStrength == 0 && p->rc.cuTree == 0)
-    {
         p->rc.aqMode = X265_AQ_NONE;
-    }
 
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
-    {
         p->rc.aqStrength = 0;
-    }
 
     if (p->internalCsp != X265_CSP_I420)
     {
@@ -1332,9 +1326,7 @@ void Encoder::configure(x265_param *p)
     }
 
     if (p->interlaceMode)
-    {
         x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");
-    }
 
     if (p->rc.rfConstantMin > p->rc.rfConstant)
     {

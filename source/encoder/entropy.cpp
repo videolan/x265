@@ -69,12 +69,12 @@ void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
     WRITE_UVLC(sps->chromaFormatIdc, "chroma_format_idc");
 
     if (sps->chromaFormatIdc == CHROMA_444)
-        WRITE_FLAG(0,                          "separate_colour_plane_flag");
+        WRITE_FLAG(0,                        "separate_colour_plane_flag");
 
     WRITE_UVLC(sps->picWidthInLumaSamples,   "pic_width_in_luma_samples");
     WRITE_UVLC(sps->picHeightInLumaSamples,  "pic_height_in_luma_samples");
-    Window& conf = sps->conformanceWindow;
 
+    Window& conf = sps->conformanceWindow;
     WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
     if (conf.bEnabled)
     {
