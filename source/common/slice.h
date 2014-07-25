@@ -101,11 +101,6 @@ struct ProfileTierLevel
     bool    interlacedSourceFlag;
     bool    nonPackedConstraintFlag;
     bool    frameOnlyConstraintFlag;
-
-    ProfileTierLevel()
-    {
-        ::memset(profileCompatibilityFlag, 0, sizeof(profileCompatibilityFlag));
-    }
 };
 
 struct HRDInfo

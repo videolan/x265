@@ -1085,21 +1085,10 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
 void Encoder::initSPS(SPS *sps)
 {
-    m_vps.ptl.profileCompatibilityFlag[m_vps.ptl.profileIdc] = true;
     m_vps.ptl.progressiveSourceFlag = !m_param->interlaceMode;
     m_vps.ptl.interlacedSourceFlag = !!m_param->interlaceMode;
     m_vps.ptl.nonPackedConstraintFlag = false;
     m_vps.ptl.frameOnlyConstraintFlag = false;
-
-    if (m_vps.ptl.profileIdc == Profile::MAIN10 && X265_DEPTH == 8)
-        /* The above constraint is equal to Profile::MAIN */
-        m_vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
-    if (m_vps.ptl.profileIdc == Profile::MAIN)
-        /* A Profile::MAIN10 decoder can always decode Profile::MAIN */
-        m_vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
-
-    /* TODO: Range extension profiles */
-    /* TODO: check final spec for compatibility rules here */
 
     sps->conformanceWindow = m_conformanceWindow;
     sps->chromaFormatIdc = m_param->internalCsp;
