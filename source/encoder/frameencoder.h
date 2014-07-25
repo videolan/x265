@@ -85,9 +85,6 @@ public:
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
-    /* Frame singletons, last the life of the encoder */
-    TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
-
     void startCompressFrame(Frame* pic);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */

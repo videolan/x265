@@ -303,21 +303,16 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
-    if (slice->m_sps->bUseSAO)
+    if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
     {
-        SAOParam* saoParam = m_frame->getPicSym()->getSaoParam();
+        /* frame based SAO */
+        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->getSaoParam());
+        m_frameFilter.m_sao.endSaoEnc();
+        restoreLFDisabledOrigYuv(m_frame);
 
-        if (!getSAO()->getSaoLcuBasedOptimization())
-        {
-            /* frame based SAO */
-            getSAO()->SAOProcess(saoParam);
-            getSAO()->endSaoEnc();
-            restoreLFDisabledOrigYuv(m_frame);
-
-            // Extend border after whole-frame SAO is finished
-            for (int row = 0; row < m_numRows; row++)
-                m_frameFilter.processRowPost(row);
-        }
+        // Extend border after whole-frame SAO is finished
+        for (int row = 0; row < m_numRows; row++)
+            m_frameFilter.processRowPost(row);
     }
 
     /* start slice NALunit */
@@ -528,6 +523,7 @@ void FrameEncoder::compressCTURows()
     // NOTE: set SAO lambda every Frame
     m_frameFilter.m_sao.lumaLambda = lambda;
     m_frameFilter.m_sao.chromaLambda = chromaLambda;
+    m_frameFilter.start(m_frame);
 
     // Clip qps back to 0-51 range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
@@ -552,7 +548,6 @@ void FrameEncoder::compressCTURows()
     m_SSDY = m_SSDU = m_SSDV = 0;
     m_ssim = 0;
     m_ssimCnt = 0;
-    m_frameFilter.start(m_frame);
     memset(&m_frameStats, 0, sizeof(m_frameStats));
 
     m_rows[0].m_active = true;

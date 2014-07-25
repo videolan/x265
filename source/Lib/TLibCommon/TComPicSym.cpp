@@ -57,13 +57,14 @@ TComPicSym::TComPicSym()
     , m_numCUsInFrame(0)
     , m_slice(NULL)
     , m_cuData(NULL)
-{}
+{
+    m_saoParam = NULL;
+}
 
 bool TComPicSym::create(x265_param *param)
 {
     uint32_t i;
 
-    m_saoParam        = NULL;
     m_numPartitions   = 1 << (g_maxCUDepth << 1);
 
     m_log2UnitSize    = g_log2UnitSize;

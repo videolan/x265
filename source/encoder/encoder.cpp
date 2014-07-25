@@ -432,10 +432,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             fenc->m_picSym->m_slice->m_pps = &m_pps;
             fenc->m_picSym->m_slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
             fenc->m_picSym->m_slice->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
-
-            // NOTE: the SAO pointer from m_frameEncoder for read m_maxSplitLevel, etc, we can remove it later
-            if (m_param->bEnableSAO)
-                fenc->getPicSym()->allocSaoParam(m_frameEncoder->getSAO());
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)

@@ -92,6 +92,12 @@ void FrameFilter::start(Frame *pic)
         m_sao.createPicSaoInfo(pic);
 
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        if (!saoParam)
+        {
+            pic->getPicSym()->allocSaoParam(&m_sao);
+            saoParam = pic->getPicSym()->getSaoParam();
+        }
+
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
 
