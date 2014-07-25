@@ -163,9 +163,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
 
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
-        {
             processSao(row - m_saoRowDelay);
-        }
     }
 
     // this row of CTUs has been encoded
@@ -175,9 +173,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
         return;
 
     if (row > 0)
-    {
         processRowPost(row - 1);
-    }
 
     if (row == m_numRows - 1)
     {
@@ -186,9 +182,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
-            {
                 processSao(i);
-            }
         }
 
         processRowPost(row);
@@ -217,9 +211,7 @@ void FrameFilter::processRowPost(int row)
         pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX();
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
-        {
             memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
-        }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
@@ -237,9 +229,7 @@ void FrameFilter::processRowPost(int row)
         pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
         pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
         for (int y = 0; y < recon->getLumaMarginY(); y++)
-        {
             memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
-        }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
@@ -306,9 +296,7 @@ void FrameFilter::processRowPost(int row)
         if (!row)
         {
             for (int i = 0; i < 3; i++)
-            {
                 MD5Init(&m_frame->m_state[i]);
-            }
         }
 
         updateMD5Plane(m_frame->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
@@ -383,15 +371,11 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-            {
                 ssd += primitives.sse_pp[LUMA_64x64](fenc + x, stride, rec + x, stride);
-            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x64](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
         {
@@ -412,20 +396,14 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-            {
                 ssd += primitives.sse_pp[LUMA_64x16](fenc + x, stride, rec + x, stride);
-            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x16](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
-        {
             ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
-        }
 
         fenc += stride * 16;
         rec += stride * 16;
@@ -438,14 +416,10 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x4](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
-        {
             ssd += primitives.sse_pp[LUMA_4x4](fenc + x, stride, rec + x, stride);
-        }
 
         fenc += stride * 4;
         rec += stride * 4;
@@ -471,15 +445,11 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         {
             std::swap(sum0, sum1);
             for (int x = 0; x < width; x += 2)
-            {
                 primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
-            }
         }
 
         for (int x = 0; x < width - 1; x += 4)
-        {
             ssim += primitives.ssim_end_4(sum0 + x, sum1 + x, X265_MIN(4, width - x - 1));
-        }
     }
 
     cnt = (height - 1) * (width - 1);
@@ -496,9 +466,8 @@ void FrameFilter::processSao(int row)
     X265_CHECK(!saoParam->oneUnitFlag[0] && !saoParam->oneUnitFlag[1] && !saoParam->oneUnitFlag[2], "invalid SAO flag");
 
     if (saoParam->bSaoFlag[0])
-    {
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
-    }
+
     if (saoParam->bSaoFlag[1])
     {
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);

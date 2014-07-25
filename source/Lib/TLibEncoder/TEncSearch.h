@@ -105,8 +105,6 @@ public:
     MotionEstimate   m_me;
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
-    bool            m_bFrameParallel;
-
     ShortYuv*       m_qtTempShortYuv;
 
     coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
@@ -123,10 +121,9 @@ public:
     x265_param*     m_param;
     Entropy       (*m_rdEntropyCoders)[CI_NUM];
 
+    bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
     int             m_numLayers;
-
-    // ME parameters
     int             m_refLagPixels;
 
     void setQP(int qp, int qpCb, int qpCr);

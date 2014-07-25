@@ -83,17 +83,17 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_param = top->m_param;
     m_numRows = numRows;
     m_numCols = numCols;
-    m_filterRowDelay = (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary) ?
-        2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
+    m_filterRowDelay = (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary) ?
+                        2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
 
     m_rows = new CTURow[m_numRows];
     bool ok = !!m_numRows;
 
-    int range = m_param->searchRange; /* fpel search */
-    range    += 1;                    /* diamond search range check lag */
-    range    += 2;                    /* subpel refine */
-    range    += NTAPS_LUMA / 2;       /* subpel filter half-length */
+    int range  = m_param->searchRange; /* fpel search */
+        range += 1;                    /* diamond search range check lag */
+        range += 2;                    /* subpel refine */
+        range += NTAPS_LUMA / 2;       /* subpel filter half-length */
     m_refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -567,14 +567,10 @@ void FrameEncoder::compressCTURows()
 
                     int reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
-                    {
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
-                    }
 
                     if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                    {
                         m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows);
-                    }
                 }
             }
 
@@ -606,14 +602,10 @@ void FrameEncoder::compressCTURows()
 
                         int reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
-                        {
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
-                        }
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                        {
                             m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows);
-                        }
                     }
                 }
 
@@ -622,9 +614,7 @@ void FrameEncoder::compressCTURows()
 
             // Filter
             if (i >= m_filterRowDelay)
-            {
                 processRow((i - m_filterRowDelay) * 2 + 1, -1);
-            }
         }
     }
     m_frameTime = (double)m_totalTime / 1000000;
@@ -662,10 +652,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         ScopedLock self(curRow.m_lock);
         if (!curRow.m_active)
-        {
             /* VBV restart is in progress, exit out */
             return;
-        }
         if (curRow.m_busy)
         {
             /* On multi-socket Windows servers, we have seen problems with
@@ -827,10 +815,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
         // NOTE: do CU level Filter
         if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
-        {
             // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
-        }
 
         // NOTE: active next row
         if (curRow.m_completed >= 2 && row < m_numRows - 1)
