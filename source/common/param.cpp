@@ -1229,6 +1229,8 @@ void x265_print_params(x265_param *param)
         else
             fprintf(stderr, "tskip ");
     }
+    TOOLOPT(param->rc.bStatWrite, "stats-write");
+    TOOLOPT(param->rc.bStatRead,  "stats-read");
     fprintf(stderr, "\n");
     fflush(stderr);
 }
