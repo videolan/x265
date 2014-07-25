@@ -69,8 +69,6 @@ public:
 
     virtual ~FrameEncoder() {}
 
-    void setThreadPool(ThreadPool *p);
-
     bool init(Encoder *top, int numRows, int numCols);
 
     void destroy();
@@ -90,7 +88,7 @@ public:
     /* Frame singletons, last the life of the encoder */
     TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
 
-    void initSlice(Frame* pic);
+    void startCompressFrame(Frame* pic);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
@@ -103,11 +101,6 @@ public:
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
-
-    void setLambda(int qp, ThreadLocalData& tld);
-
-    // worker thread
-    void threadMain();
 
     Event                    m_enable;
     Event                    m_done;
@@ -137,6 +130,8 @@ public:
 
 protected:
 
+    void threadMain();
+    void setLambda(int qp, ThreadLocalData& tld);
     int calcQpForCu(uint32_t cuAddr, double baseQp);
     void noiseReductionUpdate();
 
@@ -152,8 +147,7 @@ protected:
     uint32_t*                m_substreamSizes;
     NoiseReduction           m_nr;
     NALList                  m_nalList;
-    ThreadLocalData          m_tld;
-
+    ThreadLocalData          m_tld; /* for --no-wpp */
 
     int                      m_filterRowDelay;
     int                      m_filterRowDelayCus;

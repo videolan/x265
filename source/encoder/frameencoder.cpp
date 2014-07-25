@@ -54,11 +54,6 @@ FrameEncoder::FrameEncoder()
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
-void FrameEncoder::setThreadPool(ThreadPool *p)
-{
-    m_pool = p;
-}
-
 void FrameEncoder::destroy()
 {
     JobProvider::flush();  // ensure no worker threads are using this frame
@@ -134,59 +129,11 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     return ok;
 }
 
-/****************************************************************************
- * DCT-domain noise reduction / adaptive deadzone
- * from libavcodec
- ****************************************************************************/
-
-void FrameEncoder::noiseReductionUpdate()
-{
-    if (!m_nr.bNoiseReduction)
-        return;
-
-    m_nr.offset = m_nr.offsetDenoise;
-    m_nr.residualSum = m_nr.residualSumBuf[0];
-    m_nr.count = m_nr.countBuf[0];
-
-    int transformSize[4] = {16, 64, 256, 1024};
-    uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
-
-    int isCspI444 = (m_param->internalCsp == X265_CSP_I444) ? 1 : 0;
-    for (int cat = 0; cat < 7 + isCspI444; cat++)
-    {
-        int index = cat % 4;
-        int size = transformSize[index];
-
-        if (m_nr.count[cat] > blockCount[index])
-        {
-            for (int i = 0; i < size; i++)
-                m_nr.residualSum[cat][i] >>= 1;
-            m_nr.count[cat] >>= 1;
-        }
-
-        for (int i = 0; i < size; i++)
-            m_nr.offset[cat][i] =
-                (uint16_t)(((uint64_t)m_param->noiseReduction * m_nr.count[cat]
-                 + m_nr.residualSum[cat][i] / 2)
-              / ((uint64_t)m_nr.residualSum[cat][i] + 1));
-
-        // Don't denoise DC coefficients
-        m_nr.offset[cat][0] = 0;
-    }
-}
-
-// TODO: combine with DPB::prepareEncode
-void FrameEncoder::initSlice(Frame* pic)
+void FrameEncoder::startCompressFrame(Frame* pic)
 {
     m_frame = pic;
-    Slice* slice = pic->m_picSym->m_slice;
-
-    slice->m_pic = pic;
-    slice->m_poc = pic->m_POC;
-
-    int type = pic->m_lowres.sliceType;
-    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
-    slice->m_bReferenced = m_isReferenced = type != X265_TYPE_B;
+    m_isReferenced = pic->m_lowres.sliceType != X265_TYPE_B;
+    m_enable.trigger();
 }
 
 void FrameEncoder::threadMain()
@@ -202,16 +149,6 @@ void FrameEncoder::threadMain()
         }
     }
     while (m_threadActive);
-}
-
-void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
-{
-    Slice* slice = m_frame->m_picSym->m_slice;
-  
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
-    int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
-    
-    tld.m_cuCoder.setQP(qp, qpCb, qpCr);
 }
 
 void FrameEncoder::compressFrame()
@@ -970,6 +907,53 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
     m_totalTime += x265_mdate() - startTime;
     curRow.m_busy = false;
+}
+
+void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
+{
+    Slice* slice = m_frame->m_picSym->m_slice;
+  
+    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
+    int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
+    
+    tld.m_cuCoder.setQP(qp, qpCb, qpCr);
+}
+
+/* DCT-domain noise reduction / adaptive deadzone from libavcodec */
+void FrameEncoder::noiseReductionUpdate()
+{
+    if (!m_nr.bNoiseReduction)
+        return;
+
+    m_nr.offset = m_nr.offsetDenoise;
+    m_nr.residualSum = m_nr.residualSumBuf[0];
+    m_nr.count = m_nr.countBuf[0];
+
+    int transformSize[4] = {16, 64, 256, 1024};
+    uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
+
+    int isCspI444 = (m_param->internalCsp == X265_CSP_I444) ? 1 : 0;
+    for (int cat = 0; cat < 7 + isCspI444; cat++)
+    {
+        int index = cat % 4;
+        int size = transformSize[index];
+
+        if (m_nr.count[cat] > blockCount[index])
+        {
+            for (int i = 0; i < size; i++)
+                m_nr.residualSum[cat][i] >>= 1;
+            m_nr.count[cat] >>= 1;
+        }
+
+        for (int i = 0; i < size; i++)
+            m_nr.offset[cat][i] =
+                (uint16_t)(((uint64_t)m_param->noiseReduction * m_nr.count[cat]
+                 + m_nr.residualSum[cat][i] / 2)
+              / ((uint64_t)m_nr.residualSum[cat][i] + 1));
+
+        // Don't denoise DC coefficients
+        m_nr.offset[cat][0] = 0;
+    }
 }
 
 int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)

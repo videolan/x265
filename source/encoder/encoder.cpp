@@ -449,15 +449,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
             fenc->m_dts = fenc->m_reorderedPts;
 
-        // Initialize slice for encoding with this FrameEncoder
-        curEncoder->initSlice(fenc);
-
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
 
-
         // Allow FrameEncoder::compressFrame() to start in a worker thread
-        curEncoder->m_enable.trigger();
+        curEncoder->startCompressFrame(fenc);
     }
     else if (m_encodedFrameNum)
         m_rateControl->setFinalFrameCount(m_encodedFrameNum);
