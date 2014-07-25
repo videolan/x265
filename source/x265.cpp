@@ -839,7 +839,7 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        if (pic_in != NULL && pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
+        if (pic_in && pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
         {
             ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
             pic_in->bitDepth = X265_DEPTH;
