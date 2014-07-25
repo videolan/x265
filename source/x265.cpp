@@ -603,9 +603,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (argc <= 1 || help)
         showHelp(param);
 
-    if (x265_param_apply_profile(param, profile))
-        return true;
-
     if (inputfn == NULL || bitstreamfn == NULL)
     {
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
@@ -669,6 +666,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
         this->framesToBeEncoded = info.frameCount - seek;
     param->totalFrames = this->framesToBeEncoded;
+
+    if (x265_param_apply_profile(param, profile))
+        return true;
 
     if (param->logLevel >= X265_LOG_INFO)
     {
