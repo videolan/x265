@@ -98,14 +98,14 @@ public:
     ~TComTrQuant();
 
     /* one-time setup */
-    bool init(bool useRDOQ, const ScalingList& scalingList);
+    bool init(bool useRDOQ, double scale, const ScalingList& scalingList);
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);
     void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
-    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
-                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip, bool curUseRDOQ);
+    uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
+                          uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip, bool curUseRDOQ);
 
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
@@ -119,7 +119,10 @@ public:
     double   m_lambdas[3];
 
     bool     m_useRDOQ;
+    uint64_t m_psyRdoqScale;
     coeff_t* m_resiDctCoeff;
+    coeff_t* m_fencDctCoeff;
+    int16_t* m_fencShortBuf;
 
     static const uint32_t IEP_RATE = 32768; // cost of an equal probable bit
 
@@ -137,9 +140,11 @@ protected:
 
     inline uint32_t getCodedLevel(double& codedCost, uint32_t curCostSig, double& codedCostSig, int levelDouble,
                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
-                                  uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
+                                  uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale, int blkPos, bool usePsy) const;
 
     inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
+
+    int m_transformShift; // short-lived hack for psy-rdoq
 
 public:
 

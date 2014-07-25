@@ -1289,8 +1289,12 @@ void Encoder::configure(x265_param *p)
         p->crQpOffset += 6;
     }
 
-    // disable RDOQ if psy-rd is enabled; until we make it psy-aware
-    m_bEnableRDOQ = p->psyRd == 0.0 && p->rdLevel >= 4;
+    // disable RDOQ if rdlevel < 4 or if psy-rd is enabled without psy-rdoq
+    m_bEnableRDOQ = p->rdLevel >= 4 ? (p->psyRdoq || !p->psyRd) : 0;
+
+    // disable psy-rdoq if psy-rd is not enabled (do not show in logs as in-use)
+    if (!m_bEnableRDOQ)
+        p->psyRdoq = 0;
 
     if (p->bLossless)
     {
@@ -1359,7 +1363,7 @@ void Encoder::configure(x265_param *p)
     {
         const char *s = NULL;
 
-        if (p->psyRd)
+        if (p->psyRd || p->psyRdoq)
         {
             s = p->bEnablePsnr ? "psnr" : "ssim";
             x265_log(p, X265_LOG_WARNING, "--%s used with psy on: results will be invalid!\n", s);

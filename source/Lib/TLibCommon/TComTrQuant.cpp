@@ -39,6 +39,8 @@
 
 using namespace x265;
 
+#define SIGN(x,y) ((x^(y >> 31))-(y >> 31))
+
 namespace {
 
 struct coeffGroupRDStats
@@ -174,19 +176,26 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *g
 TComTrQuant::TComTrQuant()
 {
     m_resiDctCoeff = NULL;
+    m_fencDctCoeff = NULL;
+    m_fencShortBuf = NULL;
 }
 
-bool TComTrQuant::init(bool useRDOQ, const ScalingList& scalingList)
+bool TComTrQuant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
 {
     m_useRDOQ = useRDOQ;
+    m_psyRdoqScale = (uint64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;
-    m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_CU_SIZE * MAX_CU_SIZE);
-    return m_resiDctCoeff;
+    m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
+    m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
+    m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
+    
+    return m_resiDctCoeff && m_fencShortBuf;
 }
 
 TComTrQuant::~TComTrQuant()
 {
     X265_FREE(m_resiDctCoeff);
+    X265_FREE(m_fencShortBuf);
 }
 
 void TComTrQuant::setQPforQuant(TComDataCU* cu)
@@ -350,6 +359,8 @@ uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize,
 }
 
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
+                                   pixel*      fenc,
+                                   uint32_t    fencStride,
                                    int16_t*    residual,
                                    uint32_t    stride,
                                    coeff_t*    coeff,
@@ -394,10 +405,17 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
     }
     else
     {
-        // TODO: this may need larger data types for X265_DEPTH > 10
         const uint32_t sizeIdx = log2TrSize - 2;
-        int useDST = (sizeIdx == 0 && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA);
+        int useDST = !sizeIdx && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA;
         int index = DCT_4x4 + sizeIdx - useDST;
+        if (m_psyRdoqScale && ttype == TEXT_LUMA)
+        {
+            // converting pixel to short for input to dct and psy-rdoq eval
+            // TODO: can this be re-used? should it be performed by caller?
+            primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
+            primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
+        }
+
         primitives.dct[index](residual, m_resiDctCoeff, stride);
 
         if (m_nr->bNoiseReduction && !useDST)
@@ -491,6 +509,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
+    m_transformShift = transformShift;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
@@ -512,6 +531,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     selectLambda(ttype);
 
     double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
+    bool usePsy = m_psyRdoqScale && ttype == TEXT_LUMA;
 
     double blockUncodedCost = 0;
     double costCoeff[32 * 32];
@@ -600,7 +620,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     level = getCodedLevel(costCoeff[scanPos], 0, costSig[scanPos],
                                           levelDouble, maxAbsLevel, baseLevel,
                                           greaterOneBits, levelAbsBits, goRiceParam,
-                                          c1c2Idx, qbits, scaleFactor);
+                                          c1c2Idx, qbits, scaleFactor, blkPos, usePsy);
                     sigRateDelta[blkPos] = 0;
                 }
                 else
@@ -617,7 +637,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                         level = getCodedLevel(costCoeff[scanPos], m_estBitsSbac.significantBits[ctxSig][1], costSig[scanPos],
                                               levelDouble, maxAbsLevel, baseLevel,
                                               greaterOneBits, levelAbsBits, goRiceParam,
-                                              c1c2Idx, qbits, scaleFactor);
+                                              c1c2Idx, qbits, scaleFactor, blkPos, usePsy);
                     }
                     else
                         level = 0;
@@ -1060,7 +1080,9 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
                                            uint32_t     absGoRice,
                                            uint32_t     c1c2Idx,
                                            int          qbits,
-                                           double       scaleFactor) const
+                                           double       scaleFactor,
+                                           int          blkPos,
+                                           bool         usePsy) const
 {
     X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
 
@@ -1078,12 +1100,28 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
 
     err2 *= scaleFactor;
 
+    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - m_transformShift;
+    int add = (1 << shift) - 1;
+    int scale = m_scalingList->s_invQuantScales[m_qpParam[0].rem] << m_qpParam[0].per;
+    int scaleBits = SCALE_BITS - 2 * m_transformShift;
+
     for (int level = maxAbsLevel; level >= minAbsLevel; level--)
     {
         X265_CHECK(fabs((double)err2 - double(levelDouble - (level << qbits)) * double(levelDouble - (level << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
 
         uint32_t rateCost = getICRateCost(level, level - baseLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
         double curCost = err2 + m_lambda * (curCostSig + rateCost);
+
+        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */
+        if (usePsy && blkPos)
+        {
+            int signCoef = m_resiDctCoeff[blkPos];
+            int unquantAbsLevel = (level * scale + add) >> shift;
+            int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
+            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits;
+            int psyValue = (m_psyRdoqScale * reconCoef) >> 8;
+            curCost -= psyValue;
+        }
 
         if (curCost < codedCost)
         {
