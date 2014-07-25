@@ -318,9 +318,6 @@ public:
     {
         m_numRefIdx[0] = 0;
         m_numRefIdx[1] = 0;
-        m_colFromL0Flag = true;
-        m_colRefIdx = 0;
-        m_bCheckLDC = false;
     }
 
     void disableWeights();
