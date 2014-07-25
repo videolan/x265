@@ -59,8 +59,8 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
-    m_pad[0] = top->m_pad[0];
-    m_pad[1] = top->m_pad[1];
+    m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
+    m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
 
     // NOTE (Min): for sao only, I write this code because I want to exact match with HM's bug bitstream
     m_row0EntropyCoder = row0Coder;

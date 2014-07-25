@@ -294,7 +294,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         /* Copy input picture into a TComPic, send to lookahead */
         pic->m_POC = ++m_pocLast;
         pic->reinit(m_param);
-        pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_pad);
+        pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
         pic->m_forceqp = pic_in->forceqp;
@@ -590,7 +590,8 @@ void Encoder::printSummary()
     }
     if (m_param->bLossless)
     {
-        float frameSize = (float)(m_param->sourceWidth - m_pad[0]) * (m_param->sourceHeight - m_pad[1]);
+        float frameSize = (float)(m_param->sourceWidth - m_sps.conformanceWindow.rightOffset) *
+                                 (m_param->sourceHeight - m_sps.conformanceWindow.bottomOffset);
         float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
 
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
@@ -857,8 +858,8 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     TComPicYuv* recon = pic->getPicYuvRec();
 
     //===== calculate PSNR =====
-    int width  = recon->getWidth() - m_pad[0];
-    int height = recon->getHeight() - m_pad[1];
+    int width  = recon->getWidth() - m_sps.conformanceWindow.rightOffset;
+    int height = recon->getHeight() - m_sps.conformanceWindow.bottomOffset;
     int size = width * height;
 
     int maxvalY = 255 << (X265_DEPTH - 8);
@@ -1355,7 +1356,6 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.topOffset = 0;
     m_conformanceWindow.bottomOffset = 0;
     m_conformanceWindow.leftOffset = 0;
-    m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
     uint32_t maxCUDepth = (uint32_t)g_convertToBit[p->maxCUSize];
@@ -1366,11 +1366,10 @@ void Encoder::configure(x265_param *p)
         uint32_t rem = p->sourceWidth % minCUDepth;
         padsize = minCUDepth - rem;
         p->sourceWidth += padsize;
-        m_pad[0] = padsize; //pad width
 
         /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.rightOffset = m_pad[0];
+        m_conformanceWindow.rightOffset = padsize;
     }
 
     //======== set pad size if height is not multiple of the minimum CU size =========
@@ -1380,11 +1379,10 @@ void Encoder::configure(x265_param *p)
         uint32_t rem = p->sourceHeight % minCUDepth;
         padsize = minCUDepth - rem;
         p->sourceHeight += padsize;
-        m_pad[1] = padsize; //pad height
 
         /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.bottomOffset = m_pad[1];
+        m_conformanceWindow.bottomOffset = padsize;
     }
 
     int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)

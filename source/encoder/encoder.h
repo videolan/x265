@@ -139,7 +139,6 @@ public:
 
     bool               m_bEnableRDOQ;
 
-    int                m_pad[2];
     Window             m_conformanceWindow;
 
     uint32_t           m_numDelayedPic;
