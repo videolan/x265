@@ -314,12 +314,6 @@ public:
         disableWeights();
     }
 
-    void initSlice()
-    {
-        m_numRefIdx[0] = 0;
-        m_numRefIdx[1] = 0;
-    }
-
     void disableWeights();
 
     void setRefPicList(PicList& picList);

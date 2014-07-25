@@ -184,8 +184,6 @@ void FrameEncoder::initSlice(Frame* pic)
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
 
-    slice->initSlice();
-
     int type = pic->m_lowres.sliceType;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
     slice->m_bReferenced = m_isReferenced = type != X265_TYPE_B;
