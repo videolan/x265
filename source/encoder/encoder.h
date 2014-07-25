@@ -141,7 +141,6 @@ public:
 
     int                m_pad[2];
     Window             m_conformanceWindow;
-    Window             m_defaultDisplayWindow;
 
     uint32_t           m_numDelayedPic;
 

@@ -276,7 +276,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         if (m_dpb->m_freeList.empty())
         {
             pic = new Frame;
-            if (!pic || !pic->create(m_param, m_defaultDisplayWindow, m_conformanceWindow))
+            if (!pic || !pic->create(m_param, m_sps.vuiParameters.defaultDisplayWindow, m_conformanceWindow))
             {
                 m_aborted = true;
                 x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -1135,7 +1135,11 @@ void Encoder::initSPS(SPS *sps)
     vui.chromaSampleLocTypeTopField = m_param->vui.chromaSampleLocTypeTopField;
     vui.chromaSampleLocTypeBottomField = m_param->vui.chromaSampleLocTypeBottomField;
 
-    vui.defaultDisplayWindow = m_defaultDisplayWindow;
+    vui.defaultDisplayWindow.bEnabled = m_param->vui.bEnableDefaultDisplayWindowFlag;
+    vui.defaultDisplayWindow.rightOffset = m_param->vui.defDispWinRightOffset;
+    vui.defaultDisplayWindow.topOffset = m_param->vui.defDispWinTopOffset;
+    vui.defaultDisplayWindow.bottomOffset = m_param->vui.defDispWinBottomOffset;
+    vui.defaultDisplayWindow.leftOffset = m_param->vui.defDispWinLeftOffset;
 
     vui.frameFieldInfoPresentFlag = !!m_param->interlaceMode;
     vui.fieldSeqFlag = !!m_param->interlaceMode;
@@ -1346,11 +1350,11 @@ void Encoder::configure(x265_param *p)
     m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
-    m_defaultDisplayWindow.bEnabled = p->vui.bEnableDefaultDisplayWindowFlag;
-    m_defaultDisplayWindow.rightOffset = p->vui.defDispWinRightOffset;
-    m_defaultDisplayWindow.topOffset = p->vui.defDispWinTopOffset;
-    m_defaultDisplayWindow.bottomOffset = p->vui.defDispWinBottomOffset;
-    m_defaultDisplayWindow.leftOffset = p->vui.defDispWinLeftOffset;
+    m_conformanceWindow.bEnabled = false;
+    m_conformanceWindow.rightOffset = 0;
+    m_conformanceWindow.topOffset = 0;
+    m_conformanceWindow.bottomOffset = 0;
+    m_conformanceWindow.leftOffset = 0;
     m_pad[0] = m_pad[1] = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
@@ -1366,7 +1370,7 @@ void Encoder::configure(x265_param *p)
 
         /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.rightOffset += m_pad[0];
+        m_conformanceWindow.rightOffset = m_pad[0];
     }
 
     //======== set pad size if height is not multiple of the minimum CU size =========
@@ -1380,7 +1384,7 @@ void Encoder::configure(x265_param *p)
 
         /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.bottomOffset += m_pad[1];
+        m_conformanceWindow.bottomOffset = m_pad[1];
     }
 
     int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
