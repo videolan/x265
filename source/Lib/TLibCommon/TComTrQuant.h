@@ -209,7 +209,7 @@ private:
 
     inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
                                    uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
-                                   uint32_t c1c2Idx, int qbits, double scale, bool bLast) const;
+                                   uint32_t c1c2Idx, int qbits, double scale) const;
 
     inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
 
