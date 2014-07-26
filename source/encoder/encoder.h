@@ -117,31 +117,21 @@ public:
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
 
-    Lookahead*         m_lookahead;
-
-    bool               m_aborted;         // fatal error detected
-
-    //====== Coding Structure ========
-    int                m_maxRefPicNum;
-
-    //======= Transform =============
     uint32_t           m_quadtreeTULog2MaxSize;
     uint32_t           m_quadtreeTULog2MinSize;
 
-    int                m_maxNumOffsetsPerPic;
     int                m_maxCuDQPDepth;
-
     int                m_lastBPSEI;
+    uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
     ThreadLocalData*   m_threadLocalData;
-
-    bool               m_bEnableRDOQ;
-
+    Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
-    uint32_t           m_numDelayedPic;
+    bool               m_bEnableRDOQ;
+    bool               m_aborted;          // fatal error detected
 
     Encoder();
 

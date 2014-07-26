@@ -108,9 +108,6 @@ public:
     inline int64_t estSaoDist(int64_t count, int64_t offset, int64_t offsetOrg, int shift);
     inline int64_t estIterOffset(int typeIdx, int classIdx, double lambda, int64_t offsetInput, int64_t count, int64_t offsetOrg, int shift, int bitIncrease, int32_t *currentDistortionTableBo, double *currentRdCostTableBo, int offsetTh);
     inline int64_t estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo);
-    void setMaxNumOffsetsPerPic(int val) { m_maxNumOffsetsPerPic = val; }
-
-    int  getMaxNumOffsetsPerPic() { return m_maxNumOffsetsPerPic; }
 
     void rdoSaoUnitRowInit(SAOParam *saoParam);
     void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);

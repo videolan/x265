@@ -60,7 +60,6 @@ Encoder::Encoder()
     m_aborted = false;
     m_encodedFrameNum = 0;
     m_pocLast = -1;
-    m_maxRefPicNum = 0;
     m_curEncoder = 0;
     m_numLumaWPFrames = 0;
     m_numChromaWPFrames = 0;
@@ -1403,6 +1402,4 @@ void Encoder::configure(x265_param *p)
         m_scalingList.m_bDataPresent = !m_scalingList.checkDefaultScalingList();
         break;
     }
-
-    m_maxNumOffsetsPerPic = 2048;
 }

@@ -190,7 +190,6 @@ protected:
     pixel*      m_tmpU2[3];
     pixel*      m_tmpL1;
     pixel*      m_tmpL2;
-    int         m_maxNumOffsetsPerPic;
     bool        m_saoLcuBoundary;
     bool        m_saoLcuBasedOptimization;
 

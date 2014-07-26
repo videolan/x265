@@ -71,7 +71,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     {
         m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
-        m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
         m_sao.create(m_param->sourceWidth, m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
