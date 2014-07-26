@@ -101,16 +101,11 @@ static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int
     }
 }
 
-void TComTrQuant::setQPforQuant(int qpy, int qpBdOffset)
-{
-    m_qpParam[TEXT_LUMA].setQpParam(qpy + qpBdOffset);
-}
-
-void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt)
+void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt)
 {
     X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
 
-    int qp = Clip3(-qpBdOffset, 57, qpy + chromaQPOffset);
+    int qp = Clip3(-QP_BD_OFFSET, 57, qpy + chromaQPOffset);
     if (qp >= 30)
     {
         if (chFmt == CHROMA_420)
@@ -118,18 +113,17 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chr
         else
             qp = X265_MIN(qp, 51);
     }
-    m_qpParam[ttype].setQpParam(qp + qpBdOffset);
+    m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }
 
 void TComTrQuant::setQPforQuant(TComDataCU* cu)
 {
     int qpy = cu->getQP(0);
     int chFmt = cu->getChromaFormat();
-    const PPS* pps = cu->m_slice->m_pps;
 
-    setQPforQuant(qpy, QP_BD_OFFSET);
-    setQPforQuant(qpy, TEXT_CHROMA_U, QP_BD_OFFSET, pps->chromaCbQpOffset, chFmt);
-    setQPforQuant(qpy, TEXT_CHROMA_V, QP_BD_OFFSET, pps->chromaCrQpOffset, chFmt);
+    m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
+    setQPforQuant(qpy, TEXT_CHROMA_U, cu->m_slice->m_pps->chromaCbQpOffset, chFmt);
+    setQPforQuant(qpy, TEXT_CHROMA_V, cu->m_slice->m_pps->chromaCrQpOffset, chFmt);
 }
 
 // To minimize the distortion only. No rate is considered.

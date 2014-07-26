@@ -112,8 +112,7 @@ public:
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     // Misc functions
-    void setQPforQuant(int qpy, int qpBdOffset);
-    void setQPforQuant(int qpy, TextType ttype, int qpBdOffset, int chromaQPOffset, int chFmt);
+    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
     void setQPforQuant(TComDataCU* cu);
     void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
