@@ -101,15 +101,6 @@ static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int
     }
 }
 
-/** Set qP for Quantization.
- * \param qpy QPy
- * \param ttype
- * \param qpBdOffset
- * \param chromaQPOffset
- *
- * return void
- */
-
 void TComTrQuant::setQPforQuant(int qpy, int qpBdOffset)
 {
     m_qpParam[TEXT_LUMA].setQpParam(qpy + qpBdOffset);
