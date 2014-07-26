@@ -715,14 +715,13 @@ void Entropy::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
     {
         codeMergeFlag(cu, subPartIdx);
         if (cu->getMergeFlag(subPartIdx))
-        {
             codeMergeIndex(cu, subPartIdx);
-        }
         else
         {
-            uint32_t interDir = cu->getInterDir(subPartIdx);
             if (cu->m_slice->isInterB())
                 codeInterDir(cu, subPartIdx);
+
+            uint32_t interDir = cu->getInterDir(subPartIdx);
             for (uint32_t list = 0; list < 2; list++)
             {
                 if (interDir & (1 << list))
@@ -741,12 +740,10 @@ void Entropy::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
 /** encode reference frame index for a PU block */
 void Entropy::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
-    X265_CHECK(!cu->isIntra(absPartIdx), "intra block expected\n");
-    if (cu->m_slice->m_numRefIdx[list] == 1)
-        return;
+    X265_CHECK(!cu->isIntra(absPartIdx), "intra block not expected\n");
 
-    X265_CHECK(cu->getInterDir(absPartIdx) & (1 << list), "inter dir failure\n");
-    codeRefFrmIdx(cu, absPartIdx, list);
+    if (cu->m_slice->m_numRefIdx[list] > 1)
+        codeRefFrmIdx(cu, absPartIdx, list);
 }
 
 void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP)
@@ -779,9 +776,8 @@ void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
     if (symbol)
     {
         if (saoLcuParam->typeIdx < 4 && compIdx != 2)
-        {
             saoLcuParam->subTypeIdx = saoLcuParam->typeIdx;
-        }
+
         int offsetTh = 1 << X265_MIN(X265_DEPTH - 5, 5);
         if (saoLcuParam->typeIdx == SAO_BO)
         {
