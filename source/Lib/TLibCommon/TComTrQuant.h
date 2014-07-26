@@ -121,14 +121,11 @@ public:
     void initScalingList();
     void destroyScalingList();
     void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
-    double* getErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp) { return m_errScale[size][list][qp]; }   //!< get Error Scale Coefficent
-
+    double* getErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp) { return m_errScale[size][list][qp]; }       //!< get Error Scale Coefficent
     int32_t* getQuantCoeff(uint32_t list, uint32_t qp, uint32_t size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
-
     int32_t* getDequantCoeff(uint32_t list, uint32_t qp, uint32_t size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
     void setUseScalingList(bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
-
     bool getUseScalingList() { return m_scalingListEnabledFlag; }
 
     void setFlatScalingList();
@@ -138,6 +135,7 @@ public:
     void setScalingList(ScalingList *scalingList);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
+
     static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
     static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TextType ctype, const uint32_t firstSignificanceMapContext);
     static uint32_t getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);

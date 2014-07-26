@@ -448,7 +448,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
     uint32_t numSig = primitives.nquant(srcCoeff, qCoef, scaledCoeff, dstCoeff, qbits, add, numCoeff);
 
     X265_CHECK(numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
-    if (numSig == 0)
+    if (!numSig)
         return 0;
 
     x265_emms();
@@ -549,7 +549,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff
                         costSig[scanPos] = xGetRateSigCoef(0, ctxSig);
                         costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
                     }
-                    if (maxAbsLevel != 0)
+                    if (maxAbsLevel)
                     {
                         curCostSig = xGetRateSigCoef(1, ctxSig);
                         level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
