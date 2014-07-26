@@ -1315,6 +1315,9 @@ void Encoder::configure(x265_param *p)
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
         p->rc.aqStrength = 0;
 
+    if (p->rc.aqStrength == 0)
+        p->rc.aqMode = 0;
+
     if (p->internalCsp != X265_CSP_I420)
     {
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
@@ -1333,6 +1336,39 @@ void Encoder::configure(x265_param *p)
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     p->bFrameBias = X265_MIN(X265_MAX(-90, p->bFrameBias), 100);
+
+    if (p->logLevel < X265_LOG_INFO)
+    {
+        /* don't measure these metrics if they will not be reported */
+        p->bEnablePsnr = 0;
+        p->bEnableSsim = 0;
+    }
+    /* Warn users trying to measure PSNR/SSIM with psy opts on. */
+    if (p->bEnablePsnr || p->bEnableSsim)
+    {
+        const char *s = NULL;
+
+        if (p->psyRd)
+        {
+            s = p->bEnablePsnr ? "psnr" : "ssim";
+            x265_log(p, X265_LOG_WARNING, "--%s used with psy on: results will be invalid!\n", s);
+        }
+        else if (!p->rc.aqMode && p->bEnableSsim)
+        {
+            x265_log(p, X265_LOG_WARNING, "--ssim used with AQ off: results will be invalid!\n");
+            s = "ssim";
+        }
+        else if (p->rc.aqMode && p->bEnablePsnr)
+        {
+            x265_log(p, X265_LOG_WARNING, "--psnr used with AQ on: results will be invalid!\n");
+            s = "psnr";
+        }
+        if (s)
+            x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
+    }
+
+    if (p->bOpenGOP && p->rc.bStatRead)
+        p->lookaheadDepth = 0;
 
     //====== Coding Tools ========
 
