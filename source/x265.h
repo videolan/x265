@@ -1016,8 +1016,11 @@ int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
 /* x265_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns negative on error, zero if no NAL units returned.
- *      the payloads of all output NALs are guaranteed to be sequential in memory. */
+ *      returns negative on error, 1 if a picture and access unit were output,
+ *      or zero if the encoder pipeline is still filling or is empty after flushing.
+ *      the payloads of all output NALs are guaranteed to be sequential in memory.
+ *      To flush the encoder and retrieve delayed output pictures, pass pic_in as NULL.
+ *      Once flushing has begun, all subsequent calls must pass pic_in as NULL. */
 int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
 
 /* x265_encoder_get_stats:
