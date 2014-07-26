@@ -139,44 +139,34 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
         int n;
 
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
-        {
             if (qCoef[codingParameters.scan[n + subPos]])
-            {
                 break;
-            }
-        }
+        if (n < 0)
+            continue;
 
-        if (n < 0) continue;
-
-        int  lastNZPosInCG = n;
+        int lastNZPosInCG = n;
 
         for (n = 0;; n++)
-        {
             if (qCoef[codingParameters.scan[n + subPos]])
-            {
                 break;
-            }
-        }
 
-        int  firstNZPosInCG = n;
+        int firstNZPosInCG = n;
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
             uint32_t signbit = (qCoef[codingParameters.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
-            int  absSum = 0;
+            int absSum = 0;
 
             for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
-            {
                 absSum += qCoef[codingParameters.scan[n + subPos]];
-            }
 
-            if (signbit != (absSum & 0x1)) //compare signbit with sum_parity
+            if (signbit != (absSum & 0x1)) // compare signbit with sum_parity
             {
                 int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
 
                 for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
-                    uint32_t blkPos   = codingParameters.scan[n + subPos];
+                    uint32_t blkPos = codingParameters.scan[n + subPos];
                     if (qCoef[blkPos] != 0)
                     {
                         if (deltaU[blkPos] > 0)
@@ -186,11 +176,8 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
                         }
                         else
                         {
-                            //curChange =-1;
                             if (n == firstNZPosInCG && abs(qCoef[blkPos]) == 1)
-                            {
                                 curCost = MAX_INT;
-                            }
                             else
                             {
                                 curCost = deltaU[blkPos];
@@ -202,20 +189,18 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
                     {
                         if (n < firstNZPosInCG)
                         {
-                            uint32_t thisSignBit = (coef[blkPos] >= 0 ? 0 : 1);
+                            uint32_t thisSignBit = coef[blkPos] >= 0 ? 0 : 1;
                             if (thisSignBit != signbit)
-                            {
                                 curCost = MAX_INT;
-                            }
                             else
                             {
-                                curCost = -(deltaU[blkPos]);
+                                curCost = -deltaU[blkPos];
                                 curChange = 1;
                             }
                         }
                         else
                         {
-                            curCost = -(deltaU[blkPos]);
+                            curCost = -deltaU[blkPos];
                             curChange = 1;
                         }
                     }
@@ -226,30 +211,25 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
                         finalChange = curChange;
                         minPos = blkPos;
                     }
-                } //CG loop
-
-                if (qCoef[minPos] == 32767 || qCoef[minPos] == -32768)
-                {
-                    finalChange = -1;
                 }
 
-                if (qCoef[minPos] == 0)
+                if (qCoef[minPos] == 32767 || qCoef[minPos] == -32768)
+                    finalChange = -1;
+
+                if (!qCoef[minPos])
                     numSig++;
                 else if (finalChange == -1 && abs(qCoef[minPos]) == 1)
                     numSig--;
 
                 if (coef[minPos] >= 0)
-                {
                     qCoef[minPos] += finalChange;
-                }
                 else
-                {
                     qCoef[minPos] -= finalChange;
-                }
-            } // Hide
+            }
         }
+
         lastCG = 0;
-    } // TU loop
+    }
 
     return numSig;
 }
