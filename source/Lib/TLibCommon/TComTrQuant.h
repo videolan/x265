@@ -196,13 +196,14 @@ protected:
 
 private:
 
-    void xITransformSkip(int32_t* coeff, int16_t* residual, uint32_t stride, uint32_t log2TrSize);
-    void xTransformSkip(int16_t* resiBlock, uint32_t stride, int32_t* coeff, uint32_t log2TrSize);
+    void xITransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+    void xTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, int32_t* src, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+    uint32_t xQuant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     // RDOQ functions
-    uint32_t xRateDistOptQuant(TComDataCU* cu, int32_t* srcCoeff, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+    uint32_t xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
                                    uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
