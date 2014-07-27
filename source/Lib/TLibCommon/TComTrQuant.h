@@ -148,11 +148,11 @@ private:
 
     bool initScalingList();
     void destroyScalingList();
-    void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
+    void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t rem);
 
-    void xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t qp);
-    void xSetScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
-    void xSetScalingListDec(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
+    void xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t rem);
+    void xSetScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t rem);
+    void xSetScalingListDec(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t rem);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
 
