@@ -1018,7 +1018,7 @@ inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
                                           uint32_t   c1c2Idx) const
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
-    uint32_t rate = xGetIEPRate();
+    uint32_t rate = IEP_RATE;
 
     if (diffLevel < 0)
     {
@@ -1134,8 +1134,8 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
     int32_t maskX = (int32_t)(2 - posx) >> 31;
     int32_t maskY = (int32_t)(2 - posy) >> 31;
 
-    cost += maskX & (xGetIEPRate() * ((ctxX - 2) >> 1));
-    cost += maskY & (xGetIEPRate() * ((ctxY - 2) >> 1));
+    cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
+    cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
     return xGetICost(cost);
 }
 

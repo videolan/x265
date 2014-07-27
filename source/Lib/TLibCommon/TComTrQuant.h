@@ -119,6 +119,8 @@ public:
 
 private:
 
+    static const uint32_t IEP_RATE = 32768; // cost of an equal probable bit
+
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
@@ -142,7 +144,6 @@ private:
     inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
     inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig]; }
     inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
-    inline uint32_t xGetIEPRate() const        { return 32768; }           ///< Get the cost of an equal probable bit
 
     /* Scaling list maintenance */
 
