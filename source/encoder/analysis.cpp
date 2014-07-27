@@ -1545,27 +1545,19 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
 
-        if (noResidual == 0 && m_param->bEnableEarlySkip)
+        if (!noResidual && m_param->bEnableEarlySkip)
         {
-            if (outBestCU->getQtRootCbf(0) == 0)
+            if (!outBestCU->getQtRootCbf(0))
             {
                 if (outBestCU->getMergeFlag(0))
                     *earlyDetectionSkipMode = true;
                 else
                 {
-                    int mvsum = 0;
+                    bool noMvd = true;
                     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
-                    {
                         if (outBestCU->m_slice->m_numRefIdx[refListIdx] > 0)
-                        {
-                            TComCUMvField* pcCUMvField = outBestCU->getCUMvField(refListIdx);
-                            int hor = abs(pcCUMvField->getMvd(0).x);
-                            int ver = abs(pcCUMvField->getMvd(0).y);
-                            mvsum += hor + ver;
-                        }
-                    }
-
-                    if (mvsum == 0)
+                            noMvd &= !outBestCU->getCUMvField(refListIdx)->getMvd(0).word;
+                    if (noMvd)
                         *earlyDetectionSkipMode = true;
                 }
             }
