@@ -31,10 +31,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComTrQuant.h
-    \brief    transform and quantization class (header)
-*/
-
 #ifndef X265_TCOMTRQUANT_H
 #define X265_TCOMTRQUANT_H
 
@@ -94,7 +90,6 @@ public:
     int qp()    const { return m_qp; }
 };
 
-/// transform and quantization class
 class TComTrQuant
 {
 public:
@@ -102,49 +97,95 @@ public:
     TComTrQuant();
     ~TComTrQuant();
 
+    /* one-time setup */
     bool init(bool useRDOQ);
+    void setFlatScalingList();
+    void setScalingList(ScalingList *scalingList);
 
-    // transform & inverse transform functions
-    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
-                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip = false, bool curUseRDOQ = true);
-
-    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
-
-    // Misc functions
-    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
+    /* CU setup */
     void setQPforQuant(TComDataCU* cu);
     void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
+    uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
+                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip = false, bool curUseRDOQ = true);
+
+    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
+                         uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
+
+    EstBitsSbac     m_estBitsSbac;
+    NoiseReduction* m_nr;
+
+    QpParam  m_qpParam[3];
+    double   m_lambda;
+    double   m_lambdas[3];
+
+    bool     m_useRDOQ;
+    bool     m_scalingListEnabledFlag;
+
+    coeff_t* m_resiDctCoeff;
+    int32_t* m_quantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];   ///< array of quantization matrix coefficient 4x4
+    int32_t* m_dequantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM]; ///< array of dequantization matrix coefficient 4x4
+    double*  m_errScale[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];
+
+private:
+
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
+    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
+
+    void xITransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+    void xTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+
+    uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t xQuant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+
+    /* RDOQ functions */
+
+    uint32_t xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+
+    inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
+                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
+                                   uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
+
+    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
+    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
+    inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
+    inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
+    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig]; }
+    inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
+    inline uint32_t xGetIEPRate() const        { return 32768; }           ///< Get the cost of an equal probable bit
+
+    /* Scaling list maintenance */
 
     bool initScalingList();
     void destroyScalingList();
     void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
 
-    void setFlatScalingList();
     void xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t qp);
     void xSetScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
     void xSetScalingListDec(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
-    void setScalingList(ScalingList *scalingList);
     void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
     void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
+
+public:
+
+    /* static methods shared with entropy.cpp */
 
     static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
     static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TextType ctype, const uint32_t firstSignificanceMapContext);
     static uint32_t getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
     inline static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
     {
-        //set the group layout
+        // set the group layout
         const uint32_t log2TrSizeCG = log2TrSize - 2;
 
         result.log2TrSizeCG = log2TrSizeCG;
 
-        //set the scan orders
+        // set the scan orders
         result.scanType = cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
         result.scan   = g_scanOrder[result.scanType][log2TrSize - 2];
         result.scanCG = g_scanOrderCG[result.scanType][log2TrSizeCG];
 
-        //set the significance map context selection parameters
+        // set the significance map context selection parameters
         TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;
         if (log2TrSize == 2)
         {
@@ -167,55 +208,7 @@ public:
             X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21), "context failure\n");
         }
     }
-
-    EstBitsSbac     m_estBitsSbac;
-
-    NoiseReduction* m_nr;
-
-    QpParam  m_qpParam[3];
-
-    double   m_lambda;
-    double   m_lambdas[3];
-
-    bool     m_useRDOQ;
-    bool     m_scalingListEnabledFlag;
-
-    coeff_t* m_resiDctCoeff;
-    int32_t* m_quantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];     ///< array of quantization matrix coefficient 4x4
-    int32_t* m_dequantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];   ///< array of dequantization matrix coefficient 4x4
-
-    double  *m_errScale[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];
-
-private:
-
-    void xITransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
-    void xTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
-
-    uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
-
-    // RDOQ functions
-    uint32_t xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
-
-    inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
-                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice,
-                                   uint32_t c1c2Idx, int qbits, double scale) const;
-
-    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
-
-    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
-
-    inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
-
-    inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
-
-    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig]; }
-
-    inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
-
-    inline uint32_t xGetIEPRate() const        { return 32768; }           ///< Get the cost of an equal probable bit
 };
 }
-//! \}
 
 #endif // ifndef X265_TCOMTRQUANT_H
