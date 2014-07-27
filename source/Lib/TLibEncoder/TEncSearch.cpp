@@ -84,7 +84,7 @@ TEncSearch::~TEncSearch()
 bool TEncSearch::initSearch(Encoder& top)
 {
     m_param = top.m_param;
-    m_trQuant.init(top.m_bEnableRDOQ);
+    bool ok = m_trQuant.init(top.m_bEnableRDOQ);
 
     if (top.m_scalingList.m_bEnabled)
     {
@@ -130,7 +130,7 @@ bool TEncSearch::initSearch(Encoder& top)
     m_qtTempTransformSkipFlag[1] = m_qtTempTransformSkipFlag[0] + numPartitions;
     m_qtTempTransformSkipFlag[2] = m_qtTempTransformSkipFlag[0] + numPartitions * 2;
 
-    return true;
+    return ok;
 
 fail:
     return false;

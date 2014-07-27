@@ -102,8 +102,7 @@ public:
     TComTrQuant();
     ~TComTrQuant();
 
-    // initialize class
-    void init(bool useRDOQ);
+    bool init(bool useRDOQ);
 
     // transform & inverse transform functions
     uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
@@ -118,7 +117,7 @@ public:
 
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
 
-    void initScalingList();
+    bool initScalingList();
     void destroyScalingList();
     void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
     double* getErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp) { return m_errScale[size][list][qp]; }       //!< get Error Scale Coefficent
@@ -189,7 +188,7 @@ protected:
     bool     m_useRDOQ;
     bool     m_scalingListEnabledFlag;
 
-    int32_t* m_tmpCoeff;
+    coeff_t* m_resiDctCoeff;
     int32_t* m_quantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];     ///< array of quantization matrix coefficient 4x4
     int32_t* m_dequantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];   ///< array of dequantization matrix coefficient 4x4
 

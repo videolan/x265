@@ -70,21 +70,23 @@ inline static int x265_min_fast(int x, int y)
 
 TComTrQuant::TComTrQuant()
 {
-    // allocate temporary buffers
-    // OPT_ME: I may reduce this to short and output matched, but I am not sure it is right.
-    m_tmpCoeff = X265_MALLOC(int32_t, MAX_CU_SIZE * MAX_CU_SIZE);
+    m_resiDctCoeff = NULL;
+    memset(m_quantCoef, 0, sizeof(m_quantCoef));
+    memset(m_dequantCoef, 0, sizeof(m_dequantCoef));
+    memset(m_errScale, 0, sizeof(m_errScale));
+}
 
-    initScalingList();
+bool TComTrQuant::init(bool useRDOQ)
+{
+    m_useRDOQ = useRDOQ;
+    m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_CU_SIZE * MAX_CU_SIZE);
+    
+    return m_resiDctCoeff && initScalingList();
 }
 
 TComTrQuant::~TComTrQuant()
 {
-    // delete temporary buffers
-    if (m_tmpCoeff)
-    {
-        X265_FREE(m_tmpCoeff);
-    }
-
+    X265_FREE(m_resiDctCoeff);
     destroyScalingList();
 }
 
@@ -261,11 +263,6 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, int32_t* coef, coeff_t* qCoef, uint
         return numSig;
 }
 
-void TComTrQuant::init(bool useRDOQ)
-{
-    m_useRDOQ = useRDOQ;
-}
-
 uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    int16_t*    residual,
                                    uint32_t    stride,
@@ -299,23 +296,23 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = (sizeIdx == 0 && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA);
         int index = DCT_4x4 + sizeIdx - useDST;
-        primitives.dct[index](residual, m_tmpCoeff, stride);
+        primitives.dct[index](residual, m_resiDctCoeff, stride);
         if (m_nr->bNoiseReduction && index)
         {
-            denoiseDct(m_tmpCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], (16 << sizeIdx * 2));
+            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], (16 << sizeIdx * 2));
             m_nr->count[sizeIdx]++;
         }
     }
     else
     {
-        xTransformSkip(residual, stride, m_tmpCoeff, log2TrSize);
+        xTransformSkip(residual, stride, m_resiDctCoeff, log2TrSize);
     }
 
     if (m_useRDOQ && curUseRDOQ)
     {
-        return xRateDistOptQuant(cu, m_tmpCoeff, coeff, log2TrSize, ttype, absPartIdx);
+        return xRateDistOptQuant(cu, m_resiDctCoeff, coeff, log2TrSize, ttype, absPartIdx);
     }
-    return xQuant(cu, m_tmpCoeff, coeff, log2TrSize, ttype, absPartIdx);
+    return xQuant(cu, m_resiDctCoeff, coeff, log2TrSize, ttype, absPartIdx);
 }
 
 void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
@@ -340,14 +337,14 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     {
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
         int scale = invQuantScales[rem] << per;
-        primitives.dequant_normal(coeff, m_tmpCoeff, numCoeff, scale, shift);
+        primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
     }
     else
     {
         int scalingListType = (!bIntra ? 3 : 0) + ttype;
         X265_CHECK(scalingListType < 6, "scalingListType invalid %d\n", scalingListType);
         int32_t *dequantCoef = getDequantCoeff(scalingListType, rem, log2TrSize - 2);
-        primitives.dequant_scaling(coeff, dequantCoef, m_tmpCoeff, numCoeff, per, shift);
+        primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
 
     if (!useTransformSkip)
@@ -365,18 +362,18 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
             const int shift_2nd = 12 - (X265_DEPTH - 8);
             const int add_2nd = 1 << (shift_2nd - 1);
 
-            int dc_val = (((m_tmpCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
+            int dc_val = (((m_resiDctCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
             primitives.blockfill_s[sizeIdx](residual, stride, dc_val);
 
             return;
         }
 
         // TODO: this may need larger data types for X265_DEPTH > 8
-        primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_tmpCoeff, residual, stride);
+        primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
     }
     else
     {
-        xITransformSkip(m_tmpCoeff, residual, stride, log2TrSize);
+        xITransformSkip(m_resiDctCoeff, residual, stride, log2TrSize);
     }
 }
 
@@ -1315,20 +1312,24 @@ void TComTrQuant::processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, i
 }
 
 /** initialization process of scaling list array */
-void TComTrQuant::initScalingList()
+bool TComTrQuant::initScalingList()
 {
+    bool ok = true;
     for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
         for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
         {
             for (uint32_t qp = 0; qp < ScalingList::NUM_REM; qp++)
             {
-                m_quantCoef[sizeId][listId][qp] = new int[g_scalingListSize[sizeId]];
-                m_dequantCoef[sizeId][listId][qp] = new int[g_scalingListSize[sizeId]];
-                m_errScale[sizeId][listId][qp] = new double[g_scalingListSize[sizeId]];
+                m_quantCoef[sizeId][listId][qp] = X265_MALLOC(int, g_scalingListSize[sizeId]);
+                m_dequantCoef[sizeId][listId][qp] = X265_MALLOC(int, g_scalingListSize[sizeId]);
+                m_errScale[sizeId][listId][qp] = X265_MALLOC(double, g_scalingListSize[sizeId]);
+
+                ok &= m_quantCoef[sizeId][listId][qp] && m_dequantCoef[sizeId][listId][qp] && m_errScale[sizeId][listId][qp];
             }
         }
     }
+    return ok;
 }
 
 /** destroy quantization matrix array */
@@ -1340,9 +1341,9 @@ void TComTrQuant::destroyScalingList()
         {
             for (uint32_t qp = 0; qp < ScalingList::NUM_REM; qp++)
             {
-                delete [] m_quantCoef[sizeId][listId][qp];
-                delete [] m_dequantCoef[sizeId][listId][qp];
-                delete [] m_errScale[sizeId][listId][qp];
+                X265_FREE(m_quantCoef[sizeId][listId][qp]);
+                X265_FREE(m_dequantCoef[sizeId][listId][qp]);
+                X265_FREE(m_errScale[sizeId][listId][qp]);
             }
         }
     }
