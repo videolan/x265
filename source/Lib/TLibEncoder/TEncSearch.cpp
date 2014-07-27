@@ -89,12 +89,12 @@ bool TEncSearch::initSearch(Encoder& top)
     if (top.m_scalingList.m_bEnabled)
     {
         m_trQuant.setScalingList(&top.m_scalingList);
-        m_trQuant.setUseScalingList(true);
+        m_trQuant.m_scalingListEnabledFlag = true;
     }
     else
     {
         m_trQuant.setFlatScalingList();
-        m_trQuant.setUseScalingList(false);
+        m_trQuant.m_scalingListEnabledFlag = false;
     }
 
     m_rdCost.setPsyRdScale(m_param->psyRd);

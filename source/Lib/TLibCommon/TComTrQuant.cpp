@@ -329,7 +329,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
 
-    if (!getUseScalingList())
+    if (!m_scalingListEnabledFlag)
     {
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
         int scale = invQuantScales[rem] << per;

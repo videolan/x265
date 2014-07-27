@@ -121,9 +121,6 @@ public:
     void destroyScalingList();
     void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
 
-    void setUseScalingList(bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
-    bool getUseScalingList() { return m_scalingListEnabledFlag; }
-
     void setFlatScalingList();
     void xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t qp);
     void xSetScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t qp);
@@ -174,8 +171,6 @@ public:
     EstBitsSbac     m_estBitsSbac;
 
     NoiseReduction* m_nr;
-
-protected:
 
     QpParam  m_qpParam[3];
 
