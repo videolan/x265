@@ -284,7 +284,7 @@ void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_
     int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
     int data;
 
-    if (sizeId > ScalingList::SIZE_8x8)
+    if (sizeId > BLOCK_8x8)
     {
         WRITE_SVLC(scalingList->m_scalingListDC[sizeId][listId] - 8, "scaling_list_dc_coef_minus8");
         nextCoef = scalingList->m_scalingListDC[sizeId][listId];

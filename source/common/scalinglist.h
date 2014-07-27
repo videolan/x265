@@ -38,20 +38,12 @@ public:
     static const int START_VALUE = 8;          // start value for dpcm mode
     static const int MAX_MATRIX_COEF_NUM = 64; // max coefficient number for quantization matrix
     static const int MAX_MATRIX_SIZE_NUM = 8;  // max size number for quantization matrix
-
-    enum Size
-    {
-        SIZE_4x4 = 0,
-        SIZE_8x8,
-        SIZE_16x16,
-        SIZE_32x32,
-        NUM_SIZES
-    };
+    static const int NUM_SIZES = 4;            // 4x4, 8x8, 16x16, 32x32
 
     static const uint32_t s_numCoefPerSize[NUM_SIZES];
     static const uint32_t s_numListsAtSize[NUM_SIZES];
-    static const int s_invQuantScales[NUM_REM];
-    static const int s_quantScales[NUM_REM];
+    static const int      s_invQuantScales[NUM_REM];
+    static const int      s_quantScales[NUM_REM];
 
     int      m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
     int     *m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix

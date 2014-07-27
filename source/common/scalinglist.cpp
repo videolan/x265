@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "primitives.h"
 #include "TLibCommon/TComRom.h"
 #include "scalinglist.h"
 
@@ -177,7 +178,7 @@ bool ScalingList::checkPredMode(uint32_t sizeId, int listId)
         if (!memcmp(m_scalingListCoef[sizeId][listId],
                     ((listId == predListIdx) ? getScalingListDefaultAddress(sizeId, predListIdx) : m_scalingListCoef[sizeId][predListIdx]),
                     sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)s_numCoefPerSize[sizeId])) // check value of matrix
-            && ((sizeId < SIZE_16x16) || (m_scalingListDC[sizeId][listId] == m_scalingListDC[sizeId][predListIdx]))) // check DC value
+            && ((sizeId < BLOCK_16x16) || (m_scalingListDC[sizeId][listId] == m_scalingListDC[sizeId][predListIdx]))) // check DC value
         {
             m_refMatrixId[sizeId][listId] = predListIdx;
             return false;
@@ -197,7 +198,7 @@ bool ScalingList::checkDefaultScalingList()
         for (uint32_t l = 0; l < s_numListsAtSize[s]; l++)
             if (!memcmp(m_scalingListCoef[s][l], getScalingListDefaultAddress(s, l),
                         sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, (int)s_numCoefPerSize[s])) &&
-                ((s < SIZE_16x16) || (m_scalingListDC[s][l] == 16)))
+                ((s < BLOCK_16x16) || (m_scalingListDC[s][l] == 16)))
                 defaultCounter++;
 
     return (defaultCounter == (NUM_LISTS * ScalingList::NUM_SIZES - 4)) ? false : true; // -4 for 32x32
@@ -208,13 +209,13 @@ int32_t* ScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t lis
 {
     switch (sizeId)
     {
-    case SIZE_4x4:
+    case BLOCK_4x4:
         return quantTSDefault4x4;
-    case SIZE_8x8:
+    case BLOCK_8x8:
         return (listId < 3) ? quantIntraDefault8x8 : quantInterDefault8x8;
-    case SIZE_16x16:
+    case BLOCK_16x16:
         return (listId < 3) ? quantIntraDefault8x8 : quantInterDefault8x8;
-    case SIZE_32x32:
+    case BLOCK_32x32:
         return (listId < 1) ? quantIntraDefault8x8 : quantInterDefault8x8;
     default:
         break;
@@ -283,7 +284,7 @@ bool ScalingList::parseScalingList(const char* filename)
             // set DC value for default matrix check
             m_scalingListDC[sizeIdc][listIdc] = src[0];
 
-            if (sizeIdc > SIZE_8x8)
+            if (sizeIdc > BLOCK_8x8)
             {
                 fseek(fp, 0, 0);
                 do
