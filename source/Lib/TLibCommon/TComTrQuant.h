@@ -97,7 +97,7 @@ public:
     void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
 
     uint32_t transformNxN(TComDataCU* cu, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize,
-                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip = false, bool curUseRDOQ = true);
+                          TextType ttype, uint32_t absPartIdx, bool useTransformSkip, bool curUseRDOQ = true);
 
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
