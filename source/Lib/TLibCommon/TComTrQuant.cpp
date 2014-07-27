@@ -31,10 +31,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComTrQuant.cpp
-    \brief    transform and quantization class
-*/
-
 #include "common.h"
 #include "primitives.h"
 #include "frame.h"
@@ -43,30 +39,36 @@
 
 using namespace x265;
 
-typedef struct
+namespace {
+
+struct coeffGroupRDStats
 {
     int    nnzBeforePos0;
     double codedLevelAndDist; // distortion and level cost only
-    double uncodedDist;  // all zero coded block distortion
+    double uncodedDist;       // all zero coded block distortion
     double sigCost;
     double sigCost0;
-} coeffGroupRDStats;
+};
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Constants
-// ====================================================================================================================
-
-inline static int x265_min_fast(int x, int y)
+inline static int fastMin(int x, int y)
 {
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-// ====================================================================================================================
-// TComTrQuant class member functions
-// ====================================================================================================================
+inline static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        int level = dctCoef[i];
+        int sign = level >> 31;
+        level = (level + sign) ^ sign;
+        resSum[i] += level;
+        level -= offset[i];
+        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
+    }
+}
+
+}
 
 TComTrQuant::TComTrQuant()
 {
@@ -90,17 +92,14 @@ TComTrQuant::~TComTrQuant()
     destroyScalingList();
 }
 
-static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
+void TComTrQuant::setQPforQuant(TComDataCU* cu)
 {
-    for (int i = 0; i < size; i++)
-    {
-        int level = dctCoef[i];
-        int sign = level >> 31;
-        level = (level + sign) ^ sign;
-        resSum[i] += level;
-        level -= offset[i];
-        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
-    }
+    int qpy = cu->getQP(0);
+    int chFmt = cu->getChromaFormat();
+
+    m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
+    setQPforQuant(qpy, TEXT_CHROMA_U, cu->m_slice->m_pps->chromaCbQpOffset, chFmt);
+    setQPforQuant(qpy, TEXT_CHROMA_V, cu->m_slice->m_pps->chromaCrQpOffset, chFmt);
 }
 
 void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt)
@@ -116,16 +115,6 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int
             qp = X265_MIN(qp, 51);
     }
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
-}
-
-void TComTrQuant::setQPforQuant(TComDataCU* cu)
-{
-    int qpy = cu->getQP(0);
-    int chFmt = cu->getChromaFormat();
-
-    m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setQPforQuant(qpy, TEXT_CHROMA_U, cu->m_slice->m_pps->chromaCbQpOffset, chFmt);
-    setQPforQuant(qpy, TEXT_CHROMA_V, cu->m_slice->m_pps->chromaCrQpOffset, chFmt);
 }
 
 // To minimize the distortion only. No rate is considered.
@@ -484,7 +473,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
         memset(&rdStats, 0, sizeof(coeffGroupRDStats));
 
         X265_CHECK(log2TrSize - 2  == codingParameters.log2TrSizeCG, "transform size invalid\n");
-        const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
 
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
@@ -869,7 +858,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
 /** Pattern decision for context derivation process of significant_coeff_flag */
 uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, const uint32_t cgPosX, const uint32_t cgPosY, const uint32_t log2TrSizeCG)
 {
-    if (log2TrSizeCG == 0) return 0;
+    if (!log2TrSizeCG)
+        return 0;
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
     X265_CHECK(trSizeCG <= 32, "transform CG is too large\n");
@@ -899,7 +889,7 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
     if (!blkPos) // special case for the DC context variable
         return 0;
 
-    if (log2TrSize == 2) //4x4
+    if (log2TrSize == 2) // 4x4
         return ctxIndMap[blkPos];
 
     const uint32_t posY = blkPos >> log2TrSize;
@@ -953,17 +943,17 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
 
 /** Get the best level in RD sense
  * \param codedCost reference to coded cost
- * \param codedCost0 reference to cost when coefficient is 0
+ * \param curCostSig
  * \param codedCostSig reference to cost of significant coefficient
  * \param levelDouble reference to unscaled quantized level
  * \param maxAbsLevel scaled quantized level
- * \param ctxNumSig current ctxInc for coeff_abs_significant_flag
- * \param ctxNumOne current ctxInc for coeff_abs_level_greater1 (1st bin of coeff_abs_level_minus1 in AVC)
- * \param ctxNumAbs current ctxInc for coeff_abs_level_greater2 (remaining bins of coeff_abs_level_minus1 in AVC)
+ * \param baseLevel
+ * \param greaterOneBits
+ * \param levelAbsBits
  * \param absGoRice current Rice parameter for coeff_abs_level_minus3
+ * \param c1c2Idx
  * \param qbits quantization step size
  * \param scaleFactor correction factor
- * \param bLast indicates if the coefficient is the last significant
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
@@ -1112,12 +1102,12 @@ inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
             rate += egs << 15;
 
             // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
-            X265_CHECK(x265_min_fast(symbol, (maxVlc + 1)) == maxVlc + 1, "min check failure\n");
+            X265_CHECK(fastMin(symbol, (maxVlc + 1)) == maxVlc + 1, "min check failure\n");
             symbol = maxVlc + 1;
         }
 
         uint32_t prefLen = (symbol >> absGoRice) + 1;
-        uint32_t numBins = x265_min_fast(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
+        uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
 
         rate += numBins << 15;
 
