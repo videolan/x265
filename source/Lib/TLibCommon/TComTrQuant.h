@@ -120,9 +120,6 @@ public:
     bool initScalingList();
     void destroyScalingList();
     void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp);
-    double* getErrScaleCoeff(uint32_t list, uint32_t size, uint32_t qp) { return m_errScale[size][list][qp]; }       //!< get Error Scale Coefficent
-    int32_t* getQuantCoeff(uint32_t list, uint32_t qp, uint32_t size) { return m_quantCoef[size][list][qp]; }        //!< get Quant Coefficent
-    int32_t* getDequantCoeff(uint32_t list, uint32_t qp, uint32_t size) { return m_dequantCoef[size][list][qp]; }    //!< get DeQuant Coefficent
 
     void setUseScalingList(bool bUseScalingList) { m_scalingListEnabledFlag = bUseScalingList; }
     bool getUseScalingList() { return m_scalingListEnabledFlag; }
