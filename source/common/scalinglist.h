@@ -60,7 +60,7 @@ public:
     bool     checkDefaultScalingList();
     void     setDefaultScalingList();
     bool     checkPredMode(uint32_t sizeId, int listId);
-    bool     parseScalingList(char* filename);
+    bool     parseScalingList(const char* filename);
 
 protected:
 
@@ -73,6 +73,8 @@ protected:
 extern const uint32_t g_scalingListSize[ScalingList::NUM_SIZES];
 extern const uint32_t g_scalingListSizeX[ScalingList::NUM_SIZES];
 extern const uint32_t g_scalingListNum[ScalingList::NUM_SIZES];
+extern const int g_quantScales[ScalingList::NUM_REM];
+extern const int g_invQuantScales[ScalingList::NUM_REM];
 
 }
 

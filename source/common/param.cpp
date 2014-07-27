@@ -163,6 +163,7 @@ void x265_param_default(x265_param *param)
     param->crQpOffset = 0;
     param->rdPenalty = 0;
     param->psyRd = 0.0;
+    param->psyRdoq = 0.0;
     param->bIntraInBFrames = 1;
     param->bLossless = 0;
     param->bCULossless = 0;
@@ -361,11 +362,13 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->rc.aqStrength = 0.0;
             param->psyRd = 0.0;
+            param->psyRdoq = 0.0;
         }
         else if (!strcmp(tune, "ssim"))
         {
             param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
             param->psyRd = 0.0;
+            param->psyRdoq = 0.0;
         }
         else if (!strcmp(tune, "fastdecode") ||
                  !strcmp(tune, "fast-decode"))
@@ -512,6 +515,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         }
     }
     OPT("csv") p->csvfn = value;
+    OPT("scaling-list") p->scalingLists = value;
     OPT("lambda-file") p->rc.lambdaFileName = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
@@ -594,6 +598,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
     OPT("psy-rd") p->psyRd = atof(value);
+    OPT("psy-rdoq") p->psyRdoq = atof(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value);
@@ -937,6 +942,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
+    CHECK(param->psyRdoq < 0 || 2.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 2.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
@@ -1124,6 +1130,8 @@ void x265_print_params(x265_param *param)
     fprintf(stderr, "rd=%d ", param->rdLevel);
     if (param->psyRd > 0.)
         fprintf(stderr, "psy-rd=%.1lf ", param->psyRd);
+    if (param->psyRdoq > 0.)
+        fprintf(stderr, "psy-rdoq=%.1lf ", param->psyRdoq);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)

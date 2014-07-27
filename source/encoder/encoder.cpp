@@ -94,6 +94,13 @@ void Encoder::create()
         for (int i = 0; i < m_param->frameNumThreads; i++)
             m_frameEncoder[i].setThreadPool(m_threadPool);
 
+    if (!m_param->scalingLists || !strcmp(m_param->scalingLists, "off"))
+        m_scalingList.m_bEnabled = false;
+    else if (!strcmp(m_param->scalingLists, "default"))
+        m_scalingList.setDefaultScalingList();
+    else if (m_scalingList.parseScalingList(m_param->scalingLists))
+        m_aborted = true;
+
     /* Allocate thread local data shared by all frame encoders */
     ThreadPool *pool = ThreadPool::getThreadPool();
     const int poolThreadCount = pool ? pool->getThreadCount() : 1;
@@ -1410,24 +1417,5 @@ void Encoder::configure(x265_param *p)
         /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.bottomOffset = padsize;
-    }
-
-    int useScalingListId = SCALING_LIST_OFF; // TODO: expose as param(s)
-    switch (useScalingListId)
-    {
-    case SCALING_LIST_DEFAULT:
-        m_scalingList.setDefaultScalingList();
-        m_scalingList.m_bEnabled = true;
-        m_scalingList.m_bDataPresent = false;
-        break;
-    case SCALING_LIST_OFF:
-        m_scalingList.m_bEnabled = false;
-        m_scalingList.m_bDataPresent = false;
-        break;
-    case SCALING_LIST_FILE:
-        //m_scalingList.parseScalingList(filename);
-        m_scalingList.m_bEnabled = true;
-        m_scalingList.m_bDataPresent = !m_scalingList.checkDefaultScalingList();
-        break;
     }
 }

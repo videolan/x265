@@ -274,6 +274,23 @@ Input Options
 	Specifying QP (integer) is optional, and if specified they are
 	clamped within the encoder to qpmin/qpmax.
 
+.. option:: --scaling-list <filename>
+
+	Quantization scaling lists. HEVC supports 6 quantization scaling
+	lists to be defined; one each for Y, Cb, Cr for intra prediction and
+	one each for inter prediction.
+
+	x265 does not use scaling lists by default, but this can also be
+	made explicit by :option:`--scaling-list` *off*.
+
+	HEVC specifies a default set of scaling lists which may be enabled
+	without requiring them to be signaled in the SPS. Those scaling
+	lists can be enabled via :option:`--scaling-list` *default*.
+    
+	All other strings indicate a filename containing custom scaling
+	lists in the HM format. The encode will abort if the file is not
+	parsed correctly. Custom lists must be signaled in the SPS
+
 .. option:: --lambda-file <filename>
 
 	Specify a text file containing values for x265_lambda_tab and
@@ -568,8 +585,17 @@ Mode decision / Analysis
 	Influence rate distortion optimizations to try to preserve the
 	energy of the source image in the encoded image, at the expense of
 	compression efficiency. 1.0 is a typical value. Default disabled. It
-	only has effect on presets which use full RDO-based decisions (slower,
-	veryslow and placebo)
+	only has effect on presets which use RDO-based decisions.  Experimental
+
+	**Range of values:** 0 .. 2.0
+
+.. option:: --psy-rdoq <float>
+
+	Influence the rate distortion optimized quantization by favoring
+	higher energy in the reconstructed image. This generally improves
+	perceived visual quality at the cost of lower quality metric scores.
+	It only has effect on slower presets which use RDO Quantization
+	(rd-levels 4 and 5). Experimental
 
 	**Range of values:** 0 .. 2.0
 

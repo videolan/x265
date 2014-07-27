@@ -151,6 +151,8 @@ static const struct option long_options[] =
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
     { "psy-rd",         required_argument, NULL, 0 },
+    { "psy-rdoq",       required_argument, NULL, 0 },
+    { "scaling-list",   required_argument, NULL, 0 },
     { "lossless",             no_argument, NULL, 0 },
     { "no-lossless",          no_argument, NULL, 0 },
     { "no-signhide",          no_argument, NULL, 0 },
@@ -363,6 +365,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nAnalysis:\n");
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual rate distortion optimization, 0 to disable. Default %f\n", param->psyRd);
+    H0("   --psy-rdoq <0..2.0>           Strength of psycho-visual optimization in quantization, 0 to disable. Default %f\n", param->psyRdoq);
     H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
@@ -399,7 +402,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 Format of each line: framenumber frametype QP\n");
     H0("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
     H0("                                 QPs are restricted by qpmin/qpmax.\n");
-    H0("\nRate control, Adaptive Quantization:\n");
+    H0("\nRate control, Quantization:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps) for ABR (implied). Default %d\n", param->rc.bitrate);
     H0("-q/--qp <integer>                QP for P slices in CQP mode (implied). --ipratio and --pbration determine other slice QPs\n");
     H0("   --crf <float>                 Quality-based VBR (0-51). Default %f\n", param->rc.rfConstant);
@@ -423,6 +426,7 @@ void CLIOptions::showHelp(x265_param *param)
        "                                   - 1 : First pass, cretes stats file\n"
        "                                   - 2 : Last pass, does not overwrite stats file\n"
        "                                   - 3 : Nth pass, overwrites stats file\n");
+    H0("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
     H0("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H0("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
     H0("                                 Blank lines and lines starting with hash(#) are ignored\n");

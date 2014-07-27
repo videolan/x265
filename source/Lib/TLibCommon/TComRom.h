@@ -108,8 +108,6 @@ extern const uint32_t g_puOffset[8];
 #define SHIFT_INV_1ST          7 // Shift after first inverse transform stage
 #define SHIFT_INV_2ND         12 // Shift after second inverse transform stage
 
-extern const int g_quantScales[6];     // Q(QP%6)
-extern const int g_invQuantScales[6];  // IQ(QP%6)
 extern const int16_t g_t4[4][4];
 extern const int16_t g_t8[8][8];
 extern const int16_t g_t16[16][16];
@@ -169,61 +167,6 @@ extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice c
 
 extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
-static const char MatrixType[4][6][20] =
-{
-    {
-        "INTRA4X4_LUMA",
-        "INTRA4X4_CHROMAU",
-        "INTRA4X4_CHROMAV",
-        "INTER4X4_LUMA",
-        "INTER4X4_CHROMAU",
-        "INTER4X4_CHROMAV"
-    },
-    {
-        "INTRA8X8_LUMA",
-        "INTRA8X8_CHROMAU",
-        "INTRA8X8_CHROMAV",
-        "INTER8X8_LUMA",
-        "INTER8X8_CHROMAU",
-        "INTER8X8_CHROMAV"
-    },
-    {
-        "INTRA16X16_LUMA",
-        "INTRA16X16_CHROMAU",
-        "INTRA16X16_CHROMAV",
-        "INTER16X16_LUMA",
-        "INTER16X16_CHROMAU",
-        "INTER16X16_CHROMAV"
-    },
-    {
-        "INTRA32X32_LUMA",
-        "INTER32X32_LUMA",
-    },
-};
-static const char MatrixType_DC[4][12][22] =
-{
-    {},
-    {},
-    {
-        "INTRA16X16_LUMA_DC",
-        "INTRA16X16_CHROMAU_DC",
-        "INTRA16X16_CHROMAV_DC",
-        "INTER16X16_LUMA_DC",
-        "INTER16X16_CHROMAU_DC",
-        "INTER16X16_CHROMAV_DC"
-    },
-    {
-        "INTRA32X32_LUMA_DC",
-        "INTER32X32_LUMA_DC",
-    },
-};
-extern int g_quantIntraDefault8x8[64];
-extern int g_quantIntraDefault16x16[256];
-extern int g_quantIntraDefault32x32[1024];
-extern int g_quantInterDefault8x8[64];
-extern int g_quantInterDefault16x16[256];
-extern int g_quantInterDefault32x32[1024];
-extern int g_quantTSDefault4x4[16];
 
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];

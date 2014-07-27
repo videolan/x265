@@ -25,6 +25,95 @@
 #include "TLibCommon/TComRom.h"
 #include "scalinglist.h"
 
+namespace {
+// file-anonymous namespace
+
+/* Strings for scaling list file parsing */
+const char MatrixType[4][6][20] =
+{
+    {
+        "INTRA4X4_LUMA",
+        "INTRA4X4_CHROMAU",
+        "INTRA4X4_CHROMAV",
+        "INTER4X4_LUMA",
+        "INTER4X4_CHROMAU",
+        "INTER4X4_CHROMAV"
+    },
+    {
+        "INTRA8X8_LUMA",
+        "INTRA8X8_CHROMAU",
+        "INTRA8X8_CHROMAV",
+        "INTER8X8_LUMA",
+        "INTER8X8_CHROMAU",
+        "INTER8X8_CHROMAV"
+    },
+    {
+        "INTRA16X16_LUMA",
+        "INTRA16X16_CHROMAU",
+        "INTRA16X16_CHROMAV",
+        "INTER16X16_LUMA",
+        "INTER16X16_CHROMAU",
+        "INTER16X16_CHROMAV"
+    },
+    {
+        "INTRA32X32_LUMA",
+        "INTER32X32_LUMA",
+    },
+};
+const char MatrixType_DC[4][12][22] =
+{
+    {
+    },
+    {
+    },
+    {
+        "INTRA16X16_LUMA_DC",
+        "INTRA16X16_CHROMAU_DC",
+        "INTRA16X16_CHROMAV_DC",
+        "INTER16X16_LUMA_DC",
+        "INTER16X16_CHROMAU_DC",
+        "INTER16X16_CHROMAV_DC"
+    },
+    {
+        "INTRA32X32_LUMA_DC",
+        "INTER32X32_LUMA_DC",
+    },
+};
+
+int quantTSDefault4x4[16] =
+{
+    16, 16, 16, 16,
+    16, 16, 16, 16,
+    16, 16, 16, 16,
+    16, 16, 16, 16
+};
+
+int quantIntraDefault8x8[64] =
+{
+    16, 16, 16, 16, 17, 18, 21, 24,
+    16, 16, 16, 16, 17, 19, 22, 25,
+    16, 16, 17, 18, 20, 22, 25, 29,
+    16, 16, 18, 21, 24, 27, 31, 36,
+    17, 17, 20, 24, 30, 35, 41, 47,
+    18, 19, 22, 27, 35, 44, 54, 65,
+    21, 22, 25, 31, 41, 54, 70, 88,
+    24, 25, 29, 36, 47, 65, 88, 115
+};
+
+int quantInterDefault8x8[64] =
+{
+    16, 16, 16, 16, 17, 18, 20, 24,
+    16, 16, 16, 17, 18, 20, 24, 25,
+    16, 16, 17, 18, 20, 24, 25, 28,
+    16, 17, 18, 20, 24, 25, 28, 33,
+    17, 18, 20, 24, 25, 28, 33, 41,
+    18, 20, 24, 25, 28, 33, 41, 54,
+    20, 24, 25, 28, 33, 41, 54, 71,
+    24, 25, 28, 33, 41, 54, 71, 91
+};
+
+}
+
 namespace x265 {
 // private namespace
 
@@ -82,13 +171,13 @@ int32_t* ScalingList::getScalingListDefaultAddress(uint32_t sizeId, uint32_t lis
     switch (sizeId)
     {
     case SIZE_4x4:
-        return g_quantTSDefault4x4;
+        return quantTSDefault4x4;
     case SIZE_8x8:
-        return (listId < 3) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
+        return (listId < 3) ? quantIntraDefault8x8 : quantInterDefault8x8;
     case SIZE_16x16:
-        return (listId < 3) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
+        return (listId < 3) ? quantIntraDefault8x8 : quantInterDefault8x8;
     case SIZE_32x32:
-        return (listId < 1) ? g_quantIntraDefault8x8 : g_quantInterDefault8x8;
+        return (listId < 1) ? quantIntraDefault8x8 : quantInterDefault8x8;
     default:
         break;
     }
@@ -108,48 +197,46 @@ void ScalingList::setDefaultScalingList()
     for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
         for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
             processDefaultMarix(sizeId, listId);
+    m_bEnabled = true;
+    m_bDataPresent = false;
 }
 
-bool ScalingList::parseScalingList(char* filename)
+bool ScalingList::parseScalingList(const char* filename)
 {
-    FILE *fp;
-    char line[1024];
-    uint32_t sizeIdc, listIdc;
-    uint32_t i, size = 0;
-    int32_t *src = 0, data;
-    char *ret;
-    uint32_t  retval;
-
-    if ((fp = fopen(filename, "r")) == (FILE*)NULL)
+    FILE *fp = fopen(filename, "r");
+    if (!fp)
     {
-        printf("can't open file %s :: set Default Matrix\n", filename);
+        x265_log(NULL, X265_LOG_ERROR, "can't open scaling list file %s\n", filename);
         return true;
     }
 
-    for (sizeIdc = 0; sizeIdc < ScalingList::NUM_SIZES; sizeIdc++)
+    char line[1024];
+    int32_t *src = NULL;
+
+    for (uint32_t sizeIdc = 0; sizeIdc < NUM_SIZES; sizeIdc++)
     {
-        size = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
-        for (listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
+        int size = X265_MIN(MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeIdc]);
+        for (uint32_t listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
         {
             src = m_scalingListCoef[sizeIdc][listIdc];
 
             fseek(fp, 0, 0);
             do
             {
-                ret = fgets(line, 1024, fp);
-                if ((ret == NULL) || (strstr(line, MatrixType[sizeIdc][listIdc]) == NULL && feof(fp)))
+                char *ret = fgets(line, 1024, fp);
+                if (!ret || (strstr(line, MatrixType[sizeIdc][listIdc]) == NULL && feof(fp)))
                 {
-                    printf("Error: can't read Matrix :: set Default Matrix\n");
+                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
             }
             while (strstr(line, MatrixType[sizeIdc][listIdc]) == NULL);
-            for (i = 0; i < size; i++)
+            for (int i = 0; i < size; i++)
             {
-                retval = fscanf(fp, "%d,", &data);
-                if (retval != 1)
+                int data;
+                if (fscanf(fp, "%d,", &data) != 1)
                 {
-                    printf("Error: can't read Matrix :: set Default Matrix\n");
+                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
                 src[i] = data;
@@ -163,20 +250,23 @@ bool ScalingList::parseScalingList(char* filename)
                 fseek(fp, 0, 0);
                 do
                 {
-                    ret = fgets(line, 1024, fp);
-                    if ((ret == NULL) || (strstr(line, MatrixType_DC[sizeIdc][listIdc]) == NULL && feof(fp)))
+                    char *ret = fgets(line, 1024, fp);
+                    if (!ret || (!strstr(line, MatrixType_DC[sizeIdc][listIdc]) && feof(fp)))
                     {
-                        printf("Error: can't read DC :: set Default Matrix\n");
+                        x265_log(NULL, X265_LOG_ERROR, "can't read DC from %s\n", filename);
                         return true;
                     }
                 }
-                while (strstr(line, MatrixType_DC[sizeIdc][listIdc]) == NULL);
-                retval = fscanf(fp, "%d,", &data);
-                if (retval != 1)
+                while (!strstr(line, MatrixType_DC[sizeIdc][listIdc]))
+                    ;
+
+                int data;
+                if (fscanf(fp, "%d,", &data) != 1)
                 {
-                    printf("Error: can't read Matrix :: set Default Matrix\n");
+                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
+
                 // overwrite DC value when size of matrix is larger than 16x16
                 m_scalingListDC[sizeIdc][listIdc] = data;
             }
@@ -184,10 +274,17 @@ bool ScalingList::parseScalingList(char* filename)
     }
 
     fclose(fp);
+
+    m_bEnabled = true;
+    m_bDataPresent = !checkDefaultScalingList();
+
     return false;
 }
 
-const uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
-const uint32_t g_scalingListSizeX[4] = { 4, 8, 16, 32 };
+const uint32_t g_scalingListSize[ScalingList::NUM_SIZES] = { 16, 64, 256, 1024 };
+const uint32_t g_scalingListSizeX[ScalingList::NUM_SIZES] = { 4, 8, 16, 32 };
 const uint32_t g_scalingListNum[ScalingList::NUM_SIZES] = { 6, 6, 6, 6 };
+const int g_quantScales[ScalingList::NUM_REM] = { 26214, 23302, 20560, 18396, 16384, 14564 };
+const int g_invQuantScales[ScalingList::NUM_REM] = { 40, 45, 51, 57, 64, 72 };
+
 }

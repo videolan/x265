@@ -617,6 +617,22 @@ typedef struct x265_param
      * energy of the source, at the cost of lost compression. Default 0.0 */
     double    psyRd;
 
+    /* Quantization scaling lists. HEVC supports 6 quantization scaling lists to
+     * be defined; one each for Y, Cb, Cr for intra prediction and one each for
+     * inter prediction.
+     *
+     * - NULL and "off" will disable quant scaling (default)
+     * - "default" will enable the HEVC default scaling lists, which
+     *   do not need to be signaled since they are specified
+     * - all other strings indicate a filename containing custom scaling lists
+     *   in the HM format. The encode will fail if the file is not parsed
+     *   correctly. Custom lists must be signaled in the SPS. */
+    const char *scalingLists;
+
+    /* Strength of psycho-visual optimizations in quantization. Only has an
+     * effect in presets which use RDOQ (rd-levels 4 and 5). Default 0.0 */
+    double    psyRdoq;
+
     /*== Coding tools ==*/
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of
