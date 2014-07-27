@@ -84,18 +84,7 @@ TEncSearch::~TEncSearch()
 bool TEncSearch::initSearch(Encoder& top)
 {
     m_param = top.m_param;
-    bool ok = m_trQuant.init(top.m_bEnableRDOQ);
-
-    if (top.m_scalingList.m_bEnabled)
-    {
-        m_trQuant.setScalingList(&top.m_scalingList);
-        m_trQuant.m_scalingListEnabledFlag = true;
-    }
-    else
-    {
-        m_trQuant.setFlatScalingList();
-        m_trQuant.m_scalingListEnabledFlag = false;
-    }
+    bool ok = m_trQuant.init(top.m_bEnableRDOQ, top.m_scalingList);
 
     m_rdCost.setPsyRdScale(m_param->psyRd);
     m_bEnableRDOQ = top.m_bEnableRDOQ;

@@ -88,9 +88,7 @@ public:
     ~TComTrQuant();
 
     /* one-time setup */
-    bool init(bool useRDOQ);
-    void setFlatScalingList();
-    void setScalingList(ScalingList *scalingList);
+    bool init(bool useRDOQ, const ScalingList& scalingList);
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);
@@ -102,22 +100,16 @@ public:
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
-    EstBitsSbac     m_estBitsSbac;
-    NoiseReduction* m_nr;
+    EstBitsSbac        m_estBitsSbac;
+    NoiseReduction*    m_nr;
+    const ScalingList* m_scalingList;
 
     QpParam  m_qpParam[3];
     double   m_lambda;
     double   m_lambdas[3];
 
     bool     m_useRDOQ;
-    bool     m_scalingListEnabledFlag;
-
     coeff_t* m_resiDctCoeff;
-    int32_t* m_quantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];   ///< array of quantization matrix coefficient 4x4
-    int32_t* m_dequantCoef[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM]; ///< array of dequantization matrix coefficient 4x4
-    double*  m_errScale[ScalingList::NUM_SIZES][ScalingList::NUM_LISTS][ScalingList::NUM_REM];
-
-private:
 
     static const uint32_t IEP_RATE = 32768; // cost of an equal probable bit
 
@@ -158,18 +150,6 @@ private:
     {
         return m_lambda * rate;
     }
-
-    /* Scaling list maintenance */
-
-    bool initScalingList();
-    void destroyScalingList();
-    void setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t rem);
-
-    void setFlatScalingList(uint32_t list, uint32_t size, uint32_t rem);
-    void setScalingListEnc(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t rem);
-    void setScalingListDec(ScalingList *scalingList, uint32_t list, uint32_t size, uint32_t rem);
-    void processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
-    void processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc);
 
 public:
 

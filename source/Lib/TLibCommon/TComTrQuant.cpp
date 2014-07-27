@@ -73,23 +73,19 @@ inline static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offs
 TComTrQuant::TComTrQuant()
 {
     m_resiDctCoeff = NULL;
-    memset(m_quantCoef, 0, sizeof(m_quantCoef));
-    memset(m_dequantCoef, 0, sizeof(m_dequantCoef));
-    memset(m_errScale, 0, sizeof(m_errScale));
 }
 
-bool TComTrQuant::init(bool useRDOQ)
+bool TComTrQuant::init(bool useRDOQ, const ScalingList& scalingList)
 {
     m_useRDOQ = useRDOQ;
+    m_scalingList = &scalingList;
     m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_CU_SIZE * MAX_CU_SIZE);
-    
-    return m_resiDctCoeff && initScalingList();
+    return m_resiDctCoeff;
 }
 
 TComTrQuant::~TComTrQuant()
 {
     X265_FREE(m_resiDctCoeff);
-    destroyScalingList();
 }
 
 void TComTrQuant::setQPforQuant(TComDataCU* cu)
@@ -235,7 +231,7 @@ uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize,
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
     int rem = m_qpParam[ttype].rem;
     int per = m_qpParam[ttype].per;
-    int32_t *quantCoeff = m_quantCoef[log2TrSize - 2][scalingListType][rem];
+    int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
 
@@ -318,7 +314,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
 
-    if (!m_scalingListEnabledFlag)
+    if (!m_scalingList->m_bEnabled)
     {
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
         int scale = invQuantScales[rem] << per;
@@ -328,7 +324,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     {
         int scalingListType = (!bIntra ? 3 : 0) + ttype;
         X265_CHECK(scalingListType < 6, "scalingListType invalid %d\n", scalingListType);
-        int32_t *dequantCoef = m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+        int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
         primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
 
@@ -420,7 +416,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     int per = m_qpParam[ttype].per;
     int qbits = QUANT_SHIFT + per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
     int add = (1 << (qbits - 1));
-    int32_t *qCoef = m_quantCoef[log2TrSize - 2][scalingListType][rem];
+    int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << log2TrSize * 2;
     int scaledCoeff[32 * 32];
@@ -433,7 +429,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     x265_emms();
     selectLambda(ttype);
 
-    double *errScale = m_errScale[log2TrSize - 2][scalingListType][rem];
+    double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
 
     double blockUncodedCost = 0;
     double costCoeff[32 * 32];
@@ -1160,176 +1156,3 @@ uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64,
 
     return (sigRight | sigLower) & 1;
 }
-
-/** set error scale coefficients */
-void TComTrQuant::setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t rem)
-{
-    uint32_t log2TrSize = size + 2;
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-
-    uint32_t maxNumCoeff = g_scalingListSize[size];
-    int32_t *quantCoeff  = m_quantCoef[size][list][rem];
-    double *errScale     = m_errScale[size][list][rem];
-
-    double scalingBits = (double)(1 << SCALE_BITS);               // Compensate for scaling of bitcount in Lagrange cost function
-    scalingBits = scalingBits * pow(2.0, -2.0 * transformShift);  // Compensate for scaling through forward transform
-    for (uint32_t i = 0; i < maxNumCoeff; i++)
-        errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)));
-}
-
-/** set quantized matrix coefficient for encode */
-void TComTrQuant::setScalingListEnc(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
-{
-    uint32_t width = g_scalingListSizeX[sizeId];
-    uint32_t height = g_scalingListSizeX[sizeId];
-    uint32_t ratio = g_scalingListSizeX[sizeId] / X265_MIN(ScalingList::MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
-    int32_t *coeff = scalingList->m_scalingListCoef[sizeId][listId];
-    int32_t *quantCoeff = m_quantCoef[sizeId][listId][rem];
-
-    processScalingListEnc(coeff, quantCoeff, g_quantScales[rem] << 4, height, width, ratio, X265_MIN(ScalingList::MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->m_scalingListDC[sizeId][listId]);
-}
-
-/** set quantized matrix coefficient for decode */
-void TComTrQuant::setScalingListDec(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
-{
-    uint32_t width = g_scalingListSizeX[sizeId];
-    uint32_t height = g_scalingListSizeX[sizeId];
-    uint32_t ratio = g_scalingListSizeX[sizeId] / X265_MIN(ScalingList::MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]);
-    int32_t *dequantcoeff = m_dequantCoef[sizeId][listId][rem];
-    int32_t *coeff = scalingList->m_scalingListCoef[sizeId][listId];
-
-    processScalingListDec(coeff, dequantcoeff, g_invQuantScales[rem], height, width, ratio, X265_MIN(ScalingList::MAX_MATRIX_SIZE_NUM, (int)g_scalingListSizeX[sizeId]), scalingList->m_scalingListDC[sizeId][listId]);
-}
-
-/** set quantized matrix coefficient for encode */
-void TComTrQuant::setScalingList(ScalingList *scalingList)
-{
-    for (uint32_t size = 0; size < ScalingList::NUM_SIZES; size++)
-    {
-        for (uint32_t list = 0; list < g_scalingListNum[size]; list++)
-        {
-            for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
-            {
-                setScalingListEnc(scalingList, list, size, rem);
-                setScalingListDec(scalingList, list, size, rem);
-                setErrScaleCoeff(list, size, rem);
-            }
-        }
-    }
-}
-
-/** set flat matrix value to quantized coefficient */
-void TComTrQuant::setFlatScalingList()
-{
-    for (uint32_t size = 0; size < ScalingList::NUM_SIZES; size++)
-    {
-        for (uint32_t list = 0; list < g_scalingListNum[size]; list++)
-        {
-            for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
-            {
-                setFlatScalingList(list, size, rem);
-                setErrScaleCoeff(list, size, rem);
-            }
-        }
-    }
-}
-
-/** set flat matrix value to quantized coefficient */
-void TComTrQuant::setFlatScalingList(uint32_t list, uint32_t size, uint32_t rem)
-{
-    uint32_t num = g_scalingListSize[size];
-    int quantScales = g_quantScales[rem];
-    int invQuantScales = g_invQuantScales[rem] << 4;
-
-    int32_t *quantCoeff = m_quantCoef[size][list][rem];
-    int32_t *dequantCoeff = m_dequantCoef[size][list][rem];
-
-    for (uint32_t i = 0; i < num; i++)
-    {
-        *quantCoeff++ = quantScales;
-        *dequantCoeff++ = invQuantScales;
-    }
-}
-
-/** set quantized matrix coefficient for encode
- * \param coeff quantized matrix address
- * \param quantcoeff quantized matrix address
- * \param quantScales Q(QP%6)
- * \param height height
- * \param width width
- * \param ratio ratio for upscale
- * \param sizuNum matrix size
- * \param dc dc parameter
- */
-void TComTrQuant::processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc)
-{
-    int nsqth = (height < width) ? 4 : 1; // height ratio for NSQT
-    int nsqtw = (width < height) ? 4 : 1; // width ratio for NSQT
-
-    for (uint32_t j = 0; j < height; j++)
-        for (uint32_t i = 0; i < width; i++)
-            quantcoeff[j * width + i] = quantScales / coeff[sizuNum * (j * nsqth / ratio) + i * nsqtw / ratio];
-
-    if (ratio > 1)
-        quantcoeff[0] = quantScales / dc;
-}
-
-/** set quantized matrix coefficient for decode
- * \param coeff quantized matrix address
- * \param dequantcoeff quantized matrix address
- * \param invQuantScales IQ(QP%6))
- * \param height height
- * \param width width
- * \param ratio ratio for upscale
- * \param sizuNum matrix size
- * \param dc dc parameter
- */
-void TComTrQuant::processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, int sizuNum, uint32_t dc)
-{
-    for (uint32_t j = 0; j < height; j++)
-        for (uint32_t i = 0; i < width; i++)
-            dequantcoeff[j * width + i] = invQuantScales * coeff[sizuNum * (j / ratio) + i / ratio];
-
-    if (ratio > 1)
-        dequantcoeff[0] = invQuantScales * dc;
-}
-
-/** initialization process of scaling list array */
-bool TComTrQuant::initScalingList()
-{
-    bool ok = true;
-    for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
-    {
-        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
-        {
-            for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
-            {
-                m_quantCoef[sizeId][listId][rem] = X265_MALLOC(int, g_scalingListSize[sizeId]);
-                m_dequantCoef[sizeId][listId][rem] = X265_MALLOC(int, g_scalingListSize[sizeId]);
-                m_errScale[sizeId][listId][rem] = X265_MALLOC(double, g_scalingListSize[sizeId]);
-
-                ok &= m_quantCoef[sizeId][listId][rem] && m_dequantCoef[sizeId][listId][rem] && m_errScale[sizeId][listId][rem];
-            }
-        }
-    }
-    return ok;
-}
-
-/** destroy quantization matrix array */
-void TComTrQuant::destroyScalingList()
-{
-    for (uint32_t sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
-    {
-        for (uint32_t listId = 0; listId < g_scalingListNum[sizeId]; listId++)
-        {
-            for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
-            {
-                X265_FREE(m_quantCoef[sizeId][listId][rem]);
-                X265_FREE(m_dequantCoef[sizeId][listId][rem]);
-                X265_FREE(m_errScale[sizeId][listId][rem]);
-            }
-        }
-    }
-}
-
-//! \}

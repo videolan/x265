@@ -94,12 +94,18 @@ void Encoder::create()
         for (int i = 0; i < m_param->frameNumThreads; i++)
             m_frameEncoder[i].setThreadPool(m_threadPool);
 
-    if (!m_param->scalingLists || !strcmp(m_param->scalingLists, "off"))
+    if (!m_scalingList.init())
+    {
+        x265_log(m_param, X265_LOG_ERROR, "Unable to allocate scaling list arrays\n");
+        m_aborted = true;
+    }
+    else if (!m_param->scalingLists || !strcmp(m_param->scalingLists, "off"))
         m_scalingList.m_bEnabled = false;
     else if (!strcmp(m_param->scalingLists, "default"))
         m_scalingList.setDefaultScalingList();
     else if (m_scalingList.parseScalingList(m_param->scalingLists))
         m_aborted = true;
+    m_scalingList.setupQuantMatrices();
 
     /* Allocate thread local data shared by all frame encoders */
     ThreadPool *pool = ThreadPool::getThreadPool();
