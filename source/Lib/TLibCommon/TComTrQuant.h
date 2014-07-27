@@ -56,38 +56,28 @@ struct EstBitsSbac
     int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
 };
 
-class QpParam
+struct QpParam
 {
-public:
+    int rem;
+    int per;
+    int qp;
 
     QpParam()
     {
-        m_rem = 0;
-        m_per = 0;
-        m_qp  = 0;
+        rem = 0;
+        per = 0;
+        qp  = 0;
     }
-
-    int m_rem;
-    int m_per;
-    int m_qp;
-
-public:
 
     void setQpParam(int qpScaled)
     {
-        if (m_qp != qpScaled)
+        if (qp != qpScaled)
         {
-            m_rem  = qpScaled % 6;
-            m_per  = qpScaled / 6;
-            m_qp   = qpScaled;
+            rem  = qpScaled % 6;
+            per  = qpScaled / 6;
+            qp   = qpScaled;
         }
     }
-
-    int rem()   const { return m_rem; }
-
-    int per()   const { return m_per; }
-
-    int qp()    const { return m_qp; }
 };
 
 class TComTrQuant

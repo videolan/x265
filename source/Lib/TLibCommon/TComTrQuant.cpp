@@ -244,8 +244,8 @@ uint32_t TComTrQuant::xQuant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize
 
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
-    int rem = m_qpParam[ttype].m_rem;
-    int per = m_qpParam[ttype].m_per;
+    int rem = m_qpParam[ttype].rem;
+    int per = m_qpParam[ttype].per;
     int32_t *quantCoeff = m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -323,8 +323,8 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     }
 
     // Values need to pass as input parameter in dequant
-    int rem = m_qpParam[ttype].m_rem;
-    int per = m_qpParam[ttype].m_per;
+    int rem = m_qpParam[ttype].rem;
+    int per = m_qpParam[ttype].per;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
@@ -427,8 +427,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
-    int rem = m_qpParam[ttype].m_rem;
-    int per = m_qpParam[ttype].m_per;
+    int rem = m_qpParam[ttype].rem;
+    int per = m_qpParam[ttype].per;
     int qbits = QUANT_SHIFT + per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
     int add = (1 << (qbits - 1));
     int32_t *qCoef = m_quantCoef[log2TrSize - 2][scalingListType][rem];
