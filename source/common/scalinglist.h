@@ -48,7 +48,11 @@ public:
         NUM_SIZES
     };
 
-    uint32_t m_refMatrixId[NUM_SIZES][NUM_LISTS];     // used during coding
+    static const uint32_t s_numCoefPerSize[NUM_SIZES];
+    static const uint32_t s_numListsAtSize[NUM_SIZES];
+    static const int s_invQuantScales[NUM_REM];
+    static const int s_quantScales[NUM_REM];
+
     int      m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
     int     *m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix
 
@@ -64,13 +68,17 @@ public:
 
     bool     init();
     void     setDefaultScalingList();
-    bool     checkPredMode(uint32_t sizeId, int listId);
     bool     parseScalingList(const char* filename);
     void     setupQuantMatrices();
+
+    /* used during SPS coding */
+    bool     checkPredMode(uint32_t sizeId, int listId);
+    uint32_t m_refMatrixId[NUM_SIZES][NUM_LISTS];
 
 protected:
 
     static const int SCALING_LIST_DC = 16;    // default DC value
+    static const uint32_t s_scalingListSizeX[NUM_SIZES];
 
     int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
     void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
@@ -79,12 +87,6 @@ protected:
     void     processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, uint32_t sizuNum, uint32_t dc);
     void     processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, uint32_t sizuNum, uint32_t dc);
 };
-
-extern const uint32_t g_scalingListSize[ScalingList::NUM_SIZES];
-extern const uint32_t g_scalingListSizeX[ScalingList::NUM_SIZES];
-extern const uint32_t g_scalingListNum[ScalingList::NUM_SIZES];
-extern const int g_quantScales[ScalingList::NUM_REM];
-extern const int g_invQuantScales[ScalingList::NUM_REM];
 
 }
 

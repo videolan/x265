@@ -745,7 +745,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         int64_t rdFactor = (int64_t)(
-                g_invQuantScales[rem] * g_invQuantScales[rem] * (1 << (2 * per))
+                ScalingList::s_invQuantScales[rem] * ScalingList::s_invQuantScales[rem] * (1 << (2 * per))
                 / (m_lambda * (16 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8))))
                 + 0.5);
         int lastCG = 1;

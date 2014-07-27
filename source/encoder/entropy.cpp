@@ -264,7 +264,7 @@ void Entropy::codeScalingList(ScalingList* scalingList)
 
     for (sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
-        for (listId = 0; listId < g_scalingListNum[sizeId]; listId++)
+        for (listId = 0; listId < ScalingList::s_numListsAtSize[sizeId]; listId++)
         {
             scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
@@ -278,7 +278,7 @@ void Entropy::codeScalingList(ScalingList* scalingList)
 
 void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_t listId)
 {
-    int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)g_scalingListSize[sizeId]);
+    int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)ScalingList::s_numCoefPerSize[sizeId]);
     const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
     int nextCoef = ScalingList::START_VALUE;
     int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
