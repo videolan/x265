@@ -225,7 +225,7 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
     return numSig;
 }
 
-uint32_t TComTrQuant::xQuant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
 {
     TUEntropyCodingParameters codingParameters;
     getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
@@ -292,12 +292,12 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         }
     }
     else
-        xTransformSkip(residual, stride, log2TrSize);
+        transformSkip(residual, stride, log2TrSize);
 
     if (m_useRDOQ && curUseRDOQ)
-        return xRateDistOptQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
+        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
     else
-        return xQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
+        return quant(cu, coeff, log2TrSize, ttype, absPartIdx);
 }
 
 void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
@@ -357,7 +357,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
         primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
     }
     else
-        xITransformSkip(residual, stride, log2TrSize);
+        invTransformSkip(residual, stride, log2TrSize);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -370,7 +370,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
  *  \param stride stride of input residual data
  *  \param size transform size (size x size)
  */
-void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, uint32_t log2TrSize)
+void TComTrQuant::transformSkip(int16_t* resiBlock, uint32_t stride, uint32_t log2TrSize)
 {
     int trSize = 1 << log2TrSize;
     int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
@@ -389,7 +389,7 @@ void TComTrQuant::xTransformSkip(int16_t* resiBlock, uint32_t stride, uint32_t l
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping */
-void TComTrQuant::xITransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize)
+void TComTrQuant::invTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize)
 {
     int trSize = 1 << log2TrSize;
     int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
@@ -408,7 +408,7 @@ void TComTrQuant::xITransformSkip(int16_t* residual, uint32_t stride, uint32_t l
 
 /** Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC */
-uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
 {
     uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -514,9 +514,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                 costCoeff[scanPos] = MAX_DOUBLE;
                 if (scanPos == lastScanPos)
                 {
-                    level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
-                                           levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
-                                           c1c2Idx, qbits, scaleFactor);
+                    level = getCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
+                                          levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
+                                          c1c2Idx, qbits, scaleFactor);
                     sigRateDelta[blkPos] = 0;
                 }
                 else
@@ -525,15 +525,15 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
-                        costSig[scanPos] = xGetRateSigCoef(0, ctxSig);
+                        costSig[scanPos] = getRateSigCoef(0, ctxSig);
                         costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
                     }
                     if (maxAbsLevel)
                     {
-                        curCostSig = xGetRateSigCoef(1, ctxSig);
-                        level = xGetCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
-                                               levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
-                                               c1c2Idx, qbits, scaleFactor);
+                        curCostSig = getRateSigCoef(1, ctxSig);
+                        level = getCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
+                                              levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
+                                              c1c2Idx, qbits, scaleFactor);
                     }
                     else
                         level = 0;
@@ -543,9 +543,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
                 if (level > 0)
                 {
-                    int rateNow = xGetICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                    rateIncUp[blkPos] = xGetICRate(level + 1, level + 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
-                    rateIncDown[blkPos] = xGetICRate(level - 1, level - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
+                    int rateNow = getICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
+                    rateIncUp[blkPos] = getICRate(level + 1, level + 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
+                    rateIncDown[blkPos] = getICRate(level - 1, level - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
                 }
                 else // level == 0
                 {
@@ -612,8 +612,8 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-                    baseCost += xGetRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
-                    costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
+                    baseCost += getRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
+                    costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(0, ctxSig);
                 }
                 else
                 {
@@ -631,9 +631,9 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                         uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                         if (cgScanPos < cgLastScanPos)
                         {
-                            baseCost  += xGetRateSigCoeffGroup(1, ctxSig);
-                            costZeroCG += xGetRateSigCoeffGroup(0, ctxSig);
-                            costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(1, ctxSig);
+                            baseCost   += getRateSigCoeffGroup(1, ctxSig);
+                            costZeroCG += getRateSigCoeffGroup(0, ctxSig);
+                            costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(1, ctxSig);
                         }
 
                         // try to convert the current coeff group from non-zero to all-zero
@@ -647,7 +647,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                             sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
                             if (cgScanPos < cgLastScanPos)
-                                costCoeffGroupSig[cgScanPos] = xGetRateSigCoeffGroup(0, ctxSig);
+                                costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(0, ctxSig);
 
                             // reset coeffs to 0 in this block
                             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -680,14 +680,14 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + getICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][0]);
+        baseCost += getICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][1]);
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost  = blockUncodedCost + xGetICost(m_estBitsSbac.blockCbpBits[ctxCbf][0]);
-        baseCost += xGetICost(m_estBitsSbac.blockCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + getICost(m_estBitsSbac.blockCbpBits[ctxCbf][0]);
+        baseCost += getICost(m_estBitsSbac.blockCbpBits[ctxCbf][1]);
     }
 
     bool foundLast = false;
@@ -706,7 +706,7 @@ uint32_t TComTrQuant::xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint3
                 {
                     uint32_t posY = blkPos >> log2TrSize;
                     uint32_t posX = blkPos - (posY << log2TrSize);
-                    double costLast = codingParameters.scanType == SCAN_VER ? xGetRateLast(posY, posX) : xGetRateLast(posX, posY);
+                    double costLast = codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
                     double totalCost = baseCost + costLast - costSig[scanPos];
 
                     if (totalCost < bestCost)
@@ -957,18 +957,18 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
-inline uint32_t TComTrQuant::xGetCodedLevel(double&      codedCost,
-                                            const double curCostSig,
-                                            double&      codedCostSig,
-                                            int          levelDouble,
-                                            uint32_t     maxAbsLevel,
-                                            uint32_t     baseLevel,
-                                            const int *  greaterOneBits,
-                                            const int *  levelAbsBits,
-                                            uint32_t     absGoRice,
-                                            uint32_t     c1c2Idx,
-                                            int          qbits,
-                                            double       scaleFactor) const
+inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
+                                           const double curCostSig,
+                                           double&      codedCostSig,
+                                           int          levelDouble,
+                                           uint32_t     maxAbsLevel,
+                                           uint32_t     baseLevel,
+                                           const int *  greaterOneBits,
+                                           const int *  levelAbsBits,
+                                           uint32_t     absGoRice,
+                                           uint32_t     c1c2Idx,
+                                           int          qbits,
+                                           double       scaleFactor) const
 {
     uint32_t bestAbsLevel = 0;
     int32_t minAbsLevel = maxAbsLevel - 1;
@@ -991,7 +991,7 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&      codedCost,
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         X265_CHECK(fabs((double)err2 - double(levelDouble  - (absLevel << qbits)) * double(levelDouble  - (absLevel << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
-        double curCost = err2 + xGetICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
+        double curCost = err2 + getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
         if (curCost < bestCodedCost)
@@ -1010,12 +1010,12 @@ inline uint32_t TComTrQuant::xGetCodedLevel(double&      codedCost,
 }
 
 /** Calculates the cost for specific absolute transform level */
-inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
-                                          int32_t    diffLevel,
-                                          const int *greaterOneBits,
-                                          const int *levelAbsBits,
-                                          uint32_t   absGoRice,
-                                          uint32_t   c1c2Idx) const
+inline double TComTrQuant::getICRateCost(uint32_t   absLevel,
+                                         int32_t    diffLevel,
+                                         const int *greaterOneBits,
+                                         const int *levelAbsBits,
+                                         uint32_t   absGoRice,
+                                         uint32_t   c1c2Idx) const
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
     uint32_t rate = IEP_RATE;
@@ -1057,15 +1057,15 @@ inline double TComTrQuant::xGetICRateCost(uint32_t   absLevel,
             rate += levelAbsBits[1];
     }
 
-    return xGetICost(rate);
+    return getICost(rate);
 }
 
-inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
-                                   int32_t    diffLevel,
-                                   const int *greaterOneBits,
-                                   const int *levelAbsBits,
-                                   uint32_t   absGoRice,
-                                   uint32_t   c1c2Idx) const
+inline int TComTrQuant::getICRate(uint32_t   absLevel,
+                                  int32_t    diffLevel,
+                                  const int *greaterOneBits,
+                                  const int *levelAbsBits,
+                                  uint32_t   absGoRice,
+                                  uint32_t   c1c2Idx) const
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
@@ -1125,7 +1125,7 @@ inline int TComTrQuant::xGetICRate(uint32_t   absLevel,
  * \param posy Y coordinate of the last significant coefficient
  * \returns cost of last significant coefficient
  */
-inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
+inline double TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
 {
     uint32_t ctxX = getGroupIdx(posx);
     uint32_t ctxY = getGroupIdx(posy);
@@ -1136,7 +1136,7 @@ inline double TComTrQuant::xGetRateLast(uint32_t posx, uint32_t posy) const
 
     cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
     cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
-    return xGetICost(cost);
+    return getICost(cost);
 }
 
 /** Context derivation process of coeff_abs_significant_flag

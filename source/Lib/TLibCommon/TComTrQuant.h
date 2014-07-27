@@ -124,26 +124,40 @@ private:
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
-    void xITransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
-    void xTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+    void invTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
+    void transformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
 
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
-    uint32_t xQuant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+    uint32_t quant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     /* RDOQ functions */
 
-    uint32_t xRateDistOptQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
+    uint32_t rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
-    inline uint32_t xGetCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
-                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
-                                   uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
+    inline uint32_t getCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
+                                  uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
+                                  uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
 
-    inline double xGetICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
-    inline int    xGetICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const;
-    inline double xGetRateLast(uint32_t posx, uint32_t posy) const;
-    inline double xGetRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup]; }
-    inline double xGetRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const { return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig]; }
-    inline double xGetICost(double rate) const { return m_lambda * rate; } ///< Get the cost for a specific rate
+    inline double getICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits,
+                                uint32_t absGoRice, uint32_t c1c2Idx) const;
+
+    inline int    getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits,
+                            uint32_t absGoRice, uint32_t c1c2Idx) const;
+
+    inline double getRateLast(uint32_t posx, uint32_t posy) const;
+
+    inline double getRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const
+    {
+        return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup];
+    }
+    inline double getRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const
+    {
+        return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig];
+    }
+    inline double getICost(double rate) const ///< Get the cost for a specific rate
+    {
+        return m_lambda * rate;
+    }
 
     /* Scaling list maintenance */
 
