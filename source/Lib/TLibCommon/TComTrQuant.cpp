@@ -1178,7 +1178,7 @@ void TComTrQuant::setErrScaleCoeff(uint32_t list, uint32_t size, uint32_t rem)
 }
 
 /** set quantized matrix coefficient for encode */
-void TComTrQuant::xSetScalingListEnc(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
+void TComTrQuant::setScalingListEnc(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
 {
     uint32_t width = g_scalingListSizeX[sizeId];
     uint32_t height = g_scalingListSizeX[sizeId];
@@ -1190,7 +1190,7 @@ void TComTrQuant::xSetScalingListEnc(ScalingList *scalingList, uint32_t listId, 
 }
 
 /** set quantized matrix coefficient for decode */
-void TComTrQuant::xSetScalingListDec(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
+void TComTrQuant::setScalingListDec(ScalingList *scalingList, uint32_t listId, uint32_t sizeId, uint32_t rem)
 {
     uint32_t width = g_scalingListSizeX[sizeId];
     uint32_t height = g_scalingListSizeX[sizeId];
@@ -1210,8 +1210,8 @@ void TComTrQuant::setScalingList(ScalingList *scalingList)
         {
             for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
             {
-                xSetScalingListEnc(scalingList, list, size, rem);
-                xSetScalingListDec(scalingList, list, size, rem);
+                setScalingListEnc(scalingList, list, size, rem);
+                setScalingListDec(scalingList, list, size, rem);
                 setErrScaleCoeff(list, size, rem);
             }
         }
@@ -1227,7 +1227,7 @@ void TComTrQuant::setFlatScalingList()
         {
             for (uint32_t rem = 0; rem < ScalingList::NUM_REM; rem++)
             {
-                xsetFlatScalingList(list, size, rem);
+                setFlatScalingList(list, size, rem);
                 setErrScaleCoeff(list, size, rem);
             }
         }
@@ -1235,7 +1235,7 @@ void TComTrQuant::setFlatScalingList()
 }
 
 /** set flat matrix value to quantized coefficient */
-void TComTrQuant::xsetFlatScalingList(uint32_t list, uint32_t size, uint32_t rem)
+void TComTrQuant::setFlatScalingList(uint32_t list, uint32_t size, uint32_t rem)
 {
     uint32_t num = g_scalingListSize[size];
     int quantScales = g_quantScales[rem];
