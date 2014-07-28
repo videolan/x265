@@ -60,8 +60,9 @@ LevelSpec levels[] =
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
-    vps.ptl.profileIdc = Profile::NONE;
-    if (param.internalCsp == X265_CSP_I420)
+    if (param.bLossless)
+        vps.ptl.profileIdc = Profile::NONE;
+    else if (param.internalCsp == X265_CSP_I420)
     {
         if (param.internalBitDepth == 8)
         {
@@ -76,6 +77,7 @@ void determineLevel(const x265_param &param, VPS& vps)
     else
     {
         /* TODO: Range extension profiles */
+        vps.ptl.profileIdc = Profile::NONE;
     }
 
     /* determine which profiles are compatible with this stream */
