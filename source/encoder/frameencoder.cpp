@@ -156,7 +156,6 @@ void FrameEncoder::compressFrame()
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_picSym->m_slice;
-    int totalCoded = m_rce.encodeOrder;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -168,11 +167,69 @@ void FrameEncoder::compressFrame()
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
+    if (m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders)
+        m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
+
+    // Weighted Prediction parameters estimation.
+    bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
+    bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
+    if (bUseWeightP || bUseWeightB)
+        weightAnalyse(*slice, *m_param);
+    else
+        slice->disableWeights();
+
+    // Generate motion references
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    for (int l = 0; l < numPredDir; l++)
+    {
+        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
+        {
+            WeightParam *w = NULL;
+            if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
+                w = slice->m_weightPredTable[l][ref];
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->getPicYuvRec(), w);
+        }
+    }
+
+    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
+    if (!m_outStreams)
+    {
+        m_outStreams = new Bitstream[numSubstreams];
+        m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
+    }
+    else
+        for (uint32_t i = 0; i < numSubstreams; i++)
+            m_outStreams[i].resetBits();
+
+    /* Get the QP for this frame from rate control. This call may block until
+     * frames ahead of it in encode order have called rateControlEnd() */
+    int qp = m_top->m_rateControl->rateControlStart(m_frame, m_top->m_lookahead, &m_rce, m_top);
+    m_rce.newQp = qp;
+
+    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
+    m_frameFilter.m_sao.lumaLambda = x265_lambda2_tab[qp];
+    m_frameFilter.m_sao.chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
+    switch (slice->m_sliceType)
+    {
+    case I_SLICE:
+        m_frameFilter.m_sao.depth = 0;
+        break;
+    case P_SLICE:
+        m_frameFilter.m_sao.depth = 1;
+        break;
+    case B_SLICE:
+        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
+        break;
+    }
+    m_frameFilter.start(m_frame);
+
+    // Clip slice QP to 0-51 spec range before encoding
+    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+    slice->m_sliceQp = qp;
+    m_frame->m_avgQpAq = qp;
+
     if (m_frame->m_lowres.bKeyframe)
     {
-        if (m_param->bRepeatHeaders)
-            m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
-
         if (m_param->bEmitHRDSEI)
         {
             SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
@@ -190,7 +247,7 @@ void FrameEncoder::compressFrame()
 
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
-            m_top->m_lastBPSEI = totalCoded;
+            m_top->m_lastBPSEI = m_rce.encodeOrder;
         }
 
         // The recovery point SEI message assists a decoder in determining when the decoding
@@ -238,51 +295,14 @@ void FrameEncoder::compressFrame()
             // access unit associated with the picture timing SEI message has to
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
-            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, totalCoded - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
-            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - totalCoded;
+            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
+            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
 
         m_bs.resetBits();
         sei->write(m_bs, *slice->m_sps);
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
-
-    switch (slice->m_sliceType)
-    {
-    case I_SLICE:
-        m_frameFilter.m_sao.depth = 0;
-        break;
-    case P_SLICE:
-        m_frameFilter.m_sao.depth = 1;
-        break;
-    case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
-        break;
-    }
-
-    // Weighted Prediction parameters estimation.
-    bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
-    bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
-    if (bUseWeightP || bUseWeightB)
-        weightAnalyse(*slice, *m_param);
-    else
-        slice->disableWeights();
-
-    // Generate motion references
-    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-    for (int l = 0; l < numPredDir; l++)
-    {
-        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
-        {
-            WeightParam *w = NULL;
-            if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
-                w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->getPicYuvRec(), w);
-        }
-    }
-
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
 
     // Analyze CTU rows, most of the hard work is done here
     // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
@@ -314,17 +334,6 @@ void FrameEncoder::compressFrame()
         for (int row = 0; row < m_numRows; row++)
             m_frameFilter.processRowPost(row);
     }
-
-    /* start slice NALunit */
-    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    if (!m_outStreams)
-    {
-        m_outStreams = new Bitstream[numSubstreams];
-        m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
-    }
-    else
-        for (uint32_t i = 0; i < numSubstreams; i++)
-            m_outStreams[i].resetBits();
 
     m_bs.resetBits();
     m_entropyCoder.resetEntropy(slice);
@@ -379,16 +388,6 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
     }
 
-    // Decrement referenced frame reference counts, allow them to be recycled
-    for (int l = 0; l < numPredDir; l++)
-    {
-        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
-        {
-            Frame *refpic = slice->m_refPicList[l][ref];
-            ATOMIC_DEC(&refpic->m_countRefEncoders);
-        }
-    }
-
     uint64_t bytes = 0;
     for (uint32_t i = 0; i < m_nalList.m_numNal; i++)
     {
@@ -403,12 +402,23 @@ void FrameEncoder::compressFrame()
         }
     }
     m_accessUnitBits = bytes << 3;
+
+    m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
+    /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
     if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
         m_top->m_aborted = true;
 
     noiseReductionUpdate();
 
-    m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
+    // Decrement referenced frame reference counts, allow them to be recycled
+    for (int l = 0; l < numPredDir; l++)
+    {
+        for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
+        {
+            Frame *refpic = slice->m_refPicList[l][ref];
+            ATOMIC_DEC(&refpic->m_countRefEncoders);
+        }
+    }
 }
 
 void FrameEncoder::encodeSlice()
@@ -508,28 +518,6 @@ void FrameEncoder::compressCTURows()
     PPAScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_picSym->m_slice;
 
-    // set slice QP
-    m_top->m_rateControl->rateControlStart(m_frame, m_top->m_lookahead, &m_rce, m_top);
-
-    int qp = slice->m_sliceQp;
-
-    int chromaQPOffset = slice->m_pps->chromaCbQpOffset;
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + chromaQPOffset);
-    
-    double lambda = x265_lambda2_tab[qp];
-    /* Assuming qpCb and qpCr are the same, since SAO takes only a single chroma lambda. TODO: Check why */
-    double chromaLambda = x265_lambda2_tab[qpCb];
-
-    // NOTE: set SAO lambda every Frame
-    m_frameFilter.m_sao.lumaLambda = lambda;
-    m_frameFilter.m_sao.chromaLambda = chromaLambda;
-    m_frameFilter.start(m_frame);
-
-    // Clip qps back to 0-51 range before encoding
-    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->m_sliceQp = qp;
-    m_frame->m_avgQpAq = qp;
-
     // reset entropy coders
     m_entropyCoder.resetEntropy(slice);
     for (int i = 0; i < this->m_numRows; i++)
@@ -541,14 +529,17 @@ void FrameEncoder::compressCTURows()
         m_rows[i].m_busy = false;
     }
 
-    bool bUseWeightP = slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE;
-    bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE;
-    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
 
     m_SSDY = m_SSDU = m_SSDV = 0;
     m_ssim = 0;
     m_ssimCnt = 0;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
+
+    bool bUseWeightP = slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE;
+    bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE;
+    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_rows[0].m_active = true;
     if (m_pool && m_param->bEnableWavefront)
@@ -589,7 +580,7 @@ void FrameEncoder::compressCTURows()
     {
         for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
-            // Encoder
+            // Encode
             if (i < m_numRows)
             {
                 // block until all reference frames have reconstructed the rows we need

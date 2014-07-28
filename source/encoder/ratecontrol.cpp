@@ -1048,7 +1048,7 @@ int RateControl::rateControlSliceType(int frameNum)
         return X265_TYPE_AUTO;
 }
 
-void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
+int RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
 {
     int orderValue = m_startEndOrder.get();
     int startOrdinal = rce->encodeOrder * 2;
@@ -1060,7 +1060,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     {
         // faked rateControlStart calls when the encoder is flushing
         m_startEndOrder.incr();
-        return;
+        return 0;
     }
 
     m_curSlice = pic->m_picSym->m_slice;
@@ -1142,9 +1142,7 @@ void RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* r
     // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
     // to wait until rateControlUpdateStats of this frame is called
     m_framesDone++;
-    rce->newQp = m_qp;
-    /* set the final QP to slice structure */
-    m_curSlice->m_sliceQp = m_qp;
+    return m_qp;
 }
 
 void RateControl::accumPQpUpdate()
