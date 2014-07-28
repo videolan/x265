@@ -263,10 +263,10 @@ void Entropy::codeScalingList(ScalingList* scalingList)
     {
         for (int listId = 0; listId < ScalingList::s_numListsAtSize[sizeId]; listId++)
         {
-            bool scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
-            WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
-            if (!scalingListPredModeFlag) // Copy Mode
-                WRITE_UVLC(listId - scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
+            int predList = scalingList->checkPredMode(sizeId, listId);
+            WRITE_FLAG(predList < 0, "scaling_list_pred_mode_flag");
+            if (predList >= 0)
+                WRITE_UVLC(listId - predList, "scaling_list_pred_matrix_id_delta");
             else // DPCM Mode
                 codeScalingList(scalingList, sizeId, listId);
         }

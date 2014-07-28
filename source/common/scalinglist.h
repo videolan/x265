@@ -64,8 +64,7 @@ public:
     void     setupQuantMatrices();
 
     /* used during SPS coding */
-    bool     checkPredMode(int sizeId, int listId);
-    int      m_refMatrixId[NUM_SIZES][NUM_LISTS];
+    int      checkPredMode(int sizeId, int listId);
 
 protected:
 

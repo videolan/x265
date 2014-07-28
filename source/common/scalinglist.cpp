@@ -170,22 +170,23 @@ ScalingList::~ScalingList()
     }
 }
 
-  
-bool ScalingList::checkPredMode(int sizeId, int listId)
+/* returns predicted list index if a match is found, else -1 */ 
+int ScalingList::checkPredMode(int size, int list)
 {
-    for (int predListIdx = listId; predListIdx >= 0; predListIdx--)
+    for (int predList = list; predList >= 0; predList--)
     {
-        if (!memcmp(m_scalingListCoef[sizeId][listId],
-                    listId == predListIdx ? getScalingListDefaultAddress(sizeId, predListIdx) : m_scalingListCoef[sizeId][predListIdx],
-                    sizeof(int32_t) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeId])) // check value of matrix
-            && ((sizeId < BLOCK_16x16) || (m_scalingListDC[sizeId][listId] == m_scalingListDC[sizeId][predListIdx]))) // check DC value
-        {
-            m_refMatrixId[sizeId][listId] = predListIdx;
-            return false;
-        }
+        // check DC value
+        if (size < BLOCK_16x16 && m_scalingListDC[size][list] != m_scalingListDC[size][predList])
+            continue;
+
+        // check value of matrix
+        if (!memcmp(m_scalingListCoef[size][list],
+                    list == predList ? getScalingListDefaultAddress(size, predList) : m_scalingListCoef[size][predList],
+                    sizeof(int32_t) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[size])))
+            return predList;
     }
 
-    return true;
+    return -1;
 }
 
 /* check if use default quantization matrix
