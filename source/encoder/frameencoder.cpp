@@ -360,25 +360,19 @@ void FrameEncoder::compressFrame()
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
             for (int i = 0; i < 3; i++)
-            {
                 MD5Final(&m_state[i], m_seiReconPictureDigest.m_digest[i]);
-            }
         }
         else if (m_param->decodedPictureHashSEI == 2)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
             for (int i = 0; i < 3; i++)
-            {
                 crcFinish(m_crc[i], m_seiReconPictureDigest.m_digest[i]);
-            }
         }
         else if (m_param->decodedPictureHashSEI == 3)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
             for (int i = 0; i < 3; i++)
-            {
                 checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
-            }
         }
 
         m_bs.resetBits();
