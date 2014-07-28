@@ -430,9 +430,15 @@ void Lookahead::slicetypeDecide()
     }
 
     /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
-    if (m_param->rc.rateControlMode != X265_RC_CQP && maxSearch > 0)
+    if (m_param->rc.rateControlMode != X265_RC_CQP)
     {
         int p0, p1, b;
+        /* For zero latency tuning, calculate frame cost to be used later in RC */
+        if (!maxSearch)
+        {
+            for (int i = 0; i <= bframes; i++)
+               frames[i + 1] = &list[i]->m_lowres;
+        }
 
         /* estimate new non-B cost */
         p1 = b = bframes + 1;
