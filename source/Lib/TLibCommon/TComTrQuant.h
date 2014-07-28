@@ -116,7 +116,6 @@ public:
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
-    void invTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
     void transformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize);
 
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);

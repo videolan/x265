@@ -326,7 +326,22 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
         primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
     }
 
-    if (!useTransformSkip)
+    if (useTransformSkip)
+    {
+        int trSize = 1 << log2TrSize;
+
+        if (shift > 0)
+            primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
+        else
+        {
+            // The case when X265_DEPTH >= 13
+            shift = -shift;
+            for (int j = 0; j < trSize; j++)
+                for (int k = 0; k < trSize; k++)
+                    residual[j * stride + k] = m_resiDctCoeff[j * trSize + k] << shift;
+        }
+    }
+    else
     {
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
@@ -350,8 +365,6 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
         // TODO: this may need larger data types for X265_DEPTH > 8
         primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
     }
-    else
-        invTransformSkip(residual, stride, log2TrSize);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -379,24 +392,6 @@ void TComTrQuant::transformSkip(int16_t* resiBlock, uint32_t stride, uint32_t lo
         for (int j = 0; j < trSize; j++)
             for (int k = 0; k < trSize; k++)
                 m_resiDctCoeff[j * trSize + k] = (resiBlock[j * stride + k] + offset) >> shift;
-    }
-}
-
-/** Wrapper function between HM interface and core 4x4 transform skipping */
-void TComTrQuant::invTransformSkip(int16_t* residual, uint32_t stride, uint32_t log2TrSize)
-{
-    int trSize = 1 << log2TrSize;
-    int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-
-    if (shift > 0)
-        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
-    else
-    {
-        // The case when X265_DEPTH >= 13
-        shift = -shift;
-        for (int j = 0; j < trSize; j++)
-            for (int k = 0; k < trSize; k++)
-                residual[j * stride + k] = m_resiDctCoeff[j * trSize + k] << shift;
     }
 }
 
