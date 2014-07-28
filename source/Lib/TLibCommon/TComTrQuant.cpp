@@ -314,18 +314,16 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
 
-    if (!m_scalingList->m_bEnabled)
+    if (m_scalingList->m_bEnabled)
     {
-        static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
-        int scale = invQuantScales[rem] << per;
-        primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
+        int scalingListType = (bIntra ? 0 : 3) + ttype;
+        int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+        primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
     {
-        int scalingListType = (!bIntra ? 3 : 0) + ttype;
-        X265_CHECK(scalingListType < 6, "scalingListType invalid %d\n", scalingListType);
-        int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
-        primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
+        int scale = m_scalingList->s_invQuantScales[rem] << per;
+        primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
     }
 
     if (!useTransformSkip)
