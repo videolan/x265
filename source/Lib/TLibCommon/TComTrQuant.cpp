@@ -257,10 +257,10 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
                                    bool        useTransformSkip,
                                    bool        curUseRDOQ)
 {
+    int trSize = 1 << log2TrSize;
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         uint32_t numSig = 0;
-        int trSize = 1 << log2TrSize;
         for (int k = 0; k < trSize; k++)
         {
             for (int j = 0; j < trSize; j++)
@@ -274,9 +274,25 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
     }
 
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
-    if (!useTransformSkip)
+    if (useTransformSkip)
     {
-        // TODO: this may need larger data types for X265_DEPTH > 8
+        int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
+
+        if (shift >= 0)
+            primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, shift, trSize);
+        else
+        {
+            // The case when X265_DEPTH > 13
+            shift = -shift;
+            int offset = (1 << (shift - 1));
+            for (int j = 0; j < trSize; j++)
+                for (int k = 0; k < trSize; k++)
+                    m_resiDctCoeff[j * trSize + k] = (residual[j * stride + k] + offset) >> shift;
+        }
+    }
+    else
+    {
+        // TODO: this may need larger data types for X265_DEPTH > 10
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = (sizeIdx == 0 && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA);
         int index = DCT_4x4 + sizeIdx - useDST;
@@ -287,8 +303,6 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
             m_nr->count[sizeIdx]++;
         }
     }
-    else
-        transformSkip(residual, stride, log2TrSize);
 
     if (m_useRDOQ && curUseRDOQ)
         return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
@@ -370,30 +384,6 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
 // ------------------------------------------------------------------------------------------------
 // Logical transform
 // ------------------------------------------------------------------------------------------------
-
-/** Wrapper function between HM interface and core 4x4 transform skipping
- *  \param resiBlock input data (residual)
- *  \param psCoeff output data (transform coefficients)
- *  \param stride stride of input residual data
- *  \param size transform size (size x size)
- */
-void TComTrQuant::transformSkip(int16_t* resiBlock, uint32_t stride, uint32_t log2TrSize)
-{
-    int trSize = 1 << log2TrSize;
-    int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-
-    if (shift >= 0)
-        primitives.cvt16to32_shl(m_resiDctCoeff, resiBlock, stride, shift, trSize);
-    else
-    {
-        // The case when X265_DEPTH > 13
-        shift = -shift;
-        int offset = (1 << (shift - 1));
-        for (int j = 0; j < trSize; j++)
-            for (int k = 0; k < trSize; k++)
-                m_resiDctCoeff[j * trSize + k] = (resiBlock[j * stride + k] + offset) >> shift;
-    }
-}
 
 /** Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC */
