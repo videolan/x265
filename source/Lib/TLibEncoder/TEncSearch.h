@@ -149,14 +149,15 @@ public:
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv,
-                                   TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ);
+                                   TComYuv* reconYuv, bool curUseRDOQ);
+    void encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* reconYuv);
 
     void xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
                              TComYuv* predYuv, ShortYuv* resiYuv, uint32_t& distY, bool bCheckFirst,
                              uint64_t& dRDCost);
     void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
-    void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes);
+    void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
 
     void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, uint32_t depth,
                              uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);

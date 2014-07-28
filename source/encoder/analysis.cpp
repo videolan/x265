@@ -665,7 +665,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     }
 
                     encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                              m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
+                                              m_bestResiYuv[depth], m_bestRecoYuv[depth], true);
                     uint64_t bestMergeCost = m_rdCost.psyRdEnabled() ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
                     uint64_t bestCost = m_rdCost.psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                     if (bestMergeCost < bestCost)
@@ -738,7 +738,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         }
 
                         encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                                  m_bestResiYuv[depth], m_bestRecoYuv[depth], false, true);
+                                                  m_bestResiYuv[depth], m_bestRecoYuv[depth], true);
                         m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                     }
                     else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
@@ -763,10 +763,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         }
 
                         m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], outBestCU->getLog2CUSize(0));
-                        generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth], false);
+                        generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
                     }
                     else
-                        generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth], false);
+                        generateCoeffRecon(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
                 }
                 else if (m_param->rdLevel == 0)
                 {
@@ -1419,13 +1419,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             else
             {
                 //No-residue mode
-                encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true, true);
+                encodeResAndCalcRdSkipCU(outBestCU, m_origYuv[depth], bestPredYuv, m_tmpRecoYuv[depth]);
                 std::swap(yuvReconBest, m_tmpRecoYuv[depth]);
                 m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
             }
 
             //Encode with residue
-            encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
+            encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], bestPredYuv, m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
 
             uint64_t tempCost = m_rdCost.psyRdEnabled() ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
             uint64_t bestCost = m_rdCost.psyRdEnabled() ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
@@ -1487,14 +1487,20 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     outTempCU->getPartIndexAndSize(0, m_partAddr, m_width, m_height);
                     motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, true);
                     // estimate residual and encode everything
-                    encodeResAndCalcRdInterCU(outTempCU,
-                                              m_origYuv[depth],
-                                              m_tmpPredYuv[depth],
-                                              m_tmpResiYuv[depth],
-                                              m_bestResiYuv[depth],
-                                              m_tmpRecoYuv[depth],
-                                              !!noResidual,
-                                              true);
+                    if (noResidual)
+                        encodeResAndCalcRdSkipCU(outTempCU,
+                                                 m_origYuv[depth],
+                                                 m_tmpPredYuv[depth],
+                                                 m_tmpRecoYuv[depth]);
+                    else
+                        encodeResAndCalcRdInterCU(outTempCU,
+                                                  m_origYuv[depth],
+                                                  m_tmpPredYuv[depth],
+                                                  m_tmpResiYuv[depth],
+                                                  m_bestResiYuv[depth],
+                                                  m_tmpRecoYuv[depth],
+                                                  true);
+
 
                     /* Todo: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !outTempCU->getQtRootCbf(0))
@@ -1577,7 +1583,7 @@ void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, 
 
     if (predInterSearch(outTempCU, m_tmpPredYuv[depth], bUseMRG, true))
     {
-        encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], false, true);
+        encodeResAndCalcRdInterCU(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth], true);
         checkDQP(outTempCU);
         checkBestMode(outBestCU, outTempCU, depth);
     }
@@ -1922,7 +1928,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
     else
     {
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
-        generateCoeffRecon(cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth],  m_tmpRecoYuv[depth], false);
+        generateCoeffRecon(cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
         checkDQP(cu);
         m_tmpRecoYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), lcu->getAddr(), absPartIdx);
         cu->copyCodedToPic(depth);

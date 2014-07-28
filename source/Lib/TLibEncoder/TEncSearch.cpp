@@ -2268,24 +2268,9 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
     mvmax.y = X265_MIN(mvmax.y, m_refLagPixels);
 }
 
-/** encode residual and calculate rate-distortion for a CU block
- * \param cu
- * \param fencYuv
- * \param predYuv
- * \param outResiYuv
- * \param outBestResiYuv
- * \param outReconYuv
- * \param bSkipRes
- * \returns void
- */
-void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv,
-                                           ShortYuv* outBestResiYuv, TComYuv* outReconYuv, bool bSkipRes, bool curUseRDOQ)
+void TEncSearch::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* outReconYuv)
 {
-    if (cu->isIntra(0))
-        return;
-
-    uint32_t bits = 0, bestBits = 0, bestCoeffBits = 0;
-    uint32_t distortion = 0, bestDist = 0;
+    X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
     uint32_t log2CUSize = cu->getLog2CUSize(0);
     uint32_t cuSize = 1 << log2CUSize;
@@ -2295,76 +2280,95 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
     // No residual coding : SKIP mode
-    if (bSkipRes)
+
+    cu->setSkipFlagSubParts(true, 0, depth);
+    cu->setTrIdxSubParts(0, 0, depth);
+    cu->clearCbf(0, depth);
+
+    outReconYuv->copyFromYuv(predYuv);
+    // Luma
+    int part = partitionFromLog2Size(log2CUSize);
+    uint32_t distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
+    // Chroma
+    part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
+    distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+    distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+
+    m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
+    m_entropyCoder->resetBits();
+    if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+        m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
+    m_entropyCoder->codeSkipFlag(cu, 0);
+    m_entropyCoder->codeMergeIndex(cu, 0);
+
+    uint32_t bits = m_entropyCoder->getNumberOfWrittenBits();
+    cu->m_mvBits = bits;
+    cu->m_coeffBits = 0;
+    cu->m_totalBits       = bits;
+    cu->m_totalDistortion = distortion;
+    if (m_rdCost.psyRdEnabled())
     {
-        cu->setSkipFlagSubParts(true, 0, depth);
-
-        outReconYuv->copyFromYuv(predYuv);
-        // Luma
-        int part = partitionFromLog2Size(log2CUSize);
-        distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        // Chroma
-        part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
-        distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-        distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
-
-        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-        m_entropyCoder->resetBits();
-        if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-            m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
-        m_entropyCoder->codeSkipFlag(cu, 0);
-        m_entropyCoder->codeMergeIndex(cu, 0);
-
-        bits = m_entropyCoder->getNumberOfWrittenBits();
-        cu->m_mvBits = bits;
-        cu->m_coeffBits = 0;
-        cu->m_totalBits       = bits;
-        cu->m_totalDistortion = distortion;
-        if (m_rdCost.psyRdEnabled())
-        {
-            int size = log2CUSize - 2;
-            cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                                               outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-        }
-        else
-            cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
-
-        m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
-
-        cu->clearCbf(0, depth);
-        cu->setTrIdxSubParts(0, 0, depth);
-        return;
+        int size = log2CUSize - 2;
+        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
+                                           outReconYuv->getLumaAddr(), outReconYuv->getStride());
+        cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
     }
+    else
+        cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+
+    m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
+}
+
+/** encode residual and calculate rate-distortion for a CU block
+ * \param cu
+ * \param fencYuv
+ * \param predYuv
+ * \param outResiYuv
+ * \param outBestResiYuv
+ * \param outReconYuv
+ * \returns void
+ */
+void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv,
+                                           ShortYuv* outBestResiYuv, TComYuv* outReconYuv, bool curUseRDOQ)
+{
+    X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
+
+    uint32_t bestBits = 0, bestCoeffBits = 0;
+
+    uint32_t log2CUSize = cu->getLog2CUSize(0);
+    uint32_t cuSize = 1 << log2CUSize;
+    uint8_t  depth  = cu->getDepth(0);
+
+    int hChromaShift = CHROMA_H_SHIFT(m_csp);
+    int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
     m_trQuant.setQPforQuant(cu);
 
     outResiYuv->subtract(fencYuv, predYuv, log2CUSize);
 
     // Residual coding.
-    bool bIsTQBypassEnable = false, bIsLosslessMode = false;
+    bool bIsTQBypassEnable = cu->m_slice->m_pps->bTransquantBypassEnabled;
     uint32_t tqBypassMode  = 1;
 
-    if ((cu->m_slice->m_pps->bTransquantBypassEnabled))
+    if (bIsTQBypassEnable)
     {
-        bIsTQBypassEnable = true; // mark that the first iteration is to cost TQB mode.
-        tqBypassMode = 2;
-        if (m_param->bLossless)
-            tqBypassMode = 1;
+        // mark that the first iteration is to cost TQB mode.
+        if (!m_param->bLossless)
+            tqBypassMode = 2;
     }
 
     uint64_t bestCost = MAX_INT64;
 
     for (uint32_t modeId = 0; modeId < tqBypassMode; modeId++)
     {
-        bIsLosslessMode = bIsTQBypassEnable && !modeId;
+        bool bIsLosslessMode = bIsTQBypassEnable && !modeId;
 
         cu->setCUTransquantBypassSubParts(bIsLosslessMode, 0, depth);
 
         uint64_t cost = 0;
         uint32_t zeroDistortion = 0;
-        bits = 0;
-        distortion = 0;
+        uint32_t bits = 0;
+        uint32_t distortion = 0;
 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
         xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, curUseRDOQ);
@@ -2426,48 +2430,42 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             bestCoeffBits = cu->m_coeffBits;
             m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
         }
-
-        X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
-
-        if (cu->getQtRootCbf(0))
-            outReconYuv->addClip(predYuv, outBestResiYuv, log2CUSize);
-        else
-            outReconYuv->copyFromYuv(predYuv);
-
-        // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-        int part = partitionFromLog2Size(log2CUSize);
-        bestDist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
-        part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
-        bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-        bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
-        if (m_rdCost.psyRdEnabled())
-        {
-            int size = log2CUSize - 2;
-            cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                                               outReconYuv->getLumaAddr(), outReconYuv->getStride());
-            cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
-        }
-        else
-            cu->m_totalRDCost = m_rdCost.calcRdCost(bestDist, bestBits);
-        cu->m_totalBits       = bestBits;
-        cu->m_totalDistortion = bestDist;
-        cu->m_coeffBits = bestCoeffBits;
-        cu->m_mvBits = bestBits - bestCoeffBits;
-
-        if (cu->isSkipped(0))
-            cu->clearCbf(0, depth);
     }
+
+    X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
+
+    if (cu->getQtRootCbf(0))
+        outReconYuv->addClip(predYuv, outBestResiYuv, log2CUSize);
+    else
+        outReconYuv->copyFromYuv(predYuv);
+
+    // update with clipped distortion and cost (qp estimation loop uses unclipped values)
+    int part = partitionFromLog2Size(log2CUSize);
+    uint32_t bestDist = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
+    part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
+    bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+    bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+    if (m_rdCost.psyRdEnabled())
+    {
+        int size = log2CUSize - 2;
+        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
+                                           outReconYuv->getLumaAddr(), outReconYuv->getStride());
+        cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
+    }
+    else
+        cu->m_totalRDCost = m_rdCost.calcRdCost(bestDist, bestBits);
+
+    cu->m_totalBits       = bestBits;
+    cu->m_totalDistortion = bestDist;
+    cu->m_coeffBits = bestCoeffBits;
+    cu->m_mvBits = bestBits - bestCoeffBits;
+
+    if (cu->isSkipped(0))
+        cu->clearCbf(0, depth);
 }
 
-void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes)
+void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
 {
-    if (skipRes && cu->getPredictionMode(0) == MODE_INTER && cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N)
-    {
-        reconYuv->copyFromYuv(predYuv);
-        cu->clearCbf(0, cu->getDepth(0));
-        return;
-    }
-
     m_trQuant.setQPforQuant(cu);
 
     if (cu->getPredictionMode(0) == MODE_INTER)
