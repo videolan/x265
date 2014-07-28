@@ -372,18 +372,13 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
 
             int dc_val = (((m_resiDctCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
             primitives.blockfill_s[sizeIdx](residual, stride, dc_val);
-
             return;
         }
 
-        // TODO: this may need larger data types for X265_DEPTH > 8
+        // TODO: this may need larger data types for X265_DEPTH > 10
         primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Logical transform
-// ------------------------------------------------------------------------------------------------
 
 /** Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC */
