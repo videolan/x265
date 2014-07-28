@@ -38,8 +38,9 @@ if(MSVC)
     # /wd4244 type conversion, possible loss of data
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
+    # /wd4800 forcing value to bool 'true' or 'false' (performance warning)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018")
+        "/wd4244 /wd4389 /wd4018 /wd4800")
     if(INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
