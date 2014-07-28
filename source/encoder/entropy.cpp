@@ -259,17 +259,14 @@ void Entropy::codeVUI(VUI *vui)
 
 void Entropy::codeScalingList(ScalingList* scalingList)
 {
-    uint32_t listId, sizeId;
-    bool scalingListPredModeFlag;
-
-    for (sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
+    for (int sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
-        for (listId = 0; listId < ScalingList::s_numListsAtSize[sizeId]; listId++)
+        for (int listId = 0; listId < ScalingList::s_numListsAtSize[sizeId]; listId++)
         {
-            scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
+            bool scalingListPredModeFlag = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(scalingListPredModeFlag, "scaling_list_pred_mode_flag");
             if (!scalingListPredModeFlag) // Copy Mode
-                WRITE_UVLC((int)listId - (int)scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
+                WRITE_UVLC(listId - scalingList->m_refMatrixId[sizeId][listId], "scaling_list_pred_matrix_id_delta");
             else // DPCM Mode
                 codeScalingList(scalingList, sizeId, listId);
         }

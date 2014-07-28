@@ -40,13 +40,13 @@ public:
     static const int MAX_MATRIX_SIZE_NUM = 8;  // max size number for quantization matrix
     static const int NUM_SIZES = 4;            // 4x4, 8x8, 16x16, 32x32
 
-    static const uint32_t s_numCoefPerSize[NUM_SIZES];
-    static const uint32_t s_numListsAtSize[NUM_SIZES];
-    static const int      s_invQuantScales[NUM_REM];
-    static const int      s_quantScales[NUM_REM];
+    static const int     s_numCoefPerSize[NUM_SIZES];
+    static const int     s_numListsAtSize[NUM_SIZES];
+    static const int32_t s_invQuantScales[NUM_REM];
+    static const int32_t s_quantScales[NUM_REM];
 
-    int      m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
-    int     *m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix
+    int32_t  m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
+    int32_t* m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix
 
     int32_t* m_quantCoef[NUM_SIZES][NUM_LISTS][NUM_REM];   // array of quantization matrix coefficient 4x4
     int32_t* m_dequantCoef[NUM_SIZES][NUM_LISTS][NUM_REM]; // array of dequantization matrix coefficient 4x4
@@ -64,20 +64,20 @@ public:
     void     setupQuantMatrices();
 
     /* used during SPS coding */
-    bool     checkPredMode(uint32_t sizeId, int listId);
-    uint32_t m_refMatrixId[NUM_SIZES][NUM_LISTS];
+    bool     checkPredMode(int sizeId, int listId);
+    int      m_refMatrixId[NUM_SIZES][NUM_LISTS];
 
 protected:
 
     static const int SCALING_LIST_DC = 16;    // default DC value
-    static const uint32_t s_scalingListSizeX[NUM_SIZES];
+    static const int s_scalingListSizeX[NUM_SIZES];
 
-    int32_t* getScalingListDefaultAddress(uint32_t sizeId, uint32_t listId);
-    void     processDefaultMarix(uint32_t sizeId, uint32_t listId);
+    int32_t* getScalingListDefaultAddress(int sizeId, int listId);
+    void     processDefaultMarix(int sizeId, int listId);
     bool     checkDefaultScalingList();
 
-    void     processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int quantScales, uint32_t height, uint32_t width, uint32_t ratio, uint32_t sizuNum, uint32_t dc);
-    void     processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int invQuantScales, uint32_t height, uint32_t width, uint32_t ratio, uint32_t sizuNum, uint32_t dc);
+    void     processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int32_t quantScales, int height, int width, int ratio, int stride, int32_t dc);
+    void     processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int32_t invQuantScales, int height, int width, int ratio, int stride, int32_t dc);
 };
 
 }
