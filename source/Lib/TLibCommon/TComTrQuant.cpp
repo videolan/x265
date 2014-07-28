@@ -343,6 +343,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
     if (useTransformSkip)
     {
         int trSize = 1 << log2TrSize;
+        shift = transformShift;
 
         if (shift > 0)
             primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
