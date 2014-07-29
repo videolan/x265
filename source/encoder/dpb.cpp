@@ -67,7 +67,7 @@ void DPB::recycleUnreferenced()
     {
         Frame *pic = iterPic;
         iterPic = iterPic->m_next;
-        if (pic->m_picSym->m_slice->m_bReferenced == false && pic->m_countRefEncoders == 0)
+        if (!pic->m_picSym->m_bHasReferences && !pic->m_countRefEncoders)
         {
             pic->m_reconRowCount.set(0);
             pic->m_bChromaPlanesExtended = false;
@@ -91,25 +91,21 @@ void DPB::prepareEncode(Frame *pic)
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
 
-    int pocCurr = slice->m_poc;
-
     int type = pic->m_lowres.sliceType;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
-    slice->m_bReferenced = type != X265_TYPE_B;
+    pic->m_picSym->m_bHasReferences = type != X265_TYPE_B;
 
-    m_picList.pushFront(*pic);
-
+    int pocCurr = slice->m_poc;
     if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
         getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
-    {
         m_lastIDR = pocCurr;
-    }
+
     slice->m_lastIDR = m_lastIDR;
     slice->m_nalUnitType = getNalUnitType(pocCurr, m_lastIDR, pic);
 
-    // If the slice is un-referenced, change from _R "referenced" to _N "non-referenced" NAL unit type
-    if (!slice->m_bReferenced)
+    if (type == X265_TYPE_B)
     {
+        // change from _R "referenced" to _N "non-referenced" NAL unit type
         switch (slice->m_nalUnitType)
         {
         case NAL_UNIT_CODED_SLICE_TRAIL_R:
@@ -125,6 +121,8 @@ void DPB::prepareEncode(Frame *pic)
             break;
         }
     }
+
+    m_picList.pushFront(*pic);
 
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->m_nalUnitType);
@@ -178,7 +176,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
 
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
-        if ((iterPic->getPOC() != curPoc) && (iterPic->m_picSym->m_slice->m_bReferenced))
+        if ((iterPic->getPOC() != curPoc) && (iterPic->m_picSym->m_bHasReferences))
         {
             rps->poc[poci] = iterPic->getPOC();
             rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
@@ -227,7 +225,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
         while (iterPic)
         {
             if (iterPic->getPOC() != pocCurr)
-                iterPic->m_picSym->m_slice->m_bReferenced = false;
+                iterPic->m_picSym->m_bHasReferences = false;
             iterPic = iterPic->m_next;
         }
 
@@ -246,7 +244,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
             while (iterPic)
             {
                 if (iterPic->getPOC() != pocCurr && iterPic->getPOC() != m_pocCRA)
-                    iterPic->m_picSym->m_slice->m_bReferenced = false;
+                    iterPic->m_picSym->m_bHasReferences = false;
                 iterPic = iterPic->m_next;
             }
 
@@ -274,7 +272,7 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         outPic = iterPic;
         iterPic = iterPic->m_next;
 
-        if (!outPic->m_picSym->m_slice->m_bReferenced)
+        if (!outPic->m_picSym->m_bHasReferences)
             continue;
 
         isReference = 0;
@@ -289,7 +287,7 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
         // mark the picture as "unused for reference" if it is not in
         // the Reference Picture Set
         if (outPic->m_POC != curPoc && isReference == 0)
-            outPic->m_picSym->m_slice->m_bReferenced = false;
+            outPic->m_picSym->m_bHasReferences = false;
     }
 }
 

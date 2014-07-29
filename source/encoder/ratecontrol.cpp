@@ -1121,7 +1121,7 @@ int RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rc
     }
     else // CQP
     {
-        if (m_sliceType == B_SLICE && m_curSlice->m_bReferenced)
+        if (m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice))
             m_qp = (m_qpConstant[B_SLICE] + m_qpConstant[P_SLICE]) / 2;
         else
             m_qp = m_qpConstant[m_sliceType];
@@ -1355,9 +1355,9 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                 q0 = q1;
             }
         }
-        if (prevRefSlice->m_sliceType == B_SLICE && prevRefSlice->m_bReferenced)
+        if (prevRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(prevRefSlice))
             q0 -= m_pbOffset / 2;
-        if (nextRefSlice->m_sliceType == B_SLICE && nextRefSlice->m_bReferenced)
+        if (nextRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(nextRefSlice))
             q1 -= m_pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + m_ipOffset;
@@ -1368,7 +1368,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         else
             q = (q0 * dt1 + q1 * dt0) / (dt0 + dt1);
 
-        if (m_curSlice->m_bReferenced)
+        if (IS_REFERENCED(m_curSlice))
             q += m_pbOffset / 2;
         else
             q += m_pbOffset;
@@ -2049,6 +2049,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     }
 
     int64_t actualBits = bits;
+    Slice *slice = pic->m_picSym->m_slice;
     if (m_isAbr)
     {
         if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead && !m_param->rc.bStatWrite)
@@ -2056,7 +2057,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
 
         if (m_param->rc.rateControlMode == X265_RC_CRF)
         {
-            if (int(pic->m_avgQpRc + 0.5) == pic->m_picSym->m_slice->m_sliceQp)
+            if (int(pic->m_avgQpRc + 0.5) == slice->m_sliceQp)
                 pic->m_rateFactor = m_rateFactorConstant;
             else
             {
@@ -2096,8 +2097,8 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     if (m_param->rc.bStatWrite)
     {
         char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
-            : rce->sliceType == P_SLICE ? (pic->m_picSym->m_slice->m_bReferenced ? 'P' : 'p')
-            : pic->m_picSym->m_slice->m_bReferenced ? 'B' : 'b';
+            : rce->sliceType == P_SLICE ? 'P'
+            : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
                     "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
                     rce->poc, rce->encodeOrder,
@@ -2113,7 +2114,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
         if (fprintf(m_statFileOut, ";\n") < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
-        if (m_param->rc.cuTree && pic->m_picSym->m_slice->m_bReferenced && !m_param->rc.bStatRead)
+        if (m_param->rc.cuTree && IS_REFERENCED(slice) && !m_param->rc.bStatRead)
         {
             uint8_t sliceType = (uint8_t)rce->sliceType;
             for (int i = 0; i < m_ncu; i++)

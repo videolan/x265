@@ -80,6 +80,8 @@ public:
     TComPicSym*   m_freeListNext;
     TComPicYuv*   m_reconPicYuv;
 
+    bool          m_bHasReferences; // used during DPB/RPS updates
+
     bool        create(x265_param *param);
     void        destroy();
 

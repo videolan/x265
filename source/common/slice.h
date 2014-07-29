@@ -286,7 +286,6 @@ public:
     int         m_poc;
     
     int         m_lastIDR;
-    bool        m_bReferenced;
 
     bool        m_bCheckLDC;       // TODO: is this necessary?
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
@@ -342,6 +341,9 @@ public:
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
 };
+
+#define IS_REFERENCED(slice) (slice->m_pic->m_lowres.sliceType != X265_TYPE_B) 
+
 }
 
 #endif // ifndef X265_SLICE_H

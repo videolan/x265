@@ -150,7 +150,6 @@ protected:
     int                      m_filterRowDelayCus;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
-    bool                     m_isReferenced;
 };
 }
 

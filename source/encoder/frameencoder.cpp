@@ -132,7 +132,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 void FrameEncoder::startCompressFrame(Frame* pic)
 {
     m_frame = pic;
-    m_isReferenced = pic->m_lowres.sliceType != X265_TYPE_B;
     m_enable.trigger();
 }
 
@@ -218,7 +217,7 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.depth = 1;
         break;
     case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !m_isReferenced;
+        m_frameFilter.m_sao.depth = 2 + !IS_REFERENCED(slice);
         break;
     }
     m_frameFilter.start(m_frame);
@@ -944,7 +943,8 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     int block_x = (cuAddr * noOfBlocks) - block_y * m_frame->getPicSym()->getFrameWidthInCU();
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
-    double *qpoffs = (m_isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+    bool isReferenced = IS_REFERENCED(m_frame->m_picSym->m_slice);
+    double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
 
     int cnt = 0, idx = 0;
     for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)

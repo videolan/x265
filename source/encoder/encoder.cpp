@@ -929,7 +929,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->m_poc;
-        if (!slice->m_bReferenced)
+        if (!IS_REFERENCED(slice))
             c += 32; // lower case if unreferenced
 
         char buf[1024];
