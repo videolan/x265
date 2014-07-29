@@ -264,13 +264,14 @@ bool ScalingList::parseScalingList(const char* filename)
             do
             {
                 char *ret = fgets(line, 1024, fp);
-                if (!ret || (strstr(line, MatrixType[sizeIdc][listIdc]) == NULL && feof(fp)))
+                if (!ret || (!strstr(line, MatrixType[sizeIdc][listIdc]) && feof(fp)))
                 {
                     x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
             }
-            while (strstr(line, MatrixType[sizeIdc][listIdc]) == NULL);
+            while (!strstr(line, MatrixType[sizeIdc][listIdc]));
+
             for (int i = 0; i < size; i++)
             {
                 int data;
@@ -297,8 +298,7 @@ bool ScalingList::parseScalingList(const char* filename)
                         return true;
                     }
                 }
-                while (!strstr(line, MatrixType_DC[sizeIdc][listIdc]))
-                    ;
+                while (!strstr(line, MatrixType_DC[sizeIdc][listIdc]));
 
                 int data;
                 if (fscanf(fp, "%d,", &data) != 1)
