@@ -84,11 +84,10 @@
 #define NUM_CHROMA_MODE             5 // total number of chroma modes
 #define DM_CHROMA_IDX               36 // chroma mode index for derived from luma intra mode
 
-#define FULL_NBIT 1 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
-#if FULL_NBIT || !HIGH_BIT_DEPTH
-# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
-#else
+#if HIGH_BIT_DEPTH
 # define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
+#else
+# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
 #endif
 
 #define MAX_NUM_REF_PICS            16          ///< max. number of pictures used for reference
