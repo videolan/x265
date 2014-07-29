@@ -244,6 +244,7 @@ void FrameEncoder::compressFrame()
 
             m_bs.resetBits();
             bpSei->write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
 
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
@@ -301,6 +302,7 @@ void FrameEncoder::compressFrame()
 
         m_bs.resetBits();
         sei->write(m_bs, *slice->m_sps);
+        m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 

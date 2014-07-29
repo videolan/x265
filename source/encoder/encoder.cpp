@@ -1083,6 +1083,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
         bs.resetBits();
         sei.write(bs, m_sps);
+        bs.writeByteAlignment();
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 }
