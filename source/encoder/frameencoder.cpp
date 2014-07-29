@@ -162,6 +162,7 @@ void FrameEncoder::compressFrame()
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->getPOC() || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
+        m_entropyCoder.setBitstream(&m_bs);
         m_entropyCoder.codeAUD(slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
