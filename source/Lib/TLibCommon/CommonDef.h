@@ -60,6 +60,14 @@
 #define MLS_CG_SIZE                 4  // Coefficient group size of 4x4
 #define MLS_CG_LOG2_SIZE            2
 
+#define QUANT_IQUANT_SHIFT          20 // Q(QP%6) * IQ(QP%6) = 2^20
+#define QUANT_SHIFT                 14 // Q(4) = 2^14
+#define SCALE_BITS                  15 // Inherited from TMuC, presumably for fractional bit estimates in RDOQ
+#define MAX_TR_DYNAMIC_RANGE        15 // Maximum transform dynamic range (excluding sign bit)
+
+#define SHIFT_INV_1ST               7  // Shift after first inverse transform stage
+#define SHIFT_INV_2ND               12 // Shift after second inverse transform stage
+
 #define AMVP_DECIMATION_FACTOR      4
 
 #define SCAN_SET_SIZE               16

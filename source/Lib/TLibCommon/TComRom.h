@@ -100,14 +100,6 @@ extern uint32_t g_log2UnitSize;
 
 extern const uint32_t g_puOffset[8];
 
-#define QUANT_IQUANT_SHIFT    20 // Q(QP%6) * IQ(QP%6) = 2^20
-#define QUANT_SHIFT           14 // Q(4) = 2^14
-#define SCALE_BITS            15 // Inherited from TMuC, presumably for fractional bit estimates in RDOQ
-#define MAX_TR_DYNAMIC_RANGE  15 // Maximum transform dynamic range (excluding sign bit)
-
-#define SHIFT_INV_1ST          7 // Shift after first inverse transform stage
-#define SHIFT_INV_2ND         12 // Shift after second inverse transform stage
-
 extern const int16_t g_t4[4][4];
 extern const int16_t g_t8[8][8];
 extern const int16_t g_t16[16][16];
