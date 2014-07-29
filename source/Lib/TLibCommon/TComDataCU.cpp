@@ -2428,28 +2428,28 @@ void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
                                        + (partWidth  >> (m_pic->getLog2UnitSize() + 1))];
 }
 
-uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra)
+ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra)
 {
-    uint32_t scanIdx;
     uint32_t dirMode;
 
     if (!bIsIntra)
-    {
         return SCAN_DIAG;
-    }
+
     //check that MDCS can be used for this TU
 
     if (bIsLuma)
     {
-        if (log2TrSize > MDCS_LOG2_MAX_SIZE) return SCAN_DIAG;
+        if (log2TrSize > MDCS_LOG2_MAX_SIZE)
+            return SCAN_DIAG;
 
         dirMode = getLumaIntraDir(absPartIdx);
     }
     else
     {
-        if (log2TrSize > (MDCS_LOG2_MAX_SIZE - m_hChromaShift)) return SCAN_DIAG;
+        if (log2TrSize > (MDCS_LOG2_MAX_SIZE - m_hChromaShift))
+            return SCAN_DIAG;
 
-        dirMode  = getChromaIntraDir(absPartIdx);
+        dirMode = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
             uint32_t lumaLCUIdx = (m_chromaFormat == CHROMA_444) ? absPartIdx : absPartIdx & (~((1 << (2 * g_addCUDepth)) - 1));
@@ -2459,13 +2459,11 @@ uint32_t TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
     }
 
     if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
-        scanIdx = SCAN_HOR;
+        return SCAN_HOR;
     else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
-        scanIdx = SCAN_VER;
+        return SCAN_VER;
     else
-        scanIdx = SCAN_DIAG;
-
-    return scanIdx;
+        return SCAN_DIAG;
 }
 
 uint32_t TComDataCU::getSCUAddr()

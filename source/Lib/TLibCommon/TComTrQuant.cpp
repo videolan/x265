@@ -435,9 +435,9 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     uint32_t c1Idx       = 0;
     uint32_t c2Idx       = 0;
     int cgLastScanPos    = -1;
-    uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
+    const uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
-    int scanPos;
+    uint32_t scanPos;
     coeffGroupRDStats rdStats;
 
     for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
@@ -448,13 +448,11 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         memset(&rdStats, 0, sizeof(coeffGroupRDStats));
 
-        X265_CHECK(log2TrSize - 2  == codingParameters.log2TrSizeCG, "transform size invalid\n");
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
 
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
-            scanPos = cgScanPos * cgSize + scanPosinCG;
-
+            scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codingParameters.scan[scanPos];
             double scaleFactor   = errScale[blkPos];
             int levelDouble      = scaledCoeff[blkPos];
@@ -838,7 +836,7 @@ uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, cons
         return 0;
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
-    X265_CHECK(trSizeCG <= 32, "transform CG is too large\n");
+    X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
     const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;

@@ -1310,12 +1310,8 @@ void Entropy::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMu
         cu->getIntraDirLumaPredictor(absPartIdx + partOffset * j, preds[j]);
         predIdx[j] = -1;
         for (uint32_t i = 0; i < 3; i++)
-        {
             if (dir[j] == preds[j][i])
-            {
                 predIdx[j] = i;
-            }
-        }
 
         encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
     }
@@ -1461,7 +1457,6 @@ void Entropy::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
     writeUnaryMaxSymbol(TUValue, &m_contextModels[OFF_DELTA_QP_CTX], 1, CU_DQP_TU_CMAX);
     if (absDQp >= CU_DQP_TU_CMAX)
         writeEpExGolomb(absDQp - CU_DQP_TU_CMAX, CU_DQP_EG_k);
-   
 
     if (absDQp > 0)
     {
