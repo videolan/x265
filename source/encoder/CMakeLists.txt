@@ -7,10 +7,6 @@ set(LIBENCODER_SRC
     ../Lib/TLibEncoder/TEncSearch.cpp)
 source_group(TLibEncoder FILES ${LIBENCODER_HDR} ${LIBENCODER_SRC})
 
-if(GCC)
-    # HM code is not careful about signed compares
-    set_source_files_properties(compress.cpp ${LIBENCODER_SRC} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
-endif(GCC)
 if(MSVC)
     # ignore these warnings from HM source
     # /wd4244 type conversion, possible loss of data

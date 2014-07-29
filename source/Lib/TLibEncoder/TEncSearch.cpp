@@ -68,7 +68,7 @@ TEncSearch::TEncSearch()
 
 TEncSearch::~TEncSearch()
 {
-    for (uint32_t i = 0; i < m_numLayers; ++i)
+    for (int i = 0; i < m_numLayers; ++i)
     {
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
@@ -102,7 +102,7 @@ bool TEncSearch::initSearch(Encoder& top)
     m_qtTempShortYuv = new ShortYuv[m_numLayers];
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(m_csp) + CHROMA_V_SHIFT(m_csp));
-    for (uint32_t i = 0; i < m_numLayers; ++i)
+    for (int i = 0; i < m_numLayers; ++i)
     {
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
@@ -556,11 +556,11 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
     {
         int maxTuSize = cu->m_slice->m_sps->quadtreeTULog2MaxSize;
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
-        noSplitIntraMaxTuSize = (log2TrSize <= X265_MIN(maxTuSize, 4));
+        noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
 
         // if maximum RD-penalty don't check TU size 32x32
         if (m_param->rdPenalty == 2)
-            bCheckFull = (log2TrSize <= X265_MIN(maxTuSize, 4));
+            bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
     if (bCheckFirst && noSplitIntraMaxTuSize)
         bCheckSplit = false;
@@ -816,7 +816,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
     {
         int maxTuSize = cu->m_slice->m_sps->quadtreeTULog2MaxSize;
         // if maximum RD-penalty don't check TU size 32x32
-        bCheckFull = (log2TrSize <= X265_MIN(maxTuSize, 4));
+        bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
 
     if (bCheckFull)
@@ -1490,7 +1490,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
             primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
-            for (uint32_t mode = 2; mode < numModesAvailable; mode++)
+            for (int mode = 2; mode < numModesAvailable; mode++)
             {
                 bool modeHor = (mode < 18);
                 pixel *cmp = (modeHor ? buf_trans : fenc);
@@ -1505,7 +1505,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             uint32_t rbits = xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
 
             // Find N least cost modes. N = numModesForFullRD
-            for (uint32_t mode = 0; mode < numModesAvailable; mode++)
+            for (int mode = 0; mode < numModesAvailable; mode++)
             {
                 uint32_t sad = modeCosts[mode];
                 uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
@@ -1542,7 +1542,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         uint32_t bestPUMode  = 0;
         uint32_t bestPUDistY = 0;
         uint64_t bestPUCost  = MAX_INT64;
-        for (uint32_t mode = 0; mode < numModesForFullRD; mode++)
+        for (int mode = 0; mode < numModesForFullRD; mode++)
         {
             // set luma prediction mode
             uint32_t origMode = rdModeList[mode];
