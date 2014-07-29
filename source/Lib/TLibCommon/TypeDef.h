@@ -31,10 +31,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TypeDef.h
-    \brief    Define basic types, new types and enumerations
-*/
-
 #ifndef X265_TYPEDEF_H
 #define X265_TYPEDEF_H
 
@@ -43,18 +39,7 @@
 namespace x265 {
 // private namespace
 
-#define REF_PIC_LIST_0 0
-#define REF_PIC_LIST_1 1
-#define REF_PIC_LIST_X 100
-
-#define MDCS_ANGLE_LIMIT    4 // distance from true angle that horiz or vertical scan is allowed
-#define MDCS_LOG2_MAX_SIZE  3 // TUs with log2 of size greater than this can only use diagonal scan
-
-// ====================================================================================================================
-// Enumeration
-// ====================================================================================================================
-
-/// supported slice types
+// supported slice types
 enum SliceType
 {
     B_SLICE,
@@ -62,7 +47,7 @@ enum SliceType
     I_SLICE
 };
 
-/// chroma formats (according to semantics of chroma_format_idc)
+// chroma formats (according to semantics of chroma_format_idc)
 enum ChromaFormat
 {
     CHROMA_400  = 0,
@@ -75,61 +60,60 @@ enum ChromaFormat
 #define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
 #define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
 
-/// supported partition shape
+// supported partition shape
 enum PartSize
 {
-    SIZE_2Nx2N,         ///< symmetric motion partition,  2Nx2N
-    SIZE_2NxN,          ///< symmetric motion partition,  2Nx N
-    SIZE_Nx2N,          ///< symmetric motion partition,   Nx2N
-    SIZE_NxN,           ///< symmetric motion partition,   Nx N
-    SIZE_2NxnU,         ///< asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
-    SIZE_2NxnD,         ///< asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
-    SIZE_nLx2N,         ///< asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
-    SIZE_nRx2N,         ///< asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
+    SIZE_2Nx2N,         // symmetric motion partition,  2Nx2N
+    SIZE_2NxN,          // symmetric motion partition,  2Nx N
+    SIZE_Nx2N,          // symmetric motion partition,   Nx2N
+    SIZE_NxN,           // symmetric motion partition,   Nx N
+    SIZE_2NxnU,         // asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
+    SIZE_2NxnD,         // asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
+    SIZE_nLx2N,         // asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
+    SIZE_nRx2N,         // asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
     SIZE_NONE = 15
 };
 
-/// supported prediction type
+// supported prediction type
 enum PredMode
 {
-    MODE_INTER,         ///< inter-prediction mode
-    MODE_INTRA,         ///< intra-prediction mode
+    MODE_INTER,         // inter-prediction mode
+    MODE_INTRA,         // intra-prediction mode
     MODE_NONE = 15
 };
 
-/// texture component type
+// texture component type
 enum TextType
 {
-    TEXT_LUMA     = 0,  ///< luma
-    TEXT_CHROMA   = 1,  ///< chroma (U+V)
-    TEXT_CHROMA_U = 1,  ///< chroma U
-    TEXT_CHROMA_V = 2,  ///< chroma V
+    TEXT_LUMA     = 0,  // luma
+    TEXT_CHROMA   = 1,  // chroma (U+V)
+    TEXT_CHROMA_U = 1,  // chroma U
+    TEXT_CHROMA_V = 2,  // chroma V
     MAX_NUM_COMPONENT = 3
 };
 
-/// index for SBAC based RD optimization
+// index for SBAC based RD optimization
 enum CI_IDX
 {
-    CI_CURR_BEST = 0,   ///< best mode index
-    CI_NEXT_BEST,       ///< next best index
-    CI_TEMP_BEST,       ///< temporal index
+    CI_CURR_BEST = 0,   // best mode index
+    CI_NEXT_BEST,       // next best index
+    CI_TEMP_BEST,       // temporal index
     CI_QT_TRAFO_TEST,
     CI_QT_TRAFO_ROOT,
-    CI_NUM,             ///< total number
+    CI_NUM,             // total number
     CI_NUM_SAO   = 3,
 };
 
-/// motion vector predictor direction used in AMVP
+// motion vector predictor direction used in AMVP
 enum MVP_DIR
 {
-    MD_LEFT = 0,        ///< MVP of left block
-    MD_ABOVE,           ///< MVP of above block
-    MD_ABOVE_RIGHT,     ///< MVP of above right block
-    MD_BELOW_LEFT,      ///< MVP of below left block
-    MD_ABOVE_LEFT       ///< MVP of above left block
+    MD_LEFT = 0,        // MVP of left block
+    MD_ABOVE,           // MVP of above block
+    MD_ABOVE_RIGHT,     // MVP of above right block
+    MD_BELOW_LEFT,      // MVP of below left block
+    MD_ABOVE_LEFT       // MVP of above left block
 };
 
 }
-//! \}
 
 #endif // ifndef X265_TYPEDEF_H

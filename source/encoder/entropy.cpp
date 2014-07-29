@@ -27,6 +27,9 @@
 #include "TLibCommon/TComTrQuant.h"
 #include "entropy.h"
 
+#define CU_DQP_TU_CMAX 5 // max number bins for truncated unary
+#define CU_DQP_EG_k    0 // exp-golomb order
+
 namespace x265 {
 
 Entropy::Entropy()
