@@ -90,10 +90,12 @@ void DPB::prepareEncode(Frame *pic)
     Slice* slice = pic->m_picSym->m_slice;
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
-
     int type = pic->m_lowres.sliceType;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
-    pic->m_picSym->m_bHasReferences = type != X265_TYPE_B;
+
+    /* m_bHasReferences starts out as true for non-B pictures, and is set to false
+     * once no more pictures reference it */
+    pic->m_picSym->m_bHasReferences = IS_REFERENCED(slice);
 
     int pocCurr = slice->m_poc;
     if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
@@ -176,9 +178,9 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
 
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
-        if ((iterPic->getPOC() != curPoc) && (iterPic->m_picSym->m_bHasReferences))
+        if ((iterPic->m_POC != curPoc) && iterPic->m_picSym->m_bHasReferences)
         {
-            rps->poc[poci] = iterPic->getPOC();
+            rps->poc[poci] = iterPic->m_POC;
             rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
             (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;
             rps->bUsed[poci] = !isRAP;
@@ -261,33 +263,27 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 /** Function for applying picture marking based on the Reference Picture Set */
 void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
 {
-    Frame* outPic;
-    int i, isReference;
-
     // loop through all pictures in the reference picture buffer
     Frame* iterPic = m_picList.first();
-
     while (iterPic)
     {
-        outPic = iterPic;
-        iterPic = iterPic->m_next;
-
-        if (!outPic->m_picSym->m_bHasReferences)
-            continue;
-
-        isReference = 0;
-        // loop through all pictures in the Reference Picture Set
-        // to see if the picture should be kept as reference picture
-        for (i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
+        if (iterPic->m_POC != curPoc && !iterPic->m_picSym->m_bHasReferences)
         {
-            if (outPic->m_POC == curPoc + rps->deltaPOC[i])
-                isReference = 1;
+            // loop through all pictures in the Reference Picture Set
+            // to see if the picture should be kept as reference picture
+            bool referenced = false;
+            for (int i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
+            {
+                if (iterPic->m_POC == curPoc + rps->deltaPOC[i])
+                {
+                    referenced = true;
+                    break;
+                }
+            }
+            if (!referenced)
+                iterPic->m_picSym->m_bHasReferences = false;
         }
-
-        // mark the picture as "unused for reference" if it is not in
-        // the Reference Picture Set
-        if (outPic->m_POC != curPoc && isReference == 0)
-            outPic->m_picSym->m_bHasReferences = false;
+        iterPic = iterPic->m_next;
     }
 }
 
