@@ -223,8 +223,6 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
 
 uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
 {
-    TUEntropyCodingParameters codingParameters;
-    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
     int deltaU[32 * 32];
 
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
@@ -234,15 +232,18 @@ uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize,
     int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-
     int qbits = QUANT_SHIFT + per + transformShift;
     int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
-
     int numCoeff = 1 << log2TrSize * 2;
+
     uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, qCoef, qbits, add, numCoeff);
 
     if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
+    {
+        TUEntropyCodingParameters codingParameters;
+        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
         return signBitHidingHDQ(qCoef, m_resiDctCoeff, deltaU, numSig, codingParameters);
+    }
     else
         return numSig;
 }
