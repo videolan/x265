@@ -47,13 +47,14 @@ namespace x265 {
 #define REF_PIC_LIST_1 1
 #define REF_PIC_LIST_X 100
 
+#define MDCS_ANGLE_LIMIT    4 // distance from true angle that horiz or vertical scan is allowed
+#define MDCS_LOG2_MAX_SIZE  3 // TUs with log2 of size greater than this can only use diagonal scan
+
 // ====================================================================================================================
 // Enumeration
 // ====================================================================================================================
-#define MDCS_ANGLE_LIMIT                                  4         ///< (default 4) 0 = Horizontal/vertical only, 1 = Horizontal/vertical +/- 1, 2 = Horizontal/vertical +/- 2 etc...
-#define MDCS_LOG2_MAX_SIZE                                3         ///< (default 3) TUs with log2 of size greater than this can only use diagonal scan
 
-/// supported slice type
+/// supported slice types
 enum SliceType
 {
     B_SLICE,
@@ -126,33 +127,6 @@ enum MVP_DIR
     MD_ABOVE_RIGHT,     ///< MVP of above right block
     MD_BELOW_LEFT,      ///< MVP of below left block
     MD_ABOVE_LEFT       ///< MVP of above left block
-};
-
-/// coefficient scanning type used in ACS
-enum ScanType
-{
-    SCAN_DIAG = 0,      ///< up-right diagonal scan
-    SCAN_HOR  = 1,      ///< horizontal first scan
-    SCAN_VER  = 2,      ///< vertical first scan
-    NUM_SCAN_TYPE = 3
-};
-
-enum SignificanceMapContextType
-{
-    CONTEXT_TYPE_4x4    = 0,
-    CONTEXT_TYPE_8x8    = 1,
-    CONTEXT_TYPE_NxN    = 2,
-    CONTEXT_NUMBER_OF_TYPES = 3
-};
-
-//TU settings for entropy encoding
-struct TUEntropyCodingParameters
-{
-    const uint16_t  *scan;
-    const uint16_t  *scanCG;
-    uint32_t        scanType;
-    uint32_t        log2TrSizeCG;
-    uint32_t        firstSignificanceMapContext;
 };
 
 }

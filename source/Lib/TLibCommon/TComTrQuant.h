@@ -56,6 +56,17 @@ struct EstBitsSbac
     int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
 };
 
+
+// TU settings for entropy encoding
+struct TUEntropyCodingParameters
+{
+    const uint16_t  *scan;
+    const uint16_t  *scanCG;
+    uint32_t        scanType;
+    uint32_t        log2TrSizeCG;
+    uint32_t        firstSignificanceMapContext;
+};
+
 struct QpParam
 {
     int rem;
@@ -116,6 +127,8 @@ public:
     void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
+protected:
+
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
     uint32_t quant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
@@ -155,42 +168,64 @@ public:
     static uint32_t calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
     static uint32_t getSigCtxInc(uint32_t patternSigCtx, const uint32_t log2TrSize, const uint32_t trSize, const uint32_t blkPos, const TextType ctype, const uint32_t firstSignificanceMapContext);
     static uint32_t getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, const uint32_t log2TrSizeCG);
-    inline static void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+};
+
+static inline void getTUEntropyCodingParameters(TComDataCU* cu, TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+{
+    // set the group layout
+    const uint32_t log2TrSizeCG = log2TrSize - 2;
+
+    result.log2TrSizeCG = log2TrSizeCG;
+
+    // set the scan orders
+    result.scanType = cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
+    result.scan = g_scanOrder[result.scanType][log2TrSize - 2];
+    result.scanCG = g_scanOrderCG[result.scanType][log2TrSizeCG];
+
+    // set the significance map context selection parameters
+    TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;
+    if (log2TrSize == 2)
     {
-        // set the group layout
-        const uint32_t log2TrSizeCG = log2TrSize - 2;
-
-        result.log2TrSizeCG = log2TrSizeCG;
-
-        // set the scan orders
-        result.scanType = cu->getCoefScanIdx(absPartIdx, log2TrSize, ttype == TEXT_LUMA, cu->isIntra(absPartIdx));
-        result.scan   = g_scanOrder[result.scanType][log2TrSize - 2];
-        result.scanCG = g_scanOrderCG[result.scanType][log2TrSizeCG];
-
-        // set the significance map context selection parameters
-        TextType ctype = (ttype == TEXT_LUMA) ? TEXT_LUMA : TEXT_CHROMA;
-        if (log2TrSize == 2)
+        result.firstSignificanceMapContext = 0;
+        X265_CHECK(!significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4], "context failure\n");
+    }
+    else if (log2TrSize == 3)
+    {
+        result.firstSignificanceMapContext = 9;
+        X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9, "context failure\n");
+        if (result.scanType != SCAN_DIAG && !ctype)
         {
-            result.firstSignificanceMapContext = 0;
-            X265_CHECK(!significanceMapContextSetStart[ctype][CONTEXT_TYPE_4x4], "context failure\n");
-        }
-        else if (log2TrSize == 3)
-        {
-            result.firstSignificanceMapContext = 9;
-            X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_8x8] == 9, "context failure\n");
-            if (result.scanType != SCAN_DIAG && !ctype)
-            {
-                result.firstSignificanceMapContext += 6;
-                X265_CHECK(nonDiagonalScan8x8ContextOffset[ctype] == 6, "context failure\n");
-            }
-        }
-        else
-        {
-            result.firstSignificanceMapContext = (ctype ? 12 : 21);
-            X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21), "context failure\n");
+            result.firstSignificanceMapContext += 6;
+            X265_CHECK(nonDiagonalScan8x8ContextOffset[ctype] == 6, "context failure\n");
         }
     }
-};
+    else
+    {
+        result.firstSignificanceMapContext = (ctype ? 12 : 21);
+        X265_CHECK(significanceMapContextSetStart[ctype][CONTEXT_TYPE_NxN] == (uint32_t)(ctype ? 12 : 21), "context failure\n");
+    }
+}
+
+static inline uint32_t getGroupIdx(const uint32_t idx)
+{
+    // TODO: Why is this not a table lookup?
+
+    uint32_t group = (idx >> 3);
+
+    if (idx >= 24)
+        group = 2;
+    uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
+    if (idx <= 3)
+        groupIdx = idx;
+
+#ifdef _DEBUG
+    static const uint8_t g_groupIdx[32] = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+    assert(groupIdx == g_groupIdx[idx]);
+#endif
+
+    return groupIdx;
+}
+
 }
 
 #endif // ifndef X265_TCOMTRQUANT_H

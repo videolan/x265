@@ -130,43 +130,39 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 // Scanning order & context mapping table
 // ====================================================================================================================
 
+// coefficient scanning type used in ACS
+enum ScanType
+{
+    SCAN_DIAG = 0,     // up-right diagonal scan
+    SCAN_HOR = 1,      // horizontal first scan
+    SCAN_VER = 2,      // vertical first scan
+    NUM_SCAN_TYPE = 3
+};
+
+enum SignificanceMapContextType
+{
+    CONTEXT_TYPE_4x4 = 0,
+    CONTEXT_TYPE_8x8 = 1,
+    CONTEXT_TYPE_NxN = 2,
+    CONTEXT_NUMBER_OF_TYPES = 3
+};
+
 #define NUM_SCAN_SIZE 4
 
 extern const uint16_t* const g_scanOrder[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t g_scan8x8diag[8 * 8];
 extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
-
-//extern const uint8_t g_groupIdx[32];
-static inline uint32_t getGroupIdx(const uint32_t idx)
-{
-    uint32_t group = (idx >> 3);
-
-    if (idx >= 24)
-        group = 2;
-    uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
-    if (idx <= 3)
-        groupIdx = idx;
-
-#ifdef _DEBUG
-    static const uint8_t g_groupIdx[32]   = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
-    assert(groupIdx == g_groupIdx[idx]);
-#endif
-
-    return groupIdx;
-}
+#define NUM_SCAN_SIZE 4
 
 extern const uint8_t g_minInGroup[10];
-
 extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
-//extern const uint8_t g_goRicePrefixLen[5];  //!< prefix length for each maximum value
 
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
 extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
-
 
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];

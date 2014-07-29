@@ -1622,7 +1622,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 
     // select scans
     TUEntropyCodingParameters codingParameters;
-    TComTrQuant::getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
+    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
 
     //----- encode significance map -----
 
