@@ -107,7 +107,7 @@ MotionEstimate::~MotionEstimate()
     X265_FREE(fenc);
 }
 
-void MotionEstimate::setSourcePU(int offset, int width, int height)
+void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
 {
     partEnum = partitionFromSizes(width, height);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");

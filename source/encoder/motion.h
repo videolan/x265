@@ -79,7 +79,7 @@ public:
         fencLumaStride = luma;
     }
 
-    void setSourcePU(int offset, int pwidth, int pheight);
+    void setSourcePU(intptr_t offset, int pwidth, int pheight);
 
     /* buf*() and motionEstimate() methods all use cached fenc pixels and thus
      * require setSourcePU() to be called prior. */

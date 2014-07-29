@@ -1620,7 +1620,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
         //=== update PU data ====
         cu->setLumaIntraDirSubParts(bestPUMode, partOffset, depth + initTrDepth);
-        cu->copyToPic(depth, pu, initTrDepth);
+        cu->copyToPic((uint8_t)depth, pu, initTrDepth);
     } // PU loop
 
     if (numPU > 1)
@@ -1853,9 +1853,9 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
             continue;
 
         cu->getCUMvField(REF_PIC_LIST_0)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].refIdx;
+        cu->getCUMvField(REF_PIC_LIST_0)->m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][0].refIdx;
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].refIdx;
+        cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
         motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, true, false);
         uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.getStride());
@@ -1980,7 +1980,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     xPredInterLumaBlk(cu->m_slice->m_refPicList[l][ref]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), &mvCand, &m_predTempYuv);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
-                    cost = m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
+                    cost = (uint32_t)m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
                     if (bestCost > cost)
                     {
@@ -2253,7 +2253,7 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
 {
     cu->clipMv(mvp);
 
-    MV dist(merange << 2, merange << 2);
+    MV dist((int16_t)merange << 2, (int16_t)merange << 2);
     mvmin = mvp - dist;
     mvmax = mvp + dist;
 
@@ -2264,8 +2264,8 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
     mvmax >>= 2;
 
     /* conditional clipping for frame parallelism */
-    mvmin.y = X265_MIN(mvmin.y, m_refLagPixels);
-    mvmax.y = X265_MIN(mvmax.y, m_refLagPixels);
+    mvmin.y = X265_MIN(mvmin.y, (int16_t)m_refLagPixels);
+    mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
 }
 
 void TEncSearch::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* outReconYuv)
@@ -3443,7 +3443,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
                 if (splitIntoSubTUs)
                 {
-                    const uint8_t combinedCBF = (bestsubTUCBF[chromaId][subTUIndex] << subTUDepth) | (bestCBF[chromaId] << trMode);
+                    const uint8_t combinedCBF = (uint8_t)((bestsubTUCBF[chromaId][subTUIndex] << subTUDepth) | (bestCBF[chromaId] << trMode));
                     cu->setCbfPartRange(combinedCBF, (TextType)chromaId, subTUPartIdx, partIdxesPerSubTU);
                 }
                 else
