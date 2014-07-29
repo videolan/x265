@@ -47,19 +47,6 @@ enum SliceType
     I_SLICE
 };
 
-// chroma formats (according to semantics of chroma_format_idc)
-enum ChromaFormat
-{
-    CHROMA_400  = 0,
-    CHROMA_420  = 1,
-    CHROMA_422  = 2,
-    CHROMA_444  = 3,
-    NUM_CHROMA_FORMAT = 4
-};
-
-#define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
-#define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
-
 // supported partition shape
 enum PartSize
 {

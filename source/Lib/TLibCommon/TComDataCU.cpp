@@ -2452,9 +2452,9 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         dirMode = getChromaIntraDir(absPartIdx);
         if (dirMode == DM_CHROMA_IDX)
         {
-            uint32_t lumaLCUIdx = (m_chromaFormat == CHROMA_444) ? absPartIdx : absPartIdx & (~((1 << (2 * g_addCUDepth)) - 1));
+            uint32_t lumaLCUIdx = (m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & (~((1 << (2 * g_addCUDepth)) - 1));
             dirMode = getLumaIntraDir(lumaLCUIdx);
-            dirMode = (m_chromaFormat == CHROMA_422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
+            dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
         }
     }
 

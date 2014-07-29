@@ -194,7 +194,7 @@ void TEncSearch::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    if ((log2TrSize > 2) && !(m_csp == CHROMA_444))
+    if ((log2TrSize > 2) && !(m_csp == X265_CSP_I444))
     {
         if (trDepth == 0 || cu->getCbf(absPartIdx, TEXT_CHROMA_U, trDepth - 1))
             m_entropyCoder->codeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> hChromaShift), (height >> vChromaShift), TEXT_CHROMA_U, trDepth, (subdiv == 0));
@@ -265,7 +265,7 @@ void TEncSearch::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     uint32_t log2TrSizeC = log2TrSize - hChromaShift;
     
-    if ((log2TrSize == 2) && !(m_csp == CHROMA_444))
+    if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
     {
         X265_CHECK(trDepth > 0, "transform size too small\n");
         trDepthC--;
@@ -279,9 +279,9 @@ void TEncSearch::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     uint32_t qtLayer    = log2TrSize - 2;
     uint32_t log2UnitSize = cu->m_pic->getLog2UnitSize();
 
-    if (m_csp != CHROMA_422)
+    if (m_csp != X265_CSP_I422)
     {
-        uint32_t shift = (m_csp == CHROMA_420) ? 2 : 0;
+        uint32_t shift = (m_csp == X265_CSP_I420) ? 2 : 0;
         uint32_t coeffOffset = absPartIdx << (log2UnitSize * 2 - shift);
         coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
         m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, ttype);
@@ -337,7 +337,7 @@ void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
 void TEncSearch::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
 {
     // chroma prediction mode
-    if (cu->getPartitionSize(0) == SIZE_2Nx2N || cu->getChromaFormat() != CHROMA_444)
+    if (cu->getPartitionSize(0) == SIZE_2Nx2N || cu->getChromaFormat() != X265_CSP_I444)
     {
         if (!absPartIdx)
             m_entropyCoder->codeIntraDirChroma(cu, absPartIdx);
@@ -962,7 +962,7 @@ void TEncSearch::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDept
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
     uint32_t trDepthC = trDepth;
-    if (log2TrSize == 2 && cu->getChromaFormat() != CHROMA_444)
+    if (log2TrSize == 2 && cu->getChromaFormat() != X265_CSP_I444)
     {
         X265_CHECK(trDepthC > 0, "trDepthC invalid\n");
         trDepthC--;
@@ -1010,7 +1010,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         uint32_t log2TrSizeC = log2TrSize - hChromaShift;
 
         uint32_t trDepthC = trDepth;
-        if (log2TrSize == 2 && m_csp != CHROMA_444)
+        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
         {
             X265_CHECK(trDepth > 0, "invalid trDepth\n");
             trDepthC--;
@@ -1025,7 +1025,7 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
         uint32_t log2UnitSize = cu->m_pic->getLog2UnitSize();
         uint32_t tuSize = 1 << log2TrSizeC;
         uint32_t stride = fencYuv->getCStride();
-        const bool splitIntoSubTUs = (m_csp == CHROMA_422);
+        const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
         bool checkTransformSkip = (cu->m_slice->m_pps->bTransformSkipEnabled &&
                                    log2TrSizeC <= MAX_LOG2_TS_SIZE &&
@@ -1062,10 +1062,10 @@ void TEncSearch::xRecurIntraChromaCodingQT(TComDataCU* cu,
                 //===== update chroma mode =====
                 if (chromaPredMode == DM_CHROMA_IDX)
                 {
-                    uint32_t lumaLCUIdx  = (m_csp == CHROMA_444) ? absPartIdxC : absPartIdxC & (~((1 << (2 * g_addCUDepth)) - 1));
+                    uint32_t lumaLCUIdx  = (m_csp == X265_CSP_I444) ? absPartIdxC : absPartIdxC & (~((1 << (2 * g_addCUDepth)) - 1));
                     chromaPredMode = cu->getLumaIntraDir(lumaLCUIdx);
                 }
-                chromaPredMode = (m_csp == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
+                chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
                 //===== get prediction signal =====
                 predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
 
@@ -1214,7 +1214,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
         uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
         uint32_t log2TrSizeC = log2TrSize - hChromaShift;
 
-        if (log2TrSize == 2 && m_csp != CHROMA_444)
+        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
         {
             X265_CHECK(trDepth > 0, "invalid trDepth\n");
             trDepth--;
@@ -1226,7 +1226,7 @@ void TEncSearch::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint3
 
         //===== copy transform coefficients =====
 
-        uint32_t numCoeffC = 1 << (log2TrSizeC * 2 + (m_csp == CHROMA_422));
+        uint32_t numCoeffC = 1 << (log2TrSizeC * 2 + (m_csp == X265_CSP_I422));
         uint32_t coeffOffsetC = absPartIdx << (cu->m_pic->getLog2UnitSize() * 2 - (hChromaShift + vChromaShift));
 
         uint32_t qtLayer   = log2TrSize - 2;
@@ -1266,7 +1266,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
         uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
         uint32_t log2TrSizeC = log2TrSize - hChromaShift;
         uint32_t trDepthC = trDepth;
-        if (log2TrSize == 2 && m_csp != CHROMA_444)
+        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
         {
             X265_CHECK(trDepth > 0, "invalid trDepth\n");
             trDepthC--;
@@ -1280,7 +1280,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
         uint32_t log2UnitSize = cu->m_pic->getLog2UnitSize();
         uint32_t tuSize = 1 << log2TrSizeC;
         uint32_t stride = fencYuv->getCStride();
-        const bool splitIntoSubTUs = (m_csp == CHROMA_422);
+        const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
         int sizeIdxC = log2TrSizeC - 2;
         int part = partitionFromLog2Size(log2TrSizeC);
 
@@ -1312,10 +1312,10 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 //===== update chroma mode =====
                 if (chromaPredMode == DM_CHROMA_IDX)
                 {
-                    uint32_t lumaLCUIdx  = (m_csp == CHROMA_444) ? absPartIdxC : absPartIdxC & (~((1 << (2 * g_addCUDepth)) - 1));
+                    uint32_t lumaLCUIdx  = (m_csp == X265_CSP_I444) ? absPartIdxC : absPartIdxC & (~((1 << (2 * g_addCUDepth)) - 1));
                     chromaPredMode = cu->getLumaIntraDir(lumaLCUIdx);
                 }
-                chromaPredMode = (m_csp == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
+                chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
                 //===== init availability pattern =====
                 TComPattern::initAdiPatternChroma(cu, absPartIdxC, trDepthC, m_predBuf, chromaId);
                 pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, tuSize, m_predBuf);
@@ -1342,7 +1342,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
 
                     //===== reconstruction =====
                     // use square primitives
-                    primitives.chroma[CHROMA_444].add_ps[part](recon, stride, pred, residual, stride, stride);
+                    primitives.chroma[X265_CSP_I444].add_ps[part](recon, stride, pred, residual, stride, stride);
                     primitives.square_copy_pp[sizeIdxC](reconIPred, reconIPredStride, recon, stride);
                 }
                 else
@@ -1679,7 +1679,7 @@ void TEncSearch::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYu
         uint32_t chromaPredMode = modeList[mode];
         if (chromaPredMode == DM_CHROMA_IDX)
             chromaPredMode = cu->getLumaIntraDir(0);
-        chromaPredMode = (m_csp == CHROMA_422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
+        chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
         uint64_t cost = 0;
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
@@ -1710,7 +1710,7 @@ void TEncSearch::estIntraPredChromaQT(TComDataCU* cu,
                                       TComYuv*    reconYuv)
 {
     uint32_t depth       = cu->getDepth(0);
-    uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->getChromaFormat() == CHROMA_444 ? 1 : 0);
+    uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->getChromaFormat() == X265_CSP_I444 ? 1 : 0);
     uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t absPartIdx  = (cu->m_pic->getNumPartInCU() >> (depth << 1));
 
@@ -2513,7 +2513,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
         uint32_t log2TrSizeC = log2TrSize - hChromaShift;
         bool bCodeChroma = true;
         uint32_t trModeC = trMode;
-        if ((log2TrSize == 2) && !(m_csp == CHROMA_444))
+        if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
         {
             log2TrSizeC++;
             trModeC--;
@@ -2521,7 +2521,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
             bCodeChroma = ((absPartIdx & (qpdiv - 1)) == 0);
         }
 
-        const bool splitIntoSubTUs = (m_csp == CHROMA_422);
+        const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
         uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> ((cu->getDepth(0) +  trModeC) << 1);
 
         uint32_t coeffOffsetY = absPartIdx << cu->m_pic->getLog2UnitSize() * 2;
@@ -2652,7 +2652,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     uint32_t log2TrSizeC = log2TrSize - hChromaShift;
     bool bCodeChroma = true;
     uint32_t trModeC = trMode;
-    if ((log2TrSize == 2) && !(m_csp == CHROMA_444))
+    if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
     {
         log2TrSizeC++;
         trModeC--;
@@ -2677,7 +2677,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     m_entropyCoder->store(m_rdEntropyCoders[depth][CI_QT_TRAFO_ROOT]);
 
     uint32_t trSize = 1 << log2TrSize;
-    const bool splitIntoSubTUs = (m_csp == CHROMA_422);
+    const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
     uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> ((cu->getDepth(0) +  trModeC) << 1);
 
     // code full block
@@ -3259,7 +3259,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 offsetSubTUCBFs(cu, TEXT_CHROMA_V, trMode, absPartIdx);
             }
 
-            uint32_t trHeightC = (m_csp == CHROMA_422) ? (trSizeC << 1) : trSizeC;
+            uint32_t trHeightC = (m_csp == X265_CSP_I422) ? (trSizeC << 1) : trSizeC;
             m_entropyCoder->codeQtCbf(cu, absPartIdx, absPartIdxStep, trSizeC, trHeightC, TEXT_CHROMA_U, trMode, true);
             m_entropyCoder->codeQtCbf(cu, absPartIdx, absPartIdxStep, trSizeC, trHeightC, TEXT_CHROMA_V, trMode, true);
         }
@@ -3465,7 +3465,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
 
     uint32_t       log2TrSizeC = log2TrSize - hChromaShift;
     
-    const bool splitIntoSubTUs = (m_csp == CHROMA_422);
+    const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
     if (bSubdivAndCbf && log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize && log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
         m_entropyCoder->codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
@@ -3508,7 +3508,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
         //Chroma
         bool bCodeChroma = true;
         uint32_t trModeC = trMode;
-        if ((log2TrSize == 2) && !(m_csp == CHROMA_444))
+        if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
         {
             log2TrSizeC++;
             trModeC--;
@@ -3586,7 +3586,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYu
         uint32_t log2TrSizeC = log2TrSize - hChromaShift;
         bool bCodeChroma = true;
         uint32_t trModeC = trMode;
-        if ((log2TrSize == 2) && !(m_csp == CHROMA_444))
+        if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
         {
             log2TrSizeC++;
             trModeC--;
@@ -3609,7 +3609,7 @@ void TEncSearch::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYu
             ::memcpy(coeffDstY, coeffSrcY, sizeof(coeff_t) * numCoeffY);
             if (bCodeChroma)
             {
-                uint32_t numCoeffC = 1 << (log2TrSizeC * 2 + (m_csp == CHROMA_422));
+                uint32_t numCoeffC = 1 << (log2TrSizeC * 2 + (m_csp == X265_CSP_I422));
                 uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);
 
                 coeff_t* coeffSrcU = m_qtTempCoeff[1][qtLayer] + coeffOffsetC;

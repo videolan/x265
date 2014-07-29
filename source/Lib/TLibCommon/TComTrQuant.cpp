@@ -105,7 +105,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int
     int qp = Clip3(-QP_BD_OFFSET, 57, qpy + chromaQPOffset);
     if (qp >= 30)
     {
-        if (chFmt == CHROMA_420)
+        if (chFmt == X265_CSP_I420)
             qp = g_chromaScale[qp];
         else
             qp = X265_MIN(qp, 51);

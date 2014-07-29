@@ -85,7 +85,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
     uint32_t partIdxIncr = (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) ? (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) : 1;
     uint32_t sizeInPU = pic->getNumPartInCUSize() >> (depth);
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->getHorzChromaShift() : cu->getVertChromaShift();
-    const bool alwaysDoChroma = (cu->getChromaFormat() == CHROMA_444 || (1 << log2UnitSize) > DEBLOCK_SMALLEST_BLOCK);
+    const bool alwaysDoChroma = (cu->getChromaFormat() == X265_CSP_I444 || (1 << log2UnitSize) > DEBLOCK_SMALLEST_BLOCK);
 
     for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
     {
@@ -641,7 +641,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
                 int32_t qp = ((qpP + qpQ + 1) >> 1) + chromaQPOffset;
                 if (qp >= 30)
                 {
-                    if (chFmt == CHROMA_420)
+                    if (chFmt == X265_CSP_I420)
                         qp = g_chromaScale[qp];
                     else
                         qp = X265_MIN(qp, 51);

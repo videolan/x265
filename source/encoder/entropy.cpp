@@ -71,7 +71,7 @@ void Entropy::codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl)
     WRITE_UVLC(0, "sps_seq_parameter_set_id");
     WRITE_UVLC(sps->chromaFormatIdc, "chroma_format_idc");
 
-    if (sps->chromaFormatIdc == CHROMA_444)
+    if (sps->chromaFormatIdc == X265_CSP_I444)
         WRITE_FLAG(0,                        "separate_colour_plane_flag");
 
     WRITE_UVLC(sps->picWidthInLumaSamples,   "pic_width_in_luma_samples");
@@ -504,7 +504,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     if (!trIdx)
         state.bakAbsPartIdxCU = absPartIdx;
 
-    if ((log2TrSize == 2) && !(cu->getChromaFormat() == CHROMA_444))
+    if ((log2TrSize == 2) && !(cu->getChromaFormat() == X265_CSP_I444))
     {
         uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
         if ((absPartIdx & (partNum - 1)) == 0)
@@ -627,13 +627,13 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
             codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, log2TrSize, TEXT_LUMA);
 
         int chFmt = cu->getChromaFormat();
-        if ((log2TrSize == 2) && !(chFmt == CHROMA_444))
+        if ((log2TrSize == 2) && !(chFmt == X265_CSP_I444))
         {
             uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
                 const uint32_t log2TrSizeC = 2;
-                const bool splitIntoSubTUs = (chFmt == CHROMA_422);
+                const bool splitIntoSubTUs = (chFmt == X265_CSP_I422);
 
                 uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
 
@@ -657,7 +657,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         else
         {
             uint32_t log2TrSizeC = log2TrSize - hChromaShift;
-            const bool splitIntoSubTUs = (chFmt == CHROMA_422);
+            const bool splitIntoSubTUs = (chFmt == X265_CSP_I422);
             uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
             {
@@ -684,11 +684,11 @@ void Entropy::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
     {
         codeIntraDirLumaAng(cu, absPartIdx, true);
         int chFmt = cu->getChromaFormat();
-        if (chFmt != CHROMA_400)
+        if (chFmt != X265_CSP_I400)
         {
             codeIntraDirChroma(cu, absPartIdx);
 
-            if ((chFmt == CHROMA_444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
+            if ((chFmt == X265_CSP_I444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
                 uint32_t partOffset = (cu->m_pic->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 codeIntraDirChroma(cu, absPartIdx + partOffset);

@@ -145,7 +145,7 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
     pixel refAbv[3 * MAX_CU_SIZE];
     pixel refLft[3 * MAX_CU_SIZE];
 
-    bool bUseFilteredPredictions = (chFmt == CHROMA_444 && filteringIntraReferenceSamples(dirMode, log2TrSizeC));
+    bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && filteringIntraReferenceSamples(dirMode, log2TrSizeC));
 
     if (bUseFilteredPredictions)
     {

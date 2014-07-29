@@ -104,4 +104,7 @@
 
 #define MAX_CHROMA_FORMAT_IDC       3 //  TODO: Remove me
 
+#define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
+#define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
+
 #endif // ifndef X265_COMMONDEF_H
