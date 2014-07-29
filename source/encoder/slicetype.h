@@ -147,7 +147,7 @@ public:
     void flush();
     Frame* getDecidedPicture();
 
-    int64_t getEstimatedPictureCost(Frame *pic);
+    void getEstimatedPictureCost(Frame *pic);
 
 protected:
 

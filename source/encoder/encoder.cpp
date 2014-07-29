@@ -461,6 +461,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         // determine references, setup RPS, etc
         m_dpb->prepareEncode(fenc);
 
+        if (m_param->rc.rateControlMode != X265_RC_CQP)
+            m_lookahead->getEstimatedPictureCost(fenc);
+
         // Allow FrameEncoder::compressFrame() to start in a worker thread
         curEncoder->startCompressFrame(fenc);
     }

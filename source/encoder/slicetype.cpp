@@ -203,10 +203,10 @@ bool Lookahead::findJob(int)
         return false;
 }
 
-/* Called by rate-control to get the estimated SATD cost for a given picture.
- * It assumes dpb->prepareEncode() has already been called for the picture and
- * all the references are established */
-int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
+/* Called by rate-control to calculate the estimated SATD cost for a given
+ * picture.  It assumes dpb->prepareEncode() has already been called for the
+ * picture and all the references are established */
+void Lookahead::getEstimatedPictureCost(Frame *pic)
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
@@ -239,7 +239,7 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
         break;
 
     default:
-        return 0;
+        return;
     }
 
     if (m_param->rc.cuTree && !m_param->rc.bStatRead)
@@ -287,7 +287,6 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
             }
         }
     }
-    return pic->m_lowres.satdCost;
 }
 
 /* called by API thread or worker thread with inputQueueLock acquired */

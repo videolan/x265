@@ -29,7 +29,6 @@
 namespace x265 {
 // encoder namespace
 
-class Lookahead;
 class Encoder;
 class Frame;
 struct SPS;
@@ -202,7 +201,7 @@ public:
     void destroy();
 
     // to be called for each frame to process RateControl and set QP
-    int rateControlStart(Frame* pic, Lookahead *, RateControlEntry* rce, Encoder* enc);
+    int rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* enc);
     void calcAdaptiveQuantFrame(Frame *pic);
     void rateControlUpdateStats(RateControlEntry* rce);
     int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);

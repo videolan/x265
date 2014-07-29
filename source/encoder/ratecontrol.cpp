@@ -1048,7 +1048,7 @@ int RateControl::rateControlSliceType(int frameNum)
         return X265_TYPE_AUTO;
 }
 
-int RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rce, Encoder* enc)
+int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* enc)
 {
     int orderValue = m_startEndOrder.get();
     int startOrdinal = rce->encodeOrder * 2;
@@ -1107,7 +1107,7 @@ int RateControl::rateControlStart(Frame* pic, Lookahead *l, RateControlEntry* rc
     {
         if (m_isAbr || m_isVbv)
         {
-            m_currentSatd = l->getEstimatedPictureCost(pic) >> (X265_DEPTH - 8);
+            m_currentSatd = pic->m_lowres.satdCost >> (X265_DEPTH - 8);
             /* Update rce for use in rate control VBV later */
             rce->lastSatd = m_currentSatd;
         }
