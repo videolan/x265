@@ -1074,12 +1074,10 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     if (m_param->bEmitHRDSEI)
     {
+        /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
-        sei.m_activeVPSId = 0;
-        sei.m_fullRandomAccessFlag = false;
-        sei.m_noParamSetUpdateFlag = false;
-        sei.m_numSpsIdsMinus1 = 0;
-        sei.m_activeSeqParamSetId = 0;
+        sei.m_selfContainedCvsFlag = true;
+        sei.m_noParamSetUpdateFlag = true;
 
         bs.resetBits();
         sei.write(bs, m_sps);

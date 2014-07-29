@@ -175,19 +175,16 @@ public:
 
     PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
-    int  m_activeVPSId;
-    int  m_numSpsIdsMinus1;
-    int  m_activeSeqParamSetId;
-    bool m_fullRandomAccessFlag;
+    bool m_selfContainedCvsFlag;
     bool m_noParamSetUpdateFlag;
 
     void writeSEI(const SPS&)
     {
-        WRITE_CODE(m_activeVPSId,     4,   "active_vps_id");
-        WRITE_FLAG(m_fullRandomAccessFlag, "full_random_access_flag");
+        WRITE_CODE(0, 4, "active_vps_id");
+        WRITE_FLAG(m_selfContainedCvsFlag, "self_contained_cvs_flag");
         WRITE_FLAG(m_noParamSetUpdateFlag, "no_param_set_update_flag");
-        WRITE_UVLC(m_numSpsIdsMinus1,      "num_sps_ids_minus1");
-        WRITE_UVLC(m_activeSeqParamSetId,  "active_seq_param_set_id");
+        WRITE_UVLC(0, "num_sps_ids_minus1");
+        WRITE_UVLC(0, "active_seq_param_set_id");
         writeByteAlign();
     }
 };
