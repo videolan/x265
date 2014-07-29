@@ -1378,9 +1378,6 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
-    if (p->bOpenGOP && p->rc.bStatRead)
-        p->lookaheadDepth = 0;
-
     //====== Coding Tools ========
 
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;

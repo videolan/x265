@@ -573,7 +573,7 @@ bool RateControl::init(const SPS *sps)
                     return false;
                 }
 
-                if ((m_param->rc.cuTree || m_param->rc.vbvBufferSize) && ((p = strstr(opts, "rc-lookahead=")) != 0) && sscanf(p, "rc-lookahead=%d", &i))
+                if ((p = strstr(opts, "rc-lookahead=")) != 0 && sscanf(p, "rc-lookahead=%d", &i))
                     m_param->lookaheadDepth = i;
             }
             /* find number of pics */
