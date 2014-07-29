@@ -216,21 +216,15 @@ void RateControl::calcAdaptiveQuantFrame(Frame *pic)
             memset(pic->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
             memset(pic->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
             for (int cuxy = 0; cuxy < cuCount; cuxy++)
-            {
                 pic->m_lowres.invQscaleFactor[cuxy] = 256;
-            }
         }
 
         /* Need variance data for weighted prediction */
         if (m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred)
         {
             for (block_y = 0; block_y < maxRow; block_y += 16)
-            {
                 for (block_x = 0; block_x < maxCol; block_x += 16)
-                {
                     acEnergyCu(pic, block_x, block_y);
-                }
-            }
         }
     }
     else
@@ -1029,7 +1023,7 @@ int RateControl::rateControlSliceType(int frameNum)
                 x265_log(m_param, X265_LOG_ERROR, "disabling adaptive B-frames\n");
 
             m_isAbr = 0;
-            m_2pass= 0;
+            m_2pass = 0;
             m_param->rc.rateControlMode = X265_RC_CQP;
             m_param->rc.bStatRead = 0;
             m_param->bFrameAdaptive = 0;
@@ -1565,7 +1559,7 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
         }
     }
     if (rce->sliceType != B_SLICE)
-        rce->rowCplxrSum =  rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
+        rce->rowCplxrSum = rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / rce->qRceq;
     else
         rce->rowCplxrSum = rce->rowTotalBits * x265_qp2qScale(rce->qpaRc) / (rce->qRceq * fabs(m_param->rc.pbFactor));
 

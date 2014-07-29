@@ -243,10 +243,8 @@ void Lookahead::getEstimatedPictureCost(Frame *pic)
     }
 
     if (m_param->rc.cuTree && !m_param->rc.bStatRead)
-    {
         /* update row satds based on cutree offsets */
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-    }
     else if (m_param->rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else

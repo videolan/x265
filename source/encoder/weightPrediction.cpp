@@ -207,21 +207,12 @@ uint32_t weightCost(pixel *         fenc,
     }
     else if (cache.csp == X265_CSP_I444)
         for (int y = 16; y < height; y += 16, r += 16 * stride, f += 16 * stride)
-        {
             for (int x = 16; x < width; x += 16)
-            {
                 cost += primitives.satd[LUMA_16x16](r + x, stride, f + x, stride);
-            }
-        }
-
     else
         for (int y = 8; y < height; y += 8, r += 8 * stride, f += 8 * stride)
-        {
             for (int x = 8; x < width; x += 8)
-            {
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
-            }
-        }
 
     x265_emms();
     return cost;

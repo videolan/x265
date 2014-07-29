@@ -581,17 +581,13 @@ void Encoder::printSummary()
     }
     int pWithB = 0;
     for (int i = 0; i <= m_param->bframes; i++)
-    {
         pWithB += m_lookahead->m_histogram[i];
-    }
 
     if (pWithB)
     {
         int p = 0;
         for (int i = 0; i <= m_param->bframes; i++)
-        {
             p += sprintf(buffer + p, "%.1f%% ", 100. * m_lookahead->m_histogram[i] / pWithB);
-        }
 
         x265_log(m_param, X265_LOG_INFO, "consecutive B-frames: %s\n", buffer);
     }
