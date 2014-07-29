@@ -364,7 +364,7 @@ void ScalingList::setupQuantMatrices()
                 }
 
                 for (int i = 0; i < count; i++)
-                    errScale[i] = (double)scalingBits / quantCoeff[i] / quantCoeff[i] / prec;
+                    errScale[i] = (double)scalingBits / (quantCoeff[i] * quantCoeff[i] * prec);
             }
         }
     }
