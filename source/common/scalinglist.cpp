@@ -334,8 +334,7 @@ void ScalingList::setupQuantMatrices()
         // Error scale constants
         int log2TrSize = size + 2;
         int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-        double scalingBits = (double)(1 << SCALE_BITS);  // Compensate for scaling of bitcount in Lagrange cost function
-        scalingBits *= pow(2.0, -2.0 * transformShift);  // Compensate for scaling through forward transform
+        int scalingBits = 1 << (SCALE_BITS - 2 * transformShift);            // Compensate for scaling of bitcount in Lagrange cost function
         int prec = (1 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8)));
 
         for (int list = 0; list < s_numListsAtSize[size]; list++)
@@ -365,7 +364,7 @@ void ScalingList::setupQuantMatrices()
                 }
 
                 for (int i = 0; i < count; i++)
-                    errScale[i] = scalingBits / quantCoeff[i] / quantCoeff[i] / prec;
+                    errScale[i] = (double)scalingBits / quantCoeff[i] / quantCoeff[i] / prec;
             }
         }
     }
