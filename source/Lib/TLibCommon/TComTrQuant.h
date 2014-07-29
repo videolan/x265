@@ -56,7 +56,6 @@ struct EstBitsSbac
     int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
 };
 
-
 // TU settings for entropy encoding
 struct TUEntropyCodingParameters
 {

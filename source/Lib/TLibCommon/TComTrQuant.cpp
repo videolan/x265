@@ -455,14 +455,21 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codingParameters.scan[scanPos];
             double scaleFactor   = errScale[blkPos];
-            int levelDouble      = scaledCoeff[blkPos];
-            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);
+            int levelDouble      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
+            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);  /* abs(coef) */
 
+            /* initial cost of each coefficient. This works out to be:
+             *   abs(coef) * quantCoef * abs(coef) * quantCoef * (scalingBits / (quantCoef * quantCoef))
+             *   which reduces to abs(coef) * abs(coef) * scalingBits, which should be reduced
+             *   even further to abs(coef) * abs(coef) << scalingBits in the future */
             costCoeff0[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
+
+            /* running total of initial coeff L2 cost without accounting for lambda */
             blockUncodedCost   += costCoeff0[scanPos];
 
             if (maxAbsLevel > 0 && lastScanPos < 0)
             {
+                /* remember the first non-zero coef found in this reverse scan as the last pos */
                 lastScanPos   = scanPos;
                 ctxSet        = (scanPos < SCAN_SET_SIZE || ttype != TEXT_LUMA) ? 0 : 2;
                 cgLastScanPos = cgScanPos;
@@ -472,10 +479,10 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
             {
                 const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
                 const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
-                X265_CHECK(C2FLAG_NUMBER == 1, "scan validation 1\n");
-                X265_CHECK(!!(c1Idx < C1FLAG_NUMBER) == ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)), "scan validation 2\n");
-                X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 3\n");
-                X265_CHECK(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 4\n");
+
+                X265_CHECK(!!(c1Idx < C1FLAG_NUMBER) == ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)), "scan validation 1\n");
+                X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 2\n");
+                X265_CHECK(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
                 //===== coefficient level estimation =====
                 uint32_t level;
@@ -483,13 +490,14 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 const uint32_t absCtx = ctxSet + c2;
                 const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
                 const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
-                double curCostSig = 0;
 
                 costCoeff[scanPos] = MAX_DOUBLE;
                 if (scanPos == lastScanPos)
                 {
-                    level = getCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
-                                          levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
+                    /* special treatment for the last coef, which we know is non-zero */
+                    level = getCodedLevel(costCoeff[scanPos], 0, costSig[scanPos],
+                                          levelDouble, maxAbsLevel, baseLevel,
+                                          greaterOneBits, levelAbsBits, goRiceParam,
                                           c1c2Idx, qbits, scaleFactor);
                     sigRateDelta[blkPos] = 0;
                 }
@@ -504,9 +512,9 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     }
                     if (maxAbsLevel)
                     {
-                        curCostSig = getRateSigCoef(1, ctxSig);
-                        level = getCodedLevel(costCoeff[scanPos], curCostSig, costSig[scanPos],
-                                              levelDouble, maxAbsLevel, baseLevel, greaterOneBits, levelAbsBits, goRiceParam,
+                        level = getCodedLevel(costCoeff[scanPos], getRateSigCoef(1, ctxSig), costSig[scanPos],
+                                              levelDouble, maxAbsLevel, baseLevel,
+                                              greaterOneBits, levelAbsBits, goRiceParam,
                                               c1c2Idx, qbits, scaleFactor);
                     }
                     else
@@ -514,7 +522,12 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
 
                     sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
                 }
+
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
+                dstCoeff[blkPos] = level;
+                baseCost += costCoeff[scanPos];
+
+                /* record costs for sign-hiding performed at the end */
                 if (level > 0)
                 {
                     int rateNow = getICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
@@ -526,15 +539,14 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     rateIncUp[blkPos] = greaterOneBits[0];
                     rateIncDown[blkPos] = 0;
                 }
-                dstCoeff[blkPos] = level;
-                baseCost        += costCoeff[scanPos];
 
+                /* Update CABAC estimation state */
                 if (level >= baseLevel && goRiceParam < 4 && level >(3 << goRiceParam))
                     goRiceParam++;
 
                 c1Idx -= (-(int32_t)level) >> 31;
 
-                //===== update bin model =====
+                // update bin model
                 if (level > 1)
                 {
                     c1 = 0;
@@ -544,7 +556,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 else if ((c1 < 3) && (c1 > 0) && level)
                     c1++;
 
-                //===== context set update =====
+                // context set update
                 if ((scanPos % SCAN_SET_SIZE == 0) && (scanPos > 0))
                 {
                     c2 = 0;
@@ -558,7 +570,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     c1 = 1;
                 }
             }
-            else
+            else // lastScanPos < 0, nothing to code here, move along
             {
                 costCoeff[scanPos] = 0;
                 baseCost += costCoeff0[scanPos];
@@ -578,6 +590,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
             }
         } //end for (scanPosinCG)
 
+        /* Summarize costs for the coeff code group */
         if (cgLastScanPos >= 0)
         {
             costCoeffGroupSig[cgScanPos] = 0;
@@ -591,7 +604,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 }
                 else
                 {
-                    if (cgScanPos < cgLastScanPos) //skip the last coefficient group, which will be handled together with last position below.
+                    if (cgScanPos < cgLastScanPos) // skip the last coefficient group, which will be handled together with last position below.
                     {
                         if (!rdStats.nnzBeforePos0)
                         {
@@ -644,13 +657,12 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
         }
     } //end for (cgScanPos)
 
-    //===== estimate last position =====
     if (lastScanPos < 0)
         return 0;
 
-    double bestCost = 0;
-    int    ctxCbf = 0;
-    int    bestLastIdxp1 = 0;
+    double bestCost;
+    int    ctxCbf;
+
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
@@ -664,70 +676,74 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
         baseCost += getICost(m_estBitsSbac.blockCbpBits[ctxCbf][1]);
     }
 
+    // try to optimize last position
+    int  bestLastIdx = 0;
     bool foundLast = false;
-    for (int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
+    for (int cgScanPos = cgLastScanPos; cgScanPos >= 0 && !foundLast; cgScanPos--)
     {
         uint32_t cgBlkPos = codingParameters.scanCG[cgScanPos];
         baseCost -= costCoeffGroupSig[cgScanPos];
-        if (sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))
+
+        if (!(sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))) // skip empty CGs
+            continue;
+
+        for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
-            for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
+            scanPos = cgScanPos * cgSize + scanPosinCG;
+            if (scanPos > lastScanPos)
+                continue;
+
+            uint32_t blkPos = codingParameters.scan[scanPos];
+            if (dstCoeff[blkPos])
             {
-                scanPos = cgScanPos * cgSize + scanPosinCG;
-                if (scanPos > lastScanPos) continue;
-                uint32_t blkPos = codingParameters.scan[scanPos];
-                if (dstCoeff[blkPos])
+                uint32_t posY = blkPos >> log2TrSize;
+                uint32_t posX = blkPos - (posY << log2TrSize);
+                double costLast = codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+                double totalCost = baseCost + costLast - costSig[scanPos];
+
+                if (totalCost < bestCost)
                 {
-                    uint32_t posY = blkPos >> log2TrSize;
-                    uint32_t posX = blkPos - (posY << log2TrSize);
-                    double costLast = codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
-                    double totalCost = baseCost + costLast - costSig[scanPos];
-
-                    if (totalCost < bestCost)
-                    {
-                        bestLastIdxp1 = scanPos + 1;
-                        bestCost      = totalCost;
-                    }
-                    if (dstCoeff[blkPos] > 1)
-                    {
-                        foundLast = true;
-                        break;
-                    }
-                    baseCost -= costCoeff[scanPos];
-                    baseCost += costCoeff0[scanPos];
+                    bestLastIdx = scanPos + 1;
+                    bestCost = totalCost;
                 }
-                else
-                    baseCost -= costSig[scanPos];
+                if (dstCoeff[blkPos] > 1)
+                {
+                    foundLast = true;
+                    break;
+                }
+                baseCost -= costCoeff[scanPos];
+                baseCost += costCoeff0[scanPos];
             }
+            else
+                baseCost -= costSig[scanPos];
+        }
+    }
 
-            if (foundLast)
-                break;
-        } // end if (sigCoeffGroupFlag[ cgBlkPos ])
-    } // end for
-
+    /* recount non-zero coefficients and re-apply sign of DCT coef */
     numSig = 0;
-    for (int pos = 0; pos < bestLastIdxp1; pos++)
+    for (int pos = 0; pos < bestLastIdx; pos++)
     {
         int blkPos = codingParameters.scan[pos];
         int level  = dstCoeff[blkPos];
         numSig += (level != 0);
+
         uint32_t mask = (int32_t)m_resiDctCoeff[blkPos] >> 31;
         dstCoeff[blkPos] = (level ^ mask) - mask;
     }
 
-    //===== clean uncoded coefficients =====
-    for (int pos = bestLastIdxp1; pos <= lastScanPos; pos++)
+    // clean uncoded coefficients
+    for (int pos = bestLastIdx; pos <= lastScanPos; pos++)
         dstCoeff[codingParameters.scan[pos]] = 0;
 
     /* RDO version of sign-hiding */
     if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
-        int64_t rdFactor = (int64_t)(
-                ScalingList::s_invQuantScales[rem] * ScalingList::s_invQuantScales[rem] * (1 << (2 * per))
-                / (m_lambda * (16 << DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8))))
-                + 0.5);
-        int lastCG = 1;
+        // Note:: the scaling list is being ignored in this optimization
+        int prec = DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8));
+        int64_t invQuant = ScalingList::s_invQuantScales[rem] << per;
+        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (m_lambda * (16 << prec)) + 0.5);
 
+        int lastCG = 1;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
