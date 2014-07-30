@@ -981,7 +981,7 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         X265_CHECK(fabs((double)err2 - double(levelDouble  - (absLevel << qbits)) * double(levelDouble  - (absLevel << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
-        double curCost = err2 + getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
+        double curCost = err2 + m_lambda * getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
         if (curCost < bestCodedCost)
@@ -1000,12 +1000,7 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
 }
 
 /** Calculates the cost for specific absolute transform level */
-inline double TComTrQuant::getICRateCost(uint32_t   absLevel,
-                                         int32_t    diffLevel,
-                                         const int *greaterOneBits,
-                                         const int *levelAbsBits,
-                                         uint32_t   absGoRice,
-                                         uint32_t   c1c2Idx) const
+inline uint32_t TComTrQuant::getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
     uint32_t rate = IEP_RATE;
@@ -1047,7 +1042,7 @@ inline double TComTrQuant::getICRateCost(uint32_t   absLevel,
             rate += levelAbsBits[1];
     }
 
-    return m_lambda * rate;
+    return rate;
 }
 
 inline int TComTrQuant::getICRate(uint32_t   absLevel,
