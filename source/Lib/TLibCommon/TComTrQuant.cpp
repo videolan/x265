@@ -68,6 +68,107 @@ inline static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offs
     }
 }
 
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+{
+    X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
+    X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
+    if (!absLevel)
+    {
+        X265_CHECK(diffLevel < 0, "diffLevel check failure\n");
+        return 0;
+    }
+    int rate = 0;
+
+    if (diffLevel < 0)
+    {
+        X265_CHECK(absLevel <= 2, "absLevel check failure\n");
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+            rate += levelAbsBits[0];
+    }
+    else
+    {
+        uint32_t symbol = diffLevel;
+        const uint32_t maxVlc = g_goRiceRange[absGoRice];
+        bool expGolomb = (symbol > maxVlc);
+
+        if (expGolomb)
+        {
+            absLevel = symbol - maxVlc;
+
+            // NOTE: mapping to x86 hardware instruction BSR
+            unsigned long size;
+            CLZ32(size, absLevel);
+            int egs = size * 2 + 1;
+
+            rate += egs << 15;
+
+            // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
+            X265_CHECK(fastMin(symbol, (maxVlc + 1)) == maxVlc + 1, "min check failure\n");
+            symbol = maxVlc + 1;
+        }
+
+        uint32_t prefLen = (symbol >> absGoRice) + 1;
+        uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
+
+        rate += numBins << 15;
+
+        if (c1c2Idx & 1)
+            rate += greaterOneBits[1];
+
+        if (c1c2Idx == 3)
+            rate += levelAbsBits[1];
+    }
+    return rate;
+}
+
+/* Calculates the cost for specific absolute transform level */
+inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+{
+    X265_CHECK(absLevel, "absLevel should not be zero\n");
+    uint32_t rate = TComTrQuant::IEP_RATE;
+
+    if (diffLevel < 0)
+    {
+        X265_CHECK((absLevel == 1) || (absLevel == 2), "absLevel range check failure\n");
+        rate += greaterOneBits[(absLevel == 2)];
+
+        if (absLevel == 2)
+            rate += levelAbsBits[0];
+    }
+    else
+    {
+        uint32_t symbol = diffLevel;
+        uint32_t length;
+        if ((symbol >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
+        {
+            length = symbol >> absGoRice;
+            rate += (length + 1 + absGoRice) << 15;
+        }
+        else
+        {
+            length = 0;
+            symbol = (symbol >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
+            if (symbol != 0)
+            {
+                unsigned long idx;
+                CLZ32(idx, symbol + 1);
+                length = idx;
+            }
+
+            rate += (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
+        }
+        if (c1c2Idx & 1)
+            rate += greaterOneBits[1];
+
+        if (c1c2Idx == 3)
+            rate += levelAbsBits[1];
+    }
+
+    return rate;
+}
+
 }
 
 TComTrQuant::TComTrQuant()
@@ -997,112 +1098,6 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
     codedCost = bestCodedCost;
     codedCostSig = bestCodedCostSig;
     return bestAbsLevel;
-}
-
-/** Calculates the cost for specific absolute transform level */
-inline uint32_t TComTrQuant::getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx) const
-{
-    X265_CHECK(absLevel, "absLevel should not be zero\n");
-    uint32_t rate = IEP_RATE;
-
-    if (diffLevel < 0)
-    {
-        X265_CHECK((absLevel == 1) || (absLevel == 2), "absLevel range check failure\n");
-        rate += greaterOneBits[(absLevel == 2)];
-
-        if (absLevel == 2)
-            rate += levelAbsBits[0];
-    }
-    else
-    {
-        uint32_t symbol = diffLevel;
-        uint32_t length;
-        if ((symbol >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
-        {
-            length = symbol >> absGoRice;
-            rate += (length + 1 + absGoRice) << 15;
-        }
-        else
-        {
-            length = 0;
-            symbol = (symbol >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
-            if (symbol != 0)
-            {
-                unsigned long idx;
-                CLZ32(idx, symbol + 1);
-                length = idx;
-            }
-
-            rate += (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
-        }
-        if (c1c2Idx & 1)
-            rate += greaterOneBits[1];
-
-        if (c1c2Idx == 3)
-            rate += levelAbsBits[1];
-    }
-
-    return rate;
-}
-
-inline int TComTrQuant::getICRate(uint32_t   absLevel,
-                                  int32_t    diffLevel,
-                                  const int *greaterOneBits,
-                                  const int *levelAbsBits,
-                                  uint32_t   absGoRice,
-                                  uint32_t   c1c2Idx) const
-{
-    X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
-    X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
-    if (!absLevel)
-    {
-        X265_CHECK(diffLevel < 0, "diffLevel check failure\n");
-        return 0;
-    }
-    int rate = 0;
-
-    if (diffLevel < 0)
-    {
-        X265_CHECK(absLevel <= 2, "absLevel check failure\n");
-        rate += greaterOneBits[(absLevel == 2)];
-
-        if (absLevel == 2)
-            rate += levelAbsBits[0];
-    }
-    else
-    {
-        uint32_t symbol = diffLevel;
-        const uint32_t maxVlc = g_goRiceRange[absGoRice];
-        bool expGolomb = (symbol > maxVlc);
-
-        if (expGolomb)
-        {
-            absLevel = symbol - maxVlc;
-
-            // NOTE: mapping to x86 hardware instruction BSR
-            unsigned long size;
-            CLZ32(size, absLevel);
-            int egs = size * 2 + 1;
-
-            rate += egs << 15;
-
-            // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
-            X265_CHECK(fastMin(symbol, (maxVlc + 1)) == maxVlc + 1, "min check failure\n");
-            symbol = maxVlc + 1;
-        }
-
-        uint32_t prefLen = (symbol >> absGoRice) + 1;
-        uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
-
-        rate += numBins << 15;
-
-        if (c1c2Idx & 1)
-            rate += greaterOneBits[1];
-
-        if (c1c2Idx == 3)
-            rate += levelAbsBits[1];
-    }
-    return rate;
 }
 
 /** Calculates the cost of signaling the last significant coefficient in the block
