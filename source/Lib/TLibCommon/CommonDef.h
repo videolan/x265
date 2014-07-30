@@ -86,12 +86,6 @@
 #define MDCS_ANGLE_LIMIT            4 // distance from true angle that horiz or vertical scan is allowed
 #define MDCS_LOG2_MAX_SIZE          3 // TUs with log2 of size greater than this can only use diagonal scan
 
-#if HIGH_BIT_DEPTH
-# define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
-#else
-# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
-#endif
-
 #define MAX_NUM_REF_PICS            16 // max. number of pictures used for reference
 #define MAX_NUM_REF                 16 // max. number of entries in picture reference list
 

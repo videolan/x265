@@ -102,7 +102,6 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, d
 
     int64_t estDist;
     int classIdx;
-    int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
 
     m_distOrg[partIdx] =  0;
 
@@ -138,9 +137,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, d
                     saoLcuParamRdo.mergeLeftFlag = 1;
 
                     if (ry == onePart->startCUY)
-                    {
                         saoLcuParamRdo.mergeUpFlag = 0;
-                    }
 
                     if (rx == onePart->startCUX)
                         saoLcuParamRdo.mergeLeftFlag = 0;
@@ -152,7 +149,7 @@ void TEncSampleAdaptiveOffset::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, d
 
         if (typeIdx >= 0)
         {
-            estDist = estSaoTypeDist(partIdx, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
+            estDist = estSaoTypeDist(partIdx, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
             if (typeIdx == SAO_BO)
             {
                 // Estimate Best Position
@@ -1453,7 +1450,6 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
 
     int64_t estDist;
     int classIdx;
-    int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
     int64_t bestDist;
 
     SaoLcuParam* saoLcuParam = &(saoParam->saoLcuParam[yCbCr][addr]);
@@ -1484,7 +1480,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
 
     for (typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE; typeIdx++)
     {
-        estDist = estSaoTypeDist(yCbCr, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
+        estDist = estSaoTypeDist(yCbCr, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
 
         if (typeIdx == SAO_BO)
         {
@@ -1559,7 +1555,7 @@ void TEncSampleAdaptiveOffset::saoComponentParamDist(int allowMergeLeft, int all
                 for (classIdx = 0; classIdx < m_numClass[typeIdx]; classIdx++)
                 {
                     mergeOffset = saoLcuParamNeighbor->offset[classIdx];
-                    estDist += estSaoDist(m_count[yCbCr][typeIdx][classIdx + mergeBandPosition + 1], mergeOffset, m_offsetOrg[yCbCr][typeIdx][classIdx + mergeBandPosition + 1],  shift);
+                    estDist += estSaoDist(m_count[yCbCr][typeIdx][classIdx + mergeBandPosition + 1], mergeOffset, m_offsetOrg[yCbCr][typeIdx][classIdx + mergeBandPosition + 1],  0);
                 }
             }
             else
@@ -1580,7 +1576,6 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
 
     int64_t estDist[2];
     int classIdx;
-    int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(X265_DEPTH - 8);
     int64_t bestDist = 0;
 
     SaoLcuParam*  saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };
@@ -1630,7 +1625,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
             {
                 double currentRDCost = 0.0;
                 bestRDCostTableBo = MAX_DOUBLE;
-                estDist[compIdx] = estSaoTypeDist(compIdx + 1, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
+                estDist[compIdx] = estSaoTypeDist(compIdx + 1, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
                 for (int i = 0; i < SAO_MAX_BO_CLASSES - SAO_BO_LEN + 1; i++)
                 {
                     currentRDCost = 0.0;
@@ -1653,8 +1648,8 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
         }
         else
         {
-            estDist[0] = estSaoTypeDist(1, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
-            estDist[1] = estSaoTypeDist(2, typeIdx, shift, lambda, currentDistortionTableBo, currentRdCostTableBo);
+            estDist[0] = estSaoTypeDist(1, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
+            estDist[1] = estSaoTypeDist(2, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
         }
 
         m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
@@ -1714,7 +1709,7 @@ void TEncSampleAdaptiveOffset::sao2ChromaParamDist(int allowMergeLeft, int allow
                     for (classIdx = 0; classIdx < m_numClass[typeIdx]; classIdx++)
                     {
                         mergeOffset = saoLcuParamNeighbor[compIdx]->offset[classIdx];
-                        estDist[compIdx] += estSaoDist(m_count[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1], mergeOffset, m_offsetOrg[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1],  shift);
+                        estDist[compIdx] += estSaoDist(m_count[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1], mergeOffset, m_offsetOrg[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1],  0);
                     }
                 }
                 else

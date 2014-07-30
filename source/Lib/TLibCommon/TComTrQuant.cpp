@@ -861,9 +861,8 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         // Note:: the scaling list is being ignored in this optimization
-        int prec = DISTORTION_PRECISION_ADJUSTMENT(2 * (X265_DEPTH - 8));
         int64_t invQuant = ScalingList::s_invQuantScales[rem] << per;
-        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (m_lambda * (16 << prec)) + 0.5);
+        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (m_lambda * 16) + 0.5);
 
         int lastCG = 1;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
