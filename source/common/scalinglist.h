@@ -33,12 +33,11 @@ class ScalingList
 {
 public:
 
-    static const int NUM_LISTS = 6;            // list number for quantization matrix
-    static const int NUM_REM = 6;              // remainder of QP/6
-    static const int START_VALUE = 8;          // start value for dpcm mode
-    static const int MAX_MATRIX_COEF_NUM = 64; // max coefficient number for quantization matrix
-    static const int MAX_MATRIX_SIZE_NUM = 8;  // max size number for quantization matrix
-    static const int NUM_SIZES = 4;            // 4x4, 8x8, 16x16, 32x32
+    enum { NUM_SIZES = 4 };            // 4x4, 8x8, 16x16, 32x32
+    enum { NUM_LISTS = 6 };            // number of quantization matrix lists (YUV * inter/intra)
+    enum { NUM_REM = 6 };              // number of remainders of QP/6
+    enum { MAX_MATRIX_COEF_NUM = 64 }; // max coefficient number per quantization matrix
+    enum { MAX_MATRIX_SIZE_NUM = 8 };  // max size number for quantization matrix
 
     static const int     s_numCoefPerSize[NUM_SIZES];
     static const int     s_numListsAtSize[NUM_SIZES];

@@ -29,6 +29,7 @@
 
 #define CU_DQP_TU_CMAX 5 // max number bins for truncated unary
 #define CU_DQP_EG_k    0 // exp-golomb order
+#define START_VALUE    8 // start value for dpcm mode
 
 namespace x265 {
 
@@ -280,7 +281,7 @@ void Entropy::codeScalingList(ScalingList* scalingList, uint32_t sizeId, uint32_
 {
     int coefNum = X265_MIN(ScalingList::MAX_MATRIX_COEF_NUM, (int)ScalingList::s_numCoefPerSize[sizeId]);
     const uint16_t* scan = (sizeId == 0 ? g_scan4x4[SCAN_DIAG] : g_scan8x8diag);
-    int nextCoef = ScalingList::START_VALUE;
+    int nextCoef = START_VALUE;
     int32_t *src = scalingList->m_scalingListCoef[sizeId][listId];
     int data;
 
