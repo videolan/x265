@@ -1076,8 +1076,6 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
 
     err2 *= scaleFactor;
 
-    double bestCodedCost = codedCost;
-    double bestCodedCostSig = codedCostSig;
     int diffLevel = maxAbsLevel - baseLevel;
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
@@ -1085,18 +1083,16 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
         double curCost = err2 + m_lambda * getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
         curCost       += curCostSig;
 
-        if (curCost < bestCodedCost)
+        if (curCost < codedCost)
         {
             bestAbsLevel = absLevel;
-            bestCodedCost = curCost;
-            bestCodedCostSig = curCostSig;
+            codedCost = curCost;
+            codedCostSig = curCostSig;
         }
         err2 += errInc;
         diffLevel--;
     }
 
-    codedCost = bestCodedCost;
-    codedCostSig = bestCodedCostSig;
     return bestAbsLevel;
 }
 
