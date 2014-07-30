@@ -613,7 +613,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     }
                     if (maxAbsLevel)
                     {
-                        level = getCodedLevel(costCoeff[scanPos], m_lambda * m_estBitsSbac.significantBits[ctxSig][1], costSig[scanPos],
+                        level = getCodedLevel(costCoeff[scanPos], m_estBitsSbac.significantBits[ctxSig][1], costSig[scanPos],
                                               levelDouble, maxAbsLevel, baseLevel,
                                               greaterOneBits, levelAbsBits, goRiceParam,
                                               c1c2Idx, qbits, scaleFactor);
@@ -1049,7 +1049,7 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
  * This method calculates the best quantized transform level for a given scan position.
  */
 inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
-                                           const double curCostSig,
+                                           uint32_t     curCostSig,
                                            double&      codedCostSig,
                                            int          levelDouble,
                                            uint32_t     maxAbsLevel,
@@ -1080,14 +1080,13 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
         X265_CHECK(fabs((double)err2 - double(levelDouble  - (absLevel << qbits)) * double(levelDouble  - (absLevel << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
-        double curCost = err2 + m_lambda * getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
-        curCost       += curCostSig;
+        double curCost = err2 + m_lambda * (curCostSig + getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx));
 
         if (curCost < codedCost)
         {
             bestAbsLevel = absLevel;
             codedCost = curCost;
-            codedCostSig = curCostSig;
+            codedCostSig = m_lambda * curCostSig;
         }
         err2 += errInc;
         diffLevel--;

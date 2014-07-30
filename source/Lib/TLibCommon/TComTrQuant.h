@@ -135,7 +135,7 @@ protected:
 
     uint32_t rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
-    inline uint32_t getCodedLevel(double& codedCost, const double curCostSig, double& codedCostSig, int levelDouble,
+    inline uint32_t getCodedLevel(double& codedCost, uint32_t curCostSig, double& codedCostSig, int levelDouble,
                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
                                   uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
 
