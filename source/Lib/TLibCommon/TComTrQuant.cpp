@@ -507,12 +507,12 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
-                        costSig[scanPos] = getRateSigCoef(0, ctxSig);
+                        costSig[scanPos] = m_lambda * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
                     }
                     if (maxAbsLevel)
                     {
-                        level = getCodedLevel(costCoeff[scanPos], getRateSigCoef(1, ctxSig), costSig[scanPos],
+                        level = getCodedLevel(costCoeff[scanPos], m_lambda * m_estBitsSbac.significantBits[ctxSig][1], costSig[scanPos],
                                               levelDouble, maxAbsLevel, baseLevel,
                                               greaterOneBits, levelAbsBits, goRiceParam,
                                               c1c2Idx, qbits, scaleFactor);
@@ -599,8 +599,8 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-                    baseCost += getRateSigCoeffGroup(0, ctxSig) - rdStats.sigCost;
-                    costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(0, ctxSig);
+                    baseCost += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
+                    costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
                 }
                 else
                 {
@@ -618,9 +618,9 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                         uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                         if (cgScanPos < cgLastScanPos)
                         {
-                            baseCost   += getRateSigCoeffGroup(1, ctxSig);
-                            costZeroCG += getRateSigCoeffGroup(0, ctxSig);
-                            costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(1, ctxSig);
+                            baseCost += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
+                            costZeroCG += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+                            costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
                         }
 
                         // try to convert the current coeff group from non-zero to all-zero
@@ -634,7 +634,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                             sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
                             if (cgScanPos < cgLastScanPos)
-                                costCoeffGroupSig[cgScanPos] = getRateSigCoeffGroup(0, ctxSig);
+                                costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
 
                             // reset coeffs to 0 in this block
                             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -666,14 +666,14 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + getICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][0]);
-        baseCost += getICost(m_estBitsSbac.blockRootCbpBits[ctxCbf][1]);
+        bestCost  = blockUncodedCost + m_lambda * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
+        baseCost += m_lambda * m_estBitsSbac.blockRootCbpBits[ctxCbf][1];
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost  = blockUncodedCost + getICost(m_estBitsSbac.blockCbpBits[ctxCbf][0]);
-        baseCost += getICost(m_estBitsSbac.blockCbpBits[ctxCbf][1]);
+        bestCost = blockUncodedCost + m_lambda * m_estBitsSbac.blockCbpBits[ctxCbf][0];
+        baseCost += m_lambda * m_estBitsSbac.blockCbpBits[ctxCbf][1];
     }
 
     // try to optimize last position
@@ -1047,7 +1047,7 @@ inline double TComTrQuant::getICRateCost(uint32_t   absLevel,
             rate += levelAbsBits[1];
     }
 
-    return getICost(rate);
+    return m_lambda * rate;
 }
 
 inline int TComTrQuant::getICRate(uint32_t   absLevel,
@@ -1126,7 +1126,7 @@ inline double TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
 
     cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
     cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
-    return getICost(cost);
+    return m_lambda * cost;
 }
 
 /** Context derivation process of coeff_abs_significant_flag

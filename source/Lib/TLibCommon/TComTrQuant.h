@@ -139,26 +139,13 @@ protected:
                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
                                   uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
 
-    inline double getICRateCost(uint32_t absLevel, int32_t  diffLevel, const int *greaterOneBits, const int *levelAbsBits,
+    inline double getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits,
                                 uint32_t absGoRice, uint32_t c1c2Idx) const;
 
     inline int    getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits,
                             uint32_t absGoRice, uint32_t c1c2Idx) const;
 
     inline double getRateLast(uint32_t posx, uint32_t posy) const;
-
-    inline double getRateSigCoeffGroup(uint16_t sigCoeffGroup, uint16_t ctxNumSig) const
-    {
-        return m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxNumSig][sigCoeffGroup];
-    }
-    inline double getRateSigCoef(uint32_t sig, uint32_t ctxNumSig) const
-    {
-        return m_lambda * m_estBitsSbac.significantBits[ctxNumSig][sig];
-    }
-    inline double getICost(double rate) const ///< Get the cost for a specific rate
-    {
-        return m_lambda * rate;
-    }
 
 public:
 
