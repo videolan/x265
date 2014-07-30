@@ -139,7 +139,7 @@ protected:
                                   uint32_t maxAbsLevel, uint32_t baseLevel, const int *greaterOneBits, const int *levelAbsBits,
                                   uint32_t absGoRice, uint32_t c1c2Idx, int qbits, double scale) const;
 
-    inline double getRateLast(uint32_t posx, uint32_t posy) const;
+    inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
 
 public:
 

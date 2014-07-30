@@ -799,7 +799,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
             {
                 uint32_t posY = blkPos >> log2TrSize;
                 uint32_t posX = blkPos - (posY << log2TrSize);
-                double costLast = codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+                double costLast = m_lambda * (codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY));
                 double totalCost = baseCost + costLast - costSig[scanPos];
 
                 if (totalCost < bestCost)
@@ -1101,7 +1101,7 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
  * \param posy Y coordinate of the last significant coefficient
  * \returns cost of last significant coefficient
  */
-inline double TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
+inline uint32_t TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
 {
     uint32_t ctxX = getGroupIdx(posx);
     uint32_t ctxY = getGroupIdx(posy);
@@ -1112,7 +1112,7 @@ inline double TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
 
     cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
     cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
-    return m_lambda * cost;
+    return cost;
 }
 
 /** Context derivation process of coeff_abs_significant_flag
