@@ -31,7 +31,7 @@
 
 #include "common.h"
 #include "TLibCommon/TComYuv.h"
-#include "TLibCommon/TComPrediction.h"
+#include "predict.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComDataCU.h"
 #include "shortyuv.h"

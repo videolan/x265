@@ -6,7 +6,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
-    ../Lib/TLibCommon/TComPrediction.cpp
     ../Lib/TLibCommon/TComRom.cpp
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
     ../Lib/TLibCommon/TComTrQuant.cpp
@@ -21,7 +20,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPattern.h
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComPrediction.h
     ../Lib/TLibCommon/TComRom.h
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
     ../Lib/TLibCommon/TComTrQuant.h

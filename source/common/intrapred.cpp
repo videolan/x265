@@ -21,7 +21,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPrediction.h"
+#include "predict.h"
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
 

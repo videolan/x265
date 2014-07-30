@@ -42,7 +42,7 @@
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
-#include "TLibCommon/TComPrediction.h"
+#include "predict.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "bitcost.h"
 #include "motion.h"
@@ -98,7 +98,7 @@ inline int getTUBits(int idx, int numIdx)
 // ====================================================================================================================
 
 /// encoder search class
-class TEncSearch : public TComPrediction
+class TEncSearch : public Predict
 {
 public:
 

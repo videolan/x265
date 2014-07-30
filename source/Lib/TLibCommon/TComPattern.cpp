@@ -38,7 +38,7 @@
 #include "frame.h"
 #include "TComPattern.h"
 #include "TComDataCU.h"
-#include "TComPrediction.h"
+#include "predict.h"
 
 using namespace x265;
 
@@ -68,7 +68,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
 
-    bool bUseFilteredPredictions = (dirMode == ALL_IDX || TComPrediction::filteringIntraReferenceSamples(dirMode, intraNeighbors.log2TrSize));
+    bool bUseFilteredPredictions = (dirMode == ALL_IDX || Predict::filteringIntraReferenceSamples(dirMode, intraNeighbors.log2TrSize));
 
     if (bUseFilteredPredictions && 8 <= tuSize && tuSize <= 32)
     {

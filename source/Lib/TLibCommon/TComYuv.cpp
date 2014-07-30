@@ -38,7 +38,7 @@
 
 #include "common.h"
 #include "TComYuv.h"
-#include "TComPrediction.h"
+#include "predict.h"
 #include "shortyuv.h"
 #include "primitives.h"
 

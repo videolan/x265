@@ -41,7 +41,7 @@
 #include "primitives.h"
 #include "slice.h"
 #include "TComWeightPrediction.h"
-#include "TComPrediction.h"
+#include "predict.h"
 
 using namespace x265;
 

@@ -1,37 +1,27 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
- *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
+/*****************************************************************************
+* Copyright (C) 2013 x265 project
+*
+* Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+*
+* This program is also available under a commercial proprietary license.
+* For more information, contact us at license @ x265.com.
+*****************************************************************************/
 
-#include "TComPrediction.h"
+#include "predict.h"
 #include "primitives.h"
 #include "common.h"
 
@@ -46,7 +36,7 @@ static const uint8_t intraFilterThreshold[5] =
     10, //64x64
 };
 
-TComPrediction::TComPrediction()
+Predict::Predict()
 {
     m_predBuf = NULL;
     m_refAbove = NULL;
@@ -56,7 +46,7 @@ TComPrediction::TComPrediction()
     m_immedVals = NULL;
 }
 
-TComPrediction::~TComPrediction()
+Predict::~Predict()
 {
     X265_FREE(m_predBuf);
     X265_FREE(m_refAbove);
@@ -72,7 +62,7 @@ TComPrediction::~TComPrediction()
     m_predTempYuv.destroy();
 }
 
-void TComPrediction::initTempBuff(int csp)
+void Predict::initTempBuff(int csp)
 {
     m_csp = csp;
 
@@ -97,7 +87,7 @@ void TComPrediction::initTempBuff(int csp)
     }
 }
 
-bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize)
+bool Predict::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize)
 {
     bool bFilter;
 
@@ -115,7 +105,7 @@ bool TComPrediction::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t l
     return bFilter;
 }
 
-void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
+void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
     int tuSize = 1 << log2TrSize;
     bool bUseFilteredPredictions = filteringIntraReferenceSamples(dirMode, log2TrSize);
@@ -136,7 +126,7 @@ void TComPrediction::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t str
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
-void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
+void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
 {
     int tuSize = 1 << log2TrSizeC;
     uint32_t tuSize2 = tuSize << 1;
@@ -159,7 +149,7 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
 
         int l = 0;
         // left border from bottom to top
-        for (int i = 0; i < tuSize2; i++)
+        for (uint32_t i = 0; i < tuSize2; i++)
         {
             filterBuf[l++] = src[ADI_BUF_STRIDE * (tuSize2 - i)];
         }
@@ -201,7 +191,7 @@ void TComPrediction::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst
     primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
 }
 
-bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu)
+bool Predict::checkIdenticalMotion(TComDataCU* cu)
 {
     X265_CHECK(cu->m_slice->isInterB(), "identical motion check in P frame\n");
     if (!cu->m_slice->m_pps->bUseWeightedBiPred)
@@ -219,7 +209,7 @@ bool TComPrediction::xCheckIdenticalMotion(TComDataCU* cu)
     return false;
 }
 
-void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, bool bLuma, bool bChroma)
+void Predict::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, bool bLuma, bool bChroma)
 {
     if (cu->m_slice->isInterP())
         list = REF_PIC_LIST_0;
@@ -234,27 +224,27 @@ void TComPrediction::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int li
             MV mv = cu->getCUMvField(list)->getMv(m_partAddr);
             cu->clipMv(mv);
             if (bLuma)
-                xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(),
+                predInterLumaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(),
                                   &mv, shortYuv);
             if (bChroma)
-                xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+                predInterChromaBlk(cu->m_slice->m_refPicList[list][refId]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
                                     &mv, shortYuv);
 
             xWeightedPredictionUni(cu, shortYuv, m_partAddr, m_width, m_height, list, predYuv, -1, bLuma, bChroma);
         }
         else
-            xPredInterUni(cu, list, predYuv, bLuma, bChroma);
+            predInterUni(cu, list, predYuv, bLuma, bChroma);
     }
     else
     {
-        if (xCheckIdenticalMotion(cu))
-            xPredInterUni(cu, REF_PIC_LIST_0, predYuv, bLuma, bChroma);
+        if (checkIdenticalMotion(cu))
+            predInterUni(cu, REF_PIC_LIST_0, predYuv, bLuma, bChroma);
         else
-            xPredInterBi(cu, predYuv, bLuma, bChroma);
+            predInterBi(cu, predYuv, bLuma, bChroma);
     }
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, int list, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void Predict::predInterUni(TComDataCU* cu, int list, TComYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     int refIdx = cu->getCUMvField(list)->getRefIdx(m_partAddr);
 
@@ -264,15 +254,15 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, int list, TComYuv* outPredYuv
     cu->clipMv(mv);
 
     if (bLuma)
-        xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+        predInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
                           &mv, outPredYuv);
 
     if (bChroma)
-        xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+        predInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
                             &mv, outPredYuv);
 }
 
-void TComPrediction::xPredInterUni(TComDataCU* cu, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
+void Predict::predInterUni(TComDataCU* cu, int list, ShortYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     int refIdx = cu->getCUMvField(list)->getRefIdx(m_partAddr);
 
@@ -282,14 +272,14 @@ void TComPrediction::xPredInterUni(TComDataCU* cu, int list, ShortYuv* outPredYu
     cu->clipMv(mv);
 
     if (bLuma)
-        xPredInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+        predInterLumaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
                           &mv, outPredYuv);
     if (bChroma)
-        xPredInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
+        predInterChromaBlk(cu->m_slice->m_refPicList[list][refIdx]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), 
                             &mv, outPredYuv);
 }
 
-void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma)
 {
     X265_CHECK(cu->m_slice->isInterB(), "biprediction in P frame\n");
 
@@ -303,7 +293,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLum
         {
             X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-            xPredInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
+            predInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
         if (cu->m_slice->m_pps->bUseWeightedBiPred)
@@ -319,7 +309,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLum
 
             X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-            xPredInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
+            predInterUni(cu, list, &m_predShortYuv[list], bLuma, bChroma);
         }
 
         xWeightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
@@ -330,7 +320,7 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLum
 
         X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-        xPredInterUni(cu, list, outPredYuv, bLuma, bChroma);
+        predInterUni(cu, list, outPredYuv, bLuma, bChroma);
     }
     else
     {
@@ -340,11 +330,11 @@ void TComPrediction::xPredInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLum
 
         X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
 
-        xPredInterUni(cu, list, outPredYuv, bLuma, bChroma);
+        predInterUni(cu, list, outPredYuv, bLuma, bChroma);
     }
 }
 
-void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
+void Predict::predInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int dstStride = dstPic->getStride();
     pixel *dst    = dstPic->getLumaAddr(m_partAddr);
@@ -379,7 +369,7 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
 }
 
-void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
+void Predict::predInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getStride();
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
@@ -418,7 +408,7 @@ void TComPrediction::xPredInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint
     }
 }
 
-void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
+void Predict::predInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->getCStride();
@@ -471,7 +461,7 @@ void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, ui
     }
 }
 
-void TComPrediction::xPredInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
+void Predict::predInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->m_cwidth;
