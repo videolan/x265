@@ -174,7 +174,6 @@ private:
     void start();
     void finish();
     void copyState(Entropy& other);
-    void flush();
 
     void encodeBin(uint32_t binValue, ContextModel& ctxModel);
     void encodeBinEP(uint32_t binValue);

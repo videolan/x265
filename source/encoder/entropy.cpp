@@ -1994,16 +1994,6 @@ void Entropy::finish()
     m_bitIf->write(m_low >> 8, 13 + m_bitsLeft);
 }
 
-void Entropy::flush()
-{
-    encodeBinTrm(1);
-    finish();
-    m_bitIf->write(1, 1);
-    m_bitIf->writeAlignZero();
-
-    start();
-}
-
 void Entropy::copyState(Entropy& other)
 {
     m_low = other.m_low;
