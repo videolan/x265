@@ -399,7 +399,8 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         int useDST = (sizeIdx == 0 && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA);
         int index = DCT_4x4 + sizeIdx - useDST;
         primitives.dct[index](residual, m_resiDctCoeff, stride);
-        if (m_nr->bNoiseReduction && index)
+
+        if (m_nr->bNoiseReduction && !useDST)
         {
             denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], (16 << sizeIdx * 2));
             m_nr->count[sizeIdx]++;
@@ -524,8 +525,8 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     TUEntropyCodingParameters codingParameters;
     getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
 
-    const uint32_t cgSize = (1 << MLS_CG_SIZE); // 16
-    double costCoeffGroupSig[MLS_GRP_NUM];
+    const uint32_t cgSize = (1 << MLS_CG_SIZE); // 4x4 coef = 16
+    double costCoeffGroupSig[MLS_GRP_NUM];      // 32x32 has 64 4x4 coding groups
     uint64_t sigCoeffGroupFlag64 = 0;
     uint32_t ctxSet      = 0;
     int    c1            = 1;
@@ -1061,13 +1062,14 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
                                            int          qbits,
                                            double       scaleFactor) const
 {
+    X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
+
     uint32_t bestAbsLevel = 0;
     int32_t minAbsLevel = maxAbsLevel - 1;
     if (minAbsLevel < 1)
         minAbsLevel = 1;
 
     // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
-    X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
     const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
     double err2 = (double)((int64_t)err1 * err1);                         // A ^ 2
     const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
