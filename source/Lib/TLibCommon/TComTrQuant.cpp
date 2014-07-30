@@ -1079,8 +1079,10 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
     int diffLevel = maxAbsLevel - baseLevel;
     for (int absLevel = maxAbsLevel; absLevel >= minAbsLevel; absLevel--)
     {
-        X265_CHECK(fabs((double)err2 - double(levelDouble  - (absLevel << qbits)) * double(levelDouble  - (absLevel << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
-        double curCost = err2 + m_lambda * (curCostSig + getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx));
+        X265_CHECK(fabs((double)err2 - double(levelDouble - (absLevel << qbits)) * double(levelDouble - (absLevel << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
+
+        uint32_t rateCost = getICRateCost(absLevel, diffLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
+        double curCost = err2 + m_lambda * (curCostSig + rateCost);
 
         if (curCost < codedCost)
         {
