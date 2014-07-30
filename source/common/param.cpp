@@ -942,7 +942,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
-    CHECK(param->psyRdoq < 0 || 2.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 2.0");
+    // CHECK(param->psyRdoq < 0 || 2.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 2.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
