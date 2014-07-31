@@ -72,7 +72,7 @@ protected:
     void applyReferencePictureSet(RPS *rps, int curPoc);
     void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
 
-    NalUnitType getNalUnitType(int curPoc, int lastIdr, Frame* pic);
+    NalUnitType getNalUnitType(int curPoc, bool bIsKeyFrame);
 };
 }
 

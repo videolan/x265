@@ -90,20 +90,18 @@ void DPB::prepareEncode(Frame *pic)
     Slice* slice = pic->m_picSym->m_slice;
     slice->m_pic = pic;
     slice->m_poc = pic->m_POC;
-    int type = pic->m_lowres.sliceType;
-    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
-
-    /* m_bHasReferences starts out as true for non-B pictures, and is set to false
-     * once no more pictures reference it */
-    pic->m_picSym->m_bHasReferences = IS_REFERENCED(slice);
 
     int pocCurr = slice->m_poc;
-    if (getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-        getNalUnitType(pocCurr, m_lastIDR, pic) == NAL_UNIT_CODED_SLICE_IDR_N_LP)
-        m_lastIDR = pocCurr;
+    int type = pic->m_lowres.sliceType;
+    bool bIsKeyFrame = pic->m_lowres.bKeyframe;
 
+    slice->m_nalUnitType = getNalUnitType(pocCurr, bIsKeyFrame);
+    if (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+        slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP)
+        m_lastIDR = pocCurr;
     slice->m_lastIDR = m_lastIDR;
-    slice->m_nalUnitType = getNalUnitType(pocCurr, m_lastIDR, pic);
+    slice->m_nalUnitType = getNalUnitType(pocCurr, bIsKeyFrame);
+    slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
 
     if (type == X265_TYPE_B)
     {
@@ -123,6 +121,10 @@ void DPB::prepareEncode(Frame *pic)
             break;
         }
     }
+
+    /* m_bHasReferences starts out as true for non-B pictures, and is set to false
+     * once no more pictures reference it */
+    pic->m_picSym->m_bHasReferences = IS_REFERENCED(slice);
 
     m_picList.pushFront(*pic);
 
@@ -155,6 +157,7 @@ void DPB::prepareEncode(Frame *pic)
         slice->m_colFromL0Flag = true;
         slice->m_colRefIdx = 0;
     }
+    slice->m_sLFaseFlag = (SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0;
 
     /* Increment reference count of all motion-referenced frames to prevent them
      * from being recycled. These counts are decremented at the end of
@@ -287,39 +290,26 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
     }
 }
 
-/** Function for deciding the nal_unit_type.
- * \param pocCurr POC of the current picture
- * \returns the nal unit type of the picture
- * This function checks the configuration and returns the appropriate nal_unit_type for the picture.
- */
-NalUnitType DPB::getNalUnitType(int curPOC, int lastIDR, Frame* pic)
+/* deciding the nal_unit_type */
+NalUnitType DPB::getNalUnitType(int curPOC, bool bIsKeyFrame)
 {
-    if (curPOC == 0)
+    if (!curPOC)
         return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
 
-    if (pic->m_lowres.bKeyframe)
-    {
-        if (m_bOpenGOP)
-            return NAL_UNIT_CODED_SLICE_CRA;
-        else
-            return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-    }
-    if (m_pocCRA > 0)
-    {
-        if (curPOC < m_pocCRA)
-        {
-            // All leading pictures are being marked as TFD pictures here since current encoder uses all
-            // reference pictures while encoding leading pictures. An encoder can ensure that a leading
-            // picture can be still decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by
-            // controlling the reference pictures used for encoding that leading picture. Such a leading
-            // picture need not be marked as a TFD picture.
-            return NAL_UNIT_CODED_SLICE_RASL_R;
-        }
-    }
-    if (lastIDR > 0)
-    {
-        if (curPOC < lastIDR)
-            return NAL_UNIT_CODED_SLICE_RADL_R;
-    }
+    if (bIsKeyFrame)
+        return m_bOpenGOP ? NAL_UNIT_CODED_SLICE_CRA : NAL_UNIT_CODED_SLICE_IDR_W_RADL;
+
+    if (m_pocCRA && curPOC < m_pocCRA)
+        // All leading pictures are being marked as TFD pictures here since
+        // current encoder uses all reference pictures while encoding leading
+        // pictures. An encoder can ensure that a leading picture can be still
+        // decodable when random accessing to a CRA/CRANT/BLA/BLANT picture by
+        // controlling the reference pictures used for encoding that leading
+        // picture. Such a leading picture need not be marked as a TFD picture.
+        return NAL_UNIT_CODED_SLICE_RASL_R;
+
+    if (m_lastIDR && curPOC < m_lastIDR)
+        return NAL_UNIT_CODED_SLICE_RADL_R;
+
     return NAL_UNIT_CODED_SLICE_TRAIL_R;
 }
