@@ -660,7 +660,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     int numPart = outBestCU->getNumPartInter();
                     for (int partIdx = 0; partIdx < numPart; partIdx++)
                     {
-                        outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
+                        prepMotionCompensation(outBestCU, partIdx);
                         motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                     }
 
@@ -733,7 +733,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         int numPart = outBestCU->getNumPartInter();
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
-                            outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
+                            prepMotionCompensation(outBestCU, partIdx);
                             motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
 
@@ -758,7 +758,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         int numPart = outBestCU->getNumPartInter();
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
-                            outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
+                            prepMotionCompensation(outBestCU, partIdx);
                             motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
 
@@ -775,7 +775,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         int numPart = outBestCU->getNumPartInter();
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
-                            outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
+                            prepMotionCompensation(outBestCU, partIdx);
                             motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
                         }
                     }
@@ -1371,7 +1371,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
             // do MC only for Luma part
             /* Set CU parameters for motion compensation */
-            outTempCU->getPartIndexAndSize(0, m_partAddr, m_width, m_height);
+            prepMotionCompensation(outTempCU, 0);
             motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, false);
             uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
             outTempCU->m_totalBits = bitsCand;
@@ -1410,7 +1410,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             int numPart = outBestCU->getNumPartInter();
             for (int partIdx = 0; partIdx < numPart; partIdx++)
             {
-                outBestCU->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
+                prepMotionCompensation(outBestCU, partIdx);
                 motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, false, true);
             }
 
@@ -1484,7 +1484,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
 
                     // do MC
-                    outTempCU->getPartIndexAndSize(0, m_partAddr, m_width, m_height);
+                    prepMotionCompensation(outTempCU, 0);
                     motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, true);
                     // estimate residual and encode everything
                     if (noResidual)

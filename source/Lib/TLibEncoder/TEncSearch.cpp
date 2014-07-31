@@ -1907,9 +1907,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
         
         /* Prediction data for each partition */
-        m_partAddr = partAddr;
-        m_width = roiWidth;
-        m_height = roiHeight;        
+        prepMotionCompensation(cu, partIdx);     
 
         pixel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
@@ -1982,7 +1980,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                     cu->clipMv(mvCand);
 
-                    predInterLumaBlk(cu->m_slice->m_refPicList[l][ref]->getPicYuvRec(), cu->getAddr(), cu->getZorderIdxInCU(), &mvCand, &m_predTempYuv);
+                    prepMotionCompensation(cu, partIdx);
+                    predInterLumaBlk(cu->m_slice->m_refPicList[l][ref]->getPicYuvRec(), &m_predTempYuv, &mvCand);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
                     cost = (uint32_t)m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
@@ -2028,8 +2027,10 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             // Generate reference subpels
             TComPicYuv *refPic0 = cu->m_slice->m_refPicList[0][list[0].ref]->getPicYuvRec();
             TComPicYuv *refPic1 = cu->m_slice->m_refPicList[1][list[1].ref]->getPicYuvRec();
-            predInterLumaBlk(refPic0, cu->getAddr(), cu->getZorderIdxInCU(), &list[0].mv, &m_predYuv[0]);
-            predInterLumaBlk(refPic1, cu->getAddr(), cu->getZorderIdxInCU(), &list[1].mv, &m_predYuv[1]);
+            
+            prepMotionCompensation(cu, partIdx);
+            predInterLumaBlk(refPic0, &m_predYuv[0], &list[0].mv);
+            predInterLumaBlk(refPic1, &m_predYuv[1], &list[1].mv);
 
             pixel *pred0 = m_predYuv[0].getLumaAddr(partAddr);
             pixel *pred1 = m_predYuv[1].getLumaAddr(partAddr);

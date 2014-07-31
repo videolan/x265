@@ -49,27 +49,34 @@ protected:
 
     int16_t*  m_immedVals;
 
+    /* Slice information */
+    Slice*    m_slice;
     int       m_csp;
     
     /* CU information for prediction */
     int       m_width;
     int       m_height; 
     uint32_t  m_partAddr;
+    uint32_t  m_cuAddr;
+    uint32_t  m_zOrderIdxinCU;
+
+    /* Motion information */
+    TComCUMvField* m_mvField[2];
 
     // motion compensation functions
-    void predInterUni(TComDataCU *cu, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
-    void predInterUni(TComDataCU *cu, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
-    void predInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic);
-    void predInterLumaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic);
-    void predInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, TComYuv *dstPic);
-    void predInterChromaBlk(TComPicYuv *refPic, uint32_t cuAddr, uint32_t zOrderIdxinCU, MV *mv, ShortYuv *dstPic);
+    void predInterUni(TComDataCU* cu, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
+    void predInterUni(TComDataCU* cu, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
+    void predInterLumaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
+    void predInterLumaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
+    void predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
+    void predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
 
     void predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma);
 
     void getLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
-    bool checkIdenticalMotion(TComDataCU* cu);
-
+    bool checkIdenticalMotion();
+    
 public:
 
     // Intra prediction buffers
@@ -85,6 +92,7 @@ public:
     void initTempBuff(int csp);
 
     // inter
+    void prepMotionCompensation(TComDataCU* cu, int partIdx);
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList, bool bLuma, bool bChroma);
 
     // Angular Intra
