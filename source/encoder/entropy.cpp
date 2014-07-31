@@ -1746,7 +1746,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                     c1++;
             }
 
-            if (c1 == 0)
+            if (!c1)
             {
                 baseCtxMod = bIsLuma ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
@@ -1762,7 +1762,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 encodeBinsEP(coeffSigns, numNonZero);
 
             int firstCoeff2 = 1;
-            if (c1 == 0 || numNonZero > C1FLAG_NUMBER)
+            if (!c1 || numNonZero > C1FLAG_NUMBER)
             {
                 for (int idx = 0; idx < numNonZero; idx++)
                 {
