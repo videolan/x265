@@ -102,8 +102,7 @@ void initROM()
 
     int i, c;
 
-    // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
-    ::memset(g_convertToBit, -1, sizeof(g_convertToBit));
+    memset(g_convertToBit, -1, sizeof(g_convertToBit));
     c = 0;
     for (i = 4; i <= MAX_CU_SIZE; i *= 2)
     {
@@ -311,7 +310,6 @@ const uint16_t g_scan2x2[][2*2] =
 {
     { 0, 2, 1, 3 },
     { 0, 1, 2, 3 },
-    //{ 0, 2, 1, 3 },
 };
 
 const uint16_t g_scan8x8[NUM_SCAN_TYPE][8 * 8] =

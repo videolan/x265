@@ -43,13 +43,6 @@
 namespace x265 {
 // private namespace
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Macros
-// ====================================================================================================================
-
 #define MAX_CU_DEPTH            4                           // maximun CU depth
 #define MAX_FULL_DEPTH          5                           // maximun full depth
 #define MAX_LOG2_CU_SIZE        6                           // log2(LCUSize)
@@ -64,24 +57,20 @@ namespace x265 {
 #define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
-// ====================================================================================================================
-// Initialize / destroy functions
-// ====================================================================================================================
+#define SLFASE_CONSTANT 0x5f4e4a53
 
 void initROM();
 void destroyROM();
 
-// ====================================================================================================================
 static const int chromaQPMappingTableSize = 70;
 
 extern const uint8_t g_chromaScale[chromaQPMappingTableSize];
 extern const uint8_t g_chroma422IntraAngleMappingTable[36];
-// Data structure related table & variable
-// ====================================================================================================================
 
 // flexible conversion from relative to absolute index
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+
 void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
 
@@ -105,9 +94,7 @@ extern const int16_t g_t8[8][8];
 extern const int16_t g_t16[16][16];
 extern const int16_t g_t32[32][32];
 
-// ====================================================================================================================
 // Subpel interpolation defines and constants
-// ====================================================================================================================
 
 #define NTAPS_LUMA        8                            ///< Number of taps for luma
 #define NTAPS_CHROMA      4                            ///< Number of taps for chroma
@@ -118,9 +105,7 @@ extern const int16_t g_t32[32][32];
 extern const int16_t g_lumaFilter[4][NTAPS_LUMA];     ///< Luma filter taps
 extern const int16_t g_chromaFilter[8][NTAPS_CHROMA]; ///< Chroma filter taps
 
-// ====================================================================================================================
 // Scanning order & context mapping table
-// ====================================================================================================================
 
 // coefficient scanning type used in ACS
 enum ScanType
@@ -145,14 +130,9 @@ extern const uint16_t* const g_scanOrder[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t g_scan8x8diag[8 * 8];
 extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
-#define NUM_SCAN_SIZE 4
 
 extern const uint8_t g_minInGroup[10];
-extern const uint8_t g_goRiceRange[5];      //!< maximum value coded with Rice codes
-
-// ====================================================================================================================
-// Misc.
-// ====================================================================================================================
+extern const uint8_t g_goRiceRange[5]; // maximum value coded with Rice codes
 
 extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
 
@@ -167,6 +147,7 @@ extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1]
 // CABAC tables
 extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t x265_exp2_lut[64];
+
 }
 
 #endif  //ifndef X265_TCOMROM_H
