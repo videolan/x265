@@ -270,7 +270,7 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
     Frame* iterPic = m_picList.first();
     while (iterPic)
     {
-        if (iterPic->m_POC != curPoc && !iterPic->m_picSym->m_bHasReferences)
+        if (iterPic->m_POC != curPoc && iterPic->m_picSym->m_bHasReferences)
         {
             // loop through all pictures in the Reference Picture Set
             // to see if the picture should be kept as reference picture
