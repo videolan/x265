@@ -45,25 +45,14 @@ public:
 
     uint32_t  m_psyRd;
 
+    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale); }
+    void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
+    void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
+
     void setLambda(double lambda2, double lambda)
     {
         m_lambdaSSE = (uint64_t)floor(256.0 * lambda2);
         m_lambdaSAD = (uint64_t)floor(256.0 * lambda);
-    }
-
-    void setPsyRdScale(double scale)
-    {
-        m_psyRd = (uint32_t)floor(256.0 * scale);
-    }
-
-    void setCbDistortionWeight(double cbDistortionWeight)
-    {
-        m_cbDistortionWeight = (uint64_t)floor(cbDistortionWeight);
-    }
-
-    void setCrDistortionWeight(double crDistortionWeight)
-    {
-        m_crDistortionWeight = (uint64_t)floor(crDistortionWeight);
     }
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)

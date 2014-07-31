@@ -135,10 +135,10 @@ void TEncSearch::setQP(int qp, int qpCb, int qpCr)
     m_quant.setLambdas(lambda2, lambdaCb, lambdaCr);
     m_rdCost.setLambda(lambda2, x265_lambda_tab[qp]);
     int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    double lambdaOffset = m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    uint16_t lambdaOffset = m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
     m_rdCost.setCbDistortionWeight(lambdaOffset);
     chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    lambdaOffset = m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256.0;
+    lambdaOffset = m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
     m_rdCost.setCrDistortionWeight(lambdaOffset);
 }
 
