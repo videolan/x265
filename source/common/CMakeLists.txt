@@ -8,7 +8,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
     ../Lib/TLibCommon/TComRom.cpp
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
-    ../Lib/TLibCommon/TComTrQuant.cpp
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
@@ -22,7 +21,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComRom.h
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComTrQuant.h
     ../Lib/TLibCommon/TComWeightPrediction.h
     ../Lib/TLibCommon/TComYuv.h)
 
@@ -146,4 +144,5 @@ add_library(common OBJECT
     lowres.cpp lowres.h
     piclist.cpp piclist.h
     scalinglist.cpp scalinglist.h
+    quant.cpp quant.h
     deblock.cpp deblock.h)

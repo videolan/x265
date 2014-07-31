@@ -2466,6 +2466,28 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         return SCAN_DIAG;
 }
 
+void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma)
+{
+    // set the group layout
+    result.log2TrSizeCG = log2TrSize - 2;
+
+    // set the scan orders
+    result.scanType = getCoefScanIdx(absPartIdx, log2TrSize, bIsLuma, isIntra(absPartIdx));
+    result.scan     = g_scanOrder[result.scanType][log2TrSize - 2];
+    result.scanCG   = g_scanOrderCG[result.scanType][result.log2TrSizeCG];
+
+    if (log2TrSize == 2)
+        result.firstSignificanceMapContext = 0;
+    else if (log2TrSize == 3)
+    {
+        result.firstSignificanceMapContext = 9;
+        if (result.scanType != SCAN_DIAG && bIsLuma)
+            result.firstSignificanceMapContext += 6;
+    }
+    else
+        result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
+}
+
 uint32_t TComDataCU::getSCUAddr()
 {
     return (m_cuAddr) * (1 << (g_maxCUDepth << 1)) + m_absIdxInLCU;

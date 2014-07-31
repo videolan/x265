@@ -47,6 +47,16 @@
 namespace x265 {
 // private namespace
 
+// TU settings for entropy encoding
+struct TUEntropyCodingParameters
+{
+    const uint16_t *scan;
+    const uint16_t *scanCG;
+    ScanType        scanType;
+    uint32_t        log2TrSizeCG;
+    uint32_t        firstSignificanceMapContext;
+};
+
 class Frame;
 class Slice;
 
@@ -489,6 +499,7 @@ public:
     uint32_t&     getTotalNumPart()     { return m_numPartitions; }
 
     ScanType      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
+    void          getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions to support multiple color space formats

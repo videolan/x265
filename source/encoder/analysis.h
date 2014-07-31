@@ -30,11 +30,11 @@
 #define INTRA_MODES 3
 
 #include "common.h"
-#include "TLibCommon/TComYuv.h"
 #include "predict.h"
-#include "TLibCommon/TComTrQuant.h"
-#include "TLibCommon/TComDataCU.h"
+#include "quant.h"
 #include "shortyuv.h"
+#include "TLibCommon/TComYuv.h"
+#include "TLibCommon/TComDataCU.h"
 
 #include "entropy.h"
 #include "TLibEncoder/TEncSearch.h"

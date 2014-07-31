@@ -1,41 +1,33 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
+/*****************************************************************************
+ * Copyright (C) 2014 x265 project
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
+ * Authors: Steve Borho <steve@borho.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+ *
+ * This program is also available under a commercial proprietary license.
+ * For more information, contact us at license @ x265.com.
+ *****************************************************************************/
 
 #include "common.h"
 #include "primitives.h"
+#include "quant.h"
 #include "frame.h"
-#include "TComTrQuant.h"
-#include "ContextTables.h"
+#include "TLibCommon/TComDataCU.h"
+#include "TLibCommon/TComYuv.h"
+#include "TLibCommon/ContextTables.h"
 
 using namespace x265;
 
@@ -107,7 +99,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
             rate += egs << 15;
 
             // NOTE: in here, expGolomb=true means (symbol >= maxVlc + 1)
-            X265_CHECK(fastMin(symbol, (maxVlc + 1)) == maxVlc + 1, "min check failure\n");
+            X265_CHECK(fastMin(symbol, (maxVlc + 1)) == (int)maxVlc + 1, "min check failure\n");
             symbol = maxVlc + 1;
         }
 
@@ -129,7 +121,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
-    uint32_t rate = TComTrQuant::IEP_RATE;
+    uint32_t rate = Quant::IEP_RATE;
 
     if (diffLevel < 0)
     {
@@ -173,14 +165,14 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *g
 
 }
 
-TComTrQuant::TComTrQuant()
+Quant::Quant()
 {
     m_resiDctCoeff = NULL;
     m_fencDctCoeff = NULL;
     m_fencShortBuf = NULL;
 }
 
-bool TComTrQuant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
+bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
 {
     m_useRDOQ = useRDOQ;
     m_psyRdoqScale = (uint64_t)(psyScale * 256.0);
@@ -192,13 +184,13 @@ bool TComTrQuant::init(bool useRDOQ, double psyScale, const ScalingList& scaling
     return m_resiDctCoeff && m_fencShortBuf;
 }
 
-TComTrQuant::~TComTrQuant()
+Quant::~Quant()
 {
     X265_FREE(m_resiDctCoeff);
     X265_FREE(m_fencShortBuf);
 }
 
-void TComTrQuant::setQPforQuant(TComDataCU* cu)
+void Quant::setQPforQuant(TComDataCU* cu)
 {
     int qpy = cu->getQP(0);
     int chFmt = cu->getChromaFormat();
@@ -208,7 +200,7 @@ void TComTrQuant::setQPforQuant(TComDataCU* cu)
     setQPforQuant(qpy, TEXT_CHROMA_V, cu->m_slice->m_pps->chromaCrQpOffset, chFmt);
 }
 
-void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt)
+void Quant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt)
 {
     X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
 
@@ -224,7 +216,7 @@ void TComTrQuant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int
 }
 
 // To minimize the distortion only. No rate is considered.
-uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
+uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
 
@@ -252,7 +244,7 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
             uint32_t signbit = (qCoef[codingParameters.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
-            int absSum = 0;
+            uint32_t absSum = 0;
 
             for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
                 absSum += qCoef[codingParameters.scan[n + subPos]];
@@ -331,7 +323,7 @@ uint32_t TComTrQuant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* d
     return numSig;
 }
 
-uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+uint32_t Quant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
 {
     int deltaU[32 * 32];
 
@@ -351,24 +343,24 @@ uint32_t TComTrQuant::quant(TComDataCU* cu, coeff_t* qCoef, uint32_t log2TrSize,
     if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
     {
         TUEntropyCodingParameters codingParameters;
-        getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
+        cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
         return signBitHidingHDQ(qCoef, m_resiDctCoeff, deltaU, numSig, codingParameters);
     }
     else
         return numSig;
 }
 
-uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
-                                   pixel*      fenc,
-                                   uint32_t    fencStride,
-                                   int16_t*    residual,
-                                   uint32_t    stride,
-                                   coeff_t*    coeff,
-                                   uint32_t    log2TrSize,
-                                   TextType    ttype,
-                                   uint32_t    absPartIdx,
-                                   bool        useTransformSkip,
-                                   bool        curUseRDOQ)
+uint32_t Quant::transformNxN(TComDataCU* cu,
+                             pixel*      fenc,
+                             uint32_t    fencStride,
+                             int16_t*    residual,
+                             uint32_t    stride,
+                             coeff_t*    coeff,
+                             uint32_t    log2TrSize,
+                             TextType    ttype,
+                             uint32_t    absPartIdx,
+                             bool        useTransformSkip,
+                             bool        curUseRDOQ)
 {
     int trSize = 1 << log2TrSize;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -431,7 +423,7 @@ uint32_t TComTrQuant::transformNxN(TComDataCU* cu,
         return quant(cu, coeff, log2TrSize, ttype, absPartIdx);
 }
 
-void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
+void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff, uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
     if (transQuantBypass)
     {
@@ -474,7 +466,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
             shift = -shift;
             for (int j = 0; j < trSize; j++)
                 for (int k = 0; k < trSize; k++)
-                    residual[j * stride + k] = m_resiDctCoeff[j * trSize + k] << shift;
+                    residual[j * stride + k] = (int16_t)m_resiDctCoeff[j * trSize + k] << shift;
         }
     }
     else
@@ -482,7 +474,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
-        X265_CHECK(numSig == primitives.count_nonzero(coeff, 1 << log2TrSize * 2), "numSig differ\n");
+        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << log2TrSize * 2), "numSig differ\n");
 
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
@@ -493,7 +485,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
             const int add_2nd = 1 << (shift_2nd - 1);
 
             int dc_val = (((m_resiDctCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
-            primitives.blockfill_s[sizeIdx](residual, stride, dc_val);
+            primitives.blockfill_s[sizeIdx](residual, stride, (int16_t)dc_val);
             return;
         }
 
@@ -504,7 +496,7 @@ void TComTrQuant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint
 
 /** Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC */
-uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
 {
     uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -523,7 +515,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     int scaledCoeff[32 * 32];
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, scaledCoeff, dstCoeff, qbits, add, numCoeff);
 
-    X265_CHECK(numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
+    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
 
@@ -542,8 +534,6 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     int rateIncDown[32 * 32];
     int sigRateDelta[32 * 32];
     int deltaU[32 * 32];
-    TUEntropyCodingParameters codingParameters;
-    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
 
     const uint32_t cgSize = (1 << MLS_CG_SIZE); // 4x4 coef = 16
     double costCoeffGroupSig[MLS_GRP_NUM];      // 32x32 has 64 4x4 coding groups
@@ -557,6 +547,9 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
     uint32_t c1Idx       = 0;
     uint32_t c2Idx       = 0;
     int cgLastScanPos    = -1;
+
+    TUEntropyCodingParameters codingParameters;
+    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
     const uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
     uint32_t scanPos;
@@ -602,9 +595,9 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
                 const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
 
-                X265_CHECK(!!(c1Idx < C1FLAG_NUMBER) == ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)), "scan validation 1\n");
+                X265_CHECK(!!((int)c1Idx < C1FLAG_NUMBER) == (int)((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)), "scan validation 1\n");
                 X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 2\n");
-                X265_CHECK(baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
+                X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
                 //===== coefficient level estimation =====
                 uint32_t level;
@@ -614,7 +607,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
 
                 costCoeff[scanPos] = MAX_DOUBLE;
-                if (scanPos == lastScanPos)
+                if ((int)scanPos == lastScanPos)
                 {
                     /* special treatment for the last coef, which we know is non-zero */
                     level = getCodedLevel(costCoeff[scanPos], 0, costSig[scanPos],
@@ -663,7 +656,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 }
 
                 /* Update CABAC estimation state */
-                if (level >= baseLevel && goRiceParam < 4 && level >(3 << goRiceParam))
+                if (level >= baseLevel && goRiceParam < 4 && level > (3U << goRiceParam))
                     goRiceParam++;
 
                 c1Idx -= (-(int32_t)level) >> 31;
@@ -812,7 +805,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos = cgScanPos * cgSize + scanPosinCG;
-            if (scanPos > lastScanPos)
+            if ((int)scanPos > lastScanPos)
                 continue;
 
             uint32_t blkPos = codingParameters.scan[scanPos];
@@ -892,7 +885,7 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
                 for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
                     absSum += dstCoeff[codingParameters.scan[n + subPos]];
 
-                if (signbit != (absSum & 0x1)) // hide but need tune
+                if (signbit != (absSum & 1U)) // hide but need tune
                 {
                     // calculate the cost
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
@@ -967,14 +960,14 @@ uint32_t TComTrQuant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2T
 }
 
 /** Pattern decision for context derivation process of significant_coeff_flag */
-uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, const uint32_t cgPosX, const uint32_t cgPosY, const uint32_t log2TrSizeCG)
+uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
 {
     if (!log2TrSizeCG)
         return 0;
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
     X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
-    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
 
@@ -982,12 +975,8 @@ uint32_t TComTrQuant::calcPatternSigCtx(const uint64_t sigCoeffGroupFlag64, cons
 }
 
 /** Context derivation process of coeff_abs_significant_flag */
-uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
-                                   const uint32_t log2TrSize,
-                                   const uint32_t trSize,
-                                   const uint32_t blkPos,
-                                   const TextType ctype,
-                                   const uint32_t firstSignificanceMapContext)
+uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, TextType ctype,
+                             uint32_t firstSignificanceMapContext)
 {
     static const uint8_t ctxIndMap[16] =
     {
@@ -1068,20 +1057,20 @@ uint32_t TComTrQuant::getSigCtxInc(const uint32_t patternSigCtx,
  * \returns best quantized transform level for given scan position
  * This method calculates the best quantized transform level for a given scan position.
  */
-inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
-                                           uint32_t     curCostSig,
-                                           double&      codedCostSig,
-                                           int          levelDouble,
-                                           uint32_t     maxAbsLevel,
-                                           uint32_t     baseLevel,
-                                           const int *  greaterOneBits,
-                                           const int *  levelAbsBits,
-                                           uint32_t     absGoRice,
-                                           uint32_t     c1c2Idx,
-                                           int          qbits,
-                                           double       scaleFactor,
-                                           int          blkPos,
-                                           bool         usePsy) const
+inline uint32_t Quant::getCodedLevel(double&      codedCost,
+                                     uint32_t     curCostSig,
+                                     double&      codedCostSig,
+                                     int          levelDouble,
+                                     uint32_t     maxAbsLevel,
+                                     uint32_t     baseLevel,
+                                     const int *  greaterOneBits,
+                                     const int *  levelAbsBits,
+                                     uint32_t     absGoRice,
+                                     uint32_t     c1c2Idx,
+                                     int          qbits,
+                                     double       scaleFactor,
+                                     int          blkPos,
+                                     bool         usePsy) const
 {
     X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
 
@@ -1118,7 +1107,7 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
             int unquantAbsLevel = (level * scale + add) >> shift;
             int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits;
-            int psyValue = (m_psyRdoqScale * reconCoef) >> 8;
+            int psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8);
             curCost -= psyValue;
         }
 
@@ -1140,7 +1129,7 @@ inline uint32_t TComTrQuant::getCodedLevel(double&      codedCost,
  * \param posy Y coordinate of the last significant coefficient
  * \returns cost of last significant coefficient
  */
-inline uint32_t TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
+inline uint32_t Quant::getRateLast(uint32_t posx, uint32_t posy) const
 {
     uint32_t ctxX = getGroupIdx(posx);
     uint32_t ctxY = getGroupIdx(posy);
@@ -1161,15 +1150,15 @@ inline uint32_t TComTrQuant::getRateLast(uint32_t posx, uint32_t posy) const
  * \param log2TrSizeCG log2 value of block size
  * \returns ctxInc for current scan position
  */
-uint32_t TComTrQuant::getSigCoeffGroupCtxInc(const uint64_t sigCoeffGroupFlag64,
-                                             const uint32_t cgPosX,
-                                             const uint32_t cgPosY,
-                                             const uint32_t log2TrSizeCG)
+uint32_t Quant::getSigCoeffGroupCtxInc(uint64_t sigCoeffGroupFlag64,
+                                       uint32_t cgPosX,
+                                       uint32_t cgPosY,
+                                       uint32_t log2TrSizeCG)
 {
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
 
-    X265_CHECK(trSizeCG <= 32, "transform size too large\n");
-    const uint32_t sigPos = sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX);
+    X265_CHECK(trSizeCG <= 8, "transform size too large\n");
+    const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
 

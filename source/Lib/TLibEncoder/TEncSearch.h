@@ -43,7 +43,7 @@
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
 #include "predict.h"
-#include "TLibCommon/TComTrQuant.h"
+#include "quant.h"
 #include "bitcost.h"
 #include "motion.h"
 
@@ -114,7 +114,7 @@ public:
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
     // interface to classes
-    TComTrQuant     m_trQuant;
+    Quant           m_quant;
     RDCost          m_rdCost;
 
     Entropy*        m_entropyCoder;

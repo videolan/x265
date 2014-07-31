@@ -26,11 +26,12 @@
 
 #include "common.h"
 #include "frame.h"
+#include "quant.h"
+#include "shortyuv.h"
+#include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
-#include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/TComWeightPrediction.h"
-#include "shortyuv.h"
 
 namespace x265 {
 

@@ -23,9 +23,9 @@
 
 #include "common.h"
 #include "scalinglist.h"
-#include "TLibCommon/TComSampleAdaptiveOffset.h"
-#include "TLibCommon/TComTrQuant.h"
+#include "quant.h"
 #include "entropy.h"
+#include "TLibCommon/TComSampleAdaptiveOffset.h"
 
 #define CU_DQP_TU_CMAX 5 // max number bins for truncated unary
 #define CU_DQP_EG_k    0 // exp-golomb order
@@ -1547,10 +1547,9 @@ void Entropy::codeQtRootCbfZero(TComDataCU*)
 /** Encode (X,Y) position of the last significant coefficient
  * \param posx X component of last coefficient
  * \param posy Y component of last coefficient
- * \param width  Block width
- * \param height Block height
+ * \param log2TrSize
  * \param ttype plane type / luminance or chrominance
- * \param uiScanIdx scan type (zig-zag, hor, ver)
+ * \param scanIdx scan type (zig-zag, hor, ver)
  * This method encodes the X and Y component within a block of the last significant coefficient.
  */
 void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
@@ -1617,11 +1616,9 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     if (cu->m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
 
-    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-
     // select scans
     TUEntropyCodingParameters codingParameters;
-    getTUEntropyCodingParameters(cu, codingParameters, absPartIdx, log2TrSize, ttype);
+    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
 
     //----- encode significance map -----
 
@@ -1647,6 +1644,8 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     }
     while (numSig > 0);
     scanPosLast--;
+
+    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
 
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
@@ -1684,19 +1683,19 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
         const int cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
-        if (subSet == lastScanSet || subSet == 0)
+        if (subSet == lastScanSet || !subSet)
             sigCoeffGroupFlag64 |= cgBlkPosMask;
         else
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
-            uint32_t ctxSig = TComTrQuant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            uint32_t ctxSig = Quant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
 
         // encode significant_coeff_flag
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
         {
-            const int patternSigCtx = TComTrQuant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             uint32_t blkPos, sig, ctxSig;
             for (; scanPosSig >= subPos; scanPosSig--)
             {
@@ -1704,7 +1703,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig = TComTrQuant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
+                    ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
                     encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
