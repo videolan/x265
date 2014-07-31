@@ -31,18 +31,13 @@ namespace x265 {
 
 class RDCost
 {
-private:
-
-    uint64_t  m_lambdaSSE;  // m_lambda2 w/ 8 bits of fraction
-
-    uint64_t  m_lambdaSAD;  // m_lambda w/ 8 bits of fraction
-
-    uint64_t  m_cbDistortionWeight;
-
-    uint64_t  m_crDistortionWeight;
-
 public:
 
+    /* all weights and factors stored as FIX8 */
+    uint64_t  m_lambda2;
+    uint64_t  m_lambda;
+    uint64_t  m_cbDistortionWeight;
+    uint64_t  m_crDistortionWeight;
     uint32_t  m_psyRd;
 
     void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale); }
@@ -51,15 +46,15 @@ public:
 
     void setLambda(double lambda2, double lambda)
     {
-        m_lambdaSSE = (uint64_t)floor(256.0 * lambda2);
-        m_lambdaSAD = (uint64_t)floor(256.0 * lambda);
+        m_lambda2 = (uint64_t)floor(256.0 * lambda2);
+        m_lambda = (uint64_t)floor(256.0 * lambda);
     }
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
     {
-        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSSE,
-                   "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambdaSSE);
-        return distortion + ((bits * m_lambdaSSE + 128) >> 8);
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
+                   "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambda2);
+        return distortion + ((bits * m_lambda2 + 128) >> 8);
     }
 
     /* return the difference in energy between the source block and the recon block */
@@ -71,14 +66,14 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
-        return distortion + ((m_lambdaSAD * m_psyRd * psycost) >> 16) + ((bits * m_lambdaSSE) >> 8);
+        return distortion + ((m_lambda * m_psyRd * psycost) >> 16) + ((bits * m_lambda2) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
     {
-        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSAD,
-                   "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambdaSAD);
-        return sadCost + ((bits * m_lambdaSAD + 128) >> 8);
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
+                   "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
+        return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)
@@ -97,10 +92,9 @@ public:
 
     inline uint32_t getCost(uint32_t bits)
     {
-        return (uint32_t)((bits * m_lambdaSAD + 128) >> 8);
+        return (uint32_t)((bits * m_lambda + 128) >> 8);
     }
 };
 }
-//! \}
 
 #endif // ifndef X265_TCOMRDCOST_H
