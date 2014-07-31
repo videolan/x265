@@ -35,18 +35,15 @@
 
 namespace x265 {
 
-struct ReferencePlanes;
-
-/// prediction class
 class Predict : public TComWeightPrediction
 {
 protected:
 
-    // references sample for IntraPrediction
+    /* TODO: remove m_predYuv, m_predTempYuv, these should just be temporary structs inside predInterSearch */
     TComYuv   m_predYuv[2];
-    ShortYuv  m_predShortYuv[2];
     TComYuv   m_predTempYuv;
 
+    ShortYuv  m_predShortYuv[2]; //temporary storage for weighted prediction
     int16_t*  m_immedVals;
 
     /* Slice information */
@@ -62,6 +59,7 @@ protected:
 
     /* Motion information */
     TComCUMvField* m_mvField[2];
+    /* TODO: Need to investigate clipping while writing into the TComDataCU fields itself */
     MV ClippedMv[2];
 
     // motion compensation functions
@@ -92,7 +90,7 @@ public:
 
     void initTempBuff(int csp);
 
-    // inter
+    // prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
     void prepMotionCompensation(TComDataCU* cu, int partIdx);
     void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList, bool bLuma, bool bChroma);
 
@@ -102,6 +100,5 @@ public:
     static bool filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize);
 };
 }
-//! \}
 
 #endif // ifndef X265_PREDICT_H
