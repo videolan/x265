@@ -1548,14 +1548,12 @@ void Entropy::codeQtRootCbfZero(TComDataCU*)
  * \param posx X component of last coefficient
  * \param posy Y component of last coefficient
  * \param log2TrSize
- * \param ttype plane type / luminance or chrominance
+ * \param bIsLuma
  * \param scanIdx scan type (zig-zag, hor, ver)
  * This method encodes the X and Y component within a block of the last significant coefficient.
  */
-void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx)
+void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx)
 {
-    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
-
     // swap
     if (scanIdx == SCAN_VER)
         std::swap(posx, posy);
@@ -1564,8 +1562,8 @@ void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2T
     uint32_t groupIdxX = getGroupIdx(posx);
     uint32_t groupIdxY = getGroupIdx(posy);
 
-    int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
-    int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
+    int blkSizeOffset = bIsLuma ? ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
+    int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
     // posX
@@ -1650,9 +1648,9 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
     int posLastX = posLast & (trSize - 1);
-    codeLastSignificantXY(posLastX, posLastY, log2TrSize, ttype, codingParameters.scanType);
+    codeLastSignificantXY(posLastX, posLastY, log2TrSize, ttype == TEXT_LUMA, codingParameters.scanType);
     //===== code significance flag =====
-    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype ? NUM_SIG_CG_FLAG_CTX : 0)];
+    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype == TEXT_LUMA ? 0 : NUM_SIG_CG_FLAG_CTX)];
     ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
     uint32_t c1 = 1;
@@ -1703,7 +1701,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
+                    ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype == TEXT_LUMA, codingParameters.firstSignificanceMapContext);
                     encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)

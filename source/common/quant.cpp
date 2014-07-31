@@ -619,7 +619,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 else
                 {
                     // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it
-                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype, codingParameters.firstSignificanceMapContext);
+                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype == TEXT_LUMA, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
                         costSig[scanPos] = m_lambda * m_estBitsSbac.significantBits[ctxSig][0];
@@ -975,7 +975,7 @@ uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX,
 }
 
 /** Context derivation process of coeff_abs_significant_flag */
-uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, TextType ctype,
+uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma,
                              uint32_t firstSignificanceMapContext)
 {
     static const uint8_t ctxIndMap[16] =
@@ -1038,7 +1038,7 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
 
     offset += cnt;
 
-    return (ctype == TEXT_LUMA && (posX | posY) >= 4) ? 3 + offset : offset;
+    return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
 /** Get the best level in RD sense

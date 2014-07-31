@@ -205,7 +205,7 @@ private:
     void codeSAOSign(uint32_t code)                  { encodeBinEP(code); }
 
     void codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx);
-    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, TextType ttype, uint32_t scanIdx);
+    void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx);
     void codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     struct CoeffCodeState
