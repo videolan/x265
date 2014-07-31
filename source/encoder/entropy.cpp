@@ -449,7 +449,7 @@ void Entropy::codeSliceHeader(Slice* slice)
     bool isDBFEnabled = !slice->m_pps->bPicDisableDeblockingFilter;
 
     if (isSAOEnabled || isDBFEnabled)
-        WRITE_FLAG(1, "slice_loop_filter_across_slices_enabled_flag");
+        WRITE_FLAG(slice->m_sLFaseFlag, "slice_loop_filter_across_slices_enabled_flag");
 }
 
 /** write wavefront substreams sizes for the slice header */

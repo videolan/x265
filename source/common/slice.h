@@ -288,6 +288,7 @@ public:
     int         m_lastIDR;
 
     bool        m_bCheckLDC;       // TODO: is this necessary?
+    bool        m_sLFaseFlag;      // loop filter boundary flag
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
     uint32_t    m_colRefIdx;       // never modified
     
@@ -301,6 +302,7 @@ public:
     Slice()
     {
         m_lastIDR = 0;
+        m_sLFaseFlag = true;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
         for (int i = 0; i < MAX_NUM_REF; i++)
         {
