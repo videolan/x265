@@ -45,8 +45,6 @@ public:
 
     uint32_t  m_psyRd;
 
-    static const pixel zeroPel[MAX_CU_SIZE];
-
     void setLambda(double lambda2, double lambda)
     {
         m_lambdaSSE = (uint64_t)floor(256.0 * lambda2);

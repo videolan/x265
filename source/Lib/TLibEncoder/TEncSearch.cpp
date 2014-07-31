@@ -47,7 +47,7 @@
 
 using namespace x265;
 
-ALIGN_VAR_32(const pixel, RDCost::zeroPel[MAX_CU_SIZE]) = { 0 };
+ALIGN_VAR_32(const pixel, TEncSearch::zeroPel[MAX_CU_SIZE]) = { 0 };
 
 TEncSearch::TEncSearch()
 {
@@ -2385,7 +2385,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         {
             // need to check whether zero distortion is similar to psyenergy of fenc
             int size = log2CUSize - 2;
-            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), (pixel*)RDCost::zeroPel, 0);
+            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), (pixel*)zeroPel, 0);
             zeroCost = m_rdCost.calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
         }
         else
@@ -2779,7 +2779,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         {
             // need to check whether zero distortion is similar to psyenergy of fenc
             int size = log2TrSize - 2;
-            psyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), (pixel*)RDCost::zeroPel, 0);
+            psyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), (pixel*)zeroPel, 0);
         }
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width not full CU\n");
