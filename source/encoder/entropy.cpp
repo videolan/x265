@@ -412,15 +412,12 @@ void Entropy::codeSliceHeader(Slice* slice)
     if (slice->isInterB())
         WRITE_FLAG(0, "mvd_l1_zero_flag");
 
-    if (!slice->isIntra())
+    if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
     {
-        if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
-        {
-            SliceType sliceType   = slice->m_sliceType;
-            int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
-            bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-            WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
-        }
+        SliceType sliceType   = slice->m_sliceType;
+        int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
+        bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
+        WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
     }
 
     // TMVP always enabled
