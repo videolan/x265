@@ -532,13 +532,13 @@ void Lookahead::slicetypeDecide()
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
+    bool isNextNonB = false;
 
     while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
-    {
         curNonB++;
-    }
 
     int nextNonB = keyframe ? prevNonB : curNonB;
+    int nextB = keyframe ? prevNonB + 1 : curNonB + 1;
 
     while (curNonB < numFrames + !keyframe)
     {
@@ -557,12 +557,33 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
             frames[nextNonB]->plannedType[idx] = X265_TYPE_B;
         }
 
+        for (int i = nextB; i <= curNonB; i++)
+        {
+            for (int j = frames[i]->indB + i + 1; j <= curNonB; j++, frames[i]->indB++)
+            {
+                if (j == curNonB)
+                {
+                    if (isNextNonB)
+                    {
+                        int p0 = IS_X265_TYPE_I(frames[curNonB]->sliceType) ? curNonB : prevNonB;
+                        frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, p0, curNonB, curNonB);
+                        frames[i]->plannedType[frames[i]->indB] = frames[curNonB]->sliceType;
+                    }
+                }
+                else
+                {
+                    frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, prevNonB, curNonB, j);
+                    frames[i]->plannedType[frames[i]->indB] = X265_TYPE_B;
+                }
+            }
+            if (i == curNonB && !isNextNonB)
+                isNextNonB = true;
+        }
+
         prevNonB = curNonB;
         curNonB++;
         while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
-        {
             curNonB++;
-        }
     }
 
     frames[nextNonB]->plannedType[idx] = X265_TYPE_AUTO;
