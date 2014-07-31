@@ -1613,10 +1613,12 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 
     if (cu->m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
+    
+    bool bIsLuma = ttype == TEXT_LUMA;
 
     // select scans
     TUEntropyCodingParameters codingParameters;
-    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
+    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, bIsLuma);
 
     //----- encode significance map -----
 
@@ -1643,15 +1645,13 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     while (numSig > 0);
     scanPosLast--;
 
-    ttype = ttype == TEXT_LUMA ? TEXT_LUMA : TEXT_CHROMA;
-
     // Code position of last coefficient
     int posLastY = posLast >> log2TrSize;
     int posLastX = posLast & (trSize - 1);
-    codeLastSignificantXY(posLastX, posLastY, log2TrSize, ttype == TEXT_LUMA, codingParameters.scanType);
+    codeLastSignificantXY(posLastX, posLastY, log2TrSize, bIsLuma, codingParameters.scanType);
     //===== code significance flag =====
-    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (ttype == TEXT_LUMA ? 0 : NUM_SIG_CG_FLAG_CTX)];
-    ContextModel * const baseCtx = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
+    ContextModel * const baseCtx = bIsLuma ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
     uint32_t c1 = 1;
     uint32_t goRiceParam = 0;
@@ -1701,7 +1701,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 sig     = (coeff[blkPos] != 0);
                 if (scanPosSig > subPos || subSet == 0 || numNonZero)
                 {
-                    ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype == TEXT_LUMA, codingParameters.firstSignificanceMapContext);
+                    ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     encodeBin(sig, baseCtx[ctxSig]);
                 }
                 if (sig)
@@ -1721,13 +1721,13 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
         if (numNonZero > 0)
         {
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
-            uint32_t ctxSet = (subSet > 0 && ttype == TEXT_LUMA) ? 2 : 0;
+            uint32_t ctxSet = (subSet > 0 && bIsLuma) ? 2 : 0;
 
             if (c1 == 0)
                 ctxSet++;
 
             c1 = 1;
-            ContextModel *baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
+            ContextModel *baseCtxMod = bIsLuma ? &m_contextModels[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
 
             int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             int firstC2FlagIdx = -1;
@@ -1748,7 +1748,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 
             if (c1 == 0)
             {
-                baseCtxMod = (ttype == TEXT_LUMA) ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
+                baseCtxMod = bIsLuma ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
                 {
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
