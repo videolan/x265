@@ -62,10 +62,11 @@ protected:
 
     /* Motion information */
     TComCUMvField* m_mvField[2];
+    MV ClippedMv[2];
 
     // motion compensation functions
-    void predInterUni(TComDataCU* cu, int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
-    void predInterUni(TComDataCU* cu, int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
+    void predInterUni(int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
+    void predInterUni(int picList, ShortYuv* outPredYuv, bool bLuma, bool bChroma);
     void predInterLumaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
     void predInterLumaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
     void predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);

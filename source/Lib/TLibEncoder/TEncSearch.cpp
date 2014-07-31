@@ -1857,6 +1857,7 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
         cu->getCUMvField(REF_PIC_LIST_1)->m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
         cu->getCUMvField(REF_PIC_LIST_1)->m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
+        prepMotionCompensation(cu, puIdx);
         motionCompensation(cu, &m_predTempYuv, REF_PIC_LIST_X, true, false);
         uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.getStride());
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
@@ -1905,9 +1906,6 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         uint32_t partAddr;
         int      roiWidth, roiHeight;
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
-        
-        /* Prediction data for each partition */
-        prepMotionCompensation(cu, partIdx);     
 
         pixel* pu = fenc->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
@@ -1938,6 +1936,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
                 totalmebits += merge.bits;
 
+                prepMotionCompensation(cu, partIdx);     
                 motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
                 continue;
             }
@@ -2156,7 +2155,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
             totalmebits += list[1].bits;
         }
-
+        prepMotionCompensation(cu, partIdx);
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
     }
 
