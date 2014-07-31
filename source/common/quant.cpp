@@ -400,6 +400,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA;
         int index = DCT_4x4 + sizeIdx - useDST;
+
         if (m_psyRdoqScale && ttype == TEXT_LUMA)
         {
             // converting pixel to short for input to dct and psy-rdoq eval
@@ -523,7 +524,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     selectLambda(ttype);
 
     double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
-    bool usePsy = m_psyRdoqScale && ttype == TEXT_LUMA;
+    bool bIsLuma = ttype == TEXT_LUMA;
+    bool usePsy = m_psyRdoqScale && bIsLuma;
 
     double blockUncodedCost = 0;
     double costCoeff[32 * 32];
@@ -549,7 +551,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int cgLastScanPos    = -1;
 
     TUEntropyCodingParameters codingParameters;
-    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
+    cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, bIsLuma);
     const uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
     uint32_t scanPos;
@@ -586,7 +588,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             {
                 /* remember the first non-zero coef found in this reverse scan as the last pos */
                 lastScanPos   = scanPos;
-                ctxSet        = (scanPos < SCAN_SET_SIZE || ttype != TEXT_LUMA) ? 0 : 2;
+                ctxSet        = (scanPos < SCAN_SET_SIZE || !bIsLuma) ? 0 : 2;
                 cgLastScanPos = cgScanPos;
             }
 
@@ -619,7 +621,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 else
                 {
                     // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it
-                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype == TEXT_LUMA, codingParameters.firstSignificanceMapContext);
+                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
                         costSig[scanPos] = m_lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
@@ -679,7 +681,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
                     c1Idx = 0;
                     c2Idx = 0;
-                    ctxSet = (scanPos == SCAN_SET_SIZE || ttype != TEXT_LUMA) ? 0 : 2;
+                    ctxSet = (scanPos == SCAN_SET_SIZE || !bIsLuma) ? 0 : 2;
                     X265_CHECK(c1 >= 0, "c1 is negative\n");
                     ctxSet -= ((int32_t)(c1 - 1) >> 31);
                     c1 = 1;
@@ -778,7 +780,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     double bestCost;
     int    ctxCbf;
 
-    if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && !cu->getTransformIdx(absPartIdx))
+    if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
         bestCost  = blockUncodedCost + m_lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
