@@ -97,7 +97,7 @@ public:
     const ScalingList* m_scalingList;
 
     QpParam  m_qpParam[3];
-    double   m_lambda;
+    double   m_lambda2;
     double   m_lambdas[3];
 
     bool     m_useRDOQ;
@@ -108,7 +108,7 @@ public:
 
     static const uint32_t IEP_RATE = 32768; // cost of an equal probable bit
 
-    void selectLambda(TextType ttype) { m_lambda = m_lambdas[ttype]; }
+    void selectLambda(TextType ttype) { m_lambda2 = m_lambdas[ttype]; }
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
 protected:

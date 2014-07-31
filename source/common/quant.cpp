@@ -622,7 +622,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, ttype == TEXT_LUMA, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
-                        costSig[scanPos] = m_lambda * m_estBitsSbac.significantBits[ctxSig][0];
+                        costSig[scanPos] = m_lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
                     }
                     if (maxAbsLevel)
@@ -714,8 +714,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-                    baseCost += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
-                    costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+                    baseCost += m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
+                    costCoeffGroupSig[cgScanPos] = m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
                 }
                 else
                 {
@@ -733,9 +733,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                         if (cgScanPos < cgLastScanPos)
                         {
-                            baseCost += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
-                            costZeroCG += m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
-                            costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
+                            baseCost += m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
+                            costZeroCG += m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+                            costCoeffGroupSig[cgScanPos] = m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
                         }
 
                         // try to convert the current coeff group from non-zero to all-zero
@@ -749,7 +749,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                             sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
                             if (cgScanPos < cgLastScanPos)
-                                costCoeffGroupSig[cgScanPos] = m_lambda * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+                                costCoeffGroupSig[cgScanPos] = m_lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
 
                             // reset coeffs to 0 in this block
                             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -781,14 +781,14 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     if (!cu->isIntra(absPartIdx) && ttype == TEXT_LUMA && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + m_lambda * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
-        baseCost += m_lambda * m_estBitsSbac.blockRootCbpBits[ctxCbf][1];
+        bestCost  = blockUncodedCost + m_lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
+        baseCost += m_lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][1];
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost = blockUncodedCost + m_lambda * m_estBitsSbac.blockCbpBits[ctxCbf][0];
-        baseCost += m_lambda * m_estBitsSbac.blockCbpBits[ctxCbf][1];
+        bestCost = blockUncodedCost + m_lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][0];
+        baseCost += m_lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][1];
     }
 
     // try to optimize last position
@@ -813,7 +813,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             {
                 uint32_t posY = blkPos >> log2TrSize;
                 uint32_t posX = blkPos - (posY << log2TrSize);
-                double costLast = m_lambda * (codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY));
+                double costLast = m_lambda2 * (codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY));
                 double totalCost = baseCost + costLast - costSig[scanPos];
 
                 if (totalCost < bestCost)
@@ -855,7 +855,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     {
         // Note:: the scaling list is being ignored in this optimization
         int64_t invQuant = ScalingList::s_invQuantScales[rem] << per;
-        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (m_lambda * 16) + 0.5);
+        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (m_lambda2 * 16) + 0.5);
 
         int lastCG = 1;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
@@ -1098,7 +1098,7 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
         X265_CHECK(fabs((double)err2 - double(levelDouble - (level << qbits)) * double(levelDouble - (level << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
 
         uint32_t rateCost = getICRateCost(level, level - baseLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
-        double curCost = err2 + m_lambda * (curCostSig + rateCost);
+        double curCost = err2 + m_lambda2 * (curCostSig + rateCost);
 
         /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */
         if (usePsy && blkPos)
@@ -1115,7 +1115,7 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
         {
             bestAbsLevel = level;
             codedCost = curCost;
-            codedCostSig = m_lambda * curCostSig;
+            codedCostSig = m_lambda2 * curCostSig;
         }
 
         err2 += errInc;
