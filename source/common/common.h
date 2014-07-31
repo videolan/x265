@@ -194,13 +194,6 @@ struct NoiseReduction
     uint32_t countBuf[4][8];
 };
 
-enum SCALING_LIST_PARAMETER
-{
-    SCALING_LIST_OFF,
-    SCALING_LIST_DEFAULT,
-    SCALING_LIST_FILE,
-};
-
 /* defined in common.cpp */
 int64_t x265_mdate(void);
 void x265_log(const x265_param *param, int level, const char *fmt, ...);
