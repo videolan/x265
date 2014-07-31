@@ -41,9 +41,9 @@ private:
 
     uint64_t  m_crDistortionWeight;
 
-    double    m_psyRdScale;
-
 public:
+
+    uint32_t  m_psyRd;
 
     static const pixel zeroPel[MAX_CU_SIZE];
 
@@ -51,6 +51,11 @@ public:
     {
         m_lambdaSSE = (uint64_t)floor(256.0 * lambda2);
         m_lambdaSAD = (uint64_t)floor(256.0 * lambda);
+    }
+
+    void setPsyRdScale(double scale)
+    {
+        m_psyRd = (uint32_t)floor(256.0 * scale);
     }
 
     void setCbDistortionWeight(double cbDistortionWeight)
@@ -61,16 +66,6 @@ public:
     void setCrDistortionWeight(double crDistortionWeight)
     {
         m_crDistortionWeight = (uint64_t)floor(crDistortionWeight);
-    }
-
-    void setPsyRdScale(double scale)
-    {
-        m_psyRdScale = scale;
-    }
-
-    inline bool psyRdEnabled() const
-    {
-        return m_psyRdScale != 0;
     }
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
@@ -89,10 +84,7 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
-        x265_emms();
-        double cost = distortion + ((m_psyRdScale * psycost * m_lambdaSAD) + (bits * m_lambdaSSE)) / 256.0;
-        X265_CHECK(cost < (double)MAX_INT64, "calcPsyRdCost overflow\n");
-        return (uint64_t)cost;
+        return distortion + ((m_lambdaSAD * m_psyRd * psycost) >> 16) + ((bits * m_lambdaSSE) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
@@ -100,11 +92,6 @@ public:
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSAD,
                    "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambdaSAD);
         return sadCost + ((bits * m_lambdaSAD + 128) >> 8);
-    }
-
-    inline uint32_t getCost(uint32_t bits)
-    {
-        return (uint32_t)((bits * m_lambdaSAD + 128) >> 8);
     }
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)
@@ -119,6 +106,11 @@ public:
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_crDistortionWeight,
                    "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
+    }
+
+    inline uint32_t getCost(uint32_t bits)
+    {
+        return (uint32_t)((bits * m_lambdaSAD + 128) >> 8);
     }
 };
 }
