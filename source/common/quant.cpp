@@ -1077,9 +1077,7 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
     X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
 
     uint32_t bestAbsLevel = 0;
-    int32_t minAbsLevel = maxAbsLevel - 1;
-    if (minAbsLevel < 1)
-        minAbsLevel = 1;
+    int32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
 
     // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
     const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
