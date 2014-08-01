@@ -596,7 +596,15 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 cgLastScanPos = cgScanPos;
             }
 
-            if (lastScanPos >= 0)
+            if (lastScanPos < 0)
+            {
+                // No non-zero coefficient yet found, but this does not mean
+                // there is no uncoded-cost for this coefficient. Pre-
+                // quantization the coefficient may have been non-zero
+                costCoeff[scanPos] = 0;
+                baseCost += costUncoded[scanPos];
+            }
+            else
             {
                 const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
                 const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
@@ -606,7 +614,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
                 //===== coefficient level estimation =====
-                uint32_t level = 0;
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
                 const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
@@ -645,7 +652,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         } \
     } \
 }
-
+                uint32_t level = 0;
                 costCoeff[scanPos] = MAX_DOUBLE;
                 if ((int)scanPos == lastScanPos)
                 {
@@ -665,8 +672,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     {
                         RDO_CODED_LEVEL(m_estBitsSbac.significantBits[ctxSig][1]);
                     }
-                    else
-                        level = 0;
 
                     sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
                 }
@@ -676,13 +681,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 baseCost += costCoeff[scanPos];
 
                 /* record costs for sign-hiding performed at the end */
-                if (level > 0)
+                if (level)
                 {
                     int rateNow = getICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
                     rateIncUp[blkPos] = getICRate(level + 1, level + 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
                     rateIncDown[blkPos] = getICRate(level - 1, level - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
                 }
-                else // level == 0
+                else
                 {
                     rateIncUp[blkPos] = greaterOneBits[0];
                     rateIncDown[blkPos] = 0;
@@ -705,7 +710,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     c1++;
 
                 // context set update
-                if ((scanPos % SCAN_SET_SIZE == 0) && (scanPos > 0))
+                if (!(scanPos % SCAN_SET_SIZE) && scanPos)
                 {
                     c2 = 0;
                     goRiceParam = 0;
@@ -717,14 +722,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     ctxSet -= ((int32_t)(c1 - 1) >> 31);
                     c1 = 1;
                 }
-            }
-            else
-            {
-                // No non-zero coefficient yet found, but this does not mean
-                // there is no uncoded-cost for this coefficient. Pre-
-                // quantization the coefficient may have been non-zero
-                costCoeff[scanPos] = 0;
-                baseCost += costUncoded[scanPos];
             }
 
             rdStats.sigCost += costSig[scanPos];
@@ -739,13 +736,16 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 if (scanPosinCG != 0)
                     rdStats.nnzBeforePos0++;
             }
-        } //end for (scanPosinCG)
+        } // end for (scanPosinCG)
 
         /* Summarize costs for the coeff code group */
         if (cgLastScanPos >= 0)
         {
             costCoeffGroupSig[cgScanPos] = 0;
-            if (cgScanPos)
+            if (!cgScanPos)
+                /* code group 0 is always signaled */
+                sigCoeffGroupFlag64 |= cgBlkPosMask;
+            else
             {
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
@@ -799,33 +799,28 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                                 }
                                 dstCoeff[blkPos] = 0;
                             }
-                        } // end if ( d64CostAllZeros < baseCost )
+                        }
                     }
-                } // end if if (sigCoeffGroupFlag[ cgBlkPos ] == 0)
+                }
             }
-            else
-                sigCoeffGroupFlag64 |= cgBlkPosMask;
         }
-    } //end for (cgScanPos)
+    } // end for (cgScanPos)
 
     if (lastScanPos < 0)
         return 0;
 
     // estimate cost of uncoded block
     double bestCost;
-    int    ctxCbf;
-
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
-        ctxCbf    = 0;
-        bestCost  = totalUncodedCost + lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
-        baseCost += lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][1];
+        bestCost  = totalUncodedCost + lambda2 * m_estBitsSbac.blockRootCbpBits[0][0];
+        baseCost += lambda2 * m_estBitsSbac.blockRootCbpBits[0][1];
     }
     else
     {
-        ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost = totalUncodedCost + lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][0];
-        baseCost += lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][1];
+        int ctx = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
+        bestCost = totalUncodedCost + lambda2 * m_estBitsSbac.blockCbpBits[ctx][0];
+        baseCost += lambda2 * m_estBitsSbac.blockCbpBits[ctx][1];
     }
 
     // Find the least cost last non-zero coefficient position 
