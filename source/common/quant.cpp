@@ -524,7 +524,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     /* unquant constants for psy-rdoq */
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
-    int unquantRound = (1 << unquantShift) - 1;
+    int unquantRound = 1 << (unquantShift - 1);
     int scaleBits = SCALE_BITS - 2 * transformShift;
 
     double lambda2 = m_lambdas[ttype];
