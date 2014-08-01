@@ -718,8 +718,11 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     c1 = 1;
                 }
             }
-            else // lastScanPos < 0, nothing to code here, move along
+            else
             {
+                // No non-zero coefficient yet found, but this does not mean
+                // there is no uncoded-cost for this coefficient. Pre-
+                // quantization the coefficient may have been non-zero
                 costCoeff[scanPos] = 0;
                 baseCost += costUncoded[scanPos];
             }
