@@ -197,29 +197,13 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
     rps->sortDeltaPOC();
 }
 
-/** Function for marking the reference pictures when an IDR/CRA/CRANT/BLA/BLANT is encountered.
- * \param pocCRA POC of the CRA/CRANT/BLA/BLANT picture
- * \param bRefreshPending flag indicating if a deferred decoding refresh is pending
- * \param picList reference to the reference picture list
- * This function marks the reference pictures as "unused for reference" in the following conditions.
- * If the nal_unit_type is IDR/BLA/BLANT, all pictures in the reference picture list
- * are marked as "unused for reference"
- *    If the nal_unit_type is BLA/BLANT, set the pocCRA to the temporal reference of the current picture.
- * Otherwise
- *    If the bRefreshPending flag is true (a deferred decoding refresh is pending) and the current
- *    temporal reference is greater than the temporal reference of the latest CRA/CRANT/BLA/BLANT picture (pocCRA),
- *    mark all reference pictures except the latest CRA/CRANT/BLA/BLANT picture as "unused for reference" and set
- *    the bRefreshPending flag to false.
- *    If the nal_unit_type is CRA/CRANT, set the bRefreshPending flag to true and pocCRA to the temporal
- *    reference of the current picture.
- * Note that the current picture is already placed in the reference list and its marking is not changed.
- * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
- */
+/* Marking reference pictures when an IDR/CRA is encountered. */
 void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
     if (nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
     {
-        // mark all pictures as not used for reference
+        /* If the nal_unit_type is IDR, all pictures in the reference picture
+         * list are marked as "unused for reference" */
         Frame* iterPic = m_picList.first();
         while (iterPic)
         {
@@ -230,9 +214,13 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
     }
     else // CRA or No DR
     {
-        if (m_bRefreshPending == true && pocCurr > m_pocCRA)
+        if (m_bRefreshPending && pocCurr > m_pocCRA)
         {
-            // CRA reference marking pending
+            /* If the bRefreshPending flag is true (a deferred decoding refresh
+             * is pending) and the current temporal reference is greater than
+             * the temporal reference of the latest CRA picture (pocCRA), mark
+             * all reference pictures except the latest CRA picture as "unused
+             * for reference" and set the bRefreshPending flag to false */
             Frame* iterPic = m_picList.first();
             while (iterPic)
             {
@@ -243,12 +231,18 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 
             m_bRefreshPending = false;
         }
-        if (nalUnitType == NAL_UNIT_CODED_SLICE_CRA) // CRA picture found
+        if (nalUnitType == NAL_UNIT_CODED_SLICE_CRA)
         {
+            /* If the nal_unit_type is CRA, set the bRefreshPending flag to true
+             * and pocCRA to the temporal reference of the current picture */
             m_bRefreshPending = true;
             m_pocCRA = pocCurr;
         }
     }
+
+    /* Note that the current picture is already placed in the reference list and
+     * its marking is not changed.  If the current picture has a nal_ref_idc
+     * that is not 0, it will remain marked as "used for reference" */
 }
 
 /** Function for applying picture marking based on the Reference Picture Set */
