@@ -521,14 +521,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     x265_emms();
 
-    double lambda2 = m_lambdas[ttype];
-
     /* unquant constants for psy-rdoq */
+    int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int unquantRound = (1 << unquantShift) - 1;
-    int unquantScale = m_scalingList->s_invQuantScales[m_qpParam[ttype].rem] << m_qpParam[ttype].per;
     int scaleBits = SCALE_BITS - 2 * transformShift;
 
+    double lambda2 = m_lambdas[ttype];
     double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
     bool bIsLuma = ttype == TEXT_LUMA;
     bool usePsy = m_psyRdoqScale && bIsLuma;
@@ -630,7 +629,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         int psyValue = 0; \
         if (usePsy && blkPos) \
         { \
-            int unquantAbsLevel = (lvl * unquantScale + unquantRound) >> unquantShift; \
+            int unquantAbsLevel = (lvl * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift; \
             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits; \
             psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8); \
         } \
