@@ -1089,6 +1089,8 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
     int add = (1 << shift) - 1;
     int scale = m_scalingList->s_invQuantScales[m_qpParam[0].rem] << m_qpParam[0].per;
     int scaleBits = SCALE_BITS - 2 * m_transformShift;
+    int signCoef = m_resiDctCoeff[blkPos];
+    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
 
     for (int level = maxAbsLevel; level >= minAbsLevel; level--)
     {
@@ -1096,20 +1098,18 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
         double curCost = err2 * scaleFactor + m_lambda2 * (curCostSig + rateCost);
 
         /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */
+        int psyValue = 0;
         if (usePsy && blkPos)
         {
-            int signCoef = m_resiDctCoeff[blkPos];
             int unquantAbsLevel = (level * scale + add) >> shift;
-            int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits;
-            int psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8);
-            curCost -= psyValue;
+            psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8);
         }
 
-        if (curCost < codedCost)
+        if (curCost - psyValue < codedCost)
         {
             bestAbsLevel = level;
-            codedCost = curCost;
+            codedCost = curCost - psyValue;
             codedCostSig = m_lambda2 * curCostSig;
         }
 
