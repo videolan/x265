@@ -1086,9 +1086,6 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
     double err2 = (double)((int64_t)err1 * err1);                         // A ^ 2
     const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
     const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
-    const double errInc = (err3 + err4) * scaleFactor;
-
-    err2 *= scaleFactor;
 
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - m_transformShift;
     int add = (1 << shift) - 1;
@@ -1097,10 +1094,8 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
 
     for (int level = maxAbsLevel; level >= minAbsLevel; level--)
     {
-        X265_CHECK(fabs((double)err2 - double(levelDouble - (level << qbits)) * double(levelDouble - (level << qbits)) * scaleFactor) < 1e-5, "err2 check failure\n");
-
         uint32_t rateCost = getICRateCost(level, level - baseLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
-        double curCost = err2 + m_lambda2 * (curCostSig + rateCost);
+        double curCost = err2 * scaleFactor + m_lambda2 * (curCostSig + rateCost);
 
         /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */
         if (usePsy && blkPos)
@@ -1120,7 +1115,7 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
             codedCostSig = m_lambda2 * curCostSig;
         }
 
-        err2 += errInc;
+        err2 += err3 + err4;
     }
 
     return bestAbsLevel;
