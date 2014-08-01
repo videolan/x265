@@ -49,7 +49,7 @@ protected:
     /* Slice information */
     Slice*    m_slice;
     int       m_csp;
-    
+
     /* CU information for prediction */
     int       m_width;
     int       m_height; 
@@ -75,7 +75,7 @@ protected:
     void getLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
     bool checkIdenticalMotion();
-    
+
 public:
 
     // Intra prediction buffers
