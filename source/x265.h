@@ -798,6 +798,9 @@ typedef struct x265_param
         /* temporally blur complexity */
         double    complexityBlur;
 
+        /* Enable slow and a more detailed first pass encode in multi pass rate control */
+        int       bEnableSlowFirstPass;
+
         /* specify a text file which contains MAX_MAX_QP + 1 floating point
          * values to be copied into x265_lambda_tab and a second set of
          * MAX_MAX_QP + 1 floating point values for x265_lambda2_tab. All values

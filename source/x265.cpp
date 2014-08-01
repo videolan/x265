@@ -198,6 +198,8 @@ static const struct option long_options[] =
     { "nr",             required_argument, NULL, 0 },
     { "stats",          required_argument, NULL, 0 },
     { "pass",           required_argument, NULL, 0 },
+    { "slow-firstpass",       no_argument, NULL, 0 },
+    { "no-slow-firstpass",    no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -426,6 +428,7 @@ void CLIOptions::showHelp(x265_param *param)
        "                                   - 1 : First pass, cretes stats file\n"
        "                                   - 2 : Last pass, does not overwrite stats file\n"
        "                                   - 3 : Nth pass, overwrites stats file\n");
+    H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
     H0("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
     H0("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H0("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
@@ -719,7 +722,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
-
     return false;
 }
 

@@ -826,6 +826,25 @@ Quality, rate control and rate distortion options
 
 	**Range of values:**  -12 to 12
 
+.. option:: --pass <integer>
+
+	Enable multipass rate control mode. Input is encoded multiple times,
+	storing the encoded information of each pass in a stats file from which
+	the consecutive pass tunes the qp of each frame to improve the quality
+	of the output.Default 0(disabled)
+
+	1. First pass, cretes stats file
+	2. Last pass, does not overwrite stats file
+	3. Nth pass, overwrites stats file
+
+	**Range of values:** 1 to 3
+
+.. option:: --slow-firstpass, --no-slow-firstpass
+
+	Enable a slow and more detailed first pass encode in Multipass rate control mode.
+	Speed of the first pass encode is slightly lesser and quality midly improved when
+	compared to the default settings in a multipass encode.  Default disabled
+
 Loop filters
 ============
 

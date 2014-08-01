@@ -55,6 +55,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
     Encoder *encoder = new Encoder;
     if (encoder)
     {
+        if (!param->rc.bEnableSlowFirstPass)
+            x265_param_apply_fastfirstpass(param);
         // may change params for auto-detect, etc
         encoder->configure(param);
         

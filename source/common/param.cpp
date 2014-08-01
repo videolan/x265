@@ -191,6 +191,7 @@ void x265_param_default(x265_param *param)
     param->rc.statFileName = NULL;
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
+    param->rc.bEnableSlowFirstPass = 0;
 
     /* Quality Measurement Metrics */
     param->bEnablePsnr = 0;
@@ -351,6 +352,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->searchMethod = X265_STAR_SEARCH;
             param->bEnableTransformSkip = 1;
             param->maxNumReferences = 5;
+            param->rc.bEnableSlowFirstPass = 1;
             // TODO: optimized esa
         }
         else
@@ -640,6 +642,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, bError);
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("cutree")    p->rc.cuTree = atobool(value);
+    OPT("slow-firstpass") p->rc.bEnableSlowFirstPass = atobool(value);
     OPT("sar")
     {
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);
@@ -1018,6 +1021,21 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
           "Constant QP is incompatible with 2pass");
     return check_failed;
+}
+
+void x265_param_apply_fastfirstpass(x265_param* param)
+{
+    /* Set faster options in case of turbo firstpass */
+    if (param->rc.bStatWrite && !param->rc.bStatRead)
+    {
+        param->maxNumReferences = 1;
+        param->maxNumMergeCand = 1;
+        param->bEnableRectInter = 0;
+        param->bEnableAMP = 0;
+        param->searchMethod = X265_DIA_SEARCH;
+        param->subpelRefine = X265_MIN(2, param->subpelRefine);
+        param->bEnableEarlySkip = 1;
+    }
 }
 
 int x265_set_globals(x265_param *param)
