@@ -106,6 +106,7 @@ public:
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
 
     ShortYuv*       m_qtTempShortYuv;
+    TComYuv         m_predTempYuv;
 
     coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempTrIdx;

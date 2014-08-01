@@ -55,11 +55,8 @@ Predict::~Predict()
     X265_FREE(m_refLeftFlt);
     X265_FREE(m_immedVals);
 
-    m_predYuv[0].destroy();
-    m_predYuv[1].destroy();
     m_predShortYuv[0].destroy();
     m_predShortYuv[1].destroy();
-    m_predTempYuv.destroy();
 }
 
 void Predict::initTempBuff(int csp)
@@ -77,11 +74,8 @@ void Predict::initTempBuff(int csp)
         m_refLeft = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
         m_refLeftFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
 
-        m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
-        m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
         m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
-        m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
 
         m_immedVals = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
     }

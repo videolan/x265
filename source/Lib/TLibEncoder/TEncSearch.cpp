@@ -77,6 +77,7 @@ TEncSearch::~TEncSearch()
     X265_FREE(m_qtTempTrIdx);
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
+    m_predTempYuv.destroy();
 
     delete[] m_qtTempShortYuv;
 }
@@ -92,6 +93,7 @@ bool TEncSearch::initSearch(Encoder& top)
     m_numLayers = top.m_quadtreeTULog2MaxSize - 2 + 1;
 
     initTempBuff(m_param->internalCsp);
+    ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
     m_me.setSearchMethod(m_param->searchMethod);
     m_me.setSubpelRefine(m_param->subpelRefine);
 
@@ -107,7 +109,7 @@ bool TEncSearch::initSearch(Encoder& top)
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
-        m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
+        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxCUDepth << 1);
@@ -1894,12 +1896,16 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
     int      numPredDir = cu->m_slice->isInterP() ? 1 : 2;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
+    TComYuv   m_predYuv[2];
 
     const int* numRefIdx = cu->m_slice->m_numRefIdx;
 
     MergeData merge;
 
     memset(&merge, 0, sizeof(merge));
+
+    m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
+    m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
@@ -1936,7 +1942,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
                 totalmebits += merge.bits;
 
-                prepMotionCompensation(cu, partIdx);     
+                prepMotionCompensation(cu, partIdx);
                 motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
                 continue;
             }
@@ -2158,6 +2164,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         prepMotionCompensation(cu, partIdx);
         motionCompensation(cu, predYuv, REF_PIC_LIST_X, true, bChroma);
     }
+
+    m_predYuv[0].destroy();
+    m_predYuv[1].destroy();
 
     x265_emms();
     cu->m_totalBits = totalmebits;

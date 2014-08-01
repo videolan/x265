@@ -39,10 +39,6 @@ class Predict : public TComWeightPrediction
 {
 protected:
 
-    /* TODO: remove m_predYuv, m_predTempYuv, these should just be temporary structs inside predInterSearch */
-    TComYuv   m_predYuv[2];
-    TComYuv   m_predTempYuv;
-
     ShortYuv  m_predShortYuv[2]; //temporary storage for weighted prediction
     int16_t*  m_immedVals;
 
