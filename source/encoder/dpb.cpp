@@ -96,8 +96,7 @@ void DPB::prepareEncode(Frame *pic)
     bool bIsKeyFrame = pic->m_lowres.bKeyframe;
 
     slice->m_nalUnitType = getNalUnitType(pocCurr, bIsKeyFrame);
-    if (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-        slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP)
+    if (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
         m_lastIDR = pocCurr;
     slice->m_lastIDR = m_lastIDR;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
