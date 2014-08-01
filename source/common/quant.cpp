@@ -1084,8 +1084,6 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
     // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
     const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
     double err2 = (double)((int64_t)err1 * err1);                         // A ^ 2
-    const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
-    const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
 
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - m_transformShift;
     int add = (1 << shift) - 1;
@@ -1115,7 +1113,12 @@ inline uint32_t Quant::getCodedLevel(double&      codedCost,
             codedCostSig = m_lambda2 * curCostSig;
         }
 
-        err2 += err3 + err4;
+        if (level > minAbsLevel)
+        {
+            const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
+            const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
+            err2 += err3 + err4;
+        }
     }
 
     return bestAbsLevel;
