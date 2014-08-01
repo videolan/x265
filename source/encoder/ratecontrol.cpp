@@ -1467,7 +1467,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             }
             else
             {
-                if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
+                if (!m_param->rc.bStatRead)
                     checkAndResetABR(rce, false);
                 q = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
 
@@ -2036,7 +2036,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     Slice *slice = pic->m_picSym->m_slice;
     if (m_isAbr)
     {
-        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead && !m_param->rc.bStatWrite)
+        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
             checkAndResetABR(rce, true);
 
         if (m_param->rc.rateControlMode == X265_RC_CRF)
