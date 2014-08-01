@@ -502,7 +502,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
-    m_transformShift = transformShift;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
@@ -522,6 +521,12 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     x265_emms();
     selectLambda(ttype);
+
+    /* unquant constants for psy-rdoq */
+    int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
+    int unquantRound = (1 << unquantShift) - 1;
+    int unquantScale = m_scalingList->s_invQuantScales[m_qpParam[ttype].rem] << m_qpParam[ttype].per;
+    int scaleBits = SCALE_BITS - 2 * transformShift;
 
     double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
     bool bIsLuma = ttype == TEXT_LUMA;
@@ -602,25 +607,56 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
                 //===== coefficient level estimation =====
-                uint32_t level;
+                uint32_t level = 0;
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
                 const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
                 const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
 
+#define RDO_CODED_LEVEL(curCostSig) \
+{ \
+    const int32_t err1 = levelDouble - (maxAbsLevel << qbits); \
+    double err2 = (double)((int64_t)err1 * err1); \
+    uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1); \
+    int signCoef = m_resiDctCoeff[blkPos]; \
+    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef; \
+    level = 0; \
+    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--) \
+    { \
+        uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx); \
+        double curCost = err2 * scaleFactor + m_lambda2 * (curCostSig + rateCost); \
+        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */ \
+        int psyValue = 0; \
+        if (usePsy && blkPos) \
+        { \
+            int unquantAbsLevel = (lvl * unquantScale + unquantRound) >> unquantShift; \
+            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits; \
+            psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8); \
+        } \
+        if (curCost - psyValue < costCoeff[scanPos]) \
+        { \
+            level = lvl; \
+            costCoeff[scanPos] = curCost - psyValue; \
+            costSig[scanPos] = m_lambda2 * curCostSig; \
+        } \
+        if (lvl > minAbsLevel) \
+        { \
+            int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits); \
+            int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits); \
+            err2 += err3 + err4; \
+        } \
+    } \
+}
+
                 costCoeff[scanPos] = MAX_DOUBLE;
                 if ((int)scanPos == lastScanPos)
                 {
                     /* special treatment for the last coef, which we know is non-zero */
-                    level = getCodedLevel(costCoeff[scanPos], 0, costSig[scanPos],
-                                          levelDouble, maxAbsLevel, baseLevel,
-                                          greaterOneBits, levelAbsBits, goRiceParam,
-                                          c1c2Idx, qbits, scaleFactor, blkPos, usePsy);
+                    RDO_CODED_LEVEL(0);
                     sigRateDelta[blkPos] = 0;
                 }
                 else
                 {
-                    // NOTE: ttype is different to ctype, but getSigCtxInc may safety use it
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
@@ -629,10 +665,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     }
                     if (maxAbsLevel)
                     {
-                        level = getCodedLevel(costCoeff[scanPos], m_estBitsSbac.significantBits[ctxSig][1], costSig[scanPos],
-                                              levelDouble, maxAbsLevel, baseLevel,
-                                              greaterOneBits, levelAbsBits, goRiceParam,
-                                              c1c2Idx, qbits, scaleFactor, blkPos, usePsy);
+                        RDO_CODED_LEVEL(m_estBitsSbac.significantBits[ctxSig][1]);
                     }
                     else
                         level = 0;
@@ -1041,85 +1074,6 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
     offset += cnt;
 
     return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
-}
-
-/** Get the best level in RD sense
- * \param codedCost reference to coded cost
- * \param curCostSig
- * \param codedCostSig reference to cost of significant coefficient
- * \param levelDouble reference to unscaled quantized level
- * \param maxAbsLevel scaled quantized level
- * \param baseLevel
- * \param greaterOneBits
- * \param levelAbsBits
- * \param absGoRice current Rice parameter for coeff_abs_level_minus3
- * \param c1c2Idx
- * \param qbits quantization step size
- * \param scaleFactor correction factor
- * \returns best quantized transform level for given scan position
- * This method calculates the best quantized transform level for a given scan position.
- */
-inline uint32_t Quant::getCodedLevel(double&      codedCost,
-                                     uint32_t     curCostSig,
-                                     double&      codedCostSig,
-                                     int          levelDouble,
-                                     uint32_t     maxAbsLevel,
-                                     uint32_t     baseLevel,
-                                     const int *  greaterOneBits,
-                                     const int *  levelAbsBits,
-                                     uint32_t     absGoRice,
-                                     uint32_t     c1c2Idx,
-                                     int          qbits,
-                                     double       scaleFactor,
-                                     int          blkPos,
-                                     bool         usePsy) const
-{
-    X265_CHECK(abs((double)levelDouble - (maxAbsLevel << qbits)) < INT_MAX, "levelDouble range check failure\n");
-
-    uint32_t bestAbsLevel = 0;
-    int32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
-
-    // NOTE: (A + B) ^ 2 = (A ^ 2) + 2 * A * B + (B ^ 2)
-    const int32_t err1 = levelDouble - (maxAbsLevel << qbits);            // A
-    double err2 = (double)((int64_t)err1 * err1);                         // A ^ 2
-
-    int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - m_transformShift;
-    int add = (1 << shift) - 1;
-    int scale = m_scalingList->s_invQuantScales[m_qpParam[0].rem] << m_qpParam[0].per;
-    int scaleBits = SCALE_BITS - 2 * m_transformShift;
-    int signCoef = m_resiDctCoeff[blkPos];
-    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
-
-    for (int level = maxAbsLevel; level >= minAbsLevel; level--)
-    {
-        uint32_t rateCost = getICRateCost(level, level - baseLevel, greaterOneBits, levelAbsBits, absGoRice, c1c2Idx);
-        double curCost = err2 * scaleFactor + m_lambda2 * (curCostSig + rateCost);
-
-        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */
-        int psyValue = 0;
-        if (usePsy && blkPos)
-        {
-            int unquantAbsLevel = (level * scale + add) >> shift;
-            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits;
-            psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8);
-        }
-
-        if (curCost - psyValue < codedCost)
-        {
-            bestAbsLevel = level;
-            codedCost = curCost - psyValue;
-            codedCostSig = m_lambda2 * curCostSig;
-        }
-
-        if (level > minAbsLevel)
-        {
-            const int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);       // 2 * A * B
-            const int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);   // B ^ 2
-            err2 += err3 + err4;
-        }
-    }
-
-    return bestAbsLevel;
 }
 
 /** Calculates the cost of signaling the last significant coefficient in the block
