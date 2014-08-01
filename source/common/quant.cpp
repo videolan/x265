@@ -619,7 +619,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1); \
     int signCoef = m_resiDctCoeff[blkPos]; \
     int predictedCoef = m_fencDctCoeff[blkPos] - signCoef; \
-    level = 0; \
     for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--) \
     { \
         uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx); \
