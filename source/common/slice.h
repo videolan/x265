@@ -322,17 +322,12 @@ public:
     bool getRapPicFlag() const
     {
         return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-            || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
-            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-            || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
             || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA;
     }
 
     bool getIdrPicFlag() const
     {
-        return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-            || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP;
+        return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
 
     bool isIRAP() const   { return m_nalUnitType >= 16 && m_nalUnitType <= 23; }

@@ -217,11 +217,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
  */
 void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
-    if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP   ||
-        nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL ||
-        nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP   ||
-        nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
-        nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP) // IDR or BLA picture
+    if (nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
     {
         // mark all pictures as not used for reference
         Frame* iterPic = m_picList.first();
@@ -231,11 +227,6 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
                 iterPic->m_picSym->m_bHasReferences = false;
             iterPic = iterPic->m_next;
         }
-
-        if (nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP   ||
-            nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL ||
-            nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP)
-            m_pocCRA = pocCurr;
     }
     else // CRA or No DR
     {
