@@ -533,12 +533,12 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     bool usePsy = m_psyRdoqScale && bIsLuma;
 
     double blockUncodedCost = 0;
-    double costCoeff[32 * 32];
-    double costSig[32 * 32];
-    double costCoeff0[32 * 32];
+    double costCoeff[32 * 32];   // d^2 + lambda * bits
+    double costSig[32 * 32];     // lambda * bits
+    double costUncoded[32 * 32]; // d^2 + lambda * 0
 
-    int rateIncUp[32 * 32];
-    int rateIncDown[32 * 32];
+    int rateIncUp[32 * 32];      // signal overhead of increasing level
+    int rateIncDown[32 * 32];    // signal overhead of decreasing level
     int sigRateDelta[32 * 32];
     int deltaU[32 * 32];
 
@@ -584,10 +584,10 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
              *   abs(coef) * quantCoef * abs(coef) * quantCoef * (scalingBits / (quantCoef * quantCoef))
              *   which reduces to abs(coef) * abs(coef) * scalingBits, which should be reduced
              *   even further to abs(coef) * abs(coef) << scalingBits in the future */
-            costCoeff0[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
+            costUncoded[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
 
             /* running total of initial coeff L2 cost without accounting for lambda */
-            blockUncodedCost   += costCoeff0[scanPos];
+            blockUncodedCost   += costUncoded[scanPos];
 
             if (maxAbsLevel > 0 && lastScanPos < 0)
             {
@@ -661,7 +661,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     if (maxAbsLevel < 3)
                     {
                         costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
-                        costCoeff[scanPos] = costCoeff0[scanPos] + costSig[scanPos];
+                        costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
                     if (maxAbsLevel)
                     {
@@ -723,7 +723,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             else // lastScanPos < 0, nothing to code here, move along
             {
                 costCoeff[scanPos] = 0;
-                baseCost += costCoeff0[scanPos];
+                baseCost += costUncoded[scanPos];
             }
 
             rdStats.sigCost += costSig[scanPos];
@@ -734,7 +734,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             {
                 sigCoeffGroupFlag64 |= cgBlkPosMask;
                 rdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
-                rdStats.uncodedDist += costCoeff0[scanPos];
+                rdStats.uncodedDist += costUncoded[scanPos];
                 if (scanPosinCG != 0)
                     rdStats.nnzBeforePos0++;
             }
@@ -793,7 +793,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                                 uint32_t blkPos = codingParameters.scan[scanPos];
                                 if (dstCoeff[blkPos])
                                 {
-                                    costCoeff[scanPos] = costCoeff0[scanPos];
+                                    costCoeff[scanPos] = costUncoded[scanPos];
                                     costSig[scanPos] = 0;
                                 }
                                 dstCoeff[blkPos] = 0;
@@ -862,7 +862,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     break;
                 }
                 baseCost -= costCoeff[scanPos];
-                baseCost += costCoeff0[scanPos];
+                baseCost += costUncoded[scanPos];
             }
             else
                 baseCost -= costSig[scanPos];
