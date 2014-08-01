@@ -532,7 +532,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     bool bIsLuma = ttype == TEXT_LUMA;
     bool usePsy = m_psyRdoqScale && bIsLuma;
 
-    double blockUncodedCost = 0;
+    double totalUncodedCost = 0;
     double costCoeff[32 * 32];   // d^2 + lambda * bits
     double costSig[32 * 32];     // lambda * bits
     double costUncoded[32 * 32]; // d^2 + lambda * 0
@@ -580,16 +580,15 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             int levelDouble      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
             uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);  /* abs(coef) */
 
-            /* initial cost of each coefficient. This works out to be:
+            /* cost (distortion only) of not coding this coefficient. This works out to be:
              *   abs(coef) * quantCoef * abs(coef) * quantCoef * (scalingBits / (quantCoef * quantCoef))
              *   which reduces to abs(coef) * abs(coef) * scalingBits, which should be reduced
              *   even further to abs(coef) * abs(coef) << scalingBits in the future */
             costUncoded[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
 
-            /* running total of initial coeff L2 cost without accounting for lambda */
-            blockUncodedCost   += costUncoded[scanPos];
+            totalUncodedCost += costUncoded[scanPos];
 
-            if (maxAbsLevel > 0 && lastScanPos < 0)
+            if (maxAbsLevel && lastScanPos < 0)
             {
                 /* remember the first non-zero coef found in this reverse scan as the last pos */
                 lastScanPos   = scanPos;
@@ -817,13 +816,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
         ctxCbf    = 0;
-        bestCost  = blockUncodedCost + lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
+        bestCost  = totalUncodedCost + lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][0];
         baseCost += lambda2 * m_estBitsSbac.blockRootCbpBits[ctxCbf][1];
     }
     else
     {
         ctxCbf    = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost = blockUncodedCost + lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][0];
+        bestCost = totalUncodedCost + lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][0];
         baseCost += lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][1];
     }
 
