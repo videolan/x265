@@ -810,6 +810,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     if (lastScanPos < 0)
         return 0;
 
+    // estimate cost of uncoded block
     double bestCost;
     int    ctxCbf;
 
@@ -826,7 +827,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         baseCost += lambda2 * m_estBitsSbac.blockCbpBits[ctxCbf][1];
     }
 
-    // try to optimize last position
+    // Find the least cost last non-zero coefficient position 
     int  bestLastIdx = 0;
     bool foundLast = false;
     for (int cgScanPos = cgLastScanPos; cgScanPos >= 0 && !foundLast; cgScanPos--)
@@ -846,10 +847,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             uint32_t blkPos = codingParameters.scan[scanPos];
             if (dstCoeff[blkPos])
             {
+                /* found the current last non-zero; estimate the trade-off of setting it to zero */
                 uint32_t posY = blkPos >> log2TrSize;
                 uint32_t posX = blkPos - (posY << log2TrSize);
-                double costLast = lambda2 * (codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY));
-                double totalCost = baseCost + costLast - costSig[scanPos];
+                uint32_t costLast = codingParameters.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+                double totalCost = baseCost + lambda2 * costLast - costSig[scanPos];
+
+                /* TODO: perhaps psy-cost should be used here as well */
 
                 if (totalCost < bestCost)
                 {
@@ -861,6 +865,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     foundLast = true;
                     break;
                 }
+                /* uncode this coefficient! */
                 baseCost -= costCoeff[scanPos];
                 baseCost += costUncoded[scanPos];
             }
@@ -881,7 +886,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         dstCoeff[blkPos] = (level ^ mask) - mask;
     }
 
-    // clean uncoded coefficients
+    /* clean uncoded coefficients */
     for (int pos = bestLastIdx; pos <= lastScanPos; pos++)
         dstCoeff[codingParameters.scan[pos]] = 0;
 
