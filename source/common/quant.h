@@ -105,7 +105,7 @@ public:
     coeff_t* m_fencDctCoeff;
     int16_t* m_fencShortBuf;
 
-    static const uint32_t IEP_RATE = 32768; // cost of an equal probable bit
+    enum { IEP_RATE = 32768 }; // cost of an equal probable bit
 
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
