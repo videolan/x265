@@ -53,6 +53,7 @@ const pb_0,        times 16 db 0
 const pb_1,        times 32 db 1
 const pb_a1,       times 16 db 0xa1
 const pb_3,        times 16 db 3
+const pb_8,        times 16 db 8
 const pb_shuf8x8c, db 0,0,0,0,2,2,2,2,4,4,4,4,6,6,6,6
 
 const pw_2,        times 8 dw 2

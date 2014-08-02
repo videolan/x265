@@ -30,6 +30,7 @@ SECTION_RODATA 32
 tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 
 cextern pw_4
+cextern pb_8
 
 SECTION .text
 
@@ -3103,7 +3104,7 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
 
 
 ;--------------------------------------------------------------------------------------
-; void cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal cvt16to32_cnt_4, 3,3,5
@@ -3177,3 +3178,155 @@ cglobal cvt16to32_cnt_4, 3,3,5
     not         ax
     popcnt      ax, ax
     RET
+
+
+;--------------------------------------------------------------------------------------
+; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_cnt_8, 3,5,6
+    add         r2d, r2d
+    pxor        m4, m4
+    mov         r3d, 8/4
+    lea         r4, [r2 * 3]
+    pxor        m5, m5
+
+.loop
+    ; row 0
+    movu        m0, [r1]
+    mova        m2, m0
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 0 * mmsize], m1
+    movu        [r0 + 1 * mmsize], m0
+
+    ; row 1
+    movu        m0, [r1 + r2]
+    packsswb    m2, m0
+    pcmpeqb     m2, m4
+    paddb       m5, m2
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 2 * mmsize], m1
+    movu        [r0 + 3 * mmsize], m0
+
+    ; row 2
+    movu        m0, [r1 + r2 * 2]
+    mova        m2, m0
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 4 * mmsize], m1
+    movu        [r0 + 5 * mmsize], m0
+
+    ; row 3
+    movu        m0, [r1 + r4]
+    packsswb    m2, m0
+    pcmpeqb     m2, m4
+    paddb       m5, m2
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 6 * mmsize], m1
+    movu        [r0 + 7 * mmsize], m0
+
+    add         r0, 8 * mmsize
+    lea         r1, [r1 + r2 * 4]
+    dec         r3d
+    jnz        .loop
+
+    ; get count
+    movhlps     m3, m5
+    paddb       m3, m5
+
+    paddb       m3, [pb_8]
+    psadbw      m3, m4
+
+    movd        eax, m3
+    RET
+
+
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal cvt16to32_cnt_8, 3,4,6
+  %define tmpd eax
+%else
+cglobal cvt16to32_cnt_8, 3,5,6
+  %define tmpd r4d
+%endif
+    add         r2d, r2d
+    pxor        m4, m4
+    lea         r3, [r2 * 3]
+
+    ; row 0
+    movu        xm0, [r1]
+    mova        xm2, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 0 * mmsize], m1
+
+    ; row 1
+    movu        xm0, [r1 + r2]
+    vinserti128 m2, m2, xm0, 1
+    pmovsxwd    m1, xm0
+    movu        [r0 + 1 * mmsize], m1
+
+    ; row 2
+    movu        xm0, [r1 + r2 * 2]
+    mova        xm5, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 2 * mmsize], m1
+
+    ; row 3
+    movu        xm0, [r1 + r3]
+    vinserti128 m5, m5, xm0, 1
+    packsswb    m2, m5
+    pcmpeqb     m2, m4
+    pmovmskb    tmpd, m2
+    not         tmpd
+    popcnt      tmpd, tmpd
+    pmovsxwd    m1, xm0
+    movu        [r0 + 3 * mmsize], m1
+
+    add         r0, 4 * mmsize
+    lea         r1, [r1 + r2 * 4]
+
+    ; row 4
+    movu        xm0, [r1]
+    mova        xm2, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 0 * mmsize], m1
+
+    ; row 5
+    movu        xm0, [r1 + r2]
+    vinserti128 m2, m2, xm0, 1
+    pmovsxwd    m1, xm0
+    movu        [r0 + 1 * mmsize], m1
+
+    ; row 6
+    movu        xm0, [r1 + r2 * 2]
+    mova        xm5, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 2 * mmsize], m1
+
+    ; row 7
+    movu        xm0, [r1 + r3]
+    pmovsxwd    m1, xm0
+    movu        [r0 + 3 * mmsize], m1
+    vinserti128 m5, m5, xm0, 1
+
+    ; get count
+    packsswb    m2, m5
+    pcmpeqb     m2, m4
+    pmovmskb    r0d, m2
+    not         r0d
+    popcnt      r0d, r0d
+
+%if ARCH_X86_64 == 1
+    add         tmpd, r0d
+%else
+    add         r0d, tmpd
+%endif
+    RET
+;IACA_END
