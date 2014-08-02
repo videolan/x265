@@ -2,11 +2,13 @@
 ;* x86inc.asm: x264asm abstraction layer
 ;*****************************************************************************
 ;* Copyright (C) 2005-2014 x264 project
+;*               2013-2014 x265 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Anton Mitrofanov <BugMaster@narod.ru>
 ;*          Jason Garrett-Glaser <darkshikari@gmail.com>
 ;*          Henrik Gramner <henrik@gramner.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* Permission to use, copy, modify, and/or distribute this software for any
 ;* purpose with or without fee is hereby granted, provided that the above
@@ -1466,3 +1468,13 @@ FMA4_INSTR fnmsubss, fnmsub132ss, fnmsub213ss, fnmsub231ss
 %endif
 %endmacro
 %endif
+
+%macro IACA_START 0
+    mov ebx, 111
+    db 0x64, 0x67, 0x90
+%endmacro
+
+%macro IACA_END 0
+    mov ebx, 222
+    db 0x64, 0x67, 0x90
+%endmacro
