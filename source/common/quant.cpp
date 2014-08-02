@@ -653,13 +653,10 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     } \
 }
                 uint32_t level = 0;
+                uint32_t sigCost = 0;
                 costCoeff[scanPos] = MAX_DOUBLE;
                 if ((int)scanPos == lastScanPos)
-                {
-                    /* special treatment for the last coef, which we know is non-zero */
-                    RDO_CODED_LEVEL(0);
                     sigRateDelta[blkPos] = 0;
-                }
                 else
                 {
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
@@ -668,12 +665,12 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
-                    if (maxAbsLevel)
-                    {
-                        RDO_CODED_LEVEL(m_estBitsSbac.significantBits[ctxSig][1]);
-                    }
-
                     sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
+                    sigCost = m_estBitsSbac.significantBits[ctxSig][1];
+                }
+                if (maxAbsLevel)
+                {
+                    RDO_CODED_LEVEL(sigCost);
                 }
 
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
