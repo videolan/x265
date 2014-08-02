@@ -577,14 +577,14 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codingParameters.scan[scanPos];
             double scaleFactor   = errScale[blkPos];
-            int levelDouble      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
+            int levelScaled      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
             uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);  /* abs(coef) */
 
             /* cost (distortion only) of not coding this coefficient. This works out to be:
              *   abs(coef) * quantCoef * abs(coef) * quantCoef * (scalingBits / (quantCoef * quantCoef))
              *   which reduces to abs(coef) * abs(coef) * scalingBits, which should be reduced
              *   even further to abs(coef) * abs(coef) << scalingBits in the future */
-            costUncoded[scanPos] = ((uint64_t)levelDouble * levelDouble) * scaleFactor;
+            costUncoded[scanPos] = ((uint64_t)levelScaled * levelScaled) * scaleFactor;
 
             totalUncodedCost += costUncoded[scanPos];
 
@@ -641,7 +641,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     int signCoef = m_resiDctCoeff[blkPos];
                     int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
 
-                    const int64_t err1 = levelDouble - ((int64_t)maxAbsLevel << qbits);
+                    const int64_t err1 = levelScaled - ((int64_t)maxAbsLevel << qbits);
                     double err2 = (double)(err1 * err1);
 
                     uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
@@ -676,7 +676,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     }
                 }
 
-                deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
+                deltaU[blkPos] = (levelScaled - ((int)level << qbits)) >> (qbits - 8);
                 dstCoeff[blkPos] = level;
                 baseCost += costCoeff[scanPos];
 
