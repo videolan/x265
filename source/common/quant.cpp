@@ -619,39 +619,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
                 const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
 
-#define RDO_CODED_LEVEL(curCostSig) \
-{ \
-    const int32_t err1 = levelDouble - (maxAbsLevel << qbits); \
-    double err2 = (double)((int64_t)err1 * err1); \
-    uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1); \
-    int signCoef = m_resiDctCoeff[blkPos]; \
-    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef; \
-    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--) \
-    { \
-        uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx); \
-        double curCost = err2 * scaleFactor + lambda2 * (curCostSig + rateCost); \
-        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame. */ \
-        int psyValue = 0; \
-        if (usePsy && blkPos) \
-        { \
-            int unquantAbsLevel = (lvl * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift; \
-            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef)) << scaleBits; \
-            psyValue = (int)((m_psyRdoqScale * reconCoef) >> 8); \
-        } \
-        if (curCost - psyValue < costCoeff[scanPos]) \
-        { \
-            level = lvl; \
-            costCoeff[scanPos] = curCost - psyValue; \
-            costSig[scanPos] = lambda2 * curCostSig; \
-        } \
-        if (lvl > minAbsLevel) \
-        { \
-            int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits); \
-            int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits); \
-            err2 += err3 + err4; \
-        } \
-    } \
-}
                 uint32_t level = 0;
                 uint32_t sigCost = 0;
                 costCoeff[scanPos] = MAX_DOUBLE;
@@ -670,7 +637,42 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 }
                 if (maxAbsLevel)
                 {
-                    RDO_CODED_LEVEL(sigCost);
+                    int signCoef = m_resiDctCoeff[blkPos];
+                    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
+
+                    const int64_t err1 = levelDouble - ((int64_t)maxAbsLevel << qbits);
+                    double err2 = (double)(err1 * err1);
+
+                    uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
+                    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
+                    {
+                        uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
+                        double curCost = err2 * scaleFactor + lambda2 * (sigCost + rateCost);
+
+                        // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
+                        int psyValue = 0;
+                        if (usePsy && blkPos)
+                        {
+                            int unquantAbsLevel = (lvl * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
+                            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
+                            psyValue = (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
+                        }
+
+                        if (curCost - psyValue < costCoeff[scanPos])
+                        {
+                            level = lvl;
+                            costCoeff[scanPos] = curCost - psyValue;
+                            costSig[scanPos] = lambda2 * sigCost;
+                        }
+
+                        if (lvl > minAbsLevel)
+                        {
+                            // add deltas to get squared distortion at minAbsLevel
+                            int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);
+                            int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);
+                            err2 += err3 + err4;
+                        }
+                    }
                 }
 
                 deltaU[blkPos] = (levelDouble - ((int)level << qbits)) >> (qbits - 8);
