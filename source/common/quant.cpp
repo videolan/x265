@@ -613,15 +613,16 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 2\n");
                 X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
-                //===== coefficient level estimation =====
+                // coefficient level estimation
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
                 const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
                 const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
 
                 uint32_t level = 0;
-                uint32_t sigCost = 0;
+                uint32_t codedSigBits = 0;
                 costCoeff[scanPos] = MAX_DOUBLE;
+
                 if ((int)scanPos == lastScanPos)
                     sigRateDelta[blkPos] = 0;
                 else
@@ -633,7 +634,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
                     sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
-                    sigCost = m_estBitsSbac.significantBits[ctxSig][1];
+                    codedSigBits = m_estBitsSbac.significantBits[ctxSig][1];
                 }
                 if (maxAbsLevel)
                 {
@@ -647,7 +648,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
                     {
                         uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                        double curCost = err2 * scaleFactor + lambda2 * (sigCost + rateCost);
+                        double curCost = err2 * scaleFactor + lambda2 * (codedSigBits + rateCost);
 
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
                         int psyValue = 0;
@@ -662,7 +663,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         {
                             level = lvl;
                             costCoeff[scanPos] = curCost - psyValue;
-                            costSig[scanPos] = lambda2 * sigCost;
+                            costSig[scanPos] = lambda2 * codedSigBits;
                         }
 
                         if (lvl > minAbsLevel)
