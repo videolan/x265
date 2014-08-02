@@ -364,17 +364,8 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     int trSize = 1 << log2TrSize;
     if (cu->getCUTransquantBypass(absPartIdx))
     {
-        uint32_t numSig = 0;
-        for (int k = 0; k < trSize; k++)
-        {
-            for (int j = 0; j < trSize; j++)
-            {
-                coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
-                numSig += (residual[k * stride + j] != 0);
-            }
-        }
-
-        return numSig;
+        X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
+        return primitives.cvt16to32_cnt[log2TrSize - 2](coeff, residual, stride);
     }
 
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");

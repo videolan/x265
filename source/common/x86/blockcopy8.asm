@@ -29,6 +29,8 @@ SECTION_RODATA 32
 
 tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 
+cextern pw_4
+
 SECTION .text
 
 ;-----------------------------------------------------------------------------
@@ -3097,6 +3099,81 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
     add             r1,       r2
     dec             r5d
     jnz             .loop_row
-
     RET
 
+
+;--------------------------------------------------------------------------------------
+; void cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_cnt_4, 3,3,5
+    add         r2d, r2d
+    pxor        m4, m4
+
+    ; row 0 & 1
+    movh        m0, [r1]
+    movhps      m0, [r1 + r2]
+    mova        m2, m0
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 0 * mmsize], m1
+    movu        [r0 + 1 * mmsize], m0
+
+    ; row 2 & 3
+    movh        m0, [r1 + r2 * 2]
+    lea         r2, [r2 * 3]
+    movhps      m0, [r1 + r2]
+    packsswb    m2, m0
+    pcmpeqb     m2, m4
+    pmovsxwd    m1, m0
+    punpckhwd   m0, m0
+    psrad       m0, 16
+    movu        [r0 + 2 * mmsize], m1
+    movu        [r0 + 3 * mmsize], m0
+
+    ; get count
+    ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
+%if 1
+    pmovmskb    eax, m2
+    not         ax
+    popcnt      ax, ax
+%else
+    movhlps     m3, m2
+    paddw       m2, m3
+
+    mova        m3, [pw_4]
+    paddw       m3, m2
+    psadbw      m3, m4
+
+    movd        eax, m3
+%endif
+    RET
+
+
+INIT_YMM avx2
+cglobal cvt16to32_cnt_4, 3,3,5
+    add         r2d, r2d
+    pxor        m4, m4
+
+    ; row 0 & 1
+    movq        xm0, [r1]
+    movhps      xm0, [r1 + r2]
+    pmovsxwd    m1, xm0
+    movu        [r0 + 0 * mmsize], m1
+
+    ; row 2 & 3
+    movq        xm1, [r1 + r2 * 2]
+    lea         r2, [r2 * 3]
+    movhps      xm1, [r1 + r2]
+    pmovsxwd    m2, xm1
+    movu        [r0 + 1 * mmsize], m2
+
+    packsswb    xm0, xm1
+    pcmpeqb     xm0, xm4
+
+    ; get count
+    pmovmskb    eax, xm0
+    not         ax
+    popcnt      ax, ax
+    RET

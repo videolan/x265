@@ -150,6 +150,7 @@ typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
+typedef uint32_t (*cvt16to32_cnt_t)(coeff_t* coeff, int16_t* residual, intptr_t stride);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
@@ -218,6 +219,7 @@ struct EncoderPrimitives
     blockcpy_ps_t   blockcpy_ps;                     // block copy pixel from short
     cvt16to32_shl_t cvt16to32_shl;
     cvt32to16_shr_t cvt32to16_shr;
+    cvt16to32_cnt_t cvt16to32_cnt[NUM_SQUARE_BLOCKS - 1];
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];

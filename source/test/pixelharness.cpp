@@ -603,6 +603,35 @@ bool PixelHarness::check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t op
     return true;
 }
 
+bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt)
+{
+    ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int32_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+#ifdef _DEBUG
+        memset(ref_dest, 0xCD, sizeof(ref_dest));
+        memset(opt_dest, 0xCD, sizeof(opt_dest));
+#endif
+        int opt_cnt = checked(opt, opt_dest, sbuf1 + j, stride);
+        int ref_cnt = ref(ref_dest, sbuf1 + j, stride);
+
+        if ((ref_cnt != opt_cnt) || memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1368,6 +1397,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
+
+        if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
+        {
+            if (!check_cvt16to32_cnt_t(ref.cvt16to32_cnt[i], opt.cvt16to32_cnt[i]))
+            {
+                printf("cvt16to32_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
     }
 
     if (opt.cvt32to16_shr)
@@ -1725,6 +1763,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("var[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.var[i], ref.var[i], pbuf1, STRIDE);
+        }
+
+        if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
+        {
+            HEADER("cvt16to32_cnt[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cvt16to32_cnt[i], ref.cvt16to32_cnt[i], ibuf1, sbuf2, STRIDE);
         }
     }
 

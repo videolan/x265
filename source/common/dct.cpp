@@ -830,6 +830,22 @@ int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
 
     return count;
 }
+
+template<int trSize>
+uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
+{
+    uint32_t numSig = 0;
+    for (int k = 0; k < trSize; k++)
+    {
+        for (int j = 0; j < trSize; j++)
+        {
+            coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
+            numSig += (residual[k * stride + j] != 0);
+        }
+    }
+
+    return numSig;
+}
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -852,5 +868,10 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.idct[IDCT_16x16] = idct16_c;
     p.idct[IDCT_32x32] = idct32_c;
     p.count_nonzero = count_nonzero_c;
+
+    p.cvt16to32_cnt[BLOCK_4x4] = conv16to32_count<4>;
+    p.cvt16to32_cnt[BLOCK_8x8] = conv16to32_count<8>;
+    p.cvt16to32_cnt[BLOCK_16x16] = conv16to32_count<16>;
+    p.cvt16to32_cnt[BLOCK_32x32] = conv16to32_count<32>;
 }
 }
