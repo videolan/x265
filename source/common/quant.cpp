@@ -219,8 +219,7 @@ void Quant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt
 uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
-
-    int lastCG = 1;
+    bool lastCG = true;
 
     for (int subSet = (1 << log2TrSizeCG * 2) - 1; subSet >= 0; subSet--)
     {
@@ -253,7 +252,7 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU,
             {
                 int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
 
-                for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
+                for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     uint32_t blkPos = codingParameters.scan[n + subPos];
                     if (qCoef[blkPos])
@@ -317,7 +316,7 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU,
             }
         }
 
-        lastCG = 0;
+        lastCG = false;
     }
 
     return numSig;
@@ -899,7 +898,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         int64_t invQuant = ScalingList::s_invQuantScales[rem] << per;
         int64_t rdFactor = (int64_t)((invQuant * invQuant) / (lambda2 * 16) + 0.5);
 
-        int lastCG = 1;
+        int lastCG = true;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
@@ -932,7 +931,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 if (signbit != (absSum & 1U))
                 {
                     /* We must find a coeff to toggle up or down so the sign bit of the first non-zero coeff
-                     * is properly implied */
+                     * is properly implied. Note dstCoeff[] are signed by this point but curChange and
+                     * finalChange imply absolute levels (+1 is away from zero, -1 is towards zero) */
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     int minPos = -1, finalChange = 0, curChange = 0;
@@ -942,18 +942,19 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                      * having to multiply the signal bits portion. Here again the cost scale factor (1 << 15)
                      * is hard coded in three more places */
 
-                    for (n = (lastCG == 1 ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
+                    for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
                         uint32_t blkPos = codingParameters.scan[n + subPos];
                         if (dstCoeff[blkPos])
                         {
-                            int64_t costUp   = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
+                            int64_t costUp = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
 
                             /* if decrementing would make the coeff 0, we can remove the sigRateDelta */
+                            bool isOne = abs(dstCoeff[blkPos]) == 1;
                             int64_t costDown = rdFactor * (deltaU[blkPos]) + rateIncDown[blkPos] -
-                                (abs(dstCoeff[blkPos]) == 1 ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
+                                (isOne ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
 
-                            if (lastCG == 1 && lastNZPosInCG == n && abs(dstCoeff[blkPos]) == 1)
+                            if (lastCG && lastNZPosInCG == n && isOne)
                                 costDown -= (4 << 15);
 
                             if (costUp < costDown)
@@ -964,7 +965,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                             else
                             {
                                 curChange = -1;
-                                if (n == firstNZPosInCG && abs(dstCoeff[blkPos]) == 1)
+                                if (n == firstNZPosInCG && isOne)
                                     curCost = MAX_INT64;
                                 else
                                     curCost = costDown;
@@ -972,7 +973,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         }
                         else
                         {
-                            /* evaluate changing an uncoded coeff 0 to a coded coeff +1 */
+                            /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
                             curCost = rdFactor * (-(abs(deltaU[blkPos]))) + (1 << 15) + rateIncUp[blkPos] + sigRateDelta[blkPos];
                             curChange = 1;
 
@@ -1006,7 +1007,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         dstCoeff[minPos] -= finalChange;
                 }
             }
-            lastCG = 0;
+
+            lastCG = false;
         }
     }
 
