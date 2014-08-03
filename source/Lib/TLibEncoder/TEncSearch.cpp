@@ -2345,7 +2345,6 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 {
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
-    bool curUseRDOQ = true;
     uint32_t bestBits = 0, bestCoeffBits = 0;
 
     uint32_t log2CUSize = cu->getLog2CUSize(0);
@@ -2384,7 +2383,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         uint32_t distortion = 0;
 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, curUseRDOQ);
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, true);
 
         m_entropyCoder->resetBits();
         m_entropyCoder->codeQtRootCbfZero(cu);
