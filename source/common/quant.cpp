@@ -744,7 +744,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             {
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
-                    /* this coeff group is already empty */
+                    /* this coefficient group is already empty */
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                     baseCost += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
@@ -754,37 +754,33 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     /* skip the last coefficient group, which will be handled together with last position below */
                     if (cgScanPos < cgLastScanPos)
                     {
+                        uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+
                         if (!rdStats.nnzBeforePos0)
                         {
+                            /* if only coeff 0 in this CG is coded, adjust signal costs */
                             baseCost -= rdStats.sigCost0;
                             rdStats.sigCost -= rdStats.sigCost0;
                         }
-                        /* rd-cost if SigCoeffGroupFlag = 0, initialization */
-                        double costZeroCG = baseCost;
 
-                        /* add SigCoeffGroupFlag cost to total cost */
-                        uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-                        if (cgScanPos < cgLastScanPos)
-                        {
-                            baseCost += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
-                            costZeroCG += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
-                            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][1];
-                        }
-
-                        /* try to convert the current coeff group from non-zero to all-zero */
+                        /* calculate cost of not signaling this coefficient group */
+                        double costZeroCG = baseCost + lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
                         costZeroCG += rdStats.uncodedDist;       /* distortion for resetting non-zero levels to zero levels */
                         costZeroCG -= rdStats.codedLevelAndDist; /* distortion and level cost for keeping all non-zero levels */
                         costZeroCG -= rdStats.sigCost;           /* sig cost for all coeffs, including zero levels and non-zero levels */
 
-                        /* if we can save cost, change this block to all-zero block */
+                        /* speculatively add the cost of this code group to base cost */
+                        costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][1];
+                        baseCost += costCoeffGroupSig[cgScanPos];
+
+                        /* if we can save cost, change this group to all-zero group */
                         if (costZeroCG < baseCost)
                         {
                             sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                             baseCost = costZeroCG;
-                            if (cgScanPos < cgLastScanPos)
-                                costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+                            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
 
-                            /* reset all coeffs to 0. UNCODE THIS BLOCK! */
+                            /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
                             for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
                             {
                                 scanPos         = cgScanPos * cgSize + scanPosinCG;
