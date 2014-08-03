@@ -111,7 +111,7 @@ protected:
 
     enum { IEP_RATE = 32768 }; // cost of an equal probable bit
 
-    uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t signBitHidingHDQ(coeff_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
     uint32_t rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
     inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;

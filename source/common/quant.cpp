@@ -213,8 +213,8 @@ void Quant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }
 
-// To minimize the distortion only. No rate is considered.
-uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
+/* To minimize the distortion only. No rate is considered */
+uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
     bool lastCG = true;
@@ -275,7 +275,7 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU,
                     {
                         if (n < firstNZPosInCG)
                         {
-                            uint32_t thisSignBit = coef[blkPos] >= 0 ? 0 : 1;
+                            uint32_t thisSignBit = m_resiDctCoeff[blkPos] >= 0 ? 0 : 1;
                             if (thisSignBit != signbit)
                                 curCost = MAX_INT;
                             else
@@ -307,7 +307,7 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, coeff_t* coef, int32_t* deltaU,
                 else if (finalChange == -1 && abs(qCoef[minPos]) == 1)
                     numSig--;
 
-                if (coef[minPos] >= 0)
+                if (m_resiDctCoeff[minPos] >= 0)
                     qCoef[minPos] += finalChange;
                 else
                     qCoef[minPos] -= finalChange;
@@ -403,7 +403,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         {
             TUEntropyCodingParameters codingParameters;
             cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
-            return signBitHidingHDQ(coeff, m_resiDctCoeff, deltaU, numSig, codingParameters);
+            return signBitHidingHDQ(coeff, deltaU, numSig, codingParameters);
         }
         else
             return numSig;
