@@ -2341,10 +2341,11 @@ void TEncSearch::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TCom
  * \returns void
  */
 void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv,
-                                           ShortYuv* outBestResiYuv, TComYuv* outReconYuv, bool curUseRDOQ)
+                                           ShortYuv* outBestResiYuv, TComYuv* outReconYuv)
 {
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
+    bool curUseRDOQ = true;
     uint32_t bestBits = 0, bestCoeffBits = 0;
 
     uint32_t log2CUSize = cu->getLog2CUSize(0);
