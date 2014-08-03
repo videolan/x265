@@ -593,6 +593,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                  * quantization the coefficient may have been non-zero */
                 costCoeff[scanPos] = 0;
                 baseCost += costUncoded[scanPos];
+
+                /* coeff in unsignaled coeff groups have no signal cost */
+                costSig[scanPos] = 0;
             }
             else
             {
