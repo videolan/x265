@@ -44,12 +44,12 @@ struct coeffGroupRDStats
     double sigCost0;
 };
 
-inline static int fastMin(int x, int y)
+inline int fastMin(int x, int y)
 {
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline static void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
+inline void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -121,46 +121,44 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
-    uint32_t rate = Quant::IEP_RATE;
 
     if (diffLevel < 0)
     {
         X265_CHECK((absLevel == 1) || (absLevel == 2), "absLevel range check failure\n");
-        rate += greaterOneBits[(absLevel == 2)];
 
+        uint32_t rate = greaterOneBits[(absLevel == 2)];
         if (absLevel == 2)
             rate += levelAbsBits[0];
+        return rate;
     }
     else
     {
+        uint32_t rate;
         uint32_t symbol = diffLevel;
-        uint32_t length;
         if ((symbol >> absGoRice) < COEF_REMAIN_BIN_REDUCTION)
         {
-            length = symbol >> absGoRice;
-            rate += (length + 1 + absGoRice) << 15;
+            uint32_t length = symbol >> absGoRice;
+            rate = (length + 1 + absGoRice) << 15;
         }
         else
         {
-            length = 0;
+            uint32_t length = 0;
             symbol = (symbol >> absGoRice) - COEF_REMAIN_BIN_REDUCTION;
-            if (symbol != 0)
+            if (symbol)
             {
                 unsigned long idx;
                 CLZ32(idx, symbol + 1);
                 length = idx;
             }
 
-            rate += (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
+            rate = (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
         }
         if (c1c2Idx & 1)
             rate += greaterOneBits[1];
-
         if (c1c2Idx == 3)
             rate += levelAbsBits[1];
+        return rate;
     }
-
-    return rate;
 }
 
 }
@@ -641,7 +639,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
                     {
                         uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                        double curCost = err2 * scaleFactor + lambda2 * (codedSigBits + rateCost);
+                        double curCost = err2 * scaleFactor + lambda2 * (codedSigBits + rateCost + IEP_RATE);
 
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
                         int psyValue = 0;

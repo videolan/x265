@@ -105,11 +105,11 @@ public:
     coeff_t* m_fencDctCoeff;
     int16_t* m_fencShortBuf;
 
-    enum { IEP_RATE = 32768 }; // cost of an equal probable bit
-
     void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
 protected:
+
+    enum { IEP_RATE = 32768 }; // cost of an equal probable bit
 
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
     uint32_t quant(TComDataCU* cu, coeff_t* dst, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
