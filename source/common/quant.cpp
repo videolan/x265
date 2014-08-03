@@ -721,7 +721,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             }
 
             cgRdStats.sigCost += costSig[scanPos];
-            if (scanPosinCG == 0)
+            if (!scanPosinCG)
                 cgRdStats.sigCost0 = costSig[scanPos];
 
             if (dstCoeff[blkPos])
