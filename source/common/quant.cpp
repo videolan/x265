@@ -374,7 +374,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
             primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, shift, trSize);
         else
         {
-            // The case when X265_DEPTH > 13
+            /* X265_DEPTH > 13 */
             shift = -shift;
             int offset = (1 << (shift - 1));
             for (int j = 0; j < trSize; j++)
@@ -388,10 +388,11 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         int useDST = !sizeIdx && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA;
         int index = DCT_4x4 + sizeIdx - useDST;
 
+        /* NOTE: if RDOQ is disabled globally, psy-rdoq is also disabled, so
+         * there is no risk of performing this DCT unnecessarily */
         if (m_psyRdoqScale && ttype == TEXT_LUMA)
         {
-            // converting pixel to short for input to dct and psy-rdoq eval
-            // TODO: can this be re-used? should it be performed by caller?
+            /* perform DCT on source pixels for psy-rdoq */
             primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
