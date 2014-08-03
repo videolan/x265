@@ -214,18 +214,19 @@ void Quant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt
 }
 
 /* To minimize the distortion only. No rate is considered */
-uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
+uint32_t Quant::signBitHidingHDQ(coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters)
 {
     const uint32_t log2TrSizeCG = codingParameters.log2TrSizeCG;
+    const uint16_t *scan = codingParameters.scan;
     bool lastCG = true;
 
-    for (int subSet = (1 << log2TrSizeCG * 2) - 1; subSet >= 0; subSet--)
+    for (int cg = (1 << log2TrSizeCG * 2) - 1; cg >= 0; cg--)
     {
-        int subPos = subSet << LOG2_SCAN_SET_SIZE;
+        int cgStartPos = cg << LOG2_SCAN_SET_SIZE;
         int n;
 
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
-            if (qCoef[codingParameters.scan[n + subPos]])
+            if (coeff[scan[n + cgStartPos]])
                 break;
         if (n < 0)
             continue;
@@ -233,18 +234,18 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSi
         int lastNZPosInCG = n;
 
         for (n = 0;; n++)
-            if (qCoef[codingParameters.scan[n + subPos]])
+            if (coeff[scan[n + cgStartPos]])
                 break;
 
         int firstNZPosInCG = n;
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
-            uint32_t signbit = (qCoef[codingParameters.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
+            uint32_t signbit = coeff[scan[cgStartPos + firstNZPosInCG]] > 0 ? 0 : 1;
             uint32_t absSum = 0;
 
             for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
-                absSum += qCoef[codingParameters.scan[n + subPos]];
+                absSum += coeff[scan[n + cgStartPos]];
 
             if (signbit != (absSum & 0x1)) // compare signbit with sum_parity
             {
@@ -252,8 +253,8 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSi
 
                 for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
-                    uint32_t blkPos = codingParameters.scan[n + subPos];
-                    if (qCoef[blkPos])
+                    uint32_t blkPos = scan[n + cgStartPos];
+                    if (coeff[blkPos])
                     {
                         if (deltaU[blkPos] > 0)
                         {
@@ -262,7 +263,7 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSi
                         }
                         else
                         {
-                            if (n == firstNZPosInCG && abs(qCoef[blkPos]) == 1)
+                            if (n == firstNZPosInCG && abs(coeff[blkPos]) == 1)
                                 curCost = MAX_INT;
                             else
                             {
@@ -299,18 +300,19 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* qCoef, int32_t* deltaU, uint32_t numSi
                     }
                 }
 
-                if (qCoef[minPos] == 32767 || qCoef[minPos] == -32768)
+                /* do not allow change to violate coeff clamp */
+                if (coeff[minPos] == 32767 || coeff[minPos] == -32768)
                     finalChange = -1;
 
-                if (!qCoef[minPos])
+                if (!coeff[minPos])
                     numSig++;
-                else if (finalChange == -1 && abs(qCoef[minPos]) == 1)
+                else if (finalChange == -1 && abs(coeff[minPos]) == 1)
                     numSig--;
 
                 if (m_resiDctCoeff[minPos] >= 0)
-                    qCoef[minPos] += finalChange;
+                    coeff[minPos] += finalChange;
                 else
-                    qCoef[minPos] -= finalChange;
+                    coeff[minPos] -= finalChange;
             }
         }
 
@@ -331,7 +333,6 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
                              uint32_t    absPartIdx,
                              bool        useTransformSkip)
 {
-    int trSize = 1 << log2TrSize;
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
@@ -339,6 +340,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     }
 
     bool usePsy = m_psyRdoqScale && ttype == TEXT_LUMA && !useTransformSkip;
+    int trSize = 1 << log2TrSize;
 
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
@@ -481,19 +483,19 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     }
 }
 
-/** Rate distortion optimized quantization for entropy
- * coding engines using probability models like CABAC */
+/* Rate distortion optimized quantization for entropy coding engines using
+ * probability models like CABAC */
 uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     uint32_t trSize = 1 << log2TrSize;
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
     int rem = m_qpParam[ttype].rem;
     int per = m_qpParam[ttype].per;
-    int qbits = QUANT_SHIFT + per + transformShift; // Right shift of non-RDOQ quantizer;  level = (coeff*Q + offset)>>q_bits
+    int qbits = QUANT_SHIFT + per + transformShift; /* Right shift of non-RDOQ quantizer level = (coeff*Q + offset)>>q_bits */
     int add = (1 << (qbits - 1));
     int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
@@ -618,6 +620,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
+                        /* set default costs to uncoded costs.
+                         * TODO: is there really a need to check maxAbsLevel < 3 here?
+                         * TODO: psy cost not considered for level = 0 */
                         costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
@@ -726,17 +731,20 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             }
         } /* end for (scanPosinCG) */
 
-        /* Summarize costs for the coeff code group */
+        /* Summarize costs for the coeff group */
         if (cgLastScanPos >= 0)
         {
             costCoeffGroupSig[cgScanPos] = 0;
             if (!cgScanPos)
-                /* code group 0 is always signaled */
+            {
+                /* coeff group 0 is always signaled, if numSig */
                 sigCoeffGroupFlag64 |= cgBlkPosMask;
+            }
             else
             {
                 if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
                 {
+                    /* this coeff group is already empty */
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
                     baseCost += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
