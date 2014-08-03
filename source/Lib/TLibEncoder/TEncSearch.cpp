@@ -430,7 +430,7 @@ void TEncSearch::xIntraCodingLumaBlk(TComDataCU* cu,
         m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSize, TEXT_LUMA);
 
     //--- transform and quantization ---
-    uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip, true);
+    uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
 
     //--- set coded block flag ---
     cbf = numSig ? 1 : 0;
@@ -499,7 +499,7 @@ void TEncSearch::xIntraCodingChromaBlk(TComDataCU* cu,
         m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSizeC, TEXT_CHROMA);
 
     //--- transform and quantization ---
-    uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdx, useTransformSkipC, true);
+    uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdx, useTransformSkipC);
 
     //--- set coded block flag ---
     cbf = numSig ? 1 : 0;
@@ -859,7 +859,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
 
         //===== transform and quantization =====
-        uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip, true);
+        uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
 
         //--- set coded block flag ---
         cu->setCbfSubParts((numSig ? 1 : 0) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -1332,7 +1332,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
                 primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
 
                 //--- transform and quantization ---
-                uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC, true);
+                uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC);
 
                 //--- set coded block flag ---
                 cu->setCbfPartRange((((numSig > 0) ? 1 : 0) << trDepth), ttype, absPartIdxC, tuIterator.absPartIdxStep);
@@ -2553,7 +2553,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
         const uint32_t strideResiC = resiYuv->m_cwidth;
 
         uint32_t numSigY = m_quant.transformNxN(cu, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), curResiY, strideResiY, coeffCurY,
-                                                log2TrSize, TEXT_LUMA, absPartIdx, false, true);
+                                                log2TrSize, TEXT_LUMA, absPartIdx, false);
 
         cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -2578,9 +2578,9 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
                 cu->setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
                 uint32_t numSigU = m_quant.transformNxN(cu, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(), curResiU, strideResiC, coeffCurU + subTUOffset,
-                                                        log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, true);
+                                                        log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false);
                 uint32_t numSigV = m_quant.transformNxN(cu, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(), curResiV, strideResiC, coeffCurV + subTUOffset,
-                                                        log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, true);
+                                                        log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
 
                 cu->setCbfPartRange(numSigU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigV ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -2717,7 +2717,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
             m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSize, TEXT_LUMA);
 
         numSigY = m_quant.transformNxN(cu, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, coeffCurY,
-                                       log2TrSize, TEXT_LUMA, absPartIdx, false, true);
+                                       log2TrSize, TEXT_LUMA, absPartIdx, false);
 
         cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -2745,9 +2745,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSizeC, TEXT_CHROMA);
 
                 numSigU[tuIterator.section] = m_quant.transformNxN(cu, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(), resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurU + subTUOffset,
-                                                                   log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false, true);
+                                                                   log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false);
                 numSigV[tuIterator.section] = m_quant.transformNxN(cu, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(), resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, coeffCurV + subTUOffset,
-                                                                   log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false, true);
+                                                                   log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
 
                 cu->setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -3076,7 +3076,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSize, TEXT_LUMA);
 
             uint32_t numSigTSkipY = m_quant.transformNxN(cu, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, tsCoeffY,
-                                                         log2TrSize, TEXT_LUMA, absPartIdx, true, true);
+                                                         log2TrSize, TEXT_LUMA, absPartIdx, true);
             cu->setCbfSubParts(numSigTSkipY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
             if (numSigTSkipY)
@@ -3157,9 +3157,9 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                     m_entropyCoder->estBit(m_quant.m_estBitsSbac, log2TrSizeC, TEXT_CHROMA);
 
                 uint32_t numSigTSkipU = m_quant.transformNxN(cu, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(), resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffU,
-                                                             log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true, true);
+                                                             log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true);
                 uint32_t numSigTSkipV = m_quant.transformNxN(cu, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(), resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, tsCoeffV,
-                                                             log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, true, true);
+                                                             log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, true);
 
                 cu->setCbfPartRange(numSigTSkipU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigTSkipV ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);

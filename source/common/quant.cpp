@@ -356,8 +356,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
                              uint32_t    log2TrSize,
                              TextType    ttype,
                              uint32_t    absPartIdx,
-                             bool        useTransformSkip,
-                             bool        curUseRDOQ)
+                             bool        useTransformSkip)
 {
     int trSize = 1 << log2TrSize;
     if (cu->getCUTransquantBypass(absPartIdx))
@@ -406,7 +405,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         }
     }
 
-    if (m_useRDOQ && curUseRDOQ)
+    if (m_useRDOQ)
         return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
     else
         return quant(cu, coeff, log2TrSize, ttype, absPartIdx);
