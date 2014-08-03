@@ -365,6 +365,8 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         return primitives.cvt16to32_cnt[log2TrSize - 2](coeff, residual, stride);
     }
 
+    bool usePsy = m_psyRdoqScale && ttype == TEXT_LUMA && !useTransformSkip;
+
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
     {
@@ -388,16 +390,16 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         int useDST = !sizeIdx && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA;
         int index = DCT_4x4 + sizeIdx - useDST;
 
+        primitives.dct[index](residual, m_resiDctCoeff, stride);
+
         /* NOTE: if RDOQ is disabled globally, psy-rdoq is also disabled, so
          * there is no risk of performing this DCT unnecessarily */
-        if (m_psyRdoqScale && ttype == TEXT_LUMA)
+        if (usePsy)
         {
             /* perform DCT on source pixels for psy-rdoq */
             primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
-
-        primitives.dct[index](residual, m_resiDctCoeff, stride);
 
         if (m_nr->bNoiseReduction && !useDST)
         {
@@ -407,7 +409,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     }
 
     if (m_useRDOQ)
-        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx);
+        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
     else
         return quant(cu, coeff, log2TrSize, ttype, absPartIdx);
 }
@@ -485,7 +487,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
 /** Rate distortion optimized quantization for entropy
  * coding engines using probability models like CABAC */
-uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
@@ -518,7 +520,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     double lambda2 = m_lambdas[ttype];
     double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
     bool bIsLuma = ttype == TEXT_LUMA;
-    bool usePsy = m_psyRdoqScale && bIsLuma;
 
     double totalUncodedCost = 0;
     double costCoeff[32 * 32];   /* d*d + lambda * bits */
