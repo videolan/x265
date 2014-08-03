@@ -548,7 +548,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     const uint32_t cgNum = 1 << codingParameters.log2TrSizeCG * 2;
 
     uint32_t scanPos;
-    coeffGroupRDStats rdStats;
+    coeffGroupRDStats cgRdStats;
 
     /* iterate over coding groups in reverse scan order */
     for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
@@ -557,7 +557,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         const uint32_t cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
         const uint32_t cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
-        memset(&rdStats, 0, sizeof(coeffGroupRDStats));
+        memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
 
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
 
@@ -717,17 +717,17 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 }
             }
 
-            rdStats.sigCost += costSig[scanPos];
+            cgRdStats.sigCost += costSig[scanPos];
             if (scanPosinCG == 0)
-                rdStats.sigCost0 = costSig[scanPos];
+                cgRdStats.sigCost0 = costSig[scanPos];
 
             if (dstCoeff[blkPos])
             {
                 sigCoeffGroupFlag64 |= cgBlkPosMask;
-                rdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
-                rdStats.uncodedDist += costUncoded[scanPos];
+                cgRdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
+                cgRdStats.uncodedDist += costUncoded[scanPos];
                 if (scanPosinCG != 0)
-                    rdStats.nnzBeforePos0++;
+                    cgRdStats.nnzBeforePos0++;
             }
         } /* end for (scanPosinCG) */
 
@@ -746,7 +746,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 {
                     /* this coefficient group is already empty */
                     uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
-                    baseCost += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - rdStats.sigCost;
+                    baseCost += lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0] - cgRdStats.sigCost;
                     costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
                 }
                 else
@@ -756,24 +756,24 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     {
                         uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
 
-                        if (!rdStats.nnzBeforePos0)
+                        if (!cgRdStats.nnzBeforePos0)
                         {
                             /* if only coeff 0 in this CG is coded, adjust signal costs */
-                            baseCost -= rdStats.sigCost0;
-                            rdStats.sigCost -= rdStats.sigCost0;
+                            baseCost -= cgRdStats.sigCost0;
+                            cgRdStats.sigCost -= cgRdStats.sigCost0;
                         }
 
                         /* calculate cost of not signaling this coefficient group */
                         double costZeroCG = baseCost + lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
-                        costZeroCG += rdStats.uncodedDist;       /* distortion for resetting non-zero levels to zero levels */
-                        costZeroCG -= rdStats.codedLevelAndDist; /* distortion and level cost for keeping all non-zero levels */
-                        costZeroCG -= rdStats.sigCost;           /* sig cost for all coeffs, including zero levels and non-zero levels */
+                        costZeroCG += cgRdStats.uncodedDist;       /* distortion for resetting non-zero levels to zero levels */
+                        costZeroCG -= cgRdStats.codedLevelAndDist; /* distortion and level cost for keeping all non-zero levels */
+                        costZeroCG -= cgRdStats.sigCost;           /* sig cost for all coeffs, including zero levels and non-zero levels */
 
                         /* speculatively add the cost of this code group to base cost */
                         costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][1];
                         baseCost += costCoeffGroupSig[cgScanPos];
 
-                        /* if we can save cost, change this group to all-zero group */
+                        /* if we can save RD cost, change this group to all-zero group */
                         if (costZeroCG < baseCost)
                         {
                             sigCoeffGroupFlag64 &= ~cgBlkPosMask;
