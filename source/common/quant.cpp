@@ -49,9 +49,9 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int size)
+inline void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
 {
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < numCoeff; i++)
     {
         int level = dctCoef[i];
         int sign = level >> 31;
@@ -376,7 +376,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
 
         if (m_nr->bNoiseReduction && !useDST)
         {
-            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], (16 << sizeIdx * 2));
+            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], trSize << 1);
             m_nr->count[sizeIdx]++;
         }
     }
