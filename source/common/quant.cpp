@@ -569,6 +569,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             double scaleFactor   = errScale[blkPos];       /* (1 << scaleBits) / (quantCoef * quantCoef) */
             int levelScaled      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
             uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);  /* abs(coef) */
+            int signCoef         = m_resiDctCoeff[blkPos];
+            int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef;
 
             /* RDOQ measures distortion as the scaled level squared times a
              * scale factor which tries to remove the quantCoef back out, but
@@ -576,6 +578,10 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
             /* cost of not coding this coefficient (no signal bits) */
             costUncoded[scanPos] = ((uint64_t)levelScaled * levelScaled) * scaleFactor;
+            if (usePsy && blkPos)
+                /* when no coefficient is coded, predicted coef == recon coef */
+                costUncoded[scanPos] -= (int)(((m_psyRdoqScale * predictedCoef) << scaleBits) >> 8);
+
             totalUncodedCost += costUncoded[scanPos];
 
             if (maxAbsLevel && lastScanPos < 0)
@@ -624,8 +630,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     if (maxAbsLevel < 3)
                     {
                         /* set default costs to uncoded costs.
-                         * TODO: is there really a need to check maxAbsLevel < 3 here?
-                         * TODO: psy cost not considered for level = 0 */
+                         * TODO: is there really a need to check maxAbsLevel < 3 here? */
                         costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
@@ -634,9 +639,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 }
                 if (maxAbsLevel)
                 {
-                    int signCoef = m_resiDctCoeff[blkPos];
-                    int predictedCoef = m_fencDctCoeff[blkPos] - signCoef;
-
                     const int64_t err1 = levelScaled - ((int64_t)maxAbsLevel << qbits);
                     double err2 = (double)(err1 * err1);
 
@@ -647,18 +649,17 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         double curCost = err2 * scaleFactor + lambda2 * (codedSigBits + rateCost + IEP_RATE);
 
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
-                        int psyValue = 0;
                         if (usePsy && blkPos)
                         {
                             int unquantAbsLevel = (lvl * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
-                            psyValue = (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
+                            curCost -= (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
                         }
 
-                        if (curCost - psyValue < costCoeff[scanPos])
+                        if (curCost < costCoeff[scanPos])
                         {
                             level = lvl;
-                            costCoeff[scanPos] = curCost - psyValue;
+                            costCoeff[scanPos] = curCost;
                             costSig[scanPos] = lambda2 * codedSigBits;
                         }
 
