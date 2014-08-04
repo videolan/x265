@@ -629,8 +629,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
-                        /* set default costs to uncoded costs.
-                         * TODO: is there really a need to check maxAbsLevel < 3 here? */
+                        /* set default costs to uncoded costs */
                         costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
