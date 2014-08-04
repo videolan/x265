@@ -509,10 +509,26 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     x265_emms();
 
-    /* unquant constants for psy-rdoq */
+    /* unquant constants for psy-rdoq. The dequant coefficients have a (1<<4) scale applied
+     * that must be removed during unquant.  This may be larger than the QP upshift, which
+     * would turn some shifts around. To avoid this we add an optional pre-up-shift of the
+     * quantized level. Note that in real dequant there is clipping at several stages. We
+     * skip the clipping when measuring RD cost. */
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
-    int unquantRound = 1 << (unquantShift - 1);
+    int unquantRound, unquantPreshift;
+    unquantShift += 4;
+    if (unquantShift > per)
+    {
+        unquantRound = 1 << (unquantShift - per - 1);
+        unquantPreshift = 0;
+    }
+    else
+    {
+        unquantPreshift = 4;
+        unquantShift += unquantPreshift;
+        unquantRound = 0;
+    }
     int scaleBits = SCALE_BITS - 2 * transformShift;
 
     double lambda2 = m_lambdas[ttype];
@@ -650,7 +666,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
                         if (usePsy && blkPos)
                         {
-                            int unquantAbsLevel = (lvl * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
+                            int unquantAbsLevel = ((lvl << unquantPreshift) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
                             curCost -= (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
                         }
