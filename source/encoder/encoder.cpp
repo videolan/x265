@@ -1330,9 +1330,6 @@ void Encoder::configure(x265_param *p)
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
         p->rc.aqStrength = 0;
 
-    if (p->rc.aqStrength == 0)
-        p->rc.aqMode = 0;
-
     if (p->internalCsp != X265_CSP_I420)
     {
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
