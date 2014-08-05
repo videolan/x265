@@ -94,6 +94,32 @@ void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
     SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 8, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 32, cpu);
 
+#define CHROMA_PIXELSUB_DEF_422(cpu) \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(2, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 12, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(6, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 4, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(2, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 24, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(12, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 8, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 64, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 32, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 64, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 48, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(24, 64, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 16, cpu); \
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 64, cpu);
+
 #define SETUP_LUMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t * dest, intptr_t destride, pixel * src0, pixel * src1, intptr_t srcstride0, intptr_t srcstride1); \
     void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel * dest, intptr_t destride, pixel * src0, int16_t * scr1, intptr_t srcStride0, intptr_t srcStride1);
@@ -130,6 +156,9 @@ LUMA_PIXELSUB_DEF(_sse4);
 CHROMA_PIXELSUB_DEF(_sse2);
 LUMA_PIXELSUB_DEF(_sse2);
 
+CHROMA_PIXELSUB_DEF_422(_sse4);
+CHROMA_PIXELSUB_DEF_422(_sse2);
+
 #define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
     uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(pixel * pix, intptr_t pixstride);
 
@@ -142,6 +171,7 @@ LUMA_PIXELSUB_DEF(_sse2);
 LUMA_PIXELVAR_DEF(_sse2);
 
 #undef CHROMA_PIXELSUB_DEF
+#undef CHROMA_PIXELSUB_DEF_422
 #undef LUMA_PIXELSUB_DEF
 #undef LUMA_PIXELVAR_DEF
 #undef SETUP_CHROMA_PIXELSUB_PS_FUNC

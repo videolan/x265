@@ -2878,6 +2878,61 @@ INIT_XMM sse4
 RET
 
 ;-----------------------------------------------------------------------------
+; void pixel_sub_ps_2x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%macro PIXEL_SUB_PS_W2_H2 2
+%if HIGH_BIT_DEPTH
+INIT_XMM sse2
+cglobal pixel_sub_ps_2x%2, 6, 7, 4, dest, destride, src0, scr1, srcStride0, srcStride1
+    add     r1,     r1
+    add     r4,     r4
+    add     r5,     r5
+    mov     r6d,    %2/2
+.loop:
+    movd    m0,     [r2]
+    movd    m1,     [r3]
+    movd    m2,     [r2 + r4]
+    movd    m3,     [r3 + r5]
+    dec     r6d
+    lea     r2,     [r2 + r4 * 2]
+    lea     r3,     [r3 + r5 * 2]
+    psubw   m0,     m1
+    psubw   m2,     m3
+    movd    [r0],       m0
+    movd    [r0 + r1],  m2
+    lea     r0,     [r0 + 2 * r1]
+    jnz     .loop
+    RET
+%else
+INIT_XMM sse4
+cglobal pixel_sub_ps_2x%2, 6, 7, 4, dest, destride, src0, scr1, srcStride0, srcStride1
+    add         r1,     r1
+    mov         r6d,    %2/2
+.loop:
+    pinsrw      m0,     [r2],       0
+    pinsrw      m1,     [r3],       0
+    pinsrw      m2,     [r2 + r4],  0
+    pinsrw      m3,     [r3 + r5],  0
+    dec         r6d
+    lea         r2,     [r2 + r4 * 2]
+    lea         r3,     [r3 + r5 * 2]
+    pmovzxbw    m0,     m0
+    pmovzxbw    m1,     m1
+    pmovzxbw    m2,     m2
+    pmovzxbw    m3,     m3
+    psubw       m0,     m1
+    psubw       m2,     m3
+    movd        [r0],       m0
+    movd        [r0 + r1],  m2
+    lea         r0,     [r0 + r1 * 2]
+    jnz         .loop
+    RET
+%endif
+%endmacro
+
+PIXEL_SUB_PS_W2_H2   2, 16
+
+;-----------------------------------------------------------------------------
 ; void pixel_sub_sp_c_4x2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 %if HIGH_BIT_DEPTH
@@ -2991,11 +3046,17 @@ INIT_XMM sse2
 PIXELSUB_PS_W4_H4 4, 4
 PIXELSUB_PS_W4_H4 4, 8
 PIXELSUB_PS_W4_H4 4, 16
+;
+PIXELSUB_PS_W4_H4 4, 12
+PIXELSUB_PS_W4_H4 4, 32
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W4_H4 4, 4
 PIXELSUB_PS_W4_H4 4, 8
 PIXELSUB_PS_W4_H4 4, 16
+;
+PIXELSUB_PS_W4_H4 4, 12
+PIXELSUB_PS_W4_H4 4, 32
 %endif
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_%1x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
@@ -3087,9 +3148,13 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 2
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
 PIXELSUB_PS_W6_H4 6, 8
+;
+PIXELSUB_PS_W6_H4 6, 16
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W6_H4 6, 8
+;
+PIXELSUB_PS_W6_H4 6, 16
 %endif
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_c_8x2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
@@ -3285,12 +3350,18 @@ PIXELSUB_PS_W8_H4 8, 4
 PIXELSUB_PS_W8_H4 8, 8
 PIXELSUB_PS_W8_H4 8, 16
 PIXELSUB_PS_W8_H4 8, 32
+;
+PIXELSUB_PS_W8_H4 8, 12
+PIXELSUB_PS_W8_H4 8, 64
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W8_H4 8, 4
 PIXELSUB_PS_W8_H4 8, 8
 PIXELSUB_PS_W8_H4 8, 16
 PIXELSUB_PS_W8_H4 8, 32
+;
+PIXELSUB_PS_W8_H4 8, 12
+PIXELSUB_PS_W8_H4 8, 64
 %endif
 
 ;-----------------------------------------------------------------------------
@@ -3404,9 +3475,13 @@ cglobal pixel_sub_ps_%1x%2, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
 PIXELSUB_PS_W12_H4 12, 16
+;
+PIXELSUB_PS_W12_H4 12, 32
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W12_H4 12, 16
+;
+PIXELSUB_PS_W12_H4 12, 32
 %endif
 
 ;-----------------------------------------------------------------------------
@@ -3529,6 +3604,8 @@ PIXELSUB_PS_W16_H4 16, 12
 PIXELSUB_PS_W16_H4 16, 16
 PIXELSUB_PS_W16_H4 16, 32
 PIXELSUB_PS_W16_H4 16, 64
+;
+PIXELSUB_PS_W16_H4 16, 24
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W16_H4 16, 4
@@ -3537,6 +3614,8 @@ PIXELSUB_PS_W16_H4 16, 12
 PIXELSUB_PS_W16_H4 16, 16
 PIXELSUB_PS_W16_H4 16, 32
 PIXELSUB_PS_W16_H4 16, 64
+;
+PIXELSUB_PS_W16_H4 16, 24
 %endif
 
 ;-----------------------------------------------------------------------------
@@ -3632,9 +3711,13 @@ RET
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
 PIXELSUB_PS_W24_H2 24, 32
+;
+PIXELSUB_PS_W24_H2 24, 64
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W24_H2 24, 32
+;
+PIXELSUB_PS_W24_H2 24, 64
 %endif
 
 ;-----------------------------------------------------------------------------
@@ -3752,6 +3835,8 @@ PIXELSUB_PS_W32_H2 32, 16
 PIXELSUB_PS_W32_H2 32, 24
 PIXELSUB_PS_W32_H2 32, 32
 PIXELSUB_PS_W32_H2 32, 64
+;
+PIXELSUB_PS_W32_H2 32, 48
 %else
 INIT_XMM sse4
 PIXELSUB_PS_W32_H2 32, 8
@@ -3759,6 +3844,8 @@ PIXELSUB_PS_W32_H2 32, 16
 PIXELSUB_PS_W32_H2 32, 24
 PIXELSUB_PS_W32_H2 32, 32
 PIXELSUB_PS_W32_H2 32, 64
+;
+PIXELSUB_PS_W32_H2 32, 48
 %endif
 
 ;-----------------------------------------------------------------------------

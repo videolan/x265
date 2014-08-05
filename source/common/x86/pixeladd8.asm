@@ -212,6 +212,8 @@ RET
 
 PIXEL_ADD_PS_W2_H4   2, 8
 
+PIXEL_ADD_PS_W2_H4   2, 16
+
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_4x2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
@@ -359,6 +361,7 @@ PIXEL_ADD_PS_W4_H4   4,  4
 PIXEL_ADD_PS_W4_H4   4,  8
 PIXEL_ADD_PS_W4_H4   4, 16
 
+PIXEL_ADD_PS_W4_H4   4, 32
 
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
@@ -468,6 +471,8 @@ RET
 %endmacro
 
 PIXEL_ADD_PS_W6_H4 6,  8
+
+PIXEL_ADD_PS_W6_H4 6,  16
 
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_8x2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
@@ -736,6 +741,8 @@ PIXEL_ADD_PS_W8_H4 8,  8
 PIXEL_ADD_PS_W8_H4 8, 16
 PIXEL_ADD_PS_W8_H4 8, 32
 
+PIXEL_ADD_PS_W8_H4 8, 12
+PIXEL_ADD_PS_W8_H4 8, 64
 
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
@@ -886,6 +893,8 @@ RET
 
 PIXEL_ADD_PS_W12_H4 12, 16
 
+PIXEL_ADD_PS_W12_H4 12, 32
+
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
@@ -1033,6 +1042,8 @@ PIXEL_ADD_PS_W16_H4 16, 16
 PIXEL_ADD_PS_W16_H4 16, 32
 PIXEL_ADD_PS_W16_H4 16, 64
 
+PIXEL_ADD_PS_W16_H4 16, 24
+
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
@@ -1137,6 +1148,8 @@ cglobal pixel_add_ps_%1x%2, 6, 7, 6, dest, destride, src0, scr1, srcStride0, src
 %endmacro
 
 PIXEL_ADD_PS_W24_H2 24, 32
+
+PIXEL_ADD_PS_W24_H2 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
@@ -1264,6 +1277,8 @@ PIXEL_ADD_PS_W32_H2 32, 16
 PIXEL_ADD_PS_W32_H2 32, 24
 PIXEL_ADD_PS_W32_H2 32, 32
 PIXEL_ADD_PS_W32_H2 32, 64
+
+PIXEL_ADD_PS_W32_H2 32, 48
 
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_%1x%2(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)

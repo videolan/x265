@@ -83,12 +83,33 @@ uint32_t x265_cvt16to32_cnt_32_avx2(int32_t * dst, int16_t * src, intptr_t);
 #define BLOCKCOPY_SP(cpu) \
     SETUP_BLOCKCOPY_SP(2, 4, cpu); \
     SETUP_BLOCKCOPY_SP(2, 8, cpu); \
-    SETUP_BLOCKCOPY_SP(6, 8, cpu);
+    SETUP_BLOCKCOPY_SP(6, 8, cpu); \
+    \
+    SETUP_BLOCKCOPY_SP(2, 16, cpu); \
+    SETUP_BLOCKCOPY_SP(4, 32, cpu); \
+    SETUP_BLOCKCOPY_SP(6, 16, cpu); \
+    SETUP_BLOCKCOPY_SP(8, 12, cpu); \
+    SETUP_BLOCKCOPY_SP(8, 64, cpu); \
+    SETUP_BLOCKCOPY_SP(12, 32, cpu); \
+    SETUP_BLOCKCOPY_SP(16, 24, cpu); \
+    SETUP_BLOCKCOPY_SP(24, 64, cpu); \
+    SETUP_BLOCKCOPY_SP(32, 48, cpu);
 
 #define BLOCKCOPY_SS_PP(cpu) \
     SETUP_BLOCKCOPY_SS_PP(2, 4, cpu); \
     SETUP_BLOCKCOPY_SS_PP(2, 8, cpu); \
-    SETUP_BLOCKCOPY_SS_PP(6, 8, cpu);
+    SETUP_BLOCKCOPY_SS_PP(6, 8, cpu); \
+    \
+    SETUP_BLOCKCOPY_SS_PP(2, 16, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(4, 32, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(6, 16, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(8, 12, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(8, 64, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(12, 32, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(16, 24, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(24, 64, cpu); \
+    SETUP_BLOCKCOPY_SS_PP(32, 48, cpu);
+    
 
 #define BLOCKCOPY_PS(cpu) \
     SETUP_BLOCKCOPY_PS(2, 4, cpu); \
@@ -121,12 +142,24 @@ uint32_t x265_cvt16to32_cnt_32_avx2(int32_t * dst, int16_t * src, intptr_t);
     SETUP_BLOCKCOPY_PS(64, 16, cpu); \
     SETUP_BLOCKCOPY_PS(64, 32, cpu); \
     SETUP_BLOCKCOPY_PS(64, 48, cpu); \
-    SETUP_BLOCKCOPY_PS(64, 64, cpu);
+    SETUP_BLOCKCOPY_PS(64, 64, cpu); \
+    \
+    SETUP_BLOCKCOPY_PS(2, 16, cpu); \
+    SETUP_BLOCKCOPY_PS(4, 32, cpu); \
+    SETUP_BLOCKCOPY_PS(6, 16, cpu); \
+    SETUP_BLOCKCOPY_PS(8, 12, cpu); \
+    SETUP_BLOCKCOPY_PS(8, 64, cpu); \
+    SETUP_BLOCKCOPY_PS(12, 32, cpu); \
+    SETUP_BLOCKCOPY_PS(16, 24, cpu); \
+    SETUP_BLOCKCOPY_PS(24, 64, cpu); \
+    SETUP_BLOCKCOPY_PS(32, 48, cpu);
 
 BLOCKCOPY_COMMON(_sse2);
 BLOCKCOPY_SS_PP(_sse2);
 BLOCKCOPY_SP(_sse4);
 BLOCKCOPY_PS(_sse4);
+
+BLOCKCOPY_SP(_sse2);
 
 void x265_blockfill_s_4x4_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_sse2(int16_t *dst, intptr_t dstride, int16_t val);

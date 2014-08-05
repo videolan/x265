@@ -154,6 +154,50 @@ cglobal addAvg_2x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 %endrep
     RET
 
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_2x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m6,         [pw_1023]
+    mova        m7,         [pw_1024]
+    mov         r6d,        16/4
+    add         r3,         r3
+    add         r4,         r4
+    add         r5,         r5
+.loop:
+    movd        m1,         [r0]
+    movd        m2,         [r0 + r3]
+    movd        m3,         [r1]
+    movd        m4,         [r1 + r4]
+    lea         r0,         [r0 + r3 * 2]
+    lea         r1,         [r1 + r4 * 2]
+    punpckldq   m1,         m2
+    punpckldq   m3,         m4
+    movd        m2,         [r0]
+    movd        m4,         [r0 + r3]
+    movd        m5,         [r1]
+    movd        m0,         [r1 + r4]
+    lea         r0,         [r0 + r3 * 2]
+    lea         r1,         [r1 + r4 * 2]
+    punpckldq   m2,         m4
+    punpckldq   m5,         m0
+    punpcklqdq  m1,         m2
+    punpcklqdq  m3,         m5
+    paddw       m1,         m3
+    pmulhrsw    m1,         m7
+    paddw       m1,         [pw_512]
+    pxor        m0,         m0
+    pmaxsw      m1,         m0
+    pminsw      m1,         m6
+    movd        [r2],       m1
+    pextrd      [r2 + r5],  m1, 1
+    lea         r2,         [r2 + r5 * 2]
+    pextrd      [r2],       m1, 2
+    pextrd      [r2 + r5],  m1, 3
+    lea         r2,         [r2 + r5 * 2]
+    dec         r6d
+    jnz         .loop
+    RET
+;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
@@ -181,7 +225,7 @@ cglobal addAvg_4x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal addAvg_6x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+cglobal addAvg_6x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,             [pw_512]
     mova        m5,             [pw_1023]
     mova        m7,             [pw_1024]
@@ -217,6 +261,42 @@ cglobal addAvg_6x8, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     lea         r0,             [r0 + 2 * r3]
     lea         r1,             [r1 + 2 * r4]
 %endrep
+    RET
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_6x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,             [pw_512]
+    mova        m5,             [pw_1023]
+    mova        m7,             [pw_1024]
+    pxor        m6,             m6
+    mov         r6d,            16/2
+    add         r3,             r3
+    add         r4,             r4
+    add         r5,             r5
+.loop:
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    dec         r6d
+    lea         r0,             [r0 + r3 * 2]
+    lea         r1,             [r1 + r4 * 2]
+    paddw       m0,             m2
+    paddw       m1,             m3
+    pmulhrsw    m0,             m7
+    pmulhrsw    m1,             m7
+    paddw       m0,             m4
+    paddw       m1,             m4
+    pmaxsw      m0,             m6
+    pmaxsw      m1,             m6
+    pminsw      m0,             m5
+    pminsw      m1,             m5
+    movh        [r2],           m0
+    pextrd      [r2 + 8],       m0, 2
+    movh        [r2 + r5],      m1
+    pextrd      [r2 + r5 + 8],  m1, 2
+    lea         r2,             [r2 + r5 * 2]
+    jnz         .loop
     RET
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
@@ -335,6 +415,8 @@ ADDAVG_W4_H4 4
 ADDAVG_W4_H4 8
 ADDAVG_W4_H4 16
 
+ADDAVG_W4_H4 32
+
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W8_H4 1
 INIT_XMM sse4
@@ -381,6 +463,9 @@ ADDAVG_W8_H4 4
 ADDAVG_W8_H4 8
 ADDAVG_W8_H4 16
 ADDAVG_W8_H4 32
+
+ADDAVG_W8_H4 12
+ADDAVG_W8_H4 64
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W12_H4 1
@@ -441,6 +526,8 @@ cglobal addAvg_12x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 %endmacro
 
 ADDAVG_W12_H4 16
+
+ADDAVG_W12_H4 32
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W16_H4 1
@@ -508,6 +595,8 @@ ADDAVG_W16_H4 12
 ADDAVG_W16_H4 16
 ADDAVG_W16_H4 32
 ADDAVG_W16_H4 64
+
+ADDAVG_W16_H4 24
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W24_H2 2
@@ -588,6 +677,8 @@ cglobal addAvg_%1x%2, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 %endmacro
 
 ADDAVG_W24_H2 24, 32
+
+ADDAVG_W24_H2 24, 64
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W32_H2 1
@@ -690,6 +781,8 @@ ADDAVG_W32_H2 16
 ADDAVG_W32_H2 24
 ADDAVG_W32_H2 32
 ADDAVG_W32_H2 64
+
+ADDAVG_W32_H2 48
 
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W48_H2 1
@@ -1052,6 +1145,48 @@ cglobal addAvg_2x8, 6,6,8, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
 
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
+cglobal addAvg_2x16, 6,7,8, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m0,         [pw_256]
+    mova        m7,         [pw_128]
+    mov         r6d,        16/4
+    add         r3,         r3
+    add         r4,         r4
+.loop:
+    movd        m1,         [r0]
+    movd        m2,         [r0 + r3]
+    movd        m3,         [r1]
+    movd        m4,         [r1 + r4]
+    lea         r0,         [r0 + r3 * 2]
+    lea         r1,         [r1 + r4 * 2]
+    punpckldq   m1,         m2
+    punpckldq   m3,         m4
+    movd        m2,         [r0]
+    movd        m4,         [r0 + r3]
+    movd        m5,         [r1]
+    movd        m6,         [r1 + r4]
+    lea         r0,         [r0 + r3 * 2]
+    lea         r1,         [r1 + r4 * 2]
+    punpckldq   m2,         m4
+    punpckldq   m5,         m6
+    punpcklqdq  m1,         m2
+    punpcklqdq  m3,         m5
+    paddw       m1,         m3
+    pmulhrsw    m1,         m0
+    paddw       m1,         m7
+    packuswb    m1,         m1
+    pextrw      [r2],       m1, 0
+    pextrw      [r2 + r5],  m1, 1
+    lea         r2,         [r2 + r5 * 2]
+    pextrw      [r2],       m1, 2
+    pextrw      [r2 + r5],  m1, 3
+    lea         r2,         [r2 + r5 * 2]
+    dec         r6d
+    jnz         .loop
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
 cglobal addAvg_4x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
 
     mova           m1,          [pw_256]
@@ -1132,6 +1267,9 @@ cglobal addAvg_4x%1, 6,7,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstSt
 ADDAVG_W4_H4 4
 ADDAVG_W4_H4 8
 ADDAVG_W4_H4 16
+
+ADDAVG_W4_H4 32
+
 ;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
@@ -1227,6 +1365,39 @@ cglobal addAvg_6x8, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStr
     movd        [r2 + r5],      m1
     pextrw      [r2 + r5 + 4],  m1, 2
 
+    RET
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal addAvg_6x16, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova        m4,             [pw_256]
+    mova        m5,             [pw_128]
+    mov         r6d,            16/2
+    add         r3,             r3
+    add         r4,             r4
+.loop:
+    movu        m0,             [r0]
+    movu        m2,             [r1]
+    movu        m1,             [r0 + r3]
+    movu        m3,             [r1 + r4]
+    dec         r6d
+    lea         r0,             [r0 + r3 * 2]
+    lea         r1,             [r1 + r4 * 2]
+    paddw       m0,             m2
+    paddw       m1,             m3
+    pmulhrsw    m0,             m4
+    pmulhrsw    m1,             m4
+    paddw       m0,             m5
+    paddw       m1,             m5
+    packuswb    m0,             m0
+    packuswb    m1,             m1
+    movd        [r2],           m0
+    pextrw      [r2 + 4],       m0, 2
+    movd        [r2 + r5],      m1
+    pextrw      [r2 + r5 + 4],  m1, 2
+    lea         r2,             [r2 + r5 * 2]
+    jnz         .loop
     RET
 ;-----------------------------------------------------------------------------
 
@@ -1392,6 +1563,9 @@ ADDAVG_W8_H4 8
 ADDAVG_W8_H4 16
 ADDAVG_W8_H4 32
 
+ADDAVG_W8_H4 12
+ADDAVG_W8_H4 64
+
 ;-----------------------------------------------------------------------------
 
 
@@ -1484,6 +1658,8 @@ cglobal addAvg_12x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 %endmacro
 
 ADDAVG_W12_H4 16
+
+ADDAVG_W12_H4 32
 
 ;-----------------------------------------------------------------------------
 
@@ -1580,6 +1756,8 @@ ADDAVG_W16_H4 16
 ADDAVG_W16_H4 32
 ADDAVG_W16_H4 64
 
+ADDAVG_W16_H4 24
+
 ;-----------------------------------------------------------------------------
 
 
@@ -1653,6 +1831,8 @@ cglobal addAvg_%1x%2, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstS
 %endmacro
 
 ADDAVG_W24_H2 24, 32
+
+ADDAVG_W24_H2 24, 64
 
 ;-----------------------------------------------------------------------------
 
@@ -1742,6 +1922,8 @@ ADDAVG_W32_H2 16
 ADDAVG_W32_H2 24
 ADDAVG_W32_H2 32
 ADDAVG_W32_H2 64
+
+ADDAVG_W32_H2 48
 
 ;-----------------------------------------------------------------------------
 

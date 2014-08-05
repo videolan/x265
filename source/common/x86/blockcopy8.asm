@@ -92,6 +92,24 @@ cglobal blockcopy_pp_2x8, 4, 7, 0
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_2x16(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_2x16, 4, 7, 0
+    mov     r6d,    16/2
+.loop:
+    mov     r4w,    [r2]
+    mov     r5w,    [r2 + r3]
+    dec     r6d
+    lea     r2,     [r2 + r3 * 2]
+    mov     [r0],       r4w
+    mov     [r0 + r1],  r5w
+    lea     r0,     [r0 + r1 * 2]
+    jnz     .loop
+    RET
+
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_pp_4x2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
@@ -166,6 +184,8 @@ cglobal blockcopy_pp_%1x%2, 4, 5, 4
 BLOCKCOPY_PP_W4_H8 4, 8
 BLOCKCOPY_PP_W4_H8 4, 16
 
+BLOCKCOPY_PP_W4_H8 4, 32
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_6x8(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -232,6 +252,28 @@ cglobal blockcopy_pp_6x8, 4, 7, 8
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_6x16(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_6x16, 4, 7, 2
+    mov     r6d,    16/2
+.loop:
+    movd    m0,     [r2]
+    mov     r4w,    [r2 + 4]
+    movd    m1,     [r2 + r3]
+    mov     r5w,    [r2 + r3 + 4]
+    lea     r2,     [r2 + r3 * 2]
+    movd    [r0],           m0
+    mov     [r0 + 4],       r4w
+    movd    [r0 + r1],      m1
+    mov     [r0 + r1 + 4],  r5w
+    lea     r0,     [r0 + r1 * 2]
+    dec     r6d
+    jnz     .loop
+    RET
+
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_pp_8x2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
@@ -286,6 +328,23 @@ cglobal blockcopy_pp_8x6, 4, 7, 6
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_8x12(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_8x12, 4, 5, 2
+    mov      r4d,       12/2
+.loop:
+    movh     m0,        [r2]
+    movh     m1,        [r2 + r3]
+    movh     [r0],      m0
+    movh     [r0 + r1], m1
+    dec      r4d
+    lea      r0,        [r0 + 2 * r1]
+    lea      r2,        [r2 + 2 * r3]
+    jnz      .loop
+    RET
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W8_H8 2
@@ -330,6 +389,8 @@ BLOCKCOPY_PP_W8_H8 8, 8
 BLOCKCOPY_PP_W8_H8 8, 16
 BLOCKCOPY_PP_W8_H8 8, 32
 
+BLOCKCOPY_PP_W8_H8 8, 64
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -369,6 +430,8 @@ cglobal blockcopy_pp_%1x%2, 4, 5, 4
 %endmacro
 
 BLOCKCOPY_PP_W12_H4 12, 16
+
+BLOCKCOPY_PP_W12_H4 12, 32
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_16x4(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
@@ -448,6 +511,8 @@ BLOCKCOPY_PP_W16_H8 16, 16
 BLOCKCOPY_PP_W16_H8 16, 32
 BLOCKCOPY_PP_W16_H8 16, 64
 
+BLOCKCOPY_PP_W16_H8 16, 24
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -486,6 +551,8 @@ cglobal blockcopy_pp_%1x%2, 4, 5, 6
 %endmacro
 
 BLOCKCOPY_PP_W24_H4 24, 32
+
+BLOCKCOPY_PP_W24_H4 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
@@ -530,6 +597,8 @@ BLOCKCOPY_PP_W32_H4 32, 16
 BLOCKCOPY_PP_W32_H4 32, 24
 BLOCKCOPY_PP_W32_H4 32, 32
 BLOCKCOPY_PP_W32_H4 32, 64
+
+BLOCKCOPY_PP_W32_H4 32, 48
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
@@ -718,6 +787,35 @@ pextrw     [r0 + r1], m0, 4
 RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W2_H2 2
+INIT_XMM sse2
+cglobal blockcopy_sp_%1x%2, 4, 7, 2, dest, destStride, src, srcStride
+    add         r3,     r3
+    mov         r6d,    %2/2
+.loop:
+    movd        m0,     [r2]
+    movd        m1,     [r2 + r3]
+    dec         r6d
+    lea         r2,     [r2 + r3 * 2]
+    packuswb    m0,     m0
+    packuswb    m1,     m1
+    movd        r4d,        m0
+    movd        r5d,        m1
+    mov         [r0],       r4w
+    mov         [r0 + r1],  r5w
+    lea         r0,         [r0 + r1 * 2]
+    jnz         .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SP_W2_H2 2,  4
+BLOCKCOPY_SP_W2_H2 2,  8
+
+BLOCKCOPY_SP_W2_H2 2, 16
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_sp_4x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
@@ -862,6 +960,8 @@ RET
 
 BLOCKCOPY_SP_W4_H8 4, 16
 
+BLOCKCOPY_SP_W4_H8 4, 32
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_6x8(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
@@ -924,6 +1024,40 @@ cglobal blockcopy_sp_6x8, 4, 4, 2
     pextrw    [r0 + r1 + 4], m0, 2
 
     RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W6_H2 2
+INIT_XMM sse2
+cglobal blockcopy_sp_%1x%2, 4, 7, 4, dest, destStride, src, srcStride
+    add         r3,     r3
+    mov         r6d,    %2/2
+.loop:
+    movh        m0, [r2]
+    movd        m2, [r2 + 8]
+    movh        m1, [r2 + r3]
+    movd        m3, [r2 + r3 + 8]
+    dec         r6d
+    lea         r2, [r2 + r3 * 2]
+    packuswb    m0, m0
+    packuswb    m2, m2
+    packuswb    m1, m1
+    packuswb    m3, m3
+    movd        r4d,            m2
+    movd        r5d,            m3
+    movd        [r0],           m0
+    mov         [r0 + 4],       r4w
+    movd        [r0 + r1],      m1
+    mov         [r0 + r1 + 4],  r5w
+    lea         r0, [r0 + r1 * 2]
+    jnz         .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SP_W6_H2 6,  8
+
+BLOCKCOPY_SP_W6_H2 6, 16
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_8x2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
@@ -1042,6 +1176,36 @@ RET
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W8_H4 2
+INIT_XMM sse2
+cglobal blockcopy_sp_%1x%2, 4, 5, 4, dest, destStride, src, srcStride
+    add         r3,     r3
+    mov         r4d,    %2/4
+.loop:
+    movu        m0,     [r2]
+    movu        m1,     [r2 + r3]
+    lea         r2,     [r2 + r3 * 2]
+    movu        m2,     [r2]
+    movu        m3,     [r2 + r3]
+    dec         r4d
+    lea         r2,     [r2 + r3 * 2]
+    packuswb    m0,     m1
+    packuswb    m2,     m3
+    movlps      [r0],       m0
+    movhps      [r0 + r1],  m0
+    lea         r0,         [r0 + r1 * 2]
+    movlps      [r0],       m2
+    movhps      [r0 + r1],  m2
+    lea         r0,         [r0 + r1 * 2]
+    jnz         .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SP_W8_H4 8, 12
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SP_W8_H8 2
 INIT_XMM sse2
 cglobal blockcopy_sp_%1x%2, 4, 5, 8, dest, destStride, src, srcStride
@@ -1091,6 +1255,8 @@ RET
 
 BLOCKCOPY_SP_W8_H8 8, 16
 BLOCKCOPY_SP_W8_H8 8, 32
+
+BLOCKCOPY_SP_W8_H8 8, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
@@ -1147,6 +1313,8 @@ RET
 
 BLOCKCOPY_SP_W12_H4 12, 16
 
+BLOCKCOPY_SP_W12_H4 12, 32
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
@@ -1196,6 +1364,8 @@ BLOCKCOPY_SP_W16_H4 16, 16
 BLOCKCOPY_SP_W16_H4 16, 32
 BLOCKCOPY_SP_W16_H4 16, 64
 
+BLOCKCOPY_SP_W16_H4 16, 24
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
@@ -1234,6 +1404,8 @@ RET
 %endmacro
 
 BLOCKCOPY_SP_W24_H2 24, 32
+
+BLOCKCOPY_SP_W24_H2 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
@@ -1280,6 +1452,8 @@ BLOCKCOPY_SP_W32_H2 32, 16
 BLOCKCOPY_SP_W32_H2 32, 24
 BLOCKCOPY_SP_W32_H2 32, 32
 BLOCKCOPY_SP_W32_H2 32, 64
+
+BLOCKCOPY_SP_W32_H2 32, 48
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_%1x%2(pixel *dest, intptr_t destStride, int16_t *src, intptr_t srcStride)
@@ -1596,6 +1770,28 @@ movd       [r0 + r1],     m0
 
 RET
 
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_2x16(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal blockcopy_ps_2x16, 4, 5, 2, dest, destStride, src, srcStride
+    add         r1,         r1
+    mov         r4d,        16/2
+.loop:
+    movd        m0,         [r2]
+    movd        m1,         [r2 + r3]
+    dec         r4d
+    lea         r2,         [r2 + r3 * 2]
+    pmovzxbw    m0,         m0
+    pmovzxbw    m1,         m1
+    movd        [r0],       m0
+    movd        [r0 + r1],  m1
+    lea         r0,         [r0 + r1 * 2]
+    jnz         .loop
+    RET
+
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_4x2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
@@ -1687,6 +1883,9 @@ RET
 BLOCKCOPY_PS_W4_H4 4, 8
 BLOCKCOPY_PS_W4_H4 4, 16
 
+BLOCKCOPY_PS_W4_H4 4, 32
+
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
@@ -1731,6 +1930,8 @@ RET
 %endmacro
 
 BLOCKCOPY_PS_W6_H4 6, 8
+
+BLOCKCOPY_PS_W6_H4 6, 16
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_8x2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -1862,6 +2063,9 @@ BLOCKCOPY_PS_W8_H4  8,  8
 BLOCKCOPY_PS_W8_H4  8, 16
 BLOCKCOPY_PS_W8_H4  8, 32
 
+BLOCKCOPY_PS_W8_H4  8, 12
+BLOCKCOPY_PS_W8_H4  8, 64
+
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -1897,6 +2101,8 @@ RET
 %endmacro
 
 BLOCKCOPY_PS_W12_H2 12, 16
+
+BLOCKCOPY_PS_W12_H2 12, 32
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_16x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -1990,6 +2196,8 @@ BLOCKCOPY_PS_W16_H4 16, 16
 BLOCKCOPY_PS_W16_H4 16, 32
 BLOCKCOPY_PS_W16_H4 16, 64
 
+BLOCKCOPY_PS_W16_H4 16, 24
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
@@ -2032,6 +2240,8 @@ RET
 %endmacro
 
 BLOCKCOPY_PS_W24_H2 24, 32
+
+BLOCKCOPY_PS_W24_H2 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -2083,6 +2293,8 @@ BLOCKCOPY_PS_W32_H2 32, 16
 BLOCKCOPY_PS_W32_H2 32, 24
 BLOCKCOPY_PS_W32_H2 32, 32
 BLOCKCOPY_PS_W32_H2 32, 64
+
+BLOCKCOPY_PS_W32_H2 32, 48
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -2280,6 +2492,26 @@ cglobal blockcopy_ss_2x8, 4, 6, 0
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_ss_2x16(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_ss_2x16, 4, 7, 0
+    add     r1, r1
+    add     r3, r3
+    mov     r6d,    16/2
+.loop:
+    mov     r4d,    [r2]
+    mov     r5d,    [r2 + r3]
+    dec     r6d
+    lea     r2, [r2 + r3 * 2]
+    mov     [r0],       r4d
+    mov     [r0 + r1],  r5d
+    lea     r0, [r0 + r1 * 2]
+    jnz     .loop
+    RET
+
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_ss_4x2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
@@ -2361,6 +2593,8 @@ cglobal blockcopy_ss_%1x%2, 4, 5, 4
 BLOCKCOPY_SS_W4_H8 4, 8
 BLOCKCOPY_SS_W4_H8 4, 16
 
+BLOCKCOPY_SS_W4_H8 4, 32
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_6x8(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -2415,6 +2649,30 @@ cglobal blockcopy_ss_6x8, 4, 4, 4
     movd      [r0 + r1 + 8], m3
 
     RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_6x16(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_ss_6x16, 4, 5, 4
+    add     r1, r1
+    add     r3, r3
+    mov     r4d,    16/2
+.loop:
+    movh    m0, [r2]
+    movd    m2, [r2 + 8]
+    movh    m1, [r2 + r3]
+    movd    m3, [r2 + r3 + 8]
+    dec     r4d
+    lea     r2, [r2 + r3 * 2]
+    movh    [r0],           m0
+    movd    [r0 + 8],       m2
+    movh    [r0 + r1],      m1
+    movd    [r0 + r1 + 8],  m3
+    lea     r0, [r0 + r1 * 2]
+    jnz     .loop
+    RET
+
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_8x2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
@@ -2483,6 +2741,26 @@ cglobal blockcopy_ss_8x6, 4, 4, 4
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_ss_8x12(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_ss_8x12, 4, 5, 2
+    add     r1, r1
+    add     r3, r3
+    mov     r4d, 12/2
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    lea     r2, [r2 + 2 * r3]
+    dec     r4d
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    lea     r0, [r0 + 2 * r1]
+    jnz     .loop
+    RET
+
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SS_W8_H8 2
@@ -2531,6 +2809,8 @@ BLOCKCOPY_SS_W8_H8 8, 8
 BLOCKCOPY_SS_W8_H8 8, 16
 BLOCKCOPY_SS_W8_H8 8, 32
 
+BLOCKCOPY_SS_W8_H8 8, 64
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -2572,6 +2852,8 @@ cglobal blockcopy_ss_%1x%2, 4, 5, 4
 %endmacro
 
 BLOCKCOPY_SS_W12_H4 12, 16
+
+BLOCKCOPY_SS_W12_H4 12, 32
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_16x4(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
@@ -2687,6 +2969,8 @@ BLOCKCOPY_SS_W16_H8 16, 16
 BLOCKCOPY_SS_W16_H8 16, 32
 BLOCKCOPY_SS_W16_H8 16, 64
 
+BLOCKCOPY_SS_W16_H8 16, 24
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
@@ -2736,6 +3020,8 @@ cglobal blockcopy_ss_%1x%2, 4, 5, 6
 %endmacro
 
 BLOCKCOPY_SS_W24_H4 24, 32
+
+BLOCKCOPY_SS_W24_H4 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
@@ -2802,6 +3088,8 @@ BLOCKCOPY_SS_W32_H4 32, 16
 BLOCKCOPY_SS_W32_H4 32, 24
 BLOCKCOPY_SS_W32_H4 32, 32
 BLOCKCOPY_SS_W32_H4 32, 64
+
+BLOCKCOPY_SS_W32_H4 32, 48
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)

@@ -211,6 +211,41 @@ lea         dstq,       [dstq + dststrideq * 2]
 
 RET
 
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_2x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_horiz_pp_2x16, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
+%define t2          m2
+%define t1          m1
+%define t0          m0
+
+mov         r4d,        r4m
+
+%ifdef PIC
+lea         r5,          [tab_ChromaCoeff]
+movd        coef2,       [r5 + r4 * 4]
+%else
+movd        coef2,       [tab_ChromaCoeff + r4 * 4]
+%endif
+
+pshufd      coef2,       coef2,      0
+mova        t2,          [tab_c_512]
+mova        Tm0,         [tab_Tm]
+
+mov         r5d,        16/2
+
+.loop:
+FILTER_H4_w2_2   t0, t1, t2
+lea         srcq,       [srcq + srcstrideq * 2]
+lea         dstq,       [dstq + dststrideq * 2]
+dec         r5d
+jnz         .loop
+
+RET
+
 %macro FILTER_H4_w4_2 3
     movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
@@ -350,6 +385,42 @@ lea         dstq,       [dstq + dststrideq * 2]
 
 RET
 
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_4x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal interp_4tap_horiz_pp_4x32, 4, 6, 5, src, srcstride, dst, dststride
+%define coef2       m4
+%define Tm0         m3
+%define t2          m2
+%define t1          m1
+%define t0          m0
+
+mov         r4d,        r4m
+
+%ifdef PIC
+lea         r5,          [tab_ChromaCoeff]
+movd        coef2,       [r5 + r4 * 4]
+%else
+movd        coef2,       [tab_ChromaCoeff + r4 * 4]
+%endif
+
+pshufd      coef2,       coef2,      0
+mova        t2,          [tab_c_512]
+mova        Tm0,         [tab_Tm]
+
+mov         r5d,        32/2
+
+.loop:
+FILTER_H4_w4_2   t0, t1, t2
+lea         srcq,       [srcq + srcstrideq * 2]
+lea         dstq,       [dstq + dststrideq * 2]
+dec         r5d
+jnz         .loop
+
+RET
+
+
 %macro FILTER_H4_w6 3
     movu        %1, [srcq - 1]
     pshufb      %2, %1, Tm0
@@ -475,6 +546,38 @@ RET
     movu        [dstq + 16],      %2
 %endmacro
 
+%macro FILTER_H4_w16o 5
+    movu        %1, [srcq + %5 - 1]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + %5 - 1 + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    pmulhrsw    %2, %3
+    pmulhrsw    %4, %3
+    packuswb    %2, %4
+    movu        [dstq + %5],      %2
+%endmacro
+
+%macro FILTER_H4_w48 4
+    FILTER_H4_w16o %1, %2, %3, %4, 0
+    FILTER_H4_w16o %1, %2, %3, %4, 16
+    FILTER_H4_w16o %1, %2, %3, %4, 32
+%endmacro
+
+%macro FILTER_H4_w64 4
+    FILTER_H4_w16o %1, %2, %3, %4, 0
+    FILTER_H4_w16o %1, %2, %3, %4, 16
+    FILTER_H4_w16o %1, %2, %3, %4, 32
+    FILTER_H4_w16o %1, %2, %3, %4, 48
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
@@ -524,6 +627,11 @@ IPFILTER_CHROMA 8,   8
 IPFILTER_CHROMA 8,  16
 IPFILTER_CHROMA 8,  32
 IPFILTER_CHROMA 12, 16
+
+IPFILTER_CHROMA 6,  16
+IPFILTER_CHROMA 8,  12
+IPFILTER_CHROMA 8,  64
+IPFILTER_CHROMA 12, 32
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -576,6 +684,18 @@ IPFILTER_CHROMA_W 32, 16
 IPFILTER_CHROMA_W 32, 24
 IPFILTER_CHROMA_W 24, 32
 IPFILTER_CHROMA_W 32, 32
+
+IPFILTER_CHROMA_W 16, 24
+IPFILTER_CHROMA_W 16, 64
+IPFILTER_CHROMA_W 32, 48
+IPFILTER_CHROMA_W 24, 64
+IPFILTER_CHROMA_W 32, 64
+
+IPFILTER_CHROMA_W 64, 64
+IPFILTER_CHROMA_W 64, 32
+IPFILTER_CHROMA_W 64, 48
+IPFILTER_CHROMA_W 48, 64
+IPFILTER_CHROMA_W 64, 16
 
 
 %macro FILTER_H8_W8 7-8   ; t0, t1, t2, t3, coef, c512, src, dst
@@ -987,7 +1107,7 @@ RET
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W2_H4 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_pp_2x8, 4, 6, 8
+cglobal interp_4tap_vert_pp_2x%2, 4, 6, 8
 
 mov         r4d,       r4m
 sub         r0,        r1
@@ -1066,6 +1186,8 @@ RET
 %endmacro
 
 FILTER_V4_W2_H4 2, 8
+
+FILTER_V4_W2_H4 2, 16
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -1272,6 +1394,8 @@ RET
 
 FILTER_V4_W4_H4 4,  8
 FILTER_V4_W4_H4 4, 16
+
+FILTER_V4_W4_H4 4, 32
 
 %macro FILTER_V4_W8_H2 0
 punpcklbw   m1,        m2
@@ -1640,6 +1764,8 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
 FILTER_V_PS_W4_H4 4, 8
 FILTER_V_PS_W4_H4 4, 16
 
+FILTER_V_PS_W4_H4 4, 32
+
 ;--------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_8x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
@@ -1707,6 +1833,9 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 7
 FILTER_V_PS_W8_H8_H16_H2 8, 2
 FILTER_V_PS_W8_H8_H16_H2 8, 4
 FILTER_V_PS_W8_H8_H16_H2 8, 6
+
+FILTER_V_PS_W8_H8_H16_H2 8, 12
+FILTER_V_PS_W8_H8_H16_H2 8, 64
 
 ;--------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_8x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -1803,8 +1932,9 @@ FILTER_V_PS_W8_H8_H16_H32 8, 32
 ;------------------------------------------------------------------------------------------------------------
 ;void interp_4tap_vert_ps_6x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W6 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_6x8, 4, 6, 8
+cglobal interp_4tap_vert_ps_6x%2, 4, 6, 8
 
     mov        r4d, r4m
     sub        r0, r1
@@ -1821,7 +1951,7 @@ cglobal interp_4tap_vert_ps_6x8, 4, 6, 8
     pshufb     m5, [tab_Vm + 16]
     mova       m4, [pw_2000]
     lea        r5, [3 * r1]
-    mov        r4d, 2
+    mov        r4d, %2/4
 
 .loop:
     movq       m0, [r0]
@@ -1889,12 +2019,17 @@ cglobal interp_4tap_vert_ps_6x8, 4, 6, 8
     dec        r4d
     jnz        .loop
     RET
+%endmacro
+
+FILTER_V_PS_W6 6, 8
+FILTER_V_PS_W6 6, 16
 
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_12x16(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W12 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
+cglobal interp_4tap_vert_ps_12x%2, 4, 6, 8
 
     mov        r4d, r4m
     sub        r0, r1
@@ -1910,7 +2045,7 @@ cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
     pshufb     m1, m0, [tab_Vm]
     pshufb     m0, [tab_Vm + 16]
 
-    mov        r4d, 16/2
+    mov        r4d, %2/2
 
 .loop:
     movu       m2, [r0]
@@ -1970,6 +2105,10 @@ cglobal interp_4tap_vert_ps_12x16, 4, 6, 8
     dec        r4d
     jnz        .loop
     RET
+%endmacro
+
+FILTER_V_PS_W12 12, 16
+FILTER_V_PS_W12 12, 32
 
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_16x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -2059,11 +2198,15 @@ FILTER_V_PS_W16 16, 12
 FILTER_V_PS_W16 16, 16
 FILTER_V_PS_W16 16, 32
 
+FILTER_V_PS_W16 16, 24
+FILTER_V_PS_W16 16, 64
+
 ;--------------------------------------------------------------------------------------------------------------
 ;void interp_4tap_vert_ps_24x32(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
+%macro FILTER_V4_PS_W24 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
+cglobal interp_4tap_vert_ps_24x%2, 4, 6, 8
 
     mov        r4d, r4m
     sub        r0, r1
@@ -2079,7 +2222,7 @@ cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
     pshufb     m1, m0, [tab_Vm]
     pshufb     m0, [tab_Vm + 16]
 
-    mov        r4d, 32/2
+    mov        r4d, %2/2
 
 .loop:
     movu       m2, [r0]
@@ -2170,6 +2313,11 @@ cglobal interp_4tap_vert_ps_24x32, 4, 6, 8
     dec        r4d
     jnz        .loop
     RET
+%endmacro
+
+FILTER_V4_PS_W24 24, 32
+
+FILTER_V4_PS_W24 24, 64
 
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_32x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -2265,6 +2413,9 @@ FILTER_V_PS_W32 32, 16
 FILTER_V_PS_W32 32, 24
 FILTER_V_PS_W32 32, 32
 
+FILTER_V_PS_W32 32, 48
+FILTER_V_PS_W32 32, 64
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
@@ -2359,12 +2510,16 @@ FILTER_V4_W8_H8_H16_H32 8,  8
 FILTER_V4_W8_H8_H16_H32 8, 16
 FILTER_V4_W8_H8_H16_H32 8, 32
 
+FILTER_V4_W8_H8_H16_H32 8, 12
+FILTER_V4_W8_H8_H16_H32 8, 64
+
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_6x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W6_H4 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_pp_6x8, 4, 6, 8
+cglobal interp_4tap_vert_pp_6x%2, 4, 6, 8
 
 mov         r4d,       r4m
 sub         r0,        r1
@@ -2455,12 +2610,14 @@ RET
 
 FILTER_V4_W6_H4 6, 8
 
+FILTER_V4_W6_H4 6, 16
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_12x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W12_H2 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_pp_12x16, 4, 6, 8
+cglobal interp_4tap_vert_pp_12x%2, 4, 6, 8
 
 mov         r4d,       r4m
 sub         r0,        r1
@@ -2543,12 +2700,14 @@ RET
 
 FILTER_V4_W12_H2 12, 16
 
+FILTER_V4_W12_H2 12, 32
+
 ;-----------------------------------------------------------------------------
-; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_vert_pp_16x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W16_H2 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 8
+cglobal interp_4tap_vert_pp_16x%2, 4, 6, 8
 
 mov         r4d,       r4m
 sub         r0,        r1
@@ -2563,7 +2722,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 pshufb      m1,        m0,       [tab_Vm]
 pshufb      m0,        [tab_Vm + 16]
 
-mov         r4d,       %2
+mov         r4d,       %2/2
 
 .loop:
 movu        m2,        [r0]
@@ -2622,7 +2781,7 @@ movu        [r2 + r3],      m4
 
 lea         r2,        [r2 + 2 * r3]
 
-sub         r4,        2
+dec         r4d
 jnz        .loop
 RET
 %endmacro
@@ -2633,12 +2792,15 @@ FILTER_V4_W16_H2 16, 12
 FILTER_V4_W16_H2 16, 16
 FILTER_V4_W16_H2 16, 32
 
+FILTER_V4_W16_H2 16, 24
+FILTER_V4_W16_H2 16, 64
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_24x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W24 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_pp_24x32, 4, 6, 8
+cglobal interp_4tap_vert_pp_24x%2, 4, 6, 8
 
 mov         r4d,       r4m
 sub         r0,        r1
@@ -2754,8 +2916,10 @@ RET
 
 FILTER_V4_W24 24, 32
 
+FILTER_V4_W24 24, 64
+
 ;-----------------------------------------------------------------------------
-; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_vert_pp_32x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 %macro FILTER_V4_W32 2
 INIT_XMM sse4
@@ -2848,6 +3012,111 @@ FILTER_V4_W32 32,  8
 FILTER_V4_W32 32, 16
 FILTER_V4_W32 32, 24
 FILTER_V4_W32 32, 32
+
+FILTER_V4_W32 32, 48
+FILTER_V4_W32 32, 64
+
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro FILTER_V4_W16n_H2 2
+INIT_XMM sse4
+cglobal interp_4tap_vert_pp_%1x%2, 4, 7, 8
+
+mov         r4d,       r4m
+sub         r0,        r1
+
+%ifdef PIC
+lea         r5,        [tab_ChromaCoeff]
+movd        m0,        [r5 + r4 * 4]
+%else
+movd        m0,        [tab_ChromaCoeff + r4 * 4]
+%endif
+
+pshufb      m1,        m0,       [tab_Vm]
+pshufb      m0,        [tab_Vm + 16]
+
+mov         r4d,       %2/2
+
+.loop:
+
+mov         r6d,       %1/16
+
+.loopW:
+
+movu        m2,        [r0]
+movu        m3,        [r0 + r1]
+
+punpcklbw   m4,        m2,        m3
+punpckhbw   m2,        m3
+
+pmaddubsw   m4,        m1
+pmaddubsw   m2,        m1
+
+lea         r5,        [r0 + 2 * r1]
+movu        m5,        [r5]
+movu        m6,        [r5 + r1]
+
+punpckhbw   m7,        m5,        m6
+pmaddubsw   m7,        m0
+paddw       m2,        m7
+
+punpcklbw   m7,        m5,        m6
+pmaddubsw   m7,        m0
+paddw       m4,        m7
+
+mova        m7,        [tab_c_512]
+
+pmulhrsw    m4,        m7
+pmulhrsw    m2,        m7
+
+packuswb    m4,        m2
+
+movu        [r2],      m4
+
+punpcklbw   m4,        m3,        m5
+punpckhbw   m3,        m5
+
+pmaddubsw   m4,        m1
+pmaddubsw   m3,        m1
+
+movu        m5,        [r5 + 2 * r1]
+
+punpcklbw   m2,        m6,        m5
+punpckhbw   m6,        m5
+
+pmaddubsw   m2,        m0
+pmaddubsw   m6,        m0
+
+paddw       m4,        m2
+paddw       m3,        m6
+
+pmulhrsw    m4,        m7
+pmulhrsw    m3,        m7
+
+packuswb    m4,        m3
+
+movu        [r2 + r3],      m4
+
+add         r0,        16
+add         r2,        16
+dec         r6d
+jnz         .loopW
+
+lea         r0,        [r0 + r1 * 2 - %1]
+lea         r2,        [r2 + r3 * 2 - %1]
+
+dec         r4d
+jnz        .loop
+RET
+%endmacro
+
+FILTER_V4_W16n_H2 64, 64
+FILTER_V4_W16n_H2 64, 32
+FILTER_V4_W16n_H2 64, 48
+FILTER_V4_W16n_H2 48, 64
+FILTER_V4_W16n_H2 64, 16
 
 
 ;-----------------------------------------------------------------------------
@@ -3350,7 +3619,7 @@ FILTER_VER_LUMA_12xN 12, 16, ps
 ;-------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_LUMA 3
 INIT_XMM sse4
-cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
+cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-gprsize
     lea       r5, [3 * r1]
     sub       r0, r5
     shl       r4d, 6
@@ -3370,7 +3639,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
 %else
     mova      m3, [pw_2000]
 %endif
-    mov       byte [rsp], %2/4
+    mov       dword [rsp], %2/4
 
 .loopH:
     mov       r4d, (%1/8)
@@ -3420,7 +3689,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-1
     lea       r2, [r2 + 4 * r3 - 2 * %1]
 %endif
 
-    dec       byte [rsp]
+    dec       dword [rsp]
     jnz       .loopH
 
     RET
@@ -3532,7 +3801,7 @@ FILTER_VER_LUMA 64, 64, ps
 ;--------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_LUMA_SP 2
 INIT_XMM sse4
-cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
+cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
 
     add       r1d, r1d
     lea       r5, [r1 + 2 * r1]
@@ -3548,7 +3817,7 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
 
     mova      m7, [tab_c_526336]
 
-    mov       byte [rsp], %2/4
+    mov       dword [rsp], %2/4
 .loopH:
     mov       r4d, (%1/4)
 .loopW:
@@ -3585,7 +3854,7 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-1
     lea       r0, [r0 + 4 * r1 - 2 * %1]
     lea       r2, [r2 + 4 * r3 - %1]
 
-    dec       byte [rsp]
+    dec       dword [rsp]
     jnz       .loopH
 
     RET
@@ -3720,7 +3989,7 @@ cglobal chroma_p2s, 3, 7, 4
 ;--------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SP 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
+cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-gprsize
 
     add       r1d, r1d
     sub       r0, r1
@@ -3735,7 +4004,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
 
     mova      m6, [tab_c_526336]
 
-    mov       byte [rsp], %2/4
+    mov       dword [rsp], %2/4
 
 .loopH:
     mov       r4d, (%1/4)
@@ -3773,7 +4042,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
     lea       r0, [r0 + 4 * r1 - 2 * %1]
     lea       r2, [r2 + 4 * r3 - %1]
 
-    dec       byte [rsp]
+    dec       dword [rsp]
     jnz       .loopH
 
     RET
@@ -3793,6 +4062,20 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-1
     FILTER_VER_CHROMA_SP 32, 24
     FILTER_VER_CHROMA_SP 24, 32
     FILTER_VER_CHROMA_SP 32, 8
+
+    FILTER_VER_CHROMA_SP 16, 24
+    FILTER_VER_CHROMA_SP 16, 64
+    FILTER_VER_CHROMA_SP 12, 32
+    FILTER_VER_CHROMA_SP 4, 32
+    FILTER_VER_CHROMA_SP 32, 64
+    FILTER_VER_CHROMA_SP 32, 48
+    FILTER_VER_CHROMA_SP 24, 64
+
+    FILTER_VER_CHROMA_SP 64, 64
+    FILTER_VER_CHROMA_SP 64, 32
+    FILTER_VER_CHROMA_SP 64, 48
+    FILTER_VER_CHROMA_SP 48, 64
+    FILTER_VER_CHROMA_SP 64, 16
 
 
 %macro PROCESS_CHROMA_SP_W2_4R 1
@@ -3879,6 +4162,8 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 6
 FILTER_VER_CHROMA_SP_W2_4R 2, 4
 FILTER_VER_CHROMA_SP_W2_4R 2, 8
 
+FILTER_VER_CHROMA_SP_W2_4R 2, 16
+
 ;--------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_sp_4x2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;--------------------------------------------------------------------------------------------------------------
@@ -3931,10 +4216,11 @@ cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
     RET
 
 ;-------------------------------------------------------------------------------------------------------------------
-; void interp_4tap_vertical_sp_6x8(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_vertical_sp_6x%2(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_SP_W6_H4 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
+cglobal interp_4tap_vert_sp_6x%2, 5, 7, 7
 
     add       r1d, r1d
     sub       r0, r1
@@ -3949,7 +4235,7 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
 
     mova      m6, [tab_c_526336]
 
-    mov       r4d, 8/4
+    mov       r4d, %2/4
 
 .loopH:
     PROCESS_CHROMA_SP_W4_4R
@@ -4003,6 +4289,11 @@ cglobal interp_4tap_vert_sp_6x8, 5, 7, 7
     jnz       .loopH
 
     RET
+%endmacro
+
+FILTER_VER_CHROMA_SP_W6_H4 6, 8
+
+FILTER_VER_CHROMA_SP_W6_H4 6, 16
 
 %macro PROCESS_CHROMA_SP_W8_2R 0
     movu       m1, [r0]
@@ -4093,6 +4384,10 @@ FILTER_VER_CHROMA_SP_W8_H2 8, 8
 FILTER_VER_CHROMA_SP_W8_H2 8, 16
 FILTER_VER_CHROMA_SP_W8_H2 8, 32
 
+FILTER_VER_CHROMA_SP_W8_H2 8, 12
+FILTER_VER_CHROMA_SP_W8_H2 8, 64
+
+
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_2x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
@@ -4144,6 +4439,8 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 4, src, srcstride, dst, dststride
 
 FILTER_HORIZ_CHROMA_2xN 2, 4
 FILTER_HORIZ_CHROMA_2xN 2, 8
+
+FILTER_HORIZ_CHROMA_2xN 2, 16
 
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_4x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
@@ -4197,6 +4494,8 @@ FILTER_HORIZ_CHROMA_4xN 4, 2
 FILTER_HORIZ_CHROMA_4xN 4, 4
 FILTER_HORIZ_CHROMA_4xN 4, 8
 FILTER_HORIZ_CHROMA_4xN 4, 16
+
+FILTER_HORIZ_CHROMA_4xN 4, 32
 
 %macro PROCESS_CHROMA_W6 3
     movu       %1, [srcq]
@@ -4277,6 +4576,9 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 6, src, srcstride, dst, dststride
 FILTER_HORIZ_CHROMA 6, 8
 FILTER_HORIZ_CHROMA 12, 16
 
+FILTER_HORIZ_CHROMA 6, 16
+FILTER_HORIZ_CHROMA 12, 32
+
 %macro PROCESS_CHROMA_W8 3
     movu        %1, [srcq]
     pshufb      %2, %1, Tm0
@@ -4340,6 +4642,9 @@ FILTER_HORIZ_CHROMA_8xN 8, 6
 FILTER_HORIZ_CHROMA_8xN 8, 8
 FILTER_HORIZ_CHROMA_8xN 8, 16
 FILTER_HORIZ_CHROMA_8xN 8, 32
+
+FILTER_HORIZ_CHROMA_8xN 8, 12
+FILTER_HORIZ_CHROMA_8xN 8, 64
 
 %macro PROCESS_CHROMA_W16 4
     movu        %1, [srcq]
@@ -4422,6 +4727,38 @@ FILTER_HORIZ_CHROMA_8xN 8, 32
     movu        [dstq + 48], %4
 %endmacro
 
+%macro PROCESS_CHROMA_W16o 5
+    movu        %1, [srcq + %5]
+    pshufb      %2, %1, Tm0
+    pmaddubsw   %2, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %2, %1
+    movu        %1, [srcq + %5 + 8]
+    pshufb      %4, %1, Tm0
+    pmaddubsw   %4, coef2
+    pshufb      %1, %1, Tm1
+    pmaddubsw   %1, coef2
+    phaddw      %4, %1
+    psubw       %2, %3
+    psubw       %4, %3
+    movu        [dstq + %5 * 2], %2
+    movu        [dstq + %5 * 2 + 16], %4
+%endmacro
+
+%macro PROCESS_CHROMA_W48 4
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 0
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 16
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 32
+%endmacro
+
+%macro PROCESS_CHROMA_W64 4
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 0
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 16
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 32
+    PROCESS_CHROMA_W16o %1, %2, %3, %4, 48
+%endmacro
+
 ;------------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;------------------------------------------------------------------------------------------------------------------------------
@@ -4479,6 +4816,119 @@ FILTER_HORIZ_CHROMA_WxN 32,  8
 FILTER_HORIZ_CHROMA_WxN 32, 16
 FILTER_HORIZ_CHROMA_WxN 32, 24
 FILTER_HORIZ_CHROMA_WxN 32, 32
+
+FILTER_HORIZ_CHROMA_WxN 16, 24
+FILTER_HORIZ_CHROMA_WxN 16, 64
+FILTER_HORIZ_CHROMA_WxN 24, 64
+FILTER_HORIZ_CHROMA_WxN 32, 48
+FILTER_HORIZ_CHROMA_WxN 32, 64
+
+FILTER_HORIZ_CHROMA_WxN 64, 64
+FILTER_HORIZ_CHROMA_WxN 64, 32
+FILTER_HORIZ_CHROMA_WxN 64, 48
+FILTER_HORIZ_CHROMA_WxN 48, 64
+FILTER_HORIZ_CHROMA_WxN 64, 16
+
+
+;---------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;---------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W16n 2
+INIT_XMM sse4
+cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
+
+    mov        r4d, r4m
+    sub        r0, r1
+    add        r3d, r3d
+
+%ifdef PIC
+    lea        r5, [tab_ChromaCoeff]
+    movd       m0, [r5 + r4 * 4]
+%else
+    movd       m0, [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    pshufb     m1, m0, [tab_Vm]
+    pshufb     m0, [tab_Vm + 16]
+    mov        r4d, %2/2
+
+.loop:
+
+    mov         r6d,       %1/16
+
+.loopW:
+
+    movu       m2, [r0]
+    movu       m3, [r0 + r1]
+
+    punpcklbw  m4, m2, m3
+    punpckhbw  m2, m3
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m2, m1
+
+    lea        r5, [r0 + 2 * r1]
+    movu       m5, [r5]
+    movu       m7, [r5 + r1]
+
+    punpcklbw  m6, m5, m7
+    pmaddubsw  m6, m0
+    paddw      m4, m6
+
+    punpckhbw  m6, m5, m7
+    pmaddubsw  m6, m0
+    paddw      m2, m6
+
+    mova       m6, [pw_2000]
+
+    psubw      m4, m6
+    psubw      m2, m6
+
+    movu       [r2], m4
+    movu       [r2 + 16], m2
+
+    punpcklbw  m4, m3, m5
+    punpckhbw  m3, m5
+
+    pmaddubsw  m4, m1
+    pmaddubsw  m3, m1
+
+    movu       m5, [r5 + 2 * r1]
+
+    punpcklbw  m2, m7, m5
+    punpckhbw  m7, m5
+
+    pmaddubsw  m2, m0
+    pmaddubsw  m7, m0
+
+    paddw      m4, m2
+    paddw      m3, m7
+
+    psubw      m4, m6
+    psubw      m3, m6
+
+    movu       [r2 + r3], m4
+    movu       [r2 + r3 + 16], m3
+
+    add         r0,        16
+    add         r2,        32
+    dec         r6d
+    jnz         .loopW
+
+    lea         r0,        [r0 + r1 * 2 - %1]
+    lea         r2,        [r2 + r3 * 2 - %1 * 2]
+
+    dec        r4d
+    jnz        .loop
+    RET
+%endmacro
+
+FILTER_V_PS_W16n 64, 64
+FILTER_V_PS_W16n 64, 32
+FILTER_V_PS_W16n 64, 48
+FILTER_V_PS_W16n 48, 64
+FILTER_V_PS_W16n 64, 16
+
 
 ;------------------------------------------------------------------------------------------------------------
 ;void interp_4tap_vert_ps_2x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -4556,8 +5006,9 @@ cglobal interp_4tap_vert_ps_2x4, 4, 6, 7
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ps_2x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
+%macro FILTER_V_PS_W2 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_ps_2x8, 4, 6, 8
+cglobal interp_4tap_vert_ps_2x%2, 4, 6, 8
 
     mov        r4d, r4m
     sub        r0, r1
@@ -4574,7 +5025,7 @@ cglobal interp_4tap_vert_ps_2x8, 4, 6, 8
 
     mova       m1, [pw_2000]
     lea        r5, [3 * r1]
-    mov        r4d, 2
+    mov        r4d, %2/4
 .loop:
     movd       m2, [r0]
     movd       m3, [r0 + r1]
@@ -4635,13 +5086,18 @@ cglobal interp_4tap_vert_ps_2x8, 4, 6, 8
     jnz        .loop
 
 RET
+%endmacro
+
+FILTER_V_PS_W2 2, 8
+
+FILTER_V_PS_W2 2, 16
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_SS 2
 INIT_XMM sse2
-cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
+cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-gprsize
 
     add       r1d, r1d
     add       r3d, r3d
@@ -4655,7 +5111,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
     lea       r6, [tab_ChromaCoeffV + r4]
 %endif
 
-    mov       byte [rsp], %2/4
+    mov       dword [rsp], %2/4
 
 .loopH:
     mov       r4d, (%1/4)
@@ -4686,7 +5142,7 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
     lea       r0, [r0 + 4 * r1 - 2 * %1]
     lea       r2, [r2 + 4 * r3 - 2 * %1]
 
-    dec       byte [rsp]
+    dec       dword [rsp]
     jnz       .loopH
 
     RET
@@ -4706,6 +5162,21 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-1
     FILTER_VER_CHROMA_SS 32, 24
     FILTER_VER_CHROMA_SS 24, 32
     FILTER_VER_CHROMA_SS 32, 8
+
+    FILTER_VER_CHROMA_SS 16, 24
+    FILTER_VER_CHROMA_SS 12, 32
+    FILTER_VER_CHROMA_SS 4, 32
+    FILTER_VER_CHROMA_SS 32, 64
+    FILTER_VER_CHROMA_SS 16, 64
+    FILTER_VER_CHROMA_SS 32, 48
+    FILTER_VER_CHROMA_SS 24, 64
+
+    FILTER_VER_CHROMA_SS 64, 64
+    FILTER_VER_CHROMA_SS 64, 32
+    FILTER_VER_CHROMA_SS 64, 48
+    FILTER_VER_CHROMA_SS 48, 64
+    FILTER_VER_CHROMA_SS 64, 16
+
 
 ;---------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -4752,6 +5223,8 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 6, 5
 
 FILTER_VER_CHROMA_SS_W2_4R 2, 4
 FILTER_VER_CHROMA_SS_W2_4R 2, 8
+
+FILTER_VER_CHROMA_SS_W2_4R 2, 16
 
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ss_4x2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -4803,8 +5276,9 @@ cglobal interp_4tap_vert_ss_4x2, 5, 6, 4
 ;-------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_6x8(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_SS_W6_H4 2
 INIT_XMM sse4
-cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
+cglobal interp_4tap_vert_ss_6x%2, 5, 7, 6
 
     add       r1d, r1d
     add       r3d, r3d
@@ -4818,7 +5292,7 @@ cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
     lea       r6, [tab_ChromaCoeffV + r4]
 %endif
 
-    mov       r4d, 8/4
+    mov       r4d, %2/4
 
 .loopH:
     PROCESS_CHROMA_SP_W4_4R
@@ -4861,6 +5335,12 @@ cglobal interp_4tap_vert_ss_6x8, 5, 7, 6
     jnz       .loopH
 
     RET
+%endmacro
+
+FILTER_VER_CHROMA_SS_W6_H4 6, 8
+
+FILTER_VER_CHROMA_SS_W6_H4 6, 16
+
 
 ;----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_ss_8x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -4911,12 +5391,15 @@ FILTER_VER_CHROMA_SS_W8_H2 8, 8
 FILTER_VER_CHROMA_SS_W8_H2 8, 16
 FILTER_VER_CHROMA_SS_W8_H2 8, 32
 
+FILTER_VER_CHROMA_SS_W8_H2 8, 12
+FILTER_VER_CHROMA_SS_W8_H2 8, 64
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_LUMA_SS 2
 INIT_XMM sse2
-cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
+cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
 
     add        r1d, r1d
     add        r3d, r3d
@@ -4931,7 +5414,7 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     lea        r6, [tab_LumaCoeffV + r4]
 %endif
 
-    mov        byte [rsp], %2/4
+    mov        dword [rsp], %2/4
 .loopH:
     mov        r4d, (%1/4)
 .loopW:
@@ -5023,7 +5506,7 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-1
     lea        r0, [r0 + 4 * r1 - 2 * %1]
     lea        r2, [r2 + 4 * r3 - 2 * %1]
 
-    dec        byte [rsp]
+    dec        dword [rsp]
     jnz        .loopH
 
     RET
