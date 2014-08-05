@@ -1232,6 +1232,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // TODO: check POPCNT flag!
         p.cvt16to32_cnt[BLOCK_4x4] = x265_cvt16to32_cnt_4_sse4;
         p.cvt16to32_cnt[BLOCK_8x8] = x265_cvt16to32_cnt_8_sse4;
+        p.cvt16to32_cnt[BLOCK_16x16] = x265_cvt16to32_cnt_16_sse4;
 
         HEVC_SATD(sse4);
         SA8D_INTER_FROM_BLOCK(sse4);
@@ -1333,6 +1334,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_avx2;
         p.cvt16to32_cnt[BLOCK_4x4] = x265_cvt16to32_cnt_4_avx2;
         p.cvt16to32_cnt[BLOCK_8x8] = x265_cvt16to32_cnt_8_avx2;
+        p.cvt16to32_cnt[BLOCK_16x16] = x265_cvt16to32_cnt_16_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }

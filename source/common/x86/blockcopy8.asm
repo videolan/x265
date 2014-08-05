@@ -31,6 +31,7 @@ tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 
 cextern pw_4
 cextern pb_8
+cextern pb_32
 
 SECTION .text
 
@@ -3329,4 +3330,125 @@ cglobal cvt16to32_cnt_8, 3,5,6
     add         r0d, tmpd
 %endif
     RET
-;IACA_END
+
+
+;--------------------------------------------------------------------------------------
+; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_cnt_16, 3,4,7
+    add         r2d, r2d
+    mov         r3d, 16/2
+    pxor        m5, m5
+    pxor        m6, m6
+
+.loop
+    ; row 0
+    movu        m0, [r1]
+    movu        m1, [r1 + mmsize]
+    packsswb    m4, m0, m1
+    pcmpeqb     m4, m6
+    paddb       m5, m4
+    pmovsxwd    m2, m0
+    pmovsxwd    m0, [r1 + 8]
+    pmovsxwd    m3, m1
+    pmovsxwd    m1, [r1 + mmsize + 8]
+    movu        [r0 + 0 * mmsize], m2
+    movu        [r0 + 1 * mmsize], m0
+    movu        [r0 + 2 * mmsize], m3
+    movu        [r0 + 3 * mmsize], m1
+
+    ; row 1
+    movu        m0, [r1 + r2]
+    movu        m1, [r1 + r2 + mmsize]
+    packsswb    m4, m0, m1
+    pcmpeqb     m4, m6
+    paddb       m5, m4
+    pmovsxwd    m2, m0
+    pmovsxwd    m0, [r1 + r2 + 8]
+    pmovsxwd    m3, m1
+    pmovsxwd    m1, [r1 + r2 + mmsize + 8]
+    movu        [r0 + 4 * mmsize], m2
+    movu        [r0 + 5 * mmsize], m0
+    movu        [r0 + 6 * mmsize], m3
+    movu        [r0 + 7 * mmsize], m1
+
+    add         r0, 8 * mmsize
+    lea         r1, [r1 + r2 * 2]
+    dec         r3d
+    jnz        .loop
+
+    ; get count
+    movhlps     m0, m5
+    paddb       m0, m5
+    paddb       m0, [pb_32]
+    psadbw      m0, m6
+    movd        eax, m0
+    RET
+
+
+INIT_YMM avx2
+cglobal cvt16to32_cnt_16, 3,5,5
+    add         r2d, r2d
+    lea         r4, [r2 * 3]
+    mov         r3d, 16/4
+    ; NOTE: xorpd is faster than pxor
+    xorpd       m4, m4
+    xorpd       m3, m3
+
+.loop
+    ; row 0
+    movu        m0, [r1]
+    movu        xm1, [r1 + mmsize/2]
+    pmovsxwd    m2, xm0
+    pmovsxwd    m1, xm1
+    movu        [r0 + 0 * mmsize], m2
+    movu        [r0 + 1 * mmsize], m1
+
+    ; row 1
+    movu        m1, [r1 + r2]
+    movu        xm2, [r1 + r2 + mmsize/2]
+    packsswb    m0, m1
+    pcmpeqb     m0, m3
+    paddb       m4, m0
+    pmovsxwd    m1, xm1
+    pmovsxwd    m2, xm2
+    movu        [r0 + 2 * mmsize], m1
+    movu        [r0 + 3 * mmsize], m2
+
+    ; move output pointer here to avoid 128 bytes offset limit
+    add         r0, 4 * mmsize
+
+    ; row 2
+    movu        m0, [r1 + r2 * 2]
+    movu        xm1, [r1 + r2 * 2 + mmsize/2]
+    pmovsxwd    m2, xm0
+    pmovsxwd    m1, xm1
+    movu        [r0 + 0 * mmsize], m2
+    movu        [r0 + 1 * mmsize], m1
+
+    ; row 3
+    movu        m1, [r1 + r4]
+    movu        xm2, [r1 + r4 + mmsize/2]
+    packsswb    m0, m1
+    pcmpeqb     m0, m3
+    paddb       m4, m0
+    pmovsxwd    m1, xm1
+    pmovsxwd    m2, xm2
+    movu        [r0 + 2 * mmsize], m1
+    movu        [r0 + 3 * mmsize], m2
+
+    add         r0, 4 * mmsize
+    lea         r1, [r1 + r2 * 4]
+    dec         r3d
+    jnz        .loop
+
+    ; get count
+    vextracti128 xm0, m4, 1
+    paddb        xm0, xm4
+    movhlps     xm1, xm0
+    paddb       xm0, xm1
+    paddb       xm0, [pb_32]
+    psadbw      xm0, xm3
+    movd        eax, xm0
+    RET
