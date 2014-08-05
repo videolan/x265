@@ -2272,6 +2272,14 @@ void TEncSearch::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin,
     cu->clipMv(mvmin);
     cu->clipMv(mvmax);
 
+    /* Clip search range to signaled maximum MV length.
+     * We do not support this VUI field being changed from the default */
+    const int maxMvLen = (1 << 15) - 1;
+    mvmin.x = X265_MAX(mvmin.x, -maxMvLen);
+    mvmin.y = X265_MAX(mvmin.y, -maxMvLen);
+    mvmax.x = X265_MIN(mvmax.x, maxMvLen);
+    mvmax.y = X265_MIN(mvmax.y, maxMvLen);
+
     mvmin >>= 2;
     mvmax >>= 2;
 
