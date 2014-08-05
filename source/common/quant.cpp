@@ -532,7 +532,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int scaleBits = SCALE_BITS - 2 * transformShift;
 
     double lambda2 = m_lambdas[ttype];
-    double *errScale = m_scalingList->m_errScale[log2TrSize - 2][scalingListType][rem];
     bool bIsLuma = ttype == TEXT_LUMA;
 
     double totalUncodedCost = 0;
@@ -582,18 +581,16 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         {
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codingParameters.scan[scanPos];
-            double scaleFactor   = errScale[blkPos];       /* (1 << scaleBits) / (quantCoef * quantCoef) */
-            int levelScaled      = scaledCoeff[blkPos];    /* abs(coef) * quantCoef */
-            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);  /* abs(coef) */
-            int signCoef         = m_resiDctCoeff[blkPos];
-            int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef;
+            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
+            int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
+            int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
-            /* RDOQ measures distortion as the scaled level squared times a
-             * scale factor which tries to remove the quantCoef back out, but
-             * adds scaleBits to account for IEP_RATE which is 32k (1 << SCALE_BITS) */
+            /* RDOQ measures distortion as the squared difference between the unquantized coded level
+             * and the original DCT coefficient. The result is shifted scaleBits to account for the
+             * FIX15 nature of the CABAC cost tables minus the forward transform scale */
 
-            /* cost of not coding this coefficient (no signal bits) */
-            costUncoded[scanPos] = ((uint64_t)levelScaled * levelScaled) * scaleFactor;
+            /* cost of not coding this coefficient (all distortion, no signal bits) */
+            costUncoded[scanPos] = (double)((uint64_t)(signCoef * signCoef) << scaleBits);
             if (usePsy && blkPos)
                 /* when no coefficient is coded, predicted coef == recon coef */
                 costUncoded[scanPos] -= (int)(((m_psyRdoqScale * predictedCoef) << scaleBits) >> 8);
@@ -616,7 +613,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 costCoeff[scanPos] = 0;
                 baseCost += costUncoded[scanPos];
 
-                /* coeff in unsignaled coeff groups have no signal cost */
+                /* coefficients after lastNZ have no signal cost */
                 costSig[scanPos] = 0;
             }
             else
@@ -654,19 +651,19 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 }
                 if (maxAbsLevel)
                 {
-                    const int64_t err1 = levelScaled - ((int64_t)maxAbsLevel << qbits);
-                    double err2 = (double)(err1 * err1);
-
                     uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
                     for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
                     {
                         uint32_t rateCost = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                        double curCost = err2 * scaleFactor + lambda2 * (codedSigBits + rateCost + IEP_RATE);
+
+                        int unquantAbsLevel = ((lvl << unquantPreshift) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
+                        int d = unquantAbsLevel - abs(signCoef);
+                        uint64_t distortion = ((uint64_t)(d * d)) << scaleBits;
+                        double curCost = distortion + lambda2 * (codedSigBits + rateCost + IEP_RATE);
 
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
                         if (usePsy && blkPos)
                         {
-                            int unquantAbsLevel = ((lvl << unquantPreshift) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
                             curCost -= (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
                         }
@@ -677,18 +674,10 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                             costCoeff[scanPos] = curCost;
                             costSig[scanPos] = lambda2 * codedSigBits;
                         }
-
-                        if (lvl > minAbsLevel)
-                        {
-                            // add deltas to get squared distortion at minAbsLevel
-                            int64_t err3 = (int64_t)2 * err1 * ((int64_t)1 << qbits);
-                            int64_t err4 = ((int64_t)1 << qbits) * ((int64_t)1 << qbits);
-                            err2 += err3 + err4;
-                        }
                     }
                 }
 
-                deltaU[blkPos] = (levelScaled - ((int)level << qbits)) >> (qbits - 8);
+                deltaU[blkPos] = (scaledCoeff[blkPos] - ((int)level << qbits)) >> (qbits - 8);
                 dstCoeff[blkPos] = level;
                 baseCost += costCoeff[scanPos];
 

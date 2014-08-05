@@ -128,7 +128,6 @@ ScalingList::ScalingList()
 {
     memset(m_quantCoef, 0, sizeof(m_quantCoef));
     memset(m_dequantCoef, 0, sizeof(m_dequantCoef));
-    memset(m_errScale, 0, sizeof(m_errScale));
     memset(m_scalingListCoef, 0, sizeof(m_scalingListCoef));
 }
 
@@ -145,8 +144,7 @@ bool ScalingList::init()
             {
                 m_quantCoef[sizeId][listId][rem] = X265_MALLOC(int32_t, s_numCoefPerSize[sizeId]);
                 m_dequantCoef[sizeId][listId][rem] = X265_MALLOC(int32_t, s_numCoefPerSize[sizeId]);
-                m_errScale[sizeId][listId][rem] = X265_MALLOC(double, s_numCoefPerSize[sizeId]);
-                ok &= m_quantCoef[sizeId][listId][rem] && m_dequantCoef[sizeId][listId][rem] && m_errScale[sizeId][listId][rem];
+                ok &= m_quantCoef[sizeId][listId][rem] && m_dequantCoef[sizeId][listId][rem];
             }
         }
     }
@@ -164,7 +162,6 @@ ScalingList::~ScalingList()
             {
                 X265_FREE(m_quantCoef[sizeId][listId][rem]);
                 X265_FREE(m_dequantCoef[sizeId][listId][rem]);
-                X265_FREE(m_errScale[sizeId][listId][rem]);
             }
         }
     }
@@ -331,11 +328,6 @@ void ScalingList::setupQuantMatrices()
         int stride = X265_MIN(MAX_MATRIX_SIZE_NUM, width);
         int count = s_numCoefPerSize[size];
 
-        // Error scale constants
-        int log2TrSize = size + 2;
-        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-        int scalingBits = 1 << (SCALE_BITS - 2 * transformShift);            // Compensate for scaling of bitcount in Lagrange cost function
-
         for (int list = 0; list < s_numListsAtSize[size]; list++)
         {
             int32_t *coeff = m_scalingListCoef[size][list];
@@ -345,7 +337,6 @@ void ScalingList::setupQuantMatrices()
             {
                 int32_t *quantCoeff   = m_quantCoef[size][list][rem];
                 int32_t *dequantCoeff = m_dequantCoef[size][list][rem];
-                double *errScale      = m_errScale[size][list][rem];
 
                 if (m_bEnabled)
                 {
@@ -361,9 +352,6 @@ void ScalingList::setupQuantMatrices()
                         dequantCoeff[i] = s_invQuantScales[rem] << 4;
                     }
                 }
-
-                for (int i = 0; i < count; i++)
-                    errScale[i] = (double)scalingBits / (quantCoeff[i] * quantCoeff[i]);
             }
         }
     }

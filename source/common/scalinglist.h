@@ -49,7 +49,6 @@ public:
 
     int32_t* m_quantCoef[NUM_SIZES][NUM_LISTS][NUM_REM];   // array of quantization matrix coefficient 4x4
     int32_t* m_dequantCoef[NUM_SIZES][NUM_LISTS][NUM_REM]; // array of dequantization matrix coefficient 4x4
-    double*  m_errScale[NUM_SIZES][NUM_LISTS][NUM_REM];
 
     bool     m_bEnabled;
     bool     m_bDataPresent; // non-default scaling lists must be signaled
