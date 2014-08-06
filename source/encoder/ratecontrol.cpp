@@ -2084,7 +2084,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             : rce->sliceType == P_SLICE ? 'P'
             : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
-                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ",
+                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;",
                     rce->poc, rce->encodeOrder,
                     cType, m_frameDuration,
                     pic->m_avgQpRc, pic->m_avgQpAq,
@@ -2094,8 +2094,6 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                     stats->cuCount_i * m_ncu,
                     stats->cuCount_p * m_ncu,
                     stats->cuCount_skip * m_ncu) < 0)
-            goto writeFailure;
-        if (fprintf(m_statFileOut, ";\n") < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
         if (m_param->rc.cuTree && IS_REFERENCED(slice) && !m_param->rc.bStatRead)
