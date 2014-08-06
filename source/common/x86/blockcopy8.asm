@@ -32,6 +32,7 @@ tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 cextern pw_4
 cextern pb_8
 cextern pb_32
+cextern pb_128
 
 SECTION .text
 
@@ -3738,5 +3739,99 @@ cglobal cvt16to32_cnt_16, 3,5,5
     paddb       xm0, xm1
     paddb       xm0, [pb_32]
     psadbw      xm0, xm3
+    movd        eax, xm0
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_cnt_32, 3,4,8
+    add         r2d, r2d
+    mov         r3d, 32/1
+    pxor        m6, m6
+    pxor        m7, m7
+
+.loop
+    ; row 0
+    movu        m0, [r1 + 0 * mmsize]
+    movu        m1, [r1 + 1 * mmsize]
+    movu        m2, [r1 + 2 * mmsize]
+    movu        m3, [r1 + 3 * mmsize]
+    packsswb    m4, m0, m1
+    packsswb    m5, m2, m3
+    pcmpeqb     m4, m7
+    pcmpeqb     m5, m7
+    paddb       m6, m4
+    paddb       m6, m5
+
+    pmovsxwd    m4, m0
+    pmovsxwd    m5, [r1 + 0 * mmsize + mmsize/2]
+    movu        [r0 + 0 * mmsize], m4
+    movu        [r0 + 1 * mmsize], m5
+    pmovsxwd    m4, m1
+    pmovsxwd    m5, [r1 + 1 * mmsize + mmsize/2]
+    movu        [r0 + 2 * mmsize], m4
+    movu        [r0 + 3 * mmsize], m5
+    pmovsxwd    m4, m2
+    pmovsxwd    m5, [r1 + 2 * mmsize + mmsize/2]
+    movu        [r0 + 4 * mmsize], m4
+    movu        [r0 + 5 * mmsize], m5
+    pmovsxwd    m4, m3
+    pmovsxwd    m5, [r1 + 3 * mmsize + mmsize/2]
+    movu        [r0 + 6 * mmsize], m4
+    movu        [r0 + 7 * mmsize], m5
+
+    add         r0, 8 * mmsize
+    add         r1, r2
+    dec         r3d
+    jnz        .loop
+
+    ; get count
+    movhlps     m0, m6
+    paddb       m0, m6
+    paddb       m0, [pb_128]
+    psadbw      m0, m7
+    movd        eax, m0
+    RET
+
+
+INIT_YMM avx2
+cglobal cvt16to32_cnt_32, 3,4,5
+    add         r2d, r2d
+    mov         r3d, 32/1
+    xorpd       m3, m3
+    xorpd       m4, m4
+
+.loop
+    ; row 0
+    movu        m0, [r1 + 0 * mmsize]
+    movu        m1, [r1 + 1 * mmsize]
+    packsswb    m2, m0, m1
+    pcmpeqb     m2, m4
+    paddb       m3, m2
+
+    pmovsxwd    m2, xm0
+    pmovsxwd    m0, [r1 + 0 * mmsize + mmsize/2]
+    movu        [r0 + 0 * mmsize], m2
+    movu        [r0 + 1 * mmsize], m0
+    pmovsxwd    m0, xm1
+    pmovsxwd    m1, [r1 + 1 * mmsize + mmsize/2]
+    movu        [r0 + 2 * mmsize], m0
+    movu        [r0 + 3 * mmsize], m1
+
+    add         r0, 4 * mmsize
+    add         r1, r2
+    dec         r3d
+    jnz        .loop
+
+    ; get count
+    vextracti128 xm0, m3, 1
+    paddb       xm0, xm3
+    movhlps     xm3, xm0
+    paddb       xm0, xm3
+    paddb       xm0, [pb_128]
+    psadbw      xm0, xm4
     movd        eax, xm0
     RET
