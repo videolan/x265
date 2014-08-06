@@ -1150,6 +1150,8 @@ void x265_print_params(x265_param *param)
         fprintf(stderr, "psy-rd=%.1lf ", param->psyRd);
     if (param->psyRdoq > 0.)
         fprintf(stderr, "psy-rdoq=%.1lf ", param->psyRdoq);
+    if (param->noiseReduction)
+        fprintf(stderr, "nr=%d ", param->noiseReduction);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
