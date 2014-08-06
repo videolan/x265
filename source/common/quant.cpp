@@ -339,7 +339,9 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         return primitives.cvt16to32_cnt[log2TrSize - 2](coeff, residual, stride);
     }
 
-    bool usePsy = m_psyRdoqScale && ttype == TEXT_LUMA && !useTransformSkip;
+    bool isLuma  = ttype == TEXT_LUMA;
+    bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
+    bool isIntra = cu->getPredictionMode(absPartIdx) == MODE_INTRA;
     int trSize = 1 << log2TrSize;
 
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
@@ -362,7 +364,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     else
     {
         const uint32_t sizeIdx = log2TrSize - 2;
-        int useDST = !sizeIdx && ttype == TEXT_LUMA && cu->getPredictionMode(absPartIdx) == MODE_INTRA;
+        int useDST = !sizeIdx && isLuma && isIntra;
         int index = DCT_4x4 + sizeIdx - useDST;
 
         primitives.dct[index](residual, m_resiDctCoeff, stride);
@@ -376,10 +378,12 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr->bNoiseReduction && (cu->getPredictionMode(absPartIdx) == MODE_INTER))
+        if (m_nr->bNoiseReduction && !isIntra)
         {
-            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx + (4 * !!ttype)], m_nr->offset[sizeIdx + (4 * !!ttype)], trSize << 1);
-            m_nr->count[sizeIdx + (4 * !!ttype)]++;
+            /* denoise is not applied to intra residual, so DST can be ignored */
+            int cat = sizeIdx + 4 * !isLuma;
+            denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], trSize << 1);
+            m_nr->count[cat]++;
         }
     }
 
@@ -389,7 +393,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     {
         int deltaU[32 * 32];
 
-        int scalingListType = ttype + (cu->isIntra(absPartIdx) ? 0 : 3);
+        int scalingListType = ttype + (isLuma ? 3 : 0);
         int rem = m_qpParam[ttype].rem;
         int per = m_qpParam[ttype].per;
         int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
@@ -404,7 +408,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
         {
             TUEntropyCodingParameters codingParameters;
-            cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, ttype == TEXT_LUMA);
+            cu->getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, isLuma);
             return signBitHidingHDQ(coeff, deltaU, numSig, codingParameters);
         }
         else

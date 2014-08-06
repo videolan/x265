@@ -116,13 +116,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     memset(&m_frameStats, 0, sizeof(m_frameStats));
-    memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
-    memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0]) * 8 * 1024);
-    memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0]) * 8);
-
-    m_nr.offset = m_nr.offsetDenoise;
-    m_nr.residualSum = m_nr.residualSumBuf;
-    m_nr.count = m_nr.countBuf;
+    memset(&m_nr, 0, sizeof(m_nr));
     m_nr.bNoiseReduction = !!m_param->noiseReduction;
 
     start();
@@ -893,33 +887,31 @@ void FrameEncoder::noiseReductionUpdate()
     if (!m_nr.bNoiseReduction)
         return;
 
-    m_nr.offset = m_nr.offsetDenoise;
-    m_nr.residualSum = m_nr.residualSumBuf;
-    m_nr.count = m_nr.countBuf;
-
-    int transformSize[4] = {16, 64, 256, 1024};
-    uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
+    static const uint32_t maxBlocksPerTrSize[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
 
     for (int cat = 0; cat < 8; cat++)
     {
-        int index = cat % 4;
-        int size = transformSize[index];
+        int trSize = cat & 3;
+        int coefCount = 1 << ((trSize + 2) * 2);
 
-        if (m_nr.count[cat] > blockCount[index])
+        if (m_nr.count[cat] > maxBlocksPerTrSize[trSize])
         {
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < coefCount; i++)
                 m_nr.residualSum[cat][i] >>= 1;
             m_nr.count[cat] >>= 1;
         }
 
-        for (int i = 0; i < size; i++)
-            m_nr.offset[cat][i] =
-                (uint16_t)(((uint64_t)m_param->noiseReduction * m_nr.count[cat]
-                 + m_nr.residualSum[cat][i] / 2)
-              / ((uint64_t)m_nr.residualSum[cat][i] + 1));
+        uint64_t scaledCount = (uint64_t)m_param->noiseReduction * m_nr.count[cat];
+
+        for (int i = 0; i < coefCount; i++)
+        {
+            uint64_t value = scaledCount + m_nr.residualSum[cat][i] / 2;
+            uint64_t denom = m_nr.residualSum[cat][i] + 1;
+            m_nr.offsetDenoise[cat][i] = (uint16_t)(value / denom);
+        }
 
         // Don't denoise DC coefficients
-        m_nr.offset[cat][0] = 0;
+        m_nr.offsetDenoise[cat][0] = 0;
     }
 }
 

@@ -185,13 +185,9 @@ struct NoiseReduction
 
     /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t (*offset)[1024];
-    uint32_t (*residualSum)[1024];
-    uint32_t *count;
-
     uint16_t offsetDenoise[8][1024];
-    uint32_t residualSumBuf[8][1024];
-    uint32_t countBuf[8];
+    uint32_t residualSum[8][1024];
+    uint32_t count[8];
 };
 
 /* defined in common.cpp */
