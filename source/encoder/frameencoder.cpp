@@ -126,6 +126,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 void FrameEncoder::startCompressFrame(Frame* pic)
 {
     m_frame = pic;
+    pic->m_picSym->m_slice->m_mref = m_mref;
     m_enable.trigger();
 }
 
@@ -652,7 +653,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     // setup thread-local data
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
     tld.m_cuCoder.m_quant.m_nr = &m_nr;
-    tld.m_cuCoder.m_mref = m_mref;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);

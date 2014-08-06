@@ -102,8 +102,7 @@ class TEncSearch : public Predict
 {
 public:
 
-    MotionEstimate   m_me;
-    MotionReference (*m_mref)[MAX_NUM_REF + 1];
+    MotionEstimate  m_me;
 
     ShortYuv*       m_qtTempShortYuv;
     TComYuv         m_predTempYuv;

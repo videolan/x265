@@ -1890,15 +1890,16 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 {
     AMVPInfo amvpInfo[2][MAX_NUM_REF];
 
-    TComPicYuv *fenc    = cu->m_slice->m_pic->getPicYuvOrg();
+    Slice *slice        = cu->m_slice;
+    TComPicYuv *fenc    = slice->m_pic->getPicYuvOrg();
     PartSize partSize   = cu->getPartitionSize(0);
     int      numPart    = cu->getNumPartInter();
-    int      numPredDir = cu->m_slice->isInterP() ? 1 : 2;
+    int      numPredDir = slice->isInterP() ? 1 : 2;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
     TComYuv   m_predYuv[2];
 
-    const int* numRefIdx = cu->m_slice->m_numRefIdx;
+    const int* numRefIdx = slice->m_numRefIdx;
 
     MergeData merge;
 
@@ -1957,7 +1958,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         list[0].cost = MAX_UINT;
         list[1].cost = MAX_UINT;
 
-        xGetBlkBits(partSize, cu->m_slice->isInterP(), partIdx, lastMode, listSelBits);
+        xGetBlkBits(partSize, slice->isInterP(), partIdx, lastMode, listSelBits);
 
         // Uni-directional prediction
         for (int l = 0; l < numPredDir; l++)
@@ -1986,7 +1987,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     cu->clipMv(mvCand);
 
                     prepMotionCompensation(cu, partIdx);
-                    predInterLumaBlk(cu->m_slice->m_refPicList[l][ref]->getPicYuvRec(), &m_predTempYuv, &mvCand);
+                    predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &m_predTempYuv, &mvCand);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
                     cost = (uint32_t)m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
@@ -2000,7 +2001,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
 
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
-                int satdCost = m_me.motionEstimate(&m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                int satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
@@ -2022,7 +2023,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
         }
 
         // Bi-directional prediction
-        if (cu->m_slice->isInterB() && !cu->isBipredRestriction() && list[0].cost != MAX_UINT && list[1].cost != MAX_UINT)
+        if (slice->isInterB() && !cu->isBipredRestriction() && list[0].cost != MAX_UINT && list[1].cost != MAX_UINT)
         {
             ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
 
@@ -2030,8 +2031,8 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             bidir[1] = list[1];
 
             // Generate reference subpels
-            TComPicYuv *refPic0 = cu->m_slice->m_refPicList[0][list[0].ref]->getPicYuvRec();
-            TComPicYuv *refPic1 = cu->m_slice->m_refPicList[1][list[1].ref]->getPicYuvRec();
+            TComPicYuv *refPic0 = slice->m_refPicList[0][list[0].ref]->getPicYuvRec();
+            TComPicYuv *refPic1 = slice->m_refPicList[1][list[1].ref]->getPicYuvRec();
             
             prepMotionCompensation(cu, partIdx);
             predInterLumaBlk(refPic0, &m_predYuv[0], &list[0].mv);
@@ -2066,9 +2067,9 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
             if (bTryZero)
             {
                 // coincident blocks of the two reference pictures
-                pixel *ref0 = m_mref[0][list[0].ref].fpelPlane + (pu - fenc->getLumaAddr());
-                pixel *ref1 = m_mref[1][list[1].ref].fpelPlane + (pu - fenc->getLumaAddr());
-                intptr_t refStride = m_mref[0][0].lumaStride;
+                pixel *ref0 = slice->m_mref[0][list[0].ref].fpelPlane + (pu - fenc->getLumaAddr());
+                pixel *ref1 = slice->m_mref[1][list[1].ref].fpelPlane + (pu - fenc->getLumaAddr());
+                intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
                 primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
                 satdCost = m_me.bufSATD(avg, roiWidth);

@@ -31,6 +31,7 @@ namespace x265 {
 
 class Frame;
 class PicList;
+class MotionReference;
 
 struct RPS
 {
@@ -278,6 +279,7 @@ public:
     const PPS*  m_pps;
     Frame*      m_pic;
     WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
+    MotionReference (*m_mref)[MAX_NUM_REF + 1];
     RPS         m_rps;
 
     NalUnitType m_nalUnitType;
