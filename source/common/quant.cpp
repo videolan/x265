@@ -376,10 +376,10 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr->bNoiseReduction && !useDST)
+        if (m_nr->bNoiseReduction && (cu->getPredictionMode(absPartIdx) == MODE_INTER))
         {
-            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx], m_nr->offset[sizeIdx], trSize << 1);
-            m_nr->count[sizeIdx]++;
+            denoiseDct(m_resiDctCoeff, m_nr->residualSum[sizeIdx + (4 * !!ttype)], m_nr->offset[sizeIdx + (4 * !!ttype)], trSize << 1);
+            m_nr->count[sizeIdx + (4 * !!ttype)]++;
         }
     }
 

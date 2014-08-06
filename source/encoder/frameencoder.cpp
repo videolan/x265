@@ -900,8 +900,7 @@ void FrameEncoder::noiseReductionUpdate()
     int transformSize[4] = {16, 64, 256, 1024};
     uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
 
-    int isCspI444 = (m_param->internalCsp == X265_CSP_I444) ? 1 : 0;
-    for (int cat = 0; cat < 7 + isCspI444; cat++)
+    for (int cat = 0; cat < 8; cat++)
     {
         int index = cat % 4;
         int size = transformSize[index];
