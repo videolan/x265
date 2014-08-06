@@ -117,12 +117,12 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(m_nr.offsetDenoise, 0, sizeof(m_nr.offsetDenoise[0][0]) * 8 * 1024);
-    memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0][0]) * 4 * 8 * 1024);
-    memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0][0]) * 4 * 8);
+    memset(m_nr.residualSumBuf, 0, sizeof(m_nr.residualSumBuf[0][0]) * 8 * 1024);
+    memset(m_nr.countBuf, 0, sizeof(m_nr.countBuf[0]) * 8);
 
     m_nr.offset = m_nr.offsetDenoise;
-    m_nr.residualSum = m_nr.residualSumBuf[0];
-    m_nr.count = m_nr.countBuf[0];
+    m_nr.residualSum = m_nr.residualSumBuf;
+    m_nr.count = m_nr.countBuf;
     m_nr.bNoiseReduction = !!m_param->noiseReduction;
 
     start();
@@ -894,8 +894,8 @@ void FrameEncoder::noiseReductionUpdate()
         return;
 
     m_nr.offset = m_nr.offsetDenoise;
-    m_nr.residualSum = m_nr.residualSumBuf[0];
-    m_nr.count = m_nr.countBuf[0];
+    m_nr.residualSum = m_nr.residualSumBuf;
+    m_nr.count = m_nr.countBuf;
 
     int transformSize[4] = {16, 64, 256, 1024};
     uint32_t blockCount[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};

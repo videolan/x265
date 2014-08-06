@@ -190,8 +190,8 @@ struct NoiseReduction
     uint32_t *count;
 
     uint16_t offsetDenoise[8][1024];
-    uint32_t residualSumBuf[4][8][1024];
-    uint32_t countBuf[4][8];
+    uint32_t residualSumBuf[8][1024];
+    uint32_t countBuf[8];
 };
 
 /* defined in common.cpp */
