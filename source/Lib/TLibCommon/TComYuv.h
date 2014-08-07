@@ -136,8 +136,8 @@ public:
 
     //  Clip(srcYuv0 + srcYuv1) -> m_apiBuf
     void    addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size);
-    void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
-    void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part);
+    void    addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size);
+    void    addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size);
 
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
     void    addAvg(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);

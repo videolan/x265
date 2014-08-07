@@ -87,20 +87,20 @@ void ShortYuv::clear()
 
 void ShortYuv::subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t log2Size)
 {
-    int part = partitionFromLog2Size(log2Size);
+    const int sizeIdx = log2Size - 2;
 
     pixel* srcY0 = srcYuv0->getLumaAddr();
     pixel* srcY1 = srcYuv1->getLumaAddr();
 
-    primitives.luma_sub_ps[part](getLumaAddr(), m_width, srcY0, srcY1, srcYuv0->getStride(), srcYuv1->getStride());
+    primitives.luma_sub_ps[sizeIdx](getLumaAddr(), m_width, srcY0, srcY1, srcYuv0->getStride(), srcYuv1->getStride());
 
     pixel* srcU0 = srcYuv0->getCbAddr();
     pixel* srcU1 = srcYuv1->getCbAddr();
-    primitives.chroma[m_csp].sub_ps[part](getCbAddr(), m_cwidth, srcU0, srcU1, srcYuv0->getCStride(), srcYuv1->getCStride());
+    primitives.chroma[m_csp].sub_ps[sizeIdx](getCbAddr(), m_cwidth, srcU0, srcU1, srcYuv0->getCStride(), srcYuv1->getCStride());
 
     pixel* srcV0 = srcYuv0->getCrAddr();
     pixel* srcV1 = srcYuv1->getCrAddr();
-    primitives.chroma[m_csp].sub_ps[part](getCrAddr(), m_cwidth, srcV0, srcV1, srcYuv0->getCStride(), srcYuv1->getCStride());
+    primitives.chroma[m_csp].sub_ps[sizeIdx](getCrAddr(), m_cwidth, srcV0, srcV1, srcYuv0->getCStride(), srcYuv1->getCStride());
 }
 
 void ShortYuv::copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size)

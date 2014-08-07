@@ -167,13 +167,11 @@ void TComYuv::copyPartToYuv(TComYuv* dstPicYuv, uint32_t partIdx)
 
 void TComYuv::addClip(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size)
 {
-    int part = partitionFromLog2Size(log2Size);
-
-    addClipLuma(srcYuv0, srcYuv1, part);
-    addClipChroma(srcYuv0, srcYuv1, part);
+    addClipLuma(srcYuv0, srcYuv1, log2Size);
+    addClipChroma(srcYuv0, srcYuv1, log2Size);
 }
 
-void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
+void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size)
 {
     pixel* src0 = srcYuv0->getLumaAddr();
     int16_t* src1 = srcYuv1->getLumaAddr();
@@ -183,14 +181,14 @@ void TComYuv::addClipLuma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
     uint32_t src1Stride = srcYuv1->m_width;
     uint32_t dststride  = getStride();
 
-    primitives.luma_add_ps[part](dst, dststride, src0, src1, src0Stride, src1Stride);
+    primitives.luma_add_ps[log2Size - 2](dst, dststride, src0, src1, src0Stride, src1Stride);
 }
 
-void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
+void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t log2Size)
 {
     pixel* srcU0 = srcYuv0->getCbAddr();
-    int16_t* srcU1 = srcYuv1->getCbAddr();
     pixel* srcV0 = srcYuv0->getCrAddr();
+    int16_t* srcU1 = srcYuv1->getCbAddr();
     int16_t* srcV1 = srcYuv1->getCrAddr();
     pixel* dstU = getCbAddr();
     pixel* dstV = getCrAddr();
@@ -199,8 +197,8 @@ void TComYuv::addClipChroma(TComYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t part)
     uint32_t src1Stride = srcYuv1->m_cwidth;
     uint32_t dststride  = getCStride();
 
-    primitives.chroma[m_csp].add_ps[part](dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
-    primitives.chroma[m_csp].add_ps[part](dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](dstU, dststride, srcU0, srcU1, src0Stride, src1Stride);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](dstV, dststride, srcV0, srcV1, src0Stride, src1Stride);
 }
 
 void TComYuv::addAvg(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)

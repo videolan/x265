@@ -1002,36 +1002,46 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;  \
-    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define CHROMA_422(W, H) \
     p.chroma[X265_CSP_I422].addAvg[CHROMA422_ ## W ## x ## H] = addAvg<W, H>;         \
     p.chroma[X265_CSP_I422].copy_pp[CHROMA422_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_sp[CHROMA422_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_ps[CHROMA422_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_ss[CHROMA422_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].add_ps[CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I422].copy_ss[CHROMA422_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define CHROMA_444(W, H) \
     p.chroma[X265_CSP_I444].addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
+    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
+
+#define LUMA_PIXELSUB(W, H) \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.luma_add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_420(W, H) \
+    p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;  \
+    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_422(W, H) \
+    p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I422].add_ps[CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_444(W, H) \
+    p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+
 
     LUMA(4, 4);
     LUMA(8, 8);
@@ -1082,6 +1092,24 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     CHROMA_420(32, 8);
     LUMA(16, 64);
     CHROMA_420(8,  32);
+
+    LUMA_PIXELSUB(4, 4);
+    LUMA_PIXELSUB(8, 8);
+    LUMA_PIXELSUB(16, 16);
+    LUMA_PIXELSUB(32, 32);
+    LUMA_PIXELSUB(64, 64);
+    CHROMA_PIXELSUB_420(4, 4)
+    CHROMA_PIXELSUB_420(8, 8)
+    CHROMA_PIXELSUB_420(16, 16)
+    CHROMA_PIXELSUB_420(32, 32)
+    CHROMA_PIXELSUB_422(4, 8)
+    CHROMA_PIXELSUB_422(8, 16)
+    CHROMA_PIXELSUB_422(16, 32)
+    CHROMA_PIXELSUB_422(32, 64)
+    CHROMA_PIXELSUB_444(8, 8)
+    CHROMA_PIXELSUB_444(16, 16)
+    CHROMA_PIXELSUB_444(32, 32)
+    CHROMA_PIXELSUB_444(64, 64)
 
     CHROMA_422(4, 8);
     CHROMA_422(4, 4);

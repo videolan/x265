@@ -290,6 +290,13 @@
     pminsw %1, %3
 %endmacro
 
+%macro CLIPW2 4 ;(dst0, dst1, min, max)
+    pmaxsw %1, %3
+    pmaxsw %2, %3
+    pminsw %1, %4
+    pminsw %2, %4
+%endmacro
+
 %macro HADDD 2 ; sum junk
 %if sizeof%1 == 32
 %define %2 xmm%2

@@ -701,29 +701,9 @@ extern "C" {
 
 #define CHROMA_PIXELSUB_PS(cpu) \
     SETUP_CHROMA_PIXELSUB(4,  4,  cpu); \
-    SETUP_CHROMA_PIXELSUB(4,  2,  cpu); \
-    SETUP_CHROMA_PIXELSUB(2,  4,  cpu); \
     SETUP_CHROMA_PIXELSUB(8,  8,  cpu); \
-    SETUP_CHROMA_PIXELSUB(8,  4,  cpu); \
-    SETUP_CHROMA_PIXELSUB(4,  8,  cpu); \
-    SETUP_CHROMA_PIXELSUB(8,  6,  cpu); \
-    SETUP_CHROMA_PIXELSUB(6,  8,  cpu); \
-    SETUP_CHROMA_PIXELSUB(8,  2,  cpu); \
-    SETUP_CHROMA_PIXELSUB(2,  8,  cpu); \
     SETUP_CHROMA_PIXELSUB(16, 16, cpu); \
-    SETUP_CHROMA_PIXELSUB(16, 8,  cpu); \
-    SETUP_CHROMA_PIXELSUB(8,  16, cpu); \
-    SETUP_CHROMA_PIXELSUB(16, 12, cpu); \
-    SETUP_CHROMA_PIXELSUB(12, 16, cpu); \
-    SETUP_CHROMA_PIXELSUB(16, 4,  cpu); \
-    SETUP_CHROMA_PIXELSUB(4,  16, cpu); \
-    SETUP_CHROMA_PIXELSUB(32, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB(32, 16, cpu); \
-    SETUP_CHROMA_PIXELSUB(16, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB(32, 24, cpu); \
-    SETUP_CHROMA_PIXELSUB(24, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB(32, 8,  cpu); \
-    SETUP_CHROMA_PIXELSUB(8,  32, cpu);
+    SETUP_CHROMA_PIXELSUB(32, 32, cpu);
 
 #define SETUP_CHROMA_PIXELSUB_422(W, H, cpu) \
     p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
@@ -731,29 +711,9 @@ extern "C" {
 
 #define CHROMA_PIXELSUB_PS_422(cpu) \
     SETUP_CHROMA_PIXELSUB_422(4,  8,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(4,  4,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(2,  8,  cpu); \
     SETUP_CHROMA_PIXELSUB_422(8, 16,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(8,  8,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(4, 16,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(8, 12,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(6, 16,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(8,  4,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(2, 16,  cpu); \
     SETUP_CHROMA_PIXELSUB_422(16, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(16, 16, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(8,  32, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(16, 24, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(12, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(16, 8,  cpu); \
-    SETUP_CHROMA_PIXELSUB_422(4,  32, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(32, 64, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(32, 32, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(16, 64, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(32, 48, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(24, 64, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(32, 16, cpu); \
-    SETUP_CHROMA_PIXELSUB_422(8,  64, cpu);
+    SETUP_CHROMA_PIXELSUB_422(32, 64, cpu);
 
 #define LUMA_FILTERS(cpu) \
     SETUP_LUMA_FUNC_DEF(4,   4, cpu); \
@@ -785,29 +745,9 @@ extern "C" {
 #define LUMA_PIXELSUB(cpu) \
     SETUP_LUMA_SUB_FUNC_DEF(4,   4, cpu); \
     SETUP_LUMA_SUB_FUNC_DEF(8,   8, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(8,   4, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(4,   8, cpu); \
     SETUP_LUMA_SUB_FUNC_DEF(16, 16, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(16,  8, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(8,  16, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(16, 12, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(12, 16, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(16,  4, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(4,  16, cpu); \
     SETUP_LUMA_SUB_FUNC_DEF(32, 32, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(32, 16, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(16, 32, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(32, 24, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(24, 32, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(32,  8, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(8,  32, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(64, 64, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(64, 32, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(32, 64, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(64, 48, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(48, 64, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(64, 16, cpu); \
-    SETUP_LUMA_SUB_FUNC_DEF(16, 64, cpu);
+    SETUP_LUMA_SUB_FUNC_DEF(64, 64, cpu);
 
 #define LUMA_SP_FILTERS(cpu) \
     SETUP_LUMA_SP_FUNC_DEF(4,   4, cpu); \

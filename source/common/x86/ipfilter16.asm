@@ -1672,8 +1672,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     packssdw  m0, m1
     packssdw  m2, m3
     pxor      m5, m5
-    CLIPW     m0, m5,    m7
-    CLIPW     m2, m5,    m7
+    CLIPW2    m0, m2, m5, m7
 %endif
 
     movh      [r2], m0
@@ -2125,8 +2124,7 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
     packssdw  m0, m1
     packssdw  m2, m3
     pxor      m5, m5
-    CLIPW     m0, m5,    m7
-    CLIPW     m2, m5,    m7
+    CLIPW2    m0, m2, m5, m7
 %endif
 
     movh      [r2], m0
@@ -2294,8 +2292,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     packssdw  m2, m3
     pxor      m5, m5
     mova      m6, [pw_pixel_max]
-    CLIPW     m0, m5,    m6
-    CLIPW     m2, m5,    m6
+    CLIPW2    m0, m2, m5, m6
 %endif
 
     movu      [r2], m0
@@ -2512,8 +2509,7 @@ cglobal interp_8tap_vert_pp_%1x%2, 5, 7, 8 ,0-gprsize
     packssdw  m2, m3
 
     pxor      m1, m1
-    CLIPW     m0, m1, [pw_pixel_max]
-    CLIPW     m2, m1, [pw_pixel_max]
+    CLIPW2    m0, m2, m1, [pw_pixel_max]
 
     movh      [r2], m0
     movhps    [r2 + r3], m0
@@ -2700,8 +2696,7 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
     packssdw  m2, m3
 
     pxor      m1, m1
-    CLIPW     m0, m1, [pw_pixel_max]
-    CLIPW     m2, m1, [pw_pixel_max]
+    CLIPW2    m0, m2, m1, [pw_pixel_max]
 
     movh      [r2], m0
     movhps    [r2 + r3], m0

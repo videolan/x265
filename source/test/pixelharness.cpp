@@ -1217,30 +1217,33 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.luma_sub_ps[part])
-    {
-        if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
-        {
-            printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
-    if (opt.luma_add_ps[part])
-    {
-        if (!check_pixel_add_ps(ref.luma_add_ps[part], opt.luma_add_ps[part]))
-        {
-            printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.luma_addAvg[part])
     {
         if (!check_addAvg(ref.luma_addAvg[part], opt.luma_addAvg[part]))
         {
             printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
             return false;
+        }
+    }
+
+    if (part < NUM_SQUARE_BLOCKS)
+    {
+        if (opt.luma_sub_ps[part])
+        {
+            if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
+            {
+                printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
+        if (opt.luma_add_ps[part])
+        {
+            if (!check_pixel_add_ps(ref.luma_add_ps[part], opt.luma_add_ps[part]))
+            {
+                printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
         }
     }
 
@@ -1278,28 +1281,31 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 return false;
             }
         }
-        if (opt.chroma[i].sub_ps[part])
-        {
-            if (!check_pixel_sub_ps(ref.chroma[i].sub_ps[part], opt.chroma[i].sub_ps[part]))
-            {
-                printf("chroma_sub_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
-                return false;
-            }
-        }
-        if (opt.chroma[i].add_ps[part])
-        {
-            if (!check_pixel_add_ps(ref.chroma[i].add_ps[part], opt.chroma[i].add_ps[part]))
-            {
-                printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
-                return false;
-            }
-        }
         if (opt.chroma[i].addAvg[part])
         {
             if (!check_addAvg(ref.chroma[i].addAvg[part], opt.chroma[i].addAvg[part]))
             {
                 printf("chroma_addAvg[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
+            }
+        }
+        if (part < NUM_SQUARE_BLOCKS)
+        {
+            if (opt.chroma[i].sub_ps[part])
+            {
+                if (!check_pixel_sub_ps(ref.chroma[i].sub_ps[part], opt.chroma[i].sub_ps[part]))
+                {
+                    printf("chroma_sub_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
+            if (opt.chroma[i].add_ps[part])
+            {
+                if (!check_pixel_add_ps(ref.chroma[i].add_ps[part], opt.chroma[i].add_ps[part]))
+                {
+                    printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
             }
         }
     }
@@ -1629,22 +1635,23 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_copy_ss[part], ref.luma_copy_ss[part], sbuf1, 64, sbuf2, 128);
     }
-    if (opt.luma_sub_ps[part])
-    {
-        HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
-    }
-
-    if (opt.luma_add_ps[part])
-    {
-        HEADER("luma_add_ps[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
-    }
-
     if (opt.luma_addAvg[part])
     {
         HEADER("luma_addAvg[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+    }
+    if (part < NUM_SQUARE_BLOCKS)
+    {
+        if (opt.luma_sub_ps[part])
+        {
+            HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+        }
+        if (opt.luma_add_ps[part])
+        {
+            HEADER("luma_add_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+        }
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
@@ -1669,20 +1676,23 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].copy_ss[part], ref.chroma[i].copy_ss[part], sbuf1, 64, sbuf2, 128);
         }
-        if (opt.chroma[i].sub_ps[part])
-        {
-            HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].sub_ps[part], ref.chroma[i].sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
-        }
-        if (opt.chroma[i].add_ps[part])
-        {
-            HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
-        }
         if (opt.chroma[i].addAvg[part])
         {
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].addAvg[part], ref.chroma[i].addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        }
+        if (part < NUM_SQUARE_BLOCKS)
+        {
+            if (opt.chroma[i].sub_ps[part])
+            {
+                HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].sub_ps[part], ref.chroma[i].sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+            }
+            if (opt.chroma[i].add_ps[part])
+            {
+                HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            }
         }
     }
 

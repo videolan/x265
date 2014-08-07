@@ -225,8 +225,8 @@ struct EncoderPrimitives
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
     copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
-    pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
-    pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
+    pixel_sub_ps_t  luma_sub_ps[NUM_SQUARE_BLOCKS];
+    pixel_add_ps_t  luma_add_ps[NUM_SQUARE_BLOCKS];
     copy_pp_t       square_copy_pp[NUM_SQUARE_BLOCKS];
     copy_sp_t       square_copy_sp[NUM_SQUARE_BLOCKS];
     copy_ps_t       square_copy_ps[NUM_SQUARE_BLOCKS];
@@ -287,13 +287,13 @@ struct EncoderPrimitives
         filter_ss_t     filter_vss[NUM_LUMA_PARTITIONS];
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
+        addAvg_t        addAvg[NUM_LUMA_PARTITIONS];
         copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
         copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
         copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
-        pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
-        pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
-        addAvg_t        addAvg[NUM_LUMA_PARTITIONS];
+        pixel_sub_ps_t  sub_ps[NUM_SQUARE_BLOCKS];
+        pixel_add_ps_t  add_ps[NUM_SQUARE_BLOCKS];
     } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
 };
 
