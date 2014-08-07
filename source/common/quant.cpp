@@ -456,12 +456,8 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 #else
         if (shift >= 0)
             primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
-        {
-            shift = -shift;
-            for (int j = 0; j < trSize; j++)
-                for (int k = 0; k < trSize; k++)
-                    residual[j * stride + k] = (int16_t)m_resiDctCoeff[j * trSize + k] << shift;
-        }
+        else
+            primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -shift);
 #endif
     }
     else

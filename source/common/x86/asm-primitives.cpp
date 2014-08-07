@@ -1531,6 +1531,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         SA8D_INTER_FROM_BLOCK(sse2);
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
+        p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_sse2;
+        p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_sse2;
+        p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_sse2;
+        p.cvt32to16_shl[BLOCK_32x32] = x265_cvt32to16_shl_32_sse2;
         p.calcrecon[BLOCK_4x4] = x265_calcRecons4_sse2;
         p.calcrecon[BLOCK_8x8] = x265_calcRecons8_sse2;
         p.calcresidual[BLOCK_4x4] = x265_getResidual4_sse2;

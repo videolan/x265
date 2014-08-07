@@ -470,6 +470,21 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
     }
 }
 
+template<int size>
+void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[j] = ((int16_t)src[j] << shift);
+        }
+
+        src += size;
+        dst += stride;
+    }
+}
+
 template<int blockSize>
 void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 {
@@ -1193,6 +1208,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cvt16to32_shr[BLOCK_16x16] = convert16to32_shr<16>;
     p.cvt16to32_shr[BLOCK_32x32] = convert16to32_shr<32>;
     p.cvt32to16_shr = convert32to16_shr;
+    p.cvt32to16_shl[BLOCK_4x4] = convert32to16_shl<4>;
+    p.cvt32to16_shl[BLOCK_8x8] = convert32to16_shl<8>;
+    p.cvt32to16_shl[BLOCK_16x16] = convert32to16_shl<16>;
+    p.cvt32to16_shl[BLOCK_32x32] = convert32to16_shl<32>;
 
     p.sa8d[BLOCK_4x4]   = satd_4x4;
     p.sa8d[BLOCK_8x8]   = sa8d_8x8;

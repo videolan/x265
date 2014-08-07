@@ -3632,6 +3632,154 @@ cglobal cvt16to32_shr_32, 3,4,6
 
 
 ;--------------------------------------------------------------------------------------
+; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal cvt32to16_shl_4, 3,3,5
+    add         r2d, r2d
+    movd        m0, r3m
+
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movh        [r0], m1
+    movhps      [r0 + r2], m1
+    movh        [r0 + r2 * 2], m3
+    lea         r2, [r2 * 3]
+    movhps      [r0 + r2], m3
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal cvt32to16_shl_8, 3,5,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 8/4
+    lea         r4, [r2 * 3]
+
+.loop:
+    ; Row 0-1
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0], m1
+    movu        [r0 + r2], m3
+
+    ; Row 2-3
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0 + r2 * 2], m1
+    movu        [r0 + r4], m3
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 4]
+    dec         r3d
+    jnz        .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal cvt32to16_shl_16, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 16/2
+
+.loop:
+    ; Row 0
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0], m1
+    movu        [r0 + mmsize], m3
+
+    ; Row 1
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0 + r2], m1
+    movu        [r0 + r2 + mmsize], m3
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 2]
+    dec         r3d
+    jnz        .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal cvt32to16_shl_32, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 32/1
+
+.loop:
+    ; Row 0
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0 + 0 * mmsize], m1
+    movu        [r0 + 1 * mmsize], m3
+
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, m0
+    psllw       m3, m0
+    movu        [r0 + 2 * mmsize], m1
+    movu        [r0 + 3 * mmsize], m3
+
+    add         r1, 8 * mmsize
+    add         r0, r2
+    dec         r3d
+    jnz        .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
 ; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4

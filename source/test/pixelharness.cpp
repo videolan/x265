@@ -631,6 +631,34 @@ bool PixelHarness::check_cvt16to32_shr_t(cvt16to32_shr_t ref, cvt16to32_shr_t op
     return true;
 }
 
+bool PixelHarness::check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, int_test_buff[index] + j, stride, shift);
+        ref(ref_dest, int_test_buff[index] + j, stride, shift);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt)
 {
     ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
@@ -1449,6 +1477,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
+
+        if ((i < BLOCK_64x64) && opt.cvt32to16_shl[i])
+        {
+            if (!check_cvt32to16_shl_t(ref.cvt32to16_shl[i], opt.cvt32to16_shl[i]))
+            {
+                printf("cvt32to16_shl failed!\n");
+                return false;
+            }
+        }
     }
 
     if (opt.cvt32to16_shr)
@@ -1816,6 +1853,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("cvt16to32_shr[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cvt16to32_shr[i], ref.cvt16to32_shr[i], ibuf1, sbuf2, STRIDE, 3, 4);
+        }
+
+        if ((i < BLOCK_64x64) && opt.cvt32to16_shl[i])
+        {
+            HEADER("cvt32to16_shl[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cvt32to16_shl[i], ref.cvt32to16_shl[i], sbuf2, ibuf1, STRIDE, 3);
         }
 
         if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
