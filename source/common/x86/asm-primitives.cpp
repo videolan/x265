@@ -1590,6 +1590,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_ADDAVG(_sse4);
         CHROMA_ADDAVG_422(_sse4);
         p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
+        p.cvt16to32_shr[BLOCK_4x4] = x265_cvt16to32_shr_4_sse4;
+        p.cvt16to32_shr[BLOCK_8x8] = x265_cvt16to32_shr_8_sse4;
+        p.cvt16to32_shr[BLOCK_16x16] = x265_cvt16to32_shr_16_sse4;
+        p.cvt16to32_shr[BLOCK_32x32] = x265_cvt16to32_shr_32_sse4;
 
         // TODO: check POPCNT flag!
         p.cvt16to32_cnt[BLOCK_4x4] = x265_cvt16to32_cnt_4_sse4;

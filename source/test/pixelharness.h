@@ -63,6 +63,7 @@ protected:
     bool check_downscale_t(downscale_t ref, downscale_t opt);
     bool check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt);
     bool check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t opt);
+    bool check_cvt16to32_shr_t(cvt16to32_shr_t ref, cvt16to32_shr_t opt);
     bool check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt);
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);

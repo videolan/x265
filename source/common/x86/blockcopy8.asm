@@ -3394,6 +3394,244 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
 
 
 ;--------------------------------------------------------------------------------------
+; void cvt16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_shr_4, 3,3,3
+    add             r2d, r2d
+    movd            m0, r3m
+    movd            m1, r4m
+    pshufd          m1, m1, 0
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride
+    ; m0 - shift
+    ; m1 - dword [offset]
+
+    ; Row 0
+    pmovsxwd        m2, [r1]
+    paddd           m2, m1
+    psrad           m2, m0
+    movu            [r0 + 0 * mmsize], m2
+
+    ; Row 1
+    pmovsxwd        m2, [r1 + r2]
+    paddd           m2, m1
+    psrad           m2, m0
+    movu            [r0 + 1 * mmsize], m2
+
+    ; Row 2
+    lea             r1, [r1 + r2 * 2]
+    pmovsxwd        m2, [r1]
+    paddd           m2, m1
+    psrad           m2, m0
+    movu            [r0 + 2 * mmsize], m2
+
+    ; Row 3
+    pmovsxwd        m2, [r1 + r2]
+    paddd           m2, m1
+    psrad           m2, m0
+    movu            [r0 + 3 * mmsize], m2
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void cvt16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_shr_8, 3,5,3
+    add             r2d, r2d
+    movd            m0, r3m
+    movd            m1, r4m
+    pshufd          m1, m1, 0
+    mov             r3d, 8/4
+    lea             r4, [r2 * 3]
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride
+    ; r3 - loop counter
+    ; r4 - stride * 3
+    ; m0 - shift
+    ; m1 - dword [offset]
+
+.loop:
+    ; Row 0
+    pmovsxwd        m2, [r1]
+    pmovsxwd        m3, [r1 + mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    movu            [r0 + 0 * mmsize], m2
+    movu            [r0 + 1 * mmsize], m3
+
+    ; Row 1
+    pmovsxwd        m2, [r1 + r2]
+    pmovsxwd        m3, [r1 + r2 + mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    movu            [r0 + 2 * mmsize], m2
+    movu            [r0 + 3 * mmsize], m3
+
+    ; Row 2
+    pmovsxwd        m2, [r1 + r2 * 2]
+    pmovsxwd        m3, [r1 + r2 * 2 + mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    movu            [r0 + 4 * mmsize], m2
+    movu            [r0 + 5 * mmsize], m3
+
+    ; Row 3
+    pmovsxwd        m2, [r1 + r4]
+    pmovsxwd        m3, [r1 + r4 + mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    movu            [r0 + 6 * mmsize], m2
+    movu            [r0 + 7 * mmsize], m3
+
+    add             r0, 8 * mmsize
+    lea             r1, [r1 + r2 * 4]
+    dec             r3d
+    jnz            .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void cvt16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_shr_16, 3,4,6
+    add             r2d, r2d
+    movd            m0, r3m
+    movd            m1, r4m
+    pshufd          m1, m1, 0
+    mov             r3d, 16/2
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride
+    ; r3 - loop counter
+    ; m0 - shift
+    ; m1 - dword [offset]
+
+.loop:
+    ; Row 0
+    pmovsxwd        m2, [r1 + 0 * mmsize/2]
+    pmovsxwd        m3, [r1 + 1 * mmsize/2]
+    pmovsxwd        m4, [r1 + 2 * mmsize/2]
+    pmovsxwd        m5, [r1 + 3 * mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    paddd           m4, m1
+    paddd           m5, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    psrad           m4, m0
+    psrad           m5, m0
+    movu            [r0 + 0 * mmsize], m2
+    movu            [r0 + 1 * mmsize], m3
+    movu            [r0 + 2 * mmsize], m4
+    movu            [r0 + 3 * mmsize], m5
+
+    ; Row 1
+    pmovsxwd        m2, [r1 + r2 + 0 * mmsize/2]
+    pmovsxwd        m3, [r1 + r2 +1 * mmsize/2]
+    pmovsxwd        m4, [r1 + r2 +2 * mmsize/2]
+    pmovsxwd        m5, [r1 + r2 +3 * mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    paddd           m4, m1
+    paddd           m5, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    psrad           m4, m0
+    psrad           m5, m0
+    movu            [r0 + 4 * mmsize], m2
+    movu            [r0 + 5 * mmsize], m3
+    movu            [r0 + 6 * mmsize], m4
+    movu            [r0 + 7 * mmsize], m5
+
+    add             r0, 8 * mmsize
+    lea             r1, [r1 + r2 * 2]
+    dec             r3d
+    jnz            .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
+; void cvt16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal cvt16to32_shr_32, 3,4,6
+    add             r2d, r2d
+    movd            m0, r3m
+    movd            m1, r4m
+    pshufd          m1, m1, 0
+    mov             r3d, 32/1
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride
+    ; r3 - loop counter
+    ; m0 - shift
+    ; m1 - dword [offset]
+
+.loop:
+    ; Row 0
+    pmovsxwd        m2, [r1 + 0 * mmsize/2]
+    pmovsxwd        m3, [r1 + 1 * mmsize/2]
+    pmovsxwd        m4, [r1 + 2 * mmsize/2]
+    pmovsxwd        m5, [r1 + 3 * mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    paddd           m4, m1
+    paddd           m5, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    psrad           m4, m0
+    psrad           m5, m0
+    movu            [r0 + 0 * mmsize], m2
+    movu            [r0 + 1 * mmsize], m3
+    movu            [r0 + 2 * mmsize], m4
+    movu            [r0 + 3 * mmsize], m5
+
+    pmovsxwd        m2, [r1 + 4 * mmsize/2]
+    pmovsxwd        m3, [r1 + 5 * mmsize/2]
+    pmovsxwd        m4, [r1 + 6 * mmsize/2]
+    pmovsxwd        m5, [r1 + 7 * mmsize/2]
+    paddd           m2, m1
+    paddd           m3, m1
+    paddd           m4, m1
+    paddd           m5, m1
+    psrad           m2, m0
+    psrad           m3, m0
+    psrad           m4, m0
+    psrad           m5, m0
+    movu            [r0 + 4 * mmsize], m2
+    movu            [r0 + 5 * mmsize], m3
+    movu            [r0 + 6 * mmsize], m4
+    movu            [r0 + 7 * mmsize], m5
+
+    add             r0, 8 * mmsize
+    add             r1, r2
+    dec             r3d
+    jnz            .loop
+    RET
+
+
+;--------------------------------------------------------------------------------------
 ; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4

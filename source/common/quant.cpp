@@ -357,9 +357,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         {
             int shift = -transformShift;
             int offset = (1 << (shift - 1));
-            for (int j = 0; j < trSize; j++)
-                for (int k = 0; k < trSize; k++)
-                    m_resiDctCoeff[j * trSize + k] = (residual[j * stride + k] + offset) >> shift;
+            primitives.cvt16to32_shr[log2TrSize - 2](m_resiDctCoeff, residual, stride, shift, offset);
         }
 #endif
     }

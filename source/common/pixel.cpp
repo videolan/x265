@@ -442,6 +442,18 @@ void convert16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, i
     }
 }
 
+template<int size>
+void convert16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[i * size + j] = ((int)src[i * stride + j] + offset) >> shift;
+        }
+    }
+}
+
 void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, int size)
 {
     int round = 1 << (shift - 1);
@@ -1176,6 +1188,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockfill_s[BLOCK_64x64] = blockfil_s_c<64>;
 
     p.cvt16to32_shl = convert16to32_shl;
+    p.cvt16to32_shr[BLOCK_4x4] = convert16to32_shr<4>;
+    p.cvt16to32_shr[BLOCK_8x8] = convert16to32_shr<8>;
+    p.cvt16to32_shr[BLOCK_16x16] = convert16to32_shr<16>;
+    p.cvt16to32_shr[BLOCK_32x32] = convert16to32_shr<32>;
     p.cvt32to16_shr = convert32to16_shr;
 
     p.sa8d[BLOCK_4x4]   = satd_4x4;
