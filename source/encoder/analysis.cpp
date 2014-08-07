@@ -497,11 +497,6 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     if (outTempCU->m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder->codeCUTransquantBypassFlag(outTempCU, 0);
 
-    if (!outTempCU->m_slice->isIntra())
-    {
-        m_entropyCoder->codeSkipFlag(outTempCU, 0);
-        m_entropyCoder->codePredMode(outTempCU, 0);
-    }
     m_entropyCoder->codePartSize(outTempCU, 0, depth);
     m_entropyCoder->codePredInfo(outTempCU, 0);
     outTempCU->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
