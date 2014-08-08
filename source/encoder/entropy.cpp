@@ -36,7 +36,7 @@ namespace x265 {
 Entropy::Entropy()
     : m_fracBits(0)
 {
-    memset(m_contextModels, 0, sizeof(m_contextModels));
+    memset(m_contextState, 0, sizeof(m_contextState));
 }
 
 void Entropy::codeVPS(VPS* vps)
@@ -840,12 +840,12 @@ uint8_t sbacInit(int qp, int initValue)
     return (uint8_t)state;
 }
 
-static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
+static void initBuffer(uint8_t* contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
 {
     ctxModel += sliceType * size;
 
     for (int n = 0; n < size; n++)
-        contextModel[n].state = sbacInit(qp, ctxModel[n]);
+        contextModel[n] = sbacInit(qp, ctxModel[n]);
 }
 
 void Entropy::resetEntropy(Slice *slice)
@@ -853,32 +853,32 @@ void Entropy::resetEntropy(Slice *slice)
     int  qp              = slice->m_sliceQp;
     SliceType sliceType  = slice->m_sliceType;
 
-    initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
-    initBuffer(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
-    initBuffer(&m_contextModels[OFF_PART_SIZE_CTX], sliceType, qp, (uint8_t*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
-    initBuffer(&m_contextModels[OFF_PRED_MODE_CTX], sliceType, qp, (uint8_t*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
-    initBuffer(&m_contextModels[OFF_ADI_CTX], sliceType, qp, (uint8_t*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
-    initBuffer(&m_contextModels[OFF_CHROMA_PRED_CTX], sliceType, qp, (uint8_t*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
-    initBuffer(&m_contextModels[OFF_DELTA_QP_CTX], sliceType, qp, (uint8_t*)INIT_DQP, NUM_DELTA_QP_CTX);
-    initBuffer(&m_contextModels[OFF_INTER_DIR_CTX], sliceType, qp, (uint8_t*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
-    initBuffer(&m_contextModels[OFF_REF_NO_CTX], sliceType, qp, (uint8_t*)INIT_REF_PIC, NUM_REF_NO_CTX);
-    initBuffer(&m_contextModels[OFF_MV_RES_CTX], sliceType, qp, (uint8_t*)INIT_MVD, NUM_MV_RES_CTX);
-    initBuffer(&m_contextModels[OFF_QT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_CBF, NUM_QT_CBF_CTX);
-    initBuffer(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_QT_ROOT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
-    initBuffer(&m_contextModels[OFF_SIG_CG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SIG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_X], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-    initBuffer(&m_contextModels[OFF_CTX_LAST_FLAG_Y], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-    initBuffer(&m_contextModels[OFF_ONE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_ABS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_MVP_IDX_CTX], sliceType, qp, (uint8_t*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
-    initBuffer(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
-    initBuffer(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
-    initBuffer(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_SKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
+    initBuffer(&m_contextState[OFF_MERGE_IDX_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
+    initBuffer(&m_contextState[OFF_PART_SIZE_CTX], sliceType, qp, (uint8_t*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
+    initBuffer(&m_contextState[OFF_PRED_MODE_CTX], sliceType, qp, (uint8_t*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
+    initBuffer(&m_contextState[OFF_ADI_CTX], sliceType, qp, (uint8_t*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
+    initBuffer(&m_contextState[OFF_CHROMA_PRED_CTX], sliceType, qp, (uint8_t*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
+    initBuffer(&m_contextState[OFF_DELTA_QP_CTX], sliceType, qp, (uint8_t*)INIT_DQP, NUM_DELTA_QP_CTX);
+    initBuffer(&m_contextState[OFF_INTER_DIR_CTX], sliceType, qp, (uint8_t*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
+    initBuffer(&m_contextState[OFF_REF_NO_CTX], sliceType, qp, (uint8_t*)INIT_REF_PIC, NUM_REF_NO_CTX);
+    initBuffer(&m_contextState[OFF_MV_RES_CTX], sliceType, qp, (uint8_t*)INIT_MVD, NUM_MV_RES_CTX);
+    initBuffer(&m_contextState[OFF_QT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_CBF, NUM_QT_CBF_CTX);
+    initBuffer(&m_contextState[OFF_TRANS_SUBDIV_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_QT_ROOT_CBF_CTX], sliceType, qp, (uint8_t*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
+    initBuffer(&m_contextState[OFF_SIG_CG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_SIG_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_CTX_LAST_FLAG_X], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextState[OFF_CTX_LAST_FLAG_Y], sliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
+    initBuffer(&m_contextState[OFF_ONE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_ABS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_MVP_IDX_CTX], sliceType, qp, (uint8_t*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
+    initBuffer(&m_contextState[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
+    initBuffer(&m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
     // new structure
 
     start();
@@ -958,7 +958,7 @@ void Entropy::codePredWeightTable(Slice* slice)
     }
 }
 
-void Entropy::writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol)
+void Entropy::writeUnaryMaxSymbol(uint32_t symbol, uint8_t* scmModel, int offset, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
@@ -1041,7 +1041,7 @@ void  Entropy::loadIntraDirModeLuma(Entropy& src)
 {
     copyState(src);
 
-    ::memcpy(&m_contextModels[OFF_ADI_CTX], &src.m_contextModels[OFF_ADI_CTX], sizeof(ContextModel) * NUM_ADI_CTX);
+    ::memcpy(&m_contextState[OFF_ADI_CTX], &src.m_contextState[OFF_ADI_CTX], sizeof(uint8_t) * NUM_ADI_CTX);
 }
 
 void  Entropy::store(Entropy& dest)
@@ -1053,12 +1053,12 @@ void Entropy::copyFrom(Entropy& src)
 {
     copyState(src);
 
-    memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(ContextModel));
+    memcpy(m_contextState, src.m_contextState, MAX_OFF_CTX_MOD * sizeof(uint8_t));
 }
 
 void Entropy::codeMVPIdx(uint32_t symbol)
 {
-    encodeBin(symbol, m_contextModels[OFF_MVP_IDX_CTX]);
+    encodeBin(symbol, m_contextState[OFF_MVP_IDX_CTX]);
 }
 
 void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
@@ -1068,24 +1068,24 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     if (cu->isIntra(absPartIdx))
     {
         if (depth == g_maxCUDepth - g_addCUDepth)
-            encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX]);
+            encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX]);
         return;
     }
 
     switch (partSize)
     {
     case SIZE_2Nx2N:
-        encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX]);
+        encodeBin(1, m_contextState[OFF_PART_SIZE_CTX]);
         break;
 
     case SIZE_2NxN:
     case SIZE_2NxnU:
     case SIZE_2NxnD:
-        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
+        encodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 1]);
         if (cu->m_slice->m_sps->maxAMPDepth > depth)
         {
-            encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            encodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_2NxN)
                 encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
         }
@@ -1094,13 +1094,13 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_Nx2N:
     case SIZE_nLx2N:
     case SIZE_nRx2N:
-        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-        encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
+        encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
+        encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
-            encodeBin(1, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            encodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
         if (cu->m_slice->m_sps->maxAMPDepth > depth)
         {
-            encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextModels[OFF_PART_SIZE_CTX + 3]);
+            encodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX + 3]);
             if (partSize != SIZE_Nx2N)
                 encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
         }
@@ -1109,9 +1109,9 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_NxN:
         if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
         {
-            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 0]);
-            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 1]);
-            encodeBin(0, m_contextModels[OFF_PART_SIZE_CTX + 2]);
+            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
+            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
+            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 2]);
         }
         break;
 
@@ -1125,13 +1125,13 @@ void Entropy::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
 {
     // get context function is here
     int predMode = cu->getPredictionMode(absPartIdx);
-    encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextModels[OFF_PRED_MODE_CTX]);
+    encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextState[OFF_PRED_MODE_CTX]);
 }
 
 void Entropy::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
-    encodeBin(symbol, m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
+    encodeBin(symbol, m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
 void Entropy::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
@@ -1140,14 +1140,14 @@ void Entropy::codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t symbol = cu->isSkipped(absPartIdx) ? 1 : 0;
     uint32_t ctxSkip = cu->getCtxSkipFlag(absPartIdx);
 
-    encodeBin(symbol, m_contextModels[OFF_SKIP_FLAG_CTX + ctxSkip]);
+    encodeBin(symbol, m_contextState[OFF_SKIP_FLAG_CTX + ctxSkip]);
 }
 
 void Entropy::codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu->getMergeFlag(absPartIdx) ? 1 : 0;
 
-    encodeBin(symbol, m_contextModels[OFF_MERGE_FLAG_EXT_CTX]);
+    encodeBin(symbol, m_contextState[OFF_MERGE_FLAG_EXT_CTX]);
 }
 
 void Entropy::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
@@ -1157,7 +1157,7 @@ void Entropy::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
     if (numCand > 1)
     {
         uint32_t unaryIdx = cu->getMergeIndex(absPartIdx);
-        encodeBin((unaryIdx != 0), m_contextModels[OFF_MERGE_IDX_EXT_CTX]);
+        encodeBin((unaryIdx != 0), m_contextState[OFF_MERGE_IDX_EXT_CTX]);
 
         X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
 
@@ -1179,12 +1179,12 @@ void Entropy::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
-    encodeBin(currSplitFlag, m_contextModels[OFF_SPLIT_FLAG_CTX + ctx]);
+    encodeBin(currSplitFlag, m_contextState[OFF_SPLIT_FLAG_CTX + ctx]);
 }
 
 void Entropy::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 {
-    encodeBin(symbol, m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
+    encodeBin(symbol, m_contextState[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
 }
 
 void Entropy::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple)
@@ -1205,7 +1205,7 @@ void Entropy::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMu
             if (dir[j] == preds[j][i])
                 predIdx[j] = i;
 
-        encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextModels[OFF_ADI_CTX]);
+        encodeBin((predIdx[j] != -1) ? 1 : 0, m_contextState[OFF_ADI_CTX]);
     }
 
     for (j = 0; j < partNum; j++)
@@ -1245,7 +1245,7 @@ void Entropy::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t intraDirChroma = cu->getChromaIntraDir(absPartIdx);
 
     if (intraDirChroma == DM_CHROMA_IDX)
-        encodeBin(0, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        encodeBin(0, m_contextState[OFF_CHROMA_PRED_CTX]);
     else
     {
         uint32_t allowedChromaDir[NUM_CHROMA_MODE];
@@ -1260,7 +1260,7 @@ void Entropy::codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx)
             }
         }
 
-        encodeBin(1, m_contextModels[OFF_CHROMA_PRED_CTX]);
+        encodeBin(1, m_contextState[OFF_CHROMA_PRED_CTX]);
         encodeBinsEP(intraDirChroma, 2);
     }
 }
@@ -1271,16 +1271,16 @@ void Entropy::codeInterDir(TComDataCU* cu, uint32_t absPartIdx)
     const uint32_t ctx      = cu->getCtxInterDir(absPartIdx);
 
     if (cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N || cu->getLog2CUSize(absPartIdx) != 3)
-        encodeBin(interDir == 2 ? 1 : 0, m_contextModels[OFF_INTER_DIR_CTX + ctx]);
+        encodeBin(interDir == 2 ? 1 : 0, m_contextState[OFF_INTER_DIR_CTX + ctx]);
     if (interDir < 2)
-        encodeBin(interDir, m_contextModels[OFF_INTER_DIR_CTX + 4]);
+        encodeBin(interDir, m_contextState[OFF_INTER_DIR_CTX + 4]);
 }
 
 void Entropy::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
 {
     uint32_t refFrame = cu->getCUMvField(list)->getRefIdx(absPartIdx);
 
-    encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX]);
+    encodeBin(refFrame > 0, m_contextState[OFF_REF_NO_CTX]);
 
     if (refFrame > 0)
     {
@@ -1289,7 +1289,7 @@ void Entropy::codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list)
             return;
 
         refFrame--;
-        encodeBin(refFrame > 0, m_contextModels[OFF_REF_NO_CTX + 1]);
+        encodeBin(refFrame > 0, m_contextState[OFF_REF_NO_CTX + 1]);
         if (refFrame > 0)
         {
             uint32_t mask = (1 << refFrame) - 2;
@@ -1305,8 +1305,8 @@ void Entropy::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     const int hor = cuMvField->getMvd(absPartIdx).x;
     const int ver = cuMvField->getMvd(absPartIdx).y;
 
-    encodeBin(hor != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
-    encodeBin(ver != 0 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX]);
+    encodeBin(hor != 0 ? 1 : 0, m_contextState[OFF_MV_RES_CTX]);
+    encodeBin(ver != 0 ? 1 : 0, m_contextState[OFF_MV_RES_CTX]);
 
     const bool bHorAbsGr0 = hor != 0;
     const bool bVerAbsGr0 = ver != 0;
@@ -1314,10 +1314,10 @@ void Entropy::codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list)
     const uint32_t verAbs   = 0 > ver ? -ver : ver;
 
     if (bHorAbsGr0)
-        encodeBin(horAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        encodeBin(horAbs > 1 ? 1 : 0, m_contextState[OFF_MV_RES_CTX + 1]);
 
     if (bVerAbsGr0)
-        encodeBin(verAbs > 1 ? 1 : 0, m_contextModels[OFF_MV_RES_CTX + 1]);
+        encodeBin(verAbs > 1 ? 1 : 0, m_contextState[OFF_MV_RES_CTX + 1]);
 
     if (bHorAbsGr0)
     {
@@ -1346,7 +1346,7 @@ void Entropy::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 
     uint32_t absDQp = (uint32_t)((dqp > 0) ? dqp  : (-dqp));
     uint32_t TUValue = X265_MIN((int)absDQp, CU_DQP_TU_CMAX);
-    writeUnaryMaxSymbol(TUValue, &m_contextModels[OFF_DELTA_QP_CTX], 1, CU_DQP_TU_CMAX);
+    writeUnaryMaxSymbol(TUValue, &m_contextState[OFF_DELTA_QP_CTX], 1, CU_DQP_TU_CMAX);
     if (absDQp >= CU_DQP_TU_CMAX)
         writeEpExGolomb(absDQp - CU_DQP_TU_CMAX, CU_DQP_EG_k);
 
@@ -1375,14 +1375,14 @@ void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdx
             uint32_t subTUAbsPartIdx = absPartIdx + (subTU * partIdxesPerSubTU);
             uint32_t cbf = cu->getCbf(subTUAbsPartIdx, ttype, subTUDepth);
 
-            encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+            encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
         }
     }
     else
     {
         uint32_t cbf = cu->getCbf(absPartIdx, ttype, lowestTUDepth);
 
-        encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+        encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
     }
 }
 
@@ -1390,7 +1390,7 @@ void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uin
 {
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
-    encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
 void Entropy::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
@@ -1401,7 +1401,7 @@ void Entropy::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32
         return;
 
     uint32_t useTransformSkip = cu->getTransformSkip(absPartIdx, ttype);
-    encodeBin(useTransformSkip, m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
+    encodeBin(useTransformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
 }
 
 void Entropy::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
@@ -1409,7 +1409,7 @@ void Entropy::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     uint32_t cbf = cu->getQtRootCbf(absPartIdx);
     uint32_t ctx = 0;
 
-    encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 void Entropy::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
@@ -1419,7 +1419,7 @@ void Entropy::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
     uint32_t cbf = 0;
     uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
 
-    encodeBin(cbf, m_contextModels[OFF_QT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
 void Entropy::codeQtRootCbfZero(TComDataCU*)
@@ -1429,7 +1429,7 @@ void Entropy::codeQtRootCbfZero(TComDataCU*)
     uint32_t cbf = 0;
     uint32_t ctx = 0;
 
-    encodeBin(cbf, m_contextModels[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
@@ -1455,7 +1455,7 @@ void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2T
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
     // posX
-    ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
+    uint8_t *ctxX = &m_contextState[OFF_CTX_LAST_FLAG_X];
     for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
         encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
 
@@ -1463,7 +1463,7 @@ void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2T
         encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
 
     // posY
-    ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
+    uint8_t *ctxY = &m_contextState[OFF_CTX_LAST_FLAG_Y];
     for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
         encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
 
@@ -1538,8 +1538,8 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     int posLastX = posLast & (trSize - 1);
     codeLastSignificantXY(posLastX, posLastY, log2TrSize, bIsLuma, codingParameters.scanType);
     //===== code significance flag =====
-    ContextModel * const baseCoeffGroupCtx = &m_contextModels[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
-    ContextModel * const baseCtx = bIsLuma ? &m_contextModels[OFF_SIG_FLAG_CTX] : &m_contextModels[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    uint8_t * const baseCoeffGroupCtx = &m_contextState[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
+    uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
     uint32_t c1 = 1;
     uint32_t goRiceParam = 0;
@@ -1615,7 +1615,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 ctxSet++;
 
             c1 = 1;
-            ContextModel *baseCtxMod = bIsLuma ? &m_contextModels[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
+            uint8_t *baseCtxMod = bIsLuma ? &m_contextState[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextState[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
 
             int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             int firstC2FlagIdx = -1;
@@ -1636,7 +1636,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 
             if (!c1)
             {
-                baseCtxMod = bIsLuma ? &m_contextModels[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
+                baseCtxMod = bIsLuma ? &m_contextState[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextState[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
                 if (firstC2FlagIdx != -1)
                 {
                     uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
@@ -1691,7 +1691,7 @@ void Entropy::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 /** Code SAO type index */
 void Entropy::codeSaoTypeIdx(uint32_t code)
 {
-    encodeBin((code == 0) ? 0 : 1, m_contextModels[OFF_SAO_TYPE_IDX_CTX]);
+    encodeBin((code == 0) ? 0 : 1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
     if (code)
         encodeBinEP(code <= 4 ? 1 : 0);
 }
@@ -1713,20 +1713,20 @@ void Entropy::estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType tty
 /* estimate bit cost for each CBP bit */
 void Entropy::estCBFBit(EstBitsSbac& estBitsSbac)
 {
-    ContextModel *ctx = &m_contextModels[OFF_QT_CBF_CTX];
+    uint8_t *ctx = &m_contextState[OFF_QT_CBF_CTX];
 
     for (uint32_t ctxInc = 0; ctxInc < NUM_QT_CBF_CTX; ctxInc++)
     {
-        estBitsSbac.blockCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].state, 0);
-        estBitsSbac.blockCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].state, 1);
+        estBitsSbac.blockCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc], 0);
+        estBitsSbac.blockCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc], 1);
     }
 
-    ctx = &m_contextModels[OFF_QT_ROOT_CBF_CTX];
+    ctx = &m_contextState[OFF_QT_ROOT_CBF_CTX];
 
     for (uint32_t ctxInc = 0; ctxInc < NUM_QT_ROOT_CBF_CTX; ctxInc++)
     {
-        estBitsSbac.blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc].state, 0);
-        estBitsSbac.blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc].state, 1);
+        estBitsSbac.blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc], 0);
+        estBitsSbac.blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc], 1);
     }
 }
 
@@ -1738,7 +1738,7 @@ void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType 
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)].state, bin);
+            estBitsSbac.significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)], bin);
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
@@ -1760,20 +1760,20 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
     if (ttype == TEXT_LUMA)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX].state, bin);
+            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX], bin);
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
             for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + ctxIdx].state, bin);
+                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + ctxIdx], bin);
     }
     else
     {
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)].state, bin);
+            estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)], bin);
 
         for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
             for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextModels[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)].state, bin);
+                estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)], bin);
     }
     int bitsX = 0, bitsY = 0;
 
@@ -1783,22 +1783,22 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
 
     X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     uint32_t ctx;
-    const ContextModel *ctxX = &m_contextModels[OFF_CTX_LAST_FLAG_X];
+    const uint8_t *ctxX = &m_contextState[OFF_CTX_LAST_FLAG_X];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)
     {
         int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac.lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset].state, 0);
-        bitsX += sbacGetEntropyBits(ctxX[ctxOffset].state, 1);
+        estBitsSbac.lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset], 0);
+        bitsX += sbacGetEntropyBits(ctxX[ctxOffset], 1);
     }
 
     estBitsSbac.lastXBits[ctx] = bitsX;
 
-    const ContextModel *ctxY = &m_contextModels[OFF_CTX_LAST_FLAG_Y];
+    const uint8_t *ctxY = &m_contextState[OFF_CTX_LAST_FLAG_Y];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)
     {
         int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac.lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset].state, 0);
-        bitsY += sbacGetEntropyBits(ctxY[ctxOffset].state, 1);
+        estBitsSbac.lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset], 0);
+        bitsY += sbacGetEntropyBits(ctxY[ctxOffset], 1);
     }
 
     estBitsSbac.lastYBits[ctx] = bitsY;
@@ -1809,36 +1809,36 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType t
 {
     if (ttype == TEXT_LUMA)
     {
-        ContextModel *ctxOne = &m_contextModels[OFF_ONE_FLAG_CTX];
-        ContextModel *ctxAbs = &m_contextModels[OFF_ABS_FLAG_CTX];
+        uint8_t *ctxOne = &m_contextState[OFF_ONE_FLAG_CTX];
+        uint8_t *ctxAbs = &m_contextState[OFF_ABS_FLAG_CTX];
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].state, 0);
-            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].state, 1);
+            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx], 0);
+            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx], 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_LUMA; ctxIdx++)
         {
-            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].state, 0);
-            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].state, 1);
+            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx], 0);
+            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx], 1);
         }
     }
     else
     {
-        ContextModel *ctxOne = &m_contextModels[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA];
-        ContextModel *ctxAbs = &m_contextModels[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA];
+        uint8_t *ctxOne = &m_contextState[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA];
+        uint8_t *ctxAbs = &m_contextState[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA];
 
         for (int ctxIdx = 0; ctxIdx < NUM_ONE_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx].state, 0);
-            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx].state, 1);
+            estBitsSbac.greaterOneBits[ctxIdx][0] = sbacGetEntropyBits(ctxOne[ctxIdx], 0);
+            estBitsSbac.greaterOneBits[ctxIdx][1] = sbacGetEntropyBits(ctxOne[ctxIdx], 1);
         }
 
         for (int ctxIdx = 0; ctxIdx < NUM_ABS_FLAG_CTX_CHROMA; ctxIdx++)
         {
-            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx].state, 0);
-            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx].state, 1);
+            estBitsSbac.levelAbsBits[ctxIdx][0] = sbacGetEntropyBits(ctxAbs[ctxIdx], 0);
+            estBitsSbac.levelAbsBits[ctxIdx][1] = sbacGetEntropyBits(ctxAbs[ctxIdx], 1);
         }
     }
 }
@@ -1846,7 +1846,7 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType t
 /* Initialize our context information from the nominated source */
 void Entropy::copyContextsFrom(Entropy& src)
 {
-    memcpy(m_contextModels, src.m_contextModels, MAX_OFF_CTX_MOD * sizeof(m_contextModels[0]));
+    memcpy(m_contextState, src.m_contextState, MAX_OFF_CTX_MOD * sizeof(m_contextState[0]));
 }
 
 void Entropy::start()
@@ -1907,11 +1907,11 @@ void Entropy::resetBits()
 }
 
 /** Encode bin */
-void Entropy::encodeBin(uint32_t binValue, ContextModel &ctxModel)
+void Entropy::encodeBin(uint32_t binValue, uint8_t &ctxModel)
 {
-    uint32_t mstate = ctxModel.state;
+    uint32_t mstate = ctxModel;
 
-    ctxModel.state = sbacNext(mstate, binValue);
+    ctxModel = sbacNext(mstate, binValue);
 
     if (!m_bitIf)
     {

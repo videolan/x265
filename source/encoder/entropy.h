@@ -90,7 +90,7 @@ class Entropy : public SyntaxElementWriter
 public:
 
     uint64_t      m_pad;
-    ContextModel  m_contextModels[MAX_OFF_CTX_MOD];
+    uint8_t       m_contextState[MAX_OFF_CTX_MOD];
 
     /* CABAC state */
     uint32_t      m_low;
@@ -136,7 +136,7 @@ public:
 
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
-    void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextModels[OFF_SAO_MERGE_FLAG_CTX]); }
+    void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
     void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
@@ -174,7 +174,7 @@ private:
     void finish();
     void copyState(Entropy& other);
 
-    void encodeBin(uint32_t binValue, ContextModel& ctxModel);
+    void encodeBin(uint32_t binValue, uint8_t& ctxModel);
     void encodeBinEP(uint32_t binValue);
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
@@ -182,7 +182,7 @@ private:
     void writeOut();
 
     /* SBac private methods */
-    void writeUnaryMaxSymbol(uint32_t symbol, ContextModel* scmModel, int offset, uint32_t maxSymbol);
+    void writeUnaryMaxSymbol(uint32_t symbol, uint8_t* scmModel, int offset, uint32_t maxSymbol);
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 

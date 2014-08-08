@@ -127,11 +127,6 @@
 namespace x265 {
 // private namespace
 
-struct ContextModel
-{
-    uint8_t state;
-};
-
 extern const uint32_t g_entropyBits[128];
 extern const uint8_t g_nextState[128][2];
 
