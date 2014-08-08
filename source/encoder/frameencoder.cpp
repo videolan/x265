@@ -191,6 +191,8 @@ void FrameEncoder::compressFrame()
     {
         m_outStreams = new Bitstream[numSubstreams];
         m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
+        for (uint32_t i = 0; i < numSubstreams; i++)
+            m_rows[i].m_rowEntropyCoder.setBitstream(&m_outStreams[i]);
     }
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
@@ -420,12 +422,6 @@ void FrameEncoder::encodeSlice()
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
     SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
 
-    for (int i = 0; i < numSubstreams; i++)
-    {
-        m_rows[i].m_rowEntropyCoder.resetEntropy(slice);
-        m_rows[i].m_rowEntropyCoder.setBitstream(&m_outStreams[i]);
-    }
-
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
@@ -515,7 +511,7 @@ void FrameEncoder::compressCTURows()
     {
         m_rows[i].init(slice);
         m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].load(m_entropyCoder);
-        m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].zeroFract();
+        m_rows[i].m_rowEntropyCoder.load(m_entropyCoder);
         m_rows[i].m_completed = 0;
         m_rows[i].m_busy = false;
     }
