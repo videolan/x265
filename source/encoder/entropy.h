@@ -90,7 +90,7 @@ class Entropy : public SyntaxElementWriter
 public:
 
     uint64_t      m_pad;
-    uint8_t       m_contextState[MAX_OFF_CTX_MOD];
+    uint8_t       m_contextState[160]; // MAX_OFF_CTX_MOD + padding
 
     /* CABAC state */
     uint32_t      m_low;

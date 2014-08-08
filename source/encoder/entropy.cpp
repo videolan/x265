@@ -36,6 +36,7 @@ namespace x265 {
 Entropy::Entropy()
     : m_fracBits(0)
 {
+    X265_CHECK(sizeof(m_contextState) >= sizeof(m_contextState[0]) * MAX_OFF_CTX_MOD, "context state table is too small\n");
     memset(m_contextState, 0, sizeof(m_contextState));
 }
 
