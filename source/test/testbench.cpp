@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
+        memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -214,6 +215,11 @@ int main(int argc, char *argv[])
     Setup_Instrinsic_Primitives(optprim, cpuid);
     Setup_Assembly_Primitives(optprim, cpuid);
     Setup_Alias_Primitives(optprim);
+
+    /* some hybrid primitives may rely on other primitives in the
+     * global primitive table, so set up those pointers. This is a
+     * bit ugly, but I don't see a better solution */
+    memcpy(&primitives, &optprim, sizeof(EncoderPrimitives));
 
     printf("\nTest performance improvement with full optimizations\n");
 
