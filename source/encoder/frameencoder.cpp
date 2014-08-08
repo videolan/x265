@@ -507,7 +507,7 @@ void FrameEncoder::compressCTURows()
 
     // reset entropy coders
     m_entropyCoder.resetEntropy(slice);
-    for (int i = 0; i < this->m_numRows; i++)
+    for (int i = 0; i < m_numRows; i++)
     {
         m_rows[i].init(slice);
         m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].load(m_entropyCoder);
