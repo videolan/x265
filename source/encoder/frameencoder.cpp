@@ -483,14 +483,6 @@ void FrameEncoder::encodeSlice()
         m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
     }
 
-    // when frame parallelism is disabled, we can tweak the initial CABAC state of P and B frames
-    if (slice->m_pps->bCabacInitPresent)
-    {
-        X265_CHECK(m_param->frameNumThreads == 1, "bCabacInitPresent enabled with frame parallelism\n");
-        // we pass m_top's m_pps instance because this function will modify it
-        m_entropyCoder.determineCabacInitIdx(slice, &m_top->m_pps);
-    }
-
     // flush lines
     for (int i = 0; i < numSubstreams; i++)
     {

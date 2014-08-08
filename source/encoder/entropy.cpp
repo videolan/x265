@@ -134,7 +134,7 @@ void Entropy::codePPS(PPS* pps)
     WRITE_FLAG(0,                          "output_flag_present_flag");
     WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
     WRITE_FLAG(pps->bSignHideEnabled,      "sign_data_hiding_flag");
-    WRITE_FLAG(pps->bCabacInitPresent,     "cabac_init_present_flag");
+    WRITE_FLAG(0,                          "cabac_init_present_flag");
     WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
     WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
 
@@ -411,14 +411,6 @@ void Entropy::codeSliceHeader(Slice* slice)
 
     if (slice->isInterB())
         WRITE_FLAG(0, "mvd_l1_zero_flag");
-
-    if (!slice->isIntra() && slice->m_pps->bCabacInitPresent)
-    {
-        SliceType sliceType   = slice->m_sliceType;
-        int  encCABACTableIdx = slice->m_pps->encCABACTableIdx;
-        bool encCabacInitFlag = (sliceType != encCABACTableIdx && encCABACTableIdx != I_SLICE) ? true : false;
-        WRITE_FLAG(encCabacInitFlag, "cabac_init_flag");
-    }
 
     // TMVP always enabled
     {
@@ -908,11 +900,6 @@ void Entropy::resetEntropy(Slice *slice)
     int  qp              = slice->m_sliceQp;
     SliceType sliceType  = slice->m_sliceType;
 
-    int encCABACTableIdx = slice->m_pps->encCABACTableIdx;
-
-    if (!slice->isIntra() && (encCABACTableIdx == B_SLICE || encCABACTableIdx == P_SLICE) && slice->m_pps->bCabacInitPresent)
-        sliceType = (SliceType)encCABACTableIdx;
-
     initBuffer(&m_contextModels[OFF_SPLIT_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
     initBuffer(&m_contextModels[OFF_SKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
     initBuffer(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], sliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
@@ -942,66 +929,6 @@ void Entropy::resetEntropy(Slice *slice)
     // new structure
 
     start();
-}
-
-/* If current slice type is P/B then it determines the distance of
- * initialization type 1 and 2 from the current CABAC states and stores the
- * index of the closest table.  This index is used for the next P/B slice when
- * cabac_init_present_flag is true.
- */
-void Entropy::determineCabacInitIdx(Slice *slice, PPS *pps)
-{
-    int qp = slice->m_sliceQp;
-
-    if (!slice->isIntra())
-    {
-        SliceType aSliceTypeChoices[] = { B_SLICE, P_SLICE };
-
-        uint32_t bestCost       = MAX_UINT;
-        SliceType bestSliceType = aSliceTypeChoices[0];
-        for (uint32_t idx = 0; idx < 2; idx++)
-        {
-            uint32_t curCost = 0;
-            SliceType curSliceType = aSliceTypeChoices[idx];
-
-            x265_emms();
-            curCost  = calcCost(&m_contextModels[OFF_SPLIT_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SPLIT_FLAG, NUM_SPLIT_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SKIP_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SKIP_FLAG, NUM_SKIP_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MERGE_FLAG_EXT_CTX], curSliceType, qp, (uint8_t*)INIT_MERGE_FLAG_EXT, NUM_MERGE_FLAG_EXT_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MERGE_IDX_EXT_CTX], curSliceType, qp, (uint8_t*)INIT_MERGE_IDX_EXT, NUM_MERGE_IDX_EXT_CTX);
-            curCost += calcCost(&m_contextModels[OFF_PART_SIZE_CTX], curSliceType, qp, (uint8_t*)INIT_PART_SIZE, NUM_PART_SIZE_CTX);
-            curCost += calcCost(&m_contextModels[OFF_PRED_MODE_CTX], curSliceType, qp, (uint8_t*)INIT_PRED_MODE, NUM_PRED_MODE_CTX);
-            curCost += calcCost(&m_contextModels[OFF_ADI_CTX], curSliceType, qp, (uint8_t*)INIT_INTRA_PRED_MODE, NUM_ADI_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CHROMA_PRED_CTX], curSliceType, qp, (uint8_t*)INIT_CHROMA_PRED_MODE, NUM_CHROMA_PRED_CTX);
-            curCost += calcCost(&m_contextModels[OFF_DELTA_QP_CTX], curSliceType, qp, (uint8_t*)INIT_DQP, NUM_DELTA_QP_CTX);
-            curCost += calcCost(&m_contextModels[OFF_INTER_DIR_CTX], curSliceType, qp, (uint8_t*)INIT_INTER_DIR, NUM_INTER_DIR_CTX);
-            curCost += calcCost(&m_contextModels[OFF_REF_NO_CTX], curSliceType, qp, (uint8_t*)INIT_REF_PIC, NUM_REF_NO_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MV_RES_CTX], curSliceType, qp, (uint8_t*)INIT_MVD, NUM_MV_RES_CTX);
-            curCost += calcCost(&m_contextModels[OFF_QT_CBF_CTX], curSliceType, qp, (uint8_t*)INIT_QT_CBF, NUM_QT_CBF_CTX);
-            curCost += calcCost(&m_contextModels[OFF_TRANS_SUBDIV_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_TRANS_SUBDIV_FLAG, NUM_TRANS_SUBDIV_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_QT_ROOT_CBF_CTX], curSliceType, qp, (uint8_t*)INIT_QT_ROOT_CBF, NUM_QT_ROOT_CBF_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SIG_CG_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SIG_CG_FLAG, 2 * NUM_SIG_CG_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SIG_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SIG_FLAG, NUM_SIG_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_X], curSliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-            curCost += calcCost(&m_contextModels[OFF_CTX_LAST_FLAG_Y], curSliceType, qp, (uint8_t*)INIT_LAST, NUM_CTX_LAST_FLAG_XY);
-            curCost += calcCost(&m_contextModels[OFF_ONE_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_ONE_FLAG, NUM_ONE_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_ABS_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_ABS_FLAG, NUM_ABS_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_MVP_IDX_CTX], curSliceType, qp, (uint8_t*)INIT_MVP_IDX, NUM_MVP_IDX_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SAO_MERGE_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_SAO_TYPE_IDX_CTX], curSliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
-            curCost += calcCost(&m_contextModels[OFF_TRANSFORMSKIP_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
-            curCost += calcCost(&m_contextModels[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], curSliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
-            if (curCost < bestCost)
-            {
-                bestSliceType = curSliceType;
-                bestCost      = curCost;
-            }
-        }
-
-        pps->encCABACTableIdx = bestSliceType;
-    }
-    else
-        pps->encCABACTableIdx = I_SLICE;
 }
 
 /* code explicit wp tables */

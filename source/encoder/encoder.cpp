@@ -1196,10 +1196,7 @@ void Encoder::initPPS(PPS *pps)
     pps->deblockingFilterBetaOffsetDiv2 = 0;
     pps->deblockingFilterTcOffsetDiv2 = 0;
 
-    // options affected by parallelization
     pps->bEntropyCodingSyncEnabled = m_param->bEnableWavefront;
-    pps->bCabacInitPresent = m_param->frameNumThreads == 1; // only deterministic with one frame thread
-    pps->encCABACTableIdx = I_SLICE;
 }
 
 void Encoder::configure(x265_param *p)

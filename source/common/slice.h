@@ -234,9 +234,6 @@ struct PPS
     bool     bEntropyCodingSyncEnabled; // use param
     bool     bSignHideEnabled;          // use param
 
-    bool     bCabacInitPresent;
-    uint32_t encCABACTableIdx;          // Used to transmit table selection across slices
-
     bool     bDeblockingFilterControlPresent;
     bool     bPicDisableDeblockingFilter;
     int      deblockingFilterBetaOffsetDiv2;

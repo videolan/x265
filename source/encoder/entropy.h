@@ -133,7 +133,6 @@ public:
     void codeShortTermRefPicSet(RPS* rps);
     void codeSliceFinish()                   { finish(); }
     void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }
-    void determineCabacInitIdx(Slice *slice, PPS *pps);
 
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
