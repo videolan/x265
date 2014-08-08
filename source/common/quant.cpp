@@ -342,24 +342,26 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
     bool isIntra = cu->getPredictionMode(absPartIdx) == MODE_INTRA;
+    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int trSize = 1 << log2TrSize;
 
     X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
     {
-        int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
-
-        if (shift >= 0)
-            primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, shift, trSize);
+#if X265_DEPTH <= 10
+        primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+#else
+        if (transformShift >= 0)
+            primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
         else
         {
-            /* X265_DEPTH > 13 */
-            shift = -shift;
+            int shift = -transformShift;
             int offset = (1 << (shift - 1));
             for (int j = 0; j < trSize; j++)
                 for (int k = 0; k < trSize; k++)
                     m_resiDctCoeff[j * trSize + k] = (residual[j * stride + k] + offset) >> shift;
         }
+#endif
     }
     else
     {
@@ -398,7 +400,6 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         int per = m_qpParam[ttype].per;
         int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
-        int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
         int qbits = QUANT_SHIFT + per + transformShift;
         int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
         int numCoeff = 1 << log2TrSize * 2;
@@ -451,16 +452,18 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         int trSize = 1 << log2TrSize;
         shift = transformShift;
 
-        if (shift > 0)
+#if X265_DEPTH <= 10
+        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
+#else
+        if (shift >= 0)
             primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
-        else
         {
-            // The case when X265_DEPTH >= 13
             shift = -shift;
             for (int j = 0; j < trSize; j++)
                 for (int k = 0; k < trSize; k++)
                     residual[j * stride + k] = (int16_t)m_resiDctCoeff[j * trSize + k] << shift;
         }
+#endif
     }
     else
     {
