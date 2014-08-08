@@ -845,54 +845,7 @@ static void initBuffer(ContextModel* contextModel, SliceType sliceType, int qp, 
     ctxModel += sliceType * size;
 
     for (int n = 0; n < size; n++)
-    {
         contextModel[n].state = sbacInit(qp, ctxModel[n]);
-        contextModel[n].bBinsCoded = 0;
-    }
-}
-
-static uint32_t calcCost(ContextModel *contextModel, SliceType sliceType, int qp, uint8_t* ctxModel, int size)
-{
-    // Map the 64 CABAC states to their corresponding probability values
-    static const double stateToProbLPS[] =
-    {
-        0.50000000, 0.47460857, 0.45050660, 0.42762859, 0.40591239, 0.38529900, 0.36573242, 0.34715948,
-        0.32952974, 0.31279528, 0.29691064, 0.28183267, 0.26752040, 0.25393496, 0.24103941, 0.22879875,
-        0.21717969, 0.20615069, 0.19568177, 0.18574449, 0.17631186, 0.16735824, 0.15885931, 0.15079198,
-        0.14313433, 0.13586556, 0.12896592, 0.12241667, 0.11620000, 0.11029903, 0.10469773, 0.09938088,
-        0.09433404, 0.08954349, 0.08499621, 0.08067986, 0.07658271, 0.07269362, 0.06900203, 0.06549791,
-        0.06217174, 0.05901448, 0.05601756, 0.05317283, 0.05047256, 0.04790942, 0.04547644, 0.04316702,
-        0.04097487, 0.03889405, 0.03691890, 0.03504406, 0.03326442, 0.03157516, 0.02997168, 0.02844963,
-        0.02700488, 0.02563349, 0.02433175, 0.02309612, 0.02192323, 0.02080991, 0.01975312, 0.01875000
-    };
-
-    uint32_t cost = 0;
-
-    ctxModel += sliceType * size;
-
-    for (int n = 0; n < size; n++)
-    {
-        ContextModel tmpContextModel;
-        tmpContextModel.state = sbacInit(qp, ctxModel[n]);
-
-        double probLPS = stateToProbLPS[sbacGetState(contextModel[n].state)];
-        double prob0, prob1;
-        if (sbacGetMps(contextModel[n].state) == 1)
-        {
-            prob0 = probLPS;
-            prob1 = 1.0 - prob0;
-        }
-        else
-        {
-            prob1 = probLPS;
-            prob0 = 1.0 - prob1;
-        }
-
-        if (contextModel[n].bBinsCoded > 0)
-            cost += (uint32_t)(prob0 * sbacGetEntropyBits(tmpContextModel.state, 0) + prob1 * sbacGetEntropyBits(tmpContextModel.state, 1));
-    }
-
-    return cost;
 }
 
 void Entropy::resetEntropy(Slice *slice)
@@ -1965,7 +1918,6 @@ void Entropy::encodeBin(uint32_t binValue, ContextModel &ctxModel)
         m_fracBits += sbacGetEntropyBits(mstate, binValue);
         return;
     }
-    ctxModel.bBinsCoded = 1;
 
     uint32_t range = m_range;
     uint32_t state = sbacGetState(mstate);
