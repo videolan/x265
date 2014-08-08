@@ -384,7 +384,8 @@ uint32_t Quant::transformNxN(TComDataCU* cu,
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
             int cat = sizeIdx + 4 * !isLuma;
-            denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], trSize << 1);
+            int numCoeff = 1 << log2TrSize * 2;
+            denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
             m_nr->count[cat]++;
         }
     }
