@@ -1493,11 +1493,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 
     X265_CHECK(numSig > 0, "cbf check fail\n");
 
-    bool beValid;
-    if (cu->getCUTransquantBypass(absPartIdx))
-        beValid = false;
-    else
-        beValid = cu->m_slice->m_pps->bSignHideEnabled;
+    bool bHideFirstSign = cu->m_slice->m_pps->bSignHideEnabled && !cu->getCUTransquantBypass(absPartIdx);
 
     if (cu->m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
@@ -1537,6 +1533,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
     int posLastY = posLast >> log2TrSize;
     int posLastX = posLast & (trSize - 1);
     codeLastSignificantXY(posLastX, posLastY, log2TrSize, bIsLuma, codingParameters.scanType);
+
     //===== code significance flag =====
     uint8_t * const baseCoeffGroupCtx = &m_contextState[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
@@ -1644,7 +1641,7 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
                 }
             }
 
-            if (beValid && signHidden)
+            if (bHideFirstSign && signHidden)
                 encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
             else
                 encodeBinsEP(coeffSigns, numNonZero);
