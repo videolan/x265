@@ -37,11 +37,11 @@ namespace {
 
 struct coeffGroupRDStats
 {
-    int    nnzBeforePos0;     /* indicates coeff other than pos 0 are coded */
-    double codedLevelAndDist; /* distortion and level cost of coded coefficients */
-    double uncodedDist;       /* uncoded distortion cost of coded coefficients */ 
-    double sigCost;           /* cost of signaling significant coeff bitmap */
-    double sigCost0;          /* cost of signaling sig coeff bit of coeff 0 */
+    int     nnzBeforePos0;     /* indicates coeff other than pos 0 are coded */
+    int64_t codedLevelAndDist; /* distortion and level cost of coded coefficients */
+    int64_t uncodedDist;       /* uncoded distortion cost of coded coefficients */ 
+    int64_t sigCost;           /* cost of signaling significant coeff bitmap */
+    int64_t sigCost0;          /* cost of signaling sig coeff bit of coeff 0 */
 };
 
 inline int fastMin(int x, int y)
@@ -173,7 +173,7 @@ Quant::Quant()
 bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
 {
     m_useRDOQ = useRDOQ;
-    m_psyRdoqScale = (uint64_t)(psyScale * 256.0);
+    m_psyRdoqScale = (int64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;
     m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
@@ -209,6 +209,13 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
             qp = X265_MIN(qp, 51);
     }
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
+}
+
+void Quant::setLambdas(double lambdaY, double lambdaCb, double lambdaCr)
+{
+    m_lambda2[0] = (int64_t)(lambdaY * 256. + 0.5);
+    m_lambda2[1] = (int64_t)(lambdaCb * 256. + 0.5);
+    m_lambda2[2] = (int64_t)(lambdaCr * 256. + 0.5);
 }
 
 /* To minimize the distortion only. No rate is considered */
@@ -523,21 +530,21 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         unquantShift += 4;
         unquantRound = 0;
     }
+
+#define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
+#define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + ((lambda2 * (bits)) >> 8))
+    int64_t lambda2 = m_lambda2[ttype];
     int scaleBits = SCALE_BITS - 2 * transformShift;
 
-    double lambda2 = m_lambdas[ttype];
-    bool bIsLuma = ttype == TEXT_LUMA;
-
-    double totalUncodedCost = 0;
-    double costCoeff[32 * 32];   /* d*d + lambda * bits */
-    double costUncoded[32 * 32]; /* d*d + lambda * 0    */
-    double costSig[32 * 32];     /* lambda * bits       */
+    int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
+    int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
+    int64_t costSig[32 * 32];     /* lambda * bits       */
 
     int rateIncUp[32 * 32];      /* signal overhead of increasing level */
     int rateIncDown[32 * 32];    /* signal overhead of decreasing level */
     int sigRateDelta[32 * 32];   /* signal difference between zero and non-zero */
 
-    double   costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
+    int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
 
     uint32_t ctxSet      = 0;
@@ -549,11 +556,15 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int cgLastScanPos    = -1;
     int lastScanPos      = -1;
     const uint32_t cgSize = (1 << MLS_CG_SIZE); /* 4x4 num coef = 16 */
+    bool bIsLuma = ttype == TEXT_LUMA;
+
+    /* total rate distortion cost of transform block, as CBF=0 */
+    int64_t totalUncodedCost = 0;
 
     /* Total rate distortion cost of this transform block, counting te distortion of uncoded blocks,
      * the distortion and signal cost of coded blocks, and the coding cost of significant
      * coefficient and coefficient group bitmaps */
-    double totalRdCost = 0;
+    int64_t totalRdCost = 0;
 
     TUEntropyCodingParameters codeParams;
     cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
@@ -587,10 +598,10 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
              * FIX15 nature of the CABAC cost tables minus the forward transform scale */
 
             /* cost of not coding this coefficient (all distortion, no signal bits) */
-            costUncoded[scanPos] = (double)((uint64_t)(signCoef * signCoef) << scaleBits);
+            costUncoded[scanPos] = (int64_t)(signCoef * signCoef) << scaleBits;
             if (usePsy && blkPos)
-                /* when no coefficient is coded, predicted coef == recon coef */
-                costUncoded[scanPos] -= (int)(((m_psyRdoqScale * predictedCoef) << scaleBits) >> 8);
+                /* when no residual coefficient is coded, predicted coef == recon coef */
+                costUncoded[scanPos] -= (((m_psyRdoqScale * predictedCoef) << scaleBits) >> 8);
 
             totalUncodedCost += costUncoded[scanPos];
 
@@ -604,14 +615,14 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
             if (lastScanPos < 0)
             {
+                /* coefficients after lastNZ have no distortion signal cost */
+                costCoeff[scanPos] = 0;
+                costSig[scanPos] = 0;
+
                 /* No non-zero coefficient yet found, but this does not mean
                  * there is no uncoded-cost for this coefficient. Pre-
                  * quantization the coefficient may have been non-zero */
-                costCoeff[scanPos] = 0;
                 totalRdCost += costUncoded[scanPos];
-
-                /* coefficients after lastNZ have no signal cost */
-                costSig[scanPos] = 0;
             }
             else
             {
@@ -630,7 +641,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
                 uint32_t level = 0;
                 uint32_t sigCoefBits = 0;
-                costCoeff[scanPos] = MAX_DOUBLE;
+                costCoeff[scanPos] = MAX_INT64;
 
                 if ((int)scanPos == lastScanPos)
                     sigRateDelta[blkPos] = 0;
@@ -640,7 +651,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     if (maxAbsLevel < 3)
                     {
                         /* set default costs to uncoded costs */
-                        costSig[scanPos] = lambda2 * m_estBitsSbac.significantBits[ctxSig][0];
+                        costSig[scanPos] = SIGCOST(m_estBitsSbac.significantBits[ctxSig][0]);
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
                     sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
@@ -655,8 +666,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
                         int unquantAbsLevel = UNQUANT(lvl);
                         int d = abs(signCoef) - unquantAbsLevel;
-                        uint64_t distortion = ((uint64_t)(d * d)) << scaleBits;
-                        double curCost = distortion + lambda2 * (sigCoefBits + levelBits);
+                        int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
 
                         // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
                         if (usePsy && blkPos)
@@ -669,7 +679,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         {
                             level = lvl;
                             costCoeff[scanPos] = curCost;
-                            costSig[scanPos] = lambda2 * sigCoefBits;
+                            costSig[scanPos] = SIGCOST(sigCoefBits);
                         }
                     }
                 }
@@ -760,19 +770,19 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
             uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
 
-            double costZeroCG = totalRdCost + lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
+            int64_t costZeroCG = totalRdCost + SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
             costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
             costZeroCG -= cgRdStats.codedLevelAndDist; /* remove distortion and level cost of coded coefficients */
             costZeroCG -= cgRdStats.sigCost;           /* remove signaling cost of significant coeff bitmap */
 
-            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][1];
+            costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][1]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
 
             if (costZeroCG < totalRdCost)
             {
                 sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                 totalRdCost = costZeroCG;
-                costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
+                costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
 
                 /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
                 for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -792,7 +802,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         {
             /* there were no coded coefficients in this coefficient group */
             uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
-            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+            costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
             totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
         }
@@ -801,17 +811,17 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     X265_CHECK(lastScanPos >= 0, "numSig non zero, but no coded CG\n");
 
     /* estimate cost of uncoded block CBF=0 */
-    double bestCost;
+    int64_t bestCost;
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
-        bestCost  = totalUncodedCost + lambda2 * m_estBitsSbac.blockRootCbpBits[0][0];
-        totalRdCost += lambda2 * m_estBitsSbac.blockRootCbpBits[0][1];
+        bestCost = totalUncodedCost + SIGCOST(m_estBitsSbac.blockRootCbpBits[0][0]);
+        totalRdCost += SIGCOST(m_estBitsSbac.blockRootCbpBits[0][1]);
     }
     else
     {
         int ctx = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost = totalUncodedCost + lambda2 * m_estBitsSbac.blockCbpBits[ctx][0];
-        totalRdCost += lambda2 * m_estBitsSbac.blockCbpBits[ctx][1];
+        bestCost = totalUncodedCost + SIGCOST(m_estBitsSbac.blockCbpBits[ctx][0]);
+        totalRdCost += SIGCOST(m_estBitsSbac.blockCbpBits[ctx][1]);
     }
 
     /* Find the least cost last non-zero coefficient position  */
@@ -823,7 +833,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         totalRdCost -= costCoeffGroupSig[cgScanPos];
 
         if (cgScanPos && cgScanPos != cgLastScanPos && 
-            !(sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))) /* skip empty CGs */
+            !(sigCoeffGroupFlag64 & ((int64_t)1 << cgBlkPos))) /* skip empty CGs */
             continue;
 
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -839,7 +849,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 uint32_t posY = blkPos >> log2TrSize;
                 uint32_t posX = blkPos - (posY << log2TrSize);
                 uint32_t bitsLast = codeParams.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
-                double rdCostLast = totalRdCost + lambda2 * bitsLast - costSig[scanPos];
+                int64_t rdCostLast = totalRdCost - costSig[scanPos] + SIGCOST(bitsLast);
 
                 /* TODO: perhaps psy-cost should be used here as well */
 
@@ -927,21 +937,21 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         int absLevel    = abs(dstCoeff[blkPos]);
 
                         int d = abs(signCoef) - UNQUANT(absLevel);
-                        int64_t orig = ((int64_t)(d * d)) << scaleBits;
+                        int64_t origDist = (((int64_t)d * d)) << scaleBits;
+
+#define DELTARDCOST(d, deltabits) ((((int64_t)d * d) << scaleBits) - origDist + ((lambda2 * (int64_t)(deltabits)) >> 8))
 
                         if (dstCoeff[blkPos])
                         {
                             d = abs(signCoef) - UNQUANT(absLevel + 1);
-                            int64_t distortion = ((int64_t)(d * d)) << scaleBits;
-                            int64_t costUp = distortion - orig + (int64_t)(lambda2 * rateIncUp[blkPos]);
+                            int64_t costUp = DELTARDCOST(d, rateIncUp[blkPos]);
 
                             /* if decrementing would make the coeff 0, we can include the
-                             * significant coeff cost savings */
+                             * significant coeff flag cost savings */
                             d = abs(signCoef) - UNQUANT(absLevel - 1);
-                            distortion = ((uint64_t)(d * d)) << scaleBits;
                             bool isOne = abs(dstCoeff[blkPos]) == 1;
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
-                            int64_t costDown = distortion - orig + (int64_t)(lambda2 * downBits);
+                            int64_t costDown = DELTARDCOST(d, downBits);
 
                             if (lastCG && lastNZPosInCG == n && isOne)
                                 costDown -= 4 * IEP_RATE;
@@ -970,8 +980,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
                             d = abs(signCoef) - UNQUANT(1);
-                            int64_t distortion = ((int64_t)(d * d)) << scaleBits;
-                            curCost = distortion - orig + (int64_t)(lambda2 * (IEP_RATE + rateIncUp[blkPos] + sigRateDelta[blkPos]));
+                            curCost = DELTARDCOST(d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
                             curChange = 1;
                         }
 

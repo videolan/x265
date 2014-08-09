@@ -77,10 +77,10 @@ protected:
     const ScalingList* m_scalingList;
 
     QpParam            m_qpParam[3];
-    double             m_lambdas[3];
+    int64_t            m_lambda2[3]; /* FIX8 lambda2 values per plane */
 
     bool               m_useRDOQ;
-    uint64_t           m_psyRdoqScale;
+    int64_t            m_psyRdoqScale;
     coeff_t*           m_resiDctCoeff;
     coeff_t*           m_fencDctCoeff;
     int16_t*           m_fencShortBuf;
@@ -93,11 +93,11 @@ public:
     ~Quant();
 
     /* one-time setup */
-    bool init(bool useRDOQ, double scale, const ScalingList& scalingList);
+    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList);
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);
-    void setLambdas(double lambdaY, double lambdaCb, double lambdaCr) { m_lambdas[0] = lambdaY; m_lambdas[1] = lambdaCb; m_lambdas[2] = lambdaCr; }
+    void setLambdas(double lambdaY, double lambdaCb, double lambdaCr);
 
     uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
