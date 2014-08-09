@@ -509,6 +509,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
      * some shifts around. To avoid this we add an addition shift factor to the dequant coeff.  Note
      * that in real dequant there is clipping at several stages. We skip the clipping when measuring
      * RD cost */
+#define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << unquantPer) + unquantRound) >> unquantShift)
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int unquantRound, unquantPer;
@@ -537,7 +538,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int rateIncUp[32 * 32];      /* signal overhead of increasing level */
     int rateIncDown[32 * 32];    /* signal overhead of decreasing level */
     int sigRateDelta[32 * 32];   /* signal difference between zero and non-zero */
-    int deltaU[32 * 32];
 
     double   costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
@@ -655,8 +655,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     {
                         uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
-                        int unquantAbsLevel = (lvl * (unquantScale[blkPos] << unquantPer) + unquantRound) >> unquantShift;
-                        int d = unquantAbsLevel - abs(signCoef);
+                        int unquantAbsLevel = UNQUANT(lvl);
+                        int d = abs(signCoef) - unquantAbsLevel;
                         uint64_t distortion = ((uint64_t)(d * d)) << scaleBits;
                         double curCost = distortion + lambda2 * (sigCoefBits + levelBits);
 
@@ -676,7 +676,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     }
                 }
 
-                deltaU[blkPos] = (scaledCoeff[blkPos] - ((int)level << qbits)) >> (qbits - 8);
                 dstCoeff[blkPos] = level;
                 totalRdCost += costCoeff[scanPos];
 
@@ -884,9 +883,6 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     /* rate-distortion based sign-hiding */
     if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
-        int64_t invQuant = ScalingList::s_invQuantScales[rem] << per;
-        int64_t rdFactor = (int64_t)((invQuant * invQuant) / (lambda2 * 16) + 0.5);
-
         int lastCG = true;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
         {
@@ -926,25 +922,31 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     int minPos = -1, finalChange = 0, curChange = 0;
 
-                    /* in this section, RDOQ uses yet another novel approach at measuring cost. rdFactor is
-                     * roughly 1/errScale of the earlier section.  Except it also divides by lambda2 to avoid
-                     * having to multiply the signal bits portion. Here again the cost scale factor (1 << 15)
-                     * is hard coded in three more places */
-
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
                         uint32_t blkPos = codeParams.scan[n + subPos];
+                        int signCoef    = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
+                        int absLevel    = abs(dstCoeff[blkPos]);
+
+                        int d = abs(signCoef) - UNQUANT(absLevel);
+                        int64_t orig = ((int64_t)(d * d)) << scaleBits;
+
                         if (dstCoeff[blkPos])
                         {
-                            int64_t costUp = rdFactor * (-deltaU[blkPos]) + rateIncUp[blkPos];
+                            d = abs(signCoef) - UNQUANT(absLevel + 1);
+                            int64_t distortion = ((int64_t)(d * d)) << scaleBits;
+                            int64_t costUp = distortion - orig + (int64_t)(lambda2 * rateIncUp[blkPos]);
 
-                            /* if decrementing would make the coeff 0, we can remove the sigRateDelta */
+                            /* if decrementing would make the coeff 0, we can include the
+                             * significant coeff cost savings */
+                            d = abs(signCoef) - UNQUANT(absLevel - 1);
+                            distortion = ((uint64_t)(d * d)) << scaleBits;
                             bool isOne = abs(dstCoeff[blkPos]) == 1;
-                            int64_t costDown = rdFactor * (deltaU[blkPos]) + rateIncDown[blkPos] -
-                                (isOne ? ((1 << 15) + sigRateDelta[blkPos]) : 0);
+                            int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
+                            int64_t costDown = distortion - orig + (int64_t)(lambda2 * downBits);
 
                             if (lastCG && lastNZPosInCG == n && isOne)
-                                costDown -= (4 << 15);
+                                costDown -= 4 * IEP_RATE;
 
                             if (costUp < costDown)
                             {
@@ -960,18 +962,19 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                                     curCost = costDown;
                             }
                         }
+                        else if (n < firstNZPosInCG && signbit != (signCoef >= 0 ? 0 : 1U))
+                        {
+                            /* don't try to make a new coded coeff before the first coeff if its
+                             * sign would be different than the first coeff */
+                            curCost = MAX_INT64;
+                        }
                         else
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
-                            curCost = rdFactor * (-(abs(deltaU[blkPos]))) + (1 << 15) + rateIncUp[blkPos] + sigRateDelta[blkPos];
+                            d = abs(signCoef) - UNQUANT(1);
+                            int64_t distortion = ((int64_t)(d * d)) << scaleBits;
+                            curCost = distortion - orig + (int64_t)(lambda2 * (IEP_RATE + rateIncUp[blkPos] + sigRateDelta[blkPos]));
                             curChange = 1;
-
-                            if (n < firstNZPosInCG)
-                            {
-                                uint32_t thissignbit = (m_resiDctCoeff[blkPos] >= 0 ? 0 : 1);
-                                if (thissignbit != signbit)
-                                    curCost = MAX_INT64;
-                            }
                         }
 
                         if (curCost < minCostInc)
