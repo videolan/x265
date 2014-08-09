@@ -54,26 +54,39 @@ struct QpParam
     int per;
     int qp;
 
-    QpParam()
-    {
-        rem = 0;
-        per = 0;
-        qp  = 0;
-    }
-
     void setQpParam(int qpScaled)
     {
         if (qp != qpScaled)
         {
-            rem  = qpScaled % 6;
-            per  = qpScaled / 6;
-            qp   = qpScaled;
+            rem = qpScaled % 6;
+            per = qpScaled / 6;
+            qp  = qpScaled;
         }
     }
 };
 
 class Quant
 {
+public:
+
+    EstBitsSbac        m_estBitsSbac;
+    NoiseReduction*    m_nr;
+
+protected:
+
+    const ScalingList* m_scalingList;
+
+    QpParam            m_qpParam[3];
+    double             m_lambdas[3];
+
+    bool               m_useRDOQ;
+    uint64_t           m_psyRdoqScale;
+    coeff_t*           m_resiDctCoeff;
+    coeff_t*           m_fencDctCoeff;
+    int16_t*           m_fencShortBuf;
+
+    enum { IEP_RATE = 32768 }; /* FIX15 cost of an equal probable bit */
+
 public:
 
     Quant();
@@ -92,37 +105,19 @@ public:
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
-    EstBitsSbac        m_estBitsSbac;
-    NoiseReduction*    m_nr;
-    const ScalingList* m_scalingList;
-
-    QpParam  m_qpParam[3];
-    double   m_lambdas[3];
-
-    bool     m_useRDOQ;
-    uint64_t m_psyRdoqScale;
-    coeff_t* m_resiDctCoeff;
-    coeff_t* m_fencDctCoeff;
-    int16_t* m_fencShortBuf;
-
-    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
+    /* static methods shared with entropy.cpp */
+    static uint32_t calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
+    static uint32_t getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma, uint32_t firstSignificanceMapContext);
+    static uint32_t getSigCoeffGroupCtxInc(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
 
 protected:
 
-    enum { IEP_RATE = 32768 }; // cost of an equal probable bit
+    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
 
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
     uint32_t rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
     inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
-
-public:
-
-    /* static methods shared with entropy.cpp */
-
-    static uint32_t calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
-    static uint32_t getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma, uint32_t firstSignificanceMapContext);
-    static uint32_t getSigCoeffGroupCtxInc(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG);
 };
 
 static inline uint32_t getGroupIdx(const uint32_t idx)
