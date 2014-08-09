@@ -737,79 +737,71 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             }
         } /* end for (scanPosinCG) */
 
-        /* Summarize costs for the coeff group */
-        if (cgLastScanPos >= 0)
+        costCoeffGroupSig[cgScanPos] = 0;
+
+        if (cgLastScanPos < 0)
         {
-            costCoeffGroupSig[cgScanPos] = 0;
-            if (!cgScanPos)
+            /* nothing to do at this point */
+        }
+        else if (!cgScanPos || cgScanPos == cgLastScanPos)
+        {
+            /* coeff group 0 is implied to be present, no signal cost */
+            /* coeff group with last NZ is implied to be present, handled below */
+        }
+        else if (sigCoeffGroupFlag64 & cgBlkPosMask)
+        {
+            if (!cgRdStats.nnzBeforePos0)
             {
-                /* coeff group 0 is implied to be present, no signal cost */
-                sigCoeffGroupFlag64 |= cgBlkPosMask;
+                /* if only coeff 0 in this CG is coded, its significant coeff bit is implied */
+                totalRdCost -= cgRdStats.sigCost0;
+                cgRdStats.sigCost -= cgRdStats.sigCost0;
             }
-            else
+
+            /* there are coded coefficients in this group, but now we include the signaling cost
+             * of the significant coefficient group flag and evaluate whether the RD cost of the
+             * coded group is more than the RD cost of the uncoded group */
+
+            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+
+            double costZeroCG = totalRdCost + lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
+            costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
+            costZeroCG -= cgRdStats.codedLevelAndDist; /* remove distortion and level cost of coded coefficients */
+            costZeroCG -= cgRdStats.sigCost;           /* remove signaling cost of significant coeff bitmap */
+
+            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][1];
+            totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
+
+            if (costZeroCG < totalRdCost)
             {
-                if (!(sigCoeffGroupFlag64 & cgBlkPosMask))
+                sigCoeffGroupFlag64 &= ~cgBlkPosMask;
+                totalRdCost = costZeroCG;
+                costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
+
+                /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
+                for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
                 {
-                    /* no coefficients were coded in this coefficient group */
-                    uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
-                    costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
-                    totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
-                    totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
-                }
-                else
-                {
-                    /* skip the last coefficient group, which will be handled together with last position below */
-                    if (cgScanPos < cgLastScanPos)
+                    scanPos = cgScanPos * cgSize + scanPosinCG;
+                    uint32_t blkPos = codeParams.scan[scanPos];
+                    if (dstCoeff[blkPos])
                     {
-                        uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
-
-                        if (!cgRdStats.nnzBeforePos0)
-                        {
-                            /* if only coeff 0 in this CG is coded, its significant coeff bit is implied */
-                            totalRdCost -= cgRdStats.sigCost0;
-                            cgRdStats.sigCost -= cgRdStats.sigCost0;
-                        }
-
-                        /* calculate cost of not signaling this coefficient group */
-                        double costZeroCG = totalRdCost + lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
-                        costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
-                        costZeroCG -= cgRdStats.codedLevelAndDist; /* remove distortion and level cost of coded coefficients */
-                        costZeroCG -= cgRdStats.sigCost;           /* remove signaling cost of significant coeff bitmap */
-
-                        costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][1];
-                        totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
-
-                        /* if we can save RD cost, change this group to all-zero group */
-                        if (costZeroCG < totalRdCost)
-                        {
-                            sigCoeffGroupFlag64 &= ~cgBlkPosMask;
-                            totalRdCost = costZeroCG;
-                            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[sigCtx][0];
-
-                            /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
-                            for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
-                            {
-                                scanPos         = cgScanPos * cgSize + scanPosinCG;
-                                uint32_t blkPos = codeParams.scan[scanPos];
-                                if (dstCoeff[blkPos])
-                                {
-                                    costCoeff[scanPos] = costUncoded[scanPos];
-                                    costSig[scanPos] = 0;
-                                }
-                                dstCoeff[blkPos] = 0;
-                            }
-                        }
+                        costCoeff[scanPos] = costUncoded[scanPos];
+                        costSig[scanPos] = 0;
                     }
+                    dstCoeff[blkPos] = 0;
                 }
             }
         }
+        else
+        {
+            /* there were no coded coefficients in this coefficient group */
+            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+            costCoeffGroupSig[cgScanPos] = lambda2 * m_estBitsSbac.significantCoeffGroupBits[ctxSig][0];
+            totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
+            totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
+        }
     } /* end for (cgScanPos) */
 
-    if (lastScanPos < 0)
-    {
-        /* this should be un-possible */
-        return 0;
-    }
+    X265_CHECK(lastScanPos >= 0, "numSig non zero, but no coded CG\n");
 
     /* estimate cost of uncoded block CBF=0 */
     double bestCost;
