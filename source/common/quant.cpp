@@ -504,24 +504,24 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     x265_emms();
 
-    /* unquant constants for psy-rdoq. The dequant coefficients have a (1<<4) scale applied
-     * that must be removed during unquant.  This may be larger than the QP upshift, which
-     * would turn some shifts around. To avoid this we add an optional pre-up-shift of the
-     * quantized level. Note that in real dequant there is clipping at several stages. We
-     * skip the clipping when measuring RD cost. */
+    /* unquant constants for psy-rdoq. The dequant coefficients have a (1<<4) scale applied that
+     * must be removed during unquant.  This may be larger than the QP upshift, which would turn
+     * some shifts around. To avoid this we add an addition shift factor to the dequant coeff.  Note
+     * that in real dequant there is clipping at several stages. We skip the clipping when measuring
+     * RD cost */
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
-    int unquantRound, unquantPreshift;
+    int unquantRound, unquantPer;
     unquantShift += 4;
     if (unquantShift > per)
     {
         unquantRound = 1 << (unquantShift - per - 1);
-        unquantPreshift = 0;
+        unquantPer = per;
     }
     else
     {
-        unquantPreshift = 4;
-        unquantShift += unquantPreshift;
+        unquantPer = per + 4;
+        unquantShift += 4;
         unquantRound = 0;
     }
     int scaleBits = SCALE_BITS - 2 * transformShift;
@@ -655,7 +655,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     {
                         uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
-                        int unquantAbsLevel = ((lvl << unquantPreshift) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift;
+                        int unquantAbsLevel = (lvl * (unquantScale[blkPos] << unquantPer) + unquantRound) >> unquantShift;
                         int d = unquantAbsLevel - abs(signCoef);
                         uint64_t distortion = ((uint64_t)(d * d)) << scaleBits;
                         double curCost = distortion + lambda2 * (sigCoefBits + levelBits);
