@@ -668,7 +668,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         int d = abs(signCoef) - unquantAbsLevel;
                         int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
 
-                        // Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame
+                        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
                         if (usePsy && blkPos)
                         {
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
@@ -973,7 +973,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         else if (n < firstNZPosInCG && signbit != (signCoef >= 0 ? 0 : 1U))
                         {
                             /* don't try to make a new coded coeff before the first coeff if its
-                             * sign would be different than the first coeff */
+                             * sign would be different than the first coeff, the inferred sign would
+                             * still be wrong and we'd have to do this again. */
                             curCost = MAX_INT64;
                         }
                         else
@@ -993,6 +994,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     }
 
                     if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
+                        /* don't allow sign hiding to violate the SPEC range */
                         finalChange = -1;
 
                     if (dstCoeff[minPos] == 0)
@@ -1014,7 +1016,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     return numSig;
 }
 
-/** Pattern decision for context derivation process of significant_coeff_flag */
+/* Pattern decision for context derivation process of significant_coeff_flag */
 uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
 {
     if (!log2TrSizeCG)
@@ -1029,7 +1031,7 @@ uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX,
     return sigRight + sigLower;
 }
 
-/** Context derivation process of coeff_abs_significant_flag */
+/* Context derivation process of coeff_abs_significant_flag */
 uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma,
                              uint32_t firstSignificanceMapContext)
 {
