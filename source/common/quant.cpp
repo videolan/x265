@@ -825,7 +825,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
         totalRdCost -= costCoeffGroupSig[cgScanPos];
 
-        if (!(sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))) /* skip empty CGs */
+        if (cgScanPos && cgScanPos != cgLastScanPos && 
+            !(sigCoeffGroupFlag64 & ((uint64_t)1 << cgBlkPos))) /* skip empty CGs */
             continue;
 
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
