@@ -112,7 +112,7 @@ public:
 
 protected:
 
-    void setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt);
+    void setChromaQP(int qpin, TextType ttype, int chFmt);
 
     uint32_t signBitHidingHDQ(coeff_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 

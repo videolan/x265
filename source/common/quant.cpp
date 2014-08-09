@@ -194,15 +194,13 @@ void Quant::setQPforQuant(TComDataCU* cu)
     int chFmt = cu->getChromaFormat();
 
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setQPforQuant(qpy, TEXT_CHROMA_U, cu->m_slice->m_pps->chromaCbQpOffset, chFmt);
-    setQPforQuant(qpy, TEXT_CHROMA_V, cu->m_slice->m_pps->chromaCrQpOffset, chFmt);
+    setChromaQP(qpy + cu->m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, chFmt);
+    setChromaQP(qpy + cu->m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, chFmt);
 }
 
-void Quant::setQPforQuant(int qpy, TextType ttype, int chromaQPOffset, int chFmt)
+void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 {
-    X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
-
-    int qp = Clip3(-QP_BD_OFFSET, 57, qpy + chromaQPOffset);
+    int qp = Clip3(-QP_BD_OFFSET, 57, qpin);
     if (qp >= 30)
     {
         if (chFmt == X265_CSP_I420)
