@@ -134,12 +134,26 @@ void determineLevel(const x265_param &param, VPS& vps)
 
         /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
         if (levels[i].levelEnum >= Level::LEVEL5 && param.maxCUSize < 32)
-            x265_log(&param, X265_LOG_WARNING, "CTU size is too small, stream will be non-compliant for level %s\n", levels[i].name);
+        {
+            x265_log(&param, X265_LOG_WARNING, "level %s detected, but CTU size 16 is non-compliant\n", levels[i].name);
+            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.levelIdc = Level::NONE;
+            vps.ptl.tierFlag = Level::MAIN;
+            x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
+            return;
+        }
 
         /* The value of NumPocTotalCurr shall be less than or equal to 8 */
-        int numPocTotalCurr = param.maxNumReferences + !!param.bframes;
+        int numPocTotalCurr = param.maxNumReferences + vps.numReorderPics;
         if (numPocTotalCurr > 8)
-            x265_log(&param, X265_LOG_WARNING, "Too many reference frames, stream will be non-compliant for level %s\n", levels[i].name);
+        {
+            x265_log(&param, X265_LOG_WARNING, "level %s detected, but NumPocTotalCurr (total references) is non-compliant\n", levels[i].name);
+            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.levelIdc = Level::NONE;
+            vps.ptl.tierFlag = Level::MAIN;
+            x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
+            return;
+        }
 
         vps.ptl.levelIdc = levels[i].levelEnum;
         if (bitrate > levels[i].maxBitrateMain && bitrate <= levels[i].maxBitrateHigh &&
