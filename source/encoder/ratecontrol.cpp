@@ -2084,7 +2084,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             : rce->sliceType == P_SLICE ? 'P'
             : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
-                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;",
+                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                     rce->poc, rce->encodeOrder,
                     cType, m_frameDuration,
                     pic->m_avgQpRc, pic->m_avgQpAq,
