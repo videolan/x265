@@ -810,7 +810,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     X265_CHECK(lastScanPos >= 0, "numSig non zero, but no coded CG\n");
 
-    /* estimate cost of uncoded block CBF=0 */
+    /* calculate RD cost of uncoded block CBF=0, and add cost of CBF=1 to total */
     int64_t bestCost;
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
@@ -824,17 +824,32 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         totalRdCost += SIGCOST(m_estBitsSbac.blockCbpBits[ctx][1]);
     }
 
-    /* Find the least cost last non-zero coefficient position  */
+    /* This loop starts with the last non-zero found in the first loop and then refines this last
+     * non-zero by measuring the true RD cost of the last NZ at this position, and then the RD costs
+     * at all previous coefficients until a coefficient greater than 1 is encountered or we run out
+     * of coefficients to evaluate.  This will factor in the cost of coding empty groups and empty
+     * coeff prior to the last NZ. The base best cost is the RD cost of CBF=0 */
     int  bestLastIdx = 0;
     bool foundLast = false;
     for (int cgScanPos = cgLastScanPos; cgScanPos >= 0 && !foundLast; cgScanPos--)
     {
-        uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
-        totalRdCost -= costCoeffGroupSig[cgScanPos];
-
-        if (cgScanPos && cgScanPos != cgLastScanPos && 
-            !(sigCoeffGroupFlag64 & ((int64_t)1 << cgBlkPos))) /* skip empty CGs */
+        if (!cgScanPos || cgScanPos == cgLastScanPos)
+        {
+            /* the presence of these coefficient groups are inferred, they have no bit in
+             * sigCoeffGroupFlag64 and no saved costCoeffGroupSig[] cost */
+        }
+        else if (sigCoeffGroupFlag64 & (1ULL << codeParams.scanCG[cgScanPos]))
+        {
+            /* remove cost of significant coeff group flag, the group's presence would be inferred
+             * from lastNZ if it were present in this group */
+            totalRdCost -= costCoeffGroupSig[cgScanPos];
+        }
+        else
+        {
+            /* remove cost of signaling this empty group as not present */
+            totalRdCost -= costCoeffGroupSig[cgScanPos];
             continue;
+        }
 
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
@@ -842,28 +857,30 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             if ((int)scanPos > lastScanPos)
                 continue;
 
+            /* if the coefficient was coded, measure the RD cost of it as the last non-zero and then
+             * continue as if it were uncoded. If the coefficient was already uncoded, remove the
+             * cost of signaling it as not-significant */
             uint32_t blkPos = codeParams.scan[scanPos];
             if (dstCoeff[blkPos])
             {
-                /* found the current last non-zero; estimate the trade-off of setting it to zero */
+                /* Swap the cost of signaling its significant coeff bit with the cost of
+                 * signaling its lastNZ pos */
                 uint32_t posY = blkPos >> log2TrSize;
                 uint32_t posX = blkPos - (posY << log2TrSize);
-                uint32_t bitsLast = codeParams.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
-                int64_t rdCostLast = totalRdCost - costSig[scanPos] + SIGCOST(bitsLast);
+                uint32_t bitsLastNZ = codeParams.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+                int64_t costAsLast = totalRdCost - costSig[scanPos] + SIGCOST(bitsLastNZ);
 
-                /* TODO: perhaps psy-cost should be used here as well */
-
-                if (rdCostLast < bestCost)
+                if (costAsLast < bestCost)
                 {
                     bestLastIdx = scanPos + 1;
-                    bestCost = rdCostLast;
+                    bestCost = costAsLast;
                 }
                 if (dstCoeff[blkPos] > 1)
                 {
                     foundLast = true;
                     break;
                 }
-                /* UNCODE THIS COEFF! */
+
                 totalRdCost -= costCoeff[scanPos];
                 totalRdCost += costUncoded[scanPos];
             }
