@@ -348,11 +348,8 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
-        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
-
-        if (memcmp(mintbuf3, mintbuf5, cmp_size))
-            return false;
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf6, bits, valueToAdd, numCoeff);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf4, bits, valueToAdd, numCoeff);
 
         if (memcmp(mintbuf4, mintbuf6, cmp_size))
             return false;
@@ -511,7 +508,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.nquant)
     {
         printf("nquant\t\t");
-        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
+        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, 23, 23785, 32 * 32);
     }
 
     if (opt.count_nonzero)

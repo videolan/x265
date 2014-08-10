@@ -938,72 +938,63 @@ cglobal quant, 5,6,8
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *scaledCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal nquant, 5,6,8
-
-    ; fill qbits
-    movd        m4, r4d         ; m4 = qbits
-
-    ; fill offset
-    movd        m5, r5m
-    pshufd      m5, m5, 0       ; m5 = add
-
-    mov         r4d, r6m
-    shr         r4d, 3
+cglobal nquant, 4,5,8
+    movd        m6, r4m
+    mov         r4d, r5m
     pxor        m7, m7          ; m7 = numZero
+    movd        m5, r3d         ; m5 = qbits
+    pshufd      m6, m6, 0       ; m6 = add
+    mov         r3d, r4d        ; r3 = numCoeff
+    shr         r4d, 3
 .loop:
-    ; 4 coeff
     movu        m0, [r0]        ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
+    movu        m1, [r0 + 16]   ; m1 = level
     movu        m2, [r1]        ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    movu        [r2], m0        ; m0 = scaledCoeff
-    paddd       m2, m0, m5
-    psrad       m2, m4          ; m2 = level1
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
-
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3], m2
-    ; 4 coeff
-    movu        m0, [r0 + 16]   ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1 + 16]   ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    movu        [r2 + 16], m0   ; m0 = scaledCoeff
-    paddd       m2, m0, m5
-    psrad       m2, m4          ; m2 = level1
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
-
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3 + 16], m2
-
+    movu        m3, [r1 + 16]   ; m3 = qcoeff
     add         r0, 32
     add         r1, 32
+
+    pxor        m4, m4
+    pcmpgtd     m4, m0          ; m4 = sign
+    pabsd       m0, m0
+    pmulld      m0, m2          ; m0 = tmpLevel1
+    paddd       m0, m6
+    psrad       m0, m5          ; m0 = level1
+    pxor        m0, m4
+    psubd       m0, m4
+
+    pxor        m4, m4
+    pcmpgtd     m4, m1          ; m4 = sign
+    pabsd       m1, m1
+    pmulld      m1, m3          ; m1 = tmpLevel1
+    paddd       m1, m6
+    psrad       m1, m5          ; m1 = level1
+    pxor        m1, m4
+    psubd       m1, m4
+
+    packssdw    m0, m0
+    packssdw    m1, m1
+    pmovsxwd    m0, m0
+    pmovsxwd    m1, m1
+
+    movu        [r2], m0
+    movu        [r2 + 16], m1
     add         r2, 32
-    add         r3, 32
-
     dec         r4d
-    jnz        .loop
 
-    phaddd      m7, m7
-    phaddd      m7, m7
-    mov         eax, r6m
+    packssdw    m0, m1
+    pxor        m4, m4
+    pcmpeqw     m0, m4
+    psubw       m7, m0
+
+    jnz         .loop
+
+    packuswb    m7, m7
+    psadbw      m7, m4
+    mov         eax, r3d
     movd        r4d, m7
     sub         eax, r4d        ; numSig
 

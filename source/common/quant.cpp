@@ -487,7 +487,6 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
  * probability models like CABAC */
 uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
-    uint32_t trSize = 1 << log2TrSize;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
 
@@ -500,14 +499,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << log2TrSize * 2;
-    int scaledCoeff[32 * 32];
-    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, scaledCoeff, dstCoeff, qbits, add, numCoeff);
+    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
 
     X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
 
-    x265_emms();
+    uint32_t trSize = 1 << log2TrSize;
 
     /* unquant constants for psy-rdoq. The dequant coefficients have a (1<<4) scale applied that
      * must be removed during unquant.  This may be larger than the QP upshift, which would turn
