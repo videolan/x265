@@ -1708,6 +1708,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cvt16to32_cnt[BLOCK_8x8] = x265_cvt16to32_cnt_8_avx2;
         p.cvt16to32_cnt[BLOCK_16x16] = x265_cvt16to32_cnt_16_avx2;
         p.cvt16to32_cnt[BLOCK_32x32] = x265_cvt16to32_cnt_32_avx2;
+        p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_avx2;
+        p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_avx2;
+        p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_avx2;
+        p.cvt32to16_shl[BLOCK_32x32] = x265_cvt32to16_shl_32_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }

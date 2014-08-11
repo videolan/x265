@@ -3656,6 +3656,25 @@ cglobal cvt32to16_shl_4, 3,3,5
     RET
 
 
+INIT_YMM avx2
+cglobal cvt32to16_shl_4, 3,3,3
+    add         r2d, r2d
+    movd        xm0, r3m
+
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    packssdw    m1, m2
+    psllw       m1, xm0
+    vextracti128 xm0, m1, 1
+    movq        [r0], xm1
+    movq        [r0 + r2], xm0
+    lea         r0, [r0 + r2 * 2]
+    movhps      [r0], xm1
+    movhps      [r0 + r2], xm0
+    RET
+
+
 ;--------------------------------------------------------------------------------------
 ; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
 ;--------------------------------------------------------------------------------------
@@ -3698,6 +3717,54 @@ cglobal cvt32to16_shl_8, 3,5,5
     RET
 
 
+INIT_YMM avx2
+cglobal cvt32to16_shl_8, 3,4,3
+    add         r2d, r2d
+    movd        xm0, r3m
+    lea         r3, [r2 * 3]
+
+    ; Row 0-1
+    movu        xm1, [r1 + 0 * mmsize]
+    vinserti128  m1, m1, [r1 + 1 * mmsize], 1
+    movu        xm2, [r1 + 0 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 1 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    psllw       m1, xm0
+    movu        [r0], xm1
+    vextracti128 [r0 + r2], m1, 1
+
+    ; Row 2-3
+    movu        xm1, [r1 + 2 * mmsize]
+    vinserti128  m1, m1, [r1 + 3 * mmsize], 1
+    movu        xm2, [r1 + 2 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 3 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    psllw       m1, xm0
+    movu        [r0 + r2 * 2], xm1
+    vextracti128 [r0 + r3], m1, 1
+
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+
+    ; Row 4-5
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    packssdw    m1, m2
+    vpermq      m1, m1, 11011000b
+    psllw       m1, xm0
+    movu        [r0], xm1
+    vextracti128 [r0 + r2], m1, 1
+
+    ; Row 6-7
+    movu        m1, [r1 + 2 * mmsize]
+    movu        m2, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    vpermq      m1, m1, 11011000b
+    psllw       m1, xm0
+    movu        [r0 + r2 * 2], xm1
+    vextracti128 [r0 + r3], m1, 1
+    RET
+
 ;--------------------------------------------------------------------------------------
 ; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
 ;--------------------------------------------------------------------------------------
@@ -3739,6 +3806,58 @@ cglobal cvt32to16_shl_16, 3,4,5
     RET
 
 
+INIT_YMM avx2
+cglobal cvt32to16_shl_16, 3,5,3
+    add         r2d, r2d
+    movd        xm0, r3m
+    mov         r3d, 16/4
+    lea         r4, [r2 * 3]
+
+.loop:
+    ; Row 0
+    movu        xm1, [r1 + 0 * mmsize]
+    vinserti128  m1, m1, [r1 + 1 * mmsize], 1
+    movu        xm2, [r1 + 0 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 1 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    psllw       m1, xm0
+    movu        [r0], m1
+
+    ; Row 1
+    movu        xm1, [r1 + 2 * mmsize]
+    vinserti128  m1, m1, [r1 + 3 * mmsize], 1
+    movu        xm2, [r1 + 2 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 3 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    psllw       m1, xm0
+    movu        [r0 + r2], m1
+
+    add         r1, 4 * mmsize
+
+    ; Row 2
+    movu        xm1, [r1 + 0 * mmsize]
+    vinserti128  m1, m1, [r1 + 1 * mmsize], 1
+    movu        xm2, [r1 + 0 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 1 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    psllw       m1, xm0
+    movu        [r0 + r2 * 2], m1
+
+    ; Row 3
+    movu        m1, [r1 + 2 * mmsize]
+    movu        m2, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    psllw       m1, xm0
+    vpermq      m1, m1, 11011000b
+    movu        [r0 + r4], m1
+
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+    dec         r3d
+    jnz        .loop
+    RET
+
+
 ;--------------------------------------------------------------------------------------
 ; void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
 ;--------------------------------------------------------------------------------------
@@ -3774,6 +3893,53 @@ cglobal cvt32to16_shl_32, 3,4,5
 
     add         r1, 8 * mmsize
     add         r0, r2
+    dec         r3d
+    jnz        .loop
+    RET
+
+
+INIT_YMM avx2
+cglobal cvt32to16_shl_32, 3,4,5
+    add         r2d, r2d
+    movd        xm0, r3m
+    mov         r3d, 32/2
+
+.loop:
+    ; Row 0
+    movu        xm1, [r1 + 0 * mmsize]
+    vinserti128  m1, m1, [r1 + 1 * mmsize], 1
+    movu        xm2, [r1 + 0 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 1 * mmsize + mmsize/2], 1
+    movu        xm3, [r1 + 2 * mmsize]
+    vinserti128  m3, m3, [r1 + 3 * mmsize], 1
+    movu        xm4, [r1 + 2 * mmsize + mmsize/2]
+    vinserti128  m4, m4, [r1 + 3 * mmsize + mmsize/2], 1
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, xm0
+    psllw       m3, xm0
+    movu        [r0], m1
+    movu        [r0 + mmsize], m3
+
+    add         r1, 4 * mmsize
+
+    ; Row 1
+    movu        xm1, [r1 + 0 * mmsize]
+    vinserti128  m1, m1, [r1 + 1 * mmsize], 1
+    movu        xm2, [r1 + 0 * mmsize + mmsize/2]
+    vinserti128  m2, m2, [r1 + 1 * mmsize + mmsize/2], 1
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    packssdw    m1, m2
+    packssdw    m3, m4
+    psllw       m1, xm0
+    psllw       m3, xm0
+    vpermq      m3, m3, 11011000b
+    movu        [r0 + r2], m1
+    movu        [r0 + r2 + mmsize], m3
+
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 2]
     dec         r3d
     jnz        .loop
     RET
