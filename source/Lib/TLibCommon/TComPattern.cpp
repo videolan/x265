@@ -68,7 +68,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
 
-    bool bUseFilteredPredictions = (dirMode == ALL_IDX || Predict::filteringIntraReferenceSamples(dirMode, intraNeighbors.log2TrSize));
+    bool bUseFilteredPredictions = (dirMode == ALL_IDX || IntraFilterType[intraNeighbors.log2TrSize - 2][dirMode]);
 
     if (bUseFilteredPredictions && 8 <= tuSize && tuSize <= 32)
     {

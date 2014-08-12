@@ -27,15 +27,6 @@
 
 using namespace x265;
 
-static const uint8_t intraFilterThreshold[5] =
-{
-    10, //4x4
-    7,  //8x8
-    1,  //16x16
-    0,  //32x32
-    10, //64x64
-};
-
 Predict::Predict()
 {
     m_predBuf = NULL;
@@ -81,28 +72,10 @@ void Predict::initTempBuff(int csp)
     }
 }
 
-bool Predict::filteringIntraReferenceSamples(uint32_t dirMode, uint32_t log2TrSize)
-{
-    bool bFilter;
-
-    if (dirMode == DC_IDX || log2TrSize <= 2)
-    {
-        bFilter = false; // no smoothing for DC
-    }
-    else
-    {
-        int diff = std::min<int>(abs((int)dirMode - HOR_IDX), abs((int)dirMode - VER_IDX));
-        uint32_t sizeIdx = log2TrSize - 2;
-        bFilter = diff > intraFilterThreshold[sizeIdx];
-    }
-
-    return bFilter;
-}
-
 void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
     int tuSize = 1 << log2TrSize;
-    bool bUseFilteredPredictions = filteringIntraReferenceSamples(dirMode, log2TrSize);
+    bool bUseFilteredPredictions = IntraFilterType[log2TrSize - 2][dirMode];
 
     pixel *refLft, *refAbv;
     refLft = m_refLeft + tuSize - 1;
@@ -129,7 +102,7 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     pixel refAbv[3 * MAX_CU_SIZE];
     pixel refLft[3 * MAX_CU_SIZE];
 
-    bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && filteringIntraReferenceSamples(dirMode, log2TrSizeC));
+    bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && IntraFilterType[log2TrSizeC - 2][dirMode]);
 
     if (bUseFilteredPredictions)
     {
