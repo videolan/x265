@@ -141,8 +141,8 @@ void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, 
 
     uint32_t tmp = 4 * AMVP_DECIMATION_FACTOR / unitSize;
     tmp = tmp * tmp;
-    X265_CHECK(tmp == (1 << (g_convertToBit[tmp] + 2)), "unexpected pixel count\n");
-    tmp = g_convertToBit[tmp] + 2;
+    X265_CHECK(tmp == (1 << (g_log2Size[tmp])), "unexpected pixel count\n");
+    tmp = g_log2Size[tmp];
     m_unitMask = ~((1 << tmp) - 1);
 
     uint32_t sizeL = cuSize * cuSize;

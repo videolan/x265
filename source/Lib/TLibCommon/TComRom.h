@@ -134,7 +134,7 @@ extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
 extern const uint8_t g_minInGroup[10];
 extern const uint8_t g_goRiceRange[5]; // maximum value coded with Rice codes
 
-extern uint8_t g_convertToBit[MAX_CU_SIZE + 1]; // from width to log2(width)-2
+extern const uint8_t g_log2Size[MAX_CU_SIZE + 1]; // from size to log2(size)
 
 // Map Luma samples to chroma samples
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];

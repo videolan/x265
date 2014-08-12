@@ -861,8 +861,8 @@ int x265_check_params(x265_param *param)
     if (check_failed == 1)
         return check_failed;
 
-    uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
-    uint32_t maxLog2CUSize = maxCUDepth + 2;
+    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
+    uint32_t maxCUDepth = maxLog2CUSize - 2;
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
@@ -1041,7 +1041,8 @@ void x265_param_apply_fastfirstpass(x265_param* param)
 
 int x265_set_globals(x265_param *param)
 {
-    uint32_t maxCUDepth = (uint32_t)g_convertToBit[param->maxCUSize];
+    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
+    uint32_t maxCUDepth = maxLog2CUSize - 2;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     static int once /* = 0 */;
@@ -1058,7 +1059,7 @@ int x265_set_globals(x265_param *param)
     {
         // set max CU width & height
         g_maxCUSize = param->maxCUSize;
-        g_maxLog2CUSize = maxCUDepth + 2;
+        g_maxLog2CUSize = maxLog2CUSize;
 
         // compute actual CU depth with respect to config depth and max transform size
         g_addCUDepth = g_maxLog2CUSize - maxCUDepth - tuQTMinLog2Size;

@@ -99,16 +99,6 @@ void initROM()
 {
     if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
         return;
-
-    int i, c;
-
-    memset(g_convertToBit, -1, sizeof(g_convertToBit));
-    c = 0;
-    for (i = 4; i <= MAX_CU_SIZE; i *= 2)
-    {
-        g_convertToBit[i] = c;
-        c++;
-    }
 }
 
 void destroyROM()
@@ -300,7 +290,14 @@ const uint8_t g_chromaScale[chromaQPMappingTableSize] =
 const uint8_t g_chroma422IntraAngleMappingTable[36] =
 { 0, 1, 2, 2, 2, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 23, 24, 24, 25, 25, 26, 27, 27, 28, 28, 29, 29, 30, 31, DM_CHROMA_IDX };
 
-uint8_t g_convertToBit[MAX_CU_SIZE + 1];
+const uint8_t g_log2Size[MAX_CU_SIZE + 1] =
+{
+    0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    6
+};
 
 // ====================================================================================================================
 // Scanning order & context model mapping

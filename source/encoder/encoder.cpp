@@ -1209,7 +1209,7 @@ void Encoder::configure(x265_param *p)
 
     setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
     int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-    uint32_t maxLog2CUSize = g_convertToBit[p->maxCUSize] + 2;
+    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize];
     int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
 
     if (p->frameNumThreads == 0)
@@ -1391,7 +1391,7 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.leftOffset = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
-    uint32_t maxCUDepth = (uint32_t)g_convertToBit[p->maxCUSize];
+    uint32_t maxCUDepth = maxLog2CUSize - 2;
     uint32_t minCUDepth = (p->maxCUSize >> (maxCUDepth - 1));
     if ((p->sourceWidth % minCUDepth) != 0)
     {
