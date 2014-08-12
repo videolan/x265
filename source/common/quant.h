@@ -54,6 +54,8 @@ struct QpParam
     int per;
     int qp;
 
+    QpParam() : qp(MAX_INT) {}
+
     void setQpParam(int qpScaled)
     {
         if (qp != qpScaled)
