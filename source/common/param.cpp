@@ -132,6 +132,7 @@ void x265_param_default(x265_param *param)
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
+    param->bEnableFastIntra = 0;
 
     /* Inter Coding tools */
     param->searchMethod = X265_HEX_SEARCH;
@@ -560,6 +561,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("lossless") p->bLossless = atobool(value);
     OPT("cu-lossless") p->bCULossless = atobool(value);
     OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
+    OPT("fast-intra") p->bEnableFastIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
     OPT("scenecut")
     {
@@ -1211,6 +1213,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bLossless, "lossless");
     BOOL(p->bCULossless, "cu-lossless");
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
+    BOOL(p->bEnableFastIntra, "fast-intra");
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " interlace=%d", p->interlaceMode);
     s += sprintf(s, " keyint=%d", p->keyframeMax);

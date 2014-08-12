@@ -48,6 +48,7 @@ class Frame;
 class EstimateRow
 {
 public:
+    x265_param*         m_param;
     MotionEstimate      m_me;
     Lock                m_lock;
     pixel*              m_predictions;    // buffer for 35 intra predictions

@@ -117,6 +117,8 @@ static const struct option long_options[] =
     { "no-cu-lossless",       no_argument, NULL, 0 },
     { "no-constrained-intra", no_argument, NULL, 0 },
     { "constrained-intra",    no_argument, NULL, 0 },
+    { "fast-intra",           no_argument, NULL, 0 },
+    { "no-fast-intra",        no_argument, NULL, 0 },
     { "no-open-gop",          no_argument, NULL, 0 },
     { "open-gop",             no_argument, NULL, 0 },
     { "keyint",         required_argument, NULL, 'I' },
@@ -387,6 +389,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("   --[no-]b-intra                Enable intra in B frames in veryslow presets. Default %s\n", OPT(param->bIntraInBFrames));
+    H0("   --[no]-fast-intra             Enable faster search method for intra mode. Default %s\n", OPT(param->bEnableFastIntra));
     H0("   --rdpenalty <0..2>            penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
     H0("\nSlice decision options:\n");
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));

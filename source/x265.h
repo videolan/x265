@@ -533,6 +533,9 @@ typedef struct x265_param
      * depending on your source material. Defaults to disabled */
     int       bEnableStrongIntraSmoothing;
 
+    /* Use a faster search method to find the best intra mode. Default is 0 */
+    int       bEnableFastIntra;
+
     /*== Inter Coding Tools ==*/
 
     /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
