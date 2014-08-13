@@ -502,20 +502,13 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
      * RD cost */
 #define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << unquantPer) + unquantRound) >> unquantShift)
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
-    int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
+    int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + m_scalingList->m_bEnabled ? 4 : 0;
     int unquantRound, unquantPer;
-    unquantShift += 4;
+    unquantPer = per;
     if (unquantShift > per)
-    {
         unquantRound = 1 << (unquantShift - per - 1);
-        unquantPer = per;
-    }
     else
-    {
-        unquantPer = per + 4;
-        unquantShift += 4;
         unquantRound = 0;
-    }
 
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + ((lambda2 * (bits)) >> 8))

@@ -347,7 +347,7 @@ void ScalingList::setupQuantMatrices()
                     for (int i = 0; i < count; i++)
                     {
                         quantCoeff[i] = s_quantScales[rem];
-                        dequantCoeff[i] = s_invQuantScales[rem] << 4;
+                        dequantCoeff[i] = s_invQuantScales[rem];
                     }
                 }
             }
