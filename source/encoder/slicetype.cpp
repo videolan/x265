@@ -1679,8 +1679,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
 
         // generate 35 intra predictions into m_predictions
         pixelcmp_t satd = primitives.satd[partitionFromLog2Size(X265_LOWRES_CU_BITS)];
-        int icost = m_me.COST_MAX, cost, highcost, lowcost, acost = m_me.COST_MAX;
-        uint32_t  lowmode, mode;
+        int icost = m_me.COST_MAX, cost;
         primitives.intra_pred[sizeIdx][DC_IDX](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
         cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
         if (cost < icost)
@@ -1699,6 +1698,8 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // fast-intra angle search
         if (m_param->bEnableFastIntra)
         {
+            int lowcost, acost = m_me.COST_MAX;
+            uint32_t mode, lowmode = 0;
             for (mode = 4; mode < 35; mode += 5)
             {
                 if (mode < 18)
@@ -1716,7 +1717,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
                 lowcost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
             else
                 lowcost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-            highcost = m_me.COST_MAX;
+            int highcost = m_me.COST_MAX;
             if (lowmode < 34)
             {
                 mode = lowmode + 2;
@@ -1748,7 +1749,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         }
         else // calculate and search all intra prediction angles for lowest cost
         {
-            for (mode = 2; mode < 35; mode++)
+            for (uint32_t mode = 2; mode < 35; mode++)
             {
                 if (mode < 18)
                     cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
