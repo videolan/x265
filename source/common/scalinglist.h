@@ -66,7 +66,6 @@ public:
 protected:
 
     static const int SCALING_LIST_DC = 16;    // default DC value
-    static const int s_scalingListSizeX[NUM_SIZES];
 
     int32_t* getScalingListDefaultAddress(int sizeId, int listId);
     void     processDefaultMarix(int sizeId, int listId);

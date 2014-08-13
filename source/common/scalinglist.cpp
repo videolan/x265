@@ -119,7 +119,6 @@ namespace x265 {
 // private namespace
 
 const int     ScalingList::s_numCoefPerSize[NUM_SIZES] = { 16, 64, 256, 1024 };
-const int     ScalingList::s_scalingListSizeX[NUM_SIZES] = { 4, 8, 16, 32 };
 const int32_t ScalingList::s_quantScales[NUM_REM] = { 26214, 23302, 20560, 18396, 16384, 14564 };
 const int32_t ScalingList::s_invQuantScales[NUM_REM] = { 40, 45, 51, 57, 64, 72 };
 
@@ -322,7 +321,7 @@ void ScalingList::setupQuantMatrices()
 {
     for (int size = 0; size < NUM_SIZES; size++)
     {
-        int width = s_scalingListSizeX[size];
+        int width = 1 << (size + 2);
         int ratio = width / X265_MIN(MAX_MATRIX_SIZE_NUM, width);
         int stride = X265_MIN(MAX_MATRIX_SIZE_NUM, width);
         int count = s_numCoefPerSize[size];
