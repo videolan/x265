@@ -223,7 +223,6 @@ void FrameEncoder::compressFrame()
     // Clip slice QP to 0-51 spec range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
     slice->m_sliceQp = qp;
-    m_frame->m_avgQpAq = qp;
 
     if (m_frame->m_lowres.bKeyframe)
     {
