@@ -75,7 +75,7 @@ void Predict::initTempBuff(int csp)
 void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
     int tuSize = 1 << log2TrSize;
-    bool bUseFilteredPredictions = IntraFilterType[log2TrSize - 2][dirMode];
+    bool bUseFilteredPredictions = !!IntraFilterType[log2TrSize - 2][dirMode];
 
     pixel *refLft, *refAbv;
     refLft = m_refLeft + tuSize - 1;
