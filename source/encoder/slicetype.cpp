@@ -1699,7 +1699,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // fast-intra angle search
         if (m_param->bEnableFastIntra)
         {
-            for (mode = 4;mode < 35; mode += 5)
+            for (mode = 4; mode < 35; mode += 5)
             {
                 if (mode < 18)
                     cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
