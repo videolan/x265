@@ -833,7 +833,7 @@ Quality, rate control and rate distortion options
 	the consecutive pass tunes the qp of each frame to improve the quality
 	of the output.Default 0(disabled)
 
-	1. First pass, cretes stats file
+	1. First pass, creates stats file
 	2. Last pass, does not overwrite stats file
 	3. Nth pass, overwrites stats file
 
