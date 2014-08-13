@@ -65,8 +65,9 @@ protected:
 
     /* Motion information */
     TComCUMvField* m_mvField[2];
+
     /* TODO: Need to investigate clipping while writing into the TComDataCU fields itself */
-    MV ClippedMv[2];
+    MV             m_clippedMv[2];
 
     // motion compensation functions
     void predInterUni(int picList, TComYuv* outPredYuv, bool bLuma, bool bChroma);
