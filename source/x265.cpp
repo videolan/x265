@@ -776,6 +776,7 @@ int main(int argc, char **argv)
     if (cliopt.parse(argc, argv, param))
     {
         cliopt.destroy();
+        x265_param_free(param);
         exit(1);
     }
 
@@ -784,6 +785,7 @@ int main(int argc, char **argv)
     {
         x265_log(param, X265_LOG_ERROR, "failed to open encoder\n");
         cliopt.destroy();
+        x265_param_free(param);
         x265_cleanup();
         exit(1);
     }
