@@ -119,7 +119,6 @@ namespace x265 {
 // private namespace
 
 const int     ScalingList::s_numCoefPerSize[NUM_SIZES] = { 16, 64, 256, 1024 };
-const int     ScalingList::s_numListsAtSize[NUM_SIZES] = { 6, 6, 6, 6 };
 const int     ScalingList::s_scalingListSizeX[NUM_SIZES] = { 4, 8, 16, 32 };
 const int32_t ScalingList::s_quantScales[NUM_REM] = { 26214, 23302, 20560, 18396, 16384, 14564 };
 const int32_t ScalingList::s_invQuantScales[NUM_REM] = { 40, 45, 51, 57, 64, 72 };
@@ -136,7 +135,7 @@ bool ScalingList::init()
     bool ok = true;
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < s_numListsAtSize[sizeId]; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId++)
         {
             m_scalingListCoef[sizeId][listId] = X265_MALLOC(int32_t, X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeId]));
             ok &= !!m_scalingListCoef[sizeId][listId];
@@ -155,7 +154,7 @@ ScalingList::~ScalingList()
 {
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < s_numListsAtSize[sizeId]; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId++)
         {
             X265_FREE(m_scalingListCoef[sizeId][listId]);
             for (int rem = 0; rem < NUM_REM; rem++)
@@ -193,7 +192,7 @@ bool ScalingList::checkDefaultScalingList()
     int defaultCounter = 0;
 
     for (int s = 0; s < NUM_SIZES; s++)
-        for (int l = 0; l < s_numListsAtSize[s]; l++)
+        for (int l = 0; l < NUM_LISTS; l++)
             if (!memcmp(m_scalingListCoef[s][l], getScalingListDefaultAddress(s, l),
                         sizeof(int32_t) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[s])) &&
                 ((s < BLOCK_16x16) || (m_scalingListDC[s][l] == 16)))
@@ -232,7 +231,7 @@ void ScalingList::processDefaultMarix(int sizeId, int listId)
 void ScalingList::setDefaultScalingList()
 {
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
-        for (int listId = 0; listId < s_numListsAtSize[sizeId]; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId++)
             processDefaultMarix(sizeId, listId);
     m_bEnabled = true;
     m_bDataPresent = false;
@@ -253,7 +252,7 @@ bool ScalingList::parseScalingList(const char* filename)
     for (int sizeIdc = 0; sizeIdc < NUM_SIZES; sizeIdc++)
     {
         int size = X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeIdc]);
-        for (int listIdc = 0; listIdc < s_numListsAtSize[sizeIdc]; listIdc++)
+        for (int listIdc = 0; listIdc < NUM_LISTS; listIdc++)
         {
             src = m_scalingListCoef[sizeIdc][listIdc];
 
@@ -328,7 +327,7 @@ void ScalingList::setupQuantMatrices()
         int stride = X265_MIN(MAX_MATRIX_SIZE_NUM, width);
         int count = s_numCoefPerSize[size];
 
-        for (int list = 0; list < s_numListsAtSize[size]; list++)
+        for (int list = 0; list < NUM_LISTS; list++)
         {
             int32_t *coeff = m_scalingListCoef[size][list];
             int32_t dc = m_scalingListDC[size][list];

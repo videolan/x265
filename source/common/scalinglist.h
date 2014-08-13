@@ -40,7 +40,6 @@ public:
     enum { MAX_MATRIX_SIZE_NUM = 8 };  // max size number for quantization matrix
 
     static const int     s_numCoefPerSize[NUM_SIZES];
-    static const int     s_numListsAtSize[NUM_SIZES];
     static const int32_t s_invQuantScales[NUM_REM];
     static const int32_t s_quantScales[NUM_REM];
 

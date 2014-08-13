@@ -265,7 +265,7 @@ void Entropy::codeScalingList(ScalingList* scalingList)
 {
     for (int sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < ScalingList::s_numListsAtSize[sizeId]; listId++)
+        for (int listId = 0; listId < ScalingList::NUM_LISTS; listId++)
         {
             int predList = scalingList->checkPredMode(sizeId, listId);
             WRITE_FLAG(predList < 0, "scaling_list_pred_mode_flag");
