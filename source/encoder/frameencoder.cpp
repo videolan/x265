@@ -677,8 +677,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         if (m_param->rc.aqMode || bIsVbv)
         {
             int qp = calcQpForCu(cuAddr, cu->m_baseQp);
-            qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
             setLambda(qp, tld);
+            qp = Clip3(MIN_QP, MAX_QP, qp);
             cu->setQPSubParts(char(qp), 0, 0);
             if (m_param->rc.aqMode)
                 m_frame->m_qpaAq[row] += qp;
@@ -861,11 +861,22 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
     Slice* slice = m_frame->m_picSym->m_slice;
-  
     int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
     int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
-    
-    tld.m_cuCoder.setQP(qp, qpCb, qpCr);
+    qp = Clip3(0, MAX_MAX_QP, qp);
+    double lambda2 = x265_lambda2_tab[qp];
+    double lambdaCb = x265_lambda2_tab[qpCb];
+    double lambdaCr = x265_lambda2_tab[qpCr];
+
+    tld.m_cuCoder.m_me.setQP(qp);
+    tld.m_cuCoder.m_quant.setLambdas(lambda2, lambdaCb, lambdaCr);
+    tld.m_cuCoder.m_rdCost.setLambda(lambda2, x265_lambda_tab[qp]);
+    int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
+    uint16_t lambdaOffset = tld.m_cuCoder.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+    tld.m_cuCoder.m_rdCost.setCbDistortionWeight(lambdaOffset);
+    chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
+    lambdaOffset = tld.m_cuCoder.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+    tld.m_cuCoder.m_rdCost.setCrDistortionWeight(lambdaOffset);
 }
 
 /* DCT-domain noise reduction / adaptive deadzone from libavcodec */

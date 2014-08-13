@@ -126,8 +126,6 @@ public:
     int             m_numLayers;
     int             m_refLagPixels;
 
-    void setQP(int qp, int qpCb, int qpCr);
-
     TEncSearch();
     virtual ~TEncSearch();
 
