@@ -26,6 +26,9 @@
 #include "primitives.h"
 #include "x265.h"
 #include "cpu.h"
+#if HIGH_BIT_DEPTH
+#include "predict.h"
+#endif
 
 extern "C" {
 #include "pixel.h"
@@ -1232,8 +1235,6 @@ namespace x265 {
 // private x265 namespace
 
 #if HIGH_BIT_DEPTH
-extern unsigned char IntraFilterType[][35];
-
 /* Very similar to CRef in intrapred.cpp, except it uses optimized primitives */
 template<int log2Size>
 void intra_allangs(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
