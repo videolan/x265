@@ -25,6 +25,7 @@
 #include "primitives.h"
 #include "quant.h"
 #include "frame.h"
+#include "entropy.h"
 #include "TLibCommon/TComDataCU.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/ContextTables.h"
@@ -555,6 +556,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
     const uint32_t cgNum = 1 << codeParams.log2TrSizeCG * 2;
 
+    /* TODO: update bit estimates if dirty */
+    EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
+
     uint32_t scanPos;
     coeffGroupRDStats cgRdStats;
 
@@ -621,8 +625,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 // coefficient level estimation
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
-                const int *greaterOneBits = m_estBitsSbac.greaterOneBits[oneCtx];
-                const int *levelAbsBits = m_estBitsSbac.levelAbsBits[absCtx];
+                const int *greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
+                const int *levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
 
                 uint32_t level = 0;
                 uint32_t sigCoefBits = 0;
@@ -636,11 +640,11 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                     if (maxAbsLevel < 3)
                     {
                         /* set default costs to uncoded costs */
-                        costSig[scanPos] = SIGCOST(m_estBitsSbac.significantBits[ctxSig][0]);
+                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
                         costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
                     }
-                    sigRateDelta[blkPos] = m_estBitsSbac.significantBits[ctxSig][1] - m_estBitsSbac.significantBits[ctxSig][0];
-                    sigCoefBits = m_estBitsSbac.significantBits[ctxSig][1];
+                    sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                    sigCoefBits = estBitsSbac.significantBits[ctxSig][1];
                 }
                 if (maxAbsLevel)
                 {
@@ -755,19 +759,19 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
             uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
 
-            int64_t costZeroCG = totalRdCost + SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
+            int64_t costZeroCG = totalRdCost + SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
             costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
             costZeroCG -= cgRdStats.codedLevelAndDist; /* remove distortion and level cost of coded coefficients */
             costZeroCG -= cgRdStats.sigCost;           /* remove signaling cost of significant coeff bitmap */
 
-            costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][1]);
+            costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][1]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
 
             if (costZeroCG < totalRdCost)
             {
                 sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                 totalRdCost = costZeroCG;
-                costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
+                costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
 
                 /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
                 for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -787,7 +791,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         {
             /* there were no coded coefficients in this coefficient group */
             uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
-            costCoeffGroupSig[cgScanPos] = SIGCOST(m_estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
+            costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
             totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
         }
@@ -799,14 +803,14 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int64_t bestCost;
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
-        bestCost = totalUncodedCost + SIGCOST(m_estBitsSbac.blockRootCbpBits[0][0]);
-        totalRdCost += SIGCOST(m_estBitsSbac.blockRootCbpBits[0][1]);
+        bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockRootCbpBits[0][0]);
+        totalRdCost += SIGCOST(estBitsSbac.blockRootCbpBits[0][1]);
     }
     else
     {
         int ctx = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
-        bestCost = totalUncodedCost + SIGCOST(m_estBitsSbac.blockCbpBits[ctx][0]);
-        totalRdCost += SIGCOST(m_estBitsSbac.blockCbpBits[ctx][1]);
+        bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockCbpBits[ctx][0]);
+        totalRdCost += SIGCOST(estBitsSbac.blockCbpBits[ctx][1]);
     }
 
     /* This loop starts with the last non-zero found in the first loop and then refines this last
@@ -1105,7 +1109,7 @@ inline uint32_t Quant::getRateLast(uint32_t posx, uint32_t posy) const
 {
     uint32_t ctxX = getGroupIdx(posx);
     uint32_t ctxY = getGroupIdx(posy);
-    uint32_t cost = m_estBitsSbac.lastXBits[ctxX] + m_estBitsSbac.lastYBits[ctxY];
+    uint32_t cost = m_entropyCoder->m_estBitsSbac.lastXBits[ctxX] + m_entropyCoder->m_estBitsSbac.lastYBits[ctxY];
 
     int32_t maskX = (int32_t)(2 - posx) >> 31;
     int32_t maskY = (int32_t)(2 - posy) >> 31;

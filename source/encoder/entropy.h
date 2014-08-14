@@ -85,6 +85,19 @@ struct TURecurse
     }
 };
 
+struct EstBitsSbac
+{
+    int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
+    uint32_t significantBits[NUM_SIG_FLAG_CTX][2];
+    int lastXBits[10];
+    int lastYBits[10];
+    int greaterOneBits[NUM_ONE_FLAG_CTX][2];
+    int levelAbsBits[NUM_ABS_FLAG_CTX][2];
+
+    int blockCbpBits[NUM_QT_CBF_CTX][2];
+    int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
+};
+
 class Entropy : public SyntaxElementWriter
 {
 public:
@@ -99,6 +112,7 @@ public:
     int           m_numBufferedBytes;
     int           m_bitsLeft;
     uint64_t      m_fracBits;
+    EstBitsSbac   m_estBitsSbac;
 
     Entropy();
 
