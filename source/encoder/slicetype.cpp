@@ -1699,7 +1699,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         if (m_param->bEnableFastIntra)
         {
             int lowcost, acost = m_me.COST_MAX;
-            uint32_t mode, lowmode = 0;
+            uint32_t mode, lowmode = 4;
             for (mode = 4; mode < 35; mode += 5)
             {
                 if (mode < 18)
