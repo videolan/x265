@@ -1693,68 +1693,56 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     bool modeHor;
     pixel *cmp;
     intptr_t srcStride;
+
+#define TRY_ANGLE(angle) \
+    modeHor = angle < 18; \
+    cmp = modeHor ? buf_trans : fenc; \
+    srcStride = modeHor ? scaleTuSize : scaleStride; \
+    sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
+    bits = (mpms & ((uint64_t)1 << angle)) ? xModeBitsIntra(cu, angle, partOffset, depth) : rbits; \
+    cost = m_rdCost.calcRdSADCost(sad, bits)
+
     if (m_param->bEnableFastIntra)
     {
-        int lowsad, highsad, asad = 0;
-        uint32_t lowbits, highbits, amode, lowmode, highmode, abits = 0;
-        uint64_t lowcost, highcost = MAX_INT64, acost = MAX_INT64;
+        int asad = 0;
+        uint32_t lowmode, highmode, amode, abits = 0;
+        uint64_t acost = MAX_INT64;
 
-        for (mode = 4;mode < 35; mode += 5)
+        /* pick the best angle, sampling at distance of 5 */
+        for (mode = 5; mode < 35; mode += 5)
         {
-            modeHor = (mode < 18);
-            cmp = (modeHor ? buf_trans : fenc);
-            srcStride = (modeHor ? scaleTuSize : scaleStride);
-            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
-            bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
-            cost = m_rdCost.calcRdSADCost(sad, bits);
+            TRY_ANGLE(mode);
             COPY4_IF_LT(acost, cost, amode, mode, asad, sad, abits, bits);
         }
-        lowmode = amode - 2;
-        modeHor = (lowmode < 18);
-        cmp = (modeHor ? buf_trans : fenc);
-        srcStride = (modeHor ? scaleTuSize : scaleStride);
-        lowsad = sa8d(cmp, srcStride, &tmp[(lowmode - 2) * predsize], scaleTuSize) << costShift;
-        lowbits = !(mpms & ((uint64_t)1 << lowmode)) ? rbits : xModeBitsIntra(cu, lowmode, partOffset, depth);
-        lowcost = m_rdCost.calcRdSADCost(lowsad, lowbits);
-        if (amode < 34)
+
+        /* refine best angle at distance 2, then distance 1 */
+        for (uint32_t dist = 2; dist >= 1; dist--)
         {
-            highmode = amode + 2;
-            modeHor = (highmode < 18);
-            cmp = (modeHor ? buf_trans : fenc);
-            srcStride = (modeHor ? scaleTuSize : scaleStride);
-            highsad = sa8d(cmp, srcStride, &tmp[(highmode - 2) * predsize], scaleTuSize) << costShift;
-            highbits = !(mpms & ((uint64_t)1 << highmode)) ? rbits : xModeBitsIntra(cu, highmode, partOffset, depth);
-            highcost = m_rdCost.calcRdSADCost(highsad, highbits);
+            lowmode = amode - dist;
+            highmode = amode + dist;
+
+            X265_CHECK(lowmode >= 2 && lowmode <= 34, "low intra mode out of range\n");
+            TRY_ANGLE(lowmode);
+            COPY4_IF_LT(acost, cost, amode, lowmode, asad, sad, abits, bits);
+
+            X265_CHECK(highmode >= 2 && highmode <= 34, "high intra mode out of range\n");
+            TRY_ANGLE(highmode);
+            COPY4_IF_LT(acost, cost, amode, highmode, asad, sad, abits, bits);
         }
-        if (lowcost <= highcost)
+
+        if (amode == 33)
         {
-            mode = amode - 1;
-            COPY4_IF_LT(acost, lowcost, amode, lowmode, asad, lowsad, abits, lowbits);
+            TRY_ANGLE(34);
+            COPY4_IF_LT(acost, cost, amode, 34, asad, sad, abits, bits);
         }
-        else
-        {
-            mode = amode + 1;
-            COPY4_IF_LT(acost, highcost, amode, highmode, asad, highsad, abits, highbits);
-        }
-        modeHor = (mode < 18);
-        cmp = (modeHor ? buf_trans : fenc);
-        srcStride = (modeHor ? scaleTuSize : scaleStride);
-        sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
-        bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
-        cost = m_rdCost.calcRdSADCost(sad, bits);
-        COPY4_IF_LT(acost, cost, amode, mode, asad, sad, abits, bits);
+
         COPY4_IF_LT(bcost, acost, bmode, amode, bsad, asad, bbits, abits);
     }
     else // calculate and search all intra prediction angles for lowest cost
     {
         for (mode = 2; mode < 35; mode++)
         {
-            modeHor = (mode < 18);
-            cmp = (modeHor ? buf_trans : fenc);
-            srcStride = (modeHor ? scaleTuSize : scaleStride);
-            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
-            bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
-            cost = m_rdCost.calcRdSADCost(sad, bits);
+            TRY_ANGLE(mode);
             COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
         }
     }
