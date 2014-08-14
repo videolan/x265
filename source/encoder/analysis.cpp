@@ -693,7 +693,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (m_param->rdLevel > 2)
                         {
                             encodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth],
-                                               m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
+                                               m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
                             intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
                             bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                         }
