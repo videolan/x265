@@ -26,6 +26,7 @@
 #include "primitives.h"
 #include "x265.h"
 #include "cpu.h"
+#include "TLibCommon/TComRom.h"
 
 extern "C" {
 #include "pixel.h"
@@ -522,7 +523,7 @@ extern "C" {
     SETUP_CHROMA_SS_FUNC_DEF_444(64, 48, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_444(48, 64, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF_444(64, 16, cpu); \
-    SETUP_CHROMA_SS_FUNC_DEF_444(16, 64, cpu)
+    SETUP_CHROMA_SS_FUNC_DEF_444(16, 64, cpu);
 
 #if HIGH_BIT_DEPTH    // temporary, until all 10bit functions are completed
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
@@ -1136,7 +1137,7 @@ extern "C" {
     SETUP_CHROMA_VERT_FUNC_DEF_444(64, 48, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF_444(48, 64, cpu); \
     SETUP_CHROMA_VERT_FUNC_DEF_444(64, 16, cpu); \
-    SETUP_CHROMA_VERT_FUNC_DEF_444(16, 64, cpu)
+    SETUP_CHROMA_VERT_FUNC_DEF_444(16, 64, cpu);
 
 #define SETUP_CHROMA_HORIZ_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].filter_hpp[CHROMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
@@ -1166,7 +1167,7 @@ extern "C" {
     SETUP_CHROMA_HORIZ_FUNC_DEF(32, 24, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF(24, 32, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF(32, 8, cpu); \
-    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 32, cpu)
+    SETUP_CHROMA_HORIZ_FUNC_DEF(8, 32, cpu);
 
 #define SETUP_CHROMA_HORIZ_FUNC_DEF_422(W, H, cpu) \
     p.chroma[X265_CSP_I422].filter_hpp[CHROMA422_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
@@ -1196,7 +1197,7 @@ extern "C" {
     SETUP_CHROMA_HORIZ_FUNC_DEF_422(32, 48, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF_422(24, 64, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF_422(32, 16, cpu); \
-    SETUP_CHROMA_HORIZ_FUNC_DEF_422(8, 64, cpu)
+    SETUP_CHROMA_HORIZ_FUNC_DEF_422(8, 64, cpu);
 
 #define SETUP_CHROMA_HORIZ_FUNC_DEF_444(W, H, cpu) \
     p.chroma[X265_CSP_I444].filter_hpp[LUMA_ ## W ## x ## H] = x265_interp_4tap_horiz_pp_ ## W ## x ## H ## cpu; \
@@ -1226,7 +1227,7 @@ extern "C" {
     SETUP_CHROMA_HORIZ_FUNC_DEF_444(64, 48, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF_444(48, 64, cpu); \
     SETUP_CHROMA_HORIZ_FUNC_DEF_444(64, 16, cpu); \
-    SETUP_CHROMA_HORIZ_FUNC_DEF_444(16, 64, cpu)
+    SETUP_CHROMA_HORIZ_FUNC_DEF_444(16, 64, cpu);
 
 namespace x265 {
 // private x265 namespace
@@ -1242,8 +1243,8 @@ void intra_allangs(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixe
 
     for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *left = (IntraFilterType[sizeIdx][mode] ? left1 : left0);
-        pixel *above = (IntraFilterType[sizeIdx][mode] ? above1 : above0);
+        pixel *left  = (intraFilterFlags[mode] & size ? left1  : left0);
+        pixel *above = (intraFilterFlags[mode] & size ? above1 : above0);
         pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
         if (mode < 18)

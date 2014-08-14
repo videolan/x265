@@ -77,10 +77,13 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
     int tuSize = 1 << log2TrSize;
 
     pixel *refLft, *refAbv;
-    refLft = m_refLeft + tuSize - 1;
-    refAbv = m_refAbove + tuSize - 1;
 
-    if (IntraFilterType[log2TrSize - 2][dirMode])
+    if (!(g_intraFilterFlags[dirMode] & tuSize))
+    {
+        refLft = m_refLeft + tuSize - 1;
+        refAbv = m_refAbove + tuSize - 1;
+    }
+    else
     {
         refLft = m_refLeftFlt + tuSize - 1;
         refAbv = m_refAboveFlt + tuSize - 1;
@@ -101,7 +104,7 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     pixel refAbv[3 * MAX_CU_SIZE];
     pixel refLft[3 * MAX_CU_SIZE];
 
-    bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && IntraFilterType[log2TrSizeC - 2][dirMode]);
+    bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize));
 
     if (bUseFilteredPredictions)
     {

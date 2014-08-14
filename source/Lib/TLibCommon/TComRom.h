@@ -148,6 +148,9 @@ extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1]
 extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t x265_exp2_lut[64];
 
+// Intra tables
+extern const uint8_t g_intraFilterFlags[35];
+
 }
 
 #endif  //ifndef X265_TCOMROM_H

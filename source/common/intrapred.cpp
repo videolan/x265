@@ -21,7 +21,6 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "predict.h"
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
 
@@ -249,11 +248,10 @@ template<int log2Size>
 void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
 {
     const int size = 1 << log2Size;
-    const int sizeIdx = log2Size - 2;
     for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *left = (IntraFilterType[sizeIdx][mode] ? left1 : left0);
-        pixel *above = (IntraFilterType[sizeIdx][mode] ? above1 : above0);
+        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
+        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
         pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
         intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
