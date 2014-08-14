@@ -179,6 +179,20 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOG2(x)  log2(x)
 #endif
 
+namespace x265 {
+
+/* This table requires IntraFilterType[log2Size - 2][intra mode] */
+static const unsigned char IntraFilterType[5][35] =
+{
+    // TODO: this wants to be uint64_t FilterFlagBitmap[5]
+    //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
+    /*  4x4  */{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    /*  8x8  */{ 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+    /* 16x16 */{ 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 },
+    /* 32x32 */{ 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1 },
+    /* 64x64 */{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
+
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
@@ -188,6 +202,8 @@ struct NoiseReduction
     uint32_t residualSum[8][1024];
     uint32_t count[8];
 };
+
+}
 
 /* defined in common.cpp */
 int64_t x265_mdate(void);
@@ -201,4 +217,5 @@ double x265_qScale2qp(double qScale);
 double x265_qp2qScale(double qp);
 uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane);
 char* x265_slurp_file(const char *filename);
+
 #endif // ifndef X265_COMMON_H

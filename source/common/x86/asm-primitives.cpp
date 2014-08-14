@@ -26,9 +26,6 @@
 #include "primitives.h"
 #include "x265.h"
 #include "cpu.h"
-#if HIGH_BIT_DEPTH
-#include "predict.h"
-#endif
 
 extern "C" {
 #include "pixel.h"

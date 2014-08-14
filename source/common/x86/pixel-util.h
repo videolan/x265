@@ -71,7 +71,7 @@ void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
 #define CHROMA_PIXELSUB_DEF(cpu) \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 8, cpu); \
-    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 16, cpu);
+    SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 16, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 32, cpu);
 
 #define CHROMA_PIXELSUB_DEF_422(cpu) \
