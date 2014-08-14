@@ -39,9 +39,10 @@
 
 #include "common.h"
 #include "primitives.h"
+#include "shortyuv.h"
 #include "slice.h"
 #include "TComWeightPrediction.h"
-#include "predict.h"
+#include "TComYuv.h"
 
 using namespace x265;
 
