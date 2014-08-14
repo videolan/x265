@@ -1653,6 +1653,7 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     }
 
     pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
+    int predsize = scaleTuSize * scaleTuSize;
 
     uint32_t preds[3];
     cu->getIntraDirLumaPredictor(partOffset, preds);
@@ -1689,17 +1690,74 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
 
     primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
-    for (mode = 2; mode < 35; mode++)
+    bool modeHor;
+    pixel *cmp;
+    intptr_t srcStride;
+    if (m_param->bEnableFastIntra)
     {
-        bool modeHor = (mode < 18);
-        pixel *cmp = (modeHor ? buf_trans : fenc);
-        intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-        sad  = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+        int lowsad, highsad, asad = 0;
+        uint32_t lowbits, highbits, amode, lowmode, highmode, abits = 0;
+        uint64_t lowcost, highcost = MAX_INT64, acost = MAX_INT64;
+
+        for (mode = 4;mode < 35; mode += 5)
+        {
+            modeHor = (mode < 18);
+            cmp = (modeHor ? buf_trans : fenc);
+            srcStride = (modeHor ? scaleTuSize : scaleStride);
+            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
+            bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
+            cost = m_rdCost.calcRdSADCost(sad, bits);
+            COPY4_IF_LT(acost, cost, amode, mode, asad, sad, abits, bits);
+        }
+        lowmode = amode - 2;
+        modeHor = (lowmode < 18);
+        cmp = (modeHor ? buf_trans : fenc);
+        srcStride = (modeHor ? scaleTuSize : scaleStride);
+        lowsad = sa8d(cmp, srcStride, &tmp[(lowmode - 2) * predsize], scaleTuSize) << costShift;
+        lowbits = !(mpms & ((uint64_t)1 << lowmode)) ? rbits : xModeBitsIntra(cu, lowmode, partOffset, depth);
+        lowcost = m_rdCost.calcRdSADCost(lowsad, lowbits);
+        if (amode < 34)
+        {
+            highmode = amode + 2;
+            modeHor = (highmode < 18);
+            cmp = (modeHor ? buf_trans : fenc);
+            srcStride = (modeHor ? scaleTuSize : scaleStride);
+            highsad = sa8d(cmp, srcStride, &tmp[(highmode - 2) * predsize], scaleTuSize) << costShift;
+            highbits = !(mpms & ((uint64_t)1 << highmode)) ? rbits : xModeBitsIntra(cu, highmode, partOffset, depth);
+            highcost = m_rdCost.calcRdSADCost(highsad, highbits);
+        }
+        if (lowcost <= highcost)
+        {
+            mode = amode - 1;
+            COPY4_IF_LT(acost, lowcost, amode, lowmode, asad, lowsad, abits, lowbits);
+        }
+        else
+        {
+            mode = amode + 1;
+            COPY4_IF_LT(acost, highcost, amode, highmode, asad, highsad, abits, highbits);
+        }
+        modeHor = (mode < 18);
+        cmp = (modeHor ? buf_trans : fenc);
+        srcStride = (modeHor ? scaleTuSize : scaleStride);
+        sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
         bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
         cost = m_rdCost.calcRdSADCost(sad, bits);
-        COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
+        COPY4_IF_LT(acost, cost, amode, mode, asad, sad, abits, bits);
+        COPY4_IF_LT(bcost, acost, bmode, amode, bsad, asad, bbits, abits);
     }
-
+    else // calculate and search all intra prediction angles for lowest cost
+    {
+        for (mode = 2; mode < 35; mode++)
+        {
+            modeHor = (mode < 18);
+            cmp = (modeHor ? buf_trans : fenc);
+            srcStride = (modeHor ? scaleTuSize : scaleStride);
+            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * predsize], scaleTuSize) << costShift;
+            bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
+            cost = m_rdCost.calcRdSADCost(sad, bits);
+            COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
+        }
+    }
     cu->m_totalBits = bbits;
     cu->m_totalDistortion = bsad;
     cu->m_sa8dCost = bcost;
