@@ -693,7 +693,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (m_param->rdLevel > 2)
                         {
                             encodeIntraInInter(m_intraInInterCU[depth], m_origYuv[depth], m_modePredYuv[5][depth],
-                                                m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
+                                               m_tmpResiYuv[depth],  m_tmpRecoYuv[depth]);
                             intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
                             bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                         }
@@ -701,7 +701,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         {
                             intraInInterCost = m_intraInInterCU[depth]->m_sa8dCost;
                             bestCost = outBestCU->m_sa8dCost;
-
                         }
                         if (intraInInterCost < bestCost)
                         {
@@ -709,9 +708,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                             std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
                             std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
                             if (m_param->rdLevel > 2)
-                            {
                                 m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
-                            }
                         }
                     }
                 }
@@ -738,7 +735,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     }
                     else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
                         encodeIntraInInter(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],  m_bestRecoYuv[depth]);
-                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+
+                    m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                 }
                 else if (m_param->rdLevel == 1)
                 {
