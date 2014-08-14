@@ -845,6 +845,20 @@ uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
 
     return numSig;
 }
+
+void denoiseDct_c(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
+{
+    for (int i = 0; i < numCoeff; i++)
+    {
+        int level = dctCoef[i];
+        int sign = level >> 31;
+        level = (level + sign) ^ sign;
+        resSum[i] += level;
+        level -= offset[i];
+        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
+    }
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -867,6 +881,7 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.idct[IDCT_16x16] = idct16_c;
     p.idct[IDCT_32x32] = idct32_c;
     p.count_nonzero = count_nonzero_c;
+    p.denoiseDct = denoiseDct_c;
 
     p.cvt16to32_cnt[BLOCK_4x4] = conv16to32_count<4>;
     p.cvt16to32_cnt[BLOCK_8x8] = conv16to32_count<8>;

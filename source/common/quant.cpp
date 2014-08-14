@@ -49,19 +49,6 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline void denoiseDct(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
-{
-    for (int i = 0; i < numCoeff; i++)
-    {
-        int level = dctCoef[i];
-        int sign = level >> 31;
-        level = (level + sign) ^ sign;
-        resSum[i] += level;
-        level -= offset[i];
-        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
-    }
-}
-
 inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
@@ -375,12 +362,12 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr->bNoiseReduction && !isIntra)
+        if (m_nr && !isIntra)
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
             int cat = sizeIdx + 4 * !isLuma;
             int numCoeff = 1 << log2TrSize * 2;
-            denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
+            primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
             m_nr->count[cat]++;
         }
     }

@@ -50,6 +50,7 @@ FrameEncoder::FrameEncoder()
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
     m_substreamSizes = NULL;
+    m_nr = NULL;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
@@ -72,6 +73,8 @@ void FrameEncoder::destroy()
     delete[] m_outStreams;
     X265_FREE(m_substreamSizes);
     m_frameFilter.destroy();
+
+    X265_FREE(m_nr);
 
     // wait for worker thread to exit
     stop();
@@ -116,8 +119,11 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     memset(&m_frameStats, 0, sizeof(m_frameStats));
-    memset(&m_nr, 0, sizeof(m_nr));
-    m_nr.bNoiseReduction = !!m_param->noiseReduction;
+    m_nr = X265_MALLOC(NoiseReduction, 1);
+    if (m_nr)
+        memset(m_nr, 0, sizeof(NoiseReduction));
+    else
+        m_param->noiseReduction = 0;
 
     start();
     return ok;
@@ -639,7 +645,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
     // setup thread-local data
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
-    tld.m_cuCoder.m_quant.m_nr = &m_nr;
+    tld.m_cuCoder.m_quant.m_nr = m_nr;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
@@ -882,7 +888,7 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 /* DCT-domain noise reduction / adaptive deadzone from libavcodec */
 void FrameEncoder::noiseReductionUpdate()
 {
-    if (!m_nr.bNoiseReduction)
+    if (!m_nr)
         return;
 
     static const uint32_t maxBlocksPerTrSize[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
@@ -892,24 +898,24 @@ void FrameEncoder::noiseReductionUpdate()
         int trSize = cat & 3;
         int coefCount = 1 << ((trSize + 2) * 2);
 
-        if (m_nr.count[cat] > maxBlocksPerTrSize[trSize])
+        if (m_nr->count[cat] > maxBlocksPerTrSize[trSize])
         {
             for (int i = 0; i < coefCount; i++)
-                m_nr.residualSum[cat][i] >>= 1;
-            m_nr.count[cat] >>= 1;
+                m_nr->residualSum[cat][i] >>= 1;
+            m_nr->count[cat] >>= 1;
         }
 
-        uint64_t scaledCount = (uint64_t)m_param->noiseReduction * m_nr.count[cat];
+        uint64_t scaledCount = (uint64_t)m_param->noiseReduction * m_nr->count[cat];
 
         for (int i = 0; i < coefCount; i++)
         {
-            uint64_t value = scaledCount + m_nr.residualSum[cat][i] / 2;
-            uint64_t denom = m_nr.residualSum[cat][i] + 1;
-            m_nr.offsetDenoise[cat][i] = (uint16_t)(value / denom);
+            uint64_t value = scaledCount + m_nr->residualSum[cat][i] / 2;
+            uint64_t denom = m_nr->residualSum[cat][i] + 1;
+            m_nr->offsetDenoise[cat][i] = (uint16_t)(value / denom);
         }
 
         // Don't denoise DC coefficients
-        m_nr.offsetDenoise[cat][0] = 0;
+        m_nr->offsetDenoise[cat][0] = 0;
     }
 }
 

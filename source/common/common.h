@@ -179,10 +179,9 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOG2(x)  log2(x)
 #endif
 
+// NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
-    bool bNoiseReduction;
-
     /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
     uint16_t offsetDenoise[8][1024];

@@ -7,6 +7,7 @@
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -156,6 +157,8 @@ typedef uint32_t (*cvt16to32_cnt_t)(coeff_t* coeff, int16_t* residual, intptr_t 
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
+typedef void (*denoiseDct_t)(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff);
+
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
@@ -264,6 +267,7 @@ struct EncoderPrimitives
     dequant_scaling_t dequant_scaling;
     dequant_normal_t dequant_normal;
     count_nonzero_t count_nonzero;
+    denoiseDct_t    denoiseDct;
 
     calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
