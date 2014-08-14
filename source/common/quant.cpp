@@ -495,7 +495,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     uint32_t trSize = 1 << log2TrSize;
 
-    /* unquant constants for measuring distortion. Sscaling list quant coefficients have a (1 << 4)
+    /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
      * at several stages. We skip the clipping when measuring RD cost */
 #define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
