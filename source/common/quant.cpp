@@ -500,7 +500,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
      * at several stages. We skip the clipping when measuring RD cost */
 #define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
-    int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + m_scalingList->m_bEnabled ? 4 : 0;
+    int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
 
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
