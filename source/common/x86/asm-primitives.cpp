@@ -1243,8 +1243,8 @@ void intra_allangs(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixe
 
     for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *left  = (intraFilterFlags[mode] & size ? left1  : left0);
-        pixel *above = (intraFilterFlags[mode] & size ? above1 : above0);
+        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
+        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
         pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
         if (mode < 18)
