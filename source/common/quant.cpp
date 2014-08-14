@@ -495,11 +495,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     uint32_t trSize = 1 << log2TrSize;
 
-    /* unquant constants for psy-rdoq. The dequant coefficients have a (1<<4) scale applied that
-     * must be removed during unquant.  This may be larger than the QP upshift, which would turn
-     * some shifts around. To avoid this we add an addition shift factor to the dequant coeff.  Note
-     * that in real dequant there is clipping at several stages. We skip the clipping when measuring
-     * RD cost */
+    /* unquant constants for measuring distortion. Sscaling list quant coefficients have a (1 << 4)
+     * scale applied that must be removed during unquant. Note that in real dequant there is clipping
+     * at several stages. We skip the clipping when measuring RD cost */
 #define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + m_scalingList->m_bEnabled ? 4 : 0;
