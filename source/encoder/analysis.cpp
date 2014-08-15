@@ -1705,7 +1705,7 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     if (m_param->bEnableFastIntra)
     {
         int asad = 0;
-        uint32_t lowmode, highmode, amode, abits = 0;
+        uint32_t lowmode, highmode, amode = 5, abits = 0;
         uint64_t acost = MAX_INT64;
 
         /* pick the best angle, sampling at distance of 5 */
