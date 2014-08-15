@@ -947,7 +947,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
-    // CHECK(param->psyRdoq < 0 || 2.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 2.0");
+    CHECK(param->psyRdoq < 0 || 10.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 10.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
@@ -1151,9 +1151,9 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
     if (param->psyRd > 0.)
-        fprintf(stderr, "psy-rd=%.1lf ", param->psyRd);
+        fprintf(stderr, "psy-rd=%.2lf ", param->psyRd);
     if (param->psyRdoq > 0.)
-        fprintf(stderr, "psy-rdoq=%.1lf ", param->psyRdoq);
+        fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
     if (param->noiseReduction)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
 
