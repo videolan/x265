@@ -1037,7 +1037,7 @@ void x265_param_apply_fastfirstpass(x265_param* param)
         param->searchMethod = X265_DIA_SEARCH;
         param->subpelRefine = X265_MIN(2, param->subpelRefine);
         param->bEnableEarlySkip = 1;
-        param->rdLevel = 2;
+        param->rdLevel = X265_MIN(2, param->rdLevel);
     }
 }
 
