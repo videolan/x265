@@ -40,7 +40,7 @@ public:
     uint64_t  m_crDistortionWeight;
     uint32_t  m_psyRd;
 
-    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale); }
+    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
     void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
     void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
 
