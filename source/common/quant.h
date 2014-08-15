@@ -41,6 +41,8 @@ struct QpParam
     int rem;
     int per;
     int qp;
+    int64_t lambda2; /* FIX8 */
+    int64_t lambda;  /* FIX8 */
 
     QpParam() : qp(MAX_INT) {}
 
@@ -67,7 +69,6 @@ protected:
     const ScalingList* m_scalingList;
 
     QpParam            m_qpParam[3];
-    int64_t            m_lambda2[3]; /* FIX8 lambda2 values per plane */
 
     bool               m_useRDOQ;
     int64_t            m_psyRdoqScale;
@@ -87,7 +88,7 @@ public:
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);
-    void setLambdas(double lambdaY, double lambdaCb, double lambdaCr);
+    void setLambdaFromQP(int qpY, int qpCb, int qpCr);
 
     uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);

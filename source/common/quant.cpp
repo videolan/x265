@@ -199,11 +199,14 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }
 
-void Quant::setLambdas(double lambdaY, double lambdaCb, double lambdaCr)
+void Quant::setLambdaFromQP(int qpY, int qpCb, int qpCr)
 {
-    m_lambda2[0] = (int64_t)(lambdaY * 256. + 0.5);
-    m_lambda2[1] = (int64_t)(lambdaCb * 256. + 0.5);
-    m_lambda2[2] = (int64_t)(lambdaCr * 256. + 0.5);
+    m_qpParam[0].lambda2 = (int64_t)(x265_lambda2_tab[qpY] * 256. + 0.5);
+    m_qpParam[1].lambda2 = (int64_t)(x265_lambda2_tab[qpCb] * 256. + 0.5);
+    m_qpParam[2].lambda2 = (int64_t)(x265_lambda2_tab[qpCr] * 256. + 0.5);
+    m_qpParam[0].lambda = (int64_t)(x265_lambda_tab[qpY] * 256. + 0.5);
+    m_qpParam[1].lambda = (int64_t)(x265_lambda_tab[qpCb] * 256. + 0.5);
+    m_qpParam[2].lambda = (int64_t)(x265_lambda_tab[qpCr] * 256. + 0.5);
 }
 
 /* To minimize the distortion only. No rate is considered */
@@ -491,19 +494,21 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         return 0;
 
     uint32_t trSize = 1 << log2TrSize;
+    int64_t lambda2 = m_qpParam[ttype].lambda2;
+    int64_t lambda  = m_qpParam[ttype].lambda;
 
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
-     * at several stages. We skip the clipping when measuring RD cost */
-#define UNQUANT(lvl) (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
+     * at several stages. We skip the clipping for simplicity when measuring RD cost */
     int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
+    int scaleBits = SCALE_BITS - 2 * transformShift;
 
+#define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + ((lambda2 * (bits)) >> 8))
-    int64_t lambda2 = m_lambda2[ttype];
-    int scaleBits = SCALE_BITS - 2 * transformShift;
+#define PSYVALUE(rec)   ((m_psyRdoqScale * lambda * (rec)) >> (16 - scaleBits))
 
     int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
     int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
@@ -573,7 +578,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
             costUncoded[scanPos] = (int64_t)(signCoef * signCoef) << scaleBits;
             if (usePsy && blkPos)
                 /* when no residual coefficient is coded, predicted coef == recon coef */
-                costUncoded[scanPos] -= (((m_psyRdoqScale * predictedCoef) << scaleBits) >> 8);
+                costUncoded[scanPos] -= PSYVALUE(predictedCoef);
 
             totalUncodedCost += costUncoded[scanPos];
 
@@ -644,7 +649,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                         if (usePsy && blkPos)
                         {
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
-                            curCost -= (int)(((m_psyRdoqScale * reconCoef) << scaleBits) >> 8);
+                            curCost -= PSYVALUE(reconCoef);
                         }
 
                         if (curCost < costCoeff[scanPos])
