@@ -1695,72 +1695,38 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // calculate satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         primitives.transpose[sizeIdx](buf_trans, m_me.fenc, FENC_STRIDE);
-        // fast-intra angle search
-        if (m_param->bEnableFastIntra)
+
+        int acost = m_me.COST_MAX;
+        uint32_t mode, lowmode = 4;
+        for (mode = 5; mode < 35; mode += 5)
         {
-            int lowcost, acost = m_me.COST_MAX;
-            uint32_t mode, lowmode = 4;
-            for (mode = 4; mode < 35; mode += 5)
-            {
-                if (mode < 18)
-                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-                if (cost < acost)
-                {
-                    lowmode = mode;
-                    acost = cost;
-                }
-            }
-            mode = lowmode - 2;
-            if (mode < 18)
-                lowcost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-            else
-                lowcost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-            int highcost = m_me.COST_MAX;
-            if (lowmode < 34)
-            {
-                mode = lowmode + 2;
-                if (mode < 18)
-                    highcost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    highcost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-            }
-            if (lowcost <= highcost)
-            {
-                mode = lowmode - 1;
-                if (lowcost < acost)
-                    acost = lowcost;
-            }
-            else
-            {
-                mode = lowmode + 1;
-                if (highcost < acost)
-                    acost = highcost;
-            }
             if (mode < 18)
                 cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
             else
                 cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-             if (cost < acost)
-                acost = cost;
-            if (acost < icost)
-                icost = acost;
+            COPY2_IF_LT(acost, cost, lowmode, mode);
         }
-        else // calculate and search all intra prediction angles for lowest cost
+        for (uint32_t dist = 2; dist >= 1; dist--)
         {
-            for (uint32_t mode = 2; mode < 35; mode++)
-            {
-                if (mode < 18)
-                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-                if (cost < icost)
-                    icost = cost;
-            }
+            mode = lowmode - dist;
+            if (mode < 18)
+                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+            else
+                cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
+
+            mode = lowmode + dist;
+            if (mode < 18)
+                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+            else
+                cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
         }
+        if (acost < icost)
+            icost = acost;
+
         const int intraPenalty = 5 * m_lookAheadLambda;
-        icost += intraPenalty + lowresPenalty;
+        icost += intraPenalty + lowresPenalty; /* estimate intra signal cost */
         fenc->intraCost[cuXY] = icost;
         int icostAq = icost;
         if (bFrameScoreCU)
