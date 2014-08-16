@@ -536,6 +536,15 @@ Mode decision / Analysis
 	the encoder from perhaps finding other predictions that also have no
 	residual but require less signaling bits. Default disabled
 
+.. option:: --fast-intra, --no-fast-intra
+
+	Perform an initial scan of every fifth intra angular mode, then
+	check modes +/- 2 distance from the best mode, then +/- 1 distance
+	from the best mode, effectively performing a gradient descent. When
+	enabled 10 modes in total are checked. When disabled all 33 angular
+	modes are checked.  Only applicable for :option:`--rd` levels 3 and
+	below (medium preset and faster).
+
 .. option:: --weightp, -w, --no-weightp
 
 	Enable weighted prediction in P slices. This enables weighting
@@ -898,6 +907,7 @@ Quality, rate control and rate distortion options
 	When **turbo** first pass is not disabled, these options are
 	set on the first pass to improve performance:
 	
+	* :option:`--fast-intra`
 	* :option:`--no-rect`
 	* :option:`--no-amp`
 	* :option:`--early-skip`

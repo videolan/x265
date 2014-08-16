@@ -252,6 +252,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
+            param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "superfast"))
         {
@@ -268,6 +269,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
+            param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "veryfast"))
         {
@@ -280,6 +282,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
+            param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "faster"))
         {
@@ -290,6 +293,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
+            param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "fast"))
         {
@@ -297,6 +301,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 2;
+            param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "medium"))
         {
@@ -1033,6 +1038,7 @@ void x265_param_apply_fastfirstpass(x265_param* param)
         param->maxNumReferences = 1;
         param->maxNumMergeCand = 1;
         param->bEnableRectInter = 0;
+        param->bEnableFastIntra = 1;
         param->bEnableAMP = 0;
         param->searchMethod = X265_DIA_SEARCH;
         param->subpelRefine = X265_MIN(2, param->subpelRefine);
@@ -1167,6 +1173,7 @@ void x265_print_params(x265_param *param)
     }
     TOOLOPT(param->bEnableSignHiding, "signhide");
     TOOLOPT(param->bCULossless, "cu-lossless");
+    TOOLOPT(param->bEnableFastIntra, "fast-intra");
     if (param->bEnableTransformSkip)
     {
         if (param->bEnableTSkipFast)
