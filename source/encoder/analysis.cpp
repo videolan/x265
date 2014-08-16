@@ -247,6 +247,7 @@ void Analysis::compressCU(TComDataCU* cu)
     if (m_bestCU[0]->m_slice->m_sliceType == I_SLICE)
     {
         compressIntraCU(m_bestCU[0], m_tempCU[0], 0, false);
+
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
             uint32_t i = 0, part;
@@ -278,11 +279,12 @@ void Analysis::compressCU(TComDataCU* cu)
             TComDataCU* outBestCU = NULL;
 
             /* At the start of analysis, the best CU is a null pointer
-            On return, it points to the CU encode with best chosen mode*/
+             * On return, it points to the CU encode with best chosen mode */
             compressInterCU_rd0_4(outBestCU, m_tempCU[0], cu, 0, false, 0, 4);
         }
         else
             compressInterCU_rd5_6(m_bestCU[0], m_tempCU[0], 0, false);
+
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
             uint32_t i = 0, part;
