@@ -197,8 +197,6 @@ void FrameEncoder::compressFrame()
     {
         m_outStreams = new Bitstream[numSubstreams];
         m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
-        for (uint32_t i = 0; i < numSubstreams; i++)
-            m_rows[i].m_rowEntropyCoder.setBitstream(&m_outStreams[i]);
     }
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
@@ -438,10 +436,10 @@ void FrameEncoder::encodeSlice()
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            m_rows[subStrm].m_rowEntropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
-
-        // this load is used to simplify the code (avoid to change all the call to m_entropyCoder)
-        m_entropyCoder.load(m_rows[subStrm].m_rowEntropyCoder);
+        {
+            m_entropyCoder.copyState(m_initSliceContext);
+            m_entropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
+        }
 
         if (slice->m_sps->bUseSAO)
         {
@@ -474,25 +472,21 @@ void FrameEncoder::encodeSlice()
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCU(cu);
 
-        // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        m_rows[subStrm].m_rowEntropyCoder.load(m_entropyCoder);
-
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_rows[subStrm].m_rowEntropyCoder);
+            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_entropyCoder);
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
         m_frameStats.coeffBits += cu->m_coeffBits;
         m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
-    }
 
-    // flush lines
-    for (int i = 0; i < numSubstreams; i++)
-    {
-        m_rows[i].m_rowEntropyCoder.codeTerminatingBit(1);
-        m_rows[i].m_rowEntropyCoder.codeSliceFinish();
-        m_outStreams[i].writeByteAlignment();
+        if (col == widthInLCUs - 1)
+        {
+            m_entropyCoder.codeTerminatingBit(1);
+            m_entropyCoder.codeSliceFinish();
+            m_outStreams[lin].writeByteAlignment();
+        }
     }
 }
 
@@ -502,15 +496,10 @@ void FrameEncoder::compressCTURows()
     Slice* slice = m_frame->m_picSym->m_slice;
 
     // reset entropy coders
-    m_entropyCoder.resetEntropy(slice);
+    m_initSliceContext.resetEntropy(slice);
+    m_entropyCoder.load(m_initSliceContext);
     for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].init(slice);
-        m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].load(m_entropyCoder);
-        m_rows[i].m_rowEntropyCoder.load(m_entropyCoder);
-        m_rows[i].m_completed = 0;
-        m_rows[i].m_busy = false;
-    }
+        m_rows[i].init(m_initSliceContext);
 
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;

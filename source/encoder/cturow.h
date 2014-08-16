@@ -57,8 +57,6 @@ class CTURow
 {
 public:
 
-    Entropy         m_rowEntropyCoder;     /* only used by frameEncoder::encodeSlice() */
-
     Entropy         m_entropyCoder;
     Entropy         m_bufferEntropyCoder;  /* store context for next row */
     Entropy         m_rdEntropyCoders[MAX_FULL_DEPTH + 1][CI_NUM];
@@ -68,20 +66,18 @@ public:
     double          m_pCuCnt;
     double          m_skipCuCnt;
 
-    void init(Slice *slice)
+    void init(Entropy& initContext)
     {
         m_active = 0;
-        m_entropyCoder.resetEntropy(slice);
+        m_completed = 0;
+        m_busy = false;
+
+        m_entropyCoder.load(initContext);
 
         // Note: Reset status to avoid frame parallelism output mistake on different thread number
         for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-        {
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-            {
-                m_rdEntropyCoders[depth][ciIdx].resetEntropy(slice);
-                m_rdEntropyCoders[depth][ciIdx].zeroFract();
-            }
-        }
+                m_rdEntropyCoders[depth][ciIdx].load(initContext);
 
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }

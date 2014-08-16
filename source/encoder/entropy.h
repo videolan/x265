@@ -134,6 +134,7 @@ public:
     void loadIntraDirModeLuma(Entropy& src);
     void store(Entropy& dest);
     void loadContexts(Entropy& src)       { copyContextsFrom(src); }
+    void copyState(Entropy& other);
 
     void codeVPS(VPS* vps);
     void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
@@ -187,7 +188,6 @@ private:
     /* CABAC private methods */
     void start();
     void finish();
-    void copyState(Entropy& other);
 
     void encodeBin(uint32_t binValue, uint8_t& ctxModel);
     void encodeBinEP(uint32_t binValue);

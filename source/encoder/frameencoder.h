@@ -138,6 +138,7 @@ protected:
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     Entropy                  m_entropyCoder;
+    Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;
