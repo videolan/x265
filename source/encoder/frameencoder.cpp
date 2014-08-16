@@ -472,9 +472,7 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
-        m_tld.m_cuCoder.m_quant.m_entropyCoder = &m_entropyCoder;
-        m_tld.m_cuCoder.encodeCU(cu);
+        m_entropyCoder.encodeCU(cu);
 
         // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
         m_rows[subStrm].m_rowEntropyCoder.load(m_entropyCoder);

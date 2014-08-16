@@ -55,12 +55,10 @@ void CTURow::processCU(TComDataCU *cu, Entropy *bufferSbac, ThreadLocalData& tld
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
+    /* TODO: this should be unnecessary */
     tld.m_cuCoder.m_entropyCoder = &m_rdEntropyCoders[0][CI_CURR_BEST];
-    tld.m_cuCoder.m_quant.m_entropyCoder = &m_rdEntropyCoders[0][CI_CURR_BEST];
     m_rdEntropyCoders[0][CI_CURR_BEST].resetBits();
-
-    // TODO: still necessary?
-    tld.m_cuCoder.encodeCU(cu);
+    m_rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
 
     if (bSaveSBac)
         // Save CABAC state for next row
