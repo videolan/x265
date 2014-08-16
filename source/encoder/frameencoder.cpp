@@ -873,7 +873,6 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
     qp = Clip3(0, MAX_MAX_QP, qp);
 
     tld.m_cuCoder.m_me.setQP(qp);
-    tld.m_cuCoder.m_quant.setLambdaFromQP(qp, qpCb, qpCr);
     tld.m_cuCoder.m_rdCost.setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
 
     int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);

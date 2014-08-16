@@ -51,6 +51,7 @@ void CTURow::processCU(TComDataCU *cu, Entropy *bufferSbac, ThreadLocalData& tld
     tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
     tld.m_cuCoder.m_rdEntropyCoders = m_rdEntropyCoders;
     tld.m_cuCoder.m_quant.m_entropyCoder = &m_entropyCoder;
+    tld.m_cuCoder.m_quant.setQPforQuant(cu);
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 

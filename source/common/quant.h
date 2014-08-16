@@ -53,6 +53,8 @@ struct QpParam
             rem = qpScaled % 6;
             per = qpScaled / 6;
             qp  = qpScaled;
+            lambda2 = (int64_t)(x265_lambda2_tab[qp - QP_BD_OFFSET] * 256. + 0.5);
+            lambda  = (int64_t)(x265_lambda_tab[qp - QP_BD_OFFSET] * 256. + 0.5);
         }
     }
 };
@@ -88,7 +90,6 @@ public:
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);
-    void setLambdaFromQP(int qpY, int qpCb, int qpCr);
 
     uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);

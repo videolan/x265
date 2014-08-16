@@ -199,16 +199,6 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }
 
-void Quant::setLambdaFromQP(int qpY, int qpCb, int qpCr)
-{
-    m_qpParam[0].lambda2 = (int64_t)(x265_lambda2_tab[qpY] * 256. + 0.5);
-    m_qpParam[1].lambda2 = (int64_t)(x265_lambda2_tab[qpCb] * 256. + 0.5);
-    m_qpParam[2].lambda2 = (int64_t)(x265_lambda2_tab[qpCr] * 256. + 0.5);
-    m_qpParam[0].lambda = (int64_t)(x265_lambda_tab[qpY] * 256. + 0.5);
-    m_qpParam[1].lambda = (int64_t)(x265_lambda_tab[qpCb] * 256. + 0.5);
-    m_qpParam[2].lambda = (int64_t)(x265_lambda_tab[qpCr] * 256. + 0.5);
-}
-
 /* To minimize the distortion only. No rate is considered */
 uint32_t Quant::signBitHidingHDQ(coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
 {
