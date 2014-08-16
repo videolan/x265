@@ -24,14 +24,19 @@
 #ifndef X265_ENCODER_H
 #define X265_ENCODER_H
 
+#include "common.h"
+#include "slice.h"
+#include "scalinglist.h"
 #include "x265.h"
-#include "TLibCommon/TComSlice.h"
 #include "nal.h"
 
 struct x265_encoder {};
 
 namespace x265 {
 // private namespace
+extern const char g_sliceTypeToChar[3];
+
+class Entropy;
 
 struct EncStats
 {
@@ -71,7 +76,6 @@ class Encoder : public x265_encoder
 {
 private:
 
-    bool               m_aborted;          // fatal error detected
     int                m_pocLast;          ///< time index (POC)
     int                m_encodedFrameNum;
     int                m_outputCount;
@@ -82,7 +86,6 @@ private:
     int64_t            m_prevReorderedPts[2];
 
     ThreadPool*        m_threadPool;
-    Lookahead*         m_lookahead;
     FrameEncoder*      m_frameEncoder;
     DPB*               m_dpb;
 
@@ -99,9 +102,6 @@ private:
     FILE*              m_csvfpt;
     int64_t            m_encodeStartTime;
 
-    // quality control
-    TComScalingList    m_scalingList;      ///< quantization matrix information
-
     // weighted prediction
     int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
@@ -111,72 +111,27 @@ private:
 public:
 
     int                m_conformanceMode;
-    TComVPS            m_vps;
+    VPS                m_vps;
+    SPS                m_sps;
+    PPS                m_pps;
     NALList            m_nalList;
+    ScalingList        m_scalingList;      // quantization matrix information
 
-    /* profile & level */
-    Profile::Name      m_profile;
-    Level::Tier        m_levelTier;
-    Level::Name        m_level;
-
-    bool               m_nonPackedConstraintFlag;
-    bool               m_frameOnlyConstraintFlag;
-
-    //====== Coding Structure ========
-    int                m_maxDecPicBuffering[MAX_TLAYER];
-    int                m_numReorderPics[MAX_TLAYER];
-    int                m_maxRefPicNum;
-
-    //======= Transform =============
     uint32_t           m_quadtreeTULog2MaxSize;
     uint32_t           m_quadtreeTULog2MinSize;
 
-    //====== Loop/Deblock Filter ========
-    bool               m_loopFilterOffsetInPPS;
-    int                m_loopFilterBetaOffset;
-    int                m_loopFilterBetaOffsetDiv2;
-    int                m_loopFilterTcOffset;
-    int                m_loopFilterTcOffsetDiv2;
-    int                m_maxNumOffsetsPerPic;
-
-    //====== Quality control ========
-    int                m_maxCuDQPDepth;    //  Max. depth for a minimum CuDQP (0:default)
-
-    //====== Tool list ========
+    int                m_maxCuDQPDepth;
     int                m_lastBPSEI;
-
-    uint32_t           m_log2ParallelMergeLevelMinus2; ///< Parallel merge estimation region
-
-    int                m_useScalingListId; ///< Using quantization matrix i.e. 0=off, 1=default.
-
-    bool               m_TransquantBypassEnableFlag;   ///< transquant_bypass_enable_flag setting in PPS.
-    bool               m_CUTransquantBypassFlagValue;  ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
-
-    bool               m_neutralChromaIndicationFlag;
-    bool               m_pocProportionalToTimingFlag;
-    int                m_numTicksPocDiffOneMinus1;
-    bool               m_tilesFixedStructureFlag;
-    bool               m_motionVectorsOverPicBoundariesFlag;
-    bool               m_restrictedRefPicListsFlag;
-    int                m_minSpatialSegmentationIdc;
-    int                m_maxBytesPerPicDenom;
-    int                m_maxBitsPerMinCuDenom;
-    int                m_log2MaxMvLengthHorizontal;
-    int                m_log2MaxMvLengthVertical;
+    uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
     ThreadLocalData*   m_threadLocalData;
+    Lookahead*         m_lookahead;
+    Window             m_conformanceWindow;
 
     bool               m_bEnableRDOQ;
-
-    int                m_pad[2];
-    Window             m_conformanceWindow;
-    Window             m_defaultDisplayWindow;
-
-    int                m_totalFrameThreads;
-
-    uint32_t           m_numDelayedPic;
+    bool               m_aborted;          // fatal error detected
 
     Encoder();
 
@@ -186,12 +141,9 @@ public:
     void destroy();
     void init();
 
-    void initSPS(TComSPS *sps);
-    void initPPS(TComPPS *pps);
-
     int encode(const x265_picture* pic, x265_picture *pic_out);
 
-    void getStreamHeaders();
+    void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
@@ -201,7 +153,7 @@ public:
 
     char* statsString(EncStats&, char*);
 
-    TComScalingList* getScalingList() { return &m_scalingList; }
+    char* statsCSVString(EncStats& stat, char* buffer);
 
     void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
@@ -210,6 +162,9 @@ public:
     void updateVbvPlan(RateControl* rc);
 
 protected:
+
+    void initSPS(SPS *sps);
+    void initPPS(PPS *pps);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };

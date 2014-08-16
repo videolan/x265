@@ -22,12 +22,12 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#include "common.h"
+#include "primitives.h"
+#include "slice.h"
+#include "reference.h"
 #include "TLibCommon/TypeDef.h"
 #include "TLibCommon/TComPicYuv.h"
-#include "TLibCommon/TComSlice.h"
-#include "primitives.h"
-#include "reference.h"
-#include "common.h"
 
 using namespace x265;
 
@@ -36,7 +36,7 @@ MotionReference::MotionReference()
     m_weightBuffer = NULL;
 }
 
-int MotionReference::init(TComPicYuv* pic, wpScalingParam *w)
+int MotionReference::init(TComPicYuv* pic, WeightParam *w)
 {
     m_reconPic = pic;
     lumaStride = pic->getStride();

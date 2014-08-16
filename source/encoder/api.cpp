@@ -55,10 +55,20 @@ x265_encoder *x265_encoder_open(x265_param *p)
     Encoder *encoder = new Encoder;
     if (encoder)
     {
-        // these may change params for auto-detect, etc
+        if (!param->rc.bEnableSlowFirstPass)
+            x265_param_apply_fastfirstpass(param);
+        // may change params for auto-detect, etc
         encoder->configure(param);
-        enforceLevel(*param);
-        determineLevel(*param, encoder->m_profile, encoder->m_level, encoder->m_levelTier);
+        
+        // may change rate control and CPB params
+        if (!enforceLevel(*param, encoder->m_vps))
+        {
+            delete encoder;
+            return NULL;
+        }
+
+        // will detect and set profile/tier/level in VPS
+        determineLevel(*param, encoder->m_vps);
 
         x265_print_params(param);
         encoder->create();
@@ -74,7 +84,9 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     if (pp_nal && enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        encoder->getStreamHeaders();
+        Entropy sbacCoder;
+        Bitstream bs;
+        encoder->getStreamHeaders(encoder->m_nalList, sbacCoder, bs);
         *pp_nal = &encoder->m_nalList.m_nal[0];
         if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
         return encoder->m_nalList.m_occupancy;

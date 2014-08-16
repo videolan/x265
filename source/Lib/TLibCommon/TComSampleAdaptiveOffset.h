@@ -95,7 +95,7 @@ typedef struct _SaoQTPart
     //---- encoder only end -----//
 } SAOQTPart;
 
-typedef struct _SaoLcuParam
+struct SaoLcuParam
 {
     bool       mergeUpFlag;
     bool       mergeLeftFlag;
@@ -117,7 +117,7 @@ typedef struct _SaoLcuParam
         offset[2]     = 0;
         offset[3]     = 0;
     }
-} SaoLcuParam;
+};
 
 struct SAOParam
 {
@@ -190,7 +190,6 @@ protected:
     pixel*      m_tmpU2[3];
     pixel*      m_tmpL1;
     pixel*      m_tmpL2;
-    int         m_maxNumOffsetsPerPic;
     bool        m_saoLcuBoundary;
     bool        m_saoLcuBasedOptimization;
 

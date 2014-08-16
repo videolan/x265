@@ -31,53 +31,30 @@ namespace x265 {
 
 class RDCost
 {
-private:
-
-    uint64_t  m_lambdaSSE;  // m_lambda2 w/ 8 bits of fraction
-
-    uint64_t  m_lambdaSAD;  // m_lambda w/ 8 bits of fraction
-
-    uint64_t  m_cbDistortionWeight;
-
-    uint64_t  m_crDistortionWeight;
-
-    double    m_psyRdScale;
-
 public:
 
-    static const pixel zeroPel[MAX_CU_SIZE * MAX_CU_SIZE];
+    /* all weights and factors stored as FIX8 */
+    uint64_t  m_lambda2;
+    uint64_t  m_lambda;
+    uint64_t  m_cbDistortionWeight;
+    uint64_t  m_crDistortionWeight;
+    uint32_t  m_psyRd;
+
+    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
+    void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
+    void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
 
     void setLambda(double lambda2, double lambda)
     {
-        m_lambdaSSE = (uint64_t)floor(256.0 * lambda2);
-        m_lambdaSAD = (uint64_t)floor(256.0 * lambda);
-    }
-
-    void setCbDistortionWeight(double cbDistortionWeight)
-    {
-        m_cbDistortionWeight = (uint64_t)floor(cbDistortionWeight);
-    }
-
-    void setCrDistortionWeight(double crDistortionWeight)
-    {
-        m_crDistortionWeight = (uint64_t)floor(crDistortionWeight);
-    }
-
-    void setPsyRdScale(double scale)
-    {
-        m_psyRdScale = scale;
-    }
-
-    inline bool psyRdEnabled() const
-    {
-        return m_psyRdScale != 0;
+        m_lambda2 = (uint64_t)floor(256.0 * lambda2);
+        m_lambda = (uint64_t)floor(256.0 * lambda);
     }
 
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
     {
-        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSSE,
-                   "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambdaSSE);
-        return distortion + ((bits * m_lambdaSSE + 128) >> 8);
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
+                   "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambda2);
+        return distortion + ((bits * m_lambda2 + 128) >> 8);
     }
 
     /* return the difference in energy between the source block and the recon block */
@@ -89,22 +66,14 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
     {
-        x265_emms();
-        double cost = distortion + ((m_psyRdScale * psycost * m_lambdaSAD) + (bits * m_lambdaSSE)) / 256.0;
-        X265_CHECK(cost < (double)MAX_INT64, "calcPsyRdCost overflow\n");
-        return (uint64_t)cost;
+        return distortion + ((m_lambda * m_psyRd * psycost) >> 16) + ((bits * m_lambda2) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
     {
-        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambdaSAD,
-                   "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambdaSAD);
-        return sadCost + ((bits * m_lambdaSAD + 128) >> 8);
-    }
-
-    inline uint32_t getCost(uint32_t bits)
-    {
-        return (uint32_t)((bits * m_lambdaSAD + 128) >> 8);
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
+                   "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
+        return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
     inline uint32_t scaleChromaDistCb(uint32_t dist)
@@ -120,8 +89,12 @@ public:
                    "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
     }
+
+    inline uint32_t getCost(uint32_t bits)
+    {
+        return (uint32_t)((bits * m_lambda + 128) >> 8);
+    }
 };
 }
-//! \}
 
 #endif // ifndef X265_TCOMRDCOST_H

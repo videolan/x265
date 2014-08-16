@@ -22,10 +22,10 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "TLibCommon/TComRom.h"
-#include "TLibCommon/TComSlice.h"
-#include "x265.h"
+#include "slice.h"
 #include "threading.h"
+#include "TLibCommon/TComRom.h"
+#include "x265.h"
 
 #if _WIN32
 #include <sys/types.h>
@@ -158,4 +158,52 @@ uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane)
     uint32_t size = (uint32_t)(width >> x265_cli_csps[csp].width[plane]) * (height >> x265_cli_csps[csp].height[plane]);
 
     return size;
+}
+
+char* x265_slurp_file(const char *filename)
+{
+    if (!filename)
+        return NULL;
+
+    int bError = 0;
+    size_t fSize;
+    char *buf = NULL;
+
+    FILE *fh = fopen(filename, "rb");
+    if (!fh)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "unable to open file %s\n", filename);
+        return NULL;
+    }
+
+    bError |= fseek(fh, 0, SEEK_END) < 0;
+    bError |= (fSize = ftell(fh)) <= 0;
+    bError |= fseek(fh, 0, SEEK_SET) < 0;
+    if (bError)
+        goto error;
+
+    buf = X265_MALLOC(char, fSize + 2);
+    if (!buf)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "unable to allocate memory\n");
+        goto error;
+    }
+
+    bError |= fread(buf, 1, fSize, fh) != fSize;
+    if (buf[fSize - 1] != '\n')
+        buf[fSize++] = '\n';
+    buf[fSize] = 0;
+    fclose(fh);
+
+    if (bError)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "unable to read the file\n");
+        X265_FREE(buf);
+        buf = NULL;
+    }
+    return buf;
+
+error:
+    fclose(fh);
+    return NULL;
 }

@@ -46,8 +46,6 @@ public:
     Window            m_conformanceWindow;
     Window            m_defaultDisplayWindow;
 
-    bool              m_bIsLongTerm;
-
     TComPicSym*       m_picSym;
     TComPicYuv*       m_reconPicYuv;
     int               m_POC;
@@ -93,10 +91,6 @@ public:
     void        reinit(x265_param *param);
     void        destroy();
 
-    bool        getIsLongTerm()            { return m_bIsLongTerm; }
-
-    void        setIsLongTerm(bool lt)     { m_bIsLongTerm = lt; }
-
     int         getPOC()                   { return m_POC; }
 
     Window&     getConformanceWindow()     { return m_conformanceWindow; }
@@ -113,8 +107,6 @@ public:
 
     /* Reflector methods for data stored in m_picSym */
     TComPicSym* getPicSym()                { return m_picSym; }
-
-    TComSlice*  getSlice()                 { return m_picSym->getSlice(); }
 
     TComDataCU* getCU(uint32_t cuAddr)     { return m_picSym->getCU(cuAddr); }
 

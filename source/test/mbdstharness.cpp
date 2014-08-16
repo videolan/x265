@@ -300,13 +300,12 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int valueToAdd = rand() % (32 * 1024);
         int cmp_size = sizeof(int) * height * width;
         int numCoeff = height * width;
-        int optLastPos = -1, refLastPos = -1;
 
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff, &refLastPos);
-        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff, &optLastPos);
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
 
         if (memcmp(mintbuf3, mintbuf5, cmp_size))
             return false;
@@ -315,9 +314,6 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
             return false;
 
         if (optReturnValue != refReturnValue)
-            return false;
-
-        if (optLastPos != refLastPos)
             return false;
 
         reportfail();
@@ -352,11 +348,8 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
-        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
-
-        if (memcmp(mintbuf3, mintbuf5, cmp_size))
-            return false;
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf6, bits, valueToAdd, numCoeff);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf4, bits, valueToAdd, numCoeff);
 
         if (memcmp(mintbuf4, mintbuf6, cmp_size))
             return false;
@@ -509,14 +502,13 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.quant)
     {
         printf("quant\t\t");
-        int dummy = -1;
-        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32, &dummy);
+        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
     }
 
     if (opt.nquant)
     {
         printf("nquant\t\t");
-        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
+        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, 23, 23785, 32 * 32);
     }
 
     if (opt.count_nonzero)

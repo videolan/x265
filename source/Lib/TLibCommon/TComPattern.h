@@ -59,9 +59,10 @@ struct IntraNeighbors
     int  totalUnits;
     int  aboveUnits;
     int  leftUnits;
-    int  tuSize;
     int  unitWidth;
     int  unitHeight;
+    int  tuSize;
+    uint32_t log2TrSize;
     bool bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
 };
 
@@ -102,12 +103,6 @@ private:
     static int   isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
     static int   isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
     static int   isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
-
-    static bool  isAboveLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT);
-    static int   isAboveAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    static int   isLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
-    static int   isAboveRightAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    static int   isBelowLeftAvailableCIP(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
 };
 }
 //! \}

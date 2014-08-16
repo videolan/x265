@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "frame.h"
-#include "TLibCommon/TComLoopFilter.h"
+#include "deblock.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
 namespace x265 {
@@ -44,7 +44,7 @@ public:
 
     virtual ~FrameFilter() {}
 
-    void init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder);
+    void init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder);
 
     void destroy();
 
@@ -65,17 +65,15 @@ protected:
 
 public:
 
-    TComLoopFilter              m_loopFilter;
+    Deblock                     m_deblock;
     TEncSampleAdaptiveOffset    m_sao;
     int                         m_numRows;
     int                         m_saoRowDelay;
 
     // SAO
-    TEncEntropy                 m_entropyCoder;
-    TEncSbac                    m_rdGoOnSbacCoder;
-    TEncBinCABAC                m_rdGoOnBinCodersCABAC;
-    BitCounter                  m_bitCounter;
-    TEncSbac*                   m_rdGoOnSbacCoderRow0;  // for bitstream exact only, depends on HM's bug
+    Entropy                     m_entropyCoder;
+    Entropy*                    m_row0EntropyCoder;  // to mimic HM behavior
+    
     /* Temp storage for ssim computation that doesn't need repeated malloc */
     void*                       m_ssimBuf;
 };

@@ -33,25 +33,16 @@ using namespace x265;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
 
-// **************************************************************************
-// * LoopFilter
-// **************************************************************************
 FrameFilter::FrameFilter()
     : m_param(NULL)
-    , m_rdGoOnBinCodersCABAC(true)
+    , m_pic(NULL)
+    , m_frame(NULL)
     , m_ssimBuf(NULL)
 {
-    m_pic = NULL;
-    m_frame = NULL;
 }
 
 void FrameFilter::destroy()
 {
-    if (m_param->bEnableLoopFilter)
-    {
-        m_loopFilter.destroy();
-    }
-
     if (m_param->bEnableSAO)
     {
         // NOTE: I don't check sao flag since loopfilter and sao have same control status
@@ -61,29 +52,26 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac* rdGoOnSbacCoder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder)
 {
     m_param = top->m_param;
     m_frame = frame;
     m_numRows = numRows;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
-    m_pad[0] = top->m_pad[0];
-    m_pad[1] = top->m_pad[1];
+    m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
+    m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
+    m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
 
-    // NOTE: for sao only, I write this code because I want to exact match with HM's bug bitstream
-    m_rdGoOnSbacCoderRow0 = rdGoOnSbacCoder;
+    // NOTE (Min): for sao only, I write this code because I want to exact match with HM's bug bitstream
+    m_row0EntropyCoder = row0Coder;
 
-    if (m_param->bEnableLoopFilter)
-    {
-        m_loopFilter.create(g_maxCUDepth);
-    }
+    m_deblock.init();
 
     if (m_param->bEnableSAO)
     {
         m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
         m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
-        m_sao.setMaxNumOffsetsPerPic(top->m_maxNumOffsetsPerPic);
         m_sao.create(m_param->sourceWidth, m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
@@ -95,12 +83,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, TEncSbac*
 void FrameFilter::start(Frame *pic)
 {
     m_pic = pic;
-
-    m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, pic->getSlice());
-    m_entropyCoder.setBitstream(&m_bitCounter);
-    m_rdGoOnBinCodersCABAC.m_fracBits = 0;
+    m_entropyCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
@@ -108,6 +91,12 @@ void FrameFilter::start(Frame *pic)
         m_sao.createPicSaoInfo(pic);
 
         SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        if (!saoParam)
+        {
+            pic->getPicSym()->allocSaoParam(&m_sao);
+            saoParam = pic->getPicSym()->getSaoParam();
+        }
+
         m_sao.resetSAOParam(saoParam);
         m_sao.rdoSaoUnitRowInit(saoParam);
 
@@ -135,8 +124,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     if (row == 0 && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_rdGoOnBinCodersCABAC.m_fracBits = ((TEncBinCABAC*)((TEncSbac*)m_rdGoOnSbacCoderRow0->m_cabac))->m_fracBits;
-        m_sao.startSaoEnc(m_pic, &m_entropyCoder, &m_rdGoOnSbacCoder);
+        m_entropyCoder.m_fracBits = m_row0EntropyCoder->m_fracBits;
+        m_sao.startSaoEnc(m_pic, &m_entropyCoder);
     }
 
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
@@ -151,18 +140,18 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            m_loopFilter.loopFilterCU(cu, EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
+            m_deblock.deblockCTU(cu, Deblock::EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_pic->getCU(cuAddr - 1);
-                m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+                m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
             }
         }
 
         {
             TComDataCU* cu_prev = m_pic->getCU(lineStartCUAddr + numCols - 1);
-            m_loopFilter.loopFilterCU(cu_prev, EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+            m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
         }
     }
 
@@ -174,9 +163,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
 
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
-        {
             processSao(row - m_saoRowDelay);
-        }
     }
 
     // this row of CTUs has been encoded
@@ -186,9 +173,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
         return;
 
     if (row > 0)
-    {
         processRowPost(row - 1);
-    }
 
     if (row == m_numRows - 1)
     {
@@ -197,9 +182,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             m_sao.rdoSaoUnitRowEnd(saoParam, m_pic->getNumCUsInFrame());
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
-            {
                 processSao(i);
-            }
         }
 
         processRowPost(row);
@@ -228,9 +211,7 @@ void FrameFilter::processRowPost(int row)
         pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX();
 
         for (int y = 0; y < recon->getLumaMarginY(); y++)
-        {
             memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
-        }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
@@ -248,9 +229,7 @@ void FrameFilter::processRowPost(int row)
         pixel *pixU = recon->getCbAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
         pixel *pixV = recon->getCrAddr(lineStartCUAddr) - recon->getChromaMarginX() + ((realH >> m_vChromaShift) - 1) * strideC;
         for (int y = 0; y < recon->getLumaMarginY(); y++)
-        {
             memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
-        }
 
         for (int y = 0; y < recon->getChromaMarginY(); y++)
         {
@@ -317,9 +296,7 @@ void FrameFilter::processRowPost(int row)
         if (!row)
         {
             for (int i = 0; i < 3; i++)
-            {
                 MD5Init(&m_frame->m_state[i]);
-            }
         }
 
         updateMD5Plane(m_frame->m_state[0], recon->getLumaAddr(cuAddr), width, height, stride);
@@ -394,15 +371,11 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-            {
                 ssd += primitives.sse_pp[LUMA_64x64](fenc + x, stride, rec + x, stride);
-            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x64](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
         {
@@ -423,20 +396,14 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-            {
                 ssd += primitives.sse_pp[LUMA_64x16](fenc + x, stride, rec + x, stride);
-            }
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x16](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
-        {
             ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
-        }
 
         fenc += stride * 16;
         rec += stride * 16;
@@ -449,14 +416,10 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-            {
                 ssd += primitives.sse_pp[LUMA_16x4](fenc + x, stride, rec + x, stride);
-            }
 
         for (; x + 4 <= width; x += 4)
-        {
             ssd += primitives.sse_pp[LUMA_4x4](fenc + x, stride, rec + x, stride);
-        }
 
         fenc += stride * 4;
         rec += stride * 4;
@@ -480,19 +443,13 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     {
         for (; z <= y; z++)
         {
-            void* swap = sum0;
-            sum0 = sum1;
-            sum1 = (int(*)[4])swap;
+            std::swap(sum0, sum1);
             for (int x = 0; x < width; x += 2)
-            {
                 primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
-            }
         }
 
         for (int x = 0; x < width - 1; x += 4)
-        {
             ssim += primitives.ssim_end_4(sum0 + x, sum1 + x, X265_MIN(4, width - x - 1));
-        }
     }
 
     cnt = (height - 1) * (width - 1);
@@ -509,16 +466,15 @@ void FrameFilter::processSao(int row)
     X265_CHECK(!saoParam->oneUnitFlag[0] && !saoParam->oneUnitFlag[1] && !saoParam->oneUnitFlag[2], "invalid SAO flag");
 
     if (saoParam->bSaoFlag[0])
-    {
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
-    }
+
     if (saoParam->bSaoFlag[1])
     {
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
     }
 
-    if (m_pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (m_pic->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t col = 0; col < numCols; col++)
         {

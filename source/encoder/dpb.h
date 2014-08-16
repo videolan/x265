@@ -31,7 +31,7 @@ namespace x265 {
 
 class Frame;
 class TComPicSym;
-class TComSlice;
+class Slice;
 class Encoder;
 
 class DPB
@@ -67,14 +67,12 @@ public:
 
 protected:
 
-    void computeRPS(int curPoc, bool isRAP, TComReferencePictureSet * rps, unsigned int maxDecPicBuffer);
+    void computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer);
 
-    void applyReferencePictureSet(TComReferencePictureSet *rps, int curPoc);
+    void applyReferencePictureSet(RPS *rps, int curPoc);
     void decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType);
 
-    void arrangeLongtermPicturesInRPS(TComSlice *);
-
-    NalUnitType getNalUnitType(int curPoc, int lastIdr, Frame* pic);
+    NalUnitType getNalUnitType(int curPoc, bool bIsKeyFrame);
 };
 }
 

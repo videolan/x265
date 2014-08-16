@@ -28,12 +28,10 @@
 #include "common.h"
 #include "frame.h"
 
-#include "TLibEncoder/TEncCu.h"
-#include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncSbac.h"
-#include "TLibEncoder/TEncBinCoderCABAC.h"
+#include "analysis.h"
 
 #include "rdcost.h"
+#include "entropy.h"
 
 namespace x265 {
 // private x265 namespace
@@ -42,10 +40,7 @@ class Encoder;
 
 struct ThreadLocalData
 {
-    TEncSearch  m_search;
-    TEncCu      m_cuCoder;
-    RDCost      m_rdCost;
-    TComTrQuant m_trQuant;
+    Analysis    m_cuCoder;
 
     // NOTE: the maximum LCU 64x64 have 256 partitions
     bool        m_edgeFilter[256];
@@ -62,49 +57,36 @@ class CTURow
 {
 public:
 
-    CTURow() : m_rdGoOnBinCodersCABAC(true) {}
+    Entropy         m_rowEntropyCoder;     /* only used by frameEncoder::encodeSlice() */
 
-    TEncSbac               m_sbacCoder;
-    TEncSbac               m_rdGoOnSbacCoder;
-    TEncSbac               m_bufferSbacCoder;
-    TEncBinCABAC           m_binCoderCABAC;
-    TEncBinCABAC           m_rdGoOnBinCodersCABAC;
-    TEncEntropy            m_entropyCoder;
-    TEncSbac            ***m_rdSbacCoders;
-    TEncBinCABAC        ***m_binCodersCABAC;
+    Entropy         m_entropyCoder;
+    Entropy         m_bufferEntropyCoder;  /* store context for next row */
+    Entropy         m_rdEntropyCoders[MAX_FULL_DEPTH + 1][CI_NUM];
 
     // to compute stats for 2 pass
-    double                 m_iCuCnt;
-    double                 m_pCuCnt;
-    double                 m_skipCuCnt;
+    double          m_iCuCnt;
+    double          m_pCuCnt;
+    double          m_skipCuCnt;
 
-    bool create();
-
-    void destroy();
-
-    void init(TComSlice *slice)
+    void init(Slice *slice)
     {
         m_active = 0;
+        m_entropyCoder.resetEntropy(slice);
 
         // Note: Reset status to avoid frame parallelism output mistake on different thread number
         for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
         {
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
             {
-                m_rdSbacCoders[depth][ciIdx]->setSlice(slice);
-                m_rdSbacCoders[depth][ciIdx]->resetEntropy();
-                m_binCodersCABAC[depth][ciIdx]->m_fracBits = 0;
+                m_rdEntropyCoders[depth][ciIdx].resetEntropy(slice);
+                m_rdEntropyCoders[depth][ciIdx].zeroFract();
             }
         }
 
-        m_rdGoOnSbacCoder.setSlice(slice);
-        m_rdGoOnSbacCoder.resetEntropy();
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
-    void setThreadLocalData(ThreadLocalData& tld);
-
-    void processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
+    void processCU(TComDataCU *cu, Entropy *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
 
     /* Threading variables */
 

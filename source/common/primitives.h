@@ -7,6 +7,7 @@
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,12 +37,18 @@ namespace x265 {
 // x265 private namespace
 
 enum LumaPartitions
-{ // Square     Rectangular             Asymmetrical (0.75, 0.25)
-    LUMA_4x4,
-    LUMA_8x8,   LUMA_8x4,   LUMA_4x8,
-    LUMA_16x16, LUMA_16x8,  LUMA_8x16,  LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
-    LUMA_32x32, LUMA_32x16, LUMA_16x32, LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
-    LUMA_64x64, LUMA_64x32, LUMA_32x64, LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
+{
+    // Square
+    LUMA_4x4,   LUMA_8x8,   LUMA_16x16, LUMA_32x32, LUMA_64x64,
+    // Rectangular
+    LUMA_8x4,   LUMA_4x8,
+    LUMA_16x8,  LUMA_8x16,  
+    LUMA_32x16, LUMA_16x32,
+    LUMA_64x32, LUMA_32x64,
+    // Asymmetrical (0.75, 0.25)
+    LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
+    LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
+    LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
     NUM_LUMA_PARTITIONS
 };
 
@@ -50,21 +57,27 @@ enum LumaPartitions
 // be indexed by the luma partition enum
 enum Chroma420Partitions
 {
-    CHROMA_2x2, // never used by HEVC
-    CHROMA_4x4,   CHROMA_4x2,   CHROMA_2x4,
-    CHROMA_8x8,   CHROMA_8x4,   CHROMA_4x8,   CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
-    CHROMA_16x16, CHROMA_16x8,  CHROMA_8x16,  CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
-    CHROMA_32x32, CHROMA_32x16, CHROMA_16x32, CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
+    CHROMA_2x2,   CHROMA_4x4,   CHROMA_8x8,   CHROMA_16x16, CHROMA_32x32,
+    CHROMA_4x2,   CHROMA_2x4,
+    CHROMA_8x4,   CHROMA_4x8,
+    CHROMA_16x8,  CHROMA_8x16,
+    CHROMA_32x16, CHROMA_16x32,
+    CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
+    CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
+    CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
     NUM_CHROMA_PARTITIONS
 };
 
 enum Chroma422Partitions
 {
-    CHROMA422X_4x8,
-    CHROMA422_4x8,   CHROMA422_4x4,   CHROMA422_2x8,
-    CHROMA422_8x16,  CHROMA422_8x8,   CHROMA422_4x16,  CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
-    CHROMA422_16x32, CHROMA422_16x16, CHROMA422_8x32,  CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
-    CHROMA422_32x64, CHROMA422_32x32, CHROMA422_16x64, CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
+    CHROMA422_2x4,   CHROMA422_4x8,   CHROMA422_8x16,  CHROMA422_16x32, CHROMA422_32x64,
+    CHROMA422_4x4,   CHROMA422_2x8,
+    CHROMA422_8x8,   CHROMA422_4x16,
+    CHROMA422_16x16, CHROMA422_8x32,
+    CHROMA422_32x32, CHROMA422_16x64,
+    CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
+    CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
+    CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
     NUM_CHROMA_PARTITIONS422
 };
 
@@ -111,18 +124,16 @@ inline int partitionFromSizes(int width, int height)
     return part;
 }
 
-inline int partitionFromSize(int size)
+inline int partitionFromLog2Size(int log2Size)
 {
-    X265_CHECK((size & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block size\n");
-    extern const uint8_t lumaSquarePartitionMapTable[];
-    int part = (int)lumaSquarePartitionMapTable[(size >> 2) - 1];
-    X265_CHECK(part != 255, "Invalid block size %d\n", size);
-    return part;
+    X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
+    return log2Size - 2;
 }
 
 typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref, intptr_t frefstride);
 typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
+typedef int  (*pixel_ssd_s_t)(int16_t *fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
 typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
@@ -139,15 +150,20 @@ typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pix
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma);
 
 typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
+typedef void (*cvt16to32_shr_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
+typedef void (*cvt32to16_shl_t)(int16_t *dst, int32_t *src, intptr_t, int);
+typedef uint32_t (*cvt16to32_cnt_t)(coeff_t* coeff, int16_t* residual, intptr_t stride);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
+typedef void (*denoiseDct_t)(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff);
+
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff, int32_t* lastPos);
-typedef uint32_t (*nquant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *scaledCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*nquant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
 typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 typedef int  (*count_nonzero_t)(const int32_t *quantCoeff, int numCoeff);
@@ -197,6 +213,7 @@ struct EncoderPrimitives
     pixelcmp_t      sse_pp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
     pixelcmp_ss_t   sse_ss[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
     pixelcmp_sp_t   sse_sp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixel_ssd_s_t   ssd_s[NUM_SQUARE_BLOCKS - 1];    // Sum of Square Error (short) fenc alignment not assumed
     pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
@@ -206,14 +223,17 @@ struct EncoderPrimitives
     blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
     blockcpy_ps_t   blockcpy_ps;                     // block copy pixel from short
     cvt16to32_shl_t cvt16to32_shl;
+    cvt16to32_shr_t cvt16to32_shr[NUM_SQUARE_BLOCKS - 1];
     cvt32to16_shr_t cvt32to16_shr;
+    cvt32to16_shl_t cvt32to16_shl[NUM_SQUARE_BLOCKS - 1];
+    cvt16to32_cnt_t cvt16to32_cnt[NUM_SQUARE_BLOCKS - 1];
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
     copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
     copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
-    pixel_sub_ps_t  luma_sub_ps[NUM_LUMA_PARTITIONS];
-    pixel_add_ps_t  luma_add_ps[NUM_LUMA_PARTITIONS];
+    pixel_sub_ps_t  luma_sub_ps[NUM_SQUARE_BLOCKS];
+    pixel_add_ps_t  luma_add_ps[NUM_SQUARE_BLOCKS];
     copy_pp_t       square_copy_pp[NUM_SQUARE_BLOCKS];
     copy_sp_t       square_copy_sp[NUM_SQUARE_BLOCKS];
     copy_ps_t       square_copy_ps[NUM_SQUARE_BLOCKS];
@@ -247,6 +267,7 @@ struct EncoderPrimitives
     dequant_scaling_t dequant_scaling;
     dequant_normal_t dequant_normal;
     count_nonzero_t count_nonzero;
+    denoiseDct_t    denoiseDct;
 
     calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
     calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
@@ -274,13 +295,13 @@ struct EncoderPrimitives
         filter_ss_t     filter_vss[NUM_LUMA_PARTITIONS];
         filter_pp_t     filter_hpp[NUM_LUMA_PARTITIONS];
         filter_hps_t    filter_hps[NUM_LUMA_PARTITIONS];
-        copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
-        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS + 1];
-        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS + 1];
-        copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
-        pixel_sub_ps_t  sub_ps[NUM_LUMA_PARTITIONS];
-        pixel_add_ps_t  add_ps[NUM_LUMA_PARTITIONS];
         addAvg_t        addAvg[NUM_LUMA_PARTITIONS];
+        copy_pp_t       copy_pp[NUM_LUMA_PARTITIONS];
+        copy_sp_t       copy_sp[NUM_LUMA_PARTITIONS];
+        copy_ps_t       copy_ps[NUM_LUMA_PARTITIONS];
+        copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
+        pixel_sub_ps_t  sub_ps[NUM_SQUARE_BLOCKS];
+        pixel_add_ps_t  add_ps[NUM_SQUARE_BLOCKS];
     } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
 };
 
@@ -293,6 +314,7 @@ extern EncoderPrimitives primitives;
 void Setup_C_Primitives(EncoderPrimitives &p);
 void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask);
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask);
+void Setup_Alias_Primitives(EncoderPrimitives &p);
 }
 
 #endif // ifndef X265_PRIMITIVES_H

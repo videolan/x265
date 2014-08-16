@@ -31,106 +31,68 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     CommonDef.h
-    \brief    Defines constants, macros and tool parameters
-*/
-
 #ifndef X265_COMMONDEF_H
 #define X265_COMMONDEF_H
 
 #include "TypeDef.h"
 
-//! \ingroup TLibCommon
-//! \{
-
 #ifndef NULL
 #define NULL 0
 #endif
 
-// ====================================================================================================================
-// Common constants
-// ====================================================================================================================
+#define MAX_UINT                    0xFFFFFFFFU // max. value of unsigned 32-bit integer
+#define MAX_INT                     2147483647  // max. value of signed 32-bit integer
+#define MAX_INT64                   0x7FFFFFFFFFFFFFFFLL  // max. value of signed 64-bit integer
+#define MAX_DOUBLE                  1.7e+308    // max. value of double-type value
 
-#define MAX_NUM_PICS_IN_SOP         1024
+#define COEF_REMAIN_BIN_REDUCTION   3 // indicates the level at which the VLC
+                                      // transitions from Golomb-Rice to TU+EG(k)
 
-#define MAX_NESTING_NUM_OPS         1024
-#define MAX_NESTING_NUM_LAYER       64
+#define SBH_THRESHOLD               4 // fixed sign bit hiding controlling threshold
 
-#define MAX_VPS_NUM_HRD_PARAMETERS  1
-#define MAX_VPS_OP_SETS_PLUS1       1024
-#define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
-
-#define MAX_CPB_CNT                 32 ///< Upper bound of (cpb_cnt_minus1 + 1)
-#define MAX_NUM_LAYER_IDS           64
-
-#define COEF_REMAIN_BIN_REDUCTION   3 ///< indicates the level at which the VLC
-
-///< transitions from Golomb-Rice to TU+EG(k)
-
-#define CU_DQP_TU_CMAX              5 ///< max number bins for truncated unary
-#define CU_DQP_EG_k                 0 ///< exp-golomb order
-
-#define SBH_THRESHOLD               4 ///< I0156: value of the fixed SBH controlling threshold
-
-#define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
+#define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk:  16 in HM5
 #define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
 
 #define SAO_ENCODING_RATE           0.75
 #define SAO_ENCODING_RATE_CHROMA    0.5
 
-#define MAX_NUM_VPS                 16
-#define MAX_NUM_SPS                 16
-#define MAX_NUM_PPS                 64
-
-#define MIN_SCAN_POS_CROSS          4
-
-#define MLS_GRP_NUM                 64 ///< G644 : Max number of coefficient groups, max(16, 64)
-#define MLS_CG_SIZE                 4 ///< G644 : Coefficient group size of 4x4
+#define MLS_GRP_NUM                 64 // Max number of coefficient groups, max(16, 64)
+#define MLS_CG_SIZE                 4  // Coefficient group size of 4x4
 #define MLS_CG_LOG2_SIZE            2
 
-#define ARL_C_PRECISION             7 ///< G382: 7-bit arithmetic precision
-#define LEVEL_RANGE                 30 ///< G382: max coefficient level in statistics collection
+#define QUANT_IQUANT_SHIFT          20 // Q(QP%6) * IQ(QP%6) = 2^20
+#define QUANT_SHIFT                 14 // Q(4) = 2^14
+#define SCALE_BITS                  15 // Inherited from TMuC, presumably for fractional bit estimates in RDOQ
+#define MAX_TR_DYNAMIC_RANGE        15 // Maximum transform dynamic range (excluding sign bit)
+
+#define SHIFT_INV_1ST               7  // Shift after first inverse transform stage
+#define SHIFT_INV_2ND               12 // Shift after second inverse transform stage
 
 #define AMVP_DECIMATION_FACTOR      4
 
 #define SCAN_SET_SIZE               16
 #define LOG2_SCAN_SET_SIZE          4
 
-#define FAST_UDI_MAX_RDMODE_NUM     35 ///< maximum number of RD comparison in fast-UDI estimation loop
+#define FAST_UDI_MAX_RDMODE_NUM     35 // maximum number of RD comparison in fast-UDI estimation loop
 
 #define ALL_IDX                     -1
 #define PLANAR_IDX                  0
 #define VER_IDX                     26 // index for intra VERTICAL   mode
 #define HOR_IDX                     10 // index for intra HORIZONTAL mode
-#define DC_IDX                      1 // index for intra DC mode
-#define NUM_CHROMA_MODE             5 // total number of chroma modes
+#define DC_IDX                      1  // index for intra DC mode
+#define NUM_CHROMA_MODE             5  // total number of chroma modes
 #define DM_CHROMA_IDX               36 // chroma mode index for derived from luma intra mode
 
-#define FULL_NBIT 1 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
-#if FULL_NBIT || !HIGH_BIT_DEPTH
-# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
-#else
-# define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
-#endif
+#define MDCS_ANGLE_LIMIT            4 // distance from true angle that horiz or vertical scan is allowed
+#define MDCS_LOG2_MAX_SIZE          3 // TUs with log2 of size greater than this can only use diagonal scan
 
-#define LOG2_MAX_NUM_COLUMNS_MINUS1 7
-#define LOG2_MAX_NUM_ROWS_MINUS1    7
-#define LOG2_MAX_COLUMN_WIDTH       13
-#define LOG2_MAX_ROW_HEIGHT         13
+#define MAX_NUM_REF_PICS            16 // max. number of pictures used for reference
+#define MAX_NUM_REF                 16 // max. number of entries in picture reference list
 
-#define REG_DCT                     65535
-
-#define CABAC_INIT_PRESENT_FLAG     1
-
-#define MAX_GOP                     64          ///< max. value of hierarchical GOP size
-
-#define MAX_NUM_REF_PICS            16          ///< max. number of pictures used for reference
-#define MAX_NUM_REF                 16          ///< max. number of entries in picture reference list
-
-#define MAX_UINT                    0xFFFFFFFFU ///< max. value of unsigned 32-bit integer
-#define MAX_INT                     2147483647  ///< max. value of signed 32-bit integer
-#define MAX_INT64                   0x7FFFFFFFFFFFFFFFLL  ///< max. value of signed 64-bit integer
-#define MAX_DOUBLE                  1.7e+308    ///< max. value of double-type value
+#define REF_PIC_LIST_0              0
+#define REF_PIC_LIST_1              1
+#define REF_PIC_LIST_X              100
+#define NOT_VALID                   -1
 
 #define MIN_QP                      0
 #define MAX_QP                      51
@@ -139,25 +101,12 @@
 #define MIN_QPSCALE                 0.21249999999999999
 #define MAX_MAX_QPSCALE             615.46574234477100
 
-#define NOT_VALID                  -1
+#define AMVP_MAX_NUM_CANDS          2 // max number of final AMVP candidates
+#define MRG_MAX_NUM_CANDS           5 // max number of final merge candidates
 
-// ====================================================================================================================
-// Coding tool configuration
-// ====================================================================================================================
+#define MAX_CHROMA_FORMAT_IDC       3 //  TODO: Remove me
 
-// AMVP: advanced motion vector prediction
-#define AMVP_MAX_NUM_CANDS          2 ///< max number of final candidates
-#define AMVP_MAX_NUM_CANDS_MEM      3 ///< max number of candidates
-#define MRG_MAX_NUM_CANDS           5
-
-// Explicit temporal layer QP offset
-#define MAX_TLAYER                  8 ///< max number of temporal layer
-
-// Adaptive search range depending on POC difference
-#define ADAPT_SR_SCALE              1 ///< division factor for adaptive search range
-
-#define MAX_CHROMA_FORMAT_IDC       3
-
-//! \}
+#define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
+#define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
 
 #endif // ifndef X265_COMMONDEF_H

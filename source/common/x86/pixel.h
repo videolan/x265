@@ -5,7 +5,7 @@
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
- *          Jason Garrett-Glaser <darkshikari@gmail.com>
+ *          Fiona Glaser <fiona@x264.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,6 +166,12 @@ int x265_pixel_ssd_64x32_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x48_sse4(pixel *, intptr_t, pixel *, intptr_t);
 int x265_pixel_ssd_64x64_sse4(pixel *, intptr_t, pixel *, intptr_t);
 
+int x265_pixel_ssd_s_4_sse2(int16_t *, intptr_t);
+int x265_pixel_ssd_s_8_sse2(int16_t *, intptr_t);
+int x265_pixel_ssd_s_16_sse2(int16_t *, intptr_t);
+int x265_pixel_ssd_s_32_sse2(int16_t *, intptr_t);
+int x265_pixel_ssd_s_32_avx2(int16_t *, intptr_t);
+
 #define ADDAVG(func)  \
     void x265_ ## func ## _sse4(int16_t*, int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
 ADDAVG(addAvg_2x4)
@@ -199,6 +205,16 @@ ADDAVG(addAvg_64x16)
 ADDAVG(addAvg_64x32)
 ADDAVG(addAvg_64x48)
 ADDAVG(addAvg_64x64)
+
+ADDAVG(addAvg_2x16)
+ADDAVG(addAvg_4x32)
+ADDAVG(addAvg_6x16)
+ADDAVG(addAvg_8x12)
+ADDAVG(addAvg_8x64)
+ADDAVG(addAvg_12x32)
+ADDAVG(addAvg_16x24)
+ADDAVG(addAvg_24x64)
+ADDAVG(addAvg_32x48)
 
 void x265_downShift_16_sse2(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void x265_upShift_8_sse4(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);

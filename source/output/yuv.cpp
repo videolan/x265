@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "PPA/ppa.h"
 #include "output.h"
 #include "yuv.h"
 
@@ -53,8 +52,6 @@ YUVOutput::~YUVOutput()
 
 bool YUVOutput::writePicture(const x265_picture& pic)
 {
-    PPAStartCpuEventFunc(write_yuv);
-
     uint64_t fileOffset = pic.poc;
     fileOffset *= frameSize;
 
@@ -108,6 +105,5 @@ bool YUVOutput::writePicture(const x265_picture& pic)
 
 #endif // if HIGH_BIT_DEPTH
 
-    PPAStopCpuEventFunc(write_yuv);
     return true;
 }

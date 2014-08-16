@@ -1,17 +1,13 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComDataCU.cpp
-    ../Lib/TLibCommon/TComLoopFilter.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComPattern.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
-    ../Lib/TLibCommon/TComPrediction.cpp
     ../Lib/TLibCommon/TComRom.cpp
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
-    ../Lib/TLibCommon/TComSlice.cpp
-    ../Lib/TLibCommon/TComTrQuant.cpp
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
@@ -19,16 +15,12 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComLoopFilter.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComPattern.h
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComPrediction.h
     ../Lib/TLibCommon/TComRom.h
     ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComSlice.h
-    ../Lib/TLibCommon/TComTrQuant.h
     ../Lib/TLibCommon/TComWeightPrediction.h
     ../Lib/TLibCommon/TComYuv.h)
 
@@ -42,8 +34,9 @@ if(MSVC)
     # /wd4244 type conversion, possible loss of data
     # /wd4389 signed/unsigned mismatch
     # /wd4018 '<' signed/unsigned mismatch
+    # /wd4800 forcing value to bool 'true' or 'false' (performance warning)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018")
+        "/wd4244 /wd4389 /wd4018 /wd4800")
     if(INTEL_CXX)
         add_definitions(/Qwd2557) # signed/unsigned mismatch
     endif()
@@ -135,7 +128,7 @@ add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
-    pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp
+    pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
@@ -147,6 +140,9 @@ add_library(common OBJECT
     common.cpp common.h
     param.cpp param.h
     frame.cpp frame.h
+    slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
-    loopfilter.cpp)
+    scalinglist.cpp scalinglist.h
+    quant.cpp quant.h
+    deblock.cpp deblock.h)

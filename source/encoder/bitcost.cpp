@@ -46,9 +46,7 @@ void BitCost::setQP(unsigned int qp)
 
             // estimate same cost for negative and positive MVD
             for (int i = 0; i <= 2 * BC_MAX_MV; i++)
-            {
                 s_costs[qp][i] = s_costs[qp][-i] = (uint16_t)X265_MIN(s_bitsizes[i] * lambda + 0.5f, (1 << 16) - 1);
-            }
         }
     }
 
@@ -73,9 +71,7 @@ void BitCost::CalculateLogs()
         s_bitsizes[0] = 0.718f;
         float log2_2 = 2.0f / log(2.0f);  // 2 x 1/log(2)
         for (int i = 1; i <= 2 * BC_MAX_MV; i++)
-        {
             s_bitsizes[i] = log((float)(i + 1)) * log2_2 + 1.718f;
-        }
     }
 }
 

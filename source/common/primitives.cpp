@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "TLibCommon/TComRom.h"
-#include "TLibEncoder/TEncSbac.h"
 #include "primitives.h"
 #include "common.h"
 
@@ -50,16 +49,6 @@ extern const uint8_t lumaPartitionMapTable[] =
     255,        255,      255,        LUMA_64x16, 255, 255,        255, LUMA_64x32, 255, 255, 255, LUMA_64x48, 255, 255, 255, LUMA_64x64  // 64
 };
 
-extern const uint8_t lumaSquarePartitionMapTable[] =
-{
-    LUMA_4x4,  LUMA_8x8,  255,        LUMA_16x16, 255, 255,        255, LUMA_32x32, 255, 255, 255, 255,        255, 255, 255, LUMA_64x64
-};
-
-extern const uint8_t lumaPartitionsFromSquareBlocksTable[] =
-{
-    LUMA_4x4, LUMA_8x8, LUMA_16x16, LUMA_32x32, LUMA_64x64
-};
-
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
@@ -78,7 +67,7 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_LoopFilterPrimitives(p); // loopfilter.cpp
 }
 
-static void Setup_Alias_Primitives(EncoderPrimitives &p)
+void Setup_Alias_Primitives(EncoderPrimitives &p)
 {
     /* copy reusable luma primitives to chroma 4:4:4 */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
@@ -87,14 +76,18 @@ static void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].copy_ps[i] = p.luma_copy_ps[i];
         p.chroma[X265_CSP_I444].copy_sp[i] = p.luma_copy_sp[i];
         p.chroma[X265_CSP_I444].copy_ss[i] = p.luma_copy_ss[i];
-        p.chroma[X265_CSP_I444].add_ps[i]  = p.luma_add_ps[i];
-        p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
         p.chroma[X265_CSP_I444].addAvg[i]  = p.luma_addAvg[i];
     }
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        int partL = lumaPartitionsFromSquareBlocksTable[i];
+        p.chroma[X265_CSP_I444].add_ps[i]  = p.luma_add_ps[i];
+        p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
+    }
+
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    {
+        int partL = partitionFromLog2Size(i + 2);
         p.square_copy_pp[i] = p.luma_copy_pp[partL];
         p.square_copy_ps[i] = p.luma_copy_ps[partL];
         p.square_copy_sp[i] = p.luma_copy_sp[partL];

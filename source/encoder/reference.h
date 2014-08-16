@@ -32,7 +32,7 @@ namespace x265 {
 // private x265 namespace
 
 class TComPicYuv;
-struct wpScalingParam;
+struct WeightParam;
 
 class MotionReference : public ReferencePlanes
 {
@@ -40,7 +40,7 @@ public:
 
     MotionReference();
     ~MotionReference();
-    int  init(TComPicYuv*, wpScalingParam* w = NULL);
+    int  init(TComPicYuv*, WeightParam* w = NULL);
     void applyWeight(int rows, int numRows);
 
     TComPicYuv      *m_reconPic;

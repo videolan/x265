@@ -874,5 +874,125 @@ cglobal idct8, 3,7,8 ;,0-16*mmsize
 
     ; restore origin stack pointer
     mov         rsp, [rsp + 16*mmsize]
-
     RET
+
+
+; TODO: split into two version after coeff_t changed
+%if 1 ;HIGH_BIT_DEPTH
+;-----------------------------------------------------------------------------
+; void denoise_dct( int32_t *dct, uint32_t *sum, uint32_t *offset, int size )
+;-----------------------------------------------------------------------------
+%macro DENOISE_DCT 0
+cglobal denoise_dct, 4,4,6
+    pxor      m5, m5
+    movsxdifnidn r3, r3d
+.loop:
+    mova      m2, [r0+r3*4-2*mmsize]
+    mova      m3, [r0+r3*4-1*mmsize]
+    ABSD      m0, m2
+    ABSD      m1, m3
+    paddd     m4, m0, [r1+r3*4-2*mmsize]
+    psubd     m0, [r2+r3*4-2*mmsize]
+    mova      [r1+r3*4-2*mmsize], m4
+    paddd     m4, m1, [r1+r3*4-1*mmsize]
+    psubd     m1, [r2+r3*4-1*mmsize]
+    mova      [r1+r3*4-1*mmsize], m4
+    pcmpgtd   m4, m0, m5
+    pand      m0, m4
+    pcmpgtd   m4, m1, m5
+    pand      m1, m4
+    PSIGND    m0, m2
+    PSIGND    m1, m3
+    mova      [r0+r3*4-2*mmsize], m0
+    mova      [r0+r3*4-1*mmsize], m1
+    sub      r3d, mmsize/2
+    jg .loop
+    RET
+%endmacro
+
+%if ARCH_X86_64 == 0
+INIT_MMX mmx
+DENOISE_DCT
+%endif
+INIT_XMM sse2
+DENOISE_DCT
+INIT_XMM ssse3
+DENOISE_DCT
+INIT_XMM avx
+DENOISE_DCT
+INIT_YMM avx2
+DENOISE_DCT
+
+%else ; !HIGH_BIT_DEPTH
+
+;-----------------------------------------------------------------------------
+; void denoise_dct( int16_t *dct, uint32_t *sum, uint16_t *offset, int size )
+;-----------------------------------------------------------------------------
+%macro DENOISE_DCT 0
+cglobal denoise_dct, 4,4,7
+    pxor      m6, m6
+    movsxdifnidn r3, r3d
+.loop:
+    mova      m2, [r0+r3*2-2*mmsize]
+    mova      m3, [r0+r3*2-1*mmsize]
+    ABSW      m0, m2, sign
+    ABSW      m1, m3, sign
+    psubusw   m4, m0, [r2+r3*2-2*mmsize]
+    psubusw   m5, m1, [r2+r3*2-1*mmsize]
+    PSIGNW    m4, m2
+    PSIGNW    m5, m3
+    mova      [r0+r3*2-2*mmsize], m4
+    mova      [r0+r3*2-1*mmsize], m5
+    punpcklwd m2, m0, m6
+    punpcklwd m3, m1, m6
+    punpckhwd m0, m6
+    punpckhwd m1, m6
+    paddd     m2, [r1+r3*4-4*mmsize]
+    paddd     m0, [r1+r3*4-3*mmsize]
+    paddd     m3, [r1+r3*4-2*mmsize]
+    paddd     m1, [r1+r3*4-1*mmsize]
+    mova      [r1+r3*4-4*mmsize], m2
+    mova      [r1+r3*4-3*mmsize], m0
+    mova      [r1+r3*4-2*mmsize], m3
+    mova      [r1+r3*4-1*mmsize], m1
+    sub       r3, mmsize
+    jg .loop
+%if (mmsize == 8)
+    EMMS
+%endif
+    RET
+%endmacro
+
+%if ARCH_X86_64 == 0
+INIT_MMX mmx
+DENOISE_DCT
+%endif
+INIT_XMM sse2
+DENOISE_DCT
+INIT_XMM ssse3
+DENOISE_DCT
+INIT_XMM avx
+DENOISE_DCT
+
+INIT_YMM avx2
+cglobal denoise_dct, 4,4,4
+    pxor      m3, m3
+    movsxdifnidn r3, r3d
+.loop:
+    mova      m1, [r0+r3*2-mmsize]
+    pabsw     m0, m1
+    psubusw   m2, m0, [r2+r3*2-mmsize]
+    vpermq    m0, m0, q3120
+    psignw    m2, m1
+    mova [r0+r3*2-mmsize], m2
+    punpcklwd m1, m0, m3
+    punpckhwd m0, m3
+    paddd     m1, [r1+r3*4-2*mmsize]
+    paddd     m0, [r1+r3*4-1*mmsize]
+    mova      [r1+r3*4-2*mmsize], m1
+    mova      [r1+r3*4-1*mmsize], m0
+    sub       r3, mmsize/2
+    jg .loop
+    RET
+
+%endif ; !HIGH_BIT_DEPTH

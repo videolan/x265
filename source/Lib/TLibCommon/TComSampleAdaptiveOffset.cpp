@@ -535,12 +535,10 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     int isChroma = (yCbCr != 0) ? 1 : 0;
     int shift;
     int cuHeightTmp;
-    pixel* tmpLSwap;
     pixel* tmpL;
     pixel* tmpU;
     pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
-    int32_t *tmp_swap;
 
     picWidthTmp  = (isChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
     picHeightTmp = (isChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
@@ -556,7 +554,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
     lcuWidth     = rpelx - lpelx;
     lcuHeight    = bpely - tpely;
 
-    if (tmpCu->getPic() == 0)
+    if (tmpCu->m_pic == 0)
     {
         return;
     }
@@ -707,9 +705,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
             m_upBufft[startX] = signDown2;
 
-            tmp_swap  = m_upBuff1;
-            m_upBuff1 = m_upBufft;
-            m_upBufft = tmp_swap;
+            std::swap(m_upBuff1, m_upBufft);
 
             rec += stride;
         }
@@ -775,9 +771,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        tmpLSwap = m_tmpL1;
-        m_tmpL1  = m_tmpL2;
-        m_tmpL2  = tmpLSwap;
+        std::swap(m_tmpL1, m_tmpL2);
     }
 }
 
@@ -864,7 +858,6 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int frameHeightInCU = m_pic->getFrameHeightInCU();
     int stride;
-    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -976,9 +969,7 @@ void TComSampleAdaptiveOffset::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool 
             }
         }
 
-        tmpUSwap       = m_tmpU1[yCbCr];
-        m_tmpU1[yCbCr] = m_tmpU2[yCbCr];
-        m_tmpU2[yCbCr] = tmpUSwap;
+        std::swap(m_tmpU1[yCbCr], m_tmpU2[yCbCr]);
     }
 }
 
@@ -1018,7 +1009,6 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    pixel *tmpUSwap;
     int sChroma = (yCbCr == 0) ? 0 : 1;
     bool mergeLeftFlag;
     int saoBitIncrease = (yCbCr == 0) ? m_saoBitIncreaseY : m_saoBitIncreaseC;
@@ -1122,9 +1112,7 @@ void TComSampleAdaptiveOffset::processSaoUnitRow(SaoLcuParam* saoLcuParam, int i
             }
         }
 
-        tmpUSwap       = m_tmpU1[yCbCr];
-        m_tmpU1[yCbCr] = m_tmpU2[yCbCr];
-        m_tmpU2[yCbCr] = tmpUSwap;
+        std::swap(m_tmpU1[yCbCr], m_tmpU2[yCbCr]);
     }
 }
 
@@ -1255,7 +1243,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
  */
 void restoreLFDisabledOrigYuv(Frame* pic)
 {
-    if (pic->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+    if (pic->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
         {
@@ -1274,7 +1262,7 @@ void restoreLFDisabledOrigYuv(Frame* pic)
  */
 void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    Frame* pic = cu->getPic();
+    Frame* pic = cu->m_pic;
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
     uint32_t qNumParts   = curNumParts >> 2;
 
@@ -1285,7 +1273,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
         {
             uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
             uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->getSlice()->getSPS()->getPicWidthInLumaSamples()) && (tpely < cu->getSlice()->getSPS()->getPicHeightInLumaSamples()))
+            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
                 xOrigCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 
@@ -1294,9 +1282,7 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
 
     // restore original YUV samples
     if (cu->isLosslessCoded(absZOrderIdx))
-    {
         restoreOrigLosslessYuv(cu, absZOrderIdx, depth);
-    }
 }
 
 /** Original Lossless YUV  sample restoration.
@@ -1308,10 +1294,10 @@ void xOrigCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
  */
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPicYuv* pcPicYuvRec = cu->getPic()->getPicYuvRec();
+    TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
     int hChromaShift = cu->getHorzChromaShift();
     int vChromaShift = cu->getVertChromaShift();
-    uint32_t lumaOffset   = absZOrderIdx << cu->getPic()->getLog2UnitSize() * 2;
+    uint32_t lumaOffset   = absZOrderIdx << cu->m_pic->getLog2UnitSize() * 2;
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);

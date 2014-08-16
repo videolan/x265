@@ -21,21 +21,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComRom.h"
 #include "primitives.h"
-
-namespace x265 {
-unsigned char IntraFilterType[][35] =
-{
-    //  Index:    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
-    /*  4x4  */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    /*  8x8  */ { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-    /* 16x16 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 },
-    /* 32x32 */ { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1 },
-    /* 64x64 */ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-};
-}
 
 using namespace x265;
 
@@ -99,8 +86,8 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, 
     }
 }
 
-template<int width>
-void planad_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
+template<int log2Size>
+void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
 {
     above += 1;
     left  += 1;
@@ -110,10 +97,10 @@ void planad_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, in
     int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
     // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
     int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
-    int blkSize = width;
-    int offset2D = width;
-    int shift1D = g_convertToBit[width] + 2;
-    int shift2D = shift1D + 1;
+    const int blkSize = 1 << log2Size;
+    const int offset2D = blkSize;
+    const int shift1D = log2Size;
+    const int shift2D = shift1D + 1;
 
     // Get left and above reference column and row
     for (k = 0; k < blkSize + 1; k++)
@@ -257,14 +244,15 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
     }
 }
 
-template<int size>
+template<int log2Size>
 void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
 {
+    const int size = 1 << log2Size;
     for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *left = (IntraFilterType[(int)g_convertToBit[size]][mode] ? left1 : left0);
-        pixel *above = (IntraFilterType[(int)g_convertToBit[size]][mode] ? above1 : above0);
-        pixel *out = dest + (mode - 2) * (size * size);
+        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
+        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
+        pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
         intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
 
@@ -293,10 +281,10 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred[BLOCK_4x4][0] = planad_pred_c<4>;
-    p.intra_pred[BLOCK_8x8][0] = planad_pred_c<8>;
-    p.intra_pred[BLOCK_16x16][0] = planad_pred_c<16>;
-    p.intra_pred[BLOCK_32x32][0] = planad_pred_c<32>;
+    p.intra_pred[BLOCK_4x4][0] = planar_pred_c<2>;
+    p.intra_pred[BLOCK_8x8][0] = planar_pred_c<3>;
+    p.intra_pred[BLOCK_16x16][0] = planar_pred_c<4>;
+    p.intra_pred[BLOCK_32x32][0] = planar_pred_c<5>;
 
     // Intra Prediction DC
     p.intra_pred[BLOCK_4x4][1] = intra_pred_dc_c<4>;
@@ -311,9 +299,9 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
         p.intra_pred[BLOCK_32x32][i] = intra_pred_ang_c<32>;
     }
 
-    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<4>;
-    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<8>;
-    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<16>;
-    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<32>;
+    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<2>;
+    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<3>;
+    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<4>;
+    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<5>;
 }
 }

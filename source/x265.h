@@ -390,7 +390,7 @@ typedef struct x265_param
      * minimum requirement. All valid HEVC heights are supported */
     int       sourceHeight;
 
-    /* Minimum decoder requirement level. Defaults to -1, which implies auto-
+    /* Minimum decoder requirement level. Defaults to 0, which implies auto-
      * detection by the encoder. If specified, the encoder will attempt to bring
      * the encode specifications within that specified level. If the encoder is
      * unable to reach the level it issues a warning and emits the actual
@@ -399,6 +399,10 @@ typedef struct x265_param
      * an specified as an integer with the level times 10, for example level
      * "5.1" is specified as 51, and level "5.0" is specified as 50. */
     int       levelIdc;
+
+    /* if levelIdc is specified (non-zero) this flag will differentiate between
+     * Main (0) and High (1) tier. Default is Main tier (0) */
+    int       bHighTier;
 
     /* Interlace type of source pictures. 0 - progressive pictures (default).
      * 1 - top field first, 2 - bottom field first. HEVC encodes interlaced
@@ -417,6 +421,11 @@ typedef struct x265_param
     /* Enables the buffering period SEI and picture timing SEI to signal the HRD
      * parameteres. Default is disabled */
     int       bEmitHRDSEI;
+
+    /* Enables the emission of a user data SEI with the stream headers which
+     * describes the encoder version, build info, and parameters. This is
+     * very helpful for debugging, but may interfere with regression tests. */
+    int       bEmitInfoSEI;
 
     /*== Coding Unit (CU) definitions ==*/
 
@@ -480,6 +489,12 @@ typedef struct x265_param
      * maximum is 16 */
     int       bframes;
 
+    /* Total Number of frames to be encoded, caclulated from the user input
+     * (--frames) and (--seek). In case, the input is read from a pipe, this can
+     * remain as 0. It is later used in 2 pass RateControl, hence storing the
+     * value in param */
+    int       totalFrames;
+
     /* When enabled, the encoder will use the B frame in the middle of each
      * mini-GOP larger than 2 B frames as a motion reference for the surrounding
      * B frames.  This improves compression efficiency for a small performance
@@ -517,6 +532,9 @@ typedef struct x265_param
      * samples are flat. It may or may not improve compression efficiency,
      * depending on your source material. Defaults to disabled */
     int       bEnableStrongIntraSmoothing;
+
+    /* Use a faster search method to find the best intra mode. Default is 0 */
+    int       bEnableFastIntra;
 
     /*== Inter Coding Tools ==*/
 
@@ -601,6 +619,22 @@ typedef struct x265_param
      * which use RDO. It makes mode decision favor options which preserve the
      * energy of the source, at the cost of lost compression. Default 0.0 */
     double    psyRd;
+
+    /* Quantization scaling lists. HEVC supports 6 quantization scaling lists to
+     * be defined; one each for Y, Cb, Cr for intra prediction and one each for
+     * inter prediction.
+     *
+     * - NULL and "off" will disable quant scaling (default)
+     * - "default" will enable the HEVC default scaling lists, which
+     *   do not need to be signaled since they are specified
+     * - all other strings indicate a filename containing custom scaling lists
+     *   in the HM format. The encode will fail if the file is not parsed
+     *   correctly. Custom lists must be signaled in the SPS. */
+    const char *scalingLists;
+
+    /* Strength of psycho-visual optimizations in quantization. Only has an
+     * effect in presets which use RDOQ (rd-levels 4 and 5). Default 0.0 */
+    double    psyRdoq;
 
     /*== Coding tools ==*/
 
@@ -766,6 +800,9 @@ typedef struct x265_param
 
         /* temporally blur complexity */
         double    complexityBlur;
+
+        /* Enable slow and a more detailed first pass encode in multi pass rate control */
+        int       bEnableSlowFirstPass;
 
         /* specify a text file which contains MAX_MAX_QP + 1 floating point
          * values to be copied into x265_lambda_tab and a second set of
@@ -1001,8 +1038,11 @@ int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
 /* x265_encoder_encode:
  *      encode one picture.
  *      *pi_nal is the number of NAL units outputted in pp_nal.
- *      returns negative on error, zero if no NAL units returned.
- *      the payloads of all output NALs are guaranteed to be sequential in memory. */
+ *      returns negative on error, 1 if a picture and access unit were output,
+ *      or zero if the encoder pipeline is still filling or is empty after flushing.
+ *      the payloads of all output NALs are guaranteed to be sequential in memory.
+ *      To flush the encoder and retrieve delayed output pictures, pass pic_in as NULL.
+ *      Once flushing has begun, all subsequent calls must pass pic_in as NULL. */
 int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
 
 /* x265_encoder_get_stats:

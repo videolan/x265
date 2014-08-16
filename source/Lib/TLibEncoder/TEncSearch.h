@@ -42,19 +42,20 @@
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
-#include "TLibCommon/TComPrediction.h"
-#include "TLibCommon/TComTrQuant.h"
-#include "TEncEntropy.h"
-#include "TEncSbac.h"
+#include "predict.h"
+#include "quant.h"
 #include "bitcost.h"
 #include "motion.h"
 
+#include "entropy.h"
+#include "rdcost.h"
+
 #define MVP_IDX_BITS 1
+#define NUM_LAYERS 4
 
 namespace x265 {
 // private namespace
 
-class TEncCu;
 class Encoder;
 class RDCost;
 
@@ -97,54 +98,38 @@ inline int getTUBits(int idx, int numIdx)
 // ====================================================================================================================
 
 /// encoder search class
-class TEncSearch : public TComPrediction
+class TEncSearch : public Predict
 {
 public:
 
-    MotionEstimate   m_me;
-    MotionReference (*m_mref)[MAX_NUM_REF + 1];
-
-    TEncSbac***     m_rdSbacCoders;
-    TEncSbac*       m_rdGoOnSbacCoder;
-    bool            m_bFrameParallel;
-
-protected:
+    MotionEstimate  m_me;
 
     ShortYuv*       m_qtTempShortYuv;
+    TComYuv         m_predTempYuv;
 
-    coeff_t**       m_qtTempCoeff[3];
+    coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempTrIdx;
     uint8_t*        m_qtTempCbf[3];
 
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
-public:
     // interface to classes
-    TComTrQuant*    m_trQuant;
-    RDCost*         m_rdCost;
-    TEncEntropy*    m_entropyCoder;
-    x265_param*     m_param;
+    Quant           m_quant;
+    RDCost          m_rdCost;
 
+    Entropy*        m_entropyCoder;
+    x265_param*     m_param;
+    Entropy       (*m_rdEntropyCoders)[CI_NUM];
+
+    bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
     int             m_numLayers;
-
-    // ME parameters
     int             m_refLagPixels;
-
-public:
-
-    void setRDSbacCoder(TEncSbac*** rdSbacCoders) { m_rdSbacCoders = rdSbacCoders; }
-
-    void setEntropyCoder(TEncEntropy* entropyCoder) { m_entropyCoder = entropyCoder; }
-
-    void setRDGoOnSbacCoder(TEncSbac* rdGoOnSbacCoder) { m_rdGoOnSbacCoder = rdGoOnSbacCoder; }
-
-    void setQP(int qp, int qpCb, int qpCr);
 
     TEncSearch();
     virtual ~TEncSearch();
 
-    bool init(Encoder* top, RDCost* rdCost, TComTrQuant *trQuant);
+    bool initSearch(Encoder& top);
 
     uint32_t xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t xModeBitsRemIntra(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t & mpms);
@@ -162,32 +147,32 @@ public:
 
     /// encode residual and compute rd-cost for inter mode
     void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv,
-                                   TComYuv* reconYuv, bool bSkipRes, bool curUseRDOQ);
+                                   TComYuv* reconYuv);
+    void encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* reconYuv);
 
     void xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
                              TComYuv* predYuv, ShortYuv* resiYuv, uint32_t& distY, bool bCheckFirst,
                              uint64_t& dRDCost);
     void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
-    void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, bool skipRes);
+    void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
 
     void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, uint32_t depth,
-                             uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, bool curUseRDOQ = true);
+                             uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist);
     void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
 
-    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool curUseRDOQ = true);
+    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // compute symbol bits
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t xSymbolBitsInter(TComDataCU* cu);
-    bool isNextSection(TComTURecurse *TUIterator);
-    bool isLastSection(TComTURecurse *TUIterator);
-    void initSection(TComTURecurse *TUIterator, uint32_t splitMode, uint32_t absPartIdxStep, uint32_t m_absPartIdxTU = 0);
     void offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
 protected:
+
+    static const pixel zeroPel[MAX_CU_SIZE];
 
     // --------------------------------------------------------------------------------------------
     // Intra search

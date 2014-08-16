@@ -4,7 +4,7 @@
 ;* Copyright (C) 2003-2013 x264 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
-;*          Jason Garrett-Glaser <darkshikari@gmail.com>
+;*          Fiona Glaser <fiona@x264.com>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Alex Izvorski <aizvorksi@gmail.com>
 ;*
@@ -2394,4 +2394,203 @@ cglobal pixel_ssd_sp_64x64, 4, 7, 8, src1, stride1, src2, stride2
     call     pixel_ssd_sp_16x16_internal
     HADDD    m7,     m1
     movd     eax,    m7
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_s( int16_t *ref, intptr_t i_stride )
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal pixel_ssd_s_4, 2,2,2
+    add     r1, r1
+    movh    m0, [r0]
+    movhps  m0, [r0 + r1]
+
+    lea     r0, [r0 + r1 * 2]
+    movh    m1, [r0]
+    movhps  m1, [r0 + r1]
+
+    pmaddwd m0, m0
+    pmaddwd m1, m1
+    paddd   m0, m1
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, m0
+    RET
+
+
+INIT_XMM sse2
+cglobal pixel_ssd_s_8, 2,3,5
+    add     r1, r1
+    lea     r2, [r1 * 3]
+    movu    m0, [r0]
+    movu    m1, [r0 + r1]
+    movu    m2, [r0 + r1 * 2]
+    movu    m3, [r0 + r2]
+
+    pmaddwd m0, m0
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    paddd   m0, m1
+    paddd   m2, m3
+    paddd   m0, m2
+
+    lea     r0, [r0 + r1 * 4]
+    movu    m4, [r0]
+    movu    m1, [r0 + r1]
+    movu    m2, [r0 + r1 * 2]
+    movu    m3, [r0 + r2]
+
+    pmaddwd m4, m4
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    paddd   m4, m1
+    paddd   m2, m3
+    paddd   m4, m2
+    paddd   m0, m4
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, m0
+    RET
+
+
+INIT_XMM sse2
+cglobal pixel_ssd_s_16, 2,3,5
+    add     r1, r1
+
+    mov     r2d, 4
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0]
+    movu    m2, [r0 + mmsize]
+    movu    m3, [r0 + r1]
+    movu    m4, [r0 + r1 + mmsize]
+    lea     r0, [r0 + r1 * 2]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    movu    m1, [r0]
+    movu    m2, [r0 + mmsize]
+    movu    m3, [r0 + r1]
+    movu    m4, [r0 + r1 + mmsize]
+    lea     r0, [r0 + r1 * 2]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, m0
+    RET
+
+
+INIT_XMM sse2
+cglobal pixel_ssd_s_32, 2,3,5
+    add     r1, r1
+
+    mov     r2d, 16
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0 + 0 * mmsize]
+    movu    m2, [r0 + 1 * mmsize]
+    movu    m3, [r0 + 2 * mmsize]
+    movu    m4, [r0 + 3 * mmsize]
+    add     r0, r1
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    movu    m1, [r0 + 0 * mmsize]
+    movu    m2, [r0 + 1 * mmsize]
+    movu    m3, [r0 + 2 * mmsize]
+    movu    m4, [r0 + 3 * mmsize]
+    add     r0, r1
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, m0
+    RET
+
+
+INIT_YMM avx2
+cglobal pixel_ssd_s_32, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+
+    mov     r2d, 8
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0 + 0 * mmsize]
+    movu    m2, [r0 + 1 * mmsize]
+    movu    m3, [r0 + r1 + 0 * mmsize]
+    movu    m4, [r0 + r1 + 1 * mmsize]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    movu    m1, [r0 + r1 * 2 + 0 * mmsize]
+    movu    m2, [r0 + r1 * 2 + 1 * mmsize]
+    movu    m3, [r0 + r3 + 0 * mmsize]
+    movu    m4, [r0 + r3 + 1 * mmsize]
+    lea     r0, [r0 + 4 * r1]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, xm0
     RET

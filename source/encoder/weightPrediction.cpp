@@ -43,7 +43,7 @@ struct Cache
     int         lowresHeightInCU;
 };
 
-int sliceHeaderCost(wpScalingParam *w, int lambda, int bChroma)
+int sliceHeaderCost(WeightParam *w, int lambda, int bChroma)
 {
     /* 4 times higher, because chroma is analyzed at full resolution. */
     if (bChroma)
@@ -172,7 +172,7 @@ uint32_t weightCost(pixel *         fenc,
                     const Cache &   cache,
                     int             width,
                     int             height,
-                    wpScalingParam *w,
+                    WeightParam *w,
                     bool            bLuma)
 {
     if (w)
@@ -207,21 +207,12 @@ uint32_t weightCost(pixel *         fenc,
     }
     else if (cache.csp == X265_CSP_I444)
         for (int y = 16; y < height; y += 16, r += 16 * stride, f += 16 * stride)
-        {
             for (int x = 16; x < width; x += 16)
-            {
                 cost += primitives.satd[LUMA_16x16](r + x, stride, f + x, stride);
-            }
-        }
-
     else
         for (int y = 8; y < height; y += 8, r += 8 * stride, f += 8 * stride)
-        {
             for (int x = 8; x < width; x += 8)
-            {
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
-            }
-        }
 
     x265_emms();
     return cost;
@@ -229,11 +220,11 @@ uint32_t weightCost(pixel *         fenc,
 }
 
 namespace x265 {
-void weightAnalyse(TComSlice& slice, x265_param& param)
+void weightAnalyse(Slice& slice, x265_param& param)
 {
-    wpScalingParam wp[2][MAX_NUM_REF][3];
-    TComPicYuv *fencYuv = slice.getPic()->getPicYuvOrg();
-    Lowres& fenc        = slice.getPic()->m_lowres;
+    WeightParam wp[2][MAX_NUM_REF][3];
+    TComPicYuv *fencYuv = slice.m_pic->getPicYuvOrg();
+    Lowres& fenc        = slice.m_pic->m_lowres;
 
     Cache cache;
 
@@ -250,13 +241,13 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
     pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
     if (!mcbuf)
     {
-        slice.resetWpScaling();
+        slice.disableWeights();
         return;
     }
     pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
 
     int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
-    int curPoc = slice.getPOC();
+    int curPoc = slice.m_poc;
     const float epsilon = 1.f / 128.f;
 
     int chromaDenom, lumaDenom, denom;
@@ -269,8 +260,8 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     for (int list = 0; list < cache.numPredDir; list++)
     {
-        wpScalingParam *weights = wp[list][0];
-        Frame *refPic = slice.getRefPic(list, 0);
+        WeightParam *weights = wp[list][0];
+        Frame *refPic = slice.m_refPicList[list][0];
         Lowres& refLowres = refPic->m_lowres;
         int diffPoc = abs(curPoc - refPic->getPOC());
 
@@ -410,7 +401,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 break;
 
             default:
-                slice.resetWpScaling();
+                slice.disableWeights();
                 X265_FREE(mcbuf);
                 return;
             }
@@ -453,7 +444,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
                 int endOffset   = Clip3(-128, 127, curOffset + offsetDist);
                 for (int off = startOffset; off <= endOffset; off++)
                 {
-                    wpScalingParam wsp;
+                    WeightParam wsp;
                     SET_WEIGHT(wsp, true, curScale, mindenom, off);
                     uint32_t s = weightCost(orig, fref, weightTemp, stride, cache, width, height, &wsp, !plane) +
                         sliceHeaderCost(&wsp, lambda, !!plane);
@@ -501,7 +492,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         chromaDenom = weights[1].log2WeightDenom;
 
         /* reset weight states */
-        for (int ref = 1; ref < slice.getNumRefIdx(list); ref++)
+        for (int ref = 1; ref < slice.m_numRefIdx[list]; ref++)
         {
             SET_WEIGHT(wp[list][ref][0], false, 1 << lumaDenom, lumaDenom, 0);
             SET_WEIGHT(wp[list][ref][1], false, 1 << chromaDenom, chromaDenom, 0);
@@ -511,7 +502,7 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
 
     X265_FREE(mcbuf);
 
-    slice.setWpScaling(wp);
+    memcpy(slice.m_weightPredTable, wp, sizeof(WeightParam) * 2 * MAX_NUM_REF * 3);
 
     if (param.logLevel >= X265_LOG_FULL)
     {
@@ -519,11 +510,11 @@ void weightAnalyse(TComSlice& slice, x265_param& param)
         int p = 0;
         bool bWeighted = false;
 
-        p = sprintf(buf, "poc: %d weights:", slice.getPOC());
+        p = sprintf(buf, "poc: %d weights:", slice.m_poc);
         int numPredDir = slice.isInterP() ? 1 : 2;
         for (int list = 0; list < numPredDir; list++)
         {
-            wpScalingParam* w = &wp[list][0][0];
+            WeightParam* w = &wp[list][0][0];
             if (w[0].bPresentFlag || w[1].bPresentFlag || w[2].bPresentFlag)
             {
                 bWeighted = true;

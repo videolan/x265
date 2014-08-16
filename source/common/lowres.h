@@ -121,8 +121,11 @@ struct Lowres : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int32_t*  lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
+
+    /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
     int64_t   plannedSatd[X265_LOOKAHEAD_MAX + 1];
+    int       indB;
     int       bframes;
 
     /* rate control / adaptive quant data */
@@ -132,6 +135,7 @@ struct Lowres : public ReferencePlanes
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
 
+    /* cutree intermediate data */
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
 

@@ -40,7 +40,7 @@
 
 // Include files
 #include "common.h"
-#include "TComSlice.h"
+#include "slice.h"
 #include "TComDataCU.h"
 
 namespace x265 {
@@ -60,7 +60,7 @@ class TComPicYuv;
 /// picture symbol class
 class TComPicSym
 {
-private:
+public:
 
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
@@ -72,22 +72,20 @@ private:
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
 
-    TComSlice*    m_slice;
+    Slice*        m_slice;
     TComDataCU*   m_cuData;
 
     SAOParam*     m_saoParam;
 
-public:
-
     TComPicSym*   m_freeListNext;
     TComPicYuv*   m_reconPicYuv;
+
+    bool          m_bHasReferences; // used during DPB/RPS updates
 
     bool        create(x265_param *param);
     void        destroy();
 
     TComPicSym();
-
-    TComSlice*  getSlice()                { return m_slice; }
 
     uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
 

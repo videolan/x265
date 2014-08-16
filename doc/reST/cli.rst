@@ -274,6 +274,23 @@ Input Options
 	Specifying QP (integer) is optional, and if specified they are
 	clamped within the encoder to qpmin/qpmax.
 
+.. option:: --scaling-list <filename>
+
+	Quantization scaling lists. HEVC supports 6 quantization scaling
+	lists to be defined; one each for Y, Cb, Cr for intra prediction and
+	one each for inter prediction.
+
+	x265 does not use scaling lists by default, but this can also be
+	made explicit by :option:`--scaling-list` *off*.
+
+	HEVC specifies a default set of scaling lists which may be enabled
+	without requiring them to be signaled in the SPS. Those scaling
+	lists can be enabled via :option:`--scaling-list` *default*.
+    
+	All other strings indicate a filename containing custom scaling
+	lists in the HM format. The encode will abort if the file is not
+	parsed correctly. Custom lists must be signaled in the SPS
+
 .. option:: --lambda-file <filename>
 
 	Specify a text file containing values for x265_lambda_tab and
@@ -293,6 +310,62 @@ Input Options
 	the more bits it will try to spend on signaling information (motion
 	vectors and splits) and less on residual. This feature is intended
 	for experimentation.
+
+Profile, Level, Tier
+====================
+
+.. option:: --profile <string>
+
+	Enforce the requirements of the specified profile, ensuring the
+	output stream will be decodable by a decoder which supports that
+	profile.  May abort the encode if the specified profile is
+	impossible to be supported by the compile options chosen for the
+	encoder (a high bit depth encoder will be unable to output
+	bitstreams compliant with Main or Mainstillpicture).
+
+	API users must use x265_param_apply_profile() after configuring
+	their param structure. Any changes made to the param structure after
+	this call might make the encode non-compliant.
+
+	**Values:** main, main10, mainstillpicture
+
+	**CLI ONLY**
+
+.. option:: --level-idc <integer|float>
+
+	Minimum decoder requirement level. Defaults to 0, which implies
+	auto-detection by the encoder. If specified, the encoder will
+	attempt to bring the encode specifications within that specified
+	level. If the encoder is unable to reach the level it issues a
+	warning and aborts the encode. If the requested requirement level is
+	higher than the actual level, the actual requirement level is
+	signaled.
+
+	Beware, specifying a decoder level will force the encoder to enable
+	VBV for constant rate factor encodes, which may introduce
+	non-determinism.
+
+	The value is specified as a float or as an integer with the level
+	times 10, for example level **5.1** is specified as "5.1" or "51",
+	and level **5.0** is specified as "5.0" or "50".
+
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+
+.. option:: --high-tier, --no-high-tier
+
+	If :option:`--level-idc` has been specied, the option adds the
+	intention to support the High tier of that level. If your specified
+	level does not support a High tier, a warning is issued and this
+	modifier flag is ignored.
+
+.. note::
+	:option:`--profile`, :option:`--level-idc`, and
+	:option:`--high-tier` are only intended for use when you are
+	targeting a particular decoder (or decoders) with fixed resource
+	limitations and must constrain the bitstream within those limits.
+	Specifying a profile or level may lower the encode quality
+	parameters to meet those requirements but it will never raise
+	them.
 
 Quad-Tree analysis
 ==================
@@ -463,6 +536,15 @@ Mode decision / Analysis
 	the encoder from perhaps finding other predictions that also have no
 	residual but require less signaling bits. Default disabled
 
+.. option:: --fast-intra, --no-fast-intra
+
+	Perform an initial scan of every fifth intra angular mode, then
+	check modes +/- 2 distance from the best mode, then +/- 1 distance
+	from the best mode, effectively performing a gradient descent. When
+	enabled 10 modes in total are checked. When disabled all 33 angular
+	modes are checked.  Only applicable for :option:`--rd` levels 3 and
+	below (medium preset and faster).
+
 .. option:: --weightp, -w, --no-weightp
 
 	Enable weighted prediction in P slices. This enables weighting
@@ -507,28 +589,89 @@ Mode decision / Analysis
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
-.. option:: --psy-rd <float>
-
-	Influence rate distortion optimizations to try to preserve the
-	energy of the source image in the encoded image, at the expense of
-	compression efficiency. 1.0 is a typical value. Default disabled. It
-	only has effect on presets which use full RDO-based decisions (slower,
-	veryslow and placebo)
-
-	**Range of values:** 0 .. 2.0
-
 .. option:: --cu-lossless, --no-cu-lossless
 
 	For each CU, evaluate lossless encode (transform and quant bypass)
-	as a potential rate distortion optimization. If :option:`--lossless`
-	has been specified, all CUs will use this option unconditionally
-	regardless of whether this option was seperately enabled. Default
-	disabled.
+	as a potential rate distortion optimization. If the global option
+	:option:`--lossless` has been specified, all CUs will be encoded
+	this way unconditionally regardless of whether this option was
+	enabled. Default disabled.
 
 .. option:: --signhide, --no-signhide
 
-	Hide sign bit of one coeff per TU (rdo). Default enabled
+	Hide sign bit of one coeff per TU (rdo). The last sign is implied.
+	This requires analyzing all the coefficients to determine if a sign
+	must be toggled, and then to determine which one can be toggled with
+	the least amount of distortion. Default enabled
  
+Pycho-visual options
+====================
+
+Left to its own devices, the encoder will make mode decisions based on a
+simple rate distortion formula, trading distortion for bitrate. This is
+generally effective except for the manner in which this distortion is
+measured. It tends to favor blurred reconstructed blocks over blocks
+which have wrong motion. The human eye generally prefers the wrong
+motion over the blur and thus x265 offers psycho-visual adjustments to
+the rate distortion algorithm.
+
+:option:`--psy-rd` will add an extra cost to reconstructed blocks which
+do not match the visual energy of the source block. The higher the
+strength of :option:`--psy-rd` the more strongly it will favor similar
+energy over blur and the more aggressively it will ignore rate
+distortion. If it is too high, it will introduce visal artifacts and
+increase bitrate enough for rate control to increase quantization
+globally, reducing overall quality. psy-rd will tend to reduce the use
+of blurred prediction modes, like DC and planar intra and bi-directional
+inter prediction.
+
+:option:`--psy-rdoq` will adjust the distortion cost used in
+rate-distortion optimized quantization (RDO quant), enabled in
+:option:`--rd` 4 and above, favoring the preservation of energy in the
+reconstructed image.  :option:`--psy-rdoq` prevents RDOQ from blurring
+all of the encoding options which psy-rd has to chose from.  At low
+strength levels, psy-rdoq will influence the quantization level
+decisions, favoring higher AC energy in the reconstructed image. As
+psy-rdoq strength is increased, more non-zero coefficient levels are
+added and fewer coefficients are zeroed by RDOQ's rate distortion
+analysis. High levels of psy-rdoq can double the bitrate which can have
+a drastic effect on rate control, forcing higher overall QP, and can
+cause ringing artifacts. psy-rdoq is less accurate than psy-rd, it is
+biasing towards energy in general while psy-rd biases towards the energy
+of the source image. But very large psy-rdoq values can sometimes be
+beneficial, preserving film grain for instance.
+
+As a general rule, when both psycho-visual features are disabled, the
+encoder will tend to blur blocks in areas of difficult motion. Turning
+on small amounts of psy-rd and psy-rdoq will improve the perceived
+visual quality. Increasing psycho-visual strength further will improve
+quality and begin introducing artifacts and increase bitrate, which may
+force rate control to increase global QP. Finding the optimal
+psycho-visual parameters for a given video requires experimentation. Our
+recommended defaults (1.0 for both) are generally on the low end of the
+spectrum. And generally the lower the bitrate, the lower the optimal
+psycho-visual settings.
+
+.. option:: --psy-rd <float>
+
+	Influence rate distortion optimizated mode decision to preserve the
+	energy of the source image in the encoded image at the expense of
+	compression efficiency. It only has effect on presets which use
+	RDO-based mode decisions (:option:`--rd` 3 and above).  1.0 is a
+	typical value. Default disabled.  Experimental
+
+	**Range of values:** 0 .. 2.0
+
+.. option:: --psy-rdoq <float>
+
+	Influence rate distortion optimized quantization by favoring higher
+	energy in the reconstructed image. This generally improves perceived
+	visual quality at the cost of lower quality metric scores.  It only
+	has effect on slower presets which use RDO Quantization
+	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Experimental
+
+	**Range of values:** 0 .. 10.0
+
 
 Slice decision options
 ======================
@@ -545,7 +688,11 @@ Slice decision options
 
 .. option:: --min-keyint, -i <integer>
 
-	Minimum GOP size. Scenecuts closer together than this are coded as I or P, not IDR. 
+	Minimum GOP size. Scenecuts closer together than this are coded as I
+	or P, not IDR. Minimum keyint is clamped to be at least half of
+	:option:`--keyint`. If you wish to force regular keyframe intervals
+	and disable adaptive I frame placement, you must use
+	:option:`--no-scenecut`.
 
 	**Range of values:** >=0 (0: auto)
 
@@ -591,22 +738,6 @@ Slice decision options
 
 	Use B-frames as references, when possible. Default enabled
 
-.. option:: --level <integer|float>
-
-	Minimum decoder requirement level. Defaults to -1, which implies
-	auto-detection by the encoder. If specified, the encoder will
-	attempt to bring the encode specifications within that specified
-	level. If the encoder is unable to reach the level it issues a
-	warning and emits the actual decoder requirement. If the requested
-	requirement level is higher than the actual level, the actual
-	requirement level is signaled.
-
-	The value is specified as a float or as an integer with the level
-	times 10, for example level **5.1** is specified as "5.1" or "51",
-	and level **5.0** is specified as "5.0" or "50".
-
-	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
-
 .. option:: --ref <1..16>
 
 	Max number of L0 references to be allowed. This number has a linear
@@ -633,14 +764,14 @@ Quality, rate control and rate distortion options
 	The higher the rate factor the higher the quantization and the lower
 	the quality. Default rate factor is 28.0.
 
-.. option:: --max-crf <0..51.0>
+.. option:: --crf-max <0..51.0>
 
 	Specify an upper limit to the rate factor which may be assigned to
 	any given frame (ensuring a max QP).  This is dangerous when CRF is
 	used in combination with VBV as it may result in buffer underruns.
 	Default disabled
         
-.. option:: --min-crf <0..51.0>
+.. option:: --crf-min <0..51.0>
 
 	Specify an lower limit to the rate factor which may be assigned to
 	any given frame (ensuring a min QP).  This is dangerous when CRF is
@@ -663,9 +794,16 @@ Quality, rate control and rate distortion options
 
 	Initial buffer occupancy. The portion of the decode buffer which
 	must be full before the decoder will begin decoding.  Determines
-	absolute maximum frame size. Default 0.9
+	absolute maximum frame size. May be specified as a fractional value
+	between 0 and 1, or in kbits. In other words these two option pairs
+	are equivalent::
 
-	**Range of values:** 0 - 1.0
+	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 900
+	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 0.9
+
+	Default 0.9
+
+	**Range of values:** fractional: 0 - 1.0, or kbits: 2 .. bufsize
 
 .. option:: --qp, -q <integer>
 
@@ -710,8 +848,8 @@ Quality, rate control and rate distortion options
 	and not enough in flat areas.
 
 	0. disabled
-	1. AQ enabled **(default)**
-	2. AQ enabled with auto-variance
+	1. AQ enabled
+	2. AQ enabled with auto-variance **(default)**
 
 .. option:: --aq-strength <float>
 
@@ -745,6 +883,39 @@ Quality, rate control and rate distortion options
 	channel.  Default 0
 
 	**Range of values:**  -12 to 12
+
+.. option:: --pass <integer>
+
+	Enable multipass rate control mode. Input is encoded multiple times,
+	storing the encoded information of each pass in a stats file from which
+	the consecutive pass tunes the qp of each frame to improve the quality
+	of the output. Default disabled
+
+	1. First pass, creates stats file
+	2. Last pass, does not overwrite stats file
+	3. Nth pass, overwrites stats file
+
+	**Range of values:** 1 to 3
+
+.. option:: --slow-firstpass, --no-slow-firstpass
+
+	Enable a slow and more detailed first pass encode in Multipass rate
+	control mode.  Speed of the first pass encode is slightly lesser and
+	quality midly improved when compared to the default settings in a
+	multipass encode. Default disabled (turbo mode enabled)
+
+	When **turbo** first pass is not disabled, these options are
+	set on the first pass to improve performance:
+	
+	* :option:`--fast-intra`
+	* :option:`--no-rect`
+	* :option:`--no-amp`
+	* :option:`--early-skip`
+	* :option:`--ref` = 1
+	* :option:`--max-merge` = 1
+	* :option:`--me` = DIA
+	* :option:`--subme` = MIN(2, :option:`--subme`)
+	* :option:`--rd` = MIN(2, :option:`--rd`)
 
 Loop filters
 ============
@@ -900,6 +1071,14 @@ Bitstream options
 	keyframe. This is intended for use when you do not have a container
 	to keep the stream headers for you and you want keyframes to be
 	random access points. Default disabled
+
+.. option:: --info, --no-info
+
+	Emit an informational SEI with the stream headers which describes
+	the encoder version, build info, and encode parameters. This is very
+	helpful for debugging purposes but encoding version numbers and
+	build info could make your bitstreams diverge and interfere with
+	regression testing. Default enabled
 
 .. option:: --hrd, --no-hrd
 

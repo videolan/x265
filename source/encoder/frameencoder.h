@@ -30,12 +30,10 @@
 #include "bitstream.h"
 #include "frame.h"
 
-#include "TLibEncoder/TEncCu.h"
-#include "TLibEncoder/TEncSearch.h"
-#include "TLibEncoder/TEncSbac.h"
-#include "TLibEncoder/TEncBinCoderCABAC.h"
+#include "analysis.h"
 #include "TLibEncoder/TEncSampleAdaptiveOffset.h"
 
+#include "entropy.h"
 #include "framefilter.h"
 #include "cturow.h"
 #include "ratecontrol.h"
@@ -44,12 +42,6 @@
 
 namespace x265 {
 // private x265 namespace
-
-enum SCALING_LIST_PARAMETER
-{
-    SCALING_LIST_OFF,
-    SCALING_LIST_DEFAULT,
-};
 
 class ThreadPool;
 class Encoder;
@@ -62,7 +54,7 @@ struct FrameStats
     /* Texture bits (DCT coefs) */
     int         coeffBits;
     int         miscBits;
-    /* CU type counts */
+    /* CU type counts stored as percentage */
     double      cuCount_i;
     double      cuCount_p;
     double      cuCount_skip;
@@ -76,8 +68,6 @@ public:
     FrameEncoder();
 
     virtual ~FrameEncoder() {}
-
-    void setThreadPool(ThreadPool *p);
 
     bool init(Encoder *top, int numRows, int numCols);
 
@@ -95,17 +85,7 @@ public:
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 
-    TEncEntropy* getEntropyCoder(int row)      { return &this->m_rows[row].m_entropyCoder; }
-    TEncSbac*    getSbacCoder(int row)         { return &this->m_rows[row].m_sbacCoder; }
-    TEncSbac*    getRDGoOnSbacCoder(int row)   { return &this->m_rows[row].m_rdGoOnSbacCoder; }
-    TEncSbac*    getBufferSBac(int row)        { return &this->m_rows[row].m_bufferSbacCoder; }
-
-    /* Frame singletons, last the life of the encoder */
-    TEncSampleAdaptiveOffset* getSAO()         { return &m_frameFilter.m_sao; }
-
-    void getStreamHeaders(NALList& list, Bitstream& bs);
-
-    void initSlice(Frame* pic);
+    void startCompressFrame(Frame* pic);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
@@ -114,15 +94,10 @@ public:
     void compressCTURows();
 
     /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice(Bitstream* substreams);
+    void encodeSlice();
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
-
-    void setLambda(int qp, ThreadLocalData& tld);
-
-    // worker thread
-    void threadMain();
 
     Event                    m_enable;
     Event                    m_done;
@@ -130,9 +105,8 @@ public:
 
     int                      m_numRows;
     uint32_t                 m_numCols;
+    int                      m_refLagRows;
     CTURow*                  m_rows;
-    TComSPS                  m_sps;
-    TComPPS                  m_pps;
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
@@ -149,32 +123,33 @@ public:
     FrameStats               m_frameStats;          // stats of current frame for multipass encodes
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
+    uint64_t                 m_accessUnitBits;
 
 protected:
 
+    void threadMain();
+    void setLambda(int qp, ThreadLocalData& tld);
     int calcQpForCu(uint32_t cuAddr, double baseQp);
     void noiseReductionUpdate();
 
     Encoder*                 m_top;
     x265_param*              m_param;
+    Frame*                   m_frame;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
-    TEncSbac                 m_sbacCoder;
-    TEncBinCABAC             m_binCoderCABAC;
+    Entropy                  m_entropyCoder;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;
-    NoiseReduction           m_nr;
+    uint32_t*                m_substreamSizes;
+    NoiseReduction*          m_nr;
     NALList                  m_nalList;
-    ThreadLocalData          m_tld;
-
-    Frame*                   m_frame;
+    ThreadLocalData          m_tld; /* for --no-wpp */
 
     int                      m_filterRowDelay;
     int                      m_filterRowDelayCus;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
-    bool                     m_isReferenced;
 };
 }
 

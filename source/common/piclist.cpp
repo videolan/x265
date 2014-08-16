@@ -86,6 +86,14 @@ Frame *PicList::popFront()
         return NULL;
 }
 
+Frame* PicList::getPOC(int poc)
+{
+    Frame *pic = m_start;
+    while (pic && pic->getPOC() != poc)
+        pic = pic->m_next;
+    return pic;
+}
+
 Frame *PicList::popBack()
 {
     if (m_end)

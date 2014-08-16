@@ -42,86 +42,6 @@
 namespace x265 {
 //! \ingroup TLibCommon
 //! \{
-// scanning order table
-uint16_t* g_scanOrder[SCAN_NUMBER_OF_GROUP_TYPES][SCAN_NUMBER_OF_TYPES][MAX_CU_DEPTH];
-
-class ScanGenerator
-{
-private:
-
-    uint32_t m_line, m_column;
-    uint32_t m_blockWidth, m_blockHeight;
-    uint32_t m_stride;
-    COEFF_SCAN_TYPE m_scanType;
-
-public:
-
-    ScanGenerator(uint32_t blockWidth, uint32_t blockHeight, uint32_t stride, COEFF_SCAN_TYPE scanType)
-        : m_line(0), m_column(0), m_blockWidth(blockWidth), m_blockHeight(blockHeight), m_stride(stride), m_scanType(scanType)
-    { }
-
-    uint32_t GetCurrentX() const { return m_column; }
-
-    uint32_t GetCurrentY() const { return m_line; }
-
-    uint32_t GetNextIndex(uint32_t blockOffsetX, uint32_t blockOffsetY)
-    {
-        int rtn = ((m_line + blockOffsetY) * m_stride) + m_column + blockOffsetX;
-
-        //advance line and column to the next position
-        switch (m_scanType)
-        {
-        case SCAN_DIAG:
-        {
-            if ((m_column == (m_blockWidth - 1)) || (m_line == 0))     //if we reach the end of a rank, go diagonally down to the next one
-            {
-                m_line   += m_column + 1;
-                m_column  = 0;
-
-                if (m_line >= m_blockHeight)     //if that takes us outside the block, adjust so that we are back on the bottom row
-                {
-                    m_column += m_line - (m_blockHeight - 1);
-                    m_line    = m_blockHeight - 1;
-                }
-            }
-            else
-            {
-                m_column++;
-                m_line--;
-            }
-        }
-        break;
-
-        case SCAN_HOR:
-        {
-            if (m_column == (m_blockWidth - 1))
-            {
-                m_line++;
-                m_column = 0;
-            }
-            else m_column++;
-        }
-        break;
-
-        case SCAN_VER:
-        {
-            if (m_line == (m_blockHeight - 1))
-            {
-                m_column++;
-                m_line = 0;
-            }
-            else m_line++;
-        }
-        break;
-
-        default:
-            X265_CHECK(0, "ERROR: Unknown scan type %d in ScanGenerator::GetNextIndex", m_scanType);
-        break;
-        }
-
-        return rtn;
-    }
-};
 
 // lambda = pow(2, (double)q / 6 - 2);
 double x265_lambda_tab[MAX_MAX_QP + 1] =
@@ -179,101 +99,23 @@ void initROM()
 {
     if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
         return;
-
-    int i, c;
-
-    // g_aucConvertToBit[ x ]: log2(x/4), if x=4 -> 0, x=8 -> 1, x=16 -> 2, ...
-    ::memset(g_convertToBit, -1, sizeof(g_convertToBit));
-    c = 0;
-    for (i = 4; i <= MAX_CU_SIZE; i *= 2)
-    {
-        g_convertToBit[i] = c;
-        c++;
-    }
-
-    // initialise scan orders
-    for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
-    {
-        const uint32_t blockWidth  = 1 << log2BlockSize;
-        const uint32_t blockHeight = 1 << log2BlockSize;
-        const uint32_t totalValues = blockWidth * blockHeight;
-        //non-grouped scan orders
-        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
-        {
-            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-            g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
-            ScanGenerator fullBlockScan(blockWidth, blockHeight, blockWidth, scanType);
-
-            for (uint32_t scanPosition = 0; scanPosition < totalValues; scanPosition++)
-            {
-                g_scanOrder[SCAN_UNGROUPED][scanType][log2BlockSize][scanPosition] = fullBlockScan.GetNextIndex(0, 0);
-            }
-        }
-
-        //grouped scan orders
-        const uint32_t  groupWidth           = 1 << MLS_CG_LOG2_SIZE;
-        const uint32_t  groupHeight          = 1 << MLS_CG_LOG2_SIZE;
-        const uint32_t  widthInGroups        = blockWidth  >> MLS_CG_LOG2_SIZE;
-        const uint32_t  heightInGroups       = blockHeight >> MLS_CG_LOG2_SIZE;
-
-        const uint32_t  groupSize            = groupWidth    * groupHeight;
-        const uint32_t  totalGroups          = widthInGroups * heightInGroups;
-
-        for (uint32_t scanTypeIndex = 0; scanTypeIndex < SCAN_NUMBER_OF_TYPES; scanTypeIndex++)
-        {
-            const COEFF_SCAN_TYPE scanType = COEFF_SCAN_TYPE(scanTypeIndex);
-
-            g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize] = X265_MALLOC(uint16_t, totalValues);
-
-            ScanGenerator fullBlockScan(widthInGroups, heightInGroups, groupWidth, scanType);
-
-            for (uint32_t groupIndex = 0; groupIndex < totalGroups; groupIndex++)
-            {
-                const uint32_t groupPositionY  = fullBlockScan.GetCurrentY();
-                const uint32_t groupPositionX  = fullBlockScan.GetCurrentX();
-                const uint32_t groupOffsetX    = groupPositionX * groupWidth;
-                const uint32_t groupOffsetY    = groupPositionY * groupHeight;
-                const uint32_t groupOffsetScan = groupIndex     * groupSize;
-
-                ScanGenerator groupScan(groupWidth, groupHeight, blockWidth, scanType);
-
-                for (uint32_t scanPosition = 0; scanPosition < groupSize; scanPosition++)
-                {
-                    g_scanOrder[SCAN_GROUPED_4x4][scanType][log2BlockSize][groupOffsetScan + scanPosition] = groupScan.GetNextIndex(groupOffsetX, groupOffsetY);
-                }
-
-                fullBlockScan.GetNextIndex(0, 0);
-            }
-        }
-
-        //--------------------------------------------------------------------------------------------------
-    }
 }
 
 void destroyROM()
 {
     if (ATOMIC_CAS32(&initialized, 1, 0) == 0)
         return;
-
-    for (uint32_t groupTypeIndex = 0; groupTypeIndex < SCAN_NUMBER_OF_GROUP_TYPES; groupTypeIndex++)
-    {
-        for (uint32_t scanOrderIndex = 0; scanOrderIndex < SCAN_NUMBER_OF_TYPES; scanOrderIndex++)
-        {
-            for (uint32_t log2BlockSize = 0; log2BlockSize < MAX_CU_DEPTH; log2BlockSize++)
-            {
-                X265_FREE(g_scanOrder[groupTypeIndex][scanOrderIndex][log2BlockSize]);
-            }
-        }
-    }
 }
 
 // ====================================================================================================================
 // Data structure related table & variable
 // ====================================================================================================================
 
+uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
 uint32_t g_maxCUSize   = MAX_CU_SIZE;
-uint32_t g_maxCUDepth  = MAX_CU_DEPTH;
-uint32_t g_addCUDepth  = 0;
+uint32_t g_maxCUDepth  = MAX_FULL_DEPTH;
+uint32_t g_addCUDepth  = 1;
+uint32_t g_log2UnitSize = 2;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
@@ -363,16 +205,6 @@ const int16_t g_chromaFilter[8][NTAPS_CHROMA] =
     { -2, 10, 58, -2 }
 };
 
-const int g_quantScales[6] =
-{
-    26214, 23302, 20560, 18396, 16384, 14564
-};
-
-const int g_invQuantScales[6] =
-{
-    40, 45, 51, 57, 64, 72
-};
-
 const int16_t g_t4[4][4] =
 {
     { 64, 64, 64, 64 },
@@ -448,77 +280,138 @@ const int16_t g_t32[32][32] =
     {  9, -25, 43, -57, 70, -80, 87, -90, 90, -87, 80, -70, 57, -43, 25, -9, -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9 },
     {  4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4 }
 };
-const uint8_t g_chromaScale[NUM_CHROMA_FORMAT][chromaQPMappingTableSize] =
+
+const uint8_t g_chromaScale[chromaQPMappingTableSize] =
 {
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51 }
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
+    51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51
 };
 
 const uint8_t g_chroma422IntraAngleMappingTable[36] =
 { 0, 1, 2, 2, 2, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 23, 24, 24, 25, 25, 26, 27, 27, 28, 28, 29, 29, 30, 31, DM_CHROMA_IDX };
 
-// ====================================================================================================================
-// Misc.
-// ====================================================================================================================
-
-uint8_t g_convertToBit[MAX_CU_SIZE + 1];
-
-#if ENC_DEC_TRACE
-FILE*  g_hTrace = NULL;
-const bool g_bEncDecTraceEnable  = true;
-const bool g_bEncDecTraceDisable = false;
-bool   g_HLSTraceEnable = true;
-bool   g_bJustDoIt = false;
-uint64_t g_nSymbolCounter = 0;
-#endif
+const uint8_t g_log2Size[MAX_CU_SIZE + 1] =
+{
+    0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    6
+};
 
 // ====================================================================================================================
 // Scanning order & context model mapping
 // ====================================================================================================================
 
+const uint16_t g_scan2x2[][2*2] =
+{
+    { 0, 2, 1, 3 },
+    { 0, 1, 2, 3 },
+};
+
+const uint16_t g_scan8x8[NUM_SCAN_TYPE][8 * 8] =
+{
+    { 0,   8,  1, 16,  9,  2, 24, 17, 10,  3, 25, 18, 11, 26, 19, 27, 32, 40, 33, 48, 41, 34, 56, 49, 42, 35, 57, 50, 43, 58, 51, 59,
+      4,  12,  5, 20, 13,  6, 28, 21, 14,  7, 29, 22, 15, 30, 23, 31, 36, 44, 37, 52, 45, 38, 60, 53, 46, 39, 61, 54, 47, 62, 55, 63 },
+    { 0,   1,  2,  3,  8,  9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27,  4,  5,  6,  7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31,
+      32, 33, 34, 35, 40, 41, 42, 43, 48, 49, 50, 51, 56, 57, 58, 59, 36, 37, 38, 39, 44, 45, 46, 47, 52, 53, 54, 55, 60, 61, 62, 63 },
+    { 0,   8, 16, 24,  1,  9, 17, 25,  2, 10, 18, 26,  3, 11, 19, 27, 32, 40, 48, 56, 33, 41, 49, 57, 34, 42, 50, 58, 35, 43, 51, 59,
+      4,  12, 20, 28,  5, 13, 21, 29,  6, 14, 22, 30,  7, 15, 23, 31, 36, 44, 52, 60, 37, 45, 53, 61, 38, 46, 54, 62, 39, 47, 55, 63 }
+};
+
+const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4] =
+{
+    { 0,  4,  1,  8,  5,  2, 12,  9,  6,  3, 13, 10,  7, 14, 11, 15 },
+    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 },
+    { 0,  4,  8, 12,  1,  5,  9, 13,  2,  6, 10, 14,  3,  7, 11, 15 }
+};
+
+const uint16_t g_scan16x16[16 * 16] =
+{
+    0, 16, 1, 32, 17, 2, 48, 33, 18, 3, 49, 34, 19, 50, 35, 51,
+    64, 80, 65, 96, 81, 66, 112, 97, 82, 67, 113, 98, 83, 114, 99, 115,
+    4, 20, 5, 36, 21, 6, 52, 37, 22, 7, 53, 38, 23, 54, 39, 55,
+    128, 144, 129, 160, 145, 130, 176, 161, 146, 131, 177, 162, 147, 178, 163, 179,
+    68, 84, 69, 100, 85, 70, 116, 101, 86, 71, 117, 102, 87, 118, 103, 119,
+    8, 24, 9, 40, 25, 10, 56, 41, 26, 11, 57, 42, 27, 58, 43, 59,
+    192,208, 193,224,209, 194,240,225,210, 195,241,226,211,242,227,243,
+    132, 148, 133, 164, 149, 134, 180, 165, 150, 135, 181, 166, 151, 182, 167, 183,
+    72, 88, 73, 104, 89, 74, 120, 105, 90, 75, 121, 106, 91, 122, 107, 123,
+    12, 28, 13, 44, 29, 14, 60, 45, 30, 15, 61, 46, 31, 62, 47, 63,
+    196,212, 197,228,213, 198,244,229,214, 199,245,230,215,246,231,247,
+    136, 152, 137, 168, 153, 138, 184, 169, 154, 139, 185, 170, 155, 186, 171, 187,
+    76, 92, 77, 108, 93, 78, 124, 109, 94, 79, 125, 110, 95, 126, 111, 127,
+    200,216,201,232,217,202,248,233,218,203,249,234,219,250,235,251,
+    140, 156, 141, 172, 157, 142, 188, 173, 158, 143, 189, 174, 159, 190, 175, 191,
+    204,220,205,236,221,206,252,237,222,207,253,238,223,254,239,255
+};
+
+const uint16_t g_scan8x8diag[8 * 8] =
+{
+    0,   8,  1, 16,  9,  2, 24, 17,
+    10,  3, 32, 25, 18, 11,  4, 40,
+    33, 26, 19, 12,  5, 48, 41, 34,
+    27, 20, 13,  6, 56, 49, 42, 35,
+    28, 21, 14,  7, 57, 50, 43, 36,
+    29, 22, 15, 58, 51, 44, 37, 30,
+    23, 59, 52, 45, 38, 31, 60, 53,
+    46, 39, 61, 54, 47, 62, 55, 63
+};
+
+const uint16_t g_scan32x32[32 * 32] =
+{
+    0,32,1,64,33,2,96,65,34,3,97,66,35,98,67,99,128,160,129,192,161,130,224,193,162,131,225,194,163,226,195,227,
+    4,36,5,68,37,6,100,69,38,7,101,70,39,102,71,103,256,288,257,320,289,258,352,321,290,259,353,322,291,354,323,355,
+    132,164,133,196,165,134,228,197,166,135,229,198,167,230,199,231,8,40,9,72,41,10,104,73,42,11,105,74,43,106,75,107,
+    384,416,385,448,417,386,480,449,418,387,481,450,419,482,451,483,260,292,261,324,293,262,356,325,294,263,357,326,295,358,327,359,
+    136,168,137,200,169,138,232,201,170,139,233,202,171,234,203,235,12,44,13,76,45,14,108,77,46,15,109,78,47,110,79,111,
+    512,544,513,576,545,514,608,577,546,515,609,578,547,610,579,611,388,420,389,452,421,390,484,453,422,391,485,454,423,486,455,487,
+    264,296,265,328,297,266,360,329,298,267,361,330,299,362,331,363,140,172,141,204,173,142,236,205,174,143,237,206,175,238,207,239,
+    16,48,17,80,49,18,112,81,50,19,113,82,51,114,83,115,640,672,641,704,673,642,736,705,674,643,737,706,675,738,707,739,
+    516,548,517,580,549,518,612,581,550,519,613,582,551,614,583,615,392,424,393,456,425,394,488,457,426,395,489,458,427,490,459,491,
+    268,300,269,332,301,270,364,333,302,271,365,334,303,366,335,367,144,176,145,208,177,146,240,209,178,147,241,210,179,242,211,243,
+    20,52,21,84,53,22,116,85,54,23,117,86,55,118,87,119,768,800,769,832,801,770,864,833,802,771,865,834,803,866,835,867,
+    644,676,645,708,677,646,740,709,678,647,741,710,679,742,711,743,520,552,521,584,553,522,616,585,554,523,617,586,555,618,587,619,
+    396,428,397,460,429,398,492,461,430,399,493,462,431,494,463,495,272,304,273,336,305,274,368,337,306,275,369,338,307,370,339,371,
+    148,180,149,212,181,150,244,213,182,151,245,214,183,246,215,247,24,56,25,88,57,26,120,89,58,27,121,90,59,122,91,123,
+    896,928,897,960,929,898,992,961,930,899,993,962,931,994,963,995,772,804,773,836,805,774,868,837,806,775,869,838,807,870,839,871,
+    648,680,649,712,681,650,744,713,682,651,745,714,683,746,715,747,524,556,525,588,557,526,620,589,558,527,621,590,559,622,591,623,
+    400,432,401,464,433,402,496,465,434,403,497,466,435,498,467,499,276,308,277,340,309,278,372,341,310,279,373,342,311,374,343,375,
+    152,184,153,216,185,154,248,217,186,155,249,218,187,250,219,251,28,60,29,92,61,30,124,93,62,31,125,94,63,126,95,127,
+    900,932,901,964,933,902,996,965,934,903,997,966,935,998,967,999,776,808,777,840,809,778,872,841,810,779,873,842,811,874,843,875,
+    652,684,653,716,685,654,748,717,686,655,749,718,687,750,719,751,528,560,529,592,561,530,624,593,562,531,625,594,563,626,595,627,
+    404,436,405,468,437,406,500,469,438,407,501,470,439,502,471,503,280,312,281,344,313,282,376,345,314,283,377,346,315,378,347,379,
+    156,188,157,220,189,158,252,221,190,159,253,222,191,254,223,255,904,936,905,968,937,906,1000,969,938,907,1001,970,939,1002,971,1003,
+    780,812,781,844,813,782,876,845,814,783,877,846,815,878,847,879,656,688,657,720,689,658,752,721,690,659,753,722,691,754,723,755,
+    532,564,533,596,565,534,628,597,566,535,629,598,567,630,599,631,408,440,409,472,441,410,504,473,442,411,505,474,443,506,475,507,
+    284,316,285,348,317,286,380,349,318,287,381,350,319,382,351,383,908,940,909,972,941,910,1004,973,942,911,1005,974,943,1006,975,1007,
+    784,816,785,848,817,786,880,849,818,787,881,850,819,882,851,883,660,692,661,724,693,662,756,725,694,663,757,726,695,758,727,759,
+    536,568,537,600,569,538,632,601,570,539,633,602,571,634,603,635,412,444,413,476,445,414,508,477,446,415,509,478,447,510,479,511,
+    912,944,913,976,945,914,1008,977,946,915,1009,978,947,1010,979,1011,788,820,789,852,821,790,884,853,822,791,885,854,823,886,855,887,
+    664,696,665,728,697,666,760,729,698,667,761,730,699,762,731,763,540,572,541,604,573,542,636,605,574,543,637,606,575,638,607,639,
+    916,948,917,980,949,918,1012,981,950,919,1013,982,951,1014,983,1015,792,824,793,856,825,794,888,857,826,795,889,858,827,890,859,891,
+    668,700,669,732,701,670,764,733,702,671,765,734,703,766,735,767,920,952,921,984,953,922,1016,985,954,923,1017,986,955,1018,987,1019,
+    796,828,797,860,829,798,892,861,830,799,893,862,831,894,863,895,924,956,925,988,957,926,1020,989,958,927,1021,990,959,1022,991,1023
+};
+
+const uint16_t* const g_scanOrder[NUM_SCAN_TYPE][NUM_SCAN_SIZE] =
+{
+    { g_scan4x4[0], g_scan8x8[0], g_scan16x16, g_scan32x32 },
+    { g_scan4x4[1], g_scan8x8[1], g_scan16x16, g_scan32x32 },
+    { g_scan4x4[2], g_scan8x8[2], g_scan16x16, g_scan32x32 }
+};
+
+const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE] =
+{
+    { g_scan4x4[0], g_scan2x2[0], g_scan4x4[0], g_scan8x8diag },
+    { g_scan4x4[1], g_scan2x2[1], g_scan4x4[0], g_scan8x8diag },
+    { g_scan4x4[2], g_scan2x2[0], g_scan4x4[0], g_scan8x8diag }
+};
+
 const uint8_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
 
 // Rice parameters for absolute transform levels
 const uint8_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
-
-//const uint8_t g_goRicePrefixLen[5] = { 8, 7, 6, 5, 4 };
-
-int g_quantTSDefault4x4[16] =
-{
-    16, 16, 16, 16,
-    16, 16, 16, 16,
-    16, 16, 16, 16,
-    16, 16, 16, 16
-};
-
-int g_quantIntraDefault8x8[64] =
-{
-    16, 16, 16, 16, 17, 18, 21, 24,
-    16, 16, 16, 16, 17, 19, 22, 25,
-    16, 16, 17, 18, 20, 22, 25, 29,
-    16, 16, 18, 21, 24, 27, 31, 36,
-    17, 17, 20, 24, 30, 35, 41, 47,
-    18, 19, 22, 27, 35, 44, 54, 65,
-    21, 22, 25, 31, 41, 54, 70, 88,
-    24, 25, 29, 36, 47, 65, 88, 115
-};
-
-int g_quantInterDefault8x8[64] =
-{
-    16, 16, 16, 16, 17, 18, 20, 24,
-    16, 16, 16, 17, 18, 20, 24, 25,
-    16, 16, 17, 18, 20, 24, 25, 28,
-    16, 17, 18, 20, 24, 25, 28, 33,
-    17, 18, 20, 24, 25, 28, 33, 41,
-    18, 20, 24, 25, 28, 33, 41, 54,
-    20, 24, 25, 28, 33, 41, 54, 71,
-    24, 25, 28, 33, 41, 54, 71, 91
-};
-const uint32_t g_scalingListSize[4] = { 16, 64, 256, 1024 };
-const uint32_t g_scalingListSizeX[4] = { 4, 8, 16,  32 };
-const uint32_t g_scalingListNum[SCALING_LIST_SIZE_NUM] = { 6, 6, 6, 6 };
 
 const int g_winUnitX[] = { 1, 2, 2, 1 };
 const int g_winUnitY[] = { 1, 2, 1, 1 };
@@ -598,5 +491,15 @@ const uint8_t x265_exp2_lut[64] =
     106,  110,  114,  118,  122,  126,  130,  135,  139,  143,  147,  152,  156,  161,  165,  170,
     175,  179,  184,  189,  194,  198,  203,  208,  214,  219,  224,  229,  234,  240,  245,  250
 };
+
+/* g_intraFilterFlags[dir] & trSize */
+const uint8_t g_intraFilterFlags[35] =
+{
+    0x38, 0x00,
+    0x38, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x00, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x38, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x00, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x38, 
+};
+
 }
 //! \}

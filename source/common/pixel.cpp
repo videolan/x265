@@ -375,6 +375,21 @@ int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return cost;
 }
 
+template<int size>
+int pixel_ssd_s_c(short *a, intptr_t dstride)
+{
+    int sum = 0;
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            sum += a[x] * a[x];
+        }
+        a += dstride;
+    }
+    return sum;
+}
+
 void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
@@ -427,6 +442,18 @@ void convert16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, i
     }
 }
 
+template<int size>
+void convert16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[i * size + j] = ((int)src[i * stride + j] + offset) >> shift;
+        }
+    }
+}
+
 void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, int size)
 {
     int round = 1 << (shift - 1);
@@ -436,6 +463,21 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
         for (int j = 0; j < size; j++)
         {
             dst[j] = (int16_t)((src[j] + round) >> shift);
+        }
+
+        src += size;
+        dst += stride;
+    }
+}
+
+template<int size>
+void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[j] = ((int16_t)src[j] << shift);
         }
 
         src += size;
@@ -987,45 +1029,46 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].copy_pp[CHROMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_sp[CHROMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I420].copy_ps[CHROMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;  \
-    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I420].copy_ss[CHROMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define CHROMA_422(W, H) \
     p.chroma[X265_CSP_I422].addAvg[CHROMA422_ ## W ## x ## H] = addAvg<W, H>;         \
     p.chroma[X265_CSP_I422].copy_pp[CHROMA422_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_sp[CHROMA422_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I422].copy_ps[CHROMA422_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_ss[CHROMA422_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].add_ps[CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
-
-#define CHROMA_422_X(W, H) \
-    p.chroma[X265_CSP_I422].addAvg[CHROMA422X_ ## W ## x ## H]  = addAvg<W, H>;        \
-    p.chroma[X265_CSP_I422].copy_pp[CHROMA422X_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_sp[CHROMA422X_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_ps[CHROMA422X_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_ss[CHROMA422X_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I422].copy_sp[NUM_CHROMA_PARTITIONS422] = blockcopy_sp_c<W, (H >> 1)>; \
-    p.chroma[X265_CSP_I422].copy_ps[NUM_CHROMA_PARTITIONS422] = blockcopy_ps_c<W, (H >> 1)>;
+    p.chroma[X265_CSP_I422].copy_ss[CHROMA422_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define CHROMA_444(W, H) \
     p.chroma[X265_CSP_I444].addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.chroma[X265_CSP_I444].copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.chroma[X265_CSP_I444].copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
-    p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I444].copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
 
 #define LUMA(W, H) \
     p.luma_addAvg[LUMA_ ## W ## x ## H]  = addAvg<W, H>; \
     p.luma_copy_pp[LUMA_ ## W ## x ## H] = blockcopy_pp_c<W, H>; \
     p.luma_copy_sp[LUMA_ ## W ## x ## H] = blockcopy_sp_c<W, H>; \
     p.luma_copy_ps[LUMA_ ## W ## x ## H] = blockcopy_ps_c<W, H>; \
-    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>; \
+    p.luma_copy_ss[LUMA_ ## W ## x ## H] = blockcopy_ss_c<W, H>;
+
+#define LUMA_PIXELSUB(W, H) \
     p.luma_sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
     p.luma_add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_420(W, H) \
+    p.chroma[X265_CSP_I420].sub_ps[CHROMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>;  \
+    p.chroma[X265_CSP_I420].add_ps[CHROMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_422(W, H) \
+    p.chroma[X265_CSP_I422].sub_ps[CHROMA422_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I422].add_ps[CHROMA422_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+#define CHROMA_PIXELSUB_444(W, H) \
+    p.chroma[X265_CSP_I444].sub_ps[LUMA_ ## W ## x ## H] = pixel_sub_ps_c<W, H>; \
+    p.chroma[X265_CSP_I444].add_ps[LUMA_ ## W ## x ## H] = pixel_add_ps_c<W, H>;
+
+
 
     LUMA(4, 4);
     LUMA(8, 8);
@@ -1077,7 +1120,24 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     LUMA(16, 64);
     CHROMA_420(8,  32);
 
-    CHROMA_422_X(4, 8);
+    LUMA_PIXELSUB(4, 4);
+    LUMA_PIXELSUB(8, 8);
+    LUMA_PIXELSUB(16, 16);
+    LUMA_PIXELSUB(32, 32);
+    LUMA_PIXELSUB(64, 64);
+    CHROMA_PIXELSUB_420(4, 4)
+    CHROMA_PIXELSUB_420(8, 8)
+    CHROMA_PIXELSUB_420(16, 16)
+    CHROMA_PIXELSUB_420(32, 32)
+    CHROMA_PIXELSUB_422(4, 8)
+    CHROMA_PIXELSUB_422(8, 16)
+    CHROMA_PIXELSUB_422(16, 32)
+    CHROMA_PIXELSUB_422(32, 64)
+    CHROMA_PIXELSUB_444(8, 8)
+    CHROMA_PIXELSUB_444(16, 16)
+    CHROMA_PIXELSUB_444(32, 32)
+    CHROMA_PIXELSUB_444(64, 64)
+
     CHROMA_422(4, 8);
     CHROMA_422(4, 4);
     CHROMA_422(2, 8);
@@ -1143,7 +1203,15 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.blockfill_s[BLOCK_64x64] = blockfil_s_c<64>;
 
     p.cvt16to32_shl = convert16to32_shl;
+    p.cvt16to32_shr[BLOCK_4x4] = convert16to32_shr<4>;
+    p.cvt16to32_shr[BLOCK_8x8] = convert16to32_shr<8>;
+    p.cvt16to32_shr[BLOCK_16x16] = convert16to32_shr<16>;
+    p.cvt16to32_shr[BLOCK_32x32] = convert16to32_shr<32>;
     p.cvt32to16_shr = convert32to16_shr;
+    p.cvt32to16_shl[BLOCK_4x4] = convert32to16_shl<4>;
+    p.cvt32to16_shl[BLOCK_8x8] = convert32to16_shl<8>;
+    p.cvt32to16_shl[BLOCK_16x16] = convert32to16_shl<16>;
+    p.cvt32to16_shl[BLOCK_32x32] = convert32to16_shl<32>;
 
     p.sa8d[BLOCK_4x4]   = satd_4x4;
     p.sa8d[BLOCK_8x8]   = sa8d_8x8;
@@ -1199,6 +1267,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.transpose[BLOCK_16x16] = transpose<16>;
     p.transpose[BLOCK_32x32] = transpose<32>;
     p.transpose[BLOCK_64x64] = transpose<64>;
+
+    p.ssd_s[BLOCK_4x4] = pixel_ssd_s_c<4>;
+    p.ssd_s[BLOCK_8x8] = pixel_ssd_s_c<8>;
+    p.ssd_s[BLOCK_16x16] = pixel_ssd_s_c<16>;
+    p.ssd_s[BLOCK_32x32] = pixel_ssd_s_c<32>;
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;

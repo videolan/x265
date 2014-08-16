@@ -29,7 +29,6 @@ using namespace x265;
 
 Frame::Frame()
     : m_origPicYuv(NULL)
-    , m_bIsLongTerm(false)
     , m_reconPicYuv(NULL)
     , m_rowDiagQp(NULL)
     , m_rowDiagQScale(NULL)
@@ -73,8 +72,8 @@ bool Frame::create(x265_param *param, Window& display, Window& conformance)
     bool isVbv = param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0;
     if (ok && (isVbv || param->rc.aqMode))
     {
-        int numCols = (param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-        int numRows = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+        int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+        int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
         if (param->rc.aqMode)
             CHECKED_MALLOC(m_qpaAq, double, numRows);
@@ -126,8 +125,8 @@ bool Frame::allocPicSym(x265_param *param)
 
 void Frame::reinit(x265_param *param)
 {
-    int numCols = (param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-    int numRows = (param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
     if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
     {
         memset(m_rowDiagQp, 0, numRows * sizeof(double));

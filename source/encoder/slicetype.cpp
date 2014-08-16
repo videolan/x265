@@ -55,12 +55,13 @@ static inline void median_mv(MV &dst, MV a, MV b, MV c)
     dst.y = median(a.y, b.y, c.y);
 }
 
-Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
+Lookahead::Lookahead(x265_param *param, ThreadPool* pool, Encoder* enc)
     : JobProvider(pool)
     , m_est(pool)
 {
     m_bReady = 0;
     m_param = param;
+    m_top = enc;
     m_lastKeyframe = -m_param->keyframeMax;
     m_lastNonB = NULL;
     m_bFilling = true;
@@ -202,20 +203,21 @@ bool Lookahead::findJob(int)
         return false;
 }
 
-/* Called by rate-control to get the estimated SATD cost for a given picture.
- * It assumes dpb->prepareEncode() has already been called for the picture and
- * all the references are established */
-int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
+/* Called by rate-control to calculate the estimated SATD cost for a given
+ * picture.  It assumes dpb->prepareEncode() has already been called for the
+ * picture and all the references are established */
+void Lookahead::getEstimatedPictureCost(Frame *pic)
 {
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
     // POC distances to each reference
+    Slice *slice = pic->m_picSym->m_slice;
     int p0 = 0, p1, b;
-    int poc = pic->getSlice()->getPOC();
-    int l0poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_0, 0);
-    int l1poc = pic->getSlice()->getRefPOC(REF_PIC_LIST_1, 0);
+    int poc = slice->m_poc;
+    int l0poc = slice->m_refPOCList[0][0];
+    int l1poc = slice->m_refPOCList[1][0];
 
-    switch (pic->getSlice()->getSliceType())
+    switch (slice->m_sliceType)
     {
     case I_SLICE:
         frames[p0] = &pic->m_lowres;
@@ -224,27 +226,25 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
 
     case P_SLICE:
         b = p1 = poc - l0poc;
-        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
         break;
 
     case B_SLICE:
         b = poc - l0poc;
         p1 = b + l1poc - poc;
-        frames[p0] = &pic->getSlice()->getRefPic(REF_PIC_LIST_0, 0)->m_lowres;
+        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
         frames[b] = &pic->m_lowres;
-        frames[p1] = &pic->getSlice()->getRefPic(REF_PIC_LIST_1, 0)->m_lowres;
+        frames[p1] = &slice->m_refPicList[1][0]->m_lowres;
         break;
 
     default:
-        return 0;
+        return;
     }
 
-    if (m_param->rc.cuTree)
-    {
+    if (m_param->rc.cuTree && !m_param->rc.bStatRead)
         /* update row satds based on cutree offsets */
         pic->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-    }
     else if (m_param->rc.aqMode)
         pic->m_lowres.satdCost = pic->m_lowres.costEstAq[b - p0][p1 - b];
     else
@@ -285,7 +285,6 @@ int64_t Lookahead::getEstimatedPictureCost(Frame *pic)
             }
         }
     }
-    return pic->m_lowres.satdCost;
 }
 
 /* called by API thread or worker thread with inputQueueLock acquired */
@@ -299,7 +298,7 @@ void Lookahead::slicetypeDecide()
 
     memset(frames, 0, sizeof(frames));
     memset(list, 0, sizeof(list));
-
+    int numFrames = 0;
     {
         Frame *pic = m_inputQueue.first();
         int j;
@@ -309,6 +308,7 @@ void Lookahead::slicetypeDecide()
             list[j] = pic;
             pic = pic->m_next;
         }
+        numFrames = j;
 
         pic = m_inputQueue.first();
         frames[0] = m_lastNonB;
@@ -327,7 +327,13 @@ void Lookahead::slicetypeDecide()
     if (!m_est.m_rows && list[0])
         m_est.init(m_param, list[0]);
 
-    if (m_lastNonB &&
+    if (m_param->rc.bStatRead)
+    {
+        /* Use the frame types from the first pass */
+        for (int i = 0; i < numFrames; i++)
+            list[i]->m_lowres.sliceType = m_top->m_rateControl->rateControlSliceType(list[i]->getPOC());
+    }
+    else if (m_lastNonB &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||
          m_param->rc.cuTree || m_param->scenecutThreshold ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
@@ -421,9 +427,15 @@ void Lookahead::slicetypeDecide()
     }
 
     /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
-    if (m_param->rc.rateControlMode != X265_RC_CQP && maxSearch > 0)
+    if (m_param->rc.rateControlMode != X265_RC_CQP)
     {
         int p0, p1, b;
+        /* For zero latency tuning, calculate frame cost to be used later in RC */
+        if (!maxSearch)
+        {
+            for (int i = 0; i <= bframes; i++)
+               frames[i + 1] = &list[i]->m_lowres;
+        }
 
         /* estimate new non-B cost */
         p1 = b = bframes + 1;
@@ -520,13 +532,13 @@ void Lookahead::slicetypeDecide()
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
+    bool isNextNonB = false;
 
     while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
-    {
         curNonB++;
-    }
 
     int nextNonB = keyframe ? prevNonB : curNonB;
+    int nextB = keyframe ? prevNonB + 1 : curNonB + 1;
 
     while (curNonB < numFrames + !keyframe)
     {
@@ -545,12 +557,33 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
             frames[nextNonB]->plannedType[idx] = X265_TYPE_B;
         }
 
+        for (int i = nextB; i <= curNonB; i++)
+        {
+            for (int j = frames[i]->indB + i + 1; j <= curNonB; j++, frames[i]->indB++)
+            {
+                if (j == curNonB)
+                {
+                    if (isNextNonB)
+                    {
+                        int p0 = IS_X265_TYPE_I(frames[curNonB]->sliceType) ? curNonB : prevNonB;
+                        frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, p0, curNonB, curNonB);
+                        frames[i]->plannedType[frames[i]->indB] = frames[curNonB]->sliceType;
+                    }
+                }
+                else
+                {
+                    frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, prevNonB, curNonB, j);
+                    frames[i]->plannedType[frames[i]->indB] = X265_TYPE_B;
+                }
+            }
+            if (i == curNonB && !isNextNonB)
+                isNextNonB = true;
+        }
+
         prevNonB = curNonB;
         curNonB++;
         while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
-        {
             curNonB++;
-        }
     }
 
     frames[nextNonB]->plannedType[idx] = X265_TYPE_AUTO;
@@ -1209,6 +1242,7 @@ void CostEstimate::init(x265_param *_param, Frame *pic)
     {
         m_rows[i].m_widthInCU = m_widthInCU;
         m_rows[i].m_heightInCU = m_heightInCU;
+        m_rows[i].m_param = m_param;
     }
 
     if (!WaveFront::init(m_heightInCU))
@@ -1335,7 +1369,7 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
     return score;
 }
 
-uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *wp)
+uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightParam *wp)
 {
     Lowres *fenc = frames[b];
     Lowres *ref  = frames[p0];
@@ -1605,7 +1639,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     }
     if (!fenc->bIntraCalculated)
     {
-        int sizeIdx = g_convertToBit[cuSize]; // partition size
+        const int sizeIdx = X265_LOWRES_CU_BITS - 2; // partition size
 
         pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const above0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
         pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const above1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
@@ -1643,29 +1677,56 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
 
         int predsize = cuSize * cuSize;
 
-        // generate 35 intra predictions into tmp
+        // generate 35 intra predictions into m_predictions
+        pixelcmp_t satd = primitives.satd[partitionFromLog2Size(X265_LOWRES_CU_BITS)];
+        int icost = m_me.COST_MAX, cost;
         primitives.intra_pred[sizeIdx][DC_IDX](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
+        cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
+        if (cost < icost)
+            icost = cost;
         pixel *above = (cuSize >= 8) ? above1 : above0;
         pixel *left  = (cuSize >= 8) ? left1 : left0;
-        primitives.intra_pred[sizeIdx][PLANAR_IDX](m_predictions + predsize, cuSize, left, above, 0, 0);
+        primitives.intra_pred[sizeIdx][PLANAR_IDX](m_predictions, cuSize, left, above, 0, 0);
+        cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
+        if (cost < icost)
+            icost = cost;
         primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
 
-        // calculate 35 satd costs, keep least cost
+        // calculate satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
         primitives.transpose[sizeIdx](buf_trans, m_me.fenc, FENC_STRIDE);
-        pixelcmp_t satd = primitives.satd[partitionFromSize(cuSize)];
-        int icost = m_me.COST_MAX, cost;
-        for (uint32_t mode = 0; mode < 35; mode++)
+
+        int acost = m_me.COST_MAX;
+        uint32_t mode, lowmode = 4;
+        for (mode = 5; mode < 35; mode += 5)
         {
-            if ((mode >= 2) && (mode < 18))
+            if (mode < 18)
                 cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
             else
                 cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
-            if (cost < icost)
-                icost = cost;
+            COPY2_IF_LT(acost, cost, lowmode, mode);
         }
+        for (uint32_t dist = 2; dist >= 1; dist--)
+        {
+            mode = lowmode - dist;
+            if (mode < 18)
+                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+            else
+                cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
+
+            mode = lowmode + dist;
+            if (mode < 18)
+                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+            else
+                cost = satd(m_me.fenc, FENC_STRIDE, &m_predictions[mode * predsize], cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
+        }
+        if (acost < icost)
+            icost = acost;
+
         const int intraPenalty = 5 * m_lookAheadLambda;
-        icost += intraPenalty + lowresPenalty;
+        icost += intraPenalty + lowresPenalty; /* estimate intra signal cost */
         fenc->intraCost[cuXY] = icost;
         int icostAq = icost;
         if (bFrameScoreCU)

@@ -26,8 +26,7 @@
 
 #include "common.h"
 #include "bitstream.h"
-#include "TLibCommon/TComSlice.h"
-#include "TLibEncoder/SyntaxElementWriter.h"
+#include "slice.h"
 
 namespace x265 {
 // private namespace
@@ -41,7 +40,7 @@ public:
      * method which calls writeSEI() with a bitcounter to determine
      * the size, then it encodes the header and calls writeSEI a
      * second time for the real encode. */
-    virtual void write(Bitstream& bs, TComSPS& sps);
+    virtual void write(Bitstream& bs, const SPS& sps);
 
     virtual ~SEI() {}
 
@@ -76,16 +75,41 @@ protected:
 
     virtual PayloadType payloadType() const = 0;
 
-    virtual void writeSEI(TComSPS&) {}
+    virtual void writeSEI(const SPS&) { X265_CHECK(0, "empty writeSEI method called\n");  }
 
     void writeByteAlign();
 };
 
-#if ENC_DEC_TRACE
-#define LOG(string) fprintf(g_hTrace, string)
-#else
-#define LOG(string)
-#endif
+class SEIuserDataUnregistered : public SEI
+{
+public:
+
+    PayloadType payloadType() const { return USER_DATA_UNREGISTERED; }
+
+    SEIuserDataUnregistered() : m_userData(NULL) {}
+
+    static const uint8_t m_uuid_iso_iec_11578[16];
+    uint32_t m_userDataLength;
+    uint8_t *m_userData;
+
+    void write(Bitstream& bs, const SPS&)
+    {
+        m_bitIf = &bs;
+
+        WRITE_CODE(USER_DATA_UNREGISTERED, 8, "payload_type");
+
+        uint32_t payloadSize = 16 + m_userDataLength;
+        for (; payloadSize >= 0xff; payloadSize -= 0xff)
+            WRITE_CODE(0xff, 8, "payload_size");
+        WRITE_CODE(payloadSize, 8, "payload_size");
+
+        for (uint32_t i = 0; i < 16; i++)
+            WRITE_CODE(m_uuid_iso_iec_11578[i], 8, "sei.uuid_iso_iec_11578[i]");
+
+        for (uint32_t i = 0; i < m_userDataLength; i++)
+            WRITE_CODE(m_userData[i], 8, "user_data");
+    }
+};
 
 class SEIDecodedPictureHash : public SEI
 {
@@ -102,11 +126,9 @@ public:
 
     uint8_t m_digest[3][16];
 
-    void write(Bitstream& bs, TComSPS&)
+    void write(Bitstream& bs, const SPS&)
     {
-        setBitstream(&bs);
-
-        LOG("=========== Decoded picture hash SEI message ===========\n");
+        m_bitIf = &bs;
 
         WRITE_CODE(DECODED_PICTURE_HASH, 8, "payload_type");
 
@@ -153,20 +175,16 @@ public:
 
     PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
-    int  m_activeVPSId;
-    int  m_numSpsIdsMinus1;
-    int  m_activeSeqParamSetId;
-    bool m_fullRandomAccessFlag;
+    bool m_selfContainedCvsFlag;
     bool m_noParamSetUpdateFlag;
 
-    void writeSEI(TComSPS&)
+    void writeSEI(const SPS&)
     {
-        LOG("=========== Active Parameter sets SEI message ===========\n");
-        WRITE_CODE(m_activeVPSId,     4,   "active_vps_id");
-        WRITE_FLAG(m_fullRandomAccessFlag, "full_random_access_flag");
+        WRITE_CODE(0, 4, "active_vps_id");
+        WRITE_FLAG(m_selfContainedCvsFlag, "self_contained_cvs_flag");
         WRITE_FLAG(m_noParamSetUpdateFlag, "no_param_set_update_flag");
-        WRITE_UVLC(m_numSpsIdsMinus1,      "num_sps_ids_minus1");
-        WRITE_UVLC(m_activeSeqParamSetId,  "active_seq_param_set_id");
+        WRITE_UVLC(0, "num_sps_ids_minus1");
+        WRITE_UVLC(0, "active_seq_param_set_id");
         writeByteAlign();
     }
 };
@@ -178,64 +196,28 @@ public:
     PayloadType payloadType() const { return BUFFERING_PERIOD; }
 
     SEIBufferingPeriod()
-        : m_bpSeqParameterSetId(0)
-        , m_rapCpbParamsPresentFlag(false)
-        , m_cpbDelayOffset(0)
+        : m_cpbDelayOffset(0)
         , m_dpbDelayOffset(0)
+        , m_auCpbRemovalDelayDelta(1)
     {
-        ::memset(m_initialCpbRemovalDelay, 0, sizeof(m_initialCpbRemovalDelay));
-        ::memset(m_initialCpbRemovalDelayOffset, 0, sizeof(m_initialCpbRemovalDelayOffset));
-        ::memset(m_initialAltCpbRemovalDelay, 0, sizeof(m_initialAltCpbRemovalDelay));
-        ::memset(m_initialAltCpbRemovalDelayOffset, 0, sizeof(m_initialAltCpbRemovalDelayOffset));
     }
 
-    uint32_t m_bpSeqParameterSetId;
-    bool     m_rapCpbParamsPresentFlag;
     bool     m_cpbDelayOffset;
     bool     m_dpbDelayOffset;
-    uint32_t m_initialCpbRemovalDelay[MAX_CPB_CNT][2];
-    uint32_t m_initialCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    uint32_t m_initialAltCpbRemovalDelay[MAX_CPB_CNT][2];
-    uint32_t m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
-    bool     m_concatenationFlag;
+    uint32_t m_initialCpbRemovalDelay;
+    uint32_t m_initialCpbRemovalDelayOffset;
     uint32_t m_auCpbRemovalDelayDelta;
 
-    void writeSEI(TComSPS& sps)
+    void writeSEI(const SPS& sps)
     {
-        TComVUI *vui = sps.getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
+        const HRDInfo& hrd = sps.vuiParameters.hrdParameters;
 
-        LOG("=========== Buffering period SEI message ===========\n");
-
-        WRITE_UVLC(m_bpSeqParameterSetId, "bp_seq_parameter_set_id");
-        if (!hrd->getSubPicHrdParamsPresentFlag())
-        {
-            WRITE_FLAG(m_rapCpbParamsPresentFlag, "rap_cpb_params_present_flag");
-        }
-        WRITE_FLAG(m_concatenationFlag, "concatenation_flag");
-        WRITE_CODE(m_auCpbRemovalDelayDelta - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_delta_minus1");
-        if (m_rapCpbParamsPresentFlag)
-        {
-            WRITE_CODE(m_cpbDelayOffset, hrd->getCpbRemovalDelayLengthMinus1() + 1, "cpb_delay_offset");
-            WRITE_CODE(m_dpbDelayOffset, hrd->getDpbOutputDelayLengthMinus1()  + 1, "dpb_delay_offset");
-        }
-        for (int nalOrVcl = 0; nalOrVcl < 2; nalOrVcl++)
-        {
-            if (((nalOrVcl == 0) && (hrd->getNalHrdParametersPresentFlag())) ||
-                ((nalOrVcl == 1) && (hrd->getVclHrdParametersPresentFlag())))
-            {
-                for (uint32_t i = 0; i < (hrd->getCpbCntMinus1(0) + 1); i++)
-                {
-                    WRITE_CODE(m_initialCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),           "initial_cpb_removal_delay");
-                    WRITE_CODE(m_initialCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),      "initial_cpb_removal_delay_offset");
-                    if (hrd->getSubPicHrdParamsPresentFlag() || m_rapCpbParamsPresentFlag)
-                    {
-                        WRITE_CODE(m_initialAltCpbRemovalDelay[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1),     "initial_alt_cpb_removal_delay");
-                        WRITE_CODE(m_initialAltCpbRemovalDelayOffset[i][nalOrVcl], (hrd->getInitialCpbRemovalDelayLengthMinus1() + 1), "initial_alt_cpb_removal_delay_offset");
-                    }
-                }
-            }
-        }
+        WRITE_UVLC(0, "bp_seq_parameter_set_id");
+        WRITE_FLAG(0, "rap_cpb_params_present_flag");
+        WRITE_FLAG(0, "concatenation_flag");
+        WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   hrd.cpbRemovalDelayLength,       "au_cpb_removal_delay_delta_minus1");
+        WRITE_CODE(m_initialCpbRemovalDelay,       hrd.initialCpbRemovalDelayLength,        "initial_cpb_removal_delay");
+        WRITE_CODE(m_initialCpbRemovalDelayOffset, hrd.initialCpbRemovalDelayLength, "initial_cpb_removal_delay_offset");
 
         writeByteAlign();
     }
@@ -254,24 +236,22 @@ public:
     uint32_t  m_auCpbRemovalDelay;
     uint32_t  m_picDpbOutputDelay;
 
-    void writeSEI(TComSPS& sps)
+    void writeSEI(const SPS& sps)
     {
-        LOG("=========== Picture timing SEI message ===========\n");
+        const VUI *vui = &sps.vuiParameters;
+        const HRDInfo *hrd = &vui->hrdParameters;
 
-        TComVUI *vui = sps.getVuiParameters();
-        TComHRD *hrd = vui->getHrdParameters();
-
-        if (vui->getFrameFieldInfoPresentFlag())
+        if (vui->frameFieldInfoPresentFlag)
         {
             WRITE_CODE(m_picStruct, 4,          "pic_struct");
             WRITE_CODE(m_sourceScanType, 2,     "source_scan_type");
-            WRITE_FLAG(m_duplicateFlag ? 1 : 0, "duplicate_flag");
+            WRITE_FLAG(m_duplicateFlag,         "duplicate_flag");
         }
 
-        if (hrd->getCpbDpbDelaysPresentFlag())
+        if (vui->hrdParametersPresentFlag)
         {
-            WRITE_CODE(m_auCpbRemovalDelay - 1, (hrd->getCpbRemovalDelayLengthMinus1() + 1), "au_cpb_removal_delay_minus1");
-            WRITE_CODE(m_picDpbOutputDelay, (hrd->getDpbOutputDelayLengthMinus1() + 1), "pic_dpb_output_delay");
+            WRITE_CODE(m_auCpbRemovalDelay - 1, hrd->cpbRemovalDelayLength, "au_cpb_removal_delay_minus1");
+            WRITE_CODE(m_picDpbOutputDelay, hrd->dpbOutputDelayLength, "pic_dpb_output_delay");
             /* Removed sub-pic signaling June 2014 */
         }
         writeByteAlign();
@@ -288,9 +268,8 @@ public:
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;
 
-    void writeSEI(TComSPS&)
+    void writeSEI(const SPS&)
     {
-        LOG("=========== Recovery point SEI message ===========\n");
         WRITE_SVLC(m_recoveryPocCnt,    "recovery_poc_cnt");
         WRITE_FLAG(m_exactMatchingFlag, "exact_matching_flag");
         WRITE_FLAG(m_brokenLinkFlag,    "broken_link_flag");
@@ -298,7 +277,5 @@ public:
     }
 };
 }
-
-#undef LOG
 
 #endif // ifndef X265_SEI_H

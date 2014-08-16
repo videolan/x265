@@ -773,10 +773,10 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
     }
 }
 
-uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff, int32_t* lastPos)
+uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff)
 {
     int qBits8 = qBits - 8;
-    uint32_t acSum = 0;
+    uint32_t numSig = 0;
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos++)
     {
@@ -785,18 +785,17 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
 
         int tmplevel = abs(level) * quantCoeff[blockpos];
         level = ((tmplevel + add) >> qBits);
-        if (level)
-            *lastPos = blockpos;
         deltaU[blockpos] = ((tmplevel - (level << qBits)) >> qBits8);
-        acSum += level;
+        if (level)
+            ++numSig;
         level *= sign;
         qCoef[blockpos] = Clip3(-32768, 32767, level);
     }
 
-    return acSum;
+    return numSig;
 }
 
-uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* scaledCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)
+uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)
 {
     uint32_t numSig = 0;
 
@@ -806,7 +805,6 @@ uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* scaledCoeff, int3
         int sign  = (level < 0 ? -1 : 1);
 
         int tmplevel = abs(level) * quantCoeff[blockpos];
-        scaledCoeff[blockpos] = tmplevel;
         level = ((tmplevel + add) >> qBits);
         if (level)
             ++numSig;
@@ -831,6 +829,36 @@ int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
 
     return count;
 }
+
+template<int trSize>
+uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
+{
+    uint32_t numSig = 0;
+    for (int k = 0; k < trSize; k++)
+    {
+        for (int j = 0; j < trSize; j++)
+        {
+            coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
+            numSig += (residual[k * stride + j] != 0);
+        }
+    }
+
+    return numSig;
+}
+
+void denoiseDct_c(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
+{
+    for (int i = 0; i < numCoeff; i++)
+    {
+        int level = dctCoef[i];
+        int sign = level >> 31;
+        level = (level + sign) ^ sign;
+        resSum[i] += level;
+        level -= offset[i];
+        dctCoef[i] = level < 0 ? 0 : (level ^ sign) - sign;
+    }
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -853,5 +881,11 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.idct[IDCT_16x16] = idct16_c;
     p.idct[IDCT_32x32] = idct32_c;
     p.count_nonzero = count_nonzero_c;
+    p.denoiseDct = denoiseDct_c;
+
+    p.cvt16to32_cnt[BLOCK_4x4] = conv16to32_count<4>;
+    p.cvt16to32_cnt[BLOCK_8x8] = conv16to32_count<8>;
+    p.cvt16to32_cnt[BLOCK_16x16] = conv16to32_count<16>;
+    p.cvt16to32_cnt[BLOCK_32x32] = conv16to32_count<32>;
 }
 }

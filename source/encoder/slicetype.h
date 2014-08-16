@@ -48,6 +48,7 @@ class Frame;
 class EstimateRow
 {
 public:
+    x265_param*         m_param;
     MotionEstimate      m_me;
     Lock                m_lock;
     pixel*              m_predictions;    // buffer for 35 intra predictions
@@ -102,7 +103,7 @@ public:
     Lowres         **m_curframes;
 
     ReferencePlanes  m_weightedRef;
-    wpScalingParam   m_w;
+    WeightParam   m_w;
 
     int              m_paddedLines;     // number of lines in padded frame
     int              m_widthInCU;       // width of lowres frame in downscale CUs
@@ -118,14 +119,14 @@ public:
 protected:
 
     void     weightsAnalyse(Lowres **frames, int b, int p0);
-    uint32_t weightCostLuma(Lowres **frames, int b, int p0, wpScalingParam *w);
+    uint32_t weightCostLuma(Lowres **frames, int b, int p0, WeightParam *w);
 };
 
 class Lookahead : public JobProvider
 {
 public:
 
-    Lookahead(x265_param *param, ThreadPool *pool);
+    Lookahead(x265_param *param, ThreadPool *pool, Encoder* enc);
     ~Lookahead();
     void init();
     void destroy();
@@ -147,7 +148,7 @@ public:
     void flush();
     Frame* getDecidedPicture();
 
-    int64_t getEstimatedPictureCost(Frame *pic);
+    void getEstimatedPictureCost(Frame *pic);
 
 protected:
 
@@ -158,7 +159,7 @@ protected:
     volatile int  m_bReady;
     volatile bool m_bFilling;
     volatile bool m_bFlushed;
-
+    Encoder      *m_top;
     bool findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */

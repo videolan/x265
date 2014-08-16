@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "slice.h"
 #include "level.h"
 
 namespace x265 {
@@ -31,6 +32,8 @@ typedef struct
     uint32_t maxLumaSamplesPerSecond;
     uint32_t maxBitrateMain;
     uint32_t maxBitrateHigh;
+    uint32_t maxCpbSizeMain;
+    uint32_t maxCpbSizeHigh;
     uint32_t minCompressionRatio;
     Level::Name levelEnum;
     const char* name;
@@ -39,65 +42,75 @@ typedef struct
 
 LevelSpec levels[] =
 {
-    { MAX_UINT, MAX_UINT,   MAX_UINT, MAX_UINT, 0, Level::NONE,     "none", 0 },
-    { 36864,    552960,     128,      MAX_UINT, 2, Level::LEVEL1,   "1",   10 },
-    { 122880,   3686400,    1500,     MAX_UINT, 2, Level::LEVEL2,   "2",   20 },
-    { 245760,   7372800,    3000,     MAX_UINT, 2, Level::LEVEL2_1, "2.1", 21 },
-    { 552960,   16588800,   6000,     MAX_UINT, 2, Level::LEVEL3,   "3",   30 },
-    { 983040,   33177600,   10000,    MAX_UINT, 2, Level::LEVEL3_1, "3.1", 31 },
-    { 2228224,  66846720,   12000,    30000,    4, Level::LEVEL4,   "4",   40 },
-    { 2228224,  133693440,  20000,    50000,    4, Level::LEVEL4_1, "4.1", 41 },
-    { 8912896,  267386880,  25000,    100000,   6, Level::LEVEL5,   "5",   50 },
-    { 8912896,  534773760,  40000,    160000,   8, Level::LEVEL5_1, "5.1", 51 },
-    { 8912896,  1069547520, 60000,    240000,   8, Level::LEVEL5_2, "5.2", 52 },
-    { 35651584, 1069547520, 60000,    240000,   8, Level::LEVEL6,   "6",   60 },
-    { 35651584, 2139095040, 120000,   480000,   8, Level::LEVEL6_1, "6.1", 61 },
-    { 35651584, 4278190080U, 240000,  800000,   6, Level::LEVEL6_2, "6.2", 62 },
-    { 0, 0, 0, 0, 0, Level::NONE, "\0", 0 }
+    { 36864,    552960,     128,      MAX_UINT, 350,    MAX_UINT, 2, Level::LEVEL1,   "1",   10 },
+    { 122880,   3686400,    1500,     MAX_UINT, 1500,   MAX_UINT, 2, Level::LEVEL2,   "2",   20 },
+    { 245760,   7372800,    3000,     MAX_UINT, 3000,   MAX_UINT, 2, Level::LEVEL2_1, "2.1", 21 },
+    { 552960,   16588800,   6000,     MAX_UINT, 6000,   MAX_UINT, 2, Level::LEVEL3,   "3",   30 },
+    { 983040,   33177600,   10000,    MAX_UINT, 10000,  MAX_UINT, 2, Level::LEVEL3_1, "3.1", 31 },
+    { 2228224,  66846720,   12000,    30000,    12000,  30000,    4, Level::LEVEL4,   "4",   40 },
+    { 2228224,  133693440,  20000,    50000,    20000,  50000,    4, Level::LEVEL4_1, "4.1", 41 },
+    { 8912896,  267386880,  25000,    100000,   25000,  100000,   6, Level::LEVEL5,   "5",   50 },
+    { 8912896,  534773760,  40000,    160000,   40000,  160000,   8, Level::LEVEL5_1, "5.1", 51 },
+    { 8912896,  1069547520, 60000,    240000,   60000,  240000,   8, Level::LEVEL5_2, "5.2", 52 },
+    { 35651584, 1069547520, 60000,    240000,   60000,  240000,   8, Level::LEVEL6,   "6",   60 },
+    { 35651584, 2139095040, 120000,   480000,   120000, 480000,   8, Level::LEVEL6_1, "6.1", 61 },
+    { 35651584, 4278190080U, 240000,  800000,   240000, 800000,   6, Level::LEVEL6_2, "6.2", 62 },
 };
 
-/* determine minimum decoder level requiremented to decode the described video */
-void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name& level, Level::Tier& tier)
+/* determine minimum decoder level required to decode the described video */
+void determineLevel(const x265_param &param, VPS& vps)
 {
-    profile = Profile::NONE;
-    if (param.internalCsp == X265_CSP_I420)
+    if (param.bLossless)
+        vps.ptl.profileIdc = Profile::NONE;
+    else if (param.internalCsp == X265_CSP_I420)
     {
-        /* other misc requirements that we enforce in other areas:
-         * 1. chroma bitdpeth is same as luma bit depth
-         * 2. CTU size is 16, 32, or 64
-         * 3. some limitations on tiles, we do not support tiles
-         *
-         * Technically, Mainstillpicture implies one picture per bitstream but
-         * we do not enforce this limit. We do repeat SPS, PPS, and VPS each
-         * frame */
-
-        if (param.internalBitDepth == 8 && param.keyframeMax == 1)
-            profile = Profile::MAINSTILLPICTURE;
         if (param.internalBitDepth == 8)
-            profile = Profile::MAIN;
+        {
+            if (param.keyframeMax == 1 && param.maxNumReferences == 1)
+                vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
+            else 
+                vps.ptl.profileIdc = Profile::MAIN;
+        }
         else if (param.internalBitDepth == 10)
-            profile = Profile::MAIN10;
+            vps.ptl.profileIdc = Profile::MAIN10;
     }
-    /* TODO: Range extension profiles */
+    else
+    {
+        /* TODO: Range extension profiles */
+        vps.ptl.profileIdc = Profile::NONE;
+    }
+
+    /* determine which profiles are compatible with this stream */
+
+    memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));
+    vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc] = true;
+    if (vps.ptl.profileIdc == Profile::MAIN10 && param.internalBitDepth == 8)
+        vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
+    else if (vps.ptl.profileIdc == Profile::MAIN)
+        vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
+    else if (vps.ptl.profileIdc == Profile::MAINSTILLPICTURE)
+    {
+        vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
+        vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
+    }
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
-    uint32_t bitrate = param.rc.bitrate ? param.rc.bitrate : param.rc.vbvMaxBitrate;
+    uint32_t bitrate = param.rc.vbvMaxBitrate ? param.rc.vbvMaxBitrate : param.rc.bitrate;
 
-    /* TODO; Keep in sync with encoder.cpp, or pass in maxDecPicBuffering */
-    int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
-    int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);
-    const int MaxDpbPicBuf = 6;
+    const uint32_t MaxDpbPicBuf = 6;
+    vps.ptl.levelIdc = Level::NONE;
+    vps.ptl.tierFlag = Level::MAIN;
 
-    level = Level::NONE;
-    tier = Level::MAIN;
-    const char *levelName = "(none)";
-
-    for (int i = 1; levels[i].maxLumaSamples; i++)
+    const size_t NumLevels = sizeof(levels) / sizeof(levels[0]);
+    uint32_t i;
+    for (i = 0; i < NumLevels; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
             continue;
         else if (samplesPerSec > levels[i].maxLumaSamplesPerSecond)
+            continue;
+        else if (bitrate > levels[i].maxBitrateMain && levels[i].maxBitrateHigh == MAX_UINT)
             continue;
         else if (bitrate > levels[i].maxBitrateHigh)
             continue;
@@ -106,7 +119,7 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
         else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
             continue;
 
-        int maxDpbSize = MaxDpbPicBuf;
+        uint32_t maxDpbSize = MaxDpbPicBuf;
         if (lumaSamples <= (levels[i].maxLumaSamples >> 2))
             maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
         else if (lumaSamples <= (levels[i].maxLumaSamples >> 1))
@@ -116,27 +129,45 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
 
         /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than
          * or equal to MaxDpbSize */
-        if (maxDecPicBuffering > maxDpbSize)
+        if (vps.maxDecPicBuffering > maxDpbSize)
             continue;
 
         /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
         if (levels[i].levelEnum >= Level::LEVEL5 && param.maxCUSize < 32)
-            continue;
+        {
+            x265_log(&param, X265_LOG_WARNING, "level %s detected, but CTU size 16 is non-compliant\n", levels[i].name);
+            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.levelIdc = Level::NONE;
+            vps.ptl.tierFlag = Level::MAIN;
+            x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
+            return;
+        }
 
-        level = levels[i].levelEnum;
-        levelName = levels[i].name;
+        /* The value of NumPocTotalCurr shall be less than or equal to 8 */
+        int numPocTotalCurr = param.maxNumReferences + vps.numReorderPics;
+        if (numPocTotalCurr > 8)
+        {
+            x265_log(&param, X265_LOG_WARNING, "level %s detected, but NumPocTotalCurr (total references) is non-compliant\n", levels[i].name);
+            vps.ptl.profileIdc = Profile::NONE;
+            vps.ptl.levelIdc = Level::NONE;
+            vps.ptl.tierFlag = Level::MAIN;
+            x265_log(&param, X265_LOG_INFO, "NONE profile, Level-NONE (Main tier)\n");
+            return;
+        }
+
+        vps.ptl.levelIdc = levels[i].levelEnum;
         if (bitrate > levels[i].maxBitrateMain && bitrate <= levels[i].maxBitrateHigh &&
             levels[i].maxBitrateHigh != MAX_UINT)
-            tier = Level::HIGH;
+            vps.ptl.tierFlag = Level::HIGH;
         else
-            tier = Level::MAIN;
-        /* TODO: The value of NumPocTotalCurr shall be less than or equal to 8 */
+            vps.ptl.tierFlag = Level::MAIN;
         break;
     }
 
     static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
     static const char *tiers[]    = { "Main", "High" };
-    x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n", profiles[profile], levelName, tiers[tier]);
+    x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n",
+             profiles[vps.ptl.profileIdc], levels[i].name, tiers[vps.ptl.tierFlag]);
 }
 
 /* enforce a maximum decoder level requirement, in other words assure that a
@@ -145,28 +176,35 @@ void determineLevel(const x265_param &param, Profile::Name& profile, Level::Name
  * decoder meeting this level of requirement.  Some parameters (resolution and
  * frame rate) are non-negotiable and thus this function may fail. In those
  * circumstances it will be quite noisy */
-void enforceLevel(x265_param& param)
+bool enforceLevel(x265_param& param, VPS& vps)
 {
-    if (param.levelIdc < 0)
-        return;
+    vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
+    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+
+    /* no level specified by user, just auto-detect from the configuration */
+    if (param.levelIdc <= 0)
+        return true;
+
+    uint32_t level = 0;
+    while (levels[level].levelIdc != param.levelIdc && level + 1 < sizeof(levels) / sizeof(levels[0]))
+        level++;
+    if (levels[level].levelIdc != param.levelIdc)
+    {
+        x265_log(&param, X265_LOG_WARNING, "specified level %d does not exist\n", param.levelIdc);
+        return false;
+    }
+
+    LevelSpec& l = levels[level];
+    bool highTier = !!param.bHighTier;
+    if (highTier && l.maxBitrateHigh == MAX_UINT)
+    {
+        highTier = false;
+        x265_log(&param, X265_LOG_WARNING, "Level %s has no High tier, using Main tier\n", l.name);
+    }
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
-    int level = 1;
-    while (levels[level].levelIdc < param.levelIdc && levels[level].levelIdc)
-        level++;
-    LevelSpec& l = levels[level];
-
-    if (!l.levelIdc)
-    {
-        x265_log(&param, X265_LOG_WARNING, "specified level does not exist\n");
-        return;
-    }
-    if (l.levelIdc != param.levelIdc)
-        x265_log(&param, X265_LOG_WARNING, "Using nearest matching level %s\n", l.name);
-
     bool ok = true;
-
     if (lumaSamples > l.maxLumaSamples)
         ok = false;
     else if (param.sourceWidth > sqrt(l.maxLumaSamples * 8.0f))
@@ -174,40 +212,153 @@ void enforceLevel(x265_param& param)
     else if (param.sourceHeight > sqrt(l.maxLumaSamples * 8.0f))
         ok = false;
     if (!ok)
-        x265_log(&param, X265_LOG_WARNING, "picture dimensions are out of range for specified level\n");
-    else if (samplesPerSec > l.maxLumaSamplesPerSecond)
-        x265_log(&param, X265_LOG_WARNING, "frame rate is out of range for specified level\n");
-
-    if (param.rc.bitrate > (int)l.maxBitrateHigh && l.maxBitrateHigh != MAX_UINT)
     {
-        param.rc.bitrate = l.maxBitrateHigh;
-        x265_log(&param, X265_LOG_INFO, "Lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
+        x265_log(&param, X265_LOG_WARNING, "picture dimensions are out of range for specified level\n");
+        return false;
+    }
+    else if (samplesPerSec > l.maxLumaSamplesPerSecond)
+    {
+        x265_log(&param, X265_LOG_WARNING, "frame rate is out of range for specified level\n");
+        return false;
     }
 
-    const int MaxDpbPicBuf = 6;
-    int maxDpbSize = MaxDpbPicBuf;
+    if ((uint32_t)param.rc.vbvMaxBitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
+    {
+        param.rc.vbvMaxBitrate = highTier ? l.maxBitrateHigh : l.maxBitrateMain;
+        x265_log(&param, X265_LOG_INFO, "lowering VBV max bitrate to %dKbps\n", param.rc.vbvMaxBitrate);
+    }
+    if ((uint32_t)param.rc.vbvBufferSize > (highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain))
+    {
+        param.rc.vbvMaxBitrate = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
+        x265_log(&param, X265_LOG_INFO, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
+    }
+
+    switch (param.rc.rateControlMode)
+    {
+    case X265_RC_ABR:
+        if ((uint32_t)param.rc.bitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
+        {
+            param.rc.bitrate = l.maxBitrateHigh;
+            x265_log(&param, X265_LOG_INFO, "lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
+        }
+        break;
+
+    case X265_RC_CQP:
+        x265_log(&param, X265_LOG_WARNING, "Constant QP is inconsistent with specifying a decoder level, no bitrate guarantee is possible.\n");
+        return false;
+
+    case X265_RC_CRF:
+        if (!param.rc.vbvBufferSize || !param.rc.vbvMaxBitrate)
+        {
+            if (!param.rc.vbvMaxBitrate)
+                param.rc.vbvMaxBitrate = highTier ? l.maxBitrateHigh : l.maxBitrateMain;
+            if (!param.rc.vbvBufferSize)
+                param.rc.vbvBufferSize = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
+            x265_log(&param, X265_LOG_WARNING, "Specifying a decoder level with constant rate factor rate-control requires\n");
+            x265_log(&param, X265_LOG_WARNING, "enabling VBV with vbv-bufsize=%dkb vbv-maxrate=%dkbps. VBV outputs are non-deterministic!\n",
+                     param.rc.vbvBufferSize, param.rc.vbvMaxBitrate);
+        }
+        break;
+
+    default:
+        x265_log(&param, X265_LOG_ERROR, "Unknown rate control mode is inconsistent with specifying a decoder level\n");
+        return false;
+    }
+
+    /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than or equal to MaxDpbSize */
+    const uint32_t MaxDpbPicBuf = 6;
+    uint32_t maxDpbSize = MaxDpbPicBuf;
     if (lumaSamples <= (l.maxLumaSamples >> 2))
         maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
     else if (lumaSamples <= (l.maxLumaSamples >> 1))
         maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
     else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
         maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+
     int savedRefCount = param.maxNumReferences;
-
-    for (;; )
+    while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
     {
-        int numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
-        int maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(numReorderPics + 1, param.maxNumReferences) + numReorderPics);
-
-        if (maxDecPicBuffering > maxDpbSize)
-            param.maxNumReferences--;
-        else
-            break;
+        param.maxNumReferences--;
+        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
     }
-
     if (param.maxNumReferences != savedRefCount)
-    {
         x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
+
+    /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
+    if (param.levelIdc >= 50 && param.maxCUSize < 32)
+    {
+        param.maxCUSize = 32;
+        x265_log(&param, X265_LOG_INFO, "Levels 5.0 and above require a maximum CTU size of at least 32, using --ctu 32\n");
     }
+
+    /* The value of NumPocTotalCurr shall be less than or equal to 8 */
+    int numPocTotalCurr = param.maxNumReferences + !!param.bframes;
+    if (numPocTotalCurr > 8)
+    {
+        param.maxNumReferences = 8 - !!param.bframes;
+        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet numPocTotalCurr requirement\n", param.maxNumReferences);
+    }
+
+    return true;
+}
+
+extern "C"
+int x265_param_apply_profile(x265_param *param, const char *profile)
+{
+    if (!profile)
+        return 0;
+    if (!strcmp(profile, "main"))
+    {
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
+#if HIGH_BIT_DEPTH
+        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
+        x265_log(param, X265_LOG_ERROR, "Main profile not supported, compiled for Main10.\n");
+        return -1;
+#endif
+    }
+    else if (!strcmp(profile, "main10"))
+    {
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
+        /* SPSs shall have bit_depth_luma_minus8 in the range of 0 to 2, inclusive 
+         * this covers all builds of x265, currently */
+    }
+    else if (!strcmp(profile, "mainstillpicture") || !strcmp(profile, "msp"))
+    {
+        /* SPSs shall have chroma_format_idc equal to 1 only */
+        param->internalCsp = X265_CSP_I420;
+
+        /* SPSs shall have sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ] equal to 0 only */
+        param->maxNumReferences = 1;
+
+        /* The bitstream shall contain only one picture (we do not enforce this) */
+        /* just in case the user gives us more than one picture: */
+        param->keyframeMax = 1;
+        param->bOpenGOP = 0;
+        param->bRepeatHeaders = 1;
+        param->lookaheadDepth = 0;
+        param->bframes = 0;
+        param->scenecutThreshold = 0;
+        param->bFrameAdaptive = 0;
+        param->rc.cuTree = 0;
+        param->bEnableWeightedPred = 0;
+        param->bEnableWeightedBiPred = 0;
+
+#if HIGH_BIT_DEPTH
+        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
+        x265_log(param, X265_LOG_ERROR, "Mainstillpicture profile not supported, compiled for Main10.\n");
+        return -1;
+#endif
+    }
+    else
+    {
+        x265_log(param, X265_LOG_ERROR, "unknown profile <%s>\n", profile);
+        return -1;
+    }
+
+    return 0;
 }
 }

@@ -23,40 +23,28 @@
 
 #include "common.h"
 #include "bitstream.h"
-#include "TLibCommon/TComSlice.h"
+#include "slice.h"
 #include "sei.h"
 
 using namespace x265;
 
-#if ENC_DEC_TRACE
-#define LOG(string) fprintf(g_hTrace, string)
-#else
-#define LOG(string)
-#endif
+/* x265's identifying GUID */
+const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
+    0x2C, 0xA2, 0xDE, 0x09, 0xB5, 0x17, 0x47, 0xDB,
+    0xBB, 0x55, 0xA4, 0xFE, 0x7F, 0xC2, 0xFC, 0x4E
+};
 
-/**
- * marshal a single SEI message sei, storing the marshalled representation
- * in bitstream bs.
- */
-void SEI::write(Bitstream& bs, TComSPS& sps)
+/* marshal a single SEI message sei, storing the marshalled representation
+ * in bitstream bs */
+void SEI::write(Bitstream& bs, const SPS& sps)
 {
-    /* disable logging while we measure the SEI */
-#if ENC_DEC_TRACE
-    bool traceEnable = g_HLSTraceEnable;
-    g_HLSTraceEnable = false;
-#endif
-
     BitCounter count;
-    setBitstream(&count);
+    m_bitIf = &count;
+
+    /* virtual writeSEI method, write to bit counter */
     writeSEI(sps);
 
-#if ENC_DEC_TRACE
-    g_HLSTraceEnable = traceEnable;
-#endif
-
-    LOG("=========== SEI message ===========\n");
-
-    setBitstream(&bs);
+    m_bitIf = &bs;
     uint32_t type = payloadType();
     for (; type >= 0xff; type -= 0xff)
         WRITE_CODE(0xff, 8, "payload_type");
@@ -68,13 +56,13 @@ void SEI::write(Bitstream& bs, TComSPS& sps)
         WRITE_CODE(0xff, 8, "payload_size");
     WRITE_CODE(payloadSize, 8, "payload_size");
 
-    /* virtual writeSEI method */
+    /* virtual writeSEI method, write to bs */
     writeSEI(sps);
 }
 
 void SEI::writeByteAlign()
 {
-    // TODO: bs.writeByteAlignment()
+    // TODO: expose bs.writeByteAlignment() as virtual function
     if (m_bitIf->getNumberOfWrittenBits() % 8 != 0)
     {
         WRITE_FLAG(1, "bit_equal_to_one");

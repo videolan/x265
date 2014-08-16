@@ -40,15 +40,25 @@
 #define X265_TCOMDATACU_H
 
 #include "common.h"
+#include "slice.h"
 #include "TComMotionInfo.h"
-#include "TComSlice.h"
 #include "TComPattern.h"
 
 namespace x265 {
 // private namespace
 
+// TU settings for entropy encoding
+struct TUEntropyCodingParameters
+{
+    const uint16_t *scan;
+    const uint16_t *scanCG;
+    ScanType        scanType;
+    uint32_t        log2TrSizeCG;
+    uint32_t        firstSignificanceMapContext;
+};
+
 class Frame;
-class TComSlice;
+class Slice;
 
 //! \ingroup TLibCommon
 //! \{
@@ -76,7 +86,7 @@ typedef struct
 {
     char*    qpMemBlock;
     uint8_t* depthMemBlock;
-    uint8_t* cuSizeMemBlock;
+    uint8_t* log2CUSizeMemBlock;
     bool*    skipFlagMemBlock;
     char*    partSizeMemBlock;
     char*    predModeMemBlock;
@@ -93,6 +103,40 @@ typedef struct
     pixel*   m_tqBypassYuvMemBlock;
 } DataCUMemPool;
 
+// Partition count table, index represents partitioning mode.
+const uint8_t nbPartsTable[8] = { 1, 2, 2, 4, 2, 2, 2, 2 };
+
+// Partition table.
+// First index is partitioning mode. Second index is partition index.
+// Third index is 0 for partition sizes, 1 for partition offsets. The 
+// sizes and offsets are encoded as two packed 4-bit values (X,Y). 
+// X and Y represent 1/4 fractions of the block size.
+const uint8_t partTable[8][4][2] =
+{
+//        XY
+    { { 0x44, 0x00 }, { 0x00, 0x00 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2Nx2N.
+    { { 0x42, 0x00 }, { 0x42, 0x02 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxN.
+    { { 0x24, 0x00 }, { 0x24, 0x20 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_Nx2N.
+    { { 0x22, 0x00 }, { 0x22, 0x20 }, { 0x22, 0x02 }, { 0x22, 0x22 } }, // SIZE_NxN.
+    { { 0x41, 0x00 }, { 0x43, 0x01 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxnU.
+    { { 0x43, 0x00 }, { 0x41, 0x03 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_2NxnD.
+    { { 0x14, 0x00 }, { 0x34, 0x10 }, { 0x00, 0x00 }, { 0x00, 0x00 } }, // SIZE_nLx2N.
+    { { 0x34, 0x00 }, { 0x14, 0x30 }, { 0x00, 0x00 }, { 0x00, 0x00 } }  // SIZE_nRx2N.
+};
+
+// Partition Address table.
+// First index is partitioning mode. Second index is partition address.
+const uint8_t partAddrTable[8][4] =
+{
+    { 0x00, 0x00, 0x00, 0x00 }, // SIZE_2Nx2N.
+    { 0x00, 0x08, 0x08, 0x08 }, // SIZE_2NxN.
+    { 0x00, 0x04, 0x04, 0x04 }, // SIZE_Nx2N.
+    { 0x00, 0x04, 0x08, 0x0C }, // SIZE_NxN.
+    { 0x00, 0x02, 0x02, 0x02 }, // SIZE_2NxnU.
+    { 0x00, 0x0A, 0x0A, 0x0A }, // SIZE_2NxnD.
+    { 0x00, 0x01, 0x01, 0x01 }, // SIZE_nLx2N.
+    { 0x00, 0x05, 0x05, 0x05 }  // SIZE_nRx2N.
+};
 
 // ====================================================================================================================
 // Class definition
@@ -101,14 +145,14 @@ typedef struct
 /// CU data structure class
 class TComDataCU
 {
-private:
+public:
 
     // -------------------------------------------------------------------------------------------------------------------
     // class pointers
     // -------------------------------------------------------------------------------------------------------------------
 
     Frame*        m_pic;            ///< picture class pointer
-    TComSlice*    m_slice;          ///< slice header pointer
+    Slice*        m_slice;          ///< slice header pointer
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU description
@@ -119,7 +163,7 @@ private:
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
-    uint8_t*      m_cuSize;          ///< array of cu width/height
+    uint8_t*      m_log2CUSize;      ///< array of cu width/height
     uint8_t*      m_depth;           ///< array of depths
     int           m_chromaFormat;
     int           m_hChromaShift;
@@ -224,10 +268,6 @@ public:
     // member functions for CU description
     // -------------------------------------------------------------------------------------------------------------------
 
-    Frame*        getPic()                         { return m_pic; }
-
-    TComSlice*    getSlice()                       { return m_slice; }
-
     uint32_t&     getAddr()                        { return m_cuAddr; }
 
     uint32_t&     getZorderIdxInCU()               { return m_absIdxInLCU; }
@@ -271,9 +311,9 @@ public:
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getCUSize()                     { return m_cuSize; }
+    uint8_t*      getLog2CUSize()                     { return m_log2CUSize; }
 
-    uint8_t       getCUSize(uint32_t idx)         { return m_cuSize[idx]; }
+    uint8_t       getLog2CUSize(uint32_t idx) const   { return m_log2CUSize[idx]; }
 
     char*         getQP()                         { return m_qp; }
 
@@ -374,7 +414,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     void          getPartIndexAndSize(uint32_t partIdx, uint32_t& ruiPartAddr, int& riWidth, int& riHeight);
-    uint8_t       getNumPartInter();
+    uint8_t       getNumPartInter() { return nbPartsTable[(int)m_partSizes[0]]; }
     bool          isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------
@@ -425,8 +465,6 @@ public:
 
     bool          hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_t candAbsPartIdx);
     void          getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t& maxNumMergeCand);
-    void          deriveLeftRightTopIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT);
-    void          deriveLeftBottomIdxGeneral(uint32_t absPartIdx, uint32_t partIdx, uint32_t& partIdxLB);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for modes
@@ -460,7 +498,8 @@ public:
 
     uint32_t&     getTotalNumPart()     { return m_numPartitions; }
 
-    uint32_t      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
+    ScanType      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
+    void          getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions to support multiple color space formats

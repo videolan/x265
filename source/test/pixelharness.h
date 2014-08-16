@@ -53,6 +53,7 @@ protected:
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
     bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
     bool check_scale_pp(scale_t ref, scale_t opt);
+    bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
     bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
@@ -62,6 +63,9 @@ protected:
     bool check_downscale_t(downscale_t ref, downscale_t opt);
     bool check_cvt32to16_shr_t(cvt32to16_shr_t ref, cvt32to16_shr_t opt);
     bool check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t opt);
+    bool check_cvt16to32_shr_t(cvt16to32_shr_t ref, cvt16to32_shr_t opt);
+    bool check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t opt);
+    bool check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt);
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);

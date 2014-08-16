@@ -36,20 +36,46 @@ using namespace x265;
 
 const char* lumaPartStr[NUM_LUMA_PARTITIONS] =
 {
-    "  4x4",
-    "  8x8", "  8x4", "  4x8",
-    "16x16", " 16x8", " 8x16", "16x12", "12x16", " 16x4", " 4x16",
-    "32x32", "32x16", "16x32", "32x24", "24x32", " 32x8", " 8x32",
-    "64x64", "64x32", "32x64", "64x48", "48x64", "64x16", "16x64",
+    "  4x4", "  8x8", "16x16", "32x32", "64x64",
+    "  8x4", "  4x8",
+    " 16x8", " 8x16",
+    "32x16", "16x32",
+    "64x32", "32x64",
+    "16x12", "12x16", " 16x4", " 4x16",
+    "32x24", "24x32", " 32x8", " 8x32",
+    "64x48", "48x64", "64x16", "16x64",
 };
 
-const char* chromaPartStr[NUM_CHROMA_PARTITIONS] =
+const char* chromaPartStr420[NUM_CHROMA_PARTITIONS] =
 {
-    "  2x2", // never used by HEVC
-    "  4x4", "  4x2", "  2x4",
-    "  8x8", "  8x4", "  4x8", "  8x6", "  6x8", "  8x2", "  2x8",
-    "16x16", " 16x8", " 8x16", "16x12", "12x16", " 16x4", " 4x16",
-    "32x32", "32x16", "16x32", "32x24", "24x32", " 32x8", " 8x32",
+    "  2x2", "  4x4", "  8x8", "16x16", "32x32",
+    "  4x2", "  2x4",
+    "  8x4", "  4x8",
+    " 16x8", " 8x16",
+    "32x16", "16x32",
+    "  8x6", "  6x8", "  8x2", "  2x8",
+    "16x12", "12x16", " 16x4", " 4x16",
+    "32x24", "24x32", " 32x8", " 8x32",
+};
+
+const char* chromaPartStr422[NUM_CHROMA_PARTITIONS] =
+{
+    "  2x4", "  4x8", " 8x16", "16x32", "32x64",
+    "  4x4", "  2x8",
+    "  8x8", " 4x16",
+    "16x16", " 8x32",
+    "32x32", "16x64",
+    " 8x12", " 6x16", "  8x4", " 2x16",
+    "16x24", "12x32", " 16x8", " 4x32",
+    "32x48", "24x64", "32x16", " 8x64",
+};
+
+const char* const* chromaPartStr[X265_CSP_COUNT] =
+{
+    lumaPartStr,
+    chromaPartStr420,
+    chromaPartStr422,
+    lumaPartStr
 };
 
 void do_help()
@@ -127,6 +153,7 @@ int main(int argc, char *argv[])
     EncoderPrimitives cprim;
     memset(&cprim, 0, sizeof(EncoderPrimitives));
     Setup_C_Primitives(cprim);
+    Setup_Alias_Primitives(cprim);
 
     struct test_arch_t
     {
@@ -168,6 +195,7 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
+        memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -186,6 +214,12 @@ int main(int argc, char *argv[])
     memset(&optprim, 0, sizeof(optprim));
     Setup_Instrinsic_Primitives(optprim, cpuid);
     Setup_Assembly_Primitives(optprim, cpuid);
+    Setup_Alias_Primitives(optprim);
+
+    /* some hybrid primitives may rely on other primitives in the
+     * global primitive table, so set up those pointers. This is a
+     * bit ugly, but I don't see a better solution */
+    memcpy(&primitives, &optprim, sizeof(EncoderPrimitives));
 
     printf("\nTest performance improvement with full optimizations\n");
 

@@ -103,6 +103,8 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
+#define BITS_FOR_POC 8
+
 template<typename T>
 inline pixel Clip(T x)
 {
@@ -177,20 +179,19 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOG2(x)  log2(x)
 #endif
 
+namespace x265 {
+
+// NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
-    bool bNoiseReduction;
-
     /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t (*offset)[1024];
-    uint32_t (*residualSum)[1024];
-    uint32_t *count;
-
     uint16_t offsetDenoise[8][1024];
-    uint32_t residualSumBuf[4][8][1024];
-    uint32_t countBuf[4][8];
+    uint32_t residualSum[8][1024];
+    uint32_t count[8];
 };
+
+}
 
 /* defined in common.cpp */
 int64_t x265_mdate(void);
@@ -202,7 +203,7 @@ void x265_free(void *ptr);
 double x265_ssim2dB(double ssim);
 double x265_qScale2qp(double qScale);
 double x265_qp2qScale(double qp);
-
 uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane);
+char* x265_slurp_file(const char *filename);
 
 #endif // ifndef X265_COMMON_H

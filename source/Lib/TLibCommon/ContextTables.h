@@ -127,27 +127,16 @@
 namespace x265 {
 // private namespace
 
-// ====================================================================================================================
-// Sbac interface
-// ====================================================================================================================
-typedef struct ContextModel
-{
-    uint8_t m_state;  ///< internal state variable
-    uint8_t bBinsCoded;
-} ContextModel;
-
 extern const uint32_t g_entropyBits[128];
 extern const uint8_t g_nextState[128][2];
-uint8_t sbacInit(int qp, int initValue);   ///< initialize state with initial probability
 
 #define sbacGetMps(S)               ((S) & 1)
 #define sbacGetState(S)             ((S) >> 1)
 #define sbacNext(S, V)              (g_nextState[(S)][(V)])
 #define sbacGetEntropyBits(S, V)    (g_entropyBits[(S) ^ (V)])
 #define sbacGetEntropyBitsTrm(V)    (g_entropyBits[126 ^ (V)])
-#define  CHANNEL_TYPE_LUMA         0
-#define  CHANNEL_TYPE_CHROMA       1
-#define  MAX_NUM_CHANNEL_TYPE      2
+
+#define MAX_NUM_CHANNEL_TYPE        2
 
 // ====================================================================================================================
 // Tables

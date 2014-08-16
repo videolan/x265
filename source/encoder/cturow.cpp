@@ -32,26 +32,7 @@ using namespace x265;
 
 void ThreadLocalData::init(Encoder& enc)
 {
-    m_trQuant.init(enc.m_bEnableRDOQ);
-    if (enc.m_useScalingListId == SCALING_LIST_OFF)
-    {
-        m_trQuant.setFlatScalingList();
-        m_trQuant.setUseScalingList(false);
-    }
-    else if (enc.m_useScalingListId == SCALING_LIST_DEFAULT)
-    {
-        m_trQuant.setScalingList(enc.getScalingList());
-        m_trQuant.setUseScalingList(true);
-    }
-
-    m_rdCost.setPsyRdScale(enc.m_param->psyRd);
-
-    m_search.init(&enc, &m_rdCost, &m_trQuant);
-
-    m_cuCoder.init(&enc);
-    m_cuCoder.setPredSearch(&m_search);
-    m_cuCoder.setTrQuant(&m_trQuant);
-    m_cuCoder.setRdCost(&m_rdCost);
+    m_cuCoder.initSearch(enc);
     m_cuCoder.create((uint8_t)g_maxCUDepth, g_maxCUSize);
 }
 
@@ -60,93 +41,28 @@ ThreadLocalData::~ThreadLocalData()
     m_cuCoder.destroy();
 }
 
-bool CTURow::create()
-{
-    m_rdGoOnSbacCoder.init(&m_rdGoOnBinCodersCABAC);
-    m_sbacCoder.init(&m_binCoderCABAC);
-    m_rdSbacCoders = new TEncSbac * *[g_maxCUDepth + 1];
-    m_binCodersCABAC = new TEncBinCABAC * *[g_maxCUDepth + 1];
-    if (!m_rdSbacCoders || !m_binCodersCABAC)
-        return false;
-
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-    {
-        m_rdSbacCoders[depth] = new TEncSbac*[CI_NUM];
-        m_binCodersCABAC[depth] = new TEncBinCABAC*[CI_NUM];
-        if (!m_rdSbacCoders[depth] || !m_rdSbacCoders[depth])
-            return false;
-
-        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-        {
-            m_rdSbacCoders[depth][ciIdx] = new TEncSbac;
-            m_binCodersCABAC[depth][ciIdx] = new TEncBinCABAC(true);
-            if (m_rdSbacCoders[depth][ciIdx] && m_binCodersCABAC[depth][ciIdx])
-                m_rdSbacCoders[depth][ciIdx]->init(m_binCodersCABAC[depth][ciIdx]);
-            else
-                return false;
-        }
-    }
-
-    return true;
-}
-
-void CTURow::setThreadLocalData(ThreadLocalData& tld)
-{
-    tld.m_cuCoder.setRDSbacCoder(m_rdSbacCoders);
-    tld.m_cuCoder.setEntropyCoder(&m_entropyCoder);
-    tld.m_search.setRDSbacCoder(m_rdSbacCoders);
-    tld.m_search.setEntropyCoder(&m_entropyCoder);
-    tld.m_search.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
-}
-
-void CTURow::processCU(TComDataCU *cu, TComSlice *slice, TEncSbac *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
+void CTURow::processCU(TComDataCU *cu, Entropy *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
 {
     if (bufferSbac)
-    {
         // Load SBAC coder context from previous row.
-        m_rdSbacCoders[0][CI_CURR_BEST]->loadContexts(bufferSbac);
-    }
+        m_rdEntropyCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
 
-    BitCounter bc;
-
-    m_entropyCoder.setEntropyCoder(&m_rdGoOnSbacCoder, slice);
-    m_entropyCoder.setBitstream(&bc);
-    tld.m_cuCoder.setRDGoOnSbacCoder(&m_rdGoOnSbacCoder);
+    // setup thread local data structures to use this row's CABAC state
+    tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
+    tld.m_cuCoder.m_rdEntropyCoders = m_rdEntropyCoders;
+    tld.m_cuCoder.m_quant.m_entropyCoder = &m_entropyCoder;
+    tld.m_cuCoder.m_quant.setQPforQuant(cu);
 
     tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
 
-    // restore entropy coder to an initial state
-    m_entropyCoder.setEntropyCoder(m_rdSbacCoders[0][CI_CURR_BEST], slice);
-    m_entropyCoder.setBitstream(&bc);
-    tld.m_cuCoder.setBitCounting(true);
-    bc.resetBits();
+    tld.m_cuCoder.m_entropyCoder = &m_rdEntropyCoders[0][CI_CURR_BEST];
+    tld.m_cuCoder.m_quant.m_entropyCoder = &m_rdEntropyCoders[0][CI_CURR_BEST];
+    m_rdEntropyCoders[0][CI_CURR_BEST].resetBits();
 
-    tld.m_cuCoder.encodeCU(cu);  // Count bits
+    // TODO: still necessary?
+    tld.m_cuCoder.encodeCU(cu);
 
     if (bSaveSBac)
-    {
         // Save CABAC state for next row
-        m_bufferSbacCoder.loadContexts(m_rdSbacCoders[0][CI_CURR_BEST]);
-    }
-}
-
-void CTURow::destroy()
-{
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-    {
-        for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-        {
-            delete m_rdSbacCoders[depth][ciIdx];
-            delete m_binCodersCABAC[depth][ciIdx];
-        }
-    }
-
-    for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
-    {
-        delete [] m_rdSbacCoders[depth];
-        delete [] m_binCodersCABAC[depth];
-    }
-
-    delete[] m_rdSbacCoders;
-    delete[] m_binCodersCABAC;
+        m_bufferEntropyCoder.loadContexts(m_rdEntropyCoders[0][CI_CURR_BEST]);
 }
