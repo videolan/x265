@@ -580,25 +580,6 @@ Mode decision / Analysis
 
 	**Range of values:** 0: least .. 6: full RDO analysis
 
-.. option:: --psy-rd <float>
-
-	Influence rate distortion optimizations to try to preserve the
-	energy of the source image in the encoded image, at the expense of
-	compression efficiency. 1.0 is a typical value. Default disabled. It
-	only has effect on presets which use RDO-based decisions.  Experimental
-
-	**Range of values:** 0 .. 2.0
-
-.. option:: --psy-rdoq <float>
-
-	Influence the rate distortion optimized quantization by favoring
-	higher energy in the reconstructed image. This generally improves
-	perceived visual quality at the cost of lower quality metric scores.
-	It only has effect on slower presets which use RDO Quantization
-	(rd-levels 4 and 5). Experimental
-
-	**Range of values:** 0 .. 2.0
-
 .. option:: --cu-lossless, --no-cu-lossless
 
 	For each CU, evaluate lossless encode (transform and quant bypass)
@@ -614,6 +595,74 @@ Mode decision / Analysis
 	must be toggled, and then to determine which one can be toggled with
 	the least amount of distortion. Default enabled
  
+Pycho-visual options
+====================
+
+Left to its own devices, the encoder will make mode decisions based on a
+simple rate distortion formula, trading distortion for bitrate. This is
+generally effective except for the manner in which this distortion is
+measured. It tends to favor blurred reconstructed blocks over blocks
+which have wrong motion. The human eye generally prefers the wrong
+motion over the blur and thus x265 offers psycho-visual adjustments to
+the rate distortion algorithm.
+
+:option:`--psy-rd` will add an extra cost to reconstructed blocks which
+do not match the visual energy of the source block. The higher the
+strength of :option:`--psy-rd` the more strongly it will favor similar
+energy over blur and the more aggressively it will ignore rate
+distortion. If it is too high, it will introduce visal artifacts and
+increase bitrate enough for rate control to increase quantization
+globally, reducing overall quality. psy-rd will tend to reduce the use
+of blurred prediction modes, like DC and planar intra and bi-directional
+inter prediction.
+
+:option:`--psy-rdoq` will adjust the distortion cost used in
+rate-distortion optimized quantization (RDO quant), enabled in
+:option:`--rd` 4 and above, favoring the preservation of energy in the
+reconstructed image.  :option:`--psy-rdoq` prevents RDOQ from blurring
+all of the encoding options which psy-rd has to chose from.  At low
+strength levels, psy-rdoq will influence the quantization level
+decisions, favoring higher AC energy in the reconstructed image. As
+psy-rdoq strength is increased, more non-zero coefficient levels are
+added and fewer coefficients are zeroed by RDOQ's rate distortion
+analysis. High levels of psy-rdoq can double the bitrate which can have
+a drastic effect on rate control, forcing higher overall QP, and can
+cause ringing artifacts. psy-rdoq is less accurate than psy-rd, it is
+biasing towards energy in general while psy-rd biases towards the energy
+of the source image. But very large psy-rdoq values can sometimes be
+beneficial, preserving film grain for instance.
+
+As a general rule, when both psycho-visual features are disabled, the
+encoder will tend to blur blocks in areas of difficult motion. Turning
+on small amounts of psy-rd and psy-rdoq will improve the perceived
+visual quality. Increasing psycho-visual strength further will improve
+quality and begin introducing artifacts and increase bitrate, which may
+force rate control to increase global QP. Finding the optimal
+psycho-visual parameters for a given video requires experimentation. Our
+recommended defaults (1.0 for both) are generally on the low end of the
+spectrum. And generally the lower the bitrate, the lower the optimal
+psycho-visual settings.
+
+.. option:: --psy-rd <float>
+
+	Influence rate distortion optimizated mode decision to preserve the
+	energy of the source image in the encoded image at the expense of
+	compression efficiency. It only has effect on presets which use
+	RDO-based mode decisions (:option:`--rd` 3 and above).  1.0 is a
+	typical value. Default disabled.  Experimental
+
+	**Range of values:** 0 .. 2.0
+
+.. option:: --psy-rdoq <float>
+
+	Influence rate distortion optimized quantization by favoring higher
+	energy in the reconstructed image. This generally improves perceived
+	visual quality at the cost of lower quality metric scores.  It only
+	has effect on slower presets which use RDO Quantization
+	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Experimental
+
+	**Range of values:** 0 .. 10.0
+
 
 Slice decision options
 ======================
