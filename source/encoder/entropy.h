@@ -176,11 +176,11 @@ public:
     void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     // RDO functions
-    void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
+    void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma);
     void estCBFBit(EstBitsSbac& estBitsSbac);
-    void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType ttype);
-    void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
-    void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType ttype);
+    void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, bool bIsLuma);
+    void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma);
+    void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLuma);
 
 private:
 

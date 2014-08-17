@@ -1831,17 +1831,17 @@ void Entropy::codeSaoTypeIdx(uint32_t code)
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */
-void Entropy::estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma)
 {
     estCBFBit(estBitsSbac);
 
-    estSignificantCoeffGroupMapBit(estBitsSbac, ttype);
+    estSignificantCoeffGroupMapBit(estBitsSbac, bIsLuma);
 
     // encode significance map
-    estSignificantMapBit(estBitsSbac, log2TrSize, ttype);
+    estSignificantMapBit(estBitsSbac, log2TrSize, bIsLuma);
 
     // encode significant coefficients
-    estSignificantCoefficientsBit(estBitsSbac, ttype);
+    estSignificantCoefficientsBit(estBitsSbac, bIsLuma);
 }
 
 /* estimate bit cost for each CBP bit */
@@ -1862,33 +1862,32 @@ void Entropy::estCBFBit(EstBitsSbac& estBitsSbac)
 }
 
 /* estimate SAMBAC bit cost for significant coefficient group map */
-void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, bool bIsLuma)
 {
-    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     int firstCtx = 0, numCtx = NUM_SIG_CG_FLAG_CTX;
 
     for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
         for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_CG_FLAG_CTX + ((ttype ? NUM_SIG_CG_FLAG_CTX : 0) + ctxIdx)], bin);
+            estBitsSbac.significantCoeffGroupBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_CG_FLAG_CTX + ((bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX) + ctxIdx)], bin);
 }
 
 /* estimate SAMBAC bit cost for significant coefficient map */
-void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype)
+void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma)
 {
     int firstCtx = 1, numCtx = 8;
 
     if (log2TrSize >= 4)
     {
-        firstCtx = (ttype == TEXT_LUMA) ? 21 : 12;
-        numCtx = (ttype == TEXT_LUMA) ? 6 : 3;
+        firstCtx = bIsLuma ? 21 : 12;
+        numCtx = bIsLuma ? 6 : 3;
     }
     else if (log2TrSize == 3)
     {
         firstCtx = 9;
-        numCtx = (ttype == TEXT_LUMA) ? 12 : 3;
+        numCtx = bIsLuma ? 12 : 3;
     }
 
-    if (ttype == TEXT_LUMA)
+    if (bIsLuma)
     {
         for (uint32_t bin = 0; bin < 2; bin++)
             estBitsSbac.significantBits[0][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX], bin);
@@ -1908,11 +1907,10 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
     }
     int bitsX = 0, bitsY = 0;
 
-    int blkSizeOffset = ttype ? NUM_CTX_LAST_FLAG_XY_LUMA : ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2));
-    int ctxShift = ttype ? log2TrSize - 2 : ((log2TrSize + 1) >> 2);
+    int blkSizeOffset = bIsLuma ? ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
+    int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
-    X265_CHECK((ttype == TEXT_LUMA) || (ttype == TEXT_CHROMA), "invalid texture type\n");
     uint32_t ctx;
     const uint8_t *ctxX = &m_contextState[OFF_CTX_LAST_FLAG_X];
     for (ctx = 0; ctx < maxGroupIdx; ctx++)
@@ -1936,9 +1934,9 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
 }
 
 /* estimate bit cost of significant coefficient */
-void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType ttype)
+void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLuma)
 {
-    if (ttype == TEXT_LUMA)
+    if (bIsLuma)
     {
         uint8_t *ctxOne = &m_contextState[OFF_ONE_FLAG_CTX];
         uint8_t *ctxAbs = &m_contextState[OFF_ABS_FLAG_CTX];
