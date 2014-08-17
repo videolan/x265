@@ -781,8 +781,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int64_t bestCost;
     if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->getTransformIdx(absPartIdx))
     {
-        bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockRootCbpBits[0][0]);
-        totalRdCost += SIGCOST(estBitsSbac.blockRootCbpBits[0][1]);
+        bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockRootCbpBits[0]);
+        totalRdCost += SIGCOST(estBitsSbac.blockRootCbpBits[1]);
     }
     else
     {

@@ -1857,11 +1857,8 @@ void Entropy::estCBFBit(EstBitsSbac& estBitsSbac)
 
     ctx = &m_contextState[OFF_QT_ROOT_CBF_CTX];
 
-    for (uint32_t ctxInc = 0; ctxInc < NUM_QT_ROOT_CBF_CTX; ctxInc++)
-    {
-        estBitsSbac.blockRootCbpBits[ctxInc][0] = sbacGetEntropyBits(ctx[ctxInc], 0);
-        estBitsSbac.blockRootCbpBits[ctxInc][1] = sbacGetEntropyBits(ctx[ctxInc], 1);
-    }
+    estBitsSbac.blockRootCbpBits[0] = sbacGetEntropyBits(ctx[0], 0);
+    estBitsSbac.blockRootCbpBits[1] = sbacGetEntropyBits(ctx[0], 1);
 }
 
 /* estimate SAMBAC bit cost for significant coefficient group map */
