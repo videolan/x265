@@ -1203,21 +1203,26 @@ void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
 
+    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize];
+    int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
+
+    // Do not allow WPP if only one row, it is pointless and unstable
+    if (rows == 1)
+        p->bEnableWavefront = 0;
+
     // Trim the thread pool if WPP is disabled
     if (!p->bEnableWavefront)
         p->poolNumThreads = 1;
 
     setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
     int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize];
-    int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
 
-    if (p->frameNumThreads == 0)
+    if (!p->frameNumThreads)
     {
         // auto-detect frame threads
         int cpuCount = getCpuCount();
         if (poolThreadCount <= 1)
-            p->frameNumThreads = X265_MIN(cpuCount, rows / 2);
+            p->frameNumThreads = X265_MIN(cpuCount, (rows + 1) / 2);
         else if (cpuCount > 32)
             p->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
         else if (cpuCount >= 16)
