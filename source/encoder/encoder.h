@@ -120,7 +120,6 @@ public:
     uint32_t           m_quadtreeTULog2MaxSize;
     uint32_t           m_quadtreeTULog2MinSize;
 
-    int                m_maxCuDQPDepth;
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 

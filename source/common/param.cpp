@@ -869,12 +869,8 @@ int x265_check_params(x265_param *param)
         return check_failed;
 
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t maxCUDepth = maxLog2CUSize - 2;
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
-
-    CHECK((param->maxCUSize >> maxCUDepth) < 4,
-          "Minimum partition width size should be larger than or equal to 8");
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
@@ -1049,10 +1045,6 @@ void x265_param_apply_fastfirstpass(x265_param* param)
 
 int x265_set_globals(x265_param *param)
 {
-    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t maxCUDepth = maxLog2CUSize - 2;
-    uint32_t tuQTMinLog2Size = 2; //log2(4)
-
     static int once /* = 0 */;
 
     if (ATOMIC_CAS32(&once, 0, 1) == 1)
@@ -1065,25 +1057,23 @@ int x265_set_globals(x265_param *param)
     }
     else
     {
+        uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
+
         // set max CU width & height
-        g_maxCUSize = param->maxCUSize;
+        g_maxCUSize     = param->maxCUSize;
         g_maxLog2CUSize = maxLog2CUSize;
 
         // compute actual CU depth with respect to config depth and max transform size
-        g_addCUDepth = g_maxLog2CUSize - maxCUDepth - tuQTMinLog2Size;
-
-        maxCUDepth += g_addCUDepth;
-        g_addCUDepth++;
-        g_maxCUDepth = maxCUDepth;
-        g_log2UnitSize = g_maxLog2CUSize - g_maxCUDepth;
+        g_maxCUDepth   = maxLog2CUSize - MIN_LOG2_CU_SIZE;
+        g_maxFullDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
 
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];
-        initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
-        initRasterToZscan(g_maxCUSize, g_maxCUDepth + 1);
+        initZscanToRaster(g_maxFullDepth, 1, 0, tmp);
+        initRasterToZscan(g_maxFullDepth);
 
         // initialize conversion matrix from partition index to pel
-        initRasterToPelXY(g_maxCUSize, g_maxCUDepth + 1);
+        initRasterToPelXY(g_maxFullDepth);
     }
     return 0;
 }
