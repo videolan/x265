@@ -182,7 +182,6 @@ protected:
     pixel*      m_chromaClipTableBase;
     pixel*      m_chromaTableBo;
     int32_t*    m_upBuff1;
-    int32_t*    m_upBuff2;
     int32_t*    m_upBufft;
     TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 

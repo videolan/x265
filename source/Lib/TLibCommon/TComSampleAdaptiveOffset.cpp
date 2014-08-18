@@ -64,7 +64,6 @@ TComSampleAdaptiveOffset::TComSampleAdaptiveOffset()
     m_lumaTableBo = NULL;
     m_chromaTableBo = NULL;
     m_upBuff1 = NULL;
-    m_upBuff2 = NULL;
     m_upBufft = NULL;
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
@@ -191,11 +190,9 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
     }
 
     m_upBuff1 = X265_MALLOC(int, m_picWidth + 2);
-    m_upBuff2 = X265_MALLOC(int, m_picWidth + 2);
     m_upBufft = X265_MALLOC(int, m_picWidth + 2);
 
     m_upBuff1++;
-    m_upBuff2++;
     m_upBufft++;
     int16_t i;
 
@@ -282,10 +279,6 @@ void TComSampleAdaptiveOffset::destroy()
     m_upBuff1--;
     X265_FREE(m_upBuff1);
     m_upBuff1 = NULL;
-
-    m_upBuff2--;
-    X265_FREE(m_upBuff2);
-    m_upBuff2 = NULL;
 
     m_upBufft--;
     X265_FREE(m_upBufft);
