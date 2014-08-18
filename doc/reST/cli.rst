@@ -604,8 +604,8 @@ Mode decision / Analysis
 	must be toggled, and then to determine which one can be toggled with
 	the least amount of distortion. Default enabled
  
-Pycho-visual options
-====================
+Psycho-visual options
+=====================
 
 Left to its own devices, the encoder will make mode decisions based on a
 simple rate distortion formula, trading distortion for bitrate. This is
@@ -668,7 +668,8 @@ psycho-visual settings.
 	energy in the reconstructed image. This generally improves perceived
 	visual quality at the cost of lower quality metric scores.  It only
 	has effect on slower presets which use RDO Quantization
-	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Experimental
+	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Default
+	disabled. Experimental
 
 	**Range of values:** 0 .. 10.0
 
