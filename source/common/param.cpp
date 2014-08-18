@@ -1238,6 +1238,8 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
     s += sprintf(s, " rd=%d", p->rdLevel);
+    s += sprintf(s, " psy-rd=%.2f", p->psyRd);
+    s += sprintf(s, " psy-rdpq=%.2f", p->psyRdoq);
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "lft");
     BOOL(p->bEnableSAO, "sao");
