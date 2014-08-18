@@ -524,6 +524,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
     int signDown1;
     int signDown2;
     uint32_t edgeType;
+    int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     //if (iSaoType == EO_0  || iSaoType == EO_1 || iSaoType == EO_2 || iSaoType == EO_3)
     {
@@ -583,15 +585,15 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
             }
 
             for (x = 0; x < lcuWidth; x++)
-                m_upBuff1[x] = signOf(recon[x] - recon[x - stride]);
+                upBuff1[x] = signOf(recon[x] - recon[x - stride]);
 
             for (y = startY; y < endY; y++)
             {
                 for (x = 0; x < endX; x++)
                 {
                     signDown = signOf(recon[x] - recon[x + stride]);
-                    edgeType = signDown + m_upBuff1[x] + 2;
-                    m_upBuff1[x] = -signDown;
+                    edgeType = signDown + upBuff1[x] + 2;
+                    upBuff1[x] = -signDown;
 
                     stats[m_eoTable[edgeType]] += (fenc[x] - recon[x]);
                     counts[m_eoTable[edgeType]]++;
@@ -626,7 +628,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
             }
 
             for (x = startX; x < endX; x++)
-                m_upBuff1[x] = signOf(recon[x] - recon[x - stride - 1]);
+                upBuff1[x] = signOf(recon[x] - recon[x - stride - 1]);
 
             for (y = startY; y < endY; y++)
             {
@@ -634,14 +636,14 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
                 for (x = startX; x < endX; x++)
                 {
                     signDown1 = signOf(recon[x] - recon[x + stride + 1]);
-                    edgeType  = signDown1 + m_upBuff1[x] + 2;
-                    m_upBufft[x + 1] = -signDown1;
+                    edgeType  = signDown1 + upBuff1[x] + 2;
+                    upBufft[x + 1] = -signDown1;
                     stats[m_eoTable[edgeType]] += (fenc[x] - recon[x]);
                     counts[m_eoTable[edgeType]]++;
                 }
 
-                m_upBufft[startX] = signDown2;
-                std::swap(m_upBuff1, m_upBufft);
+                upBufft[startX] = signDown2;
+                std::swap(upBuff1, upBufft);
 
                 recon += stride;
                 fenc += stride;
@@ -672,20 +674,20 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu(int addr, int partIdx, int yCbCr)
             }
 
             for (x = startX - 1; x < endX; x++)
-                m_upBuff1[x] = signOf(recon[x] - recon[x - stride + 1]);
+                upBuff1[x] = signOf(recon[x] - recon[x - stride + 1]);
 
             for (y = startY; y < endY; y++)
             {
                 for (x = startX; x < endX; x++)
                 {
                     signDown1 = signOf(recon[x] - recon[x + stride - 1]);
-                    edgeType  = signDown1 + m_upBuff1[x] + 2;
-                    m_upBuff1[x - 1] = -signDown1;
+                    edgeType  = signDown1 + upBuff1[x] + 2;
+                    upBuff1[x - 1] = -signDown1;
                     stats[m_eoTable[edgeType]] += (fenc[x] - recon[x]);
                     counts[m_eoTable[edgeType]]++;
                 }
 
-                m_upBuff1[endX - 1] = signOf(recon[endX - 1 + stride] - recon[endX]);
+                upBuff1[endX - 1] = signOf(recon[endX - 1 + stride] - recon[endX]);
 
                 recon += stride;
                 fenc += stride;
@@ -725,6 +727,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
     uint32_t lPelX, tPelY;
     TComDataCU *cu;
     pixel* pTableBo;
+    int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     // NOTE: Row
     {
@@ -866,15 +870,15 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                 }
 
                 for (x = 0; x < lcuWidth; x++)
-                    m_upBuff1[x] = signOf(recon[x] - recon[x - stride]);
+                    upBuff1[x] = signOf(recon[x] - recon[x - stride]);
 
                 for (y = firstY; y < endY; y++)
                 {
                     for (x = 0; x < lcuWidth; x++)
                     {
                         signDown = signOf(recon[x] - recon[x + stride]);
-                        edgeType = signDown + m_upBuff1[x] + 2;
-                        m_upBuff1[x] = -signDown;
+                        edgeType = signDown + upBuff1[x] + 2;
+                        upBuff1[x] = -signDown;
 
                         if (x < startX && y < startY)
                             continue;
@@ -911,7 +915,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                 }
 
                 for (x = firstX; x < endX; x++)
-                    m_upBuff1[x] = signOf(recon[x] - recon[x - stride - 1]);
+                    upBuff1[x] = signOf(recon[x] - recon[x - stride - 1]);
 
                 for (y = firstY; y < endY; y++)
                 {
@@ -919,8 +923,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                     for (x = firstX; x < endX; x++)
                     {
                         signDown1 = signOf(recon[x] - recon[x + stride + 1]);
-                        edgeType = signDown1 + m_upBuff1[x] + 2;
-                        m_upBufft[x + 1] = -signDown1;
+                        edgeType = signDown1 + upBuff1[x] + 2;
+                        upBufft[x + 1] = -signDown1;
 
                         if (x < startX && y < startY)
                             continue;
@@ -929,8 +933,8 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                         count[m_eoTable[edgeType]]++;
                     }
 
-                    m_upBufft[firstX] = signDown2;
-                    std::swap(m_upBuff1, m_upBufft);
+                    upBufft[firstX] = signDown2;
+                    std::swap(upBuff1, upBufft);
 
                     recon += stride;
                     fenc += stride;
@@ -960,15 +964,15 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                 }
 
                 for (x = firstX - 1; x < endX; x++)
-                    m_upBuff1[x] = signOf(recon[x] - recon[x - stride + 1]);
+                    upBuff1[x] = signOf(recon[x] - recon[x - stride + 1]);
 
                 for (y = firstY; y < endY; y++)
                 {
                     for (x = firstX; x < endX; x++)
                     {
                         signDown1 = signOf(recon[x] - recon[x + stride - 1]);
-                        edgeType  = signDown1 + m_upBuff1[x] + 2;
-                        m_upBuff1[x - 1] = -signDown1;
+                        edgeType  = signDown1 + upBuff1[x] + 2;
+                        upBuff1[x - 1] = -signDown1;
 
                         if (x < startX && y < startY)
                             continue;
@@ -977,7 +981,7 @@ void TEncSampleAdaptiveOffset::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, i
                         count[m_eoTable[edgeType]]++;
                     }
 
-                    m_upBuff1[endX - 1] = signOf(recon[endX - 1 + stride] - recon[endX]);
+                    upBuff1[endX - 1] = signOf(recon[endX - 1 + stride] - recon[endX]);
 
                     recon += stride;
                     fenc += stride;

@@ -63,8 +63,6 @@ TComSampleAdaptiveOffset::TComSampleAdaptiveOffset()
     m_chromaOffsetBo = NULL;
     m_lumaTableBo = NULL;
     m_chromaTableBo = NULL;
-    m_upBuff1 = NULL;
-    m_upBufft = NULL;
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
     m_tmpU1[2] = NULL;
@@ -189,11 +187,6 @@ void TComSampleAdaptiveOffset::create(uint32_t sourceWidth, uint32_t sourceHeigh
         m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
     }
 
-    m_upBuff1 = X265_MALLOC(int, m_picWidth + 2);
-    m_upBufft = X265_MALLOC(int, m_picWidth + 2);
-
-    m_upBuff1++;
-    m_upBufft++;
     int16_t i;
 
     uint32_t maxY  = (1 << X265_DEPTH) - 1;
@@ -275,14 +268,6 @@ void TComSampleAdaptiveOffset::destroy()
     m_chromaOffsetBo = NULL;
     X265_FREE(m_chromaTableBo);
     m_chromaTableBo = NULL;
-
-    m_upBuff1--;
-    X265_FREE(m_upBuff1);
-    m_upBuff1 = NULL;
-
-    m_upBufft--;
-    X265_FREE(m_upBufft);
-    m_upBufft = NULL;
 
     X265_FREE(m_tmpL1);
     m_tmpL1 = NULL;
@@ -562,6 +547,9 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
         stride = m_pic->getCStride();
     }
 
+    int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
+
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
         cuHeightTmp  = (isChroma == 0) ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
@@ -648,7 +636,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
         }
         for (x = 0; x < lcuWidth; x++)
         {
-            m_upBuff1[x] = xSign(rec[x] - tmpU[x]);
+            upBuff1[x] = xSign(rec[x] - tmpU[x]);
         }
 
         for (y = startY; y < endY; y++)
@@ -656,8 +644,8 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
             for (x = 0; x < lcuWidth; x++)
             {
                 signDown  = xSign(rec[x] - rec[x + stride]);
-                edgeType = signDown + m_upBuff1[x] + 2;
-                m_upBuff1[x] = -signDown;
+                edgeType = signDown + upBuff1[x] + 2;
+                upBuff1[x] = -signDown;
 
                 rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
             }
@@ -682,7 +670,7 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
         for (x = startX; x < endX; x++)
         {
-            m_upBuff1[x] = xSign(rec[x] - tmpU[x - 1]);
+            upBuff1[x] = xSign(rec[x] - tmpU[x - 1]);
         }
 
         for (y = startY; y < endY; y++)
@@ -691,14 +679,14 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
             for (x = startX; x < endX; x++)
             {
                 signDown1      =  xSign(rec[x] - rec[x + stride + 1]);
-                edgeType      =  signDown1 + m_upBuff1[x] + 2;
-                m_upBufft[x + 1] = -signDown1;
+                edgeType      =  signDown1 + upBuff1[x] + 2;
+                upBufft[x + 1] = -signDown1;
                 rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
             }
 
-            m_upBufft[startX] = signDown2;
+            upBufft[startX] = signDown2;
 
-            std::swap(m_upBuff1, m_upBufft);
+            std::swap(upBuff1, upBufft);
 
             rec += stride;
         }
@@ -720,25 +708,25 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
 
         for (x = startX - 1; x < endX; x++)
         {
-            m_upBuff1[x] = xSign(rec[x] - tmpU[x + 1]);
+            upBuff1[x] = xSign(rec[x] - tmpU[x + 1]);
         }
 
         for (y = startY; y < endY; y++)
         {
             x = startX;
             signDown1      =  xSign(rec[x] - tmpL[y + 1]);
-            edgeType      =  signDown1 + m_upBuff1[x] + 2;
-            m_upBuff1[x - 1] = -signDown1;
+            edgeType      =  signDown1 + upBuff1[x] + 2;
+            upBuff1[x - 1] = -signDown1;
             rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
             for (x = startX + 1; x < endX; x++)
             {
                 signDown1      =  xSign(rec[x] - rec[x + stride - 1]);
-                edgeType      =  signDown1 + m_upBuff1[x] + 2;
-                m_upBuff1[x - 1] = -signDown1;
+                edgeType      =  signDown1 + upBuff1[x] + 2;
+                upBuff1[x - 1] = -signDown1;
                 rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
             }
 
-            m_upBuff1[endX - 1] = xSign(rec[endX - 1 + stride] - rec[endX]);
+            upBuff1[endX - 1] = xSign(rec[endX - 1 + stride] - rec[endX]);
 
             rec += stride;
         }
