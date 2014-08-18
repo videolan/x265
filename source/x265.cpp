@@ -369,7 +369,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nAnalysis:\n");
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual rate distortion optimization, 0 to disable. Default %f\n", param->psyRd);
-    H0("   --psy-rdoq <0..2.0>           Strength of psycho-visual optimization in quantization, 0 to disable. Default %f\n", param->psyRdoq);
+    H0("   --psy-rdoq <0..10.0>          Strength of psycho-visual optimization in quantization, 0 to disable. Default %f\n", param->psyRdoq);
     H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
@@ -389,7 +389,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
     H0("   --[no-]b-intra                Enable intra in B frames in veryslow presets. Default %s\n", OPT(param->bIntraInBFrames));
-    H0("   --[no]-fast-intra             Enable faster search method for angular intra predictions. Default %s\n", OPT(param->bEnableFastIntra));
+    H0("   --[no-]fast-intra             Enable faster search method for angular intra predictions. Default %s\n", OPT(param->bEnableFastIntra));
     H0("   --rdpenalty <0..2>            penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum. Default %d\n", param->rdPenalty);
     H0("\nSlice decision options:\n");
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
