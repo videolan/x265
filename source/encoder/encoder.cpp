@@ -1155,20 +1155,12 @@ void Encoder::initSPS(SPS *sps)
 
 void Encoder::initPPS(PPS *pps)
 {
-    bool isVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
-    m_maxCuDQPDepth = 0;
-
-    /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
-    bool bUseDQP = (m_maxCuDQPDepth > 0 || m_param->rc.aqMode || isVbv) ? true : false;
-
-    if ((m_maxCuDQPDepth == 0) && (m_param->rc.qp == -QP_BD_OFFSET))
-        bUseDQP = false;
-
-    if (bUseDQP)
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
         pps->bUseDQP = true;
-        pps->maxCuDQPDepth = m_maxCuDQPDepth;
+        pps->maxCuDQPDepth = 0; /* TODO: make configurable? */
     }
     else
     {
