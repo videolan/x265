@@ -184,8 +184,8 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
 void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, TextType cType, IntraNeighbors *intraNeighbors)
 {
     uint32_t log2TrSize = cu->getLog2CUSize(0) - partDepth;
-    int log2UnitWidth  = g_log2UnitSize;
-    int log2UnitHeight = g_log2UnitSize;
+    int log2UnitWidth  = LOG2_UNIT_SIZE;
+    int log2UnitHeight = LOG2_UNIT_SIZE;
 
     if (cType != TEXT_LUMA)
     {

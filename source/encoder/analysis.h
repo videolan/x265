@@ -74,14 +74,14 @@ public:
 
     TComDataCU*  m_memPool;
 
-    TComDataCU*  m_interCU_2Nx2N[MAX_CU_DEPTH];
-    TComDataCU*  m_interCU_2NxN[MAX_CU_DEPTH];
-    TComDataCU*  m_interCU_Nx2N[MAX_CU_DEPTH];
-    TComDataCU*  m_intraInInterCU[MAX_CU_DEPTH];
-    TComDataCU*  m_mergeCU[MAX_CU_DEPTH];
-    TComDataCU*  m_bestMergeCU[MAX_CU_DEPTH];
-    TComDataCU*  m_bestCU[MAX_CU_DEPTH]; // Best CUs at each depth
-    TComDataCU*  m_tempCU[MAX_CU_DEPTH]; // Temporary CUs at each depth
+    TComDataCU*  m_interCU_2Nx2N[NUM_CU_DEPTH];
+    TComDataCU*  m_interCU_2NxN[NUM_CU_DEPTH];
+    TComDataCU*  m_interCU_Nx2N[NUM_CU_DEPTH];
+    TComDataCU*  m_intraInInterCU[NUM_CU_DEPTH];
+    TComDataCU*  m_mergeCU[NUM_CU_DEPTH];
+    TComDataCU*  m_bestMergeCU[NUM_CU_DEPTH];
+    TComDataCU*  m_bestCU[NUM_CU_DEPTH]; // Best CUs at each depth
+    TComDataCU*  m_tempCU[NUM_CU_DEPTH]; // Temporary CUs at each depth
 
     TComYuv**    m_bestPredYuv;          // Best Prediction Yuv for each depth
     ShortYuv**   m_bestResiYuv;          // Best Residual Yuv for each depth
@@ -101,20 +101,20 @@ public:
 
     Analysis();
 
-    bool create(uint8_t totalDepth, uint32_t maxWidth);
+    bool create(uint32_t totalDepth, uint32_t maxWidth);
     void destroy();
 
     void compressCU(TComDataCU* cu);
 
 protected:
 
-    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint8_t depth, bool bInsidePicture);
+    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture);
     void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
 
-    void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint8_t depth,
-                               bool bInsidePicture, uint32_t partitionIndex, uint8_t minDepth);
-    void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint8_t depth, bool bInsidePicture,
-                               PartSize parentSize = SIZE_NONE);
+    void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth,
+                               bool bInsidePicture, uint32_t partitionIndex, uint32_t minDepth);
+    void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture,
+        PartSize parentSize = SIZE_NONE);
     void checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
     void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
                                TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
@@ -127,7 +127,7 @@ protected:
 
     void checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
     void encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
-    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint8_t depth);
+    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu);
     void copyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
     void copyYuv2Tmp(uint32_t uhPartUnitIdx, uint32_t depth);

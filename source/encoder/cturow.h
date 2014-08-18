@@ -59,7 +59,7 @@ public:
 
     Entropy         m_entropyCoder;
     Entropy         m_bufferEntropyCoder;  /* store context for next row */
-    Entropy         m_rdEntropyCoders[MAX_FULL_DEPTH + 1][CI_NUM];
+    Entropy         m_rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
 
     // to compute stats for 2 pass
     double          m_iCuCnt;
@@ -75,7 +75,7 @@ public:
         m_entropyCoder.load(initContext);
 
         // Note: Reset status to avoid frame parallelism output mistake on different thread number
-        for (uint32_t depth = 0; depth < g_maxCUDepth + 1; depth++)
+        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
                 m_rdEntropyCoders[depth][ciIdx].load(initContext);
 

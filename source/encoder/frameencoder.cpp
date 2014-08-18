@@ -687,14 +687,14 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         if (m_param->rc.bStatWrite)
         {
             double scale = (double)(1 << (g_maxCUSize / 16));
-            for (uint32_t part = 0; part < g_maxCUDepth ; part++, scale /= 4)
+            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, scale /= 4)
             {
-                curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[part];
-                curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[part];
-                curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[part];
+                curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[depth];
+                curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[depth];
+                curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[depth];
 
                 //clear the row cu data from thread local object
-                tld.m_cuCoder.m_log->qTreeIntraCnt[part] = tld.m_cuCoder.m_log->qTreeInterCnt[part] = tld.m_cuCoder.m_log->qTreeSkipCnt[part] = 0;
+                tld.m_cuCoder.m_log->qTreeIntraCnt[depth] = tld.m_cuCoder.m_log->qTreeInterCnt[depth] = tld.m_cuCoder.m_log->qTreeSkipCnt[depth] = 0;
             }
         }
 

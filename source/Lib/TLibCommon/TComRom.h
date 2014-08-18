@@ -43,10 +43,17 @@
 namespace x265 {
 // private namespace
 
-#define MAX_CU_DEPTH            4                           // maximun CU depth
-#define MAX_FULL_DEPTH          5                           // maximun full depth
-#define MAX_LOG2_CU_SIZE        6                           // log2(LCUSize)
+#define NUM_CU_DEPTH            4                           // maximun number of CU depths
+#define NUM_FULL_DEPTH          5                           // maximun number of full depths
+#define MIN_LOG2_CU_SIZE        3                           // log2(minCUSize)
+#define MAX_LOG2_CU_SIZE        6                           // log2(maxCUSize)
+#define MIN_CU_SIZE             (1 << MIN_LOG2_CU_SIZE)     // minimum allowable size of CU
 #define MAX_CU_SIZE             (1 << MAX_LOG2_CU_SIZE)     // maximum allowable size of CU
+
+#define LOG2_UNIT_SIZE          2                           // log2(unitSize)
+#define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
+#define TMVP_UNIT_MASK          0xF0                        // mask for mapping index to CompressMV field
+
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
 #define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
@@ -71,21 +78,20 @@ extern const uint8_t g_chroma422IntraAngleMappingTable[36];
 extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx);
-void initRasterToZscan(uint32_t maxCUSize, uint32_t maxCUDepth);
+void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx);
+void initRasterToZscan(uint32_t maxFullDepth);
 
 // conversion of partition index to picture pel position
 extern uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 extern uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
 
-void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxCUDepth);
+void initRasterToPelXY(uint32_t maxFullDepth);
 
 // global variable (LCU width/height, max. CU depth)
 extern uint32_t g_maxLog2CUSize;
 extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
-extern uint32_t g_addCUDepth;
-extern uint32_t g_log2UnitSize;
+extern uint32_t g_maxFullDepth;
 
 extern const uint32_t g_puOffset[8];
 

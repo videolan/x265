@@ -219,7 +219,6 @@ struct SPS
 struct PPS
 {
     uint32_t maxCuDQPDepth;
-    uint32_t minCuDQPSize;
 
     int      chromaCbQpOffset;       // use param
     int      chromaCrQpOffset;       // use param

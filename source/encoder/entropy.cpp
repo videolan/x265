@@ -504,10 +504,10 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     // We need to split, so don't try these modes.
-    if (bInsidePicture)
+    if (bInsidePicture && depth < g_maxCUDepth)
         codeSplitFlag(cu, absPartIdx, depth);
 
-    if ((g_maxCUSize >> depth) >= slice->m_pps->minCuDQPSize && slice->m_pps->bUseDQP)
+    if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
 
     if (!bInsidePicture)
@@ -528,7 +528,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         return;
     }
 
-    if ((depth < cu->getDepth(absPartIdx)) && (depth < (g_maxCUDepth - g_addCUDepth)))
+    if (depth < cu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
         uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
 
@@ -837,7 +837,7 @@ void Entropy::codePUWise(TComDataCU* cu, uint32_t absPartIdx)
     PartSize partSize = cu->getPartitionSize(absPartIdx);
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
     uint32_t depth = cu->getDepth(absPartIdx);
-    uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << ((g_maxCUDepth - depth) << 1)) >> 4;
+    uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_maxFullDepth - depth) * 2) >> 4;
 
     for (uint32_t partIdx = 0, subPartIdx = absPartIdx; partIdx < numPU; partIdx++, subPartIdx += puOffset)
     {
@@ -885,7 +885,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     }
 
     uint32_t log2CUSize   = cu->getLog2CUSize(absPartIdx);
-    uint32_t lumaOffset   = absPartIdx << cu->m_pic->getLog2UnitSize() * 2;
+    uint32_t lumaOffset   = absPartIdx << LOG2_UNIT_SIZE * 2;
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
     uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> (depth << 1);
     CoeffCodeState state;
@@ -1205,7 +1205,7 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 
     if (cu->isIntra(absPartIdx))
     {
-        if (depth == g_maxCUDepth - g_addCUDepth)
+        if (depth == g_maxCUDepth)
             encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX]);
         return;
     }
@@ -1234,7 +1234,7 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     case SIZE_nRx2N:
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
+        if (depth == g_maxCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
             encodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
         if (cu->m_slice->m_sps->maxAMPDepth > depth)
         {
@@ -1245,7 +1245,7 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
         break;
 
     case SIZE_NxN:
-        if (depth == g_maxCUDepth - g_addCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
+        if (depth == g_maxCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
         {
             encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
             encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
@@ -1310,8 +1310,7 @@ void Entropy::codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx)
 
 void Entropy::codeSplitFlag(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    if (depth == g_maxCUDepth - g_addCUDepth)
-        return;
+    X265_CHECK(depth < g_maxCUDepth, "invalid depth\n");
 
     uint32_t ctx           = cu->getCtxSplitFlag(absPartIdx, depth);
     uint32_t currSplitFlag = (cu->getDepth(absPartIdx) > depth) ? 1 : 0;

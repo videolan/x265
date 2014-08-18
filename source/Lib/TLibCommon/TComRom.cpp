@@ -112,10 +112,9 @@ void destroyROM()
 // ====================================================================================================================
 
 uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
-uint32_t g_maxCUSize   = MAX_CU_SIZE;
-uint32_t g_maxCUDepth  = MAX_FULL_DEPTH;
-uint32_t g_addCUDepth  = 1;
-uint32_t g_log2UnitSize = 2;
+uint32_t g_maxCUSize     = MAX_CU_SIZE;
+uint32_t g_maxFullDepth  = NUM_FULL_DEPTH - 1;
+uint32_t g_maxCUDepth    = NUM_CU_DEPTH - 1;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
@@ -123,11 +122,11 @@ uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 
 const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx)
+void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx)
 {
-    int stride = 1 << (maxDepth - 1);
+    uint32_t stride = 1 << maxFullDepth;
 
-    if (depth == maxDepth)
+    if (depth > maxFullDepth)
     {
         curIdx[0] = startVal;
         curIdx++;
@@ -135,41 +134,38 @@ void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& cu
     else
     {
         int step = stride >> depth;
-        initZscanToRaster(maxDepth, depth + 1, startVal,                        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step,                 curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride,        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride + step, curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal,                        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step,                 curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride,        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride + step, curIdx);
     }
 }
 
-void initRasterToZscan(uint32_t maxCUSize, uint32_t maxDepth)
+void initRasterToZscan(uint32_t maxFullDepth)
 {
-    uint32_t  unitSize = maxCUSize  >> (maxDepth - 1);
+    uint32_t numPartitions = 1 << maxFullDepth * 2;
 
-    uint32_t  numPartInCUSize  = (uint32_t)maxCUSize / unitSize;
-
-    for (uint32_t i = 0; i < numPartInCUSize * numPartInCUSize; i++)
+    for (uint32_t i = 0; i < numPartitions; i++)
     {
         g_rasterToZscan[g_zscanToRaster[i]] = i;
     }
 }
 
-void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
+void initRasterToPelXY(uint32_t maxFullDepth)
 {
     uint32_t i;
 
     uint32_t* tempX = &g_rasterToPelX[0];
     uint32_t* tempY = &g_rasterToPelY[0];
 
-    uint32_t  unitSize  = maxCUSize >> (maxDepth - 1);
-
-    uint32_t  numPartInCUSize = maxCUSize / unitSize;
+    uint32_t numPartInCUSize = 1 << maxFullDepth;
+    uint32_t numPartitions   = 1 << maxFullDepth * 2;
 
     tempX[0] = 0;
     tempX++;
     for (i = 1; i < numPartInCUSize; i++)
     {
-        tempX[0] = tempX[-1] + unitSize;
+        tempX[0] = tempX[-1] + UNIT_SIZE;
         tempX++;
     }
 
@@ -179,9 +175,9 @@ void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
         tempX += numPartInCUSize;
     }
 
-    for (i = 1; i < numPartInCUSize * numPartInCUSize; i++)
+    for (i = 1; i < numPartitions; i++)
     {
-        tempY[i] = (i / numPartInCUSize) * unitSize;
+        tempY[i] = (i >> maxFullDepth) * UNIT_SIZE;
     }
 }
 
