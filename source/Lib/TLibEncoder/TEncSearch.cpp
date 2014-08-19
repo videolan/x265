@@ -1385,129 +1385,121 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
         int numModesForFullRD = intraModeNumFast[sizeIdx];
 
-        bool doFastSearch = (numModesForFullRD != numModesAvailable);
-        if (doFastSearch)
+        X265_CHECK(numModesForFullRD < numModesAvailable, "numModesAvailable too large\n");
+
+        for (int i = 0; i < numModesForFullRD; i++)
+            candCostList[i] = MAX_INT64;
+
+        candNum = 0;
+        uint32_t modeCosts[35];
+
+        pixel *above         = m_refAbove    + tuSize - 1;
+        pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
+        pixel *left          = m_refLeft     + tuSize - 1;
+        pixel *leftFiltered  = m_refLeftFlt  + tuSize - 1;
+
+        // 33 Angle modes once
+        ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
+        ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
+        ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+        pixel _above[4 * 32 + 1];
+        pixel _left[4 * 32 + 1];
+        int scaleTuSize = tuSize;
+        int scaleStride = stride;
+        int costShift = 0;
+
+        if (tuSize > 32)
         {
-            X265_CHECK(numModesForFullRD < numModesAvailable, "numModesAvailable too large\n");
+            pixel *aboveScale  = _above + 2 * 32;
+            pixel *leftScale   = _left + 2 * 32;
+
+            // origin is 64x64, we scale to 32x32 and setup required parameters
+            primitives.scale2D_64to32(bufScale, fenc, stride);
+            fenc = bufScale;
+
+            // reserve space in case primitives need to store data in above
+            // or left buffers
+            aboveScale[0] = leftScale[0] = above[0];
+            primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
+            primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
+
+            scaleTuSize = 32;
+            scaleStride = 32;
+            costShift = 2;
+            sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
+
+            // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
+            above         = aboveScale;
+            left          = leftScale;
+            aboveFiltered = aboveScale;
+            leftFiltered  = leftScale;
+        }
+
+        pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
+
+        // DC
+        primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
+        modeCosts[DC_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+
+        pixel *abovePlanar   = above;
+        pixel *leftPlanar    = left;
+
+        if (tuSize >= 8 && tuSize <= 32)
+        {
+            abovePlanar = aboveFiltered;
+            leftPlanar  = leftFiltered;
+        }
+
+        // PLANAR
+        primitives.intra_pred[sizeIdx][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
+        modeCosts[PLANAR_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+
+        // Transpose NxN
+        primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
+
+        primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
+
+        for (int mode = 2; mode < numModesAvailable; mode++)
+        {
+            bool modeHor = (mode < 18);
+            pixel *cmp = (modeHor ? buf_trans : fenc);
+            intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
+            modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+        }
+
+        uint32_t preds[3];
+        int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
+        
+        uint64_t mpms;
+        uint32_t rbits = xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
+
+        // Find N least cost modes. N = numModesForFullRD
+        for (int mode = 0; mode < numModesAvailable; mode++)
+        {
+            uint32_t sad = modeCosts[mode];
+            uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
+            uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
+            candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
+        }
+
+        for (int j = 0; j < numCand; j++)
+        {
+            bool mostProbableModeIncluded = false;
+            uint32_t mostProbableMode = preds[j];
 
             for (int i = 0; i < numModesForFullRD; i++)
-                candCostList[i] = MAX_INT64;
-
-            candNum = 0;
-            uint32_t modeCosts[35];
-
-            pixel *above         = m_refAbove    + tuSize - 1;
-            pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
-            pixel *left          = m_refLeft     + tuSize - 1;
-            pixel *leftFiltered  = m_refLeftFlt  + tuSize - 1;
-
-            // 33 Angle modes once
-            ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-            ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
-            ALIGN_VAR_32(pixel, bufScale[32 * 32]);
-            pixel _above[4 * 32 + 1];
-            pixel _left[4 * 32 + 1];
-            int scaleTuSize = tuSize;
-            int scaleStride = stride;
-            int costShift = 0;
-
-            if (tuSize > 32)
             {
-                pixel *aboveScale  = _above + 2 * 32;
-                pixel *leftScale   = _left + 2 * 32;
-
-                // origin is 64x64, we scale to 32x32 and setup required parameters
-                primitives.scale2D_64to32(bufScale, fenc, stride);
-                fenc = bufScale;
-
-                // reserve space in case primitives need to store data in above
-                // or left buffers
-                aboveScale[0] = leftScale[0] = above[0];
-                primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
-                primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
-
-                scaleTuSize = 32;
-                scaleStride = 32;
-                costShift = 2;
-                sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
-
-                // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
-                above         = aboveScale;
-                left          = leftScale;
-                aboveFiltered = aboveScale;
-                leftFiltered  = leftScale;
-            }
-
-            pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
-
-            // DC
-            primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-            modeCosts[DC_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-
-            pixel *abovePlanar   = above;
-            pixel *leftPlanar    = left;
-
-            if (tuSize >= 8 && tuSize <= 32)
-            {
-                abovePlanar = aboveFiltered;
-                leftPlanar  = leftFiltered;
-            }
-
-            // PLANAR
-            primitives.intra_pred[sizeIdx][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-            modeCosts[PLANAR_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-
-            // Transpose NxN
-            primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
-
-            primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-
-            for (int mode = 2; mode < numModesAvailable; mode++)
-            {
-                bool modeHor = (mode < 18);
-                pixel *cmp = (modeHor ? buf_trans : fenc);
-                intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-                modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-            }
-
-            uint32_t preds[3];
-            int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
-
-            uint64_t mpms;
-            uint32_t rbits = xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
-
-            // Find N least cost modes. N = numModesForFullRD
-            for (int mode = 0; mode < numModesAvailable; mode++)
-            {
-                uint32_t sad = modeCosts[mode];
-                uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
-                uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
-                candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
-            }
-
-            for (int j = 0; j < numCand; j++)
-            {
-                bool mostProbableModeIncluded = false;
-                uint32_t mostProbableMode = preds[j];
-
-                for (int i = 0; i < numModesForFullRD; i++)
+                if (mostProbableMode == rdModeList[i])
                 {
-                    if (mostProbableMode == rdModeList[i])
-                    {
-                        mostProbableModeIncluded = true;
-                        break;
-                    }
+                    mostProbableModeIncluded = true;
+                    break;
                 }
-
-                if (!mostProbableModeIncluded)
-                    rdModeList[numModesForFullRD++] = mostProbableMode;
             }
+
+            if (!mostProbableModeIncluded)
+                rdModeList[numModesForFullRD++] = mostProbableMode;
         }
-        else
-        {
-            for (int i = 0; i < numModesForFullRD; i++)
-                rdModeList[i] = i;
-        }
+
         x265_emms();
 
         //===== check modes (using r-d costs) =====
