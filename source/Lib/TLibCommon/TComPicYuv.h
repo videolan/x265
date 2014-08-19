@@ -100,7 +100,7 @@ public:
     //  Memory management
     // ------------------------------------------------------------------------------------------------
 
-    bool  create(int picWidth, int picHeight, int csp, uint32_t maxCUSize, uint32_t maxCUDepth);
+    bool  create(int picWidth, int picHeight, int csp, uint32_t maxCUSize, uint32_t maxFullDepth);
     void  destroy();
 
     // ------------------------------------------------------------------------------------------------

@@ -65,9 +65,6 @@ public:
     uint32_t      m_widthInCU;
     uint32_t      m_heightInCU;
 
-    uint32_t      m_unitSize;
-    uint32_t      m_log2UnitSize;
-
     uint32_t      m_numPartitions;
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
@@ -90,10 +87,6 @@ public:
     uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
 
     uint32_t    getFrameHeightInCU() const { return m_heightInCU; }
-
-    uint32_t    getUnitSize() const       { return m_unitSize; }
-
-    uint32_t    getLog2UnitSize() const   { return m_log2UnitSize; }
 
     uint32_t    getNumberOfCUsInFrame() const { return m_numCUsInFrame; }
 

@@ -70,27 +70,21 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
 
     for (uint32_t partIdx = absZOrderIdx; partIdx < absZOrderIdx + curNumParts; partIdx++)
     {
-        uint32_t bsCheck;
-
-        if (g_log2UnitSize == 2)
-            bsCheck = (dir == EDGE_VER && !(partIdx & 1)) || (dir == EDGE_HOR && !(partIdx & 2));
-        else
-            bsCheck = 1;
+        uint32_t bsCheck = (dir == EDGE_VER ? !(partIdx & 1) : !(partIdx & 2));
 
         if (edgeFilter[partIdx] && bsCheck)
             getBoundaryStrengthSingle(cu, dir, partIdx, blockingStrength);
     }
 
-    uint32_t log2UnitSize = g_log2UnitSize;
-    uint32_t partIdxIncr = (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) ? (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) : 1;
-    uint32_t sizeInPU = pic->getNumPartInCUSize() >> (depth);
+    uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
+    uint32_t sizeInPU = pic->getNumPartInCUSize() >> depth;
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->getHorzChromaShift() : cu->getVertChromaShift();
-    const bool alwaysDoChroma = (cu->getChromaFormat() == X265_CSP_I444 || (1 << log2UnitSize) > DEBLOCK_SMALLEST_BLOCK);
+    const bool alwaysDoChroma = cu->getChromaFormat() == X265_CSP_I444;
 
     for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
     {
         edgeFilterLuma(cu, absZOrderIdx, depth, dir, e, blockingStrength);
-        if (alwaysDoChroma || !(e % ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> log2UnitSize)))
+        if (alwaysDoChroma || !(e % ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE)))
             edgeFilterChroma(cu, absZOrderIdx, depth, dir, e, blockingStrength);
     }
 }
@@ -136,7 +130,7 @@ void Deblock::setEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uint32_t ab
         return;
     }
 
-    uint32_t widthInBaseUnits  = 1 << (cu->getLog2CUSize(absZOrderIdx) - cu->getTransformIdx(absZOrderIdx) - g_log2UnitSize);
+    uint32_t widthInBaseUnits  = 1 << (cu->getLog2CUSize(absZOrderIdx) - cu->getTransformIdx(absZOrderIdx) - LOG2_UNIT_SIZE);
     setEdgefilterMultiple(cu, absTUPartIdx, depth, dir, 0, true, edgeFilter, blockingStrength, widthInBaseUnits);
 }
 
@@ -461,8 +455,7 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     int32_t stride = reconYuv->getStride();
     uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
 
-    uint32_t log2UnitSize = g_log2UnitSize;
-    uint32_t blocksInPart = (log2UnitSize - 2) > 0 ? 1 << (log2UnitSize - 2) : 1;
+    uint32_t blocksInPart = (LOG2_UNIT_SIZE - 2) > 0 ? 1 << (LOG2_UNIT_SIZE - 2) : 1;
     uint32_t bsAbsIdx = 0, bs = 0;
     int32_t offset, srcStep;
 
@@ -479,18 +472,18 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     {
         offset = 1;
         srcStep = stride;
-        tmpsrc += (edge << log2UnitSize);
+        tmpsrc += (edge << LOG2_UNIT_SIZE);
     }
     else // (dir == EDGE_HOR)
     {
         offset = stride;
         srcStep = 1;
-        tmpsrc += (edge << log2UnitSize) * stride;
+        tmpsrc += (edge << LOG2_UNIT_SIZE) * stride;
     }
 
     for (uint32_t idx = 0; idx < numParts; idx++)
     {
-        uint32_t partOffset = idx << log2UnitSize;
+        uint32_t partOffset = idx << LOG2_UNIT_SIZE;
         bsAbsIdx = calcBsIdx(cu, absZOrderIdx, dir, edge, idx);
         bs = blockingStrength[bsAbsIdx];
         if (bs)
@@ -559,8 +552,8 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
     int32_t stride = reconYuv->getCStride();
     pixel* srcCb = reconYuv->getCbAddr(cu->getAddr(), absZOrderIdx);
     pixel* srcCr = reconYuv->getCrAddr(cu->getAddr(), absZOrderIdx);
-    uint32_t log2UnitSizeH = g_log2UnitSize - cu->getHorzChromaShift();
-    uint32_t log2UnitSizeV = g_log2UnitSize - cu->getVertChromaShift();
+    uint32_t log2UnitSizeH = LOG2_UNIT_SIZE - cu->getHorzChromaShift();
+    uint32_t log2UnitSizeV = LOG2_UNIT_SIZE - cu->getVertChromaShift();
     uint32_t sizeChromaH = 1 << log2UnitSizeH;
     uint32_t sizeChromaV = 1 << log2UnitSizeV;
     int32_t offset, srcStep;

@@ -168,7 +168,6 @@ public:
     int           m_chromaFormat;
     int           m_hChromaShift;
     int           m_vChromaShift;
-    uint32_t      m_unitMask;        ///< mask for mapping index to CompressMV field
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU data
@@ -247,7 +246,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
     // create / destroy / initialize / copy
     // -------------------------------------------------------------------------------------------------------------------
-    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int unitSize, int csp, int index, bool isLossLess);
+    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
 
     bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
 
@@ -260,9 +259,9 @@ public:
     void          copyToSubCU(TComDataCU* lcu, uint32_t partUnitIdx, uint32_t depth);
     void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
-    void          copyToPic(uint8_t depth);
-    void          copyToPic(uint8_t depth, uint32_t partIdx, uint32_t partDepth);
-    void          copyCodedToPic(uint8_t depth);
+    void          copyToPic(uint32_t depth);
+    void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
+    void          copyCodedToPic(uint32_t depth);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for CU description

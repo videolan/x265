@@ -119,10 +119,6 @@ public:
     uint32_t    getFrameWidthInCU() const  { return m_picSym->getFrameWidthInCU(); }
 
     uint32_t    getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
-
-    uint32_t    getUnitSize() const        { return m_picSym->getUnitSize(); }
-
-    uint32_t    getLog2UnitSize() const    { return m_picSym->getLog2UnitSize(); }
 };
 }
 

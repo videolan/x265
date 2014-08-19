@@ -50,8 +50,6 @@ using namespace x265;
 TComPicSym::TComPicSym()
     : m_widthInCU(0)
     , m_heightInCU(0)
-    , m_unitSize(0)
-    , m_log2UnitSize(0)
     , m_numPartitions(0)
     , m_numPartInCUSize(0)
     , m_numCUsInFrame(0)
@@ -65,14 +63,10 @@ bool TComPicSym::create(x265_param *param)
 {
     uint32_t i;
 
-    m_numPartitions   = 1 << (g_maxCUDepth << 1);
+    m_numPartitions   = 1 << g_maxFullDepth * 2;
+    m_numPartInCUSize = 1 << g_maxFullDepth;
 
-    m_log2UnitSize    = g_log2UnitSize;
-    m_unitSize        = 1 << m_log2UnitSize;
-
-    m_numPartInCUSize = g_maxCUSize >> m_log2UnitSize;
-
-    m_widthInCU       = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    m_widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
     m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
     m_numCUsInFrame   = m_widthInCU * m_heightInCU;
@@ -90,7 +84,7 @@ bool TComPicSym::create(x265_param *param)
         if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
             return false;
 
-        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, m_unitSize, param->internalCsp, 0, tqBypass);
+        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, param->internalCsp, 0, tqBypass);
     }
 
     return true;

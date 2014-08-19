@@ -578,13 +578,12 @@ void TComSampleAdaptiveOffset::processSaoCu(int addr, int saoType, int yCbCr)
         endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
         if (lcuWidth % 16)
         {
-            int8_t signRight;
             for (y = 0; y < lcuHeight; y++)
             {
                 int8_t signLeft = xSign(rec[startX] - tmpL[y]);
                 for (x = startX; x < endX; x++)
                 {
-                    signRight = xSign(rec[x] - rec[x + 1]);
+                    int8_t signRight = xSign(rec[x] - rec[x + 1]);
                     edgeType = signRight + signLeft + 2;
                     signLeft  = -signRight;
 
@@ -1278,7 +1277,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
     TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
     int hChromaShift = cu->getHorzChromaShift();
     int vChromaShift = cu->getVertChromaShift();
-    uint32_t lumaOffset   = absZOrderIdx << cu->m_pic->getLog2UnitSize() * 2;
+    uint32_t lumaOffset   = absZOrderIdx << LOG2_UNIT_SIZE * 2;
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
