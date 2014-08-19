@@ -2337,20 +2337,19 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
     outResiYuv->subtract(fencYuv, predYuv, log2CUSize);
 
-    // Residual coding.
     bool bIsTQBypassEnable = cu->m_slice->m_pps->bTransquantBypassEnabled;
-    uint32_t tqBypassMode  = 1;
+    uint32_t numModes  = 1;
 
-    if (bIsTQBypassEnable)
+    if (bIsTQBypassEnable && !m_param->bLossless)
     {
-        // mark that the first iteration is to cost TQB mode.
-        if (!m_param->bLossless)
-            tqBypassMode = 2;
+        /* When cu-lossless mode is enabled, and lossless mode is not,
+        2 modes need to be checked, normal and lossless mode*/
+        numModes = 2;
     }
 
     uint64_t bestCost = MAX_INT64;
 
-    for (uint32_t modeId = 0; modeId < tqBypassMode; modeId++)
+    for (uint32_t modeId = 0; modeId < numModes; modeId++)
     {
         bool bIsLosslessMode = bIsTQBypassEnable && !modeId;
 
