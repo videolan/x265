@@ -2338,7 +2338,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     outResiYuv->subtract(fencYuv, predYuv, log2CUSize);
 
     bool bIsTQBypassEnable = cu->m_slice->m_pps->bTransquantBypassEnabled;
-    uint32_t numModes  = 1;
+    uint32_t numModes = 1;
 
     if (bIsTQBypassEnable && !m_param->bLossless)
     {
