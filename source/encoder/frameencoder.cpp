@@ -119,7 +119,8 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     memset(&m_frameStats, 0, sizeof(m_frameStats));
-    m_nr = X265_MALLOC(NoiseReduction, 1);
+    if (m_param->noiseReduction)
+        m_nr = X265_MALLOC(NoiseReduction, 1);
     if (m_nr)
         memset(m_nr, 0, sizeof(NoiseReduction));
     else
