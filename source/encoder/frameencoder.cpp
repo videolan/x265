@@ -482,12 +482,18 @@ void FrameEncoder::encodeSlice()
         m_frameStats.coeffBits += cu->m_coeffBits;
         m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
 
-        if (col == widthInLCUs - 1)
+        if (m_param->bEnableWavefront && col == widthInLCUs - 1)
         {
             m_entropyCoder.codeTerminatingBit(1);
             m_entropyCoder.codeSliceFinish();
-            m_outStreams[lin].writeByteAlignment();
+            m_outStreams[subStrm].writeByteAlignment();
         }
+    }
+    if (!m_param->bEnableWavefront)
+    {
+        m_entropyCoder.codeTerminatingBit(1);
+        m_entropyCoder.codeSliceFinish();
+        m_outStreams[0].writeByteAlignment();
     }
 }
 
