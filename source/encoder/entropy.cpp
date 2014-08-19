@@ -612,7 +612,7 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
-            codeTerminatingBit(bTerminateSlice ? 1 : 0);
+            codeTerminatingBit(0);
 
         if (!m_bitIf)
             resetBits();
