@@ -1372,7 +1372,7 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--ssim used with AQ off: results will be invalid!\n");
             s = "ssim";
         }
-        else if (p->rc.aqMode && p->bEnablePsnr)
+        else if (p->rc.aqStrength > 0 && p->bEnablePsnr)
         {
             x265_log(p, X265_LOG_WARNING, "--psnr used with AQ on: results will be invalid!\n");
             s = "psnr";
