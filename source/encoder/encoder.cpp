@@ -1291,10 +1291,10 @@ void Encoder::configure(x265_param *p)
         p->crQpOffset += 6;
     }
 
-    // disable RDOQ if rdlevel < 4 or if psy-rd is enabled without psy-rdoq
-    m_bEnableRDOQ = p->rdLevel >= 4 ? (p->psyRdoq || !p->psyRd) : 0;
+    /* disable RDOQ if rdlevel < 4 */
+    m_bEnableRDOQ = p->rdLevel >= 4;
 
-    // disable psy-rdoq if psy-rd is not enabled (do not show in logs as in-use)
+    /* disable psy-rdoq if RDOQ is not enabled (do not show in logs as in-use) */
     if (!m_bEnableRDOQ)
         p->psyRdoq = 0;
 
