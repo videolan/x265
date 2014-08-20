@@ -543,8 +543,9 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
 
-        // if maximum RD-penalty don't check TU size 32x32
-        if (m_param->rdPenalty == 2)
+        // TODO: this check for tuQTMaxIntraDepth depth is a hack, it needs a better fix
+        if (m_param->rdPenalty == 2 && m_param->tuQTMaxIntraDepth > fullDepth)
+            // if maximum RD-penalty don't check TU size 32x32
             bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
     if (bCheckFirst && noSplitIntraMaxTuSize)
