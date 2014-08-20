@@ -1377,8 +1377,6 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
-    //====== Coding Tools ========
-
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
