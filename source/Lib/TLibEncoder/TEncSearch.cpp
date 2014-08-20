@@ -525,7 +525,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                      bool        bCheckFirst,
                                      uint64_t&   rdCost)
 {
-    uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
+    uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
     bool     bCheckFull  = (log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize);
     bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
