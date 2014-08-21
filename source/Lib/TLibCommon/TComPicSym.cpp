@@ -36,16 +36,9 @@
 */
 
 #include "TComPicSym.h"
-#include "TComSampleAdaptiveOffset.h"
+#include "TComPicYuv.h"
 
 using namespace x265;
-
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / create / destroy
-// ====================================================================================================================
 
 TComPicSym::TComPicSym()
     : m_widthInCU(0)
@@ -93,27 +86,13 @@ bool TComPicSym::create(x265_param *param)
 void TComPicSym::destroy()
 {
     delete m_slice;
-    m_slice = NULL;
 
     if (m_cuData)
+    {
         for (int i = 0; i < m_numCUsInFrame; i++)
             m_cuData[i].destroy();
-
-    delete [] m_cuData;
-    m_cuData = NULL;
-
-    if (m_saoParam)
-    {
-        TComSampleAdaptiveOffset::freeSaoParam(m_saoParam);
-        delete m_saoParam;
-        m_saoParam = NULL;
+        delete[] m_cuData;
     }
-}
 
-void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
-{
-    m_saoParam = new SAOParam;
-    sao->allocSaoParam(m_saoParam);
+    delete m_saoParam;
 }
-
-//! \}

@@ -46,18 +46,8 @@
 namespace x265 {
 // private namespace
 
-struct SAOParam;
-class TComSampleAdaptiveOffset;
 class TComPicYuv;
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
-
-/// picture symbol class
 class TComPicSym
 {
 public:
@@ -79,10 +69,10 @@ public:
 
     bool          m_bHasReferences; // used during DPB/RPS updates
 
+    TComPicSym();
+
     bool        create(x265_param *param);
     void        destroy();
-
-    TComPicSym();
 
     uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
 
@@ -95,12 +85,7 @@ public:
     uint32_t    getNumPartition() const   { return m_numPartitions; }
 
     uint32_t    getNumPartInCUSize() const { return m_numPartInCUSize; }
-
-    void allocSaoParam(TComSampleAdaptiveOffset *sao);
-
-    SAOParam *getSaoParam()               { return m_saoParam; }
-}; // END CLASS DEFINITION TComPicSym
+};
 }
-//! \}
 
 #endif // ifndef X265_TCOMPICSYM_H

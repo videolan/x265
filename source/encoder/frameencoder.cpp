@@ -329,7 +329,7 @@ void FrameEncoder::compressFrame()
     if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
     {
         /* frame based SAO */
-        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->getSaoParam());
+        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->m_saoParam);
         m_frameFilter.m_sao.endSaoEnc();
         restoreLFDisabledOrigYuv(m_frame);
 
@@ -424,7 +424,7 @@ void FrameEncoder::encodeSlice()
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
+    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
 
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {

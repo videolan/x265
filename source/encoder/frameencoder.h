@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Chung Shin Yee <shinyee@multicorewareinc.com>
+ * Authors: Shin Yee <shinyee@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #include "frame.h"
 
 #include "analysis.h"
-#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "sao.h"
 
 #include "entropy.h"
 #include "framefilter.h"

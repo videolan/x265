@@ -28,7 +28,7 @@
 #include "common.h"
 #include "frame.h"
 #include "deblock.h"
-#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "sao.h"
 
 namespace x265 {
 // private x265 namespace
@@ -56,26 +56,26 @@ public:
 
 protected:
 
-    x265_param*                 m_param;
-    Frame*                      m_pic;
-    FrameEncoder*               m_frame;
-    int                         m_hChromaShift;
-    int                         m_vChromaShift;
-    int                         m_pad[2];
+    x265_param*   m_param;
+    Frame*        m_pic;
+    FrameEncoder* m_frame;
+    int           m_hChromaShift;
+    int           m_vChromaShift;
+    int           m_pad[2];
 
 public:
 
-    Deblock                     m_deblock;
-    TEncSampleAdaptiveOffset    m_sao;
-    int                         m_numRows;
-    int                         m_saoRowDelay;
+    Deblock       m_deblock;
+    SAO           m_sao;
+    int           m_numRows;
+    int           m_saoRowDelay;
 
     // SAO
-    Entropy                     m_entropyCoder;
-    Entropy*                    m_row0EntropyCoder;  // to mimic HM behavior
+    Entropy       m_entropyCoder;
+    Entropy*      m_row0EntropyCoder;  // to mimic HM behavior
     
-    /* Temp storage for ssim computation that doesn't need repeated malloc */
-    void*                       m_ssimBuf;
+    /* Temp storage for ssim computation */
+    void*         m_ssimBuf;
 };
 }
 

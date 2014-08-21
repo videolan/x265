@@ -70,8 +70,8 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
 
     if (m_param->bEnableSAO)
     {
-        m_sao.setSaoLcuBoundary(m_param->saoLcuBoundary);
-        m_sao.setSaoLcuBasedOptimization(m_param->saoLcuBasedOptimization);
+        m_sao.setSaoLcuBoundary(!!m_param->saoLcuBoundary);
+        m_sao.setSaoLcuBasedOptimization(!!m_param->saoLcuBasedOptimization);
         m_sao.create(m_param->sourceWidth, m_param->sourceHeight, g_maxCUSize, g_maxCUSize, m_param->internalCsp);
         m_sao.createEncBuffer();
     }
@@ -90,11 +90,12 @@ void FrameFilter::start(Frame *pic)
         m_sao.resetStats();
         m_sao.createPicSaoInfo(pic);
 
-        SAOParam* saoParam = pic->getPicSym()->getSaoParam();
+        SAOParam* saoParam = pic->getPicSym()->m_saoParam;
         if (!saoParam)
         {
-            pic->getPicSym()->allocSaoParam(&m_sao);
-            saoParam = pic->getPicSym()->getSaoParam();
+            saoParam = new SAOParam;
+            m_sao.allocSaoParam(saoParam);
+            pic->getPicSym()->m_saoParam = saoParam;
         }
 
         m_sao.resetSAOParam(saoParam);
@@ -156,7 +157,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     }
 
     // SAO
-    SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
+    SAOParam* saoParam = m_pic->getPicSym()->m_saoParam;
     if (m_param->bEnableSAO && m_sao.getSaoLcuBasedOptimization())
     {
         m_sao.rdoSaoUnitRow(saoParam, row);
@@ -460,7 +461,7 @@ void FrameFilter::processSao(int row)
 {
     const uint32_t numCols = m_pic->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    SAOParam* saoParam = m_pic->getPicSym()->getSaoParam();
+    SAOParam* saoParam = m_pic->getPicSym()->m_saoParam;
 
     // NOTE: these flags are not used in this mode
     X265_CHECK(!saoParam->oneUnitFlag[0] && !saoParam->oneUnitFlag[1] && !saoParam->oneUnitFlag[2], "invalid SAO flag");
@@ -481,7 +482,7 @@ void FrameFilter::processSao(int row)
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_pic->getCU(cuAddr);
 
-            xOrigCUSampleRestoration(cu, 0, 0);
+            origCUSampleRestoration(cu, 0, 0);
         }
     }
 }

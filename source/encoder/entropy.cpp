@@ -24,8 +24,8 @@
 #include "common.h"
 #include "scalinglist.h"
 #include "quant.h"
+#include "sao.h"
 #include "entropy.h"
-#include "TLibCommon/TComSampleAdaptiveOffset.h"
 
 #define CU_DQP_TU_CMAX 5 // max number bins for truncated unary
 #define CU_DQP_EG_k    0 // exp-golomb order
@@ -379,7 +379,7 @@ void Entropy::codeSliceHeader(Slice* slice)
 
         WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
-    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
+    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
     if (slice->m_sps->bUseSAO)
     {
         WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
