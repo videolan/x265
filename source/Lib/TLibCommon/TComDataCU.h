@@ -422,7 +422,7 @@ public:
 
     void          getMvField(TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& rcMvField);
 
-    int           fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info, MV *mvc);
+    int           fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, MV* amvpCand, MV* mvc);
     bool          isDiffMER(int xN, int yN, int xP, int yP);
     void          getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH);
     void          setMVPIdx(int picList, uint32_t idx, int mvpIdx) { m_mvpIdx[picList][idx] = (uint8_t)mvpIdx; }

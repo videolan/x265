@@ -2000,25 +2000,15 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
  * \param info
  * \param mvc
  */
-int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, AMVPInfo* info, MV *mvc)
+int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, MV* amvpCand, MV* mvc)
 {
-    info->m_num = 0;
+    int num = 0;
 
     //-- Get Spatial MV
     uint32_t partIdxLT, partIdxRT, partIdxLB;
 
     deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
     deriveLeftBottomIdx(partIdx, partIdxLB);
-
-    uint32_t idx;
-    TComDataCU* tmpCU = getPUBelowLeft(idx, partIdxLB);
-    bool bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
-
-    if (!bAddedSmvp)
-    {
-        tmpCU = getPULeft(idx, partIdxLB);
-        bAddedSmvp = (tmpCU != NULL) && (tmpCU->getPredictionMode(idx) != MODE_INTRA);
-    }
 
     MV mv[MD_ABOVE_LEFT + 1];
     MV mvOrder[MD_ABOVE_LEFT + 1];
@@ -2039,30 +2029,32 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
 
     // Left predictor search
     if (valid[MD_BELOW_LEFT])
-        info->m_mvCand[info->m_num++] = mv[MD_BELOW_LEFT];
+        amvpCand[num++] = mv[MD_BELOW_LEFT];
     else if (valid[MD_LEFT])
-        info->m_mvCand[info->m_num++] = mv[MD_LEFT];
+        amvpCand[num++] = mv[MD_LEFT];
     else if (validOrder[MD_BELOW_LEFT])
-        info->m_mvCand[info->m_num++] = mvOrder[MD_BELOW_LEFT];
+        amvpCand[num++] = mvOrder[MD_BELOW_LEFT];
     else if (validOrder[MD_LEFT])
-        info->m_mvCand[info->m_num++] = mvOrder[MD_LEFT];
+        amvpCand[num++] = mvOrder[MD_LEFT];
+
+    bool bAddedSmvp = num > 0;
 
     // Above predictor search
     if (valid[MD_ABOVE_RIGHT])
-        info->m_mvCand[info->m_num++] = mv[MD_ABOVE_RIGHT];
+        amvpCand[num++] = mv[MD_ABOVE_RIGHT];
     else if (valid[MD_ABOVE])
-        info->m_mvCand[info->m_num++] = mv[MD_ABOVE];
+        amvpCand[num++] = mv[MD_ABOVE];
     else if (valid[MD_ABOVE_LEFT])
-        info->m_mvCand[info->m_num++] = mv[MD_ABOVE_LEFT];
+        amvpCand[num++] = mv[MD_ABOVE_LEFT];
 
     if (!bAddedSmvp)
     {
         if (validOrder[MD_ABOVE_RIGHT])
-            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE_RIGHT];
+            amvpCand[num++] = mvOrder[MD_ABOVE_RIGHT];
         else if (validOrder[MD_ABOVE])
-            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE];
+            amvpCand[num++] = mvOrder[MD_ABOVE];
         else if (validOrder[MD_ABOVE_LEFT])
-            info->m_mvCand[info->m_num++] = mvOrder[MD_ABOVE_LEFT];
+            amvpCand[num++] = mvOrder[MD_ABOVE_LEFT];
     }
 
     int numMvc = 0;
@@ -2075,12 +2067,12 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
             mvc[numMvc++] = mvOrder[dir];
     }
 
-    if (info->m_num == 2)
+    if (num == 2)
     {
-        if (info->m_mvCand[0] == info->m_mvCand[1])
-            info->m_num = 1;
+        if (amvpCand[0] == amvpCand[1])
+            num = 1;
         else
-            /* AMVP_MAX_NUM_CANDS = 2 */
+            /* AMVP_NUM_CANDS = 2 */
             return numMvc;
     }
 
@@ -2126,7 +2118,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         }
         if (lcuIdx >= 0 && xGetColMVP(picList, lcuIdx, absPartAddr, colmv, refIdxCol))
         {
-            info->m_mvCand[info->m_num++] = colmv;
+            amvpCand[num++] = colmv;
             mvc[numMvc++] = colmv;
         }
         else
@@ -2136,17 +2128,16 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
             xDeriveCenterIdx(partIdx, partIdxCenter);
             if (xGetColMVP(picList, curLCUIdx, partIdxCenter, colmv, refIdxCol))
             {
-                info->m_mvCand[info->m_num++] = colmv;
+                amvpCand[num++] = colmv;
                 mvc[numMvc++] = colmv;
             }
         }
         //----  co-located RightBottom Temporal Predictor  ---//
     }
 
-    while (info->m_num < AMVP_MAX_NUM_CANDS)
+    while (num < AMVP_NUM_CANDS)
     {
-        info->m_mvCand[info->m_num] = 0;
-        info->m_num++;
+        amvpCand[num++] = 0;
     }
 
     return numMvc;

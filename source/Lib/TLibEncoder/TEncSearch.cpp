@@ -1851,7 +1851,8 @@ uint32_t TEncSearch::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
  */
 bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
 {
-    AMVPInfo amvpInfo[2][MAX_NUM_REF];
+    MV amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
+    MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
     Slice *slice        = cu->m_slice;
     TComPicYuv *fenc    = slice->m_pic->getPicYuvOrg();
@@ -1931,17 +1932,16 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 uint32_t bits = listSelBits[l] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[l]);
 
-                MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-                int numMvc = cu->fillMvpCand(partIdx, partAddr, l, ref, &amvpInfo[l][ref], mvc);
+                int numMvc = cu->fillMvpCand(partIdx, partAddr, l, ref, amvpCand[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
                 uint32_t bestCost = MAX_INT;
                 int mvpIdx = 0;
                 int merange = m_param->searchRange;
 
-                for (int i = 0; i < amvpInfo[l][ref].m_num; i++)
+                for (int i = 0; i < AMVP_NUM_CANDS; i++)
                 {
-                    MV mvCand = amvpInfo[l][ref].m_mvCand[i];
+                    MV mvCand = amvpCand[l][ref][i];
 
                     // NOTE: skip mvCand if Y is > merange and -FN>1
                     if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
@@ -1961,7 +1961,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                     }
                 }
 
-                MV mvmin, mvmax, outmv, mvp = amvpInfo[l][ref].m_mvCand[mvpIdx];
+                MV mvmin, mvmax, outmv, mvp = amvpCand[l][ref][mvpIdx];
 
                 xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
@@ -1971,7 +1971,7 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
                 uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                xCheckBestMVP(&amvpInfo[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                xCheckBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
 
                 if (cost < list[l].cost)
                 {
@@ -2039,19 +2039,17 @@ bool TEncSearch::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOn
 
                 MV mvp0 = list[0].mvp;
                 int mvpIdx0 = list[0].mvpIdx;
-                m_me.setMVP(mvp0);
-                uint32_t bits0 = list[0].bits - m_me.bitcost(list[0].mv) + m_me.bitcost(mvzero);
+                uint32_t bits0 = list[0].bits - m_me.bitcost(list[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
 
                 MV mvp1 = list[1].mvp;
                 int mvpIdx1 = list[1].mvpIdx;
-                m_me.setMVP(mvp1);
-                uint32_t bits1 = list[1].bits - m_me.bitcost(list[1].mv) + m_me.bitcost(mvzero);
+                uint32_t bits1 = list[1].bits - m_me.bitcost(list[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
 
                 uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
                 /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
-                xCheckBestMVP(&amvpInfo[0][list[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
-                xCheckBestMVP(&amvpInfo[1][list[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
+                xCheckBestMVP(amvpCand[0][list[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
+                xCheckBestMVP(amvpCand[1][list[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
 
                 if (cost < bidirCost)
                 {
@@ -2190,37 +2188,19 @@ void TEncSearch::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-void TEncSearch::xCheckBestMVP(AMVPInfo* amvpInfo, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
+void TEncSearch::xCheckBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
 {
-    X265_CHECK(amvpInfo->m_mvCand[outMvpIdx] == mvPred, "xCheckBestMVP: unexpected mvPred\n");
+    X265_CHECK(amvpCand[outMvpIdx] == mvPred, "xCheckBestMVP: unexpected mvPred\n");
 
-    m_me.setMVP(mvPred);
-    int bestMvpIdx = outMvpIdx;
-    int mvBitsOrig = m_me.bitcost(mv) + MVP_IDX_BITS;
-    int bestMvBits = mvBitsOrig;
-
-    for (int mvpIdx = 0; mvpIdx < amvpInfo->m_num; mvpIdx++)
+    int mvpIdx = !outMvpIdx;
+    MV mvp = amvpCand[mvpIdx];
+    int diffBits = m_me.bitcost(mv, mvp) - m_me.bitcost(mv, mvPred);
+    if (diffBits < 0)
     {
-        if (mvpIdx == outMvpIdx)
-            continue;
-
-        m_me.setMVP(amvpInfo->m_mvCand[mvpIdx]);
-        int mvbits = m_me.bitcost(mv) + MVP_IDX_BITS;
-
-        if (mvbits < bestMvBits)
-        {
-            bestMvBits = mvbits;
-            bestMvpIdx = mvpIdx;
-        }
-    }
-
-    if (bestMvpIdx != outMvpIdx) // if changed
-    {
-        mvPred = amvpInfo->m_mvCand[bestMvpIdx];
-
-        outMvpIdx = bestMvpIdx;
+        outMvpIdx = mvpIdx;
+        mvPred = mvp;
         uint32_t origOutBits = outBits;
-        outBits = origOutBits - mvBitsOrig + bestMvBits;
+        outBits = origOutBits + diffBits;
         outCost = (outCost - m_rdCost.getCost(origOutBits)) + m_rdCost.getCost(outBits);
     }
 }
