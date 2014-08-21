@@ -58,8 +58,9 @@ protected:
     enum { LUMA_GROUP_NUM = 1 << SAO_BO_BITS };
     enum { MAX_NUM_SAO_OFFSETS = 4 };
     enum { MAX_NUM_SAO_CLASS = 33 };
+    enum { SAO_BIT_INC = X265_MAX(X265_DEPTH - 10, 0) };
+    enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
 
-    static const int      s_maxDepth;
     static const int      s_numCulPartsLevel[5];
     static const int      s_numClass[MAX_NUM_SAO_TYPE];
     static const uint32_t s_eoTable[9];
@@ -91,10 +92,6 @@ protected:
     int         m_numTotalParts;
     int         m_hChromaShift;
     int         m_vChromaShift;
-
-    /* TODO: compile-time */
-    uint32_t    m_saoBitIncrease;
-    int         m_offsetTh;
 
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;

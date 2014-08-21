@@ -105,8 +105,6 @@ const int SAO::s_numClass[MAX_NUM_SAO_TYPE] =
     SAO_BO_LEN
 };
 
-const int SAO::s_maxDepth = SAO_MAX_DEPTH;
-
 SAO::SAO()
 {
     m_entropyCoder = NULL;
@@ -152,8 +150,6 @@ SAO::SAO()
     m_depthSaoRate[1][2] = 0;
     m_depthSaoRate[1][3] = 0;
 
-    m_saoBitIncrease = X265_MAX(X265_DEPTH - 10, 0);
-    m_offsetTh = 1 << X265_MIN(X265_DEPTH - 5, 5);
 }
 
 void SAO::create(x265_param *param)
@@ -168,8 +164,8 @@ void SAO::create(x265_param *param)
     int maxSplitLevelHeight = (int)(logf((float)m_numCuInHeight) / logf(2.0));
     int maxSplitLevelWidth  = (int)(logf((float)m_numCuInWidth) / logf(2.0));
 
-    m_maxSplitLevel = (maxSplitLevelHeight < maxSplitLevelWidth) ? (maxSplitLevelHeight) : (maxSplitLevelWidth);
-    m_maxSplitLevel = (m_maxSplitLevel < s_maxDepth) ? (m_maxSplitLevel) : (s_maxDepth);
+    m_maxSplitLevel = maxSplitLevelHeight < maxSplitLevelWidth ? maxSplitLevelHeight : maxSplitLevelWidth;
+    m_maxSplitLevel = X265_MIN(m_maxSplitLevel, SAO_MAX_DEPTH);
 
     /* various structures are overloaded to store per component data.
      * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
@@ -829,7 +825,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                             offset[i] = 0;
 
                         for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
-                            offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << m_saoBitIncrease;
+                            offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
                         clipTable = sChroma ? m_chromaClipTable : m_clipTable;
@@ -840,7 +836,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
                         for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
-                            offset[i + 1] = saoLcuParam[addr].offset[i] << m_saoBitIncrease;
+                            offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         for (edgeType = 0; edgeType < 6; edgeType++)
                             m_offsetEo[edgeType] = offset[s_eoTable[edgeType]];
@@ -956,7 +952,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                         offset[i] = 0;
 
                     for (i = 0; i < saoLcuParam[addr].length; i++)
-                        offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << m_saoBitIncrease;
+                        offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                     lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
                     clipTable = sChroma ? m_chromaClipTable : m_clipTable;
@@ -967,7 +963,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                 if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {
                     for (i = 0; i < saoLcuParam[addr].length; i++)
-                        offset[i + 1] = saoLcuParam[addr].offset[i] << m_saoBitIncrease;
+                        offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                     for (edgeType = 0; edgeType < 6; edgeType++)
                         m_offsetEo[edgeType] = offset[s_eoTable[edgeType]];
@@ -2289,8 +2285,8 @@ inline int64_t SAO::estSaoTypeDist(int compIdx, int typeIdx, int shift, double l
         }
         if (m_count[compIdx][typeIdx][classIdx])
         {
-            m_offset[compIdx][typeIdx][classIdx] = (int64_t)roundIDBI((double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (X265_DEPTH - 8)) / (double)(m_count[compIdx][typeIdx][classIdx] << m_saoBitIncrease));
-            m_offset[compIdx][typeIdx][classIdx] = Clip3(-m_offsetTh + 1, m_offsetTh - 1, (int)m_offset[compIdx][typeIdx][classIdx]);
+            m_offset[compIdx][typeIdx][classIdx] = (int64_t)roundIDBI((double)(m_offsetOrg[compIdx][typeIdx][classIdx] << (X265_DEPTH - 8)) / (double)(m_count[compIdx][typeIdx][classIdx] << SAO_BIT_INC));
+            m_offset[compIdx][typeIdx][classIdx] = Clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, (int)m_offset[compIdx][typeIdx][classIdx]);
             if (typeIdx < 4)
             {
                 if (m_offset[compIdx][typeIdx][classIdx] < 0 && classIdx < 3)
@@ -2298,7 +2294,7 @@ inline int64_t SAO::estSaoTypeDist(int compIdx, int typeIdx, int shift, double l
                 if (m_offset[compIdx][typeIdx][classIdx] > 0 && classIdx >= 3)
                     m_offset[compIdx][typeIdx][classIdx] = 0;
             }
-            m_offset[compIdx][typeIdx][classIdx] = estIterOffset(typeIdx, classIdx, lambda, m_offset[compIdx][typeIdx][classIdx], m_count[compIdx][typeIdx][classIdx], m_offsetOrg[compIdx][typeIdx][classIdx], shift, m_saoBitIncrease, currentDistortionTableBo, currentRdCostTableBo, m_offsetTh);
+            m_offset[compIdx][typeIdx][classIdx] = estIterOffset(typeIdx, classIdx, lambda, m_offset[compIdx][typeIdx][classIdx], m_count[compIdx][typeIdx][classIdx], m_offsetOrg[compIdx][typeIdx][classIdx], shift, SAO_BIT_INC, currentDistortionTableBo, currentRdCostTableBo, OFFSET_THRESH);
         }
         else
         {
@@ -2306,7 +2302,7 @@ inline int64_t SAO::estSaoTypeDist(int compIdx, int typeIdx, int shift, double l
             m_offset[compIdx][typeIdx][classIdx] = 0;
         }
         if (typeIdx != SAO_BO)
-            estDist += estSaoDist(m_count[compIdx][typeIdx][classIdx], m_offset[compIdx][typeIdx][classIdx] << m_saoBitIncrease, m_offsetOrg[compIdx][typeIdx][classIdx], shift);
+            estDist += estSaoDist(m_count[compIdx][typeIdx][classIdx], m_offset[compIdx][typeIdx][classIdx] << SAO_BIT_INC, m_offsetOrg[compIdx][typeIdx][classIdx], shift);
     }
 
     return estDist;
