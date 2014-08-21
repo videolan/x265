@@ -83,12 +83,12 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
 void FrameFilter::start(Frame *pic)
 {
     m_pic = pic;
+    m_sao.m_pic = pic;
     m_entropyCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
         m_sao.resetStats();
-        m_sao.createPicSaoInfo(pic);
 
         SAOParam* saoParam = pic->getPicSym()->m_saoParam;
         if (!saoParam)

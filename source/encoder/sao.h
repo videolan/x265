@@ -59,25 +59,22 @@ class SAO
 {
 protected:
 
-    Frame* m_pic;
-
-    /* TODO: rename these with s_ prefixes */
-    static const uint32_t m_maxDepth;
-    static const int      m_numCulPartsLevel[5];
-    static const uint32_t m_eoTable[9];
-    static const int      m_numClass[MAX_NUM_SAO_TYPE];
+    static const uint32_t s_maxDepth;
+    static const int      s_numCulPartsLevel[5];
+    static const uint32_t s_eoTable[9];
+    static const int      s_numClass[MAX_NUM_SAO_TYPE];
 
     Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
     Entropy*    m_entropyCoder;
 
-    int64_t  ***m_count;     // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t  ***m_offset;    // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t  ***m_offsetOrg; // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
+    int64_t  ***m_count;        // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
+    int64_t  ***m_offset;       // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
+    int64_t  ***m_offsetOrg;    // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
     int64_t   (*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];     // [LCU][plane][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
     int64_t   (*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; // [LCU][plane][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t   **m_rate;      // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    int64_t   **m_dist;      // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    double    **m_cost;      // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
+    int64_t   **m_rate;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
+    int64_t   **m_dist;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
+    double    **m_cost;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
     double     *m_costPartBest; // [MAX_NUM_SAO_PART]
     int64_t    *m_distOrg;      // [MAX_NUM_SAO_PART]
     int        *m_typePartBest; // [MAX_NUM_SAO_PART]
@@ -108,7 +105,7 @@ protected:
     pixel*      m_chromaClipTable;
     pixel*      m_chromaClipTableBase;
     pixel*      m_chromaTableBo;
-    TComPicYuv* m_tmpYuv;  //!< temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
+    TComPicYuv* m_tmpYuv;  // temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
 
     pixel*      m_tmpU1[3];
     pixel*      m_tmpU2[3];
@@ -117,14 +114,13 @@ protected:
     bool        m_saoLcuBoundary;
     bool        m_saoLcuBasedOptimization;
 
-
 public:
 
-    /* TODO: m_ prefixes */
-    int         depth;
-    int         numNoSao[2];
-    double      lumaLambda;
-    double      chromaLambda;
+    Frame*      m_pic;
+    int         m_refDepth;
+    int         m_numNoSao[2];
+    double      m_lumaLambda;
+    double      m_chromaLambda;
     /* TODO: No doubles for distortion */
 
     SAO();
@@ -141,8 +137,6 @@ public:
 
     // LCU-basd SAO process without slice granularity
     void processSaoCu(int addr, int partIdx, int plane);
-    void createPicSaoInfo(Frame* pic) { m_pic = pic; }
-    void endSaoEnc()                  { m_pic = NULL; }
 
     void resetLcuPart(SaoLcuParam* saoLcuParam);
     void convertQT2SaoUnit(SAOParam* saoParam, uint32_t partIdx, int plane);

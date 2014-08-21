@@ -209,18 +209,18 @@ void FrameEncoder::compressFrame()
     m_rce.newQp = qp;
 
     int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
-    m_frameFilter.m_sao.lumaLambda = x265_lambda2_tab[qp];
-    m_frameFilter.m_sao.chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
+    m_frameFilter.m_sao.m_lumaLambda = x265_lambda2_tab[qp];
+    m_frameFilter.m_sao.m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
     switch (slice->m_sliceType)
     {
     case I_SLICE:
-        m_frameFilter.m_sao.depth = 0;
+        m_frameFilter.m_sao.m_refDepth = 0;
         break;
     case P_SLICE:
-        m_frameFilter.m_sao.depth = 1;
+        m_frameFilter.m_sao.m_refDepth = 1;
         break;
     case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !IS_REFERENCED(slice);
+        m_frameFilter.m_sao.m_refDepth = 2 + !IS_REFERENCED(slice);
         break;
     }
     m_frameFilter.start(m_frame);
@@ -330,7 +330,6 @@ void FrameEncoder::compressFrame()
     {
         /* frame based SAO */
         m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->m_saoParam);
-        m_frameFilter.m_sao.endSaoEnc();
         restoreLFDisabledOrigYuv(m_frame);
 
         // Extend border after whole-frame SAO is finished
