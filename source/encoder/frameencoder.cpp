@@ -198,8 +198,6 @@ void FrameEncoder::compressFrame()
     {
         m_outStreams = new Bitstream[numSubstreams];
         m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
-        for (uint32_t i = 0; i < numSubstreams; i++)
-            m_rows[i].m_rowEntropyCoder.setBitstream(&m_outStreams[i]);
     }
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
@@ -211,18 +209,18 @@ void FrameEncoder::compressFrame()
     m_rce.newQp = qp;
 
     int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
-    m_frameFilter.m_sao.lumaLambda = x265_lambda2_tab[qp];
-    m_frameFilter.m_sao.chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
+    m_frameFilter.m_sao.m_lumaLambda = x265_lambda2_tab[qp];
+    m_frameFilter.m_sao.m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
     switch (slice->m_sliceType)
     {
     case I_SLICE:
-        m_frameFilter.m_sao.depth = 0;
+        m_frameFilter.m_sao.m_refDepth = 0;
         break;
     case P_SLICE:
-        m_frameFilter.m_sao.depth = 1;
+        m_frameFilter.m_sao.m_refDepth = 1;
         break;
     case B_SLICE:
-        m_frameFilter.m_sao.depth = 2 + !IS_REFERENCED(slice);
+        m_frameFilter.m_sao.m_refDepth = 2 + !IS_REFERENCED(slice);
         break;
     }
     m_frameFilter.start(m_frame);
@@ -328,11 +326,11 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
+
     if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
     {
         /* frame based SAO */
-        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->getSaoParam());
-        m_frameFilter.m_sao.endSaoEnc();
+        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->m_saoParam);
         restoreLFDisabledOrigYuv(m_frame);
 
         // Extend border after whole-frame SAO is finished
@@ -426,7 +424,7 @@ void FrameEncoder::encodeSlice()
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    SAOParam *saoParam = slice->m_pic->getPicSym()->getSaoParam();
+    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
 
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
@@ -439,10 +437,10 @@ void FrameEncoder::encodeSlice()
 
         // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
-            m_rows[subStrm].m_rowEntropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
-
-        // this load is used to simplify the code (avoid to change all the call to m_entropyCoder)
-        m_entropyCoder.load(m_rows[subStrm].m_rowEntropyCoder);
+        {
+            m_entropyCoder.copyState(m_initSliceContext);
+            m_entropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
+        }
 
         if (slice->m_sps->bUseSAO)
         {
@@ -473,29 +471,29 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
-        m_tld.m_cuCoder.m_quant.m_entropyCoder = &m_entropyCoder;
-        m_tld.m_cuCoder.encodeCU(cu);
-
-        // load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-        m_rows[subStrm].m_rowEntropyCoder.load(m_entropyCoder);
+        m_entropyCoder.encodeCU(cu);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_rows[subStrm].m_rowEntropyCoder);
+            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_entropyCoder);
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
         m_frameStats.coeffBits += cu->m_coeffBits;
         m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
-    }
 
-    // flush lines
-    for (int i = 0; i < numSubstreams; i++)
+        if (m_param->bEnableWavefront && col == widthInLCUs - 1)
+        {
+            m_entropyCoder.codeTerminatingBit(1);
+            m_entropyCoder.codeSliceFinish();
+            m_outStreams[subStrm].writeByteAlignment();
+        }
+    }
+    if (!m_param->bEnableWavefront)
     {
-        m_rows[i].m_rowEntropyCoder.codeTerminatingBit(1);
-        m_rows[i].m_rowEntropyCoder.codeSliceFinish();
-        m_outStreams[i].writeByteAlignment();
+        m_entropyCoder.codeTerminatingBit(1);
+        m_entropyCoder.codeSliceFinish();
+        m_outStreams[0].writeByteAlignment();
     }
 }
 
@@ -505,15 +503,10 @@ void FrameEncoder::compressCTURows()
     Slice* slice = m_frame->m_picSym->m_slice;
 
     // reset entropy coders
-    m_entropyCoder.resetEntropy(slice);
+    m_initSliceContext.resetEntropy(slice);
+    m_entropyCoder.load(m_initSliceContext);
     for (int i = 0; i < m_numRows; i++)
-    {
-        m_rows[i].init(slice);
-        m_rows[i].m_rdEntropyCoders[0][CI_CURR_BEST].load(m_entropyCoder);
-        m_rows[i].m_rowEntropyCoder.load(m_entropyCoder);
-        m_rows[i].m_completed = 0;
-        m_rows[i].m_busy = false;
-    }
+        m_rows[i].init(m_initSliceContext);
 
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
@@ -701,14 +694,14 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         if (m_param->rc.bStatWrite)
         {
             double scale = (double)(1 << (g_maxCUSize / 16));
-            for (uint32_t part = 0; part < g_maxCUDepth ; part++, scale /= 4)
+            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, scale /= 4)
             {
-                curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[part];
-                curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[part];
-                curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[part];
+                curRow.m_iCuCnt += scale * tld.m_cuCoder.m_log->qTreeIntraCnt[depth];
+                curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[depth];
+                curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[depth];
 
                 //clear the row cu data from thread local object
-                tld.m_cuCoder.m_log->qTreeIntraCnt[part] = tld.m_cuCoder.m_log->qTreeInterCnt[part] = tld.m_cuCoder.m_log->qTreeSkipCnt[part] = 0;
+                tld.m_cuCoder.m_log->qTreeIntraCnt[depth] = tld.m_cuCoder.m_log->qTreeInterCnt[depth] = tld.m_cuCoder.m_log->qTreeSkipCnt[depth] = 0;
             }
         }
 

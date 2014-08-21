@@ -101,7 +101,7 @@
 #define MIN_QPSCALE                 0.21249999999999999
 #define MAX_MAX_QPSCALE             615.46574234477100
 
-#define AMVP_MAX_NUM_CANDS          2 // max number of final AMVP candidates
+#define AMVP_NUM_CANDS              2 // number of AMVP candidates
 #define MRG_MAX_NUM_CANDS           5 // max number of final merge candidates
 
 #define MAX_CHROMA_FORMAT_IDC       3 //  TODO: Remove me

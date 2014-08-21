@@ -216,7 +216,7 @@ protected:
     // Inter search (AMP)
     // --------------------------------------------------------------------------------------------
 
-    void xCheckBestMVP(AMVPInfo* amvpInfo, MV cMv, MV& mvPred, int& mvpIdx,
+    void xCheckBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx,
                        uint32_t& outBits, uint32_t& outCost);
 
     void xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
