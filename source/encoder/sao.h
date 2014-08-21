@@ -93,10 +93,8 @@ protected:
     int         m_vChromaShift;
 
     /* TODO: compile-time */
-    uint32_t    m_saoBitIncreaseY;
-    uint32_t    m_saoBitIncreaseC; // for chroma
-    int         m_offsetThY;
-    int         m_offsetThC;
+    uint32_t    m_saoBitIncrease;
+    int         m_offsetTh;
 
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
