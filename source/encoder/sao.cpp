@@ -25,12 +25,6 @@
 #include "common.h"
 #include "sao.h"
 
-#if _MSC_VER // TODO: fix all these warnings
-#pragma warning(disable: 4244)
-#pragma warning(disable: 4018)
-#pragma warning(disable: 4389)
-#endif
-
 namespace {
 
 #if HIGH_BIT_DEPTH
@@ -80,23 +74,56 @@ int convertLevelRowCol2Idx(int level, int row, int col)
 
 namespace x265 {
 
-SAO::SAO()
-    : m_entropyCoder(NULL)
-    , m_count(NULL)
-    , m_offset(NULL)
-    , m_offsetOrg(NULL)
-    , m_countPreDblk(NULL)
-    , m_offsetOrgPreDblk(NULL)
-    , m_rate(NULL)
-    , m_dist(NULL)
-    , m_cost(NULL)
-    , m_costPartBest(NULL)
-    , m_distOrg(NULL)
-    , m_typePartBest(NULL)
-    , m_lumaLambda(0.)
-    , m_chromaLambda(0.)
-    , m_refDepth(0)
+const int SAO::s_numCulPartsLevel[5] =
 {
+    1,   // level 0
+    5,   // level 1
+    21,  // level 2
+    85,  // level 3
+    341, // level 4
+};
+
+const uint32_t SAO::s_eoTable[9] =
+{
+    1, // 0
+    2, // 1
+    0, // 2
+    3, // 3
+    4, // 4
+    0, // 5
+    0, // 6
+    0, // 7
+    0
+};
+
+const int SAO::s_numClass[MAX_NUM_SAO_TYPE] =
+{
+    SAO_EO_LEN,
+    SAO_EO_LEN,
+    SAO_EO_LEN,
+    SAO_EO_LEN,
+    SAO_BO_LEN
+};
+
+const int SAO::s_maxDepth = SAO_MAX_DEPTH;
+
+SAO::SAO()
+{
+    m_entropyCoder = NULL;
+    m_count = NULL;
+    m_offset = NULL;
+    m_offsetOrg = NULL;
+    m_countPreDblk = NULL;
+    m_offsetOrgPreDblk = NULL;
+    m_rate = NULL;
+    m_dist = NULL;
+    m_cost = NULL;
+    m_costPartBest = NULL;
+    m_distOrg = NULL;
+    m_typePartBest = NULL;
+    m_refDepth = 0;
+    m_lumaLambda = 0;
+    m_chromaLambda = 0;
     m_param = NULL;
     m_numTotalParts = 0;
     m_clipTable = NULL;
@@ -130,39 +157,6 @@ SAO::SAO()
     m_offsetThY = 1 << X265_MIN(X265_DEPTH - 5, 5);
     m_offsetThC = 1 << X265_MIN(X265_DEPTH - 5, 5);
 }
-
-const int SAO::s_numCulPartsLevel[5] =
-{
-    1,   // level 0
-    5,   // level 1
-    21,  // level 2
-    85,  // level 3
-    341, // level 4
-};
-
-const uint32_t SAO::s_eoTable[9] =
-{
-    1, // 0
-    2, // 1
-    0, // 2
-    3, // 3
-    4, // 4
-    0, // 5
-    0, // 6
-    0, // 7
-    0
-};
-
-const int SAO::s_numClass[MAX_NUM_SAO_TYPE] =
-{
-    SAO_EO_LEN,
-    SAO_EO_LEN,
-    SAO_EO_LEN,
-    SAO_EO_LEN,
-    SAO_BO_LEN
-};
-
-const uint32_t SAO::s_maxDepth = SAO_MAX_DEPTH;
 
 void SAO::create(x265_param *param)
 {
@@ -206,42 +200,39 @@ void SAO::create(x265_param *param)
     for (uint32_t k2 = 0; k2 < pixelRangeC; k2++)
         m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
 
-    int16_t i;
-
-    uint32_t maxY = (1 << X265_DEPTH) - 1;
-    uint32_t minY = 0;
-
+    int maxY = (1 << X265_DEPTH) - 1;
+    int minY = 0;
     int rangeExt = maxY >> 1;
 
     m_clipTableBase = X265_MALLOC(pixel, maxY + 2 * rangeExt);
     m_offsetBo      = X265_MALLOC(int, maxY + 2 * rangeExt);
 
-    for (i = 0; i < (minY + rangeExt); i++)
+    for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
 
-    for (i = minY + rangeExt; i < (maxY +  rangeExt); i++)
+    for (int i = minY + rangeExt; i < (maxY +  rangeExt); i++)
         m_clipTableBase[i] = i - rangeExt;
 
-    for (i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
+    for (int i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
         m_clipTableBase[i] = maxY;
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
-    uint32_t maxC = (1 << X265_DEPTH) - 1;
-    uint32_t minC = 0;
+    int maxC = (1 << X265_DEPTH) - 1;
+    int minC = 0;
 
     int rangeExtC = maxC >> 1;
 
     m_chromaClipTableBase = X265_MALLOC(pixel, maxC + 2 * rangeExtC);
     m_chromaOffsetBo      = X265_MALLOC(int, maxC + 2 * rangeExtC);
 
-    for (i = 0; i < (minC + rangeExtC); i++)
+    for (int i = 0; i < (minC + rangeExtC); i++)
         m_chromaClipTableBase[i] = minC;
 
-    for (i = minC + rangeExtC; i < (maxC +  rangeExtC); i++)
+    for (int i = minC + rangeExtC; i < (maxC +  rangeExtC); i++)
         m_chromaClipTableBase[i] = i - rangeExtC;
 
-    for (i = maxC + rangeExtC; i < (maxC + 2 * rangeExtC); i++)
+    for (int i = maxC + rangeExtC; i < (maxC + 2 * rangeExtC); i++)
         m_chromaClipTableBase[i] = maxC;
 
     m_chromaClipTable = &(m_chromaClipTableBase[rangeExtC]);
@@ -511,19 +502,19 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     int  lcuHeight = m_maxCUHeight;
     uint32_t lpelx = tmpCu->getCUPelX();
     uint32_t tpely = tmpCu->getCUPelY();
-    uint32_t rpelx;
-    uint32_t bpely;
-    int  edgeType;
-    int  signDown;
-    int  signDown1;
-    int  signDown2;
+    int rpelx;
+    int bpely;
+    int edgeType;
+    int signDown;
+    int signDown1;
+    int signDown2;
     int picWidthTmp;
     int picHeightTmp;
     int startX;
     int startY;
     int endX;
     int endY;
-    int isChroma = (plane != 0) ? 1 : 0;
+    bool isLuma = !plane;
     int shift;
     int cuHeightTmp;
     pixel* tmpL;
@@ -531,12 +522,12 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
 
-    picWidthTmp  = (isChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
-    picHeightTmp = (isChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
-    lcuWidth     = (isChroma == 0) ? lcuWidth    : lcuWidth    >> m_hChromaShift;
-    lcuHeight    = (isChroma == 0) ? lcuHeight   : lcuHeight   >> m_vChromaShift;
-    lpelx        = (isChroma == 0) ? lpelx       : lpelx       >> m_hChromaShift;
-    tpely        = (isChroma == 0) ? tpely       : tpely       >> m_vChromaShift;
+    picWidthTmp  = isLuma ? m_picWidth  : m_picWidth  >> m_hChromaShift;
+    picHeightTmp = isLuma ? m_picHeight : m_picHeight >> m_vChromaShift;
+    lcuWidth     = isLuma ? lcuWidth    : lcuWidth    >> m_hChromaShift;
+    lcuHeight    = isLuma ? lcuHeight   : lcuHeight   >> m_vChromaShift;
+    lpelx        = isLuma ? lpelx       : lpelx       >> m_hChromaShift;
+    tpely        = isLuma ? tpely       : tpely       >> m_vChromaShift;
 
     rpelx        = lpelx + lcuWidth;
     bpely        = tpely + lcuHeight;
@@ -564,8 +555,8 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
     {
-        cuHeightTmp  = (isChroma == 0) ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
-        shift = (isChroma == 0) ? (m_maxCUWidth - 1) : ((m_maxCUWidth >> m_hChromaShift) - 1);
+        cuHeightTmp = isLuma ? m_maxCUHeight  : (m_maxCUHeight  >> m_vChromaShift);
+        shift = isLuma ? (m_maxCUWidth - 1) : ((m_maxCUWidth >> m_hChromaShift) - 1);
         for (int i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL2[i] = rec[shift];
@@ -779,7 +770,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
 
     memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
-    int  i;
+    uint32_t i;
     uint32_t edgeType;
     pixel* lumaTable = NULL;
     pixel* clipTable = NULL;
@@ -849,7 +840,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                         for (i = 0; i < SAO_MAX_BO_CLASSES + 1; i++)
                             offset[i] = 0;
 
-                        for (i = 0; i < saoLcuParam[addr].length; i++)
+                        for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << saoBitIncrease;
 
                         lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
@@ -860,7 +851,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
-                        for (i = 0; i < saoLcuParam[addr].length; i++)
+                        for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
                             offset[i + 1] = saoLcuParam[addr].offset[i] << saoBitIncrease;
 
                         for (edgeType = 0; edgeType < 6; edgeType++)
@@ -950,7 +941,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
         stride = m_pic->getStride();
         picWidthTmp = m_picWidth;
     }
-    uint32_t maxCUHeight = sChroma ? (m_maxCUHeight >> m_vChromaShift) : m_maxCUHeight;
+    int maxCUHeight = sChroma ? (m_maxCUHeight >> m_vChromaShift) : m_maxCUHeight;
     for (i = 0; i < maxCUHeight + 1; i++)
     {
         m_tmpL1[i] = rec[0];
@@ -1081,13 +1072,13 @@ void SAO::convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int plane
             saoLcuParam[addr].subTypeIdx = saoQTPart[partIdx].subTypeIdx;
             if (saoLcuParam[addr].typeIdx != -1)
             {
-                saoLcuParam[addr].length    = saoQTPart[partIdx].length;
+                saoLcuParam[addr].length = saoQTPart[partIdx].length;
                 for (int j = 0; j < MAX_NUM_SAO_OFFSETS; j++)
                     saoLcuParam[addr].offset[j] = saoQTPart[partIdx].offset[j];
             }
             else
             {
-                saoLcuParam[addr].length    = 0;
+                saoLcuParam[addr].length = 0;
                 saoLcuParam[addr].subTypeIdx = saoQTPart[partIdx].subTypeIdx;
                 for (int j = 0; j < MAX_NUM_SAO_OFFSETS; j++)
                     saoLcuParam[addr].offset[j] = 0;
@@ -1279,7 +1270,7 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
             onePart->offset[i] = (int)m_offset[partIdx][onePart->bestType][minIndex + i + 1];
     }
     else
-        onePart->length     = 0;
+        onePart->length = 0;
 }
 
 /* Run partition tree disable */
@@ -1298,7 +1289,7 @@ void SAO::disablePartTree(SAOQTPart *psQTPart, int partIdx)
     }
 }
 
-/** Run quadtree decision function */
+/* Run quadtree decision function */
 void SAO::runQuadTreeDecision(SAOQTPart *qtPart, int partIdx, double &costFinal, int maxLevel, double lambda, int plane)
 {
     SAOQTPart* onePart = &(qtPart[partIdx]);
@@ -1389,25 +1380,26 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
     int startY;
     int endX;
     int endY;
-    pixel* pTableBo = (plane == 0) ? m_lumaTableBo : m_chromaTableBo;
 
-    int iIsChroma = (plane != 0) ? 1 : 0;
-    int numSkipLine = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
+    int isLuma = !plane;
+    int isChroma = !!plane;
+    pixel* pTableBo = isLuma ? m_lumaTableBo : m_chromaTableBo;
+    int numSkipLine = isChroma ? 4 - (2 * m_vChromaShift) : 4;
 
     if (!m_param->saoLcuBasedOptimization)
         numSkipLine = 0;
 
-    int numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
+    int numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
 
     if (!m_param->saoLcuBasedOptimization)
         numSkipLineRight = 0;
 
-    picWidthTmp  = (iIsChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
-    picHeightTmp = (iIsChroma == 0) ? m_picHeight : m_picHeight >> m_vChromaShift;
-    lcuWidth     = (iIsChroma == 0) ? lcuWidth    : lcuWidth   >> m_hChromaShift;
-    lcuHeight    = (iIsChroma == 0) ? lcuHeight   : lcuHeight  >> m_vChromaShift;
-    lpelx        = (iIsChroma == 0) ? lpelx       : lpelx       >> m_hChromaShift;
-    tpely        = (iIsChroma == 0) ? tpely       : tpely       >> m_vChromaShift;
+    picWidthTmp  = isLuma ? m_picWidth  : m_picWidth  >> m_hChromaShift;
+    picHeightTmp = isLuma ? m_picHeight : m_picHeight >> m_vChromaShift;
+    lcuWidth     = isLuma ? lcuWidth    : lcuWidth   >> m_hChromaShift;
+    lcuHeight    = isLuma ? lcuHeight   : lcuHeight  >> m_vChromaShift;
+    lpelx        = isLuma ? lpelx       : lpelx       >> m_hChromaShift;
+    tpely        = isLuma ? tpely       : tpely       >> m_vChromaShift;
 
     rpelx     = lpelx + lcuWidth;
     bpely     = tpely + lcuHeight;
@@ -1421,8 +1413,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
     {
         if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
         {
-            numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
-            numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
+            numSkipLine      = isChroma ? 3 - (2 * m_vChromaShift) : 3;
+            numSkipLineRight = isChroma ? 4 - (2 * m_hChromaShift) : 4;
         }
         stats = m_offsetOrg[partIdx][SAO_BO];
         counts = m_count[partIdx][SAO_BO];
@@ -1464,8 +1456,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
-                numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
-                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
+                numSkipLine      = isChroma ? 3 - (2 * m_vChromaShift) : 3;
+                numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             stats = m_offsetOrg[partIdx][SAO_EO_0];
             counts = m_count[partIdx][SAO_EO_0];
@@ -1497,8 +1489,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
-                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
-                numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
+                numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = isChroma ? 4 - (2 * m_hChromaShift) : 4;
             }
             stats = m_offsetOrg[partIdx][SAO_EO_1];
             counts = m_count[partIdx][SAO_EO_1];
@@ -1538,8 +1530,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
-                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
-                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
+                numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             stats = m_offsetOrg[partIdx][SAO_EO_2];
             counts = m_count[partIdx][SAO_EO_2];
@@ -1584,8 +1576,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
-                numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
-                numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
+                numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
+                numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
             }
             stats = m_offsetOrg[partIdx][SAO_EO_3];
             counts = m_count[partIdx][SAO_EO_3];
@@ -1676,8 +1668,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
             memset(m_offsetOrgPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
             for (int plane = 0; plane < 3; plane++)
             {
-                isChroma = (plane != 0) ? 1 : 0;
-
+                isChroma = !!plane;
                 if (plane == 0)
                 {
                     picWidthTmp  = m_picWidth;

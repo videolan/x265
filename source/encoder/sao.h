@@ -59,10 +59,10 @@ protected:
     enum { MAX_NUM_SAO_OFFSETS = 4 };
     enum { MAX_NUM_SAO_CLASS = 33 };
 
-    static const uint32_t s_maxDepth;
+    static const int      s_maxDepth;
     static const int      s_numCulPartsLevel[5];
-    static const uint32_t s_eoTable[9];
     static const int      s_numClass[MAX_NUM_SAO_TYPE];
+    static const uint32_t s_eoTable[9];
 
     Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
     Entropy*    m_entropyCoder;
@@ -86,7 +86,7 @@ protected:
     /* TODO: these are dups */
     int         m_picWidth;
     int         m_picHeight;
-    uint32_t    m_maxSplitLevel;
+    int         m_maxSplitLevel;
     uint32_t    m_maxCUWidth;
     uint32_t    m_maxCUHeight;
     int         m_numCuInWidth;
