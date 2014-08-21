@@ -326,6 +326,7 @@ void FrameEncoder::compressFrame()
         m_frameStats.cuCount_p /= totalCuCount;
         m_frameStats.cuCount_skip /= totalCuCount;
     }
+
     if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
     {
         /* frame based SAO */

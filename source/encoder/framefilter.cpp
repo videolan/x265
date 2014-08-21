@@ -69,7 +69,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
         m_sao.create(m_param);
 
     if (m_param->bEnableSsim)
-        m_ssimBuf = (int*)x265_malloc(sizeof(int) * 8 * (m_param->sourceWidth / 4 + 3));
+        m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
 }
 
 void FrameFilter::start(Frame *pic)
@@ -114,7 +114,7 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
     }
 
     // NOTE: We are here only active both of loopfilter and sao, the row 0 always finished, so we can safe to copy row[0]'s data
-    if (row == 0 && m_param->bEnableSAO)
+    if (!row && m_param->bEnableSAO)
     {
         // NOTE: not need, seems HM's bug, I want to keep output exact matched.
         m_entropyCoder.m_fracBits = m_row0EntropyCoder->m_fracBits;
@@ -142,10 +142,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             }
         }
 
-        {
-            TComDataCU* cu_prev = m_frame->getCU(lineStartCUAddr + numCols - 1);
-            m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
-        }
+        TComDataCU* cu_prev = m_frame->getCU(lineStartCUAddr + numCols - 1);
+        m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
     }
 
     // SAO
@@ -195,7 +193,7 @@ void FrameFilter::processRowPost(int row)
     primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
     primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
     // Border extend Top
-    if (row == 0)
+    if (!row)
     {
         const intptr_t stride = recon->getStride();
         const intptr_t strideC = recon->getCStride();
