@@ -61,6 +61,20 @@ inline int signOf(int x)
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
+int convertLevelRowCol2Idx(int level, int row, int col)
+{
+    if (!level)
+        return 0;
+    else if (level == 1)
+        return 1 + row * 2 + col;
+    else if (level == 2)
+        return 5 + row * 4 + col;
+    else if (level == 3)
+        return 21 + row * 8 + col;
+    else // (level == 4)
+        return 85 + row * 16 + col;
+}
+
 } // end anonymous namespace
 
 
@@ -149,34 +163,6 @@ const int SAO::s_numClass[MAX_NUM_SAO_TYPE] =
 };
 
 const uint32_t SAO::s_maxDepth = SAO_MAX_DEPTH;
-
-/* convert Level Row Col to Idx */
-int SAO::convertLevelRowCol2Idx(int level, int row, int col)
-{
-    int idx;
-
-    if (level == 0)
-    {
-        idx = 0;
-    }
-    else if (level == 1)
-    {
-        idx = 1 + row * 2 + col;
-    }
-    else if (level == 2)
-    {
-        idx = 5 + row * 4 + col;
-    }
-    else if (level == 3)
-    {
-        idx = 21 + row * 8 + col;
-    }
-    else // (level == 4)
-    {
-        idx = 85 + row * 16 + col;
-    }
-    return idx;
-}
 
 void SAO::create(x265_param *param)
 {

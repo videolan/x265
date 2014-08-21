@@ -178,8 +178,6 @@ public:
     void rdoSaoUnitRowInit(SAOParam *saoParam);
     void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
     void rdoSaoUnitRow(SAOParam *saoParam, int idxY);
-
-    static int convertLevelRowCol2Idx(int level, int row, int col);
 };
 
 void restoreLFDisabledOrigYuv(Frame* pic);
