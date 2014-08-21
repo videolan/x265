@@ -83,12 +83,9 @@ protected:
     int32_t*    m_chromaOffsetBo;
     int8_t      m_offsetEo[LUMA_GROUP_NUM];
 
-    /* TODO: these are dups */
-    int         m_picWidth;
-    int         m_picHeight;
     int         m_maxSplitLevel;
-    uint32_t    m_maxCUWidth;
-    uint32_t    m_maxCUHeight;
+
+    /* TODO: these are dups */
     int         m_numCuInWidth;
     int         m_numCuInHeight;
     int         m_numTotalParts;
