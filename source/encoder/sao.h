@@ -49,15 +49,15 @@ enum SAOType
     MAX_NUM_SAO_TYPE
 };
 
-#define SAO_MAX_DEPTH       4
-#define SAO_BO_BITS         5
-#define LUMA_GROUP_NUM      (1 << SAO_BO_BITS)
-#define MAX_NUM_SAO_OFFSETS 4
-#define MAX_NUM_SAO_CLASS   33
-
 class SAO
 {
 protected:
+
+    enum { SAO_MAX_DEPTH = 4 };
+    enum { SAO_BO_BITS  = 5 };
+    enum { LUMA_GROUP_NUM = 1 << SAO_BO_BITS };
+    enum { MAX_NUM_SAO_OFFSETS = 4 };
+    enum { MAX_NUM_SAO_CLASS = 33 };
 
     static const uint32_t s_maxDepth;
     static const int      s_numCulPartsLevel[5];
@@ -78,12 +78,12 @@ protected:
     double     *m_costPartBest; // [MAX_NUM_SAO_PART]
     int64_t    *m_distOrg;      // [MAX_NUM_SAO_PART]
     int        *m_typePartBest; // [MAX_NUM_SAO_PART]
-    int         m_offsetThY;
-    int         m_offsetThC;
     double      m_depthSaoRate[2][4];
     int32_t*    m_offsetBo;
     int32_t*    m_chromaOffsetBo;
     int8_t      m_offsetEo[LUMA_GROUP_NUM];
+
+    /* TODO: these are dups */
     int         m_picWidth;
     int         m_picHeight;
     uint32_t    m_maxSplitLevel;
@@ -95,9 +95,11 @@ protected:
     int         m_hChromaShift;
     int         m_vChromaShift;
 
+    /* TODO: compile-time */
     uint32_t    m_saoBitIncreaseY;
     uint32_t    m_saoBitIncreaseC; // for chroma
-    uint32_t    m_qp;
+    int         m_offsetThY;
+    int         m_offsetThC;
 
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
@@ -105,27 +107,30 @@ protected:
     pixel*      m_chromaClipTable;
     pixel*      m_chromaClipTableBase;
     pixel*      m_chromaTableBo;
-    TComPicYuv* m_tmpYuv;  // temporary picture buffer pointer when non-across slice/tile boundary SAO is enabled
+
+    /* TODO: likely not necessary */
+    TComPicYuv* m_tmpYuv;
 
     pixel*      m_tmpU1[3];
     pixel*      m_tmpU2[3];
     pixel*      m_tmpL1;
     pixel*      m_tmpL2;
-    bool        m_saoLcuBoundary;
-    bool        m_saoLcuBasedOptimization;
 
 public:
 
     Frame*      m_pic;
+    x265_param* m_param;
     int         m_refDepth;
     int         m_numNoSao[2];
+    
+    uint32_t    m_qp;
     double      m_lumaLambda;
     double      m_chromaLambda;
     /* TODO: No doubles for distortion */
 
     SAO();
 
-    void create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, int csp);
+    void create(x265_param *param);
     void destroy();
 
     void initSAOParam(SAOParam* saoParam, int partLevel, int partRow, int partCol, int parentPartIdx, int startCUX, int endCUX, int startCUY, int endCUY, int plane) const;
@@ -143,11 +148,6 @@ public:
     void convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int plane);
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plane);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane);
-
-    /* TODO: use m_param */
-    void setSaoLcuBasedOptimization(bool bVal)  { m_saoLcuBasedOptimization = bVal; }
-    void setSaoLcuBoundary(bool bVal)           { m_saoLcuBoundary = bVal; }
-    bool getSaoLcuBasedOptimization()           { return m_saoLcuBasedOptimization; }
 
     void resetSaoUnit(SaoLcuParam* saoUnit);
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);

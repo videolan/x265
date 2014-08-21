@@ -57,8 +57,8 @@ public:
 protected:
 
     x265_param*   m_param;
-    Frame*        m_pic;
-    FrameEncoder* m_frame;
+    Frame*        m_frame;
+    FrameEncoder* m_frameEncoder;
     int           m_hChromaShift;
     int           m_vChromaShift;
     int           m_pad[2];

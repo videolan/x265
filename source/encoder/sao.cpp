@@ -83,6 +83,7 @@ SAO::SAO()
     , m_chromaLambda(0.)
     , m_refDepth(0)
 {
+    m_param = NULL;
     m_clipTable = NULL;
     m_clipTableBase = NULL;
     m_chromaClipTable = NULL;
@@ -176,16 +177,17 @@ int SAO::convertLevelRowCol2Idx(int level, int row, int col)
     return idx;
 }
 
-void SAO::create(uint32_t sourceWidth, uint32_t sourceHeight, uint32_t maxCUWidth, uint32_t maxCUHeight, int csp)
+void SAO::create(x265_param *param)
 {
-    m_hChromaShift = CHROMA_H_SHIFT(csp);
-    m_vChromaShift = CHROMA_V_SHIFT(csp);
+    m_param = param;
+    m_hChromaShift = CHROMA_H_SHIFT(param->internalCsp);
+    m_vChromaShift = CHROMA_V_SHIFT(param->internalCsp);
 
-    m_picWidth  = sourceWidth;
-    m_picHeight = sourceHeight;
+    m_picWidth  = param->sourceWidth;
+    m_picHeight = param->sourceHeight;
 
-    m_maxCUWidth  = maxCUWidth;
-    m_maxCUHeight = maxCUHeight;
+    m_maxCUWidth = param->maxCUSize;
+    m_maxCUHeight = param->maxCUSize;
 
     m_numCuInWidth  = m_picWidth / m_maxCUWidth;
     m_numCuInWidth += (m_picWidth % m_maxCUWidth) ? 1 : 0;
@@ -1413,12 +1415,12 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
     int iIsChroma = (plane != 0) ? 1 : 0;
     int numSkipLine = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
 
-    if (m_saoLcuBasedOptimization == 0)
+    if (!m_param->saoLcuBasedOptimization)
         numSkipLine = 0;
 
     int numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
 
-    if (m_saoLcuBasedOptimization == 0)
+    if (!m_param->saoLcuBasedOptimization)
         numSkipLineRight = 0;
 
     picWidthTmp  = (iIsChroma == 0) ? m_picWidth  : m_picWidth  >> m_hChromaShift;
@@ -1438,7 +1440,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
 
     //if(iSaoType == BO_0 || iSaoType == BO_1)
     {
-        if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+        if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
         {
             numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
             numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
@@ -1481,7 +1483,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
     {
         //if (iSaoType == EO_0)
         {
-            if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+            if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
                 numSkipLine      = iIsChroma ? 3 - (2 * m_vChromaShift) : 3;
                 numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -1514,7 +1516,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
 
         //if (iSaoType == EO_1)
         {
-            if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+            if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
                 numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = iIsChroma ? 4 - (2 * m_hChromaShift) : 4;
@@ -1555,7 +1557,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         }
         //if (iSaoType == EO_2)
         {
-            if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+            if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
                 numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -1601,7 +1603,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         }
         //if (iSaoType == EO_3)
         {
-            if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+            if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
             {
                 numSkipLine      = iIsChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = iIsChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -2034,7 +2036,7 @@ void SAO::resetStats()
 /* Sample adaptive offset process */
 void SAO::SAOProcess(SAOParam *saoParam)
 {
-    X265_CHECK(!m_saoLcuBasedOptimization, "SAO LCU mode failure\n"); 
+    X265_CHECK(!m_param->saoLcuBasedOptimization, "SAO LCU mode failure\n"); 
     double costFinal = 0;
     saoParam->bSaoFlag[0] = 1;
     saoParam->bSaoFlag[1] = 0;
@@ -2234,7 +2236,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 for (k = 0; k < MAX_NUM_SAO_CLASS; k++)
                 {
                     m_offset[compIdx][j][k] = 0;
-                    if (m_saoLcuBasedOptimization && m_saoLcuBoundary)
+                    if (m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
                     {
                         m_count[compIdx][j][k] = m_countPreDblk[addr][compIdx][j][k];
                         m_offsetOrg[compIdx][j][k] = m_offsetOrgPreDblk[addr][compIdx][j][k];
