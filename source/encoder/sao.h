@@ -163,8 +163,6 @@ public:
     void getSaoStats(SAOQTPart *psQTPart, int plane);
     void calcSaoStatsCu(int addr, int partIdx, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
-    void destroyEncBuffer();
-    void createEncBuffer();
     void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, bool &oneUnitFlag);
     void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, int dir);
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int plane,

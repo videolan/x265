@@ -84,6 +84,7 @@ SAO::SAO()
     , m_refDepth(0)
 {
     m_param = NULL;
+    m_numTotalParts = 0;
     m_clipTable = NULL;
     m_clipTableBase = NULL;
     m_chromaClipTable = NULL;
@@ -269,6 +270,45 @@ void SAO::create(x265_param *param)
     m_tmpU2[0] = X265_MALLOC(pixel, m_picWidth);
     m_tmpU2[1] = X265_MALLOC(pixel, m_picWidth);
     m_tmpU2[2] = X265_MALLOC(pixel, m_picWidth);
+
+    /* TODO: checked malloc */
+    m_distOrg = X265_MALLOC(int64_t, m_numTotalParts);
+    m_costPartBest = X265_MALLOC(double, m_numTotalParts);
+    m_typePartBest = X265_MALLOC(int, m_numTotalParts);
+
+    m_rate = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
+    m_cost = X265_MALLOC(double*, m_numTotalParts);
+
+    m_count = X265_MALLOC(int64_t * *, m_numTotalParts);
+    m_offset = X265_MALLOC(int64_t * *, m_numTotalParts);
+    m_offsetOrg = X265_MALLOC(int64_t * *, m_numTotalParts);
+
+    for (int i = 0; i < m_numTotalParts; i++)
+    {
+        m_rate[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_dist[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
+        m_cost[i] = X265_MALLOC(double, MAX_NUM_SAO_TYPE);
+
+        m_count[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offset[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        m_offsetOrg[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+
+        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
+        {
+            m_count[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offset[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            m_offsetOrg[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+        }
+    }
+
+    if (!m_countPreDblk)
+    {
+        /* TODO: do not use new */
+        int numLcu = m_numCuInWidth * m_numCuInHeight;
+        m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+        m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    }
 }
 
 void SAO::destroy()
@@ -290,6 +330,36 @@ void SAO::destroy()
     X265_FREE(m_tmpU2[0]);
     X265_FREE(m_tmpU2[1]);
     X265_FREE(m_tmpU2[2]);
+
+    for (int i = 0; i < m_numTotalParts; i++)
+    {
+        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
+        {
+            X265_FREE(m_count[i][j]);
+            X265_FREE(m_offset[i][j]);
+            X265_FREE(m_offsetOrg[i][j]);
+        }
+
+        X265_FREE(m_rate[i]);
+        X265_FREE(m_dist[i]);
+        X265_FREE(m_cost[i]);
+        X265_FREE(m_count[i]);
+        X265_FREE(m_offset[i]);
+        X265_FREE(m_offsetOrg[i]);
+    }
+
+    X265_FREE(m_distOrg);
+    X265_FREE(m_costPartBest);
+    X265_FREE(m_typePartBest);
+    X265_FREE(m_rate);
+    X265_FREE(m_dist);
+    X265_FREE(m_cost);
+    X265_FREE(m_count);
+    X265_FREE(m_offset);
+    X265_FREE(m_offsetOrg);
+
+    delete[] m_countPreDblk;
+    delete[] m_offsetOrgPreDblk;
 }
 
 /* allocate memory for SAO parameters */
@@ -1294,83 +1364,6 @@ void SAO::runQuadTreeDecision(SAOQTPart *qtPart, int partIdx, double &costFinal,
     }
     else
         costFinal = onePart->minCost;
-}
-
-/* TODO: combine with destroy() */
-void SAO::destroyEncBuffer()
-{
-    for (int i = 0; i < m_numTotalParts; i++)
-    {
-        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
-        {
-            X265_FREE(m_count[i][j]);
-            X265_FREE(m_offset[i][j]);
-            X265_FREE(m_offsetOrg[i][j]);
-        }
-
-        X265_FREE(m_rate[i]);
-        X265_FREE(m_dist[i]);
-        X265_FREE(m_cost[i]);
-        X265_FREE(m_count[i]);
-        X265_FREE(m_offset[i]);
-        X265_FREE(m_offsetOrg[i]);
-    }
-
-    X265_FREE(m_distOrg);
-    X265_FREE(m_costPartBest);
-    X265_FREE(m_typePartBest);
-    X265_FREE(m_rate);
-    X265_FREE(m_dist);
-    X265_FREE(m_cost);
-    X265_FREE(m_count);
-    X265_FREE(m_offset);
-    X265_FREE(m_offsetOrg);
-
-    delete[] m_countPreDblk;
-    delete[] m_offsetOrgPreDblk;
-}
-
-/* TODO: combine with create() */
-void SAO::createEncBuffer()
-{
-    /* TODO: checked malloc */
-    m_distOrg = X265_MALLOC(int64_t, m_numTotalParts);
-    m_costPartBest = X265_MALLOC(double, m_numTotalParts);
-    m_typePartBest = X265_MALLOC(int, m_numTotalParts);
-
-    m_rate = X265_MALLOC(int64_t*, m_numTotalParts);
-    m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
-    m_cost = X265_MALLOC(double*, m_numTotalParts);
-
-    m_count  = X265_MALLOC(int64_t * *, m_numTotalParts);
-    m_offset = X265_MALLOC(int64_t * *, m_numTotalParts);
-    m_offsetOrg = X265_MALLOC(int64_t * *, m_numTotalParts);
-
-    for (int i = 0; i < m_numTotalParts; i++)
-    {
-        m_rate[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
-        m_dist[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
-        m_cost[i] = X265_MALLOC(double, MAX_NUM_SAO_TYPE);
-
-        m_count[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
-        m_offset[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
-        m_offsetOrg[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
-
-        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
-        {
-            m_count[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
-            m_offset[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
-            m_offsetOrg[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
-        }
-    }
-
-    if (!m_countPreDblk)
-    {
-        /* TODO: do not use new */
-        int numLcu = m_numCuInWidth * m_numCuInHeight;
-        m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-        m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    }
 }
 
 /* Start SAO encoder */

@@ -44,11 +44,8 @@ FrameFilter::FrameFilter()
 void FrameFilter::destroy()
 {
     if (m_param->bEnableSAO)
-    {
-        // NOTE: I don't check sao flag since loopfilter and sao have same control status
         m_sao.destroy();
-        m_sao.destroyEncBuffer();
-    }
+
     X265_FREE(m_ssimBuf);
 }
 
@@ -69,10 +66,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_deblock.init();
 
     if (m_param->bEnableSAO)
-    {
         m_sao.create(m_param);
-        m_sao.createEncBuffer();
-    }
 
     if (m_param->bEnableSsim)
         m_ssimBuf = (int*)x265_malloc(sizeof(int) * 8 * (m_param->sourceWidth / 4 + 3));
