@@ -117,7 +117,6 @@ public:
     int         m_refDepth;
     int         m_numNoSao[2];
     
-    uint32_t    m_qp;
     double      m_lumaLambda;
     double      m_chromaLambda;
     /* TODO: No doubles for distortion */
