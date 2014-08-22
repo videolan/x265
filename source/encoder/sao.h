@@ -94,7 +94,7 @@ protected:
 
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
-    pixel*      m_lumaTableBo;
+    pixel*      m_tableBo;
 
     pixel*      m_tmpU1[3];
     pixel*      m_tmpU2[3];

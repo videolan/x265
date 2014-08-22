@@ -123,7 +123,7 @@ SAO::SAO()
     m_clipTableBase = NULL;
     m_offsetBo = NULL;
     m_chromaOffsetBo = NULL;
-    m_lumaTableBo = NULL;
+    m_tableBo = NULL;
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
     m_tmpU1[2] = NULL;
@@ -141,7 +141,6 @@ SAO::SAO()
     m_depthSaoRate[1][1] = 0;
     m_depthSaoRate[1][2] = 0;
     m_depthSaoRate[1][3] = 0;
-
 }
 
 bool SAO::create(x265_param *param)
@@ -170,9 +169,9 @@ bool SAO::create(x265_param *param)
     int rangeExt = maxY >> 1;
     int numLcu = m_numCuInWidth * m_numCuInHeight;
 
-    CHECKED_MALLOC(m_lumaTableBo, pixel, pixelRange);
+    CHECKED_MALLOC(m_tableBo, pixel, pixelRange);
     for (int k2 = 0; k2 < pixelRange; k2++)
-        m_lumaTableBo[k2] = 1 + (k2 >> boRangeShift);
+        m_tableBo[k2] = 1 + (k2 >> boRangeShift);
 
     CHECKED_MALLOC(m_clipTableBase, pixel, maxY + 2 * rangeExt);
     CHECKED_MALLOC(m_offsetBo,        int, maxY + 2 * rangeExt);
@@ -242,7 +241,7 @@ void SAO::destroy()
 {
     X265_FREE(m_clipTableBase);
     X265_FREE(m_offsetBo);
-    X265_FREE(m_lumaTableBo);
+    X265_FREE(m_tableBo);
     X265_FREE(m_chromaOffsetBo);
 
     X265_FREE(m_tmpL1);
@@ -772,7 +771,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         for (i = 0; i < (1 << X265_DEPTH); i++)
-                            offsetBo[i] = m_clipTable[i + offset[m_lumaTable[i]]];
+                            offsetBo[i] = m_clipTable[i + offset[m_tableBo[i]]];
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
@@ -894,7 +893,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                         offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                     for (i = 0; i < (1 << X265_DEPTH); i++)
-                        offsetBo[i] = m_clipTable[i + offset[m_lumaTableBo[i]]];
+                        offsetBo[i] = m_clipTable[i + offset[m_tableBo[i]]];
                 }
                 if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {
@@ -1346,7 +1345,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             for (x = 0; x < endX; x++)
             {
-                classIdx = m_lumaTableBo[recon[x]];
+                classIdx = m_tableBo[recon[x]];
                 if (classIdx)
                 {
                     stats[classIdx] += (fenc[x] - recon[x]);
@@ -1630,7 +1629,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                         if (x < startX && y < startY)
                             continue;
 
-                        classIdx = m_lumaTableBo[recon[x]];
+                        classIdx = m_tableBo[recon[x]];
                         if (classIdx)
                         {
                             stats[classIdx] += (fenc[x] - recon[x]);
