@@ -425,7 +425,6 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     int cuHeightTmp;
     pixel* tmpL;
     pixel* tmpU;
-    int32_t *offsetBo = NULL;
     uint32_t lpelx = tmpCu->getCUPelX();
     uint32_t tpely = tmpCu->getCUPelY();
     bool isLuma = !plane;
@@ -477,16 +476,16 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         tmpU = &(m_tmpU1[plane][lpelx]);
     }
 
-    offsetBo = (plane == 0) ? m_offsetBo : m_chromaOffsetBo;
+    int32_t *offsetBo = isLuma ? m_offsetBo : m_chromaOffsetBo;
 
     switch (saoType)
     {
     case SAO_EO_0: // dir: -
     {
         pixel firstPxl = 0, lastPxl = 0;
-        startX = (lpelx == 0) ? 1 : 0;
+        startX = !lpelx;
         endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
-        if (lcuWidth % 16)
+        if (lcuWidth & 15)
         {
             for (y = 0; y < lcuHeight; y++)
             {
@@ -530,7 +529,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     }
     case SAO_EO_1: // dir: |
     {
-        startY = (tpely == 0) ? 1 : 0;
+        startY = !tpely;
         endY   = (bpely == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
         if (!tpely)
             rec += stride;
@@ -556,10 +555,10 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     }
     case SAO_EO_2: // dir: 135
     {
-        startX = (lpelx == 0) ? 1 : 0;  // TODO !lpelx
+        startX = !lpelx;
         endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth;
 
-        startY = (tpely == 0) ? 1 : 0;
+        startY = !tpely;
         endY   = (bpely == picHeightTmp) ? lcuHeight - 1 : lcuHeight;
 
         if (!tpely)
@@ -640,7 +639,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     }
 
 //   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
-        std::swap(m_tmpL1, m_tmpL2);
+    std::swap(m_tmpL1, m_tmpL2);
 }
 
 /* Process SAO all units */
@@ -664,7 +663,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
 
     uint32_t i;
     uint32_t edgeType;
-    int  typeIdx;
+    int typeIdx;
 
     int offset[LUMA_GROUP_NUM + 1];
     int idxX;
@@ -795,19 +794,18 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
     int  i;
-    uint32_t edgeType;
-    int32_t* offsetBo = NULL;
-    int  typeIdx;
+    int typeIdx;
 
     int offset[LUMA_GROUP_NUM + 1];
     int idxX;
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
+    uint32_t edgeType;
     bool isChroma = !!plane;
     bool mergeLeftFlag;
 
-    offsetBo = (plane == 0) ? m_offsetBo : m_chromaOffsetBo;
+    int32_t* offsetBo = isChroma ? m_chromaOffsetBo : m_offsetBo;
 
     offset[0] = 0;
     addr = idxY * frameWidthInCU;
@@ -897,21 +895,42 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
 
 void SAO::resetLcuPart(SaoLcuParam* saoLcuParam)
 {
-    int i, j;
-
-    for (i = 0; i < m_numCuInWidth * m_numCuInHeight; i++)
+    for (int i = 0; i < m_numCuInWidth * m_numCuInHeight; i++)
     {
         saoLcuParam[i].mergeUpFlag   =  1;
         saoLcuParam[i].mergeLeftFlag =  0;
         saoLcuParam[i].partIdx       =  0;
         saoLcuParam[i].typeIdx       = -1;
-        for (j = 0; j < MAX_NUM_SAO_OFFSETS; j++)
-        {
+        saoLcuParam[i].subTypeIdx    =  0;
+        for (int j = 0; j < MAX_NUM_SAO_OFFSETS; j++)
             saoLcuParam[i].offset[j] = 0;
-        }
-
-        saoLcuParam[i].subTypeIdx = 0;
     }
+}
+
+void SAO::resetSaoUnit(SaoLcuParam* saoUnit)
+{
+    saoUnit->mergeUpFlag   = 0;
+    saoUnit->mergeLeftFlag = 0;
+    saoUnit->partIdx       = 0;
+    saoUnit->partIdxTmp    = 0;
+    saoUnit->typeIdx       = -1;
+    saoUnit->length        = 0;
+    saoUnit->subTypeIdx    = 0;
+
+    for (int i = 0; i < 4; i++)
+        saoUnit->offset[i] = 0;
+}
+
+void SAO::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc)
+{
+    saoUnitDst->mergeLeftFlag = saoUnitSrc->mergeLeftFlag;
+    saoUnitDst->mergeUpFlag   = saoUnitSrc->mergeUpFlag;
+    saoUnitDst->typeIdx       = saoUnitSrc->typeIdx;
+    saoUnitDst->length        = saoUnitSrc->length;
+
+    saoUnitDst->subTypeIdx  = saoUnitSrc->subTypeIdx;
+    for (int i = 0; i < 4; i++)
+        saoUnitDst->offset[i] = saoUnitSrc->offset[i];
 }
 
 /* convert QP part to SAO unit */
@@ -966,33 +985,7 @@ void SAO::convertOnePart2SaoUnit(SAOParam *saoParam, uint32_t partIdx, int plane
     }
 }
 
-void SAO::resetSaoUnit(SaoLcuParam* saoUnit)
-{
-    saoUnit->partIdx       = 0;
-    saoUnit->partIdxTmp    = 0;
-    saoUnit->mergeLeftFlag = 0;
-    saoUnit->mergeUpFlag   = 0;
-    saoUnit->typeIdx       = -1;
-    saoUnit->length        = 0;
-    saoUnit->subTypeIdx    = 0;
-
-    for (int i = 0; i < 4; i++)
-        saoUnit->offset[i] = 0;
-}
-
-void SAO::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc)
-{
-    saoUnitDst->mergeLeftFlag = saoUnitSrc->mergeLeftFlag;
-    saoUnitDst->mergeUpFlag   = saoUnitSrc->mergeUpFlag;
-    saoUnitDst->typeIdx       = saoUnitSrc->typeIdx;
-    saoUnitDst->length        = saoUnitSrc->length;
-
-    saoUnitDst->subTypeIdx  = saoUnitSrc->subTypeIdx;
-    for (int i = 0; i < 4; i++)
-        saoUnitDst->offset[i] = saoUnitSrc->offset[i];
-}
-
-/** process SAO for one partition */
+/* process SAO for one partition */
 void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int plane)
 {
     int typeIdx;
@@ -1002,12 +995,12 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
     int64_t estDist;
     int classIdx;
 
-    m_distOrg[partIdx] =  0;
+    m_distOrg[partIdx] = 0;
 
-    double bestRDCostTableBo = MAX_DOUBLE;
-    int    bestClassTableBo  = 0;
+    int    bestClassTableBo = 0;
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
     double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double bestRDCostTableBo = MAX_DOUBLE;
 
     int allowMergeLeft;
     int allowMergeUp;
@@ -1067,8 +1060,7 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
                     }
                 }
 
-                // Re code all Offsets
-                // Code Center
+                // Recode all offsets
                 for (classIdx = bestClassTableBo; classIdx < bestClassTableBo + SAO_BO_LEN; classIdx++)
                     estDist += currentDistortionTableBo[classIdx];
             }
@@ -1077,7 +1069,7 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
             {
                 for (int rx = onePart->startCUX; rx <= onePart->endCUX; rx++)
                 {
-                    // get bits for iTypeIdx = -1
+                    // get bits for typeIdx = -1
                     allowMergeLeft = 1;
                     allowMergeUp   = 1;
 
