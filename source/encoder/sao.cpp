@@ -121,8 +121,6 @@ SAO::SAO()
     m_numTotalParts = 0;
     m_clipTable = NULL;
     m_clipTableBase = NULL;
-    m_chromaClipTable = NULL;
-    m_chromaClipTableBase = NULL;
     m_offsetBo = NULL;
     m_chromaOffsetBo = NULL;
     m_lumaTableBo = NULL;
@@ -186,6 +184,7 @@ void SAO::create(x265_param *param)
 
     m_clipTableBase = X265_MALLOC(pixel, maxY + 2 * rangeExt);
     m_offsetBo      = X265_MALLOC(int, maxY + 2 * rangeExt);
+    m_chromaOffsetBo = X265_MALLOC(int, maxY + 2 * rangeExt);
 
     for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
@@ -197,25 +196,6 @@ void SAO::create(x265_param *param)
         m_clipTableBase[i] = maxY;
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
-
-    int maxC = (1 << X265_DEPTH) - 1;
-    int minC = 0;
-
-    int rangeExtC = maxC >> 1;
-
-    m_chromaClipTableBase = X265_MALLOC(pixel, maxC + 2 * rangeExtC);
-    m_chromaOffsetBo      = X265_MALLOC(int, maxC + 2 * rangeExtC);
-
-    for (int i = 0; i < (minC + rangeExtC); i++)
-        m_chromaClipTableBase[i] = minC;
-
-    for (int i = minC + rangeExtC; i < (maxC +  rangeExtC); i++)
-        m_chromaClipTableBase[i] = i - rangeExtC;
-
-    for (int i = maxC + rangeExtC; i < (maxC + 2 * rangeExtC); i++)
-        m_chromaClipTableBase[i] = maxC;
-
-    m_chromaClipTable = &(m_chromaClipTableBase[rangeExtC]);
 
     m_tmpL1 = X265_MALLOC(pixel, g_maxCUSize + 1);
     m_tmpL2 = X265_MALLOC(pixel, g_maxCUSize + 1);
@@ -273,7 +253,6 @@ void SAO::destroy()
     X265_FREE(m_clipTableBase);
     X265_FREE(m_offsetBo);
     X265_FREE(m_lumaTableBo);
-    X265_FREE(m_chromaClipTableBase);
     X265_FREE(m_chromaOffsetBo);
     X265_FREE(m_chromaTableBo);
 
@@ -496,7 +475,6 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     int cuHeightTmp;
     pixel* tmpL;
     pixel* tmpU;
-    pixel* clipTbl = NULL;
     int32_t *offsetBo = NULL;
     uint32_t lpelx = tmpCu->getCUPelX();
     uint32_t tpely = tmpCu->getCUPelY();
@@ -549,7 +527,6 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         tmpU = &(m_tmpU1[plane][lpelx]);
     }
 
-    clipTbl = (plane == 0) ? m_clipTable : m_chromaClipTable;
     offsetBo = (plane == 0) ? m_offsetBo : m_chromaOffsetBo;
 
     switch (saoType)
@@ -619,7 +596,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
                 edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x] = -signDown;
 
-                rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
+                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
             }
 
             rec += stride;
@@ -649,7 +626,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
                 signDown1 = signOf(rec[x] - rec[x + stride + 1]);
                 edgeType  = signDown1 + upBuff1[x] + 2;
                 upBufft[x + 1] = -signDown1;
-                rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
+                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
             }
 
             upBufft[startX] = signDown2;
@@ -681,13 +658,13 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
             signDown1 = signOf(rec[x] - tmpL[y + 1]);
             edgeType  = signDown1 + upBuff1[x] + 2;
             upBuff1[x - 1] = -signDown1;
-            rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
+            rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
             for (x = startX + 1; x < endX; x++)
             {
                 signDown1 = signOf(rec[x] - rec[x + stride - 1]);
                 edgeType  = signDown1 + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown1;
-                rec[x] = clipTbl[rec[x] + m_offsetEo[edgeType]];
+                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
             }
 
             upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
@@ -753,7 +730,6 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
     uint32_t i;
     uint32_t edgeType;
     pixel* lumaTable = NULL;
-    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -823,10 +799,9 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
-                        clipTable = sChroma ? m_chromaClipTable : m_clipTable;
 
                         for (i = 0; i < (1 << X265_DEPTH); i++)
-                            offsetBo[i] = clipTable[i + offset[lumaTable[i]]];
+                            offsetBo[i] = m_clipTable[i + offset[lumaTable[i]]];
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
@@ -891,7 +866,6 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     int  i;
     uint32_t edgeType;
     pixel* lumaTable = NULL;
-    pixel* clipTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -950,10 +924,9 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                         offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                     lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
-                    clipTable = sChroma ? m_chromaClipTable : m_clipTable;
 
                     for (i = 0; i < (1 << X265_DEPTH); i++)
-                        offsetBo[i] = clipTable[i + offset[lumaTable[i]]];
+                        offsetBo[i] = m_clipTable[i + offset[lumaTable[i]]];
                 }
                 if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {

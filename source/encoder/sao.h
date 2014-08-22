@@ -96,8 +96,6 @@ protected:
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
     pixel*      m_lumaTableBo;
-    pixel*      m_chromaClipTable;
-    pixel*      m_chromaClipTableBase;
     pixel*      m_chromaTableBo;
 
     /* TODO: likely not necessary */
