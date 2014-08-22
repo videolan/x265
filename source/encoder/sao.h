@@ -65,24 +65,33 @@ protected:
     static const int      s_numClass[MAX_NUM_SAO_TYPE];
     static const uint32_t s_eoTable[9];
 
-    Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
-    Entropy*    m_entropyCoder;
+    typedef int64_t (PerClass[MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
+    typedef int64_t (PerType[MAX_NUM_SAO_TYPE]);
+    typedef double  (PerTypeD[MAX_NUM_SAO_TYPE]);
+    typedef int64_t (PerPlane[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
 
-    int64_t  ***m_count;        // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t  ***m_offset;       // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t  ***m_offsetOrg;    // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    int64_t   (*m_countPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];     // [LCU][plane][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t   (*m_offsetOrgPreDblk)[3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]; // [LCU][plane][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]
-    int64_t   **m_rate;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    int64_t   **m_dist;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    double    **m_cost;         // [MAX_NUM_SAO_PART][MAX_NUM_SAO_TYPE]
-    double     *m_costPartBest; // [MAX_NUM_SAO_PART]
-    int64_t    *m_distOrg;      // [MAX_NUM_SAO_PART]
-    int        *m_typePartBest; // [MAX_NUM_SAO_PART]
+    /* allocated per part */
+    PerClass*   m_count;
+    PerClass*   m_offset;
+    PerClass*   m_offsetOrg;
+    PerType*    m_rate;
+    PerType*    m_dist;
+    PerTypeD*   m_cost;
+    double*     m_costPartBest;
+    int64_t*    m_distOrg;
+    int*        m_typePartBest;
+
+    /* allocated per LCU */
+    PerPlane*   m_countPreDblk;
+    PerPlane*   m_offsetOrgPreDblk;
+
     double      m_depthSaoRate[2][4];
     int32_t*    m_offsetBo;
     int32_t*    m_chromaOffsetBo;
     int8_t      m_offsetEo[LUMA_GROUP_NUM];
+
+    Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
+    Entropy*    m_entropyCoder;
 
     int         m_maxSplitLevel;
 

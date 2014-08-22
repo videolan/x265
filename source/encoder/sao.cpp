@@ -170,12 +170,37 @@ bool SAO::create(x265_param *param)
     int numLcu = m_numCuInWidth * m_numCuInHeight;
 
     CHECKED_MALLOC(m_tableBo, pixel, pixelRange);
-    for (int k2 = 0; k2 < pixelRange; k2++)
-        m_tableBo[k2] = 1 + (k2 >> boRangeShift);
 
     CHECKED_MALLOC(m_clipTableBase, pixel, maxY + 2 * rangeExt);
     CHECKED_MALLOC(m_offsetBo,        int, maxY + 2 * rangeExt);
     CHECKED_MALLOC(m_chromaOffsetBo , int, maxY + 2 * rangeExt);
+
+    CHECKED_MALLOC(m_tmpL1, pixel, g_maxCUSize + 1);
+    CHECKED_MALLOC(m_tmpL2, pixel, g_maxCUSize + 1);
+
+    for (int i = 0; i < 3; i++)
+    {
+        CHECKED_MALLOC(m_tmpU1[i], pixel, m_param->sourceWidth);
+        CHECKED_MALLOC(m_tmpU2[i], pixel, m_param->sourceWidth);
+    }
+
+    CHECKED_MALLOC(m_distOrg, int64_t, m_numTotalParts);
+    CHECKED_MALLOC(m_costPartBest, double, m_numTotalParts);
+    CHECKED_MALLOC(m_typePartBest, int, m_numTotalParts);
+
+    CHECKED_MALLOC(m_rate, PerType, m_numTotalParts);
+    CHECKED_MALLOC(m_dist, PerType, m_numTotalParts);
+    CHECKED_MALLOC(m_cost, PerTypeD, m_numTotalParts);
+
+    CHECKED_MALLOC(m_count, PerClass, m_numTotalParts);
+    CHECKED_MALLOC(m_offset, PerClass, m_numTotalParts);
+    CHECKED_MALLOC(m_offsetOrg, PerClass, m_numTotalParts);
+
+    CHECKED_MALLOC(m_countPreDblk, PerPlane, numLcu);
+    CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numLcu);
+
+    for (int k2 = 0; k2 < pixelRange; k2++)
+        m_tableBo[k2] = 1 + (k2 >> boRangeShift);
 
     for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
@@ -188,49 +213,6 @@ bool SAO::create(x265_param *param)
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
-    CHECKED_MALLOC(m_tmpL1, pixel, g_maxCUSize + 1);
-    CHECKED_MALLOC(m_tmpL2, pixel, g_maxCUSize + 1);
-
-    CHECKED_MALLOC(m_tmpU1[0], pixel, m_param->sourceWidth);
-    CHECKED_MALLOC(m_tmpU1[1], pixel, m_param->sourceWidth);
-    CHECKED_MALLOC(m_tmpU1[2], pixel, m_param->sourceWidth);
-    CHECKED_MALLOC(m_tmpU2[0], pixel, m_param->sourceWidth);
-    CHECKED_MALLOC(m_tmpU2[1], pixel, m_param->sourceWidth);
-    CHECKED_MALLOC(m_tmpU2[2], pixel, m_param->sourceWidth);
-
-    CHECKED_MALLOC(m_distOrg, int64_t, m_numTotalParts);
-    CHECKED_MALLOC(m_costPartBest, double, m_numTotalParts);
-    CHECKED_MALLOC(m_typePartBest, int, m_numTotalParts);
-
-    CHECKED_MALLOC_ZERO(m_rate, int64_t*, m_numTotalParts);
-    CHECKED_MALLOC_ZERO(m_dist, int64_t*, m_numTotalParts);
-    CHECKED_MALLOC_ZERO(m_cost, double*, m_numTotalParts);
-
-    CHECKED_MALLOC_ZERO(m_count, int64_t**, m_numTotalParts);
-    CHECKED_MALLOC_ZERO(m_offset, int64_t**, m_numTotalParts);
-    CHECKED_MALLOC_ZERO(m_offsetOrg, int64_t**, m_numTotalParts);
-
-    for (int i = 0; i < m_numTotalParts; i++)
-    {
-        CHECKED_MALLOC(m_rate[i], int64_t, MAX_NUM_SAO_TYPE);
-        CHECKED_MALLOC(m_dist[i], int64_t, MAX_NUM_SAO_TYPE);
-        CHECKED_MALLOC(m_cost[i], double, MAX_NUM_SAO_TYPE);
-
-        CHECKED_MALLOC_ZERO(m_count[i], int64_t*, MAX_NUM_SAO_TYPE);
-        CHECKED_MALLOC_ZERO(m_offset[i], int64_t*, MAX_NUM_SAO_TYPE);
-        CHECKED_MALLOC_ZERO(m_offsetOrg[i], int64_t*, MAX_NUM_SAO_TYPE);
-
-        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
-        {
-            CHECKED_MALLOC(m_count[i][j], int64_t, MAX_NUM_SAO_CLASS);
-            CHECKED_MALLOC(m_offset[i][j], int64_t, MAX_NUM_SAO_CLASS);
-            CHECKED_MALLOC(m_offsetOrg[i][j], int64_t, MAX_NUM_SAO_CLASS);
-        }
-    }
-
-    /* TODO: do not use new */
-    m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
     return true;
 
 fail:
@@ -253,23 +235,6 @@ void SAO::destroy()
         X265_FREE(m_tmpU2[i]);
     }
 
-    for (int i = 0; i < m_numTotalParts; i++)
-    {
-        for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
-        {
-            if (m_count && m_count[i])         X265_FREE(m_count[i][j]);
-            if (m_offset && m_offset[i])       X265_FREE(m_offset[i][j]);
-            if (m_offsetOrg && m_offsetOrg[i]) X265_FREE(m_offsetOrg[i][j]);
-        }
-
-        if (m_rate)      X265_FREE(m_rate[i]);
-        if (m_dist)      X265_FREE(m_dist[i]);
-        if (m_cost)      X265_FREE(m_cost[i]);
-        if (m_count)     X265_FREE(m_count[i]);
-        if (m_offset)    X265_FREE(m_offset[i]);
-        if (m_offsetOrg) X265_FREE(m_offsetOrg[i]);
-    }
-
     X265_FREE(m_distOrg);
     X265_FREE(m_costPartBest);
     X265_FREE(m_typePartBest);
@@ -279,9 +244,8 @@ void SAO::destroy()
     X265_FREE(m_count);
     X265_FREE(m_offset);
     X265_FREE(m_offsetOrg);
-
-    delete[] m_countPreDblk;
-    delete[] m_offsetOrgPreDblk;
+    X265_FREE(m_countPreDblk);
+    X265_FREE(m_offsetOrgPreDblk);
 }
 
 /* allocate memory for SAO parameters */
