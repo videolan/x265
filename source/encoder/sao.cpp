@@ -30,7 +30,8 @@ namespace {
 #if HIGH_BIT_DEPTH
 inline double roundIDBI2(double x)
 {
-    return ((x) > 0) ? (int)(((int)(x) + (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))) : ((int)(((int)(x) - (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))));
+    return ((x) > 0) ? (int)(((int)(x) + (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))) :
+                       ((int)(((int)(x) - (1 << (X265_DEPTH - 8 - 1))) / (1 << (X265_DEPTH - 8))));
 }
 #endif
 
@@ -792,7 +793,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     if (!idxY)
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
-    int  i;
+    int i;
     int typeIdx;
 
     int offset[LUMA_GROUP_NUM + 1];
