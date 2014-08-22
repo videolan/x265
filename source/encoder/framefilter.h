@@ -40,22 +40,6 @@ class FrameFilter
 {
 public:
 
-    FrameFilter();
-
-    virtual ~FrameFilter() {}
-
-    void init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder);
-
-    void destroy();
-
-    void start(Frame *pic);
-
-    void processRow(int row, ThreadLocalData& tld);
-    void processRowPost(int row);
-    void processSao(int row);
-
-protected:
-
     x265_param*   m_param;
     Frame*        m_frame;
     FrameEncoder* m_frameEncoder;
@@ -63,19 +47,23 @@ protected:
     int           m_vChromaShift;
     int           m_pad[2];
 
-public:
-
     Deblock       m_deblock;
     SAO           m_sao;
     int           m_numRows;
     int           m_saoRowDelay;
-
-    // SAO
-    Entropy       m_entropyCoder;
-    Entropy*      m_row0EntropyCoder;  // to mimic HM behavior
     
-    /* Temp storage for ssim computation */
-    void*         m_ssimBuf;
+    void*         m_ssimBuf; /* Temp storage for ssim computation */
+
+    FrameFilter();
+
+    void init(Encoder *top, FrameEncoder *frame, int numRows);
+    void destroy();
+
+    void start(Frame *pic);
+
+    void processRow(int row, ThreadLocalData& tld);
+    void processRowPost(int row);
+    void processSao(int row);
 };
 }
 

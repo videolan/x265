@@ -90,9 +90,6 @@ protected:
     int32_t*    m_chromaOffsetBo;
     int8_t      m_offsetEo[LUMA_GROUP_NUM];
 
-    Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
-    Entropy*    m_entropyCoder;
-
     int         m_maxSplitLevel;
 
     int         m_numCuInWidth;
@@ -113,6 +110,9 @@ protected:
 public:
 
     Frame*      m_pic;
+    Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
+    Entropy     m_entropyCoder;
+
     x265_param* m_param;
     int         m_refDepth;
     int         m_numNoSao[2];
@@ -144,8 +144,6 @@ public:
 
     void resetSaoUnit(SaoLcuParam* saoUnit);
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
-
-    void startSaoEnc(Frame* pic, Entropy* entropyCoder);
 
     void resetStats();
 

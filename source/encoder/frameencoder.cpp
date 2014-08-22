@@ -107,7 +107,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     }
 
     m_tld.init(*top);
-    m_frameFilter.init(top, this, numRows, &m_rows[0].m_entropyCoder);
+    m_frameFilter.init(top, this, numRows);
 
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI)
@@ -157,6 +157,8 @@ void FrameEncoder::compressFrame()
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_picSym->m_slice;
+
+    m_initSliceContext.resetEntropy(slice);
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -339,7 +341,7 @@ void FrameEncoder::compressFrame()
     }
 
     m_bs.resetBits();
-    m_entropyCoder.resetEntropy(slice);
+    m_entropyCoder.resetEntropy(slice); // TODO: why doesn't load(m_initSliceContext) work here?
     m_entropyCoder.setBitstream(&m_bs);
     m_entropyCoder.codeSliceHeader(slice);
 
@@ -503,7 +505,6 @@ void FrameEncoder::compressCTURows()
     Slice* slice = m_frame->m_picSym->m_slice;
 
     // reset entropy coders
-    m_initSliceContext.resetEntropy(slice);
     m_entropyCoder.load(m_initSliceContext);
     for (int i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);

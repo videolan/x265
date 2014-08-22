@@ -49,7 +49,7 @@ void FrameFilter::destroy()
     X265_FREE(m_ssimBuf);
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
 {
     m_param = top->m_param;
     m_frameEncoder = frame;
@@ -59,9 +59,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
     m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-
-    // NOTE (Min): for sao only, I write this code because I want to exact match with HM's bug bitstream
-    m_row0EntropyCoder = row0Coder;
 
     m_deblock.init();
 
@@ -76,12 +73,15 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
 void FrameFilter::start(Frame *pic)
 {
     m_frame = pic;
-    m_sao.m_pic = pic;
-    m_entropyCoder.zeroFract();
 
     if (m_param->bEnableSAO)
     {
+        m_sao.m_pic = pic;
         m_sao.resetStats();
+
+        m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(m_frameEncoder->m_initSliceContext);
 
         SAOParam* saoParam = pic->getPicSym()->m_saoParam;
         if (!saoParam)
@@ -114,18 +114,8 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
         return;
     }
 
-    // NOTE: We are here only active both of loopfilter and sao, the row 0 always finished, so we can safe to copy row[0]'s data
-    if (!row && m_param->bEnableSAO)
-    {
-        // NOTE: not need, seems HM's bug, I want to keep output exact matched.
-        m_entropyCoder.m_fracBits = m_row0EntropyCoder->m_fracBits;
-        m_sao.startSaoEnc(m_frame, &m_entropyCoder);
-    }
-
     const uint32_t numCols = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-
-    // NOTE: remove m_sao.calcSaoStatsRowCus_BeforeDblk at here, we do it in encode loop now
 
     if (m_param->bEnableLoopFilter)
     {
@@ -149,20 +139,25 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
 
     // SAO
     SAOParam* saoParam = m_frame->getPicSym()->m_saoParam;
-    if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization)
+    if (m_param->bEnableSAO)
     {
-        m_sao.rdoSaoUnitRow(saoParam, row);
+        if (m_param->saoLcuBasedOptimization)
+        {
+            m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
+            m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(m_frameEncoder->m_initSliceContext);
+            m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(m_frameEncoder->m_initSliceContext);
 
-        // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
-        if (row >= m_saoRowDelay)
-            processSao(row - m_saoRowDelay);
+            m_sao.rdoSaoUnitRow(saoParam, row);
+
+            // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
+            if (row >= m_saoRowDelay)
+                processSao(row - m_saoRowDelay);
+        }
+        else
+            return;
     }
 
     // this row of CTUs has been encoded
-
-    // NOTE: in --sao-lcu-opt=0 mode, we do it later
-    if (m_param->bEnableSAO && !m_param->saoLcuBasedOptimization)
-        return;
 
     if (row > 0)
         processRowPost(row - 1);
@@ -193,6 +188,7 @@ void FrameFilter::processRowPost(int row)
     primitives.extendRowBorder(recon->getLumaAddr(lineStartCUAddr), recon->getStride(), recon->getWidth(), realH, recon->getLumaMarginX());
     primitives.extendRowBorder(recon->getCbAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
     primitives.extendRowBorder(recon->getCrAddr(lineStartCUAddr), recon->getCStride(), recon->getWidth() >> m_hChromaShift, realH >> m_vChromaShift, recon->getChromaMarginX());
+
     // Border extend Top
     if (!row)
     {

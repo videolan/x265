@@ -102,7 +102,6 @@ const int SAO::s_numClass[MAX_NUM_SAO_TYPE] =
 
 SAO::SAO()
 {
-    m_entropyCoder = NULL;
     m_count = NULL;
     m_offset = NULL;
     m_offsetOrg = NULL;
@@ -1008,8 +1007,8 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
 
     for (typeIdx = -1; typeIdx < numTotalType; typeIdx++)
     {
-        m_entropyCoder->load(m_rdEntropyCoders[onePart->partLevel][CI_CURR_BEST]);
-        m_entropyCoder->resetBits();
+        m_entropyCoder.load(m_rdEntropyCoders[onePart->partLevel][CI_CURR_BEST]);
+        m_entropyCoder.resetBits();
 
         if (typeIdx == -1)
         {
@@ -1034,7 +1033,7 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
                     if (rx == onePart->startCUX)
                         saoLcuParamRdo.mergeLeftFlag = 0;
 
-                    m_entropyCoder->codeSaoUnitInterleaving(plane, 1, rx, ry,  &saoLcuParamRdo, 1,  1,  allowMergeLeft, allowMergeUp);
+                    m_entropyCoder.codeSaoUnitInterleaving(plane, 1, rx, ry,  &saoLcuParamRdo, 1,  1,  allowMergeLeft, allowMergeUp);
                 }
             }
         }
@@ -1093,12 +1092,12 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
                     for (classIdx = 0; classIdx < saoLcuParamRdo.length; classIdx++)
                         saoLcuParamRdo.offset[classIdx] = (int)m_offset[partIdx][typeIdx][classIdx + saoLcuParamRdo.subTypeIdx + 1];
 
-                    m_entropyCoder->codeSaoUnitInterleaving(plane, 1, rx, ry, &saoLcuParamRdo, 1, 1, allowMergeLeft, allowMergeUp);
+                    m_entropyCoder.codeSaoUnitInterleaving(plane, 1, rx, ry, &saoLcuParamRdo, 1, 1, allowMergeLeft, allowMergeUp);
                 }
             }
 
             m_dist[partIdx][typeIdx] = estDist;
-            m_rate[partIdx][typeIdx] = m_entropyCoder->getNumberOfWrittenBits();
+            m_rate[partIdx][typeIdx] = m_entropyCoder.getNumberOfWrittenBits();
 
             m_cost[partIdx][typeIdx] = (double)((double)m_dist[partIdx][typeIdx] + lambda * (double)m_rate[partIdx][typeIdx]);
 
@@ -1107,16 +1106,16 @@ void SAO::rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int pla
                 m_distOrg[partIdx] = 0;
                 m_costPartBest[partIdx] = m_cost[partIdx][typeIdx];
                 m_typePartBest[partIdx] = typeIdx;
-                m_entropyCoder->store(m_rdEntropyCoders[onePart->partLevel][CI_TEMP_BEST]);
+                m_entropyCoder.store(m_rdEntropyCoders[onePart->partLevel][CI_TEMP_BEST]);
             }
         }
         else
         {
             if (m_distOrg[partIdx] < m_costPartBest[partIdx])
             {
-                m_costPartBest[partIdx] = (double)m_distOrg[partIdx] + m_entropyCoder->getNumberOfWrittenBits() * lambda;
+                m_costPartBest[partIdx] = (double)m_distOrg[partIdx] + m_entropyCoder.getNumberOfWrittenBits() * lambda;
                 m_typePartBest[partIdx] = -1;
-                m_entropyCoder->store(m_rdEntropyCoders[onePart->partLevel][CI_TEMP_BEST]);
+                m_entropyCoder.store(m_rdEntropyCoders[onePart->partLevel][CI_TEMP_BEST]);
             }
         }
     }
@@ -1212,19 +1211,6 @@ void SAO::runQuadTreeDecision(SAOQTPart *qtPart, int partIdx, double &costFinal,
     }
     else
         costFinal = onePart->minCost;
-}
-
-/* Start SAO encoder */
-void SAO::startSaoEnc(Frame* pic, Entropy* entropyCoder)
-{
-    m_pic = pic;
-
-    m_entropyCoder = entropyCoder;
-    /* todo, get initial slice encode state from frame encoder */
-    m_entropyCoder->resetEntropy(pic->m_picSym->m_slice);
-    m_entropyCoder->resetBits(); /* TODO: redundant? */
-    m_entropyCoder->store(m_rdEntropyCoders[0][CI_NEXT_BEST]);
-    m_rdEntropyCoders[0][CI_CURR_BEST].load(m_rdEntropyCoders[0][CI_NEXT_BEST]);
 }
 
 /* Calculate SAO statistics for current LCU without non-crossing slice */
@@ -2060,12 +2046,12 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
         compDistortion[0] = 0;
         compDistortion[1] = 0;
         compDistortion[2] = 0;
-        m_entropyCoder->load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+        m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
         if (allowMergeLeft)
-            m_entropyCoder->codeSaoMerge(0);
+            m_entropyCoder.codeSaoMerge(0);
         if (allowMergeUp)
-            m_entropyCoder->codeSaoMerge(0);
-        m_entropyCoder->store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+            m_entropyCoder.codeSaoMerge(0);
+        m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
         // reset stats Y, Cb, Cr
         for (compIdx = 0; compIdx < 3; compIdx++)
         {
@@ -2100,40 +2086,40 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
         if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
         {
             // Cost of new SAO_params
-            m_entropyCoder->load(m_rdEntropyCoders[0][CI_CURR_BEST]);
-            m_entropyCoder->resetBits();
+            m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+            m_entropyCoder.resetBits();
             if (allowMergeLeft)
-                m_entropyCoder->codeSaoMerge(0);
+                m_entropyCoder.codeSaoMerge(0);
             if (allowMergeUp)
-                m_entropyCoder->codeSaoMerge(0);
+                m_entropyCoder.codeSaoMerge(0);
             for (compIdx = 0; compIdx < 3; compIdx++)
             {
                 if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                    m_entropyCoder->codeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
+                    m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
             }
 
-            rate = m_entropyCoder->getNumberOfWrittenBits();
+            rate = m_entropyCoder.getNumberOfWrittenBits();
             bestCost = compDistortion[0] + (double)rate;
-            m_entropyCoder->store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+            m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
 
             // Cost of Merge
             for (int mergeUp = 0; mergeUp < 2; ++mergeUp)
             {
                 if ((allowMergeLeft && !mergeUp) || (allowMergeUp && mergeUp))
                 {
-                    m_entropyCoder->load(m_rdEntropyCoders[0][CI_CURR_BEST]);
-                    m_entropyCoder->resetBits();
+                    m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+                    m_entropyCoder.resetBits();
                     if (allowMergeLeft)
-                        m_entropyCoder->codeSaoMerge(1 - mergeUp);
+                        m_entropyCoder.codeSaoMerge(1 - mergeUp);
                     if (allowMergeUp && (mergeUp == 1))
-                        m_entropyCoder->codeSaoMerge(1);
+                        m_entropyCoder.codeSaoMerge(1);
 
-                    rate = m_entropyCoder->getNumberOfWrittenBits();
+                    rate = m_entropyCoder.getNumberOfWrittenBits();
                     mergeCost = compDistortion[mergeUp + 1] + (double)rate;
                     if (mergeCost < bestCost)
                     {
                         bestCost = mergeCost;
-                        m_entropyCoder->store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+                        m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
                         for (compIdx = 0; compIdx < 3; compIdx++)
                         {
                             mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = !mergeUp;
@@ -2149,8 +2135,8 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 m_numNoSao[0]++;
             if (saoParam->saoLcuParam[1][addr].typeIdx == -1)
                 m_numNoSao[1] += 2;
-            m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-            m_entropyCoder->store(m_rdEntropyCoders[0][CI_CURR_BEST]);
+            m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+            m_entropyCoder.store(m_rdEntropyCoders[0][CI_CURR_BEST]);
         }
     }
 }
@@ -2263,10 +2249,10 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
     resetSaoUnit(&saoLcuParamRdo);
 
-    m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-    m_entropyCoder->resetBits();
-    m_entropyCoder->codeSaoOffset(&saoLcuParamRdo, plane);
-    dCostPartBest = m_entropyCoder->getNumberOfWrittenBits() * lambda;
+    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.resetBits();
+    m_entropyCoder.codeSaoOffset(&saoLcuParamRdo, plane);
+    dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * lambda;
     copySaoUnit(saoLcuParam, &saoLcuParamRdo);
     bestDist = 0;
 
@@ -2307,11 +2293,11 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
         for (classIdx = 0; classIdx < saoLcuParamRdo.length; classIdx++)
             saoLcuParamRdo.offset[classIdx] = (int)m_offset[plane][typeIdx][classIdx + saoLcuParamRdo.subTypeIdx + 1];
 
-        m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-        m_entropyCoder->resetBits();
-        m_entropyCoder->codeSaoOffset(&saoLcuParamRdo, plane);
+        m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+        m_entropyCoder.resetBits();
+        m_entropyCoder.codeSaoOffset(&saoLcuParamRdo, plane);
 
-        estRate = m_entropyCoder->getNumberOfWrittenBits();
+        estRate = m_entropyCoder.getNumberOfWrittenBits();
         m_cost[plane][typeIdx] = (double)((double)estDist + lambda * (double)estRate);
 
         if (m_cost[plane][typeIdx] < dCostPartBest)
@@ -2323,9 +2309,9 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     }
 
     compDistortion[0] += ((double)bestDist / lambda);
-    m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-    m_entropyCoder->codeSaoOffset(saoLcuParam, plane);
-    m_entropyCoder->store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.codeSaoOffset(saoLcuParam, plane);
+    m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
 
     // merge left or merge up
 
@@ -2399,12 +2385,12 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     resetSaoUnit(&saoLcuParamRdo[0]);
     resetSaoUnit(&saoLcuParamRdo[1]);
 
-    m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-    m_entropyCoder->resetBits();
-    m_entropyCoder->codeSaoOffset(&saoLcuParamRdo[0], 1);
-    m_entropyCoder->codeSaoOffset(&saoLcuParamRdo[1], 2);
+    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.resetBits();
+    m_entropyCoder.codeSaoOffset(&saoLcuParamRdo[0], 1);
+    m_entropyCoder.codeSaoOffset(&saoLcuParamRdo[1], 2);
 
-    costPartBest = m_entropyCoder->getNumberOfWrittenBits() * lambda;
+    costPartBest = m_entropyCoder.getNumberOfWrittenBits() * lambda;
     copySaoUnit(saoLcuParam[0], &saoLcuParamRdo[0]);
     copySaoUnit(saoLcuParam[1], &saoLcuParamRdo[1]);
 
@@ -2444,8 +2430,8 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
             estDist[1] = estSaoTypeDist(2, typeIdx, 0, lambda, currentDistortionTableBo, currentRdCostTableBo);
         }
 
-        m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-        m_entropyCoder->resetBits();
+        m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+        m_entropyCoder.resetBits();
 
         for (int compIdx = 0; compIdx < 2; compIdx++)
         {
@@ -2458,10 +2444,10 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
             for (classIdx = 0; classIdx < saoLcuParamRdo[compIdx].length; classIdx++)
                 saoLcuParamRdo[compIdx].offset[classIdx] = (int)m_offset[compIdx + 1][typeIdx][classIdx + saoLcuParamRdo[compIdx].subTypeIdx + 1];
 
-            m_entropyCoder->codeSaoOffset(&saoLcuParamRdo[compIdx], compIdx + 1);
+            m_entropyCoder.codeSaoOffset(&saoLcuParamRdo[compIdx], compIdx + 1);
         }
 
-        estRate = m_entropyCoder->getNumberOfWrittenBits();
+        estRate = m_entropyCoder.getNumberOfWrittenBits();
         m_cost[1][typeIdx] = (double)((double)(estDist[0] + estDist[1])  + lambda * (double)estRate);
 
         if (m_cost[1][typeIdx] < costPartBest)
@@ -2474,10 +2460,10 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     }
 
     distortion[0] += ((double)bestDist / lambda);
-    m_entropyCoder->load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-    m_entropyCoder->codeSaoOffset(saoLcuParam[0], 1);
-    m_entropyCoder->codeSaoOffset(saoLcuParam[1], 2);
-    m_entropyCoder->store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.codeSaoOffset(saoLcuParam[0], 1);
+    m_entropyCoder.codeSaoOffset(saoLcuParam[1], 2);
+    m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
 
     // merge left or merge up
 
