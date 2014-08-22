@@ -700,7 +700,6 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
 
     uint32_t i;
     uint32_t edgeType;
-    int32_t* offsetBo = NULL;
     int  typeIdx;
 
     int offset[LUMA_GROUP_NUM + 1];
@@ -710,10 +709,10 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int frameHeightInCU = m_pic->getFrameHeightInCU();
     int stride;
-    bool sChroma = !!plane;
+    bool isChroma = !!plane;
     bool mergeLeftFlag;
 
-    offsetBo = sChroma ? m_chromaOffsetBo : m_offsetBo;
+    int32_t *offsetBo = isChroma ? m_chromaOffsetBo : m_offsetBo;
 
     offset[0] = 0;
     for (idxY = 0; idxY < frameHeightInCU; idxY++)
@@ -731,7 +730,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
             stride = m_pic->getCStride();
             picWidthTmp = m_param->sourceWidth >> m_hChromaShift;
         }
-        uint32_t cuHeightTmp = sChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
+        uint32_t cuHeightTmp = isChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
         for (i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL1[i] = rec[0];
@@ -786,7 +785,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
             {
                 if (idxX != (frameWidthInCU - 1))
                 {
-                    if (sChroma)
+                    if (isChroma)
                     {
                         rec = m_pic->getPicYuvRec()->getChromaAddr(plane, addr);
                         stride = m_pic->getCStride();
@@ -797,7 +796,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                         stride = m_pic->getStride();
                     }
 
-                    int widthShift = sChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
+                    int widthShift = isChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
                     for (i = 0; i < cuHeightTmp + 1; i++)
                     {
                         m_tmpL1[i] = rec[widthShift - 1];
@@ -841,14 +840,14 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    bool sChroma = !!plane;
+    bool isChroma = !!plane;
     bool mergeLeftFlag;
 
     offsetBo = (plane == 0) ? m_offsetBo : m_chromaOffsetBo;
 
     offset[0] = 0;
     addr = idxY * frameWidthInCU;
-    if (sChroma)
+    if (isChroma)
     {
         rec = m_pic->getPicYuvRec()->getChromaAddr(plane, addr);
         stride = m_pic->getCStride();
@@ -860,7 +859,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
         stride = m_pic->getStride();
         picWidthTmp = m_param->sourceWidth;
     }
-    int maxCUHeight = sChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
+    int maxCUHeight = isChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
     for (i = 0; i < maxCUHeight + 1; i++)
     {
         m_tmpL1[i] = rec[0];
@@ -908,7 +907,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
         {
             if (idxX != (frameWidthInCU - 1))
             {
-                if (sChroma)
+                if (isChroma)
                 {
                     rec = m_pic->getPicYuvRec()->getChromaAddr(plane, addr);
                     stride = m_pic->getCStride();
@@ -919,7 +918,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                     stride = m_pic->getStride();
                 }
 
-                int widthShift = sChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
+                int widthShift = isChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
                 for (i = 0; i < maxCUHeight + 1; i++)
                 {
                     m_tmpL1[i] = rec[widthShift - 1];
