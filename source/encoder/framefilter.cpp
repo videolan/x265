@@ -66,7 +66,8 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* 
     m_deblock.init();
 
     if (m_param->bEnableSAO)
-        m_param->bEnableSAO &= m_sao.create(m_param);
+        if (!m_sao.create(m_param))
+            m_param->bEnableSAO = 0;
 
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));

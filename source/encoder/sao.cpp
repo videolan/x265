@@ -164,9 +164,9 @@ bool SAO::create(x265_param *param)
 
     int pixelRange = 1 << X265_DEPTH;
     int boRangeShift = X265_DEPTH - SAO_BO_BITS;
-    int maxY = (1 << X265_DEPTH) - 1;
-    int minY = 0;
-    int rangeExt = maxY >> 1;
+    pixel maxY = (1 << X265_DEPTH) - 1;
+    pixel minY = 0;
+    pixel rangeExt = maxY >> 1;
     int numLcu = m_numCuInWidth * m_numCuInHeight;
 
     CHECKED_MALLOC(m_tableBo, pixel, pixelRange);
@@ -200,12 +200,12 @@ bool SAO::create(x265_param *param)
     CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numLcu);
 
     for (int k2 = 0; k2 < pixelRange; k2++)
-        m_tableBo[k2] = 1 + (k2 >> boRangeShift);
+        m_tableBo[k2] = (pixel)(1 + (k2 >> boRangeShift));
 
     for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
 
-    for (int i = minY + rangeExt; i < (maxY + rangeExt); i++)
+    for (pixel i = minY + rangeExt; i < (maxY + rangeExt); i++)
         m_clipTableBase[i] = i - rangeExt;
 
     for (int i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
@@ -489,14 +489,14 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         {
             for (y = 0; y < lcuHeight; y++)
             {
-                int8_t signLeft = signOf(rec[startX] - tmpL[y]);
+                int signLeft = signOf(rec[startX] - tmpL[y]);
                 for (x = startX; x < endX; x++)
                 {
-                    int8_t signRight = signOf(rec[x] - rec[x + 1]);
+                    int signRight = signOf(rec[x] - rec[x + 1]);
                     edgeType = signRight + signLeft + 2;
-                    signLeft  = -signRight;
+                    signLeft = -signRight;
 
-                    rec[x] =  Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
+                    rec[x] = (pixel)Clip3(0, (1 << X265_DEPTH) - 1, rec[x] + m_offsetEo[edgeType]);
                 }
 
                 rec += stride;
@@ -506,7 +506,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         {
             for (y = 0; y < lcuHeight; y++)
             {
-                int8_t signLeft = signOf(rec[startX] - tmpL[y]);
+                int signLeft = signOf(rec[startX] - tmpL[y]);
 
                 if (!lpelx)
                     firstPxl = rec[0];
@@ -514,7 +514,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
                 if (rpelx == picWidthTmp)
                     lastPxl = rec[lcuWidth - 1];
 
-                primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, signLeft);
+                primitives.saoCuOrgE0(rec, m_offsetEo, lcuWidth, (int8_t)signLeft);
 
                 if (!lpelx)
                     rec[0] = firstPxl;
@@ -628,7 +628,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         for (y = 0; y < lcuHeight; y++)
         {
             for (x = 0; x < lcuWidth; x++)
-                rec[x] = offsetBo[rec[x]];
+                rec[x] = (pixel)offsetBo[rec[x]];
 
             rec += stride;
         }
@@ -739,7 +739,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                             offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         for (edgeType = 0; edgeType < 6; edgeType++)
-                            m_offsetEo[edgeType] = offset[s_eoTable[edgeType]];
+                            m_offsetEo[edgeType] = (int8_t)offset[s_eoTable[edgeType]];
                     }
                 }
                 processSaoCu(addr, typeIdx, plane);
@@ -860,7 +860,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                         offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                     for (edgeType = 0; edgeType < 6; edgeType++)
-                        m_offsetEo[edgeType] = offset[s_eoTable[edgeType]];
+                        m_offsetEo[edgeType] = (int8_t)offset[s_eoTable[edgeType]];
                 }
             }
             processSaoCu(addr, typeIdx, plane);
