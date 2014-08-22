@@ -246,30 +246,28 @@ void SAO::destroy()
 
     X265_FREE(m_tmpL1);
     X265_FREE(m_tmpL2);
-    X265_FREE(m_tmpU1[0]);
 
-    X265_FREE(m_tmpU1[1]);
-    X265_FREE(m_tmpU1[2]);
-
-    X265_FREE(m_tmpU2[0]);
-    X265_FREE(m_tmpU2[1]);
-    X265_FREE(m_tmpU2[2]);
+    for (int i = 0; i < 3; i++)
+    {
+        X265_FREE(m_tmpU1[i]);
+        X265_FREE(m_tmpU2[i]);
+    }
 
     for (int i = 0; i < m_numTotalParts; i++)
     {
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            X265_FREE(m_count[i][j]);
-            X265_FREE(m_offset[i][j]);
-            X265_FREE(m_offsetOrg[i][j]);
+            if (m_count && m_count[i])         X265_FREE(m_count[i][j]);
+            if (m_offset && m_offset[i])       X265_FREE(m_offset[i][j]);
+            if (m_offsetOrg && m_offsetOrg[i]) X265_FREE(m_offsetOrg[i][j]);
         }
 
-        X265_FREE(m_rate[i]);
-        X265_FREE(m_dist[i]);
-        X265_FREE(m_cost[i]);
-        X265_FREE(m_count[i]);
-        X265_FREE(m_offset[i]);
-        X265_FREE(m_offsetOrg[i]);
+        if (m_rate)      X265_FREE(m_rate[i]);
+        if (m_dist)      X265_FREE(m_dist[i]);
+        if (m_cost)      X265_FREE(m_cost[i]);
+        if (m_count)     X265_FREE(m_count[i]);
+        if (m_offset)    X265_FREE(m_offset[i]);
+        if (m_offsetOrg) X265_FREE(m_offsetOrg[i]);
     }
 
     X265_FREE(m_distOrg);
