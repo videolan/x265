@@ -145,7 +145,7 @@ SAO::SAO()
 
 }
 
-void SAO::create(x265_param *param)
+bool SAO::create(x265_param *param)
 {
     m_param = param;
     m_hChromaShift = CHROMA_H_SHIFT(param->internalCsp);
@@ -164,32 +164,29 @@ void SAO::create(x265_param *param)
      * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
     m_numTotalParts = X265_MAX(3, s_numCulPartsLevel[m_maxSplitLevel]);
 
-    uint32_t pixelRangeY = 1 << X265_DEPTH;
-    uint32_t boRangeShiftY = X265_DEPTH - SAO_BO_BITS;
-
-    m_lumaTableBo = X265_MALLOC(pixel, pixelRangeY);
-    for (uint32_t k2 = 0; k2 < pixelRangeY; k2++)
-        m_lumaTableBo[k2] = 1 + (k2 >> boRangeShiftY);
-
-    uint32_t pixelRangeC = 1 << X265_DEPTH;
-    uint32_t boRangeShiftC = X265_DEPTH - SAO_BO_BITS;
-
-    m_chromaTableBo = X265_MALLOC(pixel, pixelRangeC);
-    for (uint32_t k2 = 0; k2 < pixelRangeC; k2++)
-        m_chromaTableBo[k2] = 1 + (k2 >> boRangeShiftC);
-
+    int pixelRange = 1 << X265_DEPTH;
+    int boRangeShift = X265_DEPTH - SAO_BO_BITS;
     int maxY = (1 << X265_DEPTH) - 1;
     int minY = 0;
     int rangeExt = maxY >> 1;
+    int numLcu = m_numCuInWidth * m_numCuInHeight;
 
-    m_clipTableBase = X265_MALLOC(pixel, maxY + 2 * rangeExt);
-    m_offsetBo      = X265_MALLOC(int, maxY + 2 * rangeExt);
-    m_chromaOffsetBo = X265_MALLOC(int, maxY + 2 * rangeExt);
+    CHECKED_MALLOC(m_lumaTableBo, pixel, pixelRange);
+    for (int k2 = 0; k2 < pixelRange; k2++)
+        m_lumaTableBo[k2] = 1 + (k2 >> boRangeShift);
+
+    CHECKED_MALLOC(m_chromaTableBo, pixel, pixelRange);
+    for (int k2 = 0; k2 < pixelRange; k2++)
+        m_chromaTableBo[k2] = 1 + (k2 >> boRangeShift);
+
+    CHECKED_MALLOC(m_clipTableBase, pixel, maxY + 2 * rangeExt);
+    CHECKED_MALLOC(m_offsetBo,        int, maxY + 2 * rangeExt);
+    CHECKED_MALLOC(m_chromaOffsetBo , int, maxY + 2 * rangeExt);
 
     for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
 
-    for (int i = minY + rangeExt; i < (maxY +  rangeExt); i++)
+    for (int i = minY + rangeExt; i < (maxY + rangeExt); i++)
         m_clipTableBase[i] = i - rangeExt;
 
     for (int i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
@@ -197,55 +194,53 @@ void SAO::create(x265_param *param)
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
-    m_tmpL1 = X265_MALLOC(pixel, g_maxCUSize + 1);
-    m_tmpL2 = X265_MALLOC(pixel, g_maxCUSize + 1);
+    CHECKED_MALLOC(m_tmpL1, pixel, g_maxCUSize + 1);
+    CHECKED_MALLOC(m_tmpL2, pixel, g_maxCUSize + 1);
 
-    m_tmpU1[0] = X265_MALLOC(pixel, m_param->sourceWidth);
-    m_tmpU1[1] = X265_MALLOC(pixel, m_param->sourceWidth);
-    m_tmpU1[2] = X265_MALLOC(pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU1[0], pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU1[1], pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU1[2], pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU2[0], pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU2[1], pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_tmpU2[2], pixel, m_param->sourceWidth);
 
-    m_tmpU2[0] = X265_MALLOC(pixel, m_param->sourceWidth);
-    m_tmpU2[1] = X265_MALLOC(pixel, m_param->sourceWidth);
-    m_tmpU2[2] = X265_MALLOC(pixel, m_param->sourceWidth);
+    CHECKED_MALLOC(m_distOrg, int64_t, m_numTotalParts);
+    CHECKED_MALLOC(m_costPartBest, double, m_numTotalParts);
+    CHECKED_MALLOC(m_typePartBest, int, m_numTotalParts);
 
-    /* TODO: checked malloc */
-    m_distOrg = X265_MALLOC(int64_t, m_numTotalParts);
-    m_costPartBest = X265_MALLOC(double, m_numTotalParts);
-    m_typePartBest = X265_MALLOC(int, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_rate, int64_t*, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_dist, int64_t*, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_cost, double*, m_numTotalParts);
 
-    m_rate = X265_MALLOC(int64_t*, m_numTotalParts);
-    m_dist = X265_MALLOC(int64_t*, m_numTotalParts);
-    m_cost = X265_MALLOC(double*, m_numTotalParts);
-
-    m_count = X265_MALLOC(int64_t * *, m_numTotalParts);
-    m_offset = X265_MALLOC(int64_t * *, m_numTotalParts);
-    m_offsetOrg = X265_MALLOC(int64_t * *, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_count, int64_t**, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_offset, int64_t**, m_numTotalParts);
+    CHECKED_MALLOC_ZERO(m_offsetOrg, int64_t**, m_numTotalParts);
 
     for (int i = 0; i < m_numTotalParts; i++)
     {
-        m_rate[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
-        m_dist[i] = X265_MALLOC(int64_t, MAX_NUM_SAO_TYPE);
-        m_cost[i] = X265_MALLOC(double, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC(m_rate[i], int64_t, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC(m_dist[i], int64_t, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC(m_cost[i], double, MAX_NUM_SAO_TYPE);
 
-        m_count[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
-        m_offset[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
-        m_offsetOrg[i] = X265_MALLOC(int64_t*, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC_ZERO(m_count[i], int64_t*, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC_ZERO(m_offset[i], int64_t*, MAX_NUM_SAO_TYPE);
+        CHECKED_MALLOC_ZERO(m_offsetOrg[i], int64_t*, MAX_NUM_SAO_TYPE);
 
         for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
         {
-            m_count[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
-            m_offset[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
-            m_offsetOrg[i][j] = X265_MALLOC(int64_t, MAX_NUM_SAO_CLASS);
+            CHECKED_MALLOC(m_count[i][j], int64_t, MAX_NUM_SAO_CLASS);
+            CHECKED_MALLOC(m_offset[i][j], int64_t, MAX_NUM_SAO_CLASS);
+            CHECKED_MALLOC(m_offsetOrg[i][j], int64_t, MAX_NUM_SAO_CLASS);
         }
     }
 
-    if (!m_countPreDblk)
-    {
-        /* TODO: do not use new */
-        int numLcu = m_numCuInWidth * m_numCuInHeight;
-        m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-        m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
-    }
+    /* TODO: do not use new */
+    m_countPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    m_offsetOrgPreDblk = new int64_t[numLcu][3][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    return true;
+
+fail:
+    return false;
 }
 
 void SAO::destroy()

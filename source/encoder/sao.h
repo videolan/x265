@@ -116,7 +116,7 @@ public:
 
     SAO();
 
-    void create(x265_param *param);
+    bool create(x265_param *param);
     void destroy();
 
     void initSAOParam(SAOParam* saoParam, int partLevel, int partRow, int partCol, int parentPartIdx, int startCUX, int endCUX, int startCUY, int endCUY, int plane) const;
