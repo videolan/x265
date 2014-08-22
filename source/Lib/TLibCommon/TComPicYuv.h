@@ -139,6 +139,8 @@ public:
     //  Access starting position of original picture for specific coding unit (CU) or partition unit (PU)
     pixel*  getLumaAddr(int cuAddr) { return m_picOrg[0] + m_cuOffsetY[cuAddr]; }
 
+    pixel*  getPlaneAddr(int plane, int cuAddr) { return m_picOrg[plane] + (plane ? m_cuOffsetC[cuAddr] : m_cuOffsetY[cuAddr]); }
+
     pixel*  getCbAddr(int cuAddr) { return m_picOrg[1] + m_cuOffsetC[cuAddr]; }
 
     pixel*  getCrAddr(int cuAddr) { return m_picOrg[2] + m_cuOffsetC[cuAddr]; }

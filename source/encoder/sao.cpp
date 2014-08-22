@@ -693,21 +693,6 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
         std::swap(m_tmpL1, m_tmpL2);
 }
 
-pixel* SAO::getPicYuvAddr(TComPicYuv* picYuv, int plane, int addr)
-{
-    switch (plane)
-    {
-    case 0:
-        return picYuv->getLumaAddr(addr);
-    case 1:
-        return picYuv->getCbAddr(addr);
-    case 2:
-        return picYuv->getCrAddr(addr);
-    default:
-        return NULL;
-    }
-}
-
 /* Process SAO all units */
 void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plane)
 {
@@ -1370,8 +1355,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         stats = m_offsetOrg[partIdx][SAO_BO];
         counts = m_count[partIdx][SAO_BO];
 
-        fenc = getPicYuvAddr(m_pic->getPicYuvOrg(), plane, addr);
-        recon = getPicYuvAddr(m_pic->getPicYuvRec(), plane, addr);
+        fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+        recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
         endX = (rpelx == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
         endY = (bpely == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
@@ -1413,8 +1398,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
             stats = m_offsetOrg[partIdx][SAO_EO_0];
             counts = m_count[partIdx][SAO_EO_0];
 
-            fenc = getPicYuvAddr(m_pic->getPicYuvOrg(), plane, addr);
-            recon = getPicYuvAddr(m_pic->getPicYuvRec(), plane, addr);
+            fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+            recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
@@ -1446,8 +1431,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
             stats = m_offsetOrg[partIdx][SAO_EO_1];
             counts = m_count[partIdx][SAO_EO_1];
 
-            fenc = getPicYuvAddr(m_pic->getPicYuvOrg(), plane, addr);
-            recon = getPicYuvAddr(m_pic->getPicYuvRec(), plane, addr);
+            fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+            recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
             startY = (tpely == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
@@ -1487,8 +1472,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
             stats = m_offsetOrg[partIdx][SAO_EO_2];
             counts = m_count[partIdx][SAO_EO_2];
 
-            fenc = getPicYuvAddr(m_pic->getPicYuvOrg(), plane, addr);
-            recon = getPicYuvAddr(m_pic->getPicYuvRec(), plane, addr);
+            fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+            recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
@@ -1533,8 +1518,8 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
             stats = m_offsetOrg[partIdx][SAO_EO_3];
             counts = m_count[partIdx][SAO_EO_3];
 
-            fenc = getPicYuvAddr(m_pic->getPicYuvOrg(), plane, addr);
-            recon = getPicYuvAddr(m_pic->getPicYuvRec(), plane, addr);
+            fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+            recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
@@ -1652,8 +1637,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[addr][plane][SAO_BO];
                 count = m_countPreDblk[addr][plane][SAO_BO];
 
-                fenc = getPicYuvAddr(pic->getPicYuvOrg(), plane, addr);
-                recon = getPicYuvAddr(pic->getPicYuvRec(), plane, addr);
+                fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+                recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
                 startX = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
@@ -1693,8 +1678,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_0];
                 count = m_countPreDblk[addr][plane][SAO_EO_0];
 
-                fenc = getPicYuvAddr(pic->getPicYuvOrg(), plane, addr);
-                recon = getPicYuvAddr(pic->getPicYuvRec(), plane, addr);
+                fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+                recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
                 startX = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? lcuHeight : lcuHeight - numSkipLine;
@@ -1729,8 +1714,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_1];
                 count = m_countPreDblk[addr][plane][SAO_EO_1];
 
-                fenc = getPicYuvAddr(pic->getPicYuvOrg(), plane, addr);
-                recon = getPicYuvAddr(pic->getPicYuvRec(), plane, addr);
+                fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+                recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
                 startX = (rPelX == picWidthTmp) ? lcuWidth : lcuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
@@ -1772,8 +1757,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_2];
                 count = m_countPreDblk[addr][plane][SAO_EO_2];
 
-                fenc = getPicYuvAddr(pic->getPicYuvOrg(), plane, addr);
-                recon = getPicYuvAddr(pic->getPicYuvRec(), plane, addr);
+                fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+                recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
                 startX = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;
@@ -1821,8 +1806,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_3];
                 count = m_countPreDblk[addr][plane][SAO_EO_3];
 
-                fenc = getPicYuvAddr(pic->getPicYuvOrg(), plane, addr);
-                recon = getPicYuvAddr(pic->getPicYuvRec(), plane, addr);
+                fenc = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
+                recon = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
 
                 startX = (rPelX == picWidthTmp) ? lcuWidth - 1 : lcuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? lcuHeight - 1 : lcuHeight - numSkipLine;

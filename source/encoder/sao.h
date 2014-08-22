@@ -124,7 +124,6 @@ public:
     void resetSAOParam(SAOParam* saoParam);
 
     void SAOProcess(SAOParam* saoParam);
-    pixel* getPicYuvAddr(TComPicYuv* picYuv, int plane, int addr = 0); /* TODO: remove default value */
 
     // LCU-basd SAO process without slice granularity
     void processSaoCu(int addr, int partIdx, int plane);
