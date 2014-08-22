@@ -170,6 +170,17 @@ typedef int32_t  coeff_t;      // transform coefficient
             goto fail; \
         } \
     }
+#define CHECKED_MALLOC_ZERO(var, type, count) \
+    { \
+        var = (type*)x265_malloc(sizeof(type) * (count)); \
+        if (var) \
+            memset((void*)var, 0, sizeof(type) * (count)); \
+        else \
+        { \
+            x265_log(NULL, X265_LOG_ERROR, "malloc of size %d failed\n", sizeof(type) * (count)); \
+            goto fail; \
+        } \
+    }
 
 #if defined(_MSC_VER)
 #define X265_LOG2F(x) (logf((float)(x)) * 1.44269504088896405f)
