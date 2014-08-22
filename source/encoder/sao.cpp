@@ -124,7 +124,6 @@ SAO::SAO()
     m_offsetBo = NULL;
     m_chromaOffsetBo = NULL;
     m_lumaTableBo = NULL;
-    m_chromaTableBo = NULL;
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
     m_tmpU1[2] = NULL;
@@ -174,10 +173,6 @@ bool SAO::create(x265_param *param)
     CHECKED_MALLOC(m_lumaTableBo, pixel, pixelRange);
     for (int k2 = 0; k2 < pixelRange; k2++)
         m_lumaTableBo[k2] = 1 + (k2 >> boRangeShift);
-
-    CHECKED_MALLOC(m_chromaTableBo, pixel, pixelRange);
-    for (int k2 = 0; k2 < pixelRange; k2++)
-        m_chromaTableBo[k2] = 1 + (k2 >> boRangeShift);
 
     CHECKED_MALLOC(m_clipTableBase, pixel, maxY + 2 * rangeExt);
     CHECKED_MALLOC(m_offsetBo,        int, maxY + 2 * rangeExt);
@@ -249,7 +244,6 @@ void SAO::destroy()
     X265_FREE(m_offsetBo);
     X265_FREE(m_lumaTableBo);
     X265_FREE(m_chromaOffsetBo);
-    X265_FREE(m_chromaTableBo);
 
     X265_FREE(m_tmpL1);
     X265_FREE(m_tmpL2);
@@ -709,7 +703,6 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
 
     uint32_t i;
     uint32_t edgeType;
-    pixel* lumaTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -778,10 +771,8 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                         for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
-                        lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
-
                         for (i = 0; i < (1 << X265_DEPTH); i++)
-                            offsetBo[i] = m_clipTable[i + offset[lumaTable[i]]];
+                            offsetBo[i] = m_clipTable[i + offset[m_lumaTable[i]]];
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
@@ -845,7 +836,6 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
 
     int  i;
     uint32_t edgeType;
-    pixel* lumaTable = NULL;
     int32_t* offsetBo = NULL;
     int  typeIdx;
 
@@ -903,10 +893,8 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                     for (i = 0; i < saoLcuParam[addr].length; i++)
                         offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
-                    lumaTable = sChroma ? m_chromaTableBo : m_lumaTableBo;
-
                     for (i = 0; i < (1 << X265_DEPTH); i++)
-                        offsetBo[i] = m_clipTable[i + offset[lumaTable[i]]];
+                        offsetBo[i] = m_clipTable[i + offset[m_lumaTableBo[i]]];
                 }
                 if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {
@@ -1314,7 +1302,6 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
 
     int isLuma = !plane;
     int isChroma = !!plane;
-    pixel* pTableBo = isLuma ? m_lumaTableBo : m_chromaTableBo;
     int numSkipLine = isChroma ? 4 - (2 * m_vChromaShift) : 4;
 
     if (!m_param->saoLcuBasedOptimization)
@@ -1359,7 +1346,7 @@ void SAO::calcSaoStatsCu(int addr, int partIdx, int plane)
         {
             for (x = 0; x < endX; x++)
             {
-                classIdx = pTableBo[recon[x]];
+                classIdx = m_lumaTableBo[recon[x]];
                 if (classIdx)
                 {
                     stats[classIdx] += (fenc[x] - recon[x]);
@@ -1580,7 +1567,6 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
 
     uint32_t lPelX, tPelY;
     TComDataCU *cu;
-    pixel* pTableBo;
     int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
     int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
@@ -1622,7 +1608,6 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 lcuHeight = bPelY - tPelY;
 
                 stride   = (plane == 0) ? pic->getStride() : pic->getCStride();
-                pTableBo = (plane == 0) ? m_lumaTableBo : m_chromaTableBo;
 
                 //if(iSaoType == BO)
 
@@ -1645,7 +1630,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                         if (x < startX && y < startY)
                             continue;
 
-                        classIdx = pTableBo[recon[x]];
+                        classIdx = m_lumaTableBo[recon[x]];
                         if (classIdx)
                         {
                             stats[classIdx] += (fenc[x] - recon[x]);
