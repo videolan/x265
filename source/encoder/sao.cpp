@@ -205,8 +205,8 @@ bool SAO::create(x265_param *param)
     for (int i = 0; i < (minY + rangeExt); i++)
         m_clipTableBase[i] = minY;
 
-    for (pixel i = minY + rangeExt; i < (maxY + rangeExt); i++)
-        m_clipTableBase[i] = i - rangeExt;
+    for (int i = minY + rangeExt; i < (maxY + rangeExt); i++)
+        m_clipTableBase[i] = (pixel)(i - rangeExt);
 
     for (int i = maxY + rangeExt; i < (maxY + 2 * rangeExt); i++)
         m_clipTableBase[i] = maxY;
