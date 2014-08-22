@@ -86,7 +86,6 @@ protected:
 
     int         m_maxSplitLevel;
 
-    /* TODO: these are dups */
     int         m_numCuInWidth;
     int         m_numCuInHeight;
     int         m_numTotalParts;
@@ -97,9 +96,6 @@ protected:
     pixel*      m_clipTableBase;
     pixel*      m_lumaTableBo;
     pixel*      m_chromaTableBo;
-
-    /* TODO: likely not necessary */
-    TComPicYuv* m_tmpYuv;
 
     pixel*      m_tmpU1[3];
     pixel*      m_tmpU2[3];
