@@ -2082,8 +2082,12 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 calcSaoStatsCu(addr, compIdx,  compIdx);
         }
 
-        saoComponentParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, 0, m_lumaLambda, &mergeSaoParam[0][0], &compDistortion[0]);
-        sao2ChromaParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, m_chromaLambda, &mergeSaoParam[1][0], &mergeSaoParam[2][0], &compDistortion[0]);
+        saoComponentParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, 0, m_lumaLambda,
+                              &mergeSaoParam[0][0], &compDistortion[0]);
+
+        sao2ChromaParamDist(allowMergeLeft, allowMergeUp, saoParam, addr, addrUp, addrLeft, m_chromaLambda,
+                            &mergeSaoParam[1][0], &mergeSaoParam[2][0], &compDistortion[0]);
+
         if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
         {
             // Cost of new SAO_params
@@ -2223,7 +2227,8 @@ inline int64_t SAO::estIterOffset(int typeIdx, int classIdx, double lambda, int6
     return offsetOutput;
 }
 
-void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int plane, double lambda, SaoLcuParam *compSaoParam, double *compDistortion)
+void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int plane,
+                                double lambda, SaoLcuParam *compSaoParam, double *compDistortion)
 {
     int typeIdx;
 
@@ -2349,13 +2354,13 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     }
 }
 
-void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion)
+void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
+                             double lambda, SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion)
 {
-    int typeIdx;
-
     int64_t estDist[2];
-    int classIdx;
     int64_t bestDist = 0;
+    int typeIdx;
+    int classIdx;
 
     SaoLcuParam* saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };
     SaoLcuParam* saoLcuParamNeighbor[2] = { NULL, NULL };
@@ -2374,14 +2379,13 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     resetSaoUnit(saoMergeParam[1][1]);
 
     double costPartBest = MAX_DOUBLE;
-
-    double  bestRDCostTableBo;
-    int     bestClassTableBo[2] = { 0, 0 };
-    int     currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    double  currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double bestRDCostTableBo;
+    double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    double estRate = 0;
+    int    bestClassTableBo[2] = { 0, 0 };
+    int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
 
     SaoLcuParam saoLcuParamRdo[2];
-    double estRate = 0;
 
     resetSaoUnit(&saoLcuParamRdo[0]);
     resetSaoUnit(&saoLcuParamRdo[1]);
@@ -2449,7 +2453,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
         }
 
         estRate = m_entropyCoder.getNumberOfWrittenBits();
-        m_cost[1][typeIdx] = (double)((double)(estDist[0] + estDist[1])  + lambda * (double)estRate);
+        m_cost[1][typeIdx] = (double)((double)(estDist[0] + estDist[1]) + lambda * (double)estRate);
 
         if (m_cost[1][typeIdx] < costPartBest)
         {
@@ -2484,10 +2488,9 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
                 if (typeIdx >= 0)
                 {
                     int mergeBandPosition = (typeIdx == SAO_BO) ? saoLcuParamNeighbor[compIdx]->subTypeIdx : 0;
-                    int mergeOffset;
                     for (classIdx = 0; classIdx < s_numClass[typeIdx]; classIdx++)
                     {
-                        mergeOffset = saoLcuParamNeighbor[compIdx]->offset[classIdx];
+                        int mergeOffset = saoLcuParamNeighbor[compIdx]->offset[classIdx];
                         estDist[compIdx] += estSaoDist(m_count[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1], mergeOffset, m_offsetOrg[compIdx + 1][typeIdx][classIdx + mergeBandPosition + 1],  0);
                     }
                 }
