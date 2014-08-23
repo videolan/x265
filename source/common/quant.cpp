@@ -399,7 +399,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 {
     if (transQuantBypass)
     {
-        primitives.cvt32to16_shr(residual, coeff, stride, 0, 1 << log2TrSize);
+        primitives.cvt32to16_shl[log2TrSize - 2](residual, coeff, stride, 0);
         return;
     }
 
@@ -430,7 +430,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 #if X265_DEPTH <= 10
         primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
 #else
-        if (shift >= 0)
+        if (shift > 0)
             primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
         else
             primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -shift);
