@@ -441,10 +441,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
         {
             fenc->allocPicSym(m_param);
-            fenc->m_picSym->m_slice->m_sps = &m_sps;
-            fenc->m_picSym->m_slice->m_pps = &m_pps;
-            fenc->m_picSym->m_slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            fenc->m_picSym->m_slice->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
+            Slice* slice = fenc->m_picSym->m_slice;
+            slice->m_pic = fenc;
+            slice->m_sps = &m_sps;
+            slice->m_pps = &m_pps;
+            slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
+            slice->m_endCUAddr = slice->realEndAddress(fenc->getNumCUsInFrame() * fenc->getNumPartInCU());
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)

@@ -493,40 +493,34 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     Frame* pic = cu->m_pic;
     Slice* slice = cu->m_slice;
 
-    if (!bInsidePicture)
-    {
-        uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-        uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-        uint32_t rpelx = lpelx + (g_maxCUSize >> depth);
-        uint32_t bpely = tpely + (g_maxCUSize >> depth);
-        bInsidePicture = (rpelx <= slice->m_sps->picWidthInLumaSamples &&
-                          bpely <= slice->m_sps->picHeightInLumaSamples);
-    }
-
-    // We need to split, so don't try these modes.
-    if (bInsidePicture && depth < g_maxCUDepth)
-        codeSplitFlag(cu, absPartIdx, depth);
-
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
 
     if (!bInsidePicture)
     {
-        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
+        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
+        uint32_t cuSize = g_maxCUSize >> depth;
 
-        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
+        bInsidePicture = (g_zscanToPelX[absPartIdx] + cuSize <= xmax &&
+                          g_zscanToPelY[absPartIdx] + cuSize <= ymax);
+
+        if (!bInsidePicture)
         {
-            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-            if ((lpelx < slice->m_sps->picWidthInLumaSamples) &&
-                (tpely < slice->m_sps->picHeightInLumaSamples))
+            uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+            for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
             {
-                encodeCU(cu, absPartIdx, depth + 1, bInsidePicture, bEncodeDQP);
+                if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
+                    encodeCU(cu, absPartIdx, depth + 1, bInsidePicture, bEncodeDQP);
             }
-        }
 
-        return;
+            return;
+        }
     }
+
+    // We need to split, so don't try these modes.
+    if (bInsidePicture && depth < g_maxCUDepth)
+        codeSplitFlag(cu, absPartIdx, depth);
 
     if (depth < cu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
@@ -568,45 +562,24 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 /* finish encoding a cu and handle end-of-slice conditions */
 void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
-    Frame* pic = cu->m_pic;
     Slice* slice = cu->m_slice;
 
     // Calculate end address
+    X265_CHECK(slice->m_endCUAddr == slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
+    uint32_t realEndAddress = slice->m_endCUAddr;
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
-
-    uint32_t internalAddress = (slice->m_endCUAddr - 1) % pic->getNumPartInCU();
-    uint32_t externalAddress = (slice->m_endCUAddr - 1) / pic->getNumPartInCU();
-    uint32_t posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-    uint32_t posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-    uint32_t width = slice->m_sps->picWidthInLumaSamples;
-    uint32_t height = slice->m_sps->picHeightInLumaSamples;
-    uint32_t cuSize = 1 << cu->getLog2CUSize(absPartIdx);
-
-    while (posx >= width || posy >= height)
-    {
-        internalAddress--;
-        posx = (externalAddress % pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelX[g_zscanToRaster[internalAddress]];
-        posy = (externalAddress / pic->getFrameWidthInCU()) * g_maxCUSize + g_rasterToPelY[g_zscanToRaster[internalAddress]];
-    }
-
-    internalAddress++;
-    if (internalAddress == cu->m_pic->getNumPartInCU())
-    {
-        internalAddress = 0;
-        externalAddress = (externalAddress + 1);
-    }
-    uint32_t realEndAddress = (externalAddress * pic->getNumPartInCU() + internalAddress);
 
     // Encode slice finish
     bool bTerminateSlice = false;
     if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
         bTerminateSlice = true;
 
-    uint32_t granularityWidth = g_maxCUSize;
-    posx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-    posy = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-    bool granularityBoundary = ((posx + cuSize) % granularityWidth == 0 || (posx + cuSize == width))
-                            && ((posy + cuSize) % granularityWidth == 0 || (posy + cuSize == height));
+    uint32_t granularityMask = g_maxCUSize - 1;
+    uint32_t cuSize = 1 << cu->getLog2CUSize(absPartIdx);
+    uint32_t rpelx = cu->getCUPelX() + g_zscanToPelX[absPartIdx] + cuSize;
+    uint32_t bpely = cu->getCUPelY() + g_zscanToPelY[absPartIdx] + cuSize;
+    bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
+                                ((bpely & granularityMask) == 0 || (bpely == slice->m_sps->picHeightInLumaSamples)));
 
     if (granularityBoundary)
     {

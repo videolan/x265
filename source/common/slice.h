@@ -335,6 +335,8 @@ public:
     bool isInterB() const { return m_sliceType == B_SLICE; }
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
+
+    uint32_t realEndAddress(uint32_t endCUAddr);
 };
 
 #define IS_REFERENCED(slice) (slice->m_pic->m_lowres.sliceType != X265_TYPE_B) 

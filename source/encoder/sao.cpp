@@ -2525,18 +2525,17 @@ void restoreLFDisabledOrigYuv(Frame* pic)
 /* Original YUV restoration for CU in lossless coding */
 void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    Frame* pic = cu->m_pic;
-    uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
-    uint32_t qNumParts   = curNumParts >> 2;
-
     // go to sub-CU
     if (cu->getDepth(absZOrderIdx) > depth)
     {
+        Frame* pic = cu->m_pic;
+        uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
+        uint32_t qNumParts   = curNumParts >> 2;
+        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
+        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
-            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
+            if (g_zscanToPelX[absZOrderIdx] < xmax && g_zscanToPelY[absZOrderIdx] < ymax)
                 origCUSampleRestoration(cu, absZOrderIdx, depth + 1);
         }
 

@@ -1071,9 +1071,6 @@ int x265_set_globals(x265_param *param)
         uint32_t* tmp = &g_zscanToRaster[0];
         initZscanToRaster(g_maxFullDepth, 1, 0, tmp);
         initRasterToZscan(g_maxFullDepth);
-
-        // initialize conversion matrix from partition index to pel
-        initRasterToPelXY(g_maxFullDepth);
     }
     return 0;
 }

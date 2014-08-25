@@ -49,15 +49,15 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
 
     Frame* pic = cu->m_pic;
     uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
-    uint32_t qNumParts   = curNumParts >> 2;
 
     if (cu->getDepth(absZOrderIdx) > depth)
     {
+        uint32_t qNumParts   = curNumParts >> 2;
+        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
+        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
-            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
+            if (g_zscanToPelX[absZOrderIdx] < xmax && g_zscanToPelY[absZOrderIdx] < ymax)
                 deblockCU(cu, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
         }
         return;
@@ -184,8 +184,8 @@ void Deblock::setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir
 
 void Deblock::setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *params)
 {
-    uint32_t x = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-    uint32_t y = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+    uint32_t x = cu->getCUPelX() + g_zscanToPelX[absZOrderIdx];
+    uint32_t y = cu->getCUPelY() + g_zscanToPelY[absZOrderIdx];
 
     TComDataCU* tempCU;
     uint32_t    tempPartIdx;

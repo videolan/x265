@@ -548,7 +548,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     Slice* slice = outTempCU->m_slice;
     if (!bInsidePicture)
     {
-        int cuSize = 1 << outTempCU->getLog2CUSize(0);
+        uint32_t cuSize = 1 << outTempCU->getLog2CUSize(0);
         uint32_t lpelx = outTempCU->getCUPelX();
         uint32_t tpely = outTempCU->getCUPelY();
         uint32_t rpelx = lpelx + cuSize;
@@ -1875,15 +1875,14 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
         uint32_t nextDepth = depth + 1;
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - lcu->getCUPelX();
+        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - lcu->getCUPelY();
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            uint32_t lpelx = lcu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absPartIdx]];
-            uint32_t tpely = lcu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absPartIdx]];
-            if ((lpelx < slice->m_sps->picWidthInLumaSamples) &&
-                (tpely < slice->m_sps->picHeightInLumaSamples))
+            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
             {
-                subTempPartCU->copyToSubCU(cu, partUnitIdx, depth + 1);
-                encodeResidue(lcu, subTempPartCU, absPartIdx, depth + 1);
+                subTempPartCU->copyToSubCU(cu, partUnitIdx, nextDepth);
+                encodeResidue(lcu, subTempPartCU, absPartIdx, nextDepth);
             }
         }
 
