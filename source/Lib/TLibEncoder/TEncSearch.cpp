@@ -572,6 +572,10 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
 
         bool checkTQbypass = cu->m_slice->m_pps->bTransquantBypassEnabled && !m_param->bLossless;
 
+        // NOTE: transform_quant_bypass just at cu level
+        if ((cu->m_slice->m_pps->bTransquantBypassEnabled) && cu->getCUTransquantBypass(0) != checkTQbypass)
+            checkTQbypass = cu->getCUTransquantBypass(0) && !m_param->bLossless;
+
         uint32_t stride = fencYuv->getStride();
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
 
