@@ -200,7 +200,7 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 }
 
 /* To minimize the distortion only. No rate is considered */
-uint32_t Quant::signBitHidingHDQ(coeff_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
+uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
 {
     const uint32_t log2TrSizeCG = codeParams.log2TrSizeCG;
     const uint16_t *scan = codeParams.scan;
@@ -235,7 +235,8 @@ uint32_t Quant::signBitHidingHDQ(coeff_t* coeff, int32_t* deltaU, uint32_t numSi
 
             if (signbit != (absSum & 0x1)) // compare signbit with sum_parity
             {
-                int minCostInc = MAX_INT,  minPos = -1, finalChange = 0, curCost = MAX_INT, curChange = 0;
+                int minCostInc = MAX_INT,  minPos = -1, curCost = MAX_INT;
+                int16_t finalChange = 0, curChange = 0;
 
                 for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
@@ -396,9 +397,24 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
 
         if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
         {
+           /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+            * optimize to take coefficients as int16_t*, it will be cleanse.*/
+           ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
+           for (int i = 0; i < numCoeff; i++)
+           {
+               qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+           }
             TUEntropyCodingParameters codeParams;
             cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, isLuma);
-            return signBitHidingHDQ(coeff, deltaU, numSig, codeParams);
+            uint32_t numSign = signBitHidingHDQ(qCoeff, deltaU, numSig, codeParams);
+
+            /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+             * optimize to take coefficients as int16_t*, it will be cleanse.*/
+             for (int i = 0; i < numCoeff; i++)
+             {
+                  coeff[i] = qCoeff[i];
+             }
+             return numSign;
         }
         else
             return numSig;
