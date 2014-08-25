@@ -1252,11 +1252,6 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
     }
-    if (p->bCULossless)
-    {
-        x265_log(p, X265_LOG_WARNING, "CU-Lossless is disabled in this release of x265\n");
-        p->bCULossless = 0;
-    }
 
     if (p->keyframeMax < 0)
     {
