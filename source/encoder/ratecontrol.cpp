@@ -320,6 +320,7 @@ RateControl::RateControl(x265_param *p)
     m_startEndOrder.set(0);
     m_bTerminated = false;
     m_finalFrameCount = 0;
+    m_numEntries = 0;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -1033,7 +1034,7 @@ int RateControl::rateControlSliceType(int frameNum)
                 m_param->bframes = 1;
             return X265_TYPE_AUTO;
         }
-        int frameType = m_rce2Pass[frameNum].sliceType == I_SLICE ? (m_rce2Pass[frameNum].poc == 0 ? X265_TYPE_I : X265_TYPE_IDR)
+        int frameType = m_rce2Pass[frameNum].sliceType == I_SLICE ? (frameNum > 0 && m_param->bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR)
                             : m_rce2Pass[frameNum].sliceType == P_SLICE ? X265_TYPE_P
                             : (m_rce2Pass[frameNum].sliceType == B_SLICE && m_rce2Pass[frameNum].keptAsRef? X265_TYPE_BREF : X265_TYPE_B);
         return frameType;
@@ -2080,7 +2081,7 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
     // Write frame stats into the stats file if 2 pass is enabled.
     if (m_param->rc.bStatWrite)
     {
-        char cType = rce->sliceType == I_SLICE ? (rce->poc == 0 ? 'I' : 'i')
+        char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
             : rce->sliceType == P_SLICE ? 'P'
             : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
