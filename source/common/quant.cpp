@@ -367,7 +367,18 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
     }
 
     if (m_useRDOQ)
-        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
+    {
+        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+         * optimize to take coefficients as int16_t*, it will be cleanse.*/
+        int numCoeff = 1 << log2TrSize * 2;
+        assert(numCoeff <= 1024);
+        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
+        for (int i = 0; i < numCoeff; i++)
+        {
+            qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+        }
+        return rdoQuant(cu, qCoeff, log2TrSize, ttype, absPartIdx, usePsy);
+    }
     else
     {
         int deltaU[32 * 32];
@@ -472,7 +483,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+uint32_t Quant::rdoQuant(TComDataCU* cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
@@ -487,26 +498,9 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
 
     int numCoeff = 1 << log2TrSize * 2;
 
-    assert(numCoeff <= 1024);
-    ALIGN_VAR_16(int16_t, qCoeff1[1024]);
-    for (int i = 0; i < numCoeff; i++)
-    {
-        qCoeff1[i] = (int16_t)Clip3(-32768, 32767, dstCoeff[i]);
-    }
-    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, qCoeff1, qbits, add, numCoeff);
-    for (int i = 0; i < numCoeff; i++)
-    {
-        dstCoeff[i] = qCoeff1[i];
-    }
+    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
 
-    assert(numCoeff <= 1024);
-    ALIGN_VAR_16(int16_t, qCoeff[1024]);
-    for (int i = 0; i < numCoeff; i++)
-    {
-        qCoeff[i] = (int16_t)Clip3(-32768, 32767, dstCoeff[i]);
-    }
-
-    X265_CHECK((int)numSig == primitives.count_nonzero(qCoeff, 1 << log2TrSize * 2), "numSig differ\n");
+    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, 1 << log2TrSize * 2), "numSig differ\n");
     if (!numSig)
         return 0;
 
@@ -583,7 +577,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         {
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codeParams.scan[scanPos];
-            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
+            uint16_t maxAbsLevel = (int16_t)abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
             int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
             int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
@@ -633,7 +627,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 const int *greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
                 const int *levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
 
-                uint32_t level = 0;
+                uint16_t level = 0;
                 uint32_t sigCoefBits = 0;
                 costCoeff[scanPos] = MAX_INT64;
 
@@ -653,8 +647,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                 }
                 if (maxAbsLevel)
                 {
-                    uint32_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
-                    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
+                    uint16_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
+                    for (uint16_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
                     {
                         uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
@@ -892,7 +886,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
         numSig += (level != 0);
 
         uint32_t mask = (int32_t)m_resiDctCoeff[blkPos] >> 31;
-        dstCoeff[blkPos] = (level ^ mask) - mask;
+        dstCoeff[blkPos] = (int16_t)((level ^ mask) - mask);
     }
 
     /* clean uncoded coefficients */
@@ -939,7 +933,8 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
                      * finalChange imply absolute levels (+1 is away from zero, -1 is towards zero) */
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
-                    int minPos = -1, finalChange = 0, curChange = 0;
+                    int minPos = -1;
+                    int16_t finalChange = 0, curChange = 0;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
