@@ -277,7 +277,7 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
 
 bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
 {
-    ALIGN_VAR_32(int32_t, qcoeff[32 * 32]);
+    ALIGN_VAR_32(int16_t, qcoeff[32 * 32]);
 
     for (int i = 0; i < 4; i++)
     {
@@ -287,7 +287,7 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
 
         for (int n = 0; n <= num; n++)
         {
-            memset(qcoeff, 0, num * sizeof(int32_t));
+            memset(qcoeff, 0, num * sizeof(int16_t));
 
             for (int j = 0; j < n; j++)
             {
@@ -297,7 +297,7 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
                     k = (k + 11) & mask;
                 }
 
-                qcoeff[k] = rand() - RAND_MAX / 2;
+                qcoeff[k] = (int16_t)rand() - RAND_MAX / 2;
             }
 
             int refval = ref(qcoeff, num);
@@ -436,7 +436,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         for (int i = 4; i <= 32; i <<= 1)
         {
             printf("count_nonzero[%dx%d]", i, i);
-            REPORT_SPEEDUP(opt.count_nonzero, ref.count_nonzero, mbufidct, i * i)
+            REPORT_SPEEDUP(opt.count_nonzero, ref.count_nonzero, mbuf1, i * i)
         }
     }
 }

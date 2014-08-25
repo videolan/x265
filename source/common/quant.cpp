@@ -441,7 +441,15 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
-        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << log2TrSize * 2), "numSig differ\n");
+        int numCoeff = (1 << (log2TrSize * 2));
+        assert(numCoeff <= 1024);
+        ALIGN_VAR_16(int16_t, qCoeff[1024]);
+        for (int i = 0; i < numCoeff; i++)
+        {
+            qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+        }
+
+        X265_CHECK((int)numSig == primitives.count_nonzero(qCoeff, 1 << log2TrSize * 2), "numSig differ\n");
 
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
@@ -479,7 +487,14 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int numCoeff = 1 << log2TrSize * 2;
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
 
-    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, numCoeff), "numSig differ\n");
+    assert(numCoeff <= 1024);
+    ALIGN_VAR_16(int16_t, qCoeff[1024]);
+    for (int i = 0; i < numCoeff; i++)
+    {
+        qCoeff[i] = (int16_t)Clip3(-32768, 32767, dstCoeff[i]);
+    }
+
+    X265_CHECK((int)numSig == primitives.count_nonzero(qCoeff, 1 << log2TrSize * 2), "numSig differ\n");
     if (!numSig)
         return 0;
 

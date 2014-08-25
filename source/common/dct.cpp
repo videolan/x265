@@ -817,7 +817,7 @@ uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits,
     return numSig;
 }
 
-int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
+int  count_nonzero_c(const int16_t *quantCoeff, int numCoeff)
 {
     X265_CHECK(((intptr_t)quantCoeff & 15) == 0, "quant buffer not aligned\n");
     X265_CHECK(numCoeff > 0 && (numCoeff & 15) == 0, "numCoeff invalid %d\n", numCoeff);
