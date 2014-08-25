@@ -146,8 +146,8 @@ public:
 
     void resetStats();
 
-    void runQuadTreeDecision(SAOQTPart *psQTPart, int partIdx, double &costFinal, int maxLevel, double lambda, int plane);
-    void rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, double lambda, int plane);
+    void runQuadTreeDecision(SAOQTPart *psQTPart, int partIdx, double &costFinal, int maxLevel, int plane);
+    void rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, int plane);
 
     void disablePartTree(SAOQTPart *psQTPart, int partIdx);
     void getSaoStats(SAOQTPart *psQTPart, int plane);
@@ -155,9 +155,10 @@ public:
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
     void assignSaoUnitSyntax(SaoLcuParam* saoLcuParam,  SAOQTPart* saoPart, bool &oneUnitFlag);
     void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, int dir);
+
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, int plane,
-                               double lambda, SaoLcuParam *compSaoParam, double *distortion);
-    void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft, double lambda,
+                               SaoLcuParam *compSaoParam, double *distortion);
+    void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
                             SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion);
 
     inline int64_t estSaoDist(int64_t count, int64_t offset, int64_t offsetOrg, int shift);
