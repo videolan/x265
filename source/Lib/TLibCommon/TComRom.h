@@ -144,8 +144,8 @@ extern const uint8_t g_log2Size[MAX_CU_SIZE + 1]; // from size to log2(size)
 extern const int g_winUnitX[MAX_CHROMA_FORMAT_IDC + 1];
 extern const int g_winUnitY[MAX_CHROMA_FORMAT_IDC + 1];
 
-extern double x265_lambda_tab[MAX_MAX_QP + 1];
-extern double x265_lambda2_tab[MAX_MAX_QP + 1];
+extern double x265_lambda_tab[QP_MAX_MAX + 1];
+extern double x265_lambda2_tab[QP_MAX_MAX + 1];
 extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1];
 
 // CABAC tables

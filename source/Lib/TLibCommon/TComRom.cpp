@@ -44,7 +44,7 @@ namespace x265 {
 //! \{
 
 // lambda = pow(2, (double)q / 6 - 2);
-double x265_lambda_tab[MAX_MAX_QP + 1] =
+double x265_lambda_tab[QP_MAX_MAX + 1] =
 {
     0.2500, 0.2806, 0.3150, 0.3536, 0.3969,
     0.4454, 0.5000, 0.5612, 0.6300, 0.7071,
@@ -63,7 +63,7 @@ double x265_lambda_tab[MAX_MAX_QP + 1] =
 };
 
 // lambda2 = pow(lambda, 2) * scale (0.85);
-double x265_lambda2_tab[MAX_MAX_QP + 1] =
+double x265_lambda2_tab[QP_MAX_MAX + 1] =
 {
     0.0531, 0.0669, 0.0843, 0.1063, 0.1339,
     0.1687, 0.2125, 0.2677, 0.3373, 0.4250,

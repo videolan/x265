@@ -421,8 +421,8 @@ RateControl::RateControl(x265_param *p)
         if (m_qp && !m_param->bLossless)
         {
             m_qpConstant[P_SLICE] = m_qp;
-            m_qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_qp + m_pbOffset + 0.5));
+            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp + m_pbOffset + 0.5));
         }
         else
         {
@@ -922,11 +922,11 @@ bool RateControl::initPass2()
                  (double)m_param->rc.bitrate,
                  expectedBits * m_fps / (m_numEntries * 1000.),
                  avgq);
-        if (expectedBits < allAvailableBits && avgq < MIN_QP + 2)
+        if (expectedBits < allAvailableBits && avgq < QP_MIN + 2)
         {
             x265_log(m_param, X265_LOG_WARNING, "try reducing target bitrate\n");
         }
-        else if (expectedBits > allAvailableBits && avgq > MAX_QP - 2)
+        else if (expectedBits > allAvailableBits && avgq > QP_MAX_SPEC - 2)
         {
             x265_log(m_param, X265_LOG_WARNING, "try increasing target bitrate\n");
         }
@@ -1014,9 +1014,9 @@ int RateControl::rateControlSliceType(int frameNum)
              * adaptive B-frames, but that would be complicated.
              * So just calculate the average QP used so far. */
             m_param->rc.qp = (m_accumPQp < 1) ? ABR_INIT_QP_MAX : (int)(m_accumPQp + 0.5);
-            m_qpConstant[P_SLICE] = Clip3(0, MAX_MAX_QP, m_param->rc.qp);
-            m_qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_param->rc.qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_param->rc.qp + m_pbOffset + 0.5));
+            m_qpConstant[P_SLICE] = Clip3(0, QP_MAX_MAX, m_param->rc.qp);
+            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp + m_pbOffset + 0.5));
 
             x265_log(m_param, X265_LOG_ERROR, "2nd pass has more frames than 1st pass (%d)\n", m_numEntries);
             x265_log(m_param, X265_LOG_ERROR, "continuing anyway, at constant QP=%d\n", m_param->rc.qp);
@@ -1107,7 +1107,7 @@ int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* en
             rce->lastSatd = m_currentSatd;
         }
         double q = x265_qScale2qp(rateEstimateQscale(pic, rce));
-        q = Clip3((double)MIN_QP, (double)MAX_MAX_QP, q);
+        q = Clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
         m_qp = int(q + 0.5);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
@@ -1131,7 +1131,7 @@ int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* en
     if (pic->m_forceqp)
     {
         m_qp = int32_t(pic->m_forceqp + 0.5) - 1;
-        m_qp = Clip3(MIN_QP, MAX_MAX_QP, m_qp);
+        m_qp = Clip3(QP_MIN, QP_MAX_MAX, m_qp);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = m_qp;
     }
     // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
@@ -1852,8 +1852,8 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
     int canReencodeRow = 1;
     /* tweak quality based on difference from predicted size */
     double prevRowQp = qpVbv;
-    double qpAbsoluteMax = MAX_MAX_QP;
-    double qpAbsoluteMin = MIN_QP;
+    double qpAbsoluteMax = QP_MAX_MAX;
+    double qpAbsoluteMin = QP_MIN;
     if (m_rateFactorMaxIncrement)
         qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + m_rateFactorMaxIncrement);
 

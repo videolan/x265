@@ -501,8 +501,8 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
             int32_t qp = (qpP + qpQ + 1) >> 1;
             int32_t bitdepthScale = 1 << (X265_DEPTH - 8);
 
-            int32_t indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
-            int32_t indexB = Clip3(0, MAX_QP, qp + betaOffset);
+            int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
+            int32_t indexB = Clip3(0, QP_MAX_SPEC, qp + betaOffset);
 
             int32_t tc = s_tcTable[indexTC] * bitdepthScale;
             int32_t beta = s_betaTable[indexB] * bitdepthScale;
@@ -641,7 +641,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
                 }
 
                 int32_t bitdepthScale = 1 << (X265_DEPTH - 8);
-                int32_t indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset);
+                int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset);
                 int32_t tc = s_tcTable[indexTC] * bitdepthScale;
 
                 for (uint32_t step = 0; step < loopLength; step++)

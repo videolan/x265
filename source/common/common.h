@@ -103,6 +103,13 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
+#define QP_MIN      0
+#define QP_MAX_SPEC 51 /* max allowed signaled QP in HEVC */
+#define QP_MAX_MAX  69 /* max allowed QP to be output by rate control */
+
+#define MIN_QPSCALE     0.21249999999999999
+#define MAX_MAX_QPSCALE 615.46574234477100
+
 #define BITS_FOR_POC 8
 
 template<typename T>

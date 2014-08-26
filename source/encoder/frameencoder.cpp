@@ -209,7 +209,7 @@ void FrameEncoder::compressFrame()
     m_rce.newQp = qp;
 
     /* Clip slice QP to 0-51 spec range before encoding */
-    slice->m_sliceQp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
+    slice->m_sliceQp = Clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
     m_initSliceContext.resetEntropy(slice);
 
@@ -664,7 +664,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         {
             int qp = calcQpForCu(cuAddr, cu->m_baseQp);
             setLambda(qp, tld);
-            qp = Clip3(MIN_QP, MAX_QP, qp);
+            qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
             cu->setQPSubParts(char(qp), 0, 0);
             if (m_param->rc.aqMode)
                 m_frame->m_qpaAq[row] += qp;
@@ -705,7 +705,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             {
                 double qpBase = cu->m_baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
-                qpBase = Clip3((double)MIN_QP, (double)MAX_MAX_QP, qpBase);
+                qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
                 m_frame->m_rowDiagQp[row] = qpBase;
                 m_frame->m_rowDiagQScale[row] =  x265_qp2qScale(qpBase);
 
@@ -847,9 +847,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
 {
     Slice* slice = m_frame->m_picSym->m_slice;
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
-    int qpCr = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCrQpOffset);
-    qp = Clip3(0, MAX_MAX_QP, qp);
+    int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
+    int qpCr = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCrQpOffset);
+    qp = Clip3(0, QP_MAX_MAX, qp);
 
     tld.m_cuCoder.m_me.setQP(qp);
     tld.m_cuCoder.m_rdCost.setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
@@ -942,7 +942,7 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     qp_offset /= cnt;
     qp += qp_offset;
 
-    return Clip3(MIN_QP, MAX_MAX_QP, (int)(qp + 0.5));
+    return Clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
 }
 
 Frame *FrameEncoder::getEncodedPicture(NALList& output)

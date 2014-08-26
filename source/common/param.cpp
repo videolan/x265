@@ -1245,7 +1245,7 @@ char *x265_param2string(x265_param *p)
             s += sprintf(s, " bitrate=%d ratetol=%.1f",
                          p->rc.bitrate, p->rc.rateTolerance);
         s += sprintf(s, " qcomp=%.2f qpmin=%d qpmax=%d qpstep=%d",
-                     p->rc.qCompress, MIN_QP, MAX_QP, p->rc.qpStep);
+                     p->rc.qCompress, QP_MIN, QP_MAX_SPEC, p->rc.qpStep);
         if (p->rc.bStatRead)
             s += sprintf( s, " cplxblur=%.1f qblur=%.1f",
                           p->rc.complexityBlur, p->rc.qblur);
@@ -1288,7 +1288,7 @@ bool parseLambdaFile(x265_param *param)
     {
         double *table = t ? x265_lambda2_tab : x265_lambda_tab;
 
-        for (int i = 0; i < MAX_MAX_QP + 1; i++)
+        for (int i = 0; i < QP_MAX_MAX + 1; i++)
         {
             double value;
 

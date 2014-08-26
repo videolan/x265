@@ -77,7 +77,7 @@ void FrameFilter::start(Frame *pic, Entropy& initState, int qp)
 
     if (m_param->bEnableSAO)
     {
-        int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
+        int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
         m_sao.m_lumaLambda = x265_lambda2_tab[qp];
         m_sao.m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
         m_sao.m_pic = pic;
