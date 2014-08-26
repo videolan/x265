@@ -158,8 +158,6 @@ void FrameEncoder::compressFrame()
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_picSym->m_slice;
 
-    m_initSliceContext.resetEntropy(slice);
-
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
@@ -225,11 +223,14 @@ void FrameEncoder::compressFrame()
         m_frameFilter.m_sao.m_refDepth = 2 + !IS_REFERENCED(slice);
         break;
     }
-    m_frameFilter.start(m_frame);
 
     // Clip slice QP to 0-51 spec range before encoding
     qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
     slice->m_sliceQp = qp;
+
+    m_initSliceContext.resetEntropy(slice);
+
+    m_frameFilter.start(m_frame);
 
     if (m_frame->m_lowres.bKeyframe)
     {
