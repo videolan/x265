@@ -208,29 +208,12 @@ void FrameEncoder::compressFrame()
     int qp = m_top->m_rateControl->rateControlStart(m_frame, &m_rce, m_top);
     m_rce.newQp = qp;
 
-    int qpCb = Clip3(0, MAX_MAX_QP, qp + slice->m_pps->chromaCbQpOffset);
-    m_frameFilter.m_sao.m_lumaLambda = x265_lambda2_tab[qp];
-    m_frameFilter.m_sao.m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
-    switch (slice->m_sliceType)
-    {
-    case I_SLICE:
-        m_frameFilter.m_sao.m_refDepth = 0;
-        break;
-    case P_SLICE:
-        m_frameFilter.m_sao.m_refDepth = 1;
-        break;
-    case B_SLICE:
-        m_frameFilter.m_sao.m_refDepth = 2 + !IS_REFERENCED(slice);
-        break;
-    }
-
-    // Clip slice QP to 0-51 spec range before encoding
-    qp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
-    slice->m_sliceQp = qp;
+    /* Clip slice QP to 0-51 spec range before encoding */
+    slice->m_sliceQp = Clip3(-QP_BD_OFFSET, MAX_QP, qp);
 
     m_initSliceContext.resetEntropy(slice);
 
-    m_frameFilter.start(m_frame);
+    m_frameFilter.start(m_frame, m_initSliceContext, qp);
 
     if (m_frame->m_lowres.bKeyframe)
     {

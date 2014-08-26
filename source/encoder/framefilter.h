@@ -34,6 +34,7 @@ namespace x265 {
 // private x265 namespace
 
 class Encoder;
+class Entropy;
 
 // Manages the processing of a single frame loopfilter
 class FrameFilter
@@ -59,7 +60,7 @@ public:
     void init(Encoder *top, FrameEncoder *frame, int numRows);
     void destroy();
 
-    void start(Frame *pic);
+    void start(Frame *pic, Entropy& initState, int qp);
 
     void processRow(int row, ThreadLocalData& tld);
     void processRowPost(int row);
