@@ -2324,6 +2324,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
 
     uint64_t bestCost = MAX_INT64;
+    uint32_t bestMode = 0;
 
     for (uint32_t modeId = 0; modeId < numModes; modeId++)
     {
@@ -2391,6 +2392,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
             if (cu->getQtRootCbf(0))
                 xSetResidualQTData(cu, 0, outBestResiYuv, depth, true);
 
+            bestMode = modeId; //0 for lossless
             bestBits = bits;
             bestCost = cost;
             bestCoeffBits = cu->m_coeffBits;
@@ -2399,6 +2401,19 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
     }
 
     X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
+
+    if (bIsTQBypassEnable && !bestMode)
+    {
+        cu->setCUTransquantBypassSubParts(true, 0, depth);
+        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
+        uint64_t cost = 0;
+        uint32_t zeroDistortion = 0;
+        uint32_t bits = 0;
+        uint32_t distortion = 0;
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion);
+        xSetResidualQTData(cu, 0, NULL, depth, false);
+        m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
+    }
 
     if (cu->getQtRootCbf(0))
         outReconYuv->addClip(predYuv, outBestResiYuv, log2CUSize);
