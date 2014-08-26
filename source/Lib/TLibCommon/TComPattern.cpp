@@ -59,7 +59,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     IntraNeighbors intraNeighbors;
 
-    initIntraNeighbors(cu, zOrderIdxInPart, partDepth, TEXT_LUMA, &intraNeighbors);
+    initIntraNeighbors(cu, zOrderIdxInPart, partDepth, true, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t tuSize2 = tuSize << 1;
 
@@ -172,7 +172,7 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
 
     IntraNeighbors intraNeighbors;
 
-    initIntraNeighbors(cu, zOrderIdxInPart, partDepth, TEXT_CHROMA, &intraNeighbors);
+    initIntraNeighbors(cu, zOrderIdxInPart, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
     roiOrigin = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
@@ -181,13 +181,13 @@ void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart,
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
 }
 
-void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, TextType cType, IntraNeighbors *intraNeighbors)
+void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *intraNeighbors)
 {
     uint32_t log2TrSize = cu->getLog2CUSize(0) - partDepth;
     int log2UnitWidth  = LOG2_UNIT_SIZE;
     int log2UnitHeight = LOG2_UNIT_SIZE;
 
-    if (cType != TEXT_LUMA)
+    if (!isLuma)
     {
         log2TrSize     -= cu->getHorzChromaShift();
         log2UnitWidth  -= cu->getHorzChromaShift();
