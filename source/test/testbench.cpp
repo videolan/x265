@@ -88,6 +88,11 @@ void do_help()
     printf("Options and testbench name may be truncated.\n");
 }
 
+PixelHarness  HPixel;
+MBDstHarness  HMBDist;
+IPFilterHarness HIPFilter;
+IntraPredHarness HIPred;
+
 int main(int argc, char *argv[])
 {
     int cpuid = x265::cpu_detect();
@@ -135,11 +140,6 @@ int main(int argc, char *argv[])
     const char *bpp[] = { "8bpp", "16bpp" };
     printf("Using random seed %X %s\n", seed, bpp[HIGH_BIT_DEPTH]);
     srand(seed);
-
-    PixelHarness  HPixel;
-    MBDstHarness  HMBDist;
-    IPFilterHarness HIPFilter;
-    IntraPredHarness HIPred;
 
     // To disable classes of tests, simply comment them out in this list
     TestHarness *harness[] =
