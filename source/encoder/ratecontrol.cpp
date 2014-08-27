@@ -1735,6 +1735,25 @@ double RateControl::clipQscale(Frame* pic, double q)
 
             q = X265_MAX(q0, q);
         }
+         // Check B-frame complexity, and use up any bits that would
+         // overflow before the next P-frame.
+         if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
+         {
+             int nb = m_leadingBframes;
+             double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+             double bbits = predictSize(&m_predBfromP, q * m_param->rc.pbFactor, (double)m_currentSatd);
+             double space;
+             if (bbits > m_bufferRate)
+                 nb = 0;
+             double pbbits = nb * bbits;
+
+             space = m_bufferFill + (1 + nb) * m_bufferRate - m_bufferSize;
+             if (pbbits < space)
+             {
+                 q *= X265_MAX(pbbits / space, bits / (0.5 * m_bufferSize));
+             }
+             q = X265_MAX(q0 / 2, q);
+         }
 
         if (!m_isCbr)
             q = X265_MAX(q0, q);
