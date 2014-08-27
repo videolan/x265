@@ -53,14 +53,12 @@ IPFilterHarness::IPFilterHarness()
     memset(IPF_vec_output_s, 0xCD, TEST_BUF_SIZE * sizeof(int16_t));
 
     int pixelMax = (1 << X265_DEPTH) - 1;
-    int shortMax = (1 << 16) - 1;
+    int shortMax = (1 << 15) - 1;
     for (int i = 0; i < TEST_BUF_SIZE; i++)
     {
-        int isPositive = rand() & 1;
-        isPositive = (isPositive) ? 1 : -1;
-
         pixel_buff[i] = (pixel)(rand() & pixelMax);
-        short_buff[i] = (int16_t)(isPositive) * (rand() & shortMax);
+        int isPositive = (rand() & 1) ? 1 : -1;
+        short_buff[i] = (int16_t)(isPositive * (rand() & shortMax));
     }
 }
 
