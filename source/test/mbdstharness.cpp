@@ -357,6 +357,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.dequant_scaling)
+    {
+        if (!check_dequant_primitive(ref.dequant_scaling, opt.dequant_scaling))
+        {
+            printf("dequant_scaling: Failed!\n");
+            return false;
+        }
+    }
+
     if (opt.quant)
     {
         if (!check_quant_primitive(ref.quant, opt.quant))
