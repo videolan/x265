@@ -353,7 +353,7 @@ Profile, Level, Tier
 
 .. option:: --high-tier, --no-high-tier
 
-	If :option:`--level-idc` has been specied, the option adds the
+	If :option:`--level-idc` has been specified, the option adds the
 	intention to support the High tier of that level. If your specified
 	level does not support a High tier, a warning is issued and this
 	modifier flag is ignored.
