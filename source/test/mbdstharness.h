@@ -53,8 +53,6 @@ protected:
     int     mintbuf4[MEM_CMP_SIZE];
     int     mintbuf5[MEM_CMP_SIZE];
     int     mintbuf6[MEM_CMP_SIZE];
-    int     mintbuf7[MEM_CMP_SIZE];
-    int     mintbuf8[MEM_CMP_SIZE];
 
     int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
     int     int_test_buff[TEST_CASES][TEST_BUF_SIZE];

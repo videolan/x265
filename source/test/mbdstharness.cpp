@@ -93,8 +93,6 @@ MBDstHarness::MBDstHarness()
     memset(mintbuf4, 0, MEM_CMP_SIZE);
     memset(mintbuf5, 0, MEM_CMP_SIZE);
     memset(mintbuf6, 0, MEM_CMP_SIZE);
-    memset(mintbuf7, 0, MEM_CMP_SIZE);
-    memset(mintbuf8, 0, MEM_CMP_SIZE);
 #endif // if _DEBUG
 }
 
