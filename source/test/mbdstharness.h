@@ -36,21 +36,21 @@ protected:
 
     enum { ITERS = 100 };
     enum { INCR = 16 };
-    enum { MEM_CMP_SIZE = 32 * 32 };
-    enum { TEST_BUF_SIZE = MEM_CMP_SIZE + ITERS * INCR };
+    enum { MAX_TU_SIZE = 32 * 32 };
+    enum { TEST_BUF_SIZE = MAX_TU_SIZE + ITERS * INCR };
     enum { TEST_CASES = 3 };
 
     ALIGN_VAR_16(int16_t, mbuf1[TEST_BUF_SIZE]);
     int16_t mbufdct[TEST_BUF_SIZE];
     int     mbufidct[TEST_BUF_SIZE];
 
-    int16_t mshortbuf2[MEM_CMP_SIZE];
-    int16_t mshortbuf3[MEM_CMP_SIZE];
+    int16_t mshortbuf2[MAX_TU_SIZE];
+    int16_t mshortbuf3[MAX_TU_SIZE];
 
-    int     mintbuf1[MEM_CMP_SIZE];
-    int     mintbuf2[MEM_CMP_SIZE];
-    int     mintbuf3[MEM_CMP_SIZE];
-    int     mintbuf4[MEM_CMP_SIZE];
+    int     mintbuf1[MAX_TU_SIZE];
+    int     mintbuf2[MAX_TU_SIZE];
+    int     mintbuf3[MAX_TU_SIZE];
+    int     mintbuf4[MAX_TU_SIZE];
 
     int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
     int     int_test_buff[TEST_CASES][TEST_BUF_SIZE];

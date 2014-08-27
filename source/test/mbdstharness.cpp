@@ -81,14 +81,13 @@ MBDstHarness::MBDstHarness()
     }
 
 #if _DEBUG
-    memset(mshortbuf2, 0, MEM_CMP_SIZE);
-    memset(mshortbuf3, 0, MEM_CMP_SIZE);
-    memset(mbufidct, 0, TEST_BUF_SIZE);
+    memset(mshortbuf2, 0, MAX_TU_SIZE * sizeof(int16_t));
+    memset(mshortbuf3, 0, MAX_TU_SIZE * sizeof(int16_t));
 
-    memset(mintbuf1, 0, MEM_CMP_SIZE);
-    memset(mintbuf2, 0, MEM_CMP_SIZE);
-    memset(mintbuf3, 0, MEM_CMP_SIZE);
-    memset(mintbuf4, 0, MEM_CMP_SIZE);
+    memset(mintbuf1, 0, MAX_TU_SIZE * sizeof(int));
+    memset(mintbuf2, 0, MAX_TU_SIZE * sizeof(int));
+    memset(mintbuf3, 0, MAX_TU_SIZE * sizeof(int));
+    memset(mintbuf4, 0, MAX_TU_SIZE * sizeof(int));
 #endif // if _DEBUG
 }
 
