@@ -1740,12 +1740,12 @@ double RateControl::clipQscale(Frame* pic, double q)
          if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
          {
              int nb = m_leadingBframes;
-             double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+             double space, pbbits;
+             double bits = pbbits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
              double bbits = predictSize(&m_predBfromP, q * m_param->rc.pbFactor, (double)m_currentSatd);
-             double space;
              if (bbits > m_bufferRate)
                  nb = 0;
-             double pbbits = nb * bbits;
+             pbbits += nb * bbits;
 
              space = m_bufferFill + (1 + nb) * m_bufferRate - m_bufferSize;
              if (pbbits < space)
