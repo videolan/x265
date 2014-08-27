@@ -85,10 +85,10 @@ MBDstHarness::MBDstHarness()
     memset(mshortbuf3, 0, MEM_CMP_SIZE);
     memset(mbufidct, 0, TEST_BUF_SIZE);
 
+    memset(mintbuf1, 0, MEM_CMP_SIZE);
+    memset(mintbuf2, 0, MEM_CMP_SIZE);
     memset(mintbuf3, 0, MEM_CMP_SIZE);
     memset(mintbuf4, 0, MEM_CMP_SIZE);
-    memset(mintbuf5, 0, MEM_CMP_SIZE);
-    memset(mintbuf6, 0, MEM_CMP_SIZE);
 #endif // if _DEBUG
 }
 
@@ -223,13 +223,13 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf5, mintbuf6, bits, valueToAdd, numCoeff);
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf1, mintbuf2, bits, valueToAdd, numCoeff);
         optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
 
-        if (memcmp(mintbuf3, mintbuf5, cmp_size))
+        if (memcmp(mintbuf3, mintbuf1, cmp_size))
             return false;
 
-        if (memcmp(mintbuf4, mintbuf6, cmp_size))
+        if (memcmp(mintbuf4, mintbuf2, cmp_size))
             return false;
 
         if (optReturnValue != refReturnValue)
@@ -262,10 +262,10 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf6, bits, valueToAdd, numCoeff);
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf2, bits, valueToAdd, numCoeff);
         optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf4, bits, valueToAdd, numCoeff);
 
-        if (memcmp(mintbuf4, mintbuf6, cmp_size))
+        if (memcmp(mintbuf4, mintbuf2, cmp_size))
             return false;
 
         if (optReturnValue != refReturnValue)
