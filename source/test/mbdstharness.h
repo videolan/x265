@@ -46,9 +46,9 @@ protected:
     int     mintbuf1[TEST_BUF_SIZE];
     int     mintbuf2[TEST_BUF_SIZE];
 
-    int16_t mbuf2[MEM_CMP_SIZE];
-    int16_t mbuf3[MEM_CMP_SIZE];
-    int16_t mbuf4[MEM_CMP_SIZE];
+    int16_t mshortbuf2[MEM_CMP_SIZE];
+    int16_t mshortbuf3[MEM_CMP_SIZE];
+
     int     mintbuf3[MEM_CMP_SIZE];
     int     mintbuf4[MEM_CMP_SIZE];
     int     mintbuf5[MEM_CMP_SIZE];

@@ -84,9 +84,8 @@ MBDstHarness::MBDstHarness()
     }
 
 #if _DEBUG
-    memset(mbuf2, 0, MEM_CMP_SIZE);
-    memset(mbuf3, 0, MEM_CMP_SIZE);
-    memset(mbuf4, 0, MEM_CMP_SIZE);
+    memset(mshortbuf2, 0, MEM_CMP_SIZE);
+    memset(mshortbuf3, 0, MEM_CMP_SIZE);
     memset(mbufidct, 0, TEST_BUF_SIZE);
 
     memset(mintbuf3, 0, MEM_CMP_SIZE);
@@ -127,10 +126,10 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, intptr_t width)
     {
         int index = rand() % TEST_CASES;
 
-        ref(int_idct_test_buff[index] + j, mbuf2, width);
-        checked(opt, int_idct_test_buff[index] + j, mbuf3, width);
+        ref(int_idct_test_buff[index] + j, mshortbuf2, width);
+        checked(opt, int_idct_test_buff[index] + j, mshortbuf3, width);
 
-        if (memcmp(mbuf2, mbuf3, cmp_size))
+        if (memcmp(mshortbuf2, mshortbuf3, cmp_size))
             return false;
 
         reportfail();
@@ -410,7 +409,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if (opt.idct[value])
         {
             printf("%s\t", idctInfo[value].name);
-            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mbuf2, idctInfo[value].width);
+            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mshortbuf2, idctInfo[value].width);
         }
     }
 
