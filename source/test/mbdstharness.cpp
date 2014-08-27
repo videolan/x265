@@ -141,6 +141,7 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
 
     for (int i = 0; i < ITERS; i++)
     {
+        int index = rand() % TEST_CASES;
         int log2TrSize = (rand() % 4) + 2;
 
         int width = (1 << log2TrSize);
@@ -153,13 +154,10 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
         int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
         int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
-        int cmp_size = sizeof(int) * height * width;
-        int index = rand() % TEST_CASES;
+        ref(int_test_buff[index] + j, mintbuf1, width * height, scale, shift);
+        checked(opt, int_test_buff[index] + j, mintbuf2, width * height, scale, shift);
 
-        ref(int_test_buff[index] + j, mintbuf3, width * height, scale, shift);
-        checked(opt, int_test_buff[index] + j, mintbuf4, width * height, scale, shift);
-
-        if (memcmp(mintbuf3, mintbuf4, cmp_size))
+        if (memcmp(mintbuf1, mintbuf2, sizeof(int) * height * width))
             return false;
 
         reportfail();
