@@ -34,12 +34,31 @@ class MBDstHarness : public TestHarness
 {
 protected:
 
-    int16_t *mbuf1, *mbuf2, *mbuf3, *mbuf4, *mbufdct, **short_test_buff;
-    int *mbufidct, *mintbuf1, *mintbuf2, *mintbuf3, *mintbuf4, *mintbuf5, *mintbuf6, *mintbuf7, *mintbuf8;
-    int **int_test_buff, **int_idct_test_buff;
+    enum { ITERS = 100 };
+    enum { INCR = 16 };
+    enum { MEM_CMP_SIZE = 32 * 32 };
+    enum { TEST_BUF_SIZE = MEM_CMP_SIZE + ITERS * INCR };
+    enum { TEST_CASES = 3 };
 
-    static const int mb_t_size = 6400;
-    static const int mem_cmp_size = 32 * 32;
+    ALIGN_VAR_16(int16_t, mbuf1[TEST_BUF_SIZE]);
+    int16_t mbufdct[TEST_BUF_SIZE];
+    int     mbufidct[TEST_BUF_SIZE];
+    int     mintbuf1[TEST_BUF_SIZE];
+    int     mintbuf2[TEST_BUF_SIZE];
+
+    int16_t mbuf2[MEM_CMP_SIZE];
+    int16_t mbuf3[MEM_CMP_SIZE];
+    int16_t mbuf4[MEM_CMP_SIZE];
+    int     mintbuf3[MEM_CMP_SIZE];
+    int     mintbuf4[MEM_CMP_SIZE];
+    int     mintbuf5[MEM_CMP_SIZE];
+    int     mintbuf6[MEM_CMP_SIZE];
+    int     mintbuf7[MEM_CMP_SIZE];
+    int     mintbuf8[MEM_CMP_SIZE];
+
+    int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
+    int     int_test_buff[TEST_CASES][TEST_BUF_SIZE];
+    int     int_idct_test_buff[TEST_CASES][TEST_BUF_SIZE];
 
     bool check_dequant_primitive(dequant_scaling_t ref, dequant_scaling_t opt);
     bool check_dequant_primitive(dequant_normal_t ref, dequant_normal_t opt);
@@ -52,8 +71,6 @@ protected:
 public:
 
     MBDstHarness();
-
-    virtual ~MBDstHarness();
 
     const char *getName() const { return "transforms"; }
 

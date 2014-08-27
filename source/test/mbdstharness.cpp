@@ -28,16 +28,15 @@
 #include "TLibCommon/TComRom.h"
 #include "common.h"
 
-#define ITERS  100
-#define TEST_CASES 3
 using namespace x265;
-struct DctConf_t
+
+struct DctConf
 {
     const char *name;
     int width;
 };
 
-const DctConf_t DctConf_infos[] =
+const DctConf dctInfo[] =
 {
     { "dst4x4\t",    4 },
     { "dct4x4\t",    4 },
@@ -46,7 +45,7 @@ const DctConf_t DctConf_infos[] =
     { "dct32x32",   32 },
 };
 
-const DctConf_t IDctConf_infos[] =
+const DctConf idctInfo[] =
 {
     { "idst4x4\t",    4 },
     { "idct4x4\t",    4 },
@@ -59,109 +58,44 @@ MBDstHarness::MBDstHarness()
 {
     const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
 
-    CHECKED_MALLOC(mbuf1, int16_t, mb_t_size);
-    CHECKED_MALLOC(mbufdct, int16_t, mb_t_size);
-    CHECKED_MALLOC(mbufidct, int, mb_t_size);
-
-    CHECKED_MALLOC(mbuf2, int16_t, mem_cmp_size);
-    CHECKED_MALLOC(mbuf3, int16_t, mem_cmp_size);
-    CHECKED_MALLOC(mbuf4, int16_t, mem_cmp_size);
-
-    CHECKED_MALLOC(mintbuf1, int, mb_t_size);
-    CHECKED_MALLOC(mintbuf2, int, mb_t_size);
-    CHECKED_MALLOC(mintbuf3, int, mem_cmp_size);
-    CHECKED_MALLOC(mintbuf4, int, mem_cmp_size);
-    CHECKED_MALLOC(mintbuf5, int, mem_cmp_size);
-    CHECKED_MALLOC(mintbuf6, int, mem_cmp_size);
-    CHECKED_MALLOC(mintbuf7, int, mem_cmp_size);
-    CHECKED_MALLOC(mintbuf8, int, mem_cmp_size);
-
-    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
-    CHECKED_MALLOC(int_idct_test_buff, int*, TEST_CASES);
-
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        CHECKED_MALLOC(short_test_buff[i], int16_t, mb_t_size);
-        CHECKED_MALLOC(int_test_buff[i], int, mb_t_size);
-        CHECKED_MALLOC(int_idct_test_buff[i], int, mb_t_size);
-    }
-
     /* [0] --- Random values
      * [1] --- Minimum
      * [2] --- Maximum */
-    for (int i = 0; i < mb_t_size; i++)
+    for (int i = 0; i < TEST_BUF_SIZE; i++)
     {
         short_test_buff[0][i]    = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         int_test_buff[0][i]      = rand() % PIXEL_MAX;
         int_idct_test_buff[0][i] = (rand() % (SHORT_MAX - SHORT_MIN)) - SHORT_MAX;
+
         short_test_buff[1][i]    = -PIXEL_MAX;
         int_test_buff[1][i]      = -PIXEL_MAX;
         int_idct_test_buff[1][i] = SHORT_MIN;
+
         short_test_buff[2][i]    = PIXEL_MAX;
         int_test_buff[2][i]      = PIXEL_MAX;
         int_idct_test_buff[2][i] = SHORT_MAX;
-    }
 
-    for (int i = 0; i < mb_t_size; i++)
-    {
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         mbufidct[i] = (rand() & idct_max);
-    }
 
-    for (int i = 0; i < mb_t_size; i++)
-    {
         mintbuf1[i] = rand() & PIXEL_MAX;
         mintbuf2[i] = rand() & PIXEL_MAX;
     }
 
 #if _DEBUG
-    memset(mbuf2, 0, mem_cmp_size);
-    memset(mbuf3, 0, mem_cmp_size);
-    memset(mbuf4, 0, mem_cmp_size);
-    memset(mbufidct, 0, mb_t_size);
+    memset(mbuf2, 0, MEM_CMP_SIZE);
+    memset(mbuf3, 0, MEM_CMP_SIZE);
+    memset(mbuf4, 0, MEM_CMP_SIZE);
+    memset(mbufidct, 0, TEST_BUF_SIZE);
 
-    memset(mintbuf3, 0, mem_cmp_size);
-    memset(mintbuf4, 0, mem_cmp_size);
-    memset(mintbuf5, 0, mem_cmp_size);
-    memset(mintbuf6, 0, mem_cmp_size);
-    memset(mintbuf7, 0, mem_cmp_size);
-    memset(mintbuf8, 0, mem_cmp_size);
+    memset(mintbuf3, 0, MEM_CMP_SIZE);
+    memset(mintbuf4, 0, MEM_CMP_SIZE);
+    memset(mintbuf5, 0, MEM_CMP_SIZE);
+    memset(mintbuf6, 0, MEM_CMP_SIZE);
+    memset(mintbuf7, 0, MEM_CMP_SIZE);
+    memset(mintbuf8, 0, MEM_CMP_SIZE);
 #endif // if _DEBUG
-    return;
-
-fail:
-    exit(1);
-}
-
-MBDstHarness::~MBDstHarness()
-{
-    X265_FREE(mbuf1);
-    X265_FREE(mbuf2);
-    X265_FREE(mbuf3);
-    X265_FREE(mbuf4);
-    X265_FREE(mbufdct);
-    X265_FREE(mbufidct);
-
-    X265_FREE(mintbuf1);
-    X265_FREE(mintbuf2);
-    X265_FREE(mintbuf3);
-    X265_FREE(mintbuf4);
-    X265_FREE(mintbuf5);
-    X265_FREE(mintbuf6);
-    X265_FREE(mintbuf7);
-    X265_FREE(mintbuf8);
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        X265_FREE(short_test_buff[i]);
-        X265_FREE(int_test_buff[i]);
-        X265_FREE(int_idct_test_buff[i]);
-    }
-
-    X265_FREE(short_test_buff);
-    X265_FREE(int_test_buff);
-    X265_FREE(int_idct_test_buff);
 }
 
 bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, intptr_t width)
@@ -169,7 +103,7 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, intptr_t width)
     int j = 0;
     intptr_t cmp_size = sizeof(int) * width * width;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int index = rand() % TEST_CASES;
 
@@ -180,7 +114,7 @@ bool MBDstHarness::check_dct_primitive(dct_t ref, dct_t opt, intptr_t width)
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -191,7 +125,7 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, intptr_t width)
     int j = 0;
     intptr_t cmp_size = sizeof(int16_t) * width * width;
 
-    for (int i = 0; i <= 100; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int index = rand() % TEST_CASES;
 
@@ -202,7 +136,7 @@ bool MBDstHarness::check_idct_primitive(idct_t ref, idct_t opt, intptr_t width)
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -212,17 +146,13 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
 {
     int j = 0;
 
-    for (int i = 0; i <= 5; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int log2TrSize = (rand() % 4) + 2;
 
         int width = (1 << log2TrSize);
         int height = width;
-#if HIGH_BIT_DEPTH
-        int qp = rand() % 64;
-#else
-        int qp = rand() % 51;
-#endif
+        int qp = rand() % (QP_MAX_SPEC + QP_BD_OFFSET + 1);
         int per = qp / 6;
         int rem = qp % 6;
         static const int invQuantScales[6] = { 40, 45, 51, 57, 64, 72 };
@@ -240,7 +170,7 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -250,14 +180,14 @@ bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scalin
 {
     int j = 0;
 
-    for (int i = 0; i <= 5; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int log2TrSize = (rand() % 4) + 2;
 
         int width = (1 << log2TrSize);
         int height = width;
 
-        int qp = rand() % 52;
+        int qp = rand() % (QP_MAX_SPEC + QP_BD_OFFSET + 1);
         int per = qp / 6;
         int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
         int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
@@ -273,7 +203,7 @@ bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scalin
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -283,14 +213,9 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 {
     int j = 0;
 
-    for (int i = 0; i <= ITERS; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int width = (rand() % 4 + 1) * 4;
-
-        if (width == 12)
-        {
-            width = 32;
-        }
         int height = width;
 
         uint32_t optReturnValue = 0;
@@ -317,7 +242,7 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -327,14 +252,9 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
 {
     int j = 0;
 
-    for (int i = 0; i <= ITERS; i++)
+    for (int i = 0; i < ITERS; i++)
     {
         int width = (rand() % 4 + 1) * 4;
-
-        if (width == 12)
-        {
-            width = 32;
-        }
         int height = width;
 
         uint32_t optReturnValue = 0;
@@ -358,7 +278,7 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
             return false;
 
         reportfail();
-        j += 16;
+        j += INCR;
     }
 
     return true;
@@ -408,9 +328,9 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.dct[i])
         {
-            if (!check_dct_primitive(ref.dct[i], opt.dct[i], DctConf_infos[i].width))
+            if (!check_dct_primitive(ref.dct[i], opt.dct[i], dctInfo[i].width))
             {
-                printf("\n%s failed\n", DctConf_infos[i].name);
+                printf("\n%s failed\n", dctInfo[i].name);
                 return false;
             }
         }
@@ -420,9 +340,9 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (opt.idct[i])
         {
-            if (!check_idct_primitive(ref.idct[i], opt.idct[i], IDctConf_infos[i].width))
+            if (!check_idct_primitive(ref.idct[i], opt.idct[i], idctInfo[i].width))
             {
-                printf("%s failed\n", IDctConf_infos[i].name);
+                printf("%s failed\n", idctInfo[i].name);
                 return false;
             }
         }
@@ -473,8 +393,8 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.dct[value])
         {
-            printf("%s\t", DctConf_infos[value].name);
-            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mintbuf3, DctConf_infos[value].width);
+            printf("%s\t", dctInfo[value].name);
+            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mintbuf3, dctInfo[value].width);
         }
     }
 
@@ -482,8 +402,8 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         if (opt.idct[value])
         {
-            printf("%s\t", IDctConf_infos[value].name);
-            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mbuf2, IDctConf_infos[value].width);
+            printf("%s\t", idctInfo[value].name);
+            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mbufidct, mbuf2, idctInfo[value].width);
         }
     }
 
