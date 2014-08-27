@@ -31,12 +31,35 @@ class PixelHarness : public TestHarness
 {
 protected:
 
-    pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4, **pixel_test_buff;
-    int *ibuf1, **int_test_buff;
-    int8_t *psbuf1;
-    int16_t *sbuf1, *sbuf2, *sbuf3, **short_test_buff, **short_test_buff1, **short_test_buff2;
-    uint16_t **ushort_test_buff;
-    uint8_t **uchar_test_buff;
+    enum { INCR = 32 };
+    enum { STRIDE = 64 };
+    enum { ITERS = 100 };
+    enum { MAX_HEIGHT = 64 };
+    enum { PAD_ROWS = 64 };
+    enum { BUFFSIZE = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS };
+    enum { TEST_CASES = 3 };
+    enum { SMAX = 1 << 12 };
+    enum { SMIN = -1 << 12 };
+
+    ALIGN_VAR_32(pixel, pbuf1[BUFFSIZE]);
+    pixel    pbuf2[BUFFSIZE];
+    pixel    pbuf3[BUFFSIZE];
+    pixel    pbuf4[BUFFSIZE];
+    int      ibuf1[BUFFSIZE];
+    int8_t   psbuf1[BUFFSIZE];
+
+    int16_t  sbuf1[BUFFSIZE];
+    int16_t  sbuf2[BUFFSIZE];
+    int16_t  sbuf3[BUFFSIZE];
+
+    pixel    pixel_test_buff[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff1[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff2[TEST_CASES][BUFFSIZE];
+    int      int_test_buff[TEST_CASES][BUFFSIZE];
+    uint16_t ushort_test_buff[TEST_CASES][BUFFSIZE];
+    uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
+
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
@@ -77,8 +100,6 @@ protected:
 public:
 
     PixelHarness();
-
-    virtual ~PixelHarness();
 
     const char *getName() const { return "pixel"; }
 
