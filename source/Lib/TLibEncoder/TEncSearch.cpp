@@ -1589,7 +1589,6 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
 
         //=== update PU data ====
         cu->setLumaIntraDirSubParts(bestPUMode, partOffset, depth + initTrDepth);
-        cu->copyToPic(depth, pu, initTrDepth);
     } // PU loop
 
     if (numPU > 1)
