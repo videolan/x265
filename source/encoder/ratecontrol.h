@@ -133,7 +133,7 @@ public:
     Predictor m_pred[5];
     Predictor m_predBfromP;
 
-    int       m_bframes;
+    int       m_leadingBframes;
     int64_t   m_bframeBits;
     int64_t   m_currentSatd;
     int       m_qpConstant[3];
