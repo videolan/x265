@@ -78,9 +78,6 @@ MBDstHarness::MBDstHarness()
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         mbufidct[i] = (rand() & idct_max);
-
-        mintbuf1[i] = rand() & PIXEL_MAX;
-        mintbuf2[i] = rand() & PIXEL_MAX;
     }
 
 #if _DEBUG
@@ -416,25 +413,25 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.dequant_normal)
     {
         printf("dequant_normal\t");
-        REPORT_SPEEDUP(opt.dequant_normal, ref.dequant_normal, mintbuf1, mintbuf3, 32 * 32, 70, 1);
+        REPORT_SPEEDUP(opt.dequant_normal, ref.dequant_normal, int_test_buff[0], mintbuf3, 32 * 32, 70, 1);
     }
 
     if (opt.dequant_scaling)
     {
         printf("dequant_scaling\t");
-        REPORT_SPEEDUP(opt.dequant_scaling, ref.dequant_scaling, mintbuf1, mintbuf3, mintbuf2, 32 * 32, 5, 1);
+        REPORT_SPEEDUP(opt.dequant_scaling, ref.dequant_scaling, int_test_buff[0], mintbuf3, mintbuf4, 32 * 32, 5, 1);
     }
 
     if (opt.quant)
     {
         printf("quant\t\t");
-        REPORT_SPEEDUP(opt.quant, ref.quant, mintbuf1, mintbuf2, mintbuf3, mintbuf4, 23, 23785, 32 * 32);
+        REPORT_SPEEDUP(opt.quant, ref.quant, int_test_buff[0], int_test_buff[1], mintbuf3, mintbuf4, 23, 23785, 32 * 32);
     }
 
     if (opt.nquant)
     {
         printf("nquant\t\t");
-        REPORT_SPEEDUP(opt.nquant, ref.nquant, mintbuf1, mintbuf2, mintbuf3, 23, 23785, 32 * 32);
+        REPORT_SPEEDUP(opt.nquant, ref.nquant, int_test_buff[0], int_test_buff[1], mintbuf3, 23, 23785, 32 * 32);
     }
 
     if (opt.count_nonzero)

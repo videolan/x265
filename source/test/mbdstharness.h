@@ -43,8 +43,6 @@ protected:
     ALIGN_VAR_16(int16_t, mbuf1[TEST_BUF_SIZE]);
     int16_t mbufdct[TEST_BUF_SIZE];
     int     mbufidct[TEST_BUF_SIZE];
-    int     mintbuf1[TEST_BUF_SIZE];
-    int     mintbuf2[TEST_BUF_SIZE];
 
     int16_t mshortbuf2[MEM_CMP_SIZE];
     int16_t mshortbuf3[MEM_CMP_SIZE];
