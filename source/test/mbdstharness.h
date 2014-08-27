@@ -40,7 +40,7 @@ protected:
     enum { TEST_BUF_SIZE = MAX_TU_SIZE + ITERS * INCR };
     enum { TEST_CASES = 3 };
 
-    ALIGN_VAR_16(int16_t, mbuf1[TEST_BUF_SIZE]);
+    ALIGN_VAR_32(int16_t, mbuf1[TEST_BUF_SIZE]);
     int16_t mbufdct[TEST_BUF_SIZE];
     int     mbufidct[TEST_BUF_SIZE];
 
