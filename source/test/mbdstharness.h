@@ -34,7 +34,7 @@ class MBDstHarness : public TestHarness
 {
 protected:
 
-    enum { ITERS = 100 };
+    enum { ITERS = 128 };
     enum { INCR = 16 };
     enum { MAX_TU_SIZE = 32 * 32 };
     enum { TEST_BUF_SIZE = MAX_TU_SIZE + ITERS * INCR };
