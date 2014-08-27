@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Chung Shin Yee <shinyee@multicorewareinc.com>
+ * Authors: Shin Yee <shinyee@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #include "frame.h"
 
 #include "analysis.h"
-#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "sao.h"
 
 #include "entropy.h"
 #include "framefilter.h"
@@ -73,28 +73,8 @@ public:
 
     void destroy();
 
-    /* Called by WaveFront::findJob() */
-    void processRow(int row, int threadId);
-
-    void processRowEncoder(int row, ThreadLocalData& tld);
-
-    void processRowFilter(int row, ThreadLocalData& tld) { m_frameFilter.processRow(row, tld); }
-
-    void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
-    void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
-    void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
-    void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
-
+    /* triggers encode of a new frame by the worker thread */
     void startCompressFrame(Frame* pic);
-
-    /* analyze / compress frame, can be run in parallel within reference constraints */
-    void compressFrame();
-
-    /* called by compressFrame to perform wave-front compression analysis */
-    void compressCTURows();
-
-    /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice();
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
@@ -125,19 +105,13 @@ public:
     volatile int             m_vbvResetTriggerRow;
     uint64_t                 m_accessUnitBits;
 
-protected:
-
-    void threadMain();
-    void setLambda(int qp, ThreadLocalData& tld);
-    int calcQpForCu(uint32_t cuAddr, double baseQp);
-    void noiseReductionUpdate();
-
     Encoder*                 m_top;
     x265_param*              m_param;
     Frame*                   m_frame;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     Entropy                  m_entropyCoder;
+    Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;
@@ -150,6 +124,32 @@ protected:
     int                      m_filterRowDelayCus;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
+
+protected:
+
+    /* analyze / compress frame, can be run in parallel within reference constraints */
+    void compressFrame();
+
+    /* called by compressFrame to perform wave-front compression analysis */
+    void compressCTURows();
+
+    /* called by compressFrame to generate final per-row bitstreams */
+    void encodeSlice();
+
+    void threadMain();
+    void setLambda(int qp, ThreadLocalData& tld);
+    int calcQpForCu(uint32_t cuAddr, double baseQp);
+    void noiseReductionUpdate();
+
+    /* Called by WaveFront::findJob() */
+    void processRow(int row, int threadId);
+    void processRowEncoder(int row, ThreadLocalData& tld);
+    void processRowFilter(int row, ThreadLocalData& tld) { m_frameFilter.processRow(row, tld); }
+
+    void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
+    void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
+    void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
+    void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 };
 }
 

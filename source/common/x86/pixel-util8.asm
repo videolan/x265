@@ -2007,13 +2007,13 @@ cglobal pixel_ssim_4x4x2_core, 4,4,8
 ;-----------------------------------------------------------------------------
 ; float pixel_ssim_end( int sum0[5][4], int sum1[5][4], int width )
 ;-----------------------------------------------------------------------------
-cglobal pixel_ssim_end4, 2,3,7
+cglobal pixel_ssim_end4, 2,3
     mov       r2d, r2m
-    movdqa    m0, [r0+ 0]
-    movdqa    m1, [r0+16]
-    movdqa    m2, [r0+32]
-    movdqa    m3, [r0+48]
-    movdqa    m4, [r0+64]
+    mova      m0, [r0+ 0]
+    mova      m1, [r0+16]
+    mova      m2, [r0+32]
+    mova      m3, [r0+48]
+    mova      m4, [r0+64]
     paddd     m0, [r1+ 0]
     paddd     m1, [r1+16]
     paddd     m2, [r1+32]
@@ -2023,8 +2023,6 @@ cglobal pixel_ssim_end4, 2,3,7
     paddd     m1, m2
     paddd     m2, m3
     paddd     m3, m4
-    movdqa    m5, [ssim_c1]
-    movdqa    m6, [ssim_c2]
     TRANSPOSE4x4D  0, 1, 2, 3, 4
 
 ;   s1=m0, s2=m1, ss=m2, s12=m3
@@ -2033,20 +2031,21 @@ cglobal pixel_ssim_end4, 2,3,7
     cvtdq2ps  m1, m1
     cvtdq2ps  m2, m2
     cvtdq2ps  m3, m3
+    mulps     m4, m0, m1  ; s1*s2
+    mulps     m0, m0      ; s1*s1
+    mulps     m1, m1      ; s2*s2
     mulps     m2, [pf_64] ; ss*64
     mulps     m3, [pf_128] ; s12*128
-    movdqa    m4, m1
-    mulps     m4, m0      ; s1*s2
-    mulps     m1, m1      ; s2*s2
-    mulps     m0, m0      ; s1*s1
     addps     m4, m4      ; s1*s2*2
     addps     m0, m1      ; s1*s1 + s2*s2
     subps     m2, m0      ; vars
     subps     m3, m4      ; covar*2
-    addps     m4, m5      ; s1*s2*2 + ssim_c1
-    addps     m0, m5      ; s1*s1 + s2*s2 + ssim_c1
-    addps     m2, m6      ; vars + ssim_c2
-    addps     m3, m6      ; covar*2 + ssim_c2
+    movaps    m1, [ssim_c1]
+    addps     m4, m1      ; s1*s2*2 + ssim_c1
+    addps     m0, m1      ; s1*s1 + s2*s2 + ssim_c1
+    movaps    m1, [ssim_c2]
+    addps     m2, m1      ; vars + ssim_c2
+    addps     m3, m1      ; covar*2 + ssim_c2
 %else
     pmaddwd   m4, m1, m0  ; s1*s2
     pslld     m1, 16
@@ -2057,10 +2056,12 @@ cglobal pixel_ssim_end4, 2,3,7
     pslld     m2, 6
     psubd     m3, m4  ; covar*2
     psubd     m2, m0  ; vars
-    paddd     m0, m5
-    paddd     m4, m5
-    paddd     m3, m6
-    paddd     m2, m6
+    mova      m1, [ssim_c1]
+    paddd     m0, m1
+    paddd     m4, m1
+    mova      m1, [ssim_c2]
+    paddd     m3, m1
+    paddd     m2, m1
     cvtdq2ps  m0, m0  ; (float)(s1*s1 + s2*s2 + ssim_c1)
     cvtdq2ps  m4, m4  ; (float)(s1*s2*2 + ssim_c1)
     cvtdq2ps  m3, m3  ; (float)(covar*2 + ssim_c2)
@@ -2073,20 +2074,31 @@ cglobal pixel_ssim_end4, 2,3,7
     cmp       r2d, 4
     je .skip ; faster only if this is the common case; remove branch if we use ssim on a macroblock level
     neg       r2
+
 %ifdef PIC
     lea       r3, [mask_ff + 16]
-    movdqu    m1, [r3 + r2*4]
+    %xdefine %%mask r3
 %else
-    movdqu    m1, [mask_ff + r2*4 + 16]
+    %xdefine %%mask mask_ff + 16
 %endif
-    pand      m4, m1
+%if cpuflag(avx)
+    andps     m4, [%%mask + r2*4]
+%else
+    movups    m0, [%%mask + r2*4]
+    andps     m4, m0
+%endif
+
 .skip:
     movhlps   m0, m4
     addps     m0, m4
-    pshuflw   m4, m0, q0032
+%if cpuflag(ssse3)
+    movshdup  m4, m0
+%else
+     pshuflw   m4, m0, q0032
+%endif
     addss     m0, m4
 %if ARCH_X86_64 == 0
-    movd     r0m, m0
+    movss    r0m, m0
     fld     dword r0m
 %endif
     RET

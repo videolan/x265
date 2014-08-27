@@ -441,10 +441,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
         else
         {
             fenc->allocPicSym(m_param);
-            fenc->m_picSym->m_slice->m_sps = &m_sps;
-            fenc->m_picSym->m_slice->m_pps = &m_pps;
-            fenc->m_picSym->m_slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            fenc->m_picSym->m_slice->m_endCUAddr = fenc->getNumCUsInFrame() * fenc->getNumPartInCU();
+            Slice* slice = fenc->m_picSym->m_slice;
+            slice->m_pic = fenc;
+            slice->m_sps = &m_sps;
+            slice->m_pps = &m_pps;
+            slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
+            slice->m_endCUAddr = slice->realEndAddress(fenc->getNumCUsInFrame() * fenc->getNumPartInCU());
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
@@ -613,7 +615,7 @@ void Encoder::printSummary()
             continue;
 
         StatisticLog finalLog;
-        for (int depth = 0; depth < (int)g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             for (int i = 0; i < poolThreadCount; i++)
             {
@@ -628,7 +630,7 @@ void Encoder::printSummary()
                     finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                 }
 
-                if (depth == (int)g_maxCUDepth - 1)
+                if (depth == g_maxCUDepth)
                     finalLog.cntIntraNxN += enclog.cntIntraNxN;
                 if (sliceType != I_SLICE)
                 {
@@ -729,14 +731,14 @@ void Encoder::printSummary()
                                cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
-                    if (depth == (int)g_maxCUDepth - 1)
+                    if (depth == g_maxCUDepth)
                         len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
                 len += sprintf(stats + len, ")");
                 if (sliceType == I_SLICE)
                 {
-                    if (depth == (int)g_maxCUDepth - 1)
+                    if (depth == g_maxCUDepth)
                         len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
@@ -1098,8 +1100,8 @@ void Encoder::initSPS(SPS *sps)
     sps->picWidthInLumaSamples = m_param->sourceWidth;
     sps->picHeightInLumaSamples = m_param->sourceHeight;
 
-    sps->log2MinCodingBlockSize = g_maxLog2CUSize - (g_maxCUDepth - g_addCUDepth);
-    sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth - g_addCUDepth;
+    sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
+    sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;
 
     sps->quadtreeTULog2MaxSize = m_quadtreeTULog2MaxSize;
     sps->quadtreeTULog2MinSize = m_quadtreeTULog2MinSize;
@@ -1109,7 +1111,7 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseSAO = m_param->bEnableSAO;
 
     sps->bUseAMP = m_param->bEnableAMP;
-    sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth - g_addCUDepth : 0;
+    sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth : 0;
 
     sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
     sps->numReorderPics = m_vps.numReorderPics;
@@ -1155,27 +1157,17 @@ void Encoder::initSPS(SPS *sps)
 
 void Encoder::initPPS(PPS *pps)
 {
-    bool isVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
-    m_maxCuDQPDepth = 0;
-
-    /* TODO: This variable m_maxCuDQPDepth needs to be a CLI option to allow us to choose AQ granularity */
-    bool bUseDQP = (m_maxCuDQPDepth > 0 || m_param->rc.aqMode || isVbv) ? true : false;
-
-    if ((m_maxCuDQPDepth == 0) && (m_param->rc.qp == -QP_BD_OFFSET))
-        bUseDQP = false;
-
-    if (bUseDQP)
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
         pps->bUseDQP = true;
-        pps->maxCuDQPDepth = m_maxCuDQPDepth;
-        pps->minCuDQPSize = g_maxCUSize >> pps->maxCuDQPDepth;
+        pps->maxCuDQPDepth = 0; /* TODO: make configurable? */
     }
     else
     {
         pps->bUseDQP = false;
         pps->maxCuDQPDepth = 0;
-        pps->minCuDQPSize = g_maxCUSize >> pps->maxCuDQPDepth;
     }
 
     pps->chromaCbQpOffset = m_param->cbQpOffset;
@@ -1392,8 +1384,6 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
-    //====== Coding Tools ========
-
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
@@ -1407,13 +1397,11 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.leftOffset = 0;
 
     //======== set pad size if width is not multiple of the minimum CU size =========
-    uint32_t maxCUDepth = maxLog2CUSize - 2;
-    uint32_t minCUDepth = (p->maxCUSize >> (maxCUDepth - 1));
-    if ((p->sourceWidth % minCUDepth) != 0)
+    const uint32_t minCUSize = MIN_CU_SIZE;
+    if (p->sourceWidth & (minCUSize - 1))
     {
-        uint32_t padsize = 0;
-        uint32_t rem = p->sourceWidth % minCUDepth;
-        padsize = minCUDepth - rem;
+        uint32_t rem = p->sourceWidth & (minCUSize - 1);
+        uint32_t padsize = minCUSize - rem;
         p->sourceWidth += padsize;
 
         /* set the confirmation window offsets  */
@@ -1422,11 +1410,10 @@ void Encoder::configure(x265_param *p)
     }
 
     //======== set pad size if height is not multiple of the minimum CU size =========
-    if ((p->sourceHeight % minCUDepth) != 0)
+    if (p->sourceHeight & (minCUSize - 1))
     {
-        uint32_t padsize = 0;
-        uint32_t rem = p->sourceHeight % minCUDepth;
-        padsize = minCUDepth - rem;
+        uint32_t rem = p->sourceHeight & (minCUSize - 1);
+        uint32_t padsize = minCUSize - rem;
         p->sourceHeight += padsize;
 
         /* set the confirmation window offsets  */

@@ -94,14 +94,7 @@
 #define REF_PIC_LIST_X              100
 #define NOT_VALID                   -1
 
-#define MIN_QP                      0
-#define MAX_QP                      51
-#define MAX_MAX_QP                  69
-
-#define MIN_QPSCALE                 0.21249999999999999
-#define MAX_MAX_QPSCALE             615.46574234477100
-
-#define AMVP_MAX_NUM_CANDS          2 // max number of final AMVP candidates
+#define AMVP_NUM_CANDS              2 // number of AMVP candidates
 #define MRG_MAX_NUM_CANDS           5 // max number of final merge candidates
 
 #define MAX_CHROMA_FORMAT_IDC       3 //  TODO: Remove me

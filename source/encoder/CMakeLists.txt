@@ -1,8 +1,6 @@
 # vim: syntax=cmake
 
 add_library(encoder OBJECT ../x265.h
-    ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.h
-    ../Lib/TLibEncoder/TEncSampleAdaptiveOffset.cpp
     ../Lib/TLibEncoder/TEncSearch.h
     ../Lib/TLibEncoder/TEncSearch.cpp
     analysis.cpp analysis.h
@@ -16,6 +14,7 @@ add_library(encoder OBJECT ../x265.h
     level.cpp level.h
     nal.cpp nal.h
     sei.cpp sei.h
+    sao.cpp sao.h
     entropy.cpp entropy.h
     dpb.cpp dpb.h
     ratecontrol.cpp ratecontrol.h
