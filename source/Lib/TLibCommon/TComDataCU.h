@@ -81,8 +81,7 @@ enum NDBFBlockBorderTag
     NUM_SGU_BORDER
 };
 
-
-typedef struct
+struct DataCUMemPool
 {
     char*    qpMemBlock;
     uint8_t* depthMemBlock;
@@ -101,7 +100,23 @@ typedef struct
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
     pixel*   m_tqBypassYuvMemBlock;
-} DataCUMemPool;
+};
+
+struct CU
+{
+    enum {
+        INTRA           = 1<<0, // CU is intra predicted
+        PRESENT         = 1<<1, // CU is not completely outside the frame
+        SPLIT_MANDATORY = 1<<2, // CU split is mandatory if CU is inside frame and can be splitted
+        LEAF            = 1<<3, // CU is a leaf node of the CTU
+        SPLIT           = 1<<4, // CU is currently split in four child CUs.
+    };
+    uint32_t log2CUSize; // Log of the CU size.
+    uint32_t childIdx;   // Index of the first child CU
+    uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
+    uint32_t offset[2];  // Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin
+    uint32_t flags;      // CU flags.
+};
 
 // Partition count table, index represents partitioning mode.
 const uint8_t nbPartsTable[8] = { 1, 2, 2, 4, 2, 2, 2, 2 };
@@ -210,8 +225,12 @@ public:
     DataCUMemPool m_DataCUMemPool;
     TComCUMvField m_cuMvFieldMemPool;
 
-protected:
+    // CU data. Index is the CU index. Neighbour CUs (top-left, top, top-right, left) are appended to the end,
+    // required for prediction of current CU.
+    // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
+    CU m_CULocalData[104]; 
 
+protected:
     /// add possible motion vector predictor candidates
     bool xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir);
 

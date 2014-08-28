@@ -100,16 +100,15 @@ public:
     StatisticLog* m_log;
 
     Analysis();
-
     bool create(uint32_t totalDepth, uint32_t maxWidth);
     void destroy();
-
     void compressCU(TComDataCU* cu);
-
+    void loadCTUData(TComDataCU* cu);
 protected:
 
-    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture);
-    void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
+    /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
+    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, TComDataCU* cuPicsym, CU *cu);
+    void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, CU *cu);
 
     void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth,
                                bool bInsidePicture, uint32_t partitionIndex, uint32_t minDepth);
@@ -118,10 +117,8 @@ protected:
     void checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
     void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
                                TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
-
     void checkInter_rd0_4(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
     void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG = false);
-
     void checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize);
     void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
 

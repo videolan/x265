@@ -291,8 +291,9 @@ struct SAOParam
     }
 };
 
+#define CU_SET_FLAG(bitfield, flag, value) (bitfield) = (bitfield) & (~(flag)) | ((~((value) - 1)) & (flag))
+#define CU_GET_FLAG(bitfield, flag) (!!((bitfield) & (flag)))
 }
-
 /* defined in common.cpp */
 int64_t x265_mdate(void);
 void x265_log(const x265_param *param, int level, const char *fmt, ...);
