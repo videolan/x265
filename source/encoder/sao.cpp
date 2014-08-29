@@ -661,9 +661,8 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
 
     memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
-    uint32_t i;
-    uint32_t edgeType;
     int typeIdx;
+    uint32_t edgeType;
 
     int offset[LUMA_GROUP_NUM + 1];
     int idxX;
@@ -694,7 +693,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
             picWidthTmp = m_param->sourceWidth >> m_hChromaShift;
         }
         uint32_t cuHeightTmp = isChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
-        for (i = 0; i < cuHeightTmp + 1; i++)
+        for (uint32_t i = 0; i < cuHeightTmp + 1; i++)
         {
             m_tmpL1[i] = rec[0];
             rec += stride;
@@ -724,18 +723,18 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                 {
                     if (typeIdx == SAO_BO)
                     {
-                        for (i = 0; i < SAO_MAX_BO_CLASSES + 1; i++)
+                        for (int i = 0; i < SAO_MAX_BO_CLASSES + 1; i++)
                             offset[i] = 0;
 
-                        for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
+                        for (int i = 0; i < saoLcuParam[addr].length; i++)
                             offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
-                        for (i = 0; i < (1 << X265_DEPTH); i++)
+                        for (int i = 0; i < (1 << X265_DEPTH); i++)
                             offsetBo[i] = m_clipTable[i + offset[m_tableBo[i]]];
                     }
                     if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                     {
-                        for (i = 0; i < (uint32_t)saoLcuParam[addr].length; i++)
+                        for (int i = 0; i < saoLcuParam[addr].length; i++)
                             offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
                         for (edgeType = 0; edgeType < 6; edgeType++)
@@ -760,7 +759,7 @@ void SAO::processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plan
                     }
 
                     int widthShift = isChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
-                    for (i = 0; i < cuHeightTmp + 1; i++)
+                    for (uint32_t i = 0; i < cuHeightTmp + 1; i++)
                     {
                         m_tmpL1[i] = rec[widthShift - 1];
                         rec += stride;
@@ -793,7 +792,6 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     if (!idxY)
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
-    int i;
     int typeIdx;
 
     int offset[LUMA_GROUP_NUM + 1];
@@ -801,7 +799,6 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     int addr;
     int frameWidthInCU = m_pic->getFrameWidthInCU();
     int stride;
-    uint32_t edgeType;
     bool isChroma = !!plane;
     bool mergeLeftFlag;
 
@@ -822,7 +819,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
         picWidthTmp = m_param->sourceWidth;
     }
     int maxCUHeight = isChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
-    for (i = 0; i < maxCUHeight + 1; i++)
+    for (int i = 0; i < maxCUHeight + 1; i++)
     {
         m_tmpL1[i] = rec[0];
         rec += stride;
@@ -845,21 +842,21 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
             {
                 if (typeIdx == SAO_BO)
                 {
-                    for (i = 0; i < SAO_MAX_BO_CLASSES + 1; i++)
+                    for (int i = 0; i < SAO_MAX_BO_CLASSES + 1; i++)
                         offset[i] = 0;
 
-                    for (i = 0; i < saoLcuParam[addr].length; i++)
+                    for (int i = 0; i < saoLcuParam[addr].length; i++)
                         offset[(saoLcuParam[addr].subTypeIdx + i) % SAO_MAX_BO_CLASSES  + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
-                    for (i = 0; i < (1 << X265_DEPTH); i++)
+                    for (int i = 0; i < (1 << X265_DEPTH); i++)
                         offsetBo[i] = m_clipTable[i + offset[m_tableBo[i]]];
                 }
                 if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {
-                    for (i = 0; i < saoLcuParam[addr].length; i++)
+                    for (int i = 0; i < saoLcuParam[addr].length; i++)
                         offset[i + 1] = saoLcuParam[addr].offset[i] << SAO_BIT_INC;
 
-                    for (edgeType = 0; edgeType < 6; edgeType++)
+                    for (uint32_t edgeType = 0; edgeType < 6; edgeType++)
                         m_offsetEo[edgeType] = (int8_t)offset[s_eoTable[edgeType]];
                 }
             }
@@ -881,7 +878,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
                 }
 
                 int widthShift = isChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
-                for (i = 0; i < maxCUHeight + 1; i++)
+                for (int i = 0; i < maxCUHeight + 1; i++)
                 {
                     m_tmpL1[i] = rec[widthShift - 1];
                     rec += stride;
