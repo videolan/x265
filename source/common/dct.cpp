@@ -834,7 +834,7 @@ uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
     {
         for (int j = 0; j < trSize; j++)
         {
-            coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
+            coeff[k * trSize + j] = residual[k * stride + j];
             numSig += (residual[k * stride + j] != 0);
         }
     }

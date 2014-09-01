@@ -29,6 +29,10 @@ SECTION_RODATA 32
 
 tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 
+cextern pb_4
+cextern pb_1
+cextern pb_16
+cextern pb_64
 cextern pw_4
 cextern pb_8
 cextern pb_32
@@ -3946,52 +3950,47 @@ cglobal cvt32to16_shl_32, 3,4,5
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal cvt16to32_cnt_4, 3,3,5
     add         r2d, r2d
     pxor        m4, m4
 
-    ; row 0 & 1
-    movh        m0, [r1]
-    movhps      m0, [r1 + r2]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 0 * mmsize], m1
-    movu        [r0 + 1 * mmsize], m0
+     ; row 0 & 1
+     movh        m0, [r1]
+     movh        m1, [r1 + r2]
+     movh        [r0], m0
+     movh        [r0 + 8], m1
 
-    ; row 2 & 3
-    movh        m0, [r1 + r2 * 2]
-    lea         r2, [r2 * 3]
-    movhps      m0, [r1 + r2]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m0
+     mova        m2, [r0]
 
-    ; get count
-    ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
-%if 1
-    pmovmskb    eax, m2
-    not         ax
-    popcnt      ax, ax
+     ; row 2 & 3
+     movh        m0, [r1 + r2 * 2]
+     lea         r2, [r2 * 3]
+     movh        m1, [r1 + r2]
+     movh        [r0 + 16], m0
+     movh        [r0 + 24], m1
+ 
+     mova        m0, [r0 + 16]
+     packsswb    m2, m0
+     pcmpeqb     m2, m4
+
+     ; get count
+     ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
+%if 0
+     pmovmskb    eax, m2
+     not         ax
+     popcnt      ax, ax
 %else
-    movhlps     m3, m2
-    paddw       m2, m3
-
-    mova        m3, [pw_4]
-    paddw       m3, m2
-    psadbw      m3, m4
-
-    movd        eax, m3
-%endif
-    RET
+     mova        m0, [pb_1]
+     paddb       m2, m0
+     psadbw      m2, m4
+     pshufd      m0, m2, 2
+     paddw       m2, m0
+     movd        eax, m2
+ %endif
+     RET
 
 
 INIT_YMM avx2
@@ -4023,71 +4022,65 @@ cglobal cvt16to32_cnt_4, 3,3,5
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_8, 3,5,6
+cglobal cvt16to32_cnt_8, 3,3,6
     add         r2d, r2d
     pxor        m4, m4
-    mov         r3d, 8/4
-    lea         r4, [r2 * 3]
     pxor        m5, m5
 
-.loop
-    ; row 0
+   ; row 0 & 1
+    movu         m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    ; row 2 & 3
+    lea         r1, [r1 + 2 * r2]
     movu        m0, [r1]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 0 * mmsize], m1
-    movu        [r0 + 1 * mmsize], m0
+    movu        m1, [r1 + r2]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
 
-    ; row 1
-    movu        m0, [r1 + r2]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    paddb       m5, m2
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m0
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    ; row 2
-    movu        m0, [r1 + r2 * 2]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 4 * mmsize], m1
-    movu        [r0 + 5 * mmsize], m0
+    ; row 4 & 5
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
 
-    ; row 3
-    movu        m0, [r1 + r4]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    paddb       m5, m2
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 6 * mmsize], m1
-    movu        [r0 + 7 * mmsize], m0
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    add         r0, 8 * mmsize
-    lea         r1, [r1 + r2 * 4]
-    dec         r3d
-    jnz        .loop
+    ; row 6 & 7
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
     ; get count
-    movhlps     m3, m5
-    paddb       m3, m5
-
-    paddb       m3, [pb_8]
-    psadbw      m3, m4
-
-    movd        eax, m3
-    RET
+    mova        m0, [pb_4]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
 
 
 INIT_YMM avx2
@@ -4174,58 +4167,69 @@ cglobal cvt16to32_cnt_8, 3,5,6
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_16, 3,4,7
-    add         r2d, r2d
-    mov         r3d, 16/2
-    pxor        m5, m5
-    pxor        m6, m6
+cglobal cvt16to32_cnt_16, 3,4,6
+     add         r2d, r2d
+     mov         r3d, 4
+     pxor        m4, m4
+     pxor        m5, m5
 
 .loop
     ; row 0
     movu        m0, [r1]
-    movu        m1, [r1 + mmsize]
-    packsswb    m4, m0, m1
-    pcmpeqb     m4, m6
-    paddb       m5, m4
-    pmovsxwd    m2, m0
-    pmovsxwd    m0, [r1 + 8]
-    pmovsxwd    m3, m1
-    pmovsxwd    m1, [r1 + mmsize + 8]
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m0
-    movu        [r0 + 2 * mmsize], m3
-    movu        [r0 + 3 * mmsize], m1
+    movu        m1, [r1 + 16]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
 
-    ; row 1
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+     ; row 1
     movu        m0, [r1 + r2]
-    movu        m1, [r1 + r2 + mmsize]
-    packsswb    m4, m0, m1
-    pcmpeqb     m4, m6
-    paddb       m5, m4
-    pmovsxwd    m2, m0
-    pmovsxwd    m0, [r1 + r2 + 8]
-    pmovsxwd    m3, m1
-    pmovsxwd    m1, [r1 + r2 + mmsize + 8]
-    movu        [r0 + 4 * mmsize], m2
-    movu        [r0 + 5 * mmsize], m0
-    movu        [r0 + 6 * mmsize], m3
-    movu        [r0 + 7 * mmsize], m1
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
 
-    add         r0, 8 * mmsize
-    lea         r1, [r1 + r2 * 2]
-    dec         r3d
-    jnz        .loop
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    ; get count
-    movhlps     m0, m5
-    paddb       m0, m5
-    paddb       m0, [pb_32]
-    psadbw      m0, m6
-    movd        eax, m0
-    RET
+    ; row 2
+    movu        m0, [r1 + 2 * r2]
+    movu        m1, [r1 + 2 * r2 + 16]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    ; row 3
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1 + r2]
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
+     dec         r3d
+     jnz        .loop
+
+    mova        m0, [pb_16]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
 
 
 INIT_YMM avx2
@@ -4294,59 +4298,68 @@ cglobal cvt16to32_cnt_16, 3,5,5
     movd        eax, xm0
     RET
 
-
 ;--------------------------------------------------------------------------------------
 ; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_32, 3,4,8
+cglobal cvt16to32_cnt_32, 3,4,6
     add         r2d, r2d
-    mov         r3d, 32/1
-    pxor        m6, m6
-    pxor        m7, m7
+    mov         r3d, 16
+    pxor        m4, m4
+    pxor        m5, m5
 
 .loop
     ; row 0
-    movu        m0, [r1 + 0 * mmsize]
-    movu        m1, [r1 + 1 * mmsize]
-    movu        m2, [r1 + 2 * mmsize]
-    movu        m3, [r1 + 3 * mmsize]
-    packsswb    m4, m0, m1
-    packsswb    m5, m2, m3
-    pcmpeqb     m4, m7
-    pcmpeqb     m5, m7
-    paddb       m6, m4
-    paddb       m6, m5
+    movu        m0, [r1]
+    movu        m1, [r1 + 16]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
 
-    pmovsxwd    m4, m0
-    pmovsxwd    m5, [r1 + 0 * mmsize + mmsize/2]
-    movu        [r0 + 0 * mmsize], m4
-    movu        [r0 + 1 * mmsize], m5
-    pmovsxwd    m4, m1
-    pmovsxwd    m5, [r1 + 1 * mmsize + mmsize/2]
-    movu        [r0 + 2 * mmsize], m4
-    movu        [r0 + 3 * mmsize], m5
-    pmovsxwd    m4, m2
-    pmovsxwd    m5, [r1 + 2 * mmsize + mmsize/2]
-    movu        [r0 + 4 * mmsize], m4
-    movu        [r0 + 5 * mmsize], m5
-    pmovsxwd    m4, m3
-    pmovsxwd    m5, [r1 + 3 * mmsize + mmsize/2]
-    movu        [r0 + 6 * mmsize], m4
-    movu        [r0 + 7 * mmsize], m5
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    add         r0, 8 * mmsize
-    add         r1, r2
-    dec         r3d
-    jnz        .loop
+    movu        m0, [r1 + 32]
+    movu        m1, [r1 + 48]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
 
-    ; get count
-    movhlps     m0, m6
-    paddb       m0, m6
-    paddb       m0, [pb_128]
-    psadbw      m0, m7
-    movd        eax, m0
-    RET
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    ; row 1
+    movu        m0, [r1 + r2]
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    movu        m0, [r1 + r2 + 32]
+    movu        m1, [r1 + r2 + 48]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
+     dec         r3d
+     jnz        .loop
+
+     ; get count
+    mova        m0, [pb_64]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
 
 
 INIT_YMM avx2

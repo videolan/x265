@@ -592,14 +592,11 @@ bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t op
     intptr_t stride = STRIDE;
     for (int i = 0; i < ITERS; i++)
     {
-#ifdef _DEBUG
-        memset(ref_dest, 0xCD, sizeof(ref_dest));
-        memset(opt_dest, 0xCD, sizeof(opt_dest));
-#endif
-        int opt_cnt = (int)checked(opt, opt_dest, sbuf1 + j, stride);
-        int ref_cnt = ref(ref_dest, sbuf1 + j, stride);
+        int index = i % TEST_CASES;
+        int opt_cnt = (int)checked(opt, opt_dest, short_test_buff1[index] + j, stride);
+        int ref_cnt = ref(ref_dest, short_test_buff1[index] + j, stride);
 
-        if ((ref_cnt != opt_cnt) || memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
+        if ((ref_cnt != opt_cnt) || memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         reportfail();
