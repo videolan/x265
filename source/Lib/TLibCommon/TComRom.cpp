@@ -44,7 +44,7 @@ namespace x265 {
 //! \{
 
 // lambda = pow(2, (double)q / 6 - 2);
-double x265_lambda_tab[MAX_MAX_QP + 1] =
+double x265_lambda_tab[QP_MAX_MAX + 1] =
 {
     0.2500, 0.2806, 0.3150, 0.3536, 0.3969,
     0.4454, 0.5000, 0.5612, 0.6300, 0.7071,
@@ -63,7 +63,7 @@ double x265_lambda_tab[MAX_MAX_QP + 1] =
 };
 
 // lambda2 = pow(lambda, 2) * scale (0.85);
-double x265_lambda2_tab[MAX_MAX_QP + 1] =
+double x265_lambda2_tab[QP_MAX_MAX + 1] =
 {
     0.0531, 0.0669, 0.0843, 0.1063, 0.1339,
     0.1687, 0.2125, 0.2677, 0.3373, 0.4250,
@@ -112,22 +112,59 @@ void destroyROM()
 // ====================================================================================================================
 
 uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
-uint32_t g_maxCUSize   = MAX_CU_SIZE;
-uint32_t g_maxCUDepth  = MAX_FULL_DEPTH;
-uint32_t g_addCUDepth  = 1;
-uint32_t g_log2UnitSize = 2;
+uint32_t g_maxCUSize     = MAX_CU_SIZE;
+uint32_t g_maxFullDepth  = NUM_FULL_DEPTH - 1;
+uint32_t g_maxCUDepth    = NUM_CU_DEPTH - 1;
 uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
 uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+
+const uint8_t g_zscanToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] =
+{
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60
+};
+
+const uint8_t g_zscanToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] =
+{
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60
+};
 
 const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
-void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx)
+void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx)
 {
-    int stride = 1 << (maxDepth - 1);
+    uint32_t stride = 1 << maxFullDepth;
 
-    if (depth == maxDepth)
+    if (depth > maxFullDepth)
     {
         curIdx[0] = startVal;
         curIdx++;
@@ -135,53 +172,20 @@ void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& cu
     else
     {
         int step = stride >> depth;
-        initZscanToRaster(maxDepth, depth + 1, startVal,                        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step,                 curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride,        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride + step, curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal,                        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step,                 curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride,        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride + step, curIdx);
     }
 }
 
-void initRasterToZscan(uint32_t maxCUSize, uint32_t maxDepth)
+void initRasterToZscan(uint32_t maxFullDepth)
 {
-    uint32_t  unitSize = maxCUSize  >> (maxDepth - 1);
+    uint32_t numPartitions = 1 << maxFullDepth * 2;
 
-    uint32_t  numPartInCUSize  = (uint32_t)maxCUSize / unitSize;
-
-    for (uint32_t i = 0; i < numPartInCUSize * numPartInCUSize; i++)
+    for (uint32_t i = 0; i < numPartitions; i++)
     {
         g_rasterToZscan[g_zscanToRaster[i]] = i;
-    }
-}
-
-void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
-{
-    uint32_t i;
-
-    uint32_t* tempX = &g_rasterToPelX[0];
-    uint32_t* tempY = &g_rasterToPelY[0];
-
-    uint32_t  unitSize  = maxCUSize >> (maxDepth - 1);
-
-    uint32_t  numPartInCUSize = maxCUSize / unitSize;
-
-    tempX[0] = 0;
-    tempX++;
-    for (i = 1; i < numPartInCUSize; i++)
-    {
-        tempX[0] = tempX[-1] + unitSize;
-        tempX++;
-    }
-
-    for (i = 1; i < numPartInCUSize; i++)
-    {
-        memcpy(tempX, tempX - numPartInCUSize, sizeof(uint32_t) * numPartInCUSize);
-        tempX += numPartInCUSize;
-    }
-
-    for (i = 1; i < numPartInCUSize * numPartInCUSize; i++)
-    {
-        tempY[i] = (i / numPartInCUSize) * unitSize;
     }
 }
 

@@ -33,13 +33,22 @@ class IPFilterHarness : public TestHarness
 {
 protected:
 
-    pixel *pixel_buff, **pixel_test_buff;
-    int16_t *short_buff, **short_test_buff;
+    // Assuming max_height = max_width = max_srcStride = max_dstStride = 100
+    enum { TEST_BUF_SIZE = 200 * 200 };
+    enum { ITERS = 100 };
+    enum { TEST_CASES = 3 };
+    enum { SMAX = 1 << 12 };
+    enum { SMIN = -1 << 12 };
 
-    pixel *IPF_vec_output_p, *IPF_C_output_p;
-    int16_t *IPF_vec_output_s, *IPF_C_output_s;
+    ALIGN_VAR_32(pixel, pixel_buff[TEST_BUF_SIZE]);
+    int16_t short_buff[TEST_BUF_SIZE];
+    int16_t IPF_vec_output_s[TEST_BUF_SIZE];
+    int16_t IPF_C_output_s[TEST_BUF_SIZE];
+    pixel   IPF_vec_output_p[TEST_BUF_SIZE];
+    pixel   IPF_C_output_p[TEST_BUF_SIZE];
 
-    int ipf_t_size;
+    pixel   pixel_test_buff[TEST_CASES][TEST_BUF_SIZE];
+    int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
 
     bool check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma, int csp);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
@@ -57,8 +66,6 @@ protected:
 public:
 
     IPFilterHarness();
-
-    virtual ~IPFilterHarness();
 
     const char *getName() const { return "interp"; }
 

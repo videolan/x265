@@ -27,6 +27,10 @@
 #include "common.h"
 #include "primitives.h"
 
+#if _MSC_VER
+#pragma warning(disable: 4324) // structure was padded due to __declspec(align())
+#endif
+
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
 #else

@@ -26,53 +26,8 @@
 
 using namespace x265;
 
-#define INCR   32
-#define STRIDE 64
-#define ITERS  100
-#define MAX_HEIGHT 64
-#define PAD_ROWS   64
-#define BUFFSIZE STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS
-#define TEST_CASES 3
-#define SMAX (1 << 12)
-#define SMIN (-1 << 12)
-
 PixelHarness::PixelHarness()
 {
-    int bufsize = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS;
-
-    /* 64 pixels wide, 2k deep */
-    CHECKED_MALLOC(pbuf1, pixel, bufsize);
-    CHECKED_MALLOC(pbuf2, pixel, bufsize);
-    CHECKED_MALLOC(pbuf3, pixel, bufsize);
-    CHECKED_MALLOC(pbuf4, pixel, bufsize);
-
-    CHECKED_MALLOC(ibuf1, int, bufsize);
-    CHECKED_MALLOC(psbuf1, int8_t, bufsize);
-
-    CHECKED_MALLOC(sbuf1, int16_t, bufsize);
-    CHECKED_MALLOC(sbuf2, int16_t, bufsize);
-    CHECKED_MALLOC(sbuf3, int16_t, bufsize);
-
-    /* Test Case buffer array */
-    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff1, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff2, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
-    CHECKED_MALLOC(ushort_test_buff, uint16_t*, TEST_CASES);
-    CHECKED_MALLOC(uchar_test_buff, uint8_t*, TEST_CASES);
-
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        CHECKED_MALLOC(pixel_test_buff[i], pixel, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff1[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff2[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(int_test_buff[i], int, BUFFSIZE);
-        CHECKED_MALLOC(ushort_test_buff[i], uint16_t, BUFFSIZE);
-        CHECKED_MALLOC(uchar_test_buff[i], uint8_t, BUFFSIZE);
-    }
-
     /* [0] --- Random values
      * [1] --- Minimum
      * [2] --- Maximum */
@@ -84,69 +39,35 @@ PixelHarness::PixelHarness()
         short_test_buff2[0][i]  = rand() % 16383;                       // for addAvg
         int_test_buff[0][i]     = rand() % SHORT_MAX;
         ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
-        uchar_test_buff[0][i]  = rand() % ((1 << 8) - 1);
+        uchar_test_buff[0][i]   = rand() % ((1 << 8) - 1);
+
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
         short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;
         ushort_test_buff[1][i]  = PIXEL_MIN;
-        uchar_test_buff[1][i]  = PIXEL_MIN;
+        uchar_test_buff[1][i]   = PIXEL_MIN;
+
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
         short_test_buff1[2][i]  = PIXEL_MAX;
         short_test_buff2[2][i]  = 16383;
         int_test_buff[2][i]     = SHORT_MAX;
         ushort_test_buff[2][i]  = ((1 << 16) - 1);
-        uchar_test_buff[2][i]  = 255;
-    }
+        uchar_test_buff[2][i]   = 255;
 
-    for (int i = 0; i < bufsize; i++)
-    {
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
+
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
         psbuf1[i] = (rand() % 65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
-
-    return;
-
-fail:
-    exit(1);
-}
-
-PixelHarness::~PixelHarness()
-{
-    X265_FREE(pbuf1);
-    X265_FREE(pbuf2);
-    X265_FREE(pbuf3);
-    X265_FREE(pbuf4);
-    X265_FREE(sbuf1);
-    X265_FREE(sbuf2);
-    X265_FREE(sbuf3);
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        X265_FREE(pixel_test_buff[i]);
-        X265_FREE(short_test_buff[i]);
-        X265_FREE(short_test_buff1[i]);
-        X265_FREE(short_test_buff2[i]);
-        X265_FREE(int_test_buff[i]);
-        X265_FREE(ushort_test_buff[i]);
-        X265_FREE(uchar_test_buff[i]);
-    }
-
-    X265_FREE(pixel_test_buff);
-    X265_FREE(short_test_buff);
-    X265_FREE(short_test_buff1);
-    X265_FREE(short_test_buff2);
-    X265_FREE(int_test_buff);
-    X265_FREE(ushort_test_buff);
-    X265_FREE(uchar_test_buff);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
