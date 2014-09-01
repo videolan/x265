@@ -2798,7 +2798,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 else
                     singleCostY = m_rdCost.calcRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0]);
                 m_entropyCoder->resetBits();
-                m_entropyCoder->codeQtCbfZero(cu, TEXT_LUMA, trMode);
+                m_entropyCoder->codeQtCbfZero(TEXT_LUMA, trMode);
                 const uint32_t nullBitsY = m_entropyCoder->getNumberOfWrittenBits();
                 uint64_t nullCostY = 0;
                 if (m_rdCost.m_psyRd)
@@ -2826,7 +2826,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         else if (checkTransformSkipY)
         {
             m_entropyCoder->resetBits();
-            m_entropyCoder->codeQtCbfZero(cu, TEXT_LUMA, trMode);
+            m_entropyCoder->codeQtCbfZero(TEXT_LUMA, trMode);
             const uint32_t nullBitsY = m_entropyCoder->getNumberOfWrittenBits();
             if (m_rdCost.m_psyRd)
                 minCost[TEXT_LUMA][0] = m_rdCost.calcPsyRdCost(distY, nullBitsY, psyEnergyY);
@@ -2898,7 +2898,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         else
                             singleCostU = m_rdCost.calcRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section]);
                         m_entropyCoder->resetBits();
-                        m_entropyCoder->codeQtCbfZero(cu, TEXT_CHROMA_U, trMode);
+                        m_entropyCoder->codeQtCbfZero(TEXT_CHROMA_U, trMode);
                         const uint32_t nullBitsU = m_entropyCoder->getNumberOfWrittenBits();
                         uint64_t nullCostU = 0;
                         if (m_rdCost.m_psyRd)
@@ -2926,7 +2926,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 else if (checkTransformSkipUV)
                 {
                     m_entropyCoder->resetBits();
-                    m_entropyCoder->codeQtCbfZero(cu, TEXT_CHROMA_U, trModeC);
+                    m_entropyCoder->codeQtCbfZero(TEXT_CHROMA_U, trModeC);
                     const uint32_t nullBitsU = m_entropyCoder->getNumberOfWrittenBits();
                     if (m_rdCost.m_psyRd)
                         minCost[TEXT_CHROMA_U][tuIterator.section] = m_rdCost.calcPsyRdCost(distU, nullBitsU, psyEnergyU);
@@ -2980,7 +2980,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                         else
                             singleCostV = m_rdCost.calcRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section]);
                         m_entropyCoder->resetBits();
-                        m_entropyCoder->codeQtCbfZero(cu, TEXT_CHROMA_V, trMode);
+                        m_entropyCoder->codeQtCbfZero(TEXT_CHROMA_V, trMode);
                         const uint32_t nullBitsV = m_entropyCoder->getNumberOfWrittenBits();
                         uint64_t nullCostV = 0;
                         if (m_rdCost.m_psyRd)
@@ -3008,7 +3008,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                 else if (checkTransformSkipUV)
                 {
                     m_entropyCoder->resetBits();
-                    m_entropyCoder->codeQtCbfZero(cu, TEXT_CHROMA_V, trModeC);
+                    m_entropyCoder->codeQtCbfZero(TEXT_CHROMA_V, trModeC);
                     const uint32_t nullBitsV = m_entropyCoder->getNumberOfWrittenBits();
                     if (m_rdCost.m_psyRd)
                         minCost[TEXT_CHROMA_V][tuIterator.section] = m_rdCost.calcPsyRdCost(distV, nullBitsV, psyEnergyV);

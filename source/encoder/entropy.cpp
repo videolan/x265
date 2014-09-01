@@ -1469,7 +1469,7 @@ void Entropy::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 
 void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
 {
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
 
     bool canQuadSplit       = (width >= (MIN_TU_SIZE * 2)) && (height >= (MIN_TU_SIZE * 2));
     uint32_t lowestTUDepth  = trDepth + ((!lowestLevel && !canQuadSplit) ? 1 : 0); // unsplittable TUs inherit their parent's CBF
@@ -1498,7 +1498,7 @@ void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdx
 
 void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
 {
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
@@ -1522,14 +1522,12 @@ void Entropy::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
     encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX + ctx]);
 }
 
-void Entropy::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
+void Entropy::codeQtCbfZero(TextType ttype, uint32_t trDepth)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
-    uint32_t cbf = 0;
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
-
-    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
+    encodeBin(0, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
 void Entropy::codeQtRootCbfZero(TComDataCU*)

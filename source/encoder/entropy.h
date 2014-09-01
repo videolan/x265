@@ -39,6 +39,7 @@ struct EstBitsSbac;
 class TComDataCU;
 class ScalingList;
 
+
 enum SplitType
 {
     DONT_SPLIT            = 0,
@@ -167,7 +168,7 @@ public:
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
-    void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
+    void codeQtCbfZero(TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero(TComDataCU* cu);
     void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP);
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);

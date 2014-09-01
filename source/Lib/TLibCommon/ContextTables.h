@@ -144,6 +144,7 @@ extern const uint8_t g_nextState[128][2];
 #define NEIGHBOURHOOD_00_CONTEXT_1_THRESHOLD_4x4  3
 #define NEIGHBOURHOOD_00_CONTEXT_2_THRESHOLD_4x4  1
 
+static const uint32_t ctxCbf[3][3] = { { 1, 0, 0 }, { 2, 3, 4 }, { 2, 3, 4} };
 static const uint32_t significanceMapContextSetStart[MAX_NUM_CHANNEL_TYPE][3] = { { 0,  9, 21 }, { 0,  9, 12 } };
 static const uint32_t significanceMapContextSetSize[MAX_NUM_CHANNEL_TYPE][3]  = { { 9, 12,  6 }, { 9,  3,  3 } };
 static const uint32_t nonDiagonalScan8x8ContextOffset[MAX_NUM_CHANNEL_TYPE]   = {  6, 0  };
