@@ -23,8 +23,8 @@
 
 #ifndef X265_DCT8_H
 #define X265_DCT8_H
-
 void x265_dct4_sse2(int16_t *src, int32_t *dst, intptr_t stride);
+void x265_dct4_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_idct4_sse2(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_idct8_ssse3(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_dst4_ssse3(int16_t *src, int32_t *dst, intptr_t stride);

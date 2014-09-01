@@ -34,6 +34,10 @@ tab_dct4:       times 4 dw 64, 64
                 times 4 dw 83, 36
                 times 4 dw 64, -64
                 times 4 dw 36, -83
+avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
+                dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
+
+dct4_shuf:      db 0, 1, 2, 3, 8, 9, 10, 11, 6, 7, 4, 5, 14, 15, 12, 13
 
 tab_dst4:       times 2 dw 29, 55, 74, 84
                 times 2 dw 74, 74,  0, -74
@@ -184,7 +188,74 @@ cglobal dct4, 3, 4, 8
     paddd       m2, m7
     psrad       m2, 8
     movu        [r1 + 3 * 16], m2
+    RET
 
+; DCT 4x4
+;
+; Input parameters:
+; - r0:     source
+; - r1:     destination
+; - r2:     source stride
+INIT_YMM avx2
+cglobal dct4, 3, 4, 8, src, dst, srcStride
+%if BIT_DEPTH == 10
+    %define DCT_SHIFT 3
+    vbroadcasti128 m7, [pd_4]
+%elif BIT_DEPTH == 8
+    %define DCT_SHIFT 1
+    vbroadcasti128 m7, [pd_1]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    add             r2d, r2d
+    lea             r3, [avx2_dct4]
+
+    vbroadcasti128  m4, [dct4_shuf]
+    mova            m5, [r3]
+    mova            m6, [r3 + 32]
+    movq            xm0, [r0]
+    movhps          xm0, [r0 + r2]
+    lea             r0, [r0 + 2 * r2]
+    movq            xm1, [r0]
+    movhps          xm1, [r0 + r2]
+
+    vinserti128     m0, m0, xm1, 1
+    pshufb          m0, m4
+    vpermq          m1, m0, 11011101b
+    vpermq          m0, m0, 10001000b
+    paddw           m2, m0, m1
+    psubw           m0, m1
+
+    pmaddwd         m2, m5
+    paddd           m2, m7
+    psrad           m2, DCT_SHIFT
+
+    pmaddwd         m0, m6
+    paddd           m0, m7
+    psrad           m0, DCT_SHIFT
+
+    packssdw        m2, m0
+    pshufb          m2, m4
+    vpermq          m1, m2, 11011101b
+    vpermq          m2, m2, 10001000b
+    vbroadcasti128  m7, [pd_128]
+
+    pmaddwd         m0, m2, m5
+    pmaddwd         m3, m1, m5
+    paddd           m3, m0
+    paddd           m3, m7
+    psrad           m3, 8
+
+    pmaddwd         m2, m6
+    pmaddwd         m1, m6
+    psubd           m2, m1
+    paddd           m2, m7
+    psrad           m2, 8
+
+    movu            [r1], xm3
+    movu            [r1 + mmsize/2], m2
+    vextracti128    [r1 + mmsize], m3, 1
+    vextracti128    [r1 + mmsize + mmsize/2], m2, 1
     RET
 
 ;-------------------------------------------------------
