@@ -323,7 +323,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
         {
              qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
         }
-        int numSign = primitives.cvt16to32_cnt[log2TrSize - 2](qCoeff, residual, stride);
+        int numSign = primitives.copy_cnt[log2TrSize - 2](qCoeff, residual, stride);
 
         /* This section of code is to safely convert int16_t coefficients to int32_t, once the caller function is
          * optimize to take coefficients as int16_t*, it will be cleanse.*/

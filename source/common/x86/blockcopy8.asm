@@ -3950,10 +3950,10 @@ cglobal cvt32to16_shl_32, 3,4,5
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_4, 3,3,5
+cglobal copy_cnt_4, 3,3,5
     add         r2d, r2d
     pxor        m4, m4
 
@@ -3994,7 +3994,7 @@ cglobal cvt16to32_cnt_4, 3,3,5
 
 
 INIT_YMM avx2
-cglobal cvt16to32_cnt_4, 3,3,5
+cglobal copy_cnt_4, 3,3,5
     add         r2d, r2d
     pxor        m4, m4
 
@@ -4022,10 +4022,10 @@ cglobal cvt16to32_cnt_4, 3,3,5
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_8, 3,3,6
+cglobal copy_cnt_8, 3,3,6
     add         r2d, r2d
     pxor        m4, m4
     pxor        m5, m5
@@ -4085,10 +4085,10 @@ cglobal cvt16to32_cnt_8, 3,3,6
 
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal cvt16to32_cnt_8, 3,4,6
+cglobal copy_cnt_8, 3,4,6
   %define tmpd eax
 %else
-cglobal cvt16to32_cnt_8, 3,5,6
+cglobal copy_cnt_8, 3,5,6
   %define tmpd r4d
 %endif
     add         r2d, r2d
@@ -4167,10 +4167,10 @@ cglobal cvt16to32_cnt_8, 3,5,6
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int16_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_16, 3,4,6
+cglobal copy_cnt_16, 3,4,6
      add         r2d, r2d
      mov         r3d, 4
      pxor        m4, m4
@@ -4233,7 +4233,7 @@ cglobal cvt16to32_cnt_16, 3,4,6
 
 
 INIT_YMM avx2
-cglobal cvt16to32_cnt_16, 3,5,5
+cglobal copy_cnt_16, 3,5,5
     add         r2d, r2d
     lea         r4, [r2 * 3]
     mov         r3d, 16/4
@@ -4299,10 +4299,10 @@ cglobal cvt16to32_cnt_16, 3,5,5
     RET
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int32_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_32, 3,4,6
+cglobal copy_cnt_32, 3,4,6
     add         r2d, r2d
     mov         r3d, 16
     pxor        m4, m4
@@ -4363,7 +4363,7 @@ cglobal cvt16to32_cnt_32, 3,4,6
 
 
 INIT_YMM avx2
-cglobal cvt16to32_cnt_32, 3,4,5
+cglobal copy_cnt_32, 3,4,5
     add         r2d, r2d
     mov         r3d, 32/1
     xorpd       m3, m3

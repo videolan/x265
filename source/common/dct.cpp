@@ -827,7 +827,7 @@ int  count_nonzero_c(const int16_t *quantCoeff, int numCoeff)
 }
 
 template<int trSize>
-uint32_t conv16to32_count(int16_t* coeff, int16_t* residual, intptr_t stride)
+uint32_t copy_count(int16_t* coeff, int16_t* residual, intptr_t stride)
 {
     uint32_t numSig = 0;
     for (int k = 0; k < trSize; k++)
@@ -879,9 +879,9 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.count_nonzero = count_nonzero_c;
     p.denoiseDct = denoiseDct_c;
 
-    p.cvt16to32_cnt[BLOCK_4x4] = conv16to32_count<4>;
-    p.cvt16to32_cnt[BLOCK_8x8] = conv16to32_count<8>;
-    p.cvt16to32_cnt[BLOCK_16x16] = conv16to32_count<16>;
-    p.cvt16to32_cnt[BLOCK_32x32] = conv16to32_count<32>;
+    p.copy_cnt[BLOCK_4x4] = copy_count<4>;
+    p.copy_cnt[BLOCK_8x8] = copy_count<8>;
+    p.copy_cnt[BLOCK_16x16] = copy_count<16>;
+    p.copy_cnt[BLOCK_32x32] = copy_count<32>;
 }
 }
