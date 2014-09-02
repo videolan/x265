@@ -1558,6 +1558,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.idct[IDST_4x4] = x265_idst4_sse2;
         p.planecopy_sp = x265_downShift_16_sse2;
         p.denoiseDct = x265_denoise_dct_sse2;
+        p.copy_shl[BLOCK_4x4] = x265_copy_shl_4_sse2;
+        p.copy_shl[BLOCK_8x8] = x265_copy_shl_8_sse2;
+        p.copy_shl[BLOCK_16x16] = x265_copy_shl_16_sse2;
+        p.copy_shl[BLOCK_32x32] = x265_copy_shl_32_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

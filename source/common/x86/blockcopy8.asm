@@ -4476,3 +4476,152 @@ cglobal copy_shr, 4, 7, 4, dst, src, stride
     jg         .loop_row
 
     RET
+
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_4, 3,3,3
+    add         r2d, r2d
+    movd        m0, r3m
+
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    movh        [r0], m1
+    movhps      [r0 + r2], m1
+    movh        [r0 + r2 * 2], m2
+    lea         r2, [r2 * 3]
+    movhps      [r0 + r2], m2
+    RET
+
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_8, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + r2], m2
+    movu        [r0 + 2 * r2], m3
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2 * 2], m1
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m2
+    movu        [r0 + 2 * r2], m3
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m4
+    RET
+
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_16, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 256/64
+
+.loop:
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + 16], m2
+    movu        [r0 + r2], m3
+    movu        [r0 + r2 + 16], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2 * 2], m1
+    movu        [r0 + r2 * 2 + 16], m2
+    lea         r0, [r0 + r2 * 2]
+    movu        [r0 + r2], m3
+    movu        [r0 + r2 + 16], m4
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 2]
+    dec         r3d
+    jnz        .loop
+    RET
+
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_32, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 1024/64
+
+.loop:
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + 16], m2
+    movu        [r0 + 32], m3
+    movu        [r0 + 48], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2], m1
+    movu        [r0 + r2 + 16], m2
+    movu        [r0 + r2 + 32], m3
+    movu        [r0 + r2 + 48], m4
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 2]
+    dec         r3d
+    jnz        .loop
+    RET

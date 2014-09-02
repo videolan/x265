@@ -155,6 +155,7 @@ typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shl_t)(int16_t *dst, int32_t *src, intptr_t, int);
 typedef uint32_t (*copy_cnt_t)(int16_t* coeff, int16_t* residual, intptr_t stride);
 typedef void (*copy_shr_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size);
+typedef void (*copy_shl_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
@@ -229,6 +230,7 @@ struct EncoderPrimitives
     cvt32to16_shl_t cvt32to16_shl[NUM_SQUARE_BLOCKS - 1];
     copy_cnt_t      copy_cnt[NUM_SQUARE_BLOCKS - 1];
     copy_shr_t      copy_shr;
+    copy_shl_t      copy_shl[NUM_SQUARE_BLOCKS - 1];
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
