@@ -214,18 +214,19 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         int bits = rand() % 32;
         int valueToAdd = rand() % (32 * 1024);
         int cmp_size = sizeof(int) * height * width;
+        int cmp_size1 = sizeof(short) * height * width;
         int numCoeff = height * width;
 
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
 
-        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf1, mintbuf2, bits, valueToAdd, numCoeff);
-        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mintbuf4, bits, valueToAdd, numCoeff);
+        refReturnValue = ref(int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf1, mshortbuf2, bits, valueToAdd, numCoeff);
+        optReturnValue = (uint32_t)checked(opt, int_test_buff[index1] + j, int_test_buff[index2] + j, mintbuf3, mshortbuf3, bits, valueToAdd, numCoeff);
 
-        if (memcmp(mintbuf3, mintbuf1, cmp_size))
+        if (memcmp(mintbuf1, mintbuf3, cmp_size))
             return false;
 
-        if (memcmp(mintbuf4, mintbuf2, cmp_size))
+        if (memcmp(mshortbuf2, mshortbuf3, cmp_size1))
             return false;
 
         if (optReturnValue != refReturnValue)
@@ -430,7 +431,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.quant)
     {
         printf("quant\t\t");
-        REPORT_SPEEDUP(opt.quant, ref.quant, int_test_buff[0], int_test_buff[1], mintbuf3, mintbuf4, 23, 23785, 32 * 32);
+        REPORT_SPEEDUP(opt.quant, ref.quant, int_test_buff[0], int_test_buff[1], mintbuf3, mshortbuf2, 23, 23785, 32 * 32);
     }
 
     if (opt.nquant)

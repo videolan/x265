@@ -855,7 +855,7 @@ cglobal getResidual32, 4,5,7
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal quant, 5,6,8
@@ -895,8 +895,7 @@ cglobal quant, 5,6,8
     pxor        m2, m1
     psubd       m2, m1
     packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3], m2
+    movh        [r3], m2
     ; 4 coeff
     movu        m0, [r0 + 16]   ; m0 = level
     pxor        m1, m1
@@ -917,13 +916,12 @@ cglobal quant, 5,6,8
     pxor        m2, m1
     psubd       m2, m1
     packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3 + 16], m2
+    movh        [r3 + 8], m2
 
     add         r0, 32
     add         r1, 32
     add         r2, 32
-    add         r3, 32
+    add         r3, 16
 
     dec         r4d
     jnz        .loop

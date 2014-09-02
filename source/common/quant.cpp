@@ -409,7 +409,21 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
         int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
         int numCoeff = 1 << log2TrSize * 2;
 
-        uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, coeff, qbits, add, numCoeff);
+        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+         * optimize to take coefficients as int16_t*, it will be cleanse.*/
+        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
+        for (int i = 0; i < numCoeff; i++)
+        {
+             qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+        }
+        uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, qCoeff, qbits, add, numCoeff);
+
+        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+         * optimize to take coefficients as int16_t*, it will be cleanse.*/
+        for (int i = 0; i < numCoeff; i++)
+        {
+             coeff[i] = qCoeff[i];
+        }
 
         if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
         {
