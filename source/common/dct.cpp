@@ -718,7 +718,7 @@ void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
+void dequant_normal_c(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
 #if HIGH_BIT_DEPTH
     X265_CHECK(scale < 32768 || ((scale & 3) == 0 && shift > 2), "dequant invalid scale %d\n", scale);
@@ -732,14 +732,11 @@ void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scal
 
     int add, coeffQ;
 
-    int clipQCoef;
-
     add = 1 << (shift - 1);
 
     for (int n = 0; n < num; n++)
     {
-        clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-        coeffQ = (clipQCoef * scale + add) >> shift;
+        coeffQ = (quantCoef[n] * scale + add) >> shift;
         coef[n] = Clip3(-32768, 32767, coeffQ);
     }
 }

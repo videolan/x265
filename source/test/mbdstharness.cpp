@@ -154,10 +154,10 @@ bool MBDstHarness::check_dequant_primitive(dequant_normal_t ref, dequant_normal_
         int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
         int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
 
-        ref(int_test_buff[index] + j, mintbuf1, width * height, scale, shift);
-        checked(opt, int_test_buff[index] + j, mintbuf2, width * height, scale, shift);
+        ref(short_test_buff[index] + j, mintbuf3, width * height, scale, shift);
+        checked(opt, short_test_buff[index] + j, mintbuf4, width * height, scale, shift);
 
-        if (memcmp(mintbuf1, mintbuf2, sizeof(int) * height * width))
+        if (memcmp(mintbuf3, mintbuf4, sizeof(int) * height * width))
             return false;
 
         reportfail();
@@ -410,7 +410,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.dequant_normal)
     {
         printf("dequant_normal\t");
-        REPORT_SPEEDUP(opt.dequant_normal, ref.dequant_normal, int_test_buff[0], mintbuf3, 32 * 32, 70, 1);
+        REPORT_SPEEDUP(opt.dequant_normal, ref.dequant_normal, short_test_buff[0], mintbuf3, 32 * 32, 70, 1);
     }
 
     if (opt.dequant_scaling)

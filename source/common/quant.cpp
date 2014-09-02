@@ -410,6 +410,15 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
 
+    /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+     * optimize to take coefficients as int16_t*, it will be cleanse.*/
+    assert(numCoeff <= 1024);
+    ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
+    for (int i = 0; i < numCoeff; i++)
+    {
+        qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+    }
+
     if (m_scalingList->m_bEnabled)
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
@@ -419,7 +428,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     else
     {
         int scale = m_scalingList->s_invQuantScales[rem] << per;
-        primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
+        primitives.dequant_normal(qCoeff, m_resiDctCoeff, numCoeff, scale, shift);
     }
 
     if (useTransformSkip)
