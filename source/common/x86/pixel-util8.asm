@@ -1002,7 +1002,7 @@ cglobal nquant, 4,5,8
 
 
 ;-----------------------------------------------------------------------------
-; void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
+; void dequant_normal(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal dequant_normal, 5,5,5
@@ -1027,8 +1027,6 @@ cglobal dequant_normal, 5,5,5
     ; m2 = word [1]
 .loop:
     movu        m3, [r0]
-    movu        m4, [r0 + 16]
-    packssdw    m3, m4              ; m3 = clipQCoef
     punpckhwd   m4, m3, m2
     punpcklwd   m3, m2
     pmaddwd     m3, m1              ; m3 = dword (clipQCoef * scale + add)
@@ -1042,7 +1040,7 @@ cglobal dequant_normal, 5,5,5
     movu        [r1], m3
     movu        [r1 + 16], m4
 
-    add         r0, 32
+    add         r0, 16
     add         r1, 32
 
     sub         r2d, 8
