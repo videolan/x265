@@ -1590,16 +1590,8 @@ void Entropy::codeCoeffNxN(TComDataCU* cu, coeff_t* coeff, uint32_t absPartIdx, 
 {
     uint32_t trSize = 1 << log2TrSize;
 
-    int numCoeff = (1 << (log2TrSize << 1));
-    assert(numCoeff <= 1024);
-    ALIGN_VAR_16(int16_t, qCoeff[1024]);
-    for (int i = 0; i < numCoeff; i++)
-    {
-        qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-    }
-
     // compute number of significant coefficients
-    uint32_t numSig = primitives.count_nonzero(qCoeff, (1 << (log2TrSize << 1)));
+    uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
     X265_CHECK(numSig > 0, "cbf check fail\n");
 

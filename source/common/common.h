@@ -124,7 +124,7 @@ inline T Clip3(T minVal, T maxVal, T a)
     return std::min<T>(std::max<T>(minVal, a), maxVal);
 }
 
-typedef int32_t  coeff_t;      // transform coefficient
+typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))

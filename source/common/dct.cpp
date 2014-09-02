@@ -842,7 +842,7 @@ uint32_t copy_count(int16_t* coeff, int16_t* residual, intptr_t stride)
     return numSig;
 }
 
-void denoiseDct_c(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
+void denoiseDct_c(int32_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
 {
     for (int i = 0; i < numCoeff; i++)
     {

@@ -163,7 +163,7 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
     m_useRDOQ = useRDOQ;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;
-    m_resiDctCoeff = X265_MALLOC(coeff_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
+    m_resiDctCoeff = X265_MALLOC(int32_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
     
@@ -315,23 +315,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
-        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-         * optimize to take coefficients as int16_t*, it will be cleanse.*/
-        int numCoeff = 1 << log2TrSize * 2;
-        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
-        for (int i = 0; i < numCoeff; i++)
-        {
-             qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-        }
-        int numSign = primitives.copy_cnt[log2TrSize - 2](qCoeff, residual, stride);
-
-        /* This section of code is to safely convert int16_t coefficients to int32_t, once the caller function is
-         * optimize to take coefficients as int16_t*, it will be cleanse.*/
-        for (int i = 0; i < numCoeff; i++)
-        {
-            coeff[i] = qCoeff[i];
-        }
-        return numSign;
+        return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);
     }
 
     bool isLuma  = ttype == TEXT_LUMA;
@@ -385,16 +369,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
 
     if (m_useRDOQ)
     {
-        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-         * optimize to take coefficients as int16_t*, it will be cleanse.*/
-        int numCoeff = 1 << log2TrSize * 2;
-        assert(numCoeff <= 1024);
-        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
-        for (int i = 0; i < numCoeff; i++)
-        {
-            qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-        }
-        return rdoQuant(cu, qCoeff, log2TrSize, ttype, absPartIdx, usePsy);
+        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
     }
     else
     {
@@ -409,42 +384,13 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
         int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
         int numCoeff = 1 << log2TrSize * 2;
 
-        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-         * optimize to take coefficients as int16_t*, it will be cleanse.*/
-        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
-        for (int i = 0; i < numCoeff; i++)
-        {
-             qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-        }
-        uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, qCoeff, qbits, add, numCoeff);
-
-        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-         * optimize to take coefficients as int16_t*, it will be cleanse.*/
-        for (int i = 0; i < numCoeff; i++)
-        {
-             coeff[i] = qCoeff[i];
-        }
+        uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, coeff, qbits, add, numCoeff);
 
         if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
         {
-           /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-            * optimize to take coefficients as int16_t*, it will be cleanse.*/
-           ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
-           for (int i = 0; i < numCoeff; i++)
-           {
-               qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-           }
             TUEntropyCodingParameters codeParams;
             cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, isLuma);
-            uint32_t numSign = signBitHidingHDQ(qCoeff, deltaU, numSig, codeParams);
-
-            /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-             * optimize to take coefficients as int16_t*, it will be cleanse.*/
-             for (int i = 0; i < numCoeff; i++)
-             {
-                  coeff[i] = qCoeff[i];
-             }
-             return numSign;
+            return signBitHidingHDQ(coeff, deltaU, numSig, codeParams);
         }
         else
             return numSig;
@@ -456,15 +402,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 {
     if (transQuantBypass)
     {
-        int numCoeff = (1 << (log2TrSize << 1));
-        assert(numCoeff <= 1024);
-        ALIGN_VAR_16(int16_t, qCoeff[1024]);
-        for (int i = 0; i < numCoeff; i++)
-        {
-            qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-        }
-
-        primitives.copy_shl[log2TrSize - 2](residual, qCoeff, stride, 0);
+        primitives.copy_shl[log2TrSize - 2](residual, coeff, stride, 0);
         return;
     }
 
@@ -475,25 +413,16 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
     int numCoeff = 1 << log2TrSize * 2;
 
-    /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
-     * optimize to take coefficients as int16_t*, it will be cleanse.*/
-    assert(numCoeff <= 1024);
-    ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
-    for (int i = 0; i < numCoeff; i++)
-    {
-        qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
-    }
-
     if (m_scalingList->m_bEnabled)
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
         int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
-        primitives.dequant_scaling(qCoeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
+        primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
     {
         int scale = m_scalingList->s_invQuantScales[rem] << per;
-        primitives.dequant_normal(qCoeff, m_resiDctCoeff, numCoeff, scale, shift);
+        primitives.dequant_normal(coeff, m_resiDctCoeff, numCoeff, scale, shift);
     }
 
     if (useTransformSkip)
