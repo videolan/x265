@@ -582,8 +582,8 @@ bool PixelHarness::check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t op
 
 bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt)
 {
-    ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int32_t, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
@@ -1782,7 +1782,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
         {
             HEADER("cvt16to32_cnt[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cvt16to32_cnt[i], ref.cvt16to32_cnt[i], ibuf1, sbuf2, STRIDE);
+            REPORT_SPEEDUP(opt.cvt16to32_cnt[i], ref.cvt16to32_cnt[i], sbuf1, sbuf2, STRIDE);
         }
     }
 

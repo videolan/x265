@@ -315,7 +315,23 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
     if (cu->getCUTransquantBypass(absPartIdx))
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
-        return primitives.cvt16to32_cnt[log2TrSize - 2](coeff, residual, stride);
+        /* This section of code is to safely convert int32_t coefficients to int16_t, once the caller function is
+         * optimize to take coefficients as int16_t*, it will be cleanse.*/
+        int numCoeff = 1 << log2TrSize * 2;
+        ALIGN_VAR_16(int16_t, qCoeff[32 * 32]);
+        for (int i = 0; i < numCoeff; i++)
+        {
+             qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+        }
+        int numSign = primitives.cvt16to32_cnt[log2TrSize - 2](qCoeff, residual, stride);
+
+        /* This section of code is to safely convert int16_t coefficients to int32_t, once the caller function is
+         * optimize to take coefficients as int16_t*, it will be cleanse.*/
+        for (int i = 0; i < numCoeff; i++)
+        {
+            coeff[i] = qCoeff[i];
+        }
+        return numSign;
     }
 
     bool isLuma  = ttype == TEXT_LUMA;

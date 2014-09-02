@@ -827,7 +827,7 @@ int  count_nonzero_c(const int16_t *quantCoeff, int numCoeff)
 }
 
 template<int trSize>
-uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
+uint32_t conv16to32_count(int16_t* coeff, int16_t* residual, intptr_t stride)
 {
     uint32_t numSig = 0;
     for (int k = 0; k < trSize; k++)
