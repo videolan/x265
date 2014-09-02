@@ -442,7 +442,15 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 {
     if (transQuantBypass)
     {
-        primitives.cvt32to16_shl[log2TrSize - 2](residual, coeff, stride, 0);
+        int numCoeff = (1 << (log2TrSize << 1));
+        assert(numCoeff <= 1024);
+        ALIGN_VAR_16(int16_t, qCoeff[1024]);
+        for (int i = 0; i < numCoeff; i++)
+        {
+            qCoeff[i] = (int16_t)Clip3(-32768, 32767, coeff[i]);
+        }
+
+        primitives.copy_shl[log2TrSize - 2](residual, qCoeff, stride, 0);
         return;
     }
 
