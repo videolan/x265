@@ -532,7 +532,10 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
-    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    uint32_t tuDepthRange[2];
+    outTempCU->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
+    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], tuDepthRange);
 
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
@@ -546,7 +549,7 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
+    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
@@ -837,9 +840,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             {
                 if (depth < g_maxCUDepth)
                 {
-                m_entropyCoder->resetBits();
-                m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
-                outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+                    m_entropyCoder->resetBits();
+                    m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
+                    outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
                 }
                 if (m_rdCost.m_psyRd)
                     outBestCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
@@ -850,8 +853,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             // copy original YUV samples in lossless mode
             if (outBestCU->isLosslessCoded(0))
                 fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
-            }
         }
+    }
 
     // further split
     if (bSubBranch && depth < g_maxCUDepth)
@@ -1814,7 +1817,10 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
     outTempCU->setPredModeSubParts(MODE_INTRA, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
-    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+    uint32_t tuDepthRange[2];
+    outTempCU->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
+    estIntraPredQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], tuDepthRange);
 
     estIntraPredChromaQT(outTempCU, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
 
@@ -1833,7 +1839,7 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP);
+    m_entropyCoder->codeCoeff(outTempCU, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
@@ -1864,7 +1870,10 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 
     m_quant.setQPforQuant(cu);
 
-    xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost);
+    uint32_t tuDepthRange[2];
+    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
+    xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
 
     //=== update PU data ====
@@ -1889,7 +1898,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_entropyCoder->codeCoeff(cu, 0, depth, bCodeDQP);
+    m_entropyCoder->codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
 
     cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
@@ -1960,8 +1969,10 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
             dststride = m_tmpResiYuv[depth]->m_cwidth;
             primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
+            uint32_t tuDepthRange[2];
+            cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
             // Residual encoding
-            residualTransformQuantInter(cu, 0, m_origYuv[0], m_tmpResiYuv[depth], cu->getDepth(0));
+            residualTransformQuantInter(cu, 0, m_origYuv[0], m_tmpResiYuv[depth], cu->getDepth(0), tuDepthRange);
             checkDQP(cu);
 
             if (lcu->getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))

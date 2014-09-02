@@ -552,8 +552,11 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
     codePredInfo(cu, absPartIdx);
 
+    uint32_t tuDepthRange[2];
+    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
+
     // Encode Coefficients, allow codeCoeff() to modify m_bEncodeDQP
-    codeCoeff(cu, absPartIdx, depth, bEncodeDQP);
+    codeCoeff(cu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
     finishCU(cu, absPartIdx, depth);
@@ -593,7 +596,7 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 }
 
 void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
-                              uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP)
+                              uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP, uint32_t* depthRange)
 {
     const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
     uint32_t hChromaShift = cu->getHorzChromaShift();
@@ -627,7 +630,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     else if (cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu->getDepth(absPartIdx) &&
              (cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
     {
-        if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+        if (log2TrSize > *depthRange)
         {
             X265_CHECK(subdiv, "subdivision state failure\n");
         }
@@ -636,7 +639,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrSize > cu->m_slice->m_sps->quadtreeTULog2MaxSize)
+    else if (log2TrSize > *(depthRange + 1))
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
@@ -644,13 +647,13 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
-    else if (log2TrSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+    else if (log2TrSize == *depthRange)
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else
     {
-        X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size failure\n");
+        X265_CHECK(log2TrSize > *depthRange, "transform size failure\n");
         codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
@@ -686,22 +689,22 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         absPartIdxStep >>= 2;
         const uint32_t partNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
 
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP, depthRange);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP, depthRange);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP, depthRange);
 
         absPartIdx += partNum;
         offsetLuma += numCoeff;
         offsetChroma += numCoeffC;
-        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP);
+        encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP, depthRange);
     }
     else
     {
@@ -847,7 +850,7 @@ void Entropy::codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list)
         codeRefFrmIdx(cu, absPartIdx, list);
 }
 
-void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP)
+void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t* depthRange)
 {
     if (!cu->isIntra(absPartIdx))
     {
@@ -862,7 +865,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
     uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> (depth << 1);
     CoeffCodeState state;
-    encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP);
+    encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP, depthRange);
 }
 
 void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)

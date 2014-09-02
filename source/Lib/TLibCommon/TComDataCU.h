@@ -359,7 +359,7 @@ public:
     void          setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
 
-    uint32_t      getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx);
+    void          getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx);
 
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
 

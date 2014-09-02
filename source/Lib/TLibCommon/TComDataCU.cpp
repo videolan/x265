@@ -1193,45 +1193,18 @@ uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth)
     return ctx;
 }
 
-uint32_t TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx)
+void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx)
 {
     uint32_t log2CUSize = getLog2CUSize(absPartIdx);
     PartSize partSize   = getPartitionSize(absPartIdx);
-    uint32_t quadtreeTUDepth;
+    uint32_t quadtreeTUMaxDepth = getPredictionMode(0) == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
+    uint32_t intraSplitFlag = (getPredictionMode(absPartIdx) == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
+    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(0) == MODE_INTER) && (partSize != SIZE_2Nx2N));
 
-    if (getPredictionMode(absPartIdx) == MODE_INTRA)
-    {
-        quadtreeTUDepth = m_slice->m_sps->quadtreeTUMaxDepthIntra - 1;
-        // add 1 if split
-        if (partSize == SIZE_NxN)
-            quadtreeTUDepth++;
-    }
-    else
-    {
-        quadtreeTUDepth = m_slice->m_sps->quadtreeTUMaxDepthInter - 1;
-        // add 1 if split
-        if (quadtreeTUDepth == 1 && partSize != SIZE_2Nx2N)
-            quadtreeTUDepth++;
-    }
+    tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
+    tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
 
-    uint32_t log2MinTUSizeInCU = 0;
-
-    if (log2CUSize < (m_slice->m_sps->quadtreeTULog2MinSize + quadtreeTUDepth))
-    {
-        // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is < QuadtreeTULog2MinSize
-        log2MinTUSizeInCU = m_slice->m_sps->quadtreeTULog2MinSize;
-    }
-    else
-    {
-        // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is still >= QuadtreeTULog2MinSize
-        log2MinTUSizeInCU = log2CUSize - quadtreeTUDepth; // stop when trafoDepth == hierarchy_depth = splitFlag
-        if (log2MinTUSizeInCU > m_slice->m_sps->quadtreeTULog2MaxSize)
-        {
-            // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is still > QuadtreeTULog2MaxSize
-            log2MinTUSizeInCU = m_slice->m_sps->quadtreeTULog2MaxSize;
-        }
-    }
-    return log2MinTUSizeInCU;
+    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (quadtreeTUMaxDepth - 1 + interSplitFlag + intraSplitFlag), tuDepthRange[1]));
 }
 
 uint32_t TComDataCU::getCtxSkipFlag(uint32_t absPartIdx)

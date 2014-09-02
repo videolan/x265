@@ -127,7 +127,7 @@ fail:
     return false;
 }
 
-void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
+void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t* depthRange)
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
@@ -138,7 +138,7 @@ void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
     {
         X265_CHECK(subdiv, "subdivision not present\n");
     }
-    else if (log2TrSize > cu->m_slice->m_sps->quadtreeTULog2MaxSize)
+    else if (log2TrSize > *(depthRange + 1))
     {
         X265_CHECK(subdiv, "subdivision not present\n");
     }
@@ -146,13 +146,13 @@ void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
     {
         X265_CHECK(!subdiv, "subdivision present\n");
     }
-    else if (log2TrSize == cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+    else if (log2TrSize == *depthRange)
     {
         X265_CHECK(!subdiv, "subdivision present\n");
     }
     else
     {
-        X265_CHECK(log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx), "transform size too small\n");
+        X265_CHECK(log2TrSize > *depthRange, "transform size too small\n");
         m_entropyCoder->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
@@ -160,7 +160,7 @@ void TEncSearch::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
     {
         uint32_t qtPartNum = cu->m_pic->getNumPartInCU() >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            xEncSubdivCbfQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum);
+            xEncSubdivCbfQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum, depthRange);
 
         return;
     }
@@ -333,11 +333,11 @@ void TEncSearch::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-uint32_t TEncSearch::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
+uint32_t TEncSearch::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t* depthRange)
 {
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
-    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx);
+    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx, depthRange);
     xEncCoeffQTLuma(cu, trDepth, absPartIdx);
     return m_entropyCoder->getNumberOfWrittenBits();
 }
@@ -353,11 +353,11 @@ uint32_t TEncSearch::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uin
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-uint32_t TEncSearch::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff)
+uint32_t TEncSearch::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t* depthRange)
 {
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
-    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx);
+    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx, depthRange);
 
     if (cu->getCbf(absPartIdx, TEXT_LUMA, trDepth))
         m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
@@ -523,12 +523,13 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                                      ShortYuv*   resiYuv,
                                      uint32_t&   outDistY,
                                      bool        bCheckFirst,
-                                     uint64_t&   rdCost)
+                                     uint64_t&   rdCost,
+                                     uint32_t*   depthRange)
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = (log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize);
-    bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+    bool bCheckSplit = log2TrSize > *depthRange;
+    bool bCheckFull  = log2TrSize <= *(depthRange + 1);
 
     int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
 
@@ -640,7 +641,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
                     break;
                 else
                 {
-                    uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff);
+                    uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
                     if (m_rdCost.m_psyRd)
                         singleCostTmp = m_rdCost.calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
                     else
@@ -694,7 +695,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
-            uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY);
+            uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
             if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
@@ -728,7 +729,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             cu->m_psyEnergy = 0;
-            xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, splitDistY, bCheckFirst, splitCost);
+            xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, splitDistY, bCheckFirst, splitCost, depthRange);
 
             splitPsyEnergyY += cu->m_psyEnergy;
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
@@ -741,7 +742,7 @@ void TEncSearch::xRecurIntraCodingQT(TComDataCU* cu,
         m_entropyCoder->load(m_rdEntropyCoders[fullDepth][CI_QT_TRAFO_ROOT]);
 
         //----- determine rate and r-d cost -----
-        uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx);
+        uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx, depthRange);
         if (m_rdCost.m_psyRd)
             splitCost = m_rdCost.calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
         else
@@ -791,12 +792,13 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
                                              TComYuv*    fencYuv,
                                              TComYuv*    predYuv,
                                              ShortYuv*   resiYuv,
-                                             TComYuv*    reconYuv)
+                                             TComYuv*    reconYuv,
+                                             uint32_t*   depthRange)
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = (log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize);
-    bool     bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+    bool     bCheckFull  = (log2TrSize <= *(depthRange + 1));
+    bool     bCheckSplit = (log2TrSize > *depthRange);
 
     int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
 
@@ -881,7 +883,7 @@ void TEncSearch::residualTransformQuantIntra(TComDataCU* cu,
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            residualTransformQuantIntra(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, reconYuv);
+            residualTransformQuantIntra(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, reconYuv, depthRange);
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
@@ -1360,7 +1362,7 @@ void TEncSearch::residualQTIntrachroma(TComDataCU* cu,
     }
 }
 
-void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
+void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t* depthRange)
 {
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
@@ -1524,7 +1526,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             // determine residual for partition
             uint32_t puDistY = 0;
             uint64_t puCost  = 0;
-            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, true, puCost);
+            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, true, puCost, depthRange);
 
             // check r-d cost
             if (puCost < bestPUCost)
@@ -1553,7 +1555,7 @@ void TEncSearch::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
             // determine residual for partition
             uint32_t puDistY = 0;
             uint64_t puCost  = 0;
-            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost);
+            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost, depthRange);
 
             // check r-d cost
             if (puCost < bestPUCost)
@@ -2323,6 +2325,9 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         numModes = 2;
     }
 
+    uint32_t tuDepthRange[2];
+    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
     uint64_t bestCost = MAX_INT64;
     uint32_t bestMode = 0;
 
@@ -2338,7 +2343,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         uint32_t distortion = 0;
 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion);
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, tuDepthRange);
 
         m_entropyCoder->resetBits();
         m_entropyCoder->codeQtRootCbfZero();
@@ -2380,7 +2385,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-        bits = xSymbolBitsInter(cu);
+        bits = xSymbolBitsInter(cu, tuDepthRange);
 
         if (m_rdCost.m_psyRd)
             cost = m_rdCost.calcPsyRdCost(distortion, bits, cu->m_psyEnergy);
@@ -2410,7 +2415,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         uint32_t zeroDistortion = 0;
         uint32_t bits = 0;
         uint32_t distortion = 0;
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion);
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, tuDepthRange);
         xSetResidualQTData(cu, 0, NULL, depth, false);
         m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
     }
@@ -2449,9 +2454,12 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
 {
     m_quant.setQPforQuant(cu);
 
+    uint32_t tuDepthRange[2];
+    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
     if (cu->getPredictionMode(0) == MODE_INTER)
     {
-        residualTransformQuantInter(cu, 0, fencYuv, resiYuv, cu->getDepth(0));
+        residualTransformQuantInter(cu, 0, fencYuv, resiYuv, cu->getDepth(0), tuDepthRange);
         if (cu->getQtRootCbf(0))
             reconYuv->addClip(predYuv, resiYuv, cu->getLog2CUSize(0));
         else
@@ -2464,13 +2472,13 @@ void TEncSearch::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
     else if (cu->getPredictionMode(0) == MODE_INTRA)
     {
         uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-        residualTransformQuantIntra(cu, initTrDepth, 0, fencYuv, predYuv, resiYuv, reconYuv);
+        residualTransformQuantIntra(cu, initTrDepth, 0, fencYuv, predYuv, resiYuv, reconYuv, tuDepthRange);
         getBestIntraModeChroma(cu, fencYuv, predYuv);
         residualQTIntrachroma(cu, 0, 0, fencYuv, predYuv, resiYuv, reconYuv);
     }
 }
 
-void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, const uint32_t depth)
+void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, const uint32_t depth, uint32_t* depthRange)
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2481,11 +2489,11 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
 
     bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
-    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx)))
+    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > *depthRange))
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize);
-    const bool bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+        bCheckFull = (log2TrSize <= *(depthRange + 1));
+    const bool bCheckSplit = (log2TrSize > *depthRange);
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
     // code full block
@@ -2580,7 +2588,7 @@ void TEncSearch::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx
     {
         const uint32_t qPartNumSubdiv = cu->m_pic->getNumPartInCU() >> ((depth + 1) << 1);
         for (uint32_t i = 0; i < 4; ++i)
-            residualTransformQuantInter(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, resiYuv, depth + 1);
+            residualTransformQuantInter(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, resiYuv, depth + 1, depthRange);
 
         uint32_t ycbf = 0;
         uint32_t ucbf = 0;
@@ -2607,10 +2615,11 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
                                      TComYuv*       predYuv,
                                      ShortYuv*      resiYuv,
                                      const uint32_t depth,
-                                     uint64_t &     rdCost,
-                                     uint32_t &     outBits,
-                                     uint32_t &     outDist,
-                                     uint32_t *     outZeroDist)
+                                     uint64_t&      rdCost,
+                                     uint32_t&      outBits,
+                                     uint32_t&      outDist,
+                                     uint32_t*      outZeroDist,
+                                     uint32_t*      depthRange)
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2622,11 +2631,12 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
     bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
-    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx)))
+    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > *depthRange))
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize);
-    const bool bCheckSplit = (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx));
+        bCheckFull = (log2TrSize <= *(depthRange + 1));
+    const bool bCheckSplit = (log2TrSize > *depthRange);
+
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
     uint32_t log2TrSizeC = log2TrSize - hChromaShift;
@@ -3228,7 +3238,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
 
         m_entropyCoder->resetBits();
 
-        if (log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+        if (log2TrSize > *depthRange)
             m_entropyCoder->codeTransformSubdivFlag(0, 5 - log2TrSize);
 
         if (bCodeChroma)
@@ -3334,7 +3344,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         for (uint32_t i = 0; i < 4; ++i)
         {
             cu->m_psyEnergy = 0;
-            xEstimateResidualQT(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, predYuv, resiYuv, depth + 1, subDivCost, subdivBits, subdivDist, bCheckFull ? NULL : outZeroDist);
+            xEstimateResidualQT(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, predYuv, resiYuv, depth + 1, subDivCost, subdivBits, subdivDist, bCheckFull ? NULL : outZeroDist, depthRange);
             subDivPsyEnergy += cu->m_psyEnergy;
         }
 
@@ -3358,10 +3368,10 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_QT_TRAFO_ROOT]);
         m_entropyCoder->resetBits();
 
-        xEncodeResidualQT(cu, absPartIdx, depth, true,  TEXT_LUMA);
-        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_LUMA);
-        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_U);
-        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_V);
+        xEncodeResidualQT(cu, absPartIdx, depth, true,  TEXT_LUMA, depthRange);
+        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_LUMA, depthRange);
+        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_U, depthRange);
+        xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_V, depthRange);
 
         subdivBits = m_entropyCoder->getNumberOfWrittenBits();
 
@@ -3433,7 +3443,7 @@ void TEncSearch::xEstimateResidualQT(TComDataCU*    cu,
     }
 }
 
-void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype)
+void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t* depthRange)
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t curTrMode   = depth - cu->getDepth(0);
@@ -3443,11 +3453,11 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    uint32_t       log2TrSizeC = log2TrSize - hChromaShift;
+    uint32_t log2TrSizeC = log2TrSize - hChromaShift;
     
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
-    if (bSubdivAndCbf && log2TrSize <= cu->m_slice->m_sps->quadtreeTULog2MaxSize && log2TrSize > cu->getQuadtreeTULog2MinSizeInCU(absPartIdx))
+    if (bSubdivAndCbf && log2TrSize <= *(depthRange + 1) && log2TrSize > *depthRange)
         m_entropyCoder->codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
 
     X265_CHECK(cu->getPredictionMode(absPartIdx) != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
@@ -3544,7 +3554,7 @@ void TEncSearch::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const ui
         {
             const uint32_t qpartNumSubdiv = cu->m_pic->getNumPartInCU() >> ((depth + 1) << 1);
             for (uint32_t i = 0; i < 4; ++i)
-                xEncodeResidualQT(cu, absPartIdx + i * qpartNumSubdiv, depth + 1, bSubdivAndCbf, ttype);
+                xEncodeResidualQT(cu, absPartIdx + i * qpartNumSubdiv, depth + 1, bSubdivAndCbf, ttype, depthRange);
         }
     }
 }
@@ -3662,7 +3672,7 @@ uint32_t TEncSearch::xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fast
 /** add inter-prediction syntax elements for a CU block
  * \param cu
  */
-uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
+uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu, uint32_t* depthRange)
 {
     if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
     {
@@ -3692,7 +3702,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         m_entropyCoder->codePredInfo(cu, 0);
         bool bDummy = false;
         cu->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
-        m_entropyCoder->codeCoeff(cu, 0, cu->getDepth(0), bDummy);
+        m_entropyCoder->codeCoeff(cu, 0, cu->getDepth(0), bDummy, depthRange);
         int totalBits = m_entropyCoder->getNumberOfWrittenBits();
         cu->m_coeffBits = totalBits - cu->m_mvBits;
         return totalBits;
