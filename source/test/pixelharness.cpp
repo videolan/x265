@@ -606,6 +606,34 @@ bool PixelHarness::check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt)
     return true;
 }
 
+bool PixelHarness::check_copy_shr_t(copy_shr_t ref, copy_shr_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, short_test_buff[index] + j, stride, shift, (int)STRIDE);
+        ref(ref_dest, short_test_buff[index] + j, stride, shift, (int)STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1541,6 +1569,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.copy_shr)
+    {
+        if (!check_copy_shr_t(ref.copy_shr, opt.copy_shr))
+        {
+            printf("copy_shr failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1875,4 +1912,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         HEADER0("planecopy_cp");
         REPORT_SPEEDUP(opt.planecopy_cp, ref.planecopy_cp, uchar_test_buff[0], 64, pbuf1, 64, 64, 64, 2);
     }
+
+    if (opt.copy_shr)
+    {
+        HEADER0("copy_shr");
+        REPORT_SPEEDUP(opt.copy_shr, ref.copy_shr, sbuf1, sbuf2, 64, 5, 64);
+    }
+
 }

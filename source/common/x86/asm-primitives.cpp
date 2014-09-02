@@ -1678,6 +1678,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INTRA_ANG_SSE4(sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
+        p.copy_shr = x265_copy_shr_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

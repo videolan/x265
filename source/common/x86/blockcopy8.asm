@@ -4400,3 +4400,79 @@ cglobal copy_cnt_32, 3,4,5
     psadbw      xm0, xm4
     movd        eax, xm0
     RET
+
+;-----------------------------------------------------------------------------
+; void copy_shr(short *dst, short *src, intptr_t stride, int shift, int size)
+;-----------------------------------------------------------------------------
+
+INIT_XMM sse4
+cglobal copy_shr, 4, 7, 4, dst, src, stride
+%define rnd     m2
+%define shift   m1
+
+    ; make shift
+    mov         r5d, r3m
+    movd        shift, r5d
+
+    ; make round
+    dec         r5
+    xor         r6, r6
+    bts         r6, r5
+
+    movd        rnd, r6d
+    pshufd      rnd, rnd, 0
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride * 2 (short*)
+    ; r3 - lx
+    ; r4 - size
+    ; r5 - ly
+    ; r6 - diff
+    add         r2d, r2d
+
+    mov         r4d, r4m
+    mov         r5, r4 ; size
+    mov         r6, r2 ; stride
+    sub         r6, r4
+    add         r6, r6
+
+    shr         r5, 1
+.loop_row:
+
+    mov         r3, r4
+    shr         r3, 2
+.loop_col:
+    ; row 0
+    movh        m3, [r1]
+    pmovsxwd    m0, m3
+    paddd       m0, rnd
+    psrad       m0, shift
+    packssdw    m0, m0
+    movh        [r0], m0
+
+    ; row 1
+    movh        m3, [r1 + r4 * 2]
+    pmovsxwd    m0, m3
+    paddd       m0, rnd
+    psrad       m0, shift
+    packssdw    m0, m0
+    movh        [r0 + r2], m0
+
+    ; move col pointer
+    add         r1, 8
+    add         r0, 8
+
+    dec         r3
+    jg          .loop_col
+
+    ; update pointer
+    lea         r1, [r1 + r4 * 2]
+    add         r0, r6
+
+    ; end of loop_row
+    dec         r5
+    jg         .loop_row
+
+    RET
