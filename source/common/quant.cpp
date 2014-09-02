@@ -486,7 +486,18 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << log2TrSize * 2;
-    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
+
+    assert(numCoeff <= 1024);
+    ALIGN_VAR_16(int16_t, qCoeff1[1024]);
+    for (int i = 0; i < numCoeff; i++)
+    {
+        qCoeff1[i] = (int16_t)Clip3(-32768, 32767, dstCoeff[i]);
+    }
+    uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, qCoeff1, qbits, add, numCoeff);
+    for (int i = 0; i < numCoeff; i++)
+    {
+        dstCoeff[i] = qCoeff1[i];
+    }
 
     assert(numCoeff <= 1024);
     ALIGN_VAR_16(int16_t, qCoeff[1024]);

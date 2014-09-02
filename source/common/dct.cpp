@@ -791,7 +791,7 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
     return numSig;
 }
 
-uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)
+uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
     uint32_t numSig = 0;
 
@@ -805,7 +805,7 @@ uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits,
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = Clip3(-32768, 32767, level);
+        qCoef[blockpos] = (int16_t)Clip3(-32768, 32767, level);
     }
 
     return numSig;

@@ -938,7 +938,7 @@ cglobal quant, 5,6,8
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal nquant, 4,5,8
@@ -975,17 +975,12 @@ cglobal nquant, 4,5,8
     pxor        m1, m4
     psubd       m1, m4
 
-    packssdw    m0, m0
-    packssdw    m1, m1
-    pmovsxwd    m0, m0
-    pmovsxwd    m1, m1
+    packssdw    m0, m1
 
     movu        [r2], m0
-    movu        [r2 + 16], m1
-    add         r2, 32
+    add         r2,   16
     dec         r4d
 
-    packssdw    m0, m1
     pxor        m4, m4
     pcmpeqw     m0, m4
     psubw       m7, m0
