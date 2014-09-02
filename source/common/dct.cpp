@@ -741,12 +741,11 @@ void dequant_normal_c(const int16_t* quantCoef, int32_t* coef, int num, int scal
     }
 }
 
-void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
+void dequant_scaling_c(const int16_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
 
     int add, coeffQ;
-    int clipQCoef;
 
     shift += 4;
 
@@ -756,8 +755,7 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
 
         for (int n = 0; n < num; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-            coeffQ = ((clipQCoef * deQuantCoef[n]) + add) >> (shift - per);
+            coeffQ = ((quantCoef[n] * deQuantCoef[n]) + add) >> (shift - per);
             coef[n] = Clip3(-32768, 32767, coeffQ);
         }
     }
@@ -765,8 +763,7 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
     {
         for (int n = 0; n < num; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-            coeffQ   = Clip3(-32768, 32767, clipQCoef * deQuantCoef[n]);
+            coeffQ   = Clip3(-32768, 32767, quantCoef[n] * deQuantCoef[n]);
             coef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
         }
     }

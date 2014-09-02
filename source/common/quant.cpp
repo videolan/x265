@@ -423,7 +423,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
         int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
-        primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
+        primitives.dequant_scaling(qCoeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
     {

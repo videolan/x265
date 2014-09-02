@@ -185,12 +185,11 @@ bool MBDstHarness::check_dequant_primitive(dequant_scaling_t ref, dequant_scalin
 
         int cmp_size = sizeof(int) * height * width;
         int index1 = rand() % TEST_CASES;
-        int index2 = rand() % TEST_CASES;
 
-        ref(int_test_buff[index1] + j, mintbuf3, int_test_buff[index2] + j, width * height, per, shift);
-        checked(opt, int_test_buff[index1] + j, mintbuf4, int_test_buff[index2] + j, width * height, per, shift);
+        ref(short_test_buff[index1] + j, mintbuf3, mintbuf1, width * height, per, shift);
+        checked(opt, short_test_buff[index1] + j, mintbuf4, mintbuf2, width * height, per, shift);
 
-        if (memcmp(mintbuf3, mintbuf4, cmp_size))
+        if (memcmp(mintbuf1, mintbuf2, cmp_size))
             return false;
 
         reportfail();
@@ -384,6 +383,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.dequant_scaling)
+    {
+        if (!check_dequant_primitive(ref.dequant_scaling, opt.dequant_scaling))
+        {
+            printf("dequant_scaling: Failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -416,7 +424,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.dequant_scaling)
     {
         printf("dequant_scaling\t");
-        REPORT_SPEEDUP(opt.dequant_scaling, ref.dequant_scaling, int_test_buff[0], mintbuf3, mintbuf4, 32 * 32, 5, 1);
+        REPORT_SPEEDUP(opt.dequant_scaling, ref.dequant_scaling, short_test_buff[0], mintbuf3, mintbuf4, 32 * 32, 5, 1);
     }
 
     if (opt.quant)
