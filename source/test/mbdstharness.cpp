@@ -252,7 +252,7 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
         uint32_t refReturnValue = 0;
 
         int bits = rand() % 32;
-        int valueToAdd = rand() % (32 * 1024);
+        int valueToAdd = rand() % (1 << bits);
         int cmp_size = sizeof(int) * height * width;
         int numCoeff = height * width;
 
