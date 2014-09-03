@@ -147,13 +147,13 @@ public:
 
     pixel*  getChromaAddr(uint32_t chromaId, int cuAddr) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr]; }
 
-    pixel*  getLumaAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[0] + m_cuOffsetY[cuAddr] + m_buOffsetY[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getLumaAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[0] + m_cuOffsetY[cuAddr] + m_buOffsetY[absZOrderIdx]; }
 
-    pixel*  getCbAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[1] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getCbAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[1] + m_cuOffsetC[cuAddr] + m_buOffsetC[absZOrderIdx]; }
 
-    pixel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[2] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getCrAddr(int cuAddr, int absZOrderIdx) { return m_picOrg[2] + m_cuOffsetC[cuAddr] + m_buOffsetC[absZOrderIdx]; }
 
-    pixel*  getChromaAddr(uint32_t chromaId, int cuAddr, int absZOrderIdx) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr] + m_buOffsetC[g_zscanToRaster[absZOrderIdx]]; }
+    pixel*  getChromaAddr(uint32_t chromaId, int cuAddr, int absZOrderIdx) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr] + m_buOffsetC[absZOrderIdx]; }
 
     uint32_t getCUHeight(int rowNum);
 

@@ -111,13 +111,12 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUS
 
     CHECKED_MALLOC(m_buOffsetY, int, (size_t)numPartitions);
     CHECKED_MALLOC(m_buOffsetC, int, (size_t)numPartitions);
-    for (int buRow = 0; buRow < (1 << maxFullDepth); buRow++)
+    for (uint32_t idx = 0; idx < numPartitions; ++idx)
     {
-        for (int buCol = 0; buCol < (1 << maxFullDepth); buCol++)
-        {
-            m_buOffsetY[(buRow << maxFullDepth) + buCol] = getStride() * buRow * UNIT_SIZE + buCol * UNIT_SIZE;
-            m_buOffsetC[(buRow << maxFullDepth) + buCol] = getCStride() * buRow * (UNIT_SIZE >> m_vChromaShift) + buCol * (UNIT_SIZE >> m_hChromaShift);
-        }
+        int x = g_zscanToPelX[idx];
+        int y = g_zscanToPelY[idx];
+        m_buOffsetY[idx] = getStride() * y + x;
+        m_buOffsetC[idx] = getCStride() * (y >> m_vChromaShift) + (x >> m_hChromaShift);
     }
 
     return true;
