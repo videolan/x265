@@ -258,7 +258,7 @@ int getDepthScanIdx(int x, int y, int size)
 
 void Analysis::loadCTUData(TComDataCU* parentCU)
 {
-    int8_t cuRange[2]= {MIN_LOG2_CU_SIZE, g_log2Size[m_param->maxCUSize]};
+    uint8_t cuRange[2]= {MIN_LOG2_CU_SIZE, g_log2Size[m_param->maxCUSize]};
 
     // Initialize the coding blocks inside the CTB
     for (int rangeIdx = cuRange[1], rangeCUIdx = 0; rangeIdx >= cuRange[0]; rangeIdx--)

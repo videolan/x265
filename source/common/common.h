@@ -291,7 +291,7 @@ struct SAOParam
     }
 };
 
-#define CU_SET_FLAG(bitfield, flag, value) (bitfield) = (bitfield) & (~(flag)) | ((~((value) - 1)) & (flag))
+#define CU_SET_FLAG(bitfield, flag, value) (bitfield) = ((bitfield) & (~(flag))) | ((~((value) - 1)) & (flag))
 #define CU_GET_FLAG(bitfield, flag) (!!((bitfield) & (flag)))
 }
 /* defined in common.cpp */
