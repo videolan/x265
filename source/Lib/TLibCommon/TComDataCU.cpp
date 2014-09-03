@@ -1197,13 +1197,26 @@ uint32_t TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx)
 {
     uint32_t log2CUSize = getLog2CUSize(absPartIdx);
     PartSize partSize   = getPartitionSize(absPartIdx);
-    uint32_t quadtreeTUMaxDepth = getPredictionMode(absPartIdx) == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
-    int intraSplitFlag = (getPredictionMode(absPartIdx) == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
-    int interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(absPartIdx) == MODE_INTER) && (partSize != SIZE_2Nx2N));
+    uint32_t quadtreeTUDepth;
+
+    if (getPredictionMode(absPartIdx) == MODE_INTRA)
+    {
+        quadtreeTUDepth = m_slice->m_sps->quadtreeTUMaxDepthIntra - 1;
+        // add 1 if split
+        if (partSize == SIZE_NxN)
+            quadtreeTUDepth++;
+    }
+    else
+    {
+        quadtreeTUDepth = m_slice->m_sps->quadtreeTUMaxDepthInter - 1;
+        // add 1 if split
+        if (quadtreeTUDepth == 1 && partSize != SIZE_2Nx2N)
+            quadtreeTUDepth++;
+    }
 
     uint32_t log2MinTUSizeInCU = 0;
 
-    if (log2CUSize < (m_slice->m_sps->quadtreeTULog2MinSize + quadtreeTUMaxDepth - 1 + interSplitFlag + intraSplitFlag))
+    if (log2CUSize < (m_slice->m_sps->quadtreeTULog2MinSize + quadtreeTUDepth))
     {
         // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is < QuadtreeTULog2MinSize
         log2MinTUSizeInCU = m_slice->m_sps->quadtreeTULog2MinSize;
@@ -1211,7 +1224,7 @@ uint32_t TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t absPartIdx)
     else
     {
         // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is still >= QuadtreeTULog2MinSize
-        log2MinTUSizeInCU = log2CUSize - (quadtreeTUMaxDepth - 1 + interSplitFlag + intraSplitFlag); // stop when trafoDepth == hierarchy_depth = splitFlag
+        log2MinTUSizeInCU = log2CUSize - quadtreeTUDepth; // stop when trafoDepth == hierarchy_depth = splitFlag
         if (log2MinTUSizeInCU > m_slice->m_sps->quadtreeTULog2MaxSize)
         {
             // when fully making use of signaled TUMaxDepth + inter/intraSplitFlag, resulting luma TB size is still > QuadtreeTULog2MaxSize
