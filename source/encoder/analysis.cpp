@@ -420,13 +420,13 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         checkIntra(outBestCU, outTempCU, SIZE_2Nx2N, cu);
         if (depth == g_maxCUDepth)
         {
-                checkIntra(outBestCU, outTempCU, SIZE_NxN, cu);
+            checkIntra(outBestCU, outTempCU, SIZE_NxN, cu);
         }
         else
         {
-        m_entropyCoder->resetBits();
-        m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
-        outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
+            m_entropyCoder->resetBits();
+            m_entropyCoder->codeSplitFlag(outBestCU, 0, depth);
+            outBestCU->m_totalBits += m_entropyCoder->getNumberOfWrittenBits(); // split bits
         }
         if (m_rdCost.m_psyRd)
             outBestCU->m_totalPsyCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
@@ -437,6 +437,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
     // copy original YUV samples in lossless mode
     if (outBestCU->isLosslessCoded(0))
         fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
+
     // further split
     if (cu_split_flag)
     {
@@ -445,18 +446,17 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            int qp = outTempCU->getQP(0);
-            subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
-            if (cu->flags & CU::PRESENT)
+            CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
+
+            if (child_cu->flags & CU::PRESENT)
             {
+                int qp = outTempCU->getQP(0);
+                subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
-                CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
-                if (!(child_cu->flags & CU::PRESENT))
-                    continue;
 
                 compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, bInsidePicture, cuPicsym, child_cu);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
