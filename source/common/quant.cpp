@@ -441,7 +441,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
-        X265_CHECK((int)numSig == primitives.count_nonzero(qCoeff, 1 << log2TrSize * 2), "numSig differ\n");
+        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << log2TrSize * 2), "numSig differ\n");
 
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
