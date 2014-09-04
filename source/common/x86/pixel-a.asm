@@ -590,7 +590,7 @@ cglobal pixel_satd_4x4, 4,6
 %macro SATDS_SSE2 0
 %define vertical ((notcpuflag(ssse3) || cpuflag(atom)) || HIGH_BIT_DEPTH)
 
-%if vertical==0 || HIGH_BIT_DEPTH
+%if cpuflag(ssse3) && (vertical==0 || HIGH_BIT_DEPTH)
 cglobal pixel_satd_4x4, 4, 6, 6
     SATD_START_MMX
     mova m4, [hmul_4p]
