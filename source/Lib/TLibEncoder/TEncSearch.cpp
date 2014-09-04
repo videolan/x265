@@ -2341,7 +2341,7 @@ void TEncSearch::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TCo
         xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion);
 
         m_entropyCoder->resetBits();
-        m_entropyCoder->codeQtRootCbfZero(cu);
+        m_entropyCoder->codeQtRootCbfZero();
         uint32_t zeroResiBits = m_entropyCoder->getNumberOfWrittenBits();
         uint64_t zeroCost = 0;
         uint32_t zeroPsyEnergyY = 0;

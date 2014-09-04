@@ -169,7 +169,7 @@ public:
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
     void codeQtCbfZero(TextType ttype, uint32_t trDepth);
-    void codeQtRootCbfZero(TComDataCU* cu);
+    void codeQtRootCbfZero();
     void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP);
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
@@ -211,7 +211,7 @@ private:
     void codePredWeightTable(Slice* slice);
     void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
     void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
+    void codeQtRootCbf(uint32_t cbf);
     void codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list);
     void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list);
 
