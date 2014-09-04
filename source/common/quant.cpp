@@ -368,9 +368,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
     }
 
     if (m_useRDOQ)
-    {
         return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
-    }
     else
     {
         int deltaU[32 * 32];
@@ -428,15 +426,14 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     if (useTransformSkip)
     {
         int trSize = 1 << log2TrSize;
-        shift = transformShift;
 
 #if X265_DEPTH <= 10
-        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
+        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
 #else
-        if (shift > 0)
-            primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, shift, trSize);
+        if (transformShift > 0)
+            primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
         else
-            primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -shift);
+            primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -transformShift);
 #endif
     }
     else
@@ -459,7 +456,6 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
             return;
         }
 
-        // TODO: this may need larger data types for X265_DEPTH > 10
         primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
     }
 }
