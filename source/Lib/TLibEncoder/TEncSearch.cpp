@@ -292,7 +292,7 @@ void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 m_entropyCoder->codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
             m_entropyCoder->codeSkipFlag(cu, 0);
-            m_entropyCoder->codePredMode(cu, 0);
+            m_entropyCoder->codePredMode(cu->getPredictionMode(0));
         }
 
         m_entropyCoder->codePartSize(cu, 0, cu->getDepth(0));
@@ -3686,7 +3686,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
         if (!cu->m_slice->isIntra())
         {
             m_entropyCoder->codeSkipFlag(cu, 0);
-            m_entropyCoder->codePredMode(cu, 0);
+            m_entropyCoder->codePredMode(cu->getPredictionMode(0));
         }
         m_entropyCoder->codePartSize(cu, 0, cu->getDepth(0));
         m_entropyCoder->codePredInfo(cu, 0);

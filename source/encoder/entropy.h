@@ -163,7 +163,7 @@ public:
     void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list);
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void codePredMode(int predMode);
     void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);

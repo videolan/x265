@@ -1825,7 +1825,7 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
     if (!outTempCU->m_slice->isIntra())
     {
         m_entropyCoder->codeSkipFlag(outTempCU, 0);
-        m_entropyCoder->codePredMode(outTempCU, 0);
+        m_entropyCoder->codePredMode(outTempCU->getPredictionMode(0));
     }
     m_entropyCoder->codePartSize(outTempCU, 0, depth);
     m_entropyCoder->codePredInfo(outTempCU, 0);
@@ -1881,7 +1881,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     if (!cu->m_slice->isIntra())
     {
         m_entropyCoder->codeSkipFlag(cu, 0);
-        m_entropyCoder->codePredMode(cu, 0);
+        m_entropyCoder->codePredMode(cu->getPredictionMode(0));
     }
     m_entropyCoder->codePartSize(cu, 0, depth);
     m_entropyCoder->codePredInfo(cu, 0);

@@ -545,7 +545,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     if (!slice->isIntra())
-        codePredMode(cu, absPartIdx);
+        codePredMode(cu->getPredictionMode(absPartIdx));
 
     codePartSize(cu, absPartIdx, depth);
 
@@ -1232,10 +1232,8 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 }
 
-void Entropy::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codePredMode(int predMode)
 {
-    // get context function is here
-    int predMode = cu->getPredictionMode(absPartIdx);
     encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextState[OFF_PRED_MODE_CTX]);
 }
 
