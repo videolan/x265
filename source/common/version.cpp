@@ -59,6 +59,8 @@
 #define NVM_ONOS        "[Windows]"
 #elif  __linux
 #define NVM_ONOS        "[Linux]"
+#elif __OpenBSD__
+#define NVM_ONOS        "[OpenBSD]"
 #elif  __CYGWIN__
 #define NVM_ONOS        "[Cygwin]"
 #elif __APPLE__
