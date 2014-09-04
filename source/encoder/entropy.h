@@ -39,6 +39,7 @@ struct EstBitsSbac;
 class TComDataCU;
 class ScalingList;
 
+
 enum SplitType
 {
     DONT_SPLIT            = 0,
@@ -153,7 +154,7 @@ public:
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
-    void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void codeCUTransquantBypassFlag(uint32_t symbol);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
@@ -162,13 +163,13 @@ public:
     void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list);
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void codePredMode(int predMode);
     void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
-    void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
-    void codeQtRootCbfZero(TComDataCU* cu);
+    void codeQtCbfZero(TextType ttype, uint32_t trDepth);
+    void codeQtRootCbfZero();
     void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP);
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
@@ -210,7 +211,7 @@ private:
     void codePredWeightTable(Slice* slice);
     void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
     void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
+    void codeQtRootCbf(uint32_t cbf);
     void codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list);
     void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list);
 

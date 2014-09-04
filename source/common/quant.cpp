@@ -786,7 +786,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize,
     }
     else
     {
-        int ctx = cu->getCtxQtCbf(ttype, cu->getTransformIdx(absPartIdx));
+        int ctx = ctxCbf[ttype][cu->getTransformIdx(absPartIdx)];
         bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockCbpBits[ctx][0]);
         totalRdCost += SIGCOST(estBitsSbac.blockCbpBits[ctx][1]);
     }

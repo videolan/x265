@@ -532,7 +532,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        codeCUTransquantBypassFlag(cu, absPartIdx);
+        codeCUTransquantBypassFlag(cu->getCUTransquantBypass(absPartIdx));
 
     if (!slice->isIntra())
         codeSkipFlag(cu, absPartIdx);
@@ -545,7 +545,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     if (!slice->isIntra())
-        codePredMode(cu, absPartIdx);
+        codePredMode(cu->getPredictionMode(absPartIdx));
 
     codePartSize(cu, absPartIdx, depth);
 
@@ -852,7 +852,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     if (!cu->isIntra(absPartIdx))
     {
         if (!(cu->getMergeFlag(absPartIdx) && cu->getPartitionSize(absPartIdx) == SIZE_2Nx2N))
-            codeQtRootCbf(cu, absPartIdx);
+            codeQtRootCbf(cu->getQtRootCbf(absPartIdx));
         if (!cu->getQtRootCbf(absPartIdx))
             return;
     }
@@ -1232,16 +1232,13 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     }
 }
 
-void Entropy::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codePredMode(int predMode)
 {
-    // get context function is here
-    int predMode = cu->getPredictionMode(absPartIdx);
     encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextState[OFF_PRED_MODE_CTX]);
 }
 
-void Entropy::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)
 {
-    uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
     encodeBin(symbol, m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
@@ -1469,7 +1466,7 @@ void Entropy::codeDeltaQP(TComDataCU* cu, uint32_t absPartIdx)
 
 void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
 {
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
 
     bool canQuadSplit       = (width >= (MIN_TU_SIZE * 2)) && (height >= (MIN_TU_SIZE * 2));
     uint32_t lowestTUDepth  = trDepth + ((!lowestLevel && !canQuadSplit) ? 1 : 0); // unsplittable TUs inherit their parent's CBF
@@ -1498,7 +1495,7 @@ void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdx
 
 void Entropy::codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
 {
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
     uint32_t cbf = cu->getCbf(absPartIdx, ttype, trDepth);
     encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
@@ -1514,32 +1511,24 @@ void Entropy::codeTransformSkipFlags(TComDataCU* cu, uint32_t absPartIdx, uint32
     encodeBin(useTransformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
 }
 
-void Entropy::codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeQtRootCbf(uint32_t cbf)
 {
-    uint32_t cbf = cu->getQtRootCbf(absPartIdx);
-    uint32_t ctx = 0;
-
-    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]);
 }
 
-void Entropy::codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth)
+void Entropy::codeQtCbfZero(TextType ttype, uint32_t trDepth)
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
-    uint32_t cbf = 0;
-    uint32_t ctx = cu->getCtxQtCbf(ttype, trDepth);
-
-    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
+    uint32_t ctx = ctxCbf[ttype][trDepth];
+    encodeBin(0, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
-void Entropy::codeQtRootCbfZero(TComDataCU*)
+void Entropy::codeQtRootCbfZero()
 {
     // this function is only used to estimate the bits when cbf is 0
     // and will never be called when writing the bistream. do not need to write log
-    uint32_t cbf = 0;
-    uint32_t ctx = 0;
-
-    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX + ctx]);
+    encodeBin(0, m_contextState[OFF_QT_ROOT_CBF_CTX]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
