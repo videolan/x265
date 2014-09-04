@@ -65,7 +65,7 @@
 
 #define NUM_REF_NO_CTX                2       ///< number of context models for reference index
 #define NUM_TRANS_SUBDIV_FLAG_CTX     3       ///< number of context models for transform subdivision flags
-#define NUM_QT_CBF_CTX                6       ///< number of context models for QT CBF
+#define NUM_QT_CBF_CTX                7       ///< number of context models for QT CBF
 #define NUM_QT_ROOT_CBF_CTX           1       ///< number of context models for QT ROOT CBF
 #define NUM_DELTA_QP_CTX              3       ///< number of context models for dQP
 
@@ -144,7 +144,7 @@ extern const uint8_t g_nextState[128][2];
 #define NEIGHBOURHOOD_00_CONTEXT_1_THRESHOLD_4x4  3
 #define NEIGHBOURHOOD_00_CONTEXT_2_THRESHOLD_4x4  1
 
-static const uint32_t ctxCbf[3][3] = { { 1, 0, 0 }, { 2, 3, 4 }, { 2, 3, 4} };
+static const uint32_t ctxCbf[3][5] = { { 1, 0, 0, 0, 0 }, { 2, 3, 4, 5, 6 }, { 2, 3, 4, 5, 6 } };
 static const uint32_t significanceMapContextSetStart[MAX_NUM_CHANNEL_TYPE][3] = { { 0,  9, 21 }, { 0,  9, 12 } };
 static const uint32_t significanceMapContextSetSize[MAX_NUM_CHANNEL_TYPE][3]  = { { 9, 12,  6 }, { 9,  3,  3 } };
 static const uint32_t nonDiagonalScan8x8ContextOffset[MAX_NUM_CHANNEL_TYPE]   = {  6, 0  };
@@ -259,9 +259,9 @@ static const uint8_t
 static const uint8_t
     INIT_QT_CBF[3][NUM_QT_CBF_CTX] =
 {
-    { 153,  111,  149,   92,  167,  154, },
-    { 153,  111,  149,  107,  167,  154, },
-    { 111,  141,   94,  138,  182,  154, },
+    { 153,  111,  149,   92,  167,  154,  154 },
+    { 153,  111,  149,  107,  167,  154,  154 },
+    { 111,  141,   94,  138,  182,  154,  154 },
 };
 
 static const uint8_t
