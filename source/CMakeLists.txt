@@ -55,9 +55,10 @@ endif()
 
 if(UNIX)
     SET(PLATFORM_LIBS pthread)
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    find_library(LIBRT rt)
+    if(LIBRT)
         SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
-    endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    endif()
 endif(UNIX)
 
 # Compiler detection
