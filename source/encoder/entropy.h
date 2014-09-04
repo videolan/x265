@@ -154,7 +154,7 @@ public:
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
-    void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void codeCUTransquantBypassFlag(uint32_t symbol);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);

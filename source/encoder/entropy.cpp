@@ -532,7 +532,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        codeCUTransquantBypassFlag(cu, absPartIdx);
+        codeCUTransquantBypassFlag(cu->getCUTransquantBypass(absPartIdx));
 
     if (!slice->isIntra())
         codeSkipFlag(cu, absPartIdx);
@@ -1239,9 +1239,8 @@ void Entropy::codePredMode(TComDataCU* cu, uint32_t absPartIdx)
     encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextState[OFF_PRED_MODE_CTX]);
 }
 
-void Entropy::codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx)
+void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)
 {
-    uint32_t symbol = cu->getCUTransquantBypass(absPartIdx);
     encodeBin(symbol, m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 

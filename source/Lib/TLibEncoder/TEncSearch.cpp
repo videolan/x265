@@ -290,7 +290,7 @@ void TEncSearch::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t 
         if (!cu->m_slice->isIntra())
         {
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-                m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
+                m_entropyCoder->codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
             m_entropyCoder->codeSkipFlag(cu, 0);
             m_entropyCoder->codePredMode(cu, 0);
         }
@@ -2264,7 +2264,7 @@ void TEncSearch::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TCom
     m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
     m_entropyCoder->resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
+        m_entropyCoder->codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
     m_entropyCoder->codeSkipFlag(cu, 0);
     m_entropyCoder->codeMergeIndex(cu, 0);
 
@@ -3670,7 +3670,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
 
         m_entropyCoder->resetBits();
         if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-            m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
+            m_entropyCoder->codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
         if (!cu->m_slice->isIntra())
             m_entropyCoder->codeSkipFlag(cu, 0);
         m_entropyCoder->codeMergeIndex(cu, 0);
@@ -3682,7 +3682,7 @@ uint32_t TEncSearch::xSymbolBitsInter(TComDataCU* cu)
     {
         m_entropyCoder->resetBits();
         if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-            m_entropyCoder->codeCUTransquantBypassFlag(cu, 0);
+            m_entropyCoder->codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
         if (!cu->m_slice->isIntra())
         {
             m_entropyCoder->codeSkipFlag(cu, 0);
