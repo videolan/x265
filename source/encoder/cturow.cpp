@@ -40,27 +40,3 @@ ThreadLocalData::~ThreadLocalData()
 {
     m_cuCoder.destroy();
 }
-
-void CTURow::processCU(TComDataCU *cu, Entropy *bufferSbac, ThreadLocalData& tld, bool bSaveSBac)
-{
-    if (bufferSbac)
-        // Load SBAC coder context from previous row.
-        m_rdEntropyCoders[0][CI_CURR_BEST].loadContexts(*bufferSbac);
-
-    // setup thread local data structures to use this row's CABAC state
-    tld.m_cuCoder.m_entropyCoder = &m_entropyCoder;
-    tld.m_cuCoder.m_rdEntropyCoders = m_rdEntropyCoders;
-    tld.m_cuCoder.m_quant.m_entropyCoder = &m_entropyCoder;
-    tld.m_cuCoder.m_quant.setQPforQuant(cu);
-
-    tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
-
-    /* TODO: this should be unnecessary */
-    tld.m_cuCoder.m_entropyCoder = &m_rdEntropyCoders[0][CI_CURR_BEST];
-    m_rdEntropyCoders[0][CI_CURR_BEST].resetBits();
-    m_rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
-
-    if (bSaveSBac)
-        // Save CABAC state for next row
-        m_bufferEntropyCoder.loadContexts(m_rdEntropyCoders[0][CI_CURR_BEST]);
-}

@@ -82,8 +82,6 @@ public:
         m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
     }
 
-    void processCU(TComDataCU *cu, Entropy *bufferSBac, ThreadLocalData& tld, bool bSaveCabac);
-
     /* Threading variables */
 
     /* This lock must be acquired when reading or writing m_active or m_busy */

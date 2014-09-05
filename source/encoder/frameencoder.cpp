@@ -628,6 +628,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.m_cuCoder.m_quant.m_nr = m_nr;
     tld.m_cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.m_cuCoder.m_log = &tld.m_cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
+    tld.m_cuCoder.m_rdEntropyCoders = curRow.m_rdEntropyCoders;
+    tld.m_cuCoder.m_quant.m_entropyCoder = &curRow.m_entropyCoder;
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();
@@ -670,8 +672,25 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 m_frame->m_qpaAq[row] += qp;
         }
 
-        Entropy *bufSbac = (m_param->bEnableWavefront && col == 0 && row > 0) ? &m_rows[row - 1].m_bufferEntropyCoder : NULL;
-        codeRow.processCU(cu, bufSbac, tld, m_param->bEnableWavefront && col == 1);
+        if (m_param->bEnableWavefront && col == 0 && row > 0)
+            // Load SBAC coder context from previous row.
+            curRow.m_rdEntropyCoders[0][CI_CURR_BEST].loadContexts(m_rows[row - 1].m_bufferEntropyCoder);
+
+        // setup thread local data structures to use this row's CABAC state
+        tld.m_cuCoder.m_entropyCoder = &curRow.m_entropyCoder;
+
+        tld.m_cuCoder.m_quant.setQPforQuant(cu);
+        tld.m_cuCoder.compressCU(cu); // Does all the CU analysis
+
+        /* TODO: this should be unnecessary */
+        tld.m_cuCoder.m_entropyCoder = &curRow.m_rdEntropyCoders[0][CI_CURR_BEST];
+        curRow.m_rdEntropyCoders[0][CI_CURR_BEST].resetBits();
+        curRow.m_rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
+
+        if (m_param->bEnableWavefront && col == 1)
+            // Save CABAC state for next row
+            curRow.m_bufferEntropyCoder.loadContexts(curRow.m_rdEntropyCoders[0][CI_CURR_BEST]);
+
         // Completed CU processing
         curRow.m_completed++;
 
