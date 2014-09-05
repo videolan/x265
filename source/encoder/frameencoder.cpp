@@ -678,8 +678,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         tld.cuCoder.m_quant.setQPforQuant(cu);
         tld.cuCoder.compressCU(cu); // Does all the CU analysis
 
-        /* TODO: this should be unnecessary */
-        curRow.rdEntropyCoders[0][CI_CURR_BEST].resetBits();
+        /* advance top-level CI_CURR_BEST to include the context of this CTU.
+         * Note that if SAO was disabled this could directly write to a
+         * bitstream object and we could skip most of encodeSlice() */
         curRow.rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
 
         if (m_param->bEnableWavefront && col == 1)
