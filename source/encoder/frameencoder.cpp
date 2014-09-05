@@ -602,7 +602,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
-    CTURow& codeRow = m_rows[m_param->bEnableWavefront ? row : 0];
     CTURow& curRow  = m_rows[row];
     {
         ScopedLock self(curRow.m_lock);
@@ -704,7 +703,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 curRow.m_pCuCnt += scale * tld.m_cuCoder.m_log->qTreeInterCnt[depth];
                 curRow.m_skipCuCnt += scale * tld.m_cuCoder.m_log->qTreeSkipCnt[depth];
 
-                //clear the row cu data from thread local object
+                // clear the row cu data from thread local object
                 tld.m_cuCoder.m_log->qTreeIntraCnt[depth] = tld.m_cuCoder.m_log->qTreeInterCnt[depth] = tld.m_cuCoder.m_log->qTreeSkipCnt[depth] = 0;
             }
         }
