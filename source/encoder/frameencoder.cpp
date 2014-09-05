@@ -191,16 +191,6 @@ void FrameEncoder::compressFrame()
         }
     }
 
-    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    if (!m_outStreams)
-    {
-        m_outStreams = new Bitstream[numSubstreams];
-        m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
-    }
-    else
-        for (uint32_t i = 0; i < numSubstreams; i++)
-            m_outStreams[i].resetBits();
-
     /* Get the QP for this frame from rate control. This call may block until
      * frames ahead of it in encode order have called rateControlEnd() */
     int qp = m_top->m_rateControl->rateControlStart(m_frame, &m_rce, m_top);
@@ -212,6 +202,24 @@ void FrameEncoder::compressFrame()
     m_initSliceContext.resetEntropy(slice);
 
     m_frameFilter.start(m_frame, m_initSliceContext, qp);
+
+    // reset entropy coders
+    m_entropyCoder.load(m_initSliceContext);
+    for (int i = 0; i < m_numRows; i++)
+        m_rows[i].init(m_initSliceContext);
+
+    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
+    if (!m_outStreams)
+    {
+        m_outStreams = new Bitstream[numSubstreams];
+        m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
+        if (!m_param->bEnableSAO)
+            for (uint32_t i = 0; i < numSubstreams; i++)
+                m_rows[i].rdEntropyCoders[0][CI_CURR_BEST].setBitstream(&m_outStreams[i]);
+    }
+    else
+        for (uint32_t i = 0; i < numSubstreams; i++)
+            m_outStreams[i].resetBits();
 
     if (m_frame->m_lowres.bKeyframe)
     {
@@ -327,7 +335,7 @@ void FrameEncoder::compressFrame()
     m_entropyCoder.setBitstream(&m_bs);
     m_entropyCoder.codeSliceHeader(slice);
 
-    // re-encode each row of CUs for the final time (TODO: get rid of this second pass)
+    // finish encode of each CTU row
     encodeSlice();
 
     // serialize each row, record final lengths in slice header
@@ -408,8 +416,40 @@ void FrameEncoder::encodeSlice()
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
-    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
 
+    if (!m_param->bEnableSAO)
+    {
+        /* terminate each row and collect stats */
+        for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
+        {
+            uint32_t col = cuAddr % widthInLCUs;
+
+            if (m_param->bEnableWavefront && col == widthInLCUs - 1)
+            {
+                uint32_t lin = cuAddr / widthInLCUs;
+                uint32_t subStrm = lin % numSubstreams;
+                m_rows[subStrm].rdEntropyCoders[0][CI_CURR_BEST].codeTerminatingBit(1);
+                m_rows[subStrm].rdEntropyCoders[0][CI_CURR_BEST].codeSliceFinish();
+                m_outStreams[subStrm].writeByteAlignment();
+            }
+
+            // Collect Frame Stats for 2 pass
+            TComDataCU* cu = m_frame->getCU(cuAddr);
+            m_frameStats.mvBits += cu->m_mvBits;
+            m_frameStats.coeffBits += cu->m_coeffBits;
+            m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
+        }
+        if (!m_param->bEnableWavefront)
+        {
+            m_rows[0].rdEntropyCoders[0][CI_CURR_BEST].codeTerminatingBit(1);
+            m_rows[0].rdEntropyCoders[0][CI_CURR_BEST].codeSliceFinish();
+            m_outStreams[0].writeByteAlignment();
+        }
+
+        return;
+    }
+
+    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
@@ -485,11 +525,6 @@ void FrameEncoder::compressCTURows()
 {
     PPAScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_picSym->m_slice;
-
-    // reset entropy coders
-    m_entropyCoder.load(m_initSliceContext);
-    for (int i = 0; i < m_numRows; i++)
-        m_rows[i].init(m_initSliceContext);
 
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
@@ -621,6 +656,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         curRow.busy = true;
     }
 
+    /* When WPP is enabled, every row has its own row coder instance. Otherwise
+     * they share row 0 */
+    Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rdEntropyCoders[0][CI_CURR_BEST] :
+                                                    m_rows[0].rdEntropyCoders[0][CI_CURR_BEST];
     // setup thread-local data
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
     tld.cuCoder.m_quant.m_nr = m_nr;
@@ -671,21 +710,29 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 m_frame->m_qpaAq[row] += qp;
         }
 
-        if (m_param->bEnableWavefront && col == 0 && row > 0)
-            // Load SBAC coder context from previous row.
-            curRow.rdEntropyCoders[0][CI_CURR_BEST].loadContexts(m_rows[row - 1].bufferEntropyCoder);
+        if (m_param->bEnableWavefront)
+        {
+            if (!col && row)
+            {
+                // Load SBAC coder context from previous row and initialize row state.
+                rowCoder.copyState(m_initSliceContext);
+                rowCoder.loadContexts(m_rows[row - 1].bufferEntropyCoder);
+            }
+        }
+        else if (row)
+            // load current best state from go-on entropy coder
+            curRow.rdEntropyCoders[0][CI_CURR_BEST].load(rowCoder);
 
         tld.cuCoder.m_quant.setQPforQuant(cu);
         tld.cuCoder.compressCU(cu); // Does all the CU analysis
 
-        /* advance top-level CI_CURR_BEST to include the context of this CTU.
-         * Note that if SAO was disabled this could directly write to a
-         * bitstream object and we could skip most of encodeSlice() */
-        curRow.rdEntropyCoders[0][CI_CURR_BEST].encodeCTU(cu);
+        /* advance top-level row coder to include the context of this CTU.
+         * if SAO is disabled, rowCoder writes the final CTU bitstream */
+        rowCoder.encodeCTU(cu);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row
-            curRow.bufferEntropyCoder.loadContexts(curRow.rdEntropyCoders[0][CI_CURR_BEST]);
+            curRow.bufferEntropyCoder.loadContexts(rowCoder);
 
         // Completed CU processing
         curRow.completed++;
