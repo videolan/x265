@@ -618,7 +618,7 @@ void Encoder::printSummary()
         {
             for (int i = 0; i < poolThreadCount; i++)
             {
-                StatisticLog& enclog = m_threadLocalData[i].m_cuCoder.m_sliceTypeLog[sliceType];
+                StatisticLog& enclog = m_threadLocalData[i].cuCoder.m_sliceTypeLog[sliceType];
                 if (depth == 0)
                     finalLog.totalCu += enclog.totalCu;
                 finalLog.cntIntra[depth] += enclog.cntIntra[depth];

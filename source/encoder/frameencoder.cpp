@@ -302,9 +302,9 @@ void FrameEncoder::compressFrame()
         // accumulate intra,inter,skip cu count per frame for 2 pass
         for (int i = 0; i < m_numRows; i++)
         {
-            m_frameStats.cuCount_i += m_rows[i].m_iCuCnt;
-            m_frameStats.cuCount_p += m_rows[i].m_pCuCnt;
-            m_frameStats.cuCount_skip += m_rows[i].m_skipCuCnt;
+            m_frameStats.cuCount_i += m_rows[i].iCuCnt;
+            m_frameStats.cuCount_p += m_rows[i].pCuCnt;
+            m_frameStats.cuCount_skip += m_rows[i].skipCuCnt;
         }
         double totalCuCount = m_frameStats.cuCount_i + m_frameStats.cuCount_p + m_frameStats.cuCount_skip;
         m_frameStats.cuCount_i /= totalCuCount;
@@ -424,7 +424,7 @@ void FrameEncoder::encodeSlice()
         if (m_param->bEnableWavefront && !col && lin)
         {
             m_entropyCoder.copyState(m_initSliceContext);
-            m_entropyCoder.loadContexts(m_rows[lin - 1].m_bufferEntropyCoder);
+            m_entropyCoder.loadContexts(m_rows[lin - 1].bufferEntropyCoder);
         }
 
         if (slice->m_sps->bUseSAO)
@@ -460,7 +460,7 @@ void FrameEncoder::encodeSlice()
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
-            m_rows[lin].m_bufferEntropyCoder.loadContexts(m_entropyCoder);
+            m_rows[lin].bufferEntropyCoder.loadContexts(m_entropyCoder);
 
         // Collect Frame Stats for 2 pass
         m_frameStats.mvBits += cu->m_mvBits;
@@ -504,7 +504,7 @@ void FrameEncoder::compressCTURows()
     bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE;
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
-    m_rows[0].m_active = true;
+    m_rows[0].active = true;
     if (m_pool && m_param->bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
@@ -603,11 +603,11 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
     CTURow& curRow  = m_rows[row];
     {
-        ScopedLock self(curRow.m_lock);
-        if (!curRow.m_active)
+        ScopedLock self(curRow.lock);
+        if (!curRow.active)
             /* VBV restart is in progress, exit out */
             return;
-        if (curRow.m_busy)
+        if (curRow.busy)
         {
             /* On multi-socket Windows servers, we have seen problems with
              * ATOMIC_CAS which resulted in multiple worker threads processing
@@ -618,7 +618,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                      "internal error - simultaneous row access detected. Please report HW to x265-devel@videolan.org\n");
             return;
         }
-        curRow.m_busy = true;
+        curRow.busy = true;
     }
 
     // setup thread-local data
@@ -626,8 +626,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.cuCoder.m_quant.m_nr = m_nr;
     tld.cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.cuCoder.m_log = &tld.cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
-    tld.cuCoder.m_rdEntropyCoders = curRow.m_rdEntropyCoders;
-    tld.cuCoder.m_quant.m_entropyCoder = &curRow.m_entropyCoder;
+    tld.cuCoder.m_rdEntropyCoders = curRow.rdEntropyCoders;
+    tld.cuCoder.m_entropyCoder = &curRow.entropyCoder;
+    tld.cuCoder.m_quant.m_entropyCoder = &curRow.entropyCoder;
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();
@@ -636,9 +637,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
-    while (curRow.m_completed < numCols)
+    while (curRow.completed < numCols)
     {
-        int col = curRow.m_completed;
+        int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* cu = m_frame->getCU(cuAddr);
         cu->initCU(m_frame, cuAddr);
@@ -672,25 +673,21 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
         if (m_param->bEnableWavefront && col == 0 && row > 0)
             // Load SBAC coder context from previous row.
-            curRow.m_rdEntropyCoders[0][CI_CURR_BEST].loadContexts(m_rows[row - 1].m_bufferEntropyCoder);
-
-        // setup thread local data structures to use this row's CABAC state
-        tld.cuCoder.m_entropyCoder = &curRow.m_entropyCoder;
+            curRow.rdEntropyCoders[0][CI_CURR_BEST].loadContexts(m_rows[row - 1].bufferEntropyCoder);
 
         tld.cuCoder.m_quant.setQPforQuant(cu);
         tld.cuCoder.compressCU(cu); // Does all the CU analysis
 
         /* TODO: this should be unnecessary */
-        tld.cuCoder.m_entropyCoder = &curRow.m_rdEntropyCoders[0][CI_CURR_BEST];
-        curRow.m_rdEntropyCoders[0][CI_CURR_BEST].resetBits();
-        curRow.m_rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
+        curRow.rdEntropyCoders[0][CI_CURR_BEST].resetBits();
+        curRow.rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row
-            curRow.m_bufferEntropyCoder.loadContexts(curRow.m_rdEntropyCoders[0][CI_CURR_BEST]);
+            curRow.bufferEntropyCoder.loadContexts(curRow.rdEntropyCoders[0][CI_CURR_BEST]);
 
         // Completed CU processing
-        curRow.m_completed++;
+        curRow.completed++;
 
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
@@ -698,9 +695,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             double scale = (double)(1 << (g_maxCUSize / 16));
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, scale /= 4)
             {
-                curRow.m_iCuCnt += scale * tld.cuCoder.m_log->qTreeIntraCnt[depth];
-                curRow.m_pCuCnt += scale * tld.cuCoder.m_log->qTreeInterCnt[depth];
-                curRow.m_skipCuCnt += scale * tld.cuCoder.m_log->qTreeSkipCnt[depth];
+                curRow.iCuCnt += scale * tld.cuCoder.m_log->qTreeIntraCnt[depth];
+                curRow.pCuCnt += scale * tld.cuCoder.m_log->qTreeInterCnt[depth];
+                curRow.skipCuCnt += scale * tld.cuCoder.m_log->qTreeSkipCnt[depth];
 
                 // clear the row cu data from thread local object
                 tld.cuCoder.m_log->qTreeIntraCnt[depth] = tld.cuCoder.m_log->qTreeInterCnt[depth] = tld.cuCoder.m_log->qTreeSkipCnt[depth] = 0;
@@ -742,23 +739,23 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                         if (r != row)
                         {
                             /* if row was active (ready to be run) clear active bit and bitmap bit for this row */
-                            stopRow.m_lock.acquire();
-                            while (stopRow.m_active)
+                            stopRow.lock.acquire();
+                            while (stopRow.active)
                             {
                                 if (dequeueRow(r * 2))
-                                    stopRow.m_active = false;
+                                    stopRow.active = false;
                                 else
                                     GIVE_UP_TIME();
                             }
 
-                            stopRow.m_lock.release();
+                            stopRow.lock.release();
 
                             bool bRowBusy = true;
                             do
                             {
-                                stopRow.m_lock.acquire();
-                                bRowBusy = stopRow.m_busy;
-                                stopRow.m_lock.release();
+                                stopRow.lock.acquire();
+                                bRowBusy = stopRow.busy;
+                                stopRow.lock.release();
 
                                 if (bRowBusy)
                                 {
@@ -768,8 +765,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                             while (bRowBusy);
                         }
 
-                        stopRow.m_completed = 0;
-                        stopRow.m_iCuCnt = stopRow.m_pCuCnt = stopRow.m_skipCuCnt = 0;
+                        stopRow.completed = 0;
+                        stopRow.iCuCnt = stopRow.pCuCnt = stopRow.skipCuCnt = 0;
                         if (m_frame->m_qpaAq)
                             m_frame->m_qpaAq[r] = 0;
                         m_frame->m_qpaRc[r] = 0;
@@ -790,24 +787,24 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 
         // NOTE: active next row
-        if (curRow.m_completed >= 2 && row < m_numRows - 1)
+        if (curRow.completed >= 2 && row < m_numRows - 1)
         {
-            ScopedLock below(m_rows[row + 1].m_lock);
-            if (m_rows[row + 1].m_active == false &&
-                m_rows[row + 1].m_completed + 2 <= curRow.m_completed &&
+            ScopedLock below(m_rows[row + 1].lock);
+            if (m_rows[row + 1].active == false &&
+                m_rows[row + 1].completed + 2 <= curRow.completed &&
                 (!m_bAllRowsStop || row + 1 < m_vbvResetTriggerRow))
             {
-                m_rows[row + 1].m_active = true;
+                m_rows[row + 1].active = true;
                 enqueueRowEncoder(row + 1);
             }
         }
 
-        ScopedLock self(curRow.m_lock);
+        ScopedLock self(curRow.lock);
         if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) ||
-            (row > 0 && curRow.m_completed < numCols - 1 && m_rows[row - 1].m_completed < m_rows[row].m_completed + 2))
+            (row > 0 && curRow.completed < numCols - 1 && m_rows[row - 1].completed < m_rows[row].completed + 2))
         {
-            curRow.m_active = false;
-            curRow.m_busy = false;
+            curRow.active = false;
+            curRow.busy = false;
             m_totalTime += x265_mdate() - startTime;
             return;
         }
@@ -858,7 +855,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     }
 
     m_totalTime += x265_mdate() - startTime;
-    curRow.m_busy = false;
+    curRow.busy = false;
 }
 
 void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)

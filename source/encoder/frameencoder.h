@@ -63,56 +63,54 @@ struct ThreadLocalData
 };
 
 /* manages the state of encoding one row of CTU blocks.  When
- * WPP is active, several rows will be simultaneously encoded.
- * When WPP is inactive, only one CTURow instance is used. */
-class CTURow
+ * WPP is active, several rows will be simultaneously encoded. */
+struct CTURow
 {
-public:
-
-    Entropy m_entropyCoder;
-    Entropy m_bufferEntropyCoder;  /* store context for next row */
-    Entropy m_rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
+    Entropy           entropyCoder;
+    Entropy           bufferEntropyCoder;  /* store context for next row */
+    Entropy           rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
 
     // to compute stats for 2 pass
-    double  m_iCuCnt;
-    double  m_pCuCnt;
-    double  m_skipCuCnt;
-
-    void init(Entropy& initContext)
-    {
-        m_active = 0;
-        m_completed = 0;
-        m_busy = false;
-
-        m_entropyCoder.load(initContext);
-
-        // Note: Reset status to avoid frame parallelism output mistake on different thread number
-        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
-            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-                m_rdEntropyCoders[depth][ciIdx].load(initContext);
-
-        m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
-    }
+    double            iCuCnt;
+    double            pCuCnt;
+    double            skipCuCnt;
 
     /* Threading variables */
 
     /* This lock must be acquired when reading or writing m_active or m_busy */
-    Lock              m_lock;
+    Lock              lock;
 
     /* row is ready to run, has no neighbor dependencies. The row may have
      * external dependencies (reference frame pixels) that prevent it from being
      * processed, so it may stay with m_active=true for some time before it is
      * encoded by a worker thread. */
-    volatile bool     m_active;
+    volatile bool     active;
 
     /* row is being processed by a worker thread.  This flag is only true when a
      * worker thread is within the context of FrameEncoder::processRow(). This
      * flag is used to detect multiple possible wavefront problems. */
-    volatile bool     m_busy;
+    volatile bool     busy;
 
     /* count of completed CUs in this row */
-    volatile uint32_t m_completed;
+    volatile uint32_t completed;
+
+    void init(Entropy& initContext)
+    {
+        active = 0;
+        completed = 0;
+        busy = false;
+
+        entropyCoder.load(initContext);
+
+        // Note: Reset status to avoid frame parallelism output mistake on different thread number
+        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+                rdEntropyCoders[depth][ciIdx].load(initContext);
+
+        iCuCnt = pCuCnt = skipCuCnt = 0;
+    }
 };
+
 /* Current frame stats for 2 pass */
 struct FrameStats
 {
