@@ -1197,9 +1197,9 @@ void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t
 {
     uint32_t log2CUSize = getLog2CUSize(absPartIdx);
     PartSize partSize   = getPartitionSize(absPartIdx);
-    uint32_t quadtreeTUMaxDepth = getPredictionMode(0) == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
+    uint32_t quadtreeTUMaxDepth = getPredictionMode(absPartIdx) == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
     uint32_t intraSplitFlag = (getPredictionMode(absPartIdx) == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
-    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(0) == MODE_INTER) && (partSize != SIZE_2Nx2N));
+    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(absPartIdx) == MODE_INTER) && (partSize != SIZE_2Nx2N));
 
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
