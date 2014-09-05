@@ -35,7 +35,6 @@
 
 #include "entropy.h"
 #include "framefilter.h"
-#include "cturow.h"
 #include "ratecontrol.h"
 #include "reference.h"
 #include "nal.h"
@@ -46,6 +45,74 @@ namespace x265 {
 class ThreadPool;
 class Encoder;
 
+struct ThreadLocalData
+{
+    Analysis m_cuCoder;
+
+    // NOTE: the maximum LCU 64x64 have 256 4x4 partitions
+    bool     m_edgeFilter[256];
+    uint8_t  m_blockingStrength[256];
+
+    void init(Encoder& enc)
+    {
+        m_cuCoder.initSearch(enc);
+        m_cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
+    }
+
+    ~ThreadLocalData() { m_cuCoder.destroy(); }
+};
+
+/* manages the state of encoding one row of CTU blocks.  When
+ * WPP is active, several rows will be simultaneously encoded.
+ * When WPP is inactive, only one CTURow instance is used. */
+class CTURow
+{
+public:
+
+    Entropy m_entropyCoder;
+    Entropy m_bufferEntropyCoder;  /* store context for next row */
+    Entropy m_rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
+
+    // to compute stats for 2 pass
+    double  m_iCuCnt;
+    double  m_pCuCnt;
+    double  m_skipCuCnt;
+
+    void init(Entropy& initContext)
+    {
+        m_active = 0;
+        m_completed = 0;
+        m_busy = false;
+
+        m_entropyCoder.load(initContext);
+
+        // Note: Reset status to avoid frame parallelism output mistake on different thread number
+        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+                m_rdEntropyCoders[depth][ciIdx].load(initContext);
+
+        m_iCuCnt = m_pCuCnt = m_skipCuCnt = 0;
+    }
+
+    /* Threading variables */
+
+    /* This lock must be acquired when reading or writing m_active or m_busy */
+    Lock              m_lock;
+
+    /* row is ready to run, has no neighbor dependencies. The row may have
+     * external dependencies (reference frame pixels) that prevent it from being
+     * processed, so it may stay with m_active=true for some time before it is
+     * encoded by a worker thread. */
+    volatile bool     m_active;
+
+    /* row is being processed by a worker thread.  This flag is only true when a
+     * worker thread is within the context of FrameEncoder::processRow(). This
+     * flag is used to detect multiple possible wavefront problems. */
+    volatile bool     m_busy;
+
+    /* count of completed CUs in this row */
+    volatile uint32_t m_completed;
+};
 /* Current frame stats for 2 pass */
 struct FrameStats
 {

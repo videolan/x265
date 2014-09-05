@@ -31,7 +31,6 @@
 #include "TLibCommon/TComRom.h"
 
 #include "bitcost.h"
-#include "cturow.h"
 #include "encoder.h"
 #include "slicetype.h"
 #include "frameencoder.h"
