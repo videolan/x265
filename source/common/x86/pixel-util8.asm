@@ -939,50 +939,43 @@ cglobal quant, 5,6,8
 ; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal nquant, 4,5,8
+cglobal nquant, 3,5,8
     movd        m6, r4m
     mov         r4d, r5m
     pxor        m7, m7          ; m7 = numZero
-    movd        m5, r3d         ; m5 = qbits
+    movd        m5, r3m         ; m5 = qbits
     pshufd      m6, m6, 0       ; m6 = add
     mov         r3d, r4d        ; r3 = numCoeff
     shr         r4d, 3
+
 .loop:
     movu        m0, [r0]        ; m0 = level
     movu        m1, [r0 + 16]   ; m1 = level
-    movu        m2, [r1]        ; m2 = qcoeff
-    movu        m3, [r1 + 16]   ; m3 = qcoeff
+
+    pabsd       m2, m0
+    pmulld      m2, [r1]        ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m6
+    psrad       m2, m5          ; m0 = level1
+    psignd      m2, m0
+
+    pabsd       m3, m1
+    pmulld      m3, [r1 + 16]   ; m1 = tmpLevel1 * qcoeff
+    paddd       m3, m6
+    psrad       m3, m5          ; m1 = level1
+    psignd      m3, m1
+
+    packssdw    m2, m3
+
+    movu        [r2], m2
     add         r0, 32
     add         r1, 32
+    add         r2, 16
 
     pxor        m4, m4
-    pcmpgtd     m4, m0          ; m4 = sign
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m0, m6
-    psrad       m0, m5          ; m0 = level1
-    pxor        m0, m4
-    psubd       m0, m4
+    pcmpeqw     m2, m4
+    psubw       m7, m2
 
-    pxor        m4, m4
-    pcmpgtd     m4, m1          ; m4 = sign
-    pabsd       m1, m1
-    pmulld      m1, m3          ; m1 = tmpLevel1
-    paddd       m1, m6
-    psrad       m1, m5          ; m1 = level1
-    pxor        m1, m4
-    psubd       m1, m4
-
-    packssdw    m0, m1
-
-    movu        [r2], m0
-    add         r2,   16
     dec         r4d
-
-    pxor        m4, m4
-    pcmpeqw     m0, m4
-    psubw       m7, m0
-
     jnz         .loop
 
     packuswb    m7, m7
@@ -990,7 +983,6 @@ cglobal nquant, 4,5,8
     mov         eax, r3d
     movd        r4d, m7
     sub         eax, r4d        ; numSig
-
     RET
 
 

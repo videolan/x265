@@ -793,6 +793,10 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int16_t* q
 
 uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
+    X265_CHECK((numCoeff % 16) == 0, "number of quant coeff is not multiple of 4x4\n");
+    X265_CHECK((uint32_t)add < ((uint32_t)1 << qBits), "2 ^ qBits less than add\n");
+    X265_CHECK(((intptr_t)quantCoeff & 31) == 0, "quantCoeff buffer not aligned\n");
+
     uint32_t numSig = 0;
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos++)
