@@ -434,7 +434,16 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
     dec    r4d
     jg .loop
 %endif
-    HADDD     m0, m1
+%if %1 == 4
+  %if notcpuflag(ssse3)
+    pshufd   m1, m0, 1
+    paddd    m0, m1
+  %else
+    phaddd   m0, m0
+  %endif
+%else
+    HADDD    m0, m1
+%endif
     movd     eax, m0
     RET
 %endmacro
