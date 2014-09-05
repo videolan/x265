@@ -142,17 +142,17 @@ void FrameFilter::processRow(int row, ThreadLocalData& tld)
             const uint32_t cuAddr = lineStartCUAddr + col;
             TComDataCU* cu = m_frame->getCU(cuAddr);
 
-            m_deblock.deblockCTU(cu, Deblock::EDGE_VER, tld.m_edgeFilter, tld.m_blockingStrength);
+            m_deblock.deblockCTU(cu, Deblock::EDGE_VER, tld.edgeFilter, tld.blockingStrength);
 
             if (col > 0)
             {
                 TComDataCU* cu_prev = m_frame->getCU(cuAddr - 1);
-                m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+                m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.edgeFilter, tld.blockingStrength);
             }
         }
 
         TComDataCU* cu_prev = m_frame->getCU(lineStartCUAddr + numCols - 1);
-        m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.m_edgeFilter, tld.m_blockingStrength);
+        m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR, tld.edgeFilter, tld.blockingStrength);
     }
 
     // SAO
