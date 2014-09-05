@@ -1441,6 +1441,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_AVX2)
     {
         p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.nquant = x265_nquant_avx2;
     }
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
@@ -1737,6 +1738,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.denoiseDct = x265_denoise_dct_avx2;
 
         p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.nquant = x265_nquant_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }

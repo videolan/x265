@@ -986,6 +986,55 @@ cglobal nquant, 3,5,8
     RET
 
 
+INIT_YMM avx2
+cglobal nquant, 3,5,7
+    vpbroadcastd m4, r4m
+    vpbroadcastd m6, [pw_1]
+    mov         r4d, r5m
+    pxor        m5, m5              ; m7 = numZero
+    movd        xm3, r3m            ; m5 = qbits
+    mov         r3d, r4d            ; r3 = numCoeff
+    shr         r4d, 4
+
+.loop:
+    movu        m0, [r0]            ; m0 = level
+    pabsd       m1, m0
+    pmulld      m1, [r1]            ; m0 = tmpLevel1 * qcoeff
+    paddd       m1, m4
+    psrad       m1, xm3             ; m0 = level1
+    psignd      m1, m0
+
+    movu        m0, [r0 + mmsize]   ; m0 = level
+    pabsd       m2, m0
+    pmulld      m2, [r1 + mmsize]   ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m4
+    psrad       m2, xm3             ; m0 = level1
+    psignd      m2, m0
+
+    packssdw    m1, m2
+    vpermq      m2, m1, q3120
+
+    movu        [r2], m2
+    add         r0, mmsize * 2
+    add         r1, mmsize * 2
+    add         r2, mmsize
+
+    pminuw      m1, m6
+    paddw       m5, m1
+
+    dec         r4d
+    jnz         .loop
+
+    pxor        m0, m0
+    psadbw      m5, m0
+    vextracti128 xm0, m5, 1
+    paddd       xm5, xm0
+    pshufd      xm0, xm5, 2
+    paddd       xm5, xm0
+    movd        eax, xm5
+    RET
+
+
 ;-----------------------------------------------------------------------------
 ; void dequant_normal(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 ;-----------------------------------------------------------------------------
