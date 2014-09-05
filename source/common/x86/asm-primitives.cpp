@@ -1495,6 +1495,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_VAR(_sse2);
 
         ASSGN_SSE(sse2);
+        ASSGN_SSE_SS(sse2);
         INIT2(sad, _sse2);
         SAD(sse2);
         INIT2(sad_x3, _sse2);
