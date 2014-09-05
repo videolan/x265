@@ -888,6 +888,8 @@ INIT_XMM
     %define ymmmm%1   mm%1
     %define ymmxmm%1 xmm%1
     %define ymmymm%1 ymm%1
+    %define ymm%1xmm xmm%1
+    %define xmm%1ymm ymm%1
     %define xm%1 xmm %+ m%1
     %define ym%1 ymm %+ m%1
 %endmacro
@@ -1480,3 +1482,13 @@ FMA4_INSTR fnmsubss, fnmsub132ss, fnmsub213ss, fnmsub231ss
 %endif
 %endmacro
 %endif
+
+; workaround: vpbroadcastd with register, the yasm will generate wrong code
+%macro vpbroadcastd 2
+  %ifid %2
+    movd         %1 %+ xmm, %2
+    vpbroadcastd %1, %1 %+ xmm
+  %else
+    vbroadcastsd %1, %2
+  %endif
+%endmacro
