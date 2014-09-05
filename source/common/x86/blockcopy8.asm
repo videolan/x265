@@ -3953,42 +3953,37 @@ cglobal cvt32to16_shl_32, 3,4,5
 ; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal copy_cnt_4, 3,3,5
+cglobal copy_cnt_4, 3,3,3
     add         r2d, r2d
-    pxor        m4, m4
+    pxor        m2, m2
 
      ; row 0 & 1
      movh        m0, [r1]
-     movh        m1, [r1 + r2]
-     movh        [r0], m0
-     movh        [r0 + 8], m1
-
-     mova        m2, [r0]
+     movhps      m0, [r1 + r2]
+     mova        [r0], m0
 
      ; row 2 & 3
-     movh        m0, [r1 + r2 * 2]
+     movh        m1, [r1 + r2 * 2]
      lea         r2, [r2 * 3]
-     movh        m1, [r1 + r2]
-     movh        [r0 + 16], m0
-     movh        [r0 + 24], m1
- 
-     mova        m0, [r0 + 16]
-     packsswb    m2, m0
-     pcmpeqb     m2, m4
+     movhps      m1, [r1 + r2]
+     mova        [r0 + 16], m1
+
+     packsswb    m0, m1
+     pcmpeqb     m0, m2
 
      ; get count
      ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
 %if 0
-     pmovmskb    eax, m2
+     pmovmskb    eax, m0
      not         ax
      popcnt      ax, ax
 %else
-     mova        m0, [pb_1]
-     paddb       m2, m0
-     psadbw      m2, m4
-     pshufd      m0, m2, 2
-     paddw       m2, m0
-     movd        eax, m2
+     mova        m1, [pb_1]
+     paddb       m0, m1
+     psadbw      m0, m2
+     pshufd      m1, m0, 2
+     paddw       m0, m1
+     movd        eax, m0
  %endif
      RET
 
