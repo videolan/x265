@@ -3957,35 +3957,35 @@ cglobal copy_cnt_4, 3,3,3
     add         r2d, r2d
     pxor        m2, m2
 
-     ; row 0 & 1
-     movh        m0, [r1]
-     movhps      m0, [r1 + r2]
-     mova        [r0], m0
+    ; row 0 & 1
+    movh        m0, [r1]
+    movhps      m0, [r1 + r2]
+    mova        [r0], m0
 
-     ; row 2 & 3
-     movh        m1, [r1 + r2 * 2]
-     lea         r2, [r2 * 3]
-     movhps      m1, [r1 + r2]
-     mova        [r0 + 16], m1
+    ; row 2 & 3
+    movh        m1, [r1 + r2 * 2]
+    lea         r2, [r2 * 3]
+    movhps      m1, [r1 + r2]
+    mova        [r0 + 16], m1
 
-     packsswb    m0, m1
-     pcmpeqb     m0, m2
+    packsswb    m0, m1
+    pcmpeqb     m0, m2
 
-     ; get count
-     ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
+    ; get count
+    ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
 %if 0
-     pmovmskb    eax, m0
-     not         ax
-     popcnt      ax, ax
+    pmovmskb    eax, m0
+    not         ax
+    popcnt      ax, ax
 %else
-     mova        m1, [pb_1]
-     paddb       m0, m1
-     psadbw      m0, m2
-     pshufd      m1, m0, 2
-     paddw       m0, m1
-     movd        eax, m0
- %endif
-     RET
+    mova        m1, [pb_1]
+    paddb       m0, m1
+    psadbw      m0, m2
+    pshufd      m1, m0, 2
+    paddw       m0, m1
+    movd        eax, m0
+%endif
+    RET
 
 
 INIT_YMM avx2
