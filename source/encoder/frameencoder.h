@@ -94,20 +94,19 @@ struct CTURow
     /* count of completed CUs in this row */
     volatile uint32_t completed;
 
+    /* called at the start of each frame to initialize state */
     void init(Entropy& initContext)
     {
-        active = 0;
-        completed = 0;
+        active = false;
         busy = false;
+        completed = 0;
+        iCuCnt = pCuCnt = skipCuCnt = 0;
 
         entropyCoder.load(initContext);
 
-        // Note: Reset status to avoid frame parallelism output mistake on different thread number
         for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
                 rdEntropyCoders[depth][ciIdx].load(initContext);
-
-        iCuCnt = pCuCnt = skipCuCnt = 0;
     }
 };
 
