@@ -1045,7 +1045,7 @@ cglobal dequant_normal, 5,5,5
 ; int count_nonzero(const int16_t *quantCoeff, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal count_nonzero, 2,2,4
+cglobal count_nonzero, 2,2,3
     pxor        m0, m0
     shr         r1d, 4
     movd        m1, r1d
@@ -1053,8 +1053,7 @@ cglobal count_nonzero, 2,2,4
 
 .loop:
     mova        m2, [r0 +  0]
-    mova        m3, [r0 + 16]
-    packsswb    m2, m3
+    packsswb    m2, [r0 + 16]
     add         r0, 32
     pcmpeqb     m2, m0
     paddb       m1, m2
