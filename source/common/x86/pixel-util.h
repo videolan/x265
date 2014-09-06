@@ -48,6 +48,7 @@ uint32_t x265_quant_sse4(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, in
 uint32_t x265_nquant_sse4(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 uint32_t x265_nquant_avx2(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 void x265_dequant_normal_sse4(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
+void x265_dequant_normal_avx2(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 int x265_count_nonzero_ssse3(const int16_t *quantCoeff, int numCoeff);
 
 void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);

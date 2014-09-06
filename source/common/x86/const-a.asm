@@ -89,6 +89,7 @@ const pd_512,      times 4 dd 512
 const pd_1024,     times 4 dd 1024
 const pd_2048,     times 4 dd 2048
 const pd_ffff,     times 4 dd 0xffff
+const pd_32767,    times 4 dd 32767
 const pd_n32768,   times 4 dd 0xffff8000
 const pw_ff00,     times 8 dw 0xff00
 
