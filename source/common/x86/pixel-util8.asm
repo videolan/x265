@@ -1040,21 +1040,18 @@ cglobal nquant, 3,5,7
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal dequant_normal, 5,5,5
-    movd        m1, r3              ; m1 = word [scale]
     mova        m2, [pw_1]
 %if HIGH_BIT_DEPTH
     cmp         r3d, 32767
     jle         .skip
-    psrld       m1, 2
+    shr         r3d, 2
     sub         r4d, 2
 .skip:
 %endif
     movd        m0, r4d             ; m0 = shift
-    xor         r3d, r3d
-    dec         r4d
+    add         r4d, 15
     bts         r3d, r4d
-    movd        m3, r3d
-    punpcklwd   m1, m3
+    movd        m1, r3d
     pshufd      m1, m1, 0           ; m1 = dword [add scale]
     ; m0 = shift
     ; m1 = scale
@@ -1071,8 +1068,8 @@ cglobal dequant_normal, 5,5,5
     pmovsxwd    m3, m3
     packssdw    m4, m4
     pmovsxwd    m4, m4
-    movu        [r1], m3
-    movu        [r1 + 16], m4
+    mova        [r1], m3
+    mova        [r1 + 16], m4
 
     add         r0, 16
     add         r1, 32

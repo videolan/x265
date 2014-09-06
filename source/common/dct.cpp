@@ -729,6 +729,7 @@ void dequant_normal_c(const int16_t* quantCoef, int32_t* coef, int num, int scal
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
     X265_CHECK((num % 8) == 0, "dequant num %d not multiple of 8\n", num);
     X265_CHECK(shift <= 10, "shift too large %d\n", shift);
+    X265_CHECK(((int)coef & 31) == 0, "dequant coef buffer not aligned\n");
 
     int add, coeffQ;
 
