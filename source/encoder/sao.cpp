@@ -1481,14 +1481,10 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
     pixel* fenc;
     pixel* recon;
     int stride;
-    int lcuHeight;
-    int lcuWidth;
     uint32_t rPelX;
     uint32_t bPelY;
     int64_t* stats;
     int64_t* count;
-    uint32_t picWidthTmp = 0;
-    uint32_t picHeightTmp = 0;
     int classIdx;
     int startX;
     int startY;
@@ -1510,38 +1506,39 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
     {
         // NOTE: Col
         {
-            lcuHeight = g_maxCUSize;
-            lcuWidth  = g_maxCUSize;
             addr    = idxX + frameWidthInCU * idxY;
             cu      = pic->getCU(addr);
+
+            uint32_t picWidthTmp  = m_param->sourceWidth;
+            uint32_t picHeightTmp = m_param->sourceHeight;
+            int lcuWidth  = g_maxCUSize;
+            int lcuHeight = g_maxCUSize;
             lPelX   = cu->getCUPelX();
             tPelY   = cu->getCUPelY();
+            rPelX     = lPelX + lcuWidth;
+            bPelY     = tPelY + lcuHeight;
+            rPelX     = rPelX > picWidthTmp  ? picWidthTmp  : rPelX;
+            bPelY     = bPelY > picHeightTmp ? picHeightTmp : bPelY;
+            lcuWidth  = rPelX - lPelX;
+            lcuHeight = bPelY - tPelY;
 
-            memset(m_countPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
-            memset(m_offsetOrgPreDblk[addr], 0, 3 * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS * sizeof(int64_t));
+            memset(m_countPreDblk[addr], 0, sizeof(PerPlane));
+            memset(m_offsetOrgPreDblk[addr], 0, sizeof(PerPlane));
+
             for (int plane = 0; plane < 3; plane++)
             {
                 isChroma = !!plane;
-                if (plane == 0)
+                if (plane == 1)
                 {
-                    picWidthTmp  = m_param->sourceWidth;
-                    picHeightTmp = m_param->sourceHeight;
+                    picWidthTmp  >>= m_hChromaShift;
+                    picHeightTmp >>= m_vChromaShift;
+                    lcuWidth     >>= m_hChromaShift;
+                    lcuHeight    >>= m_vChromaShift;
+                    lPelX        >>= m_hChromaShift;
+                    tPelY        >>= m_vChromaShift;
+                    rPelX     = lPelX + lcuWidth;
+                    bPelY     = tPelY + lcuHeight;
                 }
-                else if (plane == 1)
-                {
-                    picWidthTmp  = m_param->sourceWidth  >> isChroma;
-                    picHeightTmp = m_param->sourceHeight >> isChroma;
-                    lcuWidth     = lcuWidth    >> isChroma;
-                    lcuHeight    = lcuHeight   >> isChroma;
-                    lPelX        = lPelX       >> isChroma;
-                    tPelY        = tPelY       >> isChroma;
-                }
-                rPelX     = lPelX + lcuWidth;
-                bPelY     = tPelY + lcuHeight;
-                rPelX     = rPelX > picWidthTmp  ? picWidthTmp  : rPelX;
-                bPelY     = bPelY > picHeightTmp ? picHeightTmp : bPelY;
-                lcuWidth  = rPelX - lPelX;
-                lcuHeight = bPelY - tPelY;
 
                 stride   = (plane == 0) ? pic->getStride() : pic->getCStride();
 
