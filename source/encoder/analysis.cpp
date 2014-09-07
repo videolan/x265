@@ -1056,21 +1056,30 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             copyYuv2Pic(pic, outBestCU->getAddr(), absPartIdx, depth);
     }
 
+#if CHECKED_BUILD || _DEBUG
     /* Assert if Best prediction mode is NONE
      * Selected mode's RD-cost must be not MAX_INT64 */
     if (bInsidePicture)
     {
         X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
         X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
-        if (m_rdCost.m_psyRd)
+        if (m_param->rdLevel > 1)
         {
-            X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
+            if (m_rdCost.m_psyRd)
+            {
+                X265_CHECK(outBestCU->m_totalPsyCost != MAX_INT64, "no best partition cost\n");
+            }
+            else
+            {
+                X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+            }
         }
         else
         {
-            X265_CHECK(outBestCU->m_totalRDCost != MAX_INT64, "no best partition cost\n");
+            X265_CHECK(outBestCU->m_sa8dCost != MAX_INT64, "no best partition cost\n");
         }
     }
+#endif
 
     x265_emms();
 }
