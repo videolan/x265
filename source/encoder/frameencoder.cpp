@@ -471,12 +471,15 @@ void FrameEncoder::encodeSlice()
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCTU(cu);
 
-        // Store probabilities of second LCU in line into buffer
-        if (col == 1 && m_param->bEnableWavefront)
-            m_rows[lin].bufferEntropyCoder.loadContexts(m_entropyCoder);
+        if (m_param->bEnableWavefront)
+        {
+            if (col == 1)
+                // Store probabilities of second LCU in line into buffer
+                m_rows[lin].bufferEntropyCoder.loadContexts(m_entropyCoder);
 
-        if (m_param->bEnableWavefront && col == widthInLCUs - 1)
-            m_entropyCoder.finishSlice();
+            if (col == widthInLCUs - 1)
+                m_entropyCoder.finishSlice();
+        }
     }
     if (!m_param->bEnableWavefront)
         m_entropyCoder.finishSlice();
