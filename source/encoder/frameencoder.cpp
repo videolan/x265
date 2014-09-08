@@ -336,7 +336,7 @@ void FrameEncoder::compressFrame()
     }
 
     m_bs.resetBits();
-    m_entropyCoder.resetEntropy(slice); // TODO: why doesn't load(m_initSliceContext) work here?
+    m_entropyCoder.load(m_initSliceContext);
     m_entropyCoder.setBitstream(&m_bs);
     m_entropyCoder.codeSliceHeader(slice);
 
