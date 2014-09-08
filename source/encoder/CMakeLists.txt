@@ -1,9 +1,8 @@
 # vim: syntax=cmake
 
 add_library(encoder OBJECT ../x265.h
-    ../Lib/TLibEncoder/TEncSearch.h
-    ../Lib/TLibEncoder/TEncSearch.cpp
     analysis.cpp analysis.h
+    search.cpp search.h
     predict.cpp  predict.h
     bitcost.cpp bitcost.h rdcost.h
     motion.cpp motion.h

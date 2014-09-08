@@ -37,7 +37,10 @@
 #include "TLibCommon/TComDataCU.h"
 
 #include "entropy.h"
-#include "TLibEncoder/TEncSearch.h"
+#include "search.h"
+
+namespace x265 {
+// private namespace
 
 struct StatisticLog
 {
@@ -61,13 +64,10 @@ struct StatisticLog
     }
 };
 
-namespace x265 {
-// private namespace
-
 class Encoder;
 class Entropy;
 
-class Analysis : public TEncSearch
+class Analysis : public Search
 {
 public:
 
