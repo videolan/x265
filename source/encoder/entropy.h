@@ -146,8 +146,7 @@ public:
     void codeSliceHeader(Slice* slice);
     void codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset);
     void codeShortTermRefPicSet(RPS* rps);
-    void codeSliceFinish()                   { finish(); }
-    void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }
+    void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
     void encodeCTU(TComDataCU* cu);
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);

@@ -62,6 +62,25 @@ struct ThreadLocalData
     ~ThreadLocalData() { cuCoder.destroy(); }
 };
 
+/* Current frame stats for 2 pass */
+struct FrameStats
+{
+    /* MV bits (MV+Ref+Block Type) */
+    int         mvBits;
+    /* Texture bits (DCT coefs) */
+    int         coeffBits;
+    int         miscBits;
+
+    int         iCuCnt;
+    int         pCuCnt;
+    int         skipCuCnt;
+    
+    /* CU type counts stored as percentage */
+    double      cuCount_i;
+    double      cuCount_p;
+    double      cuCount_skip;
+};
+
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded. */
 struct CTURow
@@ -70,10 +89,7 @@ struct CTURow
     Entropy           bufferEntropyCoder;  /* store context for next row */
     Entropy           rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
 
-    // to compute stats for 2 pass
-    double            iCuCnt;
-    double            pCuCnt;
-    double            skipCuCnt;
+    FrameStats        rowStats;
 
     /* Threading variables */
 
@@ -100,7 +116,7 @@ struct CTURow
         active = false;
         busy = false;
         completed = 0;
-        iCuCnt = pCuCnt = skipCuCnt = 0;
+        memset(&rowStats, 0, sizeof(rowStats));
 
         entropyCoder.load(initContext);
 
@@ -108,20 +124,6 @@ struct CTURow
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
                 rdEntropyCoders[depth][ciIdx].load(initContext);
     }
-};
-
-/* Current frame stats for 2 pass */
-struct FrameStats
-{
-    /* MV bits (MV+Ref+Block Type) */
-    int         mvBits;
-    /* Texture bits (DCT coefs) */
-    int         coeffBits;
-    int         miscBits;
-    /* CU type counts stored as percentage */
-    double      cuCount_i;
-    double      cuCount_p;
-    double      cuCount_skip;
 };
 
 // Manages the wave-front processing of a single encoding frame

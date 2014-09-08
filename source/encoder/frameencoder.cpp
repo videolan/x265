@@ -309,9 +309,12 @@ void FrameEncoder::compressFrame()
         // accumulate intra,inter,skip cu count per frame for 2 pass
         for (int i = 0; i < m_numRows; i++)
         {
-            m_frameStats.cuCount_i += m_rows[i].iCuCnt;
-            m_frameStats.cuCount_p += m_rows[i].pCuCnt;
-            m_frameStats.cuCount_skip += m_rows[i].skipCuCnt;
+            m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
+            m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
+            m_frameStats.miscBits  += m_rows[i].rowStats.miscBits;
+            m_frameStats.cuCount_i += m_rows[i].rowStats.iCuCnt;
+            m_frameStats.cuCount_p += m_rows[i].rowStats.pCuCnt;
+            m_frameStats.cuCount_skip += m_rows[i].rowStats.skipCuCnt;
         }
         double totalCuCount = m_frameStats.cuCount_i + m_frameStats.cuCount_p + m_frameStats.cuCount_skip;
         m_frameStats.cuCount_i /= totalCuCount;
@@ -335,8 +338,9 @@ void FrameEncoder::compressFrame()
     m_entropyCoder.setBitstream(&m_bs);
     m_entropyCoder.codeSliceHeader(slice);
 
-    // finish encode of each CTU row
-    encodeSlice();
+    // finish encode of each CTU row, only required when SAO is enabled
+    if (m_param->bEnableSAO)
+        encodeSlice();
 
     // serialize each row, record final lengths in slice header
     uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
@@ -417,38 +421,6 @@ void FrameEncoder::encodeSlice()
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
 
-    if (!m_param->bEnableSAO)
-    {
-        /* terminate each row and collect stats */
-        for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
-        {
-            uint32_t col = cuAddr % widthInLCUs;
-
-            if (m_param->bEnableWavefront && col == widthInLCUs - 1)
-            {
-                uint32_t lin = cuAddr / widthInLCUs;
-                uint32_t subStrm = lin % numSubstreams;
-                m_rows[subStrm].rdEntropyCoders[0][CI_CURR_BEST].codeTerminatingBit(1);
-                m_rows[subStrm].rdEntropyCoders[0][CI_CURR_BEST].codeSliceFinish();
-                m_outStreams[subStrm].writeByteAlignment();
-            }
-
-            // Collect Frame Stats for 2 pass
-            TComDataCU* cu = m_frame->getCU(cuAddr);
-            m_frameStats.mvBits += cu->m_mvBits;
-            m_frameStats.coeffBits += cu->m_coeffBits;
-            m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
-        }
-        if (!m_param->bEnableWavefront)
-        {
-            m_rows[0].rdEntropyCoders[0][CI_CURR_BEST].codeTerminatingBit(1);
-            m_rows[0].rdEntropyCoders[0][CI_CURR_BEST].codeSliceFinish();
-            m_outStreams[0].writeByteAlignment();
-        }
-
-        return;
-    }
-
     SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
@@ -501,24 +473,11 @@ void FrameEncoder::encodeSlice()
         if (col == 1 && m_param->bEnableWavefront)
             m_rows[lin].bufferEntropyCoder.loadContexts(m_entropyCoder);
 
-        // Collect Frame Stats for 2 pass
-        m_frameStats.mvBits += cu->m_mvBits;
-        m_frameStats.coeffBits += cu->m_coeffBits;
-        m_frameStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
-
         if (m_param->bEnableWavefront && col == widthInLCUs - 1)
-        {
-            m_entropyCoder.codeTerminatingBit(1);
-            m_entropyCoder.codeSliceFinish();
-            m_outStreams[subStrm].writeByteAlignment();
-        }
+            m_entropyCoder.finishSlice();
     }
     if (!m_param->bEnableWavefront)
-    {
-        m_entropyCoder.codeTerminatingBit(1);
-        m_entropyCoder.codeSliceFinish();
-        m_outStreams[0].writeByteAlignment();
-    }
+        m_entropyCoder.finishSlice();
 }
 
 void FrameEncoder::compressCTURows()
@@ -740,12 +699,17 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
-            double scale = (double)(1 << (g_maxCUSize / 16));
+            curRow.rowStats.mvBits += cu->m_mvBits;
+            curRow.rowStats.coeffBits += cu->m_coeffBits;
+            curRow.rowStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
+            x265_emms();
+
+            float scale = (float)(1 << (g_maxCUSize / 16));
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, scale /= 4)
             {
-                curRow.iCuCnt += scale * tld.cuCoder.m_log->qTreeIntraCnt[depth];
-                curRow.pCuCnt += scale * tld.cuCoder.m_log->qTreeInterCnt[depth];
-                curRow.skipCuCnt += scale * tld.cuCoder.m_log->qTreeSkipCnt[depth];
+                curRow.rowStats.iCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeIntraCnt[depth]);
+                curRow.rowStats.pCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeInterCnt[depth]);
+                curRow.rowStats.skipCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeSkipCnt[depth]);
 
                 // clear the row cu data from thread local object
                 tld.cuCoder.m_log->qTreeIntraCnt[depth] = tld.cuCoder.m_log->qTreeInterCnt[depth] = tld.cuCoder.m_log->qTreeSkipCnt[depth] = 0;
@@ -814,7 +778,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                         }
 
                         stopRow.completed = 0;
-                        stopRow.iCuCnt = stopRow.pCuCnt = stopRow.skipCuCnt = 0;
+                        memset(&stopRow.rowStats, 0, sizeof(stopRow.rowStats));
                         if (m_frame->m_qpaAq)
                             m_frame->m_qpaAq[r] = 0;
                         m_frame->m_qpaRc[r] = 0;
@@ -859,6 +823,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     }
 
     /* *this row of CTUs has been encoded* */
+
+    /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
+    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || row == m_numRows - 1))
+        rowCoder.finishSlice();
 
     /* If encoding with ABR, update update bits and complexity in rate control
      * after a number of rows so the next frame's rateControlStart has more

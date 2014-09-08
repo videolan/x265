@@ -572,11 +572,6 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     uint32_t realEndAddress = slice->m_endCUAddr;
     uint32_t cuAddr = cu->getSCUAddr() + absPartIdx;
 
-    // Encode slice finish
-    bool bTerminateSlice = false;
-    if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
-        bTerminateSlice = true;
-
     uint32_t granularityMask = g_maxCUSize - 1;
     uint32_t cuSize = 1 << cu->getLog2CUSize(absPartIdx);
     uint32_t rpelx = cu->getCUPelX() + g_zscanToPelX[absPartIdx] + cuSize;
@@ -586,12 +581,17 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 
     if (granularityBoundary)
     {
+        // Encode slice finish
+        bool bTerminateSlice = false;
+        if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
+            bTerminateSlice = true;
+
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
-            codeTerminatingBit(0);
+            encodeBinTrm(0);
 
         if (!m_bitIf)
-            resetBits();
+            resetBits(); // TODO: most likely unnecessary
     }
 }
 
