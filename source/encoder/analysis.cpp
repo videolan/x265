@@ -311,7 +311,7 @@ void Analysis::compressCU(TComDataCU* cu)
     uint32_t numPartition = cu->getTotalNumPart();
     if (m_bestCU[0]->m_slice->m_sliceType == I_SLICE)
     {
-        compressIntraCU(m_bestCU[0], m_tempCU[0], 0, false, cu, cu->m_CULocalData);
+        compressIntraCU(m_bestCU[0], m_tempCU[0], false, cu, cu->m_CULocalData);
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
             uint32_t i = 0;
@@ -397,7 +397,7 @@ void Analysis::compressCU(TComDataCU* cu)
         }
     }
 }
-void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, TComDataCU* cuPicsym, CU *cu)
+void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu)
 {
     //PPAScopeEvent(CompressIntraCU + depth);
     Frame* pic = outBestCU->m_pic;
@@ -412,9 +412,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
     // We need to split, so don't try these modes.
     int cu_split_flag = !(cu->flags & CU::LEAF);
     int cu_unsplit_flag = !(cu->flags & CU::SPLIT_MANDATORY);
-    int cu_intra_flag = cu_unsplit_flag;
 
-    if (cu_intra_flag)
+    if (cu_unsplit_flag)
     {
         m_quant.setQPforQuant(outTempCU);
         checkIntra(outBestCU, outTempCU, SIZE_2Nx2N, cu);
@@ -458,7 +457,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
-                compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, bInsidePicture, cuPicsym, child_cu);
+                compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, cuPicsym, child_cu);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
                 copyYuv2Tmp(subBestPartCU->getTotalNumPart() * partUnitIdx, nextDepth);
             }

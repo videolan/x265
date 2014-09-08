@@ -107,7 +107,7 @@ public:
 protected:
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
-    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, bool bInsidePicture, TComDataCU* cuPicsym, CU *cu);
+    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu);
     void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, CU *cu);
 
     void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth,
