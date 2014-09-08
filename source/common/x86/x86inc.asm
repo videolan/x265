@@ -1489,6 +1489,6 @@ FMA4_INSTR fnmsubss, fnmsub132ss, fnmsub213ss, fnmsub231ss
     movd         %1 %+ xmm, %2
     vpbroadcastd %1, %1 %+ xmm
   %else
-    vbroadcastsd %1, %2
+    vpbroadcastd %1, %2
   %endif
 %endmacro
