@@ -128,7 +128,11 @@ public:
 
     void initSAOParam(SAOParam* saoParam, int partLevel, int partRow, int partCol, int parentPartIdx, int startCUX, int endCUX, int startCUY, int endCUY, int plane) const;
     void allocSaoParam(SAOParam* saoParam) const;
+
+    void startSlice(Frame *pic, Entropy& initState, int qp);
     void resetSAOParam(SAOParam* saoParam);
+    void resetStats();
+    void resetSaoUnit(SaoLcuParam* saoUnit);
 
     void SAOProcess(SAOParam* saoParam);
 
@@ -141,10 +145,7 @@ public:
     void processSaoUnitAll(SaoLcuParam* saoLcuParam, bool oneUnitFlag, int plane);
     void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane);
 
-    void resetSaoUnit(SaoLcuParam* saoUnit);
     void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
-
-    void resetStats();
 
     void runQuadTreeDecision(SAOQTPart *psQTPart, int partIdx, double &costFinal, int maxLevel, int plane);
     void rdoSaoOnePart(SAOQTPart *psQTPart, int partIdx, int plane);

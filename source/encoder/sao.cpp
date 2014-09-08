@@ -395,6 +395,54 @@ void SAO::resetSAOParam(SAOParam *saoParam)
     }
 }
 
+void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
+{
+    Slice* slice = pic->m_picSym->m_slice;
+
+    int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
+    m_lumaLambda = x265_lambda2_tab[qp];
+    m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
+    m_pic = pic;
+
+    switch (slice->m_sliceType)
+    {
+    case I_SLICE:
+        m_refDepth = 0;
+        break;
+    case P_SLICE:
+        m_refDepth = 1;
+        break;
+    case B_SLICE:
+        m_refDepth = 2 + !IS_REFERENCED(slice);
+        break;
+    }
+
+    resetStats();
+
+    m_entropyCoder.load(initState);
+    m_rdEntropyCoders[0][CI_NEXT_BEST].load(initState);
+    m_rdEntropyCoders[0][CI_CURR_BEST].load(initState);
+
+    SAOParam* saoParam = pic->getPicSym()->m_saoParam;
+    if (!saoParam)
+    {
+        saoParam = new SAOParam;
+        allocSaoParam(saoParam);
+        pic->getPicSym()->m_saoParam = saoParam;
+    }
+
+    resetSAOParam(saoParam);
+    rdoSaoUnitRowInit(saoParam);
+
+    // NOTE: Disable SAO automatic turn-off when frame parallelism is
+    // enabled for output exact independent of frame thread count
+    if (m_param->frameNumThreads > 1)
+    {
+        saoParam->bSaoFlag[0] = true;
+        saoParam->bSaoFlag[1] = true;
+    }
+}
+
 /* sample adaptive offset process for one LCU crossing LCU boundary */
 void SAO::processSaoCu(int addr, int saoType, int plane)
 {

@@ -73,53 +73,9 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
 void FrameFilter::start(Frame *pic, Entropy& initState, int qp)
 {
     m_frame = pic;
-    Slice* slice = pic->m_picSym->m_slice;
 
     if (m_param->bEnableSAO)
-    {
-        int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
-        m_sao.m_lumaLambda = x265_lambda2_tab[qp];
-        m_sao.m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
-        m_sao.m_pic = pic;
-
-        switch (slice->m_sliceType)
-        {
-        case I_SLICE:
-            m_sao.m_refDepth = 0;
-            break;
-        case P_SLICE:
-            m_sao.m_refDepth = 1;
-            break;
-        case B_SLICE:
-            m_sao.m_refDepth = 2 + !IS_REFERENCED(slice);
-            break;
-        }
-
-        m_sao.resetStats();
-
-        m_sao.m_entropyCoder.load(initState);
-        m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(initState);
-        m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(initState);
-
-        SAOParam* saoParam = pic->getPicSym()->m_saoParam;
-        if (!saoParam)
-        {
-            saoParam = new SAOParam;
-            m_sao.allocSaoParam(saoParam);
-            pic->getPicSym()->m_saoParam = saoParam;
-        }
-
-        m_sao.resetSAOParam(saoParam);
-        m_sao.rdoSaoUnitRowInit(saoParam);
-
-        // NOTE: Disable SAO automatic turn-off when frame parallelism is
-        // enabled for output exact independent of frame thread count
-        if (m_param->frameNumThreads > 1)
-        {
-            saoParam->bSaoFlag[0] = true;
-            saoParam->bSaoFlag[1] = true;
-        }
-    }
+        m_sao.startSlice(pic, initState, qp);
 }
 
 void FrameFilter::processRow(int row, ThreadLocalData& tld)
