@@ -601,7 +601,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
     PPAScopeEvent(Thread_ProcessRow);
 
-    CTURow& curRow  = m_rows[row];
+    CTURow& curRow = m_rows[row];
+
     {
         ScopedLock self(curRow.lock);
         if (!curRow.active)

@@ -133,7 +133,7 @@ public:
     void load(Entropy& src);
     void loadIntraDirModeLuma(Entropy& src);
     void store(Entropy& dest);
-    void loadContexts(Entropy& src)       { copyContextsFrom(src); }
+    void loadContexts(Entropy& src)    { copyContextsFrom(src); }
     void copyState(Entropy& other);
 
     void codeVPS(VPS* vps);
@@ -152,7 +152,7 @@ public:
     void encodeCTU(TComDataCU* cu);
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
-    void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
+    void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
     void codeCUTransquantBypassFlag(uint32_t symbol);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
