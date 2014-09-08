@@ -306,20 +306,22 @@ void FrameEncoder::compressFrame()
 
     if (m_param->rc.bStatWrite)
     {
+        int totalI = 0, totalP = 0, totalSkip = 0;
+
         // accumulate intra,inter,skip cu count per frame for 2 pass
         for (int i = 0; i < m_numRows; i++)
         {
             m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
             m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
             m_frameStats.miscBits  += m_rows[i].rowStats.miscBits;
-            m_frameStats.cuCount_i += m_rows[i].rowStats.iCuCnt;
-            m_frameStats.cuCount_p += m_rows[i].rowStats.pCuCnt;
-            m_frameStats.cuCount_skip += m_rows[i].rowStats.skipCuCnt;
+            totalI                 += m_rows[i].rowStats.iCuCnt;
+            totalP                 += m_rows[i].rowStats.pCuCnt;
+            totalSkip              += m_rows[i].rowStats.skipCuCnt;
         }
-        double totalCuCount = m_frameStats.cuCount_i + m_frameStats.cuCount_p + m_frameStats.cuCount_skip;
-        m_frameStats.cuCount_i /= totalCuCount;
-        m_frameStats.cuCount_p /= totalCuCount;
-        m_frameStats.cuCount_skip /= totalCuCount;
+        int totalCuCount = totalI + totalP + totalSkip;
+        m_frameStats.cuCount_i    = (double)totalI / totalCuCount;
+        m_frameStats.cuCount_p    = (double)totalP / totalCuCount;
+        m_frameStats.cuCount_skip = (double)totalSkip / totalCuCount;
     }
 
     if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
