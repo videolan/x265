@@ -54,6 +54,7 @@ struct StatisticLog
     uint32_t qTreeInterCnt[4];
     uint32_t qTreeIntraCnt[4];
     uint32_t qTreeSkipCnt[4];
+
     StatisticLog()
     {
         memset(this, 0, sizeof(StatisticLog));
