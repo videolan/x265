@@ -319,9 +319,9 @@ void FrameEncoder::compressFrame()
             totalSkip              += m_rows[i].rowStats.skipCuCnt;
         }
         int totalCuCount = totalI + totalP + totalSkip;
-        m_frameStats.cuCount_i    = (double)totalI / totalCuCount;
-        m_frameStats.cuCount_p    = (double)totalP / totalCuCount;
-        m_frameStats.cuCount_skip = (double)totalSkip / totalCuCount;
+        m_frameStats.percentIntra = (double)totalI / totalCuCount;
+        m_frameStats.percentInter = (double)totalP / totalCuCount;
+        m_frameStats.percentSkip  = (double)totalSkip / totalCuCount;
     }
 
     if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)

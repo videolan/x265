@@ -76,9 +76,9 @@ struct FrameStats
     int         skipCuCnt;
     
     /* CU type counts stored as percentage */
-    double      cuCount_i;
-    double      cuCount_p;
-    double      cuCount_skip;
+    double      percentIntra;
+    double      percentInter;
+    double      percentSkip;
 };
 
 /* manages the state of encoding one row of CTU blocks.  When

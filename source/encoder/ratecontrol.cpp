@@ -2111,9 +2111,9 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
                     stats->coeffBits,
                     stats->mvBits,
                     stats->miscBits,
-                    stats->cuCount_i * m_ncu,
-                    stats->cuCount_p * m_ncu,
-                    stats->cuCount_skip * m_ncu) < 0)
+                    stats->percentIntra * m_ncu,
+                    stats->percentInter * m_ncu,
+                    stats->percentSkip  * m_ncu) < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
         if (m_param->rc.cuTree && IS_REFERENCED(slice) && !m_param->rc.bStatRead)
