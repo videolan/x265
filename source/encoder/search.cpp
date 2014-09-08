@@ -1291,7 +1291,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint32_t log2TrSize   = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
     uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
-    uint32_t qPartNum     = cu->m_pic->getNumPartInCU() >> ((depth + initTrDepth) << 1);
     uint32_t overallDistY = 0;
     uint32_t candNum;
     uint64_t candCostList[FAST_UDI_MAX_RDMODE_NUM];
@@ -1433,6 +1432,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         uint32_t bestPUMode  = 0;
         uint32_t bestPUDistY = 0;
         uint64_t bestPUCost  = MAX_INT64;
+        uint32_t puDistY;
+        uint64_t puCost;
         for (int mode = 0; mode < numModesForFullRD; mode++)
         {
             // set luma prediction mode
@@ -1442,8 +1443,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
             // determine residual for partition
-            uint32_t puDistY = 0;
-            uint64_t puCost  = 0;
+            puDistY = puCost = 0;
             xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, true, puCost, depthRange);
 
             // check r-d cost
@@ -1455,32 +1455,19 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             }
         }
 
+        /* remeasure best mode, allowing TU splits */
+        cu->setLumaIntraDirSubParts(bestPUMode, partOffset, depth + initTrDepth);
 
-        // TODO: if last was not best, re-do
-        {
-            uint32_t origMode = bestPUMode;
+        // set context models
+        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-            cu->setLumaIntraDirSubParts(origMode, partOffset, depth + initTrDepth);
+        // determine residual for partition
+        puDistY = puCost = 0;
+        xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost, depthRange);
 
-            // set context models
-            m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-
-            // determine residual for partition
-            uint32_t puDistY = 0;
-            uint64_t puCost  = 0;
-            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost, depthRange);
-
-            // check r-d cost
-            if (puCost < bestPUCost)
-                bestPUDistY = puDistY;
-        }
-
-        overallDistY += bestPUDistY;
+        overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
 
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
-
-        ::memcpy(m_qtTempCbf[TEXT_LUMA], cu->getCbf(TEXT_LUMA) + partOffset, qPartNum * sizeof(uint8_t));
-        ::memcpy(m_qtTempTransformSkipFlag[TEXT_LUMA], cu->getTransformSkip(TEXT_LUMA) + partOffset, qPartNum * sizeof(uint8_t));
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
@@ -1492,9 +1479,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             uint32_t srcstride   = reconYuv->getStride();
             primitives.square_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
         }
-
-        // update PU data
-        cu->setLumaIntraDirSubParts(bestPUMode, partOffset, depth + initTrDepth);
     }
 
     if (numPU > 1)
