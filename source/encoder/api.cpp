@@ -22,11 +22,14 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "bitstream.h"
 #include "param.h"
+
 #include "encoder.h"
-#include "frameencoder.h"
+#include "entropy.h"
 #include "level.h"
 #include "nal.h"
+#include "bitcost.h"
 
 using namespace x265;
 
