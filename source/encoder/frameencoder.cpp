@@ -117,7 +117,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
     }
 
-    memset(&m_frameStats, 0, sizeof(m_frameStats));
     if (m_param->noiseReduction)
         m_nr = X265_MALLOC(NoiseReduction, 1);
     if (m_nr)
