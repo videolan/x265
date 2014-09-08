@@ -39,7 +39,6 @@ ALIGN_VAR_32(const pixel, Search::zeroPel[MAX_CU_SIZE]) = { 0 };
 Search::Search()
 {
     memset(m_qtTempCoeff, 0, sizeof(m_qtTempCoeff));
-    m_qtTempTrIdx = NULL;
     m_qtTempShortYuv = NULL;
     for (int i = 0; i < 3; i++)
     {
@@ -61,7 +60,6 @@ Search::~Search()
         m_qtTempShortYuv[i].destroy();
     }
 
-    X265_FREE(m_qtTempTrIdx);
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
     m_predTempYuv.destroy();
@@ -100,7 +98,6 @@ bool Search::initSearch(Encoder& top)
     }
 
     const uint32_t numPartitions = 1 << g_maxFullDepth * 2;
-    CHECKED_MALLOC(m_qtTempTrIdx, uint8_t, numPartitions);
     CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions * 3);
     m_qtTempCbf[1] = m_qtTempCbf[0] + numPartitions;
     m_qtTempCbf[2] = m_qtTempCbf[0] + numPartitions * 2;
@@ -1459,7 +1456,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
                 xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
                 // TODO: Necessary?
-                ::memcpy(m_qtTempTrIdx,  cu->getTransformIdx()     + partOffset, qPartNum * sizeof(uint8_t));
                 ::memcpy(m_qtTempCbf[0], cu->getCbf(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
                 ::memcpy(m_qtTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
             }
@@ -1488,7 +1484,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
                 xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
-                ::memcpy(m_qtTempTrIdx,  cu->getTransformIdx()     + partOffset, qPartNum * sizeof(uint8_t));
                 ::memcpy(m_qtTempCbf[0], cu->getCbf(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
                 ::memcpy(m_qtTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
             }
@@ -1497,7 +1492,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         overallDistY += bestPUDistY;
 
         // update transform index and cbf
-        ::memcpy(cu->getTransformIdx() + partOffset, m_qtTempTrIdx,  qPartNum * sizeof(uint8_t));
         ::memcpy(cu->getCbf(TEXT_LUMA) + partOffset, m_qtTempCbf[0], qPartNum * sizeof(uint8_t));
         ::memcpy(cu->getTransformSkip(TEXT_LUMA) + partOffset, m_qtTempTransformSkipFlag[0], qPartNum * sizeof(uint8_t));
 
