@@ -481,7 +481,7 @@ void Entropy::codeShortTermRefPicSet(RPS* rps)
     }
 }
 
-void Entropy::encodeCU(TComDataCU* cu)
+void Entropy::encodeCTU(TComDataCU* cu)
 {
     bool bEncodeDQP = cu->m_slice->m_pps->bUseDQP;
     encodeCU(cu, 0, 0, false, bEncodeDQP);

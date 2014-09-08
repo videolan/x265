@@ -456,7 +456,7 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_entropyCoder.encodeCU(cu);
+        m_entropyCoder.encodeCTU(cu);
 
         // Store probabilities of second LCU in line into buffer
         if (col == 1 && m_param->bEnableWavefront)
@@ -681,7 +681,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         /* advance top-level CI_CURR_BEST to include the context of this CTU.
          * Note that if SAO was disabled this could directly write to a
          * bitstream object and we could skip most of encodeSlice() */
-        curRow.rdEntropyCoders[0][CI_CURR_BEST].encodeCU(cu);
+        curRow.rdEntropyCoders[0][CI_CURR_BEST].encodeCTU(cu);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row
