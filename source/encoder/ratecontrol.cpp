@@ -28,7 +28,6 @@
 #include "frame.h"
 
 #include "encoder.h"
-#include "frameencoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
 #include "sei.h"

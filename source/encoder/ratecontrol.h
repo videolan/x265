@@ -33,7 +33,6 @@ class Encoder;
 class Frame;
 struct SPS;
 class SEIBufferingPeriod;
-struct FrameStats;
 #define BASE_FRAME_DURATION 0.04
 
 /* Arbitrary limitations as a sanity check. */
@@ -41,6 +40,23 @@ struct FrameStats;
 #define MIN_FRAME_DURATION 0.01
 
 #define CLIP_DURATION(f) Clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
+
+/* Current frame stats for 2 pass */
+struct FrameStats
+{
+    int         mvBits;    /* MV bits (MV+Ref+Block Type) */
+    int         coeffBits; /* Texture bits (DCT coefs) */
+    int         miscBits;
+
+    int         iCuCnt;
+    int         pCuCnt;
+    int         skipCuCnt;
+    
+    /* CU type counts stored as percentage */
+    double      percentIntra;
+    double      percentInter;
+    double      percentSkip;
+};
 
 struct Predictor
 {

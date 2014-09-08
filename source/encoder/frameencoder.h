@@ -62,25 +62,6 @@ struct ThreadLocalData
     ~ThreadLocalData() { cuCoder.destroy(); }
 };
 
-/* Current frame stats for 2 pass */
-struct FrameStats
-{
-    /* MV bits (MV+Ref+Block Type) */
-    int         mvBits;
-    /* Texture bits (DCT coefs) */
-    int         coeffBits;
-    int         miscBits;
-
-    int         iCuCnt;
-    int         pCuCnt;
-    int         skipCuCnt;
-    
-    /* CU type counts stored as percentage */
-    double      percentIntra;
-    double      percentInter;
-    double      percentSkip;
-};
-
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded. */
 struct CTURow
