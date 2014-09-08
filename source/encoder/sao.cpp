@@ -159,7 +159,7 @@ bool SAO::create(x265_param *param)
     m_maxSplitLevel = X265_MIN(m_maxSplitLevel, SAO_MAX_DEPTH);
 
     /* various structures are overloaded to store per component data.
-     * m_iNumTotalParts must allow for sufficient storage in any allocated arrays */
+     * m_numTotalParts must allow for sufficient storage in any allocated arrays */
     m_numTotalParts = X265_MAX(3, s_numCulPartsLevel[m_maxSplitLevel]);
 
     int pixelRange = 1 << X265_DEPTH;
@@ -252,20 +252,23 @@ void SAO::destroy()
 void SAO::allocSaoParam(SAOParam *saoParam) const
 {
     saoParam->maxSplitLevel = m_maxSplitLevel;
+    saoParam->numCuInWidth  = m_numCuInWidth;
+    saoParam->numCuInHeight = m_numCuInHeight;
+
     saoParam->saoPart[0] = new SAOQTPart[s_numCulPartsLevel[saoParam->maxSplitLevel]];
     initSAOParam(saoParam, 0, 0, 0, -1, 0, m_numCuInWidth - 1,  0, m_numCuInHeight - 1, 0);
+
     saoParam->saoPart[1] = new SAOQTPart[s_numCulPartsLevel[saoParam->maxSplitLevel]];
     saoParam->saoPart[2] = new SAOQTPart[s_numCulPartsLevel[saoParam->maxSplitLevel]];
     initSAOParam(saoParam, 0, 0, 0, -1, 0, m_numCuInWidth - 1,  0, m_numCuInHeight - 1, 1);
     initSAOParam(saoParam, 0, 0, 0, -1, 0, m_numCuInWidth - 1,  0, m_numCuInHeight - 1, 2);
-    saoParam->numCuInWidth  = m_numCuInWidth;
-    saoParam->numCuInHeight = m_numCuInHeight;
+
     saoParam->saoLcuParam[0] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
     saoParam->saoLcuParam[1] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
     saoParam->saoLcuParam[2] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
 }
 
-/* initialize SAO parameters */
+/* recursively initialize SAO parameters (only once) */
 void SAO::initSAOParam(SAOParam *saoParam, int partLevel, int partRow, int partCol, int parentPartIdx, int startCUX, int endCUX, int startCUY, int endCUY, int plane) const
 {
     int j;
@@ -294,31 +297,23 @@ void SAO::initSAOParam(SAOParam *saoParam, int partLevel, int partRow, int partC
     for (j = 0; j < MAX_NUM_SAO_OFFSETS; j++)
         saoPart->offset[j] = 0;
 
-    if (saoPart->partLevel != m_maxSplitLevel)
+    if (saoPart->partLevel < m_maxSplitLevel)
     {
         int downLevel    = (partLevel + 1);
         int downRowStart = (partRow << 1);
         int downColStart = (partCol << 1);
 
-        int downRowIdx, downColIdx;
-        int numCUWidth, numCUHeight;
-        int numCULeft;
-        int numCUTop;
+        int numCUWidth  = endCUX - startCUX + 1;
+        int numCUHeight = endCUY - startCUY + 1;
+        int numCULeft   = (numCUWidth  >> 1);
+        int numCUTop    = (numCUHeight >> 1);
 
-        int downStartCUX, downStartCUY;
-        int downEndCUX, downEndCUY;
-
-        numCUWidth  = endCUX - startCUX + 1;
-        numCUHeight = endCUY - startCUY + 1;
-        numCULeft   = (numCUWidth  >> 1);
-        numCUTop    = (numCUHeight >> 1);
-
-        downStartCUX = startCUX;
-        downEndCUX  = downStartCUX + numCULeft - 1;
-        downStartCUY = startCUY;
-        downEndCUY  = downStartCUY + numCUTop  - 1;
-        downRowIdx = downRowStart + 0;
-        downColIdx = downColStart + 0;
+        int downStartCUX = startCUX;
+        int downEndCUX  = downStartCUX + numCULeft - 1;
+        int downStartCUY = startCUY;
+        int downEndCUY  = downStartCUY + numCUTop  - 1;
+        int downRowIdx = downRowStart + 0;
+        int downColIdx = downColStart + 0;
 
         saoPart->downPartsIdx[0] = convertLevelRowCol2Idx(downLevel, downRowIdx, downColIdx);
 
@@ -363,7 +358,7 @@ void SAO::initSAOParam(SAOParam *saoParam, int partLevel, int partRow, int partC
     }
 }
 
-/* reset SAO parameters */
+/* reset SAO parameters once per frame */
 void SAO::resetSAOParam(SAOParam *saoParam)
 {
     int numComponet = 3;
@@ -371,7 +366,7 @@ void SAO::resetSAOParam(SAOParam *saoParam)
     for (int c = 0; c < numComponet; c++)
     {
         if (c < 2)
-            saoParam->bSaoFlag[c] = 0;
+            saoParam->bSaoFlag[c] = false;
 
         for (int i = 0; i < s_numCulPartsLevel[m_maxSplitLevel]; i++)
         {
@@ -1857,12 +1852,12 @@ void SAO::SAOProcess(SAOParam *saoParam)
 {
     X265_CHECK(!m_param->saoLcuBasedOptimization, "SAO LCU mode failure\n"); 
     double costFinal = 0;
-    saoParam->bSaoFlag[0] = 1;
-    saoParam->bSaoFlag[1] = 0;
+    saoParam->bSaoFlag[0] = true;
+    saoParam->bSaoFlag[1] = false;
 
     getSaoStats(saoParam->saoPart[0], 0);
     runQuadTreeDecision(saoParam->saoPart[0], 0, costFinal, m_maxSplitLevel, 0);
-    saoParam->bSaoFlag[0] = costFinal < 0 ? 1 : 0;
+    saoParam->bSaoFlag[0] = costFinal < 0;
 
     if (saoParam->bSaoFlag[0])
     {
