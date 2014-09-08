@@ -1452,14 +1452,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
                 bestPUMode  = rdModeList[mode];
                 bestPUDistY = puDistY;
                 bestPUCost  = puCost;
-
-                xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
-
-                // TODO: Necessary?
-                ::memcpy(m_qtTempCbf[0], cu->getCbf(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
-                ::memcpy(m_qtTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
             }
-        } // Mode loop
+        }
 
 
         // TODO: if last was not best, re-do
@@ -1478,22 +1472,15 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
             // check r-d cost
             if (puCost < bestPUCost)
-            {
-                bestPUMode = origMode;
                 bestPUDistY = puDistY;
-
-                xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
-
-                ::memcpy(m_qtTempCbf[0], cu->getCbf(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
-                ::memcpy(m_qtTempTransformSkipFlag[0], cu->getTransformSkip(TEXT_LUMA)     + partOffset, qPartNum * sizeof(uint8_t));
-            }
         }
 
         overallDistY += bestPUDistY;
 
-        // update transform index and cbf
-        ::memcpy(cu->getCbf(TEXT_LUMA) + partOffset, m_qtTempCbf[0], qPartNum * sizeof(uint8_t));
-        ::memcpy(cu->getTransformSkip(TEXT_LUMA) + partOffset, m_qtTempTransformSkipFlag[0], qPartNum * sizeof(uint8_t));
+        xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
+
+        ::memcpy(m_qtTempCbf[TEXT_LUMA], cu->getCbf(TEXT_LUMA) + partOffset, qPartNum * sizeof(uint8_t));
+        ::memcpy(m_qtTempTransformSkipFlag[TEXT_LUMA], cu->getTransformSkip(TEXT_LUMA) + partOffset, qPartNum * sizeof(uint8_t));
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
