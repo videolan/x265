@@ -3990,7 +3990,7 @@ cglobal copy_cnt_4, 3,3,3
 INIT_YMM avx2
 cglobal copy_cnt_4, 3,3,3
     add         r2d, r2d
-    xorpd       xm2, xm2
+    xorpd       m2,  m2
 
     ; row 0 & 1
     movq        xm0, [r1]
@@ -4004,11 +4004,9 @@ cglobal copy_cnt_4, 3,3,3
     vinserti128 m0, m0, xm1, 1
     movu    [r0], m0
 
-    vextractf128 xm1, m0, 1
-    packsswb     xm0, xm1
-    pcmpeqb      xm0, xm2
-
     ; get count
+    packsswb    xm0, xm1
+    pcmpeqb     xm0, xm2
     pmovmskb    eax, xm0
     not         ax
     popcnt      ax, ax
