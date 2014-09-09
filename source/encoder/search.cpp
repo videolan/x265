@@ -463,7 +463,7 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
 
 /* returns distortion. TODO reorder params */
 uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                     ShortYuv* resiYuv, bool bCheckFirst, uint64_t& rdCost, uint32_t depthRange[2])
+                                     ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& rdCost, uint32_t depthRange[2])
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -487,7 +487,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
             // if maximum RD-penalty don't check TU size 32x32
             bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
-    if (bCheckFirst && noSplitIntraMaxTuSize)
+    if (!bAllowRQTSplit && noSplitIntraMaxTuSize)
         bCheckSplit = false;
 
     uint64_t singleCost   = MAX_INT64;
@@ -667,7 +667,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             cu->m_psyEnergy = 0;
-            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bCheckFirst, splitCost, depthRange);
+            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bAllowRQTSplit, splitCost, depthRange);
             splitPsyEnergyY += cu->m_psyEnergy;
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
@@ -1436,7 +1436,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
             // determine residual for partition
             puCost = 0;
-            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, depthRange);
+            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, depthRange);
 
             // check r-d cost
             if (puCost < bestPUCost)
@@ -1455,7 +1455,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
         // determine residual for partition
         puCost = 0;
-        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, depthRange);
+        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, depthRange);
 
         overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
 

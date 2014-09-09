@@ -149,7 +149,7 @@ protected:
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t *zeroDist, uint32_t tuDepthRange[2]);
 
     uint32_t xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                 ShortYuv* resiYuv, bool bCheckFirst, uint64_t& dRDCost, uint32_t depthRange[2]);
+                                 ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& dRDCost, uint32_t depthRange[2]);
 
     uint32_t xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv);
 
