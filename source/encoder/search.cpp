@@ -1395,7 +1395,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         for (int mode = 0; mode < numModesAvailable; mode++)
         {
             uint32_t sad = modeCosts[mode];
-            uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : getIntraModeBits(cu, mode, partOffset, depth);
+            uint32_t bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
             uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
             candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
         }
