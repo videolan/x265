@@ -355,10 +355,9 @@ uint32_t Search::xGetIntraBitsChroma(TComDataCU* cu, uint32_t absPartIdx, uint32
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-/* TODO: return dist */
-void Search::xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSize, TComYuv* fencYuv, TComYuv* predYuv,
-                                 ShortYuv* resiYuv, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf,
-                                 uint32_t& outDist)
+/* returns distortion */
+uint32_t Search::xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSize, TComYuv* fencYuv, TComYuv* predYuv,
+                                     ShortYuv* resiYuv, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
     uint32_t stride       = fencYuv->getStride();
     pixel*   fenc         = fencYuv->getLumaAddr(absPartIdx);
@@ -386,27 +385,24 @@ void Search::xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32_t l
         m_entropyCoder->estBit(m_entropyCoder->m_estBitsSbac, log2TrSize, true);
 
     uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTransformSkip);
-
     if (numSig)
     {
-        cbf = 1;
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large %d\n", log2TrSize);
         m_quant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTransformSkip, numSig);
         primitives.calcrecon[sizeIdx](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
-        // update distortion
-        outDist += primitives.sse_sp[part](reconQt, reconQtStride, fenc, stride);
+        cbf = 1;
+        return primitives.sse_sp[part](reconQt, reconQtStride, fenc, stride);
     }
     else
     {
 #if CHECKED_BUILD || _DEBUG
         memset(coeff, 0, sizeof(coeff_t) << log2TrSize * 2);
 #endif
-        cbf = 0;
         // reconstruction
         primitives.square_copy_ps[sizeIdx](reconQt,    reconQtStride,    pred, stride);
         primitives.square_copy_pp[sizeIdx](reconIPred, reconIPredStride, pred, stride);
-        // update distortion
-        outDist += primitives.sse_pp[part](pred, stride, fenc, stride);
+        cbf = 0;
+        return primitives.sse_pp[part](pred, stride, fenc, stride);
     }
 }
 
@@ -563,8 +559,6 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
                 int16_t* recon = (modeId ? tsReconY : reconQt);
                 uint32_t reconStride = (modeId ? tuSize : reconQtStride);
 
-                singleDistYTmp = 0;
-                singlePsyEnergyYTmp = 0;
                 cu->setTransformSkipSubParts(checkTransformSkip ? modeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
 
                 bool bIsLossLess = modeId != firstCheckId;
@@ -572,7 +566,8 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
                     cu->setCUTransquantBypassSubParts(bIsLossLess, absPartIdx, fullDepth);
 
                 // code luma block with given intra prediction mode and store Cbf
-                xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfYTmp, singleDistYTmp);
+                singleDistYTmp = xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfYTmp);
+                singlePsyEnergyYTmp = 0;
                 if (m_rdCost.m_psyRd)
                 {
                     uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
@@ -632,7 +627,7 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
 
             // code luma block with given intra prediction mode and store Cbf
             cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
-            xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffY, singleCbfY, singleDistY);
+            singleDistY = xIntraCodingLumaBlk(cu, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffY, singleCbfY);
             if (m_rdCost.m_psyRd)
             {
                 uint32_t zorder = cu->getZorderIdxInCU() + absPartIdx;
