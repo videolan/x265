@@ -240,12 +240,13 @@ void Encoder::updateVbvPlan(RateControl* rc)
         FrameEncoder *encoder = &m_frameEncoder[encIdx];
         if (encoder->m_rce.isActive)
         {
-            rc->m_bufferFill -= encoder->m_rce.frameSizeEstimated;
+            int64_t bits = (int64_t) X265_MAX(encoder->m_rce.frameSizeEstimated, encoder->m_rce.frameSizePlanned);
+            rc->m_bufferFill -= bits;
             rc->m_bufferFill = X265_MAX(rc->m_bufferFill, 0);
             rc->m_bufferFill += encoder->m_rce.bufferRate;
             rc->m_bufferFill = X265_MIN(rc->m_bufferFill, rc->m_bufferSize);
             if (rc->m_2pass)
-                rc->m_predictedBits += (int64_t)encoder->m_rce.frameSizeEstimated;
+                rc->m_predictedBits += bits;
         }
         encIdx = (encIdx + 1) % m_param->frameNumThreads;
     }

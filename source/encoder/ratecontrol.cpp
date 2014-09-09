@@ -636,11 +636,10 @@ bool RateControl::init(const SPS *sps)
                     return false;
                 }
                 rce = &m_rce2Pass[frameNumber];
-                e += sscanf(p, " in:%*d out:%*d type:%c dur:%lf q:%lf q-aq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
-                       &picType, &rce->frameDuration, &qpRc, &qpAq, &rce->coeffBits,
+                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
+                       &picType, &qpRc, &qpAq, &rce->coeffBits,
                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
                        &rce->skipCuCount);
-                rce->clippedDuration = CLIP_DURATION(rce->frameDuration) / BASE_FRAME_DURATION;
                 rce->keptAsRef = true;
                 if (picType == 'b' || picType == 'p')
                     rce->keptAsRef = false;
@@ -652,7 +651,7 @@ bool RateControl::init(const SPS *sps)
                     rce->sliceType = B_SLICE;
                 else
                     e = -1;
-                if (e < 11)
+                if (e < 10)
                 {
                     x265_log(m_param, X265_LOG_ERROR, "statistics are damaged at line %d, parser out=%d\n", i, e);
                     return false;
@@ -750,10 +749,7 @@ void RateControl::initHRD(SPS *sps)
 bool RateControl::initPass2()
 {
     uint64_t allConstBits = 0;
-    double duration = 0;
-    for (int i = 0; i < m_numEntries; i++)
-        duration += m_rce2Pass[i].frameDuration;
-    uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * duration);
+    uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * m_numEntries * m_frameDuration);
     double rateFactor, stepMult;
     double qBlur = m_param->rc.qblur;
     double cplxBlur = m_param->rc.complexityBlur;
@@ -761,6 +757,7 @@ bool RateControl::initPass2()
     double expectedBits;
     double *qScale, *blurredQscale;
     double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
+    double clippedDuration = CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION;
 
     /* find total/average complexity & const_bits */
     for (int i = 0; i < m_numEntries; i++)
@@ -792,7 +789,7 @@ bool RateControl::initPass2()
                 break;
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
         }
         /* weighted average of cplx of past frames */
         weight = 1.0;
@@ -801,7 +798,7 @@ bool RateControl::initPass2()
             RateControlEntry *rcj = &m_rce2Pass[i - j];
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < .0001)
                 break;
@@ -1236,7 +1233,7 @@ bool RateControl::findUnderflow(double *fills, int *t0, int *t1, int over)
     int start = -1, end = -1;
     for (int i = *t0; i < m_numEntries; i++)
     {
-        fill += (m_rce2Pass[i].frameDuration * m_vbvMaxRate -
+        fill += (m_frameDuration * m_vbvMaxRate -
                  qScale2bits(&m_rce2Pass[i], m_rce2Pass[i].newQScale)) * parity;
         fill = Clip3(0.0, m_bufferSize, fill);
         fills[i] = fill;
@@ -2103,10 +2100,9 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             : rce->sliceType == P_SLICE ? 'P'
             : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
-                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+                    "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                     rce->poc, rce->encodeOrder,
-                    cType, m_frameDuration,
-                    pic->m_avgQpRc, pic->m_avgQpAq,
+                    cType, pic->m_avgQpRc, pic->m_avgQpAq,
                     stats->coeffBits,
                     stats->mvBits,
                     stats->miscBits,
