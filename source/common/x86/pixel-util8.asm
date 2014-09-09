@@ -54,6 +54,7 @@ cextern pw_1
 cextern pw_00ff
 cextern pw_2000
 cextern pw_pixel_max
+cextern pd_1
 cextern pd_32767
 cextern pd_n32768
 
@@ -861,7 +862,6 @@ cglobal getResidual32, 4,5,7
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal quant, 5,6,8
-
     ; fill qbits
     movd        m4, r4d         ; m4 = qbits
 
@@ -873,52 +873,45 @@ cglobal quant, 5,6,8
     movd        m5, r5m
     pshufd      m5, m5, 0       ; m5 = add
 
+    lea         r5, [pd_1]
+
     mov         r4d, r6m
     shr         r4d, 3
     pxor        m7, m7          ; m7 = numZero
 .loop:
     ; 4 coeff
     movu        m0, [r0]        ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1]        ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1]        ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
 
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    movh        [r3], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+
+    movu        [r2], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3], m3
+
     ; 4 coeff
     movu        m0, [r0 + 16]   ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1 + 16]   ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1 + 16]   ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2 + 16], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
-
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    movh        [r3 + 8], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+    movu        [r2 + 16], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3 + 8], m3
 
     add         r0, 32
     add         r1, 32
@@ -928,12 +921,11 @@ cglobal quant, 5,6,8
     dec         r4d
     jnz        .loop
 
-    phaddd      m7, m7
-    phaddd      m7, m7
-    mov         eax, r6m
-    movd        r4d, m7
-    sub         eax, r4d        ; numSig
-
+    pxor        m0, m0
+    psadbw      m7, m0
+    movhlps     m0, m7
+    paddd       m7, m0
+    movd        eax, m7
     RET
 
 
