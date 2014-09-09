@@ -212,7 +212,7 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
         uint32_t refReturnValue = 0;
 
         int bits = rand() % 32;
-        int valueToAdd = rand() % (32 * 1024);
+        int valueToAdd = rand() % (1 << bits);
         int cmp_size = sizeof(int) * height * width;
         int cmp_size1 = sizeof(short) * height * width;
         int numCoeff = height * width;
