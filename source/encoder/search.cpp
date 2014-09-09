@@ -2191,14 +2191,12 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
         bool bIsLosslessMode = bIsTQBypassEnable && !modeId;
 
         cu->setCUTransquantBypassSubParts(bIsLosslessMode, 0, depth);
+        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
         uint64_t cost = 0;
         uint32_t zeroDistortion = 0;
         uint32_t bits = 0;
-        uint32_t distortion = 0;
-
-        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, tuDepthRange);
+        uint32_t distortion = xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
 
         m_entropyCoder->resetBits();
         m_entropyCoder->codeQtRootCbfZero();
@@ -2269,8 +2267,7 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
         uint64_t cost = 0;
         uint32_t zeroDistortion = 0;
         uint32_t bits = 0;
-        uint32_t distortion = 0;
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, distortion, &zeroDistortion, tuDepthRange);
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
         xSetResidualQTData(cu, 0, NULL, depth, false);
         m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
     }
@@ -2465,14 +2462,15 @@ void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TC
     }
 }
 
-void Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
-                                 uint32_t depth, uint64_t& rdCost, uint32_t& outBits, uint32_t& outDist, uint32_t* outZeroDist, uint32_t depthRange[2])
+uint32_t Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
+                                     uint32_t depth, uint64_t& rdCost, uint32_t& outBits, uint32_t* outZeroDist, uint32_t depthRange[2])
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);
     const uint32_t log2TrSize = g_maxLog2CUSize - depth;
     const uint32_t subTUDepth = trMode + 1;
     const uint32_t setCbf     = 1 << trMode;
+    uint32_t outDist = 0;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
@@ -3191,7 +3189,7 @@ void Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* f
         for (uint32_t i = 0; i < 4; ++i)
         {
             cu->m_psyEnergy = 0;
-            xEstimateResidualQT(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, predYuv, resiYuv, depth + 1, subDivCost, subdivBits, subdivDist, bCheckFull ? NULL : outZeroDist, depthRange);
+            subdivDist += xEstimateResidualQT(cu, absPartIdx + i * qPartNumSubdiv, fencYuv, predYuv, resiYuv, depth + 1, subDivCost, subdivBits, bCheckFull ? NULL : outZeroDist, depthRange);
             subDivPsyEnergy += cu->m_psyEnergy;
         }
 
@@ -3235,7 +3233,7 @@ void Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* f
                 outBits += subdivBits;
                 outDist += subdivDist;
                 cu->m_psyEnergy = subDivPsyEnergy;
-                return;
+                return outDist;
             }
             else
                 cu->m_psyEnergy = singlePsyEnergy;
@@ -3288,6 +3286,8 @@ void Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* f
             }
         }
     }
+
+    return outDist;
 }
 
 void Search::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2])
