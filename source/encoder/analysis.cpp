@@ -344,7 +344,7 @@ void Analysis::compressCU(TComDataCU* cu)
 
             /* At the start of analysis, the best CU is a null pointer
              * On return, it points to the CU encode with best chosen mode */
-            compressInterCU_rd0_4(outBestCU, m_tempCU[0], cu, 0, false, 0, 4);
+            compressInterCU_rd0_4(outBestCU, m_tempCU[0], cu, 0, cu, cu->m_CULocalData, false, 0, 4);
         }
         else
             compressInterCU_rd5_6(m_bestCU[0], m_tempCU[0], 0, cu, cu->m_CULocalData);
@@ -567,7 +567,7 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     checkBestMode(outBestCU, outTempCU, depth);
 }
 
-void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, bool bInsidePicture, uint32_t PartitionIndex, uint32_t minDepth)
+void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, TComDataCU* cuPicsym, CU *cu_t, int bInsidePicture, uint32_t PartitionIndex, uint32_t minDepth)
 {
     Frame* pic = outTempCU->m_pic;
     uint32_t absPartIdx = outTempCU->getZorderIdxInCU();
@@ -584,20 +584,12 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     int qp = outTempCU->getQP(0);
 
 #if TOPSKIP
-    bool bInsidePictureParent = bInsidePicture;
+    int bInsidePictureParent = bInsidePicture;
 #endif
 
     Slice* slice = outTempCU->m_slice;
-    if (!bInsidePicture)
-    {
-        uint32_t cuSize = 1 << outTempCU->getLog2CUSize(0);
-        uint32_t lpelx = outTempCU->getCUPelX();
-        uint32_t tpely = outTempCU->getCUPelY();
-        uint32_t rpelx = lpelx + cuSize;
-        uint32_t bpely = tpely + cuSize;
-        bInsidePicture = (rpelx <= slice->m_sps->picWidthInLumaSamples &&
-                          bpely <= slice->m_sps->picHeightInLumaSamples);
-    }
+    int cu_split_flag = !(cu_t->flags & CU::LEAF);
+    int cu_unsplit_flag = !(cu_t->flags & CU::SPLIT_MANDATORY);
 
     if (depth == 0 && m_param->rdLevel == 0)
     {
@@ -605,7 +597,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
     // We need to split, so don't try these modes.
 #if TOPSKIP
-    if (bInsidePicture && !bInsidePictureParent)
+    if (cu_unsplit_flag && !bInsidePictureParent)
     {
         TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->m_refPicList[0][0]->getCU(outTempCU->getAddr()) : NULL;
         TComDataCU* colocated1 = slice->m_numRefIdx[1] > 0 ? slice->m_refPicList[1][0]->getCU(outTempCU->getAddr()) : NULL;
@@ -639,7 +631,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     if (!(depth < minDepth)) //topskip
 #endif // if TOPSKIP
     {
-        if (bInsidePicture)
+        if (cu_unsplit_flag)
         {
             /* Initialise all Mode-CUs based on parentCU */
             if (depth == 0)
@@ -856,7 +848,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
 
     // further split
-    if (bSubBranch && depth < g_maxCUDepth)
+    if (bSubBranch && cu_split_flag)
     {
 #if EARLY_EXIT // turn ON this to enable early exit
         // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour
@@ -924,19 +916,19 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
+            CU *child_cu = cuPicsym->m_CULocalData + cu_t->childIdx + partUnitIdx;
+
             TComDataCU* subBestPartCU = NULL;
             subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
-            if (bInsidePicture ||
-                ((subTempPartCU->getCUPelX() < slice->m_sps->picWidthInLumaSamples) &&
-                 (subTempPartCU->getCUPelY() < slice->m_sps->picHeightInLumaSamples)))
+            if (child_cu->flags & CU::PRESENT)
             {
                 if (0 == partUnitIdx) // initialize RD with previous depth buffer
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
-                compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, bInsidePicture, partUnitIdx, minDepth);
+                compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, cuPicsym, child_cu, cu_unsplit_flag, partUnitIdx, minDepth);
 #if EARLY_EXIT
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
@@ -965,7 +957,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
 
-        if (bInsidePicture)
+        if (cu_unsplit_flag)
         {
             if (m_param->rdLevel > 1)
             {
@@ -1051,14 +1043,14 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     else if (m_param->rdLevel != 0)
     {
         /* Copy Yuv data to picture Yuv */
-        if (bInsidePicture)
+        if (cu_unsplit_flag)
             copyYuv2Pic(pic, outBestCU->getAddr(), absPartIdx, depth);
     }
 
 #if CHECKED_BUILD || _DEBUG
     /* Assert if Best prediction mode is NONE
      * Selected mode's RD-cost must be not MAX_INT64 */
-    if (bInsidePicture)
+    if (cu_unsplit_flag)
     {
         X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best prediction size\n");
         X265_CHECK(outBestCU->getPredictionMode(0) != MODE_NONE, "no best prediction mode\n");
@@ -1312,7 +1304,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
 
-        if (cu->flags & CU::PRESENT)
+        if (cu_unsplit_flag)
         {
             m_entropyCoder->resetBits();
             m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
