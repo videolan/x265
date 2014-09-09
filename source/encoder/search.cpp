@@ -2265,9 +2265,8 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
         cu->setCUTransquantBypassSubParts(true, 0, depth);
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
         uint64_t cost = 0;
-        uint32_t zeroDistortion = 0;
         uint32_t bits = 0;
-        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
+        xEstimateResidualQT(cu, 0, fencYuv, predYuv, outResiYuv, depth, cost, bits, NULL, tuDepthRange);
         xSetResidualQTData(cu, 0, NULL, depth, false);
         m_entropyCoder->store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
     }
