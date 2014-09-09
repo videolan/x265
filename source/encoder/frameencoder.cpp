@@ -734,6 +734,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
             if (row == col && row)
             {
+                x265_emms();
                 double qpBase = cu->m_baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
