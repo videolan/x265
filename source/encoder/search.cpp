@@ -907,14 +907,14 @@ void Search::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, u
     }
 }
 
-/* TODO: return dist */
-void Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                       ShortYuv* resiYuv, uint32_t& outDist)
+/* returns distortion */
+uint32_t Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv)
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
+    uint32_t outDist = 0;
 
     if (trMode == trDepth)
     {        
@@ -930,7 +930,7 @@ void Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_
             uint32_t qpdiv = cu->m_pic->getNumPartInCU() >> ((cu->getDepth(0) + trDepthC) << 1);
             bool bFirstQ = ((absPartIdx & (qpdiv - 1)) == 0);
             if (!bFirstQ)
-                return;
+                return outDist;
         }
 
         uint32_t qtLayer = log2TrSize - 2;
@@ -1095,7 +1095,7 @@ void Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_
         uint32_t absPartIdxSub = absPartIdx;
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            xRecurIntraChromaCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, outDist);
+            outDist += xRecurIntraChromaCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv);
             splitPsyEnergy += cu->m_psyEnergy;
             splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
             splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
@@ -1108,6 +1108,8 @@ void Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_
             cu->getCbf(TEXT_CHROMA_V)[absPartIdx + offs] |= (splitCbfV << trDepth);
         }
     }
+
+    return outDist;
 }
 
 void Search::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv)
@@ -1589,11 +1591,9 @@ void Search::estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
             // chroma coding
-            uint32_t dist = 0;
-
             cu->setChromIntraDirSubParts(modeList[mode], absPartIdxC, depth + initTrDepth);
 
-            xRecurIntraChromaCodingQT(cu, initTrDepth, absPartIdxC, fencYuv, predYuv, resiYuv, dist);
+            uint32_t dist = xRecurIntraChromaCodingQT(cu, initTrDepth, absPartIdxC, fencYuv, predYuv, resiYuv);
 
             if (cu->m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
