@@ -1153,7 +1153,7 @@ void Search::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 }
 
-void Search::residualQTIntrachroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,
+void Search::residualQTIntraChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,
                                    TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
 {
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
@@ -1262,7 +1262,7 @@ void Search::residualQTIntrachroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
         uint32_t absPartIdxSub = absPartIdx;
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            residualQTIntrachroma(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, reconYuv);
+            residualQTIntraChroma(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, reconYuv);
             splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
             splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
         }
@@ -2325,7 +2325,7 @@ void Search::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
         uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
         residualTransformQuantIntra(cu, initTrDepth, 0, fencYuv, predYuv, resiYuv, reconYuv, tuDepthRange);
         getBestIntraModeChroma(cu, fencYuv, predYuv);
-        residualQTIntrachroma(cu, 0, 0, fencYuv, predYuv, resiYuv, reconYuv);
+        residualQTIntraChroma(cu, 0, 0, fencYuv, predYuv, resiYuv, reconYuv);
     }
 }
 
