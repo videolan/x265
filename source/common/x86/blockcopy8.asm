@@ -3973,7 +3973,7 @@ cglobal copy_cnt_4, 3,3,3
 
     ; get count
     ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
-%if 0
+%if 1
     pmovmskb    eax, m0
     not         ax
     popcnt      ax, ax
