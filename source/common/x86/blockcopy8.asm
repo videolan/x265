@@ -3978,8 +3978,7 @@ cglobal copy_cnt_4, 3,3,3
     not         ax
     popcnt      ax, ax
 %else
-    mova        m1, [pb_1]
-    paddb       m0, m1
+    paddb       m0, [pb_1]
     psadbw      m0, m2
     pshufd      m1, m0, 2
     paddw       m0, m1
