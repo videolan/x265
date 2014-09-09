@@ -111,7 +111,7 @@ fail:
     return false;
 }
 
-void Search::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t* depthRange)
+void Search::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
     uint32_t trMode     = cu->getTransformIdx(absPartIdx);
@@ -316,7 +316,7 @@ void Search::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-uint32_t Search::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t* depthRange)
+uint32_t Search::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
 {
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
@@ -336,7 +336,7 @@ uint32_t Search::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t* depthRange)
+uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2])
 {
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
@@ -1389,13 +1389,13 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
         
         uint64_t mpms;
-        uint32_t rbits = xModeBitsRemIntra(cu, partOffset, depth, preds, mpms);
+        uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
 
         // Find N least cost modes. N = numModesForFullRD
         for (int mode = 0; mode < numModesAvailable; mode++)
         {
             uint32_t sad = modeCosts[mode];
-            uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : xModeBitsIntra(cu, mode, partOffset, depth);
+            uint32_t bits = !(mpms & ((uint64_t)1 << mode)) ? rbits : getIntraModeBits(cu, mode, partOffset, depth);
             uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
             candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
         }
@@ -1790,7 +1790,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
         list[0].cost = MAX_UINT;
         list[1].cost = MAX_UINT;
 
-        xGetBlkBits(partSize, slice->isInterP(), partIdx, lastMode, listSelBits);
+        getBlkBits(partSize, slice->isInterP(), partIdx, lastMode, listSelBits);
 
         // Uni-directional prediction
         for (int l = 0; l < numPredDir; l++)
@@ -1839,7 +1839,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
                 uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                xCheckBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                checkBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
 
                 if (cost < list[l].cost)
                 {
@@ -1916,8 +1916,8 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
                 uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
                 /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
-                xCheckBestMVP(amvpCand[0][list[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
-                xCheckBestMVP(amvpCand[1][list[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
+                checkBestMVP(amvpCand[0][list[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
+                checkBestMVP(amvpCand[1][list[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
 
                 if (cost < bidirCost)
                 {
@@ -2003,7 +2003,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
     return true;
 }
 
-void Search::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
+void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
 {
     if (cuMode == SIZE_2Nx2N)
     {
@@ -2051,14 +2051,14 @@ void Search::xGetBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t la
     }
     else
     {
-        X265_CHECK(0, "xGetBlkBits: unknown cuMode\n");
+        X265_CHECK(0, "getBlkBits: unknown cuMode\n");
     }
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-void Search::xCheckBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
+void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
 {
-    X265_CHECK(amvpCand[outMvpIdx] == mvPred, "xCheckBestMVP: unexpected mvPred\n");
+    X265_CHECK(amvpCand[outMvpIdx] == mvPred, "checkBestMVP: unexpected mvPred\n");
 
     int mvpIdx = !outMvpIdx;
     MV mvp = amvpCand[mvpIdx];
@@ -2238,7 +2238,7 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-        bits = xSymbolBitsInter(cu, tuDepthRange);
+        bits = getInterSymbolBits(cu, tuDepthRange);
 
         if (m_rdCost.m_psyRd)
             cost = m_rdCost.calcPsyRdCost(distortion, bits, cu->m_psyEnergy);
@@ -3465,7 +3465,7 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
     }
 }
 
-uint32_t Search::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
+uint32_t Search::getIntraModeBits(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
 {
     // Reload only contexts required for coding intra mode information
     m_entropyCoder->loadIntraDirModeLuma(m_rdEntropyCoders[depth][CI_CURR_BEST]);
@@ -3478,7 +3478,9 @@ uint32_t Search::xModeBitsIntra(TComDataCU* cu, uint32_t mode, uint32_t partOffs
     return m_entropyCoder->getNumberOfWrittenBits();
 }
 
-uint32_t Search::xModeBitsRemIntra(TComDataCU* cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
+/* returns the number of bits required to signal a non-most-probable mode.
+ * on return mpm contains bitmap of most probable modes */
+uint32_t Search::getIntraRemModeBits(TComDataCU* cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
 {
     mpms = 0;
     for (int i = 0; i < 3; ++i)
@@ -3488,7 +3490,7 @@ uint32_t Search::xModeBitsRemIntra(TComDataCU* cu, uint32_t partOffset, uint32_t
     while (mpms & ((uint64_t)1 << mode))
         --mode;
 
-    return xModeBitsIntra(cu, mode, partOffset, depth);
+    return getIntraModeBits(cu, mode, partOffset, depth);
 }
 
 uint32_t Search::xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList)
@@ -3516,7 +3518,7 @@ uint32_t Search::xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCand
 }
 
 /* add inter-prediction syntax elements for a CU block */
-uint32_t Search::xSymbolBitsInter(TComDataCU* cu, uint32_t* depthRange)
+uint32_t Search::getInterSymbolBits(TComDataCU* cu, uint32_t depthRange[2])
 {
     if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
     {
