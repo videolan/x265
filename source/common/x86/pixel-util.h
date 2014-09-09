@@ -45,6 +45,7 @@ void x265_transpose32_sse2(pixel *dest, pixel *src, intptr_t stride);
 void x265_transpose64_sse2(pixel *dest, pixel *src, intptr_t stride);
 
 uint32_t x265_quant_sse4(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+uint32_t x265_quant_avx2(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 uint32_t x265_nquant_sse4(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 uint32_t x265_nquant_avx2(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 void x265_dequant_normal_sse4(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);

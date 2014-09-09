@@ -1441,6 +1441,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_AVX2)
     {
         p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
     }
@@ -1739,6 +1740,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.denoiseDct = x265_denoise_dct_avx2;
 
         p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
     }

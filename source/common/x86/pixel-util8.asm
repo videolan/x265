@@ -929,6 +929,156 @@ cglobal quant, 5,6,8
     RET
 
 
+IACA_START
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,5,10
+    ; fill qbits
+    movd            xm4, r4d            ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d            ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m             ; m5 = add
+
+    vpbroadcastw    m9, [pw_1]          ; m9 = word [1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7              ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]            ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]            ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4             ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3              ; m1 = deltaU1
+    movu            [r2], m1
+    psignd          m2, m0
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]   ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]   ; m0 = tmpLevel1
+    paddd           m3, m1, m5
+    psrad           m3, xm4             ; m2 = level1
+
+    pslld           m8, m3, 8
+    psrad           m1, xm6
+    psubd           m1, m8              ; m1 = deltaU1
+    movu            [r2 + mmsize], m1
+    psignd          m3, m0
+
+    packssdw        m2, m3
+    vpermq          m2, m2, q3120
+    movu            [r3], m2
+
+    ; count non-zero coeff
+    ; TODO: popcnt is faster, but some CPU can't support
+    pminuw          m2, m9
+    paddw           m7, m2
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    ; sum count
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+
+%else ; ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,6,8
+    ; fill qbits
+    movd            xm4, r4d        ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d        ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m         ; m5 = ad
+
+    lea             r5, [pd_1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7          ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3], xm3
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2 + mmsize], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3 + mmsize/2], xm3
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+%endif ; ARCH_X86_64 == 1
+IACA_END
+
+
 ;-----------------------------------------------------------------------------
 ; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------

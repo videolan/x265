@@ -76,7 +76,7 @@ const pw_ppppmmmm, dw 1,1,1,1,-1,-1,-1,-1
 const pw_ppmmppmm, dw 1,1,-1,-1,1,1,-1,-1
 const pw_pmpmpmpm, dw 1,-1,1,-1,1,-1,1,-1
 const pw_pmmpzzzz, dw 1,-1,-1,1,0,0,0,0
-const pd_1,        times 4 dd 1
+const pd_1,        times 8 dd 1
 const pd_2,        times 4 dd 2
 const pd_4,        times 4 dd 4
 const pd_8,        times 4 dd 8
