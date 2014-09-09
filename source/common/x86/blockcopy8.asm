@@ -3973,12 +3973,13 @@ cglobal copy_cnt_4, 3,3,3
 
     ; get count
     ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
-%if 1
+%if 0
     pmovmskb    eax, m0
     not         ax
     popcnt      ax, ax
 %else
-    paddb       m0, [pb_1]
+    mova        m1, [pb_1]
+    paddb       m0, m1
     psadbw      m0, m2
     pshufd      m1, m0, 2
     paddw       m0, m1
@@ -3990,7 +3991,7 @@ cglobal copy_cnt_4, 3,3,3
 INIT_YMM avx2
 cglobal copy_cnt_4, 3,3,3
     add         r2d, r2d
-    xorpd       m2,  m2
+    xorpd       xm2, xm2
 
     ; row 0 & 1
     movq        xm0, [r1]
@@ -4004,9 +4005,11 @@ cglobal copy_cnt_4, 3,3,3
     vinserti128 m0, m0, xm1, 1
     movu    [r0], m0
 
+    vextractf128 xm1, m0, 1
+    packsswb     xm0, xm1
+    pcmpeqb      xm0, xm2
+
     ; get count
-    packsswb    xm0, xm1
-    pcmpeqb     xm0, xm2
     pmovmskb    eax, xm0
     not         ax
     popcnt      ax, ax
@@ -4076,49 +4079,85 @@ cglobal copy_cnt_8, 3,3,6
 
 
 INIT_YMM avx2
-cglobal copy_cnt_8, 3,3,6
+%if ARCH_X86_64 == 1
+cglobal copy_cnt_8, 3,4,6
+  %define tmpd eax
+%else
+cglobal copy_cnt_8, 3,5,6
+  %define tmpd r4d
+%endif
     add         r2d, r2d
-    xorpd       m5, m5
+    pxor        m4, m4
+    lea         r3, [r2 * 3]
 
-    ; row 0 - 1
+    ; row 0
     movu        xm0, [r1]
-    movu        xm1, [r1 + r2]
-    vinserti128 m0, m0, xm1, 1
-    movu        [r0], m0
+    mova        xm2, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 0 * mmsize], m1
 
-    ; row 2 - 3
-    movu        xm1, [r1 + r2 * 2]
-    lea         r1,  [r1 + r2 * 2]
-    movu        xm2, [r1 + r2]
-    vinserti128 m1, m1, xm2, 1
-    movu        [r0 + 32], m1
+    ; row 1
+    movu        xm0, [r1 + r2]
+    vinserti128 m2, m2, xm0, 1
+    pmovsxwd    m1, xm0
+    movu        [r0 + 1 * mmsize], m1
 
-    ; row 4 - 5
-    movu        xm2, [r1 + r2 * 2]
-    lea         r1,  [r1 + r2 * 2]
-    movu        xm3, [r1 + r2]
-    vinserti128 m2, m2, xm3, 1
-    movu        [r0 + 64], m2
+    ; row 2
+    movu        xm0, [r1 + r2 * 2]
+    mova        xm5, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 2 * mmsize], m1
 
-    ; row 6 - 7
-    movu        xm3, [r1 + r2 * 2]
-    lea         r1,  [r1 + r2 * 2]
-    movu        xm4, [r1 + r2]
-    vinserti128 m3, m3, xm4, 1
-    movu        [r0 + 96], m3
+    ; row 3
+    movu        xm0, [r1 + r3]
+    vinserti128 m5, m5, xm0, 1
+    packsswb    m2, m5
+    pcmpeqb     m2, m4
+    pmovmskb    tmpd, m2
+    not         tmpd
+    popcnt      tmpd, tmpd
+    pmovsxwd    m1, xm0
+    movu        [r0 + 3 * mmsize], m1
+
+    add         r0, 4 * mmsize
+    lea         r1, [r1 + r2 * 4]
+
+    ; row 4
+    movu        xm0, [r1]
+    mova        xm2, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 0 * mmsize], m1
+
+    ; row 5
+    movu        xm0, [r1 + r2]
+    vinserti128 m2, m2, xm0, 1
+    pmovsxwd    m1, xm0
+    movu        [r0 + 1 * mmsize], m1
+
+    ; row 6
+    movu        xm0, [r1 + r2 * 2]
+    mova        xm5, xm0
+    pmovsxwd    m1, xm0
+    movu        [r0 + 2 * mmsize], m1
+
+    ; row 7
+    movu        xm0, [r1 + r3]
+    pmovsxwd    m1, xm0
+    movu        [r0 + 3 * mmsize], m1
+    vinserti128 m5, m5, xm0, 1
 
     ; get count
-    vpacksswb    m0, m1
-    vpcmpeqb     m0, m5
-    vpmovmskb    eax, m0
-    not          eax
-    popcnt       eax, eax
-    vpacksswb    m2, m3
-    vpcmpeqb     m2, m5
-    vpmovmskb    r1d, m2
-    not          r1d
-    popcnt       r1d, r1d
-    add          eax, r1d
+    packsswb    m2, m5
+    pcmpeqb     m2, m4
+    pmovmskb    r0d, m2
+    not         r0d
+    popcnt      r0d, r0d
+
+%if ARCH_X86_64 == 1
+    add         tmpd, r0d
+%else
+    add         r0d, tmpd
+%endif
     RET
 
 
