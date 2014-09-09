@@ -1202,9 +1202,7 @@ void Search::residualQTIntraChroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
                 pixel*   reconIPred     = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), zorder);
                 uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getCStride();
 
-                // TODO: is chroma transform skip irreparably broken?
-                //bool     useTransformSkipC = cu->getTransformSkip(absPartIdxC, ttype);
-                const bool useTransformSkipC = false;
+                const bool useTransformSkipC = !!cu->getTransformSkip(absPartIdxC, ttype);
                 cu->setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
                 uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdxC);
