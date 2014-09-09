@@ -128,9 +128,6 @@ public:
 
 protected:
 
-    void xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                             ShortYuv* resiYuv, uint32_t& distY, bool bCheckFirst, uint64_t& dRDCost, uint32_t* depthRange);
-
     void xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, uint32_t depth,
                              uint64_t &rdCost, uint32_t &outBits, uint32_t &outDist, uint32_t *puiZeroDist, uint32_t* tuDepthRange);
     void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
@@ -149,6 +146,9 @@ protected:
     uint32_t xGetIntraBitsChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, coeff_t* coeff);
     uint32_t xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSize, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
                                  int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf);
+
+    uint32_t xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                                 ShortYuv* resiYuv, bool bCheckFirst, uint64_t& dRDCost, uint32_t* depthRange);
 
     uint32_t xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv);
 

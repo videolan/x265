@@ -1843,7 +1843,6 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
 void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv,  ShortYuv* outResiYuv, TComYuv* outReconYuv)
 {
     uint64_t puCost = 0;
-    uint32_t puDistY = 0;
     uint32_t depth = cu->getDepth(0);
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
 
@@ -1855,7 +1854,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, puDistY, false, puCost, tuDepthRange);
+    uint32_t puDistY = xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, false, puCost, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
 
     //=== update PU data ====

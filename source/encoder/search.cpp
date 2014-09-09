@@ -461,12 +461,13 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
     return (ttype == TEXT_CHROMA_U) ? m_rdCost.scaleChromaDistCb(dist) : m_rdCost.scaleChromaDistCr(dist);
 }
 
-/* TODO: return dist, pass range as int[2], reorder params */
-void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                 ShortYuv* resiYuv, uint32_t& outDistY, bool bCheckFirst, uint64_t& rdCost, uint32_t* depthRange)
+/* returns distortion. TODO: pass range as int[2], reorder params */
+uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
+                                     ShortYuv* resiYuv, bool bCheckFirst, uint64_t& rdCost, uint32_t* depthRange)
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
+    uint32_t outDist     = 0;
     bool bCheckSplit = log2TrSize > *depthRange;
     bool bCheckFull  = log2TrSize <= *(depthRange + 1);
 
@@ -661,14 +662,12 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
         uint32_t splitPsyEnergyY = 0;
         uint32_t qPartsDiv     = cu->m_pic->getNumPartInCU() >> ((fullDepth + 1) << 1);
         uint32_t absPartIdxSub = absPartIdx;
-
-        uint32_t splitCbfY = 0;
+        uint32_t splitCbfY     = 0;
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             cu->m_psyEnergy = 0;
-            xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, splitDistY, bCheckFirst, splitCost, depthRange);
-
+            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bCheckFirst, splitCost, depthRange);
             splitPsyEnergyY += cu->m_psyEnergy;
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
@@ -688,10 +687,10 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
 
         if (splitCost < singleCost)
         {
-            outDistY += splitDistY;
+            outDist  += splitDistY;
             rdCost   += splitCost;
             cu->m_psyEnergy = splitPsyEnergyY;
-            return;
+            return outDist;
         }
         else
             cu->m_psyEnergy = singlePsyEnergyY;
@@ -717,9 +716,9 @@ void Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absP
         primitives.square_copy_sp[sizeIdx](dst, dststride, reconQt, reconQtStride);
     }
 
-    outDistY += singleDistY;
-    rdCost   += singleCost;
+    rdCost += singleCost;
     cu->m_psyEnergy = singlePsyEnergyY;
+    return outDist + singleDistY;
 }
 
 void Search::residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
@@ -1436,8 +1435,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
             // determine residual for partition
-            puCost = puDistY = 0;
-            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, true, puCost, depthRange);
+            puCost = 0;
+            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, depthRange);
 
             // check r-d cost
             if (puCost < bestPUCost)
@@ -1455,8 +1454,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
         // determine residual for partition
-        puCost = puDistY = 0;
-        xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost, depthRange);
+        puCost = 0;
+        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, depthRange);
 
         overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
 
