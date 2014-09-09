@@ -461,9 +461,9 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
     return (ttype == TEXT_CHROMA_U) ? m_rdCost.scaleChromaDistCb(dist) : m_rdCost.scaleChromaDistCr(dist);
 }
 
-/* returns distortion. TODO: pass range as int[2], reorder params */
+/* returns distortion. TODO reorder params */
 uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                     ShortYuv* resiYuv, bool bCheckFirst, uint64_t& rdCost, uint32_t* depthRange)
+                                     ShortYuv* resiYuv, bool bCheckFirst, uint64_t& rdCost, uint32_t depthRange[2])
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -722,12 +722,12 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
 }
 
 void Search::residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                         ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t* depthRange)
+                                         ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2])
 {
     uint32_t fullDepth   = cu->getDepth(0) +  trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = (log2TrSize <= *(depthRange + 1));
-    bool     bCheckSplit = (log2TrSize > *depthRange);
+    bool     bCheckFull  = log2TrSize <= depthRange[1];
+    bool     bCheckSplit = log2TrSize > depthRange[0];
 
     int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
 
@@ -1275,7 +1275,7 @@ void Search::residualQTIntrachroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     }
 }
 
-void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t* depthRange)
+void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2])
 {
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
@@ -2333,7 +2333,8 @@ void Search::generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predY
     }
 }
 
-void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, const uint32_t depth, uint32_t* depthRange)
+void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv,
+                                         const uint32_t depth, uint32_t depthRange[2])
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2344,11 +2345,11 @@ void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TC
 
     bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
-    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > *depthRange))
+    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && log2TrSize > depthRange[0])
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= *(depthRange + 1));
-    const bool bCheckSplit = (log2TrSize > *depthRange);
+        bCheckFull = log2TrSize <= depthRange[1];
+    const bool bCheckSplit = log2TrSize > depthRange[0];
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
     // code full block
@@ -2464,17 +2465,8 @@ void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TC
     }
 }
 
-void Search::xEstimateResidualQT(TComDataCU*    cu,
-                                     uint32_t       absPartIdx,
-                                     TComYuv*       fencYuv,
-                                     TComYuv*       predYuv,
-                                     ShortYuv*      resiYuv,
-                                     const uint32_t depth,
-                                     uint64_t&      rdCost,
-                                     uint32_t&      outBits,
-                                     uint32_t&      outDist,
-                                     uint32_t*      outZeroDist,
-                                     uint32_t*      depthRange)
+void Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
+                                 uint32_t depth, uint64_t& rdCost, uint32_t& outBits, uint32_t& outDist, uint32_t* outZeroDist, uint32_t depthRange[2])
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2486,11 +2478,11 @@ void Search::xEstimateResidualQT(TComDataCU*    cu,
 
     bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->getPredictionMode(absPartIdx) == MODE_INTER && (cu->getPartitionSize(absPartIdx) != SIZE_2Nx2N));
     bool bCheckFull;
-    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && (log2TrSize > *depthRange))
+    if (bSplitFlag && depth == cu->getDepth(absPartIdx) && log2TrSize > depthRange[0])
         bCheckFull = false;
     else
-        bCheckFull = (log2TrSize <= *(depthRange + 1));
-    const bool bCheckSplit = (log2TrSize > *depthRange);
+        bCheckFull = log2TrSize <= depthRange[1];
+    const bool bCheckSplit = log2TrSize > depthRange[0];
 
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
@@ -3093,7 +3085,7 @@ void Search::xEstimateResidualQT(TComDataCU*    cu,
 
         m_entropyCoder->resetBits();
 
-        if (log2TrSize > *depthRange)
+        if (log2TrSize > depthRange[0])
             m_entropyCoder->codeTransformSubdivFlag(0, 5 - log2TrSize);
 
         if (bCodeChroma)
@@ -3298,7 +3290,7 @@ void Search::xEstimateResidualQT(TComDataCU*    cu,
     }
 }
 
-void Search::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t* depthRange)
+void Search::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2])
 {
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t curTrMode   = depth - cu->getDepth(0);
@@ -3312,7 +3304,7 @@ void Search::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32
     
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
-    if (bSubdivAndCbf && log2TrSize <= *(depthRange + 1) && log2TrSize > *depthRange)
+    if (bSubdivAndCbf && log2TrSize <= depthRange[1] && log2TrSize > depthRange[0])
         m_entropyCoder->codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
 
     X265_CHECK(cu->getPredictionMode(absPartIdx) != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
