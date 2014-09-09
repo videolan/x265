@@ -772,6 +772,7 @@ void dequant_scaling_c(const int16_t* quantCoef, const int32_t *deQuantCoef, int
 
 uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
+    X265_CHECK(qBits >= 8, "qBits less than 8\n");
     int qBits8 = qBits - 8;
     uint32_t numSig = 0;
 
