@@ -406,10 +406,8 @@ uint32_t Search::xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32
     }
 }
 
-/* TODO: return dist */
-void Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
-                                   int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf, uint32_t& outDist,
-                                   uint32_t chromaId, uint32_t log2TrSizeC)
+uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, int16_t* reconQt,
+                                       uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf, uint32_t chromaId, uint32_t log2TrSizeC)
 {
     TextType ttype        = (TextType)chromaId;
     uint32_t stride       = fencYuv->getCStride();
@@ -442,9 +440,9 @@ void Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TComYuv*
     if (numSig)
     {
         X265_CHECK(log2TrSizeC <= 5, "log2TrSizeC is too large %d\n", log2TrSizeC);
-        cbf = 1;
         m_quant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
         primitives.calcrecon[sizeIdxC](pred, residual, reconQt, reconIPred, stride, reconQtStride, reconIPredStride);
+        cbf = 1;
         dist = primitives.sse_sp[part](reconQt, reconQtStride, fenc, stride);
     }
     else
@@ -452,16 +450,15 @@ void Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TComYuv*
 #if CHECKED_BUILD || _DEBUG
         memset(coeff, 0, sizeof(coeff_t) << log2TrSizeC * 2);
 #endif
-        cbf = 0;
         // reconstruction
         primitives.square_copy_ps[sizeIdxC](reconQt,    reconQtStride,    pred, stride);
         primitives.square_copy_pp[sizeIdxC](reconIPred, reconIPredStride, pred, stride);
+        cbf = 0;
         dist = primitives.sse_pp[part](pred, stride, fenc, stride);
     }
 
     X265_CHECK(ttype == TEXT_CHROMA_U || ttype == TEXT_CHROMA_V, "invalid ttype\n");
-    outDist += (ttype == TEXT_CHROMA_U) ?
-        m_rdCost.scaleChromaDistCb(dist) : m_rdCost.scaleChromaDistCr(dist);
+    return (ttype == TEXT_CHROMA_U) ? m_rdCost.scaleChromaDistCb(dist) : m_rdCost.scaleChromaDistCr(dist);
 }
 
 /* TODO: return dist, pass range as int[2], reorder params */
@@ -1010,8 +1007,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uin
 
                         cu->setTransformSkipPartRange(chromaModeId, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
-                        singleDistCTmp = 0;
-                        xIntraCodingChromaBlk(cu, absPartIdxC, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfCTmp, singleDistCTmp, chromaId, log2TrSizeC);
+                        singleDistCTmp = xIntraCodingChromaBlk(cu, absPartIdxC, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfCTmp, chromaId, log2TrSizeC);
                         cu->setCbfPartRange(singleCbfCTmp << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
                         if (chromaModeId == 1 && !singleCbfCTmp)
@@ -1068,7 +1064,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uin
                 else
                 {
                     cu->setTransformSkipPartRange(0, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
-                    xIntraCodingChromaBlk(cu, absPartIdxC, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffC, singleCbfC, outDist, chromaId, log2TrSizeC);
+                    outDist += xIntraCodingChromaBlk(cu, absPartIdxC, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffC, singleCbfC, chromaId, log2TrSizeC);
                     if (m_rdCost.m_psyRd)
                     {
                         uint32_t zorder = cu->getZorderIdxInCU() + absPartIdxC;
