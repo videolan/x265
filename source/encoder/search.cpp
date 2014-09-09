@@ -1443,7 +1443,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
             // determine residual for partition
-            puDistY = puCost = 0;
+            puCost = puDistY = 0;
             xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, true, puCost, depthRange);
 
             // check r-d cost
@@ -1462,7 +1462,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
         // determine residual for partition
-        puDistY = puCost = 0;
+        puCost = puDistY = 0;
         xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, puDistY, false, puCost, depthRange);
 
         overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
