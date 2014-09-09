@@ -707,14 +707,14 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             curRow.rowStats.mvBits += cu->m_mvBits;
             curRow.rowStats.coeffBits += cu->m_coeffBits;
             curRow.rowStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
-            x265_emms();
 
-            float scale = (float)(1 << (g_maxCUSize / 16));
-            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, scale /= 4)
+            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
             {
-                curRow.rowStats.iCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeIntraCnt[depth]);
-                curRow.rowStats.pCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeInterCnt[depth]);
-                curRow.rowStats.skipCuCnt += (int)(scale * tld.cuCoder.m_log->qTreeSkipCnt[depth]);
+                /* 1 << shift == number of 8x8 blocks at current depth */
+                int shift = 2 * (g_maxCUDepth - depth);
+                curRow.rowStats.iCuCnt += tld.cuCoder.m_log->qTreeIntraCnt[depth] << shift;
+                curRow.rowStats.pCuCnt += tld.cuCoder.m_log->qTreeInterCnt[depth] << shift;
+                curRow.rowStats.skipCuCnt += tld.cuCoder.m_log->qTreeSkipCnt[depth] << shift;
 
                 // clear the row cu data from thread local object
                 tld.cuCoder.m_log->qTreeIntraCnt[depth] = tld.cuCoder.m_log->qTreeInterCnt[depth] = tld.cuCoder.m_log->qTreeSkipCnt[depth] = 0;
