@@ -42,7 +42,6 @@
 namespace x265 {
 // private namespace
 
-class Encoder;
 class Entropy;
 
 struct MotionData
@@ -107,8 +106,7 @@ public:
     Search();
     ~Search();
 
-    /* TODO: Don't pass top-level encoder all the way down here */
-    bool initSearch(Encoder& top);
+    bool initSearch(x265_param *param, ScalingList& scalingList);
 
     void estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
     void estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);

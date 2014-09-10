@@ -53,12 +53,6 @@ struct ThreadLocalData
     bool     edgeFilter[256];
     uint8_t  blockingStrength[256];
 
-    void init(Encoder& enc)
-    {
-        cuCoder.initSearch(enc);
-        cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
-    }
-
     ~ThreadLocalData() { cuCoder.destroy(); }
 };
 

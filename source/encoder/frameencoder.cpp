@@ -105,7 +105,9 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         m_pool = NULL;
     }
 
-    m_tld.init(*top);
+    m_tld.cuCoder.initSearch(m_param, top->m_scalingList);
+    m_tld.cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
+
     m_frameFilter.init(top, this, numRows);
 
     // initialize HRD parameters of SPS

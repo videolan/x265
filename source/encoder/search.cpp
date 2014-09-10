@@ -30,7 +30,6 @@
 #include "search.h"
 #include "entropy.h"
 #include "rdcost.h"
-#include "encoder.h"
 
 using namespace x265;
 
@@ -67,24 +66,25 @@ Search::~Search()
     delete[] m_qtTempShortYuv;
 }
 
-bool Search::initSearch(Encoder& top)
+bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 {
-    m_param = top.m_param;
-    bool ok = m_quant.init(top.m_bEnableRDOQ, m_param->psyRdoq, top.m_scalingList);
+    m_param = param;
+    m_bEnableRDOQ = param->rdLevel >= 4;
+    m_bFrameParallel = param->frameNumThreads > 1;
+    m_numLayers = g_log2Size[param->maxCUSize] - 2;
 
-    m_rdCost.setPsyRdScale(m_param->psyRd);
-    m_bEnableRDOQ = top.m_bEnableRDOQ;
-    m_bFrameParallel = m_param->frameNumThreads > 1;
-    m_numLayers = top.m_quadtreeTULog2MaxSize - 2 + 1;
+    bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList);
 
-    initTempBuff(m_param->internalCsp);
-    ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
-    m_me.setSearchMethod(m_param->searchMethod);
-    m_me.setSubpelRefine(m_param->subpelRefine);
+    m_rdCost.setPsyRdScale(param->psyRd);
+
+    initTempBuff(param->internalCsp);
+    ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
+    m_me.setSearchMethod(param->searchMethod);
+    m_me.setSubpelRefine(param->subpelRefine);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
-    m_refLagPixels = m_bFrameParallel ? m_param->searchRange : m_param->sourceHeight;
+    m_refLagPixels = m_bFrameParallel ? param->searchRange : param->sourceHeight;
 
     m_qtTempShortYuv = new ShortYuv[m_numLayers];
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
@@ -94,7 +94,7 @@ bool Search::initSearch(Encoder& top)
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
-        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
+        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << g_maxFullDepth * 2;

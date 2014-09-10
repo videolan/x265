@@ -113,7 +113,10 @@ void Encoder::create()
     if (m_threadLocalData)
     {
         for (int i = 0; i < poolThreadCount; i++)
-            m_threadLocalData[i].init(*this);
+        {
+            m_threadLocalData[i].cuCoder.initSearch(m_param, m_scalingList);
+            m_threadLocalData[i].cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
+        }
     }
     else
         m_aborted = true;
@@ -1108,8 +1111,8 @@ void Encoder::initSPS(SPS *sps)
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;
 
-    sps->quadtreeTULog2MaxSize = m_quadtreeTULog2MaxSize;
-    sps->quadtreeTULog2MinSize = m_quadtreeTULog2MinSize;
+    sps->quadtreeTULog2MaxSize = g_log2Size[m_param->maxCUSize] - 1;
+    sps->quadtreeTULog2MinSize = 2;
     sps->quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
     sps->quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
 
@@ -1200,7 +1203,7 @@ void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
 
-    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize];
+    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize] - 1;
     int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
 
     // Do not allow WPP if only one row, it is pointless and unstable
@@ -1288,11 +1291,8 @@ void Encoder::configure(x265_param *p)
         p->crQpOffset += 6;
     }
 
-    /* disable RDOQ if rdlevel < 4 */
-    m_bEnableRDOQ = p->rdLevel >= 4;
-
     /* disable psy-rdoq if RDOQ is not enabled (do not show in logs as in-use) */
-    if (!m_bEnableRDOQ)
+    if (p->rdLevel < 4)
         p->psyRdoq = 0;
 
     if (p->bLossless)
@@ -1383,11 +1383,6 @@ void Encoder::configure(x265_param *p)
         if (s)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
-
-    uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
-    m_quadtreeTULog2MaxSize = tuQTMaxLog2Size;
-    uint32_t tuQTMinLog2Size = 2; //log2(4)
-    m_quadtreeTULog2MinSize = tuQTMinLog2Size;
 
     //========= set default display window ==================================
     m_conformanceWindow.bEnabled = false;

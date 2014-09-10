@@ -117,9 +117,6 @@ public:
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
 
-    uint32_t           m_quadtreeTULog2MaxSize;
-    uint32_t           m_quadtreeTULog2MinSize;
-
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 
@@ -129,7 +126,6 @@ public:
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
-    bool               m_bEnableRDOQ;
     bool               m_aborted;          // fatal error detected
 
     Encoder();
