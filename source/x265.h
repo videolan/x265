@@ -424,7 +424,8 @@ typedef struct x265_param
 
     /* Enables the emission of a user data SEI with the stream headers which
      * describes the encoder version, build info, and parameters. This is
-     * very helpful for debugging, but may interfere with regression tests. */
+     * very helpful for debugging, but may interfere with regression tests. 
+     * Default enabled */
     int       bEmitInfoSEI;
 
     /*== Coding Unit (CU) definitions ==*/

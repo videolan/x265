@@ -98,21 +98,33 @@ void x265_param_default(x265_param *param)
 {
     memset(param, 0, sizeof(x265_param));
 
-    /* Applying non-zero default values to all elements in the param structure */
+    /* Applying default values to all elements in the param structure */
     param->cpuid = x265::cpu_detect();
-    param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
-    param->frameNumThreads = 0;
     param->poolNumThreads = 0;
+    param->frameNumThreads = 0;
+
+    param->logLevel = X265_LOG_INFO;
     param->csvfn = NULL;
     param->rc.lambdaFileName = NULL;
     param->bLogCuStats = 0;
-    param->bEmitInfoSEI = 1;
+    param->decodedPictureHashSEI = 0;
+
+    /* Quality Measurement Metrics */
+    param->bEnablePsnr = 0;
+    param->bEnableSsim = 0;
 
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
+
     param->levelIdc = 0;
+    param->bHighTier = 0;
+    param->interlaceMode = 0;
+    param->bRepeatHeaders = 0;
+    param->bEnableAccessUnitDelimiters = 0;
+    param->bEmitHRDSEI = 0;
+    param->bEmitInfoSEI = 1;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -193,10 +205,6 @@ void x265_param_default(x265_param *param)
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.bEnableSlowFirstPass = 0;
-
-    /* Quality Measurement Metrics */
-    param->bEnablePsnr = 0;
-    param->bEnableSsim = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
