@@ -129,14 +129,11 @@ protected:
     void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
     void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
-    void xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
     void xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
-
-    void xEncCoeffQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
     void xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
     void xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
     void xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx);
-    uint32_t xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
+
     uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep);
     uint32_t xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2]);
     uint32_t xGetIntraBitsChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, coeff_t* coeff);
@@ -147,7 +144,7 @@ protected:
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t *zeroDist, uint32_t tuDepthRange[2]);
 
     uint32_t xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                 ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& dRDCost, uint32_t depthRange[2]);
+                                 ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& dRDCost, uint32_t& puBits, uint32_t depthRange[2]);
 
     uint32_t xRecurIntraChromaCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv);
 

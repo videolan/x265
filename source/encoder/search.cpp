@@ -111,47 +111,6 @@ fail:
     return false;
 }
 
-void Search::xEncSubdivCbfQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
-{
-    uint32_t fullDepth  = cu->getDepth(0) + trDepth;
-    uint32_t trMode     = cu->getTransformIdx(absPartIdx);
-    uint32_t subdiv     = (trMode > trDepth ? 1 : 0);
-    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-
-    if (cu->getPredictionMode(0) == MODE_INTRA && cu->getPartitionSize(0) == SIZE_NxN && trDepth == 0)
-    {
-        X265_CHECK(subdiv, "subdivision not present\n");
-    }
-    else if (log2TrSize > *(depthRange + 1))
-    {
-        X265_CHECK(subdiv, "subdivision not present\n");
-    }
-    else if (log2TrSize == cu->m_slice->m_sps->quadtreeTULog2MinSize)
-    {
-        X265_CHECK(!subdiv, "subdivision present\n");
-    }
-    else if (log2TrSize == *depthRange)
-    {
-        X265_CHECK(!subdiv, "subdivision present\n");
-    }
-    else
-    {
-        X265_CHECK(log2TrSize > *depthRange, "transform size too small\n");
-        m_entropyCoder->codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
-    }
-
-    if (subdiv)
-    {
-        uint32_t qtPartNum = cu->m_pic->getNumPartInCU() >> ((fullDepth + 1) << 1);
-        for (uint32_t part = 0; part < 4; part++)
-            xEncSubdivCbfQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum, depthRange);
-
-        return;
-    }
-
-    m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
-}
-
 void Search::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
@@ -181,32 +140,6 @@ void Search::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
         for (uint32_t part = 0; part < 4; part++)
             xEncSubdivCbfQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, absPartIdxStep, width, height);
     }
-}
-
-void Search::xEncCoeffQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
-{
-    const TextType ttype = TEXT_LUMA;
-
-    if (!cu->getCbf(absPartIdx, ttype, trDepth))
-        return;
-
-    uint32_t fullDepth = cu->getDepth(0) + trDepth;
-    uint32_t trMode    = cu->getTransformIdx(absPartIdx);
-
-    if (trMode > trDepth)
-    {
-        uint32_t qtPartNum = cu->m_pic->getNumPartInCU() >> ((fullDepth + 1) << 1);
-        for (uint32_t part = 0; part < 4; part++)
-            xEncCoeffQTLuma(cu, trDepth + 1, absPartIdx + part * qtPartNum);
-
-        return;
-    }
-
-    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-    uint32_t qtLayer    = log2TrSize - 2;
-    uint32_t coeffOffset = absPartIdx << LOG2_UNIT_SIZE * 2;
-    coeff_t* coeff = m_qtTempCoeff[ttype][qtLayer] + coeffOffset;
-    m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, ttype);
 }
 
 void Search::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype)
@@ -316,15 +249,6 @@ void Search::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
     }
 }
 
-uint32_t Search::xGetIntraBitsQTLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
-{
-    m_entropyCoder->resetBits();
-    xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
-    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx, depthRange);
-    xEncCoeffQTLuma(cu, trDepth, absPartIdx);
-    return m_entropyCoder->getNumberOfWrittenBits();
-}
-
 uint32_t Search::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep)
 {
     int cuSize = 1 << cu->getLog2CUSize(absPartIdx);
@@ -340,7 +264,14 @@ uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
 {
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
-    xEncSubdivCbfQTLuma(cu, trDepth, absPartIdx, depthRange);
+
+    //Transform subdiv flag
+    if (log2TrSize != *depthRange)
+        m_entropyCoder->codeTransformSubdivFlag(0, 5 - log2TrSize);
+
+    //===== Cbfs =====
+    uint32_t trMode = cu->getTransformIdx(absPartIdx);
+    m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
 
     if (cu->getCbf(absPartIdx, TEXT_LUMA, trDepth))
         m_entropyCoder->codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
@@ -463,7 +394,7 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
 
 /* returns distortion. TODO reorder params */
 uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                     ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& rdCost, uint32_t depthRange[2])
+                                     ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& rdCost, uint32_t& rdBits, uint32_t depthRange[2])
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -490,8 +421,9 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     if (!bAllowRQTSplit && noSplitIntraMaxTuSize)
         bCheckSplit = false;
 
-    uint64_t singleCost   = MAX_INT64;
-    uint32_t singleDistY  = 0;
+    uint64_t singleCost  = MAX_INT64;
+    uint32_t singleDistY = 0;
+    uint32_t singleBits  = 0;
     uint32_t singlePsyEnergyY = 0;
     uint32_t singleCbfY   = 0;
     int      bestModeId   = 0;
@@ -580,7 +512,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
                     break;
                 else
                 {
-                    uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
+                    singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
                     if (m_rdCost.m_psyRd)
                         singleCostTmp = m_rdCost.calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
                     else
@@ -634,7 +566,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
-            uint32_t singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
+            singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
             if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
@@ -663,23 +595,30 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         uint32_t qPartsDiv     = cu->m_pic->getNumPartInCU() >> ((fullDepth + 1) << 1);
         uint32_t absPartIdxSub = absPartIdx;
         uint32_t splitCbfY     = 0;
+        uint32_t splitBits     = 0;
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             cu->m_psyEnergy = 0;
-            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bAllowRQTSplit, splitCost, depthRange);
+            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bAllowRQTSplit, splitCost, splitBits, depthRange);
             splitPsyEnergyY += cu->m_psyEnergy;
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
+        }
+
+        if (bCheckFull)
+        {
+            m_entropyCoder->resetBits();
+
+            //subdiv
+            if (log2TrSize != *depthRange)
+                m_entropyCoder->codeTransformSubdivFlag(1, 5 - log2TrSize);
+
+             splitBits += m_entropyCoder->getNumberOfWrittenBits();
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
             cu->getCbf(TEXT_LUMA)[absPartIdx + offs] |= (splitCbfY << trDepth);
 
-        // restore context states
-        m_entropyCoder->load(m_rdEntropyCoders[fullDepth][CI_QT_TRAFO_ROOT]);
-
-        // determine rate and r-d cost
-        uint32_t splitBits = xGetIntraBitsQTLuma(cu, trDepth, absPartIdx, depthRange);
         if (m_rdCost.m_psyRd)
             splitCost = m_rdCost.calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
         else
@@ -689,6 +628,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         {
             outDist  += splitDistY;
             rdCost   += splitCost;
+            rdBits   += splitBits;
             cu->m_psyEnergy = splitPsyEnergyY;
             return outDist;
         }
@@ -717,6 +657,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 
     rdCost += singleCost;
+    rdBits += singleBits;
     cu->m_psyEnergy = singlePsyEnergyY;
     return outDist + singleDistY;
 }
@@ -1416,6 +1357,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         uint32_t bestPUDistY = 0;
         uint64_t bestPUCost  = MAX_INT64;
         uint32_t puDistY;
+        uint32_t puBits;
         uint64_t puCost;
         for (int mode = 0; mode < numModesForFullRD; mode++)
         {
@@ -1427,7 +1369,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
             // determine residual for partition
             puCost = 0;
-            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, depthRange);
+            puBits = 0;
+            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, puBits, depthRange);
 
             // check r-d cost
             if (puCost < bestPUCost)
@@ -1446,7 +1389,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
         // determine residual for partition
         puCost = 0;
-        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, depthRange);
+        puBits = 0;
+        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, puBits, depthRange);
 
         overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
 
