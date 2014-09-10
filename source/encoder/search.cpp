@@ -1295,19 +1295,15 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         TComPattern::initAdiPattern(cu, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
 
         // determine set of modes to be tested (using prediction signal only)
-        const int numModesAvailable = 35; //total number of Intra modes
         pixel*   fenc   = fencYuv->getLumaAddr(partOffset);
         uint32_t stride = predYuv->getStride();
         uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
         int numModesForFullRD = intraModeNumFast[sizeIdx];
 
-        X265_CHECK(numModesForFullRD < numModesAvailable, "numModesAvailable too large\n");
-
         for (int i = 0; i < numModesForFullRD; i++)
             candCostList[i] = MAX_INT64;
 
-        candNum = 0;
-        uint32_t modeCosts[35];
+        uint64_t modeCosts[35];
 
         pixel *above         = m_refAbove    + tuSize - 1;
         pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
@@ -1351,54 +1347,53 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             leftFiltered  = leftScale;
         }
 
+        uint32_t preds[3];
+        int numMpm = cu->getIntraDirLumaPredictor(partOffset, preds);
+        
+        uint64_t mpms;
+        uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
+
         pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
 
         // DC
         primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-        modeCosts[DC_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+        uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
+        uint32_t sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+        modeCosts[DC_IDX] = m_rdCost.calcRdSADCost(sad, bits);
 
-        pixel *abovePlanar   = above;
-        pixel *leftPlanar    = left;
-
+        // PLANAR
+        pixel *abovePlanar = above;
+        pixel *leftPlanar  = left;
         if (tuSize >= 8 && tuSize <= 32)
         {
             abovePlanar = aboveFiltered;
             leftPlanar  = leftFiltered;
         }
-
-        // PLANAR
         primitives.intra_pred[sizeIdx][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-        modeCosts[PLANAR_IDX] = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+        bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
+        sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+        modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
 
-        // Transpose NxN
-        primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
-
+        // angular predictions
         primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
-        for (int mode = 2; mode < numModesAvailable; mode++)
+        primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
+        for (int mode = 2; mode < 35; mode++)
         {
             bool modeHor = (mode < 18);
             pixel *cmp = (modeHor ? buf_trans : fenc);
             intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-            modeCosts[mode] = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+            bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
+            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+            modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
         }
-
-        uint32_t preds[3];
-        int numCand = cu->getIntraDirLumaPredictor(partOffset, preds);
-        
-        uint64_t mpms;
-        uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
 
         // Find N least cost modes. N = numModesForFullRD
-        for (int mode = 0; mode < numModesAvailable; mode++)
-        {
-            uint32_t sad = modeCosts[mode];
-            uint32_t bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
-            uint64_t cost = m_rdCost.calcRdSADCost(sad, bits);
-            candNum += xUpdateCandList(mode, cost, numModesForFullRD, rdModeList, candCostList);
-        }
+        candNum = 0;
+        for (int mode = 0; mode < 35; mode++)
+            candNum += xUpdateCandList(mode, modeCosts[mode], numModesForFullRD, rdModeList, candCostList);
 
-        for (int j = 0; j < numCand; j++)
+        for (int j = 0; j < numMpm; j++)
         {
             bool mostProbableModeIncluded = false;
             uint32_t mostProbableMode = preds[j];
@@ -1415,8 +1410,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             if (!mostProbableModeIncluded)
                 rdModeList[numModesForFullRD++] = mostProbableMode;
         }
-
-        x265_emms();
 
         // check modes (using r-d costs)
         uint32_t bestPUMode  = 0;
@@ -1487,6 +1480,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
     // set distortion (rate and r-d costs are determined later)
     cu->m_totalDistortion = overallDistY;
+
+    x265_emms();
 }
 
 void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
