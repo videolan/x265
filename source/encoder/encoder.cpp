@@ -253,11 +253,17 @@ void Encoder::updateVbvPlan(RateControl* rc)
 }
 
 /**
- \param   pic_in              input original YUV picture or NULL
- \param   pic_out             pointer to reconstructed picture struct
- \retval                      1 - success, negative on error. m_nalList contains access unit
- */
-int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
+ * Feed one new input frame into the encoder, get one frame out. If pic_in is
+ * NULL, a flush condition is implied and pic_in must be NULL for all subsequent
+ * calls for this encoder instance.
+ *
+ * pic_in  input original YUV picture or NULL
+ * pic_out pointer to reconstructed picture struct
+ *
+ * returns 0 if no frames are currently available for output
+ *         1 if frame was output, m_nalList contains access unit
+ *         negative on malloc error or abort */
+int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 {
     if (m_aborted)
         return -1;
@@ -407,10 +413,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture *pic_out)
             if (bChroma)
                 m_numChromaWPBiFrames++;
         }
-        if (m_aborted == true)
-        {
+        if (m_aborted)
             return -1;
-        }
+
         finishFrameStats(out, curEncoder, curEncoder->m_accessUnitBits);
         // Allow this frame to be recycled if no frame encoders are using it for reference
         if (!pic_out)
