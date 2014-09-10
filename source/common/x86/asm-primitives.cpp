@@ -1444,6 +1444,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
+#if X86_64
+        p.dct[DCT_16x16] = x265_dct16_avx2;
+#endif
     }
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
@@ -1738,11 +1741,13 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_avx2;
         p.cvt32to16_shl[BLOCK_32x32] = x265_cvt32to16_shl_32_avx2;
         p.denoiseDct = x265_denoise_dct_avx2;
-
         p.dct[DCT_4x4] = x265_dct4_avx2;
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
+#if X86_64
+        p.dct[DCT_16x16] = x265_dct16_avx2;
+#endif
     }
 #endif // if HIGH_BIT_DEPTH
 }
