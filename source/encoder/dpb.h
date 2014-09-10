@@ -32,7 +32,6 @@ namespace x265 {
 class Frame;
 class TComPicSym;
 class Slice;
-class Encoder;
 
 class DPB
 {

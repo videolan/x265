@@ -25,7 +25,6 @@
 #include "frame.h"
 #include "slice.h"
 
-#include "encoder.h"
 #include "dpb.h"
 #include "frameencoder.h"
 

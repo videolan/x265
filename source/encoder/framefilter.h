@@ -35,6 +35,8 @@ namespace x265 {
 
 class Encoder;
 class Entropy;
+class FrameEncoder;
+struct ThreadLocalData;
 
 // Manages the processing of a single frame loopfilter
 class FrameFilter
