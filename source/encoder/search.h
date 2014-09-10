@@ -169,10 +169,12 @@ protected:
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost);
     void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
     uint32_t getInterSymbolBits(TComDataCU* cu, uint32_t depthRange[2]);
-    uint32_t xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList);
 
     uint32_t mergeEstimation(TComDataCU* cu, int partIdx, MergeData& m);
     void     setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
+
+    enum { MAX_RD_INTRA_MODES = 16 };
+    void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
 };
 }
 

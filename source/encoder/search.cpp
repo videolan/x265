@@ -1222,12 +1222,9 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint32_t log2TrSize   = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
     uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
-    uint32_t overallDistY = 0;
-    uint32_t candNum;
-    uint64_t candCostList[FAST_UDI_MAX_RDMODE_NUM];
+    uint32_t totalDist    = 0;
     uint32_t sizeIdx      = log2TrSize - 2;
-    uint32_t partOffset = 0;
-    static const uint8_t intraModeNumFast[] = { 8, 8, 3, 3, 3 }; // 4x4, 8x8, 16x16, 32x32, 64x64
+    uint32_t partOffset   = 0;
 
     // loop over partitions
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
@@ -1238,13 +1235,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         // determine set of modes to be tested (using prediction signal only)
         pixel*   fenc   = fencYuv->getLumaAddr(partOffset);
         uint32_t stride = predYuv->getStride();
-        uint32_t rdModeList[FAST_UDI_MAX_RDMODE_NUM];
-        int numModesForFullRD = intraModeNumFast[sizeIdx];
-
-        for (int i = 0; i < numModesForFullRD; i++)
-            candCostList[i] = MAX_INT64;
-
-        uint64_t modeCosts[35];
 
         pixel *above         = m_refAbove    + tuSize - 1;
         pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
@@ -1289,18 +1279,20 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         }
 
         uint32_t preds[3];
-        int numMpm = cu->getIntraDirLumaPredictor(partOffset, preds);
+        cu->getIntraDirLumaPredictor(partOffset, preds);
         
         uint64_t mpms;
         uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
 
         pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
+        uint64_t modeCosts[35];
+        uint64_t bcost;
 
         // DC
         primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
         uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
         uint32_t sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-        modeCosts[DC_IDX] = m_rdCost.calcRdSADCost(sad, bits);
+        modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
 
         // PLANAR
         pixel *abovePlanar = above;
@@ -1314,6 +1306,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
         sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
         modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
+        COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
 
         // angular predictions
         primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
@@ -1327,72 +1320,44 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
             sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
             modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+            COPY1_IF_LT(bcost, modeCosts[mode]);
         }
 
-        // Find N least cost modes. N = numModesForFullRD
-        candNum = 0;
+        /* Find the top maxCandCount candidate modes with cost within 25% of best
+         * or among the most probable modes. maxCandCount is derived from the
+         * rdLevel and depth. In general we want to try more modes at slower RD
+         * levels and at higher depths */
+        uint64_t candCostList[MAX_RD_INTRA_MODES];
+        uint32_t rdModeList[MAX_RD_INTRA_MODES];
+        int maxCandCount = 2 + m_param->rdLevel + ((depth + initTrDepth) >> 1);
+        for (int i = 0; i < maxCandCount; i++)
+            candCostList[i] = MAX_INT64;
+
+        uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
         for (int mode = 0; mode < 35; mode++)
-            candNum += xUpdateCandList(mode, modeCosts[mode], numModesForFullRD, rdModeList, candCostList);
+            if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
+                updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
 
-        for (int j = 0; j < numMpm; j++)
+        /* measure best candidates using simple RDO (no TU splits) */
+        uint32_t bmode = 0;
+        uint64_t cost;
+        bcost = MAX_INT64;
+        for (int i = 0; i < maxCandCount; i++)
         {
-            bool mostProbableModeIncluded = false;
-            uint32_t mostProbableMode = preds[j];
-
-            for (int i = 0; i < numModesForFullRD; i++)
-            {
-                if (mostProbableMode == rdModeList[i])
-                {
-                    mostProbableModeIncluded = true;
-                    break;
-                }
-            }
-
-            if (!mostProbableModeIncluded)
-                rdModeList[numModesForFullRD++] = mostProbableMode;
-        }
-
-        // check modes (using r-d costs)
-        uint32_t bestPUMode  = 0;
-        uint32_t bestPUDistY = 0;
-        uint64_t bestPUCost  = MAX_INT64;
-        uint32_t puDistY;
-        uint32_t puBits;
-        uint64_t puCost;
-        for (int mode = 0; mode < numModesForFullRD; mode++)
-        {
-            // set luma prediction mode
-            cu->setLumaIntraDirSubParts(rdModeList[mode], partOffset, depth + initTrDepth);
-
-            // set context models
+            if (candCostList[i] == MAX_INT64)
+                break;
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-
-            // determine residual for partition
-            puCost = 0;
-            puBits = 0;
-            puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, puCost, puBits, depthRange);
-
-            // check r-d cost
-            if (puCost < bestPUCost)
-            {
-                bestPUMode  = rdModeList[mode];
-                bestPUDistY = puDistY;
-                bestPUCost  = puCost;
-            }
+            cu->setLumaIntraDirSubParts(rdModeList[i], partOffset, depth + initTrDepth);
+            cost = bits = 0;
+            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, cost, bits, depthRange);
+            COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
         }
 
         /* remeasure best mode, allowing TU splits */
-        cu->setLumaIntraDirSubParts(bestPUMode, partOffset, depth + initTrDepth);
-
-        // set context models
+        cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-        // determine residual for partition
-        puCost = 0;
-        puBits = 0;
-        puDistY = xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, puBits, depthRange);
-
-        overallDistY += (puCost >= bestPUCost) ? bestPUDistY : puDistY;
+        totalDist += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, cost, bits, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
@@ -1419,11 +1384,11 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
     }
 
-    // reset context models (TODO: caller should do this)
+    // reset context models
     m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
     // set distortion (rate and r-d costs are determined later)
-    cu->m_totalDistortion = overallDistY;
+    cu->m_totalDistortion = totalDist;
 
     x265_emms();
 }
@@ -3430,28 +3395,27 @@ uint32_t Search::getIntraRemModeBits(TComDataCU* cu, uint32_t partOffset, uint32
     return getIntraModeBits(cu, mode, partOffset, depth);
 }
 
-uint32_t Search::xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList)
+/* swap the current mode/cost with the mode with the highest cost in the
+ * current candidcate list, if its cost is better (maintain a top N list) */
+void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList)
 {
-    uint32_t i;
-    uint32_t shift = 0;
+    uint32_t maxIndex = 0;
+    uint64_t maxValue = 0;
 
-    while (shift < fastCandNum && cost < CandCostList[fastCandNum - 1 - shift])
-        shift++;
-
-    if (shift != 0)
+    for (int i = 0; i < maxCandCount; i++)
     {
-        for (i = 1; i < shift; i++)
+        if (maxValue < candCostList[i])
         {
-            CandModeList[fastCandNum - i] = CandModeList[fastCandNum - 1 - i];
-            CandCostList[fastCandNum - i] = CandCostList[fastCandNum - 1 - i];
+            maxValue = candCostList[i];
+            maxIndex = i;
         }
-
-        CandModeList[fastCandNum - shift] = mode;
-        CandCostList[fastCandNum - shift] = cost;
-        return 1;
     }
 
-    return 0;
+    if (cost < maxValue)
+    {
+        candCostList[maxIndex] = cost;
+        candModeList[maxIndex] = mode;
+    }
 }
 
 /* add inter-prediction syntax elements for a CU block */
