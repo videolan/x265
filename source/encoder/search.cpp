@@ -1654,7 +1654,7 @@ void Search::estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 }
 
 /* estimation of best merge coding */
-uint32_t Search::xMergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
+uint32_t Search::mergeEstimation(TComDataCU* cu, int puIdx, MergeData& m)
 {
     X265_CHECK(cu->getPartitionSize(0) != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
@@ -1750,7 +1750,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
             merge.absPartIdx = partAddr;
             merge.width = roiWidth;
             merge.height = roiHeight;
-            mrgCost = xMergeEstimation(cu, partIdx, merge);
+            mrgCost = mergeEstimation(cu, partIdx, merge);
 
             if (bMergeOnly && cu->getLog2CUSize(0) > 3)
             {
@@ -1824,7 +1824,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
 
                 MV mvmin, mvmax, outmv, mvp = amvpCand[l][ref][mvpIdx];
 
-                xSetSearchRange(cu, mvp, merange, mvmin, mvmax);
+                setSearchRange(cu, mvp, merange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
@@ -1880,7 +1880,7 @@ bool Search::predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, 
                  * valid search area */
                 MV mvmin, mvmax;
                 int merange = X265_MAX(m_param->sourceWidth, m_param->sourceHeight);
-                xSetSearchRange(cu, mvzero, merange, mvmin, mvmax);
+                setSearchRange(cu, mvzero, merange, mvmin, mvmax);
                 mvmax.y += 2; // there is some pad for subpel refine
                 mvmin <<= 2;
                 mvmax <<= 2;
@@ -2066,7 +2066,7 @@ void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint3
     }
 }
 
-void Search::xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)
+void Search::setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)
 {
     cu->clipMv(mvp);
 

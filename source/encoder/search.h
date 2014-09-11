@@ -56,7 +56,7 @@ struct MotionData
 
 struct MergeData
 {
-    /* merge candidate data, cached between calls to xMergeEstimation */
+    /* merge candidate data, cached between calls to mergeEstimation */
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
     uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
     uint32_t    maxNumMergeCand;
@@ -174,8 +174,8 @@ protected:
     uint32_t getInterSymbolBits(TComDataCU* cu, uint32_t depthRange[2]);
     uint32_t xUpdateCandList(uint32_t mode, uint64_t cost, uint32_t fastCandNum, uint32_t* CandModeList, uint64_t* CandCostList);
 
-    uint32_t xMergeEstimation(TComDataCU* cu, int partIdx, MergeData& m);
-    void     xSetSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
+    uint32_t mergeEstimation(TComDataCU* cu, int partIdx, MergeData& m);
+    void     setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
 };
 }
 
