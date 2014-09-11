@@ -83,6 +83,9 @@ public:
     double            m_rateFactor; // calculated based on the Frame QP
     int32_t           m_forceqp;    // Force to use the qp specified in qp file
 
+    x265_intra_data*  m_intraData;  // intra analysis information
+    x265_inter_data*  m_interData;  // inter analysis information
+
     Frame();
     virtual ~Frame();
 

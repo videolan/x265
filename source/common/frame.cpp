@@ -51,6 +51,8 @@ Frame::Frame()
     m_avgQpRc = 0;
     m_avgQpAq = 0;
     m_bChromaPlanesExtended = false;
+    m_intraData = NULL;
+    m_interData = NULL;
 }
 
 Frame::~Frame()

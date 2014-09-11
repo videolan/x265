@@ -312,6 +312,14 @@ void Analysis::compressCU(TComDataCU* cu)
     if (m_bestCU[0]->m_slice->m_sliceType == I_SLICE)
     {
         compressIntraCU(m_bestCU[0], m_tempCU[0], false, cu, cu->m_CULocalData);
+        if (m_param->analysisMode == 1)
+        {
+            memcpy(&m_bestCU[0]->m_pic->m_intraData->depth[cu->getAddr() * cu->m_numPartitions], m_bestCU[0]->getDepth(), sizeof(uint8_t) * cu->getTotalNumPart());
+            memcpy(&m_bestCU[0]->m_pic->m_intraData->modes[cu->getAddr() * cu->m_numPartitions], m_bestCU[0]->getLumaIntraDir(), sizeof(uint8_t) * cu->getTotalNumPart());
+            memcpy(&m_bestCU[0]->m_pic->m_intraData->partSizes[cu->getAddr() * cu->m_numPartitions], m_bestCU[0]->getPartitionSize(), sizeof(char) * cu->getTotalNumPart());
+            m_bestCU[0]->m_pic->m_intraData->cuAddr[cu->getAddr()] = cu->getAddr();
+            m_bestCU[0]->m_pic->m_intraData->poc[cu->getAddr()]    = cu->m_pic->m_POC;
+        }
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
             uint32_t i = 0;

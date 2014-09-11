@@ -341,6 +341,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             else
                 m_rateControl->calcAdaptiveQuantFrame(pic);
         }
+        if (pic_in->analysisData.intraData)
+        {
+            pic->m_intraData = pic_in->analysisData.intraData;
+            pic->m_interData = pic_in->analysisData.interData;
+        }
         m_lookahead->addPicture(pic, pic_in->sliceType);
         m_numDelayedPic++;
     }
@@ -389,6 +394,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             pic_out->stride[1] = recpic->getCStride() * sizeof(pixel);
             pic_out->planes[2] = recpic->getCrAddr();
             pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
+        }
+
+        if (m_param->analysisMode)
+        {
+            pic_out->analysisData.interData = out->m_interData;
+            pic_out->analysisData.intraData = out->m_intraData;
+            pic_out->analysisData.numCUsInFrame = out->m_picSym->getNumberOfCUsInFrame();
+            pic_out->analysisData.numPartitions = out->m_picSym->getNumPartition();
         }
 
         if (slice->m_sliceType == P_SLICE)
