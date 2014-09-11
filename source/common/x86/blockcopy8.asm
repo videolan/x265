@@ -3988,34 +3988,6 @@ cglobal copy_cnt_4, 3,3,3
     RET
 
 
-INIT_YMM avx2
-cglobal copy_cnt_4, 3,3,3
-    add         r2d, r2d
-    xorpd       xm2, xm2
-
-    ; row 0 & 1
-    movq        xm0, [r1]
-    movhps      xm0, [r1 + r2]
-
-    ; row 2 & 3
-    movq        xm1, [r1 + r2 * 2]
-    lea         r2, [r2 * 3]
-    movhps      xm1, [r1 + r2]
-
-    vinserti128 m0, m0, xm1, 1
-    movu    [r0], m0
-
-    vextractf128 xm1, m0, 1
-    packsswb     xm0, xm1
-    pcmpeqb      xm0, xm2
-
-    ; get count
-    pmovmskb    eax, xm0
-    not         ax
-    popcnt      ax, ax
-    RET
-
-
 ;--------------------------------------------------------------------------------------
 ; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------

@@ -1731,7 +1731,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         /* Need to update assembly code as per changed interface of the copy_cnt primitive, once
          * code is updated, avx2 version will be enabled */
 
-        // p.copy_cnt[BLOCK_4x4] = x265_copy_cnt_4_avx2;
         p.copy_cnt[BLOCK_8x8] = x265_copy_cnt_8_avx2;
         // p.copy_cnt[BLOCK_16x16] = x265_copy_cnt_16_avx2;
         // p.copy_cnt[BLOCK_32x32] = x265_copy_cnt_32_avx2;
