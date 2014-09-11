@@ -1043,6 +1043,15 @@ x265_picture *x265_picture_alloc();
  *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
 
+/* x265_alloc_analysis_data:
+ *  Allocate memory to hold analysis data, returns 0 on success else negative */
+int x265_alloc_analysis_data(x265_picture*);
+
+/* x265_free_analysis_data:
+ *  Use x265_free_analysis_data to release storage of members allocated by
+ *  x265_alloc_analysis_data */
+void x265_free_analysis_data(x265_picture*);
+
 /***
  * Initialize an x265_picture structure to default values. It sets the pixel
  * depth and color space to the encoder's internal values and sets the slice
