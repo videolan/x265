@@ -63,6 +63,7 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
+#define fseeko _fseeki64
 
 #endif // if defined(__GNUC__)
 
