@@ -26,7 +26,6 @@
 #include "slice.h"
 
 #include "dpb.h"
-#include "frameencoder.h"
 
 using namespace x265;
 
