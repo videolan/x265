@@ -80,18 +80,18 @@ private:
     int m_vChromaShift;
     int m_csp;
 
-    int getChromaAddrOffset(uint32_t partUnitIdx, uint32_t width)
+    int getChromaAddrOffset(uint32_t idx, uint32_t width)
     {
-        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]] >> m_hChromaShift;
-        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]] >> m_vChromaShift;
+        int blkX = g_zscanToPelX[idx] >> m_hChromaShift;
+        int blkY = g_zscanToPelY[idx] >> m_vChromaShift;
 
         return blkX + blkY * width;
     }
 
-    static int getAddrOffset(uint32_t partUnitIdx, uint32_t width)
+    static int getAddrOffset(uint32_t idx, uint32_t width)
     {
-        int blkX = g_rasterToPelX[g_zscanToRaster[partUnitIdx]];
-        int blkY = g_rasterToPelY[g_zscanToRaster[partUnitIdx]];
+        int blkX = g_zscanToPelX[idx];
+        int blkY = g_zscanToPelY[idx];
 
         return blkX + blkY * width;
     }

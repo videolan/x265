@@ -73,7 +73,6 @@ enum PredMode
 enum TextType
 {
     TEXT_LUMA     = 0,  // luma
-    TEXT_CHROMA   = 1,  // chroma (U+V)
     TEXT_CHROMA_U = 1,  // chroma U
     TEXT_CHROMA_V = 2,  // chroma V
     MAX_NUM_COMPONENT = 3

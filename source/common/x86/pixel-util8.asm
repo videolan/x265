@@ -54,6 +54,9 @@ cextern pw_1
 cextern pw_00ff
 cextern pw_2000
 cextern pw_pixel_max
+cextern pd_1
+cextern pd_32767
+cextern pd_n32768
 
 ;-----------------------------------------------------------------------------
 ; void calcrecon(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
@@ -855,11 +858,10 @@ cglobal getResidual32, 4,5,7
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal quant, 5,6,8
-
     ; fill qbits
     movd        m4, r4d         ; m4 = qbits
 
@@ -871,125 +873,253 @@ cglobal quant, 5,6,8
     movd        m5, r5m
     pshufd      m5, m5, 0       ; m5 = add
 
+    lea         r5, [pd_1]
+
     mov         r4d, r6m
     shr         r4d, 3
     pxor        m7, m7          ; m7 = numZero
 .loop:
     ; 4 coeff
     movu        m0, [r0]        ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1]        ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1]        ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
 
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+
+    movu        [r2], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3], m3
+
     ; 4 coeff
     movu        m0, [r0 + 16]   ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1 + 16]   ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1 + 16]   ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2 + 16], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
-
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3 + 16], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+    movu        [r2 + 16], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3 + 8], m3
 
     add         r0, 32
     add         r1, 32
     add         r2, 32
-    add         r3, 32
+    add         r3, 16
 
     dec         r4d
     jnz        .loop
 
-    phaddd      m7, m7
-    phaddd      m7, m7
-    mov         eax, r6m
-    movd        r4d, m7
-    sub         eax, r4d        ; numSig
-
+    pxor        m0, m0
+    psadbw      m7, m0
+    movhlps     m0, m7
+    paddd       m7, m0
+    movd        eax, m7
     RET
 
 
+IACA_START
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,5,10
+    ; fill qbits
+    movd            xm4, r4d            ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d            ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m             ; m5 = add
+
+    vpbroadcastw    m9, [pw_1]          ; m9 = word [1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7              ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]            ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]            ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4             ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3              ; m1 = deltaU1
+    movu            [r2], m1
+    psignd          m2, m0
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]   ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]   ; m0 = tmpLevel1
+    paddd           m3, m1, m5
+    psrad           m3, xm4             ; m2 = level1
+
+    pslld           m8, m3, 8
+    psrad           m1, xm6
+    psubd           m1, m8              ; m1 = deltaU1
+    movu            [r2 + mmsize], m1
+    psignd          m3, m0
+
+    packssdw        m2, m3
+    vpermq          m2, m2, q3120
+    movu            [r3], m2
+
+    ; count non-zero coeff
+    ; TODO: popcnt is faster, but some CPU can't support
+    pminuw          m2, m9
+    paddw           m7, m2
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    ; sum count
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+
+%else ; ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,6,8
+    ; fill qbits
+    movd            xm4, r4d        ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d        ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m         ; m5 = ad
+
+    lea             r5, [pd_1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7          ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3], xm3
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2 + mmsize], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3 + mmsize/2], xm3
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+%endif ; ARCH_X86_64 == 1
+IACA_END
+
+
 ;-----------------------------------------------------------------------------
-; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal nquant, 4,5,8
+cglobal nquant, 3,5,8
     movd        m6, r4m
     mov         r4d, r5m
     pxor        m7, m7          ; m7 = numZero
-    movd        m5, r3d         ; m5 = qbits
+    movd        m5, r3m         ; m5 = qbits
     pshufd      m6, m6, 0       ; m6 = add
     mov         r3d, r4d        ; r3 = numCoeff
     shr         r4d, 3
+
 .loop:
     movu        m0, [r0]        ; m0 = level
     movu        m1, [r0 + 16]   ; m1 = level
-    movu        m2, [r1]        ; m2 = qcoeff
-    movu        m3, [r1 + 16]   ; m3 = qcoeff
+
+    pabsd       m2, m0
+    pmulld      m2, [r1]        ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m6
+    psrad       m2, m5          ; m0 = level1
+    psignd      m2, m0
+
+    pabsd       m3, m1
+    pmulld      m3, [r1 + 16]   ; m1 = tmpLevel1 * qcoeff
+    paddd       m3, m6
+    psrad       m3, m5          ; m1 = level1
+    psignd      m3, m1
+
+    packssdw    m2, m3
+
+    movu        [r2], m2
     add         r0, 32
     add         r1, 32
+    add         r2, 16
 
     pxor        m4, m4
-    pcmpgtd     m4, m0          ; m4 = sign
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m0, m6
-    psrad       m0, m5          ; m0 = level1
-    pxor        m0, m4
-    psubd       m0, m4
+    pcmpeqw     m2, m4
+    psubw       m7, m2
 
-    pxor        m4, m4
-    pcmpgtd     m4, m1          ; m4 = sign
-    pabsd       m1, m1
-    pmulld      m1, m3          ; m1 = tmpLevel1
-    paddd       m1, m6
-    psrad       m1, m5          ; m1 = level1
-    pxor        m1, m4
-    psubd       m1, m4
-
-    packssdw    m0, m0
-    packssdw    m1, m1
-    pmovsxwd    m0, m0
-    pmovsxwd    m1, m1
-
-    movu        [r2], m0
-    movu        [r2 + 16], m1
-    add         r2, 32
     dec         r4d
-
-    packssdw    m0, m1
-    pxor        m4, m4
-    pcmpeqw     m0, m4
-    psubw       m7, m0
-
     jnz         .loop
 
     packuswb    m7, m7
@@ -997,38 +1127,81 @@ cglobal nquant, 4,5,8
     mov         eax, r3d
     movd        r4d, m7
     sub         eax, r4d        ; numSig
+    RET
 
+
+INIT_YMM avx2
+cglobal nquant, 3,5,7
+    vpbroadcastd m4, r4m
+    vpbroadcastd m6, [pw_1]
+    mov         r4d, r5m
+    pxor        m5, m5              ; m7 = numZero
+    movd        xm3, r3m            ; m5 = qbits
+    mov         r3d, r4d            ; r3 = numCoeff
+    shr         r4d, 4
+
+.loop:
+    movu        m0, [r0]            ; m0 = level
+    pabsd       m1, m0
+    pmulld      m1, [r1]            ; m0 = tmpLevel1 * qcoeff
+    paddd       m1, m4
+    psrad       m1, xm3             ; m0 = level1
+    psignd      m1, m0
+
+    movu        m0, [r0 + mmsize]   ; m0 = level
+    pabsd       m2, m0
+    pmulld      m2, [r1 + mmsize]   ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m4
+    psrad       m2, xm3             ; m0 = level1
+    psignd      m2, m0
+
+    packssdw    m1, m2
+    vpermq      m2, m1, q3120
+
+    movu        [r2], m2
+    add         r0, mmsize * 2
+    add         r1, mmsize * 2
+    add         r2, mmsize
+
+    pminuw      m1, m6
+    paddw       m5, m1
+
+    dec         r4d
+    jnz         .loop
+
+    pxor        m0, m0
+    psadbw      m5, m0
+    vextracti128 xm0, m5, 1
+    paddd       xm5, xm0
+    pshufd      xm0, xm5, 2
+    paddd       xm5, xm0
+    movd        eax, xm5
     RET
 
 
 ;-----------------------------------------------------------------------------
-; void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
+; void dequant_normal(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal dequant_normal, 5,5,5
-    movd        m1, r3              ; m1 = word [scale]
     mova        m2, [pw_1]
 %if HIGH_BIT_DEPTH
     cmp         r3d, 32767
     jle         .skip
-    psrld       m1, 2
+    shr         r3d, 2
     sub         r4d, 2
 .skip:
 %endif
     movd        m0, r4d             ; m0 = shift
-    xor         r3d, r3d
-    dec         r4d
+    add         r4d, 15
     bts         r3d, r4d
-    movd        m3, r3d
-    punpcklwd   m1, m3
+    movd        m1, r3d
     pshufd      m1, m1, 0           ; m1 = dword [add scale]
     ; m0 = shift
     ; m1 = scale
     ; m2 = word [1]
 .loop:
     movu        m3, [r0]
-    movu        m4, [r0 + 16]
-    packssdw    m3, m4              ; m3 = clipQCoef
     punpckhwd   m4, m3, m2
     punpcklwd   m3, m2
     pmaddwd     m3, m1              ; m3 = dword (clipQCoef * scale + add)
@@ -1039,10 +1212,10 @@ cglobal dequant_normal, 5,5,5
     pmovsxwd    m3, m3
     packssdw    m4, m4
     pmovsxwd    m4, m4
-    movu        [r1], m3
-    movu        [r1 + 16], m4
+    mova        [r1], m3
+    mova        [r1 + 16], m4
 
-    add         r0, 32
+    add         r0, 16
     add         r1, 32
 
     sub         r2d, 8
@@ -1050,11 +1223,57 @@ cglobal dequant_normal, 5,5,5
     RET
 
 
+INIT_YMM avx2
+cglobal dequant_normal, 5,5,7
+    vpbroadcastd    m2, [pw_1]          ; m2 = word [1]
+    vpbroadcastd    m5, [pd_32767]      ; m5 = dword [32767]
+    vpbroadcastd    m6, [pd_n32768]     ; m6 = dword [-32768]
+%if HIGH_BIT_DEPTH
+    cmp             r3d, 32767
+    jle            .skip
+    shr             r3d, 2
+    sub             r4d, 2
+.skip:
+%endif
+    movd            xm0, r4d            ; m0 = shift
+    add             r4d, -1+16
+    bts             r3d, r4d
+    vpbroadcastd    m1, r3d             ; m1 = dword [add scale]
+
+    ; m0 = shift
+    ; m1 = scale
+    ; m2 = word [1]
+    shr             r2d, 4
+.loop:
+    movu            m3, [r0]
+    punpckhwd       m4, m3, m2
+    punpcklwd       m3, m2
+    pmaddwd         m3, m1              ; m3 = dword (clipQCoef * scale + add)
+    pmaddwd         m4, m1
+    psrad           m3, xm0
+    psrad           m4, xm0
+    pminsd          m3, m5
+    pmaxsd          m3, m6
+    pminsd          m4, m5
+    pmaxsd          m4, m6
+    mova            [r1 + 0 * mmsize/2], xm3
+    mova            [r1 + 1 * mmsize/2], xm4
+    vextracti128    [r1 + 2 * mmsize/2], m3, 1
+    vextracti128    [r1 + 3 * mmsize/2], m4, 1
+
+    add             r0, mmsize
+    add             r1, mmsize * 2
+
+    dec             r2d
+    jnz            .loop
+    RET
+
+
 ;-----------------------------------------------------------------------------
-; int count_nonzero(const int32_t *quantCoeff, int numCoeff);
+; int count_nonzero(const int16_t *quantCoeff, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal count_nonzero, 2,2,5
+cglobal count_nonzero, 2,2,3
     pxor        m0, m0
     shr         r1d, 4
     movd        m1, r1d
@@ -1062,13 +1281,8 @@ cglobal count_nonzero, 2,2,5
 
 .loop:
     mova        m2, [r0 +  0]
-    mova        m3, [r0 + 16]
-    packssdw    m2, m3
-    mova        m3, [r0 + 32]
-    mova        m4, [r0 + 48]
-    add         r0, 64
-    packssdw    m3, m4
-    packsswb    m2, m3
+    packsswb    m2, [r0 + 16]
+    add         r0, 32
     pcmpeqb     m2, m0
     paddb       m1, m2
     dec         r1d
@@ -1967,13 +2181,13 @@ cglobal pixel_ssim_4x4x2_core, 4,4,8
 ;-----------------------------------------------------------------------------
 ; float pixel_ssim_end( int sum0[5][4], int sum1[5][4], int width )
 ;-----------------------------------------------------------------------------
-cglobal pixel_ssim_end4, 2,3,7
+cglobal pixel_ssim_end4, 2,3
     mov       r2d, r2m
-    movdqa    m0, [r0+ 0]
-    movdqa    m1, [r0+16]
-    movdqa    m2, [r0+32]
-    movdqa    m3, [r0+48]
-    movdqa    m4, [r0+64]
+    mova      m0, [r0+ 0]
+    mova      m1, [r0+16]
+    mova      m2, [r0+32]
+    mova      m3, [r0+48]
+    mova      m4, [r0+64]
     paddd     m0, [r1+ 0]
     paddd     m1, [r1+16]
     paddd     m2, [r1+32]
@@ -1983,8 +2197,6 @@ cglobal pixel_ssim_end4, 2,3,7
     paddd     m1, m2
     paddd     m2, m3
     paddd     m3, m4
-    movdqa    m5, [ssim_c1]
-    movdqa    m6, [ssim_c2]
     TRANSPOSE4x4D  0, 1, 2, 3, 4
 
 ;   s1=m0, s2=m1, ss=m2, s12=m3
@@ -1993,20 +2205,21 @@ cglobal pixel_ssim_end4, 2,3,7
     cvtdq2ps  m1, m1
     cvtdq2ps  m2, m2
     cvtdq2ps  m3, m3
+    mulps     m4, m0, m1  ; s1*s2
+    mulps     m0, m0      ; s1*s1
+    mulps     m1, m1      ; s2*s2
     mulps     m2, [pf_64] ; ss*64
     mulps     m3, [pf_128] ; s12*128
-    movdqa    m4, m1
-    mulps     m4, m0      ; s1*s2
-    mulps     m1, m1      ; s2*s2
-    mulps     m0, m0      ; s1*s1
     addps     m4, m4      ; s1*s2*2
     addps     m0, m1      ; s1*s1 + s2*s2
     subps     m2, m0      ; vars
     subps     m3, m4      ; covar*2
-    addps     m4, m5      ; s1*s2*2 + ssim_c1
-    addps     m0, m5      ; s1*s1 + s2*s2 + ssim_c1
-    addps     m2, m6      ; vars + ssim_c2
-    addps     m3, m6      ; covar*2 + ssim_c2
+    movaps    m1, [ssim_c1]
+    addps     m4, m1      ; s1*s2*2 + ssim_c1
+    addps     m0, m1      ; s1*s1 + s2*s2 + ssim_c1
+    movaps    m1, [ssim_c2]
+    addps     m2, m1      ; vars + ssim_c2
+    addps     m3, m1      ; covar*2 + ssim_c2
 %else
     pmaddwd   m4, m1, m0  ; s1*s2
     pslld     m1, 16
@@ -2017,10 +2230,12 @@ cglobal pixel_ssim_end4, 2,3,7
     pslld     m2, 6
     psubd     m3, m4  ; covar*2
     psubd     m2, m0  ; vars
-    paddd     m0, m5
-    paddd     m4, m5
-    paddd     m3, m6
-    paddd     m2, m6
+    mova      m1, [ssim_c1]
+    paddd     m0, m1
+    paddd     m4, m1
+    mova      m1, [ssim_c2]
+    paddd     m3, m1
+    paddd     m2, m1
     cvtdq2ps  m0, m0  ; (float)(s1*s1 + s2*s2 + ssim_c1)
     cvtdq2ps  m4, m4  ; (float)(s1*s2*2 + ssim_c1)
     cvtdq2ps  m3, m3  ; (float)(covar*2 + ssim_c2)
@@ -2033,20 +2248,31 @@ cglobal pixel_ssim_end4, 2,3,7
     cmp       r2d, 4
     je .skip ; faster only if this is the common case; remove branch if we use ssim on a macroblock level
     neg       r2
+
 %ifdef PIC
     lea       r3, [mask_ff + 16]
-    movdqu    m1, [r3 + r2*4]
+    %xdefine %%mask r3
 %else
-    movdqu    m1, [mask_ff + r2*4 + 16]
+    %xdefine %%mask mask_ff + 16
 %endif
-    pand      m4, m1
+%if cpuflag(avx)
+    andps     m4, [%%mask + r2*4]
+%else
+    movups    m0, [%%mask + r2*4]
+    andps     m4, m0
+%endif
+
 .skip:
     movhlps   m0, m4
     addps     m0, m4
-    pshuflw   m4, m0, q0032
+%if cpuflag(ssse3)
+    movshdup  m4, m0
+%else
+     pshuflw   m4, m0, q0032
+%endif
     addss     m0, m4
 %if ARCH_X86_64 == 0
-    movd     r0m, m0
+    movss    r0m, m0
     fld     dword r0m
 %endif
     RET

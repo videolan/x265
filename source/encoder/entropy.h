@@ -39,6 +39,7 @@ struct EstBitsSbac;
 class TComDataCU;
 class ScalingList;
 
+
 enum SplitType
 {
     DONT_SPLIT            = 0,
@@ -88,14 +89,13 @@ struct TURecurse
 struct EstBitsSbac
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
-    uint32_t significantBits[NUM_SIG_FLAG_CTX][2];
+    int significantBits[NUM_SIG_FLAG_CTX][2];
     int lastXBits[10];
     int lastYBits[10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
     int levelAbsBits[NUM_ABS_FLAG_CTX][2];
-
     int blockCbpBits[NUM_QT_CBF_CTX][2];
-    int blockRootCbpBits[NUM_QT_ROOT_CBF_CTX][2];
+    int blockRootCbpBits[2];
 };
 
 class Entropy : public SyntaxElementWriter
@@ -133,7 +133,8 @@ public:
     void load(Entropy& src);
     void loadIntraDirModeLuma(Entropy& src);
     void store(Entropy& dest);
-    void loadContexts(Entropy& src)       { copyContextsFrom(src); }
+    void loadContexts(Entropy& src)    { copyContextsFrom(src); }
+    void copyState(Entropy& other);
 
     void codeVPS(VPS* vps);
     void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
@@ -145,14 +146,14 @@ public:
     void codeSliceHeader(Slice* slice);
     void codeSliceHeaderWPPEntryPoints(Slice* slice, uint32_t *substreamSizes, uint32_t maxOffset);
     void codeShortTermRefPicSet(RPS* rps);
-    void codeSliceFinish()                   { finish(); }
-    void codeTerminatingBit(uint32_t lsLast) { encodeBinTrm(lsLast); }
+    void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
+    void encodeCTU(TComDataCU* cu);
     void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
     void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
-    void codeSaoMerge(uint32_t code) { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
+    void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
-    void codeCUTransquantBypassFlag(TComDataCU* cu, uint32_t absPartIdx);
+    void codeCUTransquantBypassFlag(uint32_t symbol);
     void codeSkipFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeFlag(TComDataCU* cu, uint32_t absPartIdx);
     void codeMergeIndex(TComDataCU* cu, uint32_t absPartIdx);
@@ -161,37 +162,39 @@ public:
     void codeMvd(TComDataCU* cu, uint32_t absPartIdx, int list);
 
     void codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
-    void codePredMode(TComDataCU* cu, uint32_t absPartIdx);
+    void codePredMode(int predMode);
     void codePredInfo(TComDataCU* cu, uint32_t absPartIdx);
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(TComDataCU* cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
-    void codeQtCbfZero(TComDataCU* cu, TextType ttype, uint32_t trDepth);
-    void codeQtRootCbfZero(TComDataCU* cu);
-    void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP);
+    void codeQtCbfZero(TextType ttype, uint32_t trDepth);
+    void codeQtRootCbfZero();
+    void codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t* depthRange);
     void codeCoeffNxN(TComDataCU* cu, coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
     void codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     // RDO functions
-    void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
+    void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma);
     void estCBFBit(EstBitsSbac& estBitsSbac);
-    void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, TextType ttype);
-    void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, TextType ttype);
-    void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, TextType ttype);
+    void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, bool bIsLuma);
+    void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma);
+    void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLuma);
 
 private:
 
     /* CABAC private methods */
     void start();
     void finish();
-    void copyState(Entropy& other);
 
     void encodeBin(uint32_t binValue, uint8_t& ctxModel);
     void encodeBinEP(uint32_t binValue);
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
+
+    void encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture, bool& bEncodeDQP);
+    void finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
 
     void writeOut();
 
@@ -207,7 +210,7 @@ private:
     void codePredWeightTable(Slice* slice);
     void codeInterDir(TComDataCU* cu, uint32_t absPartIdx);
     void codePUWise(TComDataCU* cu, uint32_t absPartIdx);
-    void codeQtRootCbf(TComDataCU* cu, uint32_t absPartIdx);
+    void codeQtRootCbf(uint32_t cbf);
     void codeRefFrmIdxPU(TComDataCU* cu, uint32_t absPartIdx, int list);
     void codeRefFrmIdx(TComDataCU* cu, uint32_t absPartIdx, int list);
 
@@ -227,7 +230,8 @@ private:
         uint32_t bakAbsPartIdxCU;
     };
 
-    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t uiTrIdx, bool& bCodeDQP);
+    void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, 
+                         uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t uiTrIdx, bool& bCodeDQP, uint32_t* depthRange);
 
     void copyFrom(Entropy& src);
     void copyContextsFrom(Entropy& src);

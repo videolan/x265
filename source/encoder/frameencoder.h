@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Copyright (C) 2013 x265 project
  *
- * Authors: Chung Shin Yee <shinyee@multicorewareinc.com>
+ * Authors: Shin Yee <shinyee@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,11 +31,10 @@
 #include "frame.h"
 
 #include "analysis.h"
-#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "sao.h"
 
 #include "entropy.h"
 #include "framefilter.h"
-#include "cturow.h"
 #include "ratecontrol.h"
 #include "reference.h"
 #include "nal.h"
@@ -46,18 +45,60 @@ namespace x265 {
 class ThreadPool;
 class Encoder;
 
-/* Current frame stats for 2 pass */
-struct FrameStats
+struct ThreadLocalData
 {
-    /* MV bits (MV+Ref+Block Type) */
-    int         mvBits;
-    /* Texture bits (DCT coefs) */
-    int         coeffBits;
-    int         miscBits;
-    /* CU type counts stored as percentage */
-    double      cuCount_i;
-    double      cuCount_p;
-    double      cuCount_skip;
+    Analysis cuCoder;
+
+    // NOTE: the maximum LCU 64x64 have 256 4x4 partitions
+    bool     edgeFilter[256];
+    uint8_t  blockingStrength[256];
+
+    ~ThreadLocalData() { cuCoder.destroy(); }
+};
+
+/* manages the state of encoding one row of CTU blocks.  When
+ * WPP is active, several rows will be simultaneously encoded. */
+struct CTURow
+{
+    Entropy           entropyCoder;
+    Entropy           bufferEntropyCoder;  /* store context for next row */
+    Entropy           rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
+
+    FrameStats        rowStats;
+
+    /* Threading variables */
+
+    /* This lock must be acquired when reading or writing m_active or m_busy */
+    Lock              lock;
+
+    /* row is ready to run, has no neighbor dependencies. The row may have
+     * external dependencies (reference frame pixels) that prevent it from being
+     * processed, so it may stay with m_active=true for some time before it is
+     * encoded by a worker thread. */
+    volatile bool     active;
+
+    /* row is being processed by a worker thread.  This flag is only true when a
+     * worker thread is within the context of FrameEncoder::processRow(). This
+     * flag is used to detect multiple possible wavefront problems. */
+    volatile bool     busy;
+
+    /* count of completed CUs in this row */
+    volatile uint32_t completed;
+
+    /* called at the start of each frame to initialize state */
+    void init(Entropy& initContext)
+    {
+        active = false;
+        busy = false;
+        completed = 0;
+        memset(&rowStats, 0, sizeof(rowStats));
+
+        entropyCoder.load(initContext);
+
+        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
+            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
+                rdEntropyCoders[depth][ciIdx].load(initContext);
+    }
 };
 
 // Manages the wave-front processing of a single encoding frame
@@ -73,28 +114,8 @@ public:
 
     void destroy();
 
-    /* Called by WaveFront::findJob() */
-    void processRow(int row, int threadId);
-
-    void processRowEncoder(int row, ThreadLocalData& tld);
-
-    void processRowFilter(int row, ThreadLocalData& tld) { m_frameFilter.processRow(row, tld); }
-
-    void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
-    void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
-    void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
-    void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
-
+    /* triggers encode of a new frame by the worker thread */
     void startCompressFrame(Frame* pic);
-
-    /* analyze / compress frame, can be run in parallel within reference constraints */
-    void compressFrame();
-
-    /* called by compressFrame to perform wave-front compression analysis */
-    void compressCTURows();
-
-    /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice();
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
@@ -125,19 +146,13 @@ public:
     volatile int             m_vbvResetTriggerRow;
     uint64_t                 m_accessUnitBits;
 
-protected:
-
-    void threadMain();
-    void setLambda(int qp, ThreadLocalData& tld);
-    int calcQpForCu(uint32_t cuAddr, double baseQp);
-    void noiseReductionUpdate();
-
     Encoder*                 m_top;
     x265_param*              m_param;
     Frame*                   m_frame;
 
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     Entropy                  m_entropyCoder;
+    Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
     Bitstream                m_bs;
     Bitstream*               m_outStreams;
@@ -150,6 +165,32 @@ protected:
     int                      m_filterRowDelayCus;
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
+
+protected:
+
+    /* analyze / compress frame, can be run in parallel within reference constraints */
+    void compressFrame();
+
+    /* called by compressFrame to perform wave-front compression analysis */
+    void compressCTURows();
+
+    /* called by compressFrame to generate final per-row bitstreams */
+    void encodeSlice();
+
+    void threadMain();
+    void setLambda(int qp, ThreadLocalData& tld);
+    int calcQpForCu(uint32_t cuAddr, double baseQp);
+    void noiseReductionUpdate();
+
+    /* Called by WaveFront::findJob() */
+    void processRow(int row, int threadId);
+    void processRowEncoder(int row, ThreadLocalData& tld);
+    void processRowFilter(int row, ThreadLocalData& tld) { m_frameFilter.processRow(row, tld); }
+
+    void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
+    void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
+    void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
+    void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
 };
 }
 

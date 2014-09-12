@@ -26,53 +26,8 @@
 
 using namespace x265;
 
-#define INCR   32
-#define STRIDE 64
-#define ITERS  100
-#define MAX_HEIGHT 64
-#define PAD_ROWS   64
-#define BUFFSIZE STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS
-#define TEST_CASES 3
-#define SMAX (1 << 12)
-#define SMIN (-1 << 12)
-
 PixelHarness::PixelHarness()
 {
-    int bufsize = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS;
-
-    /* 64 pixels wide, 2k deep */
-    CHECKED_MALLOC(pbuf1, pixel, bufsize);
-    CHECKED_MALLOC(pbuf2, pixel, bufsize);
-    CHECKED_MALLOC(pbuf3, pixel, bufsize);
-    CHECKED_MALLOC(pbuf4, pixel, bufsize);
-
-    CHECKED_MALLOC(ibuf1, int, bufsize);
-    CHECKED_MALLOC(psbuf1, int8_t, bufsize);
-
-    CHECKED_MALLOC(sbuf1, int16_t, bufsize);
-    CHECKED_MALLOC(sbuf2, int16_t, bufsize);
-    CHECKED_MALLOC(sbuf3, int16_t, bufsize);
-
-    /* Test Case buffer array */
-    CHECKED_MALLOC(pixel_test_buff, pixel*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff1, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(short_test_buff2, int16_t*, TEST_CASES);
-    CHECKED_MALLOC(int_test_buff, int*, TEST_CASES);
-    CHECKED_MALLOC(ushort_test_buff, uint16_t*, TEST_CASES);
-    CHECKED_MALLOC(uchar_test_buff, uint8_t*, TEST_CASES);
-
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        CHECKED_MALLOC(pixel_test_buff[i], pixel, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff1[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(short_test_buff2[i], int16_t, BUFFSIZE);
-        CHECKED_MALLOC(int_test_buff[i], int, BUFFSIZE);
-        CHECKED_MALLOC(ushort_test_buff[i], uint16_t, BUFFSIZE);
-        CHECKED_MALLOC(uchar_test_buff[i], uint8_t, BUFFSIZE);
-    }
-
     /* [0] --- Random values
      * [1] --- Minimum
      * [2] --- Maximum */
@@ -84,69 +39,35 @@ PixelHarness::PixelHarness()
         short_test_buff2[0][i]  = rand() % 16383;                       // for addAvg
         int_test_buff[0][i]     = rand() % SHORT_MAX;
         ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
-        uchar_test_buff[0][i]  = rand() % ((1 << 8) - 1);
+        uchar_test_buff[0][i]   = rand() % ((1 << 8) - 1);
+
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
         short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;
         ushort_test_buff[1][i]  = PIXEL_MIN;
-        uchar_test_buff[1][i]  = PIXEL_MIN;
+        uchar_test_buff[1][i]   = PIXEL_MIN;
+
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
         short_test_buff1[2][i]  = PIXEL_MAX;
         short_test_buff2[2][i]  = 16383;
         int_test_buff[2][i]     = SHORT_MAX;
         ushort_test_buff[2][i]  = ((1 << 16) - 1);
-        uchar_test_buff[2][i]  = 255;
-    }
+        uchar_test_buff[2][i]   = 255;
 
-    for (int i = 0; i < bufsize; i++)
-    {
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
         pbuf3[i] = rand() & PIXEL_MAX;
         pbuf4[i] = rand() & PIXEL_MAX;
+
         sbuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         sbuf2[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1; //max(SHORT_MIN, min(rand(), SMAX));
         ibuf1[i] = (rand() % (2 * SMAX + 1)) - SMAX - 1;
         psbuf1[i] = (rand() % 65) - 32;                   // range is between -32 to 32
         sbuf3[i] = rand() % PIXEL_MAX; // for blockcopy only
     }
-
-    return;
-
-fail:
-    exit(1);
-}
-
-PixelHarness::~PixelHarness()
-{
-    X265_FREE(pbuf1);
-    X265_FREE(pbuf2);
-    X265_FREE(pbuf3);
-    X265_FREE(pbuf4);
-    X265_FREE(sbuf1);
-    X265_FREE(sbuf2);
-    X265_FREE(sbuf3);
-    for (int i = 0; i < TEST_CASES; i++)
-    {
-        X265_FREE(pixel_test_buff[i]);
-        X265_FREE(short_test_buff[i]);
-        X265_FREE(short_test_buff1[i]);
-        X265_FREE(short_test_buff2[i]);
-        X265_FREE(int_test_buff[i]);
-        X265_FREE(ushort_test_buff[i]);
-        X265_FREE(uchar_test_buff[i]);
-    }
-
-    X265_FREE(pixel_test_buff);
-    X265_FREE(short_test_buff);
-    X265_FREE(short_test_buff1);
-    X265_FREE(short_test_buff2);
-    X265_FREE(int_test_buff);
-    X265_FREE(ushort_test_buff);
-    X265_FREE(uchar_test_buff);
 }
 
 bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
@@ -659,10 +580,10 @@ bool PixelHarness::check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t op
     return true;
 }
 
-bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt)
+bool PixelHarness::check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt)
 {
-    ALIGN_VAR_16(int32_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int32_t, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
@@ -671,14 +592,67 @@ bool PixelHarness::check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t op
     intptr_t stride = STRIDE;
     for (int i = 0; i < ITERS; i++)
     {
-#ifdef _DEBUG
-        memset(ref_dest, 0xCD, sizeof(ref_dest));
-        memset(opt_dest, 0xCD, sizeof(opt_dest));
-#endif
-        int opt_cnt = (int)checked(opt, opt_dest, sbuf1 + j, stride);
-        int ref_cnt = ref(ref_dest, sbuf1 + j, stride);
+        int index = i % TEST_CASES;
+        int opt_cnt = (int)checked(opt, opt_dest, short_test_buff1[index] + j, stride);
+        int ref_cnt = ref(ref_dest, short_test_buff1[index] + j, stride);
 
-        if ((ref_cnt != opt_cnt) || memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int32_t)))
+        if ((ref_cnt != opt_cnt) || memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_copy_shr_t(copy_shr_t ref, copy_shr_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, short_test_buff[index] + j, stride, shift, (int)STRIDE);
+        ref(ref_dest, short_test_buff[index] + j, stride, shift, (int)STRIDE);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_copy_shl_t(copy_shl_t ref, copy_shl_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int shift = (rand() % 7 + 1);
+
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, short_test_buff[index] + j, stride, shift);
+        ref(ref_dest, short_test_buff[index] + j, stride, shift);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
             return false;
 
         reportfail();
@@ -1460,11 +1434,11 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
+        if ((i < BLOCK_64x64) && opt.copy_cnt[i])
         {
-            if (!check_cvt16to32_cnt_t(ref.cvt16to32_cnt[i], opt.cvt16to32_cnt[i]))
+            if (!check_copy_cnt_t(ref.copy_cnt[i], opt.copy_cnt[i]))
             {
-                printf("cvt16to32_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
+                printf("copy_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1486,6 +1460,16 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
+
+        if ((i < BLOCK_64x64) && opt.copy_shl[i])
+        {
+            if (!check_copy_shl_t(ref.copy_shl[i], opt.copy_shl[i]))
+            {
+                printf("copy_shl[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
     }
 
     if (opt.cvt32to16_shr)
@@ -1619,6 +1603,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_planecopy_cp(ref.planecopy_cp, opt.planecopy_cp))
         {
             printf("planecopy_cp failed\n");
+            return false;
+        }
+    }
+
+    if (opt.copy_shr)
+    {
+        if (!check_copy_shr_t(ref.copy_shr, opt.copy_shr))
+        {
+            printf("copy_shr failed!\n");
             return false;
         }
     }
@@ -1861,11 +1854,18 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             REPORT_SPEEDUP(opt.cvt32to16_shl[i], ref.cvt32to16_shl[i], sbuf2, ibuf1, STRIDE, 3);
         }
 
-        if ((i < BLOCK_64x64) && opt.cvt16to32_cnt[i])
+        if ((i < BLOCK_64x64) && opt.copy_cnt[i])
         {
-            HEADER("cvt16to32_cnt[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cvt16to32_cnt[i], ref.cvt16to32_cnt[i], ibuf1, sbuf2, STRIDE);
+            HEADER("copy_cnt[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.copy_cnt[i], ref.copy_cnt[i], sbuf1, sbuf2, STRIDE);
         }
+
+        if ((i < BLOCK_64x64) && opt.copy_shl[i])
+        {
+            HEADER("copy_shl[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.copy_shl[i], ref.copy_shl[i], sbuf1, sbuf2, STRIDE, 64);
+        }
+
     }
 
     if (opt.cvt32to16_shr)
@@ -1957,4 +1957,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         HEADER0("planecopy_cp");
         REPORT_SPEEDUP(opt.planecopy_cp, ref.planecopy_cp, uchar_test_buff[0], 64, pbuf1, 64, 64, 64, 2);
     }
+
+    if (opt.copy_shr)
+    {
+        HEADER0("copy_shr");
+        REPORT_SPEEDUP(opt.copy_shr, ref.copy_shr, sbuf1, sbuf2, 64, 5, 64);
+    }
+
 }

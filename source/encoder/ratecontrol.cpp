@@ -28,7 +28,6 @@
 #include "frame.h"
 
 #include "encoder.h"
-#include "frameencoder.h"
 #include "slicetype.h"
 #include "ratecontrol.h"
 #include "sei.h"
@@ -421,8 +420,8 @@ RateControl::RateControl(x265_param *p)
         if (m_qp && !m_param->bLossless)
         {
             m_qpConstant[P_SLICE] = m_qp;
-            m_qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_qp + m_pbOffset + 0.5));
+            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp + m_pbOffset + 0.5));
         }
         else
         {
@@ -637,11 +636,10 @@ bool RateControl::init(const SPS *sps)
                     return false;
                 }
                 rce = &m_rce2Pass[frameNumber];
-                e += sscanf(p, " in:%*d out:%*d type:%c dur:%lf q:%lf q-aq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
-                       &picType, &rce->frameDuration, &qpRc, &qpAq, &rce->coeffBits,
+                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
+                       &picType, &qpRc, &qpAq, &rce->coeffBits,
                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
                        &rce->skipCuCount);
-                rce->clippedDuration = CLIP_DURATION(rce->frameDuration) / BASE_FRAME_DURATION;
                 rce->keptAsRef = true;
                 if (picType == 'b' || picType == 'p')
                     rce->keptAsRef = false;
@@ -653,7 +651,7 @@ bool RateControl::init(const SPS *sps)
                     rce->sliceType = B_SLICE;
                 else
                     e = -1;
-                if (e < 11)
+                if (e < 10)
                 {
                     x265_log(m_param, X265_LOG_ERROR, "statistics are damaged at line %d, parser out=%d\n", i, e);
                     return false;
@@ -751,10 +749,7 @@ void RateControl::initHRD(SPS *sps)
 bool RateControl::initPass2()
 {
     uint64_t allConstBits = 0;
-    double duration = 0;
-    for (int i = 0; i < m_numEntries; i++)
-        duration += m_rce2Pass[i].frameDuration;
-    uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * duration);
+    uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * m_numEntries * m_frameDuration);
     double rateFactor, stepMult;
     double qBlur = m_param->rc.qblur;
     double cplxBlur = m_param->rc.complexityBlur;
@@ -762,6 +757,7 @@ bool RateControl::initPass2()
     double expectedBits;
     double *qScale, *blurredQscale;
     double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
+    double clippedDuration = CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION;
 
     /* find total/average complexity & const_bits */
     for (int i = 0; i < m_numEntries; i++)
@@ -793,7 +789,7 @@ bool RateControl::initPass2()
                 break;
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
         }
         /* weighted average of cplx of past frames */
         weight = 1.0;
@@ -802,7 +798,7 @@ bool RateControl::initPass2()
             RateControlEntry *rcj = &m_rce2Pass[i - j];
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
-            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / rcj->clippedDuration;
+            cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < .0001)
                 break;
@@ -922,11 +918,11 @@ bool RateControl::initPass2()
                  (double)m_param->rc.bitrate,
                  expectedBits * m_fps / (m_numEntries * 1000.),
                  avgq);
-        if (expectedBits < allAvailableBits && avgq < MIN_QP + 2)
+        if (expectedBits < allAvailableBits && avgq < QP_MIN + 2)
         {
             x265_log(m_param, X265_LOG_WARNING, "try reducing target bitrate\n");
         }
-        else if (expectedBits > allAvailableBits && avgq > MAX_QP - 2)
+        else if (expectedBits > allAvailableBits && avgq > QP_MAX_SPEC - 2)
         {
             x265_log(m_param, X265_LOG_WARNING, "try increasing target bitrate\n");
         }
@@ -1014,9 +1010,9 @@ int RateControl::rateControlSliceType(int frameNum)
              * adaptive B-frames, but that would be complicated.
              * So just calculate the average QP used so far. */
             m_param->rc.qp = (m_accumPQp < 1) ? ABR_INIT_QP_MAX : (int)(m_accumPQp + 0.5);
-            m_qpConstant[P_SLICE] = Clip3(0, MAX_MAX_QP, m_param->rc.qp);
-            m_qpConstant[I_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_param->rc.qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, MAX_MAX_QP, (int)(m_param->rc.qp + m_pbOffset + 0.5));
+            m_qpConstant[P_SLICE] = Clip3(0, QP_MAX_MAX, m_param->rc.qp);
+            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp + m_pbOffset + 0.5));
 
             x265_log(m_param, X265_LOG_ERROR, "2nd pass has more frames than 1st pass (%d)\n", m_numEntries);
             x265_log(m_param, X265_LOG_ERROR, "continuing anyway, at constant QP=%d\n", m_param->rc.qp);
@@ -1107,7 +1103,7 @@ int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* en
             rce->lastSatd = m_currentSatd;
         }
         double q = x265_qScale2qp(rateEstimateQscale(pic, rce));
-        q = Clip3((double)MIN_QP, (double)MAX_MAX_QP, q);
+        q = Clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
         m_qp = int(q + 0.5);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
@@ -1131,7 +1127,7 @@ int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* en
     if (pic->m_forceqp)
     {
         m_qp = int32_t(pic->m_forceqp + 0.5) - 1;
-        m_qp = Clip3(MIN_QP, MAX_MAX_QP, m_qp);
+        m_qp = Clip3(QP_MIN, QP_MAX_MAX, m_qp);
         rce->qpaRc = pic->m_avgQpRc = pic->m_avgQpAq = m_qp;
     }
     // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
@@ -1237,7 +1233,7 @@ bool RateControl::findUnderflow(double *fills, int *t0, int *t1, int over)
     int start = -1, end = -1;
     for (int i = *t0; i < m_numEntries; i++)
     {
-        fill += (m_rce2Pass[i].frameDuration * m_vbvMaxRate -
+        fill += (m_frameDuration * m_vbvMaxRate -
                  qScale2bits(&m_rce2Pass[i], m_rce2Pass[i].newQScale)) * parity;
         fill = Clip3(0.0, m_bufferSize, fill);
         fills[i] = fill;
@@ -1871,8 +1867,8 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
     int canReencodeRow = 1;
     /* tweak quality based on difference from predicted size */
     double prevRowQp = qpVbv;
-    double qpAbsoluteMax = MAX_MAX_QP;
-    double qpAbsoluteMin = MIN_QP;
+    double qpAbsoluteMax = QP_MAX_MAX;
+    double qpAbsoluteMin = QP_MIN;
     if (m_rateFactorMaxIncrement)
         qpAbsoluteMax = X265_MIN(qpAbsoluteMax, rce->qpNoVbv + m_rateFactorMaxIncrement);
 
@@ -2104,16 +2100,15 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             : rce->sliceType == P_SLICE ? 'P'
             : IS_REFERENCED(slice) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
-                    "in:%d out:%d type:%c dur:%.3f q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+                    "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                     rce->poc, rce->encodeOrder,
-                    cType, m_frameDuration,
-                    pic->m_avgQpRc, pic->m_avgQpAq,
+                    cType, pic->m_avgQpRc, pic->m_avgQpAq,
                     stats->coeffBits,
                     stats->mvBits,
                     stats->miscBits,
-                    stats->cuCount_i * m_ncu,
-                    stats->cuCount_p * m_ncu,
-                    stats->cuCount_skip * m_ncu) < 0)
+                    stats->percentIntra * m_ncu,
+                    stats->percentInter * m_ncu,
+                    stats->percentSkip  * m_ncu) < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
         if (m_param->rc.cuTree && IS_REFERENCED(slice) && !m_param->rc.bStatRead)

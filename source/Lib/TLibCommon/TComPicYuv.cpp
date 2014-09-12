@@ -64,7 +64,7 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxCUDepth)
+bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxFullDepth)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -87,6 +87,7 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUS
 
     m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUSize;
+    uint32_t numPartitions = 1 << maxFullDepth * 2;
 
     CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -108,15 +109,14 @@ bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUS
         }
     }
 
-    CHECKED_MALLOC(m_buOffsetY, int, (size_t)1 << (2 * maxCUDepth));
-    CHECKED_MALLOC(m_buOffsetC, int, (size_t)1 << (2 * maxCUDepth));
-    for (int buRow = 0; buRow < (1 << maxCUDepth); buRow++)
+    CHECKED_MALLOC(m_buOffsetY, int, (size_t)numPartitions);
+    CHECKED_MALLOC(m_buOffsetC, int, (size_t)numPartitions);
+    for (uint32_t idx = 0; idx < numPartitions; ++idx)
     {
-        for (int buCol = 0; buCol < (1 << maxCUDepth); buCol++)
-        {
-            m_buOffsetY[(buRow << maxCUDepth) + buCol] = getStride() * buRow * (maxCUSize >> maxCUDepth) + buCol * (maxCUSize  >> maxCUDepth);
-            m_buOffsetC[(buRow << maxCUDepth) + buCol] = getCStride() * buRow * (maxCUSize >> maxCUDepth >> m_vChromaShift) + buCol * (maxCUSize >> maxCUDepth >> m_hChromaShift);
-        }
+        int x = g_zscanToPelX[idx];
+        int y = g_zscanToPelY[idx];
+        m_buOffsetY[idx] = getStride() * y + x;
+        m_buOffsetC[idx] = getCStride() * (y >> m_vChromaShift) + (x >> m_hChromaShift);
     }
 
     return true;

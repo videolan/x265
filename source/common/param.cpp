@@ -98,21 +98,33 @@ void x265_param_default(x265_param *param)
 {
     memset(param, 0, sizeof(x265_param));
 
-    /* Applying non-zero default values to all elements in the param structure */
+    /* Applying default values to all elements in the param structure */
     param->cpuid = x265::cpu_detect();
-    param->logLevel = X265_LOG_INFO;
     param->bEnableWavefront = 1;
-    param->frameNumThreads = 0;
     param->poolNumThreads = 0;
+    param->frameNumThreads = 0;
+
+    param->logLevel = X265_LOG_INFO;
     param->csvfn = NULL;
     param->rc.lambdaFileName = NULL;
     param->bLogCuStats = 0;
-    param->bEmitInfoSEI = 1;
+    param->decodedPictureHashSEI = 0;
+
+    /* Quality Measurement Metrics */
+    param->bEnablePsnr = 0;
+    param->bEnableSsim = 0;
 
     /* Source specifications */
     param->internalBitDepth = x265_max_bit_depth;
     param->internalCsp = X265_CSP_I420;
+
     param->levelIdc = 0;
+    param->bHighTier = 0;
+    param->interlaceMode = 0;
+    param->bRepeatHeaders = 0;
+    param->bEnableAccessUnitDelimiters = 0;
+    param->bEmitHRDSEI = 0;
+    param->bEmitInfoSEI = 1;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -193,10 +205,6 @@ void x265_param_default(x265_param *param)
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.bEnableSlowFirstPass = 0;
-
-    /* Quality Measurement Metrics */
-    param->bEnablePsnr = 0;
-    param->bEnableSsim = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -650,6 +658,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("cutree")    p->rc.cuTree = atobool(value);
     OPT("slow-firstpass") p->rc.bEnableSlowFirstPass = atobool(value);
+    OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
     OPT("sar")
     {
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);
@@ -869,12 +878,8 @@ int x265_check_params(x265_param *param)
         return check_failed;
 
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t maxCUDepth = maxLog2CUSize - 2;
     uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
     uint32_t tuQTMinLog2Size = 2; //log2(4)
-
-    CHECK((param->maxCUSize >> maxCUDepth) < 4,
-          "Minimum partition width size should be larger than or equal to 8");
 
     /* These checks might be temporary */
 #if HIGH_BIT_DEPTH
@@ -1049,10 +1054,6 @@ void x265_param_apply_fastfirstpass(x265_param* param)
 
 int x265_set_globals(x265_param *param)
 {
-    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t maxCUDepth = maxLog2CUSize - 2;
-    uint32_t tuQTMinLog2Size = 2; //log2(4)
-
     static int once /* = 0 */;
 
     if (ATOMIC_CAS32(&once, 0, 1) == 1)
@@ -1065,25 +1066,20 @@ int x265_set_globals(x265_param *param)
     }
     else
     {
+        uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
+
         // set max CU width & height
-        g_maxCUSize = param->maxCUSize;
+        g_maxCUSize     = param->maxCUSize;
         g_maxLog2CUSize = maxLog2CUSize;
 
         // compute actual CU depth with respect to config depth and max transform size
-        g_addCUDepth = g_maxLog2CUSize - maxCUDepth - tuQTMinLog2Size;
-
-        maxCUDepth += g_addCUDepth;
-        g_addCUDepth++;
-        g_maxCUDepth = maxCUDepth;
-        g_log2UnitSize = g_maxLog2CUSize - g_maxCUDepth;
+        g_maxCUDepth   = maxLog2CUSize - MIN_LOG2_CU_SIZE;
+        g_maxFullDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
 
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];
-        initZscanToRaster(g_maxCUDepth + 1, 1, 0, tmp);
-        initRasterToZscan(g_maxCUSize, g_maxCUDepth + 1);
-
-        // initialize conversion matrix from partition index to pel
-        initRasterToPelXY(g_maxCUSize, g_maxCUDepth + 1);
+        initZscanToRaster(g_maxFullDepth, 1, 0, tmp);
+        initRasterToZscan(g_maxFullDepth);
     }
     return 0;
 }
@@ -1258,7 +1254,7 @@ char *x265_param2string(x265_param *p)
             s += sprintf(s, " bitrate=%d ratetol=%.1f",
                          p->rc.bitrate, p->rc.rateTolerance);
         s += sprintf(s, " qcomp=%.2f qpmin=%d qpmax=%d qpstep=%d",
-                     p->rc.qCompress, MIN_QP, MAX_QP, p->rc.qpStep);
+                     p->rc.qCompress, QP_MIN, QP_MAX_SPEC, p->rc.qpStep);
         if (p->rc.bStatRead)
             s += sprintf( s, " cplxblur=%.1f qblur=%.1f",
                           p->rc.complexityBlur, p->rc.qblur);
@@ -1301,7 +1297,7 @@ bool parseLambdaFile(x265_param *param)
     {
         double *table = t ? x265_lambda2_tab : x265_lambda_tab;
 
-        for (int i = 0; i < MAX_MAX_QP + 1; i++)
+        for (int i = 0; i < QP_MAX_MAX + 1; i++)
         {
             double value;
 
