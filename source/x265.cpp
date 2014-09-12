@@ -788,7 +788,7 @@ void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
 
 void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
 {
-    fpos_t seekTo = pic->poc * this->analysisRecordSize;
+    uint64_t seekTo = pic->poc * this->analysisRecordSize;
     fseeko(this->analysisFile, seekTo, SEEK_SET);
     fwrite(&p->sourceWidth, sizeof(int), 1, this->analysisFile);
     fwrite(&p->sourceHeight, sizeof(int), 1, this->analysisFile);
