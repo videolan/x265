@@ -200,6 +200,8 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 namespace x265 {
 
+enum { SAO_NUM_OFFSET = 4 };
+
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
@@ -215,9 +217,8 @@ struct SAOQTPart
     enum { NUM_DOWN_PART = 4 };
 
     int     bestType;
-    int     length;
     int     subTypeIdx;  // indicates EO class or BO band position
-    int     offset[4];
+    int     offset[SAO_NUM_OFFSET];
     int     startCUX;
     int     startCUY;
     int     endCUX;
@@ -245,10 +246,9 @@ struct SaoLcuParam
     bool mergeLeftFlag;
     int  typeIdx;
     int  subTypeIdx;    // indicates EO class or BO band position
-    int  offset[4];
+    int  offset[SAO_NUM_OFFSET];
     int  partIdx;
     int  partIdxTmp;
-    int  length;
 
     void reset()
     {

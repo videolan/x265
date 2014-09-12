@@ -36,7 +36,7 @@ enum SAOTypeLen
 {
     SAO_EO_LEN = 4,
     SAO_BO_LEN = 4,
-    SAO_MAX_BO_CLASSES = 32
+    SAO_NUM_BO_CLASSES = 32
 };
 
 enum SAOType
@@ -55,15 +55,13 @@ protected:
 
     enum { SAO_MAX_DEPTH = 4 };
     enum { SAO_BO_BITS  = 5 };
-    enum { LUMA_GROUP_NUM = 1 << SAO_BO_BITS };
-    enum { MAX_NUM_SAO_OFFSETS = 4 };
     enum { MAX_NUM_SAO_CLASS = 33 };
     enum { SAO_BIT_INC = X265_MAX(X265_DEPTH - 10, 0) };
     enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+    enum { NUM_EDGETYPE = 5 };
 
     static const int      s_numCulPartsLevel[5];
-    static const int      s_numClass[MAX_NUM_SAO_TYPE];
-    static const uint32_t s_eoTable[9];
+    static const uint32_t s_eoTable[NUM_EDGETYPE];
 
     typedef int64_t (PerClass[MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
     typedef int64_t (PerType[MAX_NUM_SAO_TYPE]);
@@ -86,9 +84,8 @@ protected:
     PerPlane*   m_offsetOrgPreDblk;
 
     double      m_depthSaoRate[2][4];
-    int32_t*    m_offsetBo;
-    int32_t*    m_chromaOffsetBo;
-    int8_t      m_offsetEo[LUMA_GROUP_NUM];
+    pixel*      m_offsetBo;
+    int8_t      m_offsetEo[NUM_EDGETYPE];
 
     int         m_maxSplitLevel;
 
@@ -100,7 +97,6 @@ protected:
 
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
-    pixel*      m_tableBo;
 
     pixel*      m_tmpU1[3];
     pixel*      m_tmpU2[3];

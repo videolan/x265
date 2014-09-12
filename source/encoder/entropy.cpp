@@ -879,19 +879,19 @@ void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
 
     if (symbol)
     {
-        if (saoLcuParam->typeIdx < 4 && compIdx != 2)
+        if (saoLcuParam->typeIdx < SAO_BO && compIdx != 2)
             saoLcuParam->subTypeIdx = saoLcuParam->typeIdx;
 
         int offsetTh = 1 << X265_MIN(X265_DEPTH - 5, 5);
         if (saoLcuParam->typeIdx == SAO_BO)
         {
-            for (i = 0; i < saoLcuParam->length; i++)
+            for (i = 0; i < SAO_BO_LEN; i++)
             {
                 uint32_t absOffset = ((saoLcuParam->offset[i] < 0) ? -saoLcuParam->offset[i] : saoLcuParam->offset[i]);
                 codeSaoMaxUvlc(absOffset, offsetTh - 1);
             }
 
-            for (i = 0; i < saoLcuParam->length; i++)
+            for (i = 0; i < SAO_BO_LEN; i++)
             {
                 if (saoLcuParam->offset[i] != 0)
                 {
@@ -903,7 +903,7 @@ void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
             symbol = (uint32_t)(saoLcuParam->subTypeIdx);
             codeSaoUflc(5, symbol);
         }
-        else if (saoLcuParam->typeIdx < 4)
+        else // if (saoLcuParam->typeIdx < SAO_BO)
         {
             codeSaoMaxUvlc(saoLcuParam->offset[0], offsetTh - 1);
             codeSaoMaxUvlc(saoLcuParam->offset[1], offsetTh - 1);

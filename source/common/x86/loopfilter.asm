@@ -44,7 +44,7 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     pslldq      m0,    15          ; m0 = [iSignLeft x .. x]
     pcmpeqb     m4,    m4          ; m4 = [pb -1]
     pxor        m5,    m5          ; m5 = 0
-    movu        m6,    [r1]        ; m6 = m_iOffsetEo
+    movh        m6,    [r1]        ; m6 = m_offsetEo
 
 .loop:
     movu        m7,    [r0]        ; m1 = pRec[x]
