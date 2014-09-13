@@ -89,7 +89,7 @@ typedef struct x265_nal
 } x265_nal;
 
 /* Stores inter (motion estimation) analysis data for a single frame */
-struct x265_inter_data
+typedef struct x265_inter_data
 {
     uint32_t zOrder;
     int      ref[2];
@@ -99,26 +99,26 @@ struct x265_inter_data
     uint32_t depth;
     int      poc;
     uint32_t cuAddr;
-};
+} x265_inter_data;
 
 /* Stores intra (motion estimation) analysis data for a single frame */
-struct x265_intra_data
+typedef struct x265_intra_data
 {
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
     int*      poc;
     uint32_t* cuAddr;
-};
+} x265_intra_data;
 
 /* Stores all analysis data for a single frame */
-struct x265_analysis_data
+typedef struct x265_analysis_data
 {
     x265_inter_data* interData;
     x265_intra_data* intraData;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
-};
+} x265_analysis_data;
 
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
