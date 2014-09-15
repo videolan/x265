@@ -36,7 +36,7 @@
 using namespace x265;
 
 namespace {
-void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
+void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num too large\n");
 
@@ -53,13 +53,11 @@ void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32
         {
             __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
 
-            quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
-            quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+            quantCoef12 = _mm_loadu_si128((__m128i*)(quantCoef + n));
 
             deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
             deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
 
-            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
             sign = _mm_srai_epi16(quantCoef12, 15);
             quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
             quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);
@@ -81,13 +79,11 @@ void dequant_scaling(const int32_t* quantCoef, const int32_t *deQuantCoef, int32
         {
             __m128i quantCoef1, quantCoef2, deQuantCoef1, deQuantCoef2, quantCoef12, sign;
 
-            quantCoef1 = _mm_loadu_si128((__m128i*)(quantCoef + n));
-            quantCoef2 = _mm_loadu_si128((__m128i*)(quantCoef + n + 4));
+            quantCoef12 = _mm_loadu_si128((__m128i*)(quantCoef + n));
 
             deQuantCoef1 = _mm_loadu_si128((__m128i*)(deQuantCoef + n));
             deQuantCoef2 = _mm_loadu_si128((__m128i*)(deQuantCoef + n + 4));
 
-            quantCoef12 = _mm_packs_epi32(quantCoef1, quantCoef2);
             sign = _mm_srai_epi16(quantCoef12, 15);
             quantCoef1 = _mm_unpacklo_epi16(quantCoef12, sign);
             quantCoef2 = _mm_unpackhi_epi16(quantCoef12, sign);

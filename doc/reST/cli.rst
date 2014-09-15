@@ -918,6 +918,24 @@ Quality, rate control and rate distortion options
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
 
+.. option:: --analysis-mode <string|int>
+
+	Specify whether analysis information of each frame is output by encoder
+	or input for reuse. By reading the analysis data writen by an
+	earlier encode of the same sequence, substantial redundant work may
+	be avoided.
+
+	The following data may be stored and reused:
+	I frames   - split decisions and luma intra directions of all CUs.
+	P/B frames - motion vectors are dumped at each depth for all CUs.
+
+	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
+
+.. option:: --analysis-file <filename>
+
+	Specify a filename for analysis data (see :option:`--analysis-mode`)
+	If no filename is specified, x265_analysis.dat is used.
+
 Loop filters
 ============
 

@@ -7,7 +7,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
     ../Lib/TLibCommon/TComRom.cpp
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
     ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
@@ -20,7 +19,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
     ../Lib/TLibCommon/TComWeightPrediction.h
     ../Lib/TLibCommon/TComYuv.h)
 

@@ -83,6 +83,9 @@ public:
     double            m_rateFactor; // calculated based on the Frame QP
     int32_t           m_forceqp;    // Force to use the qp specified in qp file
 
+    x265_intra_data*  m_intraData;  // intra analysis information
+    x265_inter_data*  m_interData;  // inter analysis information
+
     Frame();
     virtual ~Frame();
 
@@ -119,10 +122,6 @@ public:
     uint32_t    getFrameWidthInCU() const  { return m_picSym->getFrameWidthInCU(); }
 
     uint32_t    getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
-
-    uint32_t    getUnitSize() const        { return m_picSym->getUnitSize(); }
-
-    uint32_t    getLog2UnitSize() const    { return m_picSym->getLog2UnitSize(); }
 };
 }
 

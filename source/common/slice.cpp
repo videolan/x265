@@ -178,3 +178,26 @@ void RPS::sortDeltaPOC()
         bUsed[k] = used;
     }
 }
+
+uint32_t Slice::realEndAddress(uint32_t endCUAddr)
+{
+    // Calculate end address
+    uint32_t internalAddress = (endCUAddr - 1) % m_pic->getNumPartInCU();
+    uint32_t externalAddress = (endCUAddr - 1) / m_pic->getNumPartInCU();
+    uint32_t xmax = m_sps->picWidthInLumaSamples  - (externalAddress % m_pic->getFrameWidthInCU()) * g_maxCUSize;
+    uint32_t ymax = m_sps->picHeightInLumaSamples - (externalAddress / m_pic->getFrameWidthInCU()) * g_maxCUSize;
+
+    while (g_zscanToPelX[internalAddress] >= xmax || g_zscanToPelY[internalAddress] >= ymax)
+        internalAddress--;
+
+    internalAddress++;
+    if (internalAddress == m_pic->getNumPartInCU())
+    {
+        internalAddress = 0;
+        externalAddress++;
+    }
+
+    return externalAddress * m_pic->getNumPartInCU() + internalAddress;
+}
+
+

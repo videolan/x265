@@ -29,11 +29,120 @@
 %include "x86util.asm"
 
 SECTION_RODATA 32
+tab_dct16_1:    dw 64, 64, 64, 64, 64, 64, 64, 64
+                dw 90, 87, 80, 70, 57, 43, 25,  9
+                dw 89, 75, 50, 18, -18, -50, -75, -89
+                dw 87, 57,  9, -43, -80, -90, -70, -25
+                dw 83, 36, -36, -83, -83, -36, 36, 83
+                dw 80,  9, -70, -87, -25, 57, 90, 43
+                dw 75, -18, -89, -50, 50, 89, 18, -75
+                dw 70, -43, -87,  9, 90, 25, -80, -57
+                dw 64, -64, -64, 64, 64, -64, -64, 64
+                dw 57, -80, -25, 90, -9, -87, 43, 70
+                dw 50, -89, 18, 75, -75, -18, 89, -50
+                dw 43, -90, 57, 25, -87, 70,  9, -80
+                dw 36, -83, 83, -36, -36, 83, -83, 36
+                dw 25, -70, 90, -80, 43,  9, -57, 87
+                dw 18, -50, 75, -89, 89, -75, 50, -18
+                dw  9, -25, 43, -57, 70, -80, 87, -90
+
+
+tab_dct16_2:    dw 64, 64, 64, 64, 64, 64, 64, 64
+                dw -9, -25, -43, -57, -70, -80, -87, -90
+                dw -89, -75, -50, -18, 18, 50, 75, 89
+                dw 25, 70, 90, 80, 43, -9, -57, -87
+                dw 83, 36, -36, -83, -83, -36, 36, 83
+                dw -43, -90, -57, 25, 87, 70, -9, -80
+                dw -75, 18, 89, 50, -50, -89, -18, 75
+                dw 57, 80, -25, -90, -9, 87, 43, -70
+                dw 64, -64, -64, 64, 64, -64, -64, 64
+                dw -70, -43, 87,  9, -90, 25, 80, -57
+                dw -50, 89, -18, -75, 75, 18, -89, 50
+                dw 80, -9, -70, 87, -25, -57, 90, -43
+                dw 36, -83, 83, -36, -36, 83, -83, 36
+                dw -87, 57, -9, -43, 80, -90, 70, -25
+                dw -18, 50, -75, 89, -89, 75, -50, 18
+                dw 90, -87, 80, -70, 57, -43, 25, -9
+
+dct16_shuf1:     times 2 db 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1
+
+dct16_shuf2:    times 2 db 0, 1, 14, 15, 2, 3, 12, 13, 4, 5, 10, 11, 6, 7, 8, 9
+
+tab_dct32_1:    dw 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+                dw 90, 90, 88, 85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13,  4
+                dw 90, 87, 80, 70, 57, 43, 25,  9, -9, -25, -43, -57, -70, -80, -87, -90
+                dw 90, 82, 67, 46, 22, -4, -31, -54, -73, -85, -90, -88, -78, -61, -38, -13
+                dw 89, 75, 50, 18, -18, -50, -75, -89, -89, -75, -50, -18, 18, 50, 75, 89
+                dw 88, 67, 31, -13, -54, -82, -90, -78, -46, -4, 38, 73, 90, 85, 61, 22
+                dw 87, 57,  9, -43, -80, -90, -70, -25, 25, 70, 90, 80, 43, -9, -57, -87
+                dw 85, 46, -13, -67, -90, -73, -22, 38, 82, 88, 54, -4, -61, -90, -78, -31
+                dw 83, 36, -36, -83, -83, -36, 36, 83, 83, 36, -36, -83, -83, -36, 36, 83
+                dw 82, 22, -54, -90, -61, 13, 78, 85, 31, -46, -90, -67,  4, 73, 88, 38
+                dw 80,  9, -70, -87, -25, 57, 90, 43, -43, -90, -57, 25, 87, 70, -9, -80
+                dw 78, -4, -82, -73, 13, 85, 67, -22, -88, -61, 31, 90, 54, -38, -90, -46
+                dw 75, -18, -89, -50, 50, 89, 18, -75, -75, 18, 89, 50, -50, -89, -18, 75
+                dw 73, -31, -90, -22, 78, 67, -38, -90, -13, 82, 61, -46, -88, -4, 85, 54
+                dw 70, -43, -87,  9, 90, 25, -80, -57, 57, 80, -25, -90, -9, 87, 43, -70
+                dw 67, -54, -78, 38, 85, -22, -90,  4, 90, 13, -88, -31, 82, 46, -73, -61
+                dw 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64
+                dw 61, -73, -46, 82, 31, -88, -13, 90, -4, -90, 22, 85, -38, -78, 54, 67
+                dw 57, -80, -25, 90, -9, -87, 43, 70, -70, -43, 87,  9, -90, 25, 80, -57
+                dw 54, -85, -4, 88, -46, -61, 82, 13, -90, 38, 67, -78, -22, 90, -31, -73
+                dw 50, -89, 18, 75, -75, -18, 89, -50, -50, 89, -18, -75, 75, 18, -89, 50
+                dw 46, -90, 38, 54, -90, 31, 61, -88, 22, 67, -85, 13, 73, -82,  4, 78
+                dw 43, -90, 57, 25, -87, 70,  9, -80, 80, -9, -70, 87, -25, -57, 90, -43
+                dw 38, -88, 73, -4, -67, 90, -46, -31, 85, -78, 13, 61, -90, 54, 22, -82
+                dw 36, -83, 83, -36, -36, 83, -83, 36, 36, -83, 83, -36, -36, 83, -83, 36
+                dw 31, -78, 90, -61,  4, 54, -88, 82, -38, -22, 73, -90, 67, -13, -46, 85
+                dw 25, -70, 90, -80, 43,  9, -57, 87, -87, 57, -9, -43, 80, -90, 70, -25
+                dw 22, -61, 85, -90, 73, -38, -4, 46, -78, 90, -82, 54, -13, -31, 67, -88
+                dw 18, -50, 75, -89, 89, -75, 50, -18, -18, 50, -75, 89, -89, 75, -50, 18
+                dw 13, -38, 61, -78, 88, -90, 85, -73, 54, -31,  4, 22, -46, 67, -82, 90
+                dw 9, -25, 43, -57, 70, -80, 87, -90, 90, -87, 80, -70, 57, -43, 25, -9
+                dw 4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90
+
+tab_dct32_2:    dw 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+                dw -4, -13, -22, -31, -38, -46, -54, -61, -67, -73, -78, -82, -85, -88, -90, -90
+                dw -90, -87, -80, -70, -57, -43, -25, -9,  9, 25, 43, 57, 70, 80, 87, 90
+                dw 13, 38, 61, 78, 88, 90, 85, 73, 54, 31,  4, -22, -46, -67, -82, -90
+                dw 89, 75, 50, 18, -18, -50, -75, -89, -89, -75, -50, -18, 18, 50, 75, 89
+                dw -22, -61, -85, -90, -73, -38,  4, 46, 78, 90, 82, 54, 13, -31, -67, -88
+                dw -87, -57, -9, 43, 80, 90, 70, 25, -25, -70, -90, -80, -43,  9, 57, 87
+                dw 31, 78, 90, 61,  4, -54, -88, -82, -38, 22, 73, 90, 67, 13, -46, -85
+                dw 83, 36, -36, -83, -83, -36, 36, 83, 83, 36, -36, -83, -83, -36, 36, 83
+                dw -38, -88, -73, -4, 67, 90, 46, -31, -85, -78, -13, 61, 90, 54, -22, -82
+                dw -80, -9, 70, 87, 25, -57, -90, -43, 43, 90, 57, -25, -87, -70,  9, 80
+                dw 46, 90, 38, -54, -90, -31, 61, 88, 22, -67, -85, -13, 73, 82,  4, -78
+                dw 75, -18, -89, -50, 50, 89, 18, -75, -75, 18, 89, 50, -50, -89, -18, 75
+                dw -54, -85,  4, 88, 46, -61, -82, 13, 90, 38, -67, -78, 22, 90, 31, -73
+                dw -70, 43, 87, -9, -90, -25, 80, 57, -57, -80, 25, 90,  9, -87, -43, 70
+                dw 61, 73, -46, -82, 31, 88, -13, -90, -4, 90, 22, -85, -38, 78, 54, -67
+                dw 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64
+                dw -67, -54, 78, 38, -85, -22, 90,  4, -90, 13, 88, -31, -82, 46, 73, -61
+                dw -57, 80, 25, -90,  9, 87, -43, -70, 70, 43, -87, -9, 90, -25, -80, 57
+                dw 73, 31, -90, 22, 78, -67, -38, 90, -13, -82, 61, 46, -88,  4, 85, -54
+                dw 50, -89, 18, 75, -75, -18, 89, -50, -50, 89, -18, -75, 75, 18, -89, 50
+                dw -78, -4, 82, -73, -13, 85, -67, -22, 88, -61, -31, 90, -54, -38, 90, -46
+                dw -43, 90, -57, -25, 87, -70, -9, 80, -80,  9, 70, -87, 25, 57, -90, 43
+                dw 82, -22, -54, 90, -61, -13, 78, -85, 31, 46, -90, 67,  4, -73, 88, -38
+                dw 36, -83, 83, -36, -36, 83, -83, 36, 36, -83, 83, -36, -36, 83, -83, 36
+                dw -85, 46, 13, -67, 90, -73, 22, 38, -82, 88, -54, -4, 61, -90, 78, -31
+                dw -25, 70, -90, 80, -43, -9, 57, -87, 87, -57,  9, 43, -80, 90, -70, 25
+                dw 88, -67, 31, 13, -54, 82, -90, 78, -46,  4, 38, -73, 90, -85, 61, -22
+                dw 18, -50, 75, -89, 89, -75, 50, -18, -18, 50, -75, 89, -89, 75, -50, 18
+                dw -90, 82, -67, 46, -22, -4, 31, -54, 73, -85, 90, -88, 78, -61, 38, -13
+                dw -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9
+                dw 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4
+
+avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
+                dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
 
 tab_dct4:       times 4 dw 64, 64
                 times 4 dw 83, 36
                 times 4 dw 64, -64
                 times 4 dw 36, -83
+
+dct4_shuf:      db 0, 1, 2, 3, 8, 9, 10, 11, 6, 7, 4, 5, 14, 15, 12, 13
 
 tab_dst4:       times 2 dw 29, 55, 74, 84
                 times 2 dw 74, 74,  0, -74
@@ -92,6 +201,7 @@ cextern pd_64
 cextern pd_128
 cextern pd_256
 cextern pd_512
+cextern pd_1024
 cextern pd_2048
 cextern pw_ppppmmmm
 
@@ -184,7 +294,74 @@ cglobal dct4, 3, 4, 8
     paddd       m2, m7
     psrad       m2, 8
     movu        [r1 + 3 * 16], m2
+    RET
 
+; DCT 4x4
+;
+; Input parameters:
+; - r0:     source
+; - r1:     destination
+; - r2:     source stride
+INIT_YMM avx2
+cglobal dct4, 3, 4, 8, src, dst, srcStride
+%if BIT_DEPTH == 10
+    %define DCT_SHIFT 3
+    vbroadcasti128 m7, [pd_4]
+%elif BIT_DEPTH == 8
+    %define DCT_SHIFT 1
+    vbroadcasti128 m7, [pd_1]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    add             r2d, r2d
+    lea             r3, [avx2_dct4]
+
+    vbroadcasti128  m4, [dct4_shuf]
+    mova            m5, [r3]
+    mova            m6, [r3 + 32]
+    movq            xm0, [r0]
+    movhps          xm0, [r0 + r2]
+    lea             r0, [r0 + 2 * r2]
+    movq            xm1, [r0]
+    movhps          xm1, [r0 + r2]
+
+    vinserti128     m0, m0, xm1, 1
+    pshufb          m0, m4
+    vpermq          m1, m0, 11011101b
+    vpermq          m0, m0, 10001000b
+    paddw           m2, m0, m1
+    psubw           m0, m1
+
+    pmaddwd         m2, m5
+    paddd           m2, m7
+    psrad           m2, DCT_SHIFT
+
+    pmaddwd         m0, m6
+    paddd           m0, m7
+    psrad           m0, DCT_SHIFT
+
+    packssdw        m2, m0
+    pshufb          m2, m4
+    vpermq          m1, m2, 11011101b
+    vpermq          m2, m2, 10001000b
+    vbroadcasti128  m7, [pd_128]
+
+    pmaddwd         m0, m2, m5
+    pmaddwd         m3, m1, m5
+    paddd           m3, m0
+    paddd           m3, m7
+    psrad           m3, 8
+
+    pmaddwd         m2, m6
+    pmaddwd         m1, m6
+    psubd           m2, m1
+    paddd           m2, m7
+    psrad           m2, 8
+
+    movu            [r1], xm3
+    movu            [r1 + mmsize/2], m2
+    vextracti128    [r1 + mmsize], m3, 1
+    vextracti128    [r1 + mmsize + mmsize/2], m2, 1
     RET
 
 ;-------------------------------------------------------
@@ -996,3 +1173,493 @@ cglobal denoise_dct, 4,4,4
     RET
 
 %endif ; !HIGH_BIT_DEPTH
+
+%macro DCT16_PASS_1_E 2
+    vpbroadcastq    m7,                [r7 + %1]
+
+    pmaddwd         m4,                m0, m7
+    pmaddwd         m6,                m2, m7
+    phaddd          m4,                m6
+
+    paddd           m4,                m9
+    psrad           m4,                DCT_SHIFT
+
+    packssdw        m4,                m4
+    vpermq          m4,                m4, 0x08
+
+    mova            [r5 + %2],         xm4
+%endmacro
+
+%macro DCT16_PASS_1_O 2
+    vbroadcasti128  m7,                [r7 + %1]
+
+    pmaddwd         m10,               m0, m7
+    pmaddwd         m11,               m2, m7
+    phaddd          m10,               m11                 ; [d0 d0 d1 d1 d4 d4 d5 d5]
+
+    pmaddwd         m11,               m4, m7
+    pmaddwd         m12,               m6, m7
+    phaddd          m11,               m12                 ; [d2 d2 d3 d3 d6 d6 d7 d7]
+
+    phaddd          m10,               m11                 ; [d0 d1 d2 d3 d4 d5 d6 d7]
+
+    paddd           m10,               m9
+    psrad           m10,               DCT_SHIFT
+
+    packssdw        m10,               m10                 ; [w0 w1 w2 w3 - - - - w4 w5 w6 w7 - - - -]
+    vpermq          m10,               m10, 0x08
+
+    mova            [r5 + %2],         xm10
+%endmacro
+
+%macro DCT16_PASS_2 1
+    vbroadcasti128  m8,                [r7 + %1]
+    vbroadcasti128  m13,               [r8 + %1]
+
+    pmaddwd         m10,               m0, m8
+    pmaddwd         m11,               m1, m13
+    paddd           m10,               m11
+
+    pmaddwd         m11,               m2, m8
+    pmaddwd         m12,               m3, m13
+    paddd           m11,               m12
+    phaddd          m10,               m11
+
+    pmaddwd         m11,               m4, m8
+    pmaddwd         m12,               m5, m13
+    paddd           m11,               m12
+
+    pmaddwd         m12,               m6, m8
+    pmaddwd         m13,               m7, m13
+    paddd           m12,               m13
+    phaddd          m11,               m12
+
+    phaddd          m10,               m11
+    paddd           m10,               m9
+    psrad           m10,               DCT_SHIFT2
+%endmacro
+
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal dct16, 3, 9, 15, 0-16*mmsize
+%if BIT_DEPTH == 10
+    %define         DCT_SHIFT          5
+    vpbroadcastd    m9,                [pd_16]
+%elif BIT_DEPTH == 8
+    %define         DCT_SHIFT          3
+    vpbroadcastd    m9,                [pd_4]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             DCT_SHIFT2         10
+
+    add             r2d,               r2d
+
+    mova            m13,               [dct16_shuf1]
+    mova            m14,               [dct16_shuf2]
+    lea             r7,                [tab_dct16_1 + 8 * 16]
+    lea             r8,                [tab_dct16_2 + 8 * 16]
+    lea             r3,                [r2 * 3]
+    mov             r5,                rsp
+    mov             r4d,               2                   ; Each iteration process 8 rows, so 16/8 iterations
+
+.pass1:
+    lea             r6,                [r0 + r2 * 4]
+
+    mova            m2,                [r0]
+    mova            m1,                [r6]
+    vperm2i128      m0,                m2, m1, 0x20        ; [row0lo  row4lo]
+    vperm2i128      m1,                m2, m1, 0x31        ; [row0hi  row4hi]
+
+    mova            m4,                [r0 + r2]
+    mova            m3,                [r6 + r2]
+    vperm2i128      m2,                m4, m3, 0x20        ; [row1lo  row5lo]
+    vperm2i128      m3,                m4, m3, 0x31        ; [row1hi  row5hi]
+
+    mova            m6,                [r0 + r2 * 2]
+    mova            m5,                [r6 + r2 * 2]
+    vperm2i128      m4,                m6, m5, 0x20        ; [row2lo  row6lo]
+    vperm2i128      m5,                m6, m5, 0x31        ; [row2hi  row6hi]
+
+    mova            m8,                [r0 + r3]
+    mova            m7,                [r6 + r3]
+    vperm2i128      m6,                m8, m7, 0x20        ; [row3lo  row7lo]
+    vperm2i128      m7,                m8, m7, 0x31        ; [row3hi  row7hi]
+
+    pshufb          m1,                m13
+    pshufb          m3,                m13
+    pshufb          m5,                m13
+    pshufb          m7,                m13
+
+    paddw           m8,                m0, m1              ;E
+    psubw           m0,                m1                  ;O
+
+    paddw           m1,                m2, m3              ;E
+    psubw           m2,                m3                  ;O
+
+    paddw           m3,                m4, m5              ;E
+    psubw           m4,                m5                  ;O
+
+    paddw           m5,                m6, m7              ;E
+    psubw           m6,                m7                  ;O
+
+    DCT16_PASS_1_O  -7 * 16,           1 * 32
+    DCT16_PASS_1_O  -5 * 16,           3 * 32
+    DCT16_PASS_1_O  -3 * 16,           1 * 32 + 16
+    DCT16_PASS_1_O  -1 * 16,           3 * 32 + 16
+    DCT16_PASS_1_O  1 * 16,            5 * 32
+    DCT16_PASS_1_O  3 * 16,            7 * 32
+    DCT16_PASS_1_O  5 * 16,            5 * 32 + 16
+    DCT16_PASS_1_O  7 * 16,            7 * 32 + 16
+
+    pshufb          m8,                m14
+    pshufb          m1,                m14
+    phaddw          m0,                m8, m1
+
+    pshufb          m3,                m14
+    pshufb          m5,                m14
+    phaddw          m2,                m3, m5
+
+    DCT16_PASS_1_E  -8 * 16,           0 * 32
+    DCT16_PASS_1_E  -4 * 16,           0 * 32 + 16
+    DCT16_PASS_1_E  0 * 16,            4 * 32
+    DCT16_PASS_1_E  4 * 16,            4 * 32 + 16
+
+    phsubw          m0,                m8, m1
+    phsubw          m2,                m3, m5
+
+    DCT16_PASS_1_E  -6 * 16,           2 * 32
+    DCT16_PASS_1_E  -2 * 16,           2 * 32 + 16
+    DCT16_PASS_1_E  2 * 16,            6 * 32
+    DCT16_PASS_1_E  6 * 16,            6 * 32 + 16
+
+    lea             r0,                [r0 + 8 * r2]
+    add             r5,                256
+
+    dec             r4d
+    jnz             .pass1
+
+    mov             r5,                rsp
+    mov             r4d,               2
+    mov             r2d,               64
+    lea             r3,                [r2 * 3]
+    vpbroadcastd    m9,                [pd_512]
+
+.pass2:
+    mova            m0,                [r5 + 0 * 32]        ; [row0lo  row4lo]
+    mova            m1,                [r5 + 8 * 32]        ; [row0hi  row4hi]
+
+    mova            m2,                [r5 + 1 * 32]        ; [row1lo  row5lo]
+    mova            m3,                [r5 + 9 * 32]        ; [row1hi  row5hi]
+
+    mova            m4,                [r5 + 2 * 32]        ; [row2lo  row6lo]
+    mova            m5,                [r5 + 10 * 32]       ; [row2hi  row6hi]
+
+    mova            m6,                [r5 + 3 * 32]        ; [row3lo  row7lo]
+    mova            m7,                [r5 + 11 * 32]       ; [row3hi  row7hi]
+
+    DCT16_PASS_2    -8 * 16
+    mova            [r1],              m10
+    DCT16_PASS_2    -7 * 16
+    mova            [r1 + r2],         m10
+    DCT16_PASS_2    -6 * 16
+    mova            [r1 + r2 * 2],     m10
+    DCT16_PASS_2    -5 * 16
+    mova            [r1 + r3],         m10
+
+    lea             r6,                [r1 + r2 * 4]
+    DCT16_PASS_2    -4 * 16
+    mova            [r6],              m10
+    DCT16_PASS_2    -3 * 16
+    mova            [r6 + r2],         m10
+    DCT16_PASS_2    -2 * 16
+    mova            [r6 + r2 * 2],     m10
+    DCT16_PASS_2    -1 * 16
+    mova            [r6 + r3],         m10
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT16_PASS_2    0 * 16
+    mova            [r6],              m10
+    DCT16_PASS_2    1 * 16
+    mova            [r6 + r2],         m10
+    DCT16_PASS_2    2 * 16
+    mova            [r6 + r2 * 2],     m10
+    DCT16_PASS_2    3 * 16
+    mova            [r6 + r3],         m10
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT16_PASS_2    4 * 16
+    mova            [r6],              m10
+    DCT16_PASS_2    5 * 16
+    mova            [r6 + r2],         m10
+    DCT16_PASS_2    6 * 16
+    mova            [r6 + r2 * 2],     m10
+    DCT16_PASS_2    7 * 16
+    mova            [r6 + r3],         m10
+
+    add             r1,                32
+    add             r5,                128
+
+    dec             r4d
+    jnz             .pass2
+    RET
+
+%macro DCT32_PASS_1 4
+    vbroadcasti128  m8,                [r7 + %1]
+
+    pmaddwd         m11,               m%3, m8
+    pmaddwd         m12,               m%4, m8
+    phaddd          m11,               m12
+
+    vbroadcasti128  m8,                [r7 + %1 + 32]
+    vbroadcasti128  m10,               [r7 + %1 + 48]
+    pmaddwd         m12,               m5, m8
+    pmaddwd         m13,               m6, m10
+    phaddd          m12,               m13
+
+    pmaddwd         m13,               m4, m8
+    pmaddwd         m14,               m7, m10
+    phaddd          m13,               m14
+
+    phaddd          m12,               m13
+
+    phaddd          m11,               m12
+    paddd           m11,               m9
+    psrad           m11,               DCT_SHIFT
+
+    vpermq          m11,               m11, 0xD8
+    packssdw        m11,               m11
+    movq            [r5 + %2],         xm11
+    vextracti128    xm10,              m11, 1
+    movq            [r5 + %2 + 64],    xm10
+%endmacro
+
+%macro DCT32_PASS_2 1
+    mova            m8,                [r7 + %1]
+    mova            m10,               [r8 + %1]
+    pmaddwd         m11,               m0, m8
+    pmaddwd         m12,               m1, m10
+    paddd           m11,               m12
+
+    pmaddwd         m12,               m2, m8
+    pmaddwd         m13,               m3, m10
+    paddd           m12,               m13
+
+    phaddd          m11,               m12
+
+    pmaddwd         m12,               m4, m8
+    pmaddwd         m13,               m5, m10
+    paddd           m12,               m13
+
+    pmaddwd         m13,               m6, m8
+    pmaddwd         m14,               m7, m10
+    paddd           m13,               m14
+
+    phaddd          m12,               m13
+
+    phaddd          m11,               m12
+    vextracti128    xm10,              m11, 1
+    paddd           xm11,              xm10
+
+    paddd           xm11,               xm9
+    psrad           xm11,               DCT_SHIFT2
+
+%endmacro
+
+INIT_YMM avx2
+cglobal dct32, 3, 9, 16, 0-64*mmsize
+%if BIT_DEPTH == 10
+    %define         DCT_SHIFT          6
+    vpbroadcastq    m9,                [pd_32]
+%elif BIT_DEPTH == 8
+    %define         DCT_SHIFT          4
+    vpbroadcastq    m9,                [pd_8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             DCT_SHIFT2         11
+
+    add             r2d,               r2d
+
+    lea             r7,                [tab_dct32_1]
+    lea             r8,                [tab_dct32_2]
+    lea             r3,                [r2 * 3]
+    mov             r5,                rsp
+    mov             r4d,               8
+    mova            m15,               [dct16_shuf1]
+
+.pass1:
+    mova            m2,                [r0]
+    mova            m1,                [r0 + 32]
+    pshufb          m1,                m15
+    vpermq          m1,                m1, 0x4E
+    psubw           m7,                m2, m1
+    paddw           m2,                m1
+
+    mova            m1,                [r0 + r2 * 2]
+    mova            m0,                [r0 + r2 * 2 + 32]
+    pshufb          m0,                m15
+    vpermq          m0,                m0, 0x4E
+    psubw           m8,                m1, m0
+    paddw           m1,                m0
+    vperm2i128      m0,                m2, m1, 0x20        ; [row0lo  row2lo] for E
+    vperm2i128      m3,                m2, m1, 0x31        ; [row0hi  row2hi] for E
+    pshufb          m3,                m15
+    psubw           m1,                m0, m3
+    paddw           m0,                m3
+
+    vperm2i128      m5,                m7, m8, 0x20        ; [row0lo  row2lo] for O
+    vperm2i128      m6,                m7, m8, 0x31        ; [row0hi  row2hi] for O
+
+
+    mova            m4,                [r0 + r2]
+    mova            m2,                [r0 + r2 + 32]
+    pshufb          m2,                m15
+    vpermq          m2,                m2, 0x4E
+    psubw           m10,               m4, m2
+    paddw           m4,                m2
+
+    mova            m3,                [r0 + r3]
+    mova            m2,                [r0 + r3 + 32]
+    pshufb          m2,                m15
+    vpermq          m2,                m2, 0x4E
+    psubw           m11,               m3, m2
+    paddw           m3,                m2
+    vperm2i128      m2,                m4, m3, 0x20        ; [row1lo  row3lo] for E
+    vperm2i128      m8,                m4, m3, 0x31        ; [row1hi  row3hi] for E
+    pshufb          m8,                m15
+    psubw           m3,                m2, m8
+    paddw           m2,                m8
+
+    vperm2i128      m4,                m10, m11, 0x20      ; [row1lo  row3lo] for O
+    vperm2i128      m7,                m10, m11, 0x31      ; [row1hi  row3hi] for O
+
+
+    DCT32_PASS_1    0 * 32,            0 * 64, 0, 2
+    DCT32_PASS_1    2 * 32,            2 * 64, 1, 3
+    DCT32_PASS_1    4 * 32,            4 * 64, 0, 2
+    DCT32_PASS_1    6 * 32,            6 * 64, 1, 3
+    DCT32_PASS_1    8 * 32,            8 * 64, 0, 2
+    DCT32_PASS_1    10 * 32,           10 * 64, 1, 3
+    DCT32_PASS_1    12 * 32,           12 * 64, 0, 2
+    DCT32_PASS_1    14 * 32,           14 * 64, 1, 3
+    DCT32_PASS_1    16 * 32,           16 * 64, 0, 2
+    DCT32_PASS_1    18 * 32,           18 * 64, 1, 3
+    DCT32_PASS_1    20 * 32,           20 * 64, 0, 2
+    DCT32_PASS_1    22 * 32,           22 * 64, 1, 3
+    DCT32_PASS_1    24 * 32,           24 * 64, 0, 2
+    DCT32_PASS_1    26 * 32,           26 * 64, 1, 3
+    DCT32_PASS_1    28 * 32,           28 * 64, 0, 2
+    DCT32_PASS_1    30 * 32,           30 * 64, 1, 3
+
+    add             r5,                8
+    lea             r0,                [r0 + r2 * 4]
+
+    dec             r4d
+    jnz             .pass1
+
+    mov             r2d,               128
+    lea             r3,                [r2 * 3]
+    mov             r5,                rsp
+    mov             r4d,               8
+    vpbroadcastq    m9,                [pd_1024]
+
+.pass2:
+    mova            m0,                [r5 + 0 * 64]
+    mova            m1,                [r5 + 0 * 64 + 32]
+
+    mova            m2,                [r5 + 1 * 64]
+    mova            m3,                [r5 + 1 * 64 + 32]
+
+    mova            m4,                [r5 + 2 * 64]
+    mova            m5,                [r5 + 2 * 64 + 32]
+
+    mova            m6,                [r5 + 3 * 64]
+    mova            m7,                [r5 + 3 * 64 + 32]
+
+    DCT32_PASS_2    0 * 32
+    mova            [r1],              xm11
+    DCT32_PASS_2    1 * 32
+    mova            [r1 + r2],         xm11
+    DCT32_PASS_2    2 * 32
+    mova            [r1 + r2 * 2],     xm11
+    DCT32_PASS_2    3 * 32
+    mova            [r1 + r3],         xm11
+
+    lea             r6,                [r1 + r2 * 4]
+    DCT32_PASS_2    4 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    5 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    6 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    7 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    8 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    9 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    10 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    11 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    12 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    13 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    14 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    15 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    16 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    17 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    18 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    19 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    20 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    21 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    22 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    23 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    24 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    25 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    26 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    27 * 32
+    mova            [r6 + r3],         xm11
+
+    lea             r6,                [r6 + r2 * 4]
+    DCT32_PASS_2    28 * 32
+    mova            [r6],              xm11
+    DCT32_PASS_2    29 * 32
+    mova            [r6 + r2],         xm11
+    DCT32_PASS_2    30 * 32
+    mova            [r6 + r2 * 2],     xm11
+    DCT32_PASS_2    31 * 32
+    mova            [r6 + r3],         xm11
+
+    add             r5,                256
+    add             r1,                16
+
+    dec             r4d
+    jnz             .pass2
+    RET
+%endif

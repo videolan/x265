@@ -153,20 +153,22 @@ typedef void (*cvt16to32_shl_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt16to32_shr_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shr_t)(int16_t *dst, int32_t *src, intptr_t, int, int);
 typedef void (*cvt32to16_shl_t)(int16_t *dst, int32_t *src, intptr_t, int);
-typedef uint32_t (*cvt16to32_cnt_t)(coeff_t* coeff, int16_t* residual, intptr_t stride);
+typedef uint32_t (*copy_cnt_t)(int16_t* coeff, int16_t* residual, intptr_t stride);
+typedef void (*copy_shr_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size);
+typedef void (*copy_shl_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift);
 
 typedef void (*dct_t)(int16_t *src, int32_t *dst, intptr_t stride);
 typedef void (*idct_t)(int32_t *src, int16_t *dst, intptr_t stride);
-typedef void (*denoiseDct_t)(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff);
+typedef void (*denoiseDct_t)(int32_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff);
 
 typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 typedef void (*calcrecon_t)(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
 typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
-typedef uint32_t (*nquant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
-typedef void (*dequant_scaling_t)(const int32_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
-typedef void (*dequant_normal_t)(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
-typedef int  (*count_nonzero_t)(const int32_t *quantCoeff, int numCoeff);
+typedef uint32_t (*quant_t)(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*nquant_t)(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
+typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t *dequantCoef, int32_t* dst, int num, int mcqp_miper, int shift);
+typedef void (*dequant_normal_t)(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
+typedef int  (*count_nonzero_t)(const int16_t *quantCoeff, int numCoeff);
 
 typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
@@ -226,7 +228,9 @@ struct EncoderPrimitives
     cvt16to32_shr_t cvt16to32_shr[NUM_SQUARE_BLOCKS - 1];
     cvt32to16_shr_t cvt32to16_shr;
     cvt32to16_shl_t cvt32to16_shl[NUM_SQUARE_BLOCKS - 1];
-    cvt16to32_cnt_t cvt16to32_cnt[NUM_SQUARE_BLOCKS - 1];
+    copy_cnt_t      copy_cnt[NUM_SQUARE_BLOCKS - 1];
+    copy_shr_t      copy_shr;
+    copy_shl_t      copy_shl[NUM_SQUARE_BLOCKS - 1];
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];

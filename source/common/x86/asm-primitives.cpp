@@ -1337,6 +1337,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_mmx2;
 
         p.cvt32to16_shr = x265_cvt32to16_shr_sse2;
+        p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_sse2;
+        p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_sse2;
+        p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_sse2;
+        p.cvt32to16_shl[BLOCK_32x32] = x265_cvt32to16_shl_32_sse2;
 
         CHROMA_PIXELSUB_PS(_sse2);
         CHROMA_PIXELSUB_PS_422(_sse2);
@@ -1409,6 +1413,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.nquant = x265_nquant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
         p.cvt16to32_shl = x265_cvt16to32_shl_sse4;
+        p.cvt16to32_shr[BLOCK_4x4] = x265_cvt16to32_shr_4_sse4;
+        p.cvt16to32_shr[BLOCK_8x8] = x265_cvt16to32_shr_8_sse4;
+        p.cvt16to32_shr[BLOCK_16x16] = x265_cvt16to32_shr_16_sse4;
+        p.cvt16to32_shr[BLOCK_32x32] = x265_cvt16to32_shr_32_sse4;
         p.intra_pred[BLOCK_4x4][0] = x265_intra_pred_planar4_sse4;
         p.intra_pred[BLOCK_8x8][0] = x265_intra_pred_planar8_sse4;
         p.intra_pred[BLOCK_16x16][0] = x265_intra_pred_planar16_sse4;
@@ -1432,8 +1440,15 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.quant = x265_quant_avx2;
+        p.nquant = x265_nquant_avx2;
+        p.dequant_normal = x265_dequant_normal_avx2;
+#if X86_64
+        p.dct[DCT_16x16] = x265_dct16_avx2;
+        p.dct[DCT_32x32] = x265_dct32_avx2;
+#endif
     }
-
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
@@ -1487,6 +1502,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_VAR(_sse2);
 
         ASSGN_SSE(sse2);
+        ASSGN_SSE_SS(sse2);
         INIT2(sad, _sse2);
         SAD(sse2);
         INIT2(sad_x3, _sse2);
@@ -1550,6 +1566,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.idct[IDST_4x4] = x265_idst4_sse2;
         p.planecopy_sp = x265_downShift_16_sse2;
         //p.denoiseDct = x265_denoise_dct_sse2;
+        p.copy_shl[BLOCK_4x4] = x265_copy_shl_4_sse2;
+        p.copy_shl[BLOCK_8x8] = x265_copy_shl_8_sse2;
+        p.copy_shl[BLOCK_16x16] = x265_copy_shl_16_sse2;
+        p.copy_shl[BLOCK_32x32] = x265_copy_shl_32_sse2;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -1601,10 +1621,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cvt16to32_shr[BLOCK_32x32] = x265_cvt16to32_shr_32_sse4;
 
         // TODO: check POPCNT flag!
-        p.cvt16to32_cnt[BLOCK_4x4] = x265_cvt16to32_cnt_4_sse4;
-        p.cvt16to32_cnt[BLOCK_8x8] = x265_cvt16to32_cnt_8_sse4;
-        p.cvt16to32_cnt[BLOCK_16x16] = x265_cvt16to32_cnt_16_sse4;
-        p.cvt16to32_cnt[BLOCK_32x32] = x265_cvt16to32_cnt_32_sse4;
+        p.copy_cnt[BLOCK_4x4] = x265_copy_cnt_4_sse4;
+        p.copy_cnt[BLOCK_8x8] = x265_copy_cnt_8_sse4;
+        p.copy_cnt[BLOCK_16x16] = x265_copy_cnt_16_sse4;
+        p.copy_cnt[BLOCK_32x32] = x265_copy_cnt_32_sse4;
 
         HEVC_SATD(sse4);
         SA8D_INTER_FROM_BLOCK(sse4);
@@ -1670,6 +1690,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INTRA_ANG_SSE4(sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
+        p.copy_shr = x265_copy_shr_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
@@ -1706,15 +1727,29 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x4[LUMA_16x12] = x265_pixel_sad_x4_16x12_avx2;
         p.sad_x4[LUMA_16x32] = x265_pixel_sad_x4_16x32_avx2;
         p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_avx2;
-        p.cvt16to32_cnt[BLOCK_4x4] = x265_cvt16to32_cnt_4_avx2;
-        p.cvt16to32_cnt[BLOCK_8x8] = x265_cvt16to32_cnt_8_avx2;
-        p.cvt16to32_cnt[BLOCK_16x16] = x265_cvt16to32_cnt_16_avx2;
-        p.cvt16to32_cnt[BLOCK_32x32] = x265_cvt16to32_cnt_32_avx2;
+
+        /* Need to update assembly code as per changed interface of the copy_cnt primitive, once
+         * code is updated, avx2 version will be enabled */
+
+        // p.copy_cnt[BLOCK_4x4] = x265_copy_cnt_4_avx2;
+        p.copy_cnt[BLOCK_8x8] = x265_copy_cnt_8_avx2;
+        // p.copy_cnt[BLOCK_16x16] = x265_copy_cnt_16_avx2;
+        // p.copy_cnt[BLOCK_32x32] = x265_copy_cnt_32_avx2;
+
+
         p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_avx2;
         p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_avx2;
         p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_avx2;
         p.cvt32to16_shl[BLOCK_32x32] = x265_cvt32to16_shl_32_avx2;
         //p.denoiseDct = x265_denoise_dct_avx2;
+        p.dct[DCT_4x4] = x265_dct4_avx2;
+        p.quant = x265_quant_avx2;
+        p.nquant = x265_nquant_avx2;
+        p.dequant_normal = x265_dequant_normal_avx2;
+#if X86_64
+        p.dct[DCT_16x16] = x265_dct16_avx2;
+        p.dct[DCT_32x32] = x265_dct32_avx2;
+#endif
     }
 #endif // if HIGH_BIT_DEPTH
 }

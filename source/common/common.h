@@ -63,6 +63,7 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
+#define fseeko _fseeki64
 
 #endif // if defined(__GNUC__)
 
@@ -103,6 +104,13 @@ typedef uint32_t pixel4;
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
 
+#define QP_MIN      0
+#define QP_MAX_SPEC 51 /* max allowed signaled QP in HEVC */
+#define QP_MAX_MAX  69 /* max allowed QP to be output by rate control */
+
+#define MIN_QPSCALE     0.21249999999999999
+#define MAX_MAX_QPSCALE 615.46574234477100
+
 #define BITS_FOR_POC 8
 
 template<typename T>
@@ -117,7 +125,7 @@ inline T Clip3(T minVal, T maxVal, T a)
     return std::min<T>(std::max<T>(minVal, a), maxVal);
 }
 
-typedef int32_t  coeff_t;      // transform coefficient
+typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -170,6 +178,17 @@ typedef int32_t  coeff_t;      // transform coefficient
             goto fail; \
         } \
     }
+#define CHECKED_MALLOC_ZERO(var, type, count) \
+    { \
+        var = (type*)x265_malloc(sizeof(type) * (count)); \
+        if (var) \
+            memset((void*)var, 0, sizeof(type) * (count)); \
+        else \
+        { \
+            x265_log(NULL, X265_LOG_ERROR, "malloc of size %d failed\n", sizeof(type) * (count)); \
+            goto fail; \
+        } \
+    }
 
 #if defined(_MSC_VER)
 #define X265_LOG2F(x) (logf((float)(x)) * 1.44269504088896405f)
@@ -191,8 +210,91 @@ struct NoiseReduction
     uint32_t count[8];
 };
 
-}
+struct SAOQTPart
+{
+    enum { NUM_DOWN_PART = 4 };
 
+    int     bestType;
+    int     length;
+    int     subTypeIdx;  // indicates EO class or BO band position
+    int     offset[4];
+    int     startCUX;
+    int     startCUY;
+    int     endCUX;
+    int     endCUY;
+
+    int     partIdx;
+    int     partLevel;
+    int     partCol;
+    int     partRow;
+
+    int     downPartsIdx[NUM_DOWN_PART];
+    int     upPartIdx;
+
+    bool    bSplit;
+
+    bool    bProcessed;
+    double  minCost;
+    int64_t minDist;
+    int     minRate;
+};
+
+struct SaoLcuParam
+{
+    bool mergeUpFlag;
+    bool mergeLeftFlag;
+    int  typeIdx;
+    int  subTypeIdx;    // indicates EO class or BO band position
+    int  offset[4];
+    int  partIdx;
+    int  partIdxTmp;
+    int  length;
+
+    void reset()
+    {
+        mergeUpFlag = false;
+        mergeLeftFlag = false;
+        typeIdx = -1;
+        subTypeIdx = 0;
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+        offset[3] = 0;
+    }
+};
+
+struct SAOParam
+{
+    SaoLcuParam* saoLcuParam[3];
+    SAOQTPart*   saoPart[3];
+    bool         bSaoFlag[2];
+    bool         oneUnitFlag[3];
+    int          maxSplitLevel;
+    int          numCuInHeight;
+    int          numCuInWidth;
+
+    SAOParam()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            saoPart[i] = NULL;
+            saoLcuParam[i] = NULL;
+        }
+    }
+    ~SAOParam()
+    {
+        delete[] saoPart[0];
+        delete[] saoPart[1];
+        delete[] saoPart[2];
+        delete[] saoLcuParam[0];
+        delete[] saoLcuParam[1];
+        delete[] saoLcuParam[2];
+    }
+};
+
+#define CU_SET_FLAG(bitfield, flag, value) (bitfield) = ((bitfield) & (~(flag))) | ((~((value) - 1)) & (flag))
+#define CU_GET_FLAG(bitfield, flag) (!!((bitfield) & (flag)))
+}
 /* defined in common.cpp */
 int64_t x265_mdate(void);
 void x265_log(const x265_param *param, int level, const char *fmt, ...);

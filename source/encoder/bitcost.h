@@ -45,10 +45,16 @@ public:
     inline uint16_t mvcost(const MV& mv) const      { return m_cost_mvx[mv.x] + m_cost_mvy[mv.y]; }
 
     // return bit cost of motion vector difference, without lambda
-    inline uint16_t bitcost(const MV& mv) const
+    inline uint32_t bitcost(const MV& mv) const
     {
-        return (uint16_t)(s_bitsizes[abs(mv.x - m_mvp.x)] +
+        return (uint32_t)(s_bitsizes[abs(mv.x - m_mvp.x)] +
                           s_bitsizes[abs(mv.y - m_mvp.y)] + 0.5f);
+    }
+
+    static inline uint32_t bitcost(const MV& mv, const MV& mvp)
+    {
+        return (uint32_t)(s_bitsizes[abs(mv.x - mvp.x)] +
+                          s_bitsizes[abs(mv.y - mvp.y)] + 0.5f);
     }
 
     static void destroy();

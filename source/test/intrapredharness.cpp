@@ -29,32 +29,10 @@ using namespace x265;
 
 IntraPredHarness::IntraPredHarness()
 {
-    CHECKED_MALLOC(pixel_buff, pixel, ip_t_size);
-    CHECKED_MALLOC(pixel_out_c, pixel, out_size);
-    CHECKED_MALLOC(pixel_out_vec, pixel, out_size);
-    CHECKED_MALLOC(pixel_out_33_c, pixel, out_size_33);
-    CHECKED_MALLOC(pixel_out_33_vec, pixel, out_size_33);
-
-    // Initialize input buffer
-    for (int i = 0; i < ip_t_size; i++)
-    {
+    for (int i = 0; i < INPUT_SIZE; i++)
         pixel_buff[i] = rand() % PIXEL_MAX;
-    }
 
     initROM();
-    return;
-
-fail:
-    exit(1);
-}
-
-IntraPredHarness::~IntraPredHarness()
-{
-    X265_FREE(pixel_buff);
-    X265_FREE(pixel_out_c);
-    X265_FREE(pixel_out_vec);
-    X265_FREE(pixel_out_33_c);
-    X265_FREE(pixel_out_33_vec);
 }
 
 bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width)
@@ -63,8 +41,8 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
-    memset(pixel_out_vec, 0xCD, out_size);
-    memset(pixel_out_c, 0xCD, out_size);
+    memset(pixel_out_vec, 0xCD, OUTPUT_SIZE);
+    memset(pixel_out_c, 0xCD, OUTPUT_SIZE);
 #endif
 
     for (int i = 0; i <= 100; i++)
@@ -101,8 +79,8 @@ bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
-    memset(pixel_out_vec, 0xCD, out_size);
-    memset(pixel_out_c, 0xCD, out_size);
+    memset(pixel_out_vec, 0xCD, OUTPUT_SIZE);
+    memset(pixel_out_c, 0xCD, OUTPUT_SIZE);
 #endif
 
     for (int i = 0; i <= 100; i++)
@@ -135,8 +113,8 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_INTR
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
-    memset(pixel_out_vec, 0xCD, out_size);
-    memset(pixel_out_c, 0xCD, out_size);
+    memset(pixel_out_vec, 0xCD, OUTPUT_SIZE);
+    memset(pixel_out_c, 0xCD, OUTPUT_SIZE);
 #endif
 
     for (int size = 2; size <= 5; size++)
@@ -179,8 +157,8 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
     int isLuma;
 
 #if _DEBUG
-    memset(pixel_out_33_vec, 0xCD, out_size_33);
-    memset(pixel_out_33_c, 0xCD, out_size_33);
+    memset(pixel_out_33_vec, 0xCD, OUTPUT_SIZE_33);
+    memset(pixel_out_33_c, 0xCD, OUTPUT_SIZE_33);
 #endif
 
     for (int size = 2; size <= 5; size++)
