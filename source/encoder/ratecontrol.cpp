@@ -51,7 +51,7 @@ namespace {
     char* q = strstr(opts, "no-"opt);\
     if (p && sscanf(p, opt "=%d" , &i) && param_val != i)\
         bErr = 1;\
-    else if (!param_val && !q)\
+    else if (!param_val && !q && !p)\
         bErr = 1;\
     else if (param_val && (q || !strstr(opts, opt)))\
         bErr = 1;\
