@@ -277,6 +277,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
+            param->bEnableSAO = 0;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "veryfast"))
@@ -326,6 +327,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "slower"))
         {
+            param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
             param->lookaheadDepth = 30;
@@ -339,6 +341,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "veryslow"))
         {
+            param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
             param->lookaheadDepth = 40;
@@ -353,6 +356,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         }
         else if (!strcmp(preset, "placebo"))
         {
+            param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
             param->lookaheadDepth = 60;
