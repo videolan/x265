@@ -1365,12 +1365,20 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             q += m_pbOffset;
         rce->qpNoVbv = q;
         double qScale = x265_qp2qScale(q);
-        if (m_leadingBframes > 5 && m_isVbv)
+
+        if (!m_2pass && m_isVbv)
         {
-            qScale = clipQscale(pic, qScale);
-            m_lastQScaleFor[m_sliceType] = qScale;
+            if (m_leadingBframes > 5)
+            {
+                qScale = clipQscale(pic, qScale);
+                m_lastQScaleFor[m_sliceType] = qScale;
+            }
+            rce->frameSizePlanned = predictSize(&m_predBfromP, qScale, (double)m_leadingNoBSatd);
         }
-        rce->frameSizePlanned = predictSize(&m_predBfromP, qScale, (double)m_leadingNoBSatd);
+        else if (m_2pass && m_isVbv)
+        {
+            rce->frameSizePlanned = qScale2bits(rce, qScale);
+        }
         rce->frameSizeEstimated = rce->frameSizePlanned;
         rce->newQScale = qScale;
         return qScale;
@@ -1400,8 +1408,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             diff = m_predictedBits - (int64_t)rce->expectedBits;
             q = rce->newQScale;
             q /= Clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
-            if (((rce->encodeOrder + 1 - m_param->frameNumThreads) >= m_fps) &&
-                (m_expectedBitsSum > 0))
+            if (m_expectedBitsSum > 0)
             {
                 /* Adjust quant based on the difference between
                  * achieved and expected bitrate so far */

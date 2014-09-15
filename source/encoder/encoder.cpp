@@ -234,14 +234,10 @@ void Encoder::init()
 
 void Encoder::updateVbvPlan(RateControl* rc)
 {
-    int encIdx, curIdx;
-
-    curIdx = (m_curEncoder + m_param->frameNumThreads - 1) % m_param->frameNumThreads;
-    encIdx = (curIdx + 1) % m_param->frameNumThreads;
-    while (encIdx != curIdx)
+    for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        FrameEncoder *encoder = &m_frameEncoder[encIdx];
-        if (encoder->m_rce.isActive)
+        FrameEncoder *encoder = &m_frameEncoder[i];
+        if (encoder->m_rce.isActive && encoder->m_rce.poc != rc->m_curSlice->m_poc)
         {
             int64_t bits = (int64_t) X265_MAX(encoder->m_rce.frameSizeEstimated, encoder->m_rce.frameSizePlanned);
             rc->m_bufferFill -= bits;
@@ -251,7 +247,6 @@ void Encoder::updateVbvPlan(RateControl* rc)
             if (rc->m_2pass)
                 rc->m_predictedBits += bits;
         }
-        encIdx = (encIdx + 1) % m_param->frameNumThreads;
     }
 }
 
