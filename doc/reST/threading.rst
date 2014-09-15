@@ -13,7 +13,7 @@ the first encoder created within each process.
 
 :option:`--threads` specifies the number of threads the encoder will
 try to allocate for its thread pool.  If the thread pool was already
-allocated this parameter is ignored.  By default x265 allocated one
+allocated this parameter is ignored.  By default x265 allocates one
 thread per (hyperthreaded) CPU core in your system.
 
 Work distribution is job based.  Idle worker threads ask their parent
@@ -29,7 +29,7 @@ providers are recommended to call this method when they make new jobs
 available.
 
 Worker jobs are not allowed to block except when abosultely necessary
-for data locking.  If a job becomes blocked, the worker thread is
+for data locking. If a job becomes blocked, the worker thread is
 expected to drop that job and go back to the pool and find more work.
 
 .. note::
