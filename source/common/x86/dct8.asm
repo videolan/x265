@@ -1341,7 +1341,7 @@ cglobal dct16, 3, 9, 15, 0-16*mmsize
 
     mov             r5,                rsp
     mov             r4d,               2
-    add             r2d,               r2d
+    mov             r2d,               64
     lea             r3,                [r2 * 3]
     vpbroadcastd    m9,                [pd_512]
 
@@ -1558,7 +1558,7 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
     dec             r4d
     jnz             .pass1
 
-    add             r2d,               r2d
+    mov             r2d,               128
     lea             r3,                [r2 * 3]
     mov             r5,                rsp
     mov             r4d,               8
