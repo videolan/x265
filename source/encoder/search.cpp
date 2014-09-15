@@ -605,15 +605,11 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
-        if (bCheckFull)
+        if (bCheckFull && log2TrSize != depthRange[0])
         {
             m_entropyCoder->resetBits();
-
-            // subdiv
-            if (log2TrSize != *depthRange)
-                m_entropyCoder->codeTransformSubdivFlag(1, 5 - log2TrSize);
-
-             splitBits += m_entropyCoder->getNumberOfWrittenBits();
+            m_entropyCoder->codeTransformSubdivFlag(1, 5 - log2TrSize);
+            splitBits += m_entropyCoder->getNumberOfWrittenBits();
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
