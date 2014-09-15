@@ -73,8 +73,6 @@
 #define SCAN_SET_SIZE               16
 #define LOG2_SCAN_SET_SIZE          4
 
-#define FAST_UDI_MAX_RDMODE_NUM     35 // maximum number of RD comparison in fast-UDI estimation loop
-
 #define ALL_IDX                     -1
 #define PLANAR_IDX                  0
 #define VER_IDX                     26 // index for intra VERTICAL   mode

@@ -44,35 +44,6 @@ namespace x265 {
 
 class Entropy;
 
-struct MotionData
-{
-    MV  mv;
-    MV  mvp;
-    int mvpIdx;
-    int ref;
-    uint32_t cost;
-    int bits;
-};
-
-struct MergeData
-{
-    /* merge candidate data, cached between calls to mergeEstimation */
-    TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
-    uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t    maxNumMergeCand;
-
-    /* data updated for each partition */
-    uint32_t    absPartIdx;
-    int         width;
-    int         height;
-
-    /* outputs */
-    TComMvField mvField[2];
-    uint32_t    interDir;
-    uint32_t    index;
-    uint32_t    bits;
-};
-
 inline int getTUBits(int idx, int numIdx)
 {
     return idx + (idx < numIdx - 1);
@@ -106,33 +77,33 @@ public:
     Search();
     ~Search();
 
-    bool initSearch(x265_param *param, ScalingList& scalingList);
+    bool     initSearch(x265_param *param, ScalingList& scalingList);
 
-    void estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
-    void estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
+    void     estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
+    void     estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
 
     // estimation inter prediction (non-skip)
-    bool predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma);
+    bool     predInterSearch(TComDataCU* cu, TComYuv* predYuv, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
-    void encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv, TComYuv* reconYuv);
-    void encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* reconYuv);
+    void     encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv, TComYuv* reconYuv);
+    void     encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* reconYuv);
 
-    void generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
-    void residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth, uint32_t depthRange[2]);
+    void     generateCoeffRecon(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
+    void     residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth, uint32_t depthRange[2]);
 
     uint32_t getIntraModeBits(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
-    uint32_t getIntraRemModeBits(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t & mpms);
+    uint32_t getIntraRemModeBits(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 
 protected:
 
-    void xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
-    void xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
+    void     xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
+    void     xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
-    void xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
-    void xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
-    void xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
-    void xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx);
+    void     xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
+    void     xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
+    void     xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
+    void     xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx);
 
     uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep);
     uint32_t xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2]);
@@ -151,30 +122,60 @@ protected:
     uint32_t xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
                                    int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf, uint32_t chromaId, uint32_t log2TrSizeC);
 
-    void residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
-                                     TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
+    void     residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
+                                         TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
 
-    void residualQTIntraChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
-                               TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
+    void     residualQTIntraChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
+                                   TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
 
-    void xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
-    void xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
+    void     xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
+    void     xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);
 
-    void xLoadIntraResultQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride);
-    void xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, int16_t* reconQt, uint32_t reconQtStride);
+    void     xLoadIntraResultQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride);
+    void     xLoadIntraResultChromaQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, int16_t* reconQt, uint32_t reconQtStride);
 
-    void     getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv);
     void     offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
+    struct MergeData
+    {
+        /* merge candidate data, cached between calls to mergeEstimation */
+        TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
+        uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
+        uint32_t    maxNumMergeCand;
+
+        /* data updated for each partition */
+        uint32_t    absPartIdx;
+        int         width;
+        int         height;
+
+        /* outputs */
+        TComMvField mvField[2];
+        uint32_t    interDir;
+        uint32_t    index;
+        uint32_t    bits;
+    };
+
+    struct MotionData
+    {
+        MV  mv;
+        MV  mvp;
+        int mvpIdx;
+        int ref;
+        uint32_t cost;
+        int bits;
+    };
+
+    /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost);
     void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
     uint32_t getInterSymbolBits(TComDataCU* cu, uint32_t depthRange[2]);
-
     uint32_t mergeEstimation(TComDataCU* cu, int partIdx, MergeData& m);
     void     setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
 
+    /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
     void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
+    void     getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv);
 };
 }
 
