@@ -206,3 +206,22 @@ The function slicetypeDecide() itself may also be performed by a worker
 thread if your system has enough CPU cores to make this a beneficial
 trade-off, else it runs within the context of the thread which calls the
 x265_encoder_encode().
+
+SAO
+===
+
+The Sample Adaptive Offset loopfilter has a large effect on encode
+performance because of the peculiar way it must be analyzed and coded.
+
+SAO flags and data are encoded at the CTU level before the CTU itself is
+coded, but SAO analysis (deciding whether to enable SAO and with what
+parameters) cannot be performed until that CTU is completely analyzed
+(reconstructed pixels are available) as well as the CTUs to the right
+and below.  So in effect the encoder must perform SAO analysis in a
+wavefront at least a full row behind the CTU compression wavefront.
+
+This extra latency forces the encoder to save the encode data of every
+CTU until the entire frame has been analyzed, at which point a function
+can code the final slice bitstream with the decided SAO flags and data
+coded between each CTU.  This second pass over the CTUs can be
+expensive, particularly at large resolutions and high bitrates.
