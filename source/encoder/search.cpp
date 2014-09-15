@@ -265,11 +265,11 @@ uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t ab
     m_entropyCoder->resetBits();
     xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
 
-    //Transform subdiv flag
+    // Transform subdiv flag
     if (log2TrSize != *depthRange)
         m_entropyCoder->codeTransformSubdivFlag(0, 5 - log2TrSize);
 
-    //===== Cbfs =====
+    // Cbfs
     uint32_t trMode = cu->getTransformIdx(absPartIdx);
     m_entropyCoder->codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
 
@@ -609,7 +609,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         {
             m_entropyCoder->resetBits();
 
-            //subdiv
+            // subdiv
             if (log2TrSize != *depthRange)
                 m_entropyCoder->codeTransformSubdivFlag(1, 5 - log2TrSize);
 
