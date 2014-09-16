@@ -124,6 +124,14 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     }
     while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic);
 
+    // do not allow reuse of these buffers for more than one picture. The
+    // encoder now owns these analysisData buffers.
+    if (pic_in)
+    {
+        pic_in->analysisData.intraData = NULL;
+        pic_in->analysisData.interData = NULL;
+    }
+
     if (pp_nal && numEncoded > 0)
     {
         *pp_nal = &encoder->m_nalList.m_nal[0];
