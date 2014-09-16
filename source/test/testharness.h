@@ -40,6 +40,7 @@
 #define PIXEL_MIN 0
 #define SHORT_MAX  32767
 #define SHORT_MIN -32767
+#define UNSIGNED_SHORT_MAX 65535
 
 using namespace x265;
 

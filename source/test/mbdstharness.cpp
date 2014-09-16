@@ -66,14 +66,17 @@ MBDstHarness::MBDstHarness()
         short_test_buff[0][i]    = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         int_test_buff[0][i]      = rand() % PIXEL_MAX;
         int_idct_test_buff[0][i] = (rand() % (SHORT_MAX - SHORT_MIN)) - SHORT_MAX;
+        int_denoise_test_buff1[0][i] = int_denoise_test_buff2[0][i] = (rand() & UNSIGNED_SHORT_MAX) - (rand() & UNSIGNED_SHORT_MAX);
 
         short_test_buff[1][i]    = -PIXEL_MAX;
         int_test_buff[1][i]      = -PIXEL_MAX;
         int_idct_test_buff[1][i] = SHORT_MIN;
+        int_denoise_test_buff1[1][i] = int_denoise_test_buff2[1][i] = -UNSIGNED_SHORT_MAX;
 
         short_test_buff[2][i]    = PIXEL_MAX;
         int_test_buff[2][i]      = PIXEL_MAX;
         int_idct_test_buff[2][i] = SHORT_MAX;
+        int_denoise_test_buff1[2][i] = int_denoise_test_buff2[2][i] = UNSIGNED_SHORT_MAX;
 
         mbuf1[i] = rand() & PIXEL_MAX;
         mbufdct[i] = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
@@ -313,6 +316,45 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
     return true;
 }
 
+bool MBDstHarness::check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t opt)
+{
+    int j = 0;
+
+    for (int s = 0; s < 4; s++)
+    {
+        int log2TrSize = s + 2;
+        int num = 1 << (log2TrSize * 2);
+        int cmp_size = sizeof(int) * num;
+
+        for (int i = 0; i < ITERS; i++)
+        {
+            memset(mubuf1, 0, num * sizeof(uint32_t));
+            memset(mubuf2, 0, num * sizeof(uint32_t));
+            memset(mushortbuf1, 0,  num * sizeof(uint16_t));
+
+            for (int k = 0; k < num; k++)
+                mushortbuf1[k] = rand() % UNSIGNED_SHORT_MAX;
+
+            int index = rand() % TEST_CASES;
+
+            ref(int_denoise_test_buff1[index] + j, mubuf1, mushortbuf1, num);
+            checked(opt, int_denoise_test_buff2[index] + j, mubuf2, mushortbuf1, num);
+
+            if (memcmp(int_denoise_test_buff1[index] + j, int_denoise_test_buff2[index] + j, cmp_size))
+                return false;
+
+            if (memcmp(mubuf1, mubuf2, cmp_size))
+                return false;
+
+            reportfail();
+            j += INCR;
+        }
+    }
+
+    return true;
+}
+
+
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int i = 0; i < NUM_DCTS; i++)
@@ -393,6 +435,15 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.denoiseDct)
+    {
+        if (!check_denoise_dct_primitive(ref.denoiseDct, opt.denoiseDct))
+        {
+            printf("denoiseDct: Failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -448,4 +499,11 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             REPORT_SPEEDUP(opt.count_nonzero, ref.count_nonzero, mbuf1, i * i)
         }
     }
+
+    if (opt.denoiseDct)
+    {
+        printf("denoiseDct\t\t");
+        REPORT_SPEEDUP(opt.denoiseDct, ref.denoiseDct, int_denoise_test_buff1[0], mubuf1, mushortbuf1, 32 * 32);
+    }
+
 }
