@@ -227,6 +227,7 @@ struct CLIOptions
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
     size_t   analysisRecordSize; // number of bytes read from or dumped into file
+    int      analysisHeaderSize;
 
     int64_t startTime;
     int64_t prevUpdateTime;
@@ -251,6 +252,7 @@ struct CLIOptions
         qpfile = NULL;
         analysisFile = NULL;
         analysisRecordSize = 0;
+        analysisHeaderSize = 0;
     }
 
     void destroy();
@@ -262,6 +264,7 @@ struct CLIOptions
     bool parseQPFile(x265_picture &pic_org);
     void readAnalysisFile(x265_picture* pic, x265_param*);
     void writeAnalysisFile(x265_picture* pic, x265_param*);
+    bool validateFanout(x265_param*);
 };
 
 void CLIOptions::destroy()
@@ -755,6 +758,95 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     return false;
 }
 
+bool CLIOptions::validateFanout(x265_param *param)
+{
+#define CMP_OPT_FANOUT(opt, param_val)\
+    {\
+        bErr = 0;\
+        p = strstr(paramBuf, opt "=");\
+        char* q = strstr(paramBuf, "no-"opt);\
+        if (p && sscanf(p, opt "=%d" , &i) && param_val != i)\
+            bErr = 1;\
+        else if (!param_val && !q)\
+            bErr = 1;\
+        else if (param_val && (q || !strstr(paramBuf, opt)))\
+            bErr = 1;\
+        if (bErr)\
+        {\
+            x265_log(param, X265_LOG_ERROR, "different " opt " setting than given in analysis file (%d vs %d)\n", param_val, i);\
+            X265_FREE(paramBuf);\
+            return false;\
+        }\
+    }
+
+    char *p = NULL, *paramBuf;
+    int i, j;
+    uint32_t k , l;
+    bool bErr = false;
+
+    paramBuf = X265_MALLOC(char, MAXPARAMSIZE);
+    if (!paramBuf)
+        return false;
+
+    fread(paramBuf, 1, MAXPARAMSIZE, this->analysisFile);
+
+    /* check whether fanout options are compatible */
+    if (strncmp(paramBuf, "#options:", 9))
+    {
+        x265_log(param, X265_LOG_ERROR, "options list in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+
+    char* buf = strchr(paramBuf, '\n');
+    if (!buf)
+    {
+        x265_log(param, X265_LOG_ERROR, "Malformed analysis file\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    *buf = '\0';
+    fseek(this->analysisFile, (int)strlen(paramBuf) + 1, SEEK_SET);
+
+    if (sscanf(paramBuf, "#options: %dx%d", &i, &j) != 2)
+    {
+        x265_log(param, X265_LOG_ERROR, "Resolution specified in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    if ((p = strstr(paramBuf, " fps=")) == 0 || sscanf(p, " fps=%u/%u", &k, &l) != 2)
+    {
+        x265_log(param, X265_LOG_ERROR, "fps specified in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    if (k != param->fpsNum || l != param->fpsDenom)
+    {
+        x265_log(param, X265_LOG_ERROR, "fps mismatch than given in analysis file (%u/%u vs %u/%u)\n",
+            param->fpsNum, param->fpsDenom, k, l);
+        X265_FREE(paramBuf);
+        return false;
+    }
+
+    CMP_OPT_FANOUT("bitdepth", param->internalBitDepth);
+    CMP_OPT_FANOUT("weightp", param->bEnableWeightedPred);
+    CMP_OPT_FANOUT("bframes", param->bframes);
+    CMP_OPT_FANOUT("b-pyramid", param->bBPyramid);
+    CMP_OPT_FANOUT("b-adapt", param->bFrameAdaptive);
+    CMP_OPT_FANOUT("open-gop", param->bOpenGOP);
+    CMP_OPT_FANOUT("keyint", param->keyframeMax);
+    CMP_OPT_FANOUT("min-keyint", param->keyframeMin);
+    CMP_OPT_FANOUT("scenecut", param->scenecutThreshold);
+    CMP_OPT_FANOUT("ctu", (int)param->maxCUSize);
+    CMP_OPT_FANOUT("ref", param->maxNumReferences);
+    CMP_OPT_FANOUT("rc-lookahead", param->lookaheadDepth);
+
+#undef CMP_OPT_FANOUT
+
+    X265_FREE(paramBuf);
+    return true;
+}
+
 void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
 {
     int poc, width, height;
@@ -788,7 +880,7 @@ void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
 
 void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
 {
-    uint64_t seekTo = pic->poc * this->analysisRecordSize;
+    uint64_t seekTo = pic->poc * this->analysisRecordSize + this->analysisHeaderSize;
     fseeko(this->analysisFile, seekTo, SEEK_SET);
     fwrite(&p->sourceWidth, sizeof(int), 1, this->analysisFile);
     fwrite(&p->sourceHeight, sizeof(int), 1, this->analysisFile);
@@ -907,11 +999,29 @@ int main(int argc, char **argv)
     }
     if (param->analysisMode)
     {
-        uint32_t numCU = pic_in->analysisData.numCUsInFrame;
-        uint32_t numPart = pic_in->analysisData.numPartitions;
+        if (param->analysisMode == X265_ANALYSIS_SAVE)
+        {
+            char *p = x265_param2string(param);
+            if (!p)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "analysis: buffer allocation failure, aborting");
+                goto fail;
+            }
+            uint32_t numCU = pic_in->analysisData.numCUsInFrame;
+            uint32_t numPart = pic_in->analysisData.numPartitions;
 
-        cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * 85 +
-        sizeof(uint8_t) * 2 * numPart * numCU + sizeof(char) * numPart * numCU + sizeof(int) * numCU  + sizeof(uint32_t) * numCU);
+            cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * 85 +
+                    sizeof(uint8_t) * 2 * numPart * numCU + sizeof(char) * numPart * numCU + sizeof(int) * numCU + sizeof(uint32_t) * numCU);
+
+            fprintf(cliopt.analysisFile, "#options: %s\n", p);
+            cliopt.analysisHeaderSize = ftell(cliopt.analysisFile);
+            X265_FREE(p);
+        }
+        else
+        {
+            if (!cliopt.validateFanout(param))
+                goto fail;
+        }
     }
 
     if (cliopt.bDither)

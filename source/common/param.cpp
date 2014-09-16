@@ -1191,7 +1191,7 @@ char *x265_param2string(x265_param *p)
 {
     char *buf, *s;
 
-    buf = s = X265_MALLOC(char, 2000);
+    buf = s = X265_MALLOC(char, MAXPARAMSIZE);
     if (!buf)
         return NULL;
 
