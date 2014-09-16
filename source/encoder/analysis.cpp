@@ -301,7 +301,6 @@ void Analysis::compressCU(TComDataCU* cu)
 {
     if (cu->m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
-    loadCTUData(cu);
 
     // initialize CU data
     m_bestCU[0]->initCU(cu->m_pic, cu->getAddr());

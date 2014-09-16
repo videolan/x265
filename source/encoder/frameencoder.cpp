@@ -470,6 +470,7 @@ void FrameEncoder::encodeSlice()
             }
         }
 
+        m_tld.cuCoder.loadCTUData(cu);
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCTU(cu);
 
@@ -689,6 +690,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             // load current best state from go-on entropy coder
             curRow.rdEntropyCoders[0][CI_CURR_BEST].load(rowCoder);
 
+        tld.cuCoder.loadCTUData(cu);
         tld.cuCoder.m_quant.setQPforQuant(cu);
         tld.cuCoder.compressCU(cu); // Does all the CU analysis
 

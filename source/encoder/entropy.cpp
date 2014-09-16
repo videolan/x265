@@ -484,11 +484,11 @@ void Entropy::codeShortTermRefPicSet(RPS* rps)
 void Entropy::encodeCTU(TComDataCU* cu)
 {
     bool bEncodeDQP = cu->m_slice->m_pps->bUseDQP;
-    encodeCU(cu, 0, 0, false, bEncodeDQP);
+    encodeCU(cu, 0, 0, bEncodeDQP, cu->m_CULocalData);
 }
 
 /* encode a CU block recursively */
-void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bInsidePicture, bool& bEncodeDQP)
+void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU* cuData)
 {
     Frame* pic = cu->m_pic;
     Slice* slice = cu->m_slice;
@@ -496,30 +496,24 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
 
-    if (!bInsidePicture)
+    int cuSplitFlag = !(cuData->flags & CU::LEAF);
+    int cuUnsplitFlag = !(cuData->flags & CU::SPLIT_MANDATORY);
+
+    if (!cuUnsplitFlag)
     {
-        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
-        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
-        uint32_t cuSize = g_maxCUSize >> depth;
-
-        bInsidePicture = (g_zscanToPelX[absPartIdx] + cuSize <= xmax &&
-                          g_zscanToPelY[absPartIdx] + cuSize <= ymax);
-
-        if (!bInsidePicture)
+        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
-            for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
-            {
-                if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-                    encodeCU(cu, absPartIdx, depth + 1, bInsidePicture, bEncodeDQP);
-            }
-
-            return;
+            CU *childCU = cu->m_CULocalData + cuData->childIdx + partUnitIdx;
+            int cuPresentFlagChild = !(childCU->flags & CU::PRESENT);
+            if (!cuPresentFlagChild)
+                encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
         }
+        return;
     }
 
     // We need to split, so don't try these modes.
-    if (bInsidePicture && depth < g_maxCUDepth)
+    if (cuSplitFlag) 
         codeSplitFlag(cu, absPartIdx, depth);
 
     if (depth < cu->getDepth(absPartIdx) && depth < g_maxCUDepth)
@@ -527,7 +521,10 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
-            encodeCU(cu, absPartIdx, depth + 1, bInsidePicture, bEncodeDQP);
+        {
+            CU *childCU = cu->m_CULocalData + cuData->childIdx + partUnitIdx;
+            encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
+        }
         return;
     }
 
