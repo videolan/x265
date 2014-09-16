@@ -1389,6 +1389,61 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     x265_emms();
 }
 
+void Search::sharedEstIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2], uint8_t* sharedModes)
+{
+    uint32_t depth       = cu->getDepth(0);
+    uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
+    uint32_t numPU       = 1 << (2 * initTrDepth);
+    uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
+    uint32_t qNumParts   = cu->getTotalNumPart() >> 2;
+
+    // loop over partitions
+    uint32_t partOffset  = 0;
+    uint64_t puCost      = 0;
+    uint32_t bits        = 0;
+    uint32_t dststride   = cu->m_pic->getPicYuvRec()->getStride();
+    uint32_t srcstride   = reconYuv->getStride();
+
+    for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
+    {
+        cu->setLumaIntraDirSubParts(sharedModes[pu], partOffset, depth + initTrDepth);
+
+        // set context models
+        m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
+
+        // update overall distortion (rate and r-d costs are determined later)
+        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, bits, depthRange);
+        xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
+
+        if (pu != numPU - 1)
+        {
+            uint32_t zorder      = cu->getZorderIdxInCU() + partOffset;
+            pixel*   dst         = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
+            pixel*   src         = reconYuv->getLumaAddr(partOffset);
+            primitives.luma_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
+        }
+
+        // update PU data
+        cu->setLumaIntraDirSubParts(sharedModes[pu], partOffset, depth + initTrDepth);
+        cu->copyToPic((uint8_t)depth, pu, initTrDepth);
+    }
+
+    if (numPU > 1)
+    {
+        // set Cbf for all blocks
+        uint32_t combCbfY = 0;
+        uint32_t partIdx  = 0;
+        for (uint32_t part = 0; part < 4; part++, partIdx += qNumParts)
+            combCbfY |= cu->getCbf(partIdx, TEXT_LUMA, 1);
+
+        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
+            cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
+    }
+
+    // reset context models
+    m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
+}
+
 void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
 {
     uint32_t depth   = cu->getDepth(0);
