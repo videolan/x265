@@ -554,10 +554,10 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
     // index to g_depthInc array to increment zOrder offset to next depth
     int32_t ctuToDepthIndex = g_maxCUDepth - 1;
 
-    if (!depth)
-        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
-    else
+    if (depth)
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], outBestCU->getZorderIdxInCU());
+    else
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), outBestCU->getZorderIdxInCU());
 
     Slice* slice = outTempCU->m_slice;
     int32_t cu_split_flag = !(cu->flags & CU::LEAF);
@@ -614,8 +614,8 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
                 compressSharedIntraCTU(subBestPartCU, subTempPartCU, nextDepth, cuPicsym, child_cu, sharedDepth, sharedPartSizes, sharedModes, zOrder);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
 
-                if(!subBestPartCU->m_totalRDCost) // if cost is 0, CU is best CU
-                    outTempCU->m_totalRDCost = 0; // set outTempCU cost to 0, so later check will use this CU as best CU
+                if (!subBestPartCU->m_totalRDCost) // if cost is 0, CU is best CU
+                    outTempCU->m_totalRDCost = 0;  // set outTempCU cost to 0, so later check will use this CU as best CU
 
                 copyYuv2Tmp(subBestPartCU->getTotalNumPart() * partUnitIdx, nextDepth);
             }
