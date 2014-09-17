@@ -349,6 +349,7 @@ bool MBDstHarness::check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t op
             reportfail();
             j += INCR;
         }
+        j = 0;
     }
 
     return true;
