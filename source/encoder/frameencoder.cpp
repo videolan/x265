@@ -787,6 +787,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                             while (bRowBusy);
                         }
 
+                        m_outStreams[r].resetBits();
                         stopRow.completed = 0;
                         memset(&stopRow.rowStats, 0, sizeof(stopRow.rowStats));
                         if (m_frame->m_qpaAq)
