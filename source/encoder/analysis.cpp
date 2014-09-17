@@ -462,11 +462,10 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
-
+            int qp = outTempCU->getQP(0);
+            subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
             if (child_cu->flags & CU::PRESENT)
             {
-                int qp = outTempCU->getQP(0);
-                subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 if (0 == partUnitIdx) //initialize RD with previous depth buffer
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
@@ -483,7 +482,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth);
             }
         }
-        if (cu->flags & CU::PRESENT)
+        if (cu_unsplit_flag)
         {
             m_entropyCoder->resetBits();
             m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
@@ -525,7 +524,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 
     // TODO: write the best CTU at the end of complete CTU analysis
     outBestCU->copyToPic(depth); // Copy Best data to Picture for next partition prediction.
-
+    if (!cu_unsplit_flag)
+        return;
     // Copy Yuv data to picture Yuv
     copyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
 
@@ -595,11 +595,10 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
-
+            int qp = outTempCU->getQP(0);
+            subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
             if (child_cu->flags & CU::PRESENT)
             {
-                int32_t qp = outTempCU->getQP(0);
-                subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
                 subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
 
                 if (partUnitIdx) // initialize RD with previous depth buffer
@@ -628,7 +627,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
             }
         }
 
-        if (cu->flags & CU::PRESENT)
+        if (cu_unsplit_flag)
         {
             m_entropyCoder->resetBits();
             m_entropyCoder->codeSplitFlag(outTempCU, 0, depth);
@@ -661,6 +660,8 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
         checkBestMode(outBestCU, outTempCU, depth);
     }
     outBestCU->copyToPic(depth);
+    if (!cu_unsplit_flag)
+        return;
     copyYuv2Pic(pic, outBestCU->getAddr(), outBestCU->getZorderIdxInCU(), depth);
 
 #if CHECKED_BUILD || _DEBUG
