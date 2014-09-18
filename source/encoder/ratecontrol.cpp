@@ -402,6 +402,8 @@ RateControl::RateControl(x265_param *p)
     }
 
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
+    if (m_isCbr && m_qCompress == 1)
+        m_param->rc.pbFactor = 1;
     m_leadingBframes = m_param->bframes;
     m_bframeBits = 0;
     m_leadingNoBSatd = 0;
@@ -1368,7 +1370,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
 
         if (!m_2pass && m_isVbv)
         {
-            if (m_leadingBframes > 5)
+            if (m_leadingBframes > 5 || m_isCbr)
             {
                 qScale = clipQscale(pic, qScale);
                 m_lastQScaleFor[m_sliceType] = qScale;
@@ -1740,7 +1742,7 @@ double RateControl::clipQscale(Frame* pic, double q)
         }
          // Check B-frame complexity, and use up any bits that would
          // overflow before the next P-frame.
-         if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
+        if ( (m_leadingBframes <= 5 || m_isCbr) && m_sliceType == P_SLICE && !m_singleFrameVbv)
          {
              int nb = m_leadingBframes;
              double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
