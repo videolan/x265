@@ -29,6 +29,8 @@
 
 SECTION_RODATA 32
 
+const pb_1,        times 32 db 1
+
 const hsub_mul,    times 16 db 1, -1
 const pw_1,        times 16 dw 1
 const pw_16,       times 16 dw 16
@@ -53,7 +55,6 @@ const pb_16,       times 16 db 16
 const pb_64,       times 16 db 64
 const pb_01,       times  8 db 0,1
 const pb_0,        times 16 db 0
-const pb_1,        times 32 db 1
 const pb_a1,       times 16 db 0xa1
 const pb_3,        times 16 db 3
 const pb_8,        times 16 db 8

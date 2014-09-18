@@ -4159,69 +4159,48 @@ cglobal copy_cnt_16, 3,4,6
 
 
 INIT_YMM avx2
-cglobal copy_cnt_16, 3,5,5
+cglobal copy_cnt_16, 3, 5, 5
     add         r2d, r2d
-    lea         r4, [r2 * 3]
-    mov         r3d, 16/4
-    ; NOTE: xorpd is faster than pxor
+    lea         r3,  [r2 * 3]
+    mov         r4d, 16/4
+
+    mova        m3, [pb_1]
     xorpd       m4, m4
-    xorpd       m3, m3
 
-.loop
-    ; row 0
+.loop:
+    ; row 0 - 1
     movu        m0, [r1]
-    movu        xm1, [r1 + mmsize/2]
-    pmovsxwd    m2, xm0
-    pmovsxwd    m1, xm1
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m1
-
-    ; row 1
+    movu        [r0], m0
     movu        m1, [r1 + r2]
-    movu        xm2, [r1 + r2 + mmsize/2]
+    movu        [r0 + 32], m1
+
     packsswb    m0, m1
-    pcmpeqb     m0, m3
+    pminub      m0, m3
+
+    ; row 2 - 3
+    movu        m1, [r1 + r2 * 2]
+    movu        [r0 + 64], m1
+    movu        m2, [r1 + r3]
+    movu        [r0 + 96], m2
+
+    packsswb    m1, m2
+    pminub      m1, m3
+    paddb       m0, m1
     paddb       m4, m0
-    pmovsxwd    m1, xm1
-    pmovsxwd    m2, xm2
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m2
 
-    ; move output pointer here to avoid 128 bytes offset limit
-    add         r0, 4 * mmsize
-
-    ; row 2
-    movu        m0, [r1 + r2 * 2]
-    movu        xm1, [r1 + r2 * 2 + mmsize/2]
-    pmovsxwd    m2, xm0
-    pmovsxwd    m1, xm1
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m1
-
-    ; row 3
-    movu        m1, [r1 + r4]
-    movu        xm2, [r1 + r4 + mmsize/2]
-    packsswb    m0, m1
-    pcmpeqb     m0, m3
-    paddb       m4, m0
-    pmovsxwd    m1, xm1
-    pmovsxwd    m2, xm2
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m2
-
-    add         r0, 4 * mmsize
-    lea         r1, [r1 + r2 * 4]
-    dec         r3d
-    jnz        .loop
+    add         r0, 128
+    lea         r1, [r1 + 4 * r2]
+    dec         r4d
+    jnz         .loop
 
     ; get count
-    vextracti128 xm0, m4, 1
-    paddb        xm0, xm4
-    movhlps     xm1, xm0
-    paddb       xm0, xm1
-    paddb       xm0, [pb_32]
-    psadbw      xm0, xm3
-    movd        eax, xm0
+    xorpd        m0,  m0
+    vextracti128 xm1, m4, 1
+    paddb        xm4, xm1
+    psadbw       xm4, xm0
+    movhlps      xm1, xm4
+    paddd        xm4, xm1
+    movd         eax, xm4
     RET
 
 ;--------------------------------------------------------------------------------------
