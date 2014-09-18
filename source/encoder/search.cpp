@@ -1218,9 +1218,10 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
     uint32_t log2TrSize   = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
     uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
-    uint32_t totalDist    = 0;
     uint32_t sizeIdx      = log2TrSize - 2;
     uint32_t partOffset   = 0;
+    uint32_t srcstride   = reconYuv->getStride();
+    uint32_t dststride   = cu->m_pic->getPicYuvRec()->getStride();
 
     // loop over partitions
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
@@ -1353,7 +1354,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-        totalDist += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, cost, bits, depthRange);
+        // update distortion (rate and r-d costs are determined later)
+        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, cost, bits, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
@@ -1362,9 +1364,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         {
             uint32_t zorder      = cu->getZorderIdxInCU() + partOffset;
             pixel*   dst         = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder);
-            uint32_t dststride   = cu->m_pic->getPicYuvRec()->getStride();
             pixel*   src         = reconYuv->getLumaAddr(partOffset);
-            uint32_t srcstride   = reconYuv->getStride();
             primitives.square_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
         }
     }
@@ -1374,7 +1374,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         uint32_t combCbfY = 0;
         uint32_t partIdx  = 0;
         for (uint32_t part = 0; part < 4; part++, partIdx += qNumParts)
-            combCbfY |= cu->getCbf(partIdx, TEXT_LUMA,     1);
+            combCbfY |= cu->getCbf(partIdx, TEXT_LUMA, 1);
 
         for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
             cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
@@ -1382,9 +1382,6 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
 
     // reset context models
     m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
-
-    // set distortion (rate and r-d costs are determined later)
-    cu->m_totalDistortion = totalDist;
 
     x265_emms();
 }
