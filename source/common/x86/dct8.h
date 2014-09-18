@@ -27,6 +27,7 @@ void x265_dct4_sse2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct4_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_idct4_sse2(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_idct8_ssse3(int32_t *src, int16_t *dst, intptr_t stride);
+void x265_idct16_avx2(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_dst4_ssse3(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_idst4_sse2(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_dct8_sse4(int16_t *src, int32_t *dst, intptr_t stride);

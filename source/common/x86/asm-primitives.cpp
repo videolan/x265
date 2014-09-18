@@ -1447,6 +1447,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         p.dct[DCT_16x16] = x265_dct16_avx2;
         p.dct[DCT_32x32] = x265_dct32_avx2;
+        p.idct[IDCT_16x16] = x265_idct16_avx2;
 #endif
     }
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
@@ -1745,6 +1746,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         p.dct[DCT_16x16] = x265_dct16_avx2;
         p.dct[DCT_32x32] = x265_dct32_avx2;
+        p.idct[IDCT_16x16] = x265_idct16_avx2;
 #endif
     }
 #endif // if HIGH_BIT_DEPTH

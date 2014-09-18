@@ -134,6 +134,28 @@ tab_dct32_2:    dw 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 6
                 dw -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9
                 dw 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4
 
+tab_idct16_1:   dw 90, 87, 80, 70, 57, 43, 25, 9
+                dw 87, 57, 9, -43, -80, -90, -70, -25
+                dw 80, 9, -70, -87, -25, 57, 90, 43
+                dw 70, -43, -87, 9, 90, 25, -80, -57
+                dw 57, -80, -25, 90, -9, -87, 43, 70
+                dw 43, -90, 57, 25, -87, 70, 9, -80
+                dw 25, -70, 90, -80, 43, 9, -57, 87
+                dw 9, -25, 43, -57, 70, -80, 87, -90
+
+tab_idct16_2:   dw 64, 89, 83, 75, 64, 50, 36, 18
+                dw 64, 75, 36, -18, -64, -89, -83, -50
+                dw 64, 50, -36, -89, -64, 18, 83, 75
+                dw 64, 18, -83, -50, 64, 75, -36, -89
+                dw 64, -18, -83, 50, 64, -75, -36, 89
+                dw 64, -50, -36, 89, -64, -18, 83, -75
+                dw 64, -75, 36, 18, -64, 89, -83, 50
+                dw 64, -89, 83, -75, 64, -50, 36, -18
+
+idct16_shuff:   dd 0, 4, 2, 6, 1, 5, 3, 7
+
+idct16_shuff1:  dd 2, 6, 0, 4, 3, 7, 1, 5
+
 avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
                 dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
 
@@ -1562,6 +1584,284 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
     add             r5,                256
     add             r1,                16
 
+    dec             r4d
+    jnz             .pass2
+    RET
+
+%macro IDCT_PASS1 2
+    vbroadcasti128  m5, [tab_idct16_2 + %1 * 16]
+
+    pmaddwd         m9, m0, m5
+    pmaddwd         m10, m7, m5
+    phaddd          m9, m10
+
+    pmaddwd         m10, m6, m5
+    pmaddwd         m11, m8, m5
+    phaddd          m10, m11
+
+    phaddd          m9, m10
+    vbroadcasti128  m5, [tab_idct16_1 + %1 * 16]
+
+    pmaddwd         m10, m1, m5
+    pmaddwd         m11, m3, m5
+    phaddd          m10, m11
+
+    pmaddwd         m11, m4, m5
+    pmaddwd         m12, m2, m5
+    phaddd          m11, m12
+
+    phaddd          m10, m11
+
+    paddd           m11, m9, m10
+    paddd           m11, m14
+    psrad           m11, IDCT_SHIFT1
+
+    psubd           m9, m10
+    paddd           m9, m14
+    psrad           m9, IDCT_SHIFT1
+
+    vbroadcasti128  m5, [tab_idct16_2 + %1 * 16 + 16]
+
+    pmaddwd         m10, m0, m5
+    pmaddwd         m12, m7, m5
+    phaddd          m10, m12
+
+    pmaddwd         m12, m6, m5
+    pmaddwd         m13, m8, m5
+    phaddd          m12, m13
+
+    phaddd          m10, m12
+    vbroadcasti128  m5, [tab_idct16_1 + %1 * 16  + 16]
+
+    pmaddwd         m12, m1, m5
+    pmaddwd         m13, m3, m5
+    phaddd          m12, m13
+
+    pmaddwd         m13, m4, m5
+    pmaddwd         m5, m2
+    phaddd          m13, m5
+
+    phaddd          m12, m13
+
+    paddd           m5, m10, m12
+    paddd           m5, m14
+    psrad           m5, IDCT_SHIFT1
+
+    psubd           m10, m12
+    paddd           m10, m14
+    psrad           m10, IDCT_SHIFT1
+
+    packssdw        m11, m5
+    packssdw        m9, m10
+
+    mova            m10, [idct16_shuff]
+    mova            m5,  [idct16_shuff1]
+
+    vpermd          m12, m10, m11
+    vpermd          m13, m5, m9
+    mova            [r3 + %1 * 16 * 2], xm12
+    mova            [r3 + %2 * 16 * 2], xm13
+    vextracti128    [r3 + %2 * 16 * 2 + 32], m13, 1
+    vextracti128    [r3 + %1 * 16 * 2 + 32], m12, 1
+%endmacro
+
+;-------------------------------------------------------
+; void idct16(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_YMM avx2
+cglobal idct16, 3, 7, 16, 0-16*mmsize
+%if BIT_DEPTH == 10
+    %define         IDCT_SHIFT2        10
+    vpbroadcastd    m15,                [pd_512]
+%elif BIT_DEPTH == 8
+    %define         IDCT_SHIFT2        12
+    vpbroadcastd    m15,                [pd_2048]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             IDCT_SHIFT1         7
+
+    vbroadcasti128  m14,               [pd_64]
+
+    add             r2d,               r2d
+    mov             r3, rsp
+    mov             r4d, 2
+
+.pass1:
+    movu            m0, [r0 +  0 * 64]
+    movu            m1, [r0 +  8 * 64]
+    packssdw        m0, m1                    ;[0L 8L 0H 8H]
+
+    movu            m1, [r0 +  1 * 64]
+    movu            m2, [r0 +  9 * 64]
+    packssdw        m1, m2                    ;[1L 9L 1H 9H]
+
+    movu            m2, [r0 +  2 * 64]
+    movu            m3, [r0 + 10 * 64]
+    packssdw        m2, m3                    ;[2L 10L 2H 10H]
+
+    movu            m3, [r0 +  3 * 64]
+    movu            m4, [r0 + 11 * 64]
+    packssdw        m3, m4                    ;[3L 11L 3H 11H]
+
+    movu            m4, [r0 +  4 * 64]
+    movu            m5, [r0 + 12 * 64]
+    packssdw        m4, m5                    ;[4L 12L 4H 12H]
+
+    movu            m5, [r0 +  5 * 64]
+    movu            m6, [r0 + 13 * 64]
+    packssdw        m5, m6                    ;[5L 13L 5H 13H]
+
+    movu            m6, [r0 +  6 * 64]
+    movu            m7, [r0 + 14 * 64]
+    packssdw        m6, m7                    ;[6L 14L 6H 14H]
+
+    movu            m7, [r0 +  7 * 64]
+    movu            m8, [r0 + 15 * 64]
+    packssdw        m7, m8                    ;[7L 15L 7H 15H]
+
+    punpckhwd       m8, m0, m2                ;[8 10]
+    punpcklwd       m0, m2                    ;[0 2]
+
+    punpckhwd       m2, m1, m3                ;[9 11]
+    punpcklwd       m1, m3                    ;[1 3]
+
+    punpckhwd       m3, m4, m6                ;[12 14]
+    punpcklwd       m4, m6                    ;[4 6]
+
+    punpckhwd       m6, m5, m7                ;[13 15]
+    punpcklwd       m5, m7                    ;[5 7]
+
+    punpckhdq       m7, m0, m4                ;[02 22 42 62 03 23 43 63 06 26 46 66 07 27 47 67]
+    punpckldq       m0, m4                    ;[00 20 40 60 01 21 41 61 04 24 44 64 05 25 45 65]
+
+    punpckhdq       m4, m8, m3                ;[82 102 122 142 83 103 123 143 86 106 126 146 87 107 127 147]
+    punpckldq       m8, m3                    ;[80 100 120 140 81 101 121 141 84 104 124 144 85 105 125 145]
+
+    punpckhdq       m3, m1, m5                ;[12 32 52 72 13 33 53 73 16 36 56 76 17 37 57 77]
+    punpckldq       m1, m5                    ;[10 30 50 70 11 31 51 71 14 34 54 74 15 35 55 75]
+
+    punpckhdq       m5, m2, m6                ;[92 112 132 152 93 113 133 153 96 116 136 156 97 117 137 157]
+    punpckldq       m2, m6                    ;[90 110 130 150 91 111 131 151 94 114 134 154 95 115 135 155]
+
+    punpckhqdq      m6, m0, m8                ;[01 21 41 61 81 101 121 141 05 25 45 65 85 105 125 145]
+    punpcklqdq      m0, m8                    ;[00 20 40 60 80 100 120 140 04 24 44 64 84 104 124 144]
+
+    punpckhqdq      m8, m7, m4                ;[03 23 43 63 43 103 123 143 07 27 47 67 87 107 127 147]
+    punpcklqdq      m7, m4                    ;[02 22 42 62 82 102 122 142 06 26 46 66 86 106 126 146]
+
+    punpckhqdq      m4, m1, m2                ;[11 31 51 71 91 111 131 151 15 35 55 75 95 115 135 155]
+    punpcklqdq      m1, m2                    ;[10 30 50 70 90 110 130 150 14 34 54 74 94 114 134 154]
+
+    punpckhqdq      m2, m3, m5                ;[13 33 53 73 93 113 133 153 17 37 57 77 97 117 137 157]
+    punpcklqdq      m3, m5                    ;[12 32 52 72 92 112 132 152 16 36 56 76 96 116 136 156]
+
+    IDCT_PASS1      0, 14
+    IDCT_PASS1      2, 12
+    IDCT_PASS1      4, 10
+    IDCT_PASS1      6, 8
+
+    add             r0, 32
+    add             r3, 16
+    dec             r4d
+    jnz             .pass1
+
+    mov             r3, rsp
+    mov             r4d, 8
+    lea             r5, [tab_idct16_2]
+    lea             r6, [tab_idct16_1]
+
+    vbroadcasti128  m7,  [r5]
+    vbroadcasti128  m8,  [r5 + 16]
+    vbroadcasti128  m9,  [r5 + 32]
+    vbroadcasti128  m10, [r5 + 48]
+    vbroadcasti128  m11, [r5 + 64]
+    vbroadcasti128  m12, [r5 + 80]
+    vbroadcasti128  m13, [r5 + 96]
+
+.pass2:
+    movu            m1, [r3]
+    vpermq          m0, m1, 0xD8
+
+    pmaddwd         m1, m0, m7
+    pmaddwd         m2, m0, m8
+    phaddd          m1, m2
+
+    pmaddwd         m2, m0, m9
+    pmaddwd         m3, m0, m10
+    phaddd          m2, m3
+
+    phaddd          m1, m2
+
+    pmaddwd         m2, m0, m11
+    pmaddwd         m3, m0, m12
+    phaddd          m2, m3
+
+    vbroadcasti128  m14, [r5 + 112]
+    pmaddwd         m3, m0, m13
+    pmaddwd         m4, m0, m14
+    phaddd          m3, m4
+
+    phaddd          m2, m3
+
+    movu            m3, [r3 + 32]
+    vpermq          m0, m3, 0xD8
+
+    vbroadcasti128  m14, [r6]
+    pmaddwd         m3, m0, m14
+    vbroadcasti128  m14, [r6 + 16]
+    pmaddwd         m4, m0, m14
+    phaddd          m3, m4
+
+    vbroadcasti128  m14, [r6 + 32]
+    pmaddwd         m4, m0, m14
+    vbroadcasti128  m14, [r6 + 48]
+    pmaddwd         m5, m0, m14
+    phaddd          m4, m5
+
+    phaddd          m3, m4
+
+    vbroadcasti128  m14, [r6 + 64]
+    pmaddwd         m4, m0, m14
+    vbroadcasti128  m14, [r6 + 80]
+    pmaddwd         m5, m0, m14
+    phaddd          m4, m5
+
+    vbroadcasti128  m14, [r6 + 96]
+    pmaddwd         m6, m0, m14
+    vbroadcasti128  m14, [r6 + 112]
+    pmaddwd         m0, m14
+    phaddd          m6, m0
+
+    phaddd          m4, m6
+
+    paddd           m5, m1, m3
+    paddd           m5, m15
+    psrad           m5, IDCT_SHIFT2
+
+    psubd           m1, m3
+    paddd           m1, m15
+    psrad           m1, IDCT_SHIFT2
+
+    paddd           m6, m2, m4
+    paddd           m6, m15
+    psrad           m6, IDCT_SHIFT2
+
+    psubd           m2, m4
+    paddd           m2, m15
+    psrad           m2, IDCT_SHIFT2
+
+    packssdw        m5, m6
+    packssdw        m1, m2
+    pshufb          m2, m1, [dct16_shuf1]
+
+    mova            [r1], xm5
+    mova            [r1 + 16], xm2
+    vextracti128    [r1 + r2], m5, 1
+    vextracti128    [r1 + r2 + 16], m2, 1
+
+    lea             r1, [r1 + 2 * r2]
+    add             r3, 64
     dec             r4d
     jnz             .pass2
     RET
