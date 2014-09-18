@@ -2054,8 +2054,7 @@ void Search::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
 {
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
-    uint32_t log2CUSize = cu->getLog2CUSize(0);
-    uint32_t cuSize = 1 << log2CUSize;
+    uint32_t cuSize = 1 << cu->getLog2CUSize(0);
     uint32_t depth  = cu->getDepth(0);
 
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
@@ -2069,12 +2068,12 @@ void Search::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
 
     outReconYuv->copyFromYuv(predYuv);
     // Luma
-    int part = partitionFromLog2Size(log2CUSize);
-    uint32_t distortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
+    int part = partitionFromLog2Size(cu->getLog2CUSize(0));
+    cu->m_totalDistortion = primitives.sse_pp[part](fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
     // Chroma
     part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
-    distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
-    distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
+    cu->m_totalDistortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->getCbAddr(), fencYuv->getCStride(), outReconYuv->getCbAddr(), outReconYuv->getCStride()));
+    cu->m_totalDistortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->getCrAddr(), fencYuv->getCStride(), outReconYuv->getCrAddr(), outReconYuv->getCStride()));
 
     m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
     m_entropyCoder->resetBits();
@@ -2083,14 +2082,13 @@ void Search::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
     m_entropyCoder->codeSkipFlag(cu, 0);
     m_entropyCoder->codeMergeIndex(cu, 0);
 
-    uint32_t bits = m_entropyCoder->getNumberOfWrittenBits();
-    cu->m_mvBits = bits;
+    cu->m_mvBits = m_entropyCoder->getNumberOfWrittenBits();
     cu->m_coeffBits = 0;
-    cu->m_totalBits       = bits;
-    cu->m_totalDistortion = distortion;
+    cu->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
+
     if (m_rdCost.m_psyRd)
     {
-        int size = log2CUSize - 2;
+        int size = cu->getLog2CUSize(0) - 2;
         cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
                                            outReconYuv->getLumaAddr(), outReconYuv->getStride());
         cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
