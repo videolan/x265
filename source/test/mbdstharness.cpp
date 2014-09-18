@@ -503,7 +503,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.denoiseDct)
     {
-        printf("denoiseDct\t\t");
+        printf("denoiseDct\t");
         REPORT_SPEEDUP(opt.denoiseDct, ref.denoiseDct, int_denoise_test_buff1[0], mubuf1, mushortbuf1, 32 * 32);
     }
 
