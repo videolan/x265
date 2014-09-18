@@ -1104,24 +1104,26 @@ cglobal denoise_dct, 4, 4, 6
     RET
 
 INIT_YMM avx2
-cglobal denoise_dct, 4,4,4
-    pxor      m3, m3
-    movsxdifnidn r3, r3d
+cglobal denoise_dct, 4, 4, 6
+    pxor     m5,  m5
+    shr      r3d, 3
 .loop:
-    mova      m1, [r0+r3*2-mmsize]
-    pabsw     m0, m1
-    psubusw   m2, m0, [r2+r3*2-mmsize]
-    vpermq    m0, m0, q3120
-    psignw    m2, m1
-    mova [r0+r3*2-mmsize], m2
-    punpcklwd m1, m0, m3
-    punpckhwd m0, m3
-    paddd     m1, [r1+r3*4-2*mmsize]
-    paddd     m0, [r1+r3*4-1*mmsize]
-    mova      [r1+r3*4-2*mmsize], m1
-    mova      [r1+r3*4-1*mmsize], m0
-    sub       r3, mmsize/2
-    jg .loop
+    mova     m0, [r0]
+    pabsd    m1, m0
+    mova     m2, [r1]
+    paddd    m2, m1
+    mova     [r1], m2
+    pmovzxwd m3, [r2]
+    psubd    m1, m3
+    pcmpgtd  m4, m1, m5
+    pand     m1, m4
+    psignd   m1, m0
+    mova     [r0], m1
+    add      r0, 32
+    add      r1, 32
+    add      r2, 16
+    dec      r3d
+    jnz .loop
     RET
 
 
