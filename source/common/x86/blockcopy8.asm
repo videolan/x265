@@ -4268,42 +4268,47 @@ cglobal copy_cnt_32, 3,4,6
 
 
 INIT_YMM avx2
-cglobal copy_cnt_32, 3,4,5
+cglobal copy_cnt_32, 3, 5, 5
     add         r2d, r2d
-    mov         r3d, 32/1
-    xorpd       m3, m3
+    mov         r3d, 32/2
+
+    mova        m3, [pb_1]
     xorpd       m4, m4
 
-.loop
+.loop:
     ; row 0
-    movu        m0, [r1 + 0 * mmsize]
-    movu        m1, [r1 + 1 * mmsize]
-    packsswb    m2, m0, m1
-    pcmpeqb     m2, m4
-    paddb       m3, m2
+    movu        m0, [r1]
+    movu        [r0], m0
+    movu        m1, [r1 + 32]
+    movu        [r0 + 32], m1
 
-    pmovsxwd    m2, xm0
-    pmovsxwd    m0, [r1 + 0 * mmsize + mmsize/2]
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m0
-    pmovsxwd    m0, xm1
-    pmovsxwd    m1, [r1 + 1 * mmsize + mmsize/2]
-    movu        [r0 + 2 * mmsize], m0
-    movu        [r0 + 3 * mmsize], m1
+    packsswb    m0, m1
+    pminub      m0, m3
 
-    add         r0, 4 * mmsize
-    add         r1, r2
+    ; row 1
+    movu        m1, [r1 + r2]
+    movu        [r0 + 64], m1
+    movu        m2, [r1 + r2 + 32]
+    movu        [r0 + 96], m2
+
+    packsswb    m1, m2
+    pminub      m1, m3
+    paddb       m0, m1
+    paddb       m4, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
     dec         r3d
-    jnz        .loop
+    jnz         .loop
 
     ; get count
-    vextracti128 xm0, m3, 1
-    paddb       xm0, xm3
-    movhlps     xm3, xm0
-    paddb       xm0, xm3
-    paddb       xm0, [pb_128]
-    psadbw      xm0, xm4
-    movd        eax, xm0
+    xorpd        m0,  m0
+    vextracti128 xm1, m4, 1
+    paddb        xm4, xm1
+    psadbw       xm4, xm0
+    movhlps      xm1, xm4
+    paddd        xm4, xm1
+    movd         eax, xm4
     RET
 
 ;-----------------------------------------------------------------------------
