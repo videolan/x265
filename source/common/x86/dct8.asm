@@ -4,6 +4,7 @@
 ;* Authors: Nabajit Deka <nabajit@multicorewareinc.com>
 ;*          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
 ;*          Li Cao <li@multicorewareinc.com>
+;*          Praveen Kumar Tiwari <Praveen@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -1076,6 +1077,31 @@ cglobal idct8, 3,7,8 ;,0-16*mmsize
     RET
 
 
+;-----------------------------------------------------------------------------
+; void denoise_dct(int32_t *dct, uint32_t *sum, uint16_t *offset, int size)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal denoise_dct, 4, 4, 6
+    pxor     m5,  m5
+    shr      r3d, 2
+.loop:
+    mova     m0, [r0]
+    pabsd    m1, m0
+    mova     m2, [r1]
+    paddd    m2, m1
+    mova     [r1], m2
+    pmovzxwd m3, [r2]
+    psubd    m1, m3
+    pcmpgtd  m4, m1, m5
+    pand     m1, m4
+    psignd   m1, m0
+    mova     [r0], m1
+    add      r0, 16
+    add      r1, 16
+    add      r2, 8
+    dec      r3d
+    jnz .loop
+    RET
 
 INIT_YMM avx2
 cglobal denoise_dct, 4,4,4

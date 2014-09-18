@@ -1690,6 +1690,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
         p.copy_shr = x265_copy_shr_sse4;
+        p.denoiseDct = x265_denoise_dct_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

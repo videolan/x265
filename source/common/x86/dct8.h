@@ -34,6 +34,7 @@ void x265_dct8_sse4(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct16_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct32_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 
+void x265_denoise_dct_sse4(int32_t *dct, uint32_t *sum, uint16_t *offset, int size);
 void x265_denoise_dct_avx2(int32_t *dct, uint32_t *sum, uint16_t *offset, int size);
 
 #endif // ifndef X265_DCT8_H
