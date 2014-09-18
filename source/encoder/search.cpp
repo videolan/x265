@@ -1443,23 +1443,14 @@ void Search::sharedEstIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
 
 void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv)
 {
-    uint32_t depth   = cu->getDepth(0);
-    uint32_t trDepth = 0;
-    uint32_t absPartIdx = 0;
     uint32_t bestMode  = 0;
     uint64_t bestCost  = MAX_INT64;
-    // init mode list
-    uint32_t minMode = 0;
-    uint32_t maxMode = NUM_CHROMA_MODE;
     uint32_t modeList[NUM_CHROMA_MODE];
 
-    int hChromaShift = CHROMA_H_SHIFT(m_csp);
-
-    uint32_t log2TrSizeC = cu->getLog2CUSize(0) - trDepth - hChromaShift;
+    uint32_t log2TrSizeC = cu->getLog2CUSize(0) - CHROMA_H_SHIFT(m_csp);
     uint32_t tuSize = 1 << log2TrSizeC;
-    uint32_t stride = fencYuv->getCStride();
-    int scaleTuSize = tuSize;
-    int costShift = 0;
+    int32_t scaleTuSize = tuSize;
+    int32_t costShift = 0;
 
     if (tuSize > 32)
     {
@@ -1467,15 +1458,15 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
         costShift = 2;
         log2TrSizeC = 5;
     }
-    int sizeIdx = log2TrSizeC - 2;
+    int32_t sizeIdx = log2TrSizeC - 2;
     pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
 
-    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, 1);
-    TComPattern::initAdiPatternChroma(cu, absPartIdx, trDepth, m_predBuf, 2);
+    TComPattern::initAdiPatternChroma(cu, 0, 0, m_predBuf, 1);
+    TComPattern::initAdiPatternChroma(cu, 0, 0, m_predBuf, 2);
     cu->getAllowedChromaDir(0, modeList);
 
     // check chroma modes
-    for (uint32_t mode = minMode; mode < maxMode; mode++)
+    for (uint32_t mode = 0; mode < NUM_CHROMA_MODE; mode++)
     {
         uint32_t chromaPredMode = modeList[mode];
         if (chromaPredMode == DM_CHROMA_IDX)
@@ -1484,13 +1475,13 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
         uint64_t cost = 0;
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            pixel* fenc = fencYuv->getChromaAddr(chromaId, absPartIdx);
-            pixel* pred = predYuv->getChromaAddr(chromaId, absPartIdx);
+            pixel* fenc = fencYuv->getChromaAddr(chromaId, 0);
+            pixel* pred = predYuv->getChromaAddr(chromaId, 0);
             pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, scaleTuSize, m_predBuf);
 
             // get prediction signal
-            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
-            cost += sa8d(fenc, stride, pred, stride) << costShift;
+            predIntraChromaAng(chromaPred, chromaPredMode, pred, fencYuv->getCStride(), log2TrSizeC, m_csp);
+            cost += sa8d(fenc, fencYuv->getCStride(), pred, fencYuv->getCStride()) << costShift;
         }
 
         if (cost < bestCost)
@@ -1500,7 +1491,7 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, TComYuv* fencYuv, TComYuv* p
         }
     }
 
-    cu->setChromIntraDirSubParts(bestMode, 0, depth);
+    cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
 void Search::estIntraPredChromaQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
