@@ -89,10 +89,10 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
         refAbv = m_refAboveFlt + tuSize - 1;
     }
 
-    bool bFilter = log2TrSize <= 4 && dirMode != PLANAR_IDX;
+    bool bFilter = log2TrSize <= 4;
     int sizeIdx = log2TrSize - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-    primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft, refAbv, dirMode, bFilter);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, refLft, refAbv, dirMode, bFilter);
 }
 
 void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
@@ -101,7 +101,7 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     uint32_t tuSize2 = tuSize << 1;
 
     // Create the prediction
-    pixel refAbv[3 * MAX_CU_SIZE];
+    pixel* refAbv;
     pixel refLft[3 * MAX_CU_SIZE];
 
     bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize));
@@ -135,21 +135,21 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
 
         // initialization of ADI buffers
         int limit = tuSize2 + 1;
-        memcpy(refAbv + tuSize - 1, filterBufN + tuSize2, limit * sizeof(pixel));
+        refAbv = filterBufN + tuSize2;
         for (int k = 0; k < limit; k++)
             refLft[k + tuSize - 1] = filterBufN[tuSize2 - k];   // Smoothened
     }
     else
     {
         int limit = (dirMode <= 25 && dirMode >= 11) ? (tuSize + 1 + 1) : (tuSize2 + 1);
-        memcpy(refAbv + tuSize - 1, src, (limit) * sizeof(pixel));
+        refAbv = src;
         for (int k = 0; k < limit; k++)
             refLft[k + tuSize - 1] = src[k * ADI_BUF_STRIDE];
     }
 
     int sizeIdx = log2TrSizeC - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-    primitives.intra_pred[sizeIdx][dirMode](dst, stride, refLft + tuSize - 1, refAbv + tuSize - 1, dirMode, 0);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, refLft + tuSize - 1, refAbv, dirMode, 0);
 }
 
 bool Predict::checkIdenticalMotion()

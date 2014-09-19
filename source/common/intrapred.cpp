@@ -281,22 +281,22 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred[BLOCK_4x4][0] = planar_pred_c<2>;
-    p.intra_pred[BLOCK_8x8][0] = planar_pred_c<3>;
-    p.intra_pred[BLOCK_16x16][0] = planar_pred_c<4>;
-    p.intra_pred[BLOCK_32x32][0] = planar_pred_c<5>;
+    p.intra_pred[0][BLOCK_4x4] = planar_pred_c<2>;
+    p.intra_pred[0][BLOCK_8x8] = planar_pred_c<3>;
+    p.intra_pred[0][BLOCK_16x16] = planar_pred_c<4>;
+    p.intra_pred[0][BLOCK_32x32] = planar_pred_c<5>;
 
     // Intra Prediction DC
-    p.intra_pred[BLOCK_4x4][1] = intra_pred_dc_c<4>;
-    p.intra_pred[BLOCK_8x8][1] = intra_pred_dc_c<8>;
-    p.intra_pred[BLOCK_16x16][1] = intra_pred_dc_c<16>;
-    p.intra_pred[BLOCK_32x32][1] = intra_pred_dc_c<32>;
+    p.intra_pred[1][BLOCK_4x4] = intra_pred_dc_c<4>;
+    p.intra_pred[1][BLOCK_8x8] = intra_pred_dc_c<8>;
+    p.intra_pred[1][BLOCK_16x16] = intra_pred_dc_c<16>;
+    p.intra_pred[1][BLOCK_32x32] = intra_pred_dc_c<32>;
     for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
-        p.intra_pred[BLOCK_4x4][i] = intra_pred_ang_c<4>;
-        p.intra_pred[BLOCK_8x8][i] = intra_pred_ang_c<8>;
-        p.intra_pred[BLOCK_16x16][i] = intra_pred_ang_c<16>;
-        p.intra_pred[BLOCK_32x32][i] = intra_pred_ang_c<32>;
+        p.intra_pred[i][BLOCK_4x4] = intra_pred_ang_c<4>;
+        p.intra_pred[i][BLOCK_8x8] = intra_pred_ang_c<8>;
+        p.intra_pred[i][BLOCK_16x16] = intra_pred_ang_c<16>;
+        p.intra_pred[i][BLOCK_32x32] = intra_pred_ang_c<32>;
     }
 
     p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<2>;

@@ -68,9 +68,9 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
 
     fillReferenceSamples(roiOrigin, picStride, adiTemp, intraNeighbors);
 
-    bool bUseFilteredPredictions = (dirMode == ALL_IDX || (g_intraFilterFlags[dirMode] & tuSize));
+    bool bUseFilteredPredictions = (dirMode == ALL_IDX ? (8 | 16 | 32) & tuSize : g_intraFilterFlags[dirMode] & tuSize);
 
-    if (bUseFilteredPredictions && 8 <= tuSize && tuSize <= 32)
+    if (bUseFilteredPredictions)
     {
         // generate filtered intra prediction samples
         // left and left above border + above and above right border + top left corner = length of 3. filter buffer

@@ -153,7 +153,7 @@ extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t x265_exp2_lut[64];
 
 // Intra tables
-extern const uint8_t g_intraFilterFlags[35];
+extern const uint8_t g_intraFilterFlags[NUM_INTRA_MODE];
 
 extern const uint32_t g_depthInc[3][4];
 

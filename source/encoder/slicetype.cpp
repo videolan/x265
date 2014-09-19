@@ -1680,13 +1680,13 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // generate 35 intra predictions into m_predictions
         pixelcmp_t satd = primitives.satd[partitionFromLog2Size(X265_LOWRES_CU_BITS)];
         int icost = m_me.COST_MAX, cost;
-        primitives.intra_pred[sizeIdx][DC_IDX](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
+        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
         cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
         pixel *above = (cuSize >= 8) ? above1 : above0;
         pixel *left  = (cuSize >= 8) ? left1 : left0;
-        primitives.intra_pred[sizeIdx][PLANAR_IDX](m_predictions, cuSize, left, above, 0, 0);
+        primitives.intra_pred[PLANAR_IDX][sizeIdx](m_predictions, cuSize, left, above, 0, 0);
         cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
         if (cost < icost)
             icost = cost;

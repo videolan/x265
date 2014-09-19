@@ -91,6 +91,8 @@ enum SquareBlocks   // Routines can be indexed using log2n(width)-2
     NUM_SQUARE_BLOCKS
 };
 
+enum { NUM_TR_SIZE = 4 };
+
 // NOTE: Not all DCT functions support dest stride
 enum Dcts
 {
@@ -145,7 +147,6 @@ typedef void (*pixeladd_ss_t)(int bx, int by, int16_t *dst, intptr_t dstride, in
 typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_planar_t)(pixel* above, pixel* left, pixel* dst, intptr_t dstStride);
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma);
 
@@ -259,8 +260,8 @@ struct EncoderPrimitives
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
     addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
 
-    intra_pred_t    intra_pred[NUM_SQUARE_BLOCKS - 1][NUM_INTRA_MODE];
-    intra_allangs_t intra_pred_allangs[NUM_SQUARE_BLOCKS - 1];
+    intra_pred_t    intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
+    intra_allangs_t intra_pred_allangs[NUM_TR_SIZE];
     scale_t         scale1D_128to64;
     scale_t         scale2D_64to32;
 

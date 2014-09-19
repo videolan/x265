@@ -1849,7 +1849,7 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
 
     // DC
-    primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
+    primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
     bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     bmode = mode = DC_IDX;
     bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
@@ -1858,14 +1858,14 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     pixel *abovePlanar   = above;
     pixel *leftPlanar    = left;
 
-    if (tuSize >= 8 && tuSize <= 32)
+    if (tuSize & (8 | 16 | 32))
     {
         abovePlanar = aboveFiltered;
         leftPlanar  = leftFiltered;
     }
 
     // PLANAR
-    primitives.intra_pred[sizeIdx][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
+    primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
     sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     mode = PLANAR_IDX;
     bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;

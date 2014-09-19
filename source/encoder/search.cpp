@@ -1285,7 +1285,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         uint64_t bcost;
 
         // DC
-        primitives.intra_pred[sizeIdx][DC_IDX](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
+        primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
         uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
         uint32_t sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
         modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
@@ -1298,7 +1298,7 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             abovePlanar = aboveFiltered;
             leftPlanar  = leftFiltered;
         }
-        primitives.intra_pred[sizeIdx][PLANAR_IDX](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
+        primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
         bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
         sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
         modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
