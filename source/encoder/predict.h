@@ -83,7 +83,7 @@ public:
     pixel*    m_refLeftFlt;
 
     Predict();
-    virtual ~Predict();
+    ~Predict();
 
     void initTempBuff(int csp);
 

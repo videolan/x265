@@ -88,9 +88,6 @@ TComDataCU::TComDataCU()
     m_DataCUMemPool.m_tqBypassYuvMemBlock  = NULL;
 }
 
-TComDataCU::~TComDataCU()
-{}
-
 
 bool TComDataCU::initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless)
 {
@@ -1086,15 +1083,6 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
     }
 }
 
-/** Check whether the CU is coded in lossless coding mode
- * \param   absPartIdx
- * \returns true if the CU is coded in lossless coding mode; false if otherwise
- */
-bool TComDataCU::isLosslessCoded(uint32_t absPartIdx)
-{
-    return m_slice->m_pps->bTransquantBypassEnabled && getCUTransquantBypass(absPartIdx);
-}
-
 /** Get allowed chroma intra modes
 *\param   absPartIdx
 *\param   uiModeList  pointer to chroma intra modes array
@@ -1222,11 +1210,6 @@ uint32_t TComDataCU::getCtxSkipFlag(uint32_t absPartIdx)
     ctx   += (tempCU) ? tempCU->isSkipped(tempPartIdx) : 0;
 
     return ctx;
-}
-
-uint32_t TComDataCU::getCtxInterDir(uint32_t absPartIdx)
-{
-    return getDepth(absPartIdx);
 }
 
 void TComDataCU::clearCbf(uint32_t absPartIdx, uint32_t depth)
@@ -2111,11 +2094,6 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
     return numMvc;
 }
 
-bool TComDataCU::isBipredRestriction()
-{
-    return getLog2CUSize(0) == 3 && getPartitionSize(0) != SIZE_2Nx2N;
-}
-
 void TComDataCU::clipMv(MV& outMV)
 {
     int mvshift = 2;
@@ -2128,15 +2106,6 @@ void TComDataCU::clipMv(MV& outMV)
 
     outMV.x = X265_MIN(xmax, X265_MAX(xmin, (int)outMV.x));
     outMV.y = X265_MIN(ymax, X265_MAX(ymin, (int)outMV.y));
-}
-
-/** Test whether the current block is skipped
- * \param partIdx Block index
- * \returns Flag indicating whether the block is skipped
- */
-bool TComDataCU::isSkipped(uint32_t partIdx)
-{
-    return getSkipFlag(partIdx);
 }
 
 // ====================================================================================================================
@@ -2436,11 +2405,6 @@ void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result,
     }
     else
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
-}
-
-uint32_t TComDataCU::getSCUAddr()
-{
-    return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInLCU;
 }
 
 //! \}

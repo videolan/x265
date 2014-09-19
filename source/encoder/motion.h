@@ -65,7 +65,7 @@ public:
 
     MotionEstimate();
 
-    virtual ~MotionEstimate();
+    ~MotionEstimate();
 
     void setSearchMethod(int i) { searchMethod = i; }
 

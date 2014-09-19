@@ -363,7 +363,6 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
 {
     int refStride = refPic->getCStride();
     int dstStride = dstPic->getCStride();
-
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 

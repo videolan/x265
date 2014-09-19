@@ -129,8 +129,6 @@ protected:
     void encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
     void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu);
-    void copyYuv2Pic(Frame* outPic, uint32_t cuAddr, uint32_t absPartIdx, uint32_t depth);
-    void copyYuv2Tmp(uint32_t partUnitIdx, uint32_t depth);
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
     void fillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);

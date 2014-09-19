@@ -60,10 +60,6 @@ TComPicYuv::TComPicYuv()
     m_buOffsetC = NULL;
 }
 
-TComPicYuv::~TComPicYuv()
-{
-}
-
 bool TComPicYuv::create(int picWidth, int picHeight, int picCsp, uint32_t maxCUSize, uint32_t maxFullDepth)
 {
     m_picWidth  = picWidth;

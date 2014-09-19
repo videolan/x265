@@ -75,10 +75,6 @@ Encoder::Encoder()
     m_param = NULL;
 }
 
-Encoder::~Encoder()
-{
-}
-
 void Encoder::create()
 {
     if (!primitives.sad[0])

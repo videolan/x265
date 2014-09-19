@@ -525,8 +525,8 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
                 if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 {
                     // check if each of PUs is lossless coded
-                    partPNoFilter = cuP->isLosslessCoded(partP);
-                    partQNoFilter = cuQ->isLosslessCoded(partQ);
+                    partPNoFilter = cuP->getCUTransquantBypass(partP);
+                    partQNoFilter = cuQ->getCUTransquantBypass(partQ);
                 }
 
                 if (d < beta)
@@ -623,8 +623,8 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {
                 // check if each of PUs is lossless coded
-                partPNoFilter = cuP->isLosslessCoded(partP);
-                partQNoFilter = cuQ->isLosslessCoded(partQ);
+                partPNoFilter = cuP->getCUTransquantBypass(partP);
+                partQNoFilter = cuQ->getCUTransquantBypass(partQ);
             }
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)

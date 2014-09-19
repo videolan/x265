@@ -94,7 +94,7 @@ public:
     int   m_numCuInHeight;
 
     TComPicYuv();
-    virtual ~TComPicYuv();
+    ~TComPicYuv() {}
 
     // ------------------------------------------------------------------------------------------------
     //  Memory management

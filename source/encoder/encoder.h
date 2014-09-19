@@ -130,7 +130,7 @@ public:
 
     Encoder();
 
-    virtual ~Encoder();
+    ~Encoder() {}
 
     void create();
     void destroy();

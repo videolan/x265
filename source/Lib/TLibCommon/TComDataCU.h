@@ -248,7 +248,7 @@ protected:
 public:
 
     TComDataCU();
-    virtual ~TComDataCU();
+    ~TComDataCU() {}
 
     uint32_t      m_psyEnergy;
     uint64_t      m_totalPsyCost;
@@ -290,7 +290,8 @@ public:
 
     uint32_t&     getZorderIdxInCU()               { return m_absIdxInLCU; }
 
-    uint32_t      getSCUAddr();
+    uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInLCU; }
+
 
     uint32_t      getCUPelX()                      { return m_cuPelX; }
 
@@ -344,7 +345,7 @@ public:
     char          getLastCodedQP(uint32_t absPartIdx);
     void          setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
 
-    bool          isLosslessCoded(uint32_t absPartIdx);
+    bool          isLosslessCoded(uint32_t idx) const { return m_cuTransquantBypass[idx] && m_slice->m_pps->bTransquantBypassEnabled; }
 
     uint8_t*      getTransformIdx()                    { return m_trIdx; }
 
@@ -488,10 +489,9 @@ public:
     // member functions for modes
     // -------------------------------------------------------------------------------------------------------------------
 
-    bool          isIntra(uint32_t partIdx)  { return m_predModes[partIdx] == MODE_INTRA; }
-
-    bool          isSkipped(uint32_t partIdx); ///< SKIP (no residual)
-    bool          isBipredRestriction();
+    bool          isIntra(uint32_t partIdx) const { return m_predModes[partIdx] == MODE_INTRA; }
+    bool          isSkipped(uint32_t idx) const { return m_skipFlag[idx]; }
+    bool          isBipredRestriction() const { return m_log2CUSize[0] == 3 && m_partSizes[0] != SIZE_2Nx2N; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for symbol prediction (most probable / mode conversion)
@@ -506,7 +506,7 @@ public:
 
     uint32_t      getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth);
     uint32_t      getCtxSkipFlag(uint32_t absPartIdx);
-    uint32_t      getCtxInterDir(uint32_t absPartIdx);
+    uint32_t      getCtxInterDir(uint32_t idx) const { return m_depth[idx]; }
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for RD cost storage

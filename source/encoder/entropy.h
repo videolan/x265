@@ -117,7 +117,6 @@ public:
     Entropy();
 
     void setBitstream(Bitstream* p)    { m_bitIf = p; }
-    bool isBitCounter() const          { return !m_bitIf; }
 
     uint32_t getNumberOfWrittenBits()
     {
@@ -130,9 +129,10 @@ public:
     void resetEntropy(Slice *slice);
 
     // SBAC RD
-    void load(Entropy& src);
+    void load(Entropy& src)            { copyFrom(src); }
+
     void loadIntraDirModeLuma(Entropy& src);
-    void store(Entropy& dest);
+    void store(Entropy& dest)          { dest.copyFrom(*this); }
     void loadContexts(Entropy& src)    { copyContextsFrom(src); }
     void copyState(Entropy& other);
 

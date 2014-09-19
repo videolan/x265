@@ -87,7 +87,7 @@ public:
     x265_inter_data*  m_interData;  // inter analysis information
 
     Frame();
-    virtual ~Frame();
+    ~Frame() {}
 
     bool        create(x265_param *param, Window& display, Window& conformance);
     bool        allocPicSym(x265_param *param);

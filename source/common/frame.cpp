@@ -55,9 +55,6 @@ Frame::Frame()
     m_interData = NULL;
 }
 
-Frame::~Frame()
-{}
-
 bool Frame::create(x265_param *param, Window& display, Window& conformance)
 {
     m_conformanceWindow = conformance;

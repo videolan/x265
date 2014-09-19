@@ -1143,21 +1143,11 @@ void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 }
 
 // SBAC RD
-void  Entropy::load(Entropy& src)
-{
-    this->copyFrom(src);
-}
-
 void  Entropy::loadIntraDirModeLuma(Entropy& src)
 {
     copyState(src);
 
     ::memcpy(&m_contextState[OFF_ADI_CTX], &src.m_contextState[OFF_ADI_CTX], sizeof(uint8_t) * NUM_ADI_CTX);
-}
-
-void  Entropy::store(Entropy& dest)
-{
-    dest.copyFrom(*this);
 }
 
 void Entropy::copyFrom(Entropy& src)

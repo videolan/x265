@@ -2166,7 +2166,7 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
         else
             zeroCost = m_rdCost.calcRdCost(zeroDistortion, zeroResiBits);
 
-        if (cu->isLosslessCoded(0))
+        if (bIsLosslessMode)
             zeroCost = cost + 1;
 
         if (zeroCost < cost)
@@ -2592,7 +2592,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYu
                 nonZeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
                     cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), zorder), cu->m_pic->getPicYuvRec()->getStride());
             }
-            if (cu->isLosslessCoded(0))
+            if (cu->getCUTransquantBypass(0))
             {
                 distY = nonZeroDistY;
                 psyEnergyY = nonZeroPsyEnergyY;
@@ -2692,7 +2692,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYu
                                                              cu->m_pic->getPicYuvRec()->getCbAddr(cu->getAddr(), zorder),
                                                              cu->m_pic->getPicYuvRec()->getCStride());
                     }
-                    if (cu->isLosslessCoded(0))
+                    if (cu->getCUTransquantBypass(0))
                     {
                         distU = nonZeroDistU;
                         psyEnergyU = nonZeroPsyEnergyU;
@@ -2774,7 +2774,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYu
                                                              cu->m_pic->getPicYuvRec()->getCrAddr(cu->getAddr(), zorder),
                                                              cu->m_pic->getPicYuvRec()->getCStride());
                     }
-                    if (cu->isLosslessCoded(0))
+                    if (cu->getCUTransquantBypass(0))
                     {
                         distV = nonZeroDistV;
                         psyEnergyV = nonZeroPsyEnergyV;
