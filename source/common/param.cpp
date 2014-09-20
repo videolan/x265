@@ -963,6 +963,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
     CHECK(param->psyRdoq < 0 || 10.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 10.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
+    CHECK(!param->bEnableWavefront && param->rc.vbvBufferSize, "VBV requires wave-front parallelism (--wpp)");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
           && param->vui.aspectRatioIdc != X265_EXTENDED_SAR,
