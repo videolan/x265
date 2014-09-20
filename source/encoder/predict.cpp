@@ -651,11 +651,12 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx, uint32_t wid
 void Predict::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1)
 {
     Slice* slice = cu->m_slice;
-    bool wpBiPred = slice->m_pps->bUseWeightedBiPred;
-    bool bBiDir  = (refIdx0 >= 0 && refIdx1 >= 0);
-    bool bUniDir = !bBiDir;
+    bool bBiDir  = refIdx0 >= 0 && refIdx1 >= 0;
 
-    if (bUniDir || wpBiPred)
+    wp0 = NULL;
+    wp1 = NULL;
+
+    if (!bBiDir || slice->m_pps->bUseWeightedBiPred)
     {
         if (refIdx0 >= 0)
             wp0 = slice->m_weightPredTable[0][refIdx0];
@@ -668,12 +669,6 @@ void Predict::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam
         X265_CHECK(0, "unexpected wpScaling configuration\n");
     }
 
-    if (refIdx0 < 0)
-        wp0 = NULL;
-
-    if (refIdx1 < 0)
-        wp1 = NULL;
-
     if (bBiDir)
     {
         for (int yuv = 0; yuv < 3; yuv++)
@@ -683,7 +678,7 @@ void Predict::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam
             wp1[yuv].w     = wp1[yuv].inputWeight;
             wp1[yuv].o     = wp1[yuv].inputOffset * (1 << (X265_DEPTH - 8));
             wp0[yuv].shift = wp0[yuv].log2WeightDenom;
-            wp0[yuv].round = (1 << wp0[yuv].log2WeightDenom);
+            wp0[yuv].round = 1 << wp0[yuv].log2WeightDenom;
             wp1[yuv].shift = wp0[yuv].shift;
             wp1[yuv].round = wp0[yuv].round;
         }
@@ -696,7 +691,7 @@ void Predict::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam
             pwp[yuv].w      = pwp[yuv].inputWeight;
             pwp[yuv].offset = pwp[yuv].inputOffset * (1 << (X265_DEPTH - 8));
             pwp[yuv].shift  = pwp[yuv].log2WeightDenom;
-            pwp[yuv].round  = (pwp[yuv].log2WeightDenom >= 1) ? (1 << (pwp[yuv].log2WeightDenom - 1)) : (0);
+            pwp[yuv].round  = pwp[yuv].log2WeightDenom >= 1 ? 1 << (pwp[yuv].log2WeightDenom - 1) : 0;
         }
     }
 }
