@@ -434,7 +434,7 @@ void Entropy::codeSliceHeader(Slice* slice)
     int code = slice->m_sliceQp - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
-    bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[0] : false;
+    bool isSAOEnabled = slice->m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
     bool isDBFEnabled = !slice->m_pps->bPicDisableDeblockingFilter;
 
     if (isSAOEnabled || isDBFEnabled)
