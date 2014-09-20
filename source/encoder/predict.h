@@ -75,8 +75,6 @@ protected:
 
     void getLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
-    bool checkIdenticalMotion();
-
     void getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1);
 
 public:

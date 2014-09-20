@@ -147,24 +147,6 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
 }
 
-bool Predict::checkIdenticalMotion()
-{
-    X265_CHECK(m_slice->isInterB(), "identical motion check in P frame\n");
-    if (!m_slice->m_pps->bUseWeightedBiPred)
-    {
-        int refIdxL0 = m_mvField[0]->getRefIdx(m_partAddr);
-        int refIdxL1 = m_mvField[1]->getRefIdx(m_partAddr);
-        if (refIdxL0 >= 0 && refIdxL1 >= 0)
-        {
-            int refPOCL0 = m_slice->m_refPOCList[0][refIdxL0];
-            int refPOCL1 = m_slice->m_refPOCList[1][refIdxL1];
-            if (refPOCL0 == refPOCL1 && m_mvField[0]->getMv(m_partAddr) == m_mvField[1]->getMv(m_partAddr))
-                return true;
-        }
-    }
-    return false;
-}
-
 void Predict::prepMotionCompensation(TComDataCU* cu, int partIdx)
 {
     m_slice = cu->m_slice;
@@ -202,12 +184,7 @@ void Predict::motionCompensation(TComDataCU* cu, TComYuv* predYuv, bool bLuma, b
             predInterUni(0, predYuv, bLuma, bChroma);
     }
     else
-    {
-        if (checkIdenticalMotion())
-            predInterUni(REF_PIC_LIST_0, predYuv, bLuma, bChroma);
-        else
-            predInterBi(cu, predYuv, bLuma, bChroma);
-    }
+        predInterBi(cu, predYuv, bLuma, bChroma);
 }
 
 void Predict::predInterUni(int list, TComYuv* outPredYuv, bool bLuma, bool bChroma)
