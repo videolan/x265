@@ -31,11 +31,10 @@
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
-#include "TLibCommon/TComWeightPrediction.h"
 
 namespace x265 {
 
-class Predict : public TComWeightPrediction
+class Predict
 {
 protected:
 
@@ -69,9 +68,17 @@ protected:
 
     void predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma);
 
+    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, WeightParam *wp0, WeightParam *wp1, TComYuv* outDstYuv, bool bLuma, bool bChroma);
+    void addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, WeightParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma);
+
+    void weightedPredictionUni(TComDataCU* cu, ShortYuv* srcYuv, uint32_t partAddr, int width, int height, int picList, TComYuv* outPredYuv, int refIdx, bool bLuma, bool bChroma);
+    void weightedPredictionBi(TComDataCU* cu, ShortYuv* srcYuv0, ShortYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outDstYuv, bool bLuma, bool bChroma);
+
     void getLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
 
     bool checkIdenticalMotion();
+
+    void getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam *&wp0, WeightParam *&wp1);
 
 public:
 

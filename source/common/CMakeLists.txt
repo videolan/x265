@@ -7,7 +7,6 @@ set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComPicYuv.cpp
     ../Lib/TLibCommon/TComPicYuvMD5.cpp
     ../Lib/TLibCommon/TComRom.cpp
-    ../Lib/TLibCommon/TComWeightPrediction.cpp
     ../Lib/TLibCommon/TComYuv.cpp)
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
@@ -19,7 +18,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComPicYuv.h
     ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComWeightPrediction.h
     ../Lib/TLibCommon/TComYuv.h)
 
 source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
