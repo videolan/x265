@@ -264,19 +264,35 @@ void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool 
     }
     else if (m_slice->m_pps->bUseWeightedBiPred)
     {
+        /* if weighted prediction is possible, we must check if it has been
+         * configured for this reference */
         WeightParam *pwp0 = NULL, *pwp1 = NULL;
         getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 
         if (refIdx0 >= 0)
         {
-            predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
-            addWeightUni(&m_predShortYuv[0], m_partAddr, m_width, m_height, pwp0, outPredYuv, bLuma, bChroma);
+            X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "unidir refidx0 out of range\n");
+
+            if (pwp0->bPresentFlag)
+            {
+                predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
+                addWeightUni(&m_predShortYuv[0], m_partAddr, m_width, m_height, pwp0, outPredYuv, bLuma, bChroma);
+            }
+            else
+                predInterUni(0, outPredYuv, bLuma, bChroma);
         }
         else
         {
             X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
-            predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
-            addWeightUni(&m_predShortYuv[1], m_partAddr, m_width, m_height, pwp1, outPredYuv, bLuma, bChroma);
+            X265_CHECK(refIdx1 < m_slice->m_numRefIdx[1], "unidir refidx1 out of range\n");
+
+            if (pwp1->bPresentFlag)
+            {
+                predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
+                addWeightUni(&m_predShortYuv[1], m_partAddr, m_width, m_height, pwp1, outPredYuv, bLuma, bChroma);
+            }
+            else
+                predInterUni(1, outPredYuv, bLuma, bChroma);
         }
     }
     else if (refIdx0 >= 0)
