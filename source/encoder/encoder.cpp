@@ -512,7 +512,7 @@ char* Encoder::statsCSVString(EncStats& stat, char* buffer)
     double fps = (double)m_param->fpsNum / m_param->fpsDenom;
     double scale = fps / 1000 / (double)stat.m_numPics;
 
-    int len = sprintf(buffer, "%-6d, ", stat.m_numPics);
+    int len = sprintf(buffer, "%-6u, ", stat.m_numPics);
 
     len += sprintf(buffer + len, "%2.2lf, ", stat.m_totalQp / (double)stat.m_numPics);
     len += sprintf(buffer + len, "%-8.2lf, ", stat.m_accBits * scale);
@@ -538,7 +538,7 @@ char* Encoder::statsString(EncStats& stat, char* buffer)
     double fps = (double)m_param->fpsNum / m_param->fpsDenom;
     double scale = fps / 1000 / (double)stat.m_numPics;
 
-    int len = sprintf(buffer, "%6d, ", stat.m_numPics);
+    int len = sprintf(buffer, "%6u, ", stat.m_numPics);
 
     len += sprintf(buffer + len, "Avg QP:%2.2lf", stat.m_totalQp / (double)stat.m_numPics);
     len += sprintf(buffer + len, "  kb/s: %-8.2lf", stat.m_accBits * scale);
