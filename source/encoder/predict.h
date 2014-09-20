@@ -95,7 +95,7 @@ public:
 
     // prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
     void prepMotionCompensation(TComDataCU* cu, int partIdx);
-    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, int picList, bool bLuma, bool bChroma);
+    void motionCompensation(TComDataCU* cu, TComYuv* predYuv, bool bLuma, bool bChroma);
 
     // Angular Intra
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);

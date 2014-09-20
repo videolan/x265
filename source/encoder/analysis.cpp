@@ -866,7 +866,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     for (int partIdx = 0; partIdx < numPart; partIdx++)
                     {
                         prepMotionCompensation(outBestCU, partIdx);
-                        motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
+                        motionCompensation(outBestCU, m_bestPredYuv[depth], false, true);
                     }
 
                     encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
@@ -936,7 +936,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             prepMotionCompensation(outBestCU, partIdx);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], false, true);
                         }
 
                         encodeResAndCalcRdInterCU(outBestCU, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
@@ -963,7 +963,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             prepMotionCompensation(outBestCU, partIdx);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], false, true);
                         }
 
                         m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], outBestCU->getLog2CUSize(0));
@@ -980,7 +980,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         for (int partIdx = 0; partIdx < numPart; partIdx++)
                         {
                             prepMotionCompensation(outBestCU, partIdx);
-                            motionCompensation(outBestCU, m_bestPredYuv[depth], REF_PIC_LIST_X, false, true);
+                            motionCompensation(outBestCU, m_bestPredYuv[depth], false, true);
                         }
                     }
                 }
@@ -1570,7 +1570,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             // do MC only for Luma part
             /* Set CU parameters for motion compensation */
             prepMotionCompensation(outTempCU, 0);
-            motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, false);
+            motionCompensation(outTempCU, m_tmpPredYuv[depth], true, false);
             uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
             outTempCU->m_totalBits = bitsCand;
             outTempCU->m_totalDistortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
@@ -1609,7 +1609,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             for (int partIdx = 0; partIdx < numPart; partIdx++)
             {
                 prepMotionCompensation(outBestCU, partIdx);
-                motionCompensation(outBestCU, bestPredYuv, REF_PIC_LIST_X, false, true);
+                motionCompensation(outBestCU, bestPredYuv, false, true);
             }
 
             if (outTempCU->isLosslessCoded(0))
@@ -1683,7 +1683,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                     // do MC
                     prepMotionCompensation(outTempCU, 0);
-                    motionCompensation(outTempCU, m_tmpPredYuv[depth], REF_PIC_LIST_X, true, true);
+                    motionCompensation(outTempCU, m_tmpPredYuv[depth], true, true);
                     // estimate residual and encode everything
                     if (noResidual)
                         encodeResAndCalcRdSkipCU(outTempCU,

@@ -181,27 +181,25 @@ void Predict::prepMotionCompensation(TComDataCU* cu, int partIdx)
     cu->clipMv(m_clippedMv[1]);
 }
 
-void Predict::motionCompensation(TComDataCU* cu, TComYuv* predYuv, int list, bool bLuma, bool bChroma)
+void Predict::motionCompensation(TComDataCU* cu, TComYuv* predYuv, bool bLuma, bool bChroma)
 {
     if (m_slice->isInterP())
-        list = REF_PIC_LIST_0;
-    if (list != REF_PIC_LIST_X)
     {
         if (m_slice->m_pps->bUseWeightPred)
         {
             ShortYuv* shortYuv = &m_predShortYuv[0];
-            int refId = m_mvField[list]->getRefIdx(m_partAddr);
+            int refId = m_mvField[0]->getRefIdx(m_partAddr);
             X265_CHECK(refId >= 0, "refidx is not positive\n");
 
             if (bLuma)
-                predInterLumaBlk(m_slice->m_refPicList[list][refId]->getPicYuvRec(), shortYuv, &m_clippedMv[list]);
+                predInterLumaBlk(m_slice->m_refPicList[0][refId]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
             if (bChroma)
-                predInterChromaBlk(m_slice->m_refPicList[list][refId]->getPicYuvRec(), shortYuv, &m_clippedMv[list]);
+                predInterChromaBlk(m_slice->m_refPicList[0][refId]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
 
-            weightedPredictionUni(cu, shortYuv, m_partAddr, m_width, m_height, list, predYuv, -1, bLuma, bChroma);
+            weightedPredictionUni(cu, shortYuv, m_partAddr, m_width, m_height, 0, predYuv, -1, bLuma, bChroma);
         }
         else
-            predInterUni(list, predYuv, bLuma, bChroma);
+            predInterUni(0, predYuv, bLuma, bChroma);
     }
     else
     {
@@ -275,6 +273,7 @@ void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool 
 
             if (pwp0->bPresentFlag)
             {
+                /* TODO: can we use fast weighted uni-prediction here? */
                 predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
                 addWeightUni(&m_predShortYuv[0], m_partAddr, m_width, m_height, pwp0, outPredYuv, bLuma, bChroma);
             }
@@ -288,6 +287,7 @@ void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool 
 
             if (pwp1->bPresentFlag)
             {
+                /* TODO: can we use fast weighted uni-prediction here? */
                 predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
                 addWeightUni(&m_predShortYuv[1], m_partAddr, m_width, m_height, pwp1, outPredYuv, bLuma, bChroma);
             }
