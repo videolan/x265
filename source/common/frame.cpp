@@ -61,8 +61,6 @@ bool Frame::create(x265_param *param, Window& display, Window& conformance)
     m_defaultDisplayWindow = display;
 
     m_origPicYuv = new TComPicYuv;
-    if (!m_origPicYuv)
-        return false;
 
     bool ok = true;
     ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
@@ -103,23 +101,18 @@ bool Frame::allocPicSym(x265_param *param)
 {
     m_picSym = new TComPicSym;
     m_reconPicYuv = new TComPicYuv;
-    if (m_picSym && m_reconPicYuv)
+    m_picSym->m_reconPicYuv = m_reconPicYuv;
+    bool ok = m_picSym->create(param) &&
+            m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
+    if (ok)
     {
-        m_picSym->m_reconPicYuv = m_reconPicYuv;
-        bool ok = m_picSym->create(param) &&
-             m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
-        if (ok)
-        {
-            // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels
-            int maxHeight = m_reconPicYuv->m_numCuInHeight * g_maxCUSize;
-            memset(m_reconPicYuv->m_picOrg[0], 0, m_reconPicYuv->m_stride * maxHeight);
-            memset(m_reconPicYuv->m_picOrg[1], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
-            memset(m_reconPicYuv->m_picOrg[2], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
-        }
-        return ok;
+        // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels
+        int maxHeight = m_reconPicYuv->m_numCuInHeight * g_maxCUSize;
+        memset(m_reconPicYuv->m_picOrg[0], 0, m_reconPicYuv->m_stride * maxHeight);
+        memset(m_reconPicYuv->m_picOrg[1], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
+        memset(m_reconPicYuv->m_picOrg[2], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
     }
-    else
-        return false;
+    return ok;
 }
 
 void Frame::reinit(x265_param *param)

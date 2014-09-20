@@ -85,9 +85,8 @@ void Encoder::create()
     }
 
     m_frameEncoder = new FrameEncoder[m_param->frameNumThreads];
-    if (m_frameEncoder)
-        for (int i = 0; i < m_param->frameNumThreads; i++)
-            m_frameEncoder[i].setThreadPool(m_threadPool);
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+        m_frameEncoder[i].setThreadPool(m_threadPool);
 
     if (!m_scalingList.init())
     {
@@ -106,16 +105,11 @@ void Encoder::create()
     ThreadPool *pool = ThreadPool::getThreadPool();
     const int poolThreadCount = pool ? pool->getThreadCount() : 1;
     m_threadLocalData = new ThreadLocalData[poolThreadCount];
-    if (m_threadLocalData)
+    for (int i = 0; i < poolThreadCount; i++)
     {
-        for (int i = 0; i < poolThreadCount; i++)
-        {
-            m_threadLocalData[i].cuCoder.initSearch(m_param, m_scalingList);
-            m_threadLocalData[i].cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
-        }
+        m_threadLocalData[i].cuCoder.initSearch(m_param, m_scalingList);
+        m_threadLocalData[i].cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
     }
-    else
-        m_aborted = true;
 
     m_lookahead = new Lookahead(m_param, m_threadPool, this);
     m_dpb = new DPB(m_param);
@@ -288,15 +282,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             pic = new Frame;
-            if (!pic || !pic->create(m_param, m_sps.vuiParameters.defaultDisplayWindow, m_conformanceWindow))
+            if (!pic->create(m_param, m_sps.vuiParameters.defaultDisplayWindow, m_conformanceWindow))
             {
                 m_aborted = true;
                 x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
-                if (pic)
-                {
-                    pic->destroy();
-                    delete pic;
-                }
+                pic->destroy();
+                delete pic;
                 return -1;
             }
         }

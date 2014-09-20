@@ -56,27 +56,24 @@ x265_encoder *x265_encoder_open(x265_param *p)
         return NULL;
 
     Encoder *encoder = new Encoder;
-    if (encoder)
+    if (!param->rc.bEnableSlowFirstPass)
+        x265_param_apply_fastfirstpass(param);
+    // may change params for auto-detect, etc
+    encoder->configure(param);
+    
+    // may change rate control and CPB params
+    if (!enforceLevel(*param, encoder->m_vps))
     {
-        if (!param->rc.bEnableSlowFirstPass)
-            x265_param_apply_fastfirstpass(param);
-        // may change params for auto-detect, etc
-        encoder->configure(param);
-        
-        // may change rate control and CPB params
-        if (!enforceLevel(*param, encoder->m_vps))
-        {
-            delete encoder;
-            return NULL;
-        }
-
-        // will detect and set profile/tier/level in VPS
-        determineLevel(*param, encoder->m_vps);
-
-        x265_print_params(param);
-        encoder->create();
-        encoder->init();
+        delete encoder;
+        return NULL;
     }
+
+    // will detect and set profile/tier/level in VPS
+    determineLevel(*param, encoder->m_vps);
+
+    x265_print_params(param);
+    encoder->create();
+    encoder->init();
 
     return encoder;
 }

@@ -66,8 +66,6 @@ bool TComPicSym::create(x265_param *param)
 
     m_slice = new Slice;
     m_cuData = new TComDataCU[m_numCUsInFrame];
-    if (!m_slice || !m_cuData)
-        return false;
 
     bool tqBypass = param->bCULossless || param->bLossless;
     for (i = 0; i < m_numCUsInFrame; i++)
