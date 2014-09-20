@@ -254,18 +254,30 @@ void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool 
         predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
 
         if (m_slice->m_pps->bUseWeightedBiPred)
-            weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx0, refIdx1, m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
+        {
+            WeightParam *pwp0 = NULL, *pwp1 = NULL;
+            getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
+            addWeightBi(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, pwp0, pwp1, outPredYuv, bLuma, bChroma);
+        }
         else
             outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
     }
     else if (m_slice->m_pps->bUseWeightedBiPred)
     {
-        if (refIdx0 >= 0)
-            predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
-        if (refIdx1 >= 0)
-            predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
+        WeightParam *pwp0 = NULL, *pwp1 = NULL;
+        getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
 
-        weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx0, refIdx1, m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
+        if (refIdx0 >= 0)
+        {
+            predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
+            addWeightUni(&m_predShortYuv[0], m_partAddr, m_width, m_height, pwp0, outPredYuv, bLuma, bChroma);
+        }
+        else
+        {
+            X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
+            predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
+            addWeightUni(&m_predShortYuv[1], m_partAddr, m_width, m_height, pwp1, outPredYuv, bLuma, bChroma);
+        }
     }
     else if (refIdx0 >= 0)
     {
@@ -670,25 +682,6 @@ void Predict::getWpScaling(TComDataCU* cu, int refIdx0, int refIdx1, WeightParam
             pwp[yuv].shift  = pwp[yuv].log2WeightDenom;
             pwp[yuv].round  = (pwp[yuv].log2WeightDenom >= 1) ? (1 << (pwp[yuv].log2WeightDenom - 1)) : (0);
         }
-    }
-}
-
-/* weighted prediction for bi-pred */
-void Predict::weightedPredictionBi(TComDataCU* cu, ShortYuv* srcYuv0, ShortYuv* srcYuv1, int refIdx0, int refIdx1, uint32_t partIdx, int width, int height, TComYuv* outPredYuv, bool bLuma, bool bChroma)
-{
-    WeightParam *pwp0 = NULL, *pwp1 = NULL;
-
-    getWpScaling(cu, refIdx0, refIdx1, pwp0, pwp1);
-
-    if (refIdx0 >= 0 && refIdx1 >= 0)
-        addWeightBi(srcYuv0, srcYuv1, partIdx, width, height, pwp0, pwp1, outPredYuv, bLuma, bChroma);
-    else if (refIdx0 >= 0 && refIdx1 <  0)
-        addWeightUni(srcYuv0, partIdx, width, height, pwp0, outPredYuv, bLuma, bChroma);
-    else if (refIdx0 <  0 && refIdx1 >= 0)
-        addWeightUni(srcYuv1, partIdx, width, height, pwp1, outPredYuv, bLuma, bChroma);
-    else
-    {
-        X265_CHECK(0, "unexpected weighte biprediction configuration\n");
     }
 }
 
