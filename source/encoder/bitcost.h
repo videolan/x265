@@ -76,9 +76,9 @@ private:
     /* default log2_max_mv_length_horizontal and log2_max_mv_length_horizontal
      * are 15, specified in quarter-pel luma sample units. making the maximum
      * signaled ful-pel motion distance 4096, max qpel is 32768 */
-    static const int BC_MAX_MV = (1 << 15);
+    enum { BC_MAX_MV = (1 << 15) };
 
-    static const int BC_MAX_QP = 82;
+    enum { BC_MAX_QP = 82 };
 
     static float *s_bitsizes;
 
