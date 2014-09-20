@@ -255,53 +255,43 @@ void Predict::predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool 
 {
     X265_CHECK(m_slice->isInterB(), "biprediction in P frame\n");
 
-    int refIdx[2];
-    refIdx[0] = m_mvField[REF_PIC_LIST_0]->getRefIdx(m_partAddr);
-    refIdx[1] = m_mvField[REF_PIC_LIST_1]->getRefIdx(m_partAddr);
+    int refIdx0 = m_mvField[REF_PIC_LIST_0]->getRefIdx(m_partAddr);
+    int refIdx1 = m_mvField[REF_PIC_LIST_1]->getRefIdx(m_partAddr);
 
-    if (refIdx[0] >= 0 && refIdx[1] >= 0)
+    if (refIdx0 >= 0 && refIdx1 >= 0)
     {
-        for (int list = 0; list < 2; list++)
-        {
-            X265_CHECK(refIdx[list] < m_slice->m_numRefIdx[list], "refidx out of range\n");
+        X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "bidir refidx0 out of range\n");
+        X265_CHECK(refIdx1 < m_slice->m_numRefIdx[1], "bidir refidx1 out of range\n");
 
-            predInterUni(list, &m_predShortYuv[list], bLuma, bChroma);
-        }
+        predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
+        predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
 
         if (m_slice->m_pps->bUseWeightedBiPred)
-            weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
+            weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx0, refIdx1, m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
         else
             outPredYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
     }
     else if (m_slice->m_pps->bUseWeightedBiPred)
     {
-        for (int list = 0; list < 2; list++)
-        {
-            if (refIdx[list] < 0) continue;
+        if (refIdx0 >= 0)
+            predInterUni(0, &m_predShortYuv[0], bLuma, bChroma);
+        if (refIdx1 >= 0)
+            predInterUni(1, &m_predShortYuv[1], bLuma, bChroma);
 
-            X265_CHECK(refIdx[list] < cu->m_slice->m_numRefIdx[list], "refidx out of range\n");
-
-            predInterUni(list, &m_predShortYuv[list], bLuma, bChroma);
-        }
-
-        weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx[0], refIdx[1], m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
+        weightedPredictionBi(cu, &m_predShortYuv[0], &m_predShortYuv[1], refIdx0, refIdx1, m_partAddr, m_width, m_height, outPredYuv, bLuma, bChroma);
     }
-    else if (refIdx[0] >= 0)
+    else if (refIdx0 >= 0)
     {
-        const int list = 0;
+        X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "unidir refidx0 out of range\n");
 
-        X265_CHECK(refIdx[list] < m_slice->m_numRefIdx[list], "refidx out of range\n");
-
-        predInterUni(list, outPredYuv, bLuma, bChroma);
+        predInterUni(0, outPredYuv, bLuma, bChroma);
     }
     else
     {
-        const int list = 1;
+        X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
+        X265_CHECK(refIdx1 < m_slice->m_numRefIdx[1], "unidir refidx1 out of range\n");
 
-        X265_CHECK(refIdx[list] >= 0, "refidx[1] was not positive\n");
-        X265_CHECK(refIdx[list] < m_slice->m_numRefIdx[list], "refidx out of range\n");
-
-        predInterUni(list, outPredYuv, bLuma, bChroma);
+        predInterUni(1, outPredYuv, bLuma, bChroma);
     }
 }
 
