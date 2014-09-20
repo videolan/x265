@@ -46,25 +46,21 @@
 
 using namespace x265;
 
-static inline pixel weightBidirY(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
+namespace
+{
+
+inline pixel weightBidir(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
     return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
 }
 
-static inline pixel weightBidirC(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
-{
-    return Clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
-}
-
-static inline pixel weightUnidirY(int w0, int16_t P0, int round, int shift, int offset)
+inline pixel weightUnidir(int w0, int16_t P0, int round, int shift, int offset)
 {
     return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
 
-static inline pixel weightUnidirC(int w0, int16_t P0, int round, int shift, int offset)
-{
-    return Clip(((w0 * (P0 + IF_INTERNAL_OFFS) + round) >> shift) + offset);
 }
+
 
 // ====================================================================================================================
 // Class definition
@@ -118,13 +114,13 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
             for (x = width - 1; x >= 0; )
             {
                 // note: luma min width is 4
-                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                pDstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                pDstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                pDstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                pDstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                pDstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
             }
 
@@ -156,9 +152,9 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                dstU[x] = weightBidir(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
                 x--;
-                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                dstU[x] = weightBidir(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
                 x--;
             }
 
@@ -179,9 +175,9 @@ void TComWeightPrediction::addWeightBi(TComYuv* srcYuv0, TComYuv* srcYuv1, uint3
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                dstV[x] = weightBidir(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
                 x--;
-                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                dstV[x] = weightBidir(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
                 x--;
             }
 
@@ -241,13 +237,13 @@ void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uin
             for (x = width - 1; x >= 0; )
             {
                 // note: luma min width is 4
-                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                dstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                dstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                dstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
-                dstY[x] = weightBidirY(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
+                dstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
                 x--;
             }
 
@@ -279,9 +275,9 @@ void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uin
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                dstU[x] = weightBidir(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
                 x--;
-                dstU[x] = weightBidirC(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
+                dstU[x] = weightBidir(w0, srcU0[x], w1, srcU1[x], round, shift, offset);
                 x--;
             }
 
@@ -302,9 +298,9 @@ void TComWeightPrediction::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uin
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                dstV[x] = weightBidir(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
                 x--;
-                dstV[x] = weightBidirC(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
+                dstV[x] = weightBidir(w0, srcV0[x], w1, srcV1[x], round, shift, offset);
                 x--;
             }
 
@@ -355,13 +351,13 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
             for (x = width - 1; x >= 0; )
             {
                 // note: luma min width is 4
-                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                dstY[x] = weightUnidir(w0, srcY0[x], round, shift, offset);
                 x--;
-                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                dstY[x] = weightUnidir(w0, srcY0[x], round, shift, offset);
                 x--;
-                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                dstY[x] = weightUnidir(w0, srcY0[x], round, shift, offset);
                 x--;
-                dstY[x] = weightUnidirY(w0, srcY0[x], round, shift, offset);
+                dstY[x] = weightUnidir(w0, srcY0[x], round, shift, offset);
                 x--;
             }
 
@@ -390,9 +386,9 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
+                dstU[x] = weightUnidir(w0, srcU0[x], round, shift, offset);
                 x--;
-                dstU[x] = weightUnidirC(w0, srcU0[x], round, shift, offset);
+                dstU[x] = weightUnidir(w0, srcU0[x], round, shift, offset);
                 x--;
             }
 
@@ -411,9 +407,9 @@ void TComWeightPrediction::addWeightUni(TComYuv* srcYuv0, uint32_t partUnitIdx, 
             for (x = width - 1; x >= 0; )
             {
                 // note: chroma min width is 2
-                dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
+                dstV[x] = weightUnidir(w0, srcV0[x], round, shift, offset);
                 x--;
-                dstV[x] = weightUnidirC(w0, srcV0[x], round, shift, offset);
+                dstV[x] = weightUnidir(w0, srcV0[x], round, shift, offset);
                 x--;
             }
 
