@@ -316,14 +316,14 @@ void Analysis::compressCU(TComDataCU* cu)
         if (m_param->analysisMode == X265_ANALYSIS_LOAD && pic->m_intraData)
         {
             uint32_t zOrder = 0;
-            compressSharedIntraCTU(m_bestCU[0], m_tempCU[0], false, cu, cu->m_CULocalData, 
+            compressSharedIntraCTU(m_bestCU[0], m_tempCU[0], false, cu->m_CULocalData, 
                 &pic->m_intraData->depth[cuAddr * cu->m_numPartitions],
                 &pic->m_intraData->partSizes[cuAddr * cu->m_numPartitions],
                 &pic->m_intraData->modes[cuAddr * cu->m_numPartitions], zOrder);
         }
         else
         {
-            compressIntraCU(m_bestCU[0], m_tempCU[0], false, cu, cu->m_CULocalData);
+            compressIntraCU(m_bestCU[0], m_tempCU[0], false, cu->m_CULocalData);
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && pic->m_intraData)
             {
                 memcpy(&pic->m_intraData->depth[cuAddr * cu->m_numPartitions], m_bestCU[0]->getDepth(), sizeof(uint8_t) * cu->getTotalNumPart());
@@ -365,10 +365,10 @@ void Analysis::compressCU(TComDataCU* cu)
 
             /* At the start of analysis, the best CU is a null pointer
              * On return, it points to the CU encode with best chosen mode */
-            compressInterCU_rd0_4(outBestCU, m_tempCU[0], cu, 0, cu, cu->m_CULocalData, false, 0, 4);
+            compressInterCU_rd0_4(outBestCU, m_tempCU[0], cu, 0, cu->m_CULocalData, false, 0, 4);
         }
         else
-            compressInterCU_rd5_6(m_bestCU[0], m_tempCU[0], 0, cu, cu->m_CULocalData);
+            compressInterCU_rd5_6(m_bestCU[0], m_tempCU[0], 0, cu->m_CULocalData);
 
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
@@ -419,7 +419,7 @@ void Analysis::compressCU(TComDataCU* cu)
     }
 }
 
-void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu)
+void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu)
 {
     //PPAScopeEvent(CompressIntraCU + depth);
     Frame* pic = outBestCU->m_pic;
@@ -467,7 +467,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
+            CU *child_cu = pic->getCU(cuAddr)->m_CULocalData + cu->childIdx + partUnitIdx;
             int qp = outTempCU->getQP(0);
             subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
             if (child_cu->flags & CU::PRESENT)
@@ -478,7 +478,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
-                compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, cuPicsym, child_cu);
+                compressIntraCU(subBestPartCU, subTempPartCU, nextDepth, child_cu);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
                 m_bestRecoYuv[nextDepth]->copyToPartYuv(m_tmpRecoYuv[depth], subBestPartCU->getTotalNumPart() * partUnitIdx);
             }
@@ -549,7 +549,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 #endif
 }
 
-void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu, uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder)
+void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu, uint8_t* sharedDepth,
+                                      char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder)
 {
     Frame* pic = outBestCU->m_pic;
 
@@ -600,7 +601,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
+            CU *child_cu = pic->getCU(outTempCU->getAddr())->m_CULocalData + cu->childIdx + partUnitIdx;
             int qp = outTempCU->getQP(0);
             subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
             if (child_cu->flags & CU::PRESENT)
@@ -615,7 +616,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
                 // set current best CU cost to 1 marking as non-best CU by default
                 subTempPartCU->m_totalRDCost = 1;
 
-                compressSharedIntraCTU(subBestPartCU, subTempPartCU, nextDepth, cuPicsym, child_cu, sharedDepth, sharedPartSizes, sharedModes, zOrder);
+                compressSharedIntraCTU(subBestPartCU, subTempPartCU, nextDepth, child_cu, sharedDepth, sharedPartSizes, sharedModes, zOrder);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
 
                 if (!subBestPartCU->m_totalRDCost) // if cost is 0, CU is best CU
@@ -731,7 +732,8 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     checkBestMode(outBestCU, outTempCU, depth);
 }
 
-void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, TComDataCU* cuPicsym, CU *cu_t, int bInsidePicture, uint32_t PartitionIndex, uint32_t minDepth)
+void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU, uint32_t depth, CU *cu, 
+                                     int bInsidePicture, uint32_t PartitionIndex, uint32_t minDepth)
 {
     Frame* pic = outTempCU->m_pic;
     uint32_t cuAddr = outTempCU->getAddr();
@@ -753,8 +755,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 #endif
 
     Slice* slice = outTempCU->m_slice;
-    int cu_split_flag = !(cu_t->flags & CU::LEAF);
-    int cu_unsplit_flag = !(cu_t->flags & CU::SPLIT_MANDATORY);
+    int cu_split_flag = !(cu->flags & CU::LEAF);
+    int cu_unsplit_flag = !(cu->flags & CU::SPLIT_MANDATORY);
 
     if (depth == 0 && m_param->rdLevel == 0)
     {
@@ -810,12 +812,12 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
             else
             {
-                m_interCU_2Nx2N[depth]->initSubCU(cu, PartitionIndex, depth, qp);
-                m_interCU_2NxN[depth]->initSubCU(cu, PartitionIndex, depth, qp);
-                m_interCU_Nx2N[depth]->initSubCU(cu, PartitionIndex, depth, qp);
-                m_intraInInterCU[depth]->initSubCU(cu, PartitionIndex, depth, qp);
-                m_mergeCU[depth]->initSubCU(cu, PartitionIndex, depth, qp);
-                m_bestMergeCU[depth]->initSubCU(cu, PartitionIndex, depth, qp);
+                m_interCU_2Nx2N[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
+                m_interCU_2NxN[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
+                m_interCU_Nx2N[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
+                m_intraInInterCU[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
+                m_mergeCU[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
+                m_bestMergeCU[depth]->initSubCU(parentCU, PartitionIndex, depth, qp);
             }
 
             /* Compute  Merge Cost */
@@ -1081,7 +1083,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *child_cu = cuPicsym->m_CULocalData + cu_t->childIdx + partUnitIdx;
+            CU *child_cu = pic->getCU(cuAddr)->m_CULocalData + cu->childIdx + partUnitIdx;
 
             TComDataCU* subBestPartCU = NULL;
             subTempPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
@@ -1093,7 +1095,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
-                compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, cuPicsym, child_cu, cu_unsplit_flag, partUnitIdx, minDepth);
+                compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, child_cu, cu_unsplit_flag, partUnitIdx, minDepth);
 #if EARLY_EXIT
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
@@ -1238,7 +1240,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     x265_emms();
 }
 
-void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu, PartSize parentSize)
+void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu, PartSize parentSize)
 {
     //PPAScopeEvent(CompressCU + depth);
 
@@ -1442,7 +1444,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *child_cu = cuPicsym->m_CULocalData + cu->childIdx + partUnitIdx;
+            CU *child_cu = pic->getCU(cuAddr)->m_CULocalData + cu->childIdx + partUnitIdx;
 
             int qp = outTempCU->getQP(0);
             subBestPartCU->initSubCU(outTempCU, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
@@ -1456,7 +1458,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                 else
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
-                compressInterCU_rd5_6(subBestPartCU, subTempPartCU, nextDepth, cuPicsym, child_cu);
+                compressInterCU_rd5_6(subBestPartCU, subTempPartCU, nextDepth, child_cu);
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
                 m_bestRecoYuv[nextDepth]->copyToPartYuv(m_tmpRecoYuv[depth], subBestPartCU->getTotalNumPart() * partUnitIdx);
             }

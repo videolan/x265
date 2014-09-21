@@ -109,13 +109,13 @@ public:
 protected:
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
-    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu);
+    void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu);
     void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, CU *cu, uint8_t* sharedModes);
-    void compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu, uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
-
-    void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* cu, uint32_t depth, TComDataCU* cuPicsym, CU *cu_t,
+    void compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu, uint8_t* sharedDepth,
+                                char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
+    void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU, uint32_t depth, CU *cu,
                                int bInsidePicture, uint32_t partitionIndex, uint32_t minDepth);
-    void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, TComDataCU* cuPicsym, CU *cu,
+    void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu,
                                PartSize parentSize = SIZE_NONE);
     void checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
     void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
