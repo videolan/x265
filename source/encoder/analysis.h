@@ -110,7 +110,7 @@ protected:
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
     void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu);
-    void checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, CU *cu, uint8_t* sharedModes);
+    void checkIntra(TComDataCU*& outTempCU, PartSize partSize, CU *cu, uint8_t* sharedModes);
     void compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu, uint8_t* sharedDepth,
                                 char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
     void compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU, uint32_t depth, CU *cu,

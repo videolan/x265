@@ -440,9 +440,14 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
     if (cu_unsplit_flag)
     {
         m_quant.setQPforQuant(outTempCU);
-        checkIntra(outBestCU, outTempCU, SIZE_2Nx2N, cu, NULL);
+        checkIntra(outTempCU, SIZE_2Nx2N, cu, NULL);
+        checkBestMode(outBestCU, outTempCU, depth);
+
         if (depth == g_maxCUDepth)
-            checkIntra(outBestCU, outTempCU, SIZE_NxN, cu, NULL);
+        {
+            checkIntra(outTempCU, SIZE_NxN, cu, NULL);
+            checkBestMode(outBestCU, outTempCU, depth);
+        }
         else
         {
             m_entropyCoder->resetBits();
@@ -572,7 +577,8 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
     if (cu_unsplit_flag && ((zOrder == outBestCU->getZorderIdxInCU()) && (depth == sharedDepth[zOrder])))
     {
         m_quant.setQPforQuant(outTempCU);
-        checkIntra(outBestCU, outTempCU, (PartSize)sharedPartSizes[zOrder], cu, &sharedModes[zOrder]);
+        checkIntra(outTempCU, (PartSize)sharedPartSizes[zOrder], cu, &sharedModes[zOrder]);
+        checkBestMode(outBestCU, outTempCU, depth);
 
         if (!(depth == g_maxCUDepth))
         {
@@ -685,7 +691,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
 #endif
 }
 
-void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, CU *cu, uint8_t* sharedModes)
+void Analysis::checkIntra(TComDataCU*& outTempCU, PartSize partSize, CU *cu, uint8_t* sharedModes)
 {
     //PPAScopeEvent(CheckRDCostIntra + depth);
     uint32_t depth = g_log2Size[m_param->maxCUSize] - cu->log2CUSize;
@@ -728,8 +734,7 @@ void Analysis::checkIntra(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSi
     else
         outTempCU->m_totalRDCost = m_rdCost.calcRdCost(outTempCU->m_totalDistortion, outTempCU->m_totalBits);
 
-    checkDQP(outTempCU);
-    checkBestMode(outBestCU, outTempCU, depth);
+    checkDQP(outTempCU);    
 }
 
 void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComDataCU* parentCU, uint32_t depth, CU *cu, 
