@@ -393,8 +393,8 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
 }
 
 /* returns distortion. TODO reorder params */
-uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                     ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& rdCost, uint32_t& rdBits, uint32_t depthRange[2])
+uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, 
+                                     bool bAllowRQTSplit, uint64_t& rdCost, uint32_t& rdBits, uint32_t& psyEnergy, uint32_t depthRange[2])
 {
     uint32_t fullDepth   = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -599,9 +599,8 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            cu->m_psyEnergy = 0;
-            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bAllowRQTSplit, splitCost, splitBits, depthRange);
-            splitPsyEnergyY += cu->m_psyEnergy;
+            splitDistY += xRecurIntraCodingQT(cu, trDepth + 1, absPartIdxSub, fencYuv, predYuv, resiYuv, bAllowRQTSplit, splitCost, splitBits, 
+                                              splitPsyEnergyY, depthRange);
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
@@ -622,14 +621,12 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
 
         if (splitCost < singleCost)
         {
-            outDist  += splitDistY;
-            rdCost   += splitCost;
-            rdBits   += splitBits;
-            cu->m_psyEnergy = splitPsyEnergyY;
+            outDist   += splitDistY;
+            rdCost    += splitCost;
+            rdBits    += splitBits;
+            psyEnergy += splitPsyEnergyY;
             return outDist;
         }
-        else
-            cu->m_psyEnergy = singlePsyEnergyY;
 
         // set entropy coding status
         m_entropyCoder->load(m_rdEntropyCoders[fullDepth][CI_QT_TRAFO_TEST]);
@@ -652,9 +649,9 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         primitives.square_copy_sp[sizeIdx](dst, dststride, reconQt, reconQtStride);
     }
 
-    rdCost += singleCost;
-    rdBits += singleBits;
-    cu->m_psyEnergy = singlePsyEnergyY;
+    rdCost    += singleCost;
+    rdBits    += singleBits;
+    psyEnergy += singlePsyEnergyY;
     return outDist + singleDistY;
 }
 
@@ -1348,7 +1345,8 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
             m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
             cu->setLumaIntraDirSubParts(rdModeList[i], partOffset, depth + initTrDepth);
             cost = bits = 0;
-            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, cost, bits, depthRange);
+            uint32_t psyEnergy = 0;
+            xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, false, cost, bits, psyEnergy, depthRange);
             COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
         }
 
@@ -1356,8 +1354,9 @@ void Search::estIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, 
         cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
+        uint32_t psyEnergy = 0;
         // update distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, cost, bits, depthRange);
+        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, cost, bits, psyEnergy, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
@@ -1410,8 +1409,9 @@ void Search::sharedEstIntraPredQT(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
         // set context models
         m_entropyCoder->load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
+        uint32_t psyEnergy = 0;
         // update overall distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, bits, depthRange);
+        cu->m_totalDistortion += xRecurIntraCodingQT(cu, initTrDepth, partOffset, fencYuv, predYuv, resiYuv, true, puCost, bits, psyEnergy, depthRange);
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
         if (pu != numPU - 1)
