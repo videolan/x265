@@ -724,6 +724,7 @@ void Analysis::checkIntra(TComDataCU*& outTempCU, PartSize partSize, CU *cu, uin
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
+    /* TODO: add chroma psyEnergy also to psyCost*/
     if (m_rdCost.m_psyRd)
     {
         int part = outTempCU->getLog2CUSize(0) - 2;
