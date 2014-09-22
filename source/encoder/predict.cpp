@@ -106,58 +106,45 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
 void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
 {
     int tuSize = 1 << log2TrSizeC;
-    uint32_t tuSize2 = tuSize << 1;
+    int tuSize2 = tuSize << 1;
 
     // Create the prediction
-    pixel* refAbv;
-    pixel refLft[3 * MAX_CU_SIZE];
+    const int bufOffset = tuSize - 1;
+    pixel buf0[3 * MAX_CU_SIZE];
+    pixel buf1[3 * MAX_CU_SIZE];
+    pixel* above;
+    pixel* left = buf0 + bufOffset;
+
+    int limit = (dirMode <= 25 && dirMode >= 11) ? (tuSize + 1 + 1) : (tuSize2 + 1);
+    for (int k = 0; k < limit; k++)
+        left[k] = src[k * ADI_BUF_STRIDE];
 
     bool bUseFilteredPredictions = (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize));
 
     if (bUseFilteredPredictions)
     {
         // generate filtered intra prediction samples
-        // left and left above border + above and above right border + top left corner = length of 3. filter buffer
-        int bufSize = tuSize2 + tuSize2 + 1;
-        uint32_t wh = ADI_BUF_STRIDE * (tuSize2 + 1);         // number of elements in one buffer
+        buf0[bufOffset - 1] = src[1];
+        left = buf1 + bufOffset;
+        for (int i = 0; i < tuSize2; i++)
+            left[i] = (buf0[bufOffset + i - 1] + 2 * buf0[bufOffset + i] + buf0[bufOffset + i + 1] + 2) >> 2;
+        left[tuSize2] = buf0[bufOffset + tuSize2];
 
-        pixel* filterBuf  = src + wh;            // buffer for 2. filtering (sequential)
-        pixel* filterBufN = filterBuf + bufSize; // buffer for 1. filtering (sequential)
-
-        int l = 0;
-        // left border from bottom to top
-        for (uint32_t i = 0; i < tuSize2; i++)
-            filterBuf[l++] = src[ADI_BUF_STRIDE * (tuSize2 - i)];
-
-        // top left corner
-        filterBuf[l++] = src[0];
-
-        // above border from left to right
-        memcpy(&filterBuf[l], &src[1], tuSize2 * sizeof(*filterBuf));
-
-        // 1. filtering with [1 2 1]
-        filterBufN[0] = filterBuf[0];
-        filterBufN[bufSize - 1] = filterBuf[bufSize - 1];
-        for (int i = 1; i < bufSize - 1; i++)
-            filterBufN[i] = (filterBuf[i - 1] + 2 * filterBuf[i] + filterBuf[i + 1] + 2) >> 2;
-
-        // initialization of ADI buffers
-        int limit = tuSize2 + 1;
-        refAbv = filterBufN + tuSize2;
-        for (int k = 0; k < limit; k++)
-            refLft[k + tuSize - 1] = filterBufN[tuSize2 - k];   // Smoothened
+        above = buf0 + bufOffset;
+        above[0] = left[0];
+        for (int i = 1; i < tuSize2; i++)
+            above[i] = (src[i - 1] + 2 * src[i] + src[i + 1] + 2) >> 2;
+        above[tuSize2] = src[tuSize2];
     }
     else
     {
-        int limit = (dirMode <= 25 && dirMode >= 11) ? (tuSize + 1 + 1) : (tuSize2 + 1);
-        refAbv = src;
-        for (int k = 0; k < limit; k++)
-            refLft[k + tuSize - 1] = src[k * ADI_BUF_STRIDE];
+        above = buf1 + bufOffset;
+        memcpy(above, src, (tuSize2 + 1) * sizeof(pixel));
     }
 
     int sizeIdx = log2TrSizeC - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-    primitives.intra_pred[dirMode][sizeIdx](dst, stride, refLft + tuSize - 1, refAbv, dirMode, 0);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
 }
 
 bool Predict::checkIdenticalMotion()

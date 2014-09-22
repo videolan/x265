@@ -95,7 +95,7 @@ public:
 private:
 
     /// padding of unavailable reference samples for intra prediction
-    static void fillReferenceSamples(pixel* roiOrigin, int picStride, pixel* adiTemp, const IntraNeighbors& intraNeighbors);
+    static void fillReferenceSamples(pixel* adiOrigin, int picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors);
 
     /// constrained intra prediction
     static bool  isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT);
