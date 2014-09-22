@@ -156,7 +156,7 @@ void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, 
     }
 }
 
-void checksumFinish(uint32_t& checksum, uint8_t digest[16])
+void checksumFinish(uint32_t checksum, uint8_t digest[16])
 {
     digest[0] = (checksum >> 24) & 0xff;
     digest[1] = (checksum >> 16) & 0xff;

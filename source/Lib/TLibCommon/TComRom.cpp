@@ -181,7 +181,7 @@ void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal,
 
 void initRasterToZscan(uint32_t maxFullDepth)
 {
-    uint32_t numPartitions = 1 << maxFullDepth * 2;
+    uint32_t numPartitions = 1 << (maxFullDepth * 2);
 
     for (uint32_t i = 0; i < numPartitions; i++)
     {

@@ -56,7 +56,7 @@ bool TComPicSym::create(x265_param *param)
 {
     uint32_t i;
 
-    m_numPartitions   = 1 << g_maxFullDepth * 2;
+    m_numPartitions   = 1 << (g_maxFullDepth * 2);
     m_numPartInCUSize = 1 << g_maxFullDepth;
 
     m_widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;

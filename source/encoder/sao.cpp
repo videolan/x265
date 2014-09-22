@@ -2482,7 +2482,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
     TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
     int hChromaShift = cu->getHorzChromaShift();
     int vChromaShift = cu->getVertChromaShift();
-    uint32_t lumaOffset   = absZOrderIdx << LOG2_UNIT_SIZE * 2;
+    uint32_t lumaOffset   = absZOrderIdx << (LOG2_UNIT_SIZE * 2);
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);

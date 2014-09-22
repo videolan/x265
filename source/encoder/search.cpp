@@ -97,7 +97,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
         ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
     }
 
-    const uint32_t numPartitions = 1 << g_maxFullDepth * 2;
+    const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
     CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions * 3);
     m_qtTempCbf[1] = m_qtTempCbf[0] + numPartitions;
     m_qtTempCbf[2] = m_qtTempCbf[0] + numPartitions * 2;
@@ -327,7 +327,7 @@ uint32_t Search::xIntraCodingLumaBlk(TComDataCU* cu, uint32_t absPartIdx, uint32
     else
     {
 #if CHECKED_BUILD || _DEBUG
-        memset(coeff, 0, sizeof(coeff_t) << log2TrSize * 2);
+        memset(coeff, 0, sizeof(coeff_t) << (log2TrSize * 2));
 #endif
         // reconstruction
         primitives.square_copy_ps[sizeIdx](reconQt,    reconQtStride,    pred, stride);
@@ -379,7 +379,7 @@ uint32_t Search::xIntraCodingChromaBlk(TComDataCU* cu, uint32_t absPartIdx, TCom
     else
     {
 #if CHECKED_BUILD || _DEBUG
-        memset(coeff, 0, sizeof(coeff_t) << log2TrSizeC * 2);
+        memset(coeff, 0, sizeof(coeff_t) << (log2TrSizeC * 2));
 #endif
         // reconstruction
         primitives.square_copy_ps[sizeIdxC](reconQt,    reconQtStride,    pred, stride);
@@ -462,7 +462,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
         uint32_t qtLayer        = log2TrSize - 2;
-        uint32_t coeffOffsetY   = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY   = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffY         = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
         int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width is not max CU size\n");
@@ -683,7 +683,7 @@ void Search::residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint3
         pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
         int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
         pixel*   recon        = reconYuv->getLumaAddr(absPartIdx);
-        uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeff        = cu->getCoeffY() + coeffOffsetY;
 
         uint32_t zorder           = cu->getZorderIdxInCU() + absPartIdx;
@@ -723,7 +723,7 @@ void Search::residualTransformQuantIntra(TComDataCU* cu, uint32_t trDepth, uint3
         else
         {
 #if CHECKED_BUILD || _DEBUG
-            memset(coeff, 0, sizeof(coeff_t) << log2TrSize * 2);
+            memset(coeff, 0, sizeof(coeff_t) << (log2TrSize * 2));
 #endif
 
             // Generate Recon
@@ -762,7 +762,7 @@ void Search::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
         uint32_t qtLayer    = log2TrSize - 2;
 
         // copy transform coefficients
-        uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffSrcY    = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
         coeff_t* coeffDestY   = cu->getCoeffY()           + coeffOffsetY;
         ::memcpy(coeffDestY, coeffSrcY, sizeof(coeff_t) << (log2TrSize * 2));
@@ -2307,7 +2307,7 @@ void Search::residualTransformQuantInter(TComDataCU* cu, uint32_t absPartIdx, TC
         const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
         uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> ((cu->getDepth(0) +  trModeC) << 1);
 
-        uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);
         coeff_t *coeffCurY = cu->getCoeffY()  + coeffOffsetY;
         coeff_t *coeffCurU = cu->getCoeffCb() + coeffOffsetC;
@@ -2465,7 +2465,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, uint32_t absPartIdx, TComYu
         int sizeIdx  = log2TrSize - 2;
         int sizeIdxC = log2TrSizeC - 2;
         const uint32_t qtLayer = log2TrSize - 2;
-        uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);
         coeff_t* coeffCurY = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
         coeff_t* coeffCurU = m_qtTempCoeff[1][qtLayer] + coeffOffsetC;
@@ -3280,7 +3280,7 @@ void Search::xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, const uint32
     {
         //Luma
         const uint32_t qtLayer = log2TrSize - 2;
-        uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffCurY = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
 
         //Chroma

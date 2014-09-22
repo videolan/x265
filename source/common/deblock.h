@@ -41,7 +41,7 @@ public:
 
     Deblock() : m_numPartitions(0) {}
 
-    void init() { m_numPartitions = 1 << g_maxFullDepth * 2; }
+    void init() { m_numPartitions = 1 << (g_maxFullDepth * 2); }
 
     void deblockCTU(TComDataCU* cu, int32_t dir, bool edgeFilter[], uint8_t blockingStrength[]);
 

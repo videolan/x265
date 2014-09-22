@@ -206,7 +206,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     const uint16_t *scan = codeParams.scan;
     bool lastCG = true;
 
-    for (int cg = (1 << log2TrSizeCG * 2) - 1; cg >= 0; cg--)
+    for (int cg = (1 << (log2TrSizeCG * 2)) - 1; cg >= 0; cg--)
     {
         int cgStartPos = cg << LOG2_SCAN_SET_SIZE;
         int n;
@@ -361,7 +361,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
             int cat = sizeIdx + 4 * !isLuma;
-            int numCoeff = 1 << log2TrSize * 2;
+            int numCoeff = 1 << (log2TrSize * 2);
             primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
             m_nr->count[cat]++;
         }
@@ -380,7 +380,7 @@ uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, i
 
         int qbits = QUANT_SHIFT + per + transformShift;
         int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
-        int numCoeff = 1 << log2TrSize * 2;
+        int numCoeff = 1 << (log2TrSize * 2);
 
         uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, coeff, qbits, add, numCoeff);
 
@@ -409,7 +409,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     int per = m_qpParam[ttype].per;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize;
     int shift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift;
-    int numCoeff = 1 << log2TrSize * 2;
+    int numCoeff = 1 << (log2TrSize * 2);
 
     if (m_scalingList->m_bEnabled)
     {
@@ -441,7 +441,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
-        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << log2TrSize * 2), "numSig differ\n");
+        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << (log2TrSize * 2)), "numSig differ\n");
 
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
@@ -475,11 +475,11 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, int16_t* dstCoeff, uint32_t log2TrSize,
     int add = (1 << (qbits - 1));
     int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
-    int numCoeff = 1 << log2TrSize * 2;
+    int numCoeff = 1 << (log2TrSize * 2);
 
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
 
-    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, 1 << log2TrSize * 2), "numSig differ\n");
+    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, 1 << (log2TrSize * 2)), "numSig differ\n");
     if (!numSig)
         return 0;
 
@@ -532,7 +532,7 @@ uint32_t Quant::rdoQuant(TComDataCU* cu, int16_t* dstCoeff, uint32_t log2TrSize,
 
     TUEntropyCodingParameters codeParams;
     cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
-    const uint32_t cgNum = 1 << codeParams.log2TrSizeCG * 2;
+    const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
 
     /* TODO: update bit estimates if dirty */
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;

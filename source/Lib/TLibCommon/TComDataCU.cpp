@@ -613,7 +613,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
-    uint32_t tmpY2 = m_absIdxInLCU << LOG2_UNIT_SIZE * 2;
+    uint32_t tmpY2 = m_absIdxInLCU << (LOG2_UNIT_SIZE * 2);
     memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY  >> (m_hChromaShift + m_vChromaShift);
@@ -624,7 +624,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     if (m_slice->m_pps->bTransquantBypassEnabled)
     {
         uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
-        uint32_t tmp2 = m_absIdxInLCU << LOG2_UNIT_SIZE * 2;
+        uint32_t tmp2 = m_absIdxInLCU << (LOG2_UNIT_SIZE * 2);
         memcpy(cu->getLumaOrigYuv() + tmp2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmp);
 
         memcpy(cu->getChromaOrigYuv(1) + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
@@ -651,7 +651,7 @@ void TComDataCU::copyCodedToPic(uint32_t depth)
     memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInLCU, m_cbf[2], sizeInChar);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
-    uint32_t tmpY2 = m_absIdxInLCU << LOG2_UNIT_SIZE * 2;
+    uint32_t tmpY2 = m_absIdxInLCU << (LOG2_UNIT_SIZE * 2);
     memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
     tmpY  >>= m_hChromaShift + m_vChromaShift;
     tmpY2 >>= m_hChromaShift + m_vChromaShift;
@@ -704,7 +704,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInLCU, partStart, qNumPart);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth - partDepth) * 2);
-    uint32_t tmpY2 = partOffset << LOG2_UNIT_SIZE * 2;
+    uint32_t tmpY2 = partOffset << (LOG2_UNIT_SIZE * 2);
     memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0],  sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY >> (m_hChromaShift + m_vChromaShift);
