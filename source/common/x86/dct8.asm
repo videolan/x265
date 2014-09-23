@@ -28,8 +28,18 @@
 
 %include "x86inc.asm"
 %include "x86util.asm"
-
 SECTION_RODATA 32
+tab_dct8:       dw 64, 64, 64, 64, 64, 64, 64, 64
+                dw 89, 75, 50, 18, -18, -50, -75, -89
+                dw 83, 36, -36, -83, -83, -36, 36, 83
+                dw 75, -18, -89, -50, 50, 89, 18, -75
+                dw 64, -64, -64, 64, 64, -64, -64, 64
+                dw 50, -89, 18, 75, -75, -18, 89, -50
+                dw 36, -83, 83, -36, -36, 83, -83, 36
+                dw 18, -50, 75, -89, 89, -75, 50, -18
+
+dct8_shuf:      times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
+
 tab_dct16_1:    dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 90, 87, 80, 70, 57, 43, 25,  9
                 dw 89, 75, 50, 18, -18, -50, -75, -89
@@ -1125,7 +1135,113 @@ cglobal denoise_dct, 4, 4, 6
     dec      r3d
     jnz .loop
     RET
+%if ARCH_X86_64 == 1
+%macro DCT8_PASS_1 4
+    vpbroadcastq    m0,                 [r6 + %1]
+    pmaddwd         m2,                 m%3, m0
+    pmaddwd         m0,                 m%4
+    phaddd          m2,                 m0
+    paddd           m2,                 m5
+    psrad           m2,                 DCT_SHIFT
+    packssdw        m2,                 m2
+    vpermq          m2,                 m2, 0x08
+    mova            [r5 + %2],          xm2
+%endmacro
 
+%macro DCT8_PASS_2 1
+    vbroadcasti128  m4,                 [r6 + %1]
+    pmaddwd         m6,                 m0, m4
+    pmaddwd         m7,                 m1, m4
+    pmaddwd         m8,                 m2, m4
+    pmaddwd         m9,                 m3, m4
+    phaddd          m6,                 m7
+    phaddd          m8,                 m9
+    phaddd          m6,                 m8
+    paddd           m6,                 m5
+    psrad           m6,                 DCT_SHIFT2
+%endmacro
+
+INIT_YMM avx2
+cglobal dct8, 3, 7, 10, 0-8*16
+%if BIT_DEPTH == 10
+    %define         DCT_SHIFT          4
+    vbroadcasti128  m5,                [pd_8]
+%elif BIT_DEPTH == 8
+    %define         DCT_SHIFT          2
+    vbroadcasti128  m5,                [pd_2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             DCT_SHIFT2         9
+
+    add             r2d,               r2d
+    lea             r3,                [r2 * 3]
+    lea             r4,                [r0 + r2 * 4]
+    mov             r5,                rsp
+    lea             r6,                [tab_dct8]
+    mova            m6,                [dct8_shuf]
+
+    ;pass1
+    mova            xm0,               [r0]
+    vinserti128     m0,                m0, [r4], 1
+    mova            xm1,               [r0 + r2]
+    vinserti128     m1,                m1, [r4 + r2], 1
+    mova            xm2,               [r0 + r2 * 2]
+    vinserti128     m2,                m2, [r4 + r2 * 2], 1
+    mova            xm3,               [r0 + r3]
+    vinserti128     m3,                m3,  [r4 + r3], 1
+
+    punpcklqdq      m4,                m0, m1
+    punpckhqdq      m0,                m1
+    punpcklqdq      m1,                m2, m3
+    punpckhqdq      m2,                m3
+
+    pshufb          m0,                m6
+    pshufb          m2,                m6
+
+    paddw           m3,                m4, m0
+    paddw           m7,                m1, m2
+
+    psubw           m4,                m0
+    psubw           m1,                m2
+
+    DCT8_PASS_1     0 * 16,             0 * 16, 3, 7
+    DCT8_PASS_1     1 * 16,             2 * 16, 4, 1
+    DCT8_PASS_1     2 * 16,             4 * 16, 3, 7
+    DCT8_PASS_1     3 * 16,             6 * 16, 4, 1
+    DCT8_PASS_1     4 * 16,             1 * 16, 3, 7
+    DCT8_PASS_1     5 * 16,             3 * 16, 4, 1
+    DCT8_PASS_1     6 * 16,             5 * 16, 3, 7
+    DCT8_PASS_1     7 * 16,             7 * 16, 4, 1
+
+    ;pass2
+    mov             r2d,               32
+    lea             r3,                [r2 * 3]
+    lea             r4,                [r1 + r2 * 4]
+    vbroadcasti128  m5,                [pd_256]
+
+    mova            m0,                [r5]
+    mova            m1,                [r5 + 32]
+    mova            m2,                [r5 + 64]
+    mova            m3,                [r5 + 96]
+
+    DCT8_PASS_2     0 * 16
+    movu            [r1],              m6
+    DCT8_PASS_2     1 * 16
+    movu            [r1 + r2],         m6
+    DCT8_PASS_2     2 * 16
+    movu            [r1 + r2 * 2],     m6
+    DCT8_PASS_2     3 * 16
+    movu            [r1 + r3],         m6
+    DCT8_PASS_2     4 * 16
+    movu            [r4],              m6
+    DCT8_PASS_2     5 * 16
+    movu            [r4 + r2],         m6
+    DCT8_PASS_2     6 * 16
+    movu            [r4 + r2 * 2],     m6
+    DCT8_PASS_2     7 * 16
+    movu            [r4 + r3],         m6
+    RET
 
 %macro DCT16_PASS_1_E 2
     vpbroadcastq    m7,                [r7 + %1]
@@ -1191,8 +1307,6 @@ cglobal denoise_dct, 4, 4, 6
     paddd           m10,               m9
     psrad           m10,               DCT_SHIFT2
 %endmacro
-
-%if ARCH_X86_64 == 1
 INIT_YMM avx2
 cglobal dct16, 3, 9, 15, 0-16*mmsize
 %if BIT_DEPTH == 10
