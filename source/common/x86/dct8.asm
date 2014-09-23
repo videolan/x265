@@ -1108,17 +1108,17 @@ cglobal denoise_dct, 4, 4, 6
     pxor     m5,  m5
     shr      r3d, 3
 .loop:
-    mova     m0, [r0]
+    movu     m0, [r0]
     pabsd    m1, m0
-    mova     m2, [r1]
+    movu     m2, [r1]
     paddd    m2, m1
-    mova     [r1], m2
+    movu     [r1], m2
     pmovzxwd m3, [r2]
     psubd    m1, m3
     pcmpgtd  m4, m1, m5
     pand     m1, m4
     psignd   m1, m0
-    mova     [r0], m1
+    movu     [r0], m1
     add      r0, 32
     add      r1, 32
     add      r2, 16
@@ -1197,10 +1197,10 @@ INIT_YMM avx2
 cglobal dct16, 3, 9, 15, 0-16*mmsize
 %if BIT_DEPTH == 10
     %define         DCT_SHIFT          5
-    vpbroadcastd    m9,                [pd_16]
+    vbroadcasti128  m9,                [pd_16]
 %elif BIT_DEPTH == 8
     %define         DCT_SHIFT          3
-    vpbroadcastd    m9,                [pd_4]
+    vbroadcasti128  m9,                [pd_4]
 %else
     %error Unsupported BIT_DEPTH!
 %endif
@@ -1219,23 +1219,23 @@ cglobal dct16, 3, 9, 15, 0-16*mmsize
 .pass1:
     lea             r6,                [r0 + r2 * 4]
 
-    mova            m2,                [r0]
-    mova            m1,                [r6]
+    movu            m2,                [r0]
+    movu            m1,                [r6]
     vperm2i128      m0,                m2, m1, 0x20        ; [row0lo  row4lo]
     vperm2i128      m1,                m2, m1, 0x31        ; [row0hi  row4hi]
 
-    mova            m4,                [r0 + r2]
-    mova            m3,                [r6 + r2]
+    movu            m4,                [r0 + r2]
+    movu            m3,                [r6 + r2]
     vperm2i128      m2,                m4, m3, 0x20        ; [row1lo  row5lo]
     vperm2i128      m3,                m4, m3, 0x31        ; [row1hi  row5hi]
 
-    mova            m6,                [r0 + r2 * 2]
-    mova            m5,                [r6 + r2 * 2]
+    movu            m6,                [r0 + r2 * 2]
+    movu            m5,                [r6 + r2 * 2]
     vperm2i128      m4,                m6, m5, 0x20        ; [row2lo  row6lo]
     vperm2i128      m5,                m6, m5, 0x31        ; [row2hi  row6hi]
 
-    mova            m8,                [r0 + r3]
-    mova            m7,                [r6 + r3]
+    movu            m8,                [r0 + r3]
+    movu            m7,                [r6 + r3]
     vperm2i128      m6,                m8, m7, 0x20        ; [row3lo  row7lo]
     vperm2i128      m7,                m8, m7, 0x31        ; [row3hi  row7hi]
 
@@ -1296,7 +1296,7 @@ cglobal dct16, 3, 9, 15, 0-16*mmsize
     mov             r4d,               2
     mov             r2d,               64
     lea             r3,                [r2 * 3]
-    vpbroadcastd    m9,                [pd_512]
+    vbroadcasti128  m9,                [pd_512]
 
 .pass2:
     mova            m0,                [r5 + 0 * 32]        ; [row0lo  row4lo]
@@ -1312,43 +1312,43 @@ cglobal dct16, 3, 9, 15, 0-16*mmsize
     mova            m7,                [r5 + 11 * 32]       ; [row3hi  row7hi]
 
     DCT16_PASS_2    -8 * 16
-    mova            [r1],              m10
+    movu            [r1],              m10
     DCT16_PASS_2    -7 * 16
-    mova            [r1 + r2],         m10
+    movu            [r1 + r2],         m10
     DCT16_PASS_2    -6 * 16
-    mova            [r1 + r2 * 2],     m10
+    movu            [r1 + r2 * 2],     m10
     DCT16_PASS_2    -5 * 16
-    mova            [r1 + r3],         m10
+    movu            [r1 + r3],         m10
 
     lea             r6,                [r1 + r2 * 4]
     DCT16_PASS_2    -4 * 16
-    mova            [r6],              m10
+    movu            [r6],              m10
     DCT16_PASS_2    -3 * 16
-    mova            [r6 + r2],         m10
+    movu            [r6 + r2],         m10
     DCT16_PASS_2    -2 * 16
-    mova            [r6 + r2 * 2],     m10
+    movu            [r6 + r2 * 2],     m10
     DCT16_PASS_2    -1 * 16
-    mova            [r6 + r3],         m10
+    movu            [r6 + r3],         m10
 
     lea             r6,                [r6 + r2 * 4]
     DCT16_PASS_2    0 * 16
-    mova            [r6],              m10
+    movu            [r6],              m10
     DCT16_PASS_2    1 * 16
-    mova            [r6 + r2],         m10
+    movu            [r6 + r2],         m10
     DCT16_PASS_2    2 * 16
-    mova            [r6 + r2 * 2],     m10
+    movu            [r6 + r2 * 2],     m10
     DCT16_PASS_2    3 * 16
-    mova            [r6 + r3],         m10
+    movu            [r6 + r3],         m10
 
     lea             r6,                [r6 + r2 * 4]
     DCT16_PASS_2    4 * 16
-    mova            [r6],              m10
+    movu            [r6],              m10
     DCT16_PASS_2    5 * 16
-    mova            [r6 + r2],         m10
+    movu            [r6 + r2],         m10
     DCT16_PASS_2    6 * 16
-    mova            [r6 + r2 * 2],     m10
+    movu            [r6 + r2 * 2],     m10
     DCT16_PASS_2    7 * 16
-    mova            [r6 + r3],         m10
+    movu            [r6 + r3],         m10
 
     add             r1,                32
     add             r5,                128
@@ -1442,15 +1442,15 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
     mova            m15,               [dct16_shuf1]
 
 .pass1:
-    mova            m2,                [r0]
-    mova            m1,                [r0 + 32]
+    movu            m2,                [r0]
+    movu            m1,                [r0 + 32]
     pshufb          m1,                m15
     vpermq          m1,                m1, 0x4E
     psubw           m7,                m2, m1
     paddw           m2,                m1
 
-    mova            m1,                [r0 + r2 * 2]
-    mova            m0,                [r0 + r2 * 2 + 32]
+    movu            m1,                [r0 + r2 * 2]
+    movu            m0,                [r0 + r2 * 2 + 32]
     pshufb          m0,                m15
     vpermq          m0,                m0, 0x4E
     psubw           m8,                m1, m0
@@ -1465,15 +1465,15 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
     vperm2i128      m6,                m7, m8, 0x31        ; [row0hi  row2hi] for O
 
 
-    mova            m4,                [r0 + r2]
-    mova            m2,                [r0 + r2 + 32]
+    movu            m4,                [r0 + r2]
+    movu            m2,                [r0 + r2 + 32]
     pshufb          m2,                m15
     vpermq          m2,                m2, 0x4E
     psubw           m10,               m4, m2
     paddw           m4,                m2
 
-    mova            m3,                [r0 + r3]
-    mova            m2,                [r0 + r3 + 32]
+    movu            m3,                [r0 + r3]
+    movu            m2,                [r0 + r3 + 32]
     pshufb          m2,                m15
     vpermq          m2,                m2, 0x4E
     psubw           m11,               m3, m2
@@ -1531,83 +1531,83 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
     mova            m7,                [r5 + 3 * 64 + 32]
 
     DCT32_PASS_2    0 * 32
-    mova            [r1],              xm11
+    movu            [r1],              xm11
     DCT32_PASS_2    1 * 32
-    mova            [r1 + r2],         xm11
+    movu            [r1 + r2],         xm11
     DCT32_PASS_2    2 * 32
-    mova            [r1 + r2 * 2],     xm11
+    movu            [r1 + r2 * 2],     xm11
     DCT32_PASS_2    3 * 32
-    mova            [r1 + r3],         xm11
+    movu            [r1 + r3],         xm11
 
     lea             r6,                [r1 + r2 * 4]
     DCT32_PASS_2    4 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    5 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    6 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    7 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    8 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    9 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    10 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    11 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    12 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    13 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    14 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    15 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    16 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    17 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    18 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    19 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    20 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    21 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    22 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    23 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    24 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    25 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    26 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    27 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     lea             r6,                [r6 + r2 * 4]
     DCT32_PASS_2    28 * 32
-    mova            [r6],              xm11
+    movu            [r6],              xm11
     DCT32_PASS_2    29 * 32
-    mova            [r6 + r2],         xm11
+    movu            [r6 + r2],         xm11
     DCT32_PASS_2    30 * 32
-    mova            [r6 + r2 * 2],     xm11
+    movu            [r6 + r2 * 2],     xm11
     DCT32_PASS_2    31 * 32
-    mova            [r6 + r3],         xm11
+    movu            [r6 + r3],         xm11
 
     add             r5,                256
     add             r1,                16
