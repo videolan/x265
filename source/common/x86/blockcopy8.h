@@ -182,6 +182,13 @@ void x265_blockfill_s_4x4_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_16x16_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_32x32_sse2(int16_t *dst, intptr_t dstride, int16_t val);
+void x265_blockcopy_ss_16x4_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x8_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x12_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x16_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x24_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x32_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x64_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
 
 #undef BLOCKCOPY_COMMON
 #undef BLOCKCOPY_SS_PP

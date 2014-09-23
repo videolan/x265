@@ -1744,6 +1744,17 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
+        p.chroma[X265_CSP_I420].copy_ss[CHROMA_16x4] = x265_blockcopy_ss_16x4_avx;
+        p.chroma[X265_CSP_I420].copy_ss[CHROMA_16x12] = x265_blockcopy_ss_16x12_avx;
+        p.chroma[X265_CSP_I420].copy_ss[CHROMA_16x8] = x265_blockcopy_ss_16x8_avx;
+        p.chroma[X265_CSP_I420].copy_ss[CHROMA_16x16] = x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I420].copy_ss[CHROMA_16x32] = x265_blockcopy_ss_16x32_avx;
+        p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x8] = x265_blockcopy_ss_16x8_avx;
+        p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x16] = x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x24] = x265_blockcopy_ss_16x24_avx;
+        p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x32] = x265_blockcopy_ss_16x32_avx;
+        p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x64] = x265_blockcopy_ss_16x64_avx;
+
 #if X86_64
         p.dct[DCT_16x16] = x265_dct16_avx2;
         p.dct[DCT_32x32] = x265_dct32_avx2;
