@@ -1710,6 +1710,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_avx;
         p.ssim_end_4 = x265_pixel_ssim_end4_avx;
+        p.luma_copy_ss[LUMA_64x16] = x265_blockcopy_ss_64x16_avx;
+        p.luma_copy_ss[LUMA_64x32] = x265_blockcopy_ss_64x32_avx;
+        p.luma_copy_ss[LUMA_64x48] = x265_blockcopy_ss_64x48_avx;
+        p.luma_copy_ss[LUMA_64x64] = x265_blockcopy_ss_64x64_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {
