@@ -102,14 +102,19 @@ void Encoder::create()
     m_scalingList.setupQuantMatrices();
 
     /* Allocate thread local data shared by all frame encoders */
-    ThreadPool *pool = ThreadPool::getThreadPool();
-    const int poolThreadCount = pool ? pool->getThreadCount() : 1;
-    m_threadLocalData = new ThreadLocalData[poolThreadCount];
-    for (int i = 0; i < poolThreadCount; i++)
+    const int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
+    int numLocalData = m_param->frameNumThreads;
+    if (m_param->bEnableWavefront)
+        numLocalData = poolThreadCount;
+    m_threadLocalData = new ThreadLocalData[numLocalData];
+    for (int i = 0; i < numLocalData; i++)
     {
         m_threadLocalData[i].cuCoder.initSearch(m_param, m_scalingList);
         m_threadLocalData[i].cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
     }
+
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+        m_frameEncoder[i].m_tld = &m_threadLocalData[i];
 
     m_lookahead = new Lookahead(m_param, m_threadPool, this);
     m_dpb = new DPB(m_param);

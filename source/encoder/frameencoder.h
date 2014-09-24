@@ -159,7 +159,7 @@ public:
     uint32_t*                m_substreamSizes;
     NoiseReduction*          m_nr;
     NALList                  m_nalList;
-    ThreadLocalData          m_tld; /* for --no-wpp */
+    ThreadLocalData*         m_tld; /* for --no-wpp */
 
     int                      m_filterRowDelay;
     int                      m_filterRowDelayCus;

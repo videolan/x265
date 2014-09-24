@@ -105,9 +105,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         m_pool = NULL;
     }
 
-    m_tld.cuCoder.initSearch(m_param, top->m_scalingList);
-    m_tld.cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
-
     m_frameFilter.init(top, this, numRows);
 
     // initialize HRD parameters of SPS
@@ -470,7 +467,7 @@ void FrameEncoder::encodeSlice()
             }
         }
 
-        m_tld.cuCoder.loadCTUData(cu);
+        m_tld->cuCoder.loadCTUData(cu);
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCTU(cu);
 
@@ -581,8 +578,8 @@ void FrameEncoder::processRow(int row, int threadId)
     const int realRow = row >> 1;
     const int typeNum = row & 1;
 
-    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : m_tld;
-
+    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : *m_tld;
+    
     if (!typeNum)
         processRowEncoder(realRow, tld);
     else
