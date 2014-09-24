@@ -38,7 +38,7 @@ class Predict
 {
 protected:
 
-    ShortYuv  m_predShortYuv[2]; //temporary storage for weighted prediction
+    ShortYuv  m_predShortYuv[2]; /* temporary storage for weighted prediction */
     int16_t*  m_immedVals;
 
     /* Slice information */
@@ -68,11 +68,9 @@ protected:
     void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0, WeightParam *wp1, TComYuv* outDstYuv, bool bLuma, bool bChroma);
     void addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma);
 
-    void getLLSPrediction(TComPattern* pcPattern, int* src0, int srcstride, pixel* dst0, int dststride, uint32_t width, uint32_t height, uint32_t ext0);
-
 public:
 
-    // Intra prediction buffers
+    /* Intra prediction buffers */
     pixel*    m_predBuf;
     pixel*    m_refAbove;
     pixel*    m_refAboveFlt;
@@ -82,13 +80,13 @@ public:
     Predict();
     ~Predict();
 
-    void initTempBuff(int csp);
+    void allocBuffers(int csp);
 
-    // prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
+    /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
     void prepMotionCompensation(TComDataCU* cu, int partIdx);
     void motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma);
 
-    // Angular Intra
+    /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
     void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
 };

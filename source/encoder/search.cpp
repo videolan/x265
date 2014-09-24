@@ -77,7 +77,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 
     m_rdCost.setPsyRdScale(param->psyRd);
 
-    initTempBuff(param->internalCsp);
+    Predict::allocBuffers(param->internalCsp);
     ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
     m_me.setSearchMethod(param->searchMethod);
     m_me.setSubpelRefine(param->subpelRefine);

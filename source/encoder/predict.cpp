@@ -58,26 +58,23 @@ Predict::~Predict()
     m_predShortYuv[1].destroy();
 }
 
-void Predict::initTempBuff(int csp)
+void Predict::allocBuffers(int csp)
 {
     m_csp = csp;
 
-    if (!m_predBuf)
-    {
-        int predBufHeight = ((MAX_CU_SIZE + 2) << 4);
-        int predBufStride = ((MAX_CU_SIZE + 8) << 4);
-        m_predBuf = X265_MALLOC(pixel, predBufStride * predBufHeight);
+    int predBufHeight = ((MAX_CU_SIZE + 2) << 4);
+    int predBufStride = ((MAX_CU_SIZE + 8) << 4);
+    m_predBuf = X265_MALLOC(pixel, predBufStride * predBufHeight);
 
-        m_refAbove = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
-        m_refAboveFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
-        m_refLeft = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
-        m_refLeftFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+    m_refAbove = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+    m_refAboveFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+    m_refLeft = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
+    m_refLeftFlt = X265_MALLOC(pixel, 3 * MAX_CU_SIZE);
 
-        m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
-        m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+    m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+    m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
 
-        m_immedVals = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
-    }
+    m_immedVals = X265_MALLOC(int16_t, 64 * (64 + NTAPS_LUMA - 1));
 }
 
 void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
