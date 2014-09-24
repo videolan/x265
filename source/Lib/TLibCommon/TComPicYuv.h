@@ -155,6 +155,8 @@ public:
 
     pixel*  getChromaAddr(uint32_t chromaId, int cuAddr, int absZOrderIdx) { return m_picOrg[chromaId] + m_cuOffsetC[cuAddr] + m_buOffsetC[absZOrderIdx]; }
 
+    int32_t getChromaAddrOffset(int cuAddr, int absZOrderIdx) { return m_cuOffsetC[cuAddr] + m_buOffsetC[absZOrderIdx]; }
+
     uint32_t getCUHeight(int rowNum);
 
     void  copyFromPicture(const x265_picture&, int padx, int pady);
