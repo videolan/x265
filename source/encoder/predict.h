@@ -65,8 +65,14 @@ protected:
     void predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
     void predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
 
-    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0, WeightParam *wp1, TComYuv* outDstYuv, bool bLuma, bool bChroma);
-    void addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma);
+    // Weighted prediction scaling values built from slice parameters (bitdepth scaled)
+    struct WeightValues
+    {
+        int w, o, offset, shift, round;
+    };
+
+    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], TComYuv* predYuv, bool bLuma, bool bChroma);
+    void addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv* predYuv, bool bLuma, bool bChroma);
 
 public:
 

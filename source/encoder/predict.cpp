@@ -160,25 +160,24 @@ void Predict::prepMotionCompensation(TComDataCU* cu, int partIdx)
 
 void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
 {
-    WeightParam *pwp0, *pwp1;
-
     if (m_slice->isInterP())
     {
         /* P Slice */
 
+        WeightValues wv0[3];
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         X265_CHECK(refIdx0 >= 0, "invalid P refidx\n");
         X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "P refidx out of range\n");
-        pwp0 = m_slice->m_weightPredTable[0][refIdx0];
+        WeightParam *wp0 = m_slice->m_weightPredTable[0][refIdx0];
 
-        if (m_slice->m_pps->bUseWeightPred && pwp0->bPresentFlag)
+        if (m_slice->m_pps->bUseWeightPred && wp0->bPresentFlag)
         {
             for (int plane = 0; plane < 3; plane++)
             {
-                pwp0[plane].w = pwp0[plane].inputWeight;
-                pwp0[plane].offset = pwp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
-                pwp0[plane].shift = pwp0[plane].log2WeightDenom;
-                pwp0[plane].round = pwp0[plane].log2WeightDenom >= 1 ? 1 << (pwp0[plane].log2WeightDenom - 1) : 0;
+                wv0[plane].w      = wp0[plane].inputWeight;
+                wv0[plane].offset = wp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
+                wv0[plane].shift  = wp0[plane].log2WeightDenom;
+                wv0[plane].round  = wp0[plane].log2WeightDenom >= 1 ? 1 << (wp0[plane].log2WeightDenom - 1) : 0;
             }
 
             ShortYuv* shortYuv = &m_predShortYuv[0];
@@ -188,7 +187,7 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
             if (bChroma)
                 predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
 
-            addWeightUni(shortYuv, pwp0, predYuv, bLuma, bChroma);
+            addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
         }
         else
         {
@@ -201,6 +200,10 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
     else
     {
         /* B Slice */
+
+        WeightValues wv0[3], wv1[3];
+        WeightParam *pwp0, *pwp1;
+
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         int refIdx1 = m_mvField[1]->getRefIdx(m_partAddr);
 
@@ -209,32 +212,32 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
             pwp0 = refIdx0 >= 0 ? m_slice->m_weightPredTable[0][refIdx0] : NULL;
             pwp1 = refIdx1 >= 0 ? m_slice->m_weightPredTable[1][refIdx1] : NULL;
 
-            if (pwp0 && pwp0->bPresentFlag && pwp1 && pwp1->bPresentFlag)
+            if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
             {
                 /* biprediction weighting */
                 for (int plane = 0; plane < 3; plane++)
                 {
-                    pwp0[plane].w = pwp0[plane].inputWeight;
-                    pwp0[plane].o = pwp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
-                    pwp0[plane].shift = pwp0[plane].log2WeightDenom;
-                    pwp0[plane].round = 1 << pwp0[plane].log2WeightDenom;
+                    wv0[plane].w = pwp0[plane].inputWeight;
+                    wv0[plane].o = pwp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
+                    wv0[plane].shift = pwp0[plane].log2WeightDenom;
+                    wv0[plane].round = 1 << pwp0[plane].log2WeightDenom;
 
-                    pwp1[plane].w = pwp1[plane].inputWeight;
-                    pwp1[plane].o = pwp1[plane].inputOffset * (1 << (X265_DEPTH - 8));
-                    pwp1[plane].shift = pwp0[plane].shift;
-                    pwp1[plane].round = pwp0[plane].round;
+                    wv1[plane].w = pwp1[plane].inputWeight;
+                    wv1[plane].o = pwp1[plane].inputOffset * (1 << (X265_DEPTH - 8));
+                    wv1[plane].shift = wv0[plane].shift;
+                    wv1[plane].round = wv0[plane].round;
                 }
             }
             else
             {
-                /* uniprediction weighting */
+                /* uniprediction weighting, always outputs to wv0 */
                 WeightParam* pwp = (refIdx0 >= 0) ? pwp0 : pwp1;
                 for (int plane = 0; plane < 3; plane++)
                 {
-                    pwp[plane].w = pwp[plane].inputWeight;
-                    pwp[plane].offset = pwp[plane].inputOffset * (1 << (X265_DEPTH - 8));
-                    pwp[plane].shift = pwp[plane].log2WeightDenom;
-                    pwp[plane].round = pwp[plane].log2WeightDenom >= 1 ? 1 << (pwp[plane].log2WeightDenom - 1) : 0;
+                    wv0[plane].w = pwp[plane].inputWeight;
+                    wv0[plane].offset = pwp[plane].inputOffset * (1 << (X265_DEPTH - 8));
+                    wv0[plane].shift = pwp[plane].log2WeightDenom;
+                    wv0[plane].round = pwp[plane].log2WeightDenom >= 1 ? 1 << (pwp[plane].log2WeightDenom - 1) : 0;
                 }
             }
         }
@@ -258,8 +261,8 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
                 predInterChromaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
             }
 
-            if ((pwp0 && pwp0->bPresentFlag) || (pwp1 && pwp1->bPresentFlag))
-                addWeightBi(&m_predShortYuv[0], &m_predShortYuv[1], pwp0, pwp1, predYuv, bLuma, bChroma);
+            if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
+                addWeightBi(&m_predShortYuv[0], &m_predShortYuv[1], wv0, wv1, predYuv, bLuma, bChroma);
             else
                 predYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
         }
@@ -277,7 +280,7 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
                 if (bChroma)
                     predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
 
-                addWeightUni(shortYuv, pwp0, predYuv, bLuma, bChroma);
+                addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
@@ -302,7 +305,7 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
                 if (bChroma)
                     predInterChromaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
 
-                addWeightUni(shortYuv, pwp1, predYuv, bLuma, bChroma);
+                addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
@@ -485,7 +488,7 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
 }
 
 /* weighted averaging for bi-pred */
-void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0, WeightParam *wp1, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], TComYuv* predYuv, bool bLuma, bool bChroma)
 {
     int x, y;
 
@@ -500,9 +503,9 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0
     int16_t* srcU1 = srcYuv1->getCbAddr(m_partAddr);
     int16_t* srcV1 = srcYuv1->getCrAddr(m_partAddr);
 
-    pixel* dstY    = outPredYuv->getLumaAddr(m_partAddr);
-    pixel* dstU    = outPredYuv->getCbAddr(m_partAddr);
-    pixel* dstV    = outPredYuv->getCrAddr(m_partAddr);
+    pixel* dstY    = predYuv->getLumaAddr(m_partAddr);
+    pixel* dstU    = predYuv->getCbAddr(m_partAddr);
+    pixel* dstV    = predYuv->getCrAddr(m_partAddr);
 
     if (bLuma)
     {
@@ -516,7 +519,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0
 
         src0Stride = srcYuv0->m_width;
         src1Stride = srcYuv1->m_width;
-        dststride  = outPredYuv->getStride();
+        dststride  = predYuv->getStride();
 
         // TODO: can we use weight_sp here?
         for (y = m_height - 1; y >= 0; y--)
@@ -552,7 +555,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0
 
         src0Stride = srcYuv0->m_cwidth;
         src1Stride = srcYuv1->m_cwidth;
-        dststride  = outPredYuv->getCStride();
+        dststride  = predYuv->getCStride();
 
         m_width  >>= srcYuv0->getHorzChromaShift();
         m_height >>= srcYuv0->getVertChromaShift();
@@ -600,15 +603,15 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, WeightParam *wp0
 }
 
 /* weighted averaging for uni-pred */
-void Predict::addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outPredYuv, bool bLuma, bool bChroma)
+void Predict::addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv* predYuv, bool bLuma, bool bChroma)
 {
     int16_t* srcY0 = srcYuv0->getLumaAddr(m_partAddr);
     int16_t* srcU0 = srcYuv0->getCbAddr(m_partAddr);
     int16_t* srcV0 = srcYuv0->getCrAddr(m_partAddr);
 
-    pixel* dstY = outPredYuv->getLumaAddr(m_partAddr);
-    pixel* dstU = outPredYuv->getCbAddr(m_partAddr);
-    pixel* dstV = outPredYuv->getCrAddr(m_partAddr);
+    pixel* dstY = predYuv->getLumaAddr(m_partAddr);
+    pixel* dstU = predYuv->getCbAddr(m_partAddr);
+    pixel* dstV = predYuv->getCrAddr(m_partAddr);
 
     int w0, offset, shiftNum, shift, round;
     uint32_t srcStride, dstStride;
@@ -616,13 +619,13 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outPred
     if (bLuma)
     {
         // Luma
-        w0      = wp0[0].w;
-        offset  = wp0[0].offset;
+        w0      = wp[0].w;
+        offset  = wp[0].offset;
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        shift   = wp0[0].shift + shiftNum;
+        shift   = wp[0].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
         srcStride = srcYuv0->m_width;
-        dstStride  = outPredYuv->getStride();
+        dstStride  = predYuv->getStride();
 
         primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
     }
@@ -630,14 +633,14 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outPred
     if (bChroma)
     {
         // Chroma U
-        w0      = wp0[1].w;
-        offset  = wp0[1].offset;
+        w0      = wp[1].w;
+        offset  = wp[1].offset;
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
-        shift   = wp0[1].shift + shiftNum;
+        shift   = wp[1].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
 
         srcStride = srcYuv0->m_cwidth;
-        dstStride = outPredYuv->getCStride();
+        dstStride = predYuv->getCStride();
 
         m_width  >>= srcYuv0->getHorzChromaShift();
         m_height >>= srcYuv0->getVertChromaShift();
@@ -645,9 +648,9 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, WeightParam *wp0, TComYuv* outPred
         primitives.weight_sp(srcU0, dstU, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
 
         // Chroma V
-        w0     = wp0[2].w;
-        offset = wp0[2].offset;
-        shift  = wp0[2].shift + shiftNum;
+        w0     = wp[2].w;
+        offset = wp[2].offset;
+        shift  = wp[2].shift + shiftNum;
         round  = shift ? (1 << (shift - 1)) : 0;
 
         primitives.weight_sp(srcV0, dstV, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);

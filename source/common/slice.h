@@ -242,21 +242,17 @@ struct PPS
 struct WeightParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
-    // or Implicit weighted prediction parameters (8 bits depth values).
     bool     bPresentFlag;
     uint32_t log2WeightDenom;
     int      inputWeight;
     int      inputOffset;
 
-    // Weighted prediction scaling values built from above parameters (bitdepth scaled):
-    int      w, o, offset, shift, round;
-
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
-    void setFromWeightAndOffset(int weight, int _offset, int denom, bool bNormalize)
+    void setFromWeightAndOffset(int w, int o, int denom, bool bNormalize)
     {
-        inputOffset = _offset;
+        inputOffset = o;
         log2WeightDenom = denom;
-        inputWeight = weight;
+        inputWeight = w;
         while (bNormalize && log2WeightDenom > 0 && (inputWeight > 127))
         {
             log2WeightDenom--;
