@@ -80,7 +80,7 @@ public:
     Predict();
     ~Predict();
 
-    void allocBuffers(int csp);
+    bool allocBuffers(int csp);
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
     void prepMotionCompensation(TComDataCU* cu, int partIdx);
