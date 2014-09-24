@@ -65,8 +65,6 @@ protected:
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
     bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);
-    bool check_blockcopy_pp(blockcpy_pp_t ref, blockcpy_pp_t opt);
-    bool check_blockcopy_ps(blockcpy_ps_t ref, blockcpy_ps_t opt);
     bool check_copy_pp(copy_pp_t ref, copy_pp_t opt);
     bool check_copy_sp(copy_sp_t ref, copy_sp_t opt);
     bool check_copy_ps(copy_ps_t ref, copy_ps_t opt);
@@ -74,7 +72,6 @@ protected:
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
-    bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
     bool check_scale_pp(scale_t ref, scale_t opt);
     bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);

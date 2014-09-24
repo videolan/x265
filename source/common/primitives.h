@@ -138,12 +138,9 @@ typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, i
 typedef int  (*pixel_ssd_s_t)(int16_t *fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
 typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
-typedef void (*blockcpy_pp_t)(int bx, int by, pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sp_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_ps_t)(int bx, int by, pixel *dst, intptr_t dstride, int16_t *src, intptr_t sstride); // dst is aligned
 typedef void (*blockcpy_sc_t)(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
 typedef void (*pixelsub_ps_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
-typedef void (*pixeladd_ss_t)(int bx, int by, int16_t *dst, intptr_t dstride, int16_t *src0, int16_t *src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
 
@@ -223,8 +220,6 @@ struct EncoderPrimitives
     pixelcmp_t      psy_cost[NUM_SQUARE_BLOCKS];     // difference in AC energy between two blocks
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
-    blockcpy_pp_t   blockcpy_pp;                     // block copy pixel from pixel
-    blockcpy_ps_t   blockcpy_ps;                     // block copy pixel from short
     cvt16to32_shl_t cvt16to32_shl;
     cvt16to32_shr_t cvt16to32_shr[NUM_SQUARE_BLOCKS - 1];
     cvt32to16_shr_t cvt32to16_shr;
@@ -256,7 +251,6 @@ struct EncoderPrimitives
 
     weightp_sp_t    weight_sp;
     weightp_pp_t    weight_pp;
-    pixeladd_ss_t   pixeladd_ss;
     pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
     addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
 

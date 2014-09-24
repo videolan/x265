@@ -390,35 +390,6 @@ int pixel_ssd_s_c(short *a, intptr_t dstride)
     return sum;
 }
 
-void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = b[x];
-        }
-
-        a += stridea;
-        b += strideb;
-    }
-}
-
-void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy error\n");
-            a[x] = (pixel)b[x];
-        }
-
-        a += stridea;
-        b += strideb;
-    }
-}
-
 template<int size>
 void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
 {
@@ -598,21 +569,6 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride,
 
         src += srcStride;
         dst += dstStride;
-    }
-}
-
-void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = (int16_t)Clip(b0[x] + b1[x]);
-        }
-
-        b0 += sstride0;
-        b1 += sstride1;
-        a += dstride;
     }
 }
 
@@ -1224,9 +1180,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
 
-    p.blockcpy_pp = blockcopy_p_p;
-    p.blockcpy_ps = blockcopy_p_s;
-
     p.blockfill_s[BLOCK_4x4]   = blockfil_s_c<4>;
     p.blockfill_s[BLOCK_8x8]   = blockfil_s_c<8>;
     p.blockfill_s[BLOCK_16x16] = blockfil_s_c<16>;
@@ -1312,8 +1265,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;
-
-    p.pixeladd_ss = pixeladd_ss_c;
 
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
