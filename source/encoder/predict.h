@@ -66,8 +66,6 @@ protected:
     void predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
     void predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
 
-    void predInterBi(TComDataCU* cu, TComYuv* outPredYuv, bool bLuma, bool bChroma);
-
     void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, WeightParam *wp0, WeightParam *wp1, TComYuv* outDstYuv, bool bLuma, bool bChroma);
     void addWeightUni(ShortYuv* srcYuv0, uint32_t partUnitIdx, uint32_t width, uint32_t height, WeightParam *wp0, TComYuv* outDstYuv, bool bLuma, bool bChroma);
 
