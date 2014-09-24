@@ -724,6 +724,72 @@ mov    r6d, 24/8
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PP_W32_H16_avx 2
+INIT_YMM avx
+cglobal blockcopy_pp_%1x%2, 4, 7, 6
+    lea    r4,  [3 * r1]
+    lea    r5,  [3 * r3]
+    mov    r6d, %2/16
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+  
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m2, [r2]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + 2 * r3]
+    movu    m5, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m2
+    movu    [r0 + r1], m3
+    movu    [r0 + 2 * r1], m4
+    movu    [r0 + r4], m5
+
+    lea     r2, [r2 + 4 * r3]
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    dec     r6d
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_PP_W32_H16_avx 32, 32
+BLOCKCOPY_PP_W32_H16_avx 32, 48
+BLOCKCOPY_PP_W32_H16_avx 32, 64
+
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W48_H2 2
 INIT_XMM sse2
 cglobal blockcopy_pp_%1x%2, 4, 5, 6
