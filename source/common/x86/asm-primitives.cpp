@@ -1714,6 +1714,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_copy_ss[LUMA_64x32] = x265_blockcopy_ss_64x32_avx;
         p.luma_copy_ss[LUMA_64x48] = x265_blockcopy_ss_64x48_avx;
         p.luma_copy_ss[LUMA_64x64] = x265_blockcopy_ss_64x64_avx;
+
+        p.chroma[X265_CSP_I420].copy_pp[CHROMA_32x8] = x265_blockcopy_pp_32x8_avx;
+        p.luma_copy_pp[LUMA_32x8] = x265_blockcopy_pp_32x8_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {
