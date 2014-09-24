@@ -1292,6 +1292,9 @@ void idct32(int32_t *src, int16_t *dst, intptr_t stride)
 namespace x265 {
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
 {
+    /* Note: We have AVX2 assembly for these two functions, but since AVX2 is
+     * still somewhat rare on end-user PCs we still compile and link these SSE3
+     * intrinsic SIMD functions */
 #if !HIGH_BIT_DEPTH
     p.idct[IDCT_16x16] = idct16;
     p.idct[IDCT_32x32] = idct32;
