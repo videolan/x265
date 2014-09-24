@@ -109,8 +109,8 @@ void Encoder::create()
     m_threadLocalData = new ThreadLocalData[numLocalData];
     for (int i = 0; i < numLocalData; i++)
     {
-        m_threadLocalData[i].cuCoder.initSearch(m_param, m_scalingList);
-        m_threadLocalData[i].cuCoder.create(g_maxCUDepth + 1, g_maxCUSize);
+        m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
+        m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize);
     }
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
@@ -627,7 +627,7 @@ void Encoder::printSummary()
         {
             for (int i = 0; i < poolThreadCount; i++)
             {
-                StatisticLog& enclog = m_threadLocalData[i].cuCoder.m_sliceTypeLog[sliceType];
+                StatisticLog& enclog = m_threadLocalData[i].analysis.m_sliceTypeLog[sliceType];
                 if (depth == 0)
                     finalLog.totalCu += enclog.totalCu;
                 finalLog.cntIntra[depth] += enclog.cntIntra[depth];

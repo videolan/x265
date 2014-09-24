@@ -47,13 +47,13 @@ class Encoder;
 
 struct ThreadLocalData
 {
-    Analysis cuCoder;
+    Analysis analysis;
 
     // NOTE: the maximum LCU 64x64 have 256 4x4 partitions
     bool     edgeFilter[256];
     uint8_t  blockingStrength[256];
 
-    ~ThreadLocalData() { cuCoder.destroy(); }
+    ~ThreadLocalData() { analysis.destroy(); }
 };
 
 /* manages the state of encoding one row of CTU blocks.  When

@@ -467,7 +467,7 @@ void FrameEncoder::encodeSlice()
             }
         }
 
-        m_tld->cuCoder.loadCTUData(cu);
+        m_tld->analysis.loadCTUData(cu);
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCTU(cu);
 
@@ -626,12 +626,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                                                     m_rows[0].rdEntropyCoders[0][CI_CURR_BEST];
     // setup thread-local data
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
-    tld.cuCoder.m_quant.m_nr = m_nr;
-    tld.cuCoder.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    tld.cuCoder.m_log = &tld.cuCoder.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
-    tld.cuCoder.m_rdEntropyCoders = curRow.rdEntropyCoders;
-    tld.cuCoder.m_entropyCoder = &curRow.entropyCoder;
-    tld.cuCoder.m_quant.m_entropyCoder = &curRow.entropyCoder;
+    tld.analysis.m_quant.m_nr = m_nr;
+    tld.analysis.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+    tld.analysis.m_log = &tld.analysis.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
+    tld.analysis.m_rdEntropyCoders = curRow.rdEntropyCoders;
+    tld.analysis.m_entropyCoder = &curRow.entropyCoder;
+    tld.analysis.m_quant.m_entropyCoder = &curRow.entropyCoder;
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();
@@ -687,9 +687,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             // load current best state from go-on entropy coder
             curRow.rdEntropyCoders[0][CI_CURR_BEST].load(rowCoder);
 
-        tld.cuCoder.loadCTUData(cu);
-        tld.cuCoder.m_quant.setQPforQuant(cu);
-        tld.cuCoder.compressCU(cu); // Does all the CU analysis
+        tld.analysis.loadCTUData(cu);
+        tld.analysis.m_quant.setQPforQuant(cu);
+        tld.analysis.compressCU(cu); // Does all the CU analysis
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
@@ -713,12 +713,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                curRow.rowStats.iCuCnt += tld.cuCoder.m_log->qTreeIntraCnt[depth] << shift;
-                curRow.rowStats.pCuCnt += tld.cuCoder.m_log->qTreeInterCnt[depth] << shift;
-                curRow.rowStats.skipCuCnt += tld.cuCoder.m_log->qTreeSkipCnt[depth] << shift;
+                curRow.rowStats.iCuCnt += tld.analysis.m_log->qTreeIntraCnt[depth] << shift;
+                curRow.rowStats.pCuCnt += tld.analysis.m_log->qTreeInterCnt[depth] << shift;
+                curRow.rowStats.skipCuCnt += tld.analysis.m_log->qTreeSkipCnt[depth] << shift;
 
                 // clear the row cu data from thread local object
-                tld.cuCoder.m_log->qTreeIntraCnt[depth] = tld.cuCoder.m_log->qTreeInterCnt[depth] = tld.cuCoder.m_log->qTreeSkipCnt[depth] = 0;
+                tld.analysis.m_log->qTreeIntraCnt[depth] = tld.analysis.m_log->qTreeInterCnt[depth] = tld.analysis.m_log->qTreeSkipCnt[depth] = 0;
             }
         }
 
@@ -889,16 +889,16 @@ void FrameEncoder::setLambda(int qp, ThreadLocalData &tld)
     int qpCr = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCrQpOffset);
     qp = Clip3(0, QP_MAX_MAX, qp);
 
-    tld.cuCoder.m_me.setQP(qp);
-    tld.cuCoder.m_rdCost.setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
+    tld.analysis.m_me.setQP(qp);
+    tld.analysis.m_rdCost.setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
 
     int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    uint16_t lambdaOffset = tld.cuCoder.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-    tld.cuCoder.m_rdCost.setCbDistortionWeight(lambdaOffset);
+    uint16_t lambdaOffset = tld.analysis.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+    tld.analysis.m_rdCost.setCbDistortionWeight(lambdaOffset);
 
     chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
-    lambdaOffset = tld.cuCoder.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-    tld.cuCoder.m_rdCost.setCrDistortionWeight(lambdaOffset);
+    lambdaOffset = tld.analysis.m_rdCost.m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+    tld.analysis.m_rdCost.setCrDistortionWeight(lambdaOffset);
 }
 
 /* DCT-domain noise reduction / adaptive deadzone from libavcodec */
