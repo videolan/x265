@@ -38,7 +38,7 @@ if(MSVC)
     endif()
 endif(MSVC)
 
-set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
+set(SSE3  vec/dct-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp)
 set(SSE41 vec/dct-sse41.cpp)
 

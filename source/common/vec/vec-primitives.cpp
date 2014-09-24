@@ -53,8 +53,6 @@
 namespace x265 {
 // private x265 namespace
 
-void Setup_Vec_BlockCopyPrimitives_sse3(EncoderPrimitives&);
-
 void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
 void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
@@ -66,7 +64,6 @@ void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_SSE3)
     {
         Setup_Vec_DCTPrimitives_sse3(p);
-        Setup_Vec_BlockCopyPrimitives_sse3(p);
     }
 #endif
 #ifdef HAVE_SSSE3
