@@ -633,6 +633,57 @@ cglobal blockcopy_pp_32x8, 4, 6, 6
     movu    [r0 + r4], m1
     RET
 
+INIT_YMM avx
+cglobal blockcopy_pp_32x16, 4, 6, 6
+    lea    r4,  [3 * r1]
+    lea    r5,  [3 * r3]
+
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m2, [r2]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + 2 * r3]
+    movu    m5, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m2
+    movu    [r0 + r1], m3
+    movu    [r0 + 2 * r1], m4
+    movu    [r0 + r4], m5
+
+    lea     r2, [r2 + 4 * r3]
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    RET
+
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------

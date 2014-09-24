@@ -1717,6 +1717,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.chroma[X265_CSP_I420].copy_pp[CHROMA_32x8] = x265_blockcopy_pp_32x8_avx;
         p.luma_copy_pp[LUMA_32x8] = x265_blockcopy_pp_32x8_avx;
+
+        p.chroma[X265_CSP_I420].copy_pp[CHROMA_32x16] = x265_blockcopy_pp_32x16_avx;
+        p.chroma[X265_CSP_I422].copy_pp[CHROMA422_32x16] = x265_blockcopy_pp_32x16_avx;
+        p.luma_copy_pp[LUMA_32x16] = x265_blockcopy_pp_32x16_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {

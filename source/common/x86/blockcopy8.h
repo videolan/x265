@@ -195,6 +195,7 @@ void x265_blockcopy_ss_64x48_avx(int16_t *dest, intptr_t deststride, int16_t *sr
 void x265_blockcopy_ss_64x64_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
 
 void x265_blockcopy_pp_32x8_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x16_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
 
 #undef BLOCKCOPY_COMMON
 #undef BLOCKCOPY_SS_PP
