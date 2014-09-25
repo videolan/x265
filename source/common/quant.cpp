@@ -158,8 +158,9 @@ Quant::Quant()
     m_fencShortBuf = NULL;
 }
 
-bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList)
+bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy)
 {
+    m_entropyCoder = &entropy;
     m_useRDOQ = useRDOQ;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;

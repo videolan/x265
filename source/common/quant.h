@@ -61,14 +61,10 @@ struct QpParam
 
 class Quant
 {
-public:
-
-    NoiseReduction*    m_nr;
-    Entropy*           m_entropyCoder;
-
 protected:
 
     const ScalingList* m_scalingList;
+    Entropy*           m_entropyCoder;
 
     QpParam            m_qpParam[3];
 
@@ -82,11 +78,13 @@ protected:
 
 public:
 
+    NoiseReduction*    m_nr;
+
     Quant();
     ~Quant();
 
     /* one-time setup */
-    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList);
+    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
 
     /* CU setup */
     void setQPforQuant(TComDataCU* cu);

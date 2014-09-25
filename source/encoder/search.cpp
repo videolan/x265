@@ -72,8 +72,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     m_bFrameParallel = param->frameNumThreads > 1;
     m_numLayers = g_log2Size[param->maxCUSize] - 2;
 
-    bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList);
-    m_quant.m_entropyCoder = &m_entropyCoder; /* TODO: move to Quant::init() */
+    bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
 
     m_rdCost.setPsyRdScale(param->psyRd);
 
