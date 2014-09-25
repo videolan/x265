@@ -30,6 +30,32 @@
 
 using namespace x265;
 
+namespace {
+// TO DO: Remove this function with a table.
+int getDepthScanIdx(int x, int y, int size)
+{
+    if (size == 1)
+        return 0;
+
+    int depth = 0;
+    int h = size >> 1;
+
+    if (x >= h)
+    {
+        x -= h;
+        depth += h * h;
+    }
+
+    if (y >= h)
+    {
+        y -= h;
+        depth += 2 * h * h;
+    }
+
+    return depth + getDepthScanIdx(x, y, h);
+}
+}
+
 Analysis::Analysis()
 {
     m_bestPredYuv     = NULL;
@@ -231,30 +257,6 @@ void Analysis::destroy()
 #define LAMBDA_PARTITION_SELECT     0.9
 #define EARLY_EXIT                  1
 #define TOPSKIP                     1
-
-// TO DO: Remove this function with a table.
-int getDepthScanIdx(int x, int y, int size)
-{
-    if (size == 1)
-        return 0;
-
-    int depth = 0;
-    int h = size >> 1;
-
-    if (x >= h)
-    {
-        x -= h;
-        depth += h * h;
-    }
-
-    if (y >= h)
-    {
-        y -= h;
-        depth += 2 * h * h;
-    }
-
-    return depth + getDepthScanIdx(x, y, h);
-}
 
 void Analysis::loadCTUData(TComDataCU* parentCU)
 {
