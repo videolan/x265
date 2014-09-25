@@ -72,14 +72,13 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     m_bFrameParallel = param->frameNumThreads > 1;
     m_numLayers = g_log2Size[param->maxCUSize] - 2;
 
-    bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
-
     m_rdCost.setPsyRdScale(param->psyRd);
-
-    ok &= Predict::allocBuffers(param->internalCsp);
-    ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
     m_me.setSearchMethod(param->searchMethod);
     m_me.setSubpelRefine(param->subpelRefine);
+
+    bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
+    ok &= Predict::allocBuffers(param->internalCsp);
+    ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
