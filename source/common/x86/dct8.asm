@@ -145,6 +145,22 @@ tab_dct32_2:    dw 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 6
                 dw -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9
                 dw 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4
 
+avx2_idct8_1:   times 4 dw 64, 83, 64, 36
+                times 4 dw 64, 36, -64, -83
+                times 4 dw 64, -36, -64, 83
+                times 4 dw 64, -83, 64, -36
+
+avx2_idct8_2:   times 4 dw 89, 75, 50, 18
+                times 4 dw 75, -18, -89, -50
+                times 4 dw 50, -89, 18, 75
+                times 4 dw 18, -50, 75, -89
+
+idct8_shuf1:    dd 0, 2, 4, 6, 1, 3, 5, 7
+
+idct8_shuf2:    times 2 db 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
+
+idct8_shuf3:    times 2 db 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3
+
 tab_idct16_1:   dw 90, 87, 80, 70, 57, 43, 25, 9
                 dw 87, 57, 9, -43, -80, -90, -70, -25
                 dw 80, 9, -70, -87, -25, 57, 90, 43
@@ -1728,6 +1744,184 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
 
     dec             r4d
     jnz             .pass2
+    RET
+
+%macro IDCT8_PASS_1 1
+    vpbroadcastd    m7,                [r5 + %1]
+    vpbroadcastd    m10,               [r5 + %1 + 4]
+    pmaddwd         m5,                m4, m7
+    pmaddwd         m6,                m0, m10
+    paddd           m5,                m6
+
+    vpbroadcastd    m7,                [r6 + %1]
+    vpbroadcastd    m10,               [r6 + %1 + 4]
+    pmaddwd         m6,                m1, m7
+    pmaddwd         m3,                m2, m10
+    paddd           m6,                m3
+
+    paddd           m3,                m5, m6
+    paddd           m3,                m11
+    psrad           m3,                IDCT_SHIFT1
+
+    psubd           m5,                m6
+    paddd           m5,                m11
+    psrad           m5,                IDCT_SHIFT1
+
+    vpbroadcastd    m7,                [r5 + %1 + 32]
+    vpbroadcastd    m10,               [r5 + %1 + 36]
+    pmaddwd         m6,                m4, m7
+    pmaddwd         m8,                m0, m10
+    paddd           m6,                m8
+
+    vpbroadcastd    m7,                [r6 + %1 + 32]
+    vpbroadcastd    m10,               [r6 + %1 + 36]
+    pmaddwd         m8,                m1, m7
+    pmaddwd         m9,                m2, m10
+    paddd           m8,                m9
+
+    paddd           m9,                m6, m8
+    paddd           m9,                m11
+    psrad           m9,                IDCT_SHIFT1
+
+    psubd           m6,                m8
+    paddd           m6,                m11
+    psrad           m6,                IDCT_SHIFT1
+
+    packssdw        m3,                m9
+    vpermq          m3,                m3, 0xD8
+
+    packssdw        m6,                m5
+    vpermq          m6,                m6, 0xD8
+%endmacro
+
+%macro IDCT8_PASS_2 0
+    punpcklqdq      m2,                m0, m1
+    punpckhqdq      m0,                m1
+
+    pmaddwd         m3,                m2, [r5]
+    pmaddwd         m5,                m2, [r5 + 32]
+    pmaddwd         m6,                m2, [r5 + 64]
+    pmaddwd         m7,                m2, [r5 + 96]
+    phaddd          m3,                m5
+    phaddd          m6,                m7
+    pshufb          m3,                [idct8_shuf2]
+    pshufb          m6,                [idct8_shuf2]
+    punpcklqdq      m7,                m3, m6
+    punpckhqdq      m3,                m6
+
+    pmaddwd         m5,                m0, [r6]
+    pmaddwd         m6,                m0, [r6 + 32]
+    pmaddwd         m8,                m0, [r6 + 64]
+    pmaddwd         m9,                m0, [r6 + 96]
+    phaddd          m5,                m6
+    phaddd          m8,                m9
+    pshufb          m5,                [idct8_shuf2]
+    pshufb          m8,                [idct8_shuf2]
+    punpcklqdq      m6,                m5, m8
+    punpckhqdq      m5,                m8
+
+    paddd           m8,                m7, m6
+    paddd           m8,                m12
+    psrad           m8,                IDCT_SHIFT2
+
+    psubd           m7,                m6
+    paddd           m7,                m12
+    psrad           m7,                IDCT_SHIFT2
+
+    pshufb          m7,                [idct8_shuf3]
+    packssdw        m8,                 m7
+
+    paddd           m9,                m3, m5
+    paddd           m9,                m12
+    psrad           m9,                IDCT_SHIFT2
+
+    psubd           m3,                m5
+    paddd           m3,                m12
+    psrad           m3,                IDCT_SHIFT2
+
+    pshufb          m3,                [idct8_shuf3]
+    packssdw        m9,                m3
+%endmacro
+
+INIT_YMM avx2
+cglobal idct8, 3, 7, 13, 0-8*16
+%if BIT_DEPTH == 10
+    %define         IDCT_SHIFT2        10
+    vpbroadcastd    m12,                [pd_512]
+%elif BIT_DEPTH == 8
+    %define         IDCT_SHIFT2        12
+    vpbroadcastd    m12,                [pd_2048]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             IDCT_SHIFT1         7
+
+    vbroadcasti128  m11,               [pd_64]
+
+    mov             r4,                rsp
+    lea             r5,                [avx2_idct8_1]
+    lea             r6,                [avx2_idct8_2]
+
+    ;pass1
+    mova            m0,                [r0 + 0 * 32]
+    mova            m1,                [r0 + 4 * 32]
+    packssdw        m0,                m1               ; [0 0 0 0 4 4 4 4 0 0 0 0 4 4 4 4]
+    mova            m1,                [r0 + 2 * 32]
+    mova            m2,                [r0 + 6 * 32]
+    packssdw        m1,                m2               ; [2 2 2 2 6 6 6 6 2 2 2 2 6 6 6 6]
+    mova            m2,                [r0 + 1 * 32]
+    mova            m3,                [r0 + 5 * 32]
+    packssdw        m2,                m3               ; [1 1 1 1 5 5 5 5 1 1 1 1 5 5 5 5]
+    mova            m3,                [r0 + 3 * 32]
+    mova            m4,                [r0 + 7 * 32]
+    packssdw        m3,                m4               ; [3 3 3 3 7 7 7 7 3 3 3 3 7 7 7 7]
+
+    mova            m5,                [idct8_shuf1]
+
+    punpcklwd       m4,                m0, m1           ; [0 2 0 2 0 2 0 2 0 2 0 2 0 2 0 2]
+    punpckhwd       m0,                m1               ; [4 6 4 6 4 6 4 6 4 6 4 6 4 6 4 6]
+    vpermd          m4,                m5, m4
+    vpermd          m0,                m5, m0
+
+    punpcklwd       m1,                m2, m3           ; [1 3 1 3 1 3 1 3 1 3 1 3 1 3 1 3]
+    punpckhwd       m2,                m3               ; [5 7 5 7 5 7 5 7 5 7 5 7 5 7 5 7]
+    vpermd          m1,                m5, m1
+    vpermd          m2,                m5, m2
+
+    IDCT8_PASS_1    0
+    mova            [r4],              m3
+    mova            [r4 + 96],         m6
+
+    IDCT8_PASS_1    64
+    mova            [r4 + 32],         m3
+    mova            [r4 + 64],         m6
+
+    ;pass2
+    add             r2d,               r2d
+    lea             r3,                [r2 * 3]
+
+    mova            m0,                [r4]
+    mova            m1,                [r4 + 32]
+    IDCT8_PASS_2
+
+    vextracti128    xm3,               m8, 1
+    mova            [r1],              xm8
+    mova            [r1 + r2],         xm3
+    vextracti128    xm3,               m9, 1
+    mova            [r1 + r2 * 2],     xm9
+    mova            [r1 + r3],         xm3
+
+    lea             r1,                [r1 + r2 * 4]
+    mova            m0,                [r4 + 64]
+    mova            m1,                [r4 + 96]
+    IDCT8_PASS_2
+
+    vextracti128    xm3,               m8, 1
+    mova            [r1],              xm8
+    mova            [r1 + r2],         xm3
+    vextracti128    xm3,               m9, 1
+    mova            [r1 + r2 * 2],     xm9
+    mova            [r1 + r3],         xm3
     RET
 
 %macro IDCT_PASS1 2
