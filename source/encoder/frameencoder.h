@@ -56,7 +56,6 @@ struct ThreadLocalData
  * WPP is active, several rows will be simultaneously encoded. */
 struct CTURow
 {
-    Entropy           entropyCoder;
     Entropy           bufferEntropyCoder;  /* store context for next row */
     Entropy           rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
 
@@ -88,8 +87,6 @@ struct CTURow
         busy = false;
         completed = 0;
         memset(&rowStats, 0, sizeof(rowStats));
-
-        entropyCoder.load(initContext);
 
         for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
             for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)

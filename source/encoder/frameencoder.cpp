@@ -629,8 +629,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     tld.analysis.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.analysis.m_log = &tld.analysis.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
     tld.analysis.m_rdEntropyCoders = curRow.rdEntropyCoders;
-    tld.analysis.m_entropyCoder = &curRow.entropyCoder;
-    tld.analysis.m_quant.m_entropyCoder = &curRow.entropyCoder;
     setLambda(m_frame->m_picSym->m_slice->m_sliceQp, tld);
 
     int64_t startTime = x265_mdate();

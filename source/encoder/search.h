@@ -34,6 +34,7 @@
 #include "TLibCommon/TComPattern.h"
 
 #include "rdcost.h"
+#include "entropy.h"
 #include "motion.h"
 
 #define MVP_IDX_BITS 1
@@ -60,7 +61,7 @@ public:
     RDCost          m_rdCost;
     x265_param*     m_param;
 
-    Entropy*        m_entropyCoder;
+    Entropy         m_entropyCoder;
     Entropy       (*m_rdEntropyCoders)[CI_NUM];
 
     TComYuv         m_predTempYuv;
