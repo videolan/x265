@@ -467,7 +467,6 @@ void FrameEncoder::encodeSlice()
             }
         }
 
-        m_tld->analysis.loadCTUData(cu);
         // final coding (bitstream generation) for this CU
         m_entropyCoder.encodeCTU(cu);
 
