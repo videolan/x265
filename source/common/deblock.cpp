@@ -49,7 +49,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
         return;
 
     Frame* pic = cu->m_pic;
-    uint32_t curNumParts = m_numPartitions >> (depth * 2);
+    uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
 
     if (cu->getDepth(absZOrderIdx) > depth)
     {
@@ -116,7 +116,7 @@ void Deblock::setEdgefilterTU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t de
 {
     if (cu->getTransformIdx(absZOrderIdx) + cu->getDepth(absZOrderIdx) > (uint8_t)depth)
     {
-        const uint32_t curNumParts = m_numPartitions >> (depth * 2);
+        const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;
 
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)

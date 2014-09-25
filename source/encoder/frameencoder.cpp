@@ -419,7 +419,7 @@ void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_picSym->m_slice;
     const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
-    const uint32_t lastCUAddr = (slice->m_endCUAddr + m_frame->getNumPartInCU() - 1) / m_frame->getNumPartInCU();
+    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
 
     SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;

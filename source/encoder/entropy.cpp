@@ -490,7 +490,6 @@ void Entropy::encodeCTU(TComDataCU* cu)
 /* encode a CU block recursively */
 void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU* cuData)
 {
-    Frame* pic = cu->m_pic;
     Slice* slice = cu->m_slice;
 
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
@@ -501,7 +500,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
     if (!cuUnsplitFlag)
     {
-        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
             CU *childCU = cu->m_CULocalData + cuData->childIdx + partUnitIdx;
@@ -518,7 +517,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
     if (depth < cu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
-        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
@@ -580,7 +579,7 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
     {
         // Encode slice finish
         bool bTerminateSlice = false;
-        if (cuAddr + (cu->m_pic->getNumPartInCU() >> (depth << 1)) == realEndAddress)
+        if (cuAddr + (NUM_CU_PARTITIONS >> (depth << 1)) == realEndAddress)
             bTerminateSlice = true;
 
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
@@ -607,7 +606,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
 
     if ((log2TrSize == 2) && !(cu->getChromaFormat() == X265_CSP_I444))
     {
-        uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
+        uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
         if ((absPartIdx & (partNum - 1)) == 0)
         {
             state.bakAbsPartIdx   = absPartIdx;
@@ -684,7 +683,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         trIdx++;
         ++depth;
         absPartIdxStep >>= 2;
-        const uint32_t partNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
+        const uint32_t partNum = NUM_CU_PARTITIONS >> (depth << 1);
 
         encodeTransform(cu, state, offsetLuma, offsetChroma, absPartIdx, absPartIdxStep, depth, log2TrSize, trIdx, bCodeDQP, depthRange);
 
@@ -730,13 +729,13 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         int chFmt = cu->getChromaFormat();
         if ((log2TrSize == 2) && !(chFmt == X265_CSP_I444))
         {
-            uint32_t partNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
+            uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
             {
                 const uint32_t log2TrSizeC = 2;
                 const bool splitIntoSubTUs = (chFmt == X265_CSP_I422);
 
-                uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> ((depth - 1) << 1);
+                uint32_t curPartNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
 
                 for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
                 {
@@ -759,7 +758,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         {
             uint32_t log2TrSizeC = log2TrSize - hChromaShift;
             const bool splitIntoSubTUs = (chFmt == X265_CSP_I422);
-            uint32_t curPartNum = cu->m_pic->getNumPartInCU() >> (depth << 1);
+            uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
             {
                 TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
@@ -791,7 +790,7 @@ void Entropy::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
 
             if ((chFmt == X265_CSP_I444) && (cu->getPartitionSize(absPartIdx) == SIZE_NxN))
             {
-                uint32_t partOffset = (cu->m_pic->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
+                uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu->getDepth(absPartIdx) << 1)) >> 2;
                 codeIntraDirChroma(cu, absPartIdx + partOffset);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 2);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 3);
@@ -860,7 +859,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     uint32_t log2CUSize   = cu->getLog2CUSize(absPartIdx);
     uint32_t lumaOffset   = absPartIdx << (LOG2_UNIT_SIZE * 2);
     uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
-    uint32_t absPartIdxStep = cu->m_pic->getNumPartInCU() >> (depth << 1);
+    uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> (depth << 1);
     CoeffCodeState state;
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP, depthRange);
 }
@@ -1291,7 +1290,7 @@ void Entropy::codeIntraDirLumaAng(TComDataCU* cu, uint32_t absPartIdx, bool isMu
     int predIdx[4];
     PartSize mode = cu->getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
-    uint32_t partOffset = (cu->m_pic->getNumPartInCU() >> (cu->getDepth(absPartIdx) << 1)) >> 2;
+    uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu->getDepth(absPartIdx) << 1)) >> 2;
 
     for (j = 0; j < partNum; j++)
     {

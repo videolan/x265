@@ -2069,7 +2069,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
         Slice* slice = cu->m_slice;
         uint32_t nextDepth = depth + 1;
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
-        uint32_t qNumParts = (pic->getNumPartInCU() >> (depth << 1)) >> 2;
+        uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - lcu->getCUPelX();
         uint32_t ymax = slice->m_sps->picHeightInLumaSamples - lcu->getCUPelY();        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {

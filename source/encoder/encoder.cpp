@@ -454,7 +454,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            slice->m_endCUAddr = slice->realEndAddress(fenc->getNumCUsInFrame() * fenc->getNumPartInCU());
+            slice->m_endCUAddr = slice->realEndAddress(fenc->getNumCUsInFrame() * NUM_CU_PARTITIONS);
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)

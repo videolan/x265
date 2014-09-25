@@ -23,6 +23,7 @@
 
 #ifndef X265_FRAME_H
 #define X265_FRAME_H
+#define NUM_CU_PARTITIONS (1U << (g_maxFullDepth << 1))
 
 #include "common.h"
 #include "TLibCommon/TComPicSym.h"
@@ -116,8 +117,6 @@ public:
     uint32_t    getNumCUsInFrame() const   { return m_picSym->getNumberOfCUsInFrame(); }
 
     uint32_t    getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
-
-    uint32_t    getNumPartInCU() const     { return m_picSym->getNumPartition(); }
 
     uint32_t    getFrameWidthInCU() const  { return m_picSym->getFrameWidthInCU(); }
 

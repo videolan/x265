@@ -2457,8 +2457,7 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     // go to sub-CU
     if (cu->getDepth(absZOrderIdx) > depth)
     {
-        Frame* pic = cu->m_pic;
-        uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
+        uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         uint32_t qNumParts   = curNumParts >> 2;
         uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
         uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
