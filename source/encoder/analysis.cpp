@@ -253,9 +253,6 @@ void Analysis::destroy()
     delete [] m_origYuv;
 }
 
-#define EARLY_EXIT                  1
-#define TOPSKIP                     1
-
 void Analysis::loadCTUData(TComDataCU* parentCU)
 {
     uint8_t cuRange[2]= {MIN_LOG2_CU_SIZE, g_log2Size[m_param->maxCUSize]};
@@ -756,9 +753,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     bool bSubBranch = true;
     int qp = outTempCU->getQP(0);
 
-#if TOPSKIP
     int bInsidePictureParent = bInsidePicture;
-#endif
 
     Slice* slice = outTempCU->m_slice;
     int cu_split_flag = !(cu->flags & CU::LEAF);
@@ -768,7 +763,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         m_origYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), cuAddr, 0);
 
     // We need to split, so don't try these modes.
-#if TOPSKIP
     if (cu_unsplit_flag && !bInsidePictureParent)
     {
         TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->m_refPicList[0][0]->getCU(cuAddr) : NULL;
@@ -800,8 +794,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         if (minDepth > 0)
             minDepth = minDepth - delta;
     }
-    if (!(depth < minDepth)) //topskip
-#endif // if TOPSKIP
+    if (!(depth < minDepth))
     {
         if (cu_unsplit_flag)
         {
@@ -1022,14 +1015,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     // further split
     if (bSubBranch && cu_split_flag)
     {
-#if EARLY_EXIT // turn ON this to enable early exit
         // early exit when the RD cost of best mode at depth n is less than the sum of avgerage of RD cost of the neighbour
-        // CU's(above, aboveleft, aboveright, left, colocated) and avg cost of that CU at depth "n"  with weightage for each quantity
-#if TOPSKIP
-        if (outBestCU != 0 && !(depth < minDepth)) //topskip
-#else
-        if (outBestCU != 0)
-#endif
+        // CU's(above, aboveleft, aboveright, left, colocated) and avg cost of that CU at depth "n" with weightage for each quantity
+        if (outBestCU && !(depth < minDepth))
         {
             uint64_t totalCostNeigh = 0, totalCostCU = 0, totalCountNeigh = 0, totalCountCU = 0;
             TComDataCU* above = outTempCU->getCUAbove();
@@ -1082,7 +1070,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 return;
             }
         }
-#endif // if EARLY_EXIT
         outTempCU->setQPSubParts(qp, 0, depth);
         uint32_t    nextDepth = depth + 1;
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
@@ -1101,7 +1088,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     m_rdEntropyCoders[nextDepth][CI_CURR_BEST].load(m_rdEntropyCoders[nextDepth][CI_NEXT_BEST]);
 
                 compressInterCU_rd0_4(subBestPartCU, subTempPartCU, outTempCU, nextDepth, child_cu, cu_unsplit_flag, partUnitIdx, minDepth);
-#if EARLY_EXIT
+
                 if (subBestPartCU->getPredictionMode(0) != MODE_INTRA)
                 {
                     uint64_t tempavgCost = 0;
@@ -1114,7 +1101,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     rootCU->m_count[nextDepth] += 1;
                     rootCU->m_avgCost[nextDepth] = (temp + tempavgCost) / rootCU->m_count[nextDepth];
                 }
-#endif // if EARLY_EXIT
+
                 /* Adding costs from best SUbCUs */
                 outTempCU->copyPartFrom(subBestPartCU, partUnitIdx, nextDepth, true); // Keep best part data to current temporary data.
                 if (m_param->rdLevel != 0)
@@ -1178,8 +1165,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
          * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
         {
-#if EARLY_EXIT
-            if (depth == 0)
+            if (!depth)
             {
                 uint64_t tempavgCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                 TComDataCU* rootCU = pic->getPicSym()->getCU(cuAddr);
@@ -1187,7 +1173,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 rootCU->m_count[depth] += 1;
                 rootCU->m_avgCost[depth] = (temp + tempavgCost) / rootCU->m_count[depth];
             }
-#endif
+
             uint64_t tempCost = m_rdCost.m_psyRd ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
             uint64_t bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost; 
             if (tempCost < bestCost)
