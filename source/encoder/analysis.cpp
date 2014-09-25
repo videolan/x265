@@ -724,7 +724,7 @@ void Analysis::checkIntra(TComDataCU*& outTempCU, PartSize partSize, CU *cu, uin
     outTempCU->m_totalBits = m_entropyCoder->getNumberOfWrittenBits();
     outTempCU->m_coeffBits = outTempCU->m_totalBits - outTempCU->m_mvBits;
 
-    /* TODO: add chroma psyEnergy also to psyCost*/
+    /* TODO: add chroma psyEnergy also to psyCost */
     if (m_rdCost.m_psyRd)
     {
         int part = outTempCU->getLog2CUSize(0) - 2;
@@ -745,12 +745,12 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     uint32_t cuAddr = outTempCU->getAddr();
     uint32_t absPartIdx = outTempCU->getZorderIdxInCU();
 
-    if (depth == 0)
-        // get original YUV data from picture
-        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), cuAddr, absPartIdx);
-    else
+    if (depth)
         // copy partition YUV from depth 0 CTU cache
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
+    else
+        // get original YUV data from picture
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), cuAddr, absPartIdx);
 
     // variables for fast encoder decision
     bool bSubBranch = true;
@@ -764,10 +764,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     int cu_split_flag = !(cu->flags & CU::LEAF);
     int cu_unsplit_flag = !(cu->flags & CU::SPLIT_MANDATORY);
 
-    if (depth == 0 && m_param->rdLevel == 0)
-    {
+    if (!depth && !m_param->rdLevel)
         m_origYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), cuAddr, 0);
-    }
+
     // We need to split, so don't try these modes.
 #if TOPSKIP
     if (cu_unsplit_flag && !bInsidePictureParent)
@@ -1209,9 +1208,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     /* Copy Best data to Picture for next partition prediction. */
     outBestCU->copyToPic(depth);
 
-    if (m_param->rdLevel == 0 && depth == 0)
+    if (!m_param->rdLevel && !depth)
         encodeResidue(outBestCU, outBestCU, 0, 0);
-    else if (m_param->rdLevel != 0)
+    else if (m_param->rdLevel)
     {
         /* Copy Yuv data to picture Yuv */
         if (cu_unsplit_flag)
@@ -1541,13 +1540,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     uint32_t maxNumMergeCand = outTempCU->m_slice->m_maxNumMergeCand;
 
     uint32_t depth = outTempCU->getDepth(0);
-    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
+    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setMergeFlag(0, true);
 
-    outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
+    outBestCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     outBestCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     outBestCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outBestCU->setMergeFlag(0, true);
@@ -1561,7 +1560,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             (mvFieldNeighbours[mergeCand][0].mv.y < (m_param->searchRange + 1) * 4 &&
              mvFieldNeighbours[mergeCand][1].mv.y < (m_param->searchRange + 1) * 4))
         {
-            // set MC parameters, interprets depth relative to LCU level
+            // set MC parameters, interprets depth relative to CTU level
             outTempCU->setMergeIndex(0, mergeCand);
             outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
             outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
@@ -1645,7 +1644,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     uint32_t maxNumMergeCand = outTempCU->m_slice->m_maxNumMergeCand;
 
     uint32_t depth = outTempCU->getDepth(0);
-    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
+    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     outTempCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
@@ -1672,12 +1671,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                 if (!(bestIsSkip && !noResidual))
                 {
                     // set MC parameters
-                    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth); // interprets depth relative to LCU level
+                    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth); // interprets depth relative to CTU level
                     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-                    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to LCU level
+                    outTempCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
                     outTempCU->setMergeFlag(0, true);
                     outTempCU->setMergeIndex(0, mergeCand);
-                    outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth); // interprets depth relative to LCU level
+                    outTempCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth); // interprets depth relative to CTU level
                     outTempCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
                     outTempCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
 
@@ -1864,8 +1863,8 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize)
     bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
     bcost = m_rdCost.calcRdSADCost(bsad, bbits);
 
-    pixel *abovePlanar   = above;
-    pixel *leftPlanar    = left;
+    pixel *abovePlanar = above;
+    pixel *leftPlanar  = left;
 
     if (tuSize & (8 | 16 | 32))
     {
@@ -2022,10 +2021,10 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
     uint32_t puDistY = xRecurIntraCodingQT(cu, initTrDepth, 0, fencYuv, predYuv, outResiYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, outReconYuv);
 
-    //=== update PU data ====
+    // update PU data
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
 
-    //===== set distortion (rate and r-d costs are determined later) =====
+    // set distortion (rate and r-d costs are determined later)
     cu->m_totalDistortion = puDistY;
 
     estIntraPredChromaQT(cu, fencYuv, predYuv, outResiYuv, outReconYuv);
@@ -2060,23 +2059,24 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* pre
         cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 }
 
-void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+void Analysis::encodeResidue(TComDataCU* ctu, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 {
     Frame* pic = cu->m_pic;
 
-    if (depth < lcu->getDepth(absPartIdx) && depth < g_maxCUDepth)
+    if (depth < ctu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
         Slice* slice = cu->m_slice;
         uint32_t nextDepth = depth + 1;
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
-        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - lcu->getCUPelX();
-        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - lcu->getCUPelY();        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
+        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - ctu->getCUPelX();
+        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - ctu->getCUPelY();
+        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
             if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
             {
                 subTempPartCU->copyToSubCU(cu, partUnitIdx, nextDepth);
-                encodeResidue(lcu, subTempPartCU, absPartIdx, nextDepth);
+                encodeResidue(ctu, subTempPartCU, absPartIdx, nextDepth);
             }
         }
 
@@ -2087,10 +2087,10 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
 
     m_quant.setQPforQuant(cu);
 
-    if (lcu->getPredictionMode(absPartIdx) == MODE_INTER)
+    if (ctu->getPredictionMode(absPartIdx) == MODE_INTER)
     {
         int log2CUSize = cu->getLog2CUSize(0);
-        if (!lcu->getSkipFlag(absPartIdx))
+        if (!ctu->getSkipFlag(absPartIdx))
         {
             const int sizeIdx = log2CUSize - 2;
             // Calculate Residue
@@ -2121,7 +2121,7 @@ void Analysis::encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartId
             residualTransformQuantInter(cu, 0, m_origYuv[0], m_tmpResiYuv[depth], cu->getDepth(0), tuDepthRange);
             checkDQP(cu);
 
-            if (lcu->getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+            if (ctu->getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
                 cu->setSkipFlagSubParts(true, 0, depth);
                 cu->copyCodedToPic(depth);
@@ -2219,7 +2219,7 @@ void Analysis::deriveTestModeAMP(TComDataCU* outBestCU, PartSize parentSize, boo
         bTestAMP_Ver = true;
     }
 
-    //! Utilizing the partition size of parent PU
+    // Utilize the partition size of parent PU
     if (parentSize >= SIZE_2NxnU && parentSize <= SIZE_nRx2N)
     {
         bTestMergeAMP_Hor = true;
