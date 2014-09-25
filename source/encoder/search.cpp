@@ -2227,8 +2227,7 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
     if (m_rdCost.m_psyRd)
     {
         int size = log2CUSize - 2;
-        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(),
-                                           outReconYuv->getLumaAddr(), outReconYuv->getStride());
+        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), outReconYuv->getLumaAddr(), outReconYuv->getStride());
         cu->m_totalPsyCost = m_rdCost.calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
     }
     else
@@ -2236,8 +2235,8 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv
 
     cu->m_totalBits       = bestBits;
     cu->m_totalDistortion = bestDist;
-    cu->m_coeffBits = bestCoeffBits;
-    cu->m_mvBits = bestBits - bestCoeffBits;
+    cu->m_coeffBits       = bestCoeffBits;
+    cu->m_mvBits          = bestBits - bestCoeffBits;
 
     if (cu->isSkipped(0))
         cu->clearCbf(0, depth);
