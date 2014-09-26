@@ -179,8 +179,7 @@ void Encoder::destroy()
         delete [] m_frameEncoder;
     }
 
-    if (m_threadLocalData)
-        delete [] m_threadLocalData;
+    delete [] m_threadLocalData;
 
     if (m_lookahead)
     {

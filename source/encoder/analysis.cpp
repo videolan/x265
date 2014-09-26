@@ -827,12 +827,11 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             if (!earlyskip)
             {
                 /* Compute 2Nx2N mode costs */
-                {
-                    checkInter_rd0_4(m_interCU_2Nx2N[depth], m_modePredYuv[0][depth], SIZE_2Nx2N);
-                    /* Choose best mode; initialise outBestCU to 2Nx2N */
-                    outBestCU = m_interCU_2Nx2N[depth];
-                    std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
-                }
+                checkInter_rd0_4(m_interCU_2Nx2N[depth], m_modePredYuv[0][depth], SIZE_2Nx2N);
+
+                /* initialise outBestCU to 2Nx2N */
+                outBestCU = m_interCU_2Nx2N[depth];
+                std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
 
                 /* Compute Rect costs */
                 if (m_param->bEnableRectInter)
