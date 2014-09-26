@@ -115,10 +115,10 @@ uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
 uint32_t g_maxCUSize     = MAX_CU_SIZE;
 uint32_t g_maxFullDepth  = NUM_FULL_DEPTH - 1;
 uint32_t g_maxCUDepth    = NUM_CU_DEPTH - 1;
-uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS] = { 0, };
+uint32_t g_rasterToZscan[MAX_NUM_PARTITIONS] = { 0, };
 
-const uint8_t g_zscanToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] =
+const uint8_t g_zscanToPelX[MAX_NUM_PARTITIONS] =
 {
     0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
     16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
@@ -138,7 +138,7 @@ const uint8_t g_zscanToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] =
     48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60
 };
 
-const uint8_t g_zscanToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] =
+const uint8_t g_zscanToPelY[MAX_NUM_PARTITIONS] =
 {
     0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
     0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,

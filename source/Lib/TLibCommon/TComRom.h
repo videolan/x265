@@ -54,6 +54,8 @@ namespace x265 {
 #define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
 #define TMVP_UNIT_MASK          0xF0                        // mask for mapping index to CompressMV field
 
+#define MAX_NUM_PARTITIONS      256
+
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
 #define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
@@ -75,15 +77,15 @@ extern const uint8_t g_chromaScale[chromaQPMappingTableSize];
 extern const uint8_t g_chroma422IntraAngleMappingTable[36];
 
 // flexible conversion from relative to absolute index
-extern uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS];
+extern uint32_t g_rasterToZscan[MAX_NUM_PARTITIONS];
 
 void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxFullDepth);
 
 // conversion of partition index to picture pel position
-extern const uint8_t g_zscanToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
-extern const uint8_t g_zscanToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W];
+extern const uint8_t g_zscanToPelX[MAX_NUM_PARTITIONS];
+extern const uint8_t g_zscanToPelY[MAX_NUM_PARTITIONS];
 
 // global variable (LCU width/height, max. CU depth)
 extern uint32_t g_maxLog2CUSize;

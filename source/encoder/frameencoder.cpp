@@ -584,7 +584,7 @@ void FrameEncoder::processRow(int row, int threadId)
         processRowEncoder(realRow, tld);
     else
     {
-        processRowFilter(realRow, tld);
+        processRowFilter(realRow);
 
         // NOTE: Active next row
         if (realRow != m_numRows - 1)

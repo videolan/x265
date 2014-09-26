@@ -64,7 +64,7 @@ public:
 
     void start(Frame *pic, Entropy& initState, int qp);
 
-    void processRow(int row, ThreadLocalData& tld);
+    void processRow(int row);
     void processRowPost(int row);
     void processSao(int row);
 };
