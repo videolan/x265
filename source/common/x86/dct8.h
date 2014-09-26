@@ -30,6 +30,7 @@ void x265_dct4_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct8_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct16_avx2(int16_t *src, int32_t *dst, intptr_t stride);
 void x265_dct32_avx2(int16_t *src, int32_t *dst, intptr_t stride);
+void x265_idct32_avx2(int32_t *src, int16_t *dst, intptr_t stride);
 
 void x265_idst4_sse2(int32_t *src, int16_t *dst, intptr_t stride);
 void x265_idct4_sse2(int32_t *src, int16_t *dst, intptr_t stride);

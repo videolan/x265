@@ -183,6 +183,60 @@ idct16_shuff:   dd 0, 4, 2, 6, 1, 5, 3, 7
 
 idct16_shuff1:  dd 2, 6, 0, 4, 3, 7, 1, 5
 
+tab_idct32_1:   dw 90 ,90 ,88 ,85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13, 4
+                dw 90, 82, 67, 46, 22, -4, -31, -54, -73, -85, -90, -88, -78, -61, -38, -13
+                dw 88, 67, 31, -13, -54, -82, -90, -78, -46, -4, 38, 73, 90, 85, 61, 22
+                dw 85, 46, -13, -67, -90, -73, -22, 38, 82, 88, 54, -4, -61, -90, -78, -31
+                dw 82, 22, -54, -90, -61, 13, 78, 85, 31, -46, -90, -67, 4, 73, 88, 38
+                dw 78, -4, -82, -73, 13, 85, 67, -22, -88, -61, 31, 90, 54, -38, -90, -46
+                dw 73, -31, -90, -22, 78, 67, -38, -90, -13, 82, 61, -46, -88, -4, 85, 54
+                dw 67, -54, -78, 38, 85, -22, -90, 4, 90, 13, -88, -31, 82, 46, -73, -61
+                dw 61, -73, -46, 82, 31, -88, -13, 90, -4, -90, 22, 85, -38, -78, 54, 67
+                dw 54, -85, -4, 88, -46, -61, 82, 13, -90, 38, 67, -78, -22, 90, -31, -73
+                dw 46, -90, 38, 54, -90, 31, 61, -88, 22, 67, -85, 13, 73, -82, 4, 78
+                dw 38, -88, 73, -4, -67, 90, -46, -31, 85, -78, 13, 61, -90, 54, 22, -82
+                dw 31, -78, 90, -61, 4, 54, -88, 82, -38, -22, 73, -90, 67, -13, -46, 85
+                dw 22, -61, 85, -90, 73, -38, -4, 46, -78, 90, -82, 54, -13, -31, 67, -88
+                dw 13, -38, 61, -78, 88, -90, 85, -73, 54, -31, 4, 22, -46, 67, -82, 90
+                dw 4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90
+
+
+tab_idct32_2:   dw 64, 89, 83, 75, 64, 50, 36, 18
+                dw 64, 75, 36, -18, -64, -89, -83, -50
+                dw 64, 50, -36, -89, -64, 18, 83, 75
+                dw 64, 18, -83, -50, 64, 75, -36, -89
+                dw 64, -18, -83, 50, 64, -75, -36, 89
+                dw 64, -50, -36, 89, -64, -18, 83, -75
+                dw 64, -75, 36, 18, -64, 89, -83, 50
+                dw 64, -89, 83, -75, 64, -50, 36, -18
+
+
+tab_idct32_3:   dw 90, 87, 80, 70, 57, 43, 25, 9
+                dw 87, 57, 9, -43, -80, -90, -70, -25
+                dw 80, 9, -70, -87, -25, 57, 90, 43
+                dw 70, -43, -87, 9, 90, 25, -80, -57
+                dw 57, -80, -25, 90, -9, -87, 43, 70
+                dw 43, -90, 57, 25, -87, 70, 9, -80
+                dw 25, -70, 90, -80, 43, 9, -57, 87
+                dw 9, -25, 43, -57, 70, -80, 87, -90
+
+tab_idct32_4:   dw 64, 90, 89, 87, 83, 80, 75, 70, 64, 57, 50, 43, 36, 25, 18, 9
+                dw 64, 87, 75, 57, 36, 9, -18, -43, -64, -80, -89, -90, -83, -70, -50, -25
+                dw 64, 80, 50, 9, -36, -70, -89, -87, -64, -25, 18, 57, 83, 90, 75, 43
+                dw 64, 70, 18, -43, -83, -87, -50, 9, 64, 90, 75, 25, -36, -80, -89, -57
+                dw 64, 57, -18, -80, -83, -25, 50, 90, 64, -9, -75, -87, -36, 43, 89, 70
+                dw 64, 43, -50, -90, -36, 57, 89, 25, -64, -87, -18, 70, 83, 9, -75, -80
+                dw 64, 25, -75, -70, 36, 90, 18, -80, -64, 43, 89, 9, -83, -57, 50, 87
+                dw 64, 9, -89, -25, 83, 43, -75, -57, 64, 70, -50, -80, 36, 87, -18, -90
+                dw 64, -9, -89, 25, 83, -43, -75, 57, 64, -70, -50, 80, 36, -87, -18, 90
+                dw 64, -25, -75, 70, 36, -90, 18, 80, -64, -43, 89, -9, -83, 57, 50, -87
+                dw 64, -43, -50, 90, -36, -57, 89, -25, -64, 87, -18, -70, 83, -9, -75, 80
+                dw 64, -57, -18, 80, -83, 25, 50, -90, 64, 9, -75, 87, -36, -43, 89, -70
+                dw 64, -70, 18, 43, -83, 87, -50, -9, 64, -90, 75, -25, -36, 80, -89, 57
+                dw 64, -80, 50, -9, -36, 70, -89, 87, -64, 25, 18, -57, 83, -90, 75, -43
+                dw 64, -87, 75, -57, 36, -9, -18, 43, -64, 80, -89, 90, -83, 70, -50, 25
+                dw 64, -90, 89, -87, 83, -80, 75, -70, 64, -57, 50, -43, 36, -25, 18, -9
+
 avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
                 dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
 
@@ -2197,6 +2251,352 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     vextracti128    [r1 + r2 + 16], m2, 1
 
     lea             r1, [r1 + 2 * r2]
+    add             r3, 64
+    dec             r4d
+    jnz             .pass2
+    RET
+
+%macro IDCT32_PASS1 1
+    vbroadcasti128  m3, [tab_idct32_1 + %1 * 32]
+    vbroadcasti128  m13, [tab_idct32_1 + %1 * 32 + 16]
+    pmaddwd         m9, m4, m3
+    pmaddwd         m10, m8, m13
+    phaddd          m9, m10
+
+    pmaddwd         m10, m2, m3
+    pmaddwd         m11, m1, m13
+    phaddd          m10, m11
+
+    phaddd          m9, m10
+
+    vbroadcasti128  m3, [tab_idct32_1 + (15 - %1) * 32]
+    vbroadcasti128  m13, [tab_idct32_1 + (15- %1) * 32 + 16]
+    pmaddwd         m10, m4, m3
+    pmaddwd         m11, m8, m13
+    phaddd          m10, m11
+
+    pmaddwd         m11, m2, m3
+    pmaddwd         m12, m1, m13
+    phaddd          m11, m12
+
+    phaddd          m10, m11
+    phaddd          m9, m10                       ;[row0s0 row2s0 row0s15 row2s15 row1s0 row3s0 row1s15 row3s15]
+
+    vbroadcasti128  m3, [tab_idct32_2 + %1 * 16]
+    pmaddwd         m10, m0, m3
+    pmaddwd         m11, m7, m3
+    phaddd          m10, m11
+    phaddd          m10, m10
+
+    vbroadcasti128  m3, [tab_idct32_3 + %1 * 16]
+    pmaddwd         m11, m5, m3
+    pmaddwd         m12, m6, m3
+    phaddd          m11, m12
+    phaddd          m11, m11
+
+    paddd           m12, m10, m11                 ;[row0a0 row2a0 NIL NIL row1sa0 row3a0 NIL NIL]
+    psubd           m10, m11                      ;[row0a15 row2a15 NIL NIL row1a15 row3a15 NIL NIL]
+
+    punpcklqdq      m12, m10                      ;[row0a0 row2a0 row0a15 row2a15 row1a0 row3a0 row1a15 row3a15]
+    paddd           m10, m9, m12
+    paddd           m10, m15
+    psrad           m10, IDCT_SHIFT1
+
+    psubd           m12, m9
+    paddd           m12, m15
+    psrad           m12, IDCT_SHIFT1
+
+    packssdw        m10, m12
+    vextracti128    xm12, m10, 1
+    movd            [r3 + %1 * 64], xm10
+    movd            [r3 + 32 + %1 * 64], xm12
+    pextrd          [r4 - %1 * 64], xm10, 1
+    pextrd          [r4+ 32 - %1 * 64], xm12, 1
+    pextrd          [r3 + 16 * 64 + %1 *64], xm10, 3
+    pextrd          [r3 + 16 * 64 + 32 + %1 * 64], xm12, 3
+    pextrd          [r4 + 16 * 64 - %1 * 64], xm10, 2
+    pextrd          [r4 + 16 * 64 + 32 - %1 * 64], xm12, 2
+%endmacro
+
+;-------------------------------------------------------
+; void idct32(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+
+; TODO: Reduce PHADDD instruction by PADDD
+
+INIT_YMM avx2
+cglobal idct32, 3, 6, 16, 0-32*64
+
+%define             IDCT_SHIFT1         7
+
+    vbroadcasti128  m15, [pd_64]
+
+    mov             r3, rsp
+    lea             r4, [r3 + 15 * 64]
+    mov             r5d, 8
+
+.pass1:
+    movu            xm0,    [r0 +  2 * 128]
+    movu            xm1,    [r0 + 18 * 128]
+    vinserti128     m0, m0, [r0 +  0 * 128], 1
+    vinserti128     m1, m1, [r0 + 16 * 128], 1
+
+    packssdw        m0, m1                      ;[2 18 0 16]
+
+    movu            xm1,    [r0 +  1 * 128]
+    movu            xm2,    [r0 +  9 * 128]
+    vinserti128     m1, m1, [r0 + 17 * 128], 1
+    vinserti128     m2, m2, [r0 + 25 * 128], 1
+    packssdw        m1, m2                      ;[1 9 17 25]
+
+    movu            xm2,    [r0 +  6 * 128]
+    movu            xm3,    [r0 + 22 * 128]
+    vinserti128     m2, m2, [r0 +  4 * 128], 1
+    vinserti128     m3, m3, [r0 + 20 * 128], 1
+    packssdw        m2, m3                      ;[6 22 4 20]
+
+    movu            xm3,    [r0 +  3 * 128]
+    movu            xm4,    [r0 + 11 * 128]
+    vinserti128     m3, m3, [r0 + 19 * 128], 1
+    vinserti128     m4, m4, [r0 + 27 * 128], 1
+    packssdw        m3, m4                      ;[3 11 19 27]
+
+    movu            xm4,    [r0 + 10 * 128]
+    movu            xm5,    [r0 + 26 * 128]
+    vinserti128     m4, m4, [r0 +  8 * 128], 1
+    vinserti128     m5, m5, [r0 + 24 * 128], 1
+    packssdw        m4, m5                      ;[10 26 8 24]
+
+    movu            xm5,    [r0 +  5 * 128]
+    movu            xm6,    [r0 + 13 * 128]
+    vinserti128     m5, m5, [r0 + 21 * 128], 1
+    vinserti128     m6, m6, [r0 + 29 * 128], 1
+    packssdw        m5, m6                      ;[5 13 21 29]
+
+    movu            xm6,    [r0 + 14 * 128]
+    movu            xm7,    [r0 + 30 * 128]
+    vinserti128     m6, m6, [r0 + 12 * 128], 1
+    vinserti128     m7, m7, [r0 + 28 * 128], 1
+    packssdw        m6, m7                      ;[14 30 12 28]
+
+    movu            xm7,    [r0 +  7 * 128]
+    movu            xm8,    [r0 + 15 * 128]
+    vinserti128     m7, m7, [r0 + 23 * 128], 1
+    vinserti128     m8, m8, [r0 + 31 * 128], 1
+    packssdw        m7, m8                      ;[7 15 23 31]
+
+    punpckhwd       m8, m0, m2                  ;[18 22 16 20]
+    punpcklwd       m0, m2                      ;[2 6 0 4]
+
+    punpckhwd       m2, m1, m3                  ;[9 11 25 27]
+    punpcklwd       m1, m3                      ;[1 3 17 19]
+
+    punpckhwd       m3, m4, m6                  ;[26 30 24 28]
+    punpcklwd       m4, m6                      ;[10 14 8 12]
+
+    punpckhwd       m6, m5, m7                  ;[13 15 29 31]
+    punpcklwd       m5, m7                      ;[5 7 21 23]
+
+    punpckhdq       m7, m0, m4                  ;[22 62 102 142 23 63 103 143 02 42 82 122 03 43 83 123]
+    punpckldq       m0, m4                      ;[20 60 100 140 21 61 101 141 00 40 80 120 01 41 81 121]
+
+    punpckhdq       m4, m8, m3                  ;[182 222 262 302 183 223 263 303 162 202 242 282 163 203 243 283]
+    punpckldq       m8, m3                      ;[180 220 260 300 181 221 261 301 160 200 240 280 161 201 241 281]
+
+    punpckhdq       m3, m1, m5                  ;[12 32 52 72 13 33 53 73 172 192 212 232 173 193 213 233]
+    punpckldq       m1, m5                      ;[10 30 50 70 11 31 51 71 170 190 210 230 171 191 211 231]
+
+    punpckhdq       m5, m2, m6                  ;[92 112 132 152 93 113 133 153 252 272 292 312 253 273 293 313]
+    punpckldq       m2, m6                      ;[90 110 130 150 91 111 131 151 250 270 290 310 251 271 291 311]
+
+    punpckhqdq      m6, m0, m8                  ;[21 61 101 141 181 221 261 301 01 41 81 121 161 201 241 281]
+    punpcklqdq      m0, m8                      ;[20 60 100 140 180 220 260 300 00 40 80 120 160 200 240 280]
+
+    punpckhqdq      m8, m7, m4                  ;[23 63 103 143 183 223 263 303 03 43 83 123 163 203 243 283]
+    punpcklqdq      m7, m4                      ;[22 62 102 142 182 222 262 302 02 42 82 122 162 202 242 282]
+
+    punpckhqdq      m4, m1, m2                  ;[11 31 51 71 91 111 131 151 171 191 211 231 251 271 291 311]
+    punpcklqdq      m1, m2                      ;[10 30 50 70 90 110 130 150 170 190 210 230 250 270 290 310]
+
+    punpckhqdq      m2, m3, m5                  ;[13 33 53 73 93 113 133 153 173 193 213 233 253 273 293 313]
+    punpcklqdq      m3, m5                      ;[12 32 52 72 92 112 132 152 172 192 212 232 252 272 292 312]
+
+    vperm2i128      m5, m0, m6, 0x20            ;[20 60 100 140 180 220 260 300 21 61 101 141 181 221 261 301]
+    vperm2i128      m0, m0, m6, 0x31            ;[00 40 80 120 160 200 240 280 01 41 81 121 161 201 241 281]
+
+    vperm2i128      m6, m7, m8, 0x20            ;[22 62 102 142 182 222 262 302 23 63 103 143 183 223 263 303]
+    vperm2i128      m7, m7, m8, 0x31            ;[02 42 82 122 162 202 242 282 03 43 83 123 163 203 243 283]
+
+    vperm2i128      m8, m1, m4, 0x31            ;[170 190 210 230 250 270 290 310 171 191 211 231 251 271 291 311]
+    vperm2i128      m4, m1, m4, 0x20            ;[10 30 50 70 90 110 130 150 11 31 51 71 91 111 131 151]
+
+    vperm2i128      m1, m3, m2, 0x31            ;[172 192 212 232 252 272 292 312 173 193 213 233 253 273 293 313]
+    vperm2i128      m2, m3, m2, 0x20            ;[12 32 52 72 92 112 132 152 13 33 53 73 93 113 133 153]
+
+    IDCT32_PASS1 0
+    IDCT32_PASS1 1
+    IDCT32_PASS1 2
+    IDCT32_PASS1 3
+    IDCT32_PASS1 4
+    IDCT32_PASS1 5
+    IDCT32_PASS1 6
+    IDCT32_PASS1 7
+
+    add             r0, 16
+    add             r3, 4
+    add             r4, 4
+    dec             r5d
+    jnz             .pass1
+
+%if BIT_DEPTH == 10
+    %define         IDCT_SHIFT2        10
+    vpbroadcastd    m15,                [pd_512]
+%elif BIT_DEPTH == 8
+    %define         IDCT_SHIFT2        12
+    vpbroadcastd    m15,                [pd_2048]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    mov             r3, rsp
+    add             r2d, r2d
+    mov             r4d, 32
+
+    mova            m7,  [tab_idct32_4]
+    mova            m8,  [tab_idct32_4 + 32]
+    mova            m9,  [tab_idct32_4 + 64]
+    mova            m10, [tab_idct32_4 + 96]
+    mova            m11, [tab_idct32_4 + 128]
+    mova            m12, [tab_idct32_4 + 160]
+    mova            m13, [tab_idct32_4 + 192]
+    mova            m14, [tab_idct32_4 + 224]
+.pass2:
+    movu            m0, [r3]
+    movu            m1, [r3 + 32]
+
+    pmaddwd         m2, m0, m7
+    pmaddwd         m3, m0, m8
+    phaddd          m2, m3
+
+    pmaddwd         m3, m0, m9
+    pmaddwd         m4, m0, m10
+    phaddd          m3, m4
+
+    phaddd          m2, m3
+
+    pmaddwd         m3, m0, m11
+    pmaddwd         m4, m0, m12
+    phaddd          m3, m4
+
+    pmaddwd         m4, m0, m13
+    pmaddwd         m5, m0, m14
+    phaddd          m4, m5
+
+    phaddd          m3, m4
+
+    vperm2i128      m4, m2, m3, 0x31
+    vperm2i128      m2, m2, m3, 0x20
+    paddd           m2, m4
+
+    pmaddwd         m3, m0, [tab_idct32_4 + 256]
+    pmaddwd         m4, m0, [tab_idct32_4 + 288]
+    phaddd          m3, m4
+
+    pmaddwd         m4, m0, [tab_idct32_4 + 320]
+    pmaddwd         m5, m0, [tab_idct32_4 + 352]
+    phaddd          m4, m5
+
+    phaddd          m3, m4
+
+    pmaddwd         m4, m0, [tab_idct32_4 + 384]
+    pmaddwd         m5, m0, [tab_idct32_4 + 416]
+    phaddd          m4, m5
+
+    pmaddwd         m5, m0, [tab_idct32_4 + 448]
+    pmaddwd         m0,     [tab_idct32_4 + 480]
+    phaddd          m5, m0
+
+    phaddd          m4, m5
+
+    vperm2i128      m0, m3, m4, 0x31
+    vperm2i128      m3, m3, m4, 0x20
+    paddd           m3, m0
+
+    pmaddwd         m4, m1, [tab_idct32_1]
+    pmaddwd         m0, m1, [tab_idct32_1 + 32]
+    phaddd          m4, m0
+
+    pmaddwd         m5, m1, [tab_idct32_1 + 64]
+    pmaddwd         m0, m1, [tab_idct32_1 + 96]
+    phaddd          m5, m0
+
+    phaddd          m4, m5
+
+    pmaddwd         m5, m1, [tab_idct32_1 + 128]
+    pmaddwd         m0, m1, [tab_idct32_1 + 160]
+    phaddd          m5, m0
+
+    pmaddwd         m6, m1, [tab_idct32_1 + 192]
+    pmaddwd         m0, m1, [tab_idct32_1 + 224]
+    phaddd          m6, m0
+
+    phaddd          m5, m6
+
+    vperm2i128      m0, m4, m5, 0x31
+    vperm2i128      m4, m4, m5, 0x20
+    paddd           m4, m0
+
+    pmaddwd         m5, m1, [tab_idct32_1 + 256]
+    pmaddwd         m0, m1, [tab_idct32_1 + 288]
+    phaddd          m5, m0
+
+    pmaddwd         m6, m1, [tab_idct32_1 + 320]
+    pmaddwd         m0, m1, [tab_idct32_1 + 352]
+    phaddd          m6, m0
+
+    phaddd          m5, m6
+
+    pmaddwd         m6, m1, [tab_idct32_1 + 384]
+    pmaddwd         m0, m1, [tab_idct32_1 + 416]
+    phaddd          m6, m0
+
+    pmaddwd         m0, m1, [tab_idct32_1 + 448]
+    pmaddwd         m1,     [tab_idct32_1 + 480]
+    phaddd          m0, m1
+
+    phaddd          m6, m0
+
+    vperm2i128      m0, m5, m6, 0x31
+    vperm2i128      m5, m5, m6, 0x20
+    paddd           m5, m0
+
+    paddd           m6, m2, m4
+    paddd           m6, m15
+    psrad           m6, IDCT_SHIFT2
+
+    psubd           m2, m4
+    paddd           m2, m15
+    psrad           m2, IDCT_SHIFT2
+
+    paddd           m4, m3, m5
+    paddd           m4, m15
+    psrad           m4, IDCT_SHIFT2
+
+    psubd           m3, m5
+    paddd           m3, m15
+    psrad           m3, IDCT_SHIFT2
+
+    packssdw        m6, m4
+    packssdw        m2, m3
+
+    vpermq          m6, m6, 0xD8
+    vpermq          m2, m2, 0x8D
+    pshufb          m2, [dct16_shuf1]
+
+    mova            [r1], m6
+    mova            [r1 + 32], m2
+
+    add             r1, r2
     add             r3, 64
     dec             r4d
     jnz             .pass2
