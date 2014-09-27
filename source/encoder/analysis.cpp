@@ -21,16 +21,19 @@
 * For more information, contact us at license @ x265.com.
 *****************************************************************************/
 
-#include "analysis.h"
-#include "primitives.h"
 #include "common.h"
+#include "primitives.h"
+#include "threading.h"
+
+#include "analysis.h"
 #include "rdcost.h"
 #include "encoder.h"
+
 #include "PPA/ppa.h"
 
 using namespace x265;
 
-Analysis::Analysis()
+Analysis::Analysis() : JobProvider(NULL)
 {
     m_bestPredYuv     = NULL;
     m_bestResiYuv     = NULL;
@@ -43,12 +46,14 @@ Analysis::Analysis()
     m_origYuv         = NULL;
     for (int i = 0; i < MAX_PRED_TYPES; i++)
         m_modePredYuv[i] = NULL;
+    m_bJobsQueued = false;
 }
 
-bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth)
+bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *tld)
 {
     X265_CHECK(numCUDepth <= NUM_CU_DEPTH, "invalid numCUDepth\n");
 
+    m_tld = tld;
     m_bestPredYuv = new TComYuv*[numCUDepth];
     m_bestResiYuv = new ShortYuv*[numCUDepth];
     m_bestRecoYuv = new TComYuv*[numCUDepth];
@@ -225,6 +230,116 @@ void Analysis::destroy()
     delete [] m_tmpResiYuv;
     delete [] m_tmpRecoYuv;
     delete [] m_origYuv;
+}
+
+bool Analysis::findJob(int threadId)
+{
+    /* try to acquire a CU mode to analyze */
+    if (m_totalNumJobs > m_numAcquiredJobs)
+    {
+        /* ATOMIC_INC returns the incremented value */
+        int id = ATOMIC_INC(&m_numAcquiredJobs);
+        if (m_totalNumJobs >= id)
+        {
+            parallelAnalysisJob(threadId, id - 1);
+            if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
+                m_modeCompletionEvent.trigger();
+            return true;
+        }
+    }
+
+    /* else try to acquire a motion estimation task */
+    if (m_totalNumME > m_numAcquiredME)
+    {
+        int id = ATOMIC_INC(&m_numAcquiredME);
+        if (m_totalNumME >= id)
+        {
+            parallelME(threadId, id - 1);
+            if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
+                m_meCompletionEvent.trigger();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Analysis::parallelAnalysisJob(int threadId, int jobId)
+{
+    Analysis* slave;
+    int depth = m_curDepth;
+
+    if (threadId == -1)
+        slave = this;
+    else
+    {
+        TComDataCU *cu = m_interCU_2Nx2N[depth];
+        TComPicYuv* fenc = cu->m_pic->getPicYuvOrg();
+
+        slave = &m_tld[threadId].analysis;
+        slave->m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+        slave->m_log = &slave->m_sliceTypeLog[cu->m_slice->m_sliceType];
+        slave->m_rdEntropyCoders = this->m_rdEntropyCoders;
+        m_origYuv[0]->copyPartToYuv(slave->m_origYuv[depth], m_curCUData->encodeIdx);
+        slave->setQP(cu->m_slice, m_rdCost.m_qp);
+        slave->m_quant.setQPforQuant(cu);
+        slave->m_quant.m_nr = m_quant.m_nr;
+    }
+
+    if (m_param->rdLevel <= 4)
+    {
+        switch (jobId)
+        {
+        case 0:
+            slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData, SIZE_2Nx2N);
+            break;
+
+        case 1:
+            slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
+            break;
+
+        case 2:
+            slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N, false);
+            break;
+
+        case 3:
+            slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN, false);
+            break;
+
+        default:
+            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+            break;
+        }
+    }
+}
+
+void Analysis::parallelME(int threadId, int meId)
+{
+    Analysis* slave;
+    int depth = m_curDepth;
+
+    if (threadId == -1)
+        slave = this;
+    else
+    {
+        slave = &m_tld[threadId].analysis;
+        TComPicYuv* fenc = m_curMECu->m_pic->getPicYuvOrg();
+
+        slave->m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+        m_origYuv[0]->copyPartToYuv(slave->m_origYuv[depth], m_curCUData->encodeIdx);
+        slave->setQP(m_curMECu->m_slice, m_rdCost.m_qp);
+    }
+
+    if (meId < m_curMECu->m_slice->m_numRefIdx[0])
+    {
+        /* perform list 0 motion search */
+    }
+    else
+    {
+        /* perform list 1 motion search */
+    }
+
+    /* TODO: acquire master output lock, if best cost save the info */
 }
 
 void Analysis::compressCU(TComDataCU* cu)
@@ -748,6 +863,118 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 m_intraInInterCU[depth]->initCU(pic, cuAddr);
                 m_mergeCU[depth]->initCU(pic, cuAddr);
                 m_bestMergeCU[depth]->initCU(pic, cuAddr);
+            }
+
+            const int distributedAnalysis = 0 && m_param->rdLevel > 2; /* only RD 3, 4 supported here */
+
+            if (distributedAnalysis)
+            {
+                /* with distributed analysis, we perform more speculative work.
+                 * We do not have early outs for when skips are found so we
+                 * always evaluate intra and all inter and merge modes
+                 *
+                 * jobs are numbered as:
+                 *  0 = intra
+                 *  1 = inter 2Nx2N
+                 *  2 = inter Nx2N
+                 *  3 = inter 2NxN */
+                m_totalNumJobs = 3 + m_param->bEnableRectInter * 2;
+                m_numAcquiredJobs = !(m_param->rdLevel > 2 && slice->m_sliceType == P_SLICE); /* skip intra for B slices */
+                m_numCompletedJobs = m_numAcquiredJobs;
+                m_curDepth = depth;
+                m_curCUData = cu;
+                m_bJobsQueued = true;
+                JobProvider::enqueue();
+
+                /* the master worker thread (this one) does merge analysis */
+                checkMerge2Nx2N_rd0_4(m_bestMergeCU[depth], m_mergeCU[depth], cu, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
+
+                if (m_bestMergeCU[depth]->isSkipped(0))
+                {
+                    /* a SKIP was found, consume remaining jobs to conserve work */
+                    JobProvider::dequeue();
+                    while (m_totalNumJobs > m_numAcquiredJobs)
+                    {
+                        int id = ATOMIC_INC(&m_numAcquiredJobs);
+                        if (m_totalNumJobs >= id)
+                        {
+                            if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
+                                m_modeCompletionEvent.trigger();
+                        }
+                    }
+                }
+                else
+                {
+                    /* participate process remaining jobs */
+                    while (findJob(-1))
+                        ;
+                    JobProvider::dequeue();
+                }
+                m_bJobsQueued = false;
+                m_modeCompletionEvent.wait();
+
+                if (m_bestMergeCU[depth]->isSkipped(0))
+                {
+                    outBestCU = m_bestMergeCU[depth];
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                    std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                }
+                else
+                {
+                    /* select best inter mode based on sa8d cost */
+                    outBestCU = m_interCU_2Nx2N[depth];
+                    m_bestPredYuv[depth] = m_modePredYuv[0][depth];
+                    if (m_param->bEnableRectInter)
+                    {
+                        if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_interCU_Nx2N[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
+                        }
+                        if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_interCU_2NxN[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
+                        }
+                    }
+
+                    /* calculate the motion compensation for chroma for the best inter mode selected */
+                    int numPart = outBestCU->getNumPartInter();
+                    for (int partIdx = 0; partIdx < numPart; partIdx++)
+                    {
+                        prepMotionCompensation(outBestCU, cu, partIdx);
+                        motionCompensation(m_bestPredYuv[depth], false, true);
+                    }
+
+                    /* RD selection between inter and merge */
+                    encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth]);
+                    uint64_t bestMergeCost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
+                    uint64_t bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                    if (bestMergeCost < bestCost)
+                    {
+                        outBestCU = m_bestMergeCU[depth];
+                        std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                        std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                    }
+                    else
+                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+
+                    if (slice->m_sliceType == P_SLICE)
+                    {
+                        /* RD selection between intra and inter/merge. TODO: move RD cost to intra job worker thread */
+                        encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+                        uint64_t intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
+                        bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+
+                        if (intraInInterCost < bestCost)
+                        {
+                            outBestCU = m_intraInInterCU[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
+                            std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
+                            m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                        }
+                    }
+                }
             }
 
             /* Compute Merge Cost */
@@ -1638,17 +1865,62 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
 }
 
-void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outPredYuv, PartSize partSize, bool bUseMRG)
+void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outPredYuv, PartSize partSize, bool bMergeOnly)
 {
     uint32_t depth = outTempCU->getDepth(0);
 
     outTempCU->setPartSizeSubParts(partSize, 0, depth);
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-
-    // do motion compensation only for Luma since luma cost alone is calculated
     outTempCU->m_totalBits = 0;
-    if (predInterSearch(outTempCU, cuData, outPredYuv, bUseMRG, false))
+
+    const int distributeME = 0; // perform unidir motion searches via Analysis::parallelME()
+    if (distributeME && !bMergeOnly)
+    {
+        Slice *slice = outTempCU->m_slice;
+        m_curMECu = outTempCU;
+        m_curPartSize = partSize;
+        m_curCUData = cuData;
+        m_curDepth = depth;
+
+        m_curPart = 0;
+        m_totalNumME = slice->m_numRefIdx[0] + slice->m_numRefIdx[1];
+        m_numAcquiredME = 0;
+        m_numCompletedME = 0;
+
+        if (!m_bJobsQueued)
+            JobProvider::enqueue();
+        while (findJob(-1))
+            ;
+        if (!m_bJobsQueued)
+            JobProvider::dequeue();
+        m_meCompletionEvent.wait();
+
+        /* TODO: all unidirectional searches are done for the first partition,
+         * now we must do merge and bidir and CU setup for the best inter option */
+
+        if (partSize != SIZE_2Nx2N)
+        {
+            m_curPart = 1;
+            m_totalNumME = slice->m_numRefIdx[0] + slice->m_numRefIdx[1];
+            m_numAcquiredME = 0;
+            m_numCompletedME = 0;
+
+            if (!m_bJobsQueued)
+                JobProvider::enqueue();
+            while (findJob(-1))
+                ;
+            if (!m_bJobsQueued)
+                JobProvider::dequeue();
+            m_meCompletionEvent.wait();
+
+            /* TODO: all unidirectional searches are done for the second partition,
+             * now we must do merge and bidir and CU setup for the best inter option */
+        }
+
+        /* TODO: motion compensation for luma for best search, setup distortion */
+    }
+    else if (predInterSearch(outTempCU, cuData, outPredYuv, bMergeOnly, false))
     {
         int sizeIdx = outTempCU->getLog2CUSize(0) - 2;
         uint32_t distortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),

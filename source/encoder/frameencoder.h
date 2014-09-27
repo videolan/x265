@@ -45,13 +45,6 @@ namespace x265 {
 class ThreadPool;
 class Encoder;
 
-struct ThreadLocalData
-{
-    Analysis analysis;
-
-    ~ThreadLocalData() { analysis.destroy(); }
-};
-
 /* manages the state of encoding one row of CTU blocks.  When
  * WPP is active, several rows will be simultaneously encoded. */
 struct CTURow

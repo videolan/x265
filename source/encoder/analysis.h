@@ -33,6 +33,7 @@
 #include "predict.h"
 #include "quant.h"
 #include "shortyuv.h"
+#include "threadpool.h"
 #include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComDataCU.h"
 
@@ -66,8 +67,9 @@ struct StatisticLog
 
 class Encoder;
 class Entropy;
+struct ThreadLocalData;
 
-class Analysis : public Search
+class Analysis : public JobProvider, public Search
 {
 public:
 
@@ -101,11 +103,36 @@ public:
     StatisticLog* m_log;
 
     Analysis();
-    bool create(uint32_t totalDepth, uint32_t maxWidth);
+    bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
     void destroy();
     void compressCU(TComDataCU* cu);
 
 protected:
+
+    /* Job provider details */
+    CU*           m_curCUData;
+    int           m_curDepth;
+    ThreadLocalData* m_tld;
+    bool          m_bJobsQueued;
+    bool findJob(int threadId);
+
+    /* mode analysis distribution */
+    int           m_totalNumJobs;
+    volatile int  m_numAcquiredJobs;
+    volatile int  m_numCompletedJobs;
+    Event         m_modeCompletionEvent;
+    void parallelAnalysisJob(int threadId, int jobId);
+
+    /* motion estimation distribution */
+    TComDataCU*   m_curMECu;
+    int           m_curPartSize; /* 2Nx2N, Nx2N or 2NxN */
+    int           m_curPart;
+    int           m_totalNumME;
+    volatile int  m_numAcquiredME;
+    volatile int  m_numCompletedME;
+    Event         m_meCompletionEvent;
+    Lock          m_outputLock;
+    void parallelME(int threadId, int meId);
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
     void compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu);
@@ -132,6 +159,14 @@ protected:
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
     void fillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
+
+struct ThreadLocalData
+{
+    Analysis analysis;
+
+    ~ThreadLocalData() { analysis.destroy(); }
+};
+
 }
 
 #endif // ifndef X265_ANALYSIS_H

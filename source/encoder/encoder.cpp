@@ -109,8 +109,9 @@ void Encoder::create()
     m_threadLocalData = new ThreadLocalData[numLocalData];
     for (int i = 0; i < numLocalData; i++)
     {
+        m_threadLocalData[i].analysis.setThreadPool(ThreadPool::getThreadPool());
         m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
-        m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize);
+        m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize, m_threadLocalData);
     }
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
