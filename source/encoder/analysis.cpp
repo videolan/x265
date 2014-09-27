@@ -30,32 +30,6 @@
 
 using namespace x265;
 
-namespace {
-// TO DO: Remove this function with a table.
-int getDepthScanIdx(int x, int y, int size)
-{
-    if (size == 1)
-        return 0;
-
-    int depth = 0;
-    int h = size >> 1;
-
-    if (x >= h)
-    {
-        x -= h;
-        depth += h * h;
-    }
-
-    if (y >= h)
-    {
-        y -= h;
-        depth += 2 * h * h;
-    }
-
-    return depth + getDepthScanIdx(x, y, h);
-}
-}
-
 Analysis::Analysis()
 {
     m_bestPredYuv     = NULL;
@@ -251,47 +225,6 @@ void Analysis::destroy()
     delete [] m_tmpResiYuv;
     delete [] m_tmpRecoYuv;
     delete [] m_origYuv;
-}
-
-void Analysis::loadCTUData(TComDataCU* parentCU)
-{
-    uint8_t cuRange[2]= {MIN_LOG2_CU_SIZE, g_log2Size[m_param->maxCUSize]};
-
-    // Initialize the coding blocks inside the CTB
-    for (int rangeIdx = cuRange[1], rangeCUIdx = 0; rangeIdx >= cuRange[0]; rangeIdx--)
-    {
-        uint32_t log2CUSize = rangeIdx;
-        int32_t  blockSize  = 1 << log2CUSize;
-        uint32_t b8Width    = 1 << (cuRange[1] - 3);
-        uint32_t sbWidth    = 1 << (cuRange[1] - rangeIdx);
-        int32_t last_level_flag = rangeIdx == cuRange[0];
-        for (uint32_t sb_y = 0; sb_y < sbWidth; sb_y++)
-        {
-            for (uint32_t sb_x = 0; sb_x < sbWidth; sb_x++)
-            {
-                uint32_t depth_idx = getDepthScanIdx(sb_x, sb_y, sbWidth);
-                uint32_t cuIdx = rangeCUIdx + depth_idx;
-                uint32_t child_idx = rangeCUIdx + sbWidth * sbWidth + (depth_idx << 2);
-                int32_t px = parentCU->getCUPelX() + sb_x * blockSize;
-                int32_t py = parentCU->getCUPelY() + sb_y * blockSize;
-                int32_t present_flag = px < parentCU->m_pic->m_origPicYuv->m_picWidth && py < parentCU->m_pic->m_origPicYuv->m_picHeight;
-                int32_t split_mandatory_flag = present_flag && !last_level_flag && (px + blockSize > parentCU->m_pic->m_origPicYuv->m_picWidth || py + blockSize > parentCU->m_pic->m_origPicYuv->m_picHeight);
-
-                CU *cu = parentCU->m_CULocalData + cuIdx;
-                cu->log2CUSize = log2CUSize;
-                cu->childIdx = child_idx;
-                cu->offset[0] = sb_x * blockSize;
-                cu->offset[1] = sb_y * blockSize;
-                cu->encodeIdx = getDepthScanIdx(cu->offset[0] >> 3, cu->offset[1] >> 3, b8Width);
-                cu->flags = 0;
-
-                CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);
-                CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, split_mandatory_flag);
-                CU_SET_FLAG(cu->flags, CU::LEAF, last_level_flag);
-            }
-        }
-        rangeCUIdx += sbWidth * sbWidth;
-    }
 }
 
 void Analysis::compressCU(TComDataCU* cu)

@@ -104,7 +104,6 @@ public:
     bool create(uint32_t totalDepth, uint32_t maxWidth);
     void destroy();
     void compressCU(TComDataCU* cu);
-    void loadCTUData(TComDataCU* cu);
 
 protected:
 

@@ -2407,4 +2407,43 @@ void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result,
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
 
+void TComDataCU::loadCTUData(uint32_t maxCUSize)
+{
+    // Initialize the coding blocks inside the CTB
+    for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
+    {
+        uint32_t blockSize  = 1 << log2CUSize;
+        uint32_t sbWidth    = 1 << (g_log2Size[maxCUSize] - log2CUSize);
+        int32_t last_level_flag = log2CUSize == MIN_LOG2_CU_SIZE;
+        for (uint32_t sb_y = 0; sb_y < sbWidth; sb_y++)
+        {
+            for (uint32_t sb_x = 0; sb_x < sbWidth; sb_x++)
+            {
+                uint32_t depth_idx = g_depthScanIdx[sb_y][sb_x];
+                uint32_t cuIdx = rangeCUIdx + depth_idx;
+                uint32_t child_idx = rangeCUIdx + sbWidth * sbWidth + (depth_idx << 2);
+                uint32_t px = m_cuPelX + sb_x * blockSize;
+                uint32_t py = m_cuPelY + sb_y * blockSize;
+                int32_t present_flag = px < m_pic->m_origPicYuv->m_picWidth && py < m_pic->m_origPicYuv->m_picHeight;
+                int32_t split_mandatory_flag = present_flag && !last_level_flag && (px + blockSize > m_pic->m_origPicYuv->m_picWidth || py + blockSize > m_pic->m_origPicYuv->m_picHeight);
+                
+                /* Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin */
+                uint32_t xOffset = (sb_x * blockSize) >> 3;
+                uint32_t yOffset = (sb_y * blockSize) >> 3;
+
+                CU *cu = m_CULocalData + cuIdx;
+                cu->log2CUSize = log2CUSize;
+                cu->childIdx = child_idx;
+                cu->encodeIdx = g_depthScanIdx[yOffset][xOffset];
+                cu->flags = 0;
+
+                CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);
+                CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, split_mandatory_flag);
+                CU_SET_FLAG(cu->flags, CU::LEAF, last_level_flag);
+            }
+        }
+        rangeCUIdx += sbWidth * sbWidth;
+    }
+}
+
 //! \}

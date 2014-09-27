@@ -159,6 +159,8 @@ extern const uint8_t g_intraFilterFlags[NUM_INTRA_MODE];
 
 extern const uint32_t g_depthInc[3][4];
 
+extern const uint32_t g_depthScanIdx[8][8];
+
 }
 
 #endif  //ifndef X265_TCOMROM_H

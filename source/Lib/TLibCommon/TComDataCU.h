@@ -114,7 +114,6 @@ struct CU
     uint32_t log2CUSize; // Log of the CU size.
     uint32_t childIdx;   // Index of the first child CU
     uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
-    uint32_t offset[2];  // Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin
     uint32_t flags;      // CU flags.
 };
 
@@ -274,6 +273,7 @@ public:
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
     void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
+    void          loadCTUData(uint32_t maxCUSize);
 
     void          copyToSubCU(TComDataCU* lcu, uint32_t partUnitIdx, uint32_t depth);
     void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);

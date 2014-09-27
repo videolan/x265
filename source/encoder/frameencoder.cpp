@@ -686,7 +686,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             // load current best state from go-on entropy coder
             curRow.rdEntropyCoders[0][CI_CURR_BEST].load(rowCoder);
 
-        tld.analysis.loadCTUData(cu);
+        cu->loadCTUData(m_param->maxCUSize);
         tld.analysis.m_quant.setQPforQuant(cu);
         tld.analysis.compressCU(cu); // Does all the CU analysis
 
