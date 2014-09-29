@@ -94,14 +94,16 @@ namespace Level {
 
 struct ProfileTierLevel
 {
-    bool    tierFlag;
-    int     profileIdc;
-    bool    profileCompatibilityFlag[32];
-    int     levelIdc;
-    bool    progressiveSourceFlag;
-    bool    interlacedSourceFlag;
-    bool    nonPackedConstraintFlag;
-    bool    frameOnlyConstraintFlag;
+    bool     tierFlag;
+    int      profileIdc;
+    bool     profileCompatibilityFlag[32];
+    int      levelIdc;
+    bool     progressiveSourceFlag;
+    bool     interlacedSourceFlag;
+    bool     nonPackedConstraintFlag;
+    bool     frameOnlyConstraintFlag;
+    uint32_t minCrForLevel;
+    uint32_t maxLumaSrForLevel;
 };
 
 struct HRDInfo

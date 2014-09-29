@@ -99,6 +99,7 @@ struct RateControlEntry
     Predictor rowPreds[3][2];
     Predictor* rowPred[2];
     double frameSizeEstimated;  /* hold frameSize, updated from cu level vbv rc */
+    double frameSizeMaximum;  /* max frame Size according to minCR restrictions and level of the video */
     bool isActive;
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;
@@ -246,7 +247,7 @@ protected:
 
     void updateVbv(int64_t bits, RateControlEntry* rce);
     void updatePredictor(Predictor *p, double q, double var, double bits);
-    double clipQscale(Frame* pic, double q);
+    double clipQscale(Frame* pic, RateControlEntry* rce, double q);
     void updateVbvPlan(Encoder* enc);
     double predictSize(Predictor *p, double q, double var);
     void checkAndResetABR(RateControlEntry* rce, bool isFrameDone);

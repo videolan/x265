@@ -887,7 +887,7 @@ bool RateControl::initPass2()
         for (int i = 0; i < m_numEntries; i++)
         {
             RateControlEntry *rce = &m_rce2Pass[i];
-            rce->newQScale = clipQscale(NULL, blurredQscale[i]); // check if needed
+            rce->newQScale = clipQscale(NULL, rce, blurredQscale[i]); // check if needed
             X265_CHECK(rce->newQScale >= 0, "new Qscale is negative\n");
             expectedBits += qScale2bits(rce, rce->newQScale);
         }
@@ -1093,6 +1093,27 @@ int RateControl::rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* en
         m_predictedBits = m_totalBits;
         updateVbvPlan(enc);
         rce->bufferFill = m_bufferFill;
+
+        int mincr = enc->m_vps.ptl.minCrForLevel;
+        /* Profiles above Main10 don't require maxAU size check, so just set the maximum to a large value. */
+        if (enc->m_vps.ptl.profileIdc > Profile::MAIN10 || enc->m_vps.ptl.levelIdc == Level::NONE)
+            rce->frameSizeMaximum = 1e9;
+        else
+        {
+            /* The spec has a special case for the first frame. */
+            if (rce->encodeOrder == 0)
+            {
+                /* 1.5 * (Max( PicSizeInSamplesY, fR * MaxLumaSr) + MaxLumaSr * (AuCpbRemovalTime[ 0 ] -AuNominalRemovalTime[ 0 ])) ? MinCr */
+                double fr = 1. / 300;
+                int picSizeInSamplesY = m_param->sourceWidth * m_param->sourceHeight;
+                rce->frameSizeMaximum = 8 * 1.5 * (X265_MAX(picSizeInSamplesY, fr * enc->m_vps.ptl.maxLumaSrForLevel) + enc->m_vps.ptl.maxLumaSrForLevel * m_frameDuration) / mincr;
+            }
+            else
+            {
+                /* 1.5 * MaxLumaSr * (AuCpbRemovalTime[ n ] - AyCpbRemovalTime[ n - 1 ]) ? MinCr */
+                rce->frameSizeMaximum = 8 * 1.5 * enc->m_vps.ptl.maxLumaSrForLevel * m_frameDuration / mincr;
+            }
+        }
     }
     if (m_isAbr || m_2pass) // ABR,CRF
     {
@@ -1370,7 +1391,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         {
             if (m_leadingBframes > 5)
             {
-                qScale = clipQscale(pic, qScale);
+                qScale = clipQscale(pic, rce, qScale);
                 m_lastQScaleFor[m_sliceType] = qScale;
             }
             rce->frameSizePlanned = predictSize(&m_predBfromP, qScale, (double)m_leadingNoBSatd);
@@ -1379,6 +1400,9 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
         {
             rce->frameSizePlanned = qScale2bits(rce, qScale);
         }
+        /* Limit planned size by MinCR */
+        if (m_isVbv)
+            rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
         rce->frameSizeEstimated = rce->frameSizePlanned;
         rce->newQScale = qScale;
         return qScale;
@@ -1527,7 +1551,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             }
             q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
             rce->qpNoVbv = x265_qScale2qp(q);
-            q = clipQscale(pic, q);
+            q = clipQscale(pic, rce, q);
         }
         m_lastQScaleFor[m_sliceType] = q;
         if ((m_curSlice->m_poc == 0 || m_lastQScaleFor[P_SLICE] < q) && !(m_2pass && !m_isVbv))
@@ -1537,11 +1561,14 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
             rce->frameSizePlanned = qScale2bits(rce, q);
         else
             rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
-        rce->frameSizeEstimated = rce->frameSizePlanned;
+
         /* Always use up the whole VBV in this case. */
         if (m_singleFrameVbv)
             rce->frameSizePlanned = m_bufferRate;
-
+        /* Limit planned size by MinCR */
+        if (m_isVbv)
+            rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
+        rce->frameSizeEstimated = rce->frameSizePlanned;
         rce->newQScale = q;
         return q;
     }
@@ -1642,12 +1669,12 @@ double RateControl::predictSize(Predictor *p, double q, double var)
     return (p->coeff * var + p->offset) / (q * p->count);
 }
 
-double RateControl::clipQscale(Frame* pic, double q)
+double RateControl::clipQscale(Frame* pic, RateControlEntry* rce, double q)
 {
     // B-frames are not directly subject to VBV,
     // since they are controlled by referenced P-frames' QPs.
     double q0 = q;
-    if (m_isVbv && m_currentSatd > 0)
+    if (m_isVbv && m_currentSatd > 0 && pic)
     {
         if (m_param->lookaheadDepth || m_param->rc.cuTree ||
             m_param->scenecutThreshold ||
@@ -1738,6 +1765,12 @@ double RateControl::clipQscale(Frame* pic, double q)
 
             q = X265_MAX(q0, q);
         }
+
+        /* Apply MinCR restrictions */
+        double pbits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+        if (pbits > rce->frameSizeMaximum)
+            q *= pbits / rce->frameSizeMaximum;
+
          // Check B-frame complexity, and use up any bits that would
          // overflow before the next P-frame.
          if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
@@ -1934,9 +1967,10 @@ int RateControl::rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControl
             accFrameBits = predictRowsSizeSum(pic, rce, qpVbv, encodedBitsSoFar);
         }
 
-        /* avoid VBV underflow */
+        /* avoid VBV underflow or MinCr violation */
         while ((qpVbv < qpAbsoluteMax)
-               && (rce->bufferFill - accFrameBits < m_bufferRate * maxFrameError))
+               && ((rce->bufferFill - accFrameBits < m_bufferRate * maxFrameError) ||
+                   (rce->frameSizeMaximum - accFrameBits < rce->frameSizeMaximum * maxFrameError)))
         {
             qpVbv += stepSize;
             accFrameBits = predictRowsSizeSum(pic, rce, qpVbv, encodedBitsSoFar);

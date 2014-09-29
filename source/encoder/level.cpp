@@ -156,6 +156,9 @@ void determineLevel(const x265_param &param, VPS& vps)
         }
 
         vps.ptl.levelIdc = levels[i].levelEnum;
+        vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
+        vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
+
         if (bitrate > levels[i].maxBitrateMain && bitrate <= levels[i].maxBitrateHigh &&
             levels[i].maxBitrateHigh != MAX_UINT)
             vps.ptl.tierFlag = Level::HIGH;
