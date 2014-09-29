@@ -63,13 +63,11 @@ typedef struct
 // Class definition
 // ====================================================================================================================
 
-/// class for motion vector with reference index
-class TComMvField
+// struct for motion vector with reference index
+struct TComMvField
 {
-public:
-
     MV  mv;
-    int       refIdx;
+    int refIdx;
 
     TComMvField() : refIdx(NOT_VALID) {}
 
@@ -80,13 +78,13 @@ public:
     }
 };
 
-/// class for motion information in one CU
+// class for motion information in one CU
 class TComCUMvField
 {
 public:
 
-    MV* m_mv;
-    MV* m_mvd;
+    MV*       m_mv;
+    MV*       m_mvd;
     char*     m_refIdx;
     uint32_t  m_numPartitions;
 
@@ -95,41 +93,20 @@ public:
 
     TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
 
-    ~TComCUMvField() {}
-
-    // ------------------------------------------------------------------------------------------------------------------
-    // initialize / create / destroy
-    // ------------------------------------------------------------------------------------------------------------------
-
     MVFieldMemPool m_MVFieldMemPool;
 
     bool initialize(uint32_t numPartition, uint32_t numBlocks);
     void create(TComCUMvField *p, uint32_t numPartition, int index, int idx);
     void destroy();
 
-    // ------------------------------------------------------------------------------------------------------------------
-    // clear / copy
-    // ------------------------------------------------------------------------------------------------------------------
-
     void clearMvField();
-
     void copyFrom(const TComCUMvField * cuMvFieldSrc, int numPartSrc, int partAddrDst);
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
-    // ------------------------------------------------------------------------------------------------------------------
-    // get
-    // ------------------------------------------------------------------------------------------------------------------
-
-    const MV & getMv(int idx) const { return m_mv[idx]; }
-
-    const MV & getMvd(int idx) const { return m_mvd[idx]; }
-
-    int getRefIdx(int idx) const { return m_refIdx[idx]; }
-
-    // ------------------------------------------------------------------------------------------------------------------
-    // set
-    // ------------------------------------------------------------------------------------------------------------------
+    const MV& getMv(int idx) const  { return m_mv[idx]; }
+    const MV& getMvd(int idx) const { return m_mvd[idx]; }
+    int getRefIdx(int idx) const    { return m_refIdx[idx]; }
 
     void    setAllMv(const MV& mv,                    PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
     void    setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
