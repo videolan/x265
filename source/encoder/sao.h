@@ -119,7 +119,7 @@ public:
     void resetStats();
     void resetSaoUnit(SaoCtuParam* saoUnit);
 
-    // LCU-basd SAO process without slice granularity
+    // CTU-based SAO process without slice granularity
     void processSaoCu(int addr, int partIdx, int plane);
 
     void resetCtuPart(SaoCtuParam* ctuParam);
@@ -129,12 +129,12 @@ public:
 
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
-    void checkMerge(SaoCtuParam* lcuParamCurr, SaoCtuParam * lcuParamCheck, int dir);
+    void checkMerge(SaoCtuParam* paramCurr, SaoCtuParam* paramCheck, int dir);
 
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
                                SaoCtuParam *compSaoParam, double *distortion);
     void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
-                            SaoCtuParam *crSaoParam, SaoCtuParam *cbSaoParam, double *distortion);
+                             SaoCtuParam *crSaoParam, SaoCtuParam *cbSaoParam, double *distortion);
 
     inline int64_t estSaoDist(int64_t count, int64_t offset, int64_t offsetOrg, int shift);
     inline int64_t estIterOffset(int typeIdx, int classIdx, double lambda, int64_t offsetInput, int64_t count, int64_t offsetOrg, int shift,
@@ -142,7 +142,7 @@ public:
     inline int64_t estSaoTypeDist(int compIdx, int typeIdx, int shift, double lambda, int32_t *currentDistortionTableBo, double *currentRdCostTableBo);
 
     void rdoSaoUnitRowInit(SAOParam *saoParam);
-    void rdoSaoUnitRowEnd(SAOParam *saoParam, int numlcus);
+    void rdoSaoUnitRowEnd(SAOParam *saoParam, int numctus);
     void rdoSaoUnitRow(SAOParam *saoParam, int idxY);
 };
 
