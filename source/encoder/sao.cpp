@@ -184,9 +184,9 @@ void SAO::resetSAOParam(SAOParam *saoParam)
 {
     saoParam->bSaoFlag[0] = false;
     saoParam->bSaoFlag[1] = false;
-    resetLcuPart(saoParam->ctuParam[0]);
-    resetLcuPart(saoParam->ctuParam[1]);
-    resetLcuPart(saoParam->ctuParam[2]);
+    resetCtuPart(saoParam->ctuParam[0]);
+    resetCtuPart(saoParam->ctuParam[1]);
+    resetCtuPart(saoParam->ctuParam[2]);
 }
 
 void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
@@ -585,7 +585,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* saoLcuParam, int idxY, int plane)
     std::swap(m_tmpU1[plane], m_tmpU2[plane]);
 }
 
-void SAO::resetLcuPart(SaoCtuParam* saoLcuParam)
+void SAO::resetCtuPart(SaoCtuParam* saoLcuParam)
 {
     for (int i = 0; i < m_numCuInWidth * m_numCuInHeight; i++)
     {

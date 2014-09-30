@@ -122,8 +122,8 @@ public:
     // LCU-basd SAO process without slice granularity
     void processSaoCu(int addr, int partIdx, int plane);
 
-    void resetLcuPart(SaoCtuParam* saoLcuParam);
-    void processSaoUnitRow(SaoCtuParam* saoLcuParam, int idxY, int plane);
+    void resetCtuPart(SaoCtuParam* ctuParam);
+    void processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane);
 
     void copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc);
 
