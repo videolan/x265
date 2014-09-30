@@ -87,7 +87,7 @@ void initRasterToZscan(uint32_t maxFullDepth);
 extern const uint8_t g_zscanToPelX[MAX_NUM_PARTITIONS];
 extern const uint8_t g_zscanToPelY[MAX_NUM_PARTITIONS];
 
-// global variable (LCU width/height, max. CU depth)
+// global variable (CTU width/height, max. CU depth)
 extern uint32_t g_maxLog2CUSize;
 extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;

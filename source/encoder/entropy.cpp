@@ -713,7 +713,7 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
 
         if (cbfY || cbfU || cbfV)
         {
-            // dQP: only for LCU once
+            // dQP: only for CTU once
             if (cu->m_slice->m_pps->bUseDQP)
             {
                 if (bCodeDQP)

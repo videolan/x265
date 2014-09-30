@@ -421,7 +421,7 @@ void FrameEncoder::encodeSlice()
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
-        // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
+        // Synchronize cabac probabilities with upper-right CTU if it's available and we're at the start of a line.
         if (m_param->bEnableWavefront && !col && lin)
         {
             m_entropyCoder.copyState(m_initSliceContext);
@@ -462,7 +462,7 @@ void FrameEncoder::encodeSlice()
         if (m_param->bEnableWavefront)
         {
             if (col == 1)
-                // Store probabilities of second LCU in line into buffer
+                // Store probabilities of second CTU in line into buffer
                 m_rows[lin].bufferEntropyCoder.loadContexts(m_entropyCoder);
 
             if (col == widthInLCUs - 1)
@@ -790,7 +790,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
         // NOTE: do CU level Filter
         if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
-            // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+            // SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 
         // NOTE: active next row

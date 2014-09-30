@@ -72,7 +72,7 @@ protected:
     PerClass*   m_offset;
     PerClass*   m_offsetOrg;
 
-    /* allocated per LCU */
+    /* allocated per CTU */
     PerPlane*   m_countPreDblk;
     PerPlane*   m_offsetOrgPreDblk;
 

@@ -994,7 +994,7 @@ TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsId
     uint32_t absZorderQpMinCUIdx = curAbsIdxInLCU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
-    // check for left LCU boundary
+    // check for left CTU boundary
     if (RasterAddress::isZeroCol(absRorderQpMinCUIdx, numPartInCUSize))
     {
         return NULL;
@@ -1003,7 +1003,7 @@ TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsId
     // get index of left-CU relative to top-left corner of current quantization group
     lPartUnitIdx = g_rasterToZscan[absRorderQpMinCUIdx - 1];
 
-    // return pointer to current LCU
+    // return pointer to current CTU
     return m_pic->getCU(getAddr());
 }
 
@@ -1018,7 +1018,7 @@ TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsI
     uint32_t absZorderQpMinCUIdx = curAbsIdxInLCU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
-    // check for top LCU boundary
+    // check for top CTU boundary
     if (RasterAddress::isZeroRow(absRorderQpMinCUIdx, numPartInCUSize))
     {
         return NULL;
@@ -1027,7 +1027,7 @@ TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsI
     // get index of top-CU relative to top-left corner of current quantization group
     aPartUnitIdx = g_rasterToZscan[absRorderQpMinCUIdx - numPartInCUSize];
 
-    // return pointer to current LCU
+    // return pointer to current CTU
     return m_pic->getCU(getAddr());
 }
 
@@ -1795,8 +1795,8 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
             uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
-            bool bNotLastCol = RasterAddress::lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of LCU
-            bool bNotLastRow = RasterAddress::lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of LCU
+            bool bNotLastCol = RasterAddress::lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
+            bool bNotLastRow = RasterAddress::lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
 
             if (bNotLastCol && bNotLastRow)
             {
@@ -1810,7 +1810,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];
                 lcuIdx = getAddr() + 1;
             }
-            else // is the right bottom corner of LCU
+            else // is the right bottom corner of CTU
                 absPartAddr = 0;
         }
 
@@ -2050,8 +2050,8 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
             uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
-            bool bNotLastCol = RasterAddress::lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of LCU
-            bool bNotLastRow = RasterAddress::lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of LCU
+            bool bNotLastCol = RasterAddress::lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
+            bool bNotLastRow = RasterAddress::lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
 
             if (bNotLastCol && bNotLastRow)
             {
@@ -2065,7 +2065,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];
                 lcuIdx = getAddr() + 1;
             }
-            else // is the right bottom corner of LCU
+            else // is the right bottom corner of CTU
                 absPartAddr = 0;
         }
         if (lcuIdx >= 0 && xGetColMVP(picList, lcuIdx, absPartAddr, colmv, refIdx))
