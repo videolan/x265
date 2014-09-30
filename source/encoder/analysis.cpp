@@ -976,166 +976,165 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     }
                 }
             }
-
-            /* Compute Merge Cost */
-            checkMerge2Nx2N_rd0_4(m_bestMergeCU[depth], m_mergeCU[depth], cu, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
-            bool earlyskip = false;
-            if (m_param->rdLevel >= 1)
-                earlyskip = (m_param->bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0));
-
-            if (!earlyskip)
-            {
-                /* Compute 2Nx2N mode costs */
-                checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
-
-                /* initialise outBestCU to 2Nx2N */
-                outBestCU = m_interCU_2Nx2N[depth];
-                std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
-
-                /* Compute Rect costs */
-                if (m_param->bEnableRectInter)
-                {
-                    checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N, false);
-                    checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN, false);
-                    if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
-                    {
-                        outBestCU = m_interCU_Nx2N[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
-                    }
-                    if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
-                    {
-                        outBestCU = m_interCU_2NxN[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
-                    }
-                }
-
-                if (m_param->rdLevel > 2)
-                {
-                    // calculate the motion compensation for chroma for the best mode selected
-                    int numPart = outBestCU->getNumPartInter();
-                    for (int partIdx = 0; partIdx < numPart; partIdx++)
-                    {
-                        prepMotionCompensation(outBestCU, cu, partIdx);
-                        motionCompensation(m_bestPredYuv[depth], false, true);
-                    }
-
-                    encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                              m_bestResiYuv[depth], m_bestRecoYuv[depth]);
-                    uint64_t bestMergeCost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
-                    uint64_t bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
-                    if (bestMergeCost < bestCost)
-                    {
-                        outBestCU = m_bestMergeCU[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
-                        std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
-                    }
-                    else
-                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
-                }
-
-                /* Check for Intra in inter frames only if it is a P-slice */
-                if (slice->m_sliceType == P_SLICE)
-                {
-                    /* compute intra cost */
-                    bool bdoIntra = true;
-                    if (m_param->rdLevel > 2)
-                        bdoIntra = outBestCU->getCbf(0, TEXT_LUMA) || outBestCU->getCbf(0, TEXT_CHROMA_U) ||
-                                   outBestCU->getCbf(0, TEXT_CHROMA_V);
-
-                    if (bdoIntra)
-                    {
-                        checkIntraInInter_rd0_4(m_intraInInterCU[depth], cu, SIZE_2Nx2N);
-                        uint64_t intraInInterCost, bestCost;
-                        if (m_param->rdLevel > 2)
-                        {
-                            encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[5][depth],
-                                               m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
-                            intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
-                            bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
-                        }
-                        else
-                        {
-                            intraInInterCost = m_intraInInterCU[depth]->m_sa8dCost;
-                            bestCost = outBestCU->m_sa8dCost;
-                        }
-                        if (intraInInterCost < bestCost)
-                        {
-                            outBestCU = m_intraInInterCU[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
-                            std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
-                            if (m_param->rdLevel > 2)
-                                m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
-                        }
-                    }
-                }
-                if (m_param->rdLevel == 2)
-                {
-                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
-                    {
-                        outBestCU = m_bestMergeCU[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
-                        std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
-                    }
-                    else if (outBestCU->getPredictionMode(0) == MODE_INTER)
-                    {
-                        int numPart = outBestCU->getNumPartInter();
-                        for (int partIdx = 0; partIdx < numPart; partIdx++)
-                        {
-                            prepMotionCompensation(outBestCU, cu, partIdx);
-                            motionCompensation(m_bestPredYuv[depth], false, true);
-                        }
-
-                        encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],
-                                                  m_bestResiYuv[depth], m_bestRecoYuv[depth]);
-                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
-                    }
-                    else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
-                    {
-                        encodeIntraInInter(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth],  m_bestRecoYuv[depth]);
-                        m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
-                    }
-                }
-                else if (m_param->rdLevel == 1)
-                {
-                    if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
-                    {
-                        outBestCU = m_bestMergeCU[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
-                        std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
-                    }
-                    else if (outBestCU->getPredictionMode(0) == MODE_INTER)
-                    {
-                        int numPart = outBestCU->getNumPartInter();
-                        for (int partIdx = 0; partIdx < numPart; partIdx++)
-                        {
-                            prepMotionCompensation(outBestCU, cu, partIdx);
-                            motionCompensation(m_bestPredYuv[depth], false, true);
-                        }
-
-                        m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], outBestCU->getLog2CUSize(0));
-                        generateCoeffRecon(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
-                    }
-                    else
-                        generateCoeffRecon(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
-                }
-                else if (!m_param->rdLevel)
-                {
-                    if (outBestCU->getPredictionMode(0) == MODE_INTER)
-                    {
-                        int numPart = outBestCU->getNumPartInter();
-                        for (int partIdx = 0; partIdx < numPart; partIdx++)
-                        {
-                            prepMotionCompensation(outBestCU, cu, partIdx);
-                            motionCompensation(m_bestPredYuv[depth], false, true);
-                        }
-                    }
-                }
-            }
             else
             {
-                outBestCU = m_bestMergeCU[depth];
-                std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
-                std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                /* Compute Merge Cost */
+                checkMerge2Nx2N_rd0_4(m_bestMergeCU[depth], m_mergeCU[depth], cu, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
+                bool earlyskip = false;
+                if (m_param->rdLevel >= 1)
+                    earlyskip = (m_param->bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0));
+
+                if (!earlyskip)
+                {
+                    /* Compute 2Nx2N mode costs */
+                    checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
+
+                    /* initialise outBestCU to 2Nx2N */
+                    outBestCU = m_interCU_2Nx2N[depth];
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
+
+                    /* Compute Rect costs */
+                    if (m_param->bEnableRectInter)
+                    {
+                        checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N, false);
+                        checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN, false);
+                        if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_interCU_Nx2N[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
+                        }
+                        if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_interCU_2NxN[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
+                        }
+                    }
+
+                    if (m_param->rdLevel > 2)
+                    {
+                        // calculate the motion compensation for chroma for the best mode selected
+                        int numPart = outBestCU->getNumPartInter();
+                        for (int partIdx = 0; partIdx < numPart; partIdx++)
+                        {
+                            prepMotionCompensation(outBestCU, cu, partIdx);
+                            motionCompensation(m_bestPredYuv[depth], false, true);
+                        }
+
+                        encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth]);
+                        uint64_t bestMergeCost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
+                        uint64_t bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                        if (bestMergeCost < bestCost)
+                        {
+                            outBestCU = m_bestMergeCU[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                        }
+                        else
+                            m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                    }
+
+                    /* Check for Intra in inter frames only if it is a P-slice */
+                    if (slice->m_sliceType == P_SLICE)
+                    {
+                        /* compute intra cost */
+                        bool bdoIntra = true;
+                        if (m_param->rdLevel > 2)
+                            bdoIntra = outBestCU->getCbf(0, TEXT_LUMA) || outBestCU->getCbf(0, TEXT_CHROMA_U) || outBestCU->getCbf(0, TEXT_CHROMA_V);
+
+                        if (bdoIntra)
+                        {
+                            checkIntraInInter_rd0_4(m_intraInInterCU[depth], cu, SIZE_2Nx2N);
+                            uint64_t intraInInterCost, bestCost;
+                            if (m_param->rdLevel > 2)
+                            {
+                                encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+                                intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
+                                bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                            }
+                            else
+                            {
+                                intraInInterCost = m_intraInInterCU[depth]->m_sa8dCost;
+                                bestCost = outBestCU->m_sa8dCost;
+                            }
+                            if (intraInInterCost < bestCost)
+                            {
+                                outBestCU = m_intraInInterCU[depth];
+                                std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
+                                std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
+                                if (m_param->rdLevel > 2)
+                                    m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                            }
+                        }
+                    }
+
+                    if (m_param->rdLevel == 2)
+                    {
+                        if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_bestMergeCU[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                        }
+                        else if (outBestCU->getPredictionMode(0) == MODE_INTER)
+                        {
+                            int numPart = outBestCU->getNumPartInter();
+                            for (int partIdx = 0; partIdx < numPart; partIdx++)
+                            {
+                                prepMotionCompensation(outBestCU, cu, partIdx);
+                                motionCompensation(m_bestPredYuv[depth], false, true);
+                            }
+
+                            encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth]);
+                            m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                        }
+                        else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
+                        {
+                            encodeIntraInInter(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
+                            m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                        }
+                    }
+                    else if (m_param->rdLevel == 1)
+                    {
+                        if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
+                        {
+                            outBestCU = m_bestMergeCU[depth];
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                        }
+                        else if (outBestCU->getPredictionMode(0) == MODE_INTER)
+                        {
+                            int numPart = outBestCU->getNumPartInter();
+                            for (int partIdx = 0; partIdx < numPart; partIdx++)
+                            {
+                                prepMotionCompensation(outBestCU, cu, partIdx);
+                                motionCompensation(m_bestPredYuv[depth], false, true);
+                            }
+
+                            m_tmpResiYuv[depth]->subtract(m_origYuv[depth], m_bestPredYuv[depth], outBestCU->getLog2CUSize(0));
+                            generateCoeffRecon(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
+                        }
+                        else
+                            generateCoeffRecon(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
+                    }
+                    else if (!m_param->rdLevel)
+                    {
+                        if (outBestCU->getPredictionMode(0) == MODE_INTER)
+                        {
+                            int numPart = outBestCU->getNumPartInter();
+                            for (int partIdx = 0; partIdx < numPart; partIdx++)
+                            {
+                                prepMotionCompensation(outBestCU, cu, partIdx);
+                                motionCompensation(m_bestPredYuv[depth], false, true);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    outBestCU = m_bestMergeCU[depth];
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                    std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                }
             }
 
             if (m_param->rdLevel > 0) // checkDQP can be done only after residual encoding is done
