@@ -484,7 +484,7 @@ void Entropy::codeShortTermRefPicSet(RPS* rps)
 void Entropy::encodeCTU(TComDataCU* cu)
 {
     bool bEncodeDQP = cu->m_slice->m_pps->bUseDQP;
-    encodeCU(cu, 0, 0, bEncodeDQP, cu->m_CULocalData);
+    encodeCU(cu, 0, 0, bEncodeDQP, cu->m_cuLocalData);
 }
 
 /* encode a CU block recursively */
@@ -503,7 +503,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            CU *childCU = cu->m_CULocalData + cuData->childIdx + partUnitIdx;
+            CU *childCU = cu->m_cuLocalData + cuData->childIdx + partUnitIdx;
             int cuPresentFlagChild = !(childCU->flags & CU::PRESENT);
             if (!cuPresentFlagChild)
                 encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
@@ -521,7 +521,7 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            CU *childCU = cu->m_CULocalData + cuData->childIdx + partUnitIdx;
+            CU *childCU = cu->m_cuLocalData + cuData->childIdx + partUnitIdx;
             encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
         }
         return;

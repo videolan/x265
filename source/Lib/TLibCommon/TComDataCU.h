@@ -222,13 +222,13 @@ public:
     // misc. variables
     // -------------------------------------------------------------------------------------------------------------------
 
-    DataCUMemPool m_DataCUMemPool;
+    DataCUMemPool m_dataCUMemPool;
     TComCUMvField m_cuMvFieldMemPool;
 
     // CU data. Index is the CU index. Neighbour CUs (top-left, top, top-right, left) are appended to the end,
     // required for prediction of current CU.
     // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
-    CU m_CULocalData[104]; 
+    CU            m_cuLocalData[104]; 
 
 protected:
     /// add possible motion vector predictor candidates
