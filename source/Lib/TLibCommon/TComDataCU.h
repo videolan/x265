@@ -272,10 +272,10 @@ public:
 
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
-    void          initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp);
+    void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyToSubCU(TComDataCU* lcu, uint32_t partUnitIdx, uint32_t depth);
+    void          copyToSubCU(TComDataCU* lcu, CU* cuData, uint32_t partUnitIdx, uint32_t depth);
     void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(uint32_t depth);
@@ -287,8 +287,6 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t&     getAddr()                        { return m_cuAddr; }
-
-    uint32_t&     getZorderIdxInCU()               { return m_absIdxInLCU; }
 
     uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInLCU; }
 

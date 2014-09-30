@@ -89,7 +89,7 @@ public:
     bool allocBuffers(int csp);
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
-    void prepMotionCompensation(TComDataCU* cu, int partIdx);
+    void prepMotionCompensation(TComDataCU* cu, CU* cuData, int partIdx);
     void motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */

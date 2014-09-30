@@ -49,7 +49,7 @@ using namespace x265;
 // Public member functions (TComPattern)
 // ====================================================================================================================
 
-void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+void TComPattern::initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
                                  pixel* refAbove, pixel* refLeft, pixel* refAboveFlt, pixel* refLeftFlt, int dirMode)
 {
     IntraNeighbors intraNeighbors;
@@ -58,7 +58,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->getAddr(), cuData->encodeIdx + zOrderIdxInPart);
     int picStride = cu->m_pic->getStride();
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
@@ -130,14 +130,14 @@ void TComPattern::initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint3
     }
 }
 
-void TComPattern::initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, uint32_t chromaId)
+void TComPattern::initAdiPatternChroma(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, uint32_t chromaId)
 {
     IntraNeighbors intraNeighbors;
 
     initIntraNeighbors(cu, zOrderIdxInPart, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cu->getZorderIdxInCU() + zOrderIdxInPart);
+    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->getAddr(), cuData->encodeIdx + zOrderIdxInPart);
     int picStride = cu->m_pic->getCStride();
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize, adiBuf);
 

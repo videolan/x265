@@ -387,16 +387,15 @@ void TComDataCU::initEstData()
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, int qp)
+void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     uint8_t log2CUSize = g_maxLog2CUSize - depth;
-    uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
 
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
     m_cuAddr           = cu->getAddr();
-    m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
+    m_absIdxInLCU      = cuData->encodeIdx;
 
     m_cuPelX           = cu->getCUPelX() + ((partUnitIdx &  1) << log2CUSize);
     m_cuPelY           = cu->getCUPelY() + ((partUnitIdx >> 1) << log2CUSize);
@@ -453,7 +452,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth,
     m_cuAboveRight  = cu->getCUAboveRight();
 }
 
-void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth)
+void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
@@ -462,7 +461,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dept
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
     m_cuAddr           = cu->getAddr();
-    m_absIdxInLCU      = cu->getZorderIdxInCU() + partOffset;
+    m_absIdxInLCU      = cuData->encodeIdx + partOffset;
 
     m_cuPelX           = cu->getCUPelX() + ((partUnitIdx &  1) << (g_maxLog2CUSize - depth));
     m_cuPelY           = cu->getCUPelY() + ((partUnitIdx >> 1) << (g_maxLog2CUSize - depth));
@@ -1067,9 +1066,9 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
     }
     else
     {
-        if (getZorderIdxInCU() > 0)
+        if (m_pic->getCU(m_cuAddr)->m_CULocalData->encodeIdx > 0)
         {
-            return m_pic->getCU(getAddr())->getLastCodedQP(getZorderIdxInCU());
+            return m_pic->getCU(getAddr())->getLastCodedQP(m_pic->getCU(m_cuAddr)->m_CULocalData->encodeIdx);
         }
         else if (getAddr() > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled &&
                                     getAddr() % m_pic->getFrameWidthInCU() == 0))
@@ -2434,7 +2433,7 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
                 CU *cu = m_CULocalData + cuIdx;
                 cu->log2CUSize = log2CUSize;
                 cu->childIdx = child_idx;
-                cu->encodeIdx = g_depthScanIdx[yOffset][xOffset];
+                cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->flags = 0;
 
                 CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);

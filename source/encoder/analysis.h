@@ -116,17 +116,17 @@ protected:
                                int bInsidePicture, uint32_t partitionIndex, uint32_t minDepth);
     void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu,
                                PartSize parentSize = SIZE_NONE);
-    void checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
-    void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, bool *earlyDetectionSkipMode,
+    void checkMerge2Nx2N_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, TComYuv*& bestPredYuv, TComYuv*& tmpPredYuv);
+    void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, bool *earlyDetectionSkipMode,
                                TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
-    void checkInter_rd0_4(TComDataCU* outTempCU, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
-    void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize, bool bUseMRG = false);
-    void checkIntraInInter_rd0_4(TComDataCU* cu, PartSize partSize);
-    void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, PartSize partSize);
+    void checkInter_rd0_4(TComDataCU* outTempCU, CU* cu, TComYuv* outPredYUV, PartSize partSize, bool bUseMRG = false);
+    void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize, bool bUseMRG = false);
+    void checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData, PartSize partSize);
+    void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize);
 
     void checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
-    void encodeIntraInInter(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
-    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
+    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu);
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);

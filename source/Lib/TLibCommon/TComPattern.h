@@ -53,6 +53,7 @@ namespace x265 {
 
 class TComDataCU;
 
+struct CU;
 struct IntraNeighbors
 {
     int  numIntraNeighbor;
@@ -82,12 +83,12 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     /// set parameters from pixel buffers for accessing neighboring pixels
-    static void initAdiPattern(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+    static void initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
                                pixel* refAbove, pixel* refLeft,
                                pixel* refAboveFlt, pixel* refLeftFlt, int dirMode);
 
     /// set chroma parameters from CU data for accessing ADI data
-    static void initAdiPatternChroma(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth,
+    static void initAdiPatternChroma(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth,
                                      pixel* adiBuf, uint32_t chromaId);
 
     static void initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
