@@ -28,13 +28,13 @@
 #define PIXEL_MIN 0
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 
-void processSaoCUE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft)
+void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
 {
     int x;
     int8_t signRight;
     int8_t edgeType;
 
-    for (x = 0; x < lcuWidth; x++)
+    for (x = 0; x < width; x++)
     {
         signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
         edgeType = signRight + signLeft + 2;

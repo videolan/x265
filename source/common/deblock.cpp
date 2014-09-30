@@ -93,12 +93,12 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
 
 static inline uint32_t calcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t lcuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
+    uint32_t ctuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
 
     if (dir)
-        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + edgeIdx * lcuWidthInBaseUnits + baseUnitIdx];
+        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + edgeIdx * ctuWidthInBaseUnits + baseUnitIdx];
     else
-        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + baseUnitIdx * lcuWidthInBaseUnits + edgeIdx];
+        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + baseUnitIdx * ctuWidthInBaseUnits + edgeIdx];
 }
 
 void Deblock::setEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockingStrength[], uint32_t widthInBaseUnits)

@@ -174,7 +174,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t      m_cuAddr;          ///< CU address in a slice
-    uint32_t      m_absIdxInLCU;     ///< absolute address in a CU. It's Z scan order
+    uint32_t      m_absIdxInCTU;     ///< absolute address in a CU. It's Z scan order
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
@@ -276,7 +276,7 @@ public:
     void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyToSubCU(TComDataCU* lcu, CU* cuData, uint32_t partUnitIdx, uint32_t depth);
+    void          copyToSubCU(TComDataCU* ctu, CU* cuData, uint32_t partUnitIdx, uint32_t depth);
     void          copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(uint32_t depth);
@@ -289,7 +289,7 @@ public:
 
     uint32_t&     getAddr()                        { return m_cuAddr; }
 
-    uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInLCU; }
+    uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
 
 
     uint32_t      getCUPelX()                      { return m_cuPelX; }
@@ -407,7 +407,7 @@ public:
     void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
 
     template<typename T>
-    void          setSubPart(T bParameter, T* pbBaseLCU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
+    void          setSubPart(T bParameter, T* baseCTU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
 
     uint8_t*      getLumaIntraDir()         { return m_lumaIntraDir; }
 
@@ -465,14 +465,14 @@ public:
     TComDataCU*   getCUAboveRight() { return m_cuAboveRight; }
 
     TComDataCU*   getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx);
-    TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtLCUBoundary = false);
+    TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary = false);
     TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx);
     TComDataCU*   getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx);
     TComDataCU*   getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx);
 
-    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInLCU);
-    TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInLCU);
-    char          getRefQP(uint32_t currAbsIdxInLCU);
+    TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInCTU);
+    TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInCTU);
+    char          getRefQP(uint32_t currAbsIdxInCTU);
 
     TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);
     TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1);

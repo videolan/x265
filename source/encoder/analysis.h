@@ -126,7 +126,7 @@ protected:
 
     void checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
     void encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
-    void encodeResidue(TComDataCU* lcu, TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
+    void encodeResidue(TComDataCU* ctu, TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu);
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
