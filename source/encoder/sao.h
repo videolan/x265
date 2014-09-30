@@ -117,24 +117,24 @@ public:
     void startSlice(Frame *pic, Entropy& initState, int qp);
     void resetSAOParam(SAOParam* saoParam);
     void resetStats();
-    void resetSaoUnit(SaoLcuParam* saoUnit);
+    void resetSaoUnit(SaoCtuParam* saoUnit);
 
     // LCU-basd SAO process without slice granularity
     void processSaoCu(int addr, int partIdx, int plane);
 
-    void resetLcuPart(SaoLcuParam* saoLcuParam);
-    void processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane);
+    void resetLcuPart(SaoCtuParam* saoLcuParam);
+    void processSaoUnitRow(SaoCtuParam* saoLcuParam, int idxY, int plane);
 
-    void copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc);
+    void copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc);
 
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
-    void checkMerge(SaoLcuParam* lcuParamCurr, SaoLcuParam * lcuParamCheck, int dir);
+    void checkMerge(SaoCtuParam* lcuParamCurr, SaoCtuParam * lcuParamCheck, int dir);
 
     void saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
-                               SaoLcuParam *compSaoParam, double *distortion);
+                               SaoCtuParam *compSaoParam, double *distortion);
     void sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
-                            SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion);
+                            SaoCtuParam *crSaoParam, SaoCtuParam *cbSaoParam, double *distortion);
 
     inline int64_t estSaoDist(int64_t count, int64_t offset, int64_t offsetOrg, int shift);
     inline int64_t estIterOffset(int typeIdx, int classIdx, double lambda, int64_t offsetInput, int64_t count, int64_t offsetOrg, int shift,

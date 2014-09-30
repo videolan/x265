@@ -174,9 +174,9 @@ void SAO::allocSaoParam(SAOParam *saoParam) const
     saoParam->numCuInWidth  = m_numCuInWidth;
     saoParam->numCuInHeight = m_numCuInHeight;
 
-    saoParam->saoLcuParam[0] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->saoLcuParam[1] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->saoLcuParam[2] = new SaoLcuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->saoLcuParam[0] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->saoLcuParam[1] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->saoLcuParam[2] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
 }
 
 /* reset SAO parameters once per frame */
@@ -472,7 +472,7 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
 }
 
 /* Process SAO all units */
-void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
+void SAO::processSaoUnitRow(SaoCtuParam* saoLcuParam, int idxY, int plane)
 {
     pixel *rec;
     int picWidthTmp;
@@ -585,7 +585,7 @@ void SAO::processSaoUnitRow(SaoLcuParam* saoLcuParam, int idxY, int plane)
     std::swap(m_tmpU1[plane], m_tmpU2[plane]);
 }
 
-void SAO::resetLcuPart(SaoLcuParam* saoLcuParam)
+void SAO::resetLcuPart(SaoCtuParam* saoLcuParam)
 {
     for (int i = 0; i < m_numCuInWidth * m_numCuInHeight; i++)
     {
@@ -599,7 +599,7 @@ void SAO::resetLcuPart(SaoLcuParam* saoLcuParam)
     }
 }
 
-void SAO::resetSaoUnit(SaoLcuParam* saoUnit)
+void SAO::resetSaoUnit(SaoCtuParam* saoUnit)
 {
     saoUnit->mergeUpFlag   = 0;
     saoUnit->mergeLeftFlag = 0;
@@ -612,7 +612,7 @@ void SAO::resetSaoUnit(SaoLcuParam* saoUnit)
         saoUnit->offset[i] = 0;
 }
 
-void SAO::copySaoUnit(SaoLcuParam* saoUnitDst, SaoLcuParam* saoUnitSrc)
+void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc)
 {
     saoUnitDst->mergeLeftFlag = saoUnitSrc->mergeLeftFlag;
     saoUnitDst->mergeUpFlag   = saoUnitSrc->mergeUpFlag;
@@ -1166,7 +1166,7 @@ void SAO::resetStats()
 }
 
 /* Check merge SAO unit */
-void SAO::checkMerge(SaoLcuParam * saoUnitCurr, SaoLcuParam * saoUnitCheck, int dir)
+void SAO::checkMerge(SaoCtuParam * saoUnitCurr, SaoCtuParam * saoUnitCheck, int dir)
 {
     int countDiff = 0;
 
@@ -1247,7 +1247,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
     int frameWidthInCU  = saoParam->numCuInWidth;
     int j, k;
     int compIdx = 0;
-    SaoLcuParam mergeSaoParam[3][2];
+    SaoCtuParam mergeSaoParam[3][2];
     double compDistortion[3];
 
     for (int idxX = 0; idxX < frameWidthInCU; idxX++)
@@ -1446,13 +1446,13 @@ inline int64_t SAO::estIterOffset(int typeIdx, int classIdx, double lambda, int6
 }
 
 void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
-                                SaoLcuParam *compSaoParam, double *compDistortion)
+                                SaoCtuParam *compSaoParam, double *compDistortion)
 {
     int64_t estDist;
     int64_t bestDist;
 
-    SaoLcuParam* saoLcuParam = &(saoParam->saoLcuParam[0][addr]);
-    SaoLcuParam* saoLcuParamNeighbor = NULL;
+    SaoCtuParam* saoLcuParam = &(saoParam->saoLcuParam[0][addr]);
+    SaoCtuParam* saoLcuParamNeighbor = NULL;
 
     resetSaoUnit(saoLcuParam);
     resetSaoUnit(&compSaoParam[0]);
@@ -1464,7 +1464,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
     double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
-    SaoLcuParam saoLcuParamRdo;
+    SaoCtuParam saoLcuParamRdo;
 
     resetSaoUnit(&saoLcuParamRdo);
 
@@ -1565,14 +1565,14 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 }
 
 void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *saoParam, int addr, int addrUp, int addrLeft,
-                              SaoLcuParam *crSaoParam, SaoLcuParam *cbSaoParam, double *distortion)
+                              SaoCtuParam *crSaoParam, SaoCtuParam *cbSaoParam, double *distortion)
 {
     int64_t estDist[2];
     int64_t bestDist = 0;
 
-    SaoLcuParam* saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };
-    SaoLcuParam* saoLcuParamNeighbor[2] = { NULL, NULL };
-    SaoLcuParam* saoMergeParam[2][2];
+    SaoCtuParam* saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };
+    SaoCtuParam* saoLcuParamNeighbor[2] = { NULL, NULL };
+    SaoCtuParam* saoMergeParam[2][2];
 
     saoMergeParam[0][0] = &crSaoParam[0];
     saoMergeParam[0][1] = &crSaoParam[1];
@@ -1592,7 +1592,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     int    bestClassTableBo[2] = { 0, 0 };
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
 
-    SaoLcuParam saoLcuParamRdo[2];
+    SaoCtuParam saoLcuParamRdo[2];
 
     resetSaoUnit(&saoLcuParamRdo[0]);
     resetSaoUnit(&saoLcuParamRdo[1]);

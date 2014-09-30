@@ -864,7 +864,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP, depthRange);
 }
 
-void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
+void Entropy::codeSaoOffset(SaoCtuParam* saoLcuParam, uint32_t compIdx)
 {
     uint32_t symbol;
     int i;
@@ -914,7 +914,7 @@ void Entropy::codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx)
     }
 }
 
-void Entropy::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
+void Entropy::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoCtuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
 {
     if (saoFlag)
     {

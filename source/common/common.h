@@ -219,7 +219,7 @@ struct NoiseReduction
     uint32_t count[8];
 };
 
-struct SaoLcuParam
+struct SaoCtuParam
 {
     bool mergeUpFlag;
     bool mergeLeftFlag;
@@ -244,7 +244,7 @@ struct SaoLcuParam
 
 struct SAOParam
 {
-    SaoLcuParam* saoLcuParam[3];
+    SaoCtuParam* saoLcuParam[3];
     bool         bSaoFlag[2];
     int          numCuInHeight;
     int          numCuInWidth;

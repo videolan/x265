@@ -34,7 +34,7 @@
 namespace x265 {
 // private namespace
 
-struct SaoLcuParam;
+struct SaoCtuParam;
 struct EstBitsSbac;
 class TComDataCU;
 class ScalingList;
@@ -149,8 +149,8 @@ public:
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
     void encodeCTU(TComDataCU* cu);
-    void codeSaoOffset(SaoLcuParam* saoLcuParam, uint32_t compIdx);
-    void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoLcuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void codeSaoOffset(SaoCtuParam* saoLcuParam, uint32_t compIdx);
+    void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoCtuParam* saoLcuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
     void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
     void codeCUTransquantBypassFlag(uint32_t symbol);
