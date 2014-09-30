@@ -25,6 +25,7 @@
 #define X265_RDCOST_H
 
 #include "common.h"
+#include "slice.h"
 
 namespace x265 {
 // private namespace
@@ -39,10 +40,28 @@ public:
     uint64_t  m_cbDistortionWeight;
     uint64_t  m_crDistortionWeight;
     uint32_t  m_psyRd;
+    int       m_qp;
 
     void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
     void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
     void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
+
+    void setQP(Slice *slice, int qp)
+    {
+        m_qp = qp;
+
+        setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
+
+        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
+        int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
+        uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+        setCbDistortionWeight(lambdaOffset);
+
+        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice->m_pps->chromaCrQpOffset);
+        chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
+        lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+        setCrDistortionWeight(lambdaOffset);
+    }
 
     void setLambda(double lambda2, double lambda)
     {

@@ -171,7 +171,6 @@ protected:
     void encodeSlice();
 
     void threadMain();
-    void setLambda(int qp, ThreadLocalData& tld);
     int calcQpForCu(uint32_t cuAddr, double baseQp);
     void noiseReductionUpdate();
 

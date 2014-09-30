@@ -109,6 +109,12 @@ fail:
     return false;
 }
 
+void Search::setQP(Slice *slice, int qp)
+{
+    m_me.setQP(qp);
+    m_rdCost.setQP(slice, qp);
+}
+
 void Search::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;
