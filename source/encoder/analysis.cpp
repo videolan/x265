@@ -759,7 +759,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             if (!earlyskip)
             {
                 /* Compute 2Nx2N mode costs */
-                checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N);
+                checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
 
                 /* initialise outBestCU to 2Nx2N */
                 outBestCU = m_interCU_2Nx2N[depth];
@@ -768,8 +768,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 /* Compute Rect costs */
                 if (m_param->bEnableRectInter)
                 {
-                    checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N);
-                    checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN);
+                    checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N, false);
+                    checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN, false);
                     if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                     {
                         outBestCU = m_interCU_Nx2N[depth];
@@ -1195,7 +1195,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             if (!m_param->bEnableEarlySkip)
             {
                 // 2Nx2N, NxN
-                checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2Nx2N);
+                checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2Nx2N, false);
                 outTempCU->initEstData();
                 if (m_param->bEnableCbfFastMode)
                     doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
@@ -1212,7 +1212,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                 // 2Nx2N, NxN
                 if (cu->log2CUSize != 3 && depth == g_maxCUDepth && doNotBlockPu)
                 {
-                    checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_NxN);
+                    checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_NxN, false);
                     outTempCU->initEstData();
                 }
 
@@ -1221,14 +1221,14 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     // 2NxN, Nx2N
                     if (doNotBlockPu)
                     {
-                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_Nx2N);
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_Nx2N, false);
                         outTempCU->initEstData();
                         if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_Nx2N)
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                     }
                     if (doNotBlockPu)
                     {
-                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxN);
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxN, false);
                         outTempCU->initEstData();
                         if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxN)
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
@@ -1248,14 +1248,14 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     {
                         if (doNotBlockPu)
                         {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU);
+                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU, false);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                         }
                         if (doNotBlockPu)
                         {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD);
+                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD, false);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
@@ -1284,14 +1284,14 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     {
                         if (doNotBlockPu)
                         {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N);
+                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N, false);
                             outTempCU->initEstData();
                             if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
                                 doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                         }
                         if (doNotBlockPu)
                         {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N);
+                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N, false);
                             outTempCU->initEstData();
                         }
                     }
@@ -1663,7 +1663,7 @@ void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outP
     }
 }
 
-void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cuData, PartSize partSize, bool bUseMRG)
+void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cuData, PartSize partSize, bool bMergeOnly)
 {
     uint32_t depth = outTempCU->getDepth(0);
 
@@ -1672,7 +1672,7 @@ void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, 
     outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
     outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
-    if (predInterSearch(outTempCU, cuData, m_tmpPredYuv[depth], bUseMRG, true))
+    if (predInterSearch(outTempCU, cuData, m_tmpPredYuv[depth], bMergeOnly, true))
     {
         encodeResAndCalcRdInterCU(outTempCU, cuData, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
         checkDQP(outTempCU);
