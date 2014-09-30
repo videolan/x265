@@ -174,9 +174,9 @@ void SAO::allocSaoParam(SAOParam *saoParam) const
     saoParam->numCuInWidth  = m_numCuInWidth;
     saoParam->numCuInHeight = m_numCuInHeight;
 
-    saoParam->saoLcuParam[0] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->saoLcuParam[1] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->saoLcuParam[2] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->ctuParam[0] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->ctuParam[1] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    saoParam->ctuParam[2] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
 }
 
 /* reset SAO parameters once per frame */
@@ -184,9 +184,9 @@ void SAO::resetSAOParam(SAOParam *saoParam)
 {
     saoParam->bSaoFlag[0] = false;
     saoParam->bSaoFlag[1] = false;
-    resetLcuPart(saoParam->saoLcuParam[0]);
-    resetLcuPart(saoParam->saoLcuParam[1]);
-    resetLcuPart(saoParam->saoLcuParam[2]);
+    resetLcuPart(saoParam->ctuParam[0]);
+    resetLcuPart(saoParam->ctuParam[1]);
+    resetLcuPart(saoParam->ctuParam[2]);
 }
 
 void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
@@ -1294,10 +1294,10 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 }
             }
 
-            saoParam->saoLcuParam[compIdx][addr].typeIdx       = -1;
-            saoParam->saoLcuParam[compIdx][addr].mergeUpFlag   = 0;
-            saoParam->saoLcuParam[compIdx][addr].mergeLeftFlag = 0;
-            saoParam->saoLcuParam[compIdx][addr].subTypeIdx    = 0;
+            saoParam->ctuParam[compIdx][addr].typeIdx       = -1;
+            saoParam->ctuParam[compIdx][addr].mergeUpFlag   = 0;
+            saoParam->ctuParam[compIdx][addr].mergeLeftFlag = 0;
+            saoParam->ctuParam[compIdx][addr].subTypeIdx    = 0;
             if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
                 calcSaoStatsCu(addr, compIdx);
         }
@@ -1320,7 +1320,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             for (compIdx = 0; compIdx < 3; compIdx++)
             {
                 if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                    m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[compIdx][addr], compIdx);
+                    m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[compIdx][addr], compIdx);
             }
 
             rate = m_entropyCoder.getNumberOfWrittenBits();
@@ -1350,15 +1350,15 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                             mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = !mergeUp;
                             mergeSaoParam[compIdx][mergeUp].mergeUpFlag = !!mergeUp;
                             if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                                copySaoUnit(&saoParam->saoLcuParam[compIdx][addr], &mergeSaoParam[compIdx][mergeUp]);
+                                copySaoUnit(&saoParam->ctuParam[compIdx][addr], &mergeSaoParam[compIdx][mergeUp]);
                         }
                     }
                 }
             }
 
-            if (saoParam->saoLcuParam[0][addr].typeIdx < 0)
+            if (saoParam->ctuParam[0][addr].typeIdx < 0)
                 m_numNoSao[0]++;
-            if (saoParam->saoLcuParam[1][addr].typeIdx < 0)
+            if (saoParam->ctuParam[1][addr].typeIdx < 0)
                 m_numNoSao[1] += 2;
             m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
             m_entropyCoder.store(m_rdEntropyCoders[0][CI_CURR_BEST]);
@@ -1451,7 +1451,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     int64_t estDist;
     int64_t bestDist;
 
-    SaoCtuParam* saoLcuParam = &(saoParam->saoLcuParam[0][addr]);
+    SaoCtuParam* saoLcuParam = &(saoParam->ctuParam[0][addr]);
     SaoCtuParam* saoLcuParamNeighbor = NULL;
 
     resetSaoUnit(saoLcuParam);
@@ -1535,9 +1535,9 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     {
         saoLcuParamNeighbor = NULL;
         if (allowMergeLeft && addrLeft >= 0 && idxNeighbor == 0)
-            saoLcuParamNeighbor = &(saoParam->saoLcuParam[0][addrLeft]);
+            saoLcuParamNeighbor = &(saoParam->ctuParam[0][addrLeft]);
         else if (allowMergeUp && addrUp >= 0 && idxNeighbor == 1)
-            saoLcuParamNeighbor = &(saoParam->saoLcuParam[0][addrUp]);
+            saoLcuParamNeighbor = &(saoParam->ctuParam[0][addrUp]);
         if (saoLcuParamNeighbor != NULL)
         {
             estDist = 0;
@@ -1570,7 +1570,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     int64_t estDist[2];
     int64_t bestDist = 0;
 
-    SaoCtuParam* saoLcuParam[2] = { &(saoParam->saoLcuParam[1][addr]), &(saoParam->saoLcuParam[2][addr]) };
+    SaoCtuParam* saoLcuParam[2] = { &(saoParam->ctuParam[1][addr]), &(saoParam->ctuParam[2][addr]) };
     SaoCtuParam* saoLcuParamNeighbor[2] = { NULL, NULL };
     SaoCtuParam* saoMergeParam[2][2];
 
@@ -1683,9 +1683,9 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
         {
             saoLcuParamNeighbor[compIdx] = NULL;
             if (allowMergeLeft && addrLeft >= 0 && idxNeighbor == 0)
-                saoLcuParamNeighbor[compIdx] = &(saoParam->saoLcuParam[compIdx + 1][addrLeft]);
+                saoLcuParamNeighbor[compIdx] = &(saoParam->ctuParam[compIdx + 1][addrLeft]);
             else if (allowMergeUp && addrUp >= 0 && idxNeighbor == 1)
-                saoLcuParamNeighbor[compIdx] = &(saoParam->saoLcuParam[compIdx + 1][addrUp]);
+                saoLcuParamNeighbor[compIdx] = &(saoParam->ctuParam[compIdx + 1][addrUp]);
             if (saoLcuParamNeighbor[compIdx] != NULL)
             {
                 estDist[compIdx] = 0;

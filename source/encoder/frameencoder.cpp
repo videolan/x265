@@ -432,8 +432,8 @@ void FrameEncoder::encodeSlice()
         {
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
-                int mergeLeft = saoParam->saoLcuParam[0][cuAddr].mergeLeftFlag && col;
-                int mergeUp = saoParam->saoLcuParam[0][cuAddr].mergeUpFlag && lin;
+                int mergeLeft = saoParam->ctuParam[0][cuAddr].mergeLeftFlag && col;
+                int mergeUp = saoParam->ctuParam[0][cuAddr].mergeUpFlag && lin;
                 if (col)
                     m_entropyCoder.codeSaoMerge(mergeLeft);
                 if (lin && !mergeLeft)
@@ -441,18 +441,18 @@ void FrameEncoder::encodeSlice()
                 if (!mergeLeft && !mergeUp)
                 {
                     if (saoParam->bSaoFlag[0])
-                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[0][cuAddr], 0);
+                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[0][cuAddr], 0);
                     if (saoParam->bSaoFlag[1])
                     {
-                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[1][cuAddr], 1);
-                        m_entropyCoder.codeSaoOffset(&saoParam->saoLcuParam[2][cuAddr], 2);
+                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[1][cuAddr], 1);
+                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[2][cuAddr], 2);
                     }
                 }
             }
             else
             {
                 for (int i = 0; i < 3; i++)
-                    saoParam->saoLcuParam[i][cuAddr].reset();
+                    saoParam->ctuParam[i][cuAddr].reset();
             }
         }
 

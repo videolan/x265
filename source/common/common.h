@@ -244,7 +244,7 @@ struct SaoCtuParam
 
 struct SAOParam
 {
-    SaoCtuParam* saoLcuParam[3];
+    SaoCtuParam* ctuParam[3];
     bool         bSaoFlag[2];
     int          numCuInHeight;
     int          numCuInWidth;
@@ -252,13 +252,13 @@ struct SAOParam
     SAOParam()
     {
         for (int i = 0; i < 3; i++)
-            saoLcuParam[i] = NULL;
+            ctuParam[i] = NULL;
     }
     ~SAOParam()
     {
-        delete[] saoLcuParam[0];
-        delete[] saoLcuParam[1];
-        delete[] saoLcuParam[2];
+        delete[] ctuParam[0];
+        delete[] ctuParam[1];
+        delete[] ctuParam[2];
     }
 };
 

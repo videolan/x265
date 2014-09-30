@@ -420,12 +420,12 @@ void FrameFilter::processSao(int row)
     SAOParam* saoParam = m_frame->getPicSym()->m_saoParam;
 
     if (saoParam->bSaoFlag[0])
-        m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);
+        m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
 
     if (saoParam->bSaoFlag[1])
     {
-        m_sao.processSaoUnitRow(saoParam->saoLcuParam[1], row, 1);
-        m_sao.processSaoUnitRow(saoParam->saoLcuParam[2], row, 2);
+        m_sao.processSaoUnitRow(saoParam->ctuParam[1], row, 1);
+        m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
     }
 
     if (m_frame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
