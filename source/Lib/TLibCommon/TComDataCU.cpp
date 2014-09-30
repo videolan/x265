@@ -177,6 +177,8 @@ void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, 
         m_tqBypassOrigYuv[1] = m_tqBypassOrigYuv[0]                       + sizeL;
         m_tqBypassOrigYuv[2] = m_tqBypassOrigYuv[0]                       + sizeL + sizeC;
     }
+    else
+        m_tqBypassOrigYuv[0] = m_tqBypassOrigYuv[1] = m_tqBypassOrigYuv[2] = NULL;
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
 }
