@@ -1247,10 +1247,6 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
         p->bEnableWavefront = 0;
     }
-    if (!p->saoLcuBasedOptimization && p->frameNumThreads > 1)
-    {
-        x265_log(p, X265_LOG_INFO, "Warning: picture-based SAO used with frame parallelism\n");
-    }
 
     if (p->keyframeMax < 0)
     {

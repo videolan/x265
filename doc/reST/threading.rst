@@ -120,11 +120,7 @@ parallelism is in use.
 
 :option:`--merange` can have a negative impact on frame parallelism. If
 the range is too large, more rows of CTU lag must be added to ensure
-those pixels are available in the reference frames.  Similarly
-:option:`--sao-lcu-opt` 0 will cause SAO to be performed over the
-entire picture at once (rather than being CTU based), which prevents any
-motion reference pixels from being available until the entire frame has
-been encoded, which prevents any real frame parallelism at all.
+those pixels are available in the reference frames.
 
 .. note::
 

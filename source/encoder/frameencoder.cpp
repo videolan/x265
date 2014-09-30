@@ -85,7 +85,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_param = top->m_param;
     m_numRows = numRows;
     m_numCols = numCols;
-    m_filterRowDelay = (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary) ?
+    m_filterRowDelay = (m_param->bEnableSAO && m_param->saoLcuBoundary) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
 
@@ -321,17 +321,6 @@ void FrameEncoder::compressFrame()
         m_frameStats.percentIntra = (double)totalI / totalCuCount;
         m_frameStats.percentInter = (double)totalP / totalCuCount;
         m_frameStats.percentSkip  = (double)totalSkip / totalCuCount;
-    }
-
-    if (slice->m_sps->bUseSAO && !m_param->saoLcuBasedOptimization)
-    {
-        /* frame based SAO */
-        m_frameFilter.m_sao.SAOProcess(m_frame->getPicSym()->m_saoParam);
-        restoreLFDisabledOrigYuv(m_frame);
-
-        // Extend border after whole-frame SAO is finished
-        for (int row = 0; row < m_numRows; row++)
-            m_frameFilter.processRowPost(row);
     }
 
     m_bs.resetBits();
@@ -799,7 +788,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         // NOTE: do CU level Filter
-        if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization && m_param->saoLcuBoundary)
+        if (m_param->bEnableSAO && m_param->saoLcuBoundary)
             // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 

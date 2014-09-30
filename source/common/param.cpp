@@ -169,7 +169,6 @@ void x265_param_default(x265_param *param)
     /* SAO Loop Filter */
     param->bEnableSAO = 1;
     param->saoLcuBoundary = 0;
-    param->saoLcuBasedOptimization = 1;
 
     /* Coding Quality */
     param->cbQpOffset = 0;
@@ -625,7 +624,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("lft") p->bEnableLoopFilter = atobool(value);
     OPT("sao") p->bEnableSAO = atobool(value);
     OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
-    OPT("sao-lcu-opt") p->saoLcuBasedOptimization = atoi(value);
     OPT("ssim") p->bEnableSsim = atobool(value);
     OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
@@ -1165,13 +1163,7 @@ void x265_print_params(x265_param *param)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
-    if (param->bEnableSAO)
-    {
-        if (param->saoLcuBasedOptimization)
-            fprintf(stderr, "sao-lcu ");
-        else
-            fprintf(stderr, "sao-frame ");
-    }
+    TOOLOPT(param->bEnableSAO, "sao");
     TOOLOPT(param->bEnableSignHiding, "signhide");
     TOOLOPT(param->bCULossless, "cu-lossless");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
@@ -1245,7 +1237,6 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableLoopFilter, "lft");
     BOOL(p->bEnableSAO, "sao");
     s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
-    s += sprintf(s, " sao-lcu-opt=%d", p->saoLcuBasedOptimization);
     BOOL(p->bBPyramid, "b-pyramid");
     BOOL(p->rc.cuTree, "cutree");
     s += sprintf(s, " rc=%s", p->rc.rateControlMode == X265_RC_ABR ? (

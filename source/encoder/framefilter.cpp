@@ -115,20 +115,15 @@ void FrameFilter::processRow(int row)
     SAOParam* saoParam = m_frame->getPicSym()->m_saoParam;
     if (m_param->bEnableSAO)
     {
-        if (m_param->saoLcuBasedOptimization)
-        {
-            m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
-            m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(m_frameEncoder->m_initSliceContext);
-            m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(m_frameEncoder->m_initSliceContext);
 
-            m_sao.rdoSaoUnitRow(saoParam, row);
+        m_sao.rdoSaoUnitRow(saoParam, row);
 
-            // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
-            if (row >= m_saoRowDelay)
-                processSao(row - m_saoRowDelay);
-        }
-        else
-            return;
+        // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
+        if (row >= m_saoRowDelay)
+            processSao(row - m_saoRowDelay);
     }
 
     // this row of CTUs has been encoded
@@ -138,7 +133,7 @@ void FrameFilter::processRow(int row)
 
     if (row == m_numRows - 1)
     {
-        if (m_param->bEnableSAO && m_param->saoLcuBasedOptimization)
+        if (m_param->bEnableSAO)
         {
             m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->getNumCUsInFrame());
 
@@ -423,9 +418,6 @@ void FrameFilter::processSao(int row)
     const uint32_t numCols = m_frame->getPicSym()->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
     SAOParam* saoParam = m_frame->getPicSym()->m_saoParam;
-
-    // NOTE: these flags are not used in this mode
-    X265_CHECK(!saoParam->oneUnitFlag[0] && !saoParam->oneUnitFlag[1] && !saoParam->oneUnitFlag[2], "invalid SAO flag");
 
     if (saoParam->bSaoFlag[0])
         m_sao.processSaoUnitRow(saoParam->saoLcuParam[0], row, 0);

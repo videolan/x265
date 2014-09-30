@@ -212,34 +212,6 @@ struct NoiseReduction
     uint32_t count[8];
 };
 
-struct SAOQTPart
-{
-    enum { NUM_DOWN_PART = 4 };
-
-    int     bestType;
-    int     subTypeIdx;  // indicates EO class or BO band position
-    int     offset[SAO_NUM_OFFSET];
-    int     startCUX;
-    int     startCUY;
-    int     endCUX;
-    int     endCUY;
-
-    int     partIdx;
-    int     partLevel;
-    int     partCol;
-    int     partRow;
-
-    int     downPartsIdx[NUM_DOWN_PART];
-    int     upPartIdx;
-
-    bool    bSplit;
-
-    bool    bProcessed;
-    double  minCost;
-    int64_t minDist;
-    int     minRate;
-};
-
 struct SaoLcuParam
 {
     bool mergeUpFlag;
@@ -266,10 +238,7 @@ struct SaoLcuParam
 struct SAOParam
 {
     SaoLcuParam* saoLcuParam[3];
-    SAOQTPart*   saoPart[3];
     bool         bSaoFlag[2];
-    bool         oneUnitFlag[3];
-    int          maxSplitLevel;
     int          numCuInHeight;
     int          numCuInWidth;
 
@@ -277,15 +246,11 @@ struct SAOParam
     {
         for (int i = 0; i < 3; i++)
         {
-            saoPart[i] = NULL;
             saoLcuParam[i] = NULL;
         }
     }
     ~SAOParam()
     {
-        delete[] saoPart[0];
-        delete[] saoPart[1];
-        delete[] saoPart[2];
         delete[] saoLcuParam[0];
         delete[] saoLcuParam[1];
         delete[] saoLcuParam[2];

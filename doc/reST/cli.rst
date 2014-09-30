@@ -954,14 +954,6 @@ Loop filters
 	0. right/bottom boundary areas skipped **(default)**
 	1. non-deblocked pixels are used
 
-.. option:: --sao-lcu-opt <0|1>
-
-	Frame level or block level optimization
-
-	0. SAO picture-based optimization (prevents frame parallelism,
-	   effectively causes :option:`--frame-threads` 1)
-	1. SAO LCU-based optimization **(default)**
-
 VUI (Video Usability Information) options
 =========================================
 

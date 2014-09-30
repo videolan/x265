@@ -734,12 +734,6 @@ typedef struct x265_param
      * pixels are used entirely. Default is 0 */
     int       saoLcuBoundary;
 
-    /* Select the scope of the SAO optimization. If 0 SAO is performed over the
-     * entire output picture at once, this can severly restrict frame
-     * parallelism so it is not recommended for many-core machines.  If 1 SAO is
-     * performed on LCUs in series. Default is 1 */
-    int       saoLcuBasedOptimization;
-
     /* Generally a small signed integer which offsets the QP used to quantize
      * the Cb chroma residual (delta from luma QP specified by rate-control).
      * Default is 0, which is recommended */
