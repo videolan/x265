@@ -65,6 +65,7 @@ public:
     Entropy       (*m_rdEntropyCoders)[CI_NUM];
 
     TComYuv         m_predTempYuv;
+    TComYuv         m_bidirPredYuv[2];
     ShortYuv*       m_qtTempShortYuv;
     coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempCbf[3];

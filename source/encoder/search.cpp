@@ -61,6 +61,8 @@ Search::~Search()
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
     m_predTempYuv.destroy();
+    m_bidirPredYuv[0].destroy();
+    m_bidirPredYuv[1].destroy();
 
     delete[] m_qtTempShortYuv;
 }
@@ -79,6 +81,8 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
     ok &= Predict::allocBuffers(param->internalCsp);
     ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
+    ok &= m_bidirPredYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
+    ok &= m_bidirPredYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
@@ -1676,16 +1680,12 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
     int      numPredDir = slice->isInterP() ? 1 : 2;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
-    TComYuv   m_predYuv[2];
 
     const int* numRefIdx = slice->m_numRefIdx;
 
     MergeData merge;
 
     memset(&merge, 0, sizeof(merge));
-
-    m_predYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
-    m_predYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
 
     for (int partIdx = 0; partIdx < numPart; partIdx++)
     {
@@ -1813,14 +1813,14 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
             TComPicYuv *refPic1 = slice->m_refPicList[1][list[1].ref]->getPicYuvRec();
             
             prepMotionCompensation(cu, cuData, partIdx);
-            predInterLumaBlk(refPic0, &m_predYuv[0], &list[0].mv);
-            predInterLumaBlk(refPic1, &m_predYuv[1], &list[1].mv);
+            predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &list[0].mv);
+            predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &list[1].mv);
 
-            pixel *pred0 = m_predYuv[0].getLumaAddr(partAddr);
-            pixel *pred1 = m_predYuv[1].getLumaAddr(partAddr);
+            pixel *pred0 = m_bidirPredYuv[0].getLumaAddr(partAddr);
+            pixel *pred1 = m_bidirPredYuv[1].getLumaAddr(partAddr);
 
             int partEnum = partitionFromSizes(roiWidth, roiHeight);
-            primitives.pixelavg_pp[partEnum](avg, roiWidth, pred0, m_predYuv[0].getStride(), pred1, m_predYuv[1].getStride(), 32);
+            primitives.pixelavg_pp[partEnum](avg, roiWidth, pred0, m_bidirPredYuv[0].getStride(), pred1, m_bidirPredYuv[1].getStride(), 32);
             int satdCost = m_me.bufSATD(avg, roiWidth);
 
             bidirBits = list[0].bits + list[1].bits + listSelBits[2] - (listSelBits[0] + listSelBits[1]);
@@ -1941,9 +1941,6 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
         prepMotionCompensation(cu, cuData, partIdx);
         motionCompensation(predYuv, true, bChroma);
     }
-
-    m_predYuv[0].destroy();
-    m_predYuv[1].destroy();
 
     x265_emms();
     cu->m_totalBits = totalmebits;
