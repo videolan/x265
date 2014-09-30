@@ -87,13 +87,12 @@ public:
     MV*       m_mvd;
     char*     m_refIdx;
     uint32_t  m_numPartitions;
-
-    template<typename T>
-    void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
+    MVFieldMemPool m_mvFieldMemPool;
 
     TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
 
-    MVFieldMemPool m_MVFieldMemPool;
+    template<typename T>
+    void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
 
     bool initialize(uint32_t numPartition, uint32_t numBlocks);
     void create(TComCUMvField *p, uint32_t numPartition, int index, int idx);
