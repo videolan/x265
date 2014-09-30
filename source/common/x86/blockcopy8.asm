@@ -1826,6 +1826,34 @@ RET
 
 BLOCKFILL_S_W16_H8 16, 16
 
+INIT_YMM avx2
+cglobal blockfill_s_16x16, 3, 4, 1
+add          r1, r1
+lea          r3, [3 * r1]
+movd         xm0, r2d
+vpbroadcastw m0, xm0
+
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+RET
+
 ;-----------------------------------------------------------------------------
 ; void blockfill_s_%1x%2(int16_t *dest, intptr_t destride, int16_t val)
 ;-----------------------------------------------------------------------------

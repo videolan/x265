@@ -1760,6 +1760,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.copy_cnt[BLOCK_16x16] = x265_copy_cnt_16_avx2;
         p.copy_cnt[BLOCK_32x32] = x265_copy_cnt_32_avx2;
 
+        p.blockfill_s[BLOCK_16x16] = x265_blockfill_s_16x16_avx2;
 
         p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_avx2;
         p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_avx2;
