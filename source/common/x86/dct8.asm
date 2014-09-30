@@ -240,6 +240,15 @@ tab_idct32_4:   dw 64, 90, 89, 87, 83, 80, 75, 70, 64, 57, 50, 43, 36, 25, 18, 9
 avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
                 dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
 
+avx2_idct4_1:   dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
+                dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36 ,-83, 36, -83
+
+avx2_idct4_2:   dw 64, 64, 64, -64, 83, 36, 36, -83
+
+idct4_shuf1:    times 2 db 0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15
+
+idct4_shuf2:    times 2 db 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8 ,9 ,10, 11
+
 tab_dct4:       times 4 dw 64, 64
                 times 4 dw 83, 36
                 times 4 dw 64, -64
@@ -2600,5 +2609,76 @@ cglobal idct32, 3, 6, 16, 0-32*64
     add             r3, 64
     dec             r4d
     jnz             .pass2
+    RET
+
+;-------------------------------------------------------
+; void idct4(int32_t *src, int16_t *dst, intptr_t stride)
+;-------------------------------------------------------
+INIT_YMM avx2
+cglobal idct4, 3, 4, 6
+
+%define             IDCT_SHIFT1         7
+%if BIT_DEPTH == 10
+    %define         IDCT_SHIFT2        10
+    vpbroadcastd    m5,                [pd_512]
+%elif BIT_DEPTH == 8
+    %define         IDCT_SHIFT2        12
+    vpbroadcastd    m5,                [pd_2048]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    vbroadcasti128  m4, [pd_64]
+
+    add             r2d, r2d
+    lea             r3, [r2 * 3]
+
+    movu            m0, [r0]                      ;[00 01 02 03 10 11 12 13]
+    movu            m1, [r0 + 32]                 ;[20 21 22 23 30 31 32 33]
+
+    packssdw        m0, m1                        ;[00 01 02 03 20 21 22 23 10 11 12 13 30 31 32 33]
+    pshufb          m0, [idct4_shuf1]             ;[00 20 02 22 01 21 03 23 10 30 12 32 11 31 13 33]
+    vpermq          m2, m0, 0x44                  ;[00 20 02 22 01 21 03 23 00 20 02 22 01 21 03 23]
+    vpermq          m0, m0, 0xEE                  ;[10 30 12 32 11 31 13 33 10 30 12 32 11 31 13 33]
+
+    mova            m1, [avx2_idct4_1]
+    mova            m3, [avx2_idct4_1 + 32]
+    pmaddwd         m1, m2
+    pmaddwd         m3, m0
+
+    paddd           m0, m1, m3
+    paddd           m0, m4
+    psrad           m0, IDCT_SHIFT1               ;[00 20 10 30 01 21 11 31]
+
+    psubd           m1, m3
+    paddd           m1, m4
+    psrad           m1, IDCT_SHIFT1               ;[03 23 13 33 02 22 12 32]
+
+    packssdw        m0, m1                        ;[00 20 10 30 03 23 13 33 01 21 11 31 02 22 12 32]
+    vmovshdup       m1, m0                        ;[10 30 10 30 13 33 13 33 11 31 11 31 12 32 12 32]
+    vmovsldup       m0, m0                        ;[00 20 00 20 03 23 03 23 01 21 01 21 02 22 02 22]
+
+    vpbroadcastq    m2, [avx2_idct4_2]
+    vpbroadcastq    m3, [avx2_idct4_2 + 8]
+    pmaddwd         m0, m2
+    pmaddwd         m1, m3
+
+    paddd           m2, m0, m1
+    paddd           m2, m5
+    psrad           m2, IDCT_SHIFT2               ;[00 01 10 11 30 31 20 21]
+
+    psubd           m0, m1
+    paddd           m0, m5
+    psrad           m0, IDCT_SHIFT2               ;[03 02 13 12 33 32 23 22]
+
+    pshufb          m0, [idct4_shuf2]             ;[02 03 12 13 32 33 22 23]
+    punpcklqdq      m1, m2, m0                    ;[00 01 02 03 10 11 12 13]
+    punpckhqdq      m2, m0                        ;[30 31 32 33 20 21 22 23]
+    packssdw        m1, m2                        ;[00 01 02 03 30 31 32 33 10 11 12 13 20 21 22 23]
+    vextracti128    xm0, m1, 1
+
+    movq            [r1], xm1
+    movq            [r1 + r2], xm0
+    movhps          [r1 + 2 * r2], xm0
+    movhps          [r1 + r3], xm1
     RET
 %endif

@@ -1448,6 +1448,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dct[DCT_8x8] = x265_dct8_avx2;
         p.dct[DCT_16x16] = x265_dct16_avx2;
         p.dct[DCT_32x32] = x265_dct32_avx2;
+        p.idct[IDCT_4x4] = x265_idct4_avx2;
         p.idct[IDCT_8x8] = x265_idct8_avx2;
         p.idct[IDCT_16x16] = x265_idct16_avx2;
         p.idct[IDCT_32x32] = x265_idct32_avx2;
@@ -1787,6 +1788,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.dct[DCT_8x8] = x265_dct8_avx2;
         p.dct[DCT_16x16] = x265_dct16_avx2;
         p.dct[DCT_32x32] = x265_dct32_avx2;
+        p.idct[IDCT_4x4] = x265_idct4_avx2;
         p.idct[IDCT_8x8] = x265_idct8_avx2;
         p.idct[IDCT_16x16] = x265_idct16_avx2;
         p.idct[IDCT_32x32] = x265_idct32_avx2;
