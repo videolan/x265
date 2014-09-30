@@ -1902,7 +1902,85 @@ RET
 
 BLOCKFILL_S_W32_H4 32, 32
 
+INIT_YMM avx2
+cglobal blockfill_s_32x32, 3, 4, 1
+add          r1, r1
+lea          r3, [3 * r1]
+movd         xm0, r2d
+vpbroadcastw m0, xm0
 
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_2x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
