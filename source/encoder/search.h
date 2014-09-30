@@ -105,11 +105,11 @@ protected:
 
     void     xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
     void     xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
-    void     xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx);
-    void     xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx);
+    void     xEncIntraHeaderLuma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx);
+    void     xEncIntraHeaderChroma(TComDataCU* cu, CU* cuData, uint32_t absPartIdx);
 
-    uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep);
-    uint32_t xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2]);
+    uint32_t xGetIntraBitsQTChroma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep);
+    uint32_t xGetIntraBitsLuma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2]);
     uint32_t xGetIntraBitsChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, coeff_t* coeff);
     uint32_t xIntraCodingLumaBlk(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t log2TrSize, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
                                  int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf);

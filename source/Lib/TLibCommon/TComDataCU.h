@@ -115,6 +115,7 @@ struct CU
     uint32_t childIdx;   // Index of the first child CU
     uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
     uint32_t flags;      // CU flags.
+    uint32_t numPartitions;// Number of 4x4 blocks in the CU
 };
 
 // Partition count table, index represents partitioning mode.
@@ -276,7 +277,7 @@ public:
     void          loadCTUData(uint32_t maxCUSize);
 
     void          copyToSubCU(TComDataCU* lcu, CU* cuData, uint32_t partUnitIdx, uint32_t depth);
-    void          copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
+    void          copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
@@ -509,8 +510,6 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for RD cost storage
     // -------------------------------------------------------------------------------------------------------------------
-
-    uint32_t&     getTotalNumPart()     { return m_numPartitions; }
 
     ScanType      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra);
     void          getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma);

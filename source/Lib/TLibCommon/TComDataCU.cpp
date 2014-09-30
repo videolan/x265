@@ -409,7 +409,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uin
     m_mvBits           = 0;
     m_coeffBits        = 0;
 
-    m_numPartitions    = cu->getTotalNumPart() >> 2;
+    m_numPartitions    = cuData->numPartitions;
 
     for (int i = 0; i < 4; i++)
     {
@@ -456,7 +456,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, u
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
-    uint32_t partOffset = (cu->getTotalNumPart() >> 2) * partUnitIdx;
+    uint32_t partOffset = cuData->numPartitions * partUnitIdx;
 
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
@@ -474,7 +474,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, u
     m_totalBits        = 0;
     m_mvBits           = 0;
     m_coeffBits        = 0;
-    m_numPartitions    = cu->getTotalNumPart() >> 2;
+    m_numPartitions    = cuData->numPartitions;
 
     TComDataCU* otherCU = m_pic->getCU(m_cuAddr);
     int sizeInChar  = sizeof(char) * m_numPartitions;
@@ -496,7 +496,7 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, u
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
+void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     if (isRDObasedAnalysis)
@@ -511,8 +511,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     m_mvBits           += cu->m_mvBits;
     m_coeffBits        += cu->m_coeffBits;
 
-    uint32_t offset       = cu->getTotalNumPart() * partUnitIdx;
-    uint32_t numPartition = cu->getTotalNumPart();
+    uint32_t offset       = cuData->numPartitions * partUnitIdx;
+    uint32_t numPartition = cuData->numPartitions;
     int sizeInBool  = sizeof(bool) * numPartition;
     int sizeInChar  = sizeof(char) * numPartition;
     memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
@@ -544,8 +544,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, uint32_t partUnitIdx, uint32_t dep
     m_cuAbove          = cu->getCUAbove();
     m_cuLeft           = cu->getCULeft();
 
-    m_cuMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cu->getTotalNumPart(), offset);
-    m_cuMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cu->getTotalNumPart(), offset);
+    m_cuMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cuData->numPartitions, offset);
+    m_cuMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cuData->numPartitions, offset);
 
     uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmp2 = partUnitIdx * tmp;
@@ -2435,6 +2435,7 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
                 cu->childIdx = child_idx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->flags = 0;
+                cu->numPartitions = (NUM_CU_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
 
                 CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);
                 CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, split_mandatory_flag);

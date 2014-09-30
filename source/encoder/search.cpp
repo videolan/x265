@@ -202,7 +202,7 @@ void Search::xEncCoeffQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
     }
 }
 
-void Search::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx)
+void Search::xEncIntraHeaderLuma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx)
 {
     // CU header
     if (!absPartIdx)
@@ -225,7 +225,7 @@ void Search::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absP
     }
     else
     {
-        uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
+        uint32_t qtNumParts = cuData->numPartitions >> 2;
         if (!trDepth)
         {
             X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
@@ -237,7 +237,7 @@ void Search::xEncIntraHeaderLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absP
     }
 }
 
-void Search::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
+void Search::xEncIntraHeaderChroma(TComDataCU* cu, CU* cuData, uint32_t absPartIdx)
 {
     // chroma prediction mode
     if (cu->getPartitionSize(0) == SIZE_2Nx2N || cu->getChromaFormat() != X265_CSP_I444)
@@ -247,27 +247,27 @@ void Search::xEncIntraHeaderChroma(TComDataCU* cu, uint32_t absPartIdx)
     }
     else
     {
-        uint32_t qtNumParts = cu->getTotalNumPart() >> 2;
+        uint32_t qtNumParts = cuData->numPartitions >> 2;
         if (!(absPartIdx & (qtNumParts - 1)))
             m_entropyCoder.codeIntraDirChroma(cu, absPartIdx);
     }
 }
 
-uint32_t Search::xGetIntraBitsQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep)
+uint32_t Search::xGetIntraBitsQTChroma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep)
 {
     int cuSize = 1 << cu->getLog2CUSize(absPartIdx);
     m_entropyCoder.resetBits();
-    xEncIntraHeaderChroma(cu, absPartIdx);
+    xEncIntraHeaderChroma(cu, cuData, absPartIdx);
     xEncSubdivCbfQTChroma(cu, trDepth, absPartIdx, absPartIdxStep, cuSize, cuSize);
     xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
     xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
     return m_entropyCoder.getNumberOfWrittenBits();
 }
 
-uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2])
+uint32_t Search::xGetIntraBitsLuma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, coeff_t* coeff, uint32_t depthRange[2])
 {
     m_entropyCoder.resetBits();
-    xEncIntraHeaderLuma(cu, trDepth, absPartIdx);
+    xEncIntraHeaderLuma(cu, cuData, trDepth, absPartIdx);
 
     // Transform subdiv flag
     if (log2TrSize != *depthRange)
@@ -515,7 +515,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, CU* cuData, uint32_t trDept
                     break;
                 else
                 {
-                    singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
+                    singleBits = xGetIntraBitsLuma(cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
                     if (m_rdCost.m_psyRd)
                         singleCostTmp = m_rdCost.calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
                     else
@@ -569,7 +569,7 @@ uint32_t Search::xRecurIntraCodingQT(TComDataCU* cu, CU* cuData, uint32_t trDept
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
-            singleBits = xGetIntraBitsLuma(cu, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
+            singleBits = xGetIntraBitsLuma(cu, cuData, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
             if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
                 singleBits *= 4;
 
@@ -1219,7 +1219,7 @@ void Search::estIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYu
     uint32_t numPU        = 1 << (2 * initTrDepth);
     uint32_t log2TrSize   = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
-    uint32_t qNumParts    = cu->getTotalNumPart() >> 2;
+    uint32_t qNumParts    = cuData->numPartitions >> 2;
     uint32_t sizeIdx      = log2TrSize - 2;
     uint32_t partOffset   = 0;
     uint32_t srcstride   = reconYuv->getStride();
@@ -1396,7 +1396,7 @@ void Search::sharedEstIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, 
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
     uint32_t numPU       = 1 << (2 * initTrDepth);
     uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
-    uint32_t qNumParts   = cu->getTotalNumPart() >> 2;
+    uint32_t qNumParts   = cuData->numPartitions >> 2;
 
     // loop over partitions
     uint32_t partOffset  = 0;
@@ -1540,7 +1540,7 @@ void Search::estIntraPredChromaQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, 
             if (cu->m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
 
-            uint32_t bits = xGetIntraBitsQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep);
+            uint32_t bits = xGetIntraBitsQTChroma(cu, cuData, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep);
             uint64_t cost = 0; 
             if (m_rdCost.m_psyRd)
                 cost = m_rdCost.calcPsyRdCost(dist, bits, psyEnergy);
