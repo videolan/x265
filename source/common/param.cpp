@@ -168,7 +168,7 @@ void x265_param_default(x265_param *param)
 
     /* SAO Loop Filter */
     param->bEnableSAO = 1;
-    param->saoLcuBoundary = 0;
+    param->bSaoNonDeblocked = 0;
 
     /* Coding Quality */
     param->cbQpOffset = 0;
@@ -623,7 +623,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value);
     OPT("sao") p->bEnableSAO = atobool(value);
-    OPT("sao-lcu-bounds") p->saoLcuBoundary = atoi(value);
+    OPT("sao-non-deblock") p->bSaoNonDeblocked = atobool(value);
     OPT("ssim") p->bEnableSsim = atobool(value);
     OPT("psnr") p->bEnablePsnr = atobool(value);
     OPT("hash") p->decodedPictureHashSEI = atoi(value);
@@ -1163,17 +1163,13 @@ void x265_print_params(x265_param *param)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
 
     TOOLOPT(param->bEnableLoopFilter, "lft");
-    TOOLOPT(param->bEnableSAO, "sao");
+    if (param->bEnableSAO)
+        fprintf(stderr, "sao%s ", param->bSaoNonDeblocked ? "-non-deblock" : "");
     TOOLOPT(param->bEnableSignHiding, "signhide");
     TOOLOPT(param->bCULossless, "cu-lossless");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     if (param->bEnableTransformSkip)
-    {
-        if (param->bEnableTSkipFast)
-            fprintf(stderr, "tskip(fast) ");
-        else
-            fprintf(stderr, "tskip ");
-    }
+        fprintf(stderr, "tskip%s ", param->bEnableTSkipFast ? "-fast" : "");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
     fprintf(stderr, "\n");
@@ -1236,7 +1232,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "lft");
     BOOL(p->bEnableSAO, "sao");
-    s += sprintf(s, " sao-lcu-bounds=%d", p->saoLcuBoundary);
+    BOOL(p->bSaoNonDeblocked, "sao-non-deblock");
     BOOL(p->bBPyramid, "b-pyramid");
     BOOL(p->rc.cuTree, "cutree");
     s += sprintf(s, " rc=%s", p->rc.rateControlMode == X265_RC_ABR ? (

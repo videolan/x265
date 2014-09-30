@@ -85,7 +85,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_param = top->m_param;
     m_numRows = numRows;
     m_numCols = numCols;
-    m_filterRowDelay = (m_param->bEnableSAO && m_param->saoLcuBoundary) ?
+    m_filterRowDelay = (m_param->bEnableSAO && m_param->bSaoNonDeblocked) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
 
@@ -789,7 +789,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         // NOTE: do CU level Filter
-        if (m_param->bEnableSAO && m_param->saoLcuBoundary)
+        if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
             // SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 

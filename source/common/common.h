@@ -252,9 +252,7 @@ struct SAOParam
     SAOParam()
     {
         for (int i = 0; i < 3; i++)
-        {
             saoLcuParam[i] = NULL;
-        }
     }
     ~SAOParam()
     {

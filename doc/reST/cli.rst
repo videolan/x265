@@ -947,12 +947,12 @@ Loop filters
 
 	Toggle Sample Adaptive Offset loop filter, default enabled
 
-.. option:: --sao-lcu-bounds <0|1>
+.. option:: --sao-non-deblock, --no-sao-non-deblock
 
-	How to handle depencency with deblocking filter
-
-	0. right/bottom boundary areas skipped **(default)**
-	1. non-deblocked pixels are used
+	Specify how to handle depencency between SAO and deblocking filter.
+	When enabled, non-deblocked pixels are used for SAO analysis. When
+	disabled, SAO analysis skips the right/bottom boundary areas.
+	Default disabled
 
 VUI (Video Usability Information) options
 =========================================

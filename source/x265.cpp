@@ -163,7 +163,8 @@ static const struct option long_options[] =
     { "lft",                  no_argument, NULL, 0 },
     { "no-sao",               no_argument, NULL, 0 },
     { "sao",                  no_argument, NULL, 0 },
-    { "sao-lcu-bounds", required_argument, NULL, 0 },
+    { "no-sao-non-deblock",   no_argument, NULL, 0 },
+    { "sao-non-deblock",      no_argument, NULL, 0 },
     { "no-ssim",              no_argument, NULL, 0 },
     { "ssim",                 no_argument, NULL, 0 },
     { "no-psnr",              no_argument, NULL, 0 },
@@ -455,7 +456,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
-    H0("   --sao-lcu-bounds <integer>    0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
+    H0("   --[no-]sao-non-deblock        Use non-deblocked pixels, else right/bottom boundary areas skipped. Default %d\n", param->bSaoNonDeblocked);
     H0("\nVUI options:\n");
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");

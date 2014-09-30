@@ -727,12 +727,12 @@ typedef struct x265_param
     int       bEnableSAO;
 
     /* Note: when deblocking and SAO are both enabled, the loop filter CU lag is
-     * only one row, as they operate in series o the same row. */
+     * only one row, as they operate in series on the same row. */
 
     /* Select the method in which SAO deals with deblocking boundary pixels.  If
-     * 0 the right and bottom boundary areas are skipped. If 1, non-deblocked
-     * pixels are used entirely. Default is 0 */
-    int       saoLcuBoundary;
+     * disabled the right and bottom boundary areas are skipped. If enabled,
+     * non-deblocked pixels are used entirely. Default is disabled */
+    int       bSaoNonDeblocked;
 
     /* Generally a small signed integer which offsets the QP used to quantize
      * the Cb chroma residual (delta from luma QP specified by rate-control).

@@ -671,7 +671,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     {
         const int boShift = X265_DEPTH - SAO_BO_BITS;
 
-        if (m_param->saoLcuBoundary)
+        if (m_param->bSaoNonDeblocked)
         {
             numSkipLine      = isChroma ? 3 - (2 * m_vChromaShift) : 3;
             numSkipLineRight = isChroma ? 4 - (2 * m_hChromaShift) : 4;
@@ -705,7 +705,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     {
         //if (iSaoType == EO_0)
         {
-            if (m_param->saoLcuBoundary)
+            if (m_param->bSaoNonDeblocked)
             {
                 numSkipLine      = isChroma ? 3 - (2 * m_vChromaShift) : 3;
                 numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -738,7 +738,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
         //if (iSaoType == EO_1)
         {
-            if (m_param->saoLcuBoundary)
+            if (m_param->bSaoNonDeblocked)
             {
                 numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = isChroma ? 4 - (2 * m_hChromaShift) : 4;
@@ -779,7 +779,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         }
         //if (iSaoType == EO_2)
         {
-            if (m_param->saoLcuBoundary)
+            if (m_param->bSaoNonDeblocked)
             {
                 numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -825,7 +825,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         }
         //if (iSaoType == EO_3)
         {
-            if (m_param->saoLcuBoundary)
+            if (m_param->bSaoNonDeblocked)
             {
                 numSkipLine      = isChroma ? 4 - (2 * m_vChromaShift) : 4;
                 numSkipLineRight = isChroma ? 5 - (2 * m_hChromaShift) : 5;
@@ -1281,7 +1281,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 for (k = 0; k < MAX_NUM_SAO_CLASS; k++)
                 {
                     m_offset[compIdx][j][k] = 0;
-                    if (m_param->saoLcuBoundary)
+                    if (m_param->bSaoNonDeblocked)
                     {
                         m_count[compIdx][j][k] = m_countPreDblk[addr][compIdx][j][k];
                         m_offsetOrg[compIdx][j][k] = m_offsetOrgPreDblk[addr][compIdx][j][k];
