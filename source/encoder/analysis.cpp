@@ -875,9 +875,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 m_bestMergeCU[depth]->initCU(pic, cuAddr);
             }
 
-            const int distributedAnalysis = 0 && m_param->rdLevel > 2; /* only RD 3, 4 supported here */
-
-            if (distributedAnalysis)
+            if (m_param->bDistributeModeAnalysis && m_param->rdLevel > 2) /* only RD 3, 4 supported here */
             {
                 /* with distributed analysis, we perform more speculative work.
                  * We do not have early outs for when skips are found so we
@@ -902,7 +900,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 /* the master worker thread (this one) does merge analysis */
                 checkMerge2Nx2N_rd0_4(m_bestMergeCU[depth], m_mergeCU[depth], cu, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
 
-                if (m_bestMergeCU[depth]->isSkipped(0))
+                if (m_param->bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0))
                 {
                     /* a SKIP was found, consume remaining jobs to conserve work */
                     JobProvider::dequeue();
@@ -926,7 +924,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 m_bJobsQueued = false;
                 m_modeCompletionEvent.wait();
 
-                if (m_bestMergeCU[depth]->isSkipped(0))
+                if (m_param->bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0))
                 {
                     outBestCU = m_bestMergeCU[depth];
                     std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);

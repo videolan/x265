@@ -387,6 +387,10 @@ typedef struct x265_param
      * is generally limited by the the number of CU rows */
     int       frameNumThreads;
 
+    /* Use multiple threads to measure CU mode costs. Recommended for many core
+     * CPUs */
+    int       bDistributeModeAnalysis;
+
     /* The level of logging detail emitted by the encoder. X265_LOG_NONE to
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
