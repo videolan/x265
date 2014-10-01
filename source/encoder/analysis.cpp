@@ -291,7 +291,7 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
         switch (jobId)
         {
         case 0:
-            slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData, SIZE_2Nx2N);
+            slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData);
             break;
 
         case 1:
@@ -1043,7 +1043,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                         if (bdoIntra)
                         {
-                            checkIntraInInter_rd0_4(m_intraInInterCU[depth], cu, SIZE_2Nx2N);
+                            checkIntraInInter_rd0_4(m_intraInInterCU[depth], cu);
                             uint64_t intraInInterCost, bestCost;
                             if (m_param->rdLevel > 2)
                             {
@@ -1951,11 +1951,14 @@ void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, 
     }
 }
 
-void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData, PartSize partSize)
+
+/* Note that this function does not save the best intra prediction, it must
+ * be generated later. It records the best mode in the cu */
+void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData)
 {
     uint32_t depth = cu->getDepth(0);
 
-    cu->setPartSizeSubParts(partSize, 0, depth);
+    cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     cu->setPredModeSubParts(MODE_INTRA, 0, depth);
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 

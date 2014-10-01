@@ -148,7 +148,7 @@ protected:
                                TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
     void checkInter_rd0_4(TComDataCU* outTempCU, CU* cu, TComYuv* outPredYUV, PartSize partSize, bool bMergeOnly);
     void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize, bool bMergeOnly);
-    void checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData, PartSize partSize);
+    void checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData);
     void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize);
 
     void checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
