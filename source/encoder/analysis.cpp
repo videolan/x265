@@ -319,20 +319,28 @@ void Analysis::parallelME(int threadId, int meId)
 {
     Analysis* slave;
     int depth = m_curDepth;
+    TComDataCU *cu = m_curMECu;
+    TComPicYuv* fenc = cu->m_pic->getPicYuvOrg();
 
     if (threadId == -1)
         slave = this;
     else
     {
         slave = &m_tld[threadId].analysis;
-        TComPicYuv* fenc = m_curMECu->m_pic->getPicYuvOrg();
 
         slave->m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
         m_origYuv[0]->copyPartToYuv(slave->m_origYuv[depth], m_curCUData->encodeIdx);
-        slave->setQP(m_curMECu->m_slice, m_rdCost.m_qp);
+        slave->setQP(cu->m_slice, m_rdCost.m_qp);
     }
 
-    if (meId < m_curMECu->m_slice->m_numRefIdx[0])
+    uint32_t partAddr;
+    int      roiWidth, roiHeight;
+    cu->getPartIndexAndSize(m_curPart, partAddr, roiWidth, roiHeight);
+
+    pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
+    m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
+
+    if (meId < cu->m_slice->m_numRefIdx[0])
     {
         /* perform list 0 motion search */
     }
@@ -888,6 +896,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 m_bJobsQueued = true;
                 JobProvider::enqueue();
 
+                for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
+                    m_pool->pokeIdleThread();
+
                 /* the master worker thread (this one) does merge analysis */
                 checkMerge2Nx2N_rd0_4(m_bestMergeCU[depth], m_mergeCU[depth], cu, m_modePredYuv[3][depth], m_bestMergeRecoYuv[depth]);
 
@@ -907,7 +918,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 }
                 else
                 {
-                    /* participate process remaining jobs */
+                    /* participate in processing remaining jobs */
                     while (findJob(-1))
                         ;
                     JobProvider::dequeue();
@@ -925,7 +936,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 {
                     /* select best inter mode based on sa8d cost */
                     outBestCU = m_interCU_2Nx2N[depth];
-                    m_bestPredYuv[depth] = m_modePredYuv[0][depth];
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
                     if (m_param->bEnableRectInter)
                     {
                         if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
