@@ -1620,9 +1620,9 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
         if (!m_isAbrReset && rce->movingAvgSum > 0)
         {
             // Reset ABR if prev frames are blank to prevent further sudden overflows/ high bit rate spikes.
-            double underflow = 1.0 + (m_totalBits - m_wantedBitsWindow) / abrBuffer;
-            const float epsilon = 0.1f;
-            if (fabs (underflow - 0.9f) < epsilon && !isFrameDone)
+            double underflow = (m_totalBits - m_wantedBitsWindow) / abrBuffer;
+            const double epsilon = 0.0001f;
+            if (underflow < epsilon && !isFrameDone)
             {
                 init(m_curSlice->m_sps);
                 m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
