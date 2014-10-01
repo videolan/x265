@@ -2114,12 +2114,11 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData)
             COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
         }
     }
+
+    cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
     cu->m_totalBits = bbits;
     cu->m_totalDistortion = bsad;
     cu->m_sa8dCost = bcost;
-
-    // generate predYuv for the best mode
-    cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
 }
 
 void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cuData, PartSize partSize)
