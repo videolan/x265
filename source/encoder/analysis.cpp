@@ -878,7 +878,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                  *  1 = inter 2Nx2N
                  *  2 = inter Nx2N
                  *  3 = inter 2NxN */
-                m_totalNumJobs = 3 + m_param->bEnableRectInter * 2;
+                m_totalNumJobs = 2 + m_param->bEnableRectInter * 2;
                 m_numAcquiredJobs = !(m_param->rdLevel > 2 && slice->m_sliceType == P_SLICE); /* skip intra for B slices */
                 m_numCompletedJobs = m_numAcquiredJobs;
                 m_curDepth = depth;
