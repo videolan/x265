@@ -47,6 +47,8 @@ Analysis::Analysis() : JobProvider(NULL)
     for (int i = 0; i < MAX_PRED_TYPES; i++)
         m_modePredYuv[i] = NULL;
     m_bJobsQueued = false;
+    m_totalNumME = m_numAcquiredME = m_numCompletedME = 0;
+    m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
 }
 
 bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *tld)
