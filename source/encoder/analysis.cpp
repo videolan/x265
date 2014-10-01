@@ -1973,7 +1973,7 @@ void Analysis::checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData)
     TComPattern::initAdiPattern(cu, cuData, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
 
     pixel* fenc     = m_origYuv[depth]->getLumaAddr();
-    uint32_t stride = m_modePredYuv[5][depth]->getStride();
+    uint32_t stride = m_origYuv[depth]->getStride();
 
     pixel *above         = m_refAbove    + tuSize - 1;
     pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
