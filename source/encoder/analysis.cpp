@@ -295,15 +295,15 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
             break;
 
         case 1:
-            slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
+            slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N);
             break;
 
         case 2:
-            slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N, false);
+            slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N);
             break;
 
         case 3:
-            slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN, false);
+            slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN);
             break;
 
         default:
@@ -987,7 +987,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 if (!earlyskip)
                 {
                     /* Compute 2Nx2N mode costs */
-                    checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N, false);
+                    checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N);
 
                     /* initialise outBestCU to 2Nx2N */
                     outBestCU = m_interCU_2Nx2N[depth];
@@ -996,8 +996,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     /* Compute Rect costs */
                     if (m_param->bEnableRectInter)
                     {
-                        checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N, false);
-                        checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN, false);
+                        checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N);
+                        checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN);
                         if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_interCU_Nx2N[depth];
@@ -1864,7 +1864,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
 }
 
-void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outPredYuv, PartSize partSize, bool bMergeOnly)
+void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outPredYuv, PartSize partSize)
 {
     uint32_t depth = outTempCU->getDepth(0);
 
@@ -1874,7 +1874,7 @@ void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outP
     outTempCU->m_totalBits = 0;
 
     const int distributeME = 0; // perform unidir motion searches via Analysis::parallelME()
-    if (distributeME && !bMergeOnly)
+    if (distributeME)
     {
         Slice *slice = outTempCU->m_slice;
         m_curMECu = outTempCU;
@@ -1919,7 +1919,7 @@ void Analysis::checkInter_rd0_4(TComDataCU* outTempCU, CU* cuData, TComYuv* outP
 
         /* TODO: motion compensation for luma for best search, setup distortion */
     }
-    else if (predInterSearch(outTempCU, cuData, outPredYuv, bMergeOnly, false))
+    else if (predInterSearch(outTempCU, cuData, outPredYuv, false, false))
     {
         int sizeIdx = outTempCU->getLog2CUSize(0) - 2;
         uint32_t distortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(),
