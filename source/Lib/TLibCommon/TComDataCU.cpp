@@ -454,19 +454,15 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uin
     m_cuAboveRight  = cu->getCUAboveRight();
 }
 
-void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth)
+void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
 {
-    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
+    m_pic              = ctu->m_pic;
+    m_slice            = ctu->m_slice;
+    m_cuAddr           = ctu->getAddr();
+    m_absIdxInCTU      = cuData->encodeIdx;
 
-    uint32_t partOffset = cuData->numPartitions * partUnitIdx;
-
-    m_pic              = cu->m_pic;
-    m_slice            = cu->m_slice;
-    m_cuAddr           = cu->getAddr();
-    m_absIdxInCTU      = cuData->encodeIdx + partOffset;
-
-    m_cuPelX           = cu->getCUPelX() + ((partUnitIdx &  1) << (g_maxLog2CUSize - depth));
-    m_cuPelY           = cu->getCUPelY() + ((partUnitIdx >> 1) << (g_maxLog2CUSize - depth));
+    m_cuPelX           = ctu->getCUPelX() + g_zscanToPelX[m_absIdxInCTU];
+    m_cuPelY           = ctu->getCUPelY() + g_zscanToPelY[m_absIdxInCTU];
 
     m_psyEnergy        = 0;
     m_totalPsyCost     = MAX_INT64;
@@ -478,18 +474,17 @@ void TComDataCU::copyToSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, u
     m_coeffBits        = 0;
     m_numPartitions    = cuData->numPartitions;
 
-    TComDataCU* otherCU = m_pic->getCU(m_cuAddr);
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
-    memcpy(m_skipFlag, otherCU->getSkipFlag() + m_absIdxInCTU, sizeof(*m_skipFlag) * m_numPartitions);
-    memcpy(m_qp, otherCU->getQP() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_skipFlag, ctu->getSkipFlag() + m_absIdxInCTU, sizeof(*m_skipFlag) * m_numPartitions);
+    memcpy(m_qp, ctu->getQP() + m_absIdxInCTU, sizeInChar);
 
-    memcpy(m_partSizes, otherCU->getPartitionSize() + m_absIdxInCTU, sizeof(*m_partSizes) * m_numPartitions);
-    memcpy(m_predModes, otherCU->getPredictionMode() + m_absIdxInCTU, sizeof(*m_predModes) * m_numPartitions);
+    memcpy(m_partSizes, ctu->getPartitionSize() + m_absIdxInCTU, sizeof(*m_partSizes) * m_numPartitions);
+    memcpy(m_predModes, ctu->getPredictionMode() + m_absIdxInCTU, sizeof(*m_predModes) * m_numPartitions);
 
-    memcpy(m_lumaIntraDir, otherCU->getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_depth, otherCU->getDepth() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_log2CUSize, otherCU->getLog2CUSize() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_lumaIntraDir, ctu->getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_depth, ctu->getDepth() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_log2CUSize, ctu->getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -2411,6 +2406,8 @@ void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result,
 void TComDataCU::loadCTUData(uint32_t maxCUSize)
 {
     // Initialize the coding blocks inside the CTB
+    int picWidth  = m_pic->m_origPicYuv->m_picWidth;
+    int picHeight = m_pic->m_origPicYuv->m_picHeight;
     for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
     {
         uint32_t blockSize  = 1 << log2CUSize;
@@ -2425,8 +2422,8 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
                 uint32_t child_idx = rangeCUIdx + sbWidth * sbWidth + (depth_idx << 2);
                 uint32_t px = m_cuPelX + sb_x * blockSize;
                 uint32_t py = m_cuPelY + sb_y * blockSize;
-                int32_t present_flag = px < m_pic->m_origPicYuv->m_picWidth && py < m_pic->m_origPicYuv->m_picHeight;
-                int32_t split_mandatory_flag = present_flag && !last_level_flag && (px + blockSize > m_pic->m_origPicYuv->m_picWidth || py + blockSize > m_pic->m_origPicYuv->m_picHeight);
+                int32_t present_flag = px < picWidth && py < picHeight;
+                int32_t split_mandatory_flag = present_flag && !last_level_flag && (px + blockSize > picWidth || py + blockSize > picHeight);
                 
                 /* Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin */
                 uint32_t xOffset = (sb_x * blockSize) >> 3;

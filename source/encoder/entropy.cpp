@@ -481,16 +481,16 @@ void Entropy::codeShortTermRefPicSet(RPS* rps)
     }
 }
 
-void Entropy::encodeCTU(TComDataCU* cu)
+void Entropy::encodeCTU(TComDataCU* ctu)
 {
-    bool bEncodeDQP = cu->m_slice->m_pps->bUseDQP;
-    encodeCU(cu, 0, 0, bEncodeDQP, cu->m_cuLocalData);
+    bool bEncodeDQP = ctu->m_slice->m_pps->bUseDQP;
+    encodeCU(ctu, 0, 0, bEncodeDQP, ctu->m_cuLocalData);
 }
 
 /* encode a CU block recursively */
-void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU* cuData)
+void Entropy::encodeCU(TComDataCU* ctu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU* cuData)
 {
-    Slice* slice = cu->m_slice;
+    Slice* slice = ctu->m_slice;
 
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
@@ -503,59 +503,58 @@ void Entropy::encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            CU *childCU = cu->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            int cuPresentFlagChild = !(childCU->flags & CU::PRESENT);
-            if (!cuPresentFlagChild)
-                encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
+            CU *childCU = ctu->m_cuLocalData + cuData->childIdx + partUnitIdx;
+            if (childCU->flags & CU::PRESENT)
+                encodeCU(ctu, absPartIdx, depth + 1, bEncodeDQP, childCU);
         }
         return;
     }
 
     // We need to split, so don't try these modes.
     if (cuSplitFlag) 
-        codeSplitFlag(cu, absPartIdx, depth);
+        codeSplitFlag(ctu, absPartIdx, depth);
 
-    if (depth < cu->getDepth(absPartIdx) && depth < g_maxCUDepth)
+    if (depth < ctu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            CU *childCU = cu->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            encodeCU(cu, absPartIdx, depth + 1, bEncodeDQP, childCU);
+            CU *childCU = ctu->m_cuLocalData + cuData->childIdx + partUnitIdx;
+            encodeCU(ctu, absPartIdx, depth + 1, bEncodeDQP, childCU);
         }
         return;
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        codeCUTransquantBypassFlag(cu->getCUTransquantBypass(absPartIdx));
+        codeCUTransquantBypassFlag(ctu->getCUTransquantBypass(absPartIdx));
 
     if (!slice->isIntra())
-        codeSkipFlag(cu, absPartIdx);
+        codeSkipFlag(ctu, absPartIdx);
 
-    if (cu->isSkipped(absPartIdx))
+    if (ctu->isSkipped(absPartIdx))
     {
-        codeMergeIndex(cu, absPartIdx);
-        finishCU(cu, absPartIdx, depth);
+        codeMergeIndex(ctu, absPartIdx);
+        finishCU(ctu, absPartIdx, depth);
         return;
     }
 
     if (!slice->isIntra())
-        codePredMode(cu->getPredictionMode(absPartIdx));
+        codePredMode(ctu->getPredictionMode(absPartIdx));
 
-    codePartSize(cu, absPartIdx, depth);
+    codePartSize(ctu, absPartIdx, depth);
 
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
-    codePredInfo(cu, absPartIdx);
+    codePredInfo(ctu, absPartIdx);
 
     uint32_t tuDepthRange[2];
-    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
+    ctu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
 
     // Encode Coefficients, allow codeCoeff() to modify m_bEncodeDQP
-    codeCoeff(cu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
+    codeCoeff(ctu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
-    finishCU(cu, absPartIdx, depth);
+    finishCU(ctu, absPartIdx, depth);
 }
 
 /* finish encoding a cu and handle end-of-slice conditions */

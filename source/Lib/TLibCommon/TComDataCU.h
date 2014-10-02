@@ -276,7 +276,7 @@ public:
     void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyToSubCU(TComDataCU* ctu, CU* cuData, uint32_t partUnitIdx, uint32_t depth);
+    void          copyFromPic(TComDataCU* ctu, CU* cuData);
     void          copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(uint32_t depth);

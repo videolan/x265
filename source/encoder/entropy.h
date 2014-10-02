@@ -193,7 +193,7 @@ private:
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
 
-    void encodeCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU *cuData);
+    void encodeCU(TComDataCU* ctu, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP, CU *cuData);
     void finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth);
 
     void writeOut();

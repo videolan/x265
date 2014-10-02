@@ -1191,10 +1191,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
             TComDataCU* aboveRight = outTempCU->getCUAboveRight();
             TComDataCU* left = outTempCU->getCULeft();
-            TComDataCU* rootCU = pic->getPicSym()->getCU(cuAddr);
+            TComDataCU* ctu = pic->getPicSym()->getCU(cuAddr);
 
-            totalCostCU += rootCU->m_avgCost[depth] * rootCU->m_count[depth];
-            totalCountCU += rootCU->m_count[depth];
+            totalCostCU += ctu->m_avgCost[depth] * ctu->m_count[depth];
+            totalCountCU += ctu->m_count[depth];
             if (above)
             {
                 totalCostNeigh += above->m_avgCost[depth] * above->m_count[depth];
@@ -1263,10 +1263,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         tempavgCost = m_rdCost.m_psyRd ? subBestPartCU->m_totalPsyCost : subBestPartCU->m_totalRDCost;
                     else
                         tempavgCost = subBestPartCU->m_totalRDCost;
-                    TComDataCU* rootCU = pic->getPicSym()->getCU(cuAddr);
-                    uint64_t temp = rootCU->m_avgCost[nextDepth] * rootCU->m_count[nextDepth];
-                    rootCU->m_count[nextDepth] += 1;
-                    rootCU->m_avgCost[nextDepth] = (temp + tempavgCost) / rootCU->m_count[nextDepth];
+                    TComDataCU* ctu = pic->getPicSym()->getCU(cuAddr);
+                    uint64_t temp = ctu->m_avgCost[nextDepth] * ctu->m_count[nextDepth];
+                    ctu->m_count[nextDepth] += 1;
+                    ctu->m_avgCost[nextDepth] = (temp + tempavgCost) / ctu->m_count[nextDepth];
                 }
 
                 /* Adding costs from best SUbCUs */
@@ -1332,10 +1332,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             if (!depth)
             {
                 uint64_t tempavgCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
-                TComDataCU* rootCU = pic->getPicSym()->getCU(cuAddr);
-                uint64_t temp = rootCU->m_avgCost[depth] * rootCU->m_count[depth];
-                rootCU->m_count[depth] += 1;
-                rootCU->m_avgCost[depth] = (temp + tempavgCost) / rootCU->m_count[depth];
+                TComDataCU* ctu = pic->getPicSym()->getCU(cuAddr);
+                uint64_t temp = ctu->m_avgCost[depth] * ctu->m_count[depth];
+                ctu->m_count[depth] += 1;
+                ctu->m_avgCost[depth] = (temp + tempavgCost) / ctu->m_count[depth];
             }
 
             uint64_t tempCost = m_rdCost.m_psyRd ? outTempCU->m_totalPsyCost : outTempCU->m_totalRDCost;
@@ -1359,7 +1359,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     outBestCU->copyToPic(depth);
 
     if (!m_param->rdLevel && !depth)
-        encodeResidue(outBestCU, outBestCU, cu, 0, 0);
+        encodeResidue(pic->getPicSym()->getCU(cuAddr), cu, 0, 0);
     else if (m_param->rdLevel)
     {
         /* Copy Yuv data to picture Yuv */
@@ -2242,32 +2242,36 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, 
         cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 }
 
-void Analysis::encodeResidue(TComDataCU* ctu, TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t depth)
+void Analysis::encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, uint32_t depth)
 {
-    Frame* pic = cu->m_pic;
+    Frame* pic = ctu->m_pic;
+    uint32_t cuAddr = ctu->getAddr();
 
     if (depth < ctu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
-        Slice* slice = cu->m_slice;
+        Slice* slice = ctu->m_slice;
         uint32_t nextDepth = depth + 1;
-        TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - ctu->getCUPelX();
         uint32_t ymax = slice->m_sps->picHeightInLumaSamples - ctu->getCUPelY();
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
-            CU *child_cu = cu->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-            {
-                subTempPartCU->copyToSubCU(cu, child_cu, partUnitIdx, nextDepth);
-                encodeResidue(ctu, subTempPartCU, child_cu, absPartIdx, nextDepth);
-            }
+            CU *child_cu = ctu->m_cuLocalData + cuData->childIdx + partUnitIdx;
+            if (child_cu->flags & CU::PRESENT)
+                encodeResidue(ctu, child_cu, absPartIdx, nextDepth);
         }
 
         return;
     }
 
-    uint32_t cuAddr = cu->getAddr();
+    TComDataCU* cu;
+    if (depth)
+    {
+        cu = m_tempCU[depth];
+        cu->copyFromPic(ctu, cuData);
+    }
+    else
+        cu = ctu;
 
     m_quant.setQPforQuant(cu);
 
