@@ -1932,7 +1932,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
 
 void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool bChroma)
 {
-    uint32_t depth = cu->getDepth(0);
     Slice *slice = cu->m_slice;
     TComPicYuv *fenc = slice->m_pic->getPicYuvOrg();
     PartSize partSize = cu->getPartitionSize(0);
@@ -1945,23 +1944,26 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
     uint32_t lastMode = 0;
     for (int partIdx = 0; partIdx < 2; partIdx++)
     {
-        m_curPart = partIdx;
-        m_totalNumME = slice->m_numRefIdx[0] + slice->m_numRefIdx[1];
-        m_numAcquiredME = 0;
-        m_numCompletedME = 0;
-
         uint32_t partAddr;
         int      roiWidth, roiHeight;
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
-        getBlkBits(partSize, slice->isInterP(), m_curPart, lastMode, m_listSelBits);
-        prepMotionCompensation(cu, cuData, m_curPart);
+        getBlkBits(partSize, slice->isInterP(), partIdx, lastMode, m_listSelBits);
+        prepMotionCompensation(cu, cuData, partIdx);
 
         pixel* pu = fenc->getLumaAddr(cu->getAddr(), cuData->encodeIdx + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
         m_bestME[0].cost = MAX_UINT;
         m_bestME[1].cost = MAX_UINT;
+
+        /* this worker might already be enqueued, so other threads might be looking at the ME job counts
+         * at any time, do these sets in a safe order */
+        m_curPart = partIdx;
+        m_totalNumME = 0;
+        m_numAcquiredME = 0;
+        m_numCompletedME = 0;
+        m_totalNumME = slice->m_numRefIdx[0] + slice->m_numRefIdx[1];
 
         if (!m_bJobsQueued)
             JobProvider::enqueue();
