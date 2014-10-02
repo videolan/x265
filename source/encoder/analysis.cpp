@@ -2249,11 +2249,8 @@ void Analysis::encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, u
 
     if (depth < ctu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
-        Slice* slice = ctu->m_slice;
         uint32_t nextDepth = depth + 1;
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
-        uint32_t xmax = slice->m_sps->picWidthInLumaSamples  - ctu->getCUPelX();
-        uint32_t ymax = slice->m_sps->picHeightInLumaSamples - ctu->getCUPelY();
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++, absPartIdx += qNumParts)
         {
             CU *child_cu = ctu->m_cuLocalData + cuData->childIdx + partUnitIdx;
