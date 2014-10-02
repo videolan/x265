@@ -70,6 +70,8 @@ static const struct option long_options[] =
     { "frame-threads",  required_argument, NULL, 'F' },
     { "no-pmode",             no_argument, NULL, 0 },
     { "pmode",                no_argument, NULL, 0 },
+    { "no-pme",               no_argument, NULL, 0 },
+    { "pme",                  no_argument, NULL, 0 },
     { "log-level",      required_argument, NULL, 0 },
     { "profile",        required_argument, NULL, 0 },
     { "level-idc",      required_argument, NULL, 0 },
@@ -371,6 +373,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
     H0("   --[no-]pmode                  Parallel mode analysis. Default %s\n", OPT(param->bDistributeModeAnalysis));
+    H0("   --[no-]pme                    Parallel motion estimation. Default %s\n", OPT(param->bDistributeMotionEstimation));
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("\nPresets:\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");

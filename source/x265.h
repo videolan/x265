@@ -391,6 +391,10 @@ typedef struct x265_param
      * CPUs */
     int       bDistributeModeAnalysis;
 
+    /* Use multiple threads to perform motion estimation to (ME to one reference
+     * per thread). Recommended for many core CPUs */
+    int       bDistributeMotionEstimation;
+
     /* The level of logging detail emitted by the encoder. X265_LOG_NONE to
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;

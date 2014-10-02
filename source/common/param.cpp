@@ -539,6 +539,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
     OPT("pmode") p->bDistributeModeAnalysis = atobool(value);
+    OPT("pme") p->bDistributeMotionEstimation = atobool(value);
     OPT2("level-idc", "level")
     {
         /* allow "5.1" or "51", both converted to integer 51 */

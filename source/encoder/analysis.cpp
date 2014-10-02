@@ -2152,8 +2152,7 @@ void Analysis::checkInter_rd0_4(TComDataCU* cu, CU* cuData, TComYuv* predYuv, Pa
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     cu->m_totalBits = 0;
 
-    const int distributeME = 0; // perform unidir motion searches via Analysis::parallelME()
-    if (distributeME)
+    if (m_param->bDistributeMotionEstimation)
     {
         parallelInterSearch(cu, cuData, predYuv, partSize);
         x265_emms();
