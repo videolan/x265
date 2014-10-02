@@ -1693,6 +1693,8 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
         int      roiWidth, roiHeight;
         cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
 
+        prepMotionCompensation(cu, cuData, partIdx);
+
         pixel* pu = fenc->getLumaAddr(cu->getAddr(), cuData->encodeIdx + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
 
@@ -1764,7 +1766,6 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
 
                     cu->clipMv(mvCand);
 
-                    prepMotionCompensation(cu, cuData, partIdx);
                     predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &m_predTempYuv, &mvCand);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
 
@@ -1811,7 +1812,6 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
             TComPicYuv *refPic0 = slice->m_refPicList[0][list[0].ref]->getPicYuvRec();
             TComPicYuv *refPic1 = slice->m_refPicList[1][list[1].ref]->getPicYuvRec();
             
-            prepMotionCompensation(cu, cuData, partIdx);
             predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &list[0].mv);
             predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &list[1].mv);
 
@@ -1937,6 +1937,7 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
 
             totalmebits += list[1].bits;
         }
+
         prepMotionCompensation(cu, cuData, partIdx);
         motionCompensation(predYuv, true, bChroma);
     }
