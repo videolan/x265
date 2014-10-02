@@ -1930,7 +1930,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
 }
 
-void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, PartSize partSize)
+void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, PartSize partSize, bool bChroma)
 {
     uint32_t depth = cu->getDepth(0);
     Slice *slice = cu->m_slice;
@@ -2137,7 +2137,7 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
             cu->m_totalBits += m_bestME[1].bits;
         }
 
-        motionCompensation(predYuv, true, false);
+        motionCompensation(predYuv, true, bChroma);
 
         if (partSize == SIZE_2Nx2N)
             return;
@@ -2152,9 +2152,9 @@ void Analysis::checkInter_rd0_4(TComDataCU* cu, CU* cuData, TComYuv* predYuv, Pa
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     cu->m_totalBits = 0;
 
-    if (m_param->bDistributeMotionEstimation)
+    if (m_param->bDistributeMotionEstimation && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
-        parallelInterSearch(cu, cuData, predYuv, partSize);
+        parallelInterSearch(cu, cuData, predYuv, partSize, false);
         x265_emms();
         int sizeIdx = cu->getLog2CUSize(0) - 2;
         cu->m_totalDistortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
@@ -2174,20 +2174,28 @@ void Analysis::checkInter_rd0_4(TComDataCU* cu, CU* cuData, TComYuv* predYuv, Pa
     }
 }
 
-void Analysis::checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cuData, PartSize partSize, bool bMergeOnly)
+void Analysis::checkInter_rd5_6(TComDataCU*& bestCU, TComDataCU*& tempCU, CU* cuData, PartSize partSize, bool bMergeOnly)
 {
-    uint32_t depth = outTempCU->getDepth(0);
+    uint32_t depth = tempCU->getDepth(0);
 
-    outTempCU->setSkipFlagSubParts(false, 0, depth);
-    outTempCU->setPartSizeSubParts(partSize, 0, depth);
-    outTempCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    outTempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    tempCU->setSkipFlagSubParts(false, 0, depth);
+    tempCU->setPartSizeSubParts(partSize, 0, depth);
+    tempCU->setPredModeSubParts(MODE_INTER, 0, depth);
+    tempCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
-    if (predInterSearch(outTempCU, cuData, m_tmpPredYuv[depth], bMergeOnly, true))
+    if (m_param->bDistributeMotionEstimation && !bMergeOnly && (tempCU->m_slice->m_numRefIdx[0] + tempCU->m_slice->m_numRefIdx[1]) > 2)
     {
-        encodeResAndCalcRdInterCU(outTempCU, cuData, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
-        checkDQP(outTempCU);
-        checkBestMode(outBestCU, outTempCU, depth);
+        parallelInterSearch(tempCU, cuData, m_tmpPredYuv[depth], partSize, true);
+        x265_emms();
+        encodeResAndCalcRdInterCU(tempCU, cuData, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
+        checkDQP(tempCU);
+        checkBestMode(bestCU, tempCU, depth);
+    }
+    else if (predInterSearch(tempCU, cuData, m_tmpPredYuv[depth], bMergeOnly, true))
+    {
+        encodeResAndCalcRdInterCU(tempCU, cuData, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
+        checkDQP(tempCU);
+        checkBestMode(bestCU, tempCU, depth);
     }
 }
 
