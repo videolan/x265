@@ -1767,7 +1767,6 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
                     prepMotionCompensation(cu, cuData, partIdx);
                     predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &m_predTempYuv, &mvCand);
                     uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.getStride());
-                    cost = (uint32_t)m_rdCost.calcRdSADCost(cost, MVP_IDX_BITS);
 
                     if (bestCost > cost)
                     {
