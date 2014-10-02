@@ -1202,9 +1202,7 @@ void Encoder::initPPS(PPS *pps)
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
-
-    uint32_t maxLog2CUSize = g_log2Size[p->maxCUSize] - 1;
-    int rows = (p->sourceHeight + p->maxCUSize - 1) >> maxLog2CUSize;
+    int rows = (p->sourceHeight + p->maxCUSize - 1) >> g_log2Size[p->maxCUSize];
 
     // Do not allow WPP if only one row, it is pointless and unstable
     if (rows == 1)
