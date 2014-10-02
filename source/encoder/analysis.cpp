@@ -318,8 +318,8 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
 void Analysis::parallelME(int threadId, int meId)
 {
     Analysis* slave;
-    int depth = m_curDepth;
     TComDataCU *cu = m_curMECu;
+    int depth = cu->getDepth(0);
     TComPicYuv* fenc = cu->m_pic->getPicYuvOrg();
     Slice *slice = cu->m_slice;
 
@@ -1930,15 +1930,14 @@ void Analysis::checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     }
 }
 
-void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, PartSize partSize, bool bChroma)
+void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool bChroma)
 {
     uint32_t depth = cu->getDepth(0);
     Slice *slice = cu->m_slice;
     TComPicYuv *fenc = slice->m_pic->getPicYuvOrg();
+    PartSize partSize = cu->getPartitionSize(0);
     m_curMECu = cu;
-    m_curPartSize = partSize;
     m_curCUData = cuData;
-    m_curDepth = depth;
 
     MergeData merge;
     memset(&merge, 0, sizeof(merge));
@@ -2154,7 +2153,7 @@ void Analysis::checkInter_rd0_4(TComDataCU* cu, CU* cuData, TComYuv* predYuv, Pa
 
     if (m_param->bDistributeMotionEstimation && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
-        parallelInterSearch(cu, cuData, predYuv, partSize, false);
+        parallelInterSearch(cu, cuData, predYuv, false);
         x265_emms();
         int sizeIdx = cu->getLog2CUSize(0) - 2;
         cu->m_totalDistortion = primitives.sa8d[sizeIdx](m_origYuv[depth]->getLumaAddr(), m_origYuv[depth]->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
@@ -2185,7 +2184,7 @@ void Analysis::checkInter_rd5_6(TComDataCU*& bestCU, TComDataCU*& tempCU, CU* cu
 
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (tempCU->m_slice->m_numRefIdx[0] + tempCU->m_slice->m_numRefIdx[1]) > 2)
     {
-        parallelInterSearch(tempCU, cuData, m_tmpPredYuv[depth], partSize, true);
+        parallelInterSearch(tempCU, cuData, m_tmpPredYuv[depth], true);
         x265_emms();
         encodeResAndCalcRdInterCU(tempCU, cuData, m_origYuv[depth], m_tmpPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
         checkDQP(tempCU);
