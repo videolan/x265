@@ -127,6 +127,8 @@ protected:
     TComDataCU*   m_curMECu;
     int           m_curPartSize; /* 2Nx2N, Nx2N or 2NxN */
     int           m_curPart;
+    MotionData    m_bestME[2];
+    uint32_t      m_listSelBits[3];
     int           m_totalNumME;
     volatile int  m_numAcquiredME;
     volatile int  m_numCompletedME;
@@ -147,6 +149,7 @@ protected:
     void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, bool *earlyDetectionSkipMode,
                                TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
     void checkInter_rd0_4(TComDataCU* outTempCU, CU* cu, TComYuv* outPredYUV, PartSize partSize);
+    void parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, PartSize partSize);
     void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize, bool bMergeOnly);
     void checkIntraInInter_rd0_4(TComDataCU* cu, CU* cuData);
     void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize);
