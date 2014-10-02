@@ -69,7 +69,7 @@ public:
         m_lambda = (uint64_t)floor(256.0 * lambda);
     }
 
-    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
+    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
                    "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambda2);
@@ -77,39 +77,39 @@ public:
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride) const
     {
         return primitives.psy_cost[size](source, sstride, recon, rstride);
     }
 
     /* return the RD cost of this prediction, including the effect of psy-rd */
-    inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
+    inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost) const
     {
         return distortion + ((m_lambda * m_psyRd * psycost) >> 16) + ((bits * m_lambda2) >> 8);
     }
 
-    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
+    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
                    "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
         return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDistCb(uint32_t dist)
+    inline uint32_t scaleChromaDistCb(uint32_t dist) const
     {
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_cbDistortionWeight,
                    "scaleChromaDistCb wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_cbDistortionWeight);
         return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDistCr(uint32_t dist)
+    inline uint32_t scaleChromaDistCr(uint32_t dist) const
     {
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_crDistortionWeight,
                    "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
     }
 
-    inline uint32_t getCost(uint32_t bits)
+    inline uint32_t getCost(uint32_t bits) const
     {
         return (uint32_t)((bits * m_lambda + 128) >> 8);
     }

@@ -171,11 +171,11 @@ protected:
     };
 
     /* inter/ME helper functions */
-    void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost);
-    void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
+    void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
+    void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]) const;
+    void     setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
     uint32_t getInterSymbolBits(TComDataCU* cu, uint32_t depthRange[2]);
     uint32_t mergeEstimation(TComDataCU* cu, CU* cuData, int partIdx, MergeData& m);
-    void     setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };

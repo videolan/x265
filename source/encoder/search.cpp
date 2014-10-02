@@ -1947,7 +1947,7 @@ bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool 
     return true;
 }
 
-void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
+void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]) const
 {
     if (cuMode == SIZE_2Nx2N)
     {
@@ -2000,7 +2000,7 @@ void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t las
 }
 
 /* Check if using an alternative MVP would result in a smaller MVD + signal bits */
-void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost)
+void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint32_t& outBits, uint32_t& outCost) const
 {
     X265_CHECK(amvpCand[outMvpIdx] == mvPred, "checkBestMVP: unexpected mvPred\n");
 
@@ -2017,7 +2017,7 @@ void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint3
     }
 }
 
-void Search::setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax)
+void Search::setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const
 {
     cu->clipMv(mvp);
 
