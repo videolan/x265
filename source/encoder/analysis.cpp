@@ -319,7 +319,6 @@ void Analysis::parallelME(int threadId, int meId)
 {
     Analysis* slave;
     TComDataCU *cu = m_curMECu;
-    int depth = cu->getDepth(0);
     TComPicYuv* fenc = cu->m_pic->getPicYuvOrg();
     Slice *slice = cu->m_slice;
 
@@ -328,9 +327,7 @@ void Analysis::parallelME(int threadId, int meId)
     else
     {
         slave = &m_tld[threadId].analysis;
-
         slave->m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        m_origYuv[0]->copyPartToYuv(slave->m_origYuv[depth], m_curCUData->encodeIdx);
         slave->setQP(slice, m_rdCost.m_qp);
     }
 
