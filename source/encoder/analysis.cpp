@@ -347,6 +347,9 @@ void Analysis::parallelME(int threadId, int meId)
     int      puWidth, puHeight;
     cu->getPartIndexAndSize(m_curPart, partAddr, puWidth, puHeight);
 
+    pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
+    slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
+
     uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
     bits += getTUBits(ref, slice->m_numRefIdx[l]);
 
@@ -379,9 +382,6 @@ void Analysis::parallelME(int threadId, int meId)
 
     MV mvmin, mvmax, outmv, mvp = amvpCand[mvpIdx];
     setSearchRange(cu, mvp, merange, mvmin, mvmax);
-
-    pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
-    slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
 
     int satdCost = slave->m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -2009,6 +2009,7 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
             TComPicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->getPicYuvRec();
             TComPicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->getPicYuvRec();
             
+            prepMotionCompensation(cu, cuData, partIdx);
             predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &m_bestME[0].mv);
             predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &m_bestME[1].mv);
 
@@ -2135,6 +2136,7 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
             cu->m_totalBits += m_bestME[1].bits;
         }
 
+        prepMotionCompensation(cu, cuData, partIdx);
         motionCompensation(predYuv, true, bChroma);
 
         if (partSize == SIZE_2Nx2N)
