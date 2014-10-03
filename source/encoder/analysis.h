@@ -147,7 +147,7 @@ protected:
     void compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu);
     void checkMerge2Nx2N_rd0_4(CU* cu, uint32_t depth);
     void checkMerge2Nx2N_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, bool *earlyDetectionSkipMode,
-                               TComYuv*& outBestPredYuv, TComYuv*& rpcYuvReconBest);
+                               TComYuv*& outBestPredYuv, TComYuv*& yuvReconBest);
     void checkInter_rd0_4(TComDataCU* outTempCU, CU* cu, TComYuv* outPredYUV, PartSize partSize);
     void parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool bChroma);
     void checkInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize, bool bMergeOnly);

@@ -1016,34 +1016,33 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         }
                     }
 
-                    /* calculate the motion compensation for chroma for the best inter mode selected */
-                    int numPart = outBestCU->getNumPartInter();
-                    for (int partIdx = 0; partIdx < numPart; partIdx++)
+                    /* RD selection between inter and merge */
+                    for (int partIdx = 0; partIdx < outBestCU->getNumPartInter(); partIdx++)
                     {
                         prepMotionCompensation(outBestCU, cu, partIdx);
                         motionCompensation(m_bestPredYuv[depth], false, true);
                     }
-
-                    /* RD selection between inter and merge */
                     encodeResAndCalcRdInterCU(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_bestRecoYuv[depth]);
-                    uint64_t bestMergeCost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
-                    uint64_t bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
-                    if (bestMergeCost < bestCost)
+                    uint64_t mcost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
+                    uint64_t bcost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                    if (mcost < bcost)
                     {
                         outBestCU = m_bestMergeCU[depth];
                         std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
                         std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
+                        /* checkMerge2Nx2N_rd0_4() already stored the best merge entropy state as next best */
                     }
                     else
+                        /* inter has best cost, store RD state as next best */
                         m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
 
                     if (slice->m_sliceType == P_SLICE)
                     {
                         /* RD selection between intra and inter/merge */
                         uint64_t icost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
-                        bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
+                        bcost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
 
-                        if (icost < bestCost)
+                        if (icost < bcost)
                         {
                             outBestCU = m_intraInInterCU[depth];
                             std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
@@ -1066,7 +1065,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     /* Compute 2Nx2N mode costs */
                     checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N);
 
-                    /* initialise outBestCU to 2Nx2N */
+                    /* initialize outBestCU to 2Nx2N */
                     outBestCU = m_interCU_2Nx2N[depth];
                     std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
 
