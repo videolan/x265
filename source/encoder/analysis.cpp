@@ -347,8 +347,8 @@ void Analysis::parallelME(int threadId, int meId)
     }
 
     uint32_t partAddr;
-    int      roiWidth, roiHeight;
-    cu->getPartIndexAndSize(m_curPart, partAddr, roiWidth, roiHeight);
+    int      puWidth, puHeight;
+    cu->getPartIndexAndSize(m_curPart, partAddr, puWidth, puHeight);
 
     uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
     bits += getTUBits(ref, slice->m_numRefIdx[l]);
@@ -384,7 +384,7 @@ void Analysis::parallelME(int threadId, int meId)
     setSearchRange(cu, mvp, merange, mvmin, mvmax);
 
     pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
-    slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
+    slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
 
     int satdCost = slave->m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -1945,14 +1945,14 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
     for (int partIdx = 0; partIdx < 2; partIdx++)
     {
         uint32_t partAddr;
-        int      roiWidth, roiHeight;
-        cu->getPartIndexAndSize(partIdx, partAddr, roiWidth, roiHeight);
+        int      puWidth, puHeight;
+        cu->getPartIndexAndSize(partIdx, partAddr, puWidth, puHeight);
 
         getBlkBits(partSize, slice->isInterP(), partIdx, lastMode, m_listSelBits);
         prepMotionCompensation(cu, cuData, partIdx);
 
         pixel* pu = fenc->getLumaAddr(cu->getAddr(), cuData->encodeIdx + partAddr);
-        m_me.setSourcePU(pu - fenc->getLumaAddr(), roiWidth, roiHeight);
+        m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
 
         m_bestME[0].cost = MAX_UINT;
         m_bestME[1].cost = MAX_UINT;
@@ -1980,8 +1980,8 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
         if (partSize != SIZE_2Nx2N)
         {
             merge.absPartIdx = partAddr;
-            merge.width = roiWidth;
-            merge.height = roiHeight;
+            merge.width = puWidth;
+            merge.height = puHeight;
             mrgCost = mergeEstimation(cu, cuData, partIdx, merge);
         }
 
@@ -2018,9 +2018,9 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
             pixel *pred0 = m_bidirPredYuv[0].getLumaAddr(partAddr);
             pixel *pred1 = m_bidirPredYuv[1].getLumaAddr(partAddr);
 
-            int partEnum = partitionFromSizes(roiWidth, roiHeight);
-            primitives.pixelavg_pp[partEnum](avg, roiWidth, pred0, m_bidirPredYuv[0].getStride(), pred1, m_bidirPredYuv[1].getStride(), 32);
-            int satdCost = m_me.bufSATD(avg, roiWidth);
+            int partEnum = partitionFromSizes(puWidth, puHeight);
+            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, m_bidirPredYuv[0].getStride(), pred1, m_bidirPredYuv[1].getStride(), 32);
+            int satdCost = m_me.bufSATD(avg, puWidth);
 
             bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
             bidirCost = satdCost + m_rdCost.getCost(bidirBits);
@@ -2048,8 +2048,8 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
                 pixel *ref1 = slice->m_mref[1][m_bestME[1].ref].fpelPlane + (pu - fenc->getLumaAddr());
                 intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
-                primitives.pixelavg_pp[partEnum](avg, roiWidth, ref0, refStride, ref1, refStride, 32);
-                satdCost = m_me.bufSATD(avg, roiWidth);
+                primitives.pixelavg_pp[partEnum](avg, puWidth, ref0, refStride, ref1, refStride, 32);
+                satdCost = m_me.bufSATD(avg, puWidth);
 
                 MV mvp0 = m_bestME[0].mvp;
                 int mvpIdx0 = m_bestME[0].mvpIdx;
