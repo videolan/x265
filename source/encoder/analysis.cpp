@@ -346,6 +346,7 @@ void Analysis::parallelME(int threadId, int meId)
     uint32_t partAddr;
     int      puWidth, puHeight;
     cu->getPartIndexAndSize(m_curPart, partAddr, puWidth, puHeight);
+    slave->prepMotionCompensation(cu, m_curCUData, m_curPart);
 
     pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
     slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
@@ -370,7 +371,7 @@ void Analysis::parallelME(int threadId, int meId)
 
         cu->clipMv(mvCand);
 
-        predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &slave->m_predTempYuv, &mvCand);
+        slave->predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &slave->m_predTempYuv, &mvCand);
         uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), slave->m_predTempYuv.getStride());
 
         if (bestCost > cost)
