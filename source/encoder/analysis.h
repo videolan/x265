@@ -95,6 +95,7 @@ public:
     TComYuv**    m_tmpRecoYuv;           // Temporary Reconstruction Yuv for each depth
     TComYuv**    m_modePredYuv[MAX_PRED_TYPES]; // Prediction buffers for inter, intra, rect(2) and merge
     TComYuv**    m_bestMergeRecoYuv;
+    TComYuv**    m_bestIntraRecoYuv;
     TComYuv**    m_origYuv;             // Original Yuv at each depth
 
     bool         m_bEncodeDQP;
@@ -117,6 +118,7 @@ protected:
     bool findJob(int threadId);
 
     /* mode analysis distribution */
+    Entropy       m_intraContexts;
     int           m_totalNumJobs;
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;

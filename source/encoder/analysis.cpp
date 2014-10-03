@@ -72,6 +72,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
     m_tmpRecoYuv = new TComYuv*[numCUDepth];
 
     m_bestMergeRecoYuv = new TComYuv*[numCUDepth];
+    m_bestIntraRecoYuv = new TComYuv*[numCUDepth];
 
     m_origYuv = new TComYuv*[numCUDepth];
 
@@ -142,6 +143,9 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
         m_bestMergeRecoYuv[i] = new TComYuv;
         ok &= m_bestMergeRecoYuv[i]->create(cuSize, cuSize, csp);
 
+        m_bestIntraRecoYuv[i] = new TComYuv;
+        ok &= m_bestIntraRecoYuv[i]->create(cuSize, cuSize, csp);
+
         m_origYuv[i] = new TComYuv;
         ok &= m_origYuv[i]->create(cuSize, cuSize, csp);
     }
@@ -211,6 +215,11 @@ void Analysis::destroy()
             m_bestMergeRecoYuv[i]->destroy();
             delete m_bestMergeRecoYuv[i];
         }
+        if (m_bestIntraRecoYuv && m_bestIntraRecoYuv[i])
+        {
+            m_bestIntraRecoYuv[i]->destroy();
+            delete m_bestIntraRecoYuv[i];
+        }
 
         if (m_origYuv && m_origYuv[i])
         {
@@ -224,6 +233,7 @@ void Analysis::destroy()
     delete [] m_bestResiYuv;
     delete [] m_bestRecoYuv;
     delete [] m_bestMergeRecoYuv;
+    delete [] m_bestIntraRecoYuv;
     delete [] m_tmpPredYuv;
 
     for (int i = 0; i < MAX_PRED_TYPES; i++)
@@ -284,34 +294,38 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
         slave->m_rdEntropyCoders = this->m_rdEntropyCoders;
         m_origYuv[0]->copyPartToYuv(slave->m_origYuv[depth], m_curCUData->encodeIdx);
         slave->setQP(cu->m_slice, m_rdCost.m_qp);
-        slave->m_quant.setQPforQuant(cu);
-        slave->m_quant.m_nr = m_quant.m_nr;
+        if (!jobId || m_param->rdLevel > 4)
+        {
+            slave->m_quant.setQPforQuant(cu);
+            slave->m_quant.m_nr = m_quant.m_nr;
+            slave->m_rdEntropyCoders[depth][CI_CURR_BEST].load(m_rdEntropyCoders[depth][CI_CURR_BEST]);
+        }
     }
 
-    if (m_param->rdLevel <= 4)
+    switch (jobId)
     {
-        switch (jobId)
-        {
-        case 0:
-            slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData);
-            break;
+    case 0:
+        slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData);
+        slave->encodeIntraInInter(m_intraInInterCU[depth], m_curCUData, m_origYuv[depth], m_modePredYuv[5][depth], slave->m_tmpResiYuv[depth], m_bestIntraRecoYuv[depth]);
+        /* TODO: pass m_intraContexts to encodeIntraInInter */
+        slave->m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_intraContexts);
+        break;
 
-        case 1:
-            slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N);
-            break;
+    case 1:
+        slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N);
+        break;
 
-        case 2:
-            slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N);
-            break;
+    case 2:
+        slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N);
+        break;
 
-        case 3:
-            slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN);
-            break;
+    case 3:
+        slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN);
+        break;
 
-        default:
-            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
-            break;
-        }
+    default:
+        X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+        break;
     }
 }
 
@@ -1025,17 +1039,16 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
 
                     if (slice->m_sliceType == P_SLICE)
                     {
-                        /* RD selection between intra and inter/merge. TODO: move RD cost to intra job worker thread */
-                        encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
-                        uint64_t intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
+                        /* RD selection between intra and inter/merge */
+                        uint64_t icost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
                         bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
 
-                        if (intraInInterCost < bestCost)
+                        if (icost < bestCost)
                         {
                             outBestCU = m_intraInInterCU[depth];
                             std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
-                            std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
-                            m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
+                            std::swap(m_bestRecoYuv[depth], m_bestIntraRecoYuv[depth]);
+                            m_intraContexts.store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                         }
                     }
                 }
