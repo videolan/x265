@@ -323,8 +323,8 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
     m_mvBits           = 0;
     m_coeffBits        = 0;
     m_numPartitions    = NUM_CU_PARTITIONS;
-    char* qp           = pic->getCU(getAddr())->getQP();
-    m_baseQp           = pic->getCU(getAddr())->m_baseQp;
+    char* qp           = pic->getCU(m_cuAddr)->getQP();
+    m_baseQp           = pic->getCU(m_cuAddr)->m_baseQp;
     for (int i = 0; i < 4; i++)
     {
         m_avgCost[i] = 0;
@@ -396,11 +396,11 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uin
 
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
-    m_cuAddr           = cu->getAddr();
+    m_cuAddr           = cu->m_cuAddr;
     m_absIdxInCTU      = cuData->encodeIdx;
 
-    m_cuPelX           = cu->getCUPelX() + ((partUnitIdx &  1) << log2CUSize);
-    m_cuPelY           = cu->getCUPelY() + ((partUnitIdx >> 1) << log2CUSize);
+    m_cuPelX           = cu->m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
+    m_cuPelY           = cu->m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
 
     m_psyEnergy        = 0;
     m_totalPsyCost     = MAX_INT64;
@@ -458,11 +458,11 @@ void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
 {
     m_pic              = ctu->m_pic;
     m_slice            = ctu->m_slice;
-    m_cuAddr           = ctu->getAddr();
+    m_cuAddr           = ctu->m_cuAddr;
     m_absIdxInCTU      = cuData->encodeIdx;
 
-    m_cuPelX           = ctu->getCUPelX() + g_zscanToPelX[m_absIdxInCTU];
-    m_cuPelY           = ctu->getCUPelY() + g_zscanToPelY[m_absIdxInCTU];
+    m_cuPelX           = ctu->m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
+    m_cuPelY           = ctu->m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
 
     m_psyEnergy        = 0;
     m_totalPsyCost     = MAX_INT64;
@@ -541,8 +541,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, 
     m_cuAbove          = cu->getCUAbove();
     m_cuLeft           = cu->getCULeft();
 
-    m_cuMvField[0].copyFrom(cu->getCUMvField(REF_PIC_LIST_0), cuData->numPartitions, offset);
-    m_cuMvField[1].copyFrom(cu->getCUMvField(REF_PIC_LIST_1), cuData->numPartitions, offset);
+    m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], cuData->numPartitions, offset);
+    m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], cuData->numPartitions, offset);
 
     uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmp2 = partUnitIdx * tmp;
@@ -605,8 +605,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
 
-    m_cuMvField[0].copyTo(cu->getCUMvField(REF_PIC_LIST_0), m_absIdxInCTU);
-    m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInCTU);
+    m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
+    m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -696,8 +696,8 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
-    m_cuMvField[0].copyTo(cu->getCUMvField(REF_PIC_LIST_0), m_absIdxInCTU, partStart, qNumPart);
-    m_cuMvField[1].copyTo(cu->getCUMvField(REF_PIC_LIST_1), m_absIdxInCTU, partStart, qNumPart);
+    m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU, partStart, qNumPart);
+    m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU, partStart, qNumPart);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth - partDepth) * 2);
     uint32_t tmpY2 = partOffset << (LOG2_UNIT_SIZE * 2);
@@ -721,7 +721,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 // Other public functions
 // --------------------------------------------------------------------------------------------------------------------
 
-TComDataCU* TComDataCU::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx)
+const TComDataCU* TComDataCU::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const
 {
     uint32_t absPartIdx       = g_zscanToRaster[curPartUnitIdx];
     uint32_t numPartInCUSize  = m_pic->getNumPartInCUSize();
@@ -732,7 +732,7 @@ TComDataCU* TComDataCU::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitId
         lPartUnitIdx = g_rasterToZscan[absPartIdx - 1];
         if (RasterAddress::isEqualCol(absPartIdx, absZorderCUIdx, numPartInCUSize))
         {
-            return m_pic->getCU(getAddr());
+            return m_pic->getCU(m_cuAddr);
         }
         else
         {
@@ -745,7 +745,7 @@ TComDataCU* TComDataCU::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitId
     return m_cuLeft;
 }
 
-TComDataCU* TComDataCU::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary)
+const TComDataCU* TComDataCU::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary) const
 {
     uint32_t absPartIdx       = g_zscanToRaster[curPartUnitIdx];
     uint32_t numPartInCUSize  = m_pic->getNumPartInCUSize();
@@ -756,7 +756,7 @@ TComDataCU* TComDataCU::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitI
         aPartUnitIdx = g_rasterToZscan[absPartIdx - numPartInCUSize];
         if (RasterAddress::isEqualRow(absPartIdx, absZorderCUIdx, numPartInCUSize))
         {
-            return m_pic->getCU(getAddr());
+            return m_pic->getCU(m_cuAddr);
         }
         else
         {
@@ -772,7 +772,7 @@ TComDataCU* TComDataCU::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitI
     return m_cuAbove;
 }
 
-TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx)
+const TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const
 {
     uint32_t absPartIdx      = g_zscanToRaster[curPartUnitIdx];
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
@@ -785,7 +785,7 @@ TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPart
             alPartUnitIdx = g_rasterToZscan[absPartIdx - numPartInCUSize - 1];
             if (RasterAddress::isEqualRowOrCol(absPartIdx, absZorderCUIdx, numPartInCUSize))
             {
-                return m_pic->getCU(getAddr());
+                return m_pic->getCU(m_cuAddr);
             }
             else
             {
@@ -807,9 +807,9 @@ TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPart
     return m_cuAboveLeft;
 }
 
-TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx)
+const TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx) const
 {
-    if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_zscanToPelX[curPartUnitIdx] + UNIT_SIZE) >= m_slice->m_sps->picWidthInLumaSamples)
+    if ((m_pic->getCU(m_cuAddr)->m_cuPelX + g_zscanToPelX[curPartUnitIdx] + UNIT_SIZE) >= m_slice->m_sps->picWidthInLumaSamples)
         return NULL;
 
     uint32_t absPartIdxRT    = g_zscanToRaster[curPartUnitIdx];
@@ -825,7 +825,7 @@ TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPar
                 arPartUnitIdx = g_rasterToZscan[absPartIdxRT - numPartInCUSize + 1];
                 if (RasterAddress::isEqualRowOrCol(absPartIdxRT, absZorderCUIdx, numPartInCUSize))
                 {
-                    return m_pic->getCU(getAddr());
+                    return m_pic->getCU(m_cuAddr);
                 }
                 else
                 {
@@ -848,9 +848,9 @@ TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPar
     return m_cuAboveRight;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx)
+const TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx) const
 {
-    if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_zscanToPelY[curPartUnitIdx] + UNIT_SIZE) >= m_slice->m_sps->picHeightInLumaSamples)
+    if ((m_pic->getCU(m_cuAddr)->m_cuPelY + g_zscanToPelY[curPartUnitIdx] + UNIT_SIZE) >= m_slice->m_sps->picHeightInLumaSamples)
         return NULL;
 
     uint32_t absPartIdxLB    = g_zscanToRaster[curPartUnitIdx];
@@ -866,7 +866,7 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
                 blPartUnitIdx = g_rasterToZscan[absPartIdxLB + numPartInCUSize - 1];
                 if (RasterAddress::isEqualRowOrCol(absPartIdxLB, absZorderCUIdxLB, numPartInCUSize))
                 {
-                    return m_pic->getCU(getAddr());
+                    return m_pic->getCU(m_cuAddr);
                 }
                 else
                 {
@@ -883,13 +883,10 @@ TComDataCU* TComDataCU::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPart
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPartUnitIdx, uint32_t partUnitOffset)
+const TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPartUnitIdx, uint32_t partUnitOffset) const
 {
-    if ((m_pic->getCU(m_cuAddr)->getCUPelY() + g_zscanToPelY[curPartUnitIdx] + (partUnitOffset << LOG2_UNIT_SIZE)) >=
-        m_slice->m_sps->picHeightInLumaSamples)
-    {
+    if ((m_pic->getCU(m_cuAddr)->m_cuPelY + g_zscanToPelY[curPartUnitIdx] + (partUnitOffset << LOG2_UNIT_SIZE)) >= m_slice->m_sps->picHeightInLumaSamples)
         return NULL;
-    }
 
     uint32_t absPartIdxLB    = g_zscanToRaster[curPartUnitIdx];
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
@@ -903,9 +900,7 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
                 uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1) * m_pic->getNumPartInCUSize();
                 blPartUnitIdx = g_rasterToZscan[absPartIdxLB + partUnitOffset * numPartInCUSize - 1];
                 if (RasterAddress::isEqualRowOrCol(absPartIdxLB, absZorderCUIdxLB, numPartInCUSize))
-                {
-                    return m_pic->getCU(getAddr());
-                }
+                    return m_pic->getCU(m_cuAddr);
                 else
                 {
                     blPartUnitIdx -= m_absIdxInCTU;
@@ -915,23 +910,18 @@ TComDataCU* TComDataCU::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t cur
             return NULL;
         }
         blPartUnitIdx = g_rasterToZscan[absPartIdxLB + (1 + partUnitOffset) * numPartInCUSize - 1];
-        if (m_cuLeft == NULL || m_cuLeft->m_slice == NULL)
-        {
+        if (!m_cuLeft || !m_cuLeft->m_slice)
             return NULL;
-        }
         return m_cuLeft;
     }
 
     return NULL;
 }
 
-TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset)
+const TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset) const
 {
-    if ((m_pic->getCU(m_cuAddr)->getCUPelX() + g_zscanToPelX[curPartUnitIdx] + (partUnitOffset << LOG2_UNIT_SIZE)) >=
-        m_slice->m_sps->picWidthInLumaSamples)
-    {
+    if ((m_pic->getCU(m_cuAddr)->m_cuPelX + g_zscanToPelX[curPartUnitIdx] + (partUnitOffset << LOG2_UNIT_SIZE)) >= m_slice->m_sps->picWidthInLumaSamples)
         return NULL;
-    }
 
     uint32_t absPartIdxRT    = g_zscanToRaster[curPartUnitIdx];
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
@@ -946,7 +936,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
                 arPartUnitIdx = g_rasterToZscan[absPartIdxRT - numPartInCUSize + partUnitOffset];
                 if (RasterAddress::isEqualRowOrCol(absPartIdxRT, absZorderCUIdx, numPartInCUSize))
                 {
-                    return m_pic->getCU(getAddr());
+                    return m_pic->getCU(m_cuAddr);
                 }
                 else
                 {
@@ -957,24 +947,17 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
             return NULL;
         }
         arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_CU_PARTITIONS - numPartInCUSize + partUnitOffset];
-        if (m_cuAbove == NULL || m_cuAbove->m_slice == NULL)
-        {
+        if (!m_cuAbove || !m_cuAbove->m_slice)
             return NULL;
-        }
         return m_cuAbove;
     }
 
     if (!RasterAddress::isZeroRow(absPartIdxRT, numPartInCUSize))
-    {
         return NULL;
-    }
 
     arPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - numPartInCUSize + partUnitOffset - 1];
-    if ((m_cuAboveRight == NULL || m_cuAboveRight->m_slice == NULL ||
-         (m_cuAboveRight->getAddr()) > getAddr()))
-    {
+    if ((m_cuAboveRight == NULL || m_cuAboveRight->m_slice == NULL || (m_cuAboveRight->m_cuAddr) > m_cuAddr))
         return NULL;
-    }
     return m_cuAboveRight;
 }
 
@@ -983,7 +966,7 @@ TComDataCU* TComDataCU::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t cur
 *\param   curAbsIdxInCTU
 *\returns TComDataCU*   point of TComDataCU of left QpMinCu
 */
-TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU)
+const TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
     uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
@@ -991,15 +974,13 @@ TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsId
 
     // check for left CTU boundary
     if (RasterAddress::isZeroCol(absRorderQpMinCUIdx, numPartInCUSize))
-    {
         return NULL;
-    }
 
     // get index of left-CU relative to top-left corner of current quantization group
     lPartUnitIdx = g_rasterToZscan[absRorderQpMinCUIdx - 1];
 
     // return pointer to current CTU
-    return m_pic->getCU(getAddr());
+    return m_pic->getCU(m_cuAddr);
 }
 
 /** Get Above QpMinCu
@@ -1007,7 +988,7 @@ TComDataCU* TComDataCU::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsId
 *\param   curAbsIdxInCTU
 *\returns TComDataCU*   point of TComDataCU of above QpMinCu
 */
-TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU)
+const TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
     uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
     uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
@@ -1015,31 +996,29 @@ TComDataCU* TComDataCU::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsI
 
     // check for top CTU boundary
     if (RasterAddress::isZeroRow(absRorderQpMinCUIdx, numPartInCUSize))
-    {
         return NULL;
-    }
 
     // get index of top-CU relative to top-left corner of current quantization group
     aPartUnitIdx = g_rasterToZscan[absRorderQpMinCUIdx - numPartInCUSize];
 
     // return pointer to current CTU
-    return m_pic->getCU(getAddr());
+    return m_pic->getCU(m_cuAddr);
 }
 
 /** Get reference QP from left QpMinCu or latest coded QP
 *\param   curAbsIdxInCTU
 *\returns char reference QP value
 */
-char TComDataCU::getRefQP(uint32_t curAbsIdxInCTU)
+char TComDataCU::getRefQP(uint32_t curAbsIdxInCTU) const
 {
     uint32_t lPartIdx = 0, aPartIdx = 0;
-    TComDataCU* cULeft = getQpMinCuLeft(lPartIdx, m_absIdxInCTU + curAbsIdxInCTU);
-    TComDataCU* cUAbove = getQpMinCuAbove(aPartIdx, m_absIdxInCTU + curAbsIdxInCTU);
+    const TComDataCU* cULeft = getQpMinCuLeft(lPartIdx, m_absIdxInCTU + curAbsIdxInCTU);
+    const TComDataCU* cUAbove = getQpMinCuAbove(aPartIdx, m_absIdxInCTU + curAbsIdxInCTU);
 
     return ((cULeft ? cULeft->getQP(lPartIdx) : getLastCodedQP(curAbsIdxInCTU)) + (cUAbove ? cUAbove->getQP(aPartIdx) : getLastCodedQP(curAbsIdxInCTU)) + 1) >> 1;
 }
 
-int TComDataCU::getLastValidPartIdx(int absPartIdx)
+int TComDataCU::getLastValidPartIdx(int absPartIdx) const
 {
     int lastValidPartIdx = absPartIdx - 1;
 
@@ -1052,30 +1031,21 @@ int TComDataCU::getLastValidPartIdx(int absPartIdx)
     return lastValidPartIdx;
 }
 
-char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
+char TComDataCU::getLastCodedQP(uint32_t absPartIdx) const
 {
     uint32_t quPartIdxMask = 0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
     int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
 
     if (lastValidPartIdx >= 0)
-    {
         return getQP(lastValidPartIdx);
-    }
     else
     {
         if (m_pic->getCU(m_cuAddr)->m_cuLocalData->encodeIdx > 0)
-        {
-            return m_pic->getCU(getAddr())->getLastCodedQP(m_pic->getCU(m_cuAddr)->m_cuLocalData->encodeIdx);
-        }
-        else if (getAddr() > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled &&
-                                    getAddr() % m_pic->getFrameWidthInCU() == 0))
-        {
-            return m_pic->getCU(getAddr() - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
-        }
+            return m_pic->getCU(m_cuAddr)->getLastCodedQP(m_pic->getCU(m_cuAddr)->m_cuLocalData->encodeIdx);
+        else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && (m_cuAddr % m_pic->getFrameWidthInCU()) == 0))
+            return m_pic->getCU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
         else
-        {
             return m_slice->m_sliceQp;
-        }
     }
 }
 
@@ -1085,7 +1055,7 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx)
 *\returns
 *- fill uiModeList with chroma intra modes
 */
-void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList)
+void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const
 {
     modeList[0] = PLANAR_IDX;
     modeList[1] = VER_IDX;
@@ -1111,9 +1081,9 @@ void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList)
 *\param   mode          it is set with MPM mode in case both MPM are equal. It is used to restrict RD search at encode side.
 *\returns Number of MPM
 */
-int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred)
+int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const
 {
-    TComDataCU* tempCU;
+    const TComDataCU* tempCU;
     uint32_t    tempPartIdx;
     uint32_t    leftIntraDir, aboveIntraDir;
 
@@ -1160,9 +1130,9 @@ int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDir
     }
 }
 
-uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth)
+uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const
 {
-    TComDataCU* tempCU;
+    const TComDataCU* tempCU;
     uint32_t    tempPartIdx;
     uint32_t    ctx;
 
@@ -1177,7 +1147,7 @@ uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth)
     return ctx;
 }
 
-void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx)
+void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
 {
     uint32_t log2CUSize = getLog2CUSize(absPartIdx);
     PartSize partSize   = getPartitionSize(absPartIdx);
@@ -1191,19 +1161,19 @@ void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t
     tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (quadtreeTUMaxDepth - 1 + interSplitFlag + intraSplitFlag), tuDepthRange[1]));
 }
 
-uint32_t TComDataCU::getCtxSkipFlag(uint32_t absPartIdx)
+uint32_t TComDataCU::getCtxSkipFlag(uint32_t absPartIdx) const
 {
-    TComDataCU* tempCU;
-    uint32_t    tempPartIdx;
-    uint32_t    ctx = 0;
+    const TComDataCU* tempCU;
+    uint32_t tempPartIdx;
+    uint32_t ctx;
 
     // Get BCBP of left PU
     tempCU = getPULeft(tempPartIdx, m_absIdxInCTU + absPartIdx);
-    ctx    = (tempCU) ? tempCU->isSkipped(tempPartIdx) : 0;
+    ctx    = tempCU ? tempCU->isSkipped(tempPartIdx) : 0;
 
     // Get BCBP of above PU
     tempCU = getPUAbove(tempPartIdx, m_absIdxInCTU + absPartIdx);
-    ctx   += (tempCU) ? tempCU->isSkipped(tempPartIdx) : 0;
+    ctx   += tempCU ? tempCU->isSkipped(tempPartIdx) : 0;
 
     return ctx;
 }
@@ -1237,7 +1207,7 @@ void TComDataCU::setDepthSubParts(uint32_t depth)
     memset(m_depth, depth, sizeof(uint8_t) * curPartNum);
 }
 
-bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth)
+bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth) const
 {
     uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
 
@@ -1450,7 +1420,7 @@ void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType t
     memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
 }
 
-void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight)
+void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const
 {
     int cuSize = 1 << getLog2CUSize(0);
     int part_mode = m_partSizes[0];
@@ -1462,54 +1432,53 @@ void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, in
     outPartAddr = (partAddrTable[part_mode][part_idx] * m_numPartitions) >> 4;
 }
 
-void TComDataCU::getMvField(TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField)
+void TComDataCU::getMvField(const TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField) const
 {
-    if (cu == NULL)  // OUT OF BOUNDARY
+    if (!cu)  // OUT OF BOUNDARY
     {
         MV mv(0, 0);
         outMvField.setMvField(mv, NOT_VALID);
         return;
     }
 
-    TComCUMvField* cuMvField = cu->getCUMvField(picList);
-    outMvField.setMvField(cuMvField->getMv(absPartIdx), cuMvField->getRefIdx(absPartIdx));
+    outMvField.setMvField(cu->m_cuMvField[picList].getMv(absPartIdx), cu->m_cuMvField[picList].getRefIdx(absPartIdx));
 }
 
-void TComDataCU::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& ruiPartIdxLT, uint32_t& ruiPartIdxRT)
+void TComDataCU::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const
 {
-    ruiPartIdxLT = m_absIdxInCTU;
-    ruiPartIdxRT = g_rasterToZscan[g_zscanToRaster[ruiPartIdxLT] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
+    partIdxLT = m_absIdxInCTU;
+    partIdxRT = g_rasterToZscan[g_zscanToRaster[partIdxLT] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
 
     switch (m_partSizes[0])
     {
     case SIZE_2Nx2N: break;
     case SIZE_2NxN:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 1;
-        ruiPartIdxRT += (partIdx == 0) ? 0 : m_numPartitions >> 1;
+        partIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 1;
+        partIdxRT += (partIdx == 0) ? 0 : m_numPartitions >> 1;
         break;
     case SIZE_Nx2N:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 2;
-        ruiPartIdxRT -= (partIdx == 1) ? 0 : m_numPartitions >> 2;
+        partIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 2;
+        partIdxRT -= (partIdx == 1) ? 0 : m_numPartitions >> 2;
         break;
     case SIZE_NxN:
-        ruiPartIdxLT += (m_numPartitions >> 2) * partIdx;
-        ruiPartIdxRT +=  (m_numPartitions >> 2) * (partIdx - 1);
+        partIdxLT += (m_numPartitions >> 2) * partIdx;
+        partIdxRT +=  (m_numPartitions >> 2) * (partIdx - 1);
         break;
     case SIZE_2NxnU:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 3;
-        ruiPartIdxRT += (partIdx == 0) ? 0 : m_numPartitions >> 3;
+        partIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 3;
+        partIdxRT += (partIdx == 0) ? 0 : m_numPartitions >> 3;
         break;
     case SIZE_2NxnD:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : (m_numPartitions >> 1) + (m_numPartitions >> 3);
-        ruiPartIdxRT += (partIdx == 0) ? 0 : (m_numPartitions >> 1) + (m_numPartitions >> 3);
+        partIdxLT += (partIdx == 0) ? 0 : (m_numPartitions >> 1) + (m_numPartitions >> 3);
+        partIdxRT += (partIdx == 0) ? 0 : (m_numPartitions >> 1) + (m_numPartitions >> 3);
         break;
     case SIZE_nLx2N:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 4;
-        ruiPartIdxRT -= (partIdx == 1) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
+        partIdxLT += (partIdx == 0) ? 0 : m_numPartitions >> 4;
+        partIdxRT -= (partIdx == 1) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
         break;
     case SIZE_nRx2N:
-        ruiPartIdxLT += (partIdx == 0) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
-        ruiPartIdxRT -= (partIdx == 1) ? 0 : m_numPartitions >> 4;
+        partIdxLT += (partIdx == 0) ? 0 : (m_numPartitions >> 2) + (m_numPartitions >> 4);
+        partIdxRT -= (partIdx == 1) ? 0 : m_numPartitions >> 4;
         break;
     default:
         X265_CHECK(0, "unexpected part index\n");
@@ -1517,7 +1486,7 @@ void TComDataCU::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& ruiPartIdxLT,
     }
 }
 
-void TComDataCU::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB)
+void TComDataCU::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
 {
     outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_pic->getNumPartInCUSize()];
 
@@ -1558,7 +1527,7 @@ void TComDataCU::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB)
  * \param [in]  partIdx
  * \param [out] outPartIdxRB
  */
-void TComDataCU::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB)
+void TComDataCU::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) const
 {
     outPartIdxRB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] +
                                    ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_pic->getNumPartInCUSize() +
@@ -1596,7 +1565,7 @@ void TComDataCU::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB)
     }
 }
 
-void TComDataCU::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outPartIdxRT, uint32_t partOffset, uint32_t partDepth)
+void TComDataCU::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outPartIdxRT, uint32_t partOffset, uint32_t partDepth) const
 {
     uint32_t numPartInWidth = 1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - partDepth);
 
@@ -1604,22 +1573,18 @@ void TComDataCU::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outP
     outPartIdxRT = g_rasterToZscan[g_zscanToRaster[outPartIdxLT] + numPartInWidth - 1];
 }
 
-bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, TComDataCU* candCU, uint32_t candAbsPartIdx)
+bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, uint32_t candAbsPartIdx) const
 {
     if (getInterDir(absPartIdx) != candCU->getInterDir(candAbsPartIdx))
-    {
         return false;
-    }
 
     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
     {
         if (getInterDir(absPartIdx) & (1 << refListIdx))
         {
-            if (getCUMvField(refListIdx)->getMv(absPartIdx)     != candCU->getCUMvField(refListIdx)->getMv(candAbsPartIdx) ||
-                getCUMvField(refListIdx)->getRefIdx(absPartIdx) != candCU->getCUMvField(refListIdx)->getRefIdx(candAbsPartIdx))
-            {
+            if (m_cuMvField[refListIdx].getMv(absPartIdx) != candCU->m_cuMvField[refListIdx].getMv(candAbsPartIdx) ||
+                m_cuMvField[refListIdx].getRefIdx(absPartIdx) != candCU->m_cuMvField[refListIdx].getRefIdx(candAbsPartIdx))
                 return false;
-            }
         }
     }
 
@@ -1660,8 +1625,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     //left
     uint32_t leftPartIdx = 0;
-    TComDataCU* cuLeft = 0;
-    cuLeft = getPULeft(leftPartIdx, partIdxLB);
+    const TComDataCU* cuLeft = getPULeft(leftPartIdx, partIdxLB);
     bool isAvailableA1 = cuLeft &&
         cuLeft->isDiffMER(xP - 1, yP + nPSH - 1, xP, yP) &&
         !(puIdx == 1 && (curPS == SIZE_Nx2N || curPS == SIZE_nLx2N || curPS == SIZE_nRx2N)) &&
@@ -1685,8 +1649,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     // above
     uint32_t abovePartIdx = 0;
-    TComDataCU* cuAbove = 0;
-    cuAbove = getPUAbove(abovePartIdx, partIdxRT);
+    const TComDataCU* cuAbove = getPUAbove(abovePartIdx, partIdxRT);
     bool isAvailableB1 = cuAbove &&
         cuAbove->isDiffMER(xP + nPSW - 1, yP - 1, xP, yP) &&
         !(puIdx == 1 && (curPS == SIZE_2NxN || curPS == SIZE_2NxnU || curPS == SIZE_2NxnD)) &&
@@ -1708,8 +1671,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     // above right
     uint32_t aboveRightPartIdx = 0;
-    TComDataCU* cuAboveRight = 0;
-    cuAboveRight = getPUAboveRight(aboveRightPartIdx, partIdxRT);
+    const TComDataCU* cuAboveRight = getPUAboveRight(aboveRightPartIdx, partIdxRT);
     bool isAvailableB0 = cuAboveRight &&
         cuAboveRight->isDiffMER(xP + nPSW, yP - 1, xP, yP) &&
         !cuAboveRight->isIntra(aboveRightPartIdx);
@@ -1730,8 +1692,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     // left bottom
     uint32_t leftBottomPartIdx = 0;
-    TComDataCU* cuLeftBottom = 0;
-    cuLeftBottom = this->getPUBelowLeft(leftBottomPartIdx, partIdxLB);
+    const TComDataCU* cuLeftBottom = this->getPUBelowLeft(leftBottomPartIdx, partIdxLB);
     bool isAvailableA0 = cuLeftBottom &&
         cuLeftBottom->isDiffMER(xP - 1, yP + nPSH, xP, yP) &&
         !cuLeftBottom->isIntra(leftBottomPartIdx);
@@ -1754,8 +1715,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     if (count < 4)
     {
         uint32_t aboveLeftPartIdx = 0;
-        TComDataCU* cuAboveLeft = 0;
-        cuAboveLeft = getPUAboveLeft(aboveLeftPartIdx, absPartAddr);
+        const TComDataCU* cuAboveLeft = getPUAboveLeft(aboveLeftPartIdx, absPartAddr);
         bool isAvailableB2 = cuAboveLeft &&
             cuAboveLeft->isDiffMER(xP - 1, yP - 1, xP, yP) &&
             !cuAboveLeft->isIntra(aboveLeftPartIdx);
@@ -1785,8 +1745,8 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         int ctuIdx = -1;
 
         // image boundary check
-        if (m_pic->getCU(m_cuAddr)->getCUPelX() + g_zscanToPelX[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picWidthInLumaSamples &&
-            m_pic->getCU(m_cuAddr)->getCUPelY() + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
+        if (m_pic->getCU(m_cuAddr)->m_cuPelX + g_zscanToPelX[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picWidthInLumaSamples &&
+            m_pic->getCU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
             uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
@@ -1796,14 +1756,14 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             if (bNotLastCol && bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + numPartInCUSize + 1];
-                ctuIdx = getAddr();
+                ctuIdx = m_cuAddr;
             }
             else if (bNotLastCol)
                 absPartAddr = g_rasterToZscan[(absPartIdxRB + numPartInCUSize + 1) & (numPartInCUSize - 1)];
             else if (bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];
-                ctuIdx = getAddr() + 1;
+                ctuIdx = m_cuAddr + 1;
             }
             else // is the right bottom corner of CTU
                 absPartAddr = 0;
@@ -1811,7 +1771,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
         int refIdx = 0;
         uint32_t partIdxCenter;
-        uint32_t curCTUIdx = getAddr();
+        uint32_t curCTUIdx = m_cuAddr;
         int dir = 0;
         xDeriveCenterIdx(puIdx, partIdxCenter);
         bool bExistMV = ctuIdx >= 0 && xGetColMVP(REF_PIC_LIST_0, ctuIdx, absPartAddr, colmv, refIdx);
@@ -1912,7 +1872,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
  * \param xP, yP   location of the upper-left corner pixel of the current PU
  * \returns bool
  */
-bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP)
+bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP) const
 {
     uint32_t plevel = 2;
 
@@ -1952,7 +1912,7 @@ void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, 
  * \param info
  * \param mvc
  */
-int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, MV* amvpCand, MV* mvc)
+int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, MV* amvpCand, MV* mvc) const
 {
     int num = 0;
 
@@ -2040,8 +2000,8 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         int ctuIdx = -1;
 
         // image boundary check
-        if (m_pic->getCU(m_cuAddr)->getCUPelX() + g_zscanToPelX[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picWidthInLumaSamples &&
-            m_pic->getCU(m_cuAddr)->getCUPelY() + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
+        if (m_pic->getCU(m_cuAddr)->m_cuPelX + g_zscanToPelX[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picWidthInLumaSamples &&
+            m_pic->getCU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
             uint32_t numPartInCUSize = m_pic->getNumPartInCUSize();
@@ -2051,14 +2011,14 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
             if (bNotLastCol && bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + numPartInCUSize + 1];
-                ctuIdx = getAddr();
+                ctuIdx = m_cuAddr;
             }
             else if (bNotLastCol)
                 absPartAddr = g_rasterToZscan[(absPartIdxRB + numPartInCUSize + 1) & (numPartInCUSize - 1)];
             else if (bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];
-                ctuIdx = getAddr() + 1;
+                ctuIdx = m_cuAddr + 1;
             }
             else // is the right bottom corner of CTU
                 absPartAddr = 0;
@@ -2071,7 +2031,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         else
         {
             uint32_t partIdxCenter;
-            uint32_t curCTUIdx = getAddr();
+            uint32_t curCTUIdx = m_cuAddr;
             xDeriveCenterIdx(partIdx, partIdxCenter);
             if (xGetColMVP(picList, curCTUIdx, partIdxCenter, colmv, refIdx))
             {
@@ -2083,14 +2043,12 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
     }
 
     while (num < AMVP_NUM_CANDS)
-    {
         amvpCand[num++] = 0;
-    }
 
     return numMvc;
 }
 
-void TComDataCU::clipMv(MV& outMV)
+void TComDataCU::clipMv(MV& outMV) const
 {
     int mvshift = 2;
     int offset = 8;
@@ -2108,9 +2066,9 @@ void TComDataCU::clipMv(MV& outMV)
 // Protected member functions
 // ====================================================================================================================
 
-bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
 {
-    TComDataCU* tmpCU = NULL;
+    const TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
 
     switch (dir)
@@ -2138,10 +2096,10 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
         return false;
 
     int refPOC = m_slice->m_refPOCList[picList][refIdx];
-    int otherPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->getCUMvField(picList)->getRefIdx(idx)];
-    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0 && refPOC == otherPOC)
+    int otherPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].getRefIdx(idx)];
+    if (tmpCU->m_cuMvField[picList].getRefIdx(idx) >= 0 && refPOC == otherPOC)
     {
-        mvp = tmpCU->getCUMvField(picList)->getMv(idx);
+        mvp = tmpCU->m_cuMvField[picList].getMv(idx);
         return true;
     }
 
@@ -2154,13 +2112,13 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
     int curRefPOC = m_slice->m_refPOCList[picList][refIdx];
     int neibRefPOC;
 
-    if (tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx)];
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx)];
         if (neibRefPOC == curRefPOC)
         {
             // Same reference frame but different list
-            mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
+            mvp = tmpCU->m_cuMvField[refPicList2nd].getMv(idx);
             return true;
         }
     }
@@ -2175,9 +2133,9 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
  * \param dir
  * \returns bool
  */
-bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir)
+bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
 {
-    TComDataCU* tmpCU = NULL;
+    const TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
 
     switch (dir)
@@ -2216,10 +2174,10 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     int neibRefPOC;
 
     //---------------  V1 (END) ------------------//
-    if (tmpCU->getCUMvField(picList)->getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[picList].getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->getCUMvField(picList)->getRefIdx(idx)];
-        MV mvp = tmpCU->getCUMvField(picList)->getMv(idx);
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].getRefIdx(idx)];
+        MV mvp = tmpCU->m_cuMvField[picList].getMv(idx);
 
         int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
@@ -2231,10 +2189,10 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
     }
 
     //---------------------- V2(END) --------------------//
-    if (tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->getCUMvField(refPicList2nd)->getRefIdx(idx)];
-        MV mvp = tmpCU->getCUMvField(refPicList2nd)->getMv(idx);
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx)];
+        MV mvp = tmpCU->m_cuMvField[refPicList2nd].getMv(idx);
 
         int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
@@ -2256,7 +2214,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
  * \param outRefIdx
  * \returns bool
  */
-bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx)
+bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const
 {
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
 
@@ -2279,12 +2237,12 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
 
     colRefPicList = m_slice->m_bCheckLDC ? picList : m_slice->m_colFromL0Flag;
 
-    int colRefIdx = colCU->getCUMvField(colRefPicList)->getRefIdx(absPartAddr);
+    int colRefIdx = colCU->m_cuMvField[colRefPicList].getRefIdx(absPartAddr);
 
     if (colRefIdx < 0)
     {
         colRefPicList = 1 - colRefPicList;
-        colRefIdx = colCU->getCUMvField(colRefPicList)->getRefIdx(absPartAddr);
+        colRefIdx = colCU->m_cuMvField[colRefPicList].getRefIdx(absPartAddr);
 
         if (colRefIdx < 0)
             return false;
@@ -2292,7 +2250,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
 
     // Scale the vector.
     colRefPOC = colCU->m_slice->m_refPOCList[colRefPicList][colRefIdx];
-    colmv = colCU->getCUMvField(colRefPicList)->getMv(absPartAddr);
+    colmv = colCU->m_cuMvField[colRefPicList].getMv(absPartAddr);
 
     curRefPOC = m_slice->m_refPOCList[picList][outRefIdx];
 
@@ -2305,7 +2263,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     return true;
 }
 
-int TComDataCU::xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC)
+int TComDataCU::xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const
 {
     int diffPocD = colPOC - colRefPOC;
     int diffPocB = curPOC - curRefPOC;
@@ -2330,7 +2288,7 @@ int TComDataCU::xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int c
  * \param outPartIdxCenter
  * \returns void
  */
-void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
+void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const
 {
     uint32_t partAddr;
     int partWidth;
@@ -2344,7 +2302,7 @@ void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter)
                                        + (partWidth  >> (LOG2_UNIT_SIZE + 1))];
 }
 
-ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra)
+ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const
 {
     uint32_t dirMode;
 
@@ -2381,7 +2339,7 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         return SCAN_DIAG;
 }
 
-void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma)
+void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const
 {
     // set the group layout
     result.log2TrSizeCG = log2TrSize - 2;

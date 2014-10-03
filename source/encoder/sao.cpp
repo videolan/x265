@@ -256,8 +256,8 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
     int endY;
     pixel* tmpL;
     pixel* tmpU;
-    uint32_t lpelx = tmpCu->getCUPelX();
-    uint32_t tpely = tmpCu->getCUPelY();
+    uint32_t lpelx = tmpCu->m_cuPelX;
+    uint32_t tpely = tmpCu->m_cuPelY;
     bool isLuma = !plane;
 
     picWidthTmp  = isLuma ? m_param->sourceWidth  : m_param->sourceWidth  >> m_hChromaShift;
@@ -644,8 +644,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int startY;
     int endX;
     int endY;
-    uint32_t lpelx = cu->getCUPelX();
-    uint32_t tpely = cu->getCUPelY();
+    uint32_t lpelx = cu->m_cuPelX;
+    uint32_t tpely = cu->m_cuPelY;
 
     int isLuma = !plane;
     int isChroma = !!plane;
@@ -910,8 +910,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
             uint32_t picHeightTmp = m_param->sourceHeight;
             int ctuWidth  = g_maxCUSize;
             int ctuHeight = g_maxCUSize;
-            lPelX   = cu->getCUPelX();
-            tPelY   = cu->getCUPelY();
+            lPelX   = cu->m_cuPelX;
+            tPelY   = cu->m_cuPelY;
             rPelX     = lPelX + ctuWidth;
             bPelY     = tPelY + ctuHeight;
             rPelX     = rPelX > picWidthTmp  ? picWidthTmp  : rPelX;
@@ -1731,8 +1731,8 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     {
         uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         uint32_t qNumParts   = curNumParts >> 2;
-        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
-        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
+        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
+        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->m_cuPelY;
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
         {
             if (g_zscanToPelX[absZOrderIdx] < xmax && g_zscanToPelY[absZOrderIdx] < ymax)
@@ -1751,12 +1751,12 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
     TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
-    int hChromaShift = cu->getHorzChromaShift();
-    int vChromaShift = cu->getVertChromaShift();
+    int hChromaShift = cu->m_hChromaShift;
+    int vChromaShift = cu->m_vChromaShift;
     uint32_t lumaOffset   = absZOrderIdx << (LOG2_UNIT_SIZE * 2);
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
-    pixel* dst = pcPicYuvRec->getLumaAddr(cu->getAddr(), absZOrderIdx);
+    pixel* dst = pcPicYuvRec->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
     pixel* src = cu->getLumaOrigYuv() + lumaOffset;
     uint32_t stride = pcPicYuvRec->getStride();
     uint32_t width  = (g_maxCUSize >> depth);
@@ -1774,10 +1774,10 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
         dst += stride;
     }
 
-    pixel* dstCb = pcPicYuvRec->getChromaAddr(1, cu->getAddr(), absZOrderIdx);
+    pixel* dstCb = pcPicYuvRec->getChromaAddr(1, cu->m_cuAddr, absZOrderIdx);
     pixel* srcCb = cu->getChromaOrigYuv(1) + chromaOffset;
 
-    pixel* dstCr = pcPicYuvRec->getChromaAddr(2, cu->getAddr(), absZOrderIdx);
+    pixel* dstCr = pcPicYuvRec->getChromaAddr(2, cu->m_cuAddr, absZOrderIdx);
     pixel* srcCr = cu->getChromaOrigYuv(2) + chromaOffset;
 
     stride = pcPicYuvRec->getCStride();

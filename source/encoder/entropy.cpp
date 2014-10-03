@@ -569,8 +569,8 @@ void Entropy::finishCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
 
     uint32_t granularityMask = g_maxCUSize - 1;
     uint32_t cuSize = 1 << cu->getLog2CUSize(absPartIdx);
-    uint32_t rpelx = cu->getCUPelX() + g_zscanToPelX[absPartIdx] + cuSize;
-    uint32_t bpely = cu->getCUPelY() + g_zscanToPelY[absPartIdx] + cuSize;
+    uint32_t rpelx = cu->m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
+    uint32_t bpely = cu->m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
     bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
                                 ((bpely & granularityMask) == 0 || (bpely == slice->m_sps->picHeightInLumaSamples)));
 
@@ -594,8 +594,8 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP, uint32_t* depthRange)
 {
     const bool subdiv = cu->getTransformIdx(absPartIdx) + cu->getDepth(absPartIdx) > (uint8_t)depth;
-    uint32_t hChromaShift = cu->getHorzChromaShift();
-    uint32_t vChromaShift = cu->getVertChromaShift();
+    uint32_t hChromaShift = cu->m_hChromaShift;
+    uint32_t vChromaShift = cu->m_vChromaShift;
     uint32_t cbfY = cu->getCbf(absPartIdx, TEXT_LUMA, trIdx);
     uint32_t cbfU = cu->getCbf(absPartIdx, TEXT_CHROMA_U, trIdx);
     uint32_t cbfV = cu->getCbf(absPartIdx, TEXT_CHROMA_V, trIdx);
@@ -603,10 +603,10 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
     if (!trIdx)
         state.bakAbsPartIdxCU = absPartIdx;
 
-    if ((log2TrSize == 2) && !(cu->getChromaFormat() == X265_CSP_I444))
+    if ((log2TrSize == 2) && cu->m_chromaFormat != X265_CSP_I444)
     {
         uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
-        if ((absPartIdx & (partNum - 1)) == 0)
+        if (!(absPartIdx & (partNum - 1)))
         {
             state.bakAbsPartIdx   = absPartIdx;
             state.bakChromaOffset = offsetChroma;
@@ -725,8 +725,8 @@ void Entropy::encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t of
         if (cbfY)
             codeCoeffNxN(cu, (cu->getCoeffY() + offsetLuma), absPartIdx, log2TrSize, TEXT_LUMA);
 
-        int chFmt = cu->getChromaFormat();
-        if ((log2TrSize == 2) && !(chFmt == X265_CSP_I444))
+        int chFmt = cu->m_chromaFormat;
+        if ((log2TrSize == 2) && chFmt != X265_CSP_I444)
         {
             uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
@@ -782,7 +782,7 @@ void Entropy::codePredInfo(TComDataCU* cu, uint32_t absPartIdx)
     if (cu->isIntra(absPartIdx)) // If it is intra mode, encode intra prediction mode.
     {
         codeIntraDirLumaAng(cu, absPartIdx, true);
-        int chFmt = cu->getChromaFormat();
+        int chFmt = cu->m_chromaFormat;
         if (chFmt != X265_CSP_I400)
         {
             codeIntraDirChroma(cu, absPartIdx);
@@ -857,7 +857,7 @@ void Entropy::codeCoeff(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, boo
 
     uint32_t log2CUSize   = cu->getLog2CUSize(absPartIdx);
     uint32_t lumaOffset   = absPartIdx << (LOG2_UNIT_SIZE * 2);
-    uint32_t chromaOffset = lumaOffset >> (cu->getHorzChromaShift() + cu->getVertChromaShift());
+    uint32_t chromaOffset = lumaOffset >> (cu->m_hChromaShift + cu->m_vChromaShift);
     uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> (depth << 1);
     CoeffCodeState state;
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP, depthRange);

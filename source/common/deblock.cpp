@@ -54,8 +54,8 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
     if (cu->getDepth(absZOrderIdx) > depth)
     {
         uint32_t qNumParts   = curNumParts >> 2;
-        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->getCUPelX();
-        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->getCUPelY();
+        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
+        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->m_cuPelY;
         for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
             if (g_zscanToPelX[absZOrderIdx] < xmax && g_zscanToPelY[absZOrderIdx] < ymax)
                 deblockCU(cu, absZOrderIdx, depth + 1, dir, blockingStrength);
@@ -79,7 +79,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
 
     const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
     uint32_t sizeInPU = pic->getNumPartInCUSize() >> depth;
-    uint32_t shiftFactor = (dir == EDGE_VER) ? cu->getHorzChromaShift() : cu->getVertChromaShift();
+    uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
     uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
     uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absZOrderIdx] : g_zscanToPelY[absZOrderIdx]) >> LOG2_UNIT_SIZE;
         
@@ -171,10 +171,10 @@ void Deblock::setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir
 
 void Deblock::setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *params)
 {
-    uint32_t x = cu->getCUPelX() + g_zscanToPelX[absZOrderIdx];
-    uint32_t y = cu->getCUPelY() + g_zscanToPelY[absZOrderIdx];
+    uint32_t x = cu->m_cuPelX + g_zscanToPelX[absZOrderIdx];
+    uint32_t y = cu->m_cuPelY + g_zscanToPelY[absZOrderIdx];
 
-    TComDataCU* tempCU;
+    const TComDataCU* tempCU;
     uint32_t    tempPartIdx;
 
     if (!x)
@@ -207,7 +207,7 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
     TComDataCU* const cuQ = cu;
 
     uint32_t partP;
-    TComDataCU* cuP;
+    const TComDataCU* cuP;
     uint8_t bs = 0;
 
     // Calculate block index
@@ -239,19 +239,19 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
             {
                 int32_t refIdx;
                 Frame *refP0, *refP1, *refQ0, *refQ1;
-                refIdx = cuP->getCUMvField(0)->getRefIdx(partP);
+                refIdx = cuP->m_cuMvField[0].getRefIdx(partP);
                 refP0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuP->getCUMvField(1)->getRefIdx(partP);
+                refIdx = cuP->m_cuMvField[1].getRefIdx(partP);
                 refP1 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[1][refIdx];
-                refIdx = cuQ->getCUMvField(0)->getRefIdx(partQ);
+                refIdx = cuQ->m_cuMvField[0].getRefIdx(partQ);
                 refQ0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->getCUMvField(1)->getRefIdx(partQ);
+                refIdx = cuQ->m_cuMvField[1].getRefIdx(partQ);
                 refQ1 = (refIdx < 0) ? NULL : slice->m_refPicList[1][refIdx];
 
-                MV mvp0 = cuP->getCUMvField(0)->getMv(partP);
-                MV mvp1 = cuP->getCUMvField(1)->getMv(partP);
-                MV mvq0 = cuQ->getCUMvField(0)->getMv(partQ);
-                MV mvq1 = cuQ->getCUMvField(1)->getMv(partQ);
+                MV mvp0 = cuP->m_cuMvField[0].getMv(partP);
+                MV mvp1 = cuP->m_cuMvField[1].getMv(partP);
+                MV mvq0 = cuQ->m_cuMvField[0].getMv(partQ);
+                MV mvq1 = cuQ->m_cuMvField[1].getMv(partQ);
 
                 if (!refP0) mvp0 = 0;
                 if (!refP1) mvp1 = 0;
@@ -296,12 +296,12 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
             {
                 int32_t refIdx;
                 Frame *refp0, *refq0;
-                refIdx = cuP->getCUMvField(0)->getRefIdx(partP);
+                refIdx = cuP->m_cuMvField[0].getRefIdx(partP);
                 refp0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->getCUMvField(0)->getRefIdx(partQ);
+                refIdx = cuQ->m_cuMvField[0].getRefIdx(partQ);
                 refq0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                MV mvp0 = cuP->getCUMvField(0)->getMv(partP);
-                MV mvq0 = cuQ->getCUMvField(0)->getMv(partQ);
+                MV mvp0 = cuP->m_cuMvField[0].getMv(partP);
+                MV mvq0 = cuQ->m_cuMvField[0].getMv(partQ);
 
                 if (!refp0) mvp0 = 0;
                 if (!refq0) mvq0 = 0;
@@ -443,7 +443,7 @@ static inline void pelFilterChroma(pixel* src, int32_t srcStep, int32_t offset, 
 void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
     TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
-    pixel* src = reconYuv->getLumaAddr(cu->getAddr(), absZOrderIdx);
+    pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
 
     int32_t stride = reconYuv->getStride();
     uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
@@ -454,8 +454,8 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     bool  partQNoFilter = false;
     uint32_t  partP = 0;
     uint32_t  partQ = 0;
-    TComDataCU* cuP = cu;
-    TComDataCU* cuQ = cu;
+    const TComDataCU* cuP = cu;
+    const TComDataCU* cuQ = cu;
     int32_t betaOffset = cuQ->m_slice->m_pps->deblockingFilterBetaOffsetDiv2 << 1;
     int32_t tcOffset = cuQ->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
@@ -541,38 +541,38 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 
 void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    int32_t chFmt = cu->getChromaFormat();
+    int32_t chFmt = cu->m_chromaFormat;
     int32_t offset, srcStep, chromaShift;
 
     bool partPNoFilter = false;
     bool partQNoFilter = false;
     uint32_t partP;
     uint32_t partQ;
-    TComDataCU* cuP;
-    TComDataCU* cuQ = cu;
+    const TComDataCU* cuP;
+    const TComDataCU* cuQ = cu;
     int32_t tcOffset = cu->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
     X265_CHECK(((dir == EDGE_VER)
-                ? ((g_zscanToPelX[absZOrderIdx] + edge * UNIT_SIZE) >> cu->getHorzChromaShift())
-                : ((g_zscanToPelY[absZOrderIdx] + edge * UNIT_SIZE) >> cu->getVertChromaShift())) % DEBLOCK_SMALLEST_BLOCK == 0,
+                ? ((g_zscanToPelX[absZOrderIdx] + edge * UNIT_SIZE) >> cu->m_hChromaShift)
+                : ((g_zscanToPelY[absZOrderIdx] + edge * UNIT_SIZE) >> cu->m_vChromaShift)) % DEBLOCK_SMALLEST_BLOCK == 0,
                "invalid edge\n");
 
 
     TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
     int32_t stride = reconYuv->getCStride();
-    int32_t srcOffset = reconYuv->getChromaAddrOffset(cu->getAddr(), absZOrderIdx);
+    int32_t srcOffset = reconYuv->getChromaAddrOffset(cu->m_cuAddr, absZOrderIdx);
 
     if (dir == EDGE_VER)
     {
-        chromaShift = cu->getVertChromaShift();
-        srcOffset += (edge << (LOG2_UNIT_SIZE - cu->getHorzChromaShift()));
+        chromaShift = cu->m_vChromaShift;
+        srcOffset += (edge << (LOG2_UNIT_SIZE - cu->m_hChromaShift));
         offset     = 1;
         srcStep    = stride;
     }
     else // (dir == EDGE_HOR)
     {
-        chromaShift = cu->getHorzChromaShift();
-        srcOffset += edge * stride << (LOG2_UNIT_SIZE - cu->getVertChromaShift());
+        chromaShift = cu->m_hChromaShift;
+        srcOffset += edge * stride << (LOG2_UNIT_SIZE - cu->m_vChromaShift);
         offset     = stride;
         srcStep    = 1;
     }

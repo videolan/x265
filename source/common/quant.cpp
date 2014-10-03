@@ -177,14 +177,13 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(TComDataCU* cu)
+void Quant::setQPforQuant(const TComDataCU* cu)
 {
     int qpy = cu->getQP(0);
-    int chFmt = cu->getChromaFormat();
 
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + cu->m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, chFmt);
-    setChromaQP(qpy + cu->m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, chFmt);
+    setChromaQP(qpy + cu->m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, cu->m_chromaFormat);
+    setChromaQP(qpy + cu->m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, cu->m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)

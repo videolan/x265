@@ -146,7 +146,7 @@ void Predict::prepMotionCompensation(TComDataCU* cu, CU* cuData, int partIdx)
 {
     m_slice = cu->m_slice;
     cu->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
-    m_cuAddr = cu->getAddr();
+    m_cuAddr = cu->m_cuAddr;
     m_zOrderIdxinCU = cuData->encodeIdx;
 
     m_mvField[0] = cu->getCUMvField(REF_PIC_LIST_0);
@@ -557,8 +557,8 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
         src1Stride = srcYuv1->m_cwidth;
         dststride  = predYuv->getCStride();
 
-        m_width  >>= srcYuv0->getHorzChromaShift();
-        m_height >>= srcYuv0->getVertChromaShift();
+        m_width  >>= srcYuv0->m_hChromaShift;
+        m_height >>= srcYuv0->m_vChromaShift;
 
         // TODO: can we use weight_sp here?
         for (y = m_height - 1; y >= 0; y--)
@@ -642,8 +642,8 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv*
         srcStride = srcYuv0->m_cwidth;
         dstStride = predYuv->getCStride();
 
-        m_width  >>= srcYuv0->getHorzChromaShift();
-        m_height >>= srcYuv0->getVertChromaShift();
+        m_width  >>= srcYuv0->m_hChromaShift;
+        m_height >>= srcYuv0->m_vChromaShift;
 
         primitives.weight_sp(srcU0, dstU, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
 

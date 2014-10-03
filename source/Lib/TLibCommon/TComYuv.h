@@ -176,14 +176,6 @@ public:
     uint32_t getCHeight()   { return m_cheight; }
 
     uint32_t getCWidth()    { return m_cwidth;  }
-
-    // -------------------------------------------------------------------------------------------------------------------
-    // member functions to support multiple color space formats
-    // -------------------------------------------------------------------------------------------------------------------
-
-    int  getHorzChromaShift()  { return m_hChromaShift; }
-
-    int  getVertChromaShift()  { return m_vChromaShift; }
 };
 }
 //! \}

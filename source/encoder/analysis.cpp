@@ -348,7 +348,7 @@ void Analysis::parallelME(int threadId, int meId)
     cu->getPartIndexAndSize(m_curPart, partAddr, puWidth, puHeight);
     slave->prepMotionCompensation(cu, m_curCUData, m_curPart);
 
-    pixel* pu = fenc->getLumaAddr(cu->getAddr(), m_curCUData->encodeIdx + partAddr);
+    pixel* pu = fenc->getLumaAddr(cu->m_cuAddr, m_curCUData->encodeIdx + partAddr);
     slave->m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
 
     uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
@@ -408,7 +408,7 @@ void Analysis::parallelME(int threadId, int meId)
 void Analysis::compressCU(TComDataCU* cu)
 {
     Frame* pic = cu->m_pic;
-    uint32_t cuAddr = cu->getAddr();
+    uint32_t cuAddr = cu->m_cuAddr;
 
     if (cu->m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
@@ -531,7 +531,7 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
 {
     //PPAScopeEvent(CompressIntraCU + depth);
     Frame* pic = outBestCU->m_pic;
-    uint32_t cuAddr = outBestCU->getAddr();
+    uint32_t cuAddr = outBestCU->m_cuAddr;
     uint32_t absPartIdx = cu->encodeIdx;
 
     if (depth == 0)
@@ -676,7 +676,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
     if (depth)
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], cu->encodeIdx);
     else
-        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->getAddr(), cu->encodeIdx);
+        m_origYuv[depth]->copyFromPicYuv(pic->getPicYuvOrg(), outBestCU->m_cuAddr, cu->encodeIdx);
 
     Slice* slice = outTempCU->m_slice;
     int32_t cu_split_flag = !(cu->flags & CU::LEAF);
@@ -715,7 +715,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *child_cu = pic->getCU(outTempCU->getAddr())->m_cuLocalData + cu->childIdx + partUnitIdx;
+            CU *child_cu = pic->getCU(outTempCU->m_cuAddr)->m_cuLocalData + cu->childIdx + partUnitIdx;
             int qp = outTempCU->getQP(0);
             subBestPartCU->initSubCU(outTempCU, child_cu, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
             if (child_cu->flags & CU::PRESENT)
@@ -783,7 +783,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
     outBestCU->copyToPic(depth);
     if (!cu_unsplit_flag)
         return;
-    m_bestRecoYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), outBestCU->getAddr(), cu->encodeIdx);
+    m_bestRecoYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), outBestCU->m_cuAddr, cu->encodeIdx);
 
 #if CHECKED_BUILD || _DEBUG
     X265_CHECK(outBestCU->getPartitionSize(0) != SIZE_NONE, "no best partition size\n");
@@ -850,7 +850,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                                      int bInsidePicture, uint32_t PartitionIndex, uint32_t minDepth)
 {
     Frame* pic = outTempCU->m_pic;
-    uint32_t cuAddr = outTempCU->getAddr();
+    uint32_t cuAddr = outTempCU->m_cuAddr;
     uint32_t absPartIdx = cu->encodeIdx;
 
     if (depth)
@@ -1238,10 +1238,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
         if (outBestCU && !(depth < minDepth))
         {
             uint64_t totalCostNeigh = 0, totalCostCU = 0, totalCountNeigh = 0, totalCountCU = 0;
-            TComDataCU* above = outTempCU->getCUAbove();
-            TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
-            TComDataCU* aboveRight = outTempCU->getCUAboveRight();
-            TComDataCU* left = outTempCU->getCULeft();
+            const TComDataCU* above = outTempCU->getCUAbove();
+            const TComDataCU* aboveLeft = outTempCU->getCUAboveLeft();
+            const TComDataCU* aboveRight = outTempCU->getCUAboveRight();
+            const TComDataCU* left = outTempCU->getCULeft();
             TComDataCU* ctu = pic->getPicSym()->getCU(cuAddr);
 
             totalCostCU += ctu->m_avgCost[depth] * ctu->m_count[depth];
@@ -1451,7 +1451,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     //PPAScopeEvent(CompressCU + depth);
 
     Frame* pic = outBestCU->m_pic;
-    uint32_t cuAddr = outBestCU->getAddr();
+    uint32_t cuAddr = outBestCU->m_cuAddr;
     uint32_t absPartIdx = cu->encodeIdx;
 
     if (depth)
@@ -1949,7 +1949,7 @@ void Analysis::parallelInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv,
         getBlkBits(partSize, slice->isInterP(), partIdx, lastMode, m_listSelBits);
         prepMotionCompensation(cu, cuData, partIdx);
 
-        pixel* pu = fenc->getLumaAddr(cu->getAddr(), cuData->encodeIdx + partAddr);
+        pixel* pu = fenc->getLumaAddr(cu->m_cuAddr, cuData->encodeIdx + partAddr);
         m_me.setSourcePU(pu - fenc->getLumaAddr(), puWidth, puHeight);
 
         m_bestME[0].cost = MAX_UINT;
@@ -2481,7 +2481,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, 
 void Analysis::encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, uint32_t depth)
 {
     Frame* pic = ctu->m_pic;
-    uint32_t cuAddr = ctu->getAddr();
+    uint32_t cuAddr = ctu->m_cuAddr;
 
     if (depth < ctu->getDepth(absPartIdx) && depth < g_maxCUDepth)
     {
@@ -2710,8 +2710,8 @@ void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
     pixel* dstCr = cu->getChromaOrigYuv(2);
 
     uint32_t srcStrideC = fencYuv->getCStride();
-    uint32_t widthC  = width  >> cu->getHorzChromaShift();
-    uint32_t heightC = height >> cu->getVertChromaShift();
+    uint32_t widthC  = width  >> cu->m_hChromaShift;
+    uint32_t heightC = height >> cu->m_vChromaShift;
 
     /* TODO: block copy primitives */
     for (uint32_t y = 0; y < heightC; y++)

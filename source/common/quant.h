@@ -87,7 +87,7 @@ public:
     bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
 
     /* CU setup */
-    void setQPforQuant(TComDataCU* cu);
+    void setQPforQuant(const TComDataCU* cu);
 
     uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);

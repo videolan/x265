@@ -95,14 +95,6 @@ public:
     void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
     void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size);
     void copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
-
-    // -------------------------------------------------------------------------------------------------------------------
-    // member functions to support multiple color space formats
-    // -------------------------------------------------------------------------------------------------------------------
-
-    int  getHorzChromaShift()  { return m_hChromaShift; }
-
-    int  getVertChromaShift()  { return m_vChromaShift; }
 };
 }
 
