@@ -1036,7 +1036,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         /* inter has best cost, store RD state as next best */
                         m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
 
-                    if (slice->m_sliceType == P_SLICE)
+                    if (slice->m_sliceType == P_SLICE 
+                    // uncomment this expression to more closely match --no-pmode outputs (throw away intra if skip found)
+                    //    && (outBestCU->getCbf(0, TEXT_LUMA) || outBestCU->getCbf(0, TEXT_CHROMA_U) || outBestCU->getCbf(0, TEXT_CHROMA_V))
+                    )
                     {
                         /* RD selection between intra and inter/merge */
                         uint64_t icost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
