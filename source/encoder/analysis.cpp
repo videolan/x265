@@ -1446,7 +1446,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
     x265_emms();
 }
 
-void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu, PartSize parentSize)
+void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth, CU *cu)
 {
     //PPAScopeEvent(CompressCU + depth);
 
@@ -1531,7 +1531,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
                     bool bTestAMP_Hor = false, bTestAMP_Ver = false;
                     bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
 
-                    deriveTestModeAMP(outBestCU, parentSize, bTestAMP_Hor, bTestAMP_Ver, bTestMergeAMP_Hor, bTestMergeAMP_Ver);
+                    deriveTestModeAMP(outBestCU, SIZE_NONE, bTestAMP_Hor, bTestAMP_Ver, bTestMergeAMP_Hor, bTestMergeAMP_Ver);
 
                     // Do horizontal AMP
                     if (bTestAMP_Hor)
