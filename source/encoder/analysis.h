@@ -73,7 +73,14 @@ class Analysis : public JobProvider, public Search
 {
 public:
 
-    static const int MAX_PRED_TYPES = 6;
+    enum {
+        PRED_2Nx2N,
+        PRED_Nx2N,
+        PRED_2NxN,
+        PRED_MERGE,
+        PRED_INTRA,
+        MAX_PRED_TYPES
+    };
 
     TComDataCU*  m_memPool;
 

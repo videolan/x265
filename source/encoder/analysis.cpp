@@ -61,12 +61,8 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
     m_bestRecoYuv = new TComYuv*[numCUDepth];
 
     m_tmpPredYuv     = new TComYuv*[numCUDepth];
-    m_modePredYuv[0] = new TComYuv*[numCUDepth];
-    m_modePredYuv[1] = new TComYuv*[numCUDepth];
-    m_modePredYuv[2] = new TComYuv*[numCUDepth];
-    m_modePredYuv[3] = new TComYuv*[numCUDepth];
-    m_modePredYuv[4] = new TComYuv*[numCUDepth];
-    m_modePredYuv[5] = new TComYuv*[numCUDepth];
+    for (int i = 0; i < MAX_PRED_TYPES; i++)
+        m_modePredYuv[i] = new TComYuv*[numCUDepth];
 
     m_tmpResiYuv = new ShortYuv*[numCUDepth];
     m_tmpRecoYuv = new TComYuv*[numCUDepth];
@@ -306,21 +302,21 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
     {
     case 0:
         slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData);
-        slave->encodeIntraInInter(m_intraInInterCU[depth], m_curCUData, m_origYuv[depth], m_modePredYuv[5][depth], slave->m_tmpResiYuv[depth], m_bestIntraRecoYuv[depth]);
+        slave->encodeIntraInInter(m_intraInInterCU[depth], m_curCUData, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], slave->m_tmpResiYuv[depth], m_bestIntraRecoYuv[depth]);
         /* TODO: pass m_intraContexts to encodeIntraInInter */
         slave->m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_intraContexts);
         break;
 
     case 1:
-        slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[0][depth], SIZE_2Nx2N);
+        slave->checkInter_rd0_4(m_interCU_2Nx2N[depth], m_curCUData, m_modePredYuv[PRED_2Nx2N][depth], SIZE_2Nx2N);
         break;
 
     case 2:
-        slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[1][depth], SIZE_Nx2N);
+        slave->checkInter_rd0_4(m_interCU_Nx2N[depth], m_curCUData, m_modePredYuv[PRED_Nx2N][depth], SIZE_Nx2N);
         break;
 
     case 3:
-        slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[2][depth], SIZE_2NxN);
+        slave->checkInter_rd0_4(m_interCU_2NxN[depth], m_curCUData, m_modePredYuv[PRED_2NxN][depth], SIZE_2NxN);
         break;
 
     default:
@@ -994,25 +990,25 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 if (m_param->bEnableEarlySkip && m_bestMergeCU[depth]->isSkipped(0))
                 {
                     outBestCU = m_bestMergeCU[depth];
-                    std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                     std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                 }
                 else
                 {
                     /* select best inter mode based on sa8d cost */
                     outBestCU = m_interCU_2Nx2N[depth];
-                    std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_2Nx2N][depth]);
                     if (m_param->bEnableRectInter)
                     {
                         if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_interCU_Nx2N[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_Nx2N][depth]);
                         }
                         if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_interCU_2NxN[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_2NxN][depth]);
                         }
                     }
 
@@ -1028,7 +1024,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                     if (mcost < bcost)
                     {
                         outBestCU = m_bestMergeCU[depth];
-                        std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                        std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                         std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                         /* checkMerge2Nx2N_rd0_4() already stored the best merge entropy state as next best */
                     }
@@ -1048,7 +1044,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (icost < bcost)
                         {
                             outBestCU = m_intraInInterCU[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_INTRA][depth]);
                             std::swap(m_bestRecoYuv[depth], m_bestIntraRecoYuv[depth]);
                             m_intraContexts.store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                         }
@@ -1066,26 +1062,26 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 if (!earlyskip)
                 {
                     /* Compute 2Nx2N mode costs */
-                    checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[0][depth], SIZE_2Nx2N);
+                    checkInter_rd0_4(m_interCU_2Nx2N[depth], cu, m_modePredYuv[PRED_2Nx2N][depth], SIZE_2Nx2N);
 
                     /* initialize outBestCU to 2Nx2N */
                     outBestCU = m_interCU_2Nx2N[depth];
-                    std::swap(m_bestPredYuv[depth], m_modePredYuv[0][depth]);
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_2Nx2N][depth]);
 
                     /* Compute Rect costs */
                     if (m_param->bEnableRectInter)
                     {
-                        checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[1][depth], SIZE_Nx2N);
-                        checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[2][depth], SIZE_2NxN);
+                        checkInter_rd0_4(m_interCU_Nx2N[depth], cu, m_modePredYuv[PRED_Nx2N][depth], SIZE_Nx2N);
+                        checkInter_rd0_4(m_interCU_2NxN[depth], cu, m_modePredYuv[PRED_2NxN][depth], SIZE_2NxN);
                         if (m_interCU_Nx2N[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_interCU_Nx2N[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[1][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_Nx2N][depth]);
                         }
                         if (m_interCU_2NxN[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_interCU_2NxN[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[2][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_2NxN][depth]);
                         }
                     }
 
@@ -1105,7 +1101,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (bestMergeCost < bestCost)
                         {
                             outBestCU = m_bestMergeCU[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                             std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                         }
                         else
@@ -1126,7 +1122,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                             uint64_t intraInInterCost, bestCost;
                             if (m_param->rdLevel > 2)
                             {
-                                encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+                                encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
                                 intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
                                 bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                             }
@@ -1138,7 +1134,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                             if (intraInInterCost < bestCost)
                             {
                                 outBestCU = m_intraInInterCU[depth];
-                                std::swap(m_bestPredYuv[depth], m_modePredYuv[5][depth]);
+                                std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_INTRA][depth]);
                                 std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
                                 if (m_param->rdLevel > 2)
                                     m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
@@ -1151,7 +1147,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_bestMergeCU[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                             std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                         }
                         else if (outBestCU->getPredictionMode(0) == MODE_INTER)
@@ -1177,7 +1173,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         if (m_bestMergeCU[depth]->m_sa8dCost < outBestCU->m_sa8dCost)
                         {
                             outBestCU = m_bestMergeCU[depth];
-                            std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                            std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                             std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                         }
                         else if (outBestCU->getPredictionMode(0) == MODE_INTER)
@@ -1211,7 +1207,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 else
                 {
                     outBestCU = m_bestMergeCU[depth];
-                    std::swap(m_bestPredYuv[depth], m_modePredYuv[3][depth]);
+                    std::swap(m_bestPredYuv[depth], m_modePredYuv[PRED_MERGE][depth]);
                     std::swap(m_bestRecoYuv[depth], m_bestMergeRecoYuv[depth]);
                 }
             }
@@ -1789,7 +1785,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
             {
                 bestSadCand = i;
                 std::swap(m_bestMergeCU[depth], m_mergeCU[depth]);
-                std::swap(m_modePredYuv[3][depth], m_tmpPredYuv[depth]);
+                std::swap(m_modePredYuv[PRED_MERGE][depth], m_tmpPredYuv[depth]);
             }
         }
     }
@@ -1815,7 +1811,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
             {
                 // calculate the motion compensation for chroma for the best mode selected
                 prepMotionCompensation(m_bestMergeCU[depth], cuData, partIdx);
-                motionCompensation(m_modePredYuv[3][depth], false, true);
+                motionCompensation(m_modePredYuv[PRED_MERGE][depth], false, true);
             }
 
             if (m_mergeCU[depth]->isLosslessCoded(0))
@@ -1823,13 +1819,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
             else
             {
                 // No-residue mode
-                encodeResAndCalcRdSkipCU(m_bestMergeCU[depth], m_origYuv[depth], m_modePredYuv[3][depth], m_tmpRecoYuv[depth]);
+                encodeResAndCalcRdSkipCU(m_bestMergeCU[depth], m_origYuv[depth], m_modePredYuv[PRED_MERGE][depth], m_tmpRecoYuv[depth]);
                 std::swap(m_bestMergeRecoYuv[depth], m_tmpRecoYuv[depth]);
                 m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
             }
 
             // Encode with residue
-            encodeResAndCalcRdInterCU(m_mergeCU[depth], cuData, m_origYuv[depth], m_modePredYuv[3][depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
+            encodeResAndCalcRdInterCU(m_mergeCU[depth], cuData, m_origYuv[depth], m_modePredYuv[PRED_MERGE][depth], m_tmpResiYuv[depth], m_bestResiYuv[depth], m_tmpRecoYuv[depth]);
 
             uint64_t tempCost = m_rdCost.m_psyRd ? m_mergeCU[depth]->m_totalPsyCost : m_mergeCU[depth]->m_totalRDCost;
             uint64_t bestCost = m_rdCost.m_psyRd ? m_bestMergeCU[depth]->m_totalPsyCost : m_bestMergeCU[depth]->m_totalRDCost;
@@ -2611,7 +2607,7 @@ void Analysis::encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, u
     else
     {
         m_origYuv[0]->copyPartToYuv(m_origYuv[depth], absPartIdx);
-        generateCoeffRecon(cu, cuData, m_origYuv[depth], m_modePredYuv[5][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+        generateCoeffRecon(cu, cuData, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
         checkDQP(cu);
         m_tmpRecoYuv[depth]->copyToPicYuv(pic->getPicYuvRec(), cuAddr, absPartIdx);
         cu->copyCodedToPic(depth);
