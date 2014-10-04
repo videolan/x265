@@ -173,7 +173,9 @@ public:
     int64_t  m_totalBits;        /* total bits used for already encoded frames */
     int      m_framesDone;       /* # of frames passed through RateCotrol already */
     double   m_fps;
-
+    int64_t  m_satdCostWindow[50];
+    int      m_sliderPos;
+    int64_t  m_encodedBitsWindow[50];
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
      * -F2:
@@ -233,6 +235,7 @@ protected:
 
     static const double s_amortizeFraction;
     static const int    s_amortizeFrames;
+    static const int    s_slidingWindowFrames;
     static const char  *s_defaultStatFileName;
 
     int m_residualFrames;

@@ -40,6 +40,7 @@ using namespace x265;
 /* Amortize the partial cost of I frames over the next N frames */
 const double RateControl::s_amortizeFraction = 0.85;
 const int RateControl::s_amortizeFrames = 75;
+const int RateControl::s_slidingWindowFrames = 20;
 const char *RateControl::s_defaultStatFileName = "x265_2pass.log";
 
 namespace {
@@ -472,6 +473,12 @@ bool RateControl::init(const SPS *sps)
     m_framesDone = 0;
     m_residualCost = 0;
     m_partialResidualCost = 0;
+    for (int i = 0; i < s_slidingWindowFrames; i++)
+    {
+        m_satdCostWindow[i] = 0;
+        m_encodedBitsWindow[i] = 0;
+    }
+    m_sliderPos = 0;
 
     /* 720p videos seem to be a good cutoff for cplxrSum */
     double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
@@ -1344,6 +1351,26 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
                      g_sliceTypeToChar[m_sliceType], g_sliceTypeToChar[rce->sliceType]);
         }
     }
+    else
+    {
+        if (m_isAbr)
+        {
+            double slidingWindowCplxSum = 0;
+            int start = m_sliderPos > s_slidingWindowFrames ?  m_sliderPos : 0;
+            for (int cnt = 0; cnt < s_slidingWindowFrames; cnt++, start++)
+            {
+                int pos = start % s_slidingWindowFrames;
+                slidingWindowCplxSum *= 0.5;
+                if (!m_satdCostWindow[pos])
+                    break;
+                slidingWindowCplxSum += m_satdCostWindow[pos] / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
+            }
+            rce->movingAvgSum = slidingWindowCplxSum;
+            m_satdCostWindow[m_sliderPos % s_slidingWindowFrames] = rce->lastSatd;
+            m_sliderPos++;
+        }
+    }
+
     if (m_sliceType == B_SLICE)
     {
         /* B-frames don't have independent rate control, but rather get the
@@ -1478,7 +1505,7 @@ double RateControl::rateEstimateQscale(Frame* pic, RateControlEntry *rce)
              * tolerances, the bit distribution approaches that of 2pass. */
 
             double wantedBits, overflow = 1;
-            rce->movingAvgSum = m_shortTermCplxSum;
+
             m_shortTermCplxSum *= 0.5;
             m_shortTermCplxCount *= 0.5;
             m_shortTermCplxSum += m_currentSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
@@ -1619,8 +1646,12 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
     {
         if (!m_isAbrReset && rce->movingAvgSum > 0)
         {
+            int64_t shrtTermWantedBits = (int64_t) (X265_MIN(m_sliderPos, s_slidingWindowFrames) * m_bitrate * m_frameDuration);
+            int64_t shrtTermTotalBitsSum = 0;
             // Reset ABR if prev frames are blank to prevent further sudden overflows/ high bit rate spikes.
-            double underflow = (m_totalBits - m_wantedBitsWindow) / abrBuffer;
+            for (int i = 0; i < s_slidingWindowFrames ; i++)
+                shrtTermTotalBitsSum += m_encodedBitsWindow[i];
+            double underflow = (shrtTermTotalBitsSum - shrtTermWantedBits) / abrBuffer;
             const double epsilon = 0.0001f;
             if (underflow < epsilon && !isFrameDone)
             {
@@ -1792,8 +1823,9 @@ double RateControl::clipQscale(Frame* pic, RateControlEntry* rce, double q)
              q = X265_MAX(q0 / 2, q);
          }
 
-        if (!m_isCbr)
+         if (!m_isCbr || m_isAbrReset)
             q = X265_MAX(q0, q);
+
 
         if (m_rateFactorMaxIncrement)
         {
@@ -2111,30 +2143,29 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
             }
         }
     }
-    if (!m_isAbrReset)
+
+    if (m_param->rc.aqMode || m_isVbv)
     {
-        if (m_param->rc.aqMode || m_isVbv)
+        if (pic->m_qpaRc)
         {
-            if (pic->m_qpaRc)
-            {
-                for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                    pic->m_avgQpRc += pic->m_qpaRc[i];
+            for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                pic->m_avgQpRc += pic->m_qpaRc[i];
 
-                pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
-                rce->qpaRc = pic->m_avgQpRc;
-                // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
-                pic->m_avgQpAq = pic->m_avgQpRc;
-            }
+            pic->m_avgQpRc /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
+            rce->qpaRc = pic->m_avgQpRc;
+            // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
+            pic->m_avgQpAq = pic->m_avgQpRc;
+        }
 
-            if (pic->m_qpaAq)
-            {
-                for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
-                    pic->m_avgQpAq += pic->m_qpaAq[i];
+        if (pic->m_qpaAq)
+        {
+            for (uint32_t i = 0; i < pic->getFrameHeightInCU(); i++)
+                pic->m_avgQpAq += pic->m_qpaAq[i];
 
-                pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
-            }
+            pic->m_avgQpAq /= (pic->getFrameHeightInCU() * pic->getFrameWidthInCU());
         }
     }
+
     // Write frame stats into the stats file if 2 pass is enabled.
     if (m_param->rc.bStatWrite)
     {
@@ -2199,6 +2230,9 @@ int RateControl::rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce,
         }
         m_wantedBitsWindow += m_frameDuration * m_bitrate;
         m_totalBits += bits - rce->rowTotalBits;
+        int pos = m_sliderPos - m_param->frameNumThreads;
+        if (pos >= 0)
+            m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;
     }
 
     if (m_2pass)
