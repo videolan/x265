@@ -417,6 +417,7 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
     Frame* pic = ctu->m_pic;
     uint32_t cuAddr = ctu->m_cuAddr;
 
+    invalidateContexts(0);
     m_rdContexts[0].cur.load(initialContext);
 
     if (ctu->m_slice->m_pps->bUseDQP)
@@ -584,7 +585,8 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
     // further split
     if (cu_split_flag)
     {
-        uint32_t    nextDepth     = depth + 1;
+        uint32_t nextDepth = depth + 1;
+        invalidateContexts(nextDepth);
         TComDataCU* subBestPartCU = m_bestCU[nextDepth];
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
@@ -719,7 +721,8 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
     // further split
     if (cu_split_flag && bSubBranch)
     {
-        uint32_t    nextDepth     = depth + 1;
+        uint32_t nextDepth = depth + 1;
+        invalidateContexts(nextDepth);
         TComDataCU* subBestPartCU = m_bestCU[nextDepth];
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
@@ -1299,7 +1302,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             }
         }
         outTempCU->setQPSubParts(qp, 0, depth);
-        uint32_t    nextDepth = depth + 1;
+
+        uint32_t nextDepth = depth + 1;
+        invalidateContexts(nextDepth);
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
@@ -1649,7 +1654,8 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
     // further split
     if (cu_split_flag && !outBestCU->isSkipped(0))
     {
-        uint32_t    nextDepth     = depth + 1;
+        uint32_t nextDepth = depth + 1;
+        invalidateContexts(nextDepth);
         TComDataCU* subBestPartCU = m_bestCU[nextDepth];
         TComDataCU* subTempPartCU = m_tempCU[nextDepth];
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)

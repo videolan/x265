@@ -118,6 +118,23 @@ void Search::setQP(Slice *slice, int qp)
     m_rdCost.setQP(slice, qp);
 }
 
+#if CHECKED_BUILD || _DEBUG
+void Search::invalidateContexts(int fromDepth)
+{
+    /* catch reads without previous writes */
+    for (int d = fromDepth; d < NUM_FULL_DEPTH; d++)
+    {
+        m_rdContexts[d].cur.markInvalid();
+        m_rdContexts[d].next.markInvalid();
+        m_rdContexts[d].temp.markInvalid();
+        m_rdContexts[d].rqtRoot.markInvalid();
+        m_rdContexts[d].rqtTest.markInvalid();
+    }
+}
+#else
+void Search::invalidateContexts(int) {}
+#endif
+
 void Search::xEncSubdivCbfQTChroma(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu->getDepth(0) + trDepth;

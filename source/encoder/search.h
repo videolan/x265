@@ -94,6 +94,7 @@ public:
 
     bool     initSearch(x265_param *param, ScalingList& scalingList);
     void     setQP(Slice* slice, int qp);
+    void     invalidateContexts(int fromDepth);
 
     void     estIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
     void     sharedEstIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2], uint8_t* sharedModes);

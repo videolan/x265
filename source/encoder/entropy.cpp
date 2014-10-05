@@ -35,6 +35,7 @@ namespace x265 {
 
 Entropy::Entropy()
 {
+    markValid();
     m_fracBits = 0;
     X265_CHECK(sizeof(m_contextState) >= sizeof(m_contextState[0]) * MAX_OFF_CTX_MOD, "context state table is too small\n");
 }
@@ -1141,18 +1142,24 @@ void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 }
 
 // SBAC RD
-void  Entropy::loadIntraDirModeLuma(Entropy& src)
+void Entropy::loadIntraDirModeLuma(const Entropy& src)
 {
+    X265_CHECK(src.m_valid, "invalid copy source context\n");
+
     copyState(src);
 
     ::memcpy(&m_contextState[OFF_ADI_CTX], &src.m_contextState[OFF_ADI_CTX], sizeof(uint8_t) * NUM_ADI_CTX);
+    markValid();
 }
 
 void Entropy::copyFrom(const Entropy& src)
 {
+    X265_CHECK(src.m_valid, "invalid copy source context\n");
+
     copyState(src);
 
     memcpy(m_contextState, src.m_contextState, MAX_OFF_CTX_MOD * sizeof(uint8_t));
+    markValid();
 }
 
 void Entropy::codeMVPIdx(uint32_t symbol)
@@ -1925,7 +1932,10 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLu
 /* Initialize our context information from the nominated source */
 void Entropy::copyContextsFrom(const Entropy& src)
 {
+    X265_CHECK(src.m_valid, "invalid copy source context\n");
+
     memcpy(m_contextState, src.m_contextState, MAX_OFF_CTX_MOD * sizeof(m_contextState[0]));
+    markValid();
 }
 
 void Entropy::start()

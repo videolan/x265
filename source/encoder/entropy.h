@@ -124,15 +124,22 @@ public:
         return uint32_t(m_fracBits >> 15);
     }
 
+#if CHECKED_BUILD || _DEBUG
+    bool m_valid;
+    void markInvalid()                 { m_valid = false; }
+    void markValid()                   { m_valid = true; }
+#else
+    void markValid()                   { }
+#endif
     void zeroFract()                   { m_fracBits = 0; }
     void resetBits();
     void resetEntropy(Slice *slice);
 
     // SBAC RD
     void load(const Entropy& src)            { copyFrom(src); }
-    void loadIntraDirModeLuma(Entropy& src);
     void store(Entropy& dest) const          { dest.copyFrom(*this); }
     void loadContexts(const Entropy& src)    { copyContextsFrom(src); }
+    void loadIntraDirModeLuma(const Entropy& src);
     void copyState(const Entropy& other);
 
     void codeVPS(VPS* vps);
