@@ -1148,7 +1148,7 @@ void  Entropy::loadIntraDirModeLuma(Entropy& src)
     ::memcpy(&m_contextState[OFF_ADI_CTX], &src.m_contextState[OFF_ADI_CTX], sizeof(uint8_t) * NUM_ADI_CTX);
 }
 
-void Entropy::copyFrom(Entropy& src)
+void Entropy::copyFrom(const Entropy& src)
 {
     copyState(src);
 
@@ -1923,7 +1923,7 @@ void Entropy::estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLu
 }
 
 /* Initialize our context information from the nominated source */
-void Entropy::copyContextsFrom(Entropy& src)
+void Entropy::copyContextsFrom(const Entropy& src)
 {
     memcpy(m_contextState, src.m_contextState, MAX_OFF_CTX_MOD * sizeof(m_contextState[0]));
 }
@@ -1964,7 +1964,7 @@ void Entropy::finish()
     m_bitIf->write(m_low >> 8, 13 + m_bitsLeft);
 }
 
-void Entropy::copyState(Entropy& other)
+void Entropy::copyState(const Entropy& other)
 {
     m_low = other.m_low;
     m_range = other.m_range;

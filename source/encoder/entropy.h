@@ -129,12 +129,11 @@ public:
     void resetEntropy(Slice *slice);
 
     // SBAC RD
-    void load(Entropy& src)            { copyFrom(src); }
-
+    void load(const Entropy& src)            { copyFrom(src); }
     void loadIntraDirModeLuma(Entropy& src);
-    void store(Entropy& dest)          { dest.copyFrom(*this); }
-    void loadContexts(Entropy& src)    { copyContextsFrom(src); }
-    void copyState(Entropy& other);
+    void store(Entropy& dest) const          { dest.copyFrom(*this); }
+    void loadContexts(const Entropy& src)    { copyContextsFrom(src); }
+    void copyState(const Entropy& other);
 
     void codeVPS(VPS* vps);
     void codeSPS(SPS* sps, ScalingList *scalingList, ProfileTierLevel *ptl);
@@ -233,8 +232,8 @@ private:
     void encodeTransform(TComDataCU* cu, CoeffCodeState& state, uint32_t offsetLumaOffset, uint32_t offsetChroma, 
                          uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t uiTrIdx, bool& bCodeDQP, uint32_t* depthRange);
 
-    void copyFrom(Entropy& src);
-    void copyContextsFrom(Entropy& src);
+    void copyFrom(const Entropy& src);
+    void copyContextsFrom(const Entropy& src);
 };
 }
 
