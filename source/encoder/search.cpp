@@ -125,7 +125,6 @@ void Search::invalidateContexts(int fromDepth)
     for (int d = fromDepth; d < NUM_FULL_DEPTH; d++)
     {
         m_rdContexts[d].cur.markInvalid();
-        m_rdContexts[d].next.markInvalid();
         m_rdContexts[d].temp.markInvalid();
         m_rdContexts[d].rqtRoot.markInvalid();
         m_rdContexts[d].rqtTest.markInvalid();

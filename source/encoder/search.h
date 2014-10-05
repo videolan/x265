@@ -52,7 +52,6 @@ struct RDContexts
     * temp will be mode->context and next is bestMode->context */
 
     Entropy cur;     /* input context for current CU */
-    Entropy next;    /* current best output context for current CU */
     Entropy temp;    /* output of most recently measured mode */
     Entropy rqtRoot; /* residual quad-tree start context */
     Entropy rqtTest; /* residual quad-tree test context */
