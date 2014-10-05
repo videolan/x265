@@ -1389,8 +1389,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 outTempCU->setQPSubParts(outTempCU->getRefQP(targetPartIdx), 0, depth); // set QP to default QP
         }
 
-        m_rdContexts[nextDepth].next.store(m_rdContexts[depth].temp);
-
         /* If Best Mode is not NULL; then compare costs. Else assign best mode to Sub-CU costs
          * Copy recon data from Temp structure to Best structure */
         if (outBestCU)
@@ -1411,6 +1409,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 outBestCU = outTempCU;
                 std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
                 std::swap(m_bestPredYuv[depth], m_tmpPredYuv[depth]);
+                // copy 'next' state from last CU of next depth as next state of this CU
+                m_rdContexts[nextDepth].next.store(m_rdContexts[depth].next);
             }
         }
         else
@@ -1418,6 +1418,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             outBestCU = outTempCU;
             std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
             std::swap(m_bestPredYuv[depth], m_tmpPredYuv[depth]);
+            // copy 'next' state from last CU of next depth as next state of this CU
+            m_rdContexts[nextDepth].next.store(m_rdContexts[depth].next);
         }
     }
 
