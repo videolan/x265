@@ -113,7 +113,7 @@ public:
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
     void destroy();
-    void compressCU(TComDataCU* cu);
+    void compressCTU(TComDataCU* ctu, const Entropy& initialContext);
 
 protected:
 

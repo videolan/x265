@@ -45,6 +45,19 @@ namespace x265 {
 
 class Entropy;
 
+/* All the CABAC contexts that Analysis needs to keep track of at each depth */
+struct RDContexts
+{
+    /* Note: When Analysis uses Mode structs, next and temp go away.
+    * temp will be mode->context and next is bestMode->context */
+
+    Entropy cur;     /* input context for current CU */
+    Entropy next;    /* current best output context for current CU */
+    Entropy temp;    /* output of most recently measured mode */
+    Entropy rqtRoot; /* residual quad-tree start context */
+    Entropy rqtTest; /* residual quad-tree test context */
+};
+
 inline int getTUBits(int idx, int numIdx)
 {
     return idx + (idx < numIdx - 1);
@@ -62,7 +75,7 @@ public:
     x265_param*     m_param;
 
     Entropy         m_entropyCoder;
-    Entropy       (*m_rdEntropyCoders)[CI_NUM];
+    RDContexts      m_rdContexts[NUM_FULL_DEPTH];
 
     TComYuv         m_predTempYuv;
     TComYuv         m_bidirPredYuv[2];

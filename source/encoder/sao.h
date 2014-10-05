@@ -95,9 +95,16 @@ protected:
 
 public:
 
+    struct SAOContexts
+    {
+        Entropy cur;
+        Entropy next;
+        Entropy temp;
+    };
+
     Frame*      m_pic;
-    Entropy     m_rdEntropyCoders[5][CI_NUM_SAO];
     Entropy     m_entropyCoder;
+    SAOContexts m_rdContexts;
 
     x265_param* m_param;
     int         m_refDepth;

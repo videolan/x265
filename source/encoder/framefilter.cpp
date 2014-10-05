@@ -116,8 +116,8 @@ void FrameFilter::processRow(int row)
     if (m_param->bEnableSAO)
     {
         m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
-        m_sao.m_rdEntropyCoders[0][CI_NEXT_BEST].load(m_frameEncoder->m_initSliceContext);
-        m_sao.m_rdEntropyCoders[0][CI_CURR_BEST].load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdContexts.next.load(m_frameEncoder->m_initSliceContext);
+        m_sao.m_rdContexts.cur.load(m_frameEncoder->m_initSliceContext);
 
         m_sao.rdoSaoUnitRow(saoParam, row);
 

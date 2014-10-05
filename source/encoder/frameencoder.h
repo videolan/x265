@@ -49,8 +49,8 @@ class Encoder;
  * WPP is active, several rows will be simultaneously encoded. */
 struct CTURow
 {
-    Entropy           bufferEntropyCoder;  /* store context for next row */
-    Entropy           rdEntropyCoders[NUM_FULL_DEPTH][CI_NUM];
+    Entropy           bufferedEntropy;  /* store CTU2 context for next row CTU0 */
+    Entropy           rowGoOnCoder;     /* store context between CTUs, code bitstream if !SAO */
 
     FrameStats        rowStats;
 
@@ -80,10 +80,7 @@ struct CTURow
         busy = false;
         completed = 0;
         memset(&rowStats, 0, sizeof(rowStats));
-
-        for (uint32_t depth = 0; depth <= g_maxFullDepth; depth++)
-            for (int ciIdx = 0; ciIdx < CI_NUM; ciIdx++)
-                rdEntropyCoders[depth][ciIdx].load(initContext);
+        rowGoOnCoder.load(initContext);
     }
 };
 

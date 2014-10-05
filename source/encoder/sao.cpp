@@ -214,8 +214,8 @@ void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
     resetStats();
 
     m_entropyCoder.load(initState);
-    m_rdEntropyCoders[0][CI_NEXT_BEST].load(initState);
-    m_rdEntropyCoders[0][CI_CURR_BEST].load(initState);
+    m_rdContexts.next.load(initState);
+    m_rdContexts.cur.load(initState);
 
     SAOParam* saoParam = pic->getPicSym()->m_saoParam;
     if (!saoParam)
@@ -1267,12 +1267,12 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
         compDistortion[0] = 0;
         compDistortion[1] = 0;
         compDistortion[2] = 0;
-        m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+        m_entropyCoder.load(m_rdContexts.cur);
         if (allowMergeLeft)
             m_entropyCoder.codeSaoMerge(0);
         if (allowMergeUp)
             m_entropyCoder.codeSaoMerge(0);
-        m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+        m_entropyCoder.store(m_rdContexts.temp);
         // reset stats Y, Cb, Cr
         for (compIdx = 0; compIdx < 3; compIdx++)
         {
@@ -1311,7 +1311,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
         if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
         {
             // Cost of new SAO_params
-            m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+            m_entropyCoder.load(m_rdContexts.cur);
             m_entropyCoder.resetBits();
             if (allowMergeLeft)
                 m_entropyCoder.codeSaoMerge(0);
@@ -1325,14 +1325,14 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
 
             rate = m_entropyCoder.getNumberOfWrittenBits();
             bestCost = compDistortion[0] + (double)rate;
-            m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+            m_entropyCoder.store(m_rdContexts.temp);
 
             // Cost of Merge
             for (int mergeUp = 0; mergeUp < 2; ++mergeUp)
             {
                 if ((allowMergeLeft && !mergeUp) || (allowMergeUp && mergeUp))
                 {
-                    m_entropyCoder.load(m_rdEntropyCoders[0][CI_CURR_BEST]);
+                    m_entropyCoder.load(m_rdContexts.cur);
                     m_entropyCoder.resetBits();
                     if (allowMergeLeft)
                         m_entropyCoder.codeSaoMerge(1 - mergeUp);
@@ -1344,7 +1344,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                     if (mergeCost < bestCost)
                     {
                         bestCost = mergeCost;
-                        m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+                        m_entropyCoder.store(m_rdContexts.temp);
                         for (compIdx = 0; compIdx < 3; compIdx++)
                         {
                             mergeSaoParam[compIdx][mergeUp].mergeLeftFlag = !mergeUp;
@@ -1360,8 +1360,8 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
                 m_numNoSao[0]++;
             if (saoParam->ctuParam[1][addr].typeIdx < 0)
                 m_numNoSao[1] += 2;
-            m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
-            m_entropyCoder.store(m_rdEntropyCoders[0][CI_CURR_BEST]);
+            m_entropyCoder.load(m_rdContexts.temp);
+            m_entropyCoder.store(m_rdContexts.cur);
         }
     }
 }
@@ -1466,7 +1466,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
     double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
-    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
     dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_lumaLambda;
@@ -1507,7 +1507,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
         for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
             ctuParamRdo.offset[classIdx] = (int)m_offset[0][typeIdx][classIdx + ctuParamRdo.subTypeIdx + 1];
 
-        m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+        m_entropyCoder.load(m_rdContexts.temp);
         m_entropyCoder.resetBits();
         m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
 
@@ -1523,9 +1523,9 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
     }
 
     compDistortion[0] += ((double)bestDist / m_lumaLambda);
-    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(lclCtuParam, 0);
-    m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
 
@@ -1593,7 +1593,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     int    bestClassTableBo[2] = { 0, 0 };
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
 
-    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoOffset(&ctuParamRdo[0], 1);
     m_entropyCoder.codeSaoOffset(&ctuParamRdo[1], 2);
@@ -1637,7 +1637,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
             estDist[1] = estSaoTypeDist(2, typeIdx, 0, m_chromaLambda, currentDistortionTableBo, currentRdCostTableBo);
         }
 
-        m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+        m_entropyCoder.load(m_rdContexts.temp);
         m_entropyCoder.resetBits();
 
         for (int compIdx = 0; compIdx < 2; compIdx++)
@@ -1666,10 +1666,10 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
     }
 
     distortion[0] += ((double)bestDist / m_chromaLambda);
-    m_entropyCoder.load(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(lclCtuParam[0], 1);
     m_entropyCoder.codeSaoOffset(lclCtuParam[1], 2);
-    m_entropyCoder.store(m_rdEntropyCoders[0][CI_TEMP_BEST]);
+    m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
 
