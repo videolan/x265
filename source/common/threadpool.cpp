@@ -122,14 +122,11 @@ public:
 
     int getThreadCount() const { return m_numThreads; }
 
+    bool IsValid() const       { return m_ok; }
+
     void release();
 
     void Stop();
-
-    bool IsValid() const
-    {
-        return m_ok;
-    }
 
     void enqueueJobProvider(JobProvider &);
 
