@@ -225,7 +225,7 @@ public:
     DataCUMemPool m_dataCUMemPool;
     TComCUMvField m_cuMvFieldMemPool;
 
-    // CU data. Index is the CU index. Neighbour CUs (top-left, top, top-right, left) are appended to the end,
+    // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
     // required for prediction of current CU.
     // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
     CU            m_cuLocalData[104]; 
@@ -237,9 +237,9 @@ public:
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
-    double        m_baseQp;          //Qp of Cu set from RateControl/Vbv.
-    uint32_t      m_mvBits;         // Mv bits + Ref + block type
-    uint32_t      m_coeffBits;        // Texture bits (DCT Coeffs)
+    double        m_baseQp;          // Qp of Cu set from RateControl/Vbv.
+    uint32_t      m_mvBits;          // Mv bits + Ref + block type
+    uint32_t      m_coeffBits;       // Texture bits (DCT Coeffs)
 
     TComDataCU();
 
