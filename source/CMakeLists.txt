@@ -59,7 +59,7 @@ if(UNIX)
     SET(PLATFORM_LIBS pthread)
     find_library(LIBRT rt)
     if(LIBRT)
-        SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
+        set(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
     endif()
 endif(UNIX)
 
