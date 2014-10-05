@@ -231,10 +231,9 @@ public:
     CU            m_cuLocalData[104]; 
 
     uint32_t      m_psyEnergy;
-    uint64_t      m_totalPsyCost;
-    uint64_t      m_totalRDCost;       ///< sum of partition RD costs
-    uint32_t      m_totalDistortion; ///< sum of partition distortion
-    uint32_t      m_totalBits;       ///< sum of partition signal bits
+    uint64_t      m_totalRDCost;     // sum of partition (psy) RD costs
+    uint32_t      m_totalDistortion; // sum of partition distortion
+    uint32_t      m_totalBits;       // sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
     uint64_t      m_sa8dCost;
