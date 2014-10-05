@@ -1329,6 +1329,18 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
     }
 
+    if (!p->bEnableWavefront && p->bDistributeModeAnalysis)
+    {
+        p->bDistributeModeAnalysis = false;
+        x265_log(p, X265_LOG_WARNING, "--no-wpp is not yet supports with --pmode\n");
+    }
+
+    if (!p->bEnableWavefront && p->bDistributeMotionEstimation)
+    {
+        p->bDistributeMotionEstimation = false;
+        x265_log(p, X265_LOG_WARNING, "--no-wpp is not yet supports with --pme\n");
+    }
+
     if (p->scalingLists && p->internalCsp == X265_CSP_I444)
     {
         x265_log(p, X265_LOG_WARNING, "Scaling lists are not yet supported for 4:4:4 color space\n");
