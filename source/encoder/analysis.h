@@ -162,7 +162,7 @@ protected:
     void checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTempCU, CU* cu, PartSize partSize);
 
     void checkBestMode(TComDataCU*& outBestCU, TComDataCU*& outTempCU, uint32_t depth);
-    void encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv);
+    void encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv, TComYuv* outReconYuv, Entropy&);
     void encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu);
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,

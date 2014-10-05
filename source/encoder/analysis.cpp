@@ -302,9 +302,7 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
     {
     case 0:
         slave->checkIntraInInter_rd0_4(m_intraInInterCU[depth], m_curCUData);
-        slave->encodeIntraInInter(m_intraInInterCU[depth], m_curCUData, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], slave->m_tmpResiYuv[depth], m_bestIntraRecoYuv[depth]);
-        /* TODO: pass m_intraContexts to encodeIntraInInter */
-        slave->m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_intraContexts);
+        slave->encodeIntraInInter(m_intraInInterCU[depth], m_curCUData, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], slave->m_tmpResiYuv[depth], m_bestIntraRecoYuv[depth], m_intraContexts);
         break;
 
     case 1:
@@ -1122,7 +1120,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                             uint64_t intraInInterCost, bestCost;
                             if (m_param->rdLevel > 2)
                             {
-                                encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth]);
+                                encodeIntraInInter(m_intraInInterCU[depth], cu, m_origYuv[depth], m_modePredYuv[PRED_INTRA][depth], m_tmpResiYuv[depth], m_tmpRecoYuv[depth], m_rdEntropyCoders[depth][CI_TEMP_BEST]);
                                 intraInInterCost = m_rdCost.m_psyRd ? m_intraInInterCU[depth]->m_totalPsyCost : m_intraInInterCU[depth]->m_totalRDCost;
                                 bestCost = m_rdCost.m_psyRd ? outBestCU->m_totalPsyCost : outBestCU->m_totalRDCost;
                             }
@@ -1164,7 +1162,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                         }
                         else if (outBestCU->getPredictionMode(0) == MODE_INTRA)
                         {
-                            encodeIntraInInter(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth]);
+                            encodeIntraInInter(outBestCU, cu, m_origYuv[depth], m_bestPredYuv[depth], m_tmpResiYuv[depth], m_bestRecoYuv[depth], m_rdEntropyCoders[depth][CI_TEMP_BEST]);
                             m_rdEntropyCoders[depth][CI_TEMP_BEST].store(m_rdEntropyCoders[depth][CI_NEXT_BEST]);
                         }
                     }
@@ -2429,7 +2427,7 @@ void Analysis::checkIntraInInter_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outT
     checkBestMode(outBestCU, outTempCU, depth);
 }
 
-void Analysis::encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv,  ShortYuv* outResiYuv, TComYuv* outReconYuv)
+void Analysis::encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv,  ShortYuv* outResiYuv, TComYuv* outReconYuv, Entropy& outContext)
 {
     uint64_t puCost = 0;
     uint32_t puBits = 0;
@@ -2471,7 +2469,7 @@ void Analysis::encodeIntraInInter(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
     m_entropyCoder.codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
-    m_entropyCoder.store(m_rdEntropyCoders[depth][CI_TEMP_BEST]);
+    m_entropyCoder.store(outContext);
 
     cu->m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
     cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;
