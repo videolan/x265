@@ -798,7 +798,21 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
             /* the master worker thread (this one) does merge analysis */
             checkMerge2Nx2N_rd0_4(cuData, depth);
 
-            if (m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0))
+            bool earlyskip = false;
+            md.bestMode = &md.pred[PRED_SKIP];
+            if (m_param->rdLevel >= 1)
+            {
+                if (md.pred[PRED_MERGE].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                    md.bestMode = &md.pred[PRED_MERGE];
+                earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
+            }
+            else
+            {
+                if (md.pred[PRED_MERGE].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                    md.bestMode = &md.pred[PRED_MERGE];
+            }
+
+            if (earlyskip)
             {
                 /* a SKIP was found, consume remaining jobs to conserve work */
                 JobProvider::dequeue();
@@ -822,7 +836,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
             m_bJobsQueued = false;
             m_modeCompletionEvent.wait();
 
-            if (!(m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0)))
+            if (!earlyskip)
             {
                 /* select best inter mode based on sa8d cost */
                 Mode *bestInter = &md.pred[PRED_2Nx2N];
@@ -1420,7 +1434,6 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
 
     /* skipPred points to the be prediction and costs */
     skipCU = &md.pred[PRED_SKIP].cu;
-    md.bestMode = skipPred;
     if (bestSadCand < 0)
         return;
 
@@ -1454,8 +1467,6 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
         mergePred->predYuv.copyFromYuv(&skipPred->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &md.tempResi);
         m_rdContexts[depth].temp.store(mergePred->contexts); /* Pass mode to encodeResAndCalcRdInterCU(), write to contexts */
-
-        md.bestMode = (mergeCU->m_totalRDCost < skipCU->m_totalRDCost) ? mergePred : skipPred;
     }
 }
 
