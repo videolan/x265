@@ -534,7 +534,8 @@ Mode decision / Analysis
 	Short circuit analysis if a prediction is found that does not set
 	the coded block flag (aka: no residual was encoded).  It prevents
 	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits. Default disabled
+	residual but require less signaling bits. Only applicable for RD
+	levels 5 and 6. Default disabled
 
 .. option:: --fast-intra, --no-fast-intra
 
