@@ -271,7 +271,6 @@ void Analysis::parallelME(int threadId, int meId)
 void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
 {
     Frame* pic = ctu->m_pic;
-    int depth = ctu->getDepth(0);
     uint32_t cuAddr = ctu->m_cuAddr;
 
     invalidateContexts(0);
@@ -298,7 +297,7 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && pic->m_intraData)
             {
-                TComDataCU *bestCU = &m_modeDepth[depth].bestMode->cu;
+                TComDataCU *bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&pic->m_intraData->depth[cuAddr * ctu->m_numPartitions], bestCU->getDepth(), sizeof(uint8_t) * numPartition);
                 memcpy(&pic->m_intraData->modes[cuAddr * ctu->m_numPartitions], bestCU->getLumaIntraDir(), sizeof(uint8_t) * numPartition);
                 memcpy(&pic->m_intraData->partSizes[cuAddr * ctu->m_numPartitions], bestCU->getPartitionSize(), sizeof(char) * numPartition);
@@ -845,7 +844,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
                     }
 
                     /* RD selection between inter and merge */
-                    encodeResAndCalcRdInterCU(&bestInter->cu, cuData, &md.origYuv, &bestInter->predYuv, &md.tempResi, &bestInter->resiYuv, &bestInter->reconYuv);
+                    encodeResAndCalcRdInterCU(md.pred[PRED_2Nx2N], cuData, &md.origYuv, &md.tempResi);
                     m_rdContexts[depth].temp.store(bestInter->contexts); /* TODO: pass mode to encodeResAndCalcRdInterCU(), save to mode.contexts */
 
                     if (md.bestMode->cu.m_totalRDCost < bestInter->cu.m_totalRDCost)
@@ -908,7 +907,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
-                    encodeResAndCalcRdInterCU(&bestInter->cu, cuData, &md.origYuv, &bestInter->predYuv, &md.tempResi, &bestInter->resiYuv, &bestInter->reconYuv);
+                    encodeResAndCalcRdInterCU(md.pred[PRED_2Nx2N], cuData, &md.origYuv, &md.tempResi);
                     m_rdContexts[depth].temp.store(bestInter->contexts);
 
                     if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
@@ -949,7 +948,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
                     prepMotionCompensation(bestCU, cuData, partIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
-                encodeResAndCalcRdInterCU(&md.bestMode->cu, cuData, &md.origYuv, &md.bestMode->predYuv, &md.tempResi, &md.bestMode->resiYuv, &md.bestMode->reconYuv)
+                encodeResAndCalcRdInterCU(*md.bestMode, cuData, &md.origYuv, &md.tempResi);
                 m_rdContexts[depth].temp.store(md.bestMode->contexts);
             }
             else if (bestCU->getPredictionMode(0) == MODE_INTRA)
@@ -1447,13 +1446,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
         else
         {
             // Skip (no-residual) mode
-            encodeResAndCalcRdSkipCU(skipCU, fencYuv, &skipPred->predYuv, &skipPred->reconYuv);
+            encodeResAndCalcRdSkipCU(md.pred[PRED_SKIP], fencYuv);
             m_rdContexts[depth].temp.store(skipPred->contexts); /* TODO: encodeResAndCalcRdSkipCU() should write to this */
         }
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(&skipPred->predYuv);
-        encodeResAndCalcRdInterCU(mergeCU, cuData, fencYuv, &mergePred->predYuv, &md.tempResi, &mergePred->resiYuv, &mergePred->reconYuv);
+        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &md.tempResi);
         m_rdContexts[depth].temp.store(mergePred->contexts); /* Pass mode to encodeResAndCalcRdInterCU(), write to contexts */
 
         md.bestMode = (mergeCU->m_totalRDCost < skipCU->m_totalRDCost) ? mergePred : skipPred;
@@ -1520,9 +1519,10 @@ void Analysis::checkMerge2Nx2N_rd5_6(CU* cuData, uint32_t depth, bool& earlySkip
 
                     // estimate residual and encode everything
                     if (noResidual)
-                        encodeResAndCalcRdSkipCU(mergeCU, fencYuv, &mergePred->predYuv, &mergePred->reconYuv);
+                        encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE], fencYuv);
                     else
-                        encodeResAndCalcRdInterCU(mergeCU, cuData, fencYuv, &mergePred->predYuv, &md.tempResi, &mergePred->resiYuv, &mergePred->reconYuv);
+                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &m_modeDepth[depth].tempResi);
+
                     m_rdContexts[depth].temp.store(mergePred->contexts);
 
                     /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
@@ -1804,7 +1804,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, CU* cuData, PartSize partSize)
         cu->m_totalDistortion = primitives.sa8d[sizeIdx](fencYuv->getLumaAddr(), fencYuv->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
         cu->m_sa8dCost = m_rdCost.calcRdSADCost(cu->m_totalDistortion, cu->m_totalBits);
     }
-    else if (predInterSearch(cu, cuData, predYuv, false, false))
+    else if (predInterSearch(interMode, cuData, false, false))
     {
         int sizeIdx = cu->getLog2CUSize(0) - 2;
         uint32_t distortion = primitives.sa8d[sizeIdx](fencYuv->getLumaAddr(), fencYuv->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
@@ -1830,22 +1830,19 @@ void Analysis::checkInter_rd5_6(Mode& interMode, CU* cuData, PartSize partSize, 
     cu->initEstData();
 
     TComYuv* fencYuv = &m_modeDepth[depth].origYuv;
-    TComYuv* reconYuv = &interMode.reconYuv;
-    TComYuv* predYuv = &interMode.predYuv;
-    ShortYuv* resiYuv = &interMode.resiYuv;
 
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, true);
-        // TODO: pass mode
-        encodeResAndCalcRdInterCU(cu, cuData, fencYuv, predYuv, &m_modeDepth[depth].tempResi, resiYuv, reconYuv);
+        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
+
         m_rdContexts[depth].temp.store(interMode.contexts);
         checkDQP(cu);
         checkBestMode(interMode, depth);
     }
-    else if (predInterSearch(cu, cuData, predYuv, bMergeOnly, true))
+    else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
-        encodeResAndCalcRdInterCU(cu, cuData, fencYuv, predYuv, &m_modeDepth[depth].tempResi, resiYuv, reconYuv);
+        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
         m_rdContexts[depth].temp.store(interMode.contexts);
         checkDQP(cu);
         checkBestMode(interMode, depth);

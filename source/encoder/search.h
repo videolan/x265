@@ -88,6 +88,15 @@ public:
     int             m_numLayers;
     int             m_refLagPixels;
 
+    struct Mode
+    {
+        TComDataCU cu;
+        TComYuv    predYuv;
+        TComYuv    reconYuv;
+        ShortYuv   resiYuv;
+        Entropy    contexts;
+    };
+
     Search();
     ~Search();
 
@@ -100,11 +109,11 @@ public:
     void     estIntraPredChromaQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
 
     // estimation inter prediction (non-skip)
-    bool     predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool bMergeOnly, bool bChroma);
+    bool     predInterSearch(Mode& interMode, CU* cuData, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
-    void     encodeResAndCalcRdInterCU(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, ShortYuv* bestResiYuv, TComYuv* reconYuv);
-    void     encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* reconYuv);
+    void     encodeResAndCalcRdInterCU(Mode& interMode, CU* cuData, TComYuv* fencYuv, ShortYuv* outResiYuv);
+    void     encodeResAndCalcRdSkipCU(Mode& interMode, TComYuv* fencYuv);
 
     void     generateCoeffRecon(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
     void     residualTransformQuantInter(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth, uint32_t depthRange[2]);

@@ -1683,8 +1683,11 @@ uint32_t Search::mergeEstimation(TComDataCU* cu, CU* cuData, int puIdx, MergeDat
 
 /* search of the best candidate for inter prediction
  * returns true if predYuv was filled with a motion compensated prediction */
-bool Search::predInterSearch(TComDataCU* cu, CU* cuData, TComYuv* predYuv, bool bMergeOnly, bool bChroma)
+bool Search::predInterSearch(Mode& interMode, CU* cuData, bool bMergeOnly, bool bChroma)
 {
+    TComDataCU* cu = &interMode.cu;
+    TComYuv* predYuv = &interMode.predYuv;
+
     MV amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
@@ -2059,8 +2062,12 @@ void Search::setSearchRange(const TComDataCU* cu, MV mvp, int merange, MV& mvmin
     mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
 }
 
-void Search::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv* predYuv, TComYuv* outReconYuv)
+void Search::encodeResAndCalcRdSkipCU(Mode& interMode, TComYuv* fencYuv)
 {
+    TComDataCU* cu = &interMode.cu;
+    TComYuv* outReconYuv = &interMode.reconYuv;
+    TComYuv* predYuv = &interMode.predYuv;
+
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
     uint32_t cuSize = 1 << cu->getLog2CUSize(0);
@@ -2109,9 +2116,13 @@ void Search::encodeResAndCalcRdSkipCU(TComDataCU* cu, TComYuv* fencYuv, TComYuv*
 }
 
 /** encode residual and calculate rate-distortion for a CU block */
-void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* outResiYuv,
-                                       ShortYuv* outBestResiYuv, TComYuv* outReconYuv)
+void Search::encodeResAndCalcRdInterCU(Mode& interMode, CU* cuData, TComYuv* fencYuv, ShortYuv* outResiYuv)
 {
+    TComDataCU* cu = &interMode.cu;
+    TComYuv* outReconYuv = &interMode.reconYuv;
+    TComYuv* predYuv = &interMode.predYuv;
+    ShortYuv* outBestResiYuv = &interMode.resiYuv;
+
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
     uint32_t bestBits = 0, bestCoeffBits = 0;

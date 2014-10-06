@@ -90,15 +90,6 @@ public:
         MAX_PRED_TYPES
     };
 
-    struct Mode
-    {
-        TComDataCU cu;
-        TComYuv    predYuv;
-        TComYuv    reconYuv;
-        ShortYuv   resiYuv;
-        Entropy    contexts;
-    };
-
     struct ModeDepth
     {
         Mode       pred[MAX_PRED_TYPES];
