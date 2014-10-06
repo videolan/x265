@@ -130,13 +130,14 @@ bool Analysis::findJob(int threadId)
 void Analysis::parallelAnalysisJob(int threadId, int jobId)
 {
     Analysis* slave;
+    ModeDepth& md = m_modeDepth[m_curDepth];
     int depth = m_curDepth;
 
     if (threadId == -1)
         slave = this;
     else
     {
-        TComDataCU& cu = m_modeDepth[depth].pred[PRED_2Nx2N].cu;
+        TComDataCU& cu = md.pred[PRED_2Nx2N].cu;
         TComPicYuv* fenc = cu.m_pic->getPicYuvOrg();
 
         slave = &m_tld[threadId].analysis;
@@ -154,21 +155,21 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
     switch (jobId)
     {
     case 0:
-        slave->checkIntraInInter_rd0_4(m_modeDepth[depth].pred[PRED_INTRA], m_curCUData);
+        slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], m_curCUData);
         if (m_param->rdLevel > 2)
-            slave->encodeIntraInInter(m_modeDepth[depth].pred[PRED_INTRA], m_curCUData);
+            slave->encodeIntraInInter(md.pred[PRED_INTRA], m_curCUData);
         break;
 
     case 1:
-        slave->checkInter_rd0_4(m_modeDepth[depth].pred[PRED_2Nx2N], m_curCUData, SIZE_2Nx2N);
+        slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], m_curCUData, SIZE_2Nx2N);
         break;
 
     case 2:
-        slave->checkInter_rd0_4(m_modeDepth[depth].pred[PRED_Nx2N], m_curCUData, SIZE_Nx2N);
+        slave->checkInter_rd0_4(md.pred[PRED_Nx2N], m_curCUData, SIZE_Nx2N);
         break;
 
     case 3:
-        slave->checkInter_rd0_4(m_modeDepth[depth].pred[PRED_2NxN], m_curCUData, SIZE_2NxN);
+        slave->checkInter_rd0_4(md.pred[PRED_2NxN], m_curCUData, SIZE_2NxN);
         break;
 
     default:
