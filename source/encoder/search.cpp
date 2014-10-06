@@ -1231,8 +1231,13 @@ void Search::residualQTIntraChroma(TComDataCU* cu, CU* cuData, uint32_t trDepth,
     }
 }
 
-void Search::estIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2])
+void Search::estIntraPredQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv, uint32_t depthRange[2])
 {
+    TComDataCU* cu = &intraMode.cu;
+    TComYuv* reconYuv = &intraMode.reconYuv;
+    TComYuv* predYuv = &intraMode.predYuv;
+    ShortYuv* resiYuv = &intraMode.resiYuv;
+
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
     uint32_t numPU        = 1 << (2 * initTrDepth);
@@ -1409,8 +1414,13 @@ void Search::estIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYu
     x265_emms();
 }
 
-void Search::sharedEstIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2], uint8_t* sharedModes)
+void Search::sharedEstIntraPredQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv, uint32_t depthRange[2], uint8_t* sharedModes)
 {
+    TComDataCU* cu = &intraMode.cu;
+    TComYuv* reconYuv = &intraMode.reconYuv;
+    TComYuv* predYuv = &intraMode.predYuv;
+    ShortYuv* resiYuv = &intraMode.resiYuv;
+
     uint32_t depth       = cu->getDepth(0);
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
     uint32_t numPU       = 1 << (2 * initTrDepth);
@@ -1518,8 +1528,13 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, CU* cuData, TComYuv* fencYuv
     cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
-void Search::estIntraPredChromaQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv)
+void Search::estIntraPredChromaQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv)
 {
+    TComDataCU* cu = &intraMode.cu;
+    TComYuv* reconYuv = &intraMode.reconYuv;
+    TComYuv* predYuv = &intraMode.predYuv;
+    ShortYuv* resiYuv = &intraMode.resiYuv;
+
     uint32_t depth       = cu->getDepth(0);
     uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->m_chromaFormat == X265_CSP_I444 ? 1 : 0);
     uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;

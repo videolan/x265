@@ -104,9 +104,9 @@ public:
     void     setQP(Slice* slice, int qp);
     void     invalidateContexts(int fromDepth);
 
-    void     estIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
-    void     sharedEstIntraPredQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2], uint8_t* sharedModes);
-    void     estIntraPredChromaQT(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
+    void     estIntraPredQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv, uint32_t depthRange[2]);
+    void     sharedEstIntraPredQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv, uint32_t depthRange[2], uint8_t* sharedModes);
+    void     estIntraPredChromaQT(Mode &intraMode, CU* cuData, TComYuv* fencYuv);
 
     // estimation inter prediction (non-skip)
     bool     predInterSearch(Mode& interMode, CU* cuData, bool bMergeOnly, bool bChroma);
