@@ -48,11 +48,8 @@ class Entropy;
 /* All the CABAC contexts that Analysis needs to keep track of at each depth */
 struct RDContexts
 {
-    /* Note: When Analysis uses Mode structs, next and temp go away.
-    * temp will be mode->context and next is bestMode->context */
-
     Entropy cur;     /* input context for current CU */
-    Entropy temp;    /* output of most recently measured mode */
+    Entropy rqtTemp; /* residual quad-tree temp context */
     Entropy rqtRoot; /* residual quad-tree start context */
     Entropy rqtTest; /* residual quad-tree test context */
 };
@@ -115,8 +112,8 @@ public:
     void     encodeResAndCalcRdInterCU(Mode& interMode, CU* cuData, TComYuv* fencYuv, ShortYuv* outResiYuv);
     void     encodeResAndCalcRdSkipCU(Mode& interMode, TComYuv* fencYuv);
 
-    void     generateCoeffRecon(TComDataCU* cu, CU* cuData, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
-    void     residualTransformQuantInter(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth, uint32_t depthRange[2]);
+    void     generateCoeffRecon(Mode& mode, CU* cuData, TComYuv* fencYuv);
+    void     residualTransformQuantInter(Mode& mode, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, uint32_t depth, uint32_t depthRange[2]);
 
     uint32_t getIntraModeBits(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t getIntraRemModeBits(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
@@ -137,23 +134,19 @@ protected:
     uint32_t xIntraCodingLumaBlk(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, uint32_t log2TrSize, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
                                  int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf);
 
-    uint32_t xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv, uint32_t depth,
+    uint32_t xEstimateResidualQT(Mode& mode, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, ShortYuv* resiYuv, uint32_t depth,
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t *zeroDist, uint32_t tuDepthRange[2]);
 
-    uint32_t xRecurIntraCodingQT(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv,
-                                 ShortYuv* resiYuv, bool bAllowRQTSplit, uint64_t& dRDCost, uint32_t& puBits, uint32_t& psyEnergy, uint32_t depthRange[2]);
+    uint32_t xRecurIntraCodingQT(Mode& mode, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, bool bAllowRQTSplit,
+                                 uint64_t& dRDCost, uint32_t& puBits, uint32_t& psyEnergy, uint32_t depthRange[2]);
 
-    uint32_t xRecurIntraChromaCodingQT(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
-                                       uint32_t& psyEnergy);
+    uint32_t xRecurIntraChromaCodingQT(Mode& mode, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, uint32_t& psyEnergy);
 
-    uint32_t xIntraCodingChromaBlk(TComDataCU* cu, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, TComYuv* predYuv, ShortYuv* resiYuv,
-                                   int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf, uint32_t chromaId, uint32_t log2TrSizeC);
+    uint32_t xIntraCodingChromaBlk(Mode& mode, CU* cuData, uint32_t absPartIdx, TComYuv* fencYuv, int16_t* reconQt, uint32_t reconQtStride,
+                                   coeff_t* coeff, uint32_t& cbf, uint32_t chromaId, uint32_t log2TrSizeC);
 
-    void     residualTransformQuantIntra(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
-                                         TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv, uint32_t depthRange[2]);
-
-    void     residualQTIntraChroma(TComDataCU* cu, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv,
-                                   TComYuv* predYuv, ShortYuv* resiYuv, TComYuv* reconYuv);
+    void     residualTransformQuantIntra(Mode& mode, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv, uint32_t depthRange[2]);
+    void     residualQTIntraChroma(Mode& mode, CU* cuData, uint32_t trDepth, uint32_t absPartIdx, TComYuv* fencYuv);
 
     void     xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
     void     xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, TComYuv* reconYuv);

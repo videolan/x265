@@ -816,8 +816,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                     }
 
                     /* RD selection between inter and merge */
-                    encodeResAndCalcRdInterCU(md.pred[PRED_2Nx2N], cuData, &md.origYuv, &md.tempResi);
-                    m_rdContexts[depth].temp.store(bestInter->contexts); /* TODO: pass mode to encodeResAndCalcRdInterCU(), save to mode.contexts */
+                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv, &md.tempResi);
 
                     if (md.bestMode->cu.m_totalRDCost < bestInter->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -879,8 +878,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
-                    encodeResAndCalcRdInterCU(md.pred[PRED_2Nx2N], cuData, &md.origYuv, &md.tempResi);
-                    m_rdContexts[depth].temp.store(bestInter->contexts);
+                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv, &md.tempResi);
 
                     if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -921,7 +919,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
                 encodeResAndCalcRdInterCU(*md.bestMode, cuData, &md.origYuv, &md.tempResi);
-                m_rdContexts[depth].temp.store(md.bestMode->contexts);
             }
             else if (bestCU->getPredictionMode(0) == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
@@ -940,11 +937,8 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                 }
 
                 md.bestMode->resiYuv.subtract(&md.origYuv, &md.bestMode->predYuv, bestCU->getLog2CUSize(0));
-                /* TODO: generateCoeffRecon() should take Mode */
-                generateCoeffRecon(bestCU, cuData, &md.origYuv, &md.bestMode->predYuv, &md.bestMode->resiYuv, &md.bestMode->reconYuv);
             }
-            else
-                generateCoeffRecon(bestCU, cuData, &md.origYuv, &md.bestMode->predYuv, &md.bestMode->resiYuv, &md.bestMode->reconYuv);
+            generateCoeffRecon(*md.bestMode, cuData, &md.origYuv);
         }
 
         TComDataCU* bestCU = &md.bestMode->cu;
@@ -1370,13 +1364,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
         {
             // Skip (no-residual) mode
             encodeResAndCalcRdSkipCU(md.pred[PRED_SKIP], fencYuv);
-            m_rdContexts[depth].temp.store(skipPred->contexts); /* TODO: encodeResAndCalcRdSkipCU() should write to this */
         }
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(&skipPred->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &md.tempResi);
-        m_rdContexts[depth].temp.store(mergePred->contexts); /* Pass mode to encodeResAndCalcRdInterCU(), write to contexts */
     }
 }
 
@@ -1443,8 +1435,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(CU* cuData, uint32_t depth, bool& earlySkip
                         encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE], fencYuv);
                     else
                         encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &m_modeDepth[depth].tempResi);
-
-                    m_rdContexts[depth].temp.store(mergePred->contexts);
 
                     /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !mergeCU->getQtRootCbf(0))
@@ -1760,15 +1750,12 @@ void Analysis::checkInter_rd5_6(Mode& interMode, CU* cuData, PartSize partSize, 
     {
         parallelInterSearch(interMode, cuData, true);
         encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
-
-        m_rdContexts[depth].temp.store(interMode.contexts);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
     else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
         encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
-        m_rdContexts[depth].temp.store(interMode.contexts);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
@@ -2015,13 +2002,11 @@ void Analysis::encodeIntraInInter(Mode& intraMode, CU* cuData)
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    ShortYuv* resiYuv = &intraMode.resiYuv;
     TComYuv*  reconYuv = &intraMode.reconYuv;
-    TComYuv*  predYuv = &intraMode.predYuv;
     TComYuv*  fencYuv = &m_modeDepth[depth].origYuv;
 
     /* TODO: why is recon a second call? pass intraMode to this function */
-    uint32_t puDistY = xRecurIntraCodingQT(cu, cuData, initTrDepth, 0, fencYuv, predYuv, resiYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
+    uint32_t puDistY = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, fencYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);
 
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
