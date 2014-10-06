@@ -1239,20 +1239,14 @@ void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32
         if (cu->getDepth(absPartIdx) > depth)
         {
             for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
-            {
                 cu->setQPSubCUs(qp, cu, absPartIdx + partUnitIdx * curPartNumQ, depth + 1, foundNonZeroCbf);
-            }
         }
         else
         {
             if (cu->getCbf(absPartIdx, TEXT_LUMA) || cu->getCbf(absPartIdx, TEXT_CHROMA_U) || cu->getCbf(absPartIdx, TEXT_CHROMA_V))
-            {
                 foundNonZeroCbf = true;
-            }
             else
-            {
                 setQPSubParts(qp, absPartIdx, depth);
-            }
         }
     }
 }
@@ -1262,9 +1256,7 @@ void TComDataCU::setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)
     uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
 
     for (uint32_t scuIdx = absPartIdx; scuIdx < absPartIdx + curPartNum; scuIdx++)
-    {
         m_qp[scuIdx] = qp;
-    }
 }
 
 void TComDataCU::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
