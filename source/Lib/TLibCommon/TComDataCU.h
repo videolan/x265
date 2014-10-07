@@ -100,6 +100,60 @@ struct DataCUMemPool
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
     pixel*   tqBypassYuvMemBlock;
+
+    DataCUMemPool() { memset(this, 0, sizeof(*this)); }
+
+    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless)
+    {
+        CHECKED_MALLOC(qpMemBlock, char, numPartition * numBlocks);
+
+        CHECKED_MALLOC(depthMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(log2CUSizeMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(skipFlagMemBlock, bool, numPartition * numBlocks);
+        CHECKED_MALLOC(partSizeMemBlock, char, numPartition * numBlocks);
+        CHECKED_MALLOC(predModeMemBlock, char, numPartition * numBlocks);
+        CHECKED_MALLOC(cuTQBypassMemBlock, bool, numPartition * numBlocks);
+
+        CHECKED_MALLOC(mergeFlagMemBlock, bool, numPartition * numBlocks);
+        CHECKED_MALLOC(lumaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(chromaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(interDirMemBlock, uint8_t, numPartition * numBlocks);
+
+        CHECKED_MALLOC(trIdxMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(transformSkipMemBlock, uint8_t, numPartition * 3 * numBlocks);
+
+        CHECKED_MALLOC(cbfMemBlock, uint8_t, numPartition * 3 * numBlocks);
+        CHECKED_MALLOC(mvpIdxMemBlock, uint8_t, numPartition * 2 * numBlocks);
+        CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
+
+        if (isLossless)
+            CHECKED_MALLOC(tqBypassYuvMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
+
+        return true;
+    fail:
+        return false;
+    }
+
+    void destroy()
+    {
+        X265_FREE(qpMemBlock);
+        X265_FREE(depthMemBlock);
+        X265_FREE(log2CUSizeMemBlock);
+        X265_FREE(cbfMemBlock);
+        X265_FREE(interDirMemBlock);
+        X265_FREE(mergeFlagMemBlock);
+        X265_FREE(lumaIntraDirMemBlock);
+        X265_FREE(chromaIntraDirMemBlock);
+        X265_FREE(trIdxMemBlock);
+        X265_FREE(transformSkipMemBlock);
+        X265_FREE(trCoeffMemBlock);
+        X265_FREE(mvpIdxMemBlock);
+        X265_FREE(cuTQBypassMemBlock);
+        X265_FREE(skipFlagMemBlock);
+        X265_FREE(partSizeMemBlock);
+        X265_FREE(predModeMemBlock);
+        X265_FREE(tqBypassYuvMemBlock);
+    }
 };
 
 struct CU
@@ -219,13 +273,6 @@ public:
     uint8_t*      m_interDir;         ///< array of inter directions
     uint8_t*      m_mvpIdx[2];        ///< array of motion vector predictor candidates or merge candidate indices [0]
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // misc. variables
-    // -------------------------------------------------------------------------------------------------------------------
-
-    DataCUMemPool m_dataCUMemPool;
-    TComCUMvField m_cuMvFieldMemPool;
-
     // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
     // required for prediction of current CU.
     // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
@@ -244,10 +291,7 @@ public:
 
     TComDataCU();
 
-    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
-    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
-    void          destroy();
-
+    void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
     void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx);

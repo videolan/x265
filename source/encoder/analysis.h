@@ -92,11 +92,12 @@ public:
 
     struct ModeDepth
     {
-        Mode       pred[MAX_PRED_TYPES];
-        Mode*      bestMode;
-        TComYuv    origYuv;
-        ShortYuv   tempResi;
-        TComDataCU memPool;
+        Mode           pred[MAX_PRED_TYPES];
+        Mode*          bestMode;
+        TComYuv        origYuv;
+        ShortYuv       tempResi;
+        DataCUMemPool  cuMemPool;
+        MVFieldMemPool mvFieldMemPool;
     };
 
     ModeDepth     m_modeDepth[NUM_CU_DEPTH];

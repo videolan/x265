@@ -52,12 +52,31 @@ namespace x265 {
 // Type definition
 // ====================================================================================================================
 
-typedef struct
+struct MVFieldMemPool
 {
-    MV*   m_mvMemBlock;
-    MV*   m_mvdMemBlock;
-    char* m_refIdxMemBlock;
-} MVFieldMemPool;
+    MV*   mvMemBlock;
+    MV*   mvdMemBlock;
+    char* refIdxMemBlock;
+
+    MVFieldMemPool() { memset(this, 0, sizeof(*this)); }
+
+    bool create(uint32_t numPartition, uint32_t numBlocks)
+    {
+        CHECKED_MALLOC(mvMemBlock, MV, numPartition * 2 * numBlocks);
+        CHECKED_MALLOC(mvdMemBlock, MV, numPartition * 2 * numBlocks);
+        CHECKED_MALLOC(refIdxMemBlock, char, numPartition * 2 * numBlocks);
+        return true;
+    fail:
+        return false;
+    }
+
+    void destroy()
+    {
+        X265_FREE(mvMemBlock);
+        X265_FREE(mvdMemBlock);
+        X265_FREE(refIdxMemBlock);
+    }
+};
 
 // ====================================================================================================================
 // Class definition
@@ -87,16 +106,13 @@ public:
     MV*       m_mvd;
     char*     m_refIdx;
     uint32_t  m_numPartitions;
-    MVFieldMemPool m_mvFieldMemPool;
 
     TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
 
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
 
-    bool initialize(uint32_t numPartition, uint32_t numBlocks);
-    void create(TComCUMvField *p, uint32_t numPartition, int index, int idx);
-    void destroy();
+    void initialize(MVFieldMemPool *pool, uint32_t numPartition, int index, int idx);
 
     void clearMvField();
     void copyFrom(const TComCUMvField * cuMvFieldSrc, int numPartSrc, int partAddrDst);

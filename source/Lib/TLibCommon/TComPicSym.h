@@ -59,6 +59,9 @@ public:
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
 
+    DataCUMemPool  m_cuMemPool;
+    MVFieldMemPool m_mvFieldMemPool;
+
     Slice*        m_slice;
     TComDataCU*   m_cuData;
 

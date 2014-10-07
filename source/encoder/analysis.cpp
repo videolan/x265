@@ -60,13 +60,14 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
 
-        ok &= md.memPool.initialize(numPartitions, sizeL, sizeC, MAX_PRED_TYPES, tqBypass);
+        md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES, tqBypass);
+        md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
         ok &= md.origYuv.create(cuSize, cuSize, csp);
         ok &= md.tempResi.create(cuSize, cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            md.pred[j].cu.create(&md.memPool, numPartitions, cuSize, csp, j, tqBypass);
+            md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j, tqBypass);
             ok &= md.pred[j].predYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
@@ -81,13 +82,13 @@ void Analysis::destroy()
     uint32_t numCUDepth = g_maxCUDepth + 1;
     for (uint32_t i = 0; i < numCUDepth; i++)
     {
-        m_modeDepth[i].memPool.destroy();
+        m_modeDepth[i].cuMemPool.destroy();
+        m_modeDepth[i].mvFieldMemPool.destroy();
         m_modeDepth[i].origYuv.destroy();
         m_modeDepth[i].tempResi.destroy();
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            m_modeDepth[i].pred[j].cu.destroy();
             m_modeDepth[i].pred[j].predYuv.destroy();
             m_modeDepth[i].pred[j].reconYuv.destroy();
             m_modeDepth[i].pred[j].resiYuv.destroy();
