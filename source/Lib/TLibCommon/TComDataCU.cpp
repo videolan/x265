@@ -85,7 +85,7 @@ TComDataCU::TComDataCU()
     m_dataCUMemPool.cbfMemBlock            = NULL;
     m_dataCUMemPool.mvpIdxMemBlock         = NULL;
     m_dataCUMemPool.trCoeffMemBlock        = NULL;
-    m_dataCUMemPool.m_tqBypassYuvMemBlock  = NULL;
+    m_dataCUMemPool.tqBypassYuvMemBlock  = NULL;
 }
 
 
@@ -117,7 +117,7 @@ bool TComDataCU::initialize(uint32_t numPartition, uint32_t sizeL, uint32_t size
     CHECKED_MALLOC(m_dataCUMemPool.trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
 
     if (isLossless)
-        CHECKED_MALLOC(m_dataCUMemPool.m_tqBypassYuvMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
+        CHECKED_MALLOC(m_dataCUMemPool.tqBypassYuvMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
 
     return ok;
 
@@ -173,7 +173,7 @@ void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, 
 
     if (isLossless)
     {
-        m_tqBypassOrigYuv[0] = cu->m_dataCUMemPool.m_tqBypassYuvMemBlock  + index * (sizeL + sizeC * 2);
+        m_tqBypassOrigYuv[0] = cu->m_dataCUMemPool.tqBypassYuvMemBlock  + index * (sizeL + sizeC * 2);
         m_tqBypassOrigYuv[1] = m_tqBypassOrigYuv[0]                       + sizeL;
         m_tqBypassOrigYuv[2] = m_tqBypassOrigYuv[0]                       + sizeL + sizeC;
     }
@@ -281,10 +281,10 @@ void TComDataCU::destroy()
         m_dataCUMemPool.predModeMemBlock = NULL;
     }
 
-    if (m_dataCUMemPool.m_tqBypassYuvMemBlock)
+    if (m_dataCUMemPool.tqBypassYuvMemBlock)
     {
-        X265_FREE(m_dataCUMemPool.m_tqBypassYuvMemBlock);
-        m_dataCUMemPool.m_tqBypassYuvMemBlock = NULL;
+        X265_FREE(m_dataCUMemPool.tqBypassYuvMemBlock);
+        m_dataCUMemPool.tqBypassYuvMemBlock = NULL;
     }
 
     m_cuMvFieldMemPool.destroy();

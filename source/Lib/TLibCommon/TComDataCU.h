@@ -99,7 +99,7 @@ struct DataCUMemPool
     uint8_t* cbfMemBlock;
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
-    pixel*   m_tqBypassYuvMemBlock;
+    pixel*   tqBypassYuvMemBlock;
 };
 
 struct CU
