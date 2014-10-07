@@ -325,7 +325,7 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
 void Analysis::parallelME(int threadId, int meId)
 {
     Analysis* slave;
-    TComDataCU *cu = m_curMECu;
+    const TComDataCU *cu = m_curMECu;
     TComPicYuv* fenc = cu->m_pic->getPicYuvOrg();
     Slice *slice = cu->m_slice;
 

@@ -53,7 +53,7 @@ protected:
     uint32_t  m_zOrderIdxinCU;
 
     /* Motion information */
-    TComCUMvField* m_mvField[2];
+    const TComCUMvField* m_mvField[2];
 
     /* TODO: Need to investigate clipping while writing into the TComDataCU fields itself */
     MV             m_clippedMv[2];
@@ -89,7 +89,7 @@ public:
     bool allocBuffers(int csp);
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
-    void prepMotionCompensation(TComDataCU* cu, CU* cuData, int partIdx);
+    void prepMotionCompensation(const TComDataCU* cu, const CU* cuData, int partIdx);
     void motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */

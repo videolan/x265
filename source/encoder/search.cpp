@@ -2033,7 +2033,7 @@ void Search::checkBestMVP(MV* amvpCand, MV mv, MV& mvPred, int& outMvpIdx, uint3
     }
 }
 
-void Search::setSearchRange(TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const
+void Search::setSearchRange(const TComDataCU* cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const
 {
     cu->clipMv(mvp);
 
