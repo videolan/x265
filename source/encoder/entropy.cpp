@@ -551,7 +551,7 @@ void Entropy::encodeCU(TComDataCU* ctu, uint32_t absPartIdx, uint32_t depth, boo
     uint32_t tuDepthRange[2];
     ctu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
 
-    // Encode Coefficients, allow codeCoeff() to modify m_bEncodeDQP
+    // Encode Coefficients, allow codeCoeff() to modify bEncodeDQP
     codeCoeff(ctu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
