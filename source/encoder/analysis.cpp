@@ -449,7 +449,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
                 compressIntraCU(splitCU, childCuData);
 
                 // Save best CU pred data to and recon to splitCU
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCuData, partUnitIdx, nextDepth);
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
                 if (partUnitIdx < 3)
                     m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
@@ -576,7 +576,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
 
                 compressSharedIntraCTU(splitCU, childCUData, sharedDepth, sharedPartSizes, sharedModes, zOrder);
 
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData->numPartitions, partUnitIdx, nextDepth); // Keep best part data to current temporary data.
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCUData->numPartitions * partUnitIdx);
 
                 // TODO: What?
@@ -1096,7 +1096,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
                 }
 
                 /* Adding costs from best SUbCUs */
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData, partUnitIdx, nextDepth, true); // Keep best part data to current temporary data.
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData->numPartitions, partUnitIdx, nextDepth, true); // Keep best part data to current temporary data.
                 if (m_param->rdLevel > 1)
                 {
                     nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCUData->numPartitions * partUnitIdx);
@@ -1327,7 +1327,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
             {
                 compressInterCU_rd5_6(splitCU, childCUData, partUnitIdx);
 
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData, partUnitIdx, nextDepth);
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->predYuv, childCUData->numPartitions * partUnitIdx);
                 if (partUnitIdx < 3)
                     m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);

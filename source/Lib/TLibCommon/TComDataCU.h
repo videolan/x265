@@ -253,7 +253,7 @@ public:
     void          loadCTUData(uint32_t maxCUSize);
 
     void          copyFromPic(TComDataCU* ctu, CU* cuData);
-    void          copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
+    void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
 
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);

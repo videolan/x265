@@ -489,7 +489,7 @@ void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
+void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
@@ -502,8 +502,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, 
     m_mvBits           += cu->m_mvBits;
     m_coeffBits        += cu->m_coeffBits;
 
-    uint32_t offset       = cuData->numPartitions * partUnitIdx;
-    uint32_t numPartition = cuData->numPartitions;
+    uint32_t offset       = numPartitions * partUnitIdx;
+    uint32_t numPartition = numPartitions;
     int sizeInBool  = sizeof(bool) * numPartition;
     int sizeInChar  = sizeof(char) * numPartition;
     memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
@@ -535,8 +535,8 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, 
     m_cuAbove          = cu->getCUAbove();
     m_cuLeft           = cu->getCULeft();
 
-    m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], cuData->numPartitions, offset);
-    m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], cuData->numPartitions, offset);
+    m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
+    m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
 
     uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmp2 = partUnitIdx * tmp;
