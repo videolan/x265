@@ -59,7 +59,7 @@ class TComPicYuv;
 /// general YUV buffer class
 class TComYuv
 {
-private:
+public:
 
     // ------------------------------------------------------------------------------------------------------------------
     //  YUV buffer
@@ -95,8 +95,6 @@ private:
 
         return blkX + blkY * width;
     }
-
-public:
 
     int m_part; // partitionFromSizes(m_width, m_height)
 

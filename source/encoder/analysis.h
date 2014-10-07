@@ -113,7 +113,7 @@ public:
 protected:
 
     /* Job provider details */
-    CU*           m_curCUData;
+    const CU*     m_curCUData;
     int           m_curDepth;
     ThreadLocalData* m_tld;
     bool          m_bJobsQueued;
@@ -140,33 +140,33 @@ protected:
     void parallelME(int threadId, int meId);
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
-    void compressIntraCU(TComDataCU* parentCU, CU *cuData, uint32_t partIndex);
-    void compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint32_t partIndex,
+    void compressIntraCU(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
+    void compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex,
                                 uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
-    void checkIntra(Mode& intraMode, CU *cuData, PartSize partSize, uint8_t* sharedModes);
+    void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
 
-    void compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t partIndex);
-    void compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t partIndex);
+    void compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
+    void compressInterCU_rd5_6(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
     void checkBestMode(Mode& mode, uint32_t depth);
 
     /* measure merge and skip */
-    void checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth);
-    void checkMerge2Nx2N_rd5_6(CU* cuData, uint32_t depth, bool& earlySkip);
+    void checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth);
+    void checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& earlySkip);
 
     /* measure inter options */
-    void checkInter_rd0_4(Mode& interMode, CU* cuData, PartSize partSize);
-    void checkInter_rd5_6(Mode& interMode, CU* cuData, PartSize partSize, bool bMergeOnly);
-    void parallelInterSearch(Mode& interMode, CU* cuData, bool bChroma);
+    void checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize);
+    void checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize partSize, bool bMergeOnly);
+    void parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma);
 
     /* measure intra options */
-    void checkIntraInInter_rd0_4(Mode& intraMode, CU* cuData);
-    void checkIntraInInter_rd5_6(Mode& intraMode, CU* cuData, PartSize partSize);
-    void encodeIntraInInter(Mode& intraMode, CU* cuData);
+    void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
+    void checkIntraInInter_rd5_6(Mode& intraMode, const CU& cuData, PartSize partSize);
+    void encodeIntraInInter(Mode& intraMode, const CU& cuData);
 
-    void encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
-    void checkDQP(TComDataCU* cu, CU *cuData);
-    void deriveTestModeAMP(TComDataCU* bestCU, bool &bHor, bool &bVer, bool &bMergeOnly);
-    void fillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
+    void encodeResidue(TComDataCU* ctu, const CU& cuData, uint32_t absPartIdx, uint32_t depth);
+    void checkDQP(TComDataCU* cu, const CU& cuData);
+    void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
+    void fillOrigYUVBuffer(TComDataCU* cu, const TComYuv* origYuv);
 };
 
 struct ThreadLocalData

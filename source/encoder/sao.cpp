@@ -1320,7 +1320,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             for (compIdx = 0; compIdx < 3; compIdx++)
             {
                 if ((compIdx == 0 && saoParam->bSaoFlag[0]) || (compIdx > 0 && saoParam->bSaoFlag[1]))
-                    m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[compIdx][addr], compIdx);
+                    m_entropyCoder.codeSaoOffset(saoParam->ctuParam[compIdx][addr], compIdx);
             }
 
             rate = m_entropyCoder.getNumberOfWrittenBits();
@@ -1468,7 +1468,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo, 0);
     dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_lumaLambda;
     copySaoUnit(lclCtuParam, &ctuParamRdo);
     bestDist = 0;
@@ -1509,7 +1509,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
         m_entropyCoder.load(m_rdContexts.temp);
         m_entropyCoder.resetBits();
-        m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
+        m_entropyCoder.codeSaoOffset(ctuParamRdo, 0);
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
         double cost = (double)((double)estDist + m_lumaLambda * (double)estRate);
@@ -1524,7 +1524,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
     compDistortion[0] += ((double)bestDist / m_lumaLambda);
     m_entropyCoder.load(m_rdContexts.temp);
-    m_entropyCoder.codeSaoOffset(lclCtuParam, 0);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
@@ -1595,8 +1595,8 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo[0], 1);
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo[1], 2);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo[0], 1);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo[1], 2);
 
     costPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_chromaLambda;
     copySaoUnit(lclCtuParam[0], &ctuParamRdo[0]);
@@ -1650,7 +1650,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
             for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
                 ctuParamRdo[compIdx].offset[classIdx] = (int)m_offset[compIdx + 1][typeIdx][classIdx + ctuParamRdo[compIdx].subTypeIdx + 1];
 
-            m_entropyCoder.codeSaoOffset(&ctuParamRdo[compIdx], compIdx + 1);
+            m_entropyCoder.codeSaoOffset(ctuParamRdo[compIdx], compIdx + 1);
         }
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
@@ -1667,8 +1667,8 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 
     distortion[0] += ((double)bestDist / m_chromaLambda);
     m_entropyCoder.load(m_rdContexts.temp);
-    m_entropyCoder.codeSaoOffset(lclCtuParam[0], 1);
-    m_entropyCoder.codeSaoOffset(lclCtuParam[1], 2);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up

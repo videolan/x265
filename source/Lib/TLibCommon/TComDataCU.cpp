@@ -214,16 +214,16 @@ void TComDataCU::initEstData()
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx)
+void TComDataCU::initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitIdx)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-    uint8_t log2CUSize = cuData->log2CUSize;
+    uint8_t log2CUSize = cuData.log2CUSize;
     int qp = cu->getQP(0);
 
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
     m_cuAddr           = cu->m_cuAddr;
-    m_absIdxInCTU      = cuData->encodeIdx;
+    m_absIdxInCTU      = cuData.encodeIdx;
 
     m_cuPelX           = cu->m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
     m_cuPelY           = cu->m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
@@ -236,7 +236,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx)
     m_mvBits           = 0;
     m_coeffBits        = 0;
 
-    m_numPartitions    = cuData->numPartitions;
+    m_numPartitions    = cuData.numPartitions;
 
     for (int i = 0; i < 4; i++)
     {
@@ -257,7 +257,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx)
     memset(m_cbf[0],             0,      sizeInChar);
     memset(m_cbf[1],             0,      sizeInChar);
     memset(m_cbf[2],             0,      sizeInChar);
-    memset(m_depth,              cuData->depth, sizeInChar);
+    memset(m_depth,              cuData.depth, sizeInChar);
     memset(m_log2CUSize,         log2CUSize, sizeInChar);
     memset(m_partSizes,          SIZE_NONE, sizeInChar);
     memset(m_predModes,          MODE_NONE, sizeInChar);
@@ -279,12 +279,12 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx)
     m_cuAboveRight  = cu->getCUAboveRight();
 }
 
-void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
+void TComDataCU::copyFromPic(TComDataCU* ctu, const CU& cuData)
 {
     m_pic              = ctu->m_pic;
     m_slice            = ctu->m_slice;
     m_cuAddr           = ctu->m_cuAddr;
-    m_absIdxInCTU      = cuData->encodeIdx;
+    m_absIdxInCTU      = cuData.encodeIdx;
 
     m_cuPelX           = ctu->m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
     m_cuPelY           = ctu->m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
@@ -296,7 +296,7 @@ void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
     m_totalBits        = 0;
     m_mvBits           = 0;
     m_coeffBits        = 0;
-    m_numPartitions    = cuData->numPartitions;
+    m_numPartitions    = cuData.numPartitions;
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 

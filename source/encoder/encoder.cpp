@@ -1113,17 +1113,17 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     /* headers for start of bitstream */
     bs.resetBits();
-    sbacCoder.codeVPS(&m_vps);
+    sbacCoder.codeVPS(m_vps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_VPS, bs);
 
     bs.resetBits();
-    sbacCoder.codeSPS(&m_sps, &m_scalingList, &m_vps.ptl);
+    sbacCoder.codeSPS(m_sps, m_scalingList, m_vps.ptl);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS(&m_pps);
+    sbacCoder.codePPS(m_pps);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 

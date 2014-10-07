@@ -49,7 +49,7 @@ using namespace x265;
 // Public member functions (TComPattern)
 // ====================================================================================================================
 
-void TComPattern::initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
+void TComPattern::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf,
                                  pixel* refAbove, pixel* refLeft, pixel* refAboveFlt, pixel* refLeftFlt, int dirMode)
 {
     IntraNeighbors intraNeighbors;
@@ -58,8 +58,8 @@ void TComPattern::initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxI
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->m_cuAddr, cuData->encodeIdx + zOrderIdxInPart);
-    int picStride = cu->m_pic->getStride();
+    pixel* adiOrigin = const_cast<Frame*>(cu.m_pic)->getPicYuvRec()->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
+    int picStride = cu.m_pic->m_origPicYuv->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
 
@@ -81,7 +81,7 @@ void TComPattern::initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxI
         refAboveFlt += bufOffset;
         refLeftFlt += bufOffset;
 
-        bool bStrongSmoothing = (tuSize == 32 && cu->m_slice->m_sps->bUseStrongIntraSmoothing);
+        bool bStrongSmoothing = (tuSize == 32 && cu.m_slice->m_sps->bUseStrongIntraSmoothing);
 
         if (bStrongSmoothing)
         {
@@ -130,31 +130,31 @@ void TComPattern::initAdiPattern(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxI
     }
 }
 
-void TComPattern::initAdiPatternChroma(TComDataCU* cu, CU* cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, uint32_t chromaId)
+void TComPattern::initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, uint32_t zOrderIdxInPart, uint32_t partDepth, pixel* adiBuf, uint32_t chromaId)
 {
     IntraNeighbors intraNeighbors;
 
     initIntraNeighbors(cu, zOrderIdxInPart, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    pixel* adiOrigin = cu->m_pic->getPicYuvRec()->getChromaAddr(chromaId, cu->m_cuAddr, cuData->encodeIdx + zOrderIdxInPart);
-    int picStride = cu->m_pic->getCStride();
+    const pixel* adiOrigin = const_cast<Frame*>(cu.m_pic)->getPicYuvRec()->getChromaAddr(chromaId, cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
+    int picStride = cu.m_pic->m_origPicYuv->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize, adiBuf);
 
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);
 }
 
-void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *intraNeighbors)
+void TComPattern::initIntraNeighbors(const TComDataCU& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *intraNeighbors)
 {
-    uint32_t log2TrSize = cu->getLog2CUSize(0) - partDepth;
+    uint32_t log2TrSize = cu.getLog2CUSize(0) - partDepth;
     int log2UnitWidth  = LOG2_UNIT_SIZE;
     int log2UnitHeight = LOG2_UNIT_SIZE;
 
     if (!isLuma)
     {
-        log2TrSize     -= cu->m_hChromaShift;
-        log2UnitWidth  -= cu->m_hChromaShift;
-        log2UnitHeight -= cu->m_vChromaShift;
+        log2TrSize     -= cu.m_hChromaShift;
+        log2UnitWidth  -= cu.m_hChromaShift;
+        log2UnitHeight -= cu.m_vChromaShift;
     }
 
     int   numIntraNeighbor = 0;
@@ -162,14 +162,14 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
 
     uint32_t partIdxLT, partIdxRT, partIdxLB;
 
-    cu->deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
+    cu.deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, zOrderIdxInPart, partDepth);
 
     uint32_t tuSize  = 1 << log2TrSize;
     int  tuWidthInUnits  = tuSize >> log2UnitWidth;
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits      = tuWidthInUnits << 1;
     int  leftUnits       = tuHeightInUnits << 1;
-    int  partIdxStride   = cu->m_pic->getNumPartInCUSize();
+    int  partIdxStride   = cu.m_pic->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
@@ -189,7 +189,7 @@ void TComPattern::initIntraNeighbors(TComDataCU* cu, uint32_t zOrderIdxInPart, u
     intraNeighbors->log2TrSize       = log2TrSize;
 }
 
-void TComPattern::fillReferenceSamples(pixel* adiOrigin, int picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors)
+void TComPattern::fillReferenceSamples(const pixel* adiOrigin, int picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors)
 {
     int numIntraNeighbor = intraNeighbors.numIntraNeighbor;
     int totalUnits       = intraNeighbors.totalUnits;
@@ -211,7 +211,7 @@ void TComPattern::fillReferenceSamples(pixel* adiOrigin, int picStride, pixel* a
     else if (numIntraNeighbor == totalUnits)
     {
         // Fill top border with rec. samples
-        pixel* adiTemp = adiOrigin - picStride - 1;
+        const pixel* adiTemp = adiOrigin - picStride - 1;
         memcpy(adiRef, adiTemp, refSize * sizeof(*adiRef));
 
         // Fill left border with rec. samples
@@ -242,7 +242,7 @@ void TComPattern::fillReferenceSamples(pixel* adiOrigin, int picStride, pixel* a
         }
 
         // Fill top-left sample
-        pixel* adiTemp =  adiOrigin - picStride - 1;
+        const pixel* adiTemp =  adiOrigin - picStride - 1;
         pAdiLineTemp = pAdiLine + (leftUnits * unitHeight);
         pNeighborFlags = bNeighborFlags + leftUnits;
         if (*pNeighborFlags)
@@ -361,18 +361,18 @@ void TComPattern::fillReferenceSamples(pixel* adiOrigin, int picStride, pixel* a
     }
 }
 
-bool TComPattern::isAboveLeftAvailable(TComDataCU* cu, uint32_t partIdxLT)
+bool TComPattern::isAboveLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT)
 {
     uint32_t partAboveLeft;
-    const TComDataCU* cuAboveLeft = cu->getPUAboveLeft(partAboveLeft, partIdxLT);
+    const TComDataCU* cuAboveLeft = cu.getPUAboveLeft(partAboveLeft, partIdxLT);
 
-    if (!cu->m_slice->m_pps->bConstrainedIntraPred)
+    if (!cu.m_slice->m_pps->bConstrainedIntraPred)
         return cuAboveLeft ? true : false;
     else
         return cuAboveLeft && cuAboveLeft->isIntra(partAboveLeft);
 }
 
-int TComPattern::isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
+int TComPattern::isAboveAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxRT] + 1;
@@ -383,8 +383,8 @@ int TComPattern::isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t p
     for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
     {
         uint32_t partAbove;
-        const TComDataCU* cuAbove = cu->getPUAbove(partAbove, g_rasterToZscan[rasterPart]);
-        if (cuAbove && (!cu->m_slice->m_pps->bConstrainedIntraPred || cuAbove->isIntra(partAbove)))
+        const TComDataCU* cuAbove = cu.getPUAbove(partAbove, g_rasterToZscan[rasterPart]);
+        if (cuAbove && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuAbove->isIntra(partAbove)))
         {
             numIntra++;
             *validFlagPtr = true;
@@ -399,19 +399,19 @@ int TComPattern::isAboveAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t p
     return numIntra;
 }
 
-int TComPattern::isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
+int TComPattern::isLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu->m_pic->getNumPartInCUSize();
+    const uint32_t idxStep = cu.m_pic->getNumPartInCUSize();
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
     {
         uint32_t partLeft;
-        const TComDataCU* cuLeft = cu->getPULeft(partLeft, g_rasterToZscan[rasterPart]);
-        if (cuLeft && (!cu->m_slice->m_pps->bConstrainedIntraPred || cuLeft->isIntra(partLeft)))
+        const TComDataCU* cuLeft = cu.getPULeft(partLeft, g_rasterToZscan[rasterPart]);
+        if (cuLeft && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuLeft->isIntra(partLeft)))
         {
             numIntra++;
             *validFlagPtr = true;
@@ -426,7 +426,7 @@ int TComPattern::isLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t pa
     return numIntra;
 }
 
-int TComPattern::isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
+int TComPattern::isAboveRightAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
 {
     const uint32_t numUnitsInPU = g_zscanToRaster[partIdxRT] - g_zscanToRaster[partIdxLT] + 1;
     bool *validFlagPtr = bValidFlags;
@@ -435,8 +435,8 @@ int TComPattern::isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint3
     for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)
     {
         uint32_t partAboveRight;
-        const TComDataCU* cuAboveRight = cu->getPUAboveRightAdi(partAboveRight, partIdxRT, offset);
-        if (cuAboveRight && (!cu->m_slice->m_pps->bConstrainedIntraPred || cuAboveRight->isIntra(partAboveRight)))
+        const TComDataCU* cuAboveRight = cu.getPUAboveRightAdi(partAboveRight, partIdxRT, offset);
+        if (cuAboveRight && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuAboveRight->isIntra(partAboveRight)))
         {
             numIntra++;
             *validFlagPtr = true;
@@ -451,17 +451,17 @@ int TComPattern::isAboveRightAvailable(TComDataCU* cu, uint32_t partIdxLT, uint3
     return numIntra;
 }
 
-int TComPattern::isBelowLeftAvailable(TComDataCU* cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
+int TComPattern::isBelowLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu->m_pic->getNumPartInCUSize() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_pic->getNumPartInCUSize() + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)
     {
         uint32_t partBelowLeft;
-        const TComDataCU* cuBelowLeft = cu->getPUBelowLeftAdi(partBelowLeft, partIdxLB, offset);
-        if (cuBelowLeft && (!cu->m_slice->m_pps->bConstrainedIntraPred || cuBelowLeft->isIntra(partBelowLeft)))
+        const TComDataCU* cuBelowLeft = cu.getPUBelowLeftAdi(partBelowLeft, partIdxLB, offset);
+        if (cuBelowLeft && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuBelowLeft->isIntra(partBelowLeft)))
         {
             numIntra++;
             *validFlagPtr = true;

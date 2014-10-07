@@ -179,7 +179,7 @@ void RPS::sortDeltaPOC()
     }
 }
 
-uint32_t Slice::realEndAddress(uint32_t endCUAddr)
+uint32_t Slice::realEndAddress(uint32_t endCUAddr) const
 {
     // Calculate end address
     uint32_t internalAddress = (endCUAddr - 1) % NUM_CU_PARTITIONS;

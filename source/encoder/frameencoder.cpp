@@ -164,7 +164,7 @@ void FrameEncoder::compressFrame()
     {
         m_bs.resetBits();
         m_entropyCoder.setBitstream(&m_bs);
-        m_entropyCoder.codeAUD(slice);
+        m_entropyCoder.codeAUD(*slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
@@ -200,7 +200,7 @@ void FrameEncoder::compressFrame()
     /* Clip slice QP to 0-51 spec range before encoding */
     slice->m_sliceQp = Clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
-    m_initSliceContext.resetEntropy(slice);
+    m_initSliceContext.resetEntropy(*slice);
 
     m_frameFilter.start(m_frame, m_initSliceContext, qp);
 
@@ -328,7 +328,7 @@ void FrameEncoder::compressFrame()
     m_bs.resetBits();
     m_entropyCoder.load(m_initSliceContext);
     m_entropyCoder.setBitstream(&m_bs);
-    m_entropyCoder.codeSliceHeader(slice);
+    m_entropyCoder.codeSliceHeader(*slice);
 
     // finish encode of each CTU row, only required when SAO is enabled
     if (m_param->bEnableSAO)
@@ -340,7 +340,7 @@ void FrameEncoder::compressFrame()
     // complete the slice header by writing WPP row-starts
     m_entropyCoder.setBitstream(&m_bs);
     if (slice->m_pps->bEntropyCodingSyncEnabled)
-        m_entropyCoder.codeSliceHeaderWPPEntryPoints(slice, m_substreamSizes, maxStreamSize);
+        m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, m_substreamSizes, maxStreamSize);
     m_bs.writeByteAlignment();
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);
@@ -419,7 +419,7 @@ void FrameEncoder::encodeSlice()
         uint32_t col = cuAddr % widthInLCUs;
         uint32_t lin = cuAddr / widthInLCUs;
         uint32_t subStrm = lin % numSubstreams;
-        TComDataCU* cu = m_frame->getCU(cuAddr);
+        TComDataCU* ctu = m_frame->getCU(cuAddr);
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
@@ -443,11 +443,11 @@ void FrameEncoder::encodeSlice()
                 if (!mergeLeft && !mergeUp)
                 {
                     if (saoParam->bSaoFlag[0])
-                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[0][cuAddr], 0);
+                        m_entropyCoder.codeSaoOffset(saoParam->ctuParam[0][cuAddr], 0);
                     if (saoParam->bSaoFlag[1])
                     {
-                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[1][cuAddr], 1);
-                        m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[2][cuAddr], 2);
+                        m_entropyCoder.codeSaoOffset(saoParam->ctuParam[1][cuAddr], 1);
+                        m_entropyCoder.codeSaoOffset(saoParam->ctuParam[2][cuAddr], 2);
                     }
                 }
             }
@@ -459,7 +459,7 @@ void FrameEncoder::encodeSlice()
         }
 
         // final coding (bitstream generation) for this CU
-        m_entropyCoder.encodeCTU(cu);
+        m_entropyCoder.encodeCTU(*ctu);
 
         if (m_param->bEnableWavefront)
         {
@@ -630,9 +630,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* cu = m_frame->getCU(cuAddr);
-        cu->initCU(m_frame, cuAddr);
-        cu->setQPSubParts(m_frame->m_picSym->m_slice->m_sliceQp, 0, 0);
+        TComDataCU* ctu = m_frame->getCU(cuAddr);
+        ctu->initCU(m_frame, cuAddr);
+        ctu->setQPSubParts(m_frame->m_picSym->m_slice->m_sliceQp, 0, 0);
 
         if (bIsVbv)
         {
@@ -643,19 +643,19 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
-                cu->m_baseQp = m_frame->getCU(cuAddr - numCols + 1)->m_baseQp;
+                ctu->m_baseQp = m_frame->getCU(cuAddr - numCols + 1)->m_baseQp;
             else
-                cu->m_baseQp = m_frame->m_rowDiagQp[row];
+                ctu->m_baseQp = m_frame->m_rowDiagQp[row];
         }
         else
-            cu->m_baseQp = m_frame->m_avgQpRc;
+            ctu->m_baseQp = m_frame->m_avgQpRc;
 
         if (m_param->rc.aqMode || bIsVbv)
         {
-            int qp = calcQpForCu(cuAddr, cu->m_baseQp);
+            int qp = calcQpForCu(cuAddr, ctu->m_baseQp);
             tld.analysis.setQP(slice, qp);
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
-            cu->setQPSubParts(char(qp), 0, 0);
+            ctu->setQPSubParts(char(qp), 0, 0);
             if (m_param->rc.aqMode)
                 m_frame->m_qpaAq[row] += qp;
         }
@@ -667,13 +667,13 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
 
-        cu->loadCTUData(m_param->maxCUSize);
-        tld.analysis.m_quant.setQPforQuant(cu);
-        tld.analysis.compressCTU(cu, rowCoder); // Does all the CU analysis
+        ctu->loadCTUData(m_param->maxCUSize);
+        tld.analysis.m_quant.setQPforQuant(ctu);
+        tld.analysis.compressCTU(ctu, rowCoder); // Does all the CU analysis
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
-        rowCoder.encodeCTU(cu);
+        rowCoder.encodeCTU(*ctu);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row
@@ -685,9 +685,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
-            curRow.rowStats.mvBits += cu->m_mvBits;
-            curRow.rowStats.coeffBits += cu->m_coeffBits;
-            curRow.rowStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
+            curRow.rowStats.mvBits += ctu->m_mvBits;
+            curRow.rowStats.coeffBits += ctu->m_coeffBits;
+            curRow.rowStats.miscBits += ctu->m_totalBits - (ctu->m_mvBits + ctu->m_coeffBits);
             StatisticLog* log = &tld.analysis.m_sliceTypeLog[slice->m_sliceType];
 
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
@@ -708,16 +708,16 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             // Update encoded bits, satdCost, baseQP for each CU
             m_frame->m_rowDiagSatd[row] += m_frame->m_cuCostsForVbv[cuAddr];
             m_frame->m_rowDiagIntraSatd[row] += m_frame->m_intraCuCostsForVbv[cuAddr];
-            m_frame->m_rowEncodedBits[row] += cu->m_totalBits;
+            m_frame->m_rowEncodedBits[row] += ctu->m_totalBits;
             m_frame->m_numEncodedCusPerRow[row] = cuAddr;
-            m_frame->m_qpaRc[row] += cu->m_baseQp;
+            m_frame->m_qpaRc[row] += ctu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
 
             if (row == col && row)
             {
                 x265_emms();
-                double qpBase = cu->m_baseQp;
+                double qpBase = ctu->m_baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
                 m_frame->m_rowDiagQp[row] = qpBase;
@@ -726,7 +726,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 if (reEncode < 0)
                 {
                     x265_log(m_param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
-                             m_frame->getPOC(), row, qpBase, cu->m_baseQp);
+                             m_frame->getPOC(), row, qpBase, ctu->m_baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
                     m_vbvResetTriggerRow = row;

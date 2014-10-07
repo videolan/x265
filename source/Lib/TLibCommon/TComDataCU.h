@@ -294,10 +294,10 @@ public:
     void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
-    void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx);
+    void          initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitIdx);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyFromPic(TComDataCU* ctu, CU* cuData);
+    void          copyFromPic(TComDataCU* ctu, const CU& cuData);
     void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void          copyToPic(uint32_t depth);
@@ -397,7 +397,7 @@ public:
 
     void          setCbf(uint32_t idx, TextType ttype, uint8_t uh)       { m_cbf[ttype][idx] = uh; }
 
-    uint8_t       getQtRootCbf(uint32_t idx)  { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
+    uint8_t       getQtRootCbf(uint32_t idx) const { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
 
     void          clearCbf(uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
@@ -410,13 +410,13 @@ public:
 
     bool*         getMergeFlag()                    { return m_bMergeFlags; }
 
-    bool          getMergeFlag(uint32_t idx)        { return m_bMergeFlags[idx]; }
+    bool          getMergeFlag(uint32_t idx) const { return m_bMergeFlags[idx]; }
 
     void          setMergeFlag(uint32_t idx, bool bMergeFlag) { m_bMergeFlags[idx] = bMergeFlag; }
 
     uint8_t*      getMergeIndex()                   { return m_mvpIdx[0]; }
 
-    uint8_t       getMergeIndex(uint32_t idx)       { return m_mvpIdx[0][idx]; }
+    uint8_t       getMergeIndex(uint32_t idx) const { return m_mvpIdx[0][idx]; }
 
     void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
 
