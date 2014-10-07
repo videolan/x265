@@ -286,14 +286,14 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
         if (m_param->analysisMode == X265_ANALYSIS_LOAD && pic->m_intraData)
         {
             uint32_t zOrder = 0;
-            compressSharedIntraCTU(0, ctu->m_cuLocalData, 
+            compressSharedIntraCTU(ctu, ctu->m_cuLocalData, 
                 &pic->m_intraData->depth[cuAddr * ctu->m_numPartitions],
                 &pic->m_intraData->partSizes[cuAddr * ctu->m_numPartitions],
                 &pic->m_intraData->modes[cuAddr * ctu->m_numPartitions], zOrder);
         }
         else
         {
-            compressIntraCU(0, ctu->m_cuLocalData);
+            compressIntraCU(ctu, ctu->m_cuLocalData);
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && pic->m_intraData)
             {
@@ -334,7 +334,7 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
         if (m_param->rdLevel < 5)
             compressInterCU_rd0_4(ctu, ctu->m_cuLocalData, false, 0, 4);
         else
-            compressInterCU_rd5_6(ctu, ctu->m_cuLocalData);
+            compressInterCU_rd5_6(ctu, ctu->m_cuLocalData, 0);
 
         if (m_param->bLogCuStats || m_param->rc.bStatWrite)
         {
@@ -391,6 +391,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
     uint32_t absPartIdx = cuData->encodeIdx;
     uint32_t depth = parentCU->getDepth(0);
     ModeDepth& md = m_modeDepth[depth];
+    md.bestMode = NULL;
 
     if (depth)
         m_modeDepth[0].origYuv.copyPartToYuv(&md.origYuv, absPartIdx);
@@ -404,10 +405,10 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
     if (cu_unsplit_flag)
     {
         m_quant.setQPforQuant(parentCU);
-        checkIntra(cuData, SIZE_2Nx2N, NULL);
+        checkIntra(parentCU, cuData, SIZE_2Nx2N, NULL);
 
         if (depth == g_maxCUDepth)
-            checkIntra(cuData, SIZE_NxN, NULL);
+            checkIntra(parentCU, cuData, SIZE_NxN, NULL);
         else
         {
             /* TODO: why add split bits to 2Nx2N intra? */
@@ -529,7 +530,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
     if (cu_unsplit_flag && ((zOrder == cuData->encodeIdx) && (depth == sharedDepth[zOrder])))
     {
         m_quant.setQPforQuant(parentCU);
-        checkIntra(cuData, (PartSize)sharedPartSizes[zOrder], &sharedModes[zOrder]);
+        checkIntra(parentCU, cuData, (PartSize)sharedPartSizes[zOrder], &sharedModes[zOrder]);
 
         if (depth != g_maxCUDepth)
         {
@@ -633,7 +634,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
 }
 
 /* TODO: move to Search except checkDQP() and checkBestMode() */
-void Analysis::checkIntra(CU *cuData, PartSize partSize, uint8_t* sharedModes)
+void Analysis::checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, uint8_t* sharedModes)
 {
     uint32_t depth = g_log2Size[m_param->maxCUSize] - cuData->log2CUSize;
     Mode& mode = partSize == SIZE_2Nx2N ? m_modeDepth[depth].pred[PRED_INTRA] : m_modeDepth[depth].pred[PRED_INTRA_NxN];
@@ -641,6 +642,7 @@ void Analysis::checkIntra(CU *cuData, PartSize partSize, uint8_t* sharedModes)
     TComYuv& orig = m_modeDepth[depth].origYuv;
     uint32_t tuDepthRange[2];
 
+    cu.initSubCU(parentCU, cuData, 0, depth, parentCU->getQP(0));
     cu.setPartSizeSubParts(partSize, 0, depth);
     cu.setPredModeSubParts(MODE_INTRA, 0, depth);
     cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
@@ -1192,13 +1194,13 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
     x265_emms();
 }
 
-void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cu)
+void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t partitionIndex)
 {
     Frame* pic = parentCU->m_pic;
     Slice* slice = parentCU->m_slice;
     uint32_t depth = parentCU->getDepth(0);
     uint32_t cuAddr = parentCU->m_cuAddr;
-    uint32_t absPartIdx = cu->encodeIdx;
+    uint32_t absPartIdx = cuData->encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -1210,34 +1212,45 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cu)
         m_modeDepth[0].origYuv.copyFromPicYuv(pic->getPicYuvOrg(), cuAddr, absPartIdx);
 
     bool earlySkip = false;
-    int cu_split_flag = !(cu->flags & CU::LEAF);
-    int cu_unsplit_flag = !(cu->flags & CU::SPLIT_MANDATORY);
+    int cu_split_flag = !(cuData->flags & CU::LEAF);
+    int cu_unsplit_flag = !(cuData->flags & CU::SPLIT_MANDATORY);
 
     X265_CHECK(slice->m_sliceType != I_SLICE, "compressInterCU_rd5_6() called for I_SLICE\n");
 
     // We need to split, so don't try these modes.
     if (cu_unsplit_flag)
     {
+        if (depth)
+        {
+            for (int i = 0; i < MAX_PRED_TYPES; i++)
+                md.pred[i].cu.initSubCU(parentCU, cuData, partitionIndex, depth, parentCU->getQP(0));
+        }
+        else
+        {
+            for (int i = 0; i < MAX_PRED_TYPES; i++)
+                md.pred[i].cu.initCU(pic, parentCU->m_cuAddr);
+        }
+
         m_quant.setQPforQuant(parentCU);
 
-        checkMerge2Nx2N_rd5_6(cu, depth, earlySkip);
+        checkMerge2Nx2N_rd5_6(cuData, depth, earlySkip);
 
         if (!earlySkip)
         {
-            checkInter_rd5_6(md.pred[PRED_2Nx2N], cu, SIZE_2Nx2N, false);
+            checkInter_rd5_6(md.pred[PRED_2Nx2N], cuData, SIZE_2Nx2N, false);
 
             // TODO: remove me
-            if (cu->log2CUSize != 3 && depth == g_maxCUDepth &&
+            if (cuData->log2CUSize != 3 && depth == g_maxCUDepth &&
                 (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0)))
-                checkInter_rd5_6(md.pred[PRED_NxN], cu, SIZE_NxN, false);
+                checkInter_rd5_6(md.pred[PRED_NxN], cuData, SIZE_NxN, false);
 
             if (m_param->bEnableRectInter)
             {
                 // Nx2N rect
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                    checkInter_rd5_6(md.pred[PRED_Nx2N], cu, SIZE_Nx2N, false);
+                    checkInter_rd5_6(md.pred[PRED_Nx2N], cuData, SIZE_Nx2N, false);
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                    checkInter_rd5_6(md.pred[PRED_2NxN], cu, SIZE_2NxN, false);
+                    checkInter_rd5_6(md.pred[PRED_2NxN], cuData, SIZE_2NxN, false);
             }
 
             // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
@@ -1251,26 +1264,26 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cu)
                 if (bHor)
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                        checkInter_rd5_6(md.pred[PRED_2NxnU], cu, SIZE_2NxnU, bMergeOnly);
+                        checkInter_rd5_6(md.pred[PRED_2NxnU], cuData, SIZE_2NxnU, bMergeOnly);
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                        checkInter_rd5_6(md.pred[PRED_2NxnD], cu, SIZE_2NxnD, bMergeOnly);
+                        checkInter_rd5_6(md.pred[PRED_2NxnD], cuData, SIZE_2NxnD, bMergeOnly);
                 }
                 if (bVer)
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                        checkInter_rd5_6(md.pred[PRED_nLx2N], cu, SIZE_nLx2N, bMergeOnly);
+                        checkInter_rd5_6(md.pred[PRED_nLx2N], cuData, SIZE_nLx2N, bMergeOnly);
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
-                        checkInter_rd5_6(md.pred[PRED_nRx2N], cu, SIZE_nRx2N, bMergeOnly);
+                        checkInter_rd5_6(md.pred[PRED_nRx2N], cuData, SIZE_nRx2N, bMergeOnly);
                 }
             }
 
             if ((slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) &&
                 (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0)))
             {
-                checkIntraInInter_rd5_6(md.pred[PRED_INTRA], cu, SIZE_2Nx2N);
+                checkIntraInInter_rd5_6(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N);
 
-                if (depth == g_maxCUDepth && cu->log2CUSize > slice->m_sps->quadtreeTULog2MinSize)
-                    checkIntraInInter_rd5_6(md.pred[PRED_INTRA_NxN], cu, SIZE_NxN);
+                if (depth == g_maxCUDepth && cuData->log2CUSize > slice->m_sps->quadtreeTULog2MinSize)
+                    checkIntraInInter_rd5_6(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN);
             }
         }
 
@@ -1307,12 +1320,12 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cu)
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            CU *childCUData = pic->getCU(cuAddr)->m_cuLocalData + cu->childIdx + partUnitIdx;
+            CU *childCUData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
             splitCU->initSubCU(parentCU, childCUData, partUnitIdx, nextDepth, qp);
 
             if (childCUData->flags & CU::PRESENT)
             {
-                compressInterCU_rd5_6(splitCU, childCUData);
+                compressInterCU_rd5_6(splitCU, childCUData, partUnitIdx);
 
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCUData, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->predYuv, childCUData->numPartitions * partUnitIdx);
@@ -1339,7 +1352,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cu)
         if (depth == slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         {
             bool hasResidual = false;
-            for (uint32_t blkIdx = 0; blkIdx < cu->numPartitions; blkIdx++)
+            for (uint32_t blkIdx = 0; blkIdx < cuData->numPartitions; blkIdx++)
             {
                 if (splitCU->getCbf(blkIdx, TEXT_LUMA) || splitCU->getCbf(blkIdx, TEXT_CHROMA_U) || splitCU->getCbf(blkIdx, TEXT_CHROMA_V))
                 {
