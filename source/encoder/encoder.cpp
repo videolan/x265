@@ -101,11 +101,12 @@ void Encoder::create()
         m_aborted = true;
     m_scalingList.setupQuantMatrices();
 
-    /* Allocate thread local data shared by all frame encoders */
+    /* Allocate thread local data, one for each thread pool worker and
+     * if --no-wpp, one for each frame encoder */
     const int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-    int numLocalData = m_param->frameNumThreads;
-    if (m_param->bEnableWavefront)
-        numLocalData = poolThreadCount;
+    int numLocalData = poolThreadCount;
+    if (!m_param->bEnableWavefront)
+        numLocalData += m_param->frameNumThreads;
     m_threadLocalData = new ThreadLocalData[numLocalData];
     for (int i = 0; i < numLocalData; i++)
     {
@@ -114,8 +115,9 @@ void Encoder::create()
         m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize, m_threadLocalData);
     }
 
-    for (int i = 0; i < m_param->frameNumThreads; i++)
-        m_frameEncoder[i].m_tld = &m_threadLocalData[i];
+    if (!m_param->bEnableWavefront)
+        for (int i = 0; i < m_param->frameNumThreads; i++)
+            m_frameEncoder[i].m_tld = &m_threadLocalData[poolThreadCount + i];
 
     m_lookahead = new Lookahead(m_param, m_threadPool, this);
     m_dpb = new DPB(m_param);
@@ -1208,8 +1210,8 @@ void Encoder::configure(x265_param *p)
     if (rows == 1)
         p->bEnableWavefront = 0;
 
-    // Trim the thread pool if WPP is disabled
-    if (!p->bEnableWavefront)
+    // Trim the thread pool if --wpp, --pme, and --pmode are disabled
+    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
         p->poolNumThreads = 1;
 
     setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
@@ -1232,13 +1234,14 @@ void Encoder::configure(x265_param *p)
         else
             p->frameNumThreads = 1;
     }
-    if (poolThreadCount > 1)
-    {
+    if (p->bEnableWavefront)
         x265_log(p, X265_LOG_INFO, "WPP streams / pool / frames         : %d / %d / %d\n", rows, poolThreadCount, p->frameNumThreads);
-    }
     else if (p->frameNumThreads > 1)
     {
-        x265_log(p, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", p->frameNumThreads);
+        if (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation)
+            x265_log(p, X265_LOG_INFO, "Concurrently encoded frames / pool  : %d / %d\n", p->frameNumThreads, poolThreadCount);
+        else
+            x265_log(p, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", p->frameNumThreads);
         p->bEnableWavefront = 0;
     }
     else
@@ -1327,18 +1330,6 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_WARNING, "!! HEVC Range Extension specifications are not finalized !!\n");
         x265_log(p, X265_LOG_WARNING, "!! This output bitstream may not be compliant with the final spec !!\n");
-    }
-
-    if (!p->bEnableWavefront && p->bDistributeModeAnalysis)
-    {
-        p->bDistributeModeAnalysis = false;
-        x265_log(p, X265_LOG_WARNING, "--no-wpp is not yet supports with --pmode\n");
-    }
-
-    if (!p->bEnableWavefront && p->bDistributeMotionEstimation)
-    {
-        p->bDistributeMotionEstimation = false;
-        x265_log(p, X265_LOG_WARNING, "--no-wpp is not yet supports with --pme\n");
     }
 
     if (p->scalingLists && p->internalCsp == X265_CSP_I444)

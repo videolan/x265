@@ -50,6 +50,7 @@ FrameEncoder::FrameEncoder()
     m_outStreams = NULL;
     m_substreamSizes = NULL;
     m_nr = NULL;
+    m_tld = NULL;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
