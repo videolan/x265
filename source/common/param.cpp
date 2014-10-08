@@ -1100,8 +1100,8 @@ void x265_print_params(x265_param *param)
     {
         x265_log(param, X265_LOG_INFO, "Interlaced field inputs             : %s\n", x265_interlace_names[param->interlaceMode]);
     }
-    x265_log(param, X265_LOG_INFO, "CU size                             : %d\n", param->maxCUSize);
-    x265_log(param, X265_LOG_INFO, "Max RQT depth inter / intra         : %d / %d\n", param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
+    x265_log(param, X265_LOG_INFO, "CTU size / RQT depth inter / intra  : %d / %d / %d\n",
+             param->maxCUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
