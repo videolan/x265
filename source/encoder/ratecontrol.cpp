@@ -1732,14 +1732,16 @@ double RateControl::clipQscale(Frame* pic, RateControlEntry* rce, double q)
                 frameQ[B_SLICE] = frameQ[P_SLICE] * m_param->rc.pbFactor;
                 frameQ[I_SLICE] = frameQ[P_SLICE] / m_param->rc.ipFactor;
                 /* Loop over the planned future frames. */
-                for (int j = 0; bufferFillCur >= 0 && bufferFillCur <= m_bufferSize; j++)
+                for (int j = 0; bufferFillCur >= 0; j++)
                 {
-                    totalDuration += m_frameDuration;
-                    bufferFillCur += m_vbvMaxRate * m_frameDuration;
                     int type = pic->m_lowres.plannedType[j];
-                    int64_t satd = pic->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     if (type == X265_TYPE_AUTO)
                         break;
+                    totalDuration += m_frameDuration;
+                    double wantedFrameSize = m_vbvMaxRate * m_frameDuration;
+                    if (bufferFillCur + wantedFrameSize <= m_bufferSize)
+                        bufferFillCur += wantedFrameSize;
+                    int64_t satd = pic->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
                     curBits = predictSize(&m_pred[type], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
@@ -1763,6 +1765,7 @@ double RateControl::clipQscale(Frame* pic, RateControlEntry* rce, double q)
                 }
                 break;
             }
+            q = X265_MAX(q0 / 2, q);
         }
         else
         {
@@ -1803,29 +1806,27 @@ double RateControl::clipQscale(Frame* pic, RateControlEntry* rce, double q)
         if (pbits > rce->frameSizeMaximum)
             q *= pbits / rce->frameSizeMaximum;
 
-         // Check B-frame complexity, and use up any bits that would
-         // overflow before the next P-frame.
-         if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
-         {
-             int nb = m_leadingBframes;
-             double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
-             double bbits = predictSize(&m_predBfromP, q * m_param->rc.pbFactor, (double)m_currentSatd);
-             double space;
-             if (bbits > m_bufferRate)
-                 nb = 0;
-             double pbbits = nb * bbits;
+        // Check B-frame complexity, and use up any bits that would
+        // overflow before the next P-frame.
+        if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
+        {
+            int nb = m_leadingBframes;
+            double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+            double bbits = predictSize(&m_predBfromP, q * m_param->rc.pbFactor, (double)m_currentSatd);
+            double space;
+            if (bbits > m_bufferRate)
+                nb = 0;
+            double pbbits = nb * bbits;
 
-             space = m_bufferFill + (1 + nb) * m_bufferRate - m_bufferSize;
-             if (pbbits < space)
-             {
-                 q *= X265_MAX(pbbits / space, bits / (0.5 * m_bufferSize));
-             }
-             q = X265_MAX(q0 / 2, q);
-         }
+            space = m_bufferFill + (1 + nb) * m_bufferRate - m_bufferSize;
+            if (pbbits < space)
+                q *= X265_MAX(pbbits / space, bits / (0.5 * m_bufferSize));
 
-         if (!m_isCbr || m_isAbrReset)
+            q = X265_MAX(q0 / 2, q);
+        }
+
+        if (!m_isCbr || (m_isAbr && m_currentSatd >= rce->movingAvgSum && q <= q0 / 2))
             q = X265_MAX(q0, q);
-
 
         if (m_rateFactorMaxIncrement)
         {
