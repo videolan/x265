@@ -618,7 +618,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     PicYuv* fencPic = m_frame->m_origPicYuv;
     tld.analysis.m_quant.m_nr = m_nr;
     tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-    tld.analysis.setQP(slice, slice->m_sliceQp);
+    tld.analysis.setQP(*slice, slice->m_sliceQp);
 
     int64_t startTime = x265_mdate();
     const uint32_t numCols = m_numCols;
@@ -652,7 +652,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         if (m_param->rc.aqMode || bIsVbv)
         {
             int qp = calcQpForCu(cuAddr, ctu->m_baseQp);
-            tld.analysis.setQP(slice, qp);
+            tld.analysis.setQP(*slice, qp);
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
             ctu->setQPSubParts(char(qp), 0, 0);
             if (m_param->rc.aqMode)
@@ -667,8 +667,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         ctu->loadCTUData(m_param->maxCUSize);
-        tld.analysis.m_quant.setQPforQuant(ctu);
-        tld.analysis.compressCTU(ctu, rowCoder); // Does all the CU analysis
+        tld.analysis.m_quant.setQPforQuant(*ctu);
+        tld.analysis.compressCTU(*ctu, rowCoder); // Does all the CU analysis
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */

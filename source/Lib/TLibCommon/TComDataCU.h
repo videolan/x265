@@ -294,10 +294,10 @@ public:
     void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
-    void          initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitIdx);
+    void          initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyFromPic(TComDataCU* ctu, const CU& cuData);
+    void          copyFromPic(const TComDataCU& ctu, const CU& cuData);
     void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void          copyToPic(uint32_t depth);

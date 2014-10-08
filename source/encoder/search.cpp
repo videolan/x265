@@ -112,7 +112,7 @@ fail:
     return false;
 }
 
-void Search::setQP(Slice *slice, int qp)
+void Search::setQP(const Slice& slice, int qp)
 {
     m_me.setQP(qp);
     m_rdCost.setQP(slice, qp);
@@ -2160,7 +2160,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, Yuv* f
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    m_quant.setQPforQuant(cu);
+    m_quant.setQPforQuant(interMode.cu);
 
     tmpResiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
@@ -2298,7 +2298,7 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData, Yuv* fencYuv)
 {
     TComDataCU* cu = &mode.cu;
 
-    m_quant.setQPforQuant(cu);
+    m_quant.setQPforQuant(mode.cu);
 
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);

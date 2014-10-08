@@ -104,11 +104,13 @@ public:
     bool          m_bEncodeDQP;
 
     StatisticLog  m_sliceTypeLog[3];
+    Frame*        m_frame;
+    const Slice*  m_slice;
 
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
     void destroy();
-    void compressCTU(TComDataCU* cu, const Entropy& initialContext);
+    void compressCTU(TComDataCU& ctu, const Entropy& initialContext);
 
 protected:
 
@@ -140,13 +142,13 @@ protected:
     void parallelME(int threadId, int meId);
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
-    void compressIntraCU(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
-    void compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex,
+    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
+    void compressSharedIntraCTU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex,
                                 uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
     void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
 
-    void compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
-    void compressInterCU_rd5_6(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex);
+    void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
+    void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
     void checkBestMode(Mode& mode, uint32_t depth);
 
     /* measure merge and skip */
@@ -159,11 +161,12 @@ protected:
     void parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma);
 
     /* measure intra options */
+    void checkIntra(const TComDataCU& parentCTU, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
     void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
     void checkIntraInInter_rd5_6(Mode& intraMode, const CU& cuData, PartSize partSize);
     void encodeIntraInInter(Mode& intraMode, const CU& cuData);
 
-    void encodeResidue(TComDataCU* ctu, const CU& cuData, uint32_t absPartIdx, uint32_t depth);
+    void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
     void checkDQP(TComDataCU* cu, const CU& cuData);
     void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
     void fillOrigYUVBuffer(TComDataCU* cu, const Yuv* origYuv);

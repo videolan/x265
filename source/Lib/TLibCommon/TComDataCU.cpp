@@ -214,19 +214,19 @@ void TComDataCU::initEstData()
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitIdx)
+void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     uint8_t log2CUSize = cuData.log2CUSize;
-    int qp = cu->getQP(0);
+    int qp = cu.getQP(0);
 
-    m_frame            = cu->m_frame;
-    m_slice            = cu->m_slice;
-    m_cuAddr           = cu->m_cuAddr;
+    m_frame            = cu.m_frame;
+    m_slice            = cu.m_slice;
+    m_cuAddr           = cu.m_cuAddr;
     m_absIdxInCTU      = cuData.encodeIdx;
 
-    m_cuPelX           = cu->m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
-    m_cuPelY           = cu->m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
+    m_cuPelX           = cu.m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
+    m_cuPelY           = cu.m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
 
     m_psyEnergy        = 0;
     m_totalRDCost      = MAX_INT64;
@@ -240,8 +240,8 @@ void TComDataCU::initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitId
 
     for (int i = 0; i < 4; i++)
     {
-        m_avgCost[i] = cu->m_avgCost[i];
-        m_count[i] = cu->m_count[i];
+        m_avgCost[i] = cu.m_avgCost[i];
+        m_count[i] = cu.m_count[i];
     }
 
     int sizeInBool = sizeof(bool) * m_numPartitions;
@@ -273,21 +273,21 @@ void TComDataCU::initSubCU(TComDataCU* cu, const CU& cuData, uint32_t partUnitId
         m_cuMvField[1].clearMvField();
     }
 
-    m_cuLeft        = cu->getCULeft();
-    m_cuAbove       = cu->getCUAbove();
-    m_cuAboveLeft   = cu->getCUAboveLeft();
-    m_cuAboveRight  = cu->getCUAboveRight();
+    m_cuLeft        = cu.getCULeft();
+    m_cuAbove       = cu.getCUAbove();
+    m_cuAboveLeft   = cu.getCUAboveLeft();
+    m_cuAboveRight  = cu.getCUAboveRight();
 }
 
-void TComDataCU::copyFromPic(TComDataCU* ctu, const CU& cuData)
+void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 {
-    m_frame            = ctu->m_frame;
-    m_slice            = ctu->m_slice;
-    m_cuAddr           = ctu->m_cuAddr;
+    m_frame            = ctu.m_frame;
+    m_slice            = ctu.m_slice;
+    m_cuAddr           = ctu.m_cuAddr;
     m_absIdxInCTU      = cuData.encodeIdx;
 
-    m_cuPelX           = ctu->m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
-    m_cuPelY           = ctu->m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
+    m_cuPelX           = ctu.m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
+    m_cuPelY           = ctu.m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
 
     m_psyEnergy        = 0;
     m_totalRDCost      = MAX_INT64;
@@ -300,15 +300,19 @@ void TComDataCU::copyFromPic(TComDataCU* ctu, const CU& cuData)
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
-    memcpy(m_skipFlag, ctu->getSkipFlag() + m_absIdxInCTU, sizeof(*m_skipFlag) * m_numPartitions);
-    memcpy(m_qp, ctu->getQP() + m_absIdxInCTU, sizeInChar);
+    /* we need an un-const reference to CTU for these pointer access methods, but
+     * we know we are only reading from the returned pointers so this is not violating
+     * the const contract */
+    TComDataCU& ctuSafe = const_cast<TComDataCU&>(ctu);
+    memcpy(m_skipFlag, ctuSafe.getSkipFlag() + m_absIdxInCTU, sizeof(*m_skipFlag) * m_numPartitions);
+    memcpy(m_qp, ctuSafe.getQP() + m_absIdxInCTU, sizeInChar);
 
-    memcpy(m_partSizes, ctu->getPartitionSize() + m_absIdxInCTU, sizeof(*m_partSizes) * m_numPartitions);
-    memcpy(m_predModes, ctu->getPredictionMode() + m_absIdxInCTU, sizeof(*m_predModes) * m_numPartitions);
+    memcpy(m_partSizes, ctuSafe.getPartitionSize() + m_absIdxInCTU, sizeof(*m_partSizes) * m_numPartitions);
+    memcpy(m_predModes, ctuSafe.getPredictionMode() + m_absIdxInCTU, sizeof(*m_predModes) * m_numPartitions);
 
-    memcpy(m_lumaIntraDir, ctu->getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_depth, ctu->getDepth() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_log2CUSize, ctu->getLog2CUSize() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_depth, ctuSafe.getDepth() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
