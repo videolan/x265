@@ -438,26 +438,29 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData, uint32_t partIn
         splitCU->initSubCU(parentCU, cuData, 0); // prepare splitCU to accumulate costs
         splitCU->m_totalRDCost = 0;
 
-        uint32_t nextDepth = cuData->depth + 1;
+        uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        Entropy* nextContext = &m_rdContexts[depth].cur;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
             if (childCuData->flags & CU::PRESENT)
             {
+                m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressIntraCU(parentCU, childCuData, partUnitIdx);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
-                if (partUnitIdx < 3) m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
+                nextContext = &nd.bestMode->contexts;
             }
             else
+            {
                 splitCU->copyToPic(nextDepth);
+                splitCU->copyPartFrom(splitCU, childCuData->numPartitions, partUnitIdx, nextDepth); // just to init lower depth
+            }
         }
         if (mightNotSplit)
         {
@@ -536,27 +539,28 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint32_t
         splitCU->initSubCU(parentCU, cuData, 0); // prepare splitCU to accumulate costs
         splitCU->m_totalRDCost = 0;
 
-        uint32_t nextDepth = cuData->depth + 1;
+        uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        Entropy* nextContext = &m_rdContexts[depth].cur;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
             if (childCuData->flags & CU::PRESENT)
             {
+                m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressSharedIntraCTU(parentCU, childCuData, partUnitIdx, sharedDepth, sharedPartSizes, sharedModes, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
-                if (partUnitIdx < 3) m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
+                nextContext = &nd.bestMode->contexts;
             }
             else
             {
                 splitCU->copyToPic(nextDepth);
+                splitCU->copyPartFrom(splitCU, childCuData->numPartitions, partUnitIdx, nextDepth); // just to init lower depth
                 zOrder += g_depthInc[g_maxCUDepth - 1][nextDepth];
             }
         }
@@ -1006,17 +1010,17 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
         splitCU->initSubCU(parentCU, cuData, 0); // prepare splitCU to accumulate costs
         splitCU->m_totalRDCost = splitCU->m_sa8dCost = 0;
 
-        uint32_t nextDepth = cuData->depth + 1;
+        uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        Entropy* nextContext = &m_rdContexts[depth].cur;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
             if (childCuData->flags & CU::PRESENT)
             {
+                m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd0_4(parentCU, childCuData, partUnitIdx, minDepth);
 
                 if (nd.bestMode->cu.getPredictionMode(0) != MODE_INTRA)
@@ -1033,13 +1037,16 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                 if (m_param->rdLevel > 1)
                 {
                     nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
-                    if (partUnitIdx < 3) m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
+                    nextContext = &nd.bestMode->contexts;
                 }
                 else
                     nd.bestMode->predYuv.copyToPartYuv(&splitPred->predYuv, childCuData->numPartitions * partUnitIdx);
             }
             else
+            {
                 splitCU->copyToPic(nextDepth);
+                splitCU->copyPartFrom(splitCU, childCuData->numPartitions, partUnitIdx, nextDepth); // just to init lower depth
+            }
         }
         if (m_param->rdLevel > 1)
         {
@@ -1218,26 +1225,29 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
         splitCU->initSubCU(parentCU, cuData, 0); // prepare splitCU to accumulate costs
         splitCU->m_totalRDCost = 0;
 
-        uint32_t nextDepth = cuData->depth + 1;
+        uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        Entropy* nextContext = &m_rdContexts[depth].cur;
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
             if (childCuData->flags & CU::PRESENT)
             {
+                m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd5_6(parentCU, childCuData, partUnitIdx);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
-                if (partUnitIdx < 3) m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
+                nextContext = &nd.bestMode->contexts;
             }
             else
+            {
                 splitCU->copyToPic(nextDepth);
+                splitCU->copyPartFrom(splitCU, childCuData->numPartitions, partUnitIdx, nextDepth); // just to init lower depth
+            }
         }
         if (mightNotSplit)
         {
