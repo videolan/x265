@@ -144,7 +144,7 @@ protected:
     void checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, uint8_t* sharedModes);
     void compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
 
-    void compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsidePicture, uint32_t partitionIndex, uint32_t minDepth);
+    void compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t partitionIndex, uint32_t minDepth);
     void compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t partitionIndex);
     void checkBestMode(Mode& mode, uint32_t depth);
 
