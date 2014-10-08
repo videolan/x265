@@ -1057,7 +1057,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
         }
         checkDQP(splitCU, cuData);
 
-        if (!depth)
+        if (!depth && md.bestMode)
         {
             /* more early-out statistics */
             TComDataCU* ctu = pic->getPicSym()->getCU(cuAddr);
@@ -1066,7 +1066,9 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
             ctu->m_avgCost[depth] = (temp + md.bestMode->cu.m_totalRDCost) / ctu->m_count[depth];
         }
 
-        if (m_param->rdLevel > 1)
+        if (!md.bestMode)
+            md.bestMode = splitPred;
+        else if (m_param->rdLevel > 1)
         {
             if (splitCU->m_totalRDCost < md.bestMode->cu.m_totalRDCost)
                 md.bestMode = splitPred;
