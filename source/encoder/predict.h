@@ -42,7 +42,7 @@ protected:
     int16_t*  m_immedVals;
 
     /* Slice information */
-    Slice*    m_slice;
+    Slice*    m_predSlice;
     int       m_csp;
 
     /* CU information for prediction */

@@ -144,7 +144,7 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
 
 void Predict::prepMotionCompensation(const TComDataCU* cu, const CU* cuData, int partIdx)
 {
-    m_slice = cu->m_slice;
+    m_predSlice = cu->m_slice;
     cu->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
     m_cuAddr = cu->m_cuAddr;
     m_zOrderIdxinCU = cuData->encodeIdx;
@@ -160,17 +160,17 @@ void Predict::prepMotionCompensation(const TComDataCU* cu, const CU* cuData, int
 
 void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
 {
-    if (m_slice->isInterP())
+    if (m_predSlice->isInterP())
     {
         /* P Slice */
 
         WeightValues wv0[3];
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         X265_CHECK(refIdx0 >= 0, "invalid P refidx\n");
-        X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "P refidx out of range\n");
-        WeightParam *wp0 = m_slice->m_weightPredTable[0][refIdx0];
+        X265_CHECK(refIdx0 < m_predSlice->m_numRefIdx[0], "P refidx out of range\n");
+        WeightParam *wp0 = m_predSlice->m_weightPredTable[0][refIdx0];
 
-        if (m_slice->m_pps->bUseWeightPred && wp0->bPresentFlag)
+        if (m_predSlice->m_pps->bUseWeightPred && wp0->bPresentFlag)
         {
             for (int plane = 0; plane < 3; plane++)
             {
@@ -183,18 +183,18 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
             ShortYuv* shortYuv = &m_predShortYuv[0];
 
             if (bLuma)
-                predInterLumaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
             if (bChroma)
-                predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
 
             addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
         }
         else
         {
             if (bLuma)
-                predInterLumaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
             if (bChroma)
-                predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
         }
     }
     else
@@ -207,10 +207,10 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         int refIdx1 = m_mvField[1]->getRefIdx(m_partAddr);
 
-        if (m_slice->m_pps->bUseWeightedBiPred)
+        if (m_predSlice->m_pps->bUseWeightedBiPred)
         {
-            pwp0 = refIdx0 >= 0 ? m_slice->m_weightPredTable[0][refIdx0] : NULL;
-            pwp1 = refIdx1 >= 0 ? m_slice->m_weightPredTable[1][refIdx1] : NULL;
+            pwp0 = refIdx0 >= 0 ? m_predSlice->m_weightPredTable[0][refIdx0] : NULL;
+            pwp1 = refIdx1 >= 0 ? m_predSlice->m_weightPredTable[1][refIdx1] : NULL;
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
             {
@@ -247,18 +247,18 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
         if (refIdx0 >= 0 && refIdx1 >= 0)
         {
             /* Biprediction */
-            X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "bidir refidx0 out of range\n");
-            X265_CHECK(refIdx1 < m_slice->m_numRefIdx[1], "bidir refidx1 out of range\n");
+            X265_CHECK(refIdx0 < m_predSlice->m_numRefIdx[0], "bidir refidx0 out of range\n");
+            X265_CHECK(refIdx1 < m_predSlice->m_numRefIdx[1], "bidir refidx1 out of range\n");
 
             if (bLuma)
             {
-                predInterLumaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
-                predInterLumaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
             }
             if (bChroma)
             {
-                predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
-                predInterChromaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
             }
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
@@ -269,50 +269,50 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
         else if (refIdx0 >= 0)
         {
             /* uniprediction to L0 */
-            X265_CHECK(refIdx0 < m_slice->m_numRefIdx[0], "unidir refidx0 out of range\n");
+            X265_CHECK(refIdx0 < m_predSlice->m_numRefIdx[0], "unidir refidx0 out of range\n");
 
             if (pwp0 && pwp0->bPresentFlag)
             {
                 ShortYuv* shortYuv = &m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
 
                 addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaBlk(m_slice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
             }
         }
         else
         {
             /* uniprediction to L1 */
             X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
-            X265_CHECK(refIdx1 < m_slice->m_numRefIdx[1], "unidir refidx1 out of range\n");
+            X265_CHECK(refIdx1 < m_predSlice->m_numRefIdx[1], "unidir refidx1 out of range\n");
 
             if (pwp1 && pwp1->bPresentFlag)
             {
                 ShortYuv* shortYuv = &m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
 
                 addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaBlk(m_slice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
             }
         }
     }
