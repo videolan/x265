@@ -112,7 +112,7 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame *pic, int sliceType)
 {
-    TComPicYuv *orig = pic->getPicYuvOrg();
+    PicYuv *orig = pic->getPicYuvOrg();
 
     pic->m_lowres.init(orig, pic->getPOC(), sliceType);
 
@@ -1256,9 +1256,9 @@ void CostEstimate::init(x265_param *_param, Frame *pic)
 
     if (m_param->bEnableWeightedPred)
     {
-        TComPicYuv *orig = pic->getPicYuvOrg();
-        m_paddedLines = pic->m_lowres.lines + 2 * orig->getLumaMarginY();
-        int padoffset = pic->m_lowres.lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
+        PicYuv *orig = pic->getPicYuvOrg();
+        m_paddedLines = pic->m_lowres.lines + 2 * orig->m_lumaMarginY;
+        int padoffset = pic->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
 
         /* allocate weighted lowres buffers */
         for (int i = 0; i < 4; i++)

@@ -219,17 +219,17 @@ public:
     void terminate();          /* un-block all waiting functions so encoder may close */
     void destroy();
 
-    // to be called for each frame to process RateControl and set QP
-    int rateControlStart(Frame* pic, RateControlEntry* rce, Encoder* enc);
-    void calcAdaptiveQuantFrame(Frame *pic);
+    // to be called for each curFrame to process RateControl and set QP
+    int rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc);
+    void calcAdaptiveQuantFrame(Frame *curFrame);
     void rateControlUpdateStats(RateControlEntry* rce);
-    int rateControlEnd(Frame* pic, int64_t bits, RateControlEntry* rce, FrameStats* stats);
-    int rowDiagonalVbvRateControl(Frame* pic, uint32_t row, RateControlEntry* rce, double& qpVbv);
+    int rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce, FrameStats* stats);
+    int rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
     void hrdFullness(SEIBufferingPeriod* sei);
     bool init(const SPS* sps);
     void initHRD(SPS* sps);
     int rateControlSliceType(int frameNum);
-    bool cuTreeReadFor2Pass(Frame* frame);
+    bool cuTreeReadFor2Pass(Frame* curFrame);
 
 protected:
 

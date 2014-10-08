@@ -46,7 +46,7 @@
 namespace x265 {
 // private namespace
 
-class TComPicYuv;
+class PicYuv;
 
 class TComPicSym
 {
@@ -68,7 +68,7 @@ public:
     SAOParam*     m_saoParam;
 
     TComPicSym*   m_freeListNext;
-    TComPicYuv*   m_reconPicYuv;
+    PicYuv*       m_reconPicYuv;
 
     bool          m_bHasReferences; // used during DPB/RPS updates
 

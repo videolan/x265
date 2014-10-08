@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "TLibCommon/TComPicSym.h"
-#include "TLibCommon/TComPicYuv.h"
+#include "picyuv.h"
 #include "lowres.h"
 #include "threading.h"
 #include "md5.h"
@@ -42,13 +42,13 @@ class Frame
 {
 public:
 
-    TComPicYuv*       m_origPicYuv;
+    PicYuv*           m_origPicYuv;
 
     Window            m_conformanceWindow;
     Window            m_defaultDisplayWindow;
 
     TComPicSym*       m_picSym;
-    TComPicYuv*       m_reconPicYuv;
+    PicYuv*           m_reconPicYuv;
     int               m_POC;
 
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
@@ -88,38 +88,22 @@ public:
     x265_inter_data*  m_interData;  // inter analysis information
 
     Frame();
-    ~Frame() {}
 
     bool        create(x265_param *param, Window& display, Window& conformance);
     bool        allocPicSym(x265_param *param);
     void        reinit(x265_param *param);
     void        destroy();
 
+    /* death row */
     int         getPOC()                   { return m_POC; }
-
     Window&     getConformanceWindow()     { return m_conformanceWindow; }
-
     Window&     getDefDisplayWindow()      { return m_defaultDisplayWindow; }
-
-    TComPicYuv* getPicYuvOrg()             { return m_origPicYuv; }
-
-    TComPicYuv* getPicYuvRec()             { return m_reconPicYuv; }
-
-    int         getStride()                { return m_origPicYuv->getStride(); }
-
-    int         getCStride()               { return m_origPicYuv->getCStride(); }
-
-    /* Reflector methods for data stored in m_picSym */
-    TComPicSym* getPicSym()                { return m_picSym; }
-
+    PicYuv*     getPicYuvOrg()             { return m_origPicYuv; }
+    PicYuv*     getPicYuvRec()             { return m_reconPicYuv; }
     TComDataCU* getCU(uint32_t cuAddr)     { return m_picSym->getCU(cuAddr); }
-
     uint32_t    getNumCUsInFrame() const   { return m_picSym->getNumberOfCUsInFrame(); }
-
     uint32_t    getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
-
     uint32_t    getFrameWidthInCU() const  { return m_picSym->getFrameWidthInCU(); }
-
     uint32_t    getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
 };
 }

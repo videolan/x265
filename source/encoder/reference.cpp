@@ -25,9 +25,9 @@
 #include "common.h"
 #include "primitives.h"
 #include "slice.h"
+#include "picyuv.h"
+
 #include "reference.h"
-#include "TLibCommon/TypeDef.h"
-#include "TLibCommon/TComPicYuv.h"
 
 using namespace x265;
 
@@ -36,21 +36,21 @@ MotionReference::MotionReference()
     m_weightBuffer = NULL;
 }
 
-int MotionReference::init(TComPicYuv* pic, WeightParam *w)
+int MotionReference::init(PicYuv* recPic, WeightParam *w)
 {
-    m_reconPic = pic;
-    lumaStride = pic->getStride();
-    intptr_t startpad = pic->m_lumaMarginY * lumaStride + pic->m_lumaMarginX;
+    m_reconPic = recPic;
+    lumaStride = recPic->m_stride;
+    intptr_t startpad = recPic->m_lumaMarginY * lumaStride + recPic->m_lumaMarginX;
 
     /* directly reference the pre-extended integer pel plane */
-    fpelPlane = pic->m_picBuf[0] + startpad;
+    fpelPlane = recPic->m_picBuf[0] + startpad;
     isWeighted = false;
 
     if (w)
     {
         if (!m_weightBuffer)
         {
-            size_t padheight = (pic->m_numCuInHeight * g_maxCUSize) + pic->m_lumaMarginY * 2;
+            size_t padheight = (recPic->m_numCuInHeight * g_maxCUSize) + recPic->m_lumaMarginY * 2;
             m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
             if (!m_weightBuffer)
                 return -1;
@@ -82,12 +82,12 @@ void MotionReference::applyWeight(int rows, int numRows)
         return;
     int marginX = m_reconPic->m_lumaMarginX;
     int marginY = m_reconPic->m_lumaMarginY;
-    pixel* src = (pixel*)m_reconPic->getLumaAddr() + (m_numWeightedRows * (int)g_maxCUSize * lumaStride);
+    pixel* src = (pixel*)m_reconPic->m_picOrg[0] + (m_numWeightedRows * (int)g_maxCUSize * lumaStride);
     pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUSize) * lumaStride);
-    int width = m_reconPic->getWidth();
+    int width = m_reconPic->m_picWidth;
     int height = ((rows - m_numWeightedRows) * g_maxCUSize);
     if (rows == numRows)
-        height = ((m_reconPic->getHeight() % g_maxCUSize) ? (m_reconPic->getHeight() % g_maxCUSize) : g_maxCUSize);
+        height = ((m_reconPic->m_picHeight % g_maxCUSize) ? (m_reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
 
     // Computing weighted CU rows
     int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
@@ -103,19 +103,15 @@ void MotionReference::applyWeight(int rows, int numRows)
     {
         pixel *pixY = fpelPlane - marginX;
         for (int y = 0; y < marginY; y++)
-        {
             memcpy(pixY - (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
-        }
     }
 
     // Extending Bottom
     if (rows == numRows)
     {
-        pixel *pixY = fpelPlane - marginX + (m_reconPic->getHeight() - 1) * lumaStride;
+        pixel *pixY = fpelPlane - marginX + (m_reconPic->m_picHeight - 1) * lumaStride;
         for (int y = 0; y < marginY; y++)
-        {
             memcpy(pixY + (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
-        }
     }
     m_numWeightedRows = rows;
 }

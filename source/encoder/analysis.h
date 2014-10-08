@@ -32,9 +32,9 @@
 #include "common.h"
 #include "predict.h"
 #include "quant.h"
+#include "yuv.h"
 #include "shortyuv.h"
 #include "threadpool.h"
-#include "TLibCommon/TComYuv.h"
 #include "TLibCommon/TComDataCU.h"
 
 #include "entropy.h"
@@ -94,7 +94,7 @@ public:
     {
         Mode           pred[MAX_PRED_TYPES];
         Mode*          bestMode;
-        TComYuv        origYuv;
+        Yuv            origYuv;
         ShortYuv       tempResi;
         DataCUMemPool  cuMemPool;
         MVFieldMemPool mvFieldMemPool;
@@ -166,7 +166,7 @@ protected:
     void encodeResidue(TComDataCU* ctu, const CU& cuData, uint32_t absPartIdx, uint32_t depth);
     void checkDQP(TComDataCU* cu, const CU& cuData);
     void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
-    void fillOrigYUVBuffer(TComDataCU* cu, const TComYuv* origYuv);
+    void fillOrigYUVBuffer(TComDataCU* cu, const Yuv* origYuv);
 };
 
 struct ThreadLocalData

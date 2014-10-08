@@ -58,8 +58,8 @@ void TComPattern::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = const_cast<Frame*>(cu.m_pic)->getPicYuvRec()->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
-    int picStride = cu.m_pic->m_origPicYuv->m_stride;
+    pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->getPicYuvRec()->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
+    int picStride = cu.m_frame->m_origPicYuv->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
 
@@ -137,8 +137,8 @@ void TComPattern::initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, u
     initIntraNeighbors(cu, zOrderIdxInPart, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    const pixel* adiOrigin = const_cast<Frame*>(cu.m_pic)->getPicYuvRec()->getChromaAddr(chromaId, cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
-    int picStride = cu.m_pic->m_origPicYuv->m_strideC;
+    const pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->getPicYuvRec()->getChromaAddr(chromaId, cu.m_cuAddr, cuData.encodeIdx + zOrderIdxInPart);
+    int picStride = cu.m_frame->m_origPicYuv->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize, adiBuf);
 
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);
@@ -169,7 +169,7 @@ void TComPattern::initIntraNeighbors(const TComDataCU& cu, uint32_t zOrderIdxInP
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits      = tuWidthInUnits << 1;
     int  leftUnits       = tuHeightInUnits << 1;
-    int  partIdxStride   = cu.m_pic->getNumPartInCUSize();
+    int  partIdxStride   = cu.m_frame->getNumPartInCUSize();
     partIdxLB            = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
@@ -403,7 +403,7 @@ int TComPattern::isLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint3
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu.m_pic->getNumPartInCUSize();
+    const uint32_t idxStep = cu.m_frame->getNumPartInCUSize();
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -453,7 +453,7 @@ int TComPattern::isAboveRightAvailable(const TComDataCU& cu, uint32_t partIdxLT,
 
 int TComPattern::isBelowLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_pic->getNumPartInCUSize() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_frame->getNumPartInCUSize() + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 

@@ -158,7 +158,7 @@ void Predict::prepMotionCompensation(const TComDataCU* cu, const CU& cuData, int
     cu->clipMv(m_clippedMv[1]);
 }
 
-void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
+void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
 {
     if (m_predSlice->isInterP())
     {
@@ -264,7 +264,7 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
                 addWeightBi(&m_predShortYuv[0], &m_predShortYuv[1], wv0, wv1, predYuv, bLuma, bChroma);
             else
-                predYuv->addAvg(&m_predShortYuv[0], &m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
+                predYuv->addAvg(m_predShortYuv[0], m_predShortYuv[1], m_partAddr, m_width, m_height, bLuma, bChroma);
         }
         else if (refIdx0 >= 0)
         {
@@ -318,12 +318,12 @@ void Predict::motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma)
     }
 }
 
-void Predict::predInterLumaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
+void Predict::predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
-    int dstStride = dstPic->getStride();
-    pixel *dst    = dstPic->getLumaAddr(m_partAddr);
+    int dstStride = dstYuv->m_width;
+    pixel *dst    = dstYuv->getLumaAddr(m_partAddr);
 
-    int srcStride = refPic->getStride();
+    int srcStride = refPic->m_stride;
     int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
     int partEnum = partitionFromSizes(m_width, m_height);
     pixel* src = refPic->getLumaAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + srcOffset;
@@ -347,14 +347,14 @@ void Predict::predInterLumaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
     }
 }
 
-void Predict::predInterLumaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
+void Predict::predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 {
-    int refStride = refPic->getStride();
+    int refStride = refPic->m_stride;
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
     pixel *ref    = refPic->getLumaAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
 
-    int dstStride = dstPic->m_width;
-    int16_t *dst  = dstPic->getLumaAddr(m_partAddr);
+    int dstStride = dstSYuv->m_width;
+    int16_t *dst  = dstSYuv->getLumaAddr(m_partAddr);
 
     int xFrac = mv->x & 0x3;
     int yFrac = mv->y & 0x3;
@@ -380,10 +380,10 @@ void Predict::predInterLumaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
     }
 }
 
-void Predict::predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
+void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
-    int refStride = refPic->getCStride();
-    int dstStride = dstPic->getCStride();
+    int refStride = refPic->m_strideC;
+    int dstStride = dstYuv->m_cwidth;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
@@ -395,8 +395,8 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
     pixel* refCb = refPic->getCbAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
     pixel* refCr = refPic->getCrAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
 
-    pixel* dstCb = dstPic->getCbAddr(m_partAddr);
-    pixel* dstCr = dstPic->getCrAddr(m_partAddr);
+    pixel* dstCb = dstYuv->getCbAddr(m_partAddr);
+    pixel* dstCr = dstYuv->getCrAddr(m_partAddr);
 
     int xFrac = mv->x & ((1 << shiftHor) - 1);
     int yFrac = mv->y & ((1 << shiftVer) - 1);
@@ -432,10 +432,10 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv)
     }
 }
 
-void Predict::predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
+void Predict::predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 {
-    int refStride = refPic->getCStride();
-    int dstStride = dstPic->m_cwidth;
+    int refStride = refPic->m_strideC;
+    int dstStride = dstSYuv->m_cwidth;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
@@ -447,8 +447,8 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
     pixel* refCb = refPic->getCbAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
     pixel* refCr = refPic->getCrAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
 
-    int16_t* dstCb = dstPic->getCbAddr(m_partAddr);
-    int16_t* dstCr = dstPic->getCrAddr(m_partAddr);
+    int16_t* dstCb = dstSYuv->getCbAddr(m_partAddr);
+    int16_t* dstCr = dstSYuv->getCrAddr(m_partAddr);
 
     int xFrac = mv->x & ((1 << shiftHor) - 1);
     int yFrac = mv->y & ((1 << shiftVer) - 1);
@@ -488,7 +488,7 @@ void Predict::predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv)
 }
 
 /* weighted averaging for bi-pred */
-void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], TComYuv* predYuv, bool bLuma, bool bChroma)
+void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], Yuv* predYuv, bool bLuma, bool bChroma)
 {
     int x, y;
 
@@ -519,7 +519,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
 
         src0Stride = srcYuv0->m_width;
         src1Stride = srcYuv1->m_width;
-        dststride  = predYuv->getStride();
+        dststride = predYuv->m_width;
 
         // TODO: can we use weight_sp here?
         for (y = m_height - 1; y >= 0; y--)
@@ -555,7 +555,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
 
         src0Stride = srcYuv0->m_cwidth;
         src1Stride = srcYuv1->m_cwidth;
-        dststride  = predYuv->getCStride();
+        dststride  = predYuv->m_cwidth;
 
         m_width  >>= srcYuv0->m_hChromaShift;
         m_height >>= srcYuv0->m_vChromaShift;
@@ -603,11 +603,11 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
 }
 
 /* weighted averaging for uni-pred */
-void Predict::addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv* predYuv, bool bLuma, bool bChroma)
+void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* predYuv, bool bLuma, bool bChroma)
 {
-    int16_t* srcY0 = srcYuv0->getLumaAddr(m_partAddr);
-    int16_t* srcU0 = srcYuv0->getCbAddr(m_partAddr);
-    int16_t* srcV0 = srcYuv0->getCrAddr(m_partAddr);
+    int16_t* srcY0 = srcYuv->getLumaAddr(m_partAddr);
+    int16_t* srcU0 = srcYuv->getCbAddr(m_partAddr);
+    int16_t* srcV0 = srcYuv->getCrAddr(m_partAddr);
 
     pixel* dstY = predYuv->getLumaAddr(m_partAddr);
     pixel* dstU = predYuv->getCbAddr(m_partAddr);
@@ -624,8 +624,8 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv*
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
         shift   = wp[0].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
-        srcStride = srcYuv0->m_width;
-        dstStride  = predYuv->getStride();
+        srcStride = srcYuv->m_width;
+        dstStride = predYuv->m_width;
 
         primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
     }
@@ -639,11 +639,11 @@ void Predict::addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv*
         shift   = wp[1].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
 
-        srcStride = srcYuv0->m_cwidth;
-        dstStride = predYuv->getCStride();
+        srcStride = srcYuv->m_cwidth;
+        dstStride = predYuv->m_cwidth;
 
-        m_width  >>= srcYuv0->m_hChromaShift;
-        m_height >>= srcYuv0->m_vChromaShift;
+        m_width  >>= srcYuv->m_hChromaShift;
+        m_height >>= srcYuv->m_vChromaShift;
 
         primitives.weight_sp(srcU0, dstU, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
 

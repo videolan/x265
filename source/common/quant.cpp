@@ -26,8 +26,8 @@
 #include "quant.h"
 #include "frame.h"
 #include "entropy.h"
+#include "yuv.h"
 #include "TLibCommon/TComDataCU.h"
-#include "TLibCommon/TComYuv.h"
 #include "TLibCommon/ContextTables.h"
 
 using namespace x265;

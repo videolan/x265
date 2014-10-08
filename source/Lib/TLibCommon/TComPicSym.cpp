@@ -36,7 +36,7 @@
 */
 
 #include "TComPicSym.h"
-#include "TComPicYuv.h"
+#include "picyuv.h"
 
 using namespace x265;
 

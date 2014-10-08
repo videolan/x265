@@ -102,7 +102,7 @@ public:
         Entropy temp;
     };
 
-    Frame*      m_pic;
+    Frame*      m_frame;
     Entropy     m_entropyCoder;
     SAOContexts m_rdContexts;
 

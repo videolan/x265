@@ -28,7 +28,7 @@
 #include "frame.h"
 #include "quant.h"
 #include "shortyuv.h"
-#include "TLibCommon/TComYuv.h"
+#include "yuv.h"
 #include "TLibCommon/TComMotionInfo.h"
 #include "TLibCommon/TComPattern.h"
 
@@ -59,11 +59,11 @@ protected:
     MV             m_clippedMv[2];
 
     // motion compensation functions
-    void predInterLumaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
-    void predInterLumaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
+    void predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv);
+    void predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv);
 
-    void predInterChromaBlk(TComPicYuv *refPic, TComYuv *dstPic, MV *mv);
-    void predInterChromaBlk(TComPicYuv *refPic, ShortYuv *dstPic, MV *mv);
+    void predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv);
+    void predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv);
 
     // Weighted prediction scaling values built from slice parameters (bitdepth scaled)
     struct WeightValues
@@ -71,8 +71,8 @@ protected:
         int w, o, offset, shift, round;
     };
 
-    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], TComYuv* predYuv, bool bLuma, bool bChroma);
-    void addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], TComYuv* predYuv, bool bLuma, bool bChroma);
+    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], Yuv* predYuv, bool bLuma, bool bChroma);
+    void addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], Yuv* predYuv, bool bLuma, bool bChroma);
 
 public:
 
@@ -90,7 +90,7 @@ public:
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
     void prepMotionCompensation(const TComDataCU* cu, const CU& cuData, int partIdx);
-    void motionCompensation(TComYuv* predYuv, bool bLuma, bool bChroma);
+    void motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);

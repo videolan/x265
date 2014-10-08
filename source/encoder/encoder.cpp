@@ -27,7 +27,7 @@
 #include "param.h"
 #include "frame.h"
 
-#include "TLibCommon/TComPicYuv.h"
+#include "picyuv.h"
 #include "TLibCommon/TComRom.h"
 
 #include "bitcost.h"
@@ -413,7 +413,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         Slice *slice = out->m_picSym->m_slice;
         if (pic_out)
         {
-            TComPicYuv *recpic = out->getPicYuvRec();
+            PicYuv *recpic = out->getPicYuvRec();
             pic_out->poc = slice->m_poc;
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
@@ -435,12 +435,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 break;
             }
 
-            pic_out->planes[0] = recpic->getLumaAddr();
-            pic_out->stride[0] = recpic->getStride() * sizeof(pixel);
-            pic_out->planes[1] = recpic->getCbAddr();
-            pic_out->stride[1] = recpic->getCStride() * sizeof(pixel);
-            pic_out->planes[2] = recpic->getCrAddr();
-            pic_out->stride[2] = recpic->getCStride() * sizeof(pixel);
+            pic_out->planes[0] = recpic->m_picOrg[0];
+            pic_out->stride[0] = recpic->m_stride * sizeof(pixel);
+            pic_out->planes[1] = recpic->m_picOrg[1];
+            pic_out->stride[1] = recpic->m_strideC * sizeof(pixel);
+            pic_out->planes[2] = recpic->m_picOrg[2];
+            pic_out->stride[2] = recpic->m_strideC * sizeof(pixel);
         }
 
         if (m_param->analysisMode)
@@ -940,13 +940,13 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits)
+void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits)
 {
-    TComPicYuv* recon = pic->getPicYuvRec();
+    PicYuv* reconPic = curFrame->getPicYuvRec();
 
     //===== calculate PSNR =====
-    int width  = recon->getWidth() - m_sps.conformanceWindow.rightOffset;
-    int height = recon->getHeight() - m_sps.conformanceWindow.bottomOffset;
+    int width  = reconPic->m_picWidth - m_sps.conformanceWindow.rightOffset;
+    int height = reconPic->m_picHeight - m_sps.conformanceWindow.bottomOffset;
     int size = width * height;
 
     int maxvalY = 255 << (X265_DEPTH - 8);
@@ -962,16 +962,14 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    Slice*  slice = pic->m_picSym->m_slice;
+    Slice*  slice = curFrame->m_picSym->m_slice;
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);
-    m_analyzeAll.addQP(pic->m_avgQpAq);
+    m_analyzeAll.addQP(curFrame->m_avgQpAq);
 
     if (m_param->bEnablePsnr)
-    {
         m_analyzeAll.addPsnr(psnrY, psnrU, psnrV);
-    }
 
     double ssim = 0.0;
     if (m_param->bEnableSsim && curEncoder->m_ssimCnt)
@@ -982,7 +980,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     if (slice->isIntra())
     {
         m_analyzeI.addBits(bits);
-        m_analyzeI.addQP(pic->m_avgQpAq);
+        m_analyzeI.addQP(curFrame->m_avgQpAq);
         if (m_param->bEnablePsnr)
             m_analyzeI.addPsnr(psnrY, psnrU, psnrV);
         if (m_param->bEnableSsim)
@@ -991,7 +989,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     else if (slice->isInterP())
     {
         m_analyzeP.addBits(bits);
-        m_analyzeP.addQP(pic->m_avgQpAq);
+        m_analyzeP.addQP(curFrame->m_avgQpAq);
         if (m_param->bEnablePsnr)
             m_analyzeP.addPsnr(psnrY, psnrU, psnrV);
         if (m_param->bEnableSsim)
@@ -1000,7 +998,7 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
     else if (slice->isInterB())
     {
         m_analyzeB.addBits(bits);
-        m_analyzeB.addQP(pic->m_avgQpAq);
+        m_analyzeB.addQP(curFrame->m_avgQpAq);
         if (m_param->bEnablePsnr)
             m_analyzeB.addPsnr(psnrY, psnrU, psnrV);
         if (m_param->bEnableSsim)
@@ -1017,9 +1015,9 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
 
         char buf[1024];
         int p;
-        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, pic->m_avgQpAq, slice->m_sliceQp, (int)bits);
+        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, curFrame->m_avgQpAq, slice->m_sliceQp, (int)bits);
         if (m_param->rc.rateControlMode == X265_RC_CRF)
-            p += sprintf(buf + p, " RF:%.3lf", pic->m_rateFactor);
+            p += sprintf(buf + p, " RF:%.3lf", curFrame->m_rateFactor);
         if (m_param->bEnablePsnr)
             p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
         if (m_param->bEnableSsim)
@@ -1044,9 +1042,9 @@ void Encoder::finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bi
         // per frame CSV logging if the file handle is valid
         if (m_csvfpt)
         {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, pic->m_avgQpAq, (int)bits);
+            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, curFrame->m_avgQpAq, (int)bits);
             if (m_param->rc.rateControlMode == X265_RC_CRF)
-                fprintf(m_csvfpt, "%.3lf,", pic->m_rateFactor);
+                fprintf(m_csvfpt, "%.3lf,", curFrame->m_rateFactor);
             double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
             if (m_param->bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);

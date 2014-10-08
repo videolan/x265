@@ -129,10 +129,10 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     return ok;
 }
 
-void FrameEncoder::startCompressFrame(Frame* pic)
+void FrameEncoder::startCompressFrame(Frame* curFrame)
 {
-    m_frame = pic;
-    pic->m_picSym->m_slice->m_mref = m_mref;
+    m_frame = curFrame;
+    curFrame->m_picSym->m_slice->m_mref = m_mref;
     m_enable.trigger();
 }
 
@@ -209,7 +209,7 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
 
-    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
+    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_picSym->getFrameHeightInCU() : 1;
     if (!m_outStreams)
     {
         m_outStreams = new Bitstream[numSubstreams];
@@ -409,11 +409,11 @@ void FrameEncoder::compressFrame()
 void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_picSym->m_slice;
-    const uint32_t widthInLCUs = m_frame->getPicSym()->getFrameWidthInCU();
+    const uint32_t widthInLCUs = m_frame->m_picSym->getFrameWidthInCU();
     const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
-    const int numSubstreams = m_param->bEnableWavefront ? m_frame->getPicSym()->getFrameHeightInCU() : 1;
+    const int numSubstreams = m_param->bEnableWavefront ? m_frame->m_picSym->getFrameHeightInCU() : 1;
 
-    SAOParam *saoParam = slice->m_pic->getPicSym()->m_saoParam;
+    SAOParam *saoParam = slice->m_pic->m_picSym->m_saoParam;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
@@ -615,13 +615,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
     // setup thread-local data
     Slice *slice = m_frame->m_picSym->m_slice;
-    TComPicYuv* fenc = m_frame->getPicYuvOrg();
+    PicYuv* fencPic = m_frame->getPicYuvOrg();
     tld.analysis.m_quant.m_nr = m_nr;
-    tld.analysis.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
+    tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
     tld.analysis.setQP(slice, slice->m_sliceQp);
 
     int64_t startTime = x265_mdate();
-    assert(m_frame->getPicSym()->getFrameWidthInCU() == m_numCols);
     const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
@@ -897,7 +896,7 @@ void FrameEncoder::noiseReductionUpdate()
     }
 }
 
-int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
+int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
 {
     x265_emms();
     double qp = baseQp;
@@ -906,17 +905,17 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (bIsVbv)
     {
-        m_frame->m_cuCostsForVbv[cuAddr] = 0;
-        m_frame->m_intraCuCostsForVbv[cuAddr] = 0;
+        m_frame->m_cuCostsForVbv[ctuAddr] = 0;
+        m_frame->m_intraCuCostsForVbv[ctuAddr] = 0;
     }
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (m_frame->getPicYuvOrg()->getWidth() + (16 - 1)) / 16;
-    int maxBlockRows = (m_frame->getPicYuvOrg()->getHeight() + (16 - 1)) / 16;
+    int maxBlockCols = (m_frame->getPicYuvOrg()->m_picWidth + (16 - 1)) / 16;
+    int maxBlockRows = (m_frame->getPicYuvOrg()->m_picHeight + (16 - 1)) / 16;
     int noOfBlocks = g_maxCUSize / 16;
-    int block_y = (cuAddr / m_frame->getPicSym()->getFrameWidthInCU()) * noOfBlocks;
-    int block_x = (cuAddr * noOfBlocks) - block_y * m_frame->getPicSym()->getFrameWidthInCU();
+    int block_y = (ctuAddr / m_frame->m_picSym->getFrameWidthInCU()) * noOfBlocks;
+    int block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_picSym->getFrameWidthInCU();
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame->m_picSym->m_slice);
@@ -932,8 +931,8 @@ int FrameEncoder::calcQpForCu(uint32_t cuAddr, double baseQp)
                 qp_offset += qpoffs[idx];
             if (bIsVbv)
             {
-                m_frame->m_cuCostsForVbv[cuAddr] += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
-                m_frame->m_intraCuCostsForVbv[cuAddr] += m_frame->m_lowres.intraCost[idx];
+                m_frame->m_cuCostsForVbv[ctuAddr] += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
+                m_frame->m_intraCuCostsForVbv[ctuAddr] += m_frame->m_lowres.intraCost[idx];
             }
             cnt++;
         }

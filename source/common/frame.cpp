@@ -60,10 +60,10 @@ bool Frame::create(x265_param *param, Window& display, Window& conformance)
     m_conformanceWindow = conformance;
     m_defaultDisplayWindow = display;
 
-    m_origPicYuv = new TComPicYuv;
+    m_origPicYuv = new PicYuv;
 
     bool ok = true;
-    ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
+    ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     ok &= m_lowres.create(m_origPicYuv, param->bframes, !!param->rc.aqMode);
 
     bool isVbv = param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0;
@@ -100,10 +100,9 @@ fail:
 bool Frame::allocPicSym(x265_param *param)
 {
     m_picSym = new TComPicSym;
-    m_reconPicYuv = new TComPicYuv;
+    m_reconPicYuv = new PicYuv;
     m_picSym->m_reconPicYuv = m_reconPicYuv;
-    bool ok = m_picSym->create(param) &&
-            m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
+    bool ok = m_picSym->create(param) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels

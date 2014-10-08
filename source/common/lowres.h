@@ -31,7 +31,7 @@
 namespace x265 {
 // private namespace
 
-class TComPicYuv;
+class PicYuv;
 
 struct ReferencePlanes
 {
@@ -139,9 +139,9 @@ struct Lowres : public ReferencePlanes
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
 
-    bool create(TComPicYuv *orig, int _bframes, bool bAqEnabled);
+    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled);
     void destroy();
-    void init(TComPicYuv *orig, int poc, int sliceType);
+    void init(PicYuv *origPic, int poc, int sliceType);
 };
 }
 
