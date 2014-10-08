@@ -59,8 +59,52 @@ Standalone Executable Options
 
 .. option:: --threads <integer>
 
-	Number of threads for thread pool. Default 0 (detected CPU core
-	count)
+	Number of threads to allocate for the worker thread pool  This pool
+	is used for WPP and for distributed analysis and motion search:
+	:option:`--wpp` :option:`--pmode` and :option:`--pme` respectively.
+
+	If :option:`--threads`=1 is specified, then no thread pool is
+	created. When no thread pool is created, all the thread pool
+	features are implicitly disabled. If all the pool features are
+	disabled by the user, then the pool is implicitly disabled.
+
+	Default 0, one thread is allocated per detected hardware thread
+	(logical CPU cores)
+
+.. option:: --pmode, --no-pmode
+
+	Parallel mode decision, or distributed mode analysis. When enabled
+	the encoder will distribute the analysis work of each CU (merge,
+	inter, intra) across multiple worker threads. Only recommended if
+	x265 is not already saturating the CPU cores. Currently only
+	supported in RD levels 3 and 4, and is most effective when --rect is
+	enabled. This feature is implicitly disabled when no thread pool is
+	present.
+
+	--pmode will increase utilization on many core systems without
+	reducing compression efficiency. In fact, since the modes are all
+	measured in parallel it makes certain early-outs impractical and
+	thus you usually get slightly better compression when it is enabled
+	(at the expense of not skipping improbable modes).
+
+	Default disabled
+
+.. option:: --pme, --no-pme
+
+	Parallel motion estimation. When enabled the encoder will distribute
+	motion estimation across multiple worker threads when more than two
+	references require motion searches for a given CU. Only recommended
+	if x265 is not already saturating CPU cores. :option:`--pmode` is
+	much more effective than this option, since the amount of work it
+	distributes is substantially higher. With --pme it is not unusual
+	for the overhead of distributing the work outweighs the parallelism
+	benefits. This feature is implicitly disabled when no thread pool is
+	present.
+
+	--pme will increase utilization on many core systems without any
+	substantial effect om compression efficiency.
+	
+	Default disabled
 
 .. option:: --preset, -p <integer|string>
 
@@ -93,6 +137,9 @@ Standalone Executable Options
 	frames are always available for motion compensation, but it has
 	severe performance implications. Default is an autodetected count
 	based on the number of CPU cores and whether WPP is enabled or not.
+
+	Over-allocation of frame threads will not improve performance, it
+	will generally just increase memory use.
 
 .. option:: --log-level <integer|string>
 
