@@ -73,6 +73,7 @@ Encoder::Encoder()
     m_outputCount = 0;
     m_csvfpt = NULL;
     m_param = NULL;
+    m_threadPool = 0;
 }
 
 void Encoder::create()
@@ -83,6 +84,64 @@ void Encoder::create()
         x265_log(m_param, X265_LOG_ERROR, "Primitives must be initialized before encoder is created\n");
         abort();
     }
+
+    x265_param* p = m_param;
+
+    int rows = (p->sourceHeight + p->maxCUSize - 1) >> g_log2Size[p->maxCUSize];
+
+    // Do not allow WPP if only one row, it is pointless and unstable
+    if (rows == 1)
+        p->bEnableWavefront = 0;
+
+    int poolThreadCount = p->poolNumThreads ? p->poolNumThreads : getCpuCount();
+
+    // Trim the thread pool if --wpp, --pme, and --pmode are disabled
+    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
+        poolThreadCount = 0;
+
+    if (poolThreadCount > 1)
+    {
+        m_threadPool = ThreadPool::allocThreadPool(poolThreadCount);
+        poolThreadCount = m_threadPool->getThreadCount();
+    }
+    else
+        poolThreadCount = 0;
+
+    if (!poolThreadCount)
+    {
+        // issue warnings if any of these features were requested
+        if (p->bEnableWavefront)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --wpp disabled\n");
+        if (p->bDistributeMotionEstimation)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pme disabled\n");
+        if (p->bDistributeModeAnalysis)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pmode disabled\n");
+
+        // disable all pool features if the thread pool is disabled or unusable.
+        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = 0;
+    }
+
+    if (!p->frameNumThreads)
+    {
+        // auto-detect frame threads
+        int cpuCount = getCpuCount();
+        if (!p->bEnableWavefront)
+            p->frameNumThreads = X265_MIN(cpuCount, (rows + 1) / 2);
+        else if (cpuCount > 32)
+            p->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
+        else if (cpuCount >= 16)
+            p->frameNumThreads = 5; // 8 HT cores, or dual socket
+        else if (cpuCount >= 8)
+            p->frameNumThreads = 3; // 4 HT cores
+        else if (cpuCount >= 4)
+            p->frameNumThreads = 2; // Dual or Quad core
+        else
+            p->frameNumThreads = 1;
+    }
+
+    x265_log(p, X265_LOG_INFO, "WPP streams / frame threads / pool  : %d / %d / %d%s%s\n", 
+             p->bEnableWavefront ? rows : 0, p->frameNumThreads, poolThreadCount,
+             p->bDistributeMotionEstimation ? " / pme" : "", p->bDistributeModeAnalysis ? " / pmode" : "");
 
     m_frameEncoder = new FrameEncoder[m_param->frameNumThreads];
     for (int i = 0; i < m_param->frameNumThreads; i++)
@@ -103,14 +162,13 @@ void Encoder::create()
 
     /* Allocate thread local data, one for each thread pool worker and
      * if --no-wpp, one for each frame encoder */
-    const int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
     int numLocalData = poolThreadCount;
     if (!m_param->bEnableWavefront)
         numLocalData += m_param->frameNumThreads;
     m_threadLocalData = new ThreadLocalData[numLocalData];
     for (int i = 0; i < numLocalData; i++)
     {
-        m_threadLocalData[i].analysis.setThreadPool(ThreadPool::getThreadPool());
+        m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
         m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
         m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize, m_threadLocalData);
     }
@@ -615,7 +673,21 @@ void Encoder::printSummary()
     if (!m_param->bLogCuStats)
         return;
 
-    const int poolThreadCount = m_threadPool ? m_threadPool->getThreadCount() : 1;
+    const int poolThreadCount = m_threadPool ? m_threadPool->getThreadCount() : 0;
+    int lastLocalData, firstLocalData;
+
+    if (m_param->bEnableWavefront)
+    {
+        /* when WPP is enabled, the pool workers accumulate CU stats */
+        firstLocalData = 0;
+        lastLocalData = poolThreadCount;
+    }
+    else
+    {
+        /* when WPP is disabled, the frame encoders accumulate CU stats */
+        firstLocalData = poolThreadCount;
+        lastLocalData = poolThreadCount + m_param->frameNumThreads;
+    }
 
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
@@ -627,7 +699,7 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
-            for (int i = 0; i < poolThreadCount; i++)
+            for (int i = firstLocalData; i < lastLocalData; i++)
             {
                 StatisticLog& enclog = m_threadLocalData[i].analysis.m_sliceTypeLog[sliceType];
                 if (depth == 0)
@@ -1204,51 +1276,6 @@ void Encoder::initPPS(PPS *pps)
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
-    int rows = (p->sourceHeight + p->maxCUSize - 1) >> g_log2Size[p->maxCUSize];
-
-    // Do not allow WPP if only one row, it is pointless and unstable
-    if (rows == 1)
-        p->bEnableWavefront = 0;
-
-    // Trim the thread pool if --wpp, --pme, and --pmode are disabled
-    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
-        p->poolNumThreads = 1;
-
-    setThreadPool(ThreadPool::allocThreadPool(p->poolNumThreads));
-    int poolThreadCount = ThreadPool::getThreadPool()->getThreadCount();
-
-    if (!p->frameNumThreads)
-    {
-        // auto-detect frame threads
-        int cpuCount = getCpuCount();
-        if (poolThreadCount <= 1)
-            p->frameNumThreads = X265_MIN(cpuCount, (rows + 1) / 2);
-        else if (cpuCount > 32)
-            p->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
-        else if (cpuCount >= 16)
-            p->frameNumThreads = 5; // 8 HT cores, or dual socket
-        else if (cpuCount >= 8)
-            p->frameNumThreads = 3; // 4 HT cores
-        else if (cpuCount >= 4)
-            p->frameNumThreads = 2; // Dual or Quad core
-        else
-            p->frameNumThreads = 1;
-    }
-    if (p->bEnableWavefront)
-        x265_log(p, X265_LOG_INFO, "WPP streams / pool / frames         : %d / %d / %d\n", rows, poolThreadCount, p->frameNumThreads);
-    else if (p->frameNumThreads > 1)
-    {
-        if (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation)
-            x265_log(p, X265_LOG_INFO, "Concurrently encoded frames / pool  : %d / %d\n", p->frameNumThreads, poolThreadCount);
-        else
-            x265_log(p, X265_LOG_INFO, "Concurrently encoded frames         : %d\n", p->frameNumThreads);
-        p->bEnableWavefront = 0;
-    }
-    else
-    {
-        x265_log(p, X265_LOG_INFO, "Parallelism disabled, single thread mode\n");
-        p->bEnableWavefront = 0;
-    }
 
     if (p->keyframeMax < 0)
     {

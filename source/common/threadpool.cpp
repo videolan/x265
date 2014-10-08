@@ -249,8 +249,6 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
 {
-    if (numThreads == 0)
-        numThreads = getCpuCount();
     m_numSleepMapWords = (numThreads + 63) >> 6;
     m_sleepMap = X265_MALLOC(uint64_t, m_numSleepMapWords);
 

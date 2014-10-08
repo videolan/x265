@@ -1151,8 +1151,6 @@ void x265_print_params(x265_param *param)
 
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
-    TOOLOPT(param->bDistributeModeAnalysis, "pmode");
-    TOOLOPT(param->bDistributeMotionEstimation, "pme");
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
