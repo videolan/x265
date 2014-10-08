@@ -64,7 +64,7 @@ void FrameEncoder::destroy()
 
     delete[] m_rows;
 
-    if (m_param->bEmitHRDSEI)
+    if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         delete m_rce.picTimingSEI;
         delete m_rce.hrdTiming;
@@ -109,7 +109,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_frameFilter.init(top, this, numRows);
 
     // initialize HRD parameters of SPS
-    if (m_param->bEmitHRDSEI)
+    if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         m_rce.picTimingSEI = new SEIPictureTiming;
         m_rce.hrdTiming = new HRDTiming;
