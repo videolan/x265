@@ -302,9 +302,6 @@ void TComDataCU::destroy()
  - initialize top-level CU
  - internal buffers are already created
  - set values before encoding a CU
- .
- \param  pic     picture (TComPic) class pointer
- \param  cuAddr  CU address
  */
 void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
 {
@@ -387,10 +384,11 @@ void TComDataCU::initEstData()
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp)
+void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-    uint8_t log2CUSize = g_maxLog2CUSize - depth;
+    uint8_t log2CUSize = cuData->log2CUSize;
+    int qp = cu->getQP(0);
 
     m_pic              = cu->m_pic;
     m_slice            = cu->m_slice;
@@ -429,7 +427,7 @@ void TComDataCU::initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uin
     memset(m_cbf[0],             0,      sizeInChar);
     memset(m_cbf[1],             0,      sizeInChar);
     memset(m_cbf[2],             0,      sizeInChar);
-    memset(m_depth,              depth,  sizeInChar);
+    memset(m_depth,              cuData->depth, sizeInChar);
     memset(m_log2CUSize,         log2CUSize, sizeInChar);
     memset(m_partSizes,          SIZE_NONE, sizeInChar);
     memset(m_predModes,          MODE_NONE, sizeInChar);
@@ -489,13 +487,12 @@ void TComDataCU::copyFromPic(TComDataCU* ctu, CU* cuData)
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis)
+void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
-    if (isRDObasedAnalysis)
-        m_totalRDCost  += cu->m_totalRDCost;
-
+    m_totalRDCost      += cu->m_totalRDCost;
+    m_sa8dCost         += cu->m_sa8dCost;
     m_psyEnergy        += cu->m_psyEnergy;
     m_totalDistortion  += cu->m_totalDistortion;
     m_totalBits        += cu->m_totalBits;
@@ -506,7 +503,7 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t 
     uint32_t numPartition = numPartitions;
     int sizeInBool  = sizeof(bool) * numPartition;
     int sizeInChar  = sizeof(char) * numPartition;
-    memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)   * numPartition);
+    memcpy(m_skipFlag  + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)  * numPartition);
     memcpy(m_qp        + offset, cu->getQP(),             sizeInChar);
     memcpy(m_partSizes + offset, cu->getPartitionSize(),  sizeof(*m_partSizes) * numPartition);
     memcpy(m_predModes + offset, cu->getPredictionMode(), sizeof(*m_predModes) * numPartition);
@@ -2375,9 +2372,10 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
                 cu->log2CUSize = log2CUSize;
                 cu->childIdx = child_idx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
-                cu->flags = 0;
                 cu->numPartitions = (NUM_CU_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
+                cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 
+                cu->flags = 0;
                 CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);
                 CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, split_mandatory_flag);
                 CU_SET_FLAG(cu->flags, CU::LEAF, last_level_flag);

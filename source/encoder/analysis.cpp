@@ -386,10 +386,9 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
 void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
 {
     Frame* pic = parentCU->m_pic;
-    Slice* slice = parentCU->m_slice;
     uint32_t cuAddr = parentCU->m_cuAddr;
+    uint32_t depth = cuData->depth;
     uint32_t absPartIdx = cuData->encodeIdx;
-    uint32_t depth = parentCU->getDepth(0);
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -411,7 +410,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
             checkIntra(parentCU, cuData, SIZE_NxN, NULL);
         else
         {
-            /* TODO: why add split bits to 2Nx2N intra? */
+            /* add signal cost not no-split flag */
             TComDataCU *cu = &md.pred[PRED_INTRA].cu;
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(cu, 0, depth);
@@ -430,23 +429,24 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
     // further split
     if (cu_split_flag)
     {
-        uint32_t nextDepth = depth + 1;
+        uint32_t nextDepth = cuData->depth + 1;
         invalidateContexts(nextDepth);
-        int qp = parentCU->getQP(0);
+
         Mode* splitPred = &md.pred[PRED_SPLIT];
         TComDataCU* splitCU = &splitPred->cu;
-        ModeDepth& nd = m_modeDepth[nextDepth];
+        splitCU->initSubCU(parentCU, cuData, 0);
+        splitCU->m_totalRDCost = 0;
 
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[depth].cur);
+        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        ModeDepth& nd = m_modeDepth[nextDepth];
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            splitCU->initSubCU(parentCU, childCuData, partUnitIdx, nextDepth, qp); // clear sub partition or init.
-
+            X265_CHECK(childCuData->depth == nextDepth, "invalid cudata\n");
             if (childCuData->flags & CU::PRESENT)
             {
-                compressIntraCU(splitCU, childCuData);
+                compressIntraCU(parentCU, childCuData);
 
                 // Save best CU pred data to and recon to splitCU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
@@ -462,37 +462,13 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(splitCU, 0, depth);
             splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits(); // TODO: use hard-coded value here
-        }
-
-        if (m_rdCost.m_psyRd)
-            splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-        else
-            splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
-
-        if (depth == slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
-        {
-            bool hasResidual = false;
-            for (uint32_t blkIdx = 0; blkIdx < cuData->numPartitions; blkIdx++)
-            {
-                if (splitCU->getCbf(blkIdx, TEXT_LUMA) || splitCU->getCbf(blkIdx, TEXT_CHROMA_U) || splitCU->getCbf(blkIdx, TEXT_CHROMA_V))
-                {
-                    hasResidual = true;
-                    break;
-                }
-            }
-
-            uint32_t targetPartIdx = 0;
-            if (hasResidual)
-            {
-                bool foundNonZeroCbf = false;
-                splitCU->setQPSubCUs(splitCU->getRefQP(targetPartIdx), splitCU, 0, depth, foundNonZeroCbf);
-                X265_CHECK(foundNonZeroCbf, "expected to find non-zero CBF\n");
-            }
+            if (m_rdCost.m_psyRd)
+                splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
             else
-                splitCU->setQPSubParts(splitCU->getRefQP(targetPartIdx), 0, depth); // set QP to default QP
+                splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
         }
-
-        md.bestMode->contexts.store(splitPred->contexts);
+        nd.bestMode->contexts.store(splitPred->contexts);
+        checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth); // RD compare current CU against split
     }
 
@@ -509,7 +485,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
 {
     Frame* pic = parentCU->m_pic;
     Slice* slice = parentCU->m_slice;
-    uint32_t depth = parentCU->getDepth(0);
+    uint32_t depth = cuData->depth;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -558,7 +534,6 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
         invalidateContexts(nextDepth);
         Mode* splitPred = &md.pred[PRED_SPLIT];
         TComDataCU* splitCU = &splitPred->cu;
-        int qp = parentCU->getQP(0);
         ModeDepth& nd = m_modeDepth[nextDepth];
 
         m_rdContexts[nextDepth].cur.load(m_rdContexts[depth].cur);
@@ -567,7 +542,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
         {
             CU *childCUData = pic->getCU(parentCU->m_cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
 
-            splitCU->initSubCU(parentCU, childCUData, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
+            splitCU->initSubCU(parentCU, childCUData, partUnitIdx);
 
             if (childCUData->flags & CU::PRESENT)
             {
@@ -636,13 +611,13 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint8_t*
 /* TODO: move to Search except checkDQP() and checkBestMode() */
 void Analysis::checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, uint8_t* sharedModes)
 {
-    uint32_t depth = g_log2Size[m_param->maxCUSize] - cuData->log2CUSize;
+    uint32_t depth = cuData->depth;
     Mode& mode = partSize == SIZE_2Nx2N ? m_modeDepth[depth].pred[PRED_INTRA] : m_modeDepth[depth].pred[PRED_INTRA_NxN];
     TComDataCU& cu = mode.cu;
     TComYuv& orig = m_modeDepth[depth].origYuv;
     uint32_t tuDepthRange[2];
 
-    cu.initSubCU(parentCU, cuData, 0, depth, parentCU->getQP(0));
+    cu.initSubCU(parentCU, cuData, 0);
     cu.setPartSizeSubParts(partSize, 0, depth);
     cu.setPredModeSubParts(MODE_INTRA, 0, depth);
     cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
@@ -680,7 +655,7 @@ void Analysis::checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, u
     else
         cu.m_totalRDCost = m_rdCost.calcRdCost(cu.m_totalDistortion, cu.m_totalBits);
 
-    checkDQP(&cu);
+    checkDQP(&cu, cuData);
     checkBestMode(mode, depth);
 }
 
@@ -688,7 +663,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
 {
     Slice* slice = parentCU->m_slice;
     Frame* pic = parentCU->m_pic;
-    uint32_t depth = parentCU->getDepth(0);
+    uint32_t depth = cuData->depth;
     uint32_t cuAddr = parentCU->m_cuAddr;
     uint32_t absPartIdx = cuData->encodeIdx;
     int qp = parentCU->getQP(0);
@@ -750,16 +725,16 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
         if (depth)
         {
             /* Initialize all prediction CUs based on parentCU */
-            md.pred[PRED_2Nx2N].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
-            md.pred[PRED_MERGE].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
-            md.pred[PRED_SKIP].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
+            md.pred[PRED_2Nx2N].cu.initSubCU(parentCU, cuData, partitionIndex);
+            md.pred[PRED_MERGE].cu.initSubCU(parentCU, cuData, partitionIndex);
+            md.pred[PRED_SKIP].cu.initSubCU(parentCU, cuData, partitionIndex);
             if (m_param->bEnableRectInter)
             {
-                md.pred[PRED_2NxN].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
-                md.pred[PRED_Nx2N].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
+                md.pred[PRED_2NxN].cu.initSubCU(parentCU, cuData, partitionIndex);
+                md.pred[PRED_Nx2N].cu.initSubCU(parentCU, cuData, partitionIndex);
             }
             if (slice->m_sliceType == P_SLICE)
-                md.pred[PRED_INTRA].cu.initSubCU(parentCU, cuData, partitionIndex, depth, qp);
+                md.pred[PRED_INTRA].cu.initSubCU(parentCU, cuData, partitionIndex);
         }
         else
         {
@@ -993,7 +968,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
 
         TComDataCU* bestCU = &md.bestMode->cu;
         if (m_param->rdLevel > 0) // checkDQP can be done only after residual encoding is done
-            checkDQP(bestCU);
+            checkDQP(bestCU, cuData);
 
         /* stop recursing if current CU is a skip */
         bSubBranch = !bestCU->isSkipped(0);
@@ -1081,7 +1056,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCUData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            splitCU->initSubCU(&md.bestMode->cu, childCUData, partUnitIdx, nextDepth, qp); // clear sub partition datas or init.
+            splitCU->initSubCU(&md.bestMode->cu, childCUData, partUnitIdx); // clear sub partition datas or init.
 
             if (childCUData->flags & CU::PRESENT)
             {
@@ -1096,7 +1071,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, int bInsi
                 }
 
                 /* Adding costs from best SUbCUs */
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData->numPartitions, partUnitIdx, nextDepth, true); // Keep best part data to current temporary data.
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCUData->numPartitions, partUnitIdx, nextDepth);
                 if (m_param->rdLevel > 1)
                 {
                     nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCUData->numPartitions * partUnitIdx);
@@ -1198,7 +1173,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
 {
     Frame* pic = parentCU->m_pic;
     Slice* slice = parentCU->m_slice;
-    uint32_t depth = parentCU->getDepth(0);
+    uint32_t depth = cuData->depth;
     uint32_t cuAddr = parentCU->m_cuAddr;
     uint32_t absPartIdx = cuData->encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
@@ -1223,7 +1198,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
         if (depth)
         {
             for (int i = 0; i < MAX_PRED_TYPES; i++)
-                md.pred[i].cu.initSubCU(parentCU, cuData, partitionIndex, depth, parentCU->getQP(0));
+                md.pred[i].cu.initSubCU(parentCU, cuData, partitionIndex);
         }
         else
         {
@@ -1309,7 +1284,6 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
     // estimate split cost
     if (cu_split_flag && !bestCU->isSkipped(0))
     {
-        int qp = parentCU->getQP(0);
         uint32_t nextDepth = depth + 1;
         invalidateContexts(nextDepth);
         Mode* splitPred = &md.pred[PRED_SPLIT];
@@ -1321,7 +1295,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCUData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            splitCU->initSubCU(parentCU, childCUData, partUnitIdx, nextDepth, qp);
+            splitCU->initSubCU(parentCU, childCUData, partUnitIdx);
 
             if (childCUData->flags & CU::PRESENT)
             {
@@ -1334,7 +1308,6 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
             }
             else
                 splitCU->copyToPic(nextDepth);
-
         }
 
         if (cu_unsplit_flag)
@@ -1555,7 +1528,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(CU* cuData, uint32_t depth, bool& earlySkip
 
                     mergeCU->setSkipFlagSubParts(!mergeCU->getQtRootCbf(0), 0, depth);
                     int origQP = mergeCU->getQP(0);
-                    checkDQP(mergeCU);
+                    checkDQP(mergeCU, cuData);
 
                     if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
                     {
@@ -1861,14 +1834,14 @@ void Analysis::checkInter_rd5_6(Mode& interMode, CU* cuData, PartSize partSize, 
         encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
 
         m_rdContexts[depth].temp.store(interMode.contexts);
-        checkDQP(cu);
+        checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
     else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
         encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
         m_rdContexts[depth].temp.store(interMode.contexts);
-        checkDQP(cu);
+        checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
 }
@@ -2093,7 +2066,7 @@ void Analysis::checkIntraInInter_rd5_6(Mode &intraMode, CU* cuData, PartSize par
     else
         cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 
-    checkDQP(cu);
+    checkDQP(cu, cuData);
     checkBestMode(intraMode, depth);
 }
 
@@ -2321,15 +2294,37 @@ void Analysis::deriveTestModeAMP(TComDataCU* bestCU, bool &bHor, bool &bVer, boo
     }
 }
 
-void Analysis::checkDQP(TComDataCU* cu)
+void Analysis::checkDQP(TComDataCU* cu, CU *cuData)
 {
-    uint32_t depth = cu->getDepth(0);
     Slice* slice = cu->m_slice;
 
-    if (slice->m_pps->bUseDQP && depth <= slice->m_pps->maxCuDQPDepth)
+    if (slice->m_pps->bUseDQP && cuData->depth <= slice->m_pps->maxCuDQPDepth)
     {
-        if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
-            cu->setQPSubParts(cu->getRefQP(0), 0, depth); // set QP to default QP
+        if (cu->getDepth(0) > cuData->depth) // detect splits
+        {
+            bool hasResidual = false;
+            for (uint32_t blkIdx = 0; blkIdx < cu->m_numPartitions; blkIdx++)
+            {
+                if (cu->getCbf(blkIdx, TEXT_LUMA) || cu->getCbf(blkIdx, TEXT_CHROMA_U) || cu->getCbf(blkIdx, TEXT_CHROMA_V))
+                {
+                    hasResidual = true;
+                    break;
+                }
+            }
+            if (hasResidual)
+            {
+                bool foundNonZeroCbf = false;
+                cu->setQPSubCUs(cu->getRefQP(0), cu, 0, cuData->depth, foundNonZeroCbf);
+                X265_CHECK(foundNonZeroCbf, "expected to find non-zero CBF\n");
+            }
+            else
+                cu->setQPSubParts(cu->getRefQP(0), 0, cuData->depth);
+        }
+        else
+        {
+            if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
+                cu->setQPSubParts(cu->getRefQP(0), 0, cuData->depth);
+        }
     }
 }
 

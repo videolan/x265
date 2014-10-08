@@ -163,7 +163,7 @@ protected:
     void encodeIntraInInter(Mode& intraMode, CU* cuData);
 
     void encodeResidue(TComDataCU* ctu, CU* cuData, uint32_t absPartIdx, uint32_t depth);
-    void checkDQP(TComDataCU* cu);
+    void checkDQP(TComDataCU* cu, CU *cuData);
     void deriveTestModeAMP(TComDataCU* bestCU, bool &bHor, bool &bVer, bool &bMergeOnly);
     void fillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };

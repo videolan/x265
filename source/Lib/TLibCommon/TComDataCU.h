@@ -114,8 +114,9 @@ struct CU
     uint32_t log2CUSize; // Log of the CU size.
     uint32_t childIdx;   // Index of the first child CU
     uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
-    uint32_t flags;      // CU flags.
     uint32_t numPartitions;// Number of 4x4 blocks in the CU
+    uint32_t depth;      // Number of 4x4 blocks in the CU
+    uint32_t flags;      // CU flags.
 };
 
 // Partition count table, index represents partitioning mode.
@@ -249,11 +250,11 @@ public:
 
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initEstData();
-    void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp);
+    void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx);
     void          loadCTUData(uint32_t maxCUSize);
 
     void          copyFromPic(TComDataCU* ctu, CU* cuData);
-    void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
+    void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
