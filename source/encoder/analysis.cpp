@@ -397,11 +397,10 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
     else
         m_modeDepth[0].origYuv.copyFromPicYuv(pic->getPicYuvOrg(), cuAddr, absPartIdx);
 
-    // We need to split, so don't try these modes.
-    int cu_split_flag = !(cuData->flags & CU::LEAF);
-    int cu_unsplit_flag = !(cuData->flags & CU::SPLIT_MANDATORY);
+    bool mightSplit = !(cuData->flags & CU::LEAF);
+    bool mightNotSplit = !(cuData->flags & CU::SPLIT_MANDATORY);
 
-    if (cu_unsplit_flag)
+    if (mightNotSplit)
     {
         m_quant.setQPforQuant(parentCU);
         checkIntra(parentCU, cuData, SIZE_2Nx2N, NULL);
@@ -426,48 +425,45 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
             fillOrigYUVBuffer(&md.bestMode->cu, &md.origYuv);
     }
 
-    // further split
-    if (cu_split_flag)
+    if (mightSplit)
     {
-        uint32_t nextDepth = cuData->depth + 1;
-        invalidateContexts(nextDepth);
-
         Mode* splitPred = &md.pred[PRED_SPLIT];
         TComDataCU* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCU, cuData, 0);
+        splitCU->initSubCU(parentCU, cuData, 0); // prepare splitCU to accumulate costs
         splitCU->m_totalRDCost = 0;
 
-        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
+        uint32_t nextDepth = cuData->depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
+        invalidateContexts(nextDepth);
+
+        m_rdContexts[nextDepth].cur.load(m_rdContexts[cuData->depth].cur);
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
             CU *childCuData = pic->getCU(cuAddr)->m_cuLocalData + cuData->childIdx + partUnitIdx;
-            X265_CHECK(childCuData->depth == nextDepth, "invalid cudata\n");
             if (childCuData->flags & CU::PRESENT)
             {
                 compressIntraCU(parentCU, childCuData);
 
-                // Save best CU pred data to and recon to splitCU
+                // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData->numPartitions, partUnitIdx, nextDepth);
                 nd.bestMode->reconYuv.copyToPartYuv(&splitPred->reconYuv, childCuData->numPartitions * partUnitIdx);
-                if (partUnitIdx < 3)
-                    m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
+                if (partUnitIdx < 3) m_rdContexts[nextDepth].cur.load(nd.bestMode->contexts);
             }
             else
                 splitCU->copyToPic(nextDepth);
         }
-        if (cu_unsplit_flag)
+        if (mightNotSplit)
         {
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(splitCU, 0, depth);
-            splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits(); // TODO: use hard-coded value here
-            if (m_rdCost.m_psyRd)
-                splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-            else
-                splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+            splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
         nd.bestMode->contexts.store(splitPred->contexts);
+        if (m_rdCost.m_psyRd)
+            splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
+        else
+            splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth); // RD compare current CU against split
     }
@@ -477,7 +473,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData)
 
     // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
     // if split was not required, write recon
-    if (cu_unsplit_flag)
+    if (mightNotSplit)
         md.bestMode->reconYuv.copyToPicYuv(pic->getPicYuvRec(), cuAddr, absPartIdx);
 }
 
@@ -615,12 +611,13 @@ void Analysis::checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, u
     Mode& mode = partSize == SIZE_2Nx2N ? m_modeDepth[depth].pred[PRED_INTRA] : m_modeDepth[depth].pred[PRED_INTRA_NxN];
     TComDataCU& cu = mode.cu;
     TComYuv& orig = m_modeDepth[depth].origYuv;
-    uint32_t tuDepthRange[2];
 
     cu.initSubCU(parentCU, cuData, 0);
     cu.setPartSizeSubParts(partSize, 0, depth);
     cu.setPredModeSubParts(MODE_INTRA, 0, depth);
     cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+
+    uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
     if (sharedModes)
@@ -638,22 +635,14 @@ void Analysis::checkIntra(TComDataCU* parentCU, CU *cuData, PartSize partSize, u
     m_entropyCoder.codePredInfo(&cu, 0);
     cu.m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
 
-    // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
     m_entropyCoder.codeCoeff(&cu, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder.store(mode.contexts);
     cu.m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
     cu.m_coeffBits = cu.m_totalBits - cu.m_mvBits;
 
-    /* TODO: add chroma psyEnergy also to psyCost */
     if (m_rdCost.m_psyRd)
-    {
-        int part = cu.getLog2CUSize(0) - 2;
-        cu.m_psyEnergy = m_rdCost.psyCost(part, orig.getLumaAddr(), orig.getStride(), mode.reconYuv.getLumaAddr(), mode.reconYuv.getStride());
-        cu.m_totalRDCost = m_rdCost.calcPsyRdCost(cu.m_totalDistortion, cu.m_totalBits, cu.m_psyEnergy);
-    }
-    else
-        cu.m_totalRDCost = m_rdCost.calcRdCost(cu.m_totalDistortion, cu.m_totalBits);
+        cu.m_psyEnergy = m_rdCost.psyCost(cuData->log2CUSize - 2, orig.getLumaAddr(), orig.getStride(), mode.reconYuv.getLumaAddr(), mode.reconYuv.getStride());
 
     checkDQP(&cu, cuData);
     checkBestMode(mode, depth);
