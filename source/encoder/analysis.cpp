@@ -141,7 +141,6 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
 
         slave = &m_tld[threadId].analysis;
         slave->m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-        slave->m_log = &slave->m_sliceTypeLog[cu.m_slice->m_sliceType];
         m_modeDepth[0].origYuv.copyPartToYuv(&slave->m_modeDepth[depth].origYuv, m_curCUData->encodeIdx);
         slave->setQP(cu.m_slice, m_rdCost.m_qp);
         if (!jobId || m_param->rdLevel > 4)
@@ -279,6 +278,8 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
     if (ctu->m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
 
+    StatisticLog* log = &m_sliceTypeLog[ctu->m_slice->m_sliceType];
+
     // analysis of CU
     uint32_t numPartition = ctu->m_cuLocalData->numPartitions;
     if (ctu->m_slice->m_sliceType == I_SLICE)
@@ -310,19 +311,19 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
             uint32_t i = 0;
             do
             {
-                m_log->totalCu++;
+                log->totalCu++;
                 uint32_t depth = ctu->getDepth(i);
                 int next = numPartition >> (depth * 2);
-                m_log->qTreeIntraCnt[depth]++;
+                log->qTreeIntraCnt[depth]++;
                 if (depth == g_maxCUDepth && ctu->getPartitionSize(i) != SIZE_2Nx2N)
-                    m_log->cntIntraNxN++;
+                    log->cntIntraNxN++;
                 else
                 {
-                    m_log->cntIntra[depth]++;
+                    log->cntIntra[depth]++;
                     if (ctu->getLumaIntraDir(i) > 1)
-                        m_log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
+                        log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
                     else
-                        m_log->cuIntraDistribution[depth][ctu->getLumaIntraDir(i)]++;
+                        log->cuIntraDistribution[depth][ctu->getLumaIntraDir(i)]++;
                 }
                 i += next;
             }
@@ -342,37 +343,37 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
             do
             {
                 uint32_t depth = ctu->getDepth(i);
-                m_log->cntTotalCu[depth]++;
+                log->cntTotalCu[depth]++;
                 int next = numPartition >> (depth * 2);
                 if (ctu->isSkipped(i))
                 {
-                    m_log->cntSkipCu[depth]++;
-                    m_log->qTreeSkipCnt[depth]++;
+                    log->cntSkipCu[depth]++;
+                    log->qTreeSkipCnt[depth]++;
                 }
                 else
                 {
-                    m_log->totalCu++;
+                    log->totalCu++;
                     if (ctu->getPredictionMode(0) == MODE_INTER)
                     {
-                        m_log->cntInter[depth]++;
-                        m_log->qTreeInterCnt[depth]++;
+                        log->cntInter[depth]++;
+                        log->qTreeInterCnt[depth]++;
                         if (ctu->getPartitionSize(0) < AMP_ID)
-                            m_log->cuInterDistribution[depth][ctu->getPartitionSize(0)]++;
+                            log->cuInterDistribution[depth][ctu->getPartitionSize(0)]++;
                         else
-                            m_log->cuInterDistribution[depth][AMP_ID]++;
+                            log->cuInterDistribution[depth][AMP_ID]++;
                     }
                     else if (ctu->getPredictionMode(0) == MODE_INTRA)
                     {
-                        m_log->qTreeIntraCnt[depth]++;
+                        log->qTreeIntraCnt[depth]++;
                         if (depth == g_maxCUDepth && ctu->getPartitionSize(0) == SIZE_NxN)
-                            m_log->cntIntraNxN++;
+                            log->cntIntraNxN++;
                         else
                         {
-                            m_log->cntIntra[depth]++;
+                            log->cntIntra[depth]++;
                             if (ctu->getLumaIntraDir(0) > 1)
-                                m_log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
+                                log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
                             else
-                                m_log->cuIntraDistribution[depth][ctu->getLumaIntraDir(0)]++;
+                                log->cuIntraDistribution[depth][ctu->getLumaIntraDir(0)]++;
                         }
                     }
                 }

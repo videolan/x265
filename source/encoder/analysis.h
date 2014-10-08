@@ -103,7 +103,6 @@ public:
     bool          m_bEncodeDQP;
 
     StatisticLog  m_sliceTypeLog[3];
-    StatisticLog* m_log;
 
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);

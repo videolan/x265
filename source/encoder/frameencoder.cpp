@@ -618,7 +618,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
     tld.analysis.m_quant.m_nr = m_nr;
     tld.analysis.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
-    tld.analysis.m_log = &tld.analysis.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
     tld.analysis.setQP(slice, slice->m_sliceQp);
 
     int64_t startTime = x265_mdate();
@@ -689,17 +688,18 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             curRow.rowStats.mvBits += cu->m_mvBits;
             curRow.rowStats.coeffBits += cu->m_coeffBits;
             curRow.rowStats.miscBits += cu->m_totalBits - (cu->m_mvBits + cu->m_coeffBits);
+            StatisticLog* log = &tld.analysis.m_sliceTypeLog[slice->m_sliceType];
 
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                curRow.rowStats.iCuCnt += tld.analysis.m_log->qTreeIntraCnt[depth] << shift;
-                curRow.rowStats.pCuCnt += tld.analysis.m_log->qTreeInterCnt[depth] << shift;
-                curRow.rowStats.skipCuCnt += tld.analysis.m_log->qTreeSkipCnt[depth] << shift;
+                curRow.rowStats.iCuCnt += log->qTreeIntraCnt[depth] << shift;
+                curRow.rowStats.pCuCnt += log->qTreeInterCnt[depth] << shift;
+                curRow.rowStats.skipCuCnt += log->qTreeSkipCnt[depth] << shift;
 
                 // clear the row cu data from thread local object
-                tld.analysis.m_log->qTreeIntraCnt[depth] = tld.analysis.m_log->qTreeInterCnt[depth] = tld.analysis.m_log->qTreeSkipCnt[depth] = 0;
+                log->qTreeIntraCnt[depth] = log->qTreeInterCnt[depth] = log->qTreeSkipCnt[depth] = 0;
             }
         }
 
