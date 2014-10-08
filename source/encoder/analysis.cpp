@@ -1596,9 +1596,13 @@ void Analysis::parallelInterSearch(Mode& interMode, CU* cuData, bool bChroma)
 
                 uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
-                /* TODO: why do we do this? */
-                // checkBestMVP(amvpCand[0][m_bestME[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
-                // checkBestMVP(amvpCand[1][m_bestME[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
+                MV amvpCand[AMVP_NUM_CANDS];
+                MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
+                cu->fillMvpCand(m_curPart, partAddr, 0, m_bestME[0].ref, amvpCand, mvc);
+                checkBestMVP(amvpCand, mvzero, mvp0, mvpIdx0, bits0, cost);
+
+                cu->fillMvpCand(m_curPart, partAddr, 1, m_bestME[1].ref, amvpCand, mvc);
+                checkBestMVP(amvpCand, mvzero, mvp1, mvpIdx1, bits1, cost);
 
                 if (cost < bidirCost)
                 {
