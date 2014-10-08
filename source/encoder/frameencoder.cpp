@@ -57,7 +57,8 @@ FrameEncoder::FrameEncoder()
 
 void FrameEncoder::destroy()
 {
-    JobProvider::flush();  // ensure no worker threads are using this frame
+    if (m_pool)
+        JobProvider::flush();  // ensure no worker threads are using this frame
 
     m_threadActive = false;
     m_enable.trigger();
