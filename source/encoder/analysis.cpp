@@ -139,7 +139,7 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
     else
     {
         TComDataCU& cu = md.pred[PRED_2Nx2N].cu;
-        PicYuv* fencPic = cu.m_frame->getPicYuvOrg();
+        PicYuv* fencPic = cu.m_frame->m_origPicYuv;
 
         slave = &m_tld[threadId].analysis;
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
@@ -183,7 +183,7 @@ void Analysis::parallelME(int threadId, int meId)
 {
     Analysis* slave;
     TComDataCU *cu = m_curMECu;
-    PicYuv* fencPic = cu->m_frame->getPicYuvOrg();
+    PicYuv* fencPic = cu->m_frame->m_origPicYuv;
     Slice *slice = cu->m_slice;
 
     if (threadId == -1)
@@ -235,7 +235,7 @@ void Analysis::parallelME(int threadId, int meId)
 
         cu->clipMv(mvCand);
 
-        slave->predInterLumaBlk(slice->m_refPicList[l][ref]->getPicYuvRec(), &slave->m_predTempYuv, &mvCand);
+        slave->predInterLumaBlk(slice->m_refPicList[l][ref]->m_reconPicYuv, &slave->m_predTempYuv, &mvCand);
         uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), slave->m_predTempYuv.m_width);
 
         if (bestCost > cost)
@@ -398,7 +398,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, const CU& cuData, uint32_t 
     if (depth)
         m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
     else
-        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->getPicYuvOrg(), cuAddr, absPartIdx);
+        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->m_origPicYuv, cuAddr, absPartIdx);
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
@@ -447,7 +447,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, const CU& cuData, uint32_t 
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            const CU& childCuData = frame->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCuData = frame->m_picSym->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
@@ -485,7 +485,7 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, const CU& cuData, uint32_t 
     // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
     // if split was not required, write recon
     if (mightNotSplit)
-        md.bestMode->reconYuv.copyToPicYuv(*frame->getPicYuvRec(), cuAddr, absPartIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*frame->m_reconPicYuv, cuAddr, absPartIdx);
 }
 
 void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, uint32_t partIndex, uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder)
@@ -500,7 +500,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, ui
     if (depth)
         m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
     else
-        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->getPicYuvOrg(), cuAddr, absPartIdx);
+        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->m_origPicYuv, cuAddr, absPartIdx);
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
@@ -548,7 +548,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, ui
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            const CU& childCuData = frame->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCuData = frame->m_picSym->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
@@ -587,7 +587,7 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, const CU& cuData, ui
     // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
     // if split was not required, write recon
     if (mightNotSplit)
-        md.bestMode->reconYuv.copyToPicYuv(*frame->getPicYuvRec(), cuAddr, absPartIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*frame->m_reconPicYuv, cuAddr, absPartIdx);
 }
 
 /* TODO: move to Search except checkDQP() and checkBestMode() */
@@ -651,7 +651,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uin
     if (depth)
         m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
     else
-        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->getPicYuvOrg(), cuAddr, absPartIdx);
+        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->m_origPicYuv, cuAddr, absPartIdx);
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
@@ -667,7 +667,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uin
         uint32_t sum0 = 0, sum1 = 0;
         if (slice->m_numRefIdx[0])
         {
-            const TComDataCU& cu = *slice->m_refPicList[0][0]->getCU(cuAddr);
+            const TComDataCU& cu = *slice->m_refPicList[0][0]->m_picSym->getCU(cuAddr);
             previousQP = cu.getQP(0);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
             {
@@ -678,7 +678,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uin
         }
         if (slice->m_numRefIdx[1])
         {
-            const TComDataCU& cu = *slice->m_refPicList[1][0]->getCU(cuAddr);
+            const TComDataCU& cu = *slice->m_refPicList[1][0]->m_picSym->getCU(cuAddr);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth1; i += 4)
             {
                 uint32_t d = cu.getDepth(absPartIdx + i);
@@ -1023,7 +1023,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uin
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            const CU& childCuData = frame->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCuData = frame->m_picSym->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
@@ -1108,7 +1108,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, const CU& cuData, uin
     {
         /* Copy Yuv data to picture Yuv */
         if (mightNotSplit)
-            md.bestMode->reconYuv.copyToPicYuv(*frame->getPicYuvRec(), cuAddr, absPartIdx);
+            md.bestMode->reconYuv.copyToPicYuv(*frame->m_reconPicYuv, cuAddr, absPartIdx);
     }
 
     x265_emms();
@@ -1126,7 +1126,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, const CU& cuData, uin
     if (depth)
         m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
     else
-        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->getPicYuvOrg(), cuAddr, absPartIdx);
+        m_modeDepth[0].origYuv.copyFromPicYuv(*frame->m_origPicYuv, cuAddr, absPartIdx);
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
@@ -1235,7 +1235,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, const CU& cuData, uin
 
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
-            const CU& childCuData = frame->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCuData = frame->m_picSym->getCU(cuAddr)->m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
@@ -1269,7 +1269,7 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, const CU& cuData, uin
 
     // Copy best data to picsym and recon
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*frame->getPicYuvRec(), cuAddr, absPartIdx);
+    md.bestMode->reconYuv.copyToPicYuv(*frame->m_reconPicYuv, cuAddr, absPartIdx);
 }
 
 void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
@@ -1481,7 +1481,7 @@ void Analysis::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChro
 {
     TComDataCU* cu = &interMode.cu;
     Slice *slice = cu->m_slice;
-    PicYuv *fencPic = slice->m_pic->getPicYuvOrg();
+    PicYuv *fencPic = slice->m_frame->m_origPicYuv;
     PartSize partSize = cu->getPartitionSize(0);
     m_curMECu = cu;
     m_curCUData = &cuData;
@@ -1557,8 +1557,8 @@ void Analysis::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChro
             bidir[1] = m_bestME[1];
 
             // Generate reference subpels
-            PicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->getPicYuvRec();
-            PicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->getPicYuvRec();
+            PicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
+            PicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
             
             prepMotionCompensation(cu, cuData, partIdx);
             predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &m_bestME[0].mv);

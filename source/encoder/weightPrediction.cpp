@@ -223,8 +223,8 @@ namespace x265 {
 void weightAnalyse(Slice& slice, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    PicYuv *fencPic = slice.m_pic->getPicYuvOrg();
-    Lowres& fenc    = slice.m_pic->m_lowres;
+    PicYuv *fencPic = slice.m_frame->m_origPicYuv;
+    Lowres& fenc    = slice.m_frame->m_lowres;
 
     Cache cache;
 
@@ -263,7 +263,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
         WeightParam *weights = wp[list][0];
         Frame *refFrame = slice.m_refPicList[list][0];
         Lowres& refLowres = refFrame->m_lowres;
-        int diffPoc = abs(curPoc - refFrame->getPOC());
+        int diffPoc = abs(curPoc - refFrame->m_POC);
 
         /* prepare estimates */
         float guessScale[3], fencMean[3], refMean[3];
@@ -333,7 +333,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
                     if (!refFrame->m_bChromaPlanesExtended)
                     {
                         refFrame->m_bChromaPlanesExtended = true;
-                        PicYuv *refPic = refFrame->getPicYuvOrg();
+                        PicYuv *refPic = refFrame->m_origPicYuv;
                         int width = refPic->m_picWidth >> cache.hshift;
                         int height = refPic->m_picHeight >> cache.vshift;
                         extendPicBorder(refPic->m_picOrg[1], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
@@ -367,7 +367,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
             case 1:
                 orig = fencPic->m_picOrg[1];
                 stride = fencPic->m_strideC;
-                fref = refFrame->getPicYuvOrg()->m_picOrg[1];
+                fref = refFrame->m_origPicYuv->m_picOrg[1];
 
                 /* Clamp the chroma dimensions to the nearest multiple of
                  * 8x8 blocks (or 16x16 for 4:4:4) since mcChroma uses lowres
@@ -385,7 +385,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 break;
 
             case 2:
-                fref = refFrame->getPicYuvOrg()->m_picOrg[2];
+                fref = refFrame->m_origPicYuv->m_picOrg[2];
                 orig = fencPic->m_picOrg[2];
                 stride = fencPic->m_strideC;
                 width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;

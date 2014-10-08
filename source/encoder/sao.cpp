@@ -241,7 +241,7 @@ void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
 void SAO::processSaoCu(int addr, int saoType, int plane)
 {
     int x, y;
-    TComDataCU *tmpCu = m_frame->getCU(addr);
+    TComDataCU *tmpCu = m_frame->m_picSym->getCU(addr);
     pixel* rec;
     int stride;
     int ctuWidth;
@@ -279,13 +279,13 @@ void SAO::processSaoCu(int addr, int saoType, int plane)
 
     if (plane)
     {
-        rec    = m_frame->getPicYuvRec()->getChromaAddr(plane, addr);
-        stride = m_frame->getPicYuvRec()->m_strideC;
+        rec    = m_frame->m_reconPicYuv->getChromaAddr(plane, addr);
+        stride = m_frame->m_reconPicYuv->m_strideC;
     }
     else
     {
-        rec    = m_frame->getPicYuvRec()->getLumaAddr(addr);
-        stride = m_frame->getPicYuvRec()->m_stride;
+        rec    = m_frame->m_reconPicYuv->getLumaAddr(addr);
+        stride = m_frame->m_reconPicYuv->m_stride;
     }
 
     int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
@@ -479,19 +479,19 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 
     if (plane)
     {
-        rec         = m_frame->getPicYuvRec()->m_picOrg[plane];
+        rec         = m_frame->m_reconPicYuv->m_picOrg[plane];
         picWidthTmp = m_param->sourceWidth >> m_hChromaShift;
     }
     else
     {
-        rec         = m_frame->getPicYuvRec()->m_picOrg[0];
+        rec         = m_frame->m_reconPicYuv->m_picOrg[0];
         picWidthTmp = m_param->sourceWidth;
     }
 
     if (!idxY)
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidthTmp);
 
-    int frameWidthInCU = m_frame->getFrameWidthInCU();
+    int frameWidthInCU = m_frame->m_picSym->getFrameWidthInCU();
     int stride;
     bool isChroma = !!plane;
 
@@ -500,14 +500,14 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
     int ctuAddr = idxY * frameWidthInCU;
     if (isChroma)
     {
-        rec = m_frame->getPicYuvRec()->getChromaAddr(plane, ctuAddr);
-        stride = m_frame->getPicYuvRec()->m_strideC;
+        rec = m_frame->m_reconPicYuv->getChromaAddr(plane, ctuAddr);
+        stride = m_frame->m_reconPicYuv->m_strideC;
         picWidthTmp = m_param->sourceWidth >> m_hChromaShift;
     }
     else
     {
-        rec = m_frame->getPicYuvRec()->getLumaAddr(ctuAddr);
-        stride = m_frame->getPicYuvRec()->m_stride;
+        rec = m_frame->m_reconPicYuv->getLumaAddr(ctuAddr);
+        stride = m_frame->m_reconPicYuv->m_stride;
         picWidthTmp = m_param->sourceWidth;
     }
     int maxCUHeight = isChroma ? (g_maxCUSize >> m_vChromaShift) : g_maxCUSize;
@@ -563,13 +563,13 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             {
                 if (isChroma)
                 {
-                    rec = m_frame->getPicYuvRec()->getChromaAddr(plane, ctuAddr);
-                    stride = m_frame->getPicYuvRec()->m_strideC;
+                    rec = m_frame->m_reconPicYuv->getChromaAddr(plane, ctuAddr);
+                    stride = m_frame->m_reconPicYuv->m_strideC;
                 }
                 else
                 {
-                    rec = m_frame->getPicYuvRec()->getLumaAddr(ctuAddr);
-                    stride = m_frame->getPicYuvRec()->m_stride;
+                    rec = m_frame->m_reconPicYuv->getLumaAddr(ctuAddr);
+                    stride = m_frame->m_reconPicYuv->m_stride;
                 }
 
                 int widthShift = isChroma ? (g_maxCUSize >> m_hChromaShift) : g_maxCUSize;
@@ -627,7 +627,7 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_frame->getCU(addr);
+    TComDataCU *cu = m_frame->m_picSym->getCU(addr);
 
     pixel* fenc;
     pixel* recon;
@@ -665,7 +665,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     bpely     = bpely > picHeightTmp ? picHeightTmp : bpely;
     ctuWidth  = rpelx - lpelx;
     ctuHeight = bpely - tpely;
-    stride = plane ? m_frame->getPicYuvRec()->m_strideC : m_frame->getPicYuvRec()->m_stride;
+    stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
 
     //if(iSaoType == BO_0 || iSaoType == BO_1)
     {
@@ -679,8 +679,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         stats = m_offsetOrg[plane][SAO_BO];
         counts = m_count[plane][SAO_BO];
 
-        fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, addr);
-        recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, addr);
+        fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+        recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
 
         endX = (rpelx == picWidthTmp) ? ctuWidth : ctuWidth - numSkipLineRight;
         endY = (bpely == picHeightTmp) ? ctuHeight : ctuHeight - numSkipLine;
@@ -713,8 +713,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             stats = m_offsetOrg[plane][SAO_EO_0];
             counts = m_count[plane][SAO_EO_0];
 
-            fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, addr);
-            recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, addr);
+            fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+            recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
@@ -746,8 +746,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             stats = m_offsetOrg[plane][SAO_EO_1];
             counts = m_count[plane][SAO_EO_1];
 
-            fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, addr);
-            recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, addr);
+            fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+            recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
 
             startY = (tpely == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? ctuWidth : ctuWidth - numSkipLineRight;
@@ -787,8 +787,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             stats = m_offsetOrg[plane][SAO_EO_2];
             counts = m_count[plane][SAO_EO_2];
 
-            fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, addr);
-            recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, addr);
+            fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+            recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
@@ -833,8 +833,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             stats = m_offsetOrg[plane][SAO_EO_3];
             counts = m_count[plane][SAO_EO_3];
 
-            fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, addr);
-            recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, addr);
+            fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+            recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
 
             startX = (lpelx == 0) ? 1 : 0;
             endX   = (rpelx == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
@@ -870,7 +870,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     }
 }
 
-void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
+void SAO::calcSaoStatsCu_BeforeDblk(Frame* curFrame, int idxX, int idxY)
 {
     int x, y;
 
@@ -904,7 +904,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
         // NOTE: Col
         {
             int ctuAddr = idxX + frameWidthInCU * idxY;
-            ctu = pic->getCU(ctuAddr);
+            ctu = curFrame->m_picSym->getCU(ctuAddr);
 
             uint32_t picWidthTmp  = m_param->sourceWidth;
             uint32_t picHeightTmp = m_param->sourceHeight;
@@ -937,7 +937,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                     bPelY     = tPelY + ctuHeight;
                 }
 
-                stride = plane ? m_frame->getPicYuvRec()->m_strideC : m_frame->getPicYuvRec()->m_stride;
+                stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
 
                 //if(iSaoType == BO)
 
@@ -947,8 +947,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[ctuAddr][plane][SAO_BO];
                 count = m_countPreDblk[ctuAddr][plane][SAO_BO];
 
-                fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, ctuAddr);
-                recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, ctuAddr);
+                fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, ctuAddr);
+                recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, ctuAddr);
 
                 startX = (rPelX == picWidthTmp) ? ctuWidth : ctuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? ctuHeight : ctuHeight - numSkipLine;
@@ -977,8 +977,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[ctuAddr][plane][SAO_EO_0];
                 count = m_countPreDblk[ctuAddr][plane][SAO_EO_0];
 
-                fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, ctuAddr);
-                recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, ctuAddr);
+                fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, ctuAddr);
+                recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, ctuAddr);
 
                 startX = (rPelX == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? ctuHeight : ctuHeight - numSkipLine;
@@ -1013,8 +1013,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[ctuAddr][plane][SAO_EO_1];
                 count = m_countPreDblk[ctuAddr][plane][SAO_EO_1];
 
-                fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, ctuAddr);
-                recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, ctuAddr);
+                fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, ctuAddr);
+                recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, ctuAddr);
 
                 startX = (rPelX == picWidthTmp) ? ctuWidth : ctuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? ctuHeight - 1 : ctuHeight - numSkipLine;
@@ -1056,8 +1056,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[ctuAddr][plane][SAO_EO_2];
                 count = m_countPreDblk[ctuAddr][plane][SAO_EO_2];
 
-                fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, ctuAddr);
-                recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, ctuAddr);
+                fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, ctuAddr);
+                recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, ctuAddr);
 
                 startX = (rPelX == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? ctuHeight - 1 : ctuHeight - numSkipLine;
@@ -1105,8 +1105,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
                 stats = m_offsetOrgPreDblk[ctuAddr][plane][SAO_EO_3];
                 count = m_countPreDblk[ctuAddr][plane][SAO_EO_3];
 
-                fenc = m_frame->getPicYuvOrg()->getPlaneAddr(plane, ctuAddr);
-                recon = m_frame->getPicYuvRec()->getPlaneAddr(plane, ctuAddr);
+                fenc = m_frame->m_origPicYuv->getPlaneAddr(plane, ctuAddr);
+                recon = m_frame->m_reconPicYuv->getPlaneAddr(plane, ctuAddr);
 
                 startX = (rPelX == picWidthTmp) ? ctuWidth - 1 : ctuWidth - numSkipLineRight;
                 startY = (bPelY == picHeightTmp) ? ctuHeight - 1 : ctuHeight - numSkipLine;
@@ -1710,16 +1710,12 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
 
 /* Original Lossless YUV LF disable process */
-void restoreLFDisabledOrigYuv(Frame* pic)
+void restoreLFDisabledOrigYuv(Frame* curFrame)
 {
-    if (pic->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
+    if (curFrame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
-        for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
-        {
-            TComDataCU* cu = pic->getCU(cuAddr);
-
-            origCUSampleRestoration(cu, 0, 0);
-        }
+        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_picSym->getNumberOfCUsInFrame(); cuAddr++)
+            origCUSampleRestoration(curFrame->m_picSym->getCU(cuAddr), 0, 0);
     }
 }
 
@@ -1750,7 +1746,7 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 /* Original Lossless YUV sample restoration */
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    PicYuv* reconPic = cu->m_frame->getPicYuvRec();
+    PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
     int hChromaShift = cu->m_hChromaShift;
     int vChromaShift = cu->m_vChromaShift;
     uint32_t lumaOffset   = absZOrderIdx << (LOG2_UNIT_SIZE * 2);

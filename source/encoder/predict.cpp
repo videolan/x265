@@ -183,18 +183,18 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
             ShortYuv* shortYuv = &m_predShortYuv[0];
 
             if (bLuma)
-                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, shortYuv, &m_clippedMv[0]);
             if (bChroma)
-                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, shortYuv, &m_clippedMv[0]);
 
             addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
         }
         else
         {
             if (bLuma)
-                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, predYuv, &m_clippedMv[0]);
             if (bChroma)
-                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, predYuv, &m_clippedMv[0]);
         }
     }
     else
@@ -252,13 +252,13 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
 
             if (bLuma)
             {
-                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
-                predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
+                predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, &m_predShortYuv[0], &m_clippedMv[0]);
+                predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, &m_predShortYuv[1], &m_clippedMv[1]);
             }
             if (bChroma)
             {
-                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), &m_predShortYuv[0], &m_clippedMv[0]);
-                predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), &m_predShortYuv[1], &m_clippedMv[1]);
+                predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, &m_predShortYuv[0], &m_clippedMv[0]);
+                predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, &m_predShortYuv[1], &m_clippedMv[1]);
             }
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
@@ -276,18 +276,18 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
                 ShortYuv* shortYuv = &m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, shortYuv, &m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), shortYuv, &m_clippedMv[0]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, shortYuv, &m_clippedMv[0]);
 
                 addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, predYuv, &m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->getPicYuvRec(), predYuv, &m_clippedMv[0]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[0][refIdx0]->m_reconPicYuv, predYuv, &m_clippedMv[0]);
             }
         }
         else
@@ -301,18 +301,18 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
                 ShortYuv* shortYuv = &m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, shortYuv, &m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), shortYuv, &m_clippedMv[1]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, shortYuv, &m_clippedMv[1]);
 
                 addWeightUni(shortYuv, wv0, predYuv, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
+                    predInterLumaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, predYuv, &m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->getPicYuvRec(), predYuv, &m_clippedMv[1]);
+                    predInterChromaBlk(m_predSlice->m_refPicList[1][refIdx1]->m_reconPicYuv, predYuv, &m_clippedMv[1]);
             }
         }
     }

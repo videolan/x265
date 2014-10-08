@@ -378,7 +378,7 @@ void Entropy::codeSliceHeader(const Slice& slice)
 
         WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
-    const SAOParam *saoParam = slice.m_pic->m_picSym->m_saoParam;
+    const SAOParam *saoParam = slice.m_frame->m_picSym->m_saoParam;
     if (slice.m_sps->bUseSAO)
     {
         WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
@@ -450,7 +450,7 @@ void Entropy::codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *
         X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
     }
 
-    uint32_t numRows = slice.m_pic->getFrameHeightInCU() - 1;
+    uint32_t numRows = slice.m_frame->m_picSym->getFrameHeightInCU() - 1;
     WRITE_UVLC(numRows, "num_entry_point_offsets");
     if (numRows > 0)
         WRITE_UVLC(offsetLen - 1, "offset_len_minus1");

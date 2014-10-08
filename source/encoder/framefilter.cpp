@@ -95,19 +95,19 @@ void FrameFilter::processRow(int row)
     {
         for (uint32_t col = 0; col < numCols; col++)
         {
-            const uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_frame->getCU(cuAddr);
+            uint32_t cuAddr = lineStartCUAddr + col;
+            TComDataCU* cu = m_frame->m_picSym->getCU(cuAddr);
 
             m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                TComDataCU* cu_prev = m_frame->getCU(cuAddr - 1);
+                TComDataCU* cu_prev = m_frame->m_picSym->getCU(cuAddr - 1);
                 m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
             }
         }
 
-        TComDataCU* cu_prev = m_frame->getCU(lineStartCUAddr + numCols - 1);
+        TComDataCU* cu_prev = m_frame->m_picSym->getCU(lineStartCUAddr + numCols - 1);
         m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
     }
 
@@ -135,7 +135,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->getNumCUsInFrame());
+            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_picSym->getNumberOfCUsInFrame());
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);
@@ -149,7 +149,7 @@ void FrameFilter::processRowPost(int row)
 {
     const uint32_t numCols = m_frame->m_picSym->getFrameWidthInCU();
     const uint32_t lineStartCUAddr = row * numCols;
-    PicYuv *reconPic = m_frame->getPicYuvRec();
+    PicYuv *reconPic = m_frame->m_reconPicYuv;
     const int lastH = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
     const int realH = (row != m_numRows - 1) ? g_maxCUSize : lastH;
 
@@ -201,7 +201,7 @@ void FrameFilter::processRowPost(int row)
     int cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)
     {
-        PicYuv* origPic = m_frame->getPicYuvOrg();
+        PicYuv* origPic = m_frame->m_origPicYuv;
 
         int stride = reconPic->m_stride;
         int width  = reconPic->m_picWidth - m_pad[0];
@@ -226,10 +226,10 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = m_frame->getPicYuvRec()->m_picOrg[0];
-        pixel *org = m_frame->getPicYuvOrg()->m_picOrg[0];
-        int stride1 = m_frame->getPicYuvOrg()->m_stride;
-        int stride2 = m_frame->getPicYuvRec()->m_stride;
+        pixel *rec = m_frame->m_reconPicYuv->m_picOrg[0];
+        pixel *org = m_frame->m_origPicYuv->m_picOrg[0];
+        int stride1 = m_frame->m_origPicYuv->m_stride;
+        int stride2 = m_frame->m_reconPicYuv->m_stride;
         int bEnd = ((row + 1) == (this->m_numRows - 1));
         int bStart = (row == 0);
         int minPixY = row * g_maxCUSize - 4 * !bStart;
@@ -431,11 +431,6 @@ void FrameFilter::processSao(int row)
     if (m_frame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t col = 0; col < numCols; col++)
-        {
-            const uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_frame->getCU(cuAddr);
-
-            origCUSampleRestoration(cu, 0, 0);
-        }
+            origCUSampleRestoration(m_frame->m_picSym->getCU(lineStartCUAddr + col), 0, 0);
     }
 }

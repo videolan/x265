@@ -55,11 +55,8 @@ Frame::Frame()
     m_interData = NULL;
 }
 
-bool Frame::create(x265_param *param, Window& display, Window& conformance)
+bool Frame::create(x265_param *param)
 {
-    m_conformanceWindow = conformance;
-    m_defaultDisplayWindow = display;
-
     m_origPicYuv = new PicYuv;
 
     bool ok = true;

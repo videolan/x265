@@ -160,7 +160,7 @@ void FrameEncoder::compressFrame()
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
-    if (m_param->bEnableAccessUnitDelimiters && (m_frame->getPOC() || m_param->bRepeatHeaders))
+    if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_POC || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
         m_entropyCoder.setBitstream(&m_bs);
@@ -188,7 +188,7 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->getPicYuvRec(), w);
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPicYuv, w);
         }
     }
 
@@ -413,13 +413,13 @@ void FrameEncoder::encodeSlice()
     const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
     const int numSubstreams = m_param->bEnableWavefront ? m_frame->m_picSym->getFrameHeightInCU() : 1;
 
-    SAOParam *saoParam = slice->m_pic->m_picSym->m_saoParam;
+    SAOParam *saoParam = slice->m_frame->m_picSym->m_saoParam;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
         uint32_t lin = cuAddr / widthInLCUs;
         uint32_t subStrm = lin % numSubstreams;
-        TComDataCU* ctu = m_frame->getCU(cuAddr);
+        TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
@@ -615,7 +615,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
     // setup thread-local data
     Slice *slice = m_frame->m_picSym->m_slice;
-    PicYuv* fencPic = m_frame->getPicYuvOrg();
+    PicYuv* fencPic = m_frame->m_origPicYuv;
     tld.analysis.m_quant.m_nr = m_nr;
     tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
     tld.analysis.setQP(slice, slice->m_sliceQp);
@@ -629,7 +629,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* ctu = m_frame->getCU(cuAddr);
+        TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
         ctu->initCU(m_frame, cuAddr);
         ctu->setQPSubParts(m_frame->m_picSym->m_slice->m_sliceQp, 0, 0);
 
@@ -642,7 +642,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
-                ctu->m_baseQp = m_frame->getCU(cuAddr - numCols + 1)->m_baseQp;
+                ctu->m_baseQp = m_frame->m_picSym->getCU(cuAddr - numCols + 1)->m_baseQp;
             else
                 ctu->m_baseQp = m_frame->m_rowDiagQp[row];
         }
@@ -725,7 +725,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 if (reEncode < 0)
                 {
                     x265_log(m_param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
-                             m_frame->getPOC(), row, qpBase, ctu->m_baseQp);
+                             m_frame->m_POC, row, qpBase, ctu->m_baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
                     m_vbvResetTriggerRow = row;
@@ -835,7 +835,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         int64_t bits = 0;
         for (uint32_t col = 0; col < rowCount * numCols; col++)
         {
-            TComDataCU* cu = m_frame->getCU(col);
+            TComDataCU* cu = m_frame->m_picSym->getCU(col);
             bits += cu->m_totalBits;
         }
 
@@ -911,8 +911,8 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (m_frame->getPicYuvOrg()->m_picWidth + (16 - 1)) / 16;
-    int maxBlockRows = (m_frame->getPicYuvOrg()->m_picHeight + (16 - 1)) / 16;
+    int maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
+    int maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
     int noOfBlocks = g_maxCUSize / 16;
     int block_y = (ctuAddr / m_frame->m_picSym->getFrameWidthInCU()) * noOfBlocks;
     int block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_picSym->getFrameWidthInCU();

@@ -347,7 +347,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             pic = new Frame;
-            if (!pic->create(m_param, m_sps.vuiParameters.defaultDisplayWindow, m_conformanceWindow))
+            if (!pic->create(m_param))
             {
                 m_aborted = true;
                 x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -362,7 +362,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         /* Copy input picture into a TComPic, send to lookahead */
         pic->m_POC = ++m_pocLast;
         pic->reinit(m_param);
-        pic->getPicYuvOrg()->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+        pic->m_origPicYuv->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         pic->m_userData = pic_in->userData;
         pic->m_pts = pic_in->pts;
         pic->m_forceqp = pic_in->forceqp;
@@ -413,7 +413,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         Slice *slice = out->m_picSym->m_slice;
         if (pic_out)
         {
-            PicYuv *recpic = out->getPicYuvRec();
+            PicYuv *recpic = out->m_reconPicYuv;
             pic_out->poc = slice->m_poc;
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = out->m_userData;
@@ -496,46 +496,46 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
     // pop a single frame from decided list, then provide to frame encoder
     // curEncoder is guaranteed to be idle at this point
-    Frame* fenc = m_lookahead->getDecidedPicture();
-    if (fenc)
+    Frame* frameEnc = m_lookahead->getDecidedPicture();
+    if (frameEnc)
     {
         // give this picture a TComPicSym instance before encoding
         if (m_dpb->m_picSymFreeList)
         {
-            fenc->m_picSym = m_dpb->m_picSymFreeList;
+            frameEnc->m_picSym = m_dpb->m_picSymFreeList;
             m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
-            fenc->m_reconPicYuv = fenc->m_picSym->m_reconPicYuv;
+            frameEnc->m_reconPicYuv = frameEnc->m_picSym->m_reconPicYuv;
         }
         else
         {
-            fenc->allocPicSym(m_param);
-            Slice* slice = fenc->m_picSym->m_slice;
-            slice->m_pic = fenc;
+            frameEnc->allocPicSym(m_param);
+            Slice* slice = frameEnc->m_picSym->m_slice;
+            slice->m_frame = frameEnc;
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            slice->m_endCUAddr = slice->realEndAddress(fenc->getNumCUsInFrame() * NUM_CU_PARTITIONS);
+            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_picSym->getNumberOfCUsInFrame() * NUM_CU_PARTITIONS);
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
         {
             int64_t *prevReorderedPts = m_prevReorderedPts;
-            fenc->m_dts = m_encodedFrameNum > m_bframeDelay
+            frameEnc->m_dts = m_encodedFrameNum > m_bframeDelay
                 ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
-                : fenc->m_reorderedPts - m_bframeDelayTime;
-            prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = fenc->m_reorderedPts;
+                : frameEnc->m_reorderedPts - m_bframeDelayTime;
+            prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = frameEnc->m_reorderedPts;
         }
         else
-            fenc->m_dts = fenc->m_reorderedPts;
+            frameEnc->m_dts = frameEnc->m_reorderedPts;
 
         // determine references, setup RPS, etc
-        m_dpb->prepareEncode(fenc);
+        m_dpb->prepareEncode(frameEnc);
 
         if (m_param->rc.rateControlMode != X265_RC_CQP)
-            m_lookahead->getEstimatedPictureCost(fenc);
+            m_lookahead->getEstimatedPictureCost(frameEnc);
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
-        curEncoder->startCompressFrame(fenc);
+        curEncoder->startCompressFrame(frameEnc);
     }
     else if (m_encodedFrameNum)
         m_rateControl->setFinalFrameCount(m_encodedFrameNum);
@@ -942,7 +942,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 
 void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits)
 {
-    PicYuv* reconPic = curFrame->getPicYuvRec();
+    PicYuv* reconPic = curFrame->m_reconPicYuv;
 
     //===== calculate PSNR =====
     int width  = reconPic->m_picWidth - m_sps.conformanceWindow.rightOffset;
