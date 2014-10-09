@@ -468,11 +468,11 @@ void Analysis::compressIntraCU(TComDataCU* parentCU, CU *cuData, uint32_t partIn
             m_entropyCoder.codeSplitFlag(splitCU, 0, depth);
             splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
-        nd.bestMode->contexts.store(splitPred->contexts);
         if (m_rdCost.m_psyRd)
             splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
         else
             splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+        nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
@@ -570,11 +570,11 @@ void Analysis::compressSharedIntraCTU(TComDataCU* parentCU, CU *cuData, uint32_t
             m_entropyCoder.codeSplitFlag(splitCU, 0, depth);
             splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
-        nd.bestMode->contexts.store(splitPred->contexts);
         if (m_rdCost.m_psyRd)
             splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
         else
             splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+        nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
@@ -1060,13 +1060,10 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
                 splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
             else
                 splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
-            nd.bestMode->contexts.store(splitPred->contexts);
         }
         else
-        {
-            m_rdContexts[depth].cur.store(splitPred->contexts); // NOP
             splitCU->m_sa8dCost = m_rdCost.calcRdSADCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
-        }
+        nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
 
         if (!depth && md.bestMode)
@@ -1255,11 +1252,11 @@ void Analysis::compressInterCU_rd5_6(TComDataCU* parentCU, CU *cuData, uint32_t 
             m_entropyCoder.codeSplitFlag(splitCU, 0, depth);
             splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
-        nd.bestMode->contexts.store(splitPred->contexts);
         if (m_rdCost.m_psyRd)
             splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
         else
             splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+        nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
