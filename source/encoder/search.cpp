@@ -2316,7 +2316,7 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData, const Yuv* fencYuv
 
     if (cu->getPredictionMode(0) == MODE_INTER)
     {
-        residualTransformQuantInter(mode, cuData, 0, fencYuv, cu->getDepth(0), tuDepthRange);
+        residualTransformQuantInter(mode, cuData, 0, cu->getDepth(0), tuDepthRange);
         if (cu->getQtRootCbf(0))
             mode.reconYuv.addClip(mode.predYuv, mode.resiYuv, cu->getLog2CUSize(0));
         else
@@ -2335,10 +2335,11 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData, const Yuv* fencYuv
     }
 }
 
-void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, const Yuv* fencYuv, const uint32_t depth, uint32_t depthRange[2])
+void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, const uint32_t depth, uint32_t depthRange[2])
 {
     TComDataCU* cu = &mode.cu;
     ShortYuv* resiYuv = &mode.resiYuv;
+    const Yuv* fencYuv = mode.origYuv;
 
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2448,7 +2449,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
     {
         const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
         for (uint32_t i = 0; i < 4; ++i)
-            residualTransformQuantInter(mode, cuData, absPartIdx + i * qPartNumSubdiv, fencYuv, depth + 1, depthRange);
+            residualTransformQuantInter(mode, cuData, absPartIdx + i * qPartNumSubdiv, depth + 1, depthRange);
 
         uint32_t ycbf = 0;
         uint32_t ucbf = 0;
