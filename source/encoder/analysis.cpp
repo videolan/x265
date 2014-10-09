@@ -73,6 +73,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
             ok &= md.pred[j].predYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
+            md.pred[j].origYuv = &md.origYuv;
         }
     }
 

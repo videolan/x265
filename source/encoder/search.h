@@ -88,6 +88,7 @@ public:
     struct Mode
     {
         TComDataCU cu;
+        const Yuv* origYuv;
         Yuv        predYuv;
         Yuv        reconYuv;
         ShortYuv   resiYuv;
