@@ -967,11 +967,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         const TComDataCU* aboveLeft = parentCTU.getCUAboveLeft();
         const TComDataCU* aboveRight = parentCTU.getCUAboveRight();
         const TComDataCU* left = parentCTU.getCULeft();
-        TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
         uint64_t neighCost = 0, cuCost = 0, neighCount = 0, cuCount = 0;
 
-        cuCost += ctu->m_avgCost[depth] * ctu->m_count[depth];
-        cuCount += ctu->m_count[depth];
+        cuCost += parentCTU.m_avgCost[depth] * parentCTU.m_count[depth];
+        cuCount += parentCTU.m_count[depth];
         if (above)
         {
             neighCost += above->m_avgCost[depth] * above->m_count[depth];
@@ -1025,10 +1024,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (nd.bestMode->cu.getPredictionMode(0) != MODE_INTRA)
                 {
                     /* more early-out statistics */
-                    TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
-                    uint64_t temp = ctu->m_avgCost[nextDepth] * ctu->m_count[nextDepth];
-                    ctu->m_count[nextDepth] += 1;
-                    ctu->m_avgCost[nextDepth] = (temp + nd.bestMode->cu.m_totalRDCost) / ctu->m_count[nextDepth];
+                    TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+                    uint64_t temp = ctu.m_avgCost[nextDepth] * ctu.m_count[nextDepth];
+                    ctu.m_count[nextDepth] += 1;
+                    ctu.m_avgCost[nextDepth] = (temp + nd.bestMode->cu.m_totalRDCost) / ctu.m_count[nextDepth];
                 }
 
                 // Save best CU and pred data for this sub CU
@@ -1068,10 +1067,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         if (!depth && md.bestMode)
         {
             /* more early-out statistics */
-            TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
-            uint64_t temp = ctu->m_avgCost[depth] * ctu->m_count[depth];
-            ctu->m_count[depth] += 1;
-            ctu->m_avgCost[depth] = (temp + md.bestMode->cu.m_totalRDCost) / ctu->m_count[depth];
+            TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+            uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
+            ctu.m_count[depth] += 1;
+            ctu.m_avgCost[depth] = (temp + md.bestMode->cu.m_totalRDCost) / ctu.m_count[depth];
         }
 
         if (!md.bestMode)
