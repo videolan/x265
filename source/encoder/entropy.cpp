@@ -1211,16 +1211,6 @@ void Entropy::codePartSize(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
                 encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
         }
         break;
-
-    case SIZE_NxN:
-        if (depth == g_maxCUDepth && !(cu->getLog2CUSize(absPartIdx) == 3))
-        {
-            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
-            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
-            encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 2]);
-        }
-        break;
-
     default:
         X265_CHECK(0, "invalid CU partition\n");
         break;

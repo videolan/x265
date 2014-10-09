@@ -1469,108 +1469,99 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             outTempCU->initEstData();
 
             // do inter modes, NxN, 2NxN, and Nx2N
-            if (slice->m_sliceType != I_SLICE)
+            
+            if (m_param->bEnableRectInter)
             {
-                // 2Nx2N, NxN
-                if (cu->log2CUSize != 3 && depth == g_maxCUDepth && doNotBlockPu)
+                // 2NxN, Nx2N
+                if (doNotBlockPu)
                 {
-                    checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_NxN, false);
+                    checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_Nx2N, false);
                     outTempCU->initEstData();
+                    if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_Nx2N)
+                        doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                 }
-
-                if (m_param->bEnableRectInter)
+                if (doNotBlockPu)
                 {
-                    // 2NxN, Nx2N
+                    checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxN, false);
+                    outTempCU->initEstData();
+                    if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxN)
+                        doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
+                }
+            }
+
+            // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
+            if (slice->m_sps->maxAMPDepth > depth)
+            {
+                bool bTestAMP_Hor = false, bTestAMP_Ver = false;
+                bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
+
+                deriveTestModeAMP(outBestCU, SIZE_NONE, bTestAMP_Hor, bTestAMP_Ver, bTestMergeAMP_Hor, bTestMergeAMP_Ver);
+
+                // Do horizontal AMP
+                if (bTestAMP_Hor)
+                {
                     if (doNotBlockPu)
                     {
-                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_Nx2N, false);
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU, false);
                         outTempCU->initEstData();
-                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_Nx2N)
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                     }
                     if (doNotBlockPu)
                     {
-                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxN, false);
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD, false);
                         outTempCU->initEstData();
-                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxN)
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
+                            doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
+                    }
+                }
+                else if (bTestMergeAMP_Hor)
+                {
+                    if (doNotBlockPu)
+                    {
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU, true);
+                        outTempCU->initEstData();
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
+                            doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
+                    }
+                    if (doNotBlockPu)
+                    {
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD, true);
+                        outTempCU->initEstData();
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
                             doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                     }
                 }
 
-                // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-                if (slice->m_sps->maxAMPDepth > depth)
+                // Do horizontal AMP
+                if (bTestAMP_Ver)
                 {
-                    bool bTestAMP_Hor = false, bTestAMP_Ver = false;
-                    bool bTestMergeAMP_Hor = false, bTestMergeAMP_Ver = false;
-
-                    deriveTestModeAMP(outBestCU, SIZE_NONE, bTestAMP_Hor, bTestAMP_Ver, bTestMergeAMP_Hor, bTestMergeAMP_Ver);
-
-                    // Do horizontal AMP
-                    if (bTestAMP_Hor)
+                    if (doNotBlockPu)
                     {
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU, false);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD, false);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N, false);
+                        outTempCU->initEstData();
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
+                            doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                     }
-                    else if (bTestMergeAMP_Hor)
+                    if (doNotBlockPu)
                     {
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnU, true);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnU)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_2NxnD, true);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_2NxnD)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N, false);
+                        outTempCU->initEstData();
                     }
-
-                    // Do horizontal AMP
-                    if (bTestAMP_Ver)
+                }
+                else if (bTestMergeAMP_Ver)
+                {
+                    if (doNotBlockPu)
                     {
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N, false);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N, false);
-                            outTempCU->initEstData();
-                        }
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N, true);
+                        outTempCU->initEstData();
+                        if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
+                            doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
                     }
-                    else if (bTestMergeAMP_Ver)
+                    if (doNotBlockPu)
                     {
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nLx2N, true);
-                            outTempCU->initEstData();
-                            if (m_param->bEnableCbfFastMode && outBestCU->getPartitionSize(0) == SIZE_nLx2N)
-                                doNotBlockPu = outBestCU->getQtRootCbf(0) != 0;
-                        }
-                        if (doNotBlockPu)
-                        {
-                            checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N, true);
-                            outTempCU->initEstData();
-                        }
+                        checkInter_rd5_6(outBestCU, outTempCU, cu, SIZE_nRx2N, true);
+                        outTempCU->initEstData();
                     }
                 }
             }
