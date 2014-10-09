@@ -1979,7 +1979,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
-    cu->m_totalDistortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, fencYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
+    cu->m_totalDistortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);  /* TODO: why is recon a second call? */
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
     cu->m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
