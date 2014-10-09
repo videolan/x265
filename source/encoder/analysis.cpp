@@ -930,7 +930,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
                 md.bestMode->resiYuv.subtract(md.origYuv, md.bestMode->predYuv, bestCU->getLog2CUSize(0));
             }
-            generateCoeffRecon(*md.bestMode, cuData, &md.origYuv);
+            generateCoeffRecon(*md.bestMode, cuData);
         }
 
         TComDataCU* bestCU = &md.bestMode->cu;
@@ -2152,9 +2152,8 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
     }
     else
     {
-        Yuv& origYuv = m_modeDepth[depth].origYuv;
         m_quant.setQPforQuant(*cu);
-        generateCoeffRecon(*bestMode, cuData, &origYuv);
+        generateCoeffRecon(*bestMode, cuData);
         checkDQP(cu, cuData);
         recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
         cu->copyCodedToPic(depth);

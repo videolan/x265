@@ -2305,9 +2305,10 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, const 
         cu->clearCbf(0, depth);
 }
 
-void Search::generateCoeffRecon(Mode& mode, const CU& cuData, const Yuv* fencYuv)
+void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
 {
     TComDataCU* cu = &mode.cu;
+    const Yuv* fencYuv = mode.origYuv;
 
     m_quant.setQPforQuant(mode.cu);
 
