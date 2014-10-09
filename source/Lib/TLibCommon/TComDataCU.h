@@ -169,7 +169,7 @@ struct CU
     uint32_t childIdx;   // Index of the first child CU
     uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
     uint32_t numPartitions;// Number of 4x4 blocks in the CU
-    uint32_t depth;      // Number of 4x4 blocks in the CU
+    uint32_t depth;      // depth of this CU relative from CTU
     uint32_t flags;      // CU flags.
 };
 
