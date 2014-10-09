@@ -1372,7 +1372,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
                 std::swap(m_bestPredYuv[depth], m_tmpPredYuv[depth]);
                 // copy 'next' state from last CU of next depth as next state of this CU
-                m_rdContexts[nextDepth].next.store(m_rdContexts[depth].temp);
+                m_rdContexts[nextDepth].next.store(m_rdContexts[depth].next);
             }
         }
         else
@@ -1381,7 +1381,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
             std::swap(m_bestRecoYuv[depth], m_tmpRecoYuv[depth]);
             std::swap(m_bestPredYuv[depth], m_tmpPredYuv[depth]);
             // copy 'next' state from last CU of next depth as next state of this CU
-            m_rdContexts[nextDepth].next.store(m_rdContexts[depth].temp);
+            m_rdContexts[nextDepth].next.store(m_rdContexts[depth].next);
         }
     }
 
