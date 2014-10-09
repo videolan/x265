@@ -132,6 +132,12 @@ inline T Clip3(T minVal, T maxVal, T a)
     return std::min<T>(std::max<T>(minVal, a), maxVal);
 }
 
+template<typename T>
+inline T x265_min(T a, T b) { return a < b ? a : b; }
+
+template<typename T>
+inline T x265_max(T a, T b) { return a > b ? a : b; }
+
 typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -224,17 +230,15 @@ struct SaoCtuParam
     bool mergeUpFlag;
     bool mergeLeftFlag;
     int  typeIdx;
-    int  subTypeIdx;    // indicates EO class or BO band position
+    uint32_t bandPos;    // BO band position
     int  offset[SAO_NUM_OFFSET];
-    int  partIdx;
-    int  partIdxTmp;
 
     void reset()
     {
         mergeUpFlag = false;
         mergeLeftFlag = false;
         typeIdx = -1;
-        subTypeIdx = 0;
+        bandPos = 0;
         offset[0] = 0;
         offset[1] = 0;
         offset[2] = 0;
@@ -246,7 +250,6 @@ struct SAOParam
 {
     SaoCtuParam* ctuParam[3];
     bool         bSaoFlag[2];
-    int          numCuInHeight;
     int          numCuInWidth;
 
     SAOParam()
@@ -254,6 +257,7 @@ struct SAOParam
         for (int i = 0; i < 3; i++)
             ctuParam[i] = NULL;
     }
+
     ~SAOParam()
     {
         delete[] ctuParam[0];
