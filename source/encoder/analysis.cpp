@@ -65,7 +65,6 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
         md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES, tqBypass);
         md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
         ok &= md.origYuv.create(cuSize, cuSize, csp);
-        ok &= md.tempResi.create(cuSize, cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
@@ -88,7 +87,6 @@ void Analysis::destroy()
         m_modeDepth[i].cuMemPool.destroy();
         m_modeDepth[i].mvFieldMemPool.destroy();
         m_modeDepth[i].origYuv.destroy();
-        m_modeDepth[i].tempResi.destroy();
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
@@ -810,7 +808,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     }
 
                     /* RD selection between inter and merge */
-                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv, &md.tempResi);
+                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv);
 
                     if (md.bestMode->cu.m_totalRDCost < bestInter->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -872,7 +870,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
-                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv, &md.tempResi);
+                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv);
 
                     if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -912,7 +910,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     prepMotionCompensation(bestCU, cuData, partIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuData, &md.origYuv, &md.tempResi);
+                encodeResAndCalcRdInterCU(*md.bestMode, cuData, &md.origYuv);
             }
             else if (bestCU->getPredictionMode(0) == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
@@ -1351,7 +1349,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(skipPred->predYuv);
-        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &md.tempResi);
+        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv);
     }
 }
 
@@ -1417,7 +1415,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
                     if (noResidual)
                         encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE], fencYuv);
                     else
-                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv, &m_modeDepth[depth].tempResi);
+                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv);
 
                     /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !mergeCU->getQtRootCbf(0))
@@ -1732,13 +1730,13 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, true);
-        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
+        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
     else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
-        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv, &m_modeDepth[depth].tempResi);
+        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }

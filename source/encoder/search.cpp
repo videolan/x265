@@ -56,6 +56,8 @@ Search::~Search()
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
     }
+    for (int i = 0; i < NUM_FULL_DEPTH; i++)
+        m_rdContexts[i].tempResi.destroy();
 
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
@@ -79,9 +81,14 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 
     bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
     ok &= Predict::allocBuffers(param->internalCsp);
+
+    /* TODO: allocate these per CU depth */
     ok &= m_predTempYuv.create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
     ok &= m_bidirPredYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
     ok &= m_bidirPredYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
+
+    for (int i = 0; i < NUM_FULL_DEPTH; i++)
+        ok &= m_rdContexts[i].tempResi.create(g_maxCUSize >> i, g_maxCUSize >> i, m_param->internalCsp);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
@@ -2140,12 +2147,13 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode, Yuv* fencYuv)
 }
 
 /** encode residual and calculate rate-distortion for a CU block */
-void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, Yuv* fencYuv, ShortYuv* tmpResiYuv)
+void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, Yuv* fencYuv)
 {
     TComDataCU* cu = &interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;
     ShortYuv* resiYuv = &interMode.resiYuv;
+    ShortYuv* tmpResiYuv = &m_rdContexts[cuData.depth].tempResi;
 
     /* TODO: is this temp residual buffer really necessary? it's somewhat annoying */
 

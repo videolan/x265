@@ -48,10 +48,11 @@ class Entropy;
 /* All the CABAC contexts that Analysis needs to keep track of at each depth */
 struct RDContexts
 {
-    Entropy cur;     /* input context for current CU */
-    Entropy rqtTemp; /* residual quad-tree temp context */
-    Entropy rqtRoot; /* residual quad-tree start context */
-    Entropy rqtTest; /* residual quad-tree test context */
+    Entropy  cur;     /* input context for current CU */
+    Entropy  rqtTemp; /* residual quad-tree temp context */
+    Entropy  rqtRoot; /* residual quad-tree start context */
+    Entropy  rqtTest; /* residual quad-tree test context */
+    ShortYuv tempResi;
 };
 
 inline int getTUBits(int idx, int numIdx)
@@ -110,7 +111,7 @@ public:
     bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
-    void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, Yuv* fencYuv, ShortYuv* outResiYuv);
+    void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, Yuv* fencYuv);
     void     encodeResAndCalcRdSkipCU(Mode& interMode, Yuv* fencYuv);
 
     void     generateCoeffRecon(Mode& mode, const CU& cuData, Yuv* fencYuv);
