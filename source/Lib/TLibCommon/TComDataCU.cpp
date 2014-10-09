@@ -60,15 +60,7 @@ static MV scaleMv(MV mv, int scale)
 
 TComDataCU::TComDataCU()
 {
-    /* TODO: can we use memset here? */
-    m_pic   = NULL;
-    m_slice = NULL;
-    m_cuAboveLeft  = NULL;
-    m_cuAboveRight = NULL;
-    m_cuAbove = NULL;
-    m_cuLeft  = NULL;
-    m_chromaFormat = 0;
-    m_baseQp       = 0;
+    memset(this, 0, sizeof(*this));
 }
 
 void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess)
