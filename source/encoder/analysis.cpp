@@ -334,7 +334,7 @@ void Analysis::compressCTU(TComDataCU* ctu, const Entropy& initialContext)
     else
     {
         if (m_param->rdLevel < 5)
-            compressInterCU_rd0_4(ctu, ctu->m_cuLocalData, 0, 4);
+            compressInterCU_rd0_4(ctu, ctu->m_cuLocalData, 0);
         else
             compressInterCU_rd5_6(ctu, ctu->m_cuLocalData, 0);
 
@@ -637,7 +637,7 @@ void Analysis::checkIntra(Mode& intraMode, CU *cuData, PartSize partSize, uint8_
     checkBestMode(intraMode, depth);
 }
 
-void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t partitionIndex, uint32_t minDepth)
+void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t partitionIndex)
 {
     Slice* slice = parentCU->m_slice;
     Frame* pic = parentCU->m_pic;
@@ -655,39 +655,49 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
     bool mightSplit = !(cuData->flags & CU::LEAF);
     bool mightNotSplit = !(cuData->flags & CU::SPLIT_MANDATORY);
 
-    if (!depth && !m_param->rdLevel)
-        md.origYuv.copyToPicYuv(pic->getPicYuvRec(), cuAddr, 0);
-
+    uint32_t minDepth = 4;
     if (mightNotSplit)
     {
-        /* refine minimum recursion depth */
-        TComDataCU* colocated0 = slice->m_numRefIdx[0] > 0 ? slice->m_refPicList[0][0]->getCU(cuAddr) : NULL;
-        TComDataCU* colocated1 = slice->m_numRefIdx[1] > 0 ? slice->m_refPicList[1][0]->getCU(cuAddr) : NULL;
-        char currentQP = parentCU->getQP(0);
-        char previousQP = colocated0->getQP(0);
-        uint32_t delta = 0, minDepth0 = 4, minDepth1 = 4;
+        /* Do not attempt to code a block larger than the largest block in the
+         * co-located CTUs in L0 and L1 */
+        int currentQP = parentCU->getQP(0);
+        int previousQP = currentQP;
+        uint32_t minDepth0 = minDepth, minDepth1 = minDepth;
         uint32_t sum0 = 0, sum1 = 0;
-        for (uint32_t i = 0; i < cuData->numPartitions; i = i + 4)
+        if (slice->m_numRefIdx[0])
         {
-            uint32_t j = absPartIdx + i;
-            if (colocated0 && colocated0->getDepth(j) < minDepth0)
-                minDepth0 = colocated0->getDepth(j);
-            if (colocated1 && colocated1->getDepth(j) < minDepth1)
-                minDepth1 = colocated1->getDepth(j);
-            if (colocated0)
-                sum0 += (colocated0->getDepth(j) * 4);
-            if (colocated1)
-                sum1 += (colocated1->getDepth(j) * 4);
+            const TComDataCU& cu = *slice->m_refPicList[0][0]->getCU(cuAddr);
+            previousQP = cu.getQP(0);
+            for (uint32_t i = 0; i < cuData->numPartitions && minDepth0; i += 4)
+            {
+                uint32_t d = cu.getDepth(absPartIdx + i);
+                minDepth0 = X265_MIN(d, minDepth0);
+                sum0 += d;
+            }
         }
-
-        uint32_t avgDepth2 = (sum0 + sum1) / cuData->numPartitions;
+        if (slice->m_numRefIdx[1])
+        {
+            const TComDataCU& cu = *slice->m_refPicList[1][0]->getCU(cuAddr);
+            for (uint32_t i = 0; i < cuData->numPartitions && minDepth1; i += 4)
+            {
+                uint32_t d = cu.getDepth(absPartIdx + i);
+                minDepth1 = X265_MIN(d, minDepth1);
+                sum1 += d;
+            }
+        }
         minDepth = X265_MIN(minDepth0, minDepth1);
-        if (((currentQP - previousQP) < 0) || (((currentQP - previousQP) >= 0) && ((avgDepth2 - 2 * minDepth) > 1)))
-            delta = 0;
+
+        /* allow block size growth if QP is raising */
+        if (!minDepth || currentQP < previousQP)
+        {
+            /* minDepth is already as low as it can go, or quantizer is lower */
+        }
         else
-            delta = 1;
-        if (minDepth > 0)
-            minDepth = minDepth - delta;
+        {
+            uint32_t avgDepth2 = (sum0 + sum1) / (cuData->numPartitions >> 2);
+            if (avgDepth2 <= 2 * minDepth + 1)
+                minDepth -= 1;
+        }
     }
 
     if (mightNotSplit && depth >= minDepth)
@@ -1022,7 +1032,7 @@ void Analysis::compressInterCU_rd0_4(TComDataCU* parentCU, CU *cuData, uint32_t 
             if (childCuData->flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
-                compressInterCU_rd0_4(parentCU, childCuData, partUnitIdx, minDepth);
+                compressInterCU_rd0_4(parentCU, childCuData, partUnitIdx);
 
                 if (nd.bestMode->cu.getPredictionMode(0) != MODE_INTRA)
                 {
@@ -1299,7 +1309,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(CU* cuData, uint32_t depth)
     TComYuv *predYuv = &md.pred[PRED_MERGE].predYuv;
 
     int bestSadCand = -1;
-    int sizeIdx = mergeCU->getLog2CUSize(0) - 2;
+    int sizeIdx = cuData->log2CUSize - 2;
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
         if (!m_bFrameParallel ||
