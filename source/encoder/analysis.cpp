@@ -1344,7 +1344,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
         else
         {
             // Skip (no-residual) mode
-            encodeResAndCalcRdSkipCU(md.pred[PRED_SKIP], fencYuv);
+            encodeResAndCalcRdSkipCU(md.pred[PRED_SKIP]);
         }
 
         // Encode with residue
@@ -1380,7 +1380,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
         mergeCandBuffer[i] = 0;
 
     bool bestIsSkip = false;
-    Yuv *fencYuv = &md.origYuv;
     uint32_t iterations = mergeCU->isLosslessCoded(0) ? 1 : 2;
 
     for (uint32_t noResidual = 0; noResidual < iterations; ++noResidual)
@@ -1413,7 +1412,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
 
                     // estimate residual and encode everything
                     if (noResidual)
-                        encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE], fencYuv);
+                        encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE]);
                     else
                         encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData);
 

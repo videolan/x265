@@ -2097,10 +2097,11 @@ void Search::setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin
     mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
 }
 
-void Search::encodeResAndCalcRdSkipCU(Mode& interMode, const Yuv* fencYuv)
+void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 {
     TComDataCU* cu = &interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
+    const Yuv* fencYuv = interMode.origYuv;
 
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 

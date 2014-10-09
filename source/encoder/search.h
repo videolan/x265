@@ -112,7 +112,7 @@ public:
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData);
-    void     encodeResAndCalcRdSkipCU(Mode& interMode, const Yuv* fencYuv);
+    void     encodeResAndCalcRdSkipCU(Mode& interMode);
 
     void     generateCoeffRecon(Mode& mode, const CU& cuData);
     void     residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
