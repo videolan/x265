@@ -1440,10 +1440,11 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
     x265_emms();
 }
 
-void Search::sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv, uint32_t depthRange[2], uint8_t* sharedModes)
+void Search::sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
+    const Yuv* fencYuv = intraMode.origYuv;
 
     uint32_t depth       = cu->getDepth(0);
     uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
@@ -1552,10 +1553,11 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv*
     cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
-void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv)
+void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
+    const Yuv* fencYuv = intraMode.origYuv;
 
     uint32_t depth       = cu->getDepth(0);
     uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->m_chromaFormat == X265_CSP_I444 ? 1 : 0);

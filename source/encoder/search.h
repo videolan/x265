@@ -104,8 +104,8 @@ public:
     void     invalidateContexts(int fromDepth);
 
     void     estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2]);
-    void     sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv, uint32_t depthRange[2], uint8_t* sharedModes);
-    void     estIntraPredChromaQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv);
+    void     sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes);
+    void     estIntraPredChromaQT(Mode &intraMode, const CU& cuData);
 
     // estimation inter prediction (non-skip)
     bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);

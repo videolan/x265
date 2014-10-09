@@ -601,11 +601,11 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
     if (sharedModes)
-        sharedEstIntraPredQT(intraMode, cuData, &origYuv, tuDepthRange, sharedModes);
+        sharedEstIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
     else
         estIntraPredQT(intraMode, cuData, tuDepthRange);
 
-    estIntraPredChromaQT(intraMode, cuData, &origYuv);
+    estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu.m_slice->m_pps->bTransquantBypassEnabled)
@@ -1927,7 +1927,7 @@ void Analysis::checkIntraInInter_rd5_6(Mode &intraMode, const CU& cuData, PartSi
     Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
     estIntraPredQT(intraMode, cuData, tuDepthRange);
-    estIntraPredChromaQT(intraMode, cuData, fencYuv);
+    estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
@@ -1993,7 +1993,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     cu->m_totalDistortion = puDistY;
     /* TODO: these cost vars can be moved from TComDataCU to Mode */
 
-    estIntraPredChromaQT(intraMode, cuData, fencYuv);
+    estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
