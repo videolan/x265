@@ -1976,8 +1976,8 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    Yuv*  reconYuv = &intraMode.reconYuv;
-    Yuv*  fencYuv = &m_modeDepth[depth].origYuv;
+    Yuv* reconYuv = &intraMode.reconYuv;
+    Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
     /* TODO: why is recon a second call? pass intraMode to this function */
     uint32_t puDistY = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, fencYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
