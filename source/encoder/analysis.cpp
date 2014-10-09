@@ -600,8 +600,8 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
-    estIntraPredChromaQT(intraMode, cuData);
+    cu.m_totalDistortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
+    cu.m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu.m_slice->m_pps->bTransquantBypassEnabled)
@@ -1922,8 +1922,8 @@ void Analysis::checkIntraInInter_rd5_6(Mode &intraMode, const CU& cuData, PartSi
 
     Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
-    estIntraPredQT(intraMode, cuData, tuDepthRange, NULL);
-    estIntraPredChromaQT(intraMode, cuData);
+    cu->m_totalDistortion += estIntraPredQT(intraMode, cuData, tuDepthRange, NULL);
+    cu->m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
@@ -1979,17 +1979,10 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
-    /* TODO: why is recon a second call? pass intraMode to this function */
-    uint32_t puDistY = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, fencYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
-    xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);
-
+    cu->m_totalDistortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, fencYuv, false, puCost, puBits, psyEnergy, tuDepthRange);
+    xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);  /* TODO: why is recon a second call? */
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
-
-    // set distortion (rate and r-d costs are determined later)
-    cu->m_totalDistortion = puDistY;
-    /* TODO: these cost vars can be moved from TComDataCU to Mode */
-
-    estIntraPredChromaQT(intraMode, cuData);
+    cu->m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)

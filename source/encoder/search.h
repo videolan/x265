@@ -101,10 +101,15 @@ public:
 
     bool     initSearch(x265_param *param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
+
+    // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
 
-    void     estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes);
-    void     estIntraPredChromaQT(Mode &intraMode, const CU& cuData);
+    // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
+    uint32_t estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes);
+
+    // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
+    uint32_t estIntraPredChromaQT(Mode &intraMode, const CU& cuData);
 
     // estimation inter prediction (non-skip)
     bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);

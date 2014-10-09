@@ -1257,7 +1257,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     }
 }
 
-void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
+uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
@@ -1272,6 +1272,7 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
     uint32_t qNumParts    = cuData.numPartitions >> 2;
     uint32_t sizeIdx      = log2TrSize - 2;
     uint32_t absPartIdx   = 0;
+    uint32_t totalDistortion = 0;
 
     // loop over partitions
     for (uint32_t pu = 0; pu < numPU; pu++, absPartIdx += qNumParts)
@@ -1411,16 +1412,20 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
         cu->setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTrDepth);
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
-        uint32_t psyEnergy = 0, tmpRdBits = 0;
+        uint32_t psyEnergy = 0, rdBits = 0;
         uint64_t tmpcost = 0;
         // update distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, fencYuv, true, tmpcost, tmpRdBits, psyEnergy, depthRange);
+        totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, fencYuv, true, tmpcost, rdBits, psyEnergy, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, absPartIdx, reconYuv);
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
         {
+            /* This has important implications for parallelism and RDO.  It is writing intermediate results into the
+             * output recon picture, so it cannot proceed in parallel with anything else when doing INTRA_NXN. Also
+             * it is not updating m_rdContexts[depth].cur for the later PUs which I suspect is slightly wrong. I think
+             * that the contexts should be tracked through each PU */
             pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
             uint32_t dststride   = cu->m_frame->m_reconPicYuv->m_stride;
             pixel*   src         = reconYuv->getLumaAddr(absPartIdx);
@@ -1440,10 +1445,11 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
             cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
     }
 
-    // reset context models
+    // TODO: remove these two lines
     m_entropyCoder.load(m_rdContexts[depth].cur);
-
     x265_emms();
+
+    return totalDistortion;
 }
 
 void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv* fencYuv, Yuv* predYuv)
@@ -1499,7 +1505,7 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv*
     cu->setChromIntraDirSubParts(bestMode, 0, cu->getDepth(0));
 }
 
-void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
+uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
@@ -1509,6 +1515,7 @@ void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
     uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->m_chromaFormat == X265_CSP_I444 ? 1 : 0);
     uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
     uint32_t absPartIdx  = (NUM_CU_PARTITIONS >> (depth << 1));
+    uint32_t totalDistortion = 0;
 
     int part = partitionFromLog2Size(log2TrSize);
 
@@ -1584,7 +1591,7 @@ void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
         ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + absPartIdxC, m_qtTempTransformSkipFlag[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
         ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + absPartIdxC, m_qtTempTransformSkipFlag[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
         cu->setChromIntraDirSubParts(bestMode, absPartIdxC, depth + initTrDepth);
-        cu->m_totalDistortion += bestDist;
+        totalDistortion += bestDist;
     }
     while (tuIterator.isNextSection());
 
@@ -1607,7 +1614,9 @@ void Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
         }
     }
 
+    /* TODO: remove this */
     m_entropyCoder.load(m_rdContexts[depth].cur);
+    return totalDistortion;
 }
 
 /* estimation of best merge coding */
