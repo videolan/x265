@@ -103,7 +103,7 @@ public:
     void     setQP(const Slice& slice, int qp);
     void     invalidateContexts(int fromDepth);
 
-    void     estIntraPredQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv, uint32_t depthRange[2]);
+    void     estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2]);
     void     sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv, uint32_t depthRange[2], uint8_t* sharedModes);
     void     estIntraPredChromaQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv);
 

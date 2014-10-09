@@ -1257,11 +1257,12 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     }
 }
 
-void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, const Yuv* fencYuv, uint32_t depthRange[2])
+void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2])
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* predYuv = &intraMode.predYuv;
+    const Yuv* fencYuv = intraMode.origYuv;
 
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
