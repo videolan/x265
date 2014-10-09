@@ -1271,10 +1271,10 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
     uint32_t tuSize       = 1 << log2TrSize;
     uint32_t qNumParts    = cuData.numPartitions >> 2;
     uint32_t sizeIdx      = log2TrSize - 2;
-    uint32_t partOffset   = 0;
+    uint32_t absPartIdx   = 0;
 
     // loop over partitions
-    for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
+    for (uint32_t pu = 0; pu < numPU; pu++, absPartIdx += qNumParts)
     {
         uint32_t bmode = 0;
 
@@ -1283,10 +1283,10 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
         else
         {
             // Reference sample smoothing
-            TComPattern::initAdiPattern(*cu, cuData, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
+            TComPattern::initAdiPattern(*cu, cuData, absPartIdx, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
 
             // determine set of modes to be tested (using prediction signal only)
-            pixel*   fenc = const_cast<pixel*>(fencYuv->getLumaAddr(partOffset));
+            pixel*   fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
             uint32_t stride = predYuv->m_width;
 
             pixel *above = m_refAbove + tuSize - 1;
@@ -1332,10 +1332,10 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
             }
 
             uint32_t preds[3];
-            cu->getIntraDirLumaPredictor(partOffset, preds);
+            cu->getIntraDirLumaPredictor(absPartIdx, preds);
 
             uint64_t mpms;
-            uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
+            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
 
             pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
             uint64_t modeCosts[35];
@@ -1343,7 +1343,7 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
 
             // DC
             primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
+            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, absPartIdx, depth) : rbits;
             uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
 
@@ -1356,7 +1356,7 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
                 leftPlanar = leftFiltered;
             }
             primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
+            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, absPartIdx, depth) : rbits;
             sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
             COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
@@ -1370,7 +1370,7 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
                 bool modeHor = (mode < 18);
                 pixel *cmp = (modeHor ? buf_trans : fenc);
                 intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
+                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
                 sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
                 modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
                 COPY1_IF_LT(bcost, modeCosts[mode]);
@@ -1399,31 +1399,31 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
                 if (candCostList[i] == MAX_INT64)
                     break;
                 m_entropyCoder.load(m_rdContexts[depth].cur);
-                cu->setLumaIntraDirSubParts(rdModeList[i], partOffset, depth + initTrDepth);
+                cu->setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTrDepth);
                 cost = bits = 0;
                 uint32_t psyEnergy = 0;
-                xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, false, cost, bits, psyEnergy, depthRange);
+                xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, fencYuv, false, cost, bits, psyEnergy, depthRange);
                 COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
             }
         }
 
         /* remeasure best mode, allowing TU splits */
-        cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
+        cu->setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTrDepth);
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
         uint32_t psyEnergy = 0, tmpRdBits = 0;
         uint64_t tmpcost = 0;
         // update distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, true, tmpcost, tmpRdBits, psyEnergy, depthRange);
+        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, fencYuv, true, tmpcost, tmpRdBits, psyEnergy, depthRange);
 
-        xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
+        xSetIntraResultQT(cu, initTrDepth, absPartIdx, reconYuv);
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
         {
-            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + partOffset);
+            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
             uint32_t dststride   = cu->m_frame->m_reconPicYuv->m_stride;
-            pixel*   src         = reconYuv->getLumaAddr(partOffset);
+            pixel*   src         = reconYuv->getLumaAddr(absPartIdx);
             uint32_t srcstride   = reconYuv->m_width;
             primitives.square_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
         }
