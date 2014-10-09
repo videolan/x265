@@ -2150,13 +2150,14 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode, const Yuv* fencYuv)
 }
 
 /** encode residual and calculate rate-distortion for a CU block */
-void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, const Yuv* fencYuv)
+void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 {
     TComDataCU* cu = &interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;
     ShortYuv* resiYuv = &interMode.resiYuv;
     ShortYuv* tmpResiYuv = &m_rdContexts[cuData.depth].tempResi;
+    const Yuv* fencYuv = interMode.origYuv;
 
     /* TODO: is this temp residual buffer really necessary? it's somewhat annoying */
 

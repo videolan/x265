@@ -808,7 +808,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     }
 
                     /* RD selection between inter and merge */
-                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv);
+                    encodeResAndCalcRdInterCU(*bestInter, cuData);
 
                     if (md.bestMode->cu.m_totalRDCost < bestInter->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -870,7 +870,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
-                    encodeResAndCalcRdInterCU(*bestInter, cuData, &md.origYuv);
+                    encodeResAndCalcRdInterCU(*bestInter, cuData);
 
                     if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
                         md.bestMode = bestInter;
@@ -910,7 +910,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     prepMotionCompensation(bestCU, cuData, partIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuData, &md.origYuv);
+                encodeResAndCalcRdInterCU(*md.bestMode, cuData);
             }
             else if (bestCU->getPredictionMode(0) == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
@@ -1349,7 +1349,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(skipPred->predYuv);
-        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv);
+        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData);
     }
 }
 
@@ -1415,7 +1415,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
                     if (noResidual)
                         encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE], fencYuv);
                     else
-                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData, fencYuv);
+                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData);
 
                     /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !mergeCU->getQtRootCbf(0))
@@ -1725,18 +1725,16 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     cu->initEstData();
 
-    Yuv* fencYuv = &m_modeDepth[depth].origYuv;
-
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, true);
-        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv);
+        encodeResAndCalcRdInterCU(interMode, cuData);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }
     else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
-        encodeResAndCalcRdInterCU(interMode, cuData, fencYuv);
+        encodeResAndCalcRdInterCU(interMode, cuData);
         checkDQP(cu, cuData);
         checkBestMode(interMode, depth);
     }

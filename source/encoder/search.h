@@ -111,7 +111,7 @@ public:
     bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
-    void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData, const Yuv* fencYuv);
+    void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData);
     void     encodeResAndCalcRdSkipCU(Mode& interMode, const Yuv* fencYuv);
 
     void     generateCoeffRecon(Mode& mode, const CU& cuData);
