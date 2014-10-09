@@ -1257,7 +1257,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     }
 }
 
-void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2])
+void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
@@ -1272,153 +1272,159 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
     uint32_t qNumParts    = cuData.numPartitions >> 2;
     uint32_t sizeIdx      = log2TrSize - 2;
     uint32_t partOffset   = 0;
-    uint32_t srcstride    = reconYuv->m_width;
-    uint32_t dststride    = cu->m_frame->m_reconPicYuv->m_stride;
 
     // loop over partitions
     for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
     {
-        // Reference sample smoothing
-        TComPattern::initAdiPattern(*cu, cuData, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
-
-        // determine set of modes to be tested (using prediction signal only)
-        pixel*   fenc   = const_cast<pixel*>(fencYuv->getLumaAddr(partOffset));
-        uint32_t stride = predYuv->m_width;
-
-        pixel *above         = m_refAbove    + tuSize - 1;
-        pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
-        pixel *left          = m_refLeft     + tuSize - 1;
-        pixel *leftFiltered  = m_refLeftFlt  + tuSize - 1;
-
-        // 33 Angle modes once
-        ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-        ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
-        ALIGN_VAR_32(pixel, bufScale[32 * 32]);
-        pixel _above[4 * 32 + 1];
-        pixel _left[4 * 32 + 1];
-        int scaleTuSize = tuSize;
-        int scaleStride = stride;
-        int costShift = 0;
-
-        if (tuSize > 32)
-        {
-            pixel *aboveScale  = _above + 2 * 32;
-            pixel *leftScale   = _left + 2 * 32;
-
-            // origin is 64x64, we scale to 32x32 and setup required parameters
-            primitives.scale2D_64to32(bufScale, fenc, stride);
-            fenc = bufScale;
-
-            // reserve space in case primitives need to store data in above
-            // or left buffers
-            aboveScale[0] = leftScale[0] = above[0];
-            primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
-            primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
-
-            scaleTuSize = 32;
-            scaleStride = 32;
-            costShift = 2;
-            sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
-
-            // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
-            above         = aboveScale;
-            left          = leftScale;
-            aboveFiltered = aboveScale;
-            leftFiltered  = leftScale;
-        }
-
-        uint32_t preds[3];
-        cu->getIntraDirLumaPredictor(partOffset, preds);
-        
-        uint64_t mpms;
-        uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
-
-        pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
-        uint64_t modeCosts[35];
-        uint64_t bcost;
-
-        // DC
-        primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-        uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
-        uint32_t sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-        modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
-
-        // PLANAR
-        pixel *abovePlanar = above;
-        pixel *leftPlanar  = left;
-        if (tuSize >= 8 && tuSize <= 32)
-        {
-            abovePlanar = aboveFiltered;
-            leftPlanar  = leftFiltered;
-        }
-        primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-        bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
-        sad  = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-        modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
-        COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
-
-        // angular predictions
-        primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-
-        primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
-        for (int mode = 2; mode < 35; mode++)
-        {
-            bool modeHor = (mode < 18);
-            pixel *cmp = (modeHor ? buf_trans : fenc);
-            intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-            bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
-            sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-            modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-            COPY1_IF_LT(bcost, modeCosts[mode]);
-        }
-
-        /* Find the top maxCandCount candidate modes with cost within 25% of best
-         * or among the most probable modes. maxCandCount is derived from the
-         * rdLevel and depth. In general we want to try more modes at slower RD
-         * levels and at higher depths */
-        uint64_t candCostList[MAX_RD_INTRA_MODES];
-        uint32_t rdModeList[MAX_RD_INTRA_MODES];
-        int maxCandCount = 2 + m_param->rdLevel + ((depth + initTrDepth) >> 1);
-        for (int i = 0; i < maxCandCount; i++)
-            candCostList[i] = MAX_INT64;
-
-        uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
-        for (int mode = 0; mode < 35; mode++)
-            if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
-                updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
-
-        /* measure best candidates using simple RDO (no TU splits) */
         uint32_t bmode = 0;
-        uint64_t cost;
-        bcost = MAX_INT64;
-        for (int i = 0; i < maxCandCount; i++)
+
+        if (sharedModes)
+            bmode = sharedModes[pu];
+        else
         {
-            if (candCostList[i] == MAX_INT64)
-                break;
-            m_entropyCoder.load(m_rdContexts[depth].cur);
-            cu->setLumaIntraDirSubParts(rdModeList[i], partOffset, depth + initTrDepth);
-            cost = bits = 0;
-            uint32_t psyEnergy = 0;
-            xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, false, cost, bits, psyEnergy, depthRange);
-            COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
+            // Reference sample smoothing
+            TComPattern::initAdiPattern(*cu, cuData, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
+
+            // determine set of modes to be tested (using prediction signal only)
+            pixel*   fenc = const_cast<pixel*>(fencYuv->getLumaAddr(partOffset));
+            uint32_t stride = predYuv->m_width;
+
+            pixel *above = m_refAbove + tuSize - 1;
+            pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
+            pixel *left = m_refLeft + tuSize - 1;
+            pixel *leftFiltered = m_refLeftFlt + tuSize - 1;
+
+            // 33 Angle modes once
+            ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
+            ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
+            ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+            pixel _above[4 * 32 + 1];
+            pixel _left[4 * 32 + 1];
+            int scaleTuSize = tuSize;
+            int scaleStride = stride;
+            int costShift = 0;
+
+            if (tuSize > 32)
+            {
+                pixel *aboveScale = _above + 2 * 32;
+                pixel *leftScale = _left + 2 * 32;
+
+                // origin is 64x64, we scale to 32x32 and setup required parameters
+                primitives.scale2D_64to32(bufScale, fenc, stride);
+                fenc = bufScale;
+
+                // reserve space in case primitives need to store data in above
+                // or left buffers
+                aboveScale[0] = leftScale[0] = above[0];
+                primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
+                primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
+
+                scaleTuSize = 32;
+                scaleStride = 32;
+                costShift = 2;
+                sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
+
+                // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
+                above = aboveScale;
+                left = leftScale;
+                aboveFiltered = aboveScale;
+                leftFiltered = leftScale;
+            }
+
+            uint32_t preds[3];
+            cu->getIntraDirLumaPredictor(partOffset, preds);
+
+            uint64_t mpms;
+            uint32_t rbits = getIntraRemModeBits(cu, partOffset, depth, preds, mpms);
+
+            pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
+            uint64_t modeCosts[35];
+            uint64_t bcost;
+
+            // DC
+            primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
+            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, partOffset, depth) : rbits;
+            uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+            modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
+
+            // PLANAR
+            pixel *abovePlanar = above;
+            pixel *leftPlanar = left;
+            if (tuSize >= 8 && tuSize <= 32)
+            {
+                abovePlanar = aboveFiltered;
+                leftPlanar = leftFiltered;
+            }
+            primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
+            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, partOffset, depth) : rbits;
+            sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+            modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
+            COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
+
+            // angular predictions
+            primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
+
+            primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
+            for (int mode = 2; mode < 35; mode++)
+            {
+                bool modeHor = (mode < 18);
+                pixel *cmp = (modeHor ? buf_trans : fenc);
+                intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
+                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, partOffset, depth) : rbits;
+                sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                COPY1_IF_LT(bcost, modeCosts[mode]);
+            }
+
+            /* Find the top maxCandCount candidate modes with cost within 25% of best
+             * or among the most probable modes. maxCandCount is derived from the
+             * rdLevel and depth. In general we want to try more modes at slower RD
+             * levels and at higher depths */
+            uint64_t candCostList[MAX_RD_INTRA_MODES];
+            uint32_t rdModeList[MAX_RD_INTRA_MODES];
+            int maxCandCount = 2 + m_param->rdLevel + ((depth + initTrDepth) >> 1);
+            for (int i = 0; i < maxCandCount; i++)
+                candCostList[i] = MAX_INT64;
+
+            uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
+            for (int mode = 0; mode < 35; mode++)
+                if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
+                    updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
+
+            /* measure best candidates using simple RDO (no TU splits) */
+            uint64_t cost;
+            bcost = MAX_INT64;
+            for (int i = 0; i < maxCandCount; i++)
+            {
+                if (candCostList[i] == MAX_INT64)
+                    break;
+                m_entropyCoder.load(m_rdContexts[depth].cur);
+                cu->setLumaIntraDirSubParts(rdModeList[i], partOffset, depth + initTrDepth);
+                cost = bits = 0;
+                uint32_t psyEnergy = 0;
+                xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, false, cost, bits, psyEnergy, depthRange);
+                COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
+            }
         }
 
         /* remeasure best mode, allowing TU splits */
         cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
-        uint32_t psyEnergy = 0;
+        uint32_t psyEnergy = 0, tmpRdBits = 0;
+        uint64_t tmpcost = 0;
         // update distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, true, cost, bits, psyEnergy, depthRange);
+        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, true, tmpcost, tmpRdBits, psyEnergy, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
         {
-            uint32_t zorder      = cuData.encodeIdx + partOffset;
-            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
+            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + partOffset);
+            uint32_t dststride   = cu->m_frame->m_reconPicYuv->m_stride;
             pixel*   src         = reconYuv->getLumaAddr(partOffset);
+            uint32_t srcstride   = reconYuv->m_width;
             primitives.square_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
         }
     }
@@ -1438,66 +1444,6 @@ void Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRan
     m_entropyCoder.load(m_rdContexts[depth].cur);
 
     x265_emms();
-}
-
-void Search::sharedEstIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
-{
-    TComDataCU* cu = &intraMode.cu;
-    Yuv* reconYuv = &intraMode.reconYuv;
-    const Yuv* fencYuv = intraMode.origYuv;
-
-    uint32_t depth       = cu->getDepth(0);
-    uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    uint32_t numPU       = 1 << (2 * initTrDepth);
-    uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
-    uint32_t qNumParts   = cuData.numPartitions >> 2;
-
-    // loop over partitions
-    uint32_t partOffset  = 0;
-    uint64_t puCost      = 0;
-    uint32_t bits        = 0;
-    uint32_t dststride   = cu->m_frame->m_reconPicYuv->m_stride;
-    uint32_t srcstride   = reconYuv->m_width;
-
-    for (uint32_t pu = 0; pu < numPU; pu++, partOffset += qNumParts)
-    {
-        cu->setLumaIntraDirSubParts(sharedModes[pu], partOffset, depth + initTrDepth);
-
-        // set context models
-        m_entropyCoder.load(m_rdContexts[depth].cur);
-
-        uint32_t psyEnergy = 0;
-        // update overall distortion (rate and r-d costs are determined later)
-        cu->m_totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, partOffset, fencYuv, true, puCost, bits, psyEnergy, depthRange);
-        xSetIntraResultQT(cu, initTrDepth, partOffset, reconYuv);
-
-        if (pu != numPU - 1)
-        {
-            uint32_t zorder      = cuData.encodeIdx + partOffset;
-            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
-            pixel*   src         = reconYuv->getLumaAddr(partOffset);
-            primitives.luma_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
-        }
-
-        // update PU data
-        cu->setLumaIntraDirSubParts(sharedModes[pu], partOffset, depth + initTrDepth);
-        cu->copyToPic((uint8_t)depth, pu, initTrDepth);
-    }
-
-    if (numPU > 1)
-    {
-        // set Cbf for all blocks
-        uint32_t combCbfY = 0;
-        uint32_t partIdx  = 0;
-        for (uint32_t part = 0; part < 4; part++, partIdx += qNumParts)
-            combCbfY |= cu->getCbf(partIdx, TEXT_LUMA, 1);
-
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
-    }
-
-    // reset context models
-    m_entropyCoder.load(m_rdContexts[depth].cur);
 }
 
 void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv* fencYuv, Yuv* predYuv)

@@ -600,11 +600,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    if (sharedModes)
-        sharedEstIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
-    else
-        estIntraPredQT(intraMode, cuData, tuDepthRange);
-
+    estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
     estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
@@ -1926,7 +1922,7 @@ void Analysis::checkIntraInInter_rd5_6(Mode &intraMode, const CU& cuData, PartSi
 
     Yuv* fencYuv = &m_modeDepth[depth].origYuv;
 
-    estIntraPredQT(intraMode, cuData, tuDepthRange);
+    estIntraPredQT(intraMode, cuData, tuDepthRange, NULL);
     estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
