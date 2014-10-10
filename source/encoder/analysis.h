@@ -73,7 +73,6 @@ public:
 
     enum {
         PRED_2Nx2N,
-        PRED_NxN,
         PRED_Nx2N,
         PRED_2NxN,
         PRED_2NxnU,
