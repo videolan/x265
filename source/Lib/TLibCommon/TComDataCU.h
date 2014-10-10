@@ -161,16 +161,16 @@ struct CU
     enum {
         INTRA           = 1<<0, // CU is intra predicted
         PRESENT         = 1<<1, // CU is not completely outside the frame
-        SPLIT_MANDATORY = 1<<2, // CU split is mandatory if CU is inside frame and can be splitted
+        SPLIT_MANDATORY = 1<<2, // CU split is mandatory if CU is inside frame and can be split
         LEAF            = 1<<3, // CU is a leaf node of the CTU
         SPLIT           = 1<<4, // CU is currently split in four child CUs.
     };
-    uint32_t log2CUSize; // Log of the CU size.
-    uint32_t childIdx;   // Index of the first child CU
-    uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
-    uint32_t numPartitions;// Number of 4x4 blocks in the CU
-    uint32_t depth;      // depth of this CU relative from CTU
-    uint32_t flags;      // CU flags.
+    uint32_t log2CUSize;    // Log of the CU size.
+    uint32_t childIdx;      // offset of the first child CU in m_cuLocalData
+    uint32_t encodeIdx;     // Encoding index of this CU in terms of 4x4 blocks.
+    uint32_t numPartitions; // Number of 4x4 blocks in the CU
+    uint32_t depth;         // depth of this CU relative from CTU
+    uint32_t flags;         // CU flags.
 };
 
 // Partition count table, index represents partitioning mode.
