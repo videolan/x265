@@ -1057,7 +1057,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
     }
 
     // estimate split cost
-    if (mightSplit && !md.bestMode || !md.bestMode->cu.isSkipped(0))
+    if (mightSplit && (!md.bestMode || !md.bestMode->cu.isSkipped(0)))
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         TComDataCU* splitCU = &splitPred->cu;
