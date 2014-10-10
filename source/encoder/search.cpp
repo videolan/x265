@@ -362,8 +362,8 @@ uint32_t Search::xIntraCodingLumaBlk(TComDataCU* cu, const CU& cuData, uint32_t 
     }
 }
 
-uint32_t Search::xIntraCodingChromaBlk(Mode& mode, const CU& cuData, uint32_t absPartIdx, int16_t* reconQt, uint32_t reconQtStride,
-                                       coeff_t* coeff, uint32_t& cbf, uint32_t chromaId, uint32_t log2TrSizeC)
+uint32_t Search::xIntraCodingChromaBlk(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t chromaId, uint32_t log2TrSizeC,
+                                       int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
@@ -982,7 +982,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
 
                         cu->setTransformSkipPartRange(chromaModeId, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
-                        singleDistCTmp = xIntraCodingChromaBlk(mode, cuData, absPartIdxC, recon, reconStride, coeff, singleCbfCTmp, chromaId, log2TrSizeC);
+                        singleDistCTmp = xIntraCodingChromaBlk(mode, cuData, absPartIdxC, chromaId, log2TrSizeC, recon, reconStride, coeff, singleCbfCTmp);
                         cu->setCbfPartRange(singleCbfCTmp << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
                         if (chromaModeId == 1 && !singleCbfCTmp)
@@ -1040,7 +1040,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                 else
                 {
                     cu->setTransformSkipPartRange(0, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
-                    outDist += xIntraCodingChromaBlk(mode, cuData, absPartIdxC, reconQt, reconQtStride, coeffC, singleCbfC, chromaId, log2TrSizeC);
+                    outDist += xIntraCodingChromaBlk(mode, cuData, absPartIdxC, chromaId, log2TrSizeC, reconQt, reconQtStride, coeffC, singleCbfC);
                     if (m_rdCost.m_psyRd)
                     {
                         uint32_t zorder = cuData.encodeIdx + absPartIdxC;
