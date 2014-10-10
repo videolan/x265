@@ -134,6 +134,7 @@ add_library(common OBJECT
     slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
+    predict.cpp  predict.h
     scalinglist.cpp scalinglist.h
     quant.cpp quant.h
     deblock.cpp deblock.h)
