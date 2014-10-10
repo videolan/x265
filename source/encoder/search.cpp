@@ -692,12 +692,13 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     return outDist + singleDistY;
 }
 
-void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, const Yuv* fencYuv, uint32_t depthRange[2])
+void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
     Yuv* reconYuv = &mode.reconYuv;
     ShortYuv* resiYuv = &mode.resiYuv;
+    const Yuv* fencYuv = mode.origYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -781,7 +782,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            residualTransformQuantIntra(mode, cuData, trDepth + 1, absPartIdxSub, fencYuv, depthRange);
+            residualTransformQuantIntra(mode, cuData, trDepth + 1, absPartIdxSub, depthRange);
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
@@ -1131,12 +1132,13 @@ void Search::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
     }
 }
 
-void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, const Yuv* fencYuv)
+void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx)
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
     ShortYuv* resiYuv = &mode.resiYuv;
     Yuv* reconYuv = &mode.reconYuv;
+    const Yuv* fencYuv = mode.origYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
@@ -1233,15 +1235,15 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     }
     else
     {
-        uint32_t splitCbfU     = 0;
-        uint32_t splitCbfV     = 0;
-        uint32_t qPartsDiv     = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
-        uint32_t absPartIdxSub = absPartIdx;
-        for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
+        uint32_t splitCbfU   = 0;
+        uint32_t splitCbfV   = 0;
+        uint32_t qPartsDiv   = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
+        uint32_t absPartIdxC = absPartIdx;
+        for (uint32_t part = 0; part < 4; part++, absPartIdxC += qPartsDiv)
         {
-            residualQTIntraChroma(mode, cuData, trDepth + 1, absPartIdxSub, fencYuv);
-            splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
-            splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
+            residualQTIntraChroma(mode, cuData, trDepth + 1, absPartIdxC);
+            splitCbfU |= cu->getCbf(absPartIdxC, TEXT_CHROMA_U, trDepth + 1);
+            splitCbfV |= cu->getCbf(absPartIdxC, TEXT_CHROMA_V, trDepth + 1);
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
@@ -2284,9 +2286,9 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
     else if (cu->getPredictionMode(0) == MODE_INTRA)
     {
         uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-        residualTransformQuantIntra(mode, cuData, initTrDepth, 0, fencYuv, tuDepthRange);
+        residualTransformQuantIntra(mode, cuData, initTrDepth, 0, tuDepthRange);
         getBestIntraModeChroma(cu, cuData, fencYuv, &mode.predYuv);
-        residualQTIntraChroma(mode, cuData, 0, 0, fencYuv);
+        residualQTIntraChroma(mode, cuData, 0, 0);
     }
 }
 
