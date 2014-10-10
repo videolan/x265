@@ -743,9 +743,12 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     if (bestInter->cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
                         md.bestMode = bestInter;
 
-                    checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
-                    if (md.pred[PRED_INTRA].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
-                        md.bestMode = &md.pred[PRED_INTRA];
+                    if (m_slice->m_sliceType == P_SLICE)
+                    {
+                        checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
+                        if (md.pred[PRED_INTRA].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                            md.bestMode = &md.pred[PRED_INTRA];
+                    }
                 }
             } // !earlyskip
         }  // !pmode
