@@ -1057,7 +1057,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
     }
 
     // estimate split cost
-    if (mightSplit && !md.bestMode->cu.isSkipped(0))
+    if (mightSplit && !md.bestMode || !md.bestMode->cu.isSkipped(0))
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         TComDataCU* splitCU = &splitPred->cu;
@@ -1253,7 +1253,15 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
         {
             encodeResAndCalcRdSkipCU(*mergePred);
             if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
+            {
                 std::swap(mergePred, skipPred);
+
+                TComDataCU* mergeCU = &mergePred->cu;
+                mergeCU->setMergeIndex(0, mergeCand);
+                mergeCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+                mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+                mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+            }
         }
 
         encodeResAndCalcRdInterCU(*mergePred, cuData);
