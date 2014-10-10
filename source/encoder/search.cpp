@@ -876,10 +876,11 @@ void Search::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, u
 }
 
 /* returns distortion */
-uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, const Yuv* fencYuv, uint32_t& psyEnergy)
+uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy)
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
+    const Yuv* fencYuv = mode.origYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
@@ -1066,7 +1067,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             uint32_t psyEnergyTemp = 0;
-            outDist += xRecurIntraChromaCodingQT(mode, cuData, trDepth + 1, absPartIdxSub, fencYuv, psyEnergyTemp);
+            outDist += xRecurIntraChromaCodingQT(mode, cuData, trDepth + 1, absPartIdxSub, psyEnergyTemp);
             splitPsyEnergy += psyEnergyTemp;
             splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
             splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
@@ -1502,7 +1503,6 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
-    const Yuv* fencYuv = intraMode.origYuv;
 
     uint32_t depth       = cu->getDepth(0);
     uint32_t initTrDepth = (cu->getPartitionSize(0) != SIZE_2Nx2N) && (cu->m_chromaFormat == X265_CSP_I444 ? 1 : 0);
@@ -1539,7 +1539,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             cu->setChromIntraDirSubParts(modeList[mode], absPartIdxC, depth + initTrDepth);
 
             uint32_t psyEnergy = 0;
-            uint32_t dist = xRecurIntraChromaCodingQT(intraMode, cuData, initTrDepth, absPartIdxC, fencYuv, psyEnergy);
+            uint32_t dist = xRecurIntraChromaCodingQT(intraMode, cuData, initTrDepth, absPartIdxC, psyEnergy);
 
             if (cu->m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rdContexts[depth].cur);
