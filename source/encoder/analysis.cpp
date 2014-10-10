@@ -985,14 +985,13 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 md.pred[i].cu.initCU(m_frame, cuAddr);
         }
 
-        bool earlySkip = false;
-        checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData, earlySkip);
+        checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
+        bool earlySkip = m_param->bEnableEarlySkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
 
         if (!earlySkip)
         {
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuData, SIZE_2Nx2N, false);
 
-            
             if (m_param->bEnableRectInter)
             {
                 // Nx2N rect
@@ -1196,10 +1195,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
         if (skipCU->isLosslessCoded(0))
             skipCU->m_totalRDCost = MAX_INT64;
         else
-        {
-            // Skip (no-residual) mode
             encodeResAndCalcRdSkipCU(*skipPred);
-        }
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(skipPred->predYuv);
@@ -1207,7 +1203,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
     }
 }
 
-void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData, bool& earlySkip)
+void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 {
     uint32_t depth = cuData.depth;
 
@@ -1215,104 +1211,58 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData, 
      * hold the reverse when the function returns. We toggle between the two modes */
     Mode* mergePred = &merge;
     Mode* skipPred = &skip;
-    TComDataCU* mergeCU = &mergePred->cu;
-    TComDataCU* skipCU = &skipPred->cu;
 
-    X265_CHECK(mergeCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
+    merge.cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    merge.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    merge.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    merge.cu.setMergeFlag(0, true);
+
+    skip.cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    skip.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    skip.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    skip.cu.setMergeFlag(0, true);
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = mergeCU->m_slice->m_maxNumMergeCand;
+    uint32_t maxNumMergeCand = merge.cu.m_slice->m_maxNumMergeCand;
+    merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
-    mergeCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    mergeCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    mergeCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
-
-    skipCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    skipCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    skipCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
-
-    int mergeCandBuffer[MRG_MAX_NUM_CANDS];
-    for (uint32_t i = 0; i < maxNumMergeCand; ++i)
-        mergeCandBuffer[i] = 0;
-
-    bool bestIsSkip = false;
-    uint32_t iterations = mergeCU->isLosslessCoded(0) ? 1 : 2;
-
-    for (uint32_t noResidual = 0; noResidual < iterations; ++noResidual)
+    skipPred->cu.m_totalRDCost = MAX_INT64;
+    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
     {
-        for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
+        if (m_bFrameParallel &&
+            (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+             mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
         {
-            if (m_bFrameParallel &&
-                (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-                 mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
-            {
-                continue;
-            }
-            if (!(noResidual && mergeCandBuffer[mergeCand] == 1))
-            {
-                if (!(bestIsSkip && !noResidual))
-                {
-                    // set MC parameters
-                    mergeCU->setPredModeSubParts(MODE_INTER, 0, depth); // interprets depth relative to CTU level
-                    mergeCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-                    mergeCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-                    mergeCU->setMergeFlag(0, true);
-                    mergeCU->setMergeIndex(0, mergeCand);
-                    mergeCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth); // interprets depth relative to CTU level
-                    mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
-                    mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0); // interprets depth relative to outTempCU level
-
-                    // do MC
-                    prepMotionCompensation(mergeCU, cuData, 0);
-                    motionCompensation(&mergePred->predYuv, true, true);
-
-                    // estimate residual and encode everything
-                    if (noResidual)
-                        encodeResAndCalcRdSkipCU(*mergePred);
-                    else
-                        encodeResAndCalcRdInterCU(*mergePred, cuData);
-
-                    /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
-                    if (!noResidual && !mergeCU->getQtRootCbf(0))
-                        mergeCandBuffer[mergeCand] = 1;
-
-                    mergeCU->setSkipFlagSubParts(!mergeCU->getQtRootCbf(0), 0, depth);
-                    int origQP = mergeCU->getQP(0);
-                    checkDQP(mergeCU, cuData);
-
-                    if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
-                    {
-                        std::swap(mergePred, skipPred);
-                        mergeCU = &mergePred->cu;
-                    }
-
-                    skipPred->cu.setQPSubParts(origQP, 0, depth);
-                    skipPred->cu.setSkipFlagSubParts(false, 0, depth);
-                    if (!bestIsSkip)
-                        bestIsSkip = !skipPred->cu.getQtRootCbf(0);
-                }
-            }
+            continue;
         }
 
-        TComDataCU* bestCU = &skipPred->cu;
-        if (!noResidual && m_param->bEnableEarlySkip && !bestCU->getQtRootCbf(0))
+        TComDataCU* mergeCU = &mergePred->cu;
+        mergeCU->setMergeIndex(0, mergeCand);
+        mergeCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+        mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+        mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+
+        prepMotionCompensation(mergeCU, cuData, 0);
+        motionCompensation(&mergePred->predYuv, true, true);
+
+        if (!m_param->bLossless)
         {
-            if (bestCU->getMergeFlag(0))
-                earlySkip = true;
-            else
-            {
-                bool noMvd = true;
-                for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
-                    if (bestCU->m_slice->m_numRefIdx[refListIdx] > 0)
-                        noMvd &= !bestCU->getCUMvField(refListIdx)->getMvd(0).word;
-                if (noMvd)
-                    earlySkip = true;
-            }
+            encodeResAndCalcRdSkipCU(*mergePred);
+            if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
+                std::swap(mergePred, skipPred);
         }
+
+        encodeResAndCalcRdInterCU(*mergePred, cuData);
+        if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
+            std::swap(mergePred, skipPred);
     }
 
-    m_modeDepth[depth].bestMode = skipPred;
+    if (skipPred->cu.m_totalRDCost < MAX_INT64)
+    {
+        checkDQP(&skipPred->cu, cuData);
+        m_modeDepth[depth].bestMode = skipPred;
+    }
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize)
