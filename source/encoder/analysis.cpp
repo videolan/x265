@@ -1752,7 +1752,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intramode, const CU& cuData)
     const uint32_t partOffset  = 0;
 
     // Reference sample smoothing
-    TComPattern::initAdiPattern(*cu, cuData, partOffset, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
+    initAdiPattern(*cu, cuData, partOffset, initTrDepth, ALL_IDX);
 
     pixel* fenc = m_modeDepth[depth].origYuv.m_buf[0];
     uint32_t stride = m_modeDepth[depth].origYuv.m_width;

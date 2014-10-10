@@ -31,7 +31,6 @@
 #include "yuv.h"
 
 #include "TLibCommon/TComMotionInfo.h"
-#include "TLibCommon/TComPattern.h"
 
 #include "rdcost.h"
 #include "entropy.h"

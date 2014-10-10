@@ -42,7 +42,7 @@
 #include "common.h"
 #include "slice.h"
 #include "TComMotionInfo.h"
-#include "TComPattern.h"
+#include "TComRom.h"
 
 namespace x265 {
 // private namespace

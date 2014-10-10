@@ -55,9 +55,8 @@ Search::~Search()
     {
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
-    }
-    for (int i = 0; i < NUM_FULL_DEPTH; i++)
         m_rdContexts[i].tempResi.destroy();
+    }
 
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
@@ -87,9 +86,6 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     ok &= m_bidirPredYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
     ok &= m_bidirPredYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, m_param->internalCsp);
 
-    for (int i = 0; i < NUM_FULL_DEPTH; i++)
-        ok &= m_rdContexts[i].tempResi.create(g_maxCUSize >> i, g_maxCUSize >> i, m_param->internalCsp);
-
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
     m_refLagPixels = m_bFrameParallel ? param->searchRange : param->sourceHeight;
@@ -103,6 +99,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
         ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, MAX_CU_SIZE, param->internalCsp);
+        ok &= m_rdContexts[i].tempResi.create(g_maxCUSize >> i, g_maxCUSize >> i, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
@@ -492,7 +489,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
         // init availability pattern
         uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
-        TComPattern::initAdiPattern(*cu, cuData, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
+        initAdiPattern(*cu, cuData, absPartIdx, trDepth, lumaPredMode);
 
         // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
@@ -735,9 +732,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
 
         bool     useTransformSkip = !!cu->getTransformSkip(absPartIdx, TEXT_LUMA);
 
-        // init availability pattern
-        TComPattern::initAdiPattern(*cu, cuData, absPartIdx, trDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, lumaPredMode);
-        // get prediction signal
+        initAdiPattern(*cu, cuData, absPartIdx, trDepth, lumaPredMode);
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
@@ -940,8 +935,8 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                 pixel*   pred        = predYuv->getChromaAddr(chromaId, absPartIdxC);
 
                 // init availability pattern
-                TComPattern::initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, m_predBuf, chromaId);
-                pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, tuSize, m_predBuf);
+                initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, chromaId);
+                pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
                 uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdxC);
                 // update chroma mode
@@ -1196,14 +1191,11 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
                 if (chromaPredMode == DM_CHROMA_IDX)
                     chromaPredMode = cu->getLumaIntraDir((m_csp == X265_CSP_I444) ? absPartIdxC : 0);
                 chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
-                // init availability pattern
-                TComPattern::initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, m_predBuf, chromaId);
-                pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, tuSize, m_predBuf);
+                initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, chromaId);
+                pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
-                // get prediction signal
                 predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
 
-                // get residual signal
                 X265_CHECK(!((intptr_t)fenc & (tuSize - 1)), "fenc alignment failure\n");
                 X265_CHECK(!((intptr_t)pred & (tuSize - 1)), "pred alignment failure\n");
                 X265_CHECK(!((intptr_t)residual & (tuSize - 1)), "residual alignment failure\n");
@@ -1285,7 +1277,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
         else
         {
             // Reference sample smoothing
-            TComPattern::initAdiPattern(*cu, cuData, absPartIdx, initTrDepth, m_predBuf, m_refAbove, m_refLeft, m_refAboveFlt, m_refLeftFlt, ALL_IDX);
+            initAdiPattern(*cu, cuData, absPartIdx, initTrDepth, ALL_IDX);
 
             // determine set of modes to be tested (using prediction signal only)
             pixel*   fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
@@ -1473,8 +1465,8 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv*
     int32_t sizeIdx = log2TrSizeC - 2;
     pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
 
-    TComPattern::initAdiPatternChroma(*cu, cuData, 0, 0, m_predBuf, 1);
-    TComPattern::initAdiPatternChroma(*cu, cuData, 0, 0, m_predBuf, 2);
+    Predict::initAdiPatternChroma(*cu, cuData, 0, 0, 1);
+    Predict::initAdiPatternChroma(*cu, cuData, 0, 0, 2);
     cu->getAllowedChromaDir(0, modeList);
 
     // check chroma modes
@@ -1489,7 +1481,7 @@ void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv*
         {
             pixel* fenc = const_cast<pixel*>(fencYuv->getChromaAddr(chromaId, 0));
             pixel* pred = predYuv->getChromaAddr(chromaId, 0);
-            pixel* chromaPred = TComPattern::getAdiChromaBuf(chromaId, scaleTuSize, m_predBuf);
+            pixel* chromaPred = getAdiChromaBuf(chromaId, scaleTuSize);
 
             // get prediction signal
             predIntraChromaAng(chromaPred, chromaPredMode, pred, fencYuv->m_cwidth, log2TrSizeC, m_csp);

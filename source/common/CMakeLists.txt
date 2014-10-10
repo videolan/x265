@@ -2,7 +2,6 @@
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
-    ../Lib/TLibCommon/TComPattern.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComRom.cpp)
 set(LIBCOMMON_HDR
@@ -11,7 +10,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPattern.h
     ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComRom.h)
 
