@@ -599,7 +599,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 m_pool->pokeIdleThread();
 
             /* the master worker thread (this one) does merge analysis */
-            checkMerge2Nx2N_rd0_4(cuData, depth);
+            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
 
             bool earlyskip = false;
             md.bestMode = &md.pred[PRED_SKIP];
@@ -682,7 +682,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         else
         {
             /* Compute Merge Cost */
-            checkMerge2Nx2N_rd0_4(cuData, depth);
+            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
 
             bool earlyskip = false;
             md.bestMode = &md.pred[PRED_SKIP];
@@ -986,7 +986,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         }
 
         bool earlySkip = false;
-        checkMerge2Nx2N_rd5_6(cuData, depth, earlySkip);
+        checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData, earlySkip);
 
         if (!earlySkip)
         {
@@ -1106,16 +1106,17 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
     md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, absPartIdx);
 }
 
-void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
+void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
 {
+    uint32_t depth = cuData.depth;
     ModeDepth& md = m_modeDepth[depth];
 
     /* Note that these two Mode instances are named MERGE and SKIP but they may
-     * be reversed. We use the two modes to toggle between */
-    Mode* mergePred = &md.pred[PRED_MERGE];
-    Mode* skipPred  = &md.pred[PRED_SKIP];
-    TComDataCU* mergeCU = &md.pred[PRED_MERGE].cu;
-    TComDataCU* skipCU = &md.pred[PRED_SKIP].cu;
+     * hold the reverse when the function returns. We toggle between the two modes */
+    Mode* mergePred = &merge;
+    Mode* skipPred = &skip;
+    TComDataCU* mergeCU = &mergePred->cu;
+    TComDataCU* skipCU = &skipPred->cu;
 
     X265_CHECK(mergeCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
@@ -1135,7 +1136,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
     mergeCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     Yuv *fencYuv = &md.origYuv;
-    Yuv *predYuv = &md.pred[PRED_MERGE].predYuv;
+    Yuv *predYuv = &mergePred->predYuv;
 
     int bestSadCand = -1;
     int sizeIdx = cuData.log2CUSize - 2;
@@ -1170,11 +1171,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
         }
     }
 
-    /* skipPred points to the be prediction and costs */
-    skipCU = &md.pred[PRED_SKIP].cu;
     if (bestSadCand < 0)
         return;
 
+    /* skipPred points to the best prediction and costs */
+    skipCU = &skipPred->cu;
     mergeCU->setMergeIndex(0, bestSadCand);
     mergeCU->setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0, depth);
     mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[bestSadCand][0], SIZE_2Nx2N, 0, 0);
@@ -1197,26 +1198,25 @@ void Analysis::checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth)
         else
         {
             // Skip (no-residual) mode
-            encodeResAndCalcRdSkipCU(md.pred[PRED_SKIP]);
+            encodeResAndCalcRdSkipCU(*skipPred);
         }
 
         // Encode with residue
         mergePred->predYuv.copyFromYuv(skipPred->predYuv);
-        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData);
+        encodeResAndCalcRdInterCU(*mergePred, cuData);
     }
 }
 
-void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& earlySkip)
+void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData, bool& earlySkip)
 {
-    ModeDepth& md = m_modeDepth[depth];
+    uint32_t depth = cuData.depth;
 
     /* Note that these two Mode instances are named MERGE and SKIP but they may
-     * be reversed. We use the two modes to toggle between */
-    Mode* mergePred = &md.pred[PRED_MERGE];
-    Mode* skipPred = &md.pred[PRED_SKIP];
-    mergePred->cu.initEstData();
-    skipPred->cu.initEstData();
-    TComDataCU* mergeCU = &md.pred[PRED_MERGE].cu;
+     * hold the reverse when the function returns. We toggle between the two modes */
+    Mode* mergePred = &merge;
+    Mode* skipPred = &skip;
+    TComDataCU* mergeCU = &mergePred->cu;
+    TComDataCU* skipCU = &skipPred->cu;
 
     X265_CHECK(mergeCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
@@ -1224,9 +1224,13 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     uint32_t maxNumMergeCand = mergeCU->m_slice->m_maxNumMergeCand;
 
-    mergeCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
+    mergeCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     mergeCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     mergeCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
+
+    skipCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    skipCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    skipCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     int mergeCandBuffer[MRG_MAX_NUM_CANDS];
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
@@ -1265,9 +1269,9 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
 
                     // estimate residual and encode everything
                     if (noResidual)
-                        encodeResAndCalcRdSkipCU(md.pred[PRED_MERGE]);
+                        encodeResAndCalcRdSkipCU(*mergePred);
                     else
-                        encodeResAndCalcRdInterCU(md.pred[PRED_MERGE], cuData);
+                        encodeResAndCalcRdInterCU(*mergePred, cuData);
 
                     /* TODO: Fix the satd cost estimates. Why is merge being chosen in high motion areas: estimated distortion is too low? */
                     if (!noResidual && !mergeCU->getQtRootCbf(0))
@@ -1291,8 +1295,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
             }
         }
 
-        md.bestMode = skipPred;
-        TComDataCU* bestCU = &md.bestMode->cu;
+        TComDataCU* bestCU = &skipPred->cu;
         if (!noResidual && m_param->bEnableEarlySkip && !bestCU->getQtRootCbf(0))
         {
             if (bestCU->getMergeFlag(0))
@@ -1308,6 +1311,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
             }
         }
     }
+
+    m_modeDepth[depth].bestMode = skipPred;
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize)

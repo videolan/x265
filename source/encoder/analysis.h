@@ -126,8 +126,8 @@ protected:
     void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
 
     /* measure merge and skip */
-    void checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth);
-    void checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& earlySkip);
+    void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData, bool& earlySkip);
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize);
