@@ -112,17 +112,12 @@ void Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_slice->m_sliceType == I_SLICE)
     {
+        uint32_t zOrder = 0;
         if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_frame->m_intraData)
-        {
-            uint32_t zOrder = 0;
-            compressSharedIntraCTU(ctu, ctu.m_cuLocalData[0], 0,
-                &m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition],
-                &m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition],
-                &m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], zOrder);
-        }
+            compressIntraCU(ctu, ctu.m_cuLocalData[0], 0, m_frame->m_intraData, zOrder);
         else
         {
-            compressIntraCU(ctu, ctu.m_cuLocalData[0], 0);
+            compressIntraCU(ctu, ctu.m_cuLocalData[0], 0, NULL, zOrder);
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
@@ -212,7 +207,7 @@ void Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
     }
 }
 
-void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex)
+void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, x265_intra_data* shared, uint32_t& zOrder)
 {
     uint32_t depth = cuData.depth;
     uint32_t absPartIdx = cuData.encodeIdx;
@@ -225,9 +220,43 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
 
-    if (mightNotSplit)
+    if (shared)
+    {
+        if (mightNotSplit && depth == shared->depth[zOrder] && zOrder == cuData.encodeIdx)
+        {
+            m_quant.setQPforQuant(parentCTU);
+
+            PartSize size = (PartSize)shared->partSizes[zOrder];
+            Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
+            mode.cu.initSubCU(parentCTU, cuData, partIndex);
+            checkIntra(mode, cuData, size, shared->modes);
+
+            if (mightSplit)
+            {
+                /* add signal cost of no-split flag */
+                TComDataCU *cu = &md.bestMode->cu;
+                m_entropyCoder.resetBits();
+                m_entropyCoder.codeSplitFlag(*cu, 0, depth);
+                cu->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
+                if (m_rdCost.m_psyRd)
+                    cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
+                else
+                    cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+            }
+
+            // copy original YUV samples in lossless mode
+            if (md.bestMode->cu.isLosslessCoded(0))
+                fillOrigYUVBuffer(&md.bestMode->cu, &md.origYuv);
+
+            // increment zOrder offset to point to next best depth in sharedDepth buffer
+            zOrder += g_depthInc[g_maxCUDepth - 1][depth];
+            mightSplit = false;
+        }
+    }
+    else if (mightNotSplit)
     {
         m_quant.setQPforQuant(parentCTU);
+
         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData, partIndex);
         checkIntra(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N, NULL);
 
@@ -239,7 +268,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
         if (mightSplit)
         {
-            /* add signal cost not no-split flag */
+            /* add signal cost of no-split flag */
             TComDataCU *cu = &md.bestMode->cu;
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(*cu, 0, depth);
@@ -273,104 +302,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
             if (childCuData.flags & CU::PRESENT)
             {
                 m_rdContexts[nextDepth].cur.load(*nextContext);
-                compressIntraCU(parentCTU, childCuData, partUnitIdx);
-
-                // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
-                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * partUnitIdx);
-                nextContext = &nd.bestMode->contexts;
-            }
-            else
-            {
-                splitCU->copyToPic(nextDepth);
-                splitCU->copyPartFrom(splitCU, childCuData.numPartitions, partUnitIdx, nextDepth); // just to init lower depth
-            }
-        }
-        if (mightNotSplit)
-        {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-            splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
-        }
-        if (m_rdCost.m_psyRd)
-            splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-        else
-            splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
-        nextContext->store(splitPred->contexts);
-        checkDQP(splitCU, cuData);
-        checkBestMode(*splitPred, depth);
-    }
-
-    // Copy best data to picsym
-    md.bestMode->cu.copyToPic(depth);
-
-    // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
-    // if split was not required, write recon
-    if (mightNotSplit)
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, absPartIdx);
-}
-
-void Analysis::compressSharedIntraCTU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder)
-{
-    uint32_t depth = cuData.depth;
-    uint32_t absPartIdx = cuData.encodeIdx;
-    ModeDepth& md = m_modeDepth[depth];
-    md.bestMode = NULL;
-
-    if (depth)
-        m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
-
-    bool mightSplit = !(cuData.flags & CU::LEAF);
-    bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
-
-    if (mightNotSplit && depth == sharedDepth[zOrder] && zOrder == cuData.encodeIdx)
-    {
-        m_quant.setQPforQuant(parentCTU);
-        Mode& mode = sharedPartSizes[zOrder] == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
-        mode.cu.initSubCU(parentCTU, cuData, partIndex);
-        checkIntra(mode, cuData, (PartSize)sharedPartSizes[zOrder], NULL);
-
-        if (mightSplit)
-        {
-            /* add signal cost not no-split flag */
-            TComDataCU *cu = &md.bestMode->cu;
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*cu, 0, depth);
-            cu->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
-            if (m_rdCost.m_psyRd)
-                cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-            else
-                cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
-        }
-
-        // copy original YUV samples in lossless mode
-        if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(&md.bestMode->cu, &md.origYuv);
-
-        // increment zOrder offset to point to next best depth in sharedDepth buffer
-        zOrder += g_depthInc[g_maxCUDepth - 1][depth];
-        mightSplit = false;
-    }
-
-    if (mightSplit)
-    {
-        Mode* splitPred = &md.pred[PRED_SPLIT];
-        TComDataCU* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
-        splitCU->m_totalRDCost = 0;
-
-        uint32_t nextDepth = depth + 1;
-        ModeDepth& nd = m_modeDepth[nextDepth];
-        invalidateContexts(nextDepth);
-        Entropy* nextContext = &m_rdContexts[depth].cur;
-
-        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
-        {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + partUnitIdx];
-            if (childCuData.flags & CU::PRESENT)
-            {
-                m_rdContexts[nextDepth].cur.load(*nextContext);
-                compressSharedIntraCTU(parentCTU, childCuData, partUnitIdx, sharedDepth, sharedPartSizes, sharedModes, zOrder);
+                compressIntraCU(parentCTU, childCuData, partUnitIdx, shared, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);

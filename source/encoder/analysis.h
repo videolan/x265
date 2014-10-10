@@ -119,11 +119,10 @@ protected:
     void parallelAnalysisJob(int threadId, int jobId);
     void parallelME(int threadId, int meId);
 
-    /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
-    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
-    void compressSharedIntraCTU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex,
-                                uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
+    /* full analysis for an I-slice CU */
+    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, x265_intra_data* sdata, uint32_t &zOrder);
 
+    /* full analysis for a P or B slice CU */
     void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
     void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
 
