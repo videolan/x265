@@ -314,9 +314,13 @@ uint32_t Search::xGetIntraBitsChroma(const TComDataCU& cu, uint32_t absPartIdx, 
 }
 
 /* returns distortion */
-uint32_t Search::xIntraCodingLumaBlk(TComDataCU* cu, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSize, const Yuv* fencYuv, Yuv* predYuv,
-                                     ShortYuv* resiYuv, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
+uint32_t Search::xIntraCodingLumaBlk(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
+    TComDataCU* cu      = &mode.cu;
+    const Yuv* fencYuv  = mode.origYuv;
+    Yuv* predYuv        = &mode.predYuv;
+    ShortYuv* resiYuv   = &mode.resiYuv;
+
     uint32_t stride       = fencYuv->m_width;
     pixel*   fenc         = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
     pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
@@ -434,7 +438,6 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     bool bCheckFull  = log2TrSize <= *(depthRange + 1);
 
     Yuv* predYuv = &mode.predYuv;
-    ShortYuv* resiYuv = &mode.resiYuv;
     TComDataCU* cu = &mode.cu;
     const Yuv* fencYuv = mode.origYuv;
 
@@ -532,7 +535,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                     cu->setCUTransquantBypassSubParts(bIsLossLess, absPartIdx, fullDepth);
 
                 // code luma block with given intra prediction mode and store Cbf
-                singleDistYTmp = xIntraCodingLumaBlk(cu, cuData, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, recon, reconStride, coeff, singleCbfYTmp);
+                singleDistYTmp = xIntraCodingLumaBlk(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, singleCbfYTmp);
                 singlePsyEnergyYTmp = 0;
                 if (m_rdCost.m_psyRd)
                 {
@@ -594,7 +597,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
             // code luma block with given intra prediction mode and store Cbf
             cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
-            singleDistY = xIntraCodingLumaBlk(cu, cuData, absPartIdx, log2TrSize, fencYuv, predYuv, resiYuv, reconQt, reconQtStride, coeffY, singleCbfY);
+            singleDistY = xIntraCodingLumaBlk(mode, cuData, absPartIdx, log2TrSize, reconQt, reconQtStride, coeffY, singleCbfY);
             if (m_rdCost.m_psyRd)
             {
                 uint32_t zorder = cuData.encodeIdx + absPartIdx;
