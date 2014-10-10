@@ -190,9 +190,29 @@ void Entropy::codeProfileTier(ProfileTierLevel& ptl)
     WRITE_FLAG(ptl.nonPackedConstraintFlag, "general_non_packed_constraint_flag");
     WRITE_FLAG(ptl.frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
 
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
-    WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+    if (ptl.profileIdc == Profile::MAINREXT || ptl.profileIdc == Profile::HIGHTHROUGHPUTREXT)
+    {
+        uint32_t bitDepthConstraint = ptl.bitDepthConstraint;
+        int csp = ptl.chromaFormatConstraint;
+        WRITE_FLAG(bitDepthConstraint<=12, "general_max_12bit_constraint_flag");
+        WRITE_FLAG(bitDepthConstraint<=10, "general_max_10bit_constraint_flag");
+        WRITE_FLAG(bitDepthConstraint<= 8 && csp != X265_CSP_I422 , "general_max_8bit_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I422 || csp == X265_CSP_I420 || csp == X265_CSP_I400, "general_max_422chroma_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I420 || csp == X265_CSP_I400,                         "general_max_420chroma_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I400,                                                 "general_max_monochrome_constraint_flag");
+        WRITE_FLAG(ptl.intraConstraintFlag,        "general_intra_constraint_flag");
+        WRITE_FLAG(0,                              "general_one_picture_only_constraint_flag");
+        WRITE_FLAG(ptl.lowerBitRateConstraintFlag, "general_lower_bit_rate_constraint_flag");
+        WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
+        WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
+        WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
+    }
+    else
+    {
+        WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
+        WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
+        WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+    }
 
     WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
 }

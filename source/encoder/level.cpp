@@ -75,10 +75,7 @@ void determineLevel(const x265_param &param, VPS& vps)
             vps.ptl.profileIdc = Profile::MAIN10;
     }
     else
-    {
-        /* TODO: Range extension profiles */
-        vps.ptl.profileIdc = Profile::NONE;
-    }
+        vps.ptl.profileIdc = Profile::MAINREXT;
 
     /* determine which profiles are compatible with this stream */
 
@@ -93,6 +90,8 @@ void determineLevel(const x265_param &param, VPS& vps)
         vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
         vps.ptl.profileCompatibilityFlag[Profile::MAIN10] = true;
     }
+    else if (vps.ptl.profileIdc == Profile::MAINREXT)
+        vps.ptl.profileCompatibilityFlag[Profile::MAINREXT] = true;
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
@@ -167,10 +166,29 @@ void determineLevel(const x265_param &param, VPS& vps)
         break;
     }
 
-    static const char *profiles[] = { "None", "Main", "Main10", "Mainstillpicture" };
+    vps.ptl.intraConstraintFlag = false;
+    vps.ptl.lowerBitRateConstraintFlag = true;
+    vps.ptl.bitDepthConstraint = param.internalBitDepth;
+    vps.ptl.chromaFormatConstraint = param.internalCsp;
+    
+    static const char *profiles[] = { "None", "Main", "Main 10", "Main Still Picture", "RExt" };
     static const char *tiers[]    = { "Main", "High" };
+
+    const char *profile = profiles[vps.ptl.profileIdc];
+    if (vps.ptl.profileIdc == Profile::MAINREXT)
+    {
+        if (param.internalCsp == X265_CSP_I422)
+            profile = "Main 4:2:2 10";
+        if (param.internalCsp == X265_CSP_I444)
+        {
+            if (vps.ptl.bitDepthConstraint <= 8)
+                profile = "Main 4:4:4 8";
+            else if (vps.ptl.bitDepthConstraint <= 10)
+                profile = "Main 4:4:4 10";
+        }
+    }
     x265_log(&param, X265_LOG_INFO, "%s profile, Level-%s (%s tier)\n",
-             profiles[vps.ptl.profileIdc], levels[i].name, tiers[vps.ptl.tierFlag]);
+             profile, levels[i].name, tiers[vps.ptl.tierFlag]);
 }
 
 /* enforce a maximum decoder level requirement, in other words assure that a
@@ -356,6 +374,18 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
         return -1;
 #endif
     }
+    else if (!strcmp(profile, "main422-10"))
+        param->internalCsp = X265_CSP_I422;
+    else if (!strcmp(profile, "main444-8"))
+    {
+        param->internalCsp = X265_CSP_I444;
+#if HIGH_BIT_DEPTH
+        x265_log(param, X265_LOG_ERROR, "Main 4:4:4 8 profile not supported, compiled for Main10.\n");
+        return -1;
+#endif
+    }
+    else if (!strcmp(profile, "main444-10"))
+        param->internalCsp = X265_CSP_I444;
     else
     {
         x265_log(param, X265_LOG_ERROR, "unknown profile <%s>\n", profile);
