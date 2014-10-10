@@ -33,12 +33,8 @@
 
 using namespace x265;
 
-Analysis::Analysis() : JobProvider(NULL)
+Analysis::Analysis()
 {
-    m_slice = NULL;
-    m_frame = NULL;
-    m_bJobsQueued = false;
-    m_totalNumME = m_numAcquiredME = m_numCompletedME = 0;
     m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
 }
 
@@ -94,180 +90,6 @@ void Analysis::destroy()
             m_modeDepth[i].pred[j].reconYuv.destroy();
             m_modeDepth[i].pred[j].resiYuv.destroy();
         }
-    }
-}
-
-bool Analysis::findJob(int threadId)
-{
-    /* try to acquire a CU mode to analyze */
-    if (m_totalNumJobs > m_numAcquiredJobs)
-    {
-        /* ATOMIC_INC returns the incremented value */
-        int id = ATOMIC_INC(&m_numAcquiredJobs);
-        if (m_totalNumJobs >= id)
-        {
-            parallelAnalysisJob(threadId, id - 1);
-            if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
-                m_modeCompletionEvent.trigger();
-            return true;
-        }
-    }
-
-    /* else try to acquire a motion estimation task */
-    if (m_totalNumME > m_numAcquiredME)
-    {
-        int id = ATOMIC_INC(&m_numAcquiredME);
-        if (m_totalNumME >= id)
-        {
-            parallelME(threadId, id - 1);
-            if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
-                m_meCompletionEvent.trigger();
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void Analysis::parallelAnalysisJob(int threadId, int jobId)
-{
-    Analysis* slave;
-    ModeDepth& md = m_modeDepth[m_curDepth];
-    int depth = m_curDepth;
-
-    if (threadId == -1)
-        slave = this;
-    else
-    {
-        TComDataCU& cu = md.pred[PRED_2Nx2N].cu;
-        PicYuv* fencPic = m_frame->m_origPicYuv;
-
-        slave = &m_tld[threadId].analysis;
-        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-        m_modeDepth[0].origYuv.copyPartToYuv(slave->m_modeDepth[depth].origYuv, m_curCUData->encodeIdx);
-        slave->setQP(*cu.m_slice, m_rdCost.m_qp);
-        slave->m_slice = m_slice;
-        slave->m_frame = m_frame;
-        if (!jobId || m_param->rdLevel > 4)
-        {
-            slave->m_quant.setQPforQuant(cu);
-            slave->m_quant.m_nr = m_quant.m_nr;
-            slave->m_rdContexts[depth].cur.load(m_rdContexts[depth].cur);
-        }
-    }
-
-    switch (jobId)
-    {
-    case 0:
-        slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], *m_curCUData);
-        if (m_param->rdLevel > 2)
-            slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curCUData);
-        break;
-
-    case 1:
-        slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curCUData, SIZE_2Nx2N);
-        break;
-
-    case 2:
-        slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curCUData, SIZE_Nx2N);
-        break;
-
-    case 3:
-        slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curCUData, SIZE_2NxN);
-        break;
-
-    default:
-        X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
-        break;
-    }
-}
-
-void Analysis::parallelME(int threadId, int meId)
-{
-    Analysis* slave;
-    TComDataCU *cu = m_curMECu;
-    PicYuv* fencPic = m_frame->m_origPicYuv;
-
-    if (threadId == -1)
-        slave = this;
-    else
-    {
-        slave = &m_tld[threadId].analysis;
-        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-        slave->setQP(*m_slice, m_rdCost.m_qp);
-    }
-
-    int ref, l;
-    if (meId < m_slice->m_numRefIdx[0])
-    {
-        l = 0;
-        ref = meId;
-    }
-    else
-    {
-        l = 1;
-        ref = meId - m_slice->m_numRefIdx[0];
-    }
-
-    uint32_t partAddr;
-    int      puWidth, puHeight;
-    cu->getPartIndexAndSize(m_curPart, partAddr, puWidth, puHeight);
-    slave->prepMotionCompensation(cu, *m_curCUData, m_curPart);
-
-    pixel* pu = fencPic->getLumaAddr(cu->m_cuAddr, m_curCUData->encodeIdx + partAddr);
-    slave->m_me.setSourcePU(pu - fencPic->m_picOrg[0], puWidth, puHeight);
-
-    uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
-    bits += getTUBits(ref, m_slice->m_numRefIdx[l]);
-
-    MV amvpCand[AMVP_NUM_CANDS];
-    MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-    int numMvc = cu->fillMvpCand(m_curPart, partAddr, l, ref, amvpCand, mvc);
-
-    uint32_t bestCost = MAX_INT;
-    int mvpIdx = 0;
-    int merange = m_param->searchRange;
-    for (int i = 0; i < AMVP_NUM_CANDS; i++)
-    {
-        MV mvCand = amvpCand[i];
-
-        // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-            continue;
-
-        cu->clipMv(mvCand);
-
-        slave->predInterLumaBlk(m_slice->m_refPicList[l][ref]->m_reconPicYuv, &slave->m_predTempYuv, &mvCand);
-        uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), slave->m_predTempYuv.m_width);
-
-        if (bestCost > cost)
-        {
-            bestCost = cost;
-            mvpIdx  = i;
-        }
-    }
-
-    MV mvmin, mvmax, outmv, mvp = amvpCand[mvpIdx];
-    setSearchRange(*cu, mvp, merange, mvmin, mvmax);
-
-    int satdCost = slave->m_me.motionEstimate(&m_slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
-
-    /* Get total cost of partition, but only include MV bit cost once */
-    bits += m_me.bitcost(outmv);
-    uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
-
-    /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-    checkBestMVP(amvpCand, outmv, mvp, mvpIdx, bits, cost);
-
-    ScopedLock _lock(m_outputLock);
-    if (cost < m_bestME[l].cost)
-    {
-        m_bestME[l].mv = outmv;
-        m_bestME[l].mvp = mvp;
-        m_bestME[l].mvpIdx = mvpIdx;
-        m_bestME[l].ref = ref;
-        m_bestME[l].cost = cost;
-        m_bestME[l].bits = bits;
     }
 }
 
@@ -630,6 +452,110 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     checkBestMode(intraMode, depth);
 }
 
+bool Analysis::findJob(int threadId)
+{
+    /* try to acquire a CU mode to analyze */
+    if (m_totalNumJobs > m_numAcquiredJobs)
+    {
+        /* ATOMIC_INC returns the incremented value */
+        int id = ATOMIC_INC(&m_numAcquiredJobs);
+        if (m_totalNumJobs >= id)
+        {
+            parallelAnalysisJob(threadId, id - 1);
+            if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
+                m_modeCompletionEvent.trigger();
+            return true;
+        }
+    }
+
+    if (m_totalNumME > m_numAcquiredME)
+    {
+        int id = ATOMIC_INC(&m_numAcquiredME);
+        if (m_totalNumME >= id)
+        {
+            parallelME(threadId, id - 1);
+            if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
+                m_meCompletionEvent.trigger();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Analysis::parallelME(int threadId, int meId)
+{
+    Analysis* slave;
+
+    if (threadId == -1)
+        slave = this;
+    else
+    {
+        PicYuv* fencPic = m_frame->m_origPicYuv;
+        slave = &m_tld[threadId].analysis;
+        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
+        slave->setQP(*m_slice, m_rdCost.m_qp);
+    }
+
+    if (meId < m_slice->m_numRefIdx[0])
+        slave->singleMotionEstimation(m_curMECu, *m_curCUData, m_curPart, 0, meId);
+    else
+        slave->singleMotionEstimation(m_curMECu, *m_curCUData, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
+}
+
+void Analysis::parallelAnalysisJob(int threadId, int jobId)
+{
+    Analysis* slave;
+    int depth = m_curCUData->depth;
+    ModeDepth& md = m_modeDepth[depth];
+
+    if (threadId == -1)
+        slave = this;
+    else
+    {
+        TComDataCU& cu = md.pred[PRED_2Nx2N].cu;
+        PicYuv* fencPic = m_frame->m_origPicYuv;
+
+        slave = &m_tld[threadId].analysis;
+        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
+        m_modeDepth[0].origYuv.copyPartToYuv(slave->m_modeDepth[depth].origYuv, m_curCUData->encodeIdx);
+        slave->setQP(*cu.m_slice, m_rdCost.m_qp);
+        slave->m_slice = m_slice;
+        slave->m_frame = m_frame;
+        if (!jobId || m_param->rdLevel > 4)
+        {
+            slave->m_quant.setQPforQuant(cu);
+            slave->m_quant.m_nr = m_quant.m_nr;
+            slave->m_rdContexts[depth].cur.load(m_rdContexts[depth].cur);
+        }
+    }
+
+    switch (jobId)
+    {
+    case 0:
+        slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], *m_curCUData);
+        if (m_param->rdLevel > 2)
+            slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curCUData);
+        break;
+
+    case 1:
+        slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curCUData, SIZE_2Nx2N);
+        break;
+
+    case 2:
+        slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curCUData, SIZE_Nx2N);
+        break;
+
+    case 3:
+        slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curCUData, SIZE_2NxN);
+        break;
+
+    default:
+        X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+        break;
+    }
+}
+
 void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData, uint32_t partitionIndex)
 {
     uint32_t depth = cuData.depth;
@@ -733,7 +659,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             m_totalNumJobs = 2 + m_param->bEnableRectInter * 2;
             m_numAcquiredJobs = m_slice->m_sliceType != P_SLICE; /* skip intra for B slices */
             m_numCompletedJobs = m_numAcquiredJobs;
-            m_curDepth = depth;
             m_curCUData = &cuData;
             m_bJobsQueued = true;
             JobProvider::enqueue();
@@ -1450,228 +1375,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(const CU& cuData, uint32_t depth, bool& ear
                     earlySkip = true;
             }
         }
-    }
-}
-
-void Analysis::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma)
-{
-    TComDataCU* cu = &interMode.cu;
-    Slice *slice = cu->m_slice;
-    PicYuv *fencPic = slice->m_frame->m_origPicYuv;
-    PartSize partSize = cu->getPartitionSize(0);
-    m_curMECu = cu;
-    m_curCUData = &cuData;
-
-    MergeData merge;
-    memset(&merge, 0, sizeof(merge));
-
-    uint32_t lastMode = 0;
-    for (int partIdx = 0; partIdx < 2; partIdx++)
-    {
-        uint32_t partAddr;
-        int      puWidth, puHeight;
-        cu->getPartIndexAndSize(partIdx, partAddr, puWidth, puHeight);
-
-        getBlkBits(partSize, slice->isInterP(), partIdx, lastMode, m_listSelBits);
-        prepMotionCompensation(cu, cuData, partIdx);
-
-        pixel* pu = fencPic->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + partAddr);
-        m_me.setSourcePU(pu - fencPic->m_picOrg[0], puWidth, puHeight);
-
-        m_bestME[0].cost = MAX_UINT;
-        m_bestME[1].cost = MAX_UINT;
-
-        /* this worker might already be enqueued, so other threads might be looking at the ME job counts
-         * at any time, do these sets in a safe order */
-        m_curPart = partIdx;
-        m_totalNumME = 0;
-        m_numAcquiredME = 0;
-        m_numCompletedME = 0;
-        m_totalNumME = slice->m_numRefIdx[0] + slice->m_numRefIdx[1];
-
-        if (!m_bJobsQueued)
-            JobProvider::enqueue();
-
-        for (int i = 0; i < m_totalNumME; i++)
-            m_pool->pokeIdleThread();
-
-        MotionData bidir[2];
-        uint32_t mrgCost = MAX_UINT;
-        uint32_t bidirCost = MAX_UINT;
-        int bidirBits = 0;
-
-        /* the master thread does merge estimation */
-        if (partSize != SIZE_2Nx2N)
-        {
-            merge.absPartIdx = partAddr;
-            merge.width = puWidth;
-            merge.height = puHeight;
-            mrgCost = mergeEstimation(cu, cuData, partIdx, merge);
-        }
-
-        /* Participate in unidir motion searches */
-        while (m_totalNumME > m_numAcquiredME)
-        {
-            int id = ATOMIC_INC(&m_numAcquiredME);
-            if (m_totalNumME >= id)
-            {
-                parallelME(-1, id - 1);
-                if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
-                    m_meCompletionEvent.trigger();
-            }
-        }
-        if (!m_bJobsQueued)
-            JobProvider::dequeue();
-        m_meCompletionEvent.wait();
-
-        /* the master thread does bidir estimation */
-        if (slice->isInterB() && !cu->isBipredRestriction() && m_bestME[0].cost != MAX_UINT && m_bestME[1].cost != MAX_UINT)
-        {
-            ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
-
-            bidir[0] = m_bestME[0];
-            bidir[1] = m_bestME[1];
-
-            // Generate reference subpels
-            PicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
-            PicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
-            
-            prepMotionCompensation(cu, cuData, partIdx);
-            predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &m_bestME[0].mv);
-            predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &m_bestME[1].mv);
-
-            pixel *pred0 = m_bidirPredYuv[0].getLumaAddr(partAddr);
-            pixel *pred1 = m_bidirPredYuv[1].getLumaAddr(partAddr);
-
-            int partEnum = partitionFromSizes(puWidth, puHeight);
-            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, m_bidirPredYuv[0].m_width, pred1, m_bidirPredYuv[1].m_width, 32);
-            int satdCost = m_me.bufSATD(avg, puWidth);
-
-            bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
-            bidirCost = satdCost + m_rdCost.getCost(bidirBits);
-
-            MV mvzero(0, 0);
-            bool bTryZero = m_bestME[0].mv.notZero() || m_bestME[1].mv.notZero();
-            if (bTryZero)
-            {
-                /* Do not try zero MV if unidir motion predictors are beyond
-                 * valid search area */
-                MV mvmin, mvmax;
-                int merange = X265_MAX(m_param->sourceWidth, m_param->sourceHeight);
-                setSearchRange(*cu, mvzero, merange, mvmin, mvmax);
-                mvmax.y += 2; // there is some pad for subpel refine
-                mvmin <<= 2;
-                mvmax <<= 2;
-
-                bTryZero &= m_bestME[0].mvp.checkRange(mvmin, mvmax);
-                bTryZero &= m_bestME[1].mvp.checkRange(mvmin, mvmax);
-            }
-            if (bTryZero)
-            {
-                // coincident blocks of the two reference pictures
-                pixel *ref0 = slice->m_mref[0][m_bestME[0].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
-                pixel *ref1 = slice->m_mref[1][m_bestME[1].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
-                intptr_t refStride = slice->m_mref[0][0].lumaStride;
-
-                primitives.pixelavg_pp[partEnum](avg, puWidth, ref0, refStride, ref1, refStride, 32);
-                satdCost = m_me.bufSATD(avg, puWidth);
-
-                MV mvp0 = m_bestME[0].mvp;
-                int mvpIdx0 = m_bestME[0].mvpIdx;
-                uint32_t bits0 = m_bestME[0].bits - m_me.bitcost(m_bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
-
-                MV mvp1 = m_bestME[1].mvp;
-                int mvpIdx1 = m_bestME[1].mvpIdx;
-                uint32_t bits1 = m_bestME[1].bits - m_me.bitcost(m_bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
-
-                uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
-
-                MV amvpCand[AMVP_NUM_CANDS];
-                MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-                cu->fillMvpCand(m_curPart, partAddr, 0, m_bestME[0].ref, amvpCand, mvc);
-                checkBestMVP(amvpCand, mvzero, mvp0, mvpIdx0, bits0, cost);
-
-                cu->fillMvpCand(m_curPart, partAddr, 1, m_bestME[1].ref, amvpCand, mvc);
-                checkBestMVP(amvpCand, mvzero, mvp1, mvpIdx1, bits1, cost);
-
-                if (cost < bidirCost)
-                {
-                    bidir[0].mv = mvzero;
-                    bidir[1].mv = mvzero;
-                    bidir[0].mvp = mvp0;
-                    bidir[1].mvp = mvp1;
-                    bidir[0].mvpIdx = mvpIdx0;
-                    bidir[1].mvpIdx = mvpIdx1;
-                    bidirCost = cost;
-                    bidirBits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
-                }
-            }
-        }
-
-        /* select best option and store into CU */
-        cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
-        cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(TComMvField(), partSize, partAddr, 0, partIdx);
-
-        if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
-        {
-            cu->setMergeFlag(partAddr, true);
-            cu->setMergeIndex(partAddr, merge.index);
-            cu->setInterDirSubParts(merge.interDir, partAddr, partIdx, cu->getDepth(partAddr));
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
-
-            cu->m_totalBits += merge.bits;
-        }
-        else if (bidirCost < m_bestME[0].cost && bidirCost < m_bestME[1].cost)
-        {
-            lastMode = 2;
-
-            cu->setMergeFlag(partAddr, false);
-            cu->setInterDirSubParts(3, partAddr, partIdx, cu->getDepth(0));
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(bidir[0].mv, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx(m_bestME[0].ref, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_0)->setMvd(partAddr, bidir[0].mv - bidir[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, partAddr, bidir[0].mvpIdx);
-
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(bidir[1].mv, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(m_bestME[1].ref, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setMvd(partAddr, bidir[1].mv - bidir[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, partAddr, bidir[1].mvpIdx);
-
-            cu->m_totalBits += bidirBits;
-        }
-        else if (m_bestME[0].cost <= m_bestME[1].cost)
-        {
-            lastMode = 0;
-
-            cu->setMergeFlag(partAddr, false);
-            cu->setInterDirSubParts(1, partAddr, partIdx, cu->getDepth(0));
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllMv(m_bestME[0].mv, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx(m_bestME[0].ref, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_0)->setMvd(partAddr, m_bestME[0].mv - m_bestME[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, partAddr, m_bestME[0].mvpIdx);
-
-            cu->m_totalBits += m_bestME[0].bits;
-        }
-        else
-        {
-            lastMode = 1;
-
-            cu->setMergeFlag(partAddr, false);
-            cu->setInterDirSubParts(2, partAddr, partIdx, cu->getDepth(0));
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllMv(m_bestME[1].mv, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx(m_bestME[1].ref, partSize, partAddr, 0, partIdx);
-            cu->getCUMvField(REF_PIC_LIST_1)->setMvd(partAddr, m_bestME[1].mv - m_bestME[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, partAddr, m_bestME[1].mvpIdx);
-
-            cu->m_totalBits += m_bestME[1].bits;
-        }
-
-        prepMotionCompensation(cu, cuData, partIdx);
-        motionCompensation(&interMode.predYuv, true, bChroma);
-
-        if (partSize == SIZE_2Nx2N)
-            return;
     }
 }
 

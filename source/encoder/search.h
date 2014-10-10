@@ -29,6 +29,7 @@
 #include "quant.h"
 #include "bitcost.h"
 #include "yuv.h"
+#include "threadpool.h"
 
 #include "TLibCommon/TComMotionInfo.h"
 
@@ -43,6 +44,7 @@ namespace x265 {
 // private namespace
 
 class Entropy;
+struct ThreadLocalData;
 
 /* All the CABAC contexts that Analysis needs to keep track of at each depth */
 struct RDContexts
@@ -59,7 +61,7 @@ inline int getTUBits(int idx, int numIdx)
     return idx + (idx < numIdx - 1);
 }
 
-class Search : public Predict
+class Search : public JobProvider, public Predict
 {
 public:
 
@@ -69,6 +71,8 @@ public:
     Quant           m_quant;
     RDCost          m_rdCost;
     x265_param*     m_param;
+    Frame*          m_frame;
+    const Slice*    m_slice;
 
     Entropy         m_entropyCoder;
     RDContexts      m_rdContexts[NUM_FULL_DEPTH];
@@ -95,6 +99,16 @@ public:
         Entropy    contexts;
     };
 
+    struct MotionData
+    {
+        MV  mv;
+        MV  mvp;
+        int mvpIdx;
+        int ref;
+        uint32_t cost;
+        int bits;
+    };
+
     Search();
     ~Search();
 
@@ -112,6 +126,7 @@ public:
 
     // estimation inter prediction (non-skip)
     bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);
+    void     parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData);
@@ -124,6 +139,21 @@ public:
     uint32_t getIntraRemModeBits(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 
 protected:
+
+    /* motion estimation distribution */
+    ThreadLocalData* m_tld;
+    TComDataCU*   m_curMECu;
+    const CU*     m_curCUData;
+    int           m_curPart;
+    MotionData    m_bestME[2];
+    uint32_t      m_listSelBits[3];
+    int           m_totalNumME;
+    volatile int  m_numAcquiredME;
+    volatile int  m_numCompletedME;
+    Event         m_meCompletionEvent;
+    Lock          m_outputLock;
+    bool          m_bJobsQueued;
+    void     singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, int list, int ref);
 
     void     xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
     void     xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
@@ -178,16 +208,6 @@ protected:
         uint32_t    interDir;
         uint32_t    index;
         uint32_t    bits;
-    };
-
-    struct MotionData
-    {
-        MV  mv;
-        MV  mvp;
-        int mvpIdx;
-        int ref;
-        uint32_t cost;
-        int bits;
     };
 
     /* inter/ME helper functions */

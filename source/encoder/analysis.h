@@ -34,7 +34,6 @@
 #include "quant.h"
 #include "yuv.h"
 #include "shortyuv.h"
-#include "threadpool.h"
 #include "TLibCommon/TComDataCU.h"
 
 #include "entropy.h"
@@ -67,9 +66,8 @@ struct StatisticLog
 
 class Encoder;
 class Entropy;
-struct ThreadLocalData;
 
-class Analysis : public JobProvider, public Search
+class Analysis : public Search
 {
 public:
 
@@ -103,8 +101,6 @@ public:
     bool          m_bEncodeDQP;
 
     StatisticLog  m_sliceTypeLog[3];
-    Frame*        m_frame;
-    const Slice*  m_slice;
 
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
@@ -113,31 +109,14 @@ public:
 
 protected:
 
-    /* Job provider details */
-    const CU*     m_curCUData;
-    int           m_curDepth;
-    ThreadLocalData* m_tld;
-    bool          m_bJobsQueued;
-    bool findJob(int threadId);
-
     /* mode analysis distribution */
     Entropy       m_intraContexts;
     int           m_totalNumJobs;
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
     Event         m_modeCompletionEvent;
+    bool findJob(int threadId);
     void parallelAnalysisJob(int threadId, int jobId);
-
-    /* motion estimation distribution */
-    TComDataCU*   m_curMECu;
-    int           m_curPart;
-    MotionData    m_bestME[2];
-    uint32_t      m_listSelBits[3];
-    int           m_totalNumME;
-    volatile int  m_numAcquiredME;
-    volatile int  m_numCompletedME;
-    Event         m_meCompletionEvent;
-    Lock          m_outputLock;
     void parallelME(int threadId, int meId);
 
     /* Warning: The interface for these functions will undergo significant changes as a major refactor is under progress */
@@ -157,7 +136,6 @@ protected:
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize);
     void checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize partSize, bool bMergeOnly);
-    void parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma);
 
     /* measure intra options */
     void checkIntra(const TComDataCU& parentCTU, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
