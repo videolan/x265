@@ -246,7 +246,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
             // copy original YUV samples in lossless mode
             if (md.bestMode->cu.isLosslessCoded(0))
-                fillOrigYUVBuffer(&md.bestMode->cu, &md.origYuv);
+                fillOrigYUVBuffer(&md.bestMode->cu, md.origYuv);
 
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][depth];
@@ -281,7 +281,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
         // copy original YUV samples in lossless mode
         if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(&md.bestMode->cu, &md.origYuv);
+            fillOrigYUVBuffer(&md.bestMode->cu, md.origYuv);
     }
 
     if (mightSplit)
@@ -807,7 +807,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         // copy original YUV samples in lossless mode
         if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, &md.origYuv);
+            fillOrigYUVBuffer(bestCU, md.origYuv);
     }
 
     /* do not try splits if best mode is already a skip */
@@ -1053,7 +1053,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
         // copy original YUV samples in lossless mode
         if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, &md.origYuv);
+            fillOrigYUVBuffer(bestCU, md.origYuv);
     }
 
     // estimate split cost
@@ -1765,54 +1765,5 @@ void Analysis::checkDQP(TComDataCU* cu, const CU& cuData)
             if (!cu->getCbf(0, TEXT_LUMA, 0) && !cu->getCbf(0, TEXT_CHROMA_U, 0) && !cu->getCbf(0, TEXT_CHROMA_V, 0))
                 cu->setQPSubParts(cu->getRefQP(0), 0, cuData.depth);
         }
-    }
-}
-
-/* Function for filling original YUV samples of a CU in lossless mode */
-void Analysis::fillOrigYUVBuffer(TComDataCU* cu, const Yuv* fencYuv)
-{
-    /* TODO: is this extra copy really necessary? the source pixels will still
-     * be available when getLumaOrigYuv() is used */
-
-    uint32_t width  = 1 << cu->getLog2CUSize(0);
-    uint32_t height = 1 << cu->getLog2CUSize(0);
-
-    const pixel* srcY = fencYuv->m_buf[0];
-    pixel* dstY = cu->getLumaOrigYuv();
-    uint32_t srcStride = fencYuv->m_width;
-
-    /* TODO: square block copy primitive */
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-            dstY[x] = srcY[x];
-
-        dstY += width;
-        srcY += srcStride;
-    }
-
-    const pixel* srcCb = fencYuv->m_buf[1];
-    const pixel* srcCr = fencYuv->m_buf[2];
-
-    pixel* dstCb = cu->getChromaOrigYuv(1);
-    pixel* dstCr = cu->getChromaOrigYuv(2);
-
-    uint32_t srcStrideC = fencYuv->m_cwidth;
-    uint32_t widthC  = width  >> cu->m_hChromaShift;
-    uint32_t heightC = height >> cu->m_vChromaShift;
-
-    /* TODO: block copy primitives */
-    for (uint32_t y = 0; y < heightC; y++)
-    {
-        for (uint32_t x = 0; x < widthC; x++)
-        {
-            dstCb[x] = srcCb[x];
-            dstCr[x] = srcCr[x];
-        }
-
-        dstCb += widthC;
-        dstCr += widthC;
-        srcCb += srcStrideC;
-        srcCr += srcStrideC;
     }
 }

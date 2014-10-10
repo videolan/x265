@@ -143,7 +143,6 @@ protected:
 
     void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
     void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
-    void fillOrigYUVBuffer(TComDataCU* cu, const Yuv* origYuv);
 };
 
 struct ThreadLocalData

@@ -3825,3 +3825,52 @@ uint32_t Search::getInterSymbolBits(TComDataCU& cu, uint32_t depthRange[2])
         return totalBits;
     }
 }
+
+/* Function for filling original YUV samples of a CU in lossless mode */
+void Search::fillOrigYUVBuffer(TComDataCU* cu, const Yuv& fencYuv)
+{
+    /* TODO: is this extra copy really necessary? the source pixels will still
+     * be available when getLumaOrigYuv() is used */
+
+    uint32_t width = 1 << cu->getLog2CUSize(0);
+    uint32_t height = 1 << cu->getLog2CUSize(0);
+
+    const pixel* srcY = fencYuv.m_buf[0];
+    pixel* dstY = cu->getLumaOrigYuv();
+    uint32_t srcStride = fencYuv.m_width;
+
+    /* TODO: square block copy primitive */
+    for (uint32_t y = 0; y < height; y++)
+    {
+        for (uint32_t x = 0; x < width; x++)
+            dstY[x] = srcY[x];
+
+        dstY += width;
+        srcY += srcStride;
+    }
+
+    const pixel* srcCb = fencYuv.m_buf[1];
+    const pixel* srcCr = fencYuv.m_buf[2];
+
+    pixel* dstCb = cu->getChromaOrigYuv(1);
+    pixel* dstCr = cu->getChromaOrigYuv(2);
+
+    uint32_t srcStrideC = fencYuv.m_cwidth;
+    uint32_t widthC = width >> cu->m_hChromaShift;
+    uint32_t heightC = height >> cu->m_vChromaShift;
+
+    /* TODO: block copy primitives */
+    for (uint32_t y = 0; y < heightC; y++)
+    {
+        for (uint32_t x = 0; x < widthC; x++)
+        {
+            dstCb[x] = srcCb[x];
+            dstCr[x] = srcCr[x];
+        }
+
+        dstCb += widthC;
+        dstCr += widthC;
+        srcCb += srcStrideC;
+        srcCr += srcStrideC;
+    }
+}
