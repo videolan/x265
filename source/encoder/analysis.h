@@ -116,7 +116,7 @@ protected:
     volatile int  m_numCompletedJobs;
     Event         m_modeCompletionEvent;
     bool findJob(int threadId);
-    void parallelAnalysisJob(int threadId, int jobId);
+    void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */

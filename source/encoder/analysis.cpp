@@ -393,7 +393,7 @@ bool Analysis::findJob(int threadId)
         int id = ATOMIC_INC(&m_numAcquiredJobs);
         if (m_totalNumJobs >= id)
         {
-            parallelAnalysisJob(threadId, id - 1);
+            parallelModeAnalysis(threadId, id - 1);
             if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
                 m_modeCompletionEvent.trigger();
             return true;
@@ -435,7 +435,7 @@ void Analysis::parallelME(int threadId, int meId)
         slave->singleMotionEstimation(m_curMECu, *m_curCUData, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
 }
 
-void Analysis::parallelAnalysisJob(int threadId, int jobId)
+void Analysis::parallelModeAnalysis(int threadId, int jobId)
 {
     Analysis* slave;
     int depth = m_curCUData->depth;
