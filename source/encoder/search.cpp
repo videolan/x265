@@ -1449,8 +1449,12 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
     return totalDistortion;
 }
 
-void Search::getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv* fencYuv, Yuv* predYuv)
+void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
 {
+    TComDataCU* cu = &intraMode.cu;
+    const Yuv* fencYuv = intraMode.origYuv;
+    Yuv* predYuv = &intraMode.predYuv;
+
     uint32_t bestMode  = 0;
     uint64_t bestCost  = MAX_INT64;
     uint32_t modeList[NUM_CHROMA_MODE];
@@ -2264,7 +2268,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
 {
     TComDataCU* cu = &mode.cu;
-    const Yuv* fencYuv = mode.origYuv;
 
     m_quant.setQPforQuant(mode.cu);
 
@@ -2287,7 +2290,7 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
     {
         uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
         residualTransformQuantIntra(mode, cuData, initTrDepth, 0, tuDepthRange);
-        getBestIntraModeChroma(cu, cuData, fencYuv, &mode.predYuv);
+        getBestIntraModeChroma(mode, cuData);
         residualQTIntraChroma(mode, cuData, 0, 0);
     }
 }

@@ -201,7 +201,7 @@ protected:
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
     void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
-    void     getBestIntraModeChroma(TComDataCU* cu, const CU& cuData, const Yuv* fencYuv, Yuv* predYuv);
+    void     getBestIntraModeChroma(Mode& intraMode, const CU& cuData);
 };
 }
 
