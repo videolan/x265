@@ -2154,7 +2154,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         uint64_t cost = 0;
         uint32_t zeroDistortion = 0;
         uint32_t bits = 0;
-        uint32_t distortion = xEstimateResidualQT(interMode, cuData, 0, fencYuv, tmpResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
+        uint32_t distortion = xEstimateResidualQT(interMode, cuData, 0, tmpResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
 
         m_entropyCoder.resetBits();
         m_entropyCoder.codeQtRootCbfZero();
@@ -2224,7 +2224,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         m_entropyCoder.load(m_rdContexts[depth].cur);
         uint64_t cost = 0;
         uint32_t bits = 0;
-        xEstimateResidualQT(interMode, cuData, 0, fencYuv, tmpResiYuv, depth, cost, bits, NULL, tuDepthRange);
+        xEstimateResidualQT(interMode, cuData, 0, tmpResiYuv, depth, cost, bits, NULL, tuDepthRange);
         xSetResidualQTData(cu, 0, NULL, depth, false);
         m_entropyCoder.store(interMode.contexts);
     }
@@ -2424,11 +2424,12 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
     }
 }
 
-uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, const Yuv* fencYuv, ShortYuv* resiYuv, uint32_t depth, uint64_t& rdCost,
+uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, uint64_t& rdCost,
                                      uint32_t& outBits, uint32_t* outZeroDist, uint32_t depthRange[2])
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
+    const Yuv* fencYuv = mode.origYuv;
 
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -3154,7 +3155,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         for (uint32_t i = 0; i < 4; ++i)
         {
             cu->m_psyEnergy = 0;
-            subdivDist += xEstimateResidualQT(mode, cuData, absPartIdx + i * qPartNumSubdiv, fencYuv, resiYuv, depth + 1, subDivCost, subdivBits, bCheckFull ? NULL : outZeroDist, depthRange);
+            subdivDist += xEstimateResidualQT(mode, cuData, absPartIdx + i * qPartNumSubdiv, resiYuv, depth + 1, subDivCost, subdivBits, bCheckFull ? NULL : outZeroDist, depthRange);
             subDivPsyEnergy += cu->m_psyEnergy;
         }
 
