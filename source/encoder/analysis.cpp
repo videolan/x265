@@ -1098,10 +1098,10 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) &&
                 (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0)))
             {
-                checkIntraInInter_rd5_6(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N);
+                checkIntra(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N, NULL);
 
                 if (depth == g_maxCUDepth && cuData.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
-                    checkIntraInInter_rd5_6(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN);
+                    checkIntra(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN, NULL);
             }
         }
 
@@ -1604,62 +1604,6 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intramode, const CU& cuData)
     cu->m_totalBits = bbits;
     cu->m_totalDistortion = bsad;
     cu->m_sa8dCost = bcost;
-}
-
-void Analysis::checkIntraInInter_rd5_6(Mode &intraMode, const CU& cuData, PartSize partSize)
-{
-    TComDataCU* cu = &intraMode.cu;
-    uint32_t depth = cu->getDepth(0);
-
-    PPAScopeEvent(CheckRDCostIntra + depth);
-
-    m_quant.setQPforQuant(intraMode.cu);
-    cu->initEstData();
-    cu->setSkipFlagSubParts(false, 0, depth);
-    cu->setPartSizeSubParts(partSize, 0, depth);
-    cu->setPredModeSubParts(MODE_INTRA, 0, depth);
-    cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-
-    uint32_t tuDepthRange[2];
-    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
-
-    Yuv* fencYuv = &m_modeDepth[depth].origYuv;
-
-    cu->m_totalDistortion += estIntraPredQT(intraMode, cuData, tuDepthRange, NULL);
-    cu->m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
-
-    m_entropyCoder.resetBits();
-    if (cu->m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
-
-    if (!cu->m_slice->isIntra())
-    {
-        m_entropyCoder.codeSkipFlag(*cu, 0);
-        m_entropyCoder.codePredMode(cu->getPredictionMode(0));
-    }
-    m_entropyCoder.codePartSize(*cu, 0, depth);
-    m_entropyCoder.codePredInfo(*cu, 0);
-    cu->m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
-
-    // Encode Coefficients
-    bool bCodeDQP = m_bEncodeDQP;
-    m_entropyCoder.codeCoeff(*cu, 0, depth, bCodeDQP, tuDepthRange);
-    m_entropyCoder.store(intraMode.contexts);
-    cu->m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;
-
-    if (m_rdCost.m_psyRd)
-    {
-        int part = cu->getLog2CUSize(0) - 2;
-        Yuv* reconYuv = &intraMode.reconYuv;
-        cu->m_psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
-        cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-    }
-    else
-        cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
-
-    checkDQP(cu, cuData);
-    checkBestMode(intraMode, depth);
 }
 
 void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)

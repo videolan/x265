@@ -123,11 +123,9 @@ protected:
     void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
     void compressSharedIntraCTU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex,
                                 uint8_t* sharedDepth, char* sharedPartSizes, uint8_t* sharedModes, uint32_t &zOrder);
-    void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
 
     void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
     void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
-    void checkBestMode(Mode& mode, uint32_t depth);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(const CU& cuData, uint32_t depth);
@@ -138,13 +136,14 @@ protected:
     void checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize partSize, bool bMergeOnly);
 
     /* measure intra options */
-    void checkIntra(const TComDataCU& parentCTU, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
+    void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
     void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
-    void checkIntraInInter_rd5_6(Mode& intraMode, const CU& cuData, PartSize partSize);
     void encodeIntraInInter(Mode& intraMode, const CU& cuData);
 
-    void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
     void checkDQP(TComDataCU* cu, const CU& cuData);
+    void checkBestMode(Mode& mode, uint32_t depth);
+
+    void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
     void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
     void fillOrigYUVBuffer(TComDataCU* cu, const Yuv* origYuv);
 };
