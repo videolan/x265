@@ -1212,8 +1212,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 
     /* Note that these two Mode instances are named MERGE and SKIP but they may
      * hold the reverse when the function returns. We toggle between the two modes */
-    Mode* mergePred = &merge;
-    Mode* skipPred = &skip;
+    Mode* tempPred = &merge;
+    Mode* bestPred = &skip;
 
     merge.cu.setPredModeSubParts(MODE_INTER, 0, depth);
     merge.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
@@ -1230,8 +1230,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
     uint32_t maxNumMergeCand = merge.cu.m_slice->m_maxNumMergeCand;
     merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
-    skipPred->cu.m_totalRDCost = MAX_INT64;
-    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
+    bestPred->cu.m_totalRDCost = MAX_INT64;
+    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; mergeCand++)
     {
         if (m_bFrameParallel &&
             (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
@@ -1240,39 +1240,54 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
             continue;
         }
 
-        TComDataCU* mergeCU = &mergePred->cu;
-        mergeCU->setMergeIndex(0, mergeCand);
-        mergeCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
-        mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
-        mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.setMergeIndex(0, mergeCand);
+        tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+        tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+        prepMotionCompensation(&tempPred->cu, cuData, 0);
+        motionCompensation(&tempPred->predYuv, true, true);
 
-        prepMotionCompensation(mergeCU, cuData, 0);
-        motionCompensation(&mergePred->predYuv, true, true);
-
-        if (!m_param->bLossless)
+        bool swapped = false;
+        if (bestPred->cu.m_totalRDCost == MAX_INT64 || bestPred->cu.getQtRootCbf(0))
         {
-            encodeResAndCalcRdSkipCU(*mergePred);
-            if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
-            {
-                std::swap(mergePred, skipPred);
+            /* if the best prediction has CBF (not a skip) then try merge with residual */
 
-                TComDataCU* mergeCU = &mergePred->cu;
-                mergeCU->setMergeIndex(0, mergeCand);
-                mergeCU->setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
-                mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
-                mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+            encodeResAndCalcRdInterCU(*tempPred, cuData);
+
+            if (tempPred->cu.m_totalRDCost < bestPred->cu.m_totalRDCost)
+            {
+                std::swap(tempPred, bestPred);
+                swapped = true;
             }
         }
+        if (!m_param->bLossless)
+        {
+            /* try merge without residual (skip), if not lossless coding */
 
-        encodeResAndCalcRdInterCU(*mergePred, cuData);
-        if (mergeCU->m_totalRDCost < skipPred->cu.m_totalRDCost)
-            std::swap(mergePred, skipPred);
+            if (swapped)
+            {
+                tempPred->cu.setMergeIndex(0, mergeCand);
+                tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+                tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+                tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+                tempPred->predYuv.copyFromYuv(bestPred->predYuv);
+            }
+            
+            encodeResAndCalcRdSkipCU(*tempPred);
+
+            if (tempPred->cu.m_totalRDCost < bestPred->cu.m_totalRDCost)
+            {
+                std::swap(tempPred, bestPred);
+                X265_CHECK(!bestPred->cu.getQtRootCbf(0), "skip CU has coded block flags\n");
+            }
+        }
     }
 
-    if (skipPred->cu.m_totalRDCost < MAX_INT64)
+    if (bestPred->cu.m_totalRDCost < MAX_INT64)
     {
-        checkDQP(&skipPred->cu, cuData);
-        m_modeDepth[depth].bestMode = skipPred;
+        checkDQP(&bestPred->cu, cuData);
+        m_modeDepth[depth].bestMode = bestPred;
+        bestPred->cu.setSkipFlagSubParts(!bestPred->cu.getQtRootCbf(0), 0, depth);
     }
 }
 
