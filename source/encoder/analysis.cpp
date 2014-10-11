@@ -549,33 +549,17 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
     if (mightNotSplit && depth >= minDepth)
     {
-        if (depth)
+        /* Initialize all prediction CUs based on parentCTU */
+        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData, partitionIndex);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuData, partitionIndex);
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuData, partitionIndex);
+        if (m_param->bEnableRectInter)
         {
-            /* Initialize all prediction CUs based on parentCTU */
-            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData, partitionIndex);
-            md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuData, partitionIndex);
-            md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuData, partitionIndex);
-            if (m_param->bEnableRectInter)
-            {
-                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuData, partitionIndex);
-                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuData, partitionIndex);
-            }
-            if (m_slice->m_sliceType == P_SLICE)
-                md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData, partitionIndex);
+            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuData, partitionIndex);
+            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuData, partitionIndex);
         }
-        else
-        {
-            md.pred[PRED_2Nx2N].cu.initCU(m_frame, cuAddr);
-            md.pred[PRED_MERGE].cu.initCU(m_frame, cuAddr);
-            md.pred[PRED_SKIP].cu.initCU(m_frame, cuAddr);
-            if (m_param->bEnableRectInter)
-            {
-                md.pred[PRED_2NxN].cu.initCU(m_frame, cuAddr);
-                md.pred[PRED_Nx2N].cu.initCU(m_frame, cuAddr);
-            }
-            if (m_slice->m_sliceType == P_SLICE)
-                md.pred[PRED_INTRA].cu.initCU(m_frame, cuAddr);
-        }
+        if (m_slice->m_sliceType == P_SLICE)
+            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData, partitionIndex);
 
         if (m_param->bDistributeModeAnalysis)
         {
@@ -963,7 +947,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
 void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partitionIndex)
 {
-    uint32_t cuAddr = parentCTU.m_cuAddr;
     uint32_t depth = cuData.depth;
     uint32_t absPartIdx = cuData.encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
@@ -977,16 +960,8 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
     if (mightNotSplit)
     {
-        if (depth)
-        {
-            for (int i = 0; i < MAX_PRED_TYPES; i++)
-                md.pred[i].cu.initSubCU(parentCTU, cuData, partitionIndex);
-        }
-        else
-        {
-            for (int i = 0; i < MAX_PRED_TYPES; i++)
-                md.pred[i].cu.initCU(m_frame, cuAddr);
-        }
+        for (int i = 0; i < MAX_PRED_TYPES; i++)
+            md.pred[i].cu.initSubCU(parentCTU, cuData, partitionIndex);
 
         checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
         bool earlySkip = m_param->bEnableEarlySkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
