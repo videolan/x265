@@ -673,22 +673,6 @@ void Encoder::printSummary()
     if (!m_param->bLogCuStats)
         return;
 
-    const int poolThreadCount = m_threadPool ? m_threadPool->getThreadCount() : 0;
-    int lastLocalData, firstLocalData;
-
-    if (m_param->bEnableWavefront)
-    {
-        /* when WPP is enabled, the pool workers accumulate CU stats */
-        firstLocalData = 0;
-        lastLocalData = poolThreadCount;
-    }
-    else
-    {
-        /* when WPP is disabled, the frame encoders accumulate CU stats */
-        firstLocalData = poolThreadCount;
-        lastLocalData = poolThreadCount + m_param->frameNumThreads;
-    }
-
     for (int sliceType = 2; sliceType >= 0; sliceType--)
     {
         if (sliceType == P_SLICE && !m_analyzeP.m_numPics)
@@ -699,10 +683,10 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
-            for (int i = firstLocalData; i < lastLocalData; i++)
+            for (int i = 0; i < m_param->frameNumThreads; i++)
             {
-                StatisticLog& enclog = m_threadLocalData[i].analysis.m_sliceTypeLog[sliceType];
-                if (depth == 0)
+                StatisticLog& enclog = m_frameEncoder[i].m_sliceTypeLog[sliceType];
+                if (!depth)
                     finalLog.totalCu += enclog.totalCu;
                 finalLog.cntIntra[depth] += enclog.cntIntra[depth];
                 for (int m = 0; m < INTER_MODES; m++)
@@ -728,13 +712,14 @@ void Encoder::printSummary()
             // check for 0/0, if true assign 0 else calculate percentage
             for (int n = 0; n < INTER_MODES; n++)
             {
-                if (finalLog.cntInter[depth] == 0)
+                if (!finalLog.cntInter[depth])
                     cuInterDistribution[n] = 0;
                 else
                     cuInterDistribution[n] = (finalLog.cuInterDistribution[depth][n] * 100) / finalLog.cntInter[depth];
+
                 if (n < INTRA_MODES)
                 {
-                    if (finalLog.cntIntra[depth] == 0)
+                    if (!finalLog.cntIntra[depth])
                     {
                         cntIntraNxN = 0;
                         cuIntraDistribution[n] = 0;
@@ -747,50 +732,41 @@ void Encoder::printSummary()
                 }
             }
 
-            if (finalLog.totalCu == 0)
-            {
+            if (!finalLog.totalCu)
                 encCu = 0;
+            else if (sliceType == I_SLICE)
+            {
+                cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.totalCu;
+                cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.totalCu;
             }
             else
-            {
-                if (sliceType == I_SLICE)
-                {
-                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.totalCu;
-                    cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.totalCu;
-                }
-                else
-                {
-                    encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.totalCu;
-                }
-            }
+                encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.totalCu;
+
             if (sliceType == I_SLICE)
             {
                 cntInter = 0;
                 cntSkipCu = 0;
             }
+            else if (!finalLog.cntTotalCu[depth])
+            {
+                cntInter = 0;
+                cntIntra = 0;
+                cntSkipCu = 0;
+            }
             else
             {
-                if (finalLog.cntTotalCu[depth] == 0)
-                {
-                    cntInter = 0;
-                    cntIntra = 0;
-                    cntSkipCu = 0;
-                }
-                else
-                {
-                    cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
-                    cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
-                    cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
-                }
+                cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
+                cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
+                cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
             }
+
             // print statistics
             int cuSize = g_maxCUSize >> depth;
             char stats[256] = { 0 };
             int len = 0;
             if (sliceType != I_SLICE)
-            {
                 len += sprintf(stats + len, " EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
-            }
+
             if (cntInter)
             {
                 len += sprintf(stats + len, " Inter "X265_LL "%%", cntInter);

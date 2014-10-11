@@ -683,13 +683,16 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // Completed CU processing
         curRow.completed++;
 
+        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
+            collectCTUStatistics(*ctu);
+
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
             curRow.rowStats.mvBits += best.mvBits;
             curRow.rowStats.coeffBits += best.coeffBits;
             curRow.rowStats.miscBits += best.totalBits - (best.mvBits + best.coeffBits);
-            StatisticLog* log = &tld.analysis.m_sliceTypeLog[slice->m_sliceType];
+            StatisticLog* log = &m_sliceTypeLog[slice->m_sliceType];
 
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
             {
@@ -859,6 +862,80 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
     m_totalTime += x265_mdate() - startTime;
     curRow.busy = false;
+}
+
+void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
+{
+    StatisticLog* log = &m_sliceTypeLog[ctu.m_slice->m_sliceType];
+
+    if (ctu.m_slice->m_sliceType == I_SLICE)
+    {
+        uint32_t depth = 0;
+        for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+        {
+            depth = ctu.getDepth(absPartIdx);
+
+            log->totalCu++;
+            log->cntIntra[depth]++;
+            log->qTreeIntraCnt[depth]++;
+
+            if (ctu.getPartitionSize(absPartIdx) != SIZE_2Nx2N)
+            {
+                /* TODO: log intra modes at absPartIdx +0 to +3 */
+                X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
+                log->cntIntraNxN++;
+                log->cntIntra[depth]--;
+            }
+            else if (ctu.getLumaIntraDir(absPartIdx) > 1)
+                log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
+            else
+                log->cuIntraDistribution[depth][ctu.getLumaIntraDir(absPartIdx)]++;
+        }
+    }
+    else
+    {
+        uint32_t depth = 0;
+        for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+        {
+            depth = ctu.getDepth(absPartIdx);
+
+            log->totalCu++;
+            log->cntTotalCu[depth]++;
+
+            if (ctu.isSkipped(absPartIdx))
+            {
+                log->totalCu--;
+                log->cntSkipCu[depth]++;
+                log->qTreeSkipCnt[depth]++;
+            }
+            else if (ctu.getPredictionMode(absPartIdx) == MODE_INTER)
+            {
+                log->cntInter[depth]++;
+                log->qTreeInterCnt[depth]++;
+
+                if (ctu.getPartitionSize(absPartIdx) < AMP_ID)
+                    log->cuInterDistribution[depth][ctu.getPartitionSize(absPartIdx)]++;
+                else
+                    log->cuInterDistribution[depth][AMP_ID]++;
+            }
+            else if (ctu.getPredictionMode(absPartIdx) == MODE_INTRA)
+            {
+                log->cntIntra[depth]++;
+                log->qTreeIntraCnt[depth]++;
+
+                if (ctu.getPartitionSize(absPartIdx) == SIZE_NxN)
+                {
+                    X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
+                    log->cntIntraNxN++;
+                    /* TODO: log intra modes at absPartIdx +0 to +3 */
+                }
+                else if (ctu.getLumaIntraDir(absPartIdx) > 1)
+                    log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
+                else
+                    log->cuIntraDistribution[depth][ctu.getLumaIntraDir(absPartIdx)]++;
+            }
+        }
+    }
 }
 
 /* DCT-domain noise reduction / adaptive deadzone from libavcodec */

@@ -96,8 +96,7 @@ public:
         MVFieldMemPool mvFieldMemPool;
     };
 
-    ModeDepth     m_modeDepth[NUM_CU_DEPTH];
-    StatisticLog  m_sliceTypeLog[3];
+    ModeDepth m_modeDepth[NUM_CU_DEPTH];
 
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);

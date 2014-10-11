@@ -102,9 +102,6 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
     m_rdContexts[0].cur.load(initialContext);
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
 
-    StatisticLog* log = &m_sliceTypeLog[m_slice->m_sliceType];
-
-    // analysis of CU
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_slice->m_sliceType == I_SLICE)
     {
@@ -125,29 +122,6 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
                 m_frame->m_intraData->poc[ctu.m_cuAddr] = m_frame->m_POC;
             }
         }
-        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
-        {
-            uint32_t i = 0;
-            do
-            {
-                log->totalCu++;
-                uint32_t depth = ctu.getDepth(i);
-                int next = numPartition >> (depth * 2);
-                log->qTreeIntraCnt[depth]++;
-                if (depth == g_maxCUDepth && ctu.getPartitionSize(i) != SIZE_2Nx2N)
-                    log->cntIntraNxN++;
-                else
-                {
-                    log->cntIntra[depth]++;
-                    if (ctu.getLumaIntraDir(i) > 1)
-                        log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
-                    else
-                        log->cuIntraDistribution[depth][ctu.getLumaIntraDir(i)]++;
-                }
-                i += next;
-            }
-            while (i < numPartition);
-        }
     }
     else
     {
@@ -155,51 +129,6 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
             compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]);
         else
             compressInterCU_rd5_6(ctu, ctu.m_cuLocalData[0]);
-
-        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
-        {
-            uint32_t i = 0;
-            do
-            {
-                uint32_t depth = ctu.getDepth(i);
-                log->cntTotalCu[depth]++;
-                int next = numPartition >> (depth * 2);
-                if (ctu.isSkipped(i))
-                {
-                    log->cntSkipCu[depth]++;
-                    log->qTreeSkipCnt[depth]++;
-                }
-                else
-                {
-                    log->totalCu++;
-                    if (ctu.getPredictionMode(0) == MODE_INTER)
-                    {
-                        log->cntInter[depth]++;
-                        log->qTreeInterCnt[depth]++;
-                        if (ctu.getPartitionSize(0) < AMP_ID)
-                            log->cuInterDistribution[depth][ctu.getPartitionSize(0)]++;
-                        else
-                            log->cuInterDistribution[depth][AMP_ID]++;
-                    }
-                    else if (ctu.getPredictionMode(0) == MODE_INTRA)
-                    {
-                        log->qTreeIntraCnt[depth]++;
-                        if (depth == g_maxCUDepth && ctu.getPartitionSize(0) == SIZE_NxN)
-                            log->cntIntraNxN++;
-                        else
-                        {
-                            log->cntIntra[depth]++;
-                            if (ctu.getLumaIntraDir(0) > 1)
-                                log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
-                            else
-                                log->cuIntraDistribution[depth][ctu.getLumaIntraDir(0)]++;
-                        }
-                    }
-                }
-                i = i + next;
-            }
-            while (i < numPartition);
-        }
     }
 
     return *m_modeDepth[0].bestMode;
