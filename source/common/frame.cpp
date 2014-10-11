@@ -28,17 +28,6 @@
 using namespace x265;
 
 Frame::Frame()
-    : m_origPicYuv(NULL)
-    , m_reconPicYuv(NULL)
-    , m_rowDiagQp(NULL)
-    , m_rowDiagQScale(NULL)
-    , m_rowDiagSatd(NULL)
-    , m_rowDiagIntraSatd(NULL)
-    , m_rowEncodedBits(NULL)
-    , m_numEncodedCusPerRow(NULL)
-    , m_rowSatdForVbv(NULL)
-    , m_cuCostsForVbv(NULL)
-    , m_intraCuCostsForVbv(NULL)
 {
     m_picSym = NULL;
     m_reconRowCount.set(0);
@@ -53,6 +42,18 @@ Frame::Frame()
     m_bChromaPlanesExtended = false;
     m_intraData = NULL;
     m_interData = NULL;
+    m_origPicYuv = NULL;
+    m_reconPicYuv = NULL;
+    m_rowDiagQp = NULL;
+    m_rowDiagQScale = NULL;
+    m_rowDiagSatd = NULL;
+    m_rowDiagIntraSatd = NULL;
+    m_rowEncodedBits = NULL;
+    m_numEncodedCusPerRow = NULL;
+    m_rowSatdForVbv = NULL;
+    m_cuCostsForVbv = NULL;
+    m_intraCuCostsForVbv = NULL;
+    m_cuBitsForVbv = NULL;
 }
 
 bool Frame::create(x265_param *param)
