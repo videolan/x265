@@ -282,23 +282,22 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
-    uint32_t offset       = numPartitions * partUnitIdx;
-    uint32_t numPartition = numPartitions;
-    int sizeInBool  = sizeof(bool) * numPartition;
-    int sizeInChar  = sizeof(char) * numPartition;
+    uint32_t offset = numPartitions * partUnitIdx;
+    int sizeInBool  = sizeof(bool) * numPartitions;
+    int sizeInChar  = sizeof(char) * numPartitions;
 
     /* we have to cheat and get a non-const reference to the passed CU, but we are only copying data from it */
     TComDataCU* cu = const_cast<TComDataCU*>(&cuConst);
 
-    memcpy(m_skipFlag         + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)  * numPartition);
+    memcpy(m_skipFlag         + offset, cu->getSkipFlag(),       sizeof(*m_skipFlag)  * numPartitions);
     memcpy(m_qp               + offset, cu->getQP(),             sizeInChar);
-    memcpy(m_partSizes        + offset, cu->getPartitionSize(),  sizeof(*m_partSizes) * numPartition);
-    memcpy(m_predModes        + offset, cu->getPredictionMode(), sizeof(*m_predModes) * numPartition);
-    memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),         sizeInBool);
-    memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),      sizeInChar);
-    memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(),    sizeInChar);
-    memcpy(m_interDir         + offset, cu->getInterDir(),          sizeInChar);
-    memcpy(m_trIdx            + offset, cu->getTransformIdx(),      sizeInChar);
+    memcpy(m_partSizes        + offset, cu->getPartitionSize(),  sizeof(*m_partSizes) * numPartitions);
+    memcpy(m_predModes        + offset, cu->getPredictionMode(), sizeof(*m_predModes) * numPartitions);
+    memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInBool);
+    memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
+    memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
+    memcpy(m_interDir         + offset, cu->getInterDir(),       sizeInChar);
+    memcpy(m_trIdx            + offset, cu->getTransformIdx(),   sizeInChar);
     memcpy(m_transformSkip[0] + offset, cu->getTransformSkip(TEXT_LUMA),     sizeInChar);
     memcpy(m_transformSkip[1] + offset, cu->getTransformSkip(TEXT_CHROMA_U), sizeInChar);
     memcpy(m_transformSkip[2] + offset, cu->getTransformSkip(TEXT_CHROMA_V), sizeInChar);
@@ -311,7 +310,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
     /* TODO: can this be moved within if(bTransquantBypassEnabled)? */
-    memcpy(m_cuTransquantBypass + offset, cu->getCUTransquantBypass(), sizeof(*m_cuTransquantBypass) * numPartition);
+    memcpy(m_cuTransquantBypass + offset, cu->getCUTransquantBypass(), sizeof(*m_cuTransquantBypass) * numPartitions);
 
     m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
     m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
