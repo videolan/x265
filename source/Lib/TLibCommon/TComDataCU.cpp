@@ -193,23 +193,22 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData, uint32_t partUnitIdx)
+void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
 {
-    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-    uint8_t log2CUSize = cuData.log2CUSize;
-    int qp = ctu.getQP(0);
-
     m_absIdxInCTU   = cuData.encodeIdx;
     m_numPartitions = cuData.numPartitions;
     m_frame         = ctu.m_frame;
     m_slice         = ctu.m_slice;
     m_cuAddr        = ctu.m_cuAddr;
-    m_cuPelX        = ctu.m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
-    m_cuPelY        = ctu.m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuData.encodeIdx];
+    m_cuLeft        = ctu.m_cuLeft;
+    m_cuAbove       = ctu.m_cuAbove;
+    m_cuAboveLeft   = ctu.m_cuAboveLeft;
+    m_cuAboveRight  = ctu.m_cuAboveRight;
 
-    int sizeInBool = sizeof(bool) * m_numPartitions;
+    int qp = ctu.getQP(0);
     int sizeInChar = sizeof(char) * m_numPartitions;
-
     memset(m_qp,                 qp,     sizeInChar);
     memset(m_lumaIntraDir,       DC_IDX, sizeInChar);
     memset(m_chromaIntraDir,     0,      sizeInChar);
@@ -221,25 +220,22 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData, uint32_t par
     memset(m_cbf[1],             0,      sizeInChar);
     memset(m_cbf[2],             0,      sizeInChar);
     memset(m_depth,              cuData.depth, sizeInChar);
-    memset(m_log2CUSize,         log2CUSize, sizeInChar);
+    memset(m_log2CUSize,         cuData.log2CUSize, sizeInChar);
     memset(m_partSizes,          SIZE_NONE, sizeInChar);
     memset(m_predModes,          MODE_NONE, sizeInChar);
+
+    int sizeInBool = sizeof(bool) * m_numPartitions;
     memset(m_skipFlag,           false, sizeInBool);
     memset(m_cuTransquantBypass, false, sizeInBool);
 
     if (m_slice->m_sliceType != I_SLICE)
     {
-        memset(m_bMergeFlags,      0, sizeInBool);
-        memset(m_interDir,         0, sizeInChar);
+        memset(m_bMergeFlags, 0, sizeInBool);
+        memset(m_interDir,    0, sizeInChar);
 
         m_cuMvField[0].clearMvField();
         m_cuMvField[1].clearMvField();
     }
-
-    m_cuLeft       = ctu.m_cuLeft;
-    m_cuAbove      = ctu.m_cuAbove;
-    m_cuAboveLeft  = ctu.m_cuAboveLeft;
-    m_cuAboveRight = ctu.m_cuAboveRight;
 }
 
 

@@ -117,11 +117,11 @@ protected:
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, x265_intra_data* sdata, uint32_t &zOrder);
+    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x265_intra_data* sdata, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
-    void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
-    void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex);
+    void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData);
+    void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData);

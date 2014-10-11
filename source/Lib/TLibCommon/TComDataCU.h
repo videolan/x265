@@ -229,7 +229,7 @@ public:
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t      m_cuAddr;          ///< CU address in a slice
-    uint32_t      m_absIdxInCTU;     ///< absolute address in a CU. It's Z scan order
+    uint32_t      m_absIdxInCTU;     ///< absolute address of CU within a CTU. Its Z scan order
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
@@ -286,7 +286,7 @@ public:
 
     void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
     void          initCU(Frame* pic, uint32_t cuAddr);
-    void          initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx);
+    void          initSubCU(const TComDataCU& cu, const CU& cuData);
     void          loadCTUData(uint32_t maxCUSize);
 
     void          copyFromPic(const TComDataCU& ctu, const CU& cuData);
