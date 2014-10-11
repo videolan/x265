@@ -321,7 +321,7 @@ uint32_t Search::xGetIntraBitsChroma(const TComDataCU& cu, uint32_t absPartIdx, 
 uint32_t Search::xIntraCodingLumaBlk(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
     TComDataCU* cu      = &mode.cu;
-    const Yuv* fencYuv  = mode.origYuv;
+    const Yuv* fencYuv  = mode.fencYuv;
     Yuv* predYuv        = &mode.predYuv;
     ShortYuv* resiYuv   = &mode.resiYuv;
 
@@ -376,7 +376,7 @@ uint32_t Search::xIntraCodingChromaBlk(Mode& mode, const CU& cuData, uint32_t ab
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
     ShortYuv* resiYuv = &mode.resiYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     TextType ttype        = (TextType)chromaId;
     uint32_t stride       = fencYuv->m_cwidth;
@@ -443,7 +443,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
     Yuv* predYuv = &mode.predYuv;
     TComDataCU* cu = &mode.cu;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
 
@@ -705,7 +705,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
     Yuv* predYuv = &mode.predYuv;
     Yuv* reconYuv = &mode.reconYuv;
     ShortYuv* resiYuv = &mode.resiYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
@@ -889,7 +889,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
@@ -1145,7 +1145,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     Yuv* predYuv = &mode.predYuv;
     ShortYuv* resiYuv = &mode.resiYuv;
     Yuv* reconYuv = &mode.reconYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     uint32_t fullDepth = cu->getDepth(0) + trDepth;
     uint32_t trMode    = cu->getTransformIdx(absPartIdx);
@@ -1266,7 +1266,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
     TComDataCU* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* predYuv = &intraMode.predYuv;
-    const Yuv* fencYuv = intraMode.origYuv;
+    const Yuv* fencYuv = intraMode.fencYuv;
 
     uint32_t depth        = cu->getDepth(0);
     uint32_t initTrDepth  = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
@@ -1459,7 +1459,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
 void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
-    const Yuv* fencYuv = intraMode.origYuv;
+    const Yuv* fencYuv = intraMode.fencYuv;
     Yuv* predYuv = &intraMode.predYuv;
 
     uint32_t bestMode  = 0;
@@ -2360,7 +2360,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 {
     TComDataCU* cu = &interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
-    const Yuv* fencYuv = interMode.origYuv;
+    const Yuv* fencYuv = interMode.fencYuv;
 
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
@@ -2417,7 +2417,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     Yuv* predYuv = &interMode.predYuv;
     ShortYuv* resiYuv = &interMode.resiYuv;
     ShortYuv* tmpResiYuv = &m_rdContexts[cuData.depth].tempResi;
-    const Yuv* fencYuv = interMode.origYuv;
+    const Yuv* fencYuv = interMode.fencYuv;
 
     /* TODO: is this temp residual buffer really necessary? it's somewhat annoying */
 
@@ -2600,7 +2600,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
 {
     TComDataCU* cu = &mode.cu;
     ShortYuv* resiYuv = &mode.resiYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "invalid depth\n");
     const uint32_t trMode = depth - cu->getDepth(0);
@@ -2736,7 +2736,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
-    const Yuv* fencYuv = mode.origYuv;
+    const Yuv* fencYuv = mode.fencYuv;
 
     X265_CHECK(cu->getDepth(0) == cu->getDepth(absPartIdx), "depth not matching\n");
     const uint32_t trMode = depth - cu->getDepth(0);

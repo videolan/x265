@@ -60,7 +60,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
 
         md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES, tqBypass);
         md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
-        ok &= md.origYuv.create(cuSize, cuSize, csp);
+        ok &= md.fencYuv.create(cuSize, cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
@@ -68,7 +68,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
             ok &= md.pred[j].predYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
-            md.pred[j].origYuv = &md.origYuv;
+            md.pred[j].fencYuv = &md.fencYuv;
         }
     }
 
@@ -82,7 +82,7 @@ void Analysis::destroy()
     {
         m_modeDepth[i].cuMemPool.destroy();
         m_modeDepth[i].mvFieldMemPool.destroy();
-        m_modeDepth[i].origYuv.destroy();
+        m_modeDepth[i].fencYuv.destroy();
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
@@ -101,7 +101,7 @@ void Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
     invalidateContexts(0);
     m_quant.setQPforQuant(ctu);
     m_rdContexts[0].cur.load(initialContext);
-    m_modeDepth[0].origYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
+    m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
 
     if (m_slice->m_pps->bUseDQP)
         m_bEncodeDQP = true;
@@ -214,9 +214,6 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
-    if (depth)
-        m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
-
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
 
@@ -246,7 +243,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
             // copy original YUV samples in lossless mode
             if (md.bestMode->cu.isLosslessCoded(0))
-                fillOrigYUVBuffer(&md.bestMode->cu, md.origYuv);
+                fillOrigYUVBuffer(&md.bestMode->cu, md.fencYuv);
 
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][depth];
@@ -281,7 +278,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
         // copy original YUV samples in lossless mode
         if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(&md.bestMode->cu, md.origYuv);
+            fillOrigYUVBuffer(&md.bestMode->cu, md.fencYuv);
     }
 
     if (mightSplit)
@@ -301,6 +298,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
             const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
                 m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressIntraCU(parentCTU, childCuData, partUnitIdx, shared, zOrder);
 
@@ -345,7 +343,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
 {
     uint32_t depth = cuData.depth;
     TComDataCU& cu = intraMode.cu;
-    Yuv& origYuv = m_modeDepth[depth].origYuv;
+    Yuv& origYuv = m_modeDepth[depth].fencYuv;
 
     cu.setPartSizeSubParts(partSize, 0, depth);
     cu.setPredModeSubParts(MODE_INTRA, 0, depth);
@@ -450,7 +448,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
 
         slave = &m_tld[threadId].analysis;
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-        m_modeDepth[0].origYuv.copyPartToYuv(slave->m_modeDepth[depth].origYuv, m_curCUData->encodeIdx);
+        m_modeDepth[0].fencYuv.copyPartToYuv(slave->m_modeDepth[depth].fencYuv, m_curCUData->encodeIdx);
         slave->setQP(*cu.m_slice, m_rdCost.m_qp);
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
@@ -495,9 +493,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     uint32_t absPartIdx = cuData.encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
-
-    if (depth)
-        m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
@@ -768,7 +763,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
 
-                md.bestMode->resiYuv.subtract(md.origYuv, md.bestMode->predYuv, bestCU->getLog2CUSize(0));
+                md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, bestCU->getLog2CUSize(0));
             }
             generateCoeffRecon(*md.bestMode, cuData);
         }
@@ -791,7 +786,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         // copy original YUV samples in lossless mode
         if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, md.origYuv);
+            fillOrigYUVBuffer(bestCU, md.fencYuv);
     }
 
     /* do not try splits if best mode is already a skip */
@@ -857,6 +852,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
                 m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd0_4(parentCTU, childCuData, partUnitIdx);
 
@@ -952,9 +948,6 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
-    if (depth)
-        m_modeDepth[0].origYuv.copyPartToYuv(md.origYuv, absPartIdx);
-
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
 
@@ -1028,7 +1021,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
         // copy original YUV samples in lossless mode
         if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, md.origYuv);
+            fillOrigYUVBuffer(bestCU, md.fencYuv);
     }
 
     // estimate split cost
@@ -1049,6 +1042,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + partUnitIdx];
             if (childCuData.flags & CU::PRESENT)
             {
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
                 m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd5_6(parentCTU, childCuData, partUnitIdx);
 
@@ -1112,7 +1106,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
     uint32_t maxNumMergeCand = mergeCU->m_slice->m_maxNumMergeCand;
     mergeCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
-    Yuv *fencYuv = &md.origYuv;
+    Yuv *fencYuv = &md.fencYuv;
     Yuv *predYuv = &mergePred->predYuv;
 
     int bestSadCand = -1;
@@ -1275,7 +1269,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     cu->m_totalBits = 0;
 
-    Yuv* fencYuv = &m_modeDepth[depth].origYuv;
+    Yuv* fencYuv = &m_modeDepth[depth].fencYuv;
     Yuv* predYuv = &interMode.predYuv;
 
     if (m_param->bDistributeMotionEstimation && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
@@ -1345,8 +1339,8 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intramode, const CU& cuData)
     // Reference sample smoothing
     initAdiPattern(*cu, cuData, partOffset, initTrDepth, ALL_IDX);
 
-    pixel* fenc = m_modeDepth[depth].origYuv.m_buf[0];
-    uint32_t stride = m_modeDepth[depth].origYuv.m_width;
+    pixel* fenc = m_modeDepth[depth].fencYuv.m_buf[0];
+    uint32_t stride = m_modeDepth[depth].fencYuv.m_width;
 
     pixel *above         = m_refAbove    + tuSize - 1;
     pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
@@ -1512,7 +1506,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
     Yuv* reconYuv = &intraMode.reconYuv;
-    Yuv* fencYuv = &m_modeDepth[depth].origYuv;
+    Yuv* fencYuv = &m_modeDepth[depth].fencYuv;
 
     cu->m_totalDistortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);  /* TODO: why is recon a second call? */
@@ -1585,7 +1579,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
         if (!ctu.getSkipFlag(absPartIdx))
         {
             const int sizeIdx = cuData.log2CUSize - 2;
-            Yuv& origYuv = m_modeDepth[0].origYuv;
+            Yuv& origYuv = m_modeDepth[0].fencYuv;
 
             // Calculate Residue
             pixel* src2 = predYuv.getLumaAddr(absPartIdx);

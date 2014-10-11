@@ -91,7 +91,7 @@ public:
     {
         Mode           pred[MAX_PRED_TYPES];
         Mode*          bestMode;
-        Yuv            origYuv;
+        Yuv            fencYuv;
         DataCUMemPool  cuMemPool;
         MVFieldMemPool mvFieldMemPool;
     };
