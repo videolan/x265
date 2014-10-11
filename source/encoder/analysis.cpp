@@ -300,8 +300,8 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
             }
             else
             {
-                splitCU->copyToPic(nextDepth);
-                splitCU->copyPartFrom(*splitCU, childCuData.numPartitions, partUnitIdx, nextDepth); // just to init lower depth
+                /* record the depth of this non-present sub-CU */
+                memset(splitCU->m_depth + childCuData.numPartitions * partUnitIdx, nextDepth, childCuData.numPartitions);
                 zOrder += g_depthInc[g_maxCUDepth - 1][nextDepth];
             }
         }
@@ -860,10 +860,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     nd.bestMode->predYuv.copyToPartYuv(splitPred->predYuv, childCuData.numPartitions * partUnitIdx);
             }
             else
-            {
-                splitCU->copyToPic(nextDepth);
-                splitCU->copyPartFrom(*splitCU, childCuData.numPartitions, partUnitIdx, nextDepth); // just to init lower depth
-            }
+                /* record the depth of this non-present sub-CU */
+                memset(splitCU->m_depth + childCuData.numPartitions * partUnitIdx, nextDepth, childCuData.numPartitions);
         }
         if (m_param->rdLevel > 1)
         {
@@ -1032,10 +1030,8 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 nextContext = &nd.bestMode->contexts;
             }
             else
-            {
-                splitCU->copyToPic(nextDepth);
-                splitCU->copyPartFrom(*splitCU, childCuData.numPartitions, partUnitIdx, nextDepth); // just to init lower depth
-            }
+                /* record the depth of this non-present sub-CU */
+                memset(splitCU->m_depth + childCuData.numPartitions * partUnitIdx, nextDepth, childCuData.numPartitions);
         }
         if (mightNotSplit)
         {
