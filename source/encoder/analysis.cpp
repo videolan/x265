@@ -349,7 +349,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
-    if (cu.m_slice->m_pps->bTransquantBypassEnabled)
+    if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.getCUTransquantBypass(0));
 
     m_entropyCoder.codePartSize(cu, 0, depth);
@@ -412,6 +412,8 @@ void Analysis::parallelME(int threadId, int meId)
         slave = &m_tld[threadId].analysis;
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
         slave->setQP(*m_slice, m_rdCost.m_qp);
+        slave->m_slice = m_slice;
+        slave->m_frame = m_frame;
     }
 
     if (meId < m_slice->m_numRefIdx[0])
@@ -1067,7 +1069,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
     Mode* tempPred = &merge;
     Mode* bestPred = &skip;
 
-    X265_CHECK(mergeCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
+    X265_CHECK(m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
     tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     tempPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
@@ -1081,7 +1083,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = tempPred->cu.m_slice->m_maxNumMergeCand;
+    uint32_t maxNumMergeCand = m_slice->m_maxNumMergeCand;
     tempPred->cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     bestPred->sa8dCost = MAX_INT64;
@@ -1172,7 +1174,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = merge.cu.m_slice->m_maxNumMergeCand;
+    uint32_t maxNumMergeCand = m_slice->m_maxNumMergeCand;
     merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
     bestPred->rdCost = MAX_INT64;
@@ -1249,7 +1251,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
     Yuv* predYuv = &interMode.predYuv;
     int sizeIdx = cu->getLog2CUSize(0) - 2;
 
-    if (m_param->bDistributeMotionEstimation && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
+    if (m_param->bDistributeMotionEstimation && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, false);
         x265_emms(); // TODO: Remove from here and predInterSearch()
@@ -1279,7 +1281,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     cu->setPredModeSubParts(MODE_INTER, 0, depth);
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
-    if (m_param->bDistributeMotionEstimation && !bMergeOnly && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
+    if (m_param->bDistributeMotionEstimation && !bMergeOnly && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, true);
         encodeResAndCalcRdInterCU(interMode, cuData);
@@ -1470,7 +1472,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     Yuv* fencYuv = &m_modeDepth[cuData.depth].fencYuv;
 
     X265_CHECK(cu->getPartitionSize(0) == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
-    X265_CHECK(!cu->m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
+    X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
     m_quant.setQPforQuant(intraMode.cu);
 
@@ -1487,7 +1489,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
-    if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+    if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
     m_entropyCoder.codeSkipFlag(*cu, 0);
     m_entropyCoder.codePredMode(cu->getPredictionMode(0));
@@ -1669,9 +1671,7 @@ void Analysis::deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, b
 
 void Analysis::checkDQP(TComDataCU* cu, const CU& cuData)
 {
-    Slice* slice = cu->m_slice;
-
-    if (slice->m_pps->bUseDQP && cuData.depth <= slice->m_pps->maxCuDQPDepth)
+    if (m_slice->m_pps->bUseDQP && cuData.depth <= m_slice->m_pps->maxCuDQPDepth)
     {
         if (cu->getDepth(0) > cuData.depth) // detect splits
         {
