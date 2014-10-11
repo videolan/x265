@@ -144,6 +144,7 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
     m_numPartitions    = NUM_CU_PARTITIONS;
     char* qp           = frame->m_picSym->getCU(m_cuAddr)->getQP();
     m_baseQp           = frame->m_picSym->getCU(m_cuAddr)->m_baseQp;
+
     for (int i = 0; i < 4; i++)
     {
         m_avgCost[i] = 0;
@@ -192,26 +193,19 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx)
+void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData, uint32_t partUnitIdx)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
     uint8_t log2CUSize = cuData.log2CUSize;
-    int qp = cu.getQP(0);
+    int qp = ctu.getQP(0);
 
-    m_frame            = cu.m_frame;
-    m_slice            = cu.m_slice;
-    m_cuAddr           = cu.m_cuAddr;
-    m_absIdxInCTU      = cuData.encodeIdx;
-    m_numPartitions    = cuData.numPartitions;
-
-    m_cuPelX           = cu.m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
-    m_cuPelY           = cu.m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
-
-    for (int i = 0; i < 4; i++)
-    {
-        m_avgCost[i] = cu.m_avgCost[i];
-        m_count[i] = cu.m_count[i];
-    }
+    m_absIdxInCTU   = cuData.encodeIdx;
+    m_numPartitions = cuData.numPartitions;
+    m_frame         = ctu.m_frame;
+    m_slice         = ctu.m_slice;
+    m_cuAddr        = ctu.m_cuAddr;
+    m_cuPelX        = ctu.m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
+    m_cuPelY        = ctu.m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
 
     int sizeInBool = sizeof(bool) * m_numPartitions;
     int sizeInChar = sizeof(char) * m_numPartitions;
@@ -242,22 +236,24 @@ void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t part
         m_cuMvField[1].clearMvField();
     }
 
-    m_cuLeft       = cu.m_cuLeft;
-    m_cuAbove      = cu.m_cuAbove;
-    m_cuAboveLeft  = cu.m_cuAboveLeft;
-    m_cuAboveRight = cu.m_cuAboveRight;
+    m_cuLeft       = ctu.m_cuLeft;
+    m_cuAbove      = ctu.m_cuAbove;
+    m_cuAboveLeft  = ctu.m_cuAboveLeft;
+    m_cuAboveRight = ctu.m_cuAboveRight;
 }
 
+
+/* TODO: Remove me. this is only called from encodeResidue() */
 void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 {
-    m_frame            = ctu.m_frame;
-    m_slice            = ctu.m_slice;
-    m_cuAddr           = ctu.m_cuAddr;
-    m_absIdxInCTU      = cuData.encodeIdx;
-    m_numPartitions    = cuData.numPartitions;
+    m_absIdxInCTU   = cuData.encodeIdx;
+    m_numPartitions = cuData.numPartitions;
 
-    m_cuPelX           = ctu.m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
-    m_cuPelY           = ctu.m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
+    m_frame         = ctu.m_frame;
+    m_slice         = ctu.m_slice;
+    m_cuAddr        = ctu.m_cuAddr;
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
@@ -346,11 +342,10 @@ void TComDataCU::copyToPic(uint32_t depth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
 
-    int sizeInBool  = sizeof(bool) * m_numPartitions;
-    int sizeInChar  = sizeof(char) * m_numPartitions;
+    int sizeInBool = sizeof(bool) * m_numPartitions;
+    int sizeInChar = sizeof(char) * m_numPartitions;
 
     memcpy(cu->getSkipFlag() + m_absIdxInCTU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
-
     memcpy(cu->getQP() + m_absIdxInCTU, m_qp, sizeInChar);
 
     memcpy(cu->getPartitionSize()  + m_absIdxInCTU, m_partSizes, sizeof(*m_partSizes) * m_numPartitions);
@@ -398,6 +393,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     }
 }
 
+/* Only called by encodeResidue */
 void TComDataCU::copyCodedToPic(uint32_t depth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
@@ -425,6 +421,7 @@ void TComDataCU::copyCodedToPic(uint32_t depth)
     memcpy(cu->m_trCoeff[2] + tmpY2, m_trCoeff[2], sizeof(coeff_t) * tmpY);
 }
 
+/* TODO: Only called by encodeIntraInInter; and probably shouldn't be */
 void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
