@@ -329,10 +329,9 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t 
 
     if (m_slice->m_pps->bTransquantBypassEnabled)
     {
-        memcpy(m_tqBypassOrigYuv[0] + tmp2, cu->getLumaOrigYuv(), sizeof(pixel) * tmp);
-
-        memcpy(m_tqBypassOrigYuv[1] + tmpC2, cu->getChromaOrigYuv(1), sizeof(pixel) * tmpC);
-        memcpy(m_tqBypassOrigYuv[2] + tmpC2, cu->getChromaOrigYuv(2), sizeof(pixel) * tmpC);
+        memcpy(m_tqBypassOrigYuv[0] + tmp2,  cu->m_tqBypassOrigYuv[0], sizeof(pixel) * tmp);
+        memcpy(m_tqBypassOrigYuv[1] + tmpC2, cu->m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
+        memcpy(m_tqBypassOrigYuv[2] + tmpC2, cu->m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
     }
 }
 
@@ -386,10 +385,9 @@ void TComDataCU::copyToPic(uint32_t depth)
     {
         uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
         uint32_t tmp2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-        memcpy(cu->getLumaOrigYuv() + tmp2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmp);
-
-        memcpy(cu->getChromaOrigYuv(1) + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
-        memcpy(cu->getChromaOrigYuv(2) + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
+        memcpy(cu->m_tqBypassOrigYuv[0] + tmp2,  m_tqBypassOrigYuv[0], sizeof(pixel) * tmp);
+        memcpy(cu->m_tqBypassOrigYuv[1] + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
+        memcpy(cu->m_tqBypassOrigYuv[2] + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
     }
 }
 
@@ -469,10 +467,9 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 
     if (m_slice->m_pps->bTransquantBypassEnabled)
     {
-        memcpy(cu->getLumaOrigYuv() + tmpY2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmpY);
-
-        memcpy(cu->getChromaOrigYuv(1) + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
-        memcpy(cu->getChromaOrigYuv(2) + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
+        memcpy(cu->m_tqBypassOrigYuv[0] + tmpY2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmpY);
+        memcpy(cu->m_tqBypassOrigYuv[1] + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
+        memcpy(cu->m_tqBypassOrigYuv[2] + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
     }
 }
 

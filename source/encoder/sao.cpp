@@ -1753,7 +1753,7 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
     uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* src = cu->getLumaOrigYuv() + lumaOffset;
+    pixel* src = cu->m_tqBypassOrigYuv[0] + lumaOffset;
     uint32_t stride = reconPic->m_stride;
     uint32_t width  = (g_maxCUSize >> depth);
     uint32_t height = (g_maxCUSize >> depth);
@@ -1771,10 +1771,10 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
     }
 
     pixel* dstCb = reconPic->getChromaAddr(1, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCb = cu->getChromaOrigYuv(1) + chromaOffset;
+    pixel* srcCb = cu->m_tqBypassOrigYuv[1] + chromaOffset;
 
     pixel* dstCr = reconPic->getChromaAddr(2, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCr = cu->getChromaOrigYuv(2) + chromaOffset;
+    pixel* srcCr = cu->m_tqBypassOrigYuv[2] + chromaOffset;
 
     stride = reconPic->m_strideC;
     width  = ((g_maxCUSize >> depth) >> hChromaShift);

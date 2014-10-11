@@ -377,10 +377,6 @@ public:
 
     coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
-    pixel*&       getLumaOrigYuv()             { return m_tqBypassOrigYuv[0]; }
-
-    pixel*&       getChromaOrigYuv(uint32_t chromaId) { return m_tqBypassOrigYuv[chromaId]; }
-
     uint8_t       getCbf(uint32_t idx, TextType ttype) const { return m_cbf[ttype][idx]; }
 
     uint8_t*      getCbf(TextType ttype) { return m_cbf[ttype]; }
