@@ -49,7 +49,6 @@ public:
     int      m_vChromaShift;
     int      m_csp;
 
-
     Yuv();
 
     bool   create(uint32_t width, uint32_t height, int csp);
