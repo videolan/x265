@@ -290,7 +290,7 @@ public:
     void          loadCTUData(uint32_t maxCUSize);
 
     void          copyFromPic(const TComDataCU& ctu, const CU& cuData);
-    void          copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
+    void          copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
