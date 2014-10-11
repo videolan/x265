@@ -1119,7 +1119,9 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
         prepMotionCompensation(&bestPred->cu, cuData, 0);
         motionCompensation(&bestPred->predYuv, false, true);
 
-        if (!bestPred->cu.isLosslessCoded(0))
+        if (bestPred->cu.isLosslessCoded(0))
+            bestPred->rdCost = MAX_INT64;
+        else
             encodeResAndCalcRdSkipCU(*bestPred);
 
         // Encode with residue
