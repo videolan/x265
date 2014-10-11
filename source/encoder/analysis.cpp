@@ -1120,12 +1120,9 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
 
     if (m_param->rdLevel >= 1)
     {
-        for (int partIdx = 0; partIdx < bestPred->cu.getNumPartInter(); partIdx++)
-        {
-            // calculate the motion compensation for chroma for the best mode selected
-            prepMotionCompensation(&bestPred->cu, cuData, partIdx);
-            motionCompensation(&bestPred->predYuv, false, true);
-        }
+        // calculate the motion compensation for chroma for the best mode selected
+        prepMotionCompensation(&bestPred->cu, cuData, 0);
+        motionCompensation(&bestPred->predYuv, false, true);
 
         if (!bestPred->cu.isLosslessCoded(0))
             encodeResAndCalcRdSkipCU(*bestPred);
