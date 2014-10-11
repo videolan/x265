@@ -647,7 +647,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     /* RD selection between inter and merge */
                     encodeResAndCalcRdInterCU(*bestInter, cuData);
 
-                    if (md.bestMode->cu.m_totalRDCost < bestInter->cu.m_totalRDCost)
+                    if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
                         md.bestMode = bestInter;
 
                     if (md.pred[PRED_INTRA].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
@@ -693,8 +693,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     if (md.pred[PRED_Nx2N].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
                         bestInter = &md.pred[PRED_Nx2N];
                     checkInter_rd0_4(md.pred[PRED_2NxN], cuData, SIZE_2NxN);
-                    if (md.pred[PRED_Nx2N].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
-                        bestInter = &md.pred[PRED_Nx2N];
+                    if (md.pred[PRED_2NxN].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
+                        bestInter = &md.pred[PRED_2NxN];
                 }
 
                 if (m_param->rdLevel > 2)
