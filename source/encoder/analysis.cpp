@@ -43,7 +43,6 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
     X265_CHECK(numCUDepth <= NUM_CU_DEPTH, "invalid numCUDepth\n");
 
     m_tld = tld;
-    m_bEncodeDQP = false;
 
     int csp       = m_param->internalCsp;
     bool tqBypass = m_param->bCULossless || m_param->bLossless;
@@ -102,9 +101,6 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
     m_quant.setQPforQuant(ctu);
     m_rdContexts[0].cur.load(initialContext);
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
-
-    if (m_slice->m_pps->bUseDQP)
-        m_bEncodeDQP = true;
 
     StatisticLog* log = &m_sliceTypeLog[m_slice->m_sliceType];
 
@@ -356,7 +352,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     m_entropyCoder.codePredInfo(cu, 0);
     intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
 
-    bool bCodeDQP = m_bEncodeDQP;
+    bool bCodeDQP = m_slice->m_pps->bUseDQP;
     m_entropyCoder.codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder.store(intraMode.contexts);
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
@@ -1492,7 +1488,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     m_entropyCoder.codePredInfo(*cu, 0);
     intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
 
-    bool bCodeDQP = m_bEncodeDQP;
+    bool bCodeDQP = m_slice->m_pps->bUseDQP;
     m_entropyCoder.codeCoeff(*cu, 0, cuData.depth, bCodeDQP, tuDepthRange);
 
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();

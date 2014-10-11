@@ -97,8 +97,6 @@ public:
     };
 
     ModeDepth     m_modeDepth[NUM_CU_DEPTH];
-    bool          m_bEncodeDQP;
-
     StatisticLog  m_sliceTypeLog[3];
 
     Analysis();
