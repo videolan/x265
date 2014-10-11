@@ -2364,6 +2364,7 @@ void Search::setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin
     mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
 }
 
+/* Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
 void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 {
     TComDataCU* cu = &interMode.cu;
@@ -2403,19 +2404,16 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     interMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
     interMode.coeffBits = 0;
-    interMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
-
+    interMode.totalBits = interMode.mvBits;
     if (m_rdCost.m_psyRd)
-    {
-        int size = cu->getLog2CUSize(0) - 2;
-        interMode.psyEnergy = m_rdCost.psyCost(size, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
-    }
+        interMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
 
     updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
 }
 
-/** encode residual and calculate rate-distortion for a CU block */
+/* encode residual and calculate rate-distortion for a CU block.
+ * Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
 void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 {
     TComDataCU* cu = &interMode.cu;
