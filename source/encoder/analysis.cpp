@@ -616,9 +616,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (m_param->rdLevel > 2)
                 {
                     /* build chroma prediction for best inter */
-                    for (int partIdx = 0; partIdx < bestInter->cu.getNumPartInter(); partIdx++)
+                    for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                     {
-                        prepMotionCompensation(&bestInter->cu, cuData, partIdx);
+                        prepMotionCompensation(&bestInter->cu, cuData, puIdx);
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
@@ -678,10 +678,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (m_param->rdLevel > 2)
                 {
                     /* Calculate RD cost of best inter option */
-                    int numPart = bestInter->cu.getNumPartInter();
-                    for (int partIdx = 0; partIdx < numPart; partIdx++)
+                    for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                     {
-                        prepMotionCompensation(&bestInter->cu, cuData, partIdx);
+                        prepMotionCompensation(&bestInter->cu, cuData, puIdx);
                         motionCompensation(&bestInter->predYuv, false, true);
                     }
 
@@ -719,34 +718,30 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         if (m_param->rdLevel == 2)
         {
             /* finally code the best mode selected from SA8D costs */
-            TComDataCU* bestCU = &md.bestMode->cu;
-            if (bestCU->getPredictionMode(0) == MODE_INTER)
+            if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
             {
-                int numPart = bestCU->getNumPartInter();
-                for (int partIdx = 0; partIdx < numPart; partIdx++)
+                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
-                    prepMotionCompensation(bestCU, cuData, partIdx);
+                    prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
                 encodeResAndCalcRdInterCU(*md.bestMode, cuData);
             }
-            else if (bestCU->getPredictionMode(0) == MODE_INTRA)
+            else if (md.bestMode->cu.getPredictionMode(0) == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
         }
         else if (m_param->rdLevel <= 1)
         {
             /* Generate recon YUV for this CU. Note: does not update any CABAC context! */
-            TComDataCU* bestCU = &md.bestMode->cu;
-            if (bestCU->getPredictionMode(0) == MODE_INTER)
+            if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
             {
-                int numPart = bestCU->getNumPartInter();
-                for (int partIdx = 0; partIdx < numPart; partIdx++)
+                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
-                    prepMotionCompensation(bestCU, cuData, partIdx);
+                    prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
                 }
 
-                md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, bestCU->getLog2CUSize(0));
+                md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuData.log2CUSize);
             }
             generateCoeffRecon(*md.bestMode, cuData);
         }
