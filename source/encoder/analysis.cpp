@@ -280,7 +280,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
+        splitCU->initSubCU(parentCTU, cuData, partIndex);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -823,7 +823,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
+        splitCU->initSubCU(parentCTU, cuData, partitionIndex);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -1011,7 +1011,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
+        splitCU->initSubCU(parentCTU, cuData, partitionIndex);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
