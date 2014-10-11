@@ -802,10 +802,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         // early exit when the RD cost of best mode at depth n is less than the sum of average of RD cost of the neighbor
         // CU's(above, aboveleft, aboveright, left, colocated) and avg cost of that CU at depth "n" with weightage for each quantity
 
-        const TComDataCU* above = parentCTU.getCUAbove();
-        const TComDataCU* aboveLeft = parentCTU.getCUAboveLeft();
-        const TComDataCU* aboveRight = parentCTU.getCUAboveRight();
-        const TComDataCU* left = parentCTU.getCULeft();
+        const TComDataCU* above = parentCTU.m_cuAbove;
+        const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
+        const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
+        const TComDataCU* left = parentCTU.m_cuLeft;
         uint64_t neighCost = 0, cuCost = 0, neighCount = 0, cuCount = 0;
 
         cuCost += parentCTU.m_avgCost[depth] * parentCTU.m_count[depth];

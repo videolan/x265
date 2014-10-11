@@ -466,15 +466,6 @@ public:
 
     void          clipMv(MV& outMV) const;
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // utility functions for neighboring information
-    // -------------------------------------------------------------------------------------------------------------------
-
-    const TComDataCU*   getCULeft() const       { return m_cuLeft; }
-    const TComDataCU*   getCUAbove() const      { return m_cuAbove; }
-    const TComDataCU*   getCUAboveLeft() const  { return m_cuAboveLeft; }
-    const TComDataCU*   getCUAboveRight() const { return m_cuAboveRight; }
-
     const TComDataCU*   getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
     const TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary = false) const;
     const TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const;
@@ -483,11 +474,11 @@ public:
 
     const TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInCTU) const;
     const TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInCTU) const;
-    char          getRefQP(uint32_t currAbsIdxInCTU) const;
 
     const TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
     const TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
 
+    char          getRefQP(uint32_t currAbsIdxInCTU) const;
     void          deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
     void          deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
     void          deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;

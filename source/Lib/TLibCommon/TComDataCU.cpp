@@ -273,10 +273,10 @@ void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t part
         m_cuMvField[1].clearMvField();
     }
 
-    m_cuLeft        = cu.getCULeft();
-    m_cuAbove       = cu.getCUAbove();
-    m_cuAboveLeft   = cu.getCUAboveLeft();
-    m_cuAboveRight  = cu.getCUAboveRight();
+    m_cuLeft       = cu.m_cuLeft;
+    m_cuAbove      = cu.m_cuAbove;
+    m_cuAboveLeft  = cu.m_cuAboveLeft;
+    m_cuAboveRight = cu.m_cuAboveRight;
 }
 
 void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
@@ -361,10 +361,10 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t 
     memcpy(m_mvpIdx[0] + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1] + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
-    m_cuAboveLeft      = cu->getCUAboveLeft();
-    m_cuAboveRight     = cu->getCUAboveRight();
-    m_cuAbove          = cu->getCUAbove();
-    m_cuLeft           = cu->getCULeft();
+    m_cuAboveLeft  = cu->m_cuAboveLeft;
+    m_cuAboveRight = cu->m_cuAboveRight;
+    m_cuAbove      = cu->m_cuAbove;
+    m_cuLeft       = cu->m_cuLeft;
 
     m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
     m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
