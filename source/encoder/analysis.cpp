@@ -208,7 +208,6 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
 void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, x265_intra_data* shared, uint32_t& zOrder)
 {
     uint32_t depth = cuData.depth;
-    uint32_t absPartIdx = cuData.encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -323,7 +322,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
     // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
     // if split was not required, write recon
     if (mightNotSplit)
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, absPartIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
 
 /* TODO: move to Search except checkDQP() and checkBestMode() */
@@ -475,7 +474,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 {
     uint32_t depth = cuData.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
-    uint32_t absPartIdx = cuData.encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -497,7 +495,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             previousQP = cu.getQP(0);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
             {
-                uint32_t d = cu.getDepth(absPartIdx + i);
+                uint32_t d = cu.getDepth(cuData.encodeIdx + i);
                 minDepth0 = X265_MIN(d, minDepth0);
                 sum0 += d;
             }
@@ -507,7 +505,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(cuAddr);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth1; i += 4)
             {
-                uint32_t d = cu.getDepth(absPartIdx + i);
+                uint32_t d = cu.getDepth(cuData.encodeIdx + i);
                 minDepth1 = X265_MIN(d, minDepth1);
                 sum1 += d;
             }
@@ -916,7 +914,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     {
         /* Copy Yuv data to picture Yuv */
         if (mightNotSplit)
-            md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
+            md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
     }
 
     x265_emms();
@@ -925,7 +923,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData, uint32_t partitionIndex)
 {
     uint32_t depth = cuData.depth;
-    uint32_t absPartIdx = cuData.encodeIdx;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
@@ -1047,7 +1044,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
     // Copy best data to picsym and recon
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, absPartIdx);
+    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
 
 void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
