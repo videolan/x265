@@ -1466,48 +1466,44 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
 void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
-    uint32_t depth = cu->getDepth(0);
-    uint32_t initTrDepth = cu->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1;
-    uint64_t puCost = 0;
-    uint32_t puBits = 0;
-    uint32_t psyEnergy = 0;
+    Yuv* reconYuv = &intraMode.reconYuv;
+    Yuv* fencYuv = &m_modeDepth[cuData.depth].fencYuv;
+
+    X265_CHECK(cu->getPartitionSize(0) == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
+    X265_CHECK(!cu->m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
     m_quant.setQPforQuant(intraMode.cu);
 
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    Yuv* reconYuv = &intraMode.reconYuv;
-    Yuv* fencYuv = &m_modeDepth[depth].fencYuv;
+    m_entropyCoder.load(m_rdContexts[cuData.depth].cur);
 
-    m_entropyCoder.load(m_rdContexts[depth].cur);
-    intraMode.distortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
-    xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);  /* TODO: why is recon a second call? */
-    cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
+    uint64_t puCost;
+    uint32_t puBits, psyEnergy;
+    intraMode.distortion = xRecurIntraCodingQT(intraMode, cuData, 0, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
+    xSetIntraResultQT(cu, 0, 0, reconYuv);  /* TODO: why is recon a second call? */
+    cu->copyToPic(cu->getDepth(0), 0, 0);
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
-
-    if (!cu->m_slice->isIntra())
-    {
-        m_entropyCoder.codeSkipFlag(*cu, 0);
-        m_entropyCoder.codePredMode(cu->getPredictionMode(0));
-    }
-    m_entropyCoder.codePartSize(*cu, 0, depth);
+    m_entropyCoder.codeSkipFlag(*cu, 0);
+    m_entropyCoder.codePredMode(cu->getPredictionMode(0));
+    m_entropyCoder.codePartSize(*cu, 0, cuData.depth);
     m_entropyCoder.codePredInfo(*cu, 0);
     intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
 
-    // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
-    m_entropyCoder.codeCoeff(*cu, 0, depth, bCodeDQP, tuDepthRange);
-    m_entropyCoder.store(intraMode.contexts);
+    m_entropyCoder.codeCoeff(*cu, 0, cuData.depth, bCodeDQP, tuDepthRange);
 
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
         intraMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
+
+    m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
 }
 
