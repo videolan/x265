@@ -104,7 +104,7 @@ public:
     Analysis();
     bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
     void destroy();
-    void compressCTU(TComDataCU& ctu, const Entropy& initialContext);
+    Search::Mode& compressCTU(TComDataCU& ctu, const Entropy& initialContext);
 
 protected:
 

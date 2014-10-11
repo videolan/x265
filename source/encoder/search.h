@@ -97,6 +97,36 @@ public:
         Yuv        reconYuv;
         ShortYuv   resiYuv;
         Entropy    contexts;
+
+        uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
+        uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
+        uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
+        uint32_t   distortion; // sum of partition SSE distortion
+        uint32_t   totalBits;  // sum of partition bits (mv + coeff)
+        uint32_t   mvBits;     // Mv bits + Ref + block type (or intra mode)
+        uint32_t   coeffBits;  // Texture bits (DCT Coeffs)
+
+        void initCosts()
+        {
+            rdCost = 0;
+            sa8dCost = 0;
+            psyEnergy = 0;
+            distortion = 0;
+            totalBits = 0;
+            mvBits = 0;
+            coeffBits = 0;
+        }
+
+        void addSubCosts(const Mode& subMode)
+        {
+            rdCost += subMode.rdCost;
+            sa8dCost += subMode.sa8dCost;
+            psyEnergy += subMode.psyEnergy;
+            distortion += subMode.distortion;
+            totalBits += subMode.totalBits;
+            mvBits += subMode.mvBits;
+            coeffBits += subMode.coeffBits;
+        }
     };
 
     struct MotionData
@@ -114,6 +144,7 @@ public:
 
     bool     initSearch(x265_param *param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
+    inline void  updateModeCost(Mode& mode) const;
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
@@ -216,7 +247,7 @@ protected:
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]) const;
     void     setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t getInterSymbolBits(TComDataCU& cu, uint32_t depthRange[2]);
+    uint32_t getInterSymbolBits(Mode& mode, uint32_t depthRange[2]);
     uint32_t mergeEstimation(TComDataCU* cu, const CU& cuData, int partIdx, MergeData& m);
 
     /* intra helper functions */

@@ -278,22 +278,14 @@ public:
     // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
     CU            m_cuLocalData[104]; 
 
-    uint32_t      m_psyEnergy;
-    uint64_t      m_totalRDCost;     // sum of partition (psy) RD costs
-    uint32_t      m_totalDistortion; // sum of partition distortion
-    uint32_t      m_totalBits;       // sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
-    uint64_t      m_sa8dCost;
     double        m_baseQp;          // Qp of Cu set from RateControl/Vbv.
-    uint32_t      m_mvBits;          // Mv bits + Ref + block type
-    uint32_t      m_coeffBits;       // Texture bits (DCT Coeffs)
 
     TComDataCU();
 
     void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
     void          initCU(Frame* pic, uint32_t cuAddr);
-    void          initEstData();
     void          initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx);
     void          loadCTUData(uint32_t maxCUSize);
 

@@ -93,7 +93,7 @@ void Analysis::destroy()
     }
 }
 
-void Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
+Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
 {
     m_slice = ctu.m_slice;
     m_frame = ctu.m_frame;
@@ -205,6 +205,8 @@ void Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
             while (i < numPartition);
         }
     }
+
+    return *m_modeDepth[0].bestMode;
 }
 
 void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, uint32_t partIndex, x265_intra_data* shared, uint32_t& zOrder)
@@ -231,14 +233,10 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
             if (mightSplit)
             {
                 /* add signal cost of no-split flag */
-                TComDataCU *cu = &md.bestMode->cu;
                 m_entropyCoder.resetBits();
-                m_entropyCoder.codeSplitFlag(*cu, 0, depth);
-                cu->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
-                if (m_rdCost.m_psyRd)
-                    cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-                else
-                    cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+                m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
+                md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits();
+                updateModeCost(*md.bestMode);
             }
 
             // copy original YUV samples in lossless mode
@@ -266,14 +264,10 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
         if (mightSplit)
         {
             /* add signal cost of no-split flag */
-            TComDataCU *cu = &md.bestMode->cu;
             m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*cu, 0, depth);
-            cu->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
-            if (m_rdCost.m_psyRd)
-                cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-            else
-                cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
+            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits();
+            updateModeCost(*md.bestMode);
         }
 
         // copy original YUV samples in lossless mode
@@ -284,9 +278,9 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
     if (mightSplit)
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
+        splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
-        splitCU->m_totalRDCost = 0;
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -304,6 +298,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
+                splitPred->addSubCosts(*nd.bestMode);
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * partUnitIdx);
                 nextContext = &nd.bestMode->contexts;
             }
@@ -318,12 +313,9 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, ui
         {
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-            splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
+            splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
-        if (m_rdCost.m_psyRd)
-            splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-        else
-            splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+        updateModeCost(*splitPred);
         nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth);
@@ -352,8 +344,9 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    cu.m_totalDistortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
-    cu.m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
+    intraMode.initCosts();
+    intraMode.distortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu.m_slice->m_pps->bTransquantBypassEnabled)
@@ -361,23 +354,17 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
 
     m_entropyCoder.codePartSize(cu, 0, depth);
     m_entropyCoder.codePredInfo(cu, 0);
-    cu.m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
 
     bool bCodeDQP = m_bEncodeDQP;
     m_entropyCoder.codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder.store(intraMode.contexts);
-    cu.m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    cu.m_coeffBits = cu.m_totalBits - cu.m_mvBits;
-
+    intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-    {
-        int part = cu.getLog2CUSize(0) - 2;
-        cu.m_psyEnergy = m_rdCost.psyCost(part, origYuv.m_buf[0], origYuv.m_width, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_width);
-        cu.m_totalRDCost = m_rdCost.calcPsyRdCost(cu.m_totalDistortion, cu.m_totalBits, cu.m_psyEnergy);
-    }
-    else
-        cu.m_totalRDCost = m_rdCost.calcRdCost(cu.m_totalDistortion, cu.m_totalBits);
+        intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, origYuv.m_buf[0], origYuv.m_width, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_width);
 
+    updateModeCost(intraMode);
     checkDQP(&cu, cuData);
     checkBestMode(intraMode, depth);
 }
@@ -584,13 +571,13 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             md.bestMode = &md.pred[PRED_SKIP];
             if (m_param->rdLevel >= 1)
             {
-                if (md.pred[PRED_MERGE].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
                     md.bestMode = &md.pred[PRED_MERGE];
                 earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
             }
             else
             {
-                if (md.pred[PRED_MERGE].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = &md.pred[PRED_MERGE];
             }
 
@@ -624,9 +611,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 Mode *bestInter = &md.pred[PRED_2Nx2N];
                 if (m_param->bEnableRectInter)
                 {
-                    if (md.pred[PRED_Nx2N].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
+                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_Nx2N];
-                    if (md.pred[PRED_Nx2N].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
+                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_Nx2N];
                 }
 
@@ -642,18 +629,18 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     /* RD selection between inter and merge */
                     encodeResAndCalcRdInterCU(*bestInter, cuData);
 
-                    if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                    if (bestInter->rdCost < md.bestMode->rdCost)
                         md.bestMode = bestInter;
 
-                    if (md.pred[PRED_INTRA].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                    if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
                         md.bestMode = &md.pred[PRED_INTRA];
                 }
                 else
                 {
-                    if (bestInter->cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                    if (bestInter->sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = bestInter;
 
-                    if (md.pred[PRED_INTRA].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                    if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = &md.pred[PRED_INTRA];
                 }
             }
@@ -667,13 +654,13 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             md.bestMode = &md.pred[PRED_SKIP];
             if (m_param->rdLevel >= 1)
             {
-                if (md.pred[PRED_MERGE].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
                     md.bestMode = &md.pred[PRED_MERGE];
                 earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
             }
             else
             {
-                if (md.pred[PRED_MERGE].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = &md.pred[PRED_MERGE];
             }
 
@@ -685,10 +672,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (m_param->bEnableRectInter)
                 {
                     checkInter_rd0_4(md.pred[PRED_Nx2N], cuData, SIZE_Nx2N);
-                    if (md.pred[PRED_Nx2N].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
+                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_Nx2N];
                     checkInter_rd0_4(md.pred[PRED_2NxN], cuData, SIZE_2NxN);
-                    if (md.pred[PRED_2NxN].cu.m_sa8dCost < bestInter->cu.m_sa8dCost)
+                    if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_2NxN];
                 }
 
@@ -704,7 +691,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
                     encodeResAndCalcRdInterCU(*bestInter, cuData);
 
-                    if (bestInter->cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                    if (bestInter->rdCost < md.bestMode->rdCost)
                         md.bestMode = bestInter;
 
                     bool bdoIntra = md.bestMode->cu.getCbf(0, TEXT_LUMA) || md.bestMode->cu.getCbf(0, TEXT_CHROMA_U) || md.bestMode->cu.getCbf(0, TEXT_CHROMA_V);
@@ -712,20 +699,20 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     {
                         checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                         encodeIntraInInter(md.pred[PRED_INTRA], cuData);
-                        if (md.pred[PRED_INTRA].cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+                        if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
                             md.bestMode = &md.pred[PRED_INTRA];
                     }
                 }
                 else
                 {
                     /* SA8D choice between merge/skip, inter, and intra */
-                    if (bestInter->cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                    if (bestInter->sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = bestInter;
 
                     if (m_slice->m_sliceType == P_SLICE)
                     {
                         checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
-                        if (md.pred[PRED_INTRA].cu.m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+                        if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                             md.bestMode = &md.pred[PRED_INTRA];
                     }
                 }
@@ -768,25 +755,20 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             generateCoeffRecon(*md.bestMode, cuData);
         }
 
-        TComDataCU* bestCU = &md.bestMode->cu;
         if (m_param->rdLevel > 0) // checkDQP can be done only after residual encoding is done
-            checkDQP(bestCU, cuData);
+            checkDQP(&md.bestMode->cu, cuData);
 
         if (m_param->rdLevel > 1 && depth < g_maxCUDepth)
         {
             m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*bestCU, 0, depth);
-            bestCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
-
-            if (m_rdCost.m_psyRd)
-                bestCU->m_totalRDCost = m_rdCost.calcPsyRdCost(bestCU->m_totalDistortion, bestCU->m_totalBits, bestCU->m_psyEnergy);
-            else
-                bestCU->m_totalRDCost = m_rdCost.calcRdCost(bestCU->m_totalDistortion, bestCU->m_totalBits);
+            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
+            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
+            updateModeCost(*md.bestMode);
         }
 
         // copy original YUV samples in lossless mode
-        if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, md.fencYuv);
+        if (md.bestMode->cu.isLosslessCoded(0))
+            fillOrigYUVBuffer(&md.bestMode->cu, md.fencYuv);
     }
 
     /* do not try splits if best mode is already a skip */
@@ -827,20 +809,21 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         }
 
         // give 60% weight to all CU's and 40% weight to neighbour CU's
-        uint64_t avgCost = 0;
-        if (neighCount + cuCount)
-            avgCost = ((3 * cuCost) + (2 * neighCost)) / ((3 * cuCount) + (2 * neighCount));
-
-        if (md.bestMode->cu.m_totalRDCost < avgCost && avgCost)
-            mightSplit = false;
+        if (neighCost + cuCount)
+        {
+            uint64_t avgCost = ((3 * cuCost) + (2 * neighCost)) / ((3 * cuCount) + (2 * neighCount));
+            uint64_t curCost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
+            if (curCost < avgCost && avgCost)
+                mightSplit = false;
+        }
     }
 
     if (mightSplit)
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
+        splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
-        splitCU->m_totalRDCost = splitCU->m_sa8dCost = 0;
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -856,17 +839,20 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 m_rdContexts[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd0_4(parentCTU, childCuData, partUnitIdx);
 
+                // Save best CU and pred data for this sub CU
+                splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
+                splitPred->addSubCosts(*nd.bestMode);
+
                 if (nd.bestMode->cu.getPredictionMode(0) != MODE_INTRA)
                 {
                     /* more early-out statistics */
                     TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+                    uint64_t nextCost = m_param->rdLevel > 1 ? nd.bestMode->rdCost : nd.bestMode->sa8dCost;
                     uint64_t temp = ctu.m_avgCost[nextDepth] * ctu.m_count[nextDepth];
                     ctu.m_count[nextDepth] += 1;
-                    ctu.m_avgCost[nextDepth] = (temp + nd.bestMode->cu.m_totalRDCost) / ctu.m_count[nextDepth];
+                    ctu.m_avgCost[nextDepth] = (temp + nextCost) / ctu.m_count[nextDepth];
                 }
 
-                // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
                 if (m_param->rdLevel > 1)
                 {
                     nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * partUnitIdx);
@@ -887,37 +873,36 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             {
                 m_entropyCoder.resetBits();
                 m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-                splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
+                splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
             }
-            if (m_rdCost.m_psyRd)
-                splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-            else
-                splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+            updateModeCost(*splitPred);
         }
         else
-            splitCU->m_sa8dCost = m_rdCost.calcRdSADCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
+            splitPred->sa8dCost = m_rdCost.calcRdSADCost(splitPred->distortion, splitPred->totalBits);
+
         nextContext->store(splitPred->contexts);
         checkDQP(splitCU, cuData);
 
         if (!depth && md.bestMode)
         {
-            /* more early-out statistics */
+            /* TODO: this is a bizarre place to have this check */
             TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+            uint64_t curCost = m_param->rdLevel > 1 ? nd.bestMode->rdCost : nd.bestMode->sa8dCost;
             uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
             ctu.m_count[depth] += 1;
-            ctu.m_avgCost[depth] = (temp + md.bestMode->cu.m_totalRDCost) / ctu.m_count[depth];
+            ctu.m_avgCost[depth] = (temp + curCost) / ctu.m_count[depth];
         }
 
         if (!md.bestMode)
             md.bestMode = splitPred;
         else if (m_param->rdLevel > 1)
         {
-            if (splitCU->m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+            if (splitPred->rdCost < md.bestMode->rdCost)
                 md.bestMode = splitPred;
         }
         else
         {
-            if (splitCU->m_sa8dCost < md.bestMode->cu.m_sa8dCost)
+            if (splitPred->sa8dCost < md.bestMode->sa8dCost)
                 md.bestMode = splitPred;
         }
     }
@@ -1007,30 +992,26 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             }
         }
 
-        TComDataCU* bestCU = &md.bestMode->cu;
         if (depth < g_maxCUDepth)
         {
             m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*bestCU, 0, depth);
-            bestCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
-            if (m_rdCost.m_psyRd)
-                bestCU->m_totalRDCost = m_rdCost.calcPsyRdCost(bestCU->m_totalDistortion, bestCU->m_totalBits, bestCU->m_psyEnergy);
-            else
-                bestCU->m_totalRDCost = m_rdCost.calcRdCost(bestCU->m_totalDistortion, bestCU->m_totalBits);
+            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
+            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
+            updateModeCost(*md.bestMode);
         }
 
         // copy original YUV samples in lossless mode
-        if (bestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(bestCU, md.fencYuv);
+        if (md.bestMode->cu.isLosslessCoded(0))
+            fillOrigYUVBuffer(&md.bestMode->cu, md.fencYuv);
     }
 
     // estimate split cost
     if (mightSplit && (!md.bestMode || !md.bestMode->cu.isSkipped(0)))
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
+        splitPred->initCosts();
         TComDataCU* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuData, 0); // prepare splitCU to accumulate costs
-        splitCU->m_totalRDCost = 0;
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -1048,6 +1029,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(&nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
+                splitPred->addSubCosts(*nd.bestMode);
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * partUnitIdx);
                 nextContext = &nd.bestMode->contexts;
             }
@@ -1061,13 +1043,10 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         {
             m_entropyCoder.resetBits();
             m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-            splitCU->m_totalBits += m_entropyCoder.getNumberOfWrittenBits();
+            splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
         }
-        if (m_rdCost.m_psyRd)
-            splitCU->m_totalRDCost = m_rdCost.calcPsyRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits, splitCU->m_psyEnergy);
-        else
-            splitCU->m_totalRDCost = m_rdCost.calcRdCost(splitCU->m_totalDistortion, splitCU->m_totalBits);
         nextContext->store(splitPred->contexts);
+        updateModeCost(*splitPred);
         checkDQP(splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
@@ -1081,34 +1060,31 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
 {
     uint32_t depth = cuData.depth;
     ModeDepth& md = m_modeDepth[depth];
+    Yuv *fencYuv = &md.fencYuv;
 
     /* Note that these two Mode instances are named MERGE and SKIP but they may
      * hold the reverse when the function returns. We toggle between the two modes */
-    Mode* mergePred = &merge;
-    Mode* skipPred = &skip;
-    TComDataCU* mergeCU = &mergePred->cu;
-    TComDataCU* skipCU = &skipPred->cu;
+    Mode* tempPred = &merge;
+    Mode* bestPred = &skip;
 
     X265_CHECK(mergeCU->m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
-    mergeCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    mergeCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    mergeCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    mergeCU->setMergeFlag(0, true);
+    tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
+    tempPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    tempPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    tempPred->cu.setMergeFlag(0, true);
 
-    skipCU->setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    skipCU->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    skipCU->setPredModeSubParts(MODE_INTER, 0, depth);
-    skipCU->setMergeFlag(0, true);
+    bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
+    bestPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
+    bestPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    bestPred->cu.setMergeFlag(0, true);
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = mergeCU->m_slice->m_maxNumMergeCand;
-    mergeCU->getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
+    uint32_t maxNumMergeCand = tempPred->cu.m_slice->m_maxNumMergeCand;
+    tempPred->cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
-    Yuv *fencYuv = &md.fencYuv;
-    Yuv *predYuv = &mergePred->predYuv;
-
+    bestPred->sa8dCost = MAX_INT64;
     int bestSadCand = -1;
     int sizeIdx = cuData.log2CUSize - 2;
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
@@ -1118,60 +1094,60 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
              mvFieldNeighbours[i][1].mv.y < (m_param->searchRange + 1) * 4))
         {
             // set MC parameters, interprets depth relative to CTU level
-            mergeCU->setMergeIndex(0, i);
-            mergeCU->setInterDirSubParts(interDirNeighbours[i], 0, 0, depth);
-            mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[i][0], SIZE_2Nx2N, 0, 0);
-            mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[i][1], SIZE_2Nx2N, 0, 0);
+            tempPred->cu.setMergeIndex(0, i);
+            tempPred->cu.setInterDirSubParts(interDirNeighbours[i], 0, 0, depth);
+            tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[i][0], SIZE_2Nx2N, 0, 0);
+            tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[i][1], SIZE_2Nx2N, 0, 0);
+            tempPred->initCosts();
 
             // do MC only for Luma part
-            prepMotionCompensation(mergeCU, cuData, 0);
-            motionCompensation(predYuv, true, false);
+            prepMotionCompensation(&tempPred->cu, cuData, 0);
+            motionCompensation(&tempPred->predYuv, true, false);
 
-            uint32_t bitsCand = getTUBits(i, maxNumMergeCand);
-            mergeCU->m_totalBits = bitsCand;
-            mergeCU->m_totalDistortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
-            mergeCU->m_sa8dCost = m_rdCost.calcRdSADCost(mergeCU->m_totalDistortion, mergeCU->m_totalBits);
+            tempPred->totalBits = getTUBits(i, maxNumMergeCand);
+            tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_width);
+            tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->totalBits);
 
-            if (mergeCU->m_sa8dCost < skipCU->m_sa8dCost)
+            if (tempPred->sa8dCost < bestPred->sa8dCost)
             {
                 bestSadCand = i;
-                std::swap(mergePred, skipPred);
-                mergeCU = &mergePred->cu;
-                predYuv = &mergePred->predYuv;
+                std::swap(tempPred, bestPred);
             }
         }
     }
 
+    /* force mode decision to pick bestPred */
+    tempPred->sa8dCost = MAX_INT64;
+    tempPred->rdCost = MAX_INT64;
     if (bestSadCand < 0)
+    {
+        /* force mode decision to take inter or intra */
+        bestPred->sa8dCost = MAX_INT64;
+        bestPred->rdCost = MAX_INT64;
         return;
-
-    /* skipPred points to the best prediction and costs */
-    skipCU = &skipPred->cu;
-    mergeCU->setMergeIndex(0, bestSadCand);
-    mergeCU->setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0, depth);
-    mergeCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[bestSadCand][0], SIZE_2Nx2N, 0, 0);
-    mergeCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[bestSadCand][1], SIZE_2Nx2N, 0, 0);
-    mergeCU->m_totalBits = skipCU->m_totalBits;
-    mergeCU->m_totalDistortion = skipCU->m_totalDistortion;
-    mergeCU->m_sa8dCost = skipCU->m_sa8dCost;
+    }
 
     if (m_param->rdLevel >= 1)
     {
-        for (int partIdx = 0; partIdx < skipCU->getNumPartInter(); partIdx++)
+        for (int partIdx = 0; partIdx < bestPred->cu.getNumPartInter(); partIdx++)
         {
             // calculate the motion compensation for chroma for the best mode selected
-            prepMotionCompensation(skipCU, cuData, partIdx);
-            motionCompensation(&skipPred->predYuv, false, true);
+            prepMotionCompensation(&bestPred->cu, cuData, partIdx);
+            motionCompensation(&bestPred->predYuv, false, true);
         }
 
-        if (skipCU->isLosslessCoded(0))
-            skipCU->m_totalRDCost = MAX_INT64;
-        else
-            encodeResAndCalcRdSkipCU(*skipPred);
+        if (!bestPred->cu.isLosslessCoded(0))
+            encodeResAndCalcRdSkipCU(*bestPred);
 
         // Encode with residue
-        mergePred->predYuv.copyFromYuv(skipPred->predYuv);
-        encodeResAndCalcRdInterCU(*mergePred, cuData);
+        tempPred->cu.setMergeIndex(0, bestSadCand);
+        tempPred->cu.setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0, depth);
+        tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[bestSadCand][0], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[bestSadCand][1], SIZE_2Nx2N, 0, 0);
+        tempPred->sa8dCost = bestPred->sa8dCost;
+        tempPred->predYuv.copyFromYuv(bestPred->predYuv);
+
+        encodeResAndCalcRdInterCU(*tempPred, cuData);
     }
 }
 
@@ -1199,7 +1175,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
     uint32_t maxNumMergeCand = merge.cu.m_slice->m_maxNumMergeCand;
     merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours, maxNumMergeCand);
 
-    bestPred->cu.m_totalRDCost = MAX_INT64;
+    bestPred->rdCost = MAX_INT64;
     for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; mergeCand++)
     {
         if (m_bFrameParallel &&
@@ -1217,13 +1193,13 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
         motionCompensation(&tempPred->predYuv, true, true);
 
         bool swapped = false;
-        if (bestPred->cu.m_totalRDCost == MAX_INT64 || bestPred->cu.getQtRootCbf(0))
+        if (bestPred->rdCost == MAX_INT64 || bestPred->cu.getQtRootCbf(0))
         {
             /* if the best prediction has CBF (not a skip) then try merge with residual */
 
             encodeResAndCalcRdInterCU(*tempPred, cuData);
 
-            if (tempPred->cu.m_totalRDCost < bestPred->cu.m_totalRDCost)
+            if (tempPred->rdCost < bestPred->rdCost)
             {
                 std::swap(tempPred, bestPred);
                 swapped = true;
@@ -1244,7 +1220,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
             
             encodeResAndCalcRdSkipCU(*tempPred);
 
-            if (tempPred->cu.m_totalRDCost < bestPred->cu.m_totalRDCost)
+            if (tempPred->rdCost < bestPred->rdCost)
             {
                 std::swap(tempPred, bestPred);
                 X265_CHECK(!bestPred->cu.getQtRootCbf(0), "skip CU has coded block flags\n");
@@ -1252,7 +1228,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
         }
     }
 
-    if (bestPred->cu.m_totalRDCost < MAX_INT64)
+    if (bestPred->rdCost < MAX_INT64)
     {
         checkDQP(&bestPred->cu, cuData);
         m_modeDepth[depth].bestMode = bestPred;
@@ -1267,30 +1243,28 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
     cu->setPartSizeSubParts(partSize, 0, depth);
     cu->setPredModeSubParts(MODE_INTER, 0, depth);
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    cu->m_totalBits = 0;
+    interMode.initCosts();
 
     Yuv* fencYuv = &m_modeDepth[depth].fencYuv;
     Yuv* predYuv = &interMode.predYuv;
+    int sizeIdx = cu->getLog2CUSize(0) - 2;
 
     if (m_param->bDistributeMotionEstimation && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
         parallelInterSearch(interMode, cuData, false);
-        x265_emms();
-        int sizeIdx = cu->getLog2CUSize(0) - 2;
-        cu->m_totalDistortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
-        cu->m_sa8dCost = m_rdCost.calcRdSADCost(cu->m_totalDistortion, cu->m_totalBits);
+        x265_emms(); // TODO: Remove from here and predInterSearch()
+        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
+        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
     }
     else if (predInterSearch(interMode, cuData, false, false))
     {
-        int sizeIdx = cu->getLog2CUSize(0) - 2;
-        uint32_t distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
-        cu->m_totalDistortion = distortion;
-        cu->m_sa8dCost = m_rdCost.calcRdSADCost(distortion, cu->m_totalBits);
+        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
+        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
     }
     else
     {
-        cu->m_totalDistortion = MAX_UINT;
-        cu->m_totalRDCost = MAX_INT64;
+        interMode.distortion = MAX_UINT;
+        interMode.sa8dCost = MAX_INT64;
     }
 }
 
@@ -1299,11 +1273,11 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     TComDataCU* cu = &interMode.cu;
     uint32_t depth = cu->getDepth(0);
 
+    interMode.initCosts();
     cu->setSkipFlagSubParts(false, 0, depth);
     cu->setPartSizeSubParts(partSize, 0, depth);
     cu->setPredModeSubParts(MODE_INTER, 0, depth);
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
-    cu->initEstData();
 
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (cu->m_slice->m_numRefIdx[0] + cu->m_slice->m_numRefIdx[1]) > 2)
     {
@@ -1322,9 +1296,9 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
 
 /* Note that this function does not save the best intra prediction, it must
  * be generated later. It records the best mode in the cu */
-void Analysis::checkIntraInInter_rd0_4(Mode& intramode, const CU& cuData)
+void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
 {
-    TComDataCU* cu = &intramode.cu;
+    TComDataCU* cu = &intraMode.cu;
     uint32_t depth = cu->getDepth(0);
 
     cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
@@ -1483,9 +1457,10 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intramode, const CU& cuData)
     }
 
     cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
-    cu->m_totalBits = bbits;
-    cu->m_totalDistortion = bsad;
-    cu->m_sa8dCost = bcost;
+    intraMode.initCosts();
+    intraMode.totalBits = bbits;
+    intraMode.distortion = bsad;
+    intraMode.sa8dCost = bcost;
 }
 
 void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
@@ -1497,9 +1472,6 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     uint32_t puBits = 0;
     uint32_t psyEnergy = 0;
 
-    // set context models
-    m_entropyCoder.load(m_rdContexts[depth].cur);
-
     m_quant.setQPforQuant(intraMode.cu);
 
     uint32_t tuDepthRange[2];
@@ -1508,10 +1480,11 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[depth].fencYuv;
 
-    cu->m_totalDistortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
+    m_entropyCoder.load(m_rdContexts[depth].cur);
+    intraMode.distortion = xRecurIntraCodingQT(intraMode, cuData, initTrDepth, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, initTrDepth, 0, reconYuv);  /* TODO: why is recon a second call? */
     cu->copyToPic(cu->getDepth(0), 0, initTrDepth);
-    cu->m_totalDistortion += estIntraPredChromaQT(intraMode, cuData);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
     if (cu->m_slice->m_pps->bTransquantBypassEnabled)
@@ -1524,23 +1497,18 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     }
     m_entropyCoder.codePartSize(*cu, 0, depth);
     m_entropyCoder.codePredInfo(*cu, 0);
-    cu->m_mvBits += m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
 
     // Encode Coefficients
     bool bCodeDQP = m_bEncodeDQP;
     m_entropyCoder.codeCoeff(*cu, 0, depth, bCodeDQP, tuDepthRange);
     m_entropyCoder.store(intraMode.contexts);
 
-    cu->m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    cu->m_coeffBits = cu->m_totalBits - cu->m_mvBits;
+    intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-    {
-        int part = cu->getLog2CUSize(0) - 2;
-        cu->m_psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
-        cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
-    }
-    else
-        cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
+        intraMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
+    updateModeCost(intraMode);
 }
 
 void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
@@ -1681,7 +1649,7 @@ void Analysis::checkBestMode(Mode& mode, uint32_t depth)
     ModeDepth& md = m_modeDepth[depth];
     if (md.bestMode)
     {
-        if (mode.cu.m_totalRDCost < md.bestMode->cu.m_totalRDCost)
+        if (mode.rdCost < md.bestMode->rdCost)
             md.bestMode = &mode;
     }
     else

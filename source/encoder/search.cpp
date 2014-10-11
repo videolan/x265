@@ -142,6 +142,14 @@ void Search::invalidateContexts(int fromDepth)
 void Search::invalidateContexts(int) {}
 #endif
 
+void Search::updateModeCost(Mode& m) const
+{
+    if (m_rdCost.m_psyRd)
+        m.rdCost = m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy);
+    else
+        m.rdCost = m_rdCost.calcRdCost(m.distortion, m.totalBits);
+}
+
 void Search::xEncSubdivCbfQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu.getDepth(0) + trDepth;
@@ -1920,7 +1928,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, partAddr, 0, partIdx);
             cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, partAddr, 0, partIdx);
 
-            cu->m_totalBits += merge.bits;
+            interMode.totalBits += merge.bits;
         }
         else if (bidirCost < m_bestME[0].cost && bidirCost < m_bestME[1].cost)
         {
@@ -1938,7 +1946,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_1)->setMvd(partAddr, bidir[1].mv - bidir[1].mvp);
             cu->setMVPIdx(REF_PIC_LIST_1, partAddr, bidir[1].mvpIdx);
 
-            cu->m_totalBits += bidirBits;
+            interMode.totalBits += bidirBits;
         }
         else if (m_bestME[0].cost <= m_bestME[1].cost)
         {
@@ -1951,7 +1959,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_0)->setMvd(partAddr, m_bestME[0].mv - m_bestME[0].mvp);
             cu->setMVPIdx(REF_PIC_LIST_0, partAddr, m_bestME[0].mvpIdx);
 
-            cu->m_totalBits += m_bestME[0].bits;
+            interMode.totalBits += m_bestME[0].bits;
         }
         else
         {
@@ -1964,7 +1972,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_1)->setMvd(partAddr, m_bestME[1].mv - m_bestME[1].mvp);
             cu->setMVPIdx(REF_PIC_LIST_1, partAddr, m_bestME[1].mvpIdx);
 
-            cu->m_totalBits += m_bestME[1].bits;
+            interMode.totalBits += m_bestME[1].bits;
         }
 
         prepMotionCompensation(cu, cuData, partIdx);
@@ -2255,7 +2263,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
     }
 
     x265_emms();
-    cu->m_totalBits = totalmebits;
+    interMode.totalBits += totalmebits;
     return true;
 }
 
@@ -2380,11 +2388,11 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     // Luma
     int part = partitionFromLog2Size(cu->getLog2CUSize(0));
-    cu->m_totalDistortion = primitives.sse_pp[part](fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
+    interMode.distortion = primitives.sse_pp[part](fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
     // Chroma
     part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
-    cu->m_totalDistortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_cwidth, reconYuv->m_buf[1], reconYuv->m_cwidth));
-    cu->m_totalDistortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_cwidth, reconYuv->m_buf[2], reconYuv->m_cwidth));
+    interMode.distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_cwidth, reconYuv->m_buf[1], reconYuv->m_cwidth));
+    interMode.distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_cwidth, reconYuv->m_buf[2], reconYuv->m_cwidth));
 
     m_entropyCoder.load(m_rdContexts[depth].cur);
     m_entropyCoder.resetBits();
@@ -2393,19 +2401,17 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     m_entropyCoder.codeSkipFlag(*cu, 0);
     m_entropyCoder.codeMergeIndex(*cu, 0);
 
-    cu->m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
-    cu->m_coeffBits = 0;
-    cu->m_totalBits = m_entropyCoder.getNumberOfWrittenBits();
+    interMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
+    interMode.coeffBits = 0;
+    interMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
 
     if (m_rdCost.m_psyRd)
     {
         int size = cu->getLog2CUSize(0) - 2;
-        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
-        cu->m_totalRDCost = m_rdCost.calcPsyRdCost(cu->m_totalDistortion, cu->m_totalBits, cu->m_psyEnergy);
+        interMode.psyEnergy = m_rdCost.psyCost(size, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
     }
-    else
-        cu->m_totalRDCost = m_rdCost.calcRdCost(cu->m_totalDistortion, cu->m_totalBits);
 
+    updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
 }
 
@@ -2485,7 +2491,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         if (zeroCost < cost)
         {
             distortion = zeroDistortion;
-            cu->m_psyEnergy = zeroPsyEnergyY;
+            interMode.psyEnergy = zeroPsyEnergyY;
 
             const uint32_t qpartnum = NUM_CU_PARTITIONS >> (depth << 1);
             ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(uint8_t));
@@ -2502,12 +2508,13 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         else
             xSetResidualQTData(cu, 0, NULL, depth, false);
 
+        /* calculate signal bits for inter/merge/skip coded CU */
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
-        bits = getInterSymbolBits(*cu, tuDepthRange);
+        bits = getInterSymbolBits(interMode, tuDepthRange);
 
         if (m_rdCost.m_psyRd)
-            cost = m_rdCost.calcPsyRdCost(distortion, bits, cu->m_psyEnergy);
+            cost = m_rdCost.calcPsyRdCost(distortion, bits, interMode.psyEnergy);
         else
             cost = m_rdCost.calcRdCost(distortion, bits);
 
@@ -2519,7 +2526,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
             bestMode = modeId; // 0 for lossless
             bestBits = bits;
             bestCost = cost;
-            bestCoeffBits = cu->m_coeffBits;
+            bestCoeffBits = interMode.coeffBits;
             m_entropyCoder.store(interMode.contexts);
         }
     }
@@ -2548,19 +2555,15 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
     bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_cwidth, reconYuv->m_buf[1], reconYuv->m_cwidth));
     bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_cwidth, reconYuv->m_buf[2], reconYuv->m_cwidth));
-    if (m_rdCost.m_psyRd)
-    {
-        int size = log2CUSize - 2;
-        cu->m_psyEnergy = m_rdCost.psyCost(size, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
-        cu->m_totalRDCost = m_rdCost.calcPsyRdCost(bestDist, bestBits, cu->m_psyEnergy);
-    }
-    else
-        cu->m_totalRDCost = m_rdCost.calcRdCost(bestDist, bestBits);
 
-    cu->m_totalBits       = bestBits;
-    cu->m_totalDistortion = bestDist;
-    cu->m_coeffBits       = bestCoeffBits;
-    cu->m_mvBits          = bestBits - bestCoeffBits;
+    if (m_rdCost.m_psyRd)
+        interMode.psyEnergy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
+
+    interMode.totalBits = bestBits;
+    interMode.distortion = bestDist;
+    interMode.coeffBits = bestCoeffBits;
+    interMode.mvBits = bestBits - bestCoeffBits;
+    updateModeCost(interMode);
 
     if (cu->isSkipped(0))
         cu->clearCbf(0, depth);
@@ -3461,9 +3464,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
         for (uint32_t i = 0; i < 4; ++i)
         {
-            cu->m_psyEnergy = 0;
+            mode.psyEnergy = 0;
             subdivDist += xEstimateResidualQT(mode, cuData, absPartIdx + i * qPartNumSubdiv, resiYuv, depth + 1, subDivCost, subdivBits, bCheckFull ? NULL : outZeroDist, depthRange);
-            subDivPsyEnergy += cu->m_psyEnergy;
+            subDivPsyEnergy += mode.psyEnergy;
         }
 
         uint32_t ycbf = 0;
@@ -3505,11 +3508,11 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 rdCost += subDivCost;
                 outBits += subdivBits;
                 outDist += subdivDist;
-                cu->m_psyEnergy = subDivPsyEnergy;
+                mode.psyEnergy = subDivPsyEnergy;
                 return outDist;
             }
             else
-                cu->m_psyEnergy = singlePsyEnergy;
+                mode.psyEnergy = singlePsyEnergy;
         }
 
         cu->setTransformSkipSubParts(bestTransformMode[TEXT_LUMA][0], TEXT_LUMA, absPartIdx, depth);
@@ -3533,7 +3536,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
     rdCost += singleCost;
     outBits += singleBits;
     outDist += singleDist;
-    cu->m_psyEnergy = singlePsyEnergy;
+    mode.psyEnergy = singlePsyEnergy;
 
     cu->setTrIdxSubParts(trMode, absPartIdx, depth);
     cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
@@ -3788,9 +3791,11 @@ void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint
     }
 }
 
-/* add inter-prediction syntax elements for a CU block */
-uint32_t Search::getInterSymbolBits(TComDataCU& cu, uint32_t depthRange[2])
+/* code inter-prediction syntax elements for a CU, record bit sizes */
+uint32_t Search::getInterSymbolBits(Mode& mode, uint32_t depthRange[2])
 {
+    TComDataCU& cu = mode.cu;
+
     if (cu.getMergeFlag(0) && cu.getPartitionSize(0) == SIZE_2Nx2N && !cu.getQtRootCbf(0))
     {
         cu.setSkipFlagSubParts(true, 0, cu.getDepth(0));
@@ -3801,8 +3806,8 @@ uint32_t Search::getInterSymbolBits(TComDataCU& cu, uint32_t depthRange[2])
         if (!cu.m_slice->isIntra())
             m_entropyCoder.codeSkipFlag(cu, 0);
         m_entropyCoder.codeMergeIndex(cu, 0);
-        cu.m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
-        cu.m_coeffBits = 0;
+        mode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
+        mode.coeffBits = 0;
         return m_entropyCoder.getNumberOfWrittenBits();
     }
     else
@@ -3818,10 +3823,10 @@ uint32_t Search::getInterSymbolBits(TComDataCU& cu, uint32_t depthRange[2])
         m_entropyCoder.codePartSize(cu, 0, cu.getDepth(0));
         m_entropyCoder.codePredInfo(cu, 0);
         bool bDummy = false;
-        cu.m_mvBits = m_entropyCoder.getNumberOfWrittenBits();
+        mode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
         m_entropyCoder.codeCoeff(cu, 0, cu.getDepth(0), bDummy, depthRange);
         int totalBits = m_entropyCoder.getNumberOfWrittenBits();
-        cu.m_coeffBits = totalBits - cu.m_mvBits;
+        mode.coeffBits = totalBits - mode.mvBits;
         return totalBits;
     }
 }

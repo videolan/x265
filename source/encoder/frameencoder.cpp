@@ -668,7 +668,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
         ctu->loadCTUData(m_param->maxCUSize);
         tld.analysis.m_quant.setQPforQuant(*ctu);
-        tld.analysis.compressCTU(*ctu, rowCoder); // Does all the CU analysis
+
+        // Does all the CU analysis, returns best top level mode decision
+        Search::Mode& best = tld.analysis.compressCTU(*ctu, rowCoder);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
@@ -684,9 +686,9 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
-            curRow.rowStats.mvBits += ctu->m_mvBits;
-            curRow.rowStats.coeffBits += ctu->m_coeffBits;
-            curRow.rowStats.miscBits += ctu->m_totalBits - (ctu->m_mvBits + ctu->m_coeffBits);
+            curRow.rowStats.mvBits += best.mvBits;
+            curRow.rowStats.coeffBits += best.coeffBits;
+            curRow.rowStats.miscBits += best.totalBits - (best.mvBits + best.coeffBits);
             StatisticLog* log = &tld.analysis.m_sliceTypeLog[slice->m_sliceType];
 
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
@@ -707,7 +709,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             // Update encoded bits, satdCost, baseQP for each CU
             m_frame->m_rowDiagSatd[row] += m_frame->m_cuCostsForVbv[cuAddr];
             m_frame->m_rowDiagIntraSatd[row] += m_frame->m_intraCuCostsForVbv[cuAddr];
-            m_frame->m_rowEncodedBits[row] += ctu->m_totalBits;
+            m_frame->m_cuBitsForVbv[cuAddr] = best.totalBits;
+            m_frame->m_rowEncodedBits[row] += best.totalBits;
             m_frame->m_numEncodedCusPerRow[row] = cuAddr;
             m_frame->m_qpaRc[row] += ctu->m_baseQp;
 
@@ -832,14 +835,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     }
     if (row == rowCount)
     {
-        int64_t bits = 0;
-        for (uint32_t col = 0; col < rowCount * numCols; col++)
-        {
-            TComDataCU* cu = m_frame->m_picSym->getCU(col);
-            bits += cu->m_totalBits;
-        }
+        m_rce.rowTotalBits = 0;
+        for (int i = 0; i < rowCount; i++)
+            m_rce.rowTotalBits += m_frame->m_rowEncodedBits[i];
 
-        m_rce.rowTotalBits = bits;
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }
 

@@ -81,6 +81,7 @@ bool Frame::create(x265_param *param)
             CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
             CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
             CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
+            CHECKED_MALLOC(m_cuBitsForVbv, uint32_t, numRows * numCols);
             CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
             CHECKED_MALLOC(m_qpaRc, double, numRows);
         }
@@ -124,7 +125,8 @@ void Frame::reinit(x265_param *param)
         memset(m_rowEncodedBits, 0, numRows * sizeof(uint32_t));
         memset(m_numEncodedCusPerRow, 0, numRows * sizeof(uint32_t));
         memset(m_rowSatdForVbv, 0, numRows * sizeof(uint32_t));
-        memset(m_cuCostsForVbv, 0,  numRows * numCols * sizeof(uint32_t));
+        memset(m_cuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
+        memset(m_cuBitsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
@@ -164,6 +166,7 @@ void Frame::destroy()
     X265_FREE(m_numEncodedCusPerRow);
     X265_FREE(m_rowSatdForVbv);
     X265_FREE(m_cuCostsForVbv);
+    X265_FREE(m_cuBitsForVbv);
     X265_FREE(m_intraCuCostsForVbv);
     X265_FREE(m_qpaAq);
     X265_FREE(m_qpaRc);

@@ -58,16 +58,25 @@ public:
     int64_t           m_pts;                // user provided presentation time stamp
     int64_t           m_reorderedPts;
     int64_t           m_dts;
+    int32_t           m_forceqp;            // Force to use the qp specified in qp file
 
     Lowres            m_lowres;
+    double*           m_qpaAq;
 
-    Frame*            m_next;       // PicList doubly linked list pointers
+    Frame*            m_next;                // PicList doubly linked list pointers
     Frame*            m_prev;
 
-    x265_intra_data*  m_intraData;  // intra analysis information
-    x265_inter_data*  m_interData;  // inter analysis information
+    x265_intra_data*  m_intraData;
+    x265_inter_data*  m_interData;
 
-    /* TODO: much of this data can be moved to RCE */
+    Frame();
+
+    bool create(x265_param *param);
+    bool allocPicSym(x265_param *param);
+    void destroy();
+
+
+    /* TODO: all of this should be moved to RCE or PicSym */
     double*           m_rowDiagQp;
     double*           m_rowDiagQScale;
     uint32_t*         m_rowDiagSatd;
@@ -76,20 +85,13 @@ public:
     uint32_t*         m_numEncodedCusPerRow;
     uint32_t*         m_rowSatdForVbv;
     uint32_t*         m_cuCostsForVbv;
+    uint32_t*         m_cuBitsForVbv;
     uint32_t*         m_intraCuCostsForVbv;
-    double*           m_qpaAq;
     double*           m_qpaRc;
     double            m_avgQpRc;    // avg QP as decided by ratecontrol
     double            m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
     double            m_rateFactor; // calculated based on the Frame QP
-    int32_t           m_forceqp;    // Force to use the qp specified in qp file
-
-    Frame();
-
-    bool create(x265_param *param);
-    bool allocPicSym(x265_param *param);
     void reinit(x265_param *param);
-    void destroy();
 };
 }
 

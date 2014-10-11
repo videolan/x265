@@ -141,13 +141,6 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
     m_cuPelX           = (cuAddr % frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
     m_cuPelY           = (cuAddr / frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
     m_absIdxInCTU      = 0;
-    m_psyEnergy        = 0;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
     m_numPartitions    = NUM_CU_PARTITIONS;
     char* qp           = frame->m_picSym->getCU(m_cuAddr)->getQP();
     m_baseQp           = frame->m_picSym->getCU(m_cuAddr)->m_baseQp;
@@ -198,21 +191,6 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
     m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? frame->m_picSym->getCU(m_cuAddr - widthInCU + 1) : NULL;
 }
 
-// initialize prediction data
-void TComDataCU::initEstData()
-{
-    m_psyEnergy        = 0;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
-
-    m_cuMvField[0].clearMvField();
-    m_cuMvField[1].clearMvField();
-}
-
 // initialize Sub partition
 void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t partUnitIdx)
 {
@@ -224,19 +202,10 @@ void TComDataCU::initSubCU(const TComDataCU& cu, const CU& cuData, uint32_t part
     m_slice            = cu.m_slice;
     m_cuAddr           = cu.m_cuAddr;
     m_absIdxInCTU      = cuData.encodeIdx;
+    m_numPartitions    = cuData.numPartitions;
 
     m_cuPelX           = cu.m_cuPelX + ((partUnitIdx &  1) << log2CUSize);
     m_cuPelY           = cu.m_cuPelY + ((partUnitIdx >> 1) << log2CUSize);
-
-    m_psyEnergy        = 0;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
-
-    m_numPartitions    = cuData.numPartitions;
 
     for (int i = 0; i < 4; i++)
     {
@@ -285,18 +254,10 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     m_slice            = ctu.m_slice;
     m_cuAddr           = ctu.m_cuAddr;
     m_absIdxInCTU      = cuData.encodeIdx;
+    m_numPartitions    = cuData.numPartitions;
 
     m_cuPelX           = ctu.m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
     m_cuPelY           = ctu.m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
-
-    m_psyEnergy        = 0;
-    m_totalRDCost      = MAX_INT64;
-    m_sa8dCost         = MAX_INT64;
-    m_totalDistortion  = 0;
-    m_totalBits        = 0;
-    m_mvBits           = 0;
-    m_coeffBits        = 0;
-    m_numPartitions    = cuData.numPartitions;
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
@@ -324,14 +285,6 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 void TComDataCU::copyPartFrom(TComDataCU* cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-
-    m_totalRDCost      += cu->m_totalRDCost;
-    m_sa8dCost         += cu->m_sa8dCost;
-    m_psyEnergy        += cu->m_psyEnergy;
-    m_totalDistortion  += cu->m_totalDistortion;
-    m_totalBits        += cu->m_totalBits;
-    m_mvBits           += cu->m_mvBits;
-    m_coeffBits        += cu->m_coeffBits;
 
     uint32_t offset       = numPartitions * partUnitIdx;
     uint32_t numPartition = numPartitions;
@@ -393,13 +346,6 @@ void TComDataCU::copyToPic(uint32_t depth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
 
-    cu->m_psyEnergy       = m_psyEnergy;
-    cu->m_totalRDCost     = m_totalRDCost;
-    cu->m_totalDistortion = m_totalDistortion;
-    cu->m_totalBits       = m_totalBits;
-    cu->m_mvBits          = m_mvBits;
-    cu->m_coeffBits       = m_coeffBits;
-
     int sizeInBool  = sizeof(bool) * m_numPartitions;
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
@@ -456,7 +402,7 @@ void TComDataCU::copyCodedToPic(uint32_t depth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
 
-    int sizeInChar  = sizeof(uint8_t) * m_numPartitions;
+    int sizeInChar = sizeof(uint8_t) * m_numPartitions;
 
     memcpy(cu->getSkipFlag() + m_absIdxInCTU, m_skipFlag, sizeof(*m_skipFlag) * m_numPartitions);
     memcpy(cu->getTransformIdx() + m_absIdxInCTU, m_trIdx, sizeInChar);
@@ -482,20 +428,13 @@ void TComDataCU::copyCodedToPic(uint32_t depth)
 void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 {
     TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
-    uint32_t qNumPart  = m_numPartitions >> (partDepth << 1);
+    uint32_t qNumPart = m_numPartitions >> (partDepth << 1);
 
     uint32_t partStart = partIdx * qNumPart;
-    uint32_t partOffset  = m_absIdxInCTU + partStart;
+    uint32_t partOffset = m_absIdxInCTU + partStart;
 
-    cu->m_psyEnergy       = m_psyEnergy;
-    cu->m_totalRDCost     = m_totalRDCost;
-    cu->m_totalDistortion = m_totalDistortion;
-    cu->m_totalBits       = m_totalBits;
-    cu->m_mvBits          = m_mvBits;
-    cu->m_coeffBits       = m_coeffBits;
-
-    int sizeInBool  = sizeof(bool) * qNumPart;
-    int sizeInChar  = sizeof(char) * qNumPart;
+    int sizeInBool = sizeof(bool) * qNumPart;
+    int sizeInChar = sizeof(char) * qNumPart;
     memcpy(cu->getSkipFlag() + partOffset, m_skipFlag,   sizeof(*m_skipFlag)   * qNumPart);
 
     memcpy(cu->getQP() + partOffset, m_qp, sizeInChar);
