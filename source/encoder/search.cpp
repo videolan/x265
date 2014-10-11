@@ -1348,7 +1348,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
             cu->getIntraDirLumaPredictor(absPartIdx, preds);
 
             uint64_t mpms;
-            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
+            uint32_t rbits = getIntraRemModeBits(*cu, absPartIdx, depth, preds, mpms);
 
             pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
             uint64_t modeCosts[35];
@@ -1356,7 +1356,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
 
             // DC
             primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, absPartIdx, depth) : rbits;
+            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(*cu, DC_IDX, absPartIdx, depth) : rbits;
             uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
 
@@ -1369,7 +1369,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
                 leftPlanar = leftFiltered;
             }
             primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, absPartIdx, depth) : rbits;
+            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(*cu, PLANAR_IDX, absPartIdx, depth) : rbits;
             sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
             COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
@@ -1383,7 +1383,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
                 bool modeHor = (mode < 18);
                 pixel *cmp = (modeHor ? buf_trans : fenc);
                 intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
+                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, absPartIdx, depth) : rbits;
                 sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
                 modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
                 COPY1_IF_LT(bcost, modeCosts[mode]);
@@ -3740,20 +3740,20 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
     }
 }
 
-uint32_t Search::getIntraModeBits(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
+uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
 {
-    cu->getLumaIntraDir()[partOffset] = (uint8_t)mode;
+    cu.getLumaIntraDir()[partOffset] = (uint8_t)mode;
 
     // Reload only contexts required for coding intra mode information
     m_entropyCoder.loadIntraDirModeLuma(m_rdContexts[depth].cur);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeIntraDirLumaAng(*cu, partOffset, false);
+    m_entropyCoder.codeIntraDirLumaAng(cu, partOffset, false); /* TODO: Pass mode here so this func can take const cu ref */
     return m_entropyCoder.getNumberOfWrittenBits();
 }
 
 /* returns the number of bits required to signal a non-most-probable mode.
  * on return mpm contains bitmap of most probable modes */
-uint32_t Search::getIntraRemModeBits(TComDataCU* cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
+uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
 {
     mpms = 0;
     for (int i = 0; i < 3; ++i)
@@ -3830,16 +3830,16 @@ uint32_t Search::getInterSymbolBits(Mode& mode, uint32_t depthRange[2])
 }
 
 /* Function for filling original YUV samples of a CU in lossless mode */
-void Search::fillOrigYUVBuffer(TComDataCU* cu, const Yuv& fencYuv)
+void Search::fillOrigYUVBuffer(TComDataCU& cu, const Yuv& fencYuv)
 {
     /* TODO: is this extra copy really necessary? the source pixels will still
      * be available when getLumaOrigYuv() is used */
 
-    uint32_t width = 1 << cu->getLog2CUSize(0);
-    uint32_t height = 1 << cu->getLog2CUSize(0);
+    uint32_t width  = 1 << cu.getLog2CUSize(0);
+    uint32_t height = 1 << cu.getLog2CUSize(0);
 
     const pixel* srcY = fencYuv.m_buf[0];
-    pixel* dstY = cu->getLumaOrigYuv();
+    pixel* dstY = cu.m_tqBypassOrigYuv[0];
     uint32_t srcStride = fencYuv.m_width;
 
     /* TODO: square block copy primitive */
@@ -3855,12 +3855,12 @@ void Search::fillOrigYUVBuffer(TComDataCU* cu, const Yuv& fencYuv)
     const pixel* srcCb = fencYuv.m_buf[1];
     const pixel* srcCr = fencYuv.m_buf[2];
 
-    pixel* dstCb = cu->getChromaOrigYuv(1);
-    pixel* dstCr = cu->getChromaOrigYuv(2);
+    pixel* dstCb = cu.m_tqBypassOrigYuv[1];
+    pixel* dstCr = cu.m_tqBypassOrigYuv[2];
 
     uint32_t srcStrideC = fencYuv.m_cwidth;
-    uint32_t widthC = width >> cu->m_hChromaShift;
-    uint32_t heightC = height >> cu->m_vChromaShift;
+    uint32_t widthC = width >> cu.m_hChromaShift;
+    uint32_t heightC = height >> cu.m_vChromaShift;
 
     /* TODO: block copy primitives */
     for (uint32_t y = 0; y < heightC; y++)

@@ -144,7 +144,7 @@ public:
 
     bool     initSearch(x265_param *param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
-    inline void  updateModeCost(Mode& mode) const;
+    inline void updateModeCost(Mode& mode) const;
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
@@ -166,10 +166,10 @@ public:
     void     generateCoeffRecon(Mode& mode, const CU& cuData);
     void     residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
 
-    void     fillOrigYUVBuffer(TComDataCU* cu, const Yuv& origYuv);
+    void     fillOrigYUVBuffer(TComDataCU& cu, const Yuv& origYuv);
 
-    uint32_t getIntraModeBits(TComDataCU* cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
-    uint32_t getIntraRemModeBits(TComDataCU * cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
+    uint32_t getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
+    uint32_t getIntraRemModeBits(TComDataCU & cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 
 protected:
 

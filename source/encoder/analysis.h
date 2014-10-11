@@ -138,7 +138,7 @@ protected:
     void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
     void encodeIntraInInter(Mode& intraMode, const CU& cuData);
 
-    void checkDQP(TComDataCU* cu, const CU& cuData);
+    void checkDQP(TComDataCU& cu, const CU& cuData);
     void checkBestMode(Mode& mode, uint32_t depth);
 
     void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
