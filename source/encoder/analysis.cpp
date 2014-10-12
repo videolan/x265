@@ -156,13 +156,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             checkIntra(mode, cuData, size, shared->modes);
 
             if (mightSplit)
-            {
-                /* add signal cost of no-split flag */
-                m_entropyCoder.resetBits();
-                m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
-                md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits();
-                updateModeCost(*md.bestMode);
-            }
+                addSplitFlagCost(*md.bestMode, cuData.depth);
 
             // copy original YUV samples in lossless mode
             if (md.bestMode->cu.isLosslessCoded(0))
@@ -187,13 +181,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
         }
 
         if (mightSplit)
-        {
-            /* add signal cost of no-split flag */
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
-            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits();
-            updateModeCost(*md.bestMode);
-        }
+            addSplitFlagCost(*md.bestMode, cuData.depth);
 
         // copy original YUV samples in lossless mode
         if (md.bestMode->cu.isLosslessCoded(0))
@@ -234,14 +222,11 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
                 zOrder += g_depthInc[g_maxCUDepth - 1][nextDepth];
             }
         }
-        if (mightNotSplit)
-        {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-            splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
-        }
-        updateModeCost(*splitPred);
         nextContext->store(splitPred->contexts);
+        if (mightNotSplit)
+            addSplitFlagCost(*splitPred, cuData.depth);
+        else
+            updateModeCost(*splitPred);
         checkDQP(*splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
@@ -679,13 +664,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         if (m_param->rdLevel > 0) // checkDQP can be done only after residual encoding is done
             checkDQP(md.bestMode->cu, cuData);
 
-        if (m_param->rdLevel > 1 && depth < g_maxCUDepth)
-        {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
-            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
-            updateModeCost(*md.bestMode);
-        }
+        if (mightSplit)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
 
         // copy original YUV samples in lossless mode
         if (md.bestMode->cu.isLosslessCoded(0))
@@ -786,20 +766,15 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 /* record the depth of this non-present sub-CU */
                 memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
         }
-        if (m_param->rdLevel > 1)
-        {
-            if (mightNotSplit)
-            {
-                m_entropyCoder.resetBits();
-                m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-                splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
-            }
-            updateModeCost(*splitPred);
-        }
-        else
-            splitPred->sa8dCost = m_rdCost.calcRdSADCost(splitPred->distortion, splitPred->totalBits);
-
         nextContext->store(splitPred->contexts);
+
+        if (mightNotSplit)
+            addSplitFlagCost(*splitPred, cuData.depth);
+        else if (m_param->rdLevel <= 1)
+            splitPred->sa8dCost = m_rdCost.calcRdSADCost(splitPred->distortion, splitPred->totalBits);
+        else
+            updateModeCost(*splitPred);
+
         checkDQP(*splitCU, cuData);
 
         if (!depth && md.bestMode)
@@ -910,13 +885,8 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             }
         }
 
-        if (depth < g_maxCUDepth)
-        {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(md.bestMode->cu, 0, depth);
-            md.bestMode->totalBits += m_entropyCoder.getNumberOfWrittenBits(); // split bits
-            updateModeCost(*md.bestMode);
-        }
+        if (mightSplit)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
 
         // copy original YUV samples in lossless mode
         if (md.bestMode->cu.isLosslessCoded(0))
@@ -955,14 +925,12 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 /* record the depth of this non-present sub-CU */
                 memset(splitCU->m_depth + childCuData.numPartitions * partUnitIdx, nextDepth, childCuData.numPartitions);
         }
-        if (mightNotSplit)
-        {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeSplitFlag(*splitCU, 0, depth);
-            splitPred->totalBits += m_entropyCoder.getNumberOfWrittenBits();
-        }
         nextContext->store(splitPred->contexts);
-        updateModeCost(*splitPred);
+        if (mightNotSplit)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
+        else
+            updateModeCost(*splitPred);
+
         checkDQP(*splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
@@ -1574,6 +1542,41 @@ void Analysis::deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, b
     {
         bHor = true;
         bVer = true;
+    }
+}
+
+void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
+{
+    if (m_param->rdLevel >= 5)
+    {
+        /* advance CABAC contexts */
+        m_entropyCoder.load(mode.contexts);
+        m_entropyCoder.resetBits();
+        m_entropyCoder.codeSplitFlag(mode.cu, 0, depth);
+        uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
+        mode.mvBits += bits;
+        mode.totalBits += bits;
+        mode.contexts.load(m_entropyCoder);
+        updateModeCost(mode);
+    }
+    else if (m_param->rdLevel >= 3)
+    {
+        /* measure cost of signaling flag, ignore contexts */
+        m_entropyCoder.resetBits();
+        m_entropyCoder.codeSplitFlag(mode.cu, 0, depth);
+        uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
+        mode.mvBits += bits;
+        mode.totalBits += bits;
+        updateModeCost(mode);
+    }
+    else
+    {
+        mode.mvBits++;
+        mode.totalBits++;
+        if (m_param->rdLevel <= 1)
+            mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.totalBits);
+        else
+            updateModeCost(mode);
     }
 }
 
