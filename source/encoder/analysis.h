@@ -79,7 +79,6 @@ public:
 protected:
 
     /* mode analysis distribution */
-    Entropy       m_intraContexts;
     int           m_totalNumJobs;
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
