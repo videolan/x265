@@ -2889,7 +2889,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         {
             // need to check whether zero distortion is similar to psyenergy of fenc
             int size = log2TrSize - 2;
-            pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
+            fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
             psyEnergyY = m_rdCost.psyCost(size, fenc, fencYuv->m_width, (pixel*)zeroPel, 0);
         }
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
@@ -2916,7 +2916,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                 primitives.luma_add_ps[sizeIdx](recon, reconPic->m_stride, pred, curResiY, predYuv->m_width, strideResiY);
                 int size = log2TrSize - 2;
-                pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
+                fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                 nonZeroPsyEnergyY = m_rdCost.psyCost(size, fenc, fencYuv->m_width, recon, reconPic->m_stride);
             }
             if (cu->getCUTransquantBypass(0))
@@ -3013,7 +3013,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                         int size = log2TrSizeC - 2;
                         primitives.luma_add_ps[size](recon, reconPic->m_strideC, pred, curResiU, predYuv->m_cwidth, strideResiC);
-                        pixel *fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
+                        fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
                         nonZeroPsyEnergyU = m_rdCost.psyCost(size, fenc, fencYuv->m_cwidth, recon, reconPic->m_strideC);
                     }
                     if (cu->getCUTransquantBypass(0))
@@ -3093,7 +3093,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                         int size = log2TrSizeC - 2;
                         primitives.luma_add_ps[size](recon, reconPic->m_strideC, pred, curResiV, predYuv->m_cwidth, strideResiC);
-                        pixel *fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
+                        fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
                         nonZeroPsyEnergyV = m_rdCost.psyCost(size, fenc, fencYuv->m_cwidth, recon, reconPic->m_strideC);
                     }
                     if (cu->getCUTransquantBypass(0))
@@ -3173,8 +3173,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             if (m_bEnableRDOQ)
                 m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
-            pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
-            int16_t *resi = resiYuv->getLumaAddr(absPartIdx);
+            fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
+            resi = resiYuv->getLumaAddr(absPartIdx);
             uint32_t numSigTSkipY = m_quant.transformNxN(cu, fenc, fencYuv->m_width, resi, resiYuv->m_width, tsCoeffY, log2TrSize, TEXT_LUMA, absPartIdx, true);
             cu->setCbfSubParts(numSigTSkipY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
@@ -3198,7 +3198,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                     int size = log2TrSize - 2;
                     primitives.luma_add_ps[size](recon, reconPic->m_stride, pred, tsResiY, predYuv->m_width, trSize);
-                    pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
+                    fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                     nonZeroPsyEnergyY = m_rdCost.psyCost(size, fenc, fencYuv->m_width, recon, reconPic->m_stride);
                     singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, skipSingleBitsY, nonZeroPsyEnergyY);
                 }
@@ -3253,8 +3253,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 if (m_bEnableRDOQ)
                     m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
 
-                pixel *fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
-                int16_t *resi = resiYuv->getCbAddr(absPartIdxC);
+                fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
+                resi = resiYuv->getCbAddr(absPartIdxC);
                 uint32_t numSigTSkipU = m_quant.transformNxN(cu, fenc, fencYuv->m_cwidth, resi, resiYuv->m_cwidth, tsCoeffU, log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, true);
 
                 fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
@@ -3287,7 +3287,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                         int size = log2TrSizeC - 2;
                         primitives.luma_add_ps[size](recon, reconPic->m_strideC, pred, tsResiU, predYuv->m_cwidth, trSizeC);
-                        pixel *fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
+                        fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
                         nonZeroPsyEnergyU = m_rdCost.psyCost(size, fenc, fencYuv->m_cwidth, recon, reconPic->m_strideC);
                         singleCostU = m_rdCost.calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
                     }
@@ -3327,7 +3327,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
                         int size = log2TrSizeC - 2;
                         primitives.luma_add_ps[size](recon, reconPic->m_strideC, pred, tsResiV, predYuv->m_cwidth, trSizeC);
-                        pixel *fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
+                        fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
                         nonZeroPsyEnergyV = m_rdCost.psyCost(size, fenc, fencYuv->m_cwidth, recon, reconPic->m_strideC);
                         singleCostV = m_rdCost.calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
                     }
