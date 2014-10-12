@@ -25,11 +25,6 @@
 #ifndef X265_ANALYSIS_H
 #define X265_ANALYSIS_H
 
-#define ANGULAR_MODE_ID 2
-#define AMP_ID 3
-#define INTER_MODES 4
-#define INTRA_MODES 3
-
 #include "common.h"
 #include "predict.h"
 #include "quant.h"
@@ -43,29 +38,6 @@
 namespace x265 {
 // private namespace
 
-struct StatisticLog
-{
-    uint64_t cntInter[4];
-    uint64_t cntIntra[4];
-    uint64_t cuInterDistribution[4][INTER_MODES];
-    uint64_t cuIntraDistribution[4][INTRA_MODES];
-    uint64_t cntIntraNxN;
-    uint64_t cntSkipCu[4];
-    uint64_t cntTotalCu[4];
-    uint64_t totalCu;
-
-    /* These states store the count of inter,intra and skip ctus within quad tree structure of each CU */
-    uint32_t qTreeInterCnt[4];
-    uint32_t qTreeIntraCnt[4];
-    uint32_t qTreeSkipCnt[4];
-
-    StatisticLog()
-    {
-        memset(this, 0, sizeof(StatisticLog));
-    }
-};
-
-class Encoder;
 class Entropy;
 
 class Analysis : public Search
