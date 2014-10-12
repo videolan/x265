@@ -106,7 +106,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
     if (m_slice->m_sliceType == I_SLICE)
     {
         uint32_t zOrder = 0;
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_frame->m_intraData)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
             compressIntraCU(ctu, ctu.m_cuLocalData[0], m_frame->m_intraData, zOrder);
         else
         {
