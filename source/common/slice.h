@@ -63,6 +63,8 @@ namespace Profile {
         MAIN = 1,
         MAIN10 = 2,
         MAINSTILLPICTURE = 3,
+        MAINREXT = 4,
+        HIGHTHROUGHPUTREXT = 5
     };
 }
 
@@ -100,10 +102,14 @@ struct ProfileTierLevel
     bool     nonPackedConstraintFlag;
     bool     frameOnlyConstraintFlag;
     bool     profileCompatibilityFlag[32];
+    bool     intraConstraintFlag;
+    bool     lowerBitRateConstraintFlag;
     int      profileIdc;
     int      levelIdc;
     uint32_t minCrForLevel;
     uint32_t maxLumaSrForLevel;
+    uint32_t bitDepthConstraint;
+    int      chromaFormatConstraint;
 };
 
 struct HRDInfo

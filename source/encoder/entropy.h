@@ -39,7 +39,6 @@ struct EstBitsSbac;
 class TComDataCU;
 class ScalingList;
 
-
 enum SplitType
 {
     DONT_SPLIT            = 0,
@@ -155,8 +154,7 @@ public:
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
     void encodeCTU(const TComDataCU& cu);
-    void codeSaoOffset(SaoCtuParam& saoCtuParam, uint32_t compIdx);
-    void codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoCtuParam& saoCtuParam, int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp);
+    void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
     void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
     void codeCUTransquantBypassFlag(uint32_t symbol);
@@ -221,9 +219,6 @@ private:
     void codeRefFrmIdx(const TComDataCU& cu, uint32_t absPartIdx, int list);
 
     void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol);
-    void codeSaoTypeIdx(uint32_t code);
-    void codeSaoUflc(uint32_t length, uint32_t code) { encodeBinsEP(code, length); }
-    void codeSAOSign(uint32_t code)                  { encodeBinEP(code); }
 
     void codeDeltaQP(const TComDataCU& cu, uint32_t absPartIdx);
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx);

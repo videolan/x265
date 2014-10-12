@@ -190,9 +190,29 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl)
     WRITE_FLAG(ptl.nonPackedConstraintFlag, "general_non_packed_constraint_flag");
     WRITE_FLAG(ptl.frameOnlyConstraintFlag, "general_frame_only_constraint_flag");
 
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
-    WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
-    WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+    if (ptl.profileIdc == Profile::MAINREXT || ptl.profileIdc == Profile::HIGHTHROUGHPUTREXT)
+    {
+        uint32_t bitDepthConstraint = ptl.bitDepthConstraint;
+        int csp = ptl.chromaFormatConstraint;
+        WRITE_FLAG(bitDepthConstraint<=12, "general_max_12bit_constraint_flag");
+        WRITE_FLAG(bitDepthConstraint<=10, "general_max_10bit_constraint_flag");
+        WRITE_FLAG(bitDepthConstraint<= 8 && csp != X265_CSP_I422 , "general_max_8bit_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I422 || csp == X265_CSP_I420 || csp == X265_CSP_I400, "general_max_422chroma_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I420 || csp == X265_CSP_I400,                         "general_max_420chroma_constraint_flag");
+        WRITE_FLAG(csp == X265_CSP_I400,                                                 "general_max_monochrome_constraint_flag");
+        WRITE_FLAG(ptl.intraConstraintFlag,        "general_intra_constraint_flag");
+        WRITE_FLAG(0,                              "general_one_picture_only_constraint_flag");
+        WRITE_FLAG(ptl.lowerBitRateConstraintFlag, "general_lower_bit_rate_constraint_flag");
+        WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
+        WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
+        WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
+    }
+    else
+    {
+        WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[0..15]");
+        WRITE_CODE(0, 16, "XXX_reserved_zero_44bits[16..31]");
+        WRITE_CODE(0, 12, "XXX_reserved_zero_44bits[32..43]");
+    }
 
     WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
 }
@@ -857,75 +877,39 @@ void Entropy::codeCoeff(const TComDataCU& cu, uint32_t absPartIdx, uint32_t dept
     encodeTransform(cu, state, lumaOffset, chromaOffset, absPartIdx, absPartIdxStep, depth, log2CUSize, 0, bCodeDQP, depthRange);
 }
 
-void Entropy::codeSaoOffset(SaoCtuParam& saoCtuParam, uint32_t compIdx)
+void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
 {
-    uint32_t symbol;
-    int i;
+    int typeIdx = ctuParam.typeIdx;
 
-    symbol = saoCtuParam.typeIdx + 1;
-    if (compIdx != 2)
-        codeSaoTypeIdx(symbol);
-
-    if (symbol)
+    if (plane != 2)
     {
-        if (saoCtuParam.typeIdx < SAO_BO && compIdx != 2)
-            saoCtuParam.subTypeIdx = saoCtuParam.typeIdx;
-
-        int offsetTh = 1 << X265_MIN(X265_DEPTH - 5, 5);
-        if (saoCtuParam.typeIdx == SAO_BO)
-        {
-            for (i = 0; i < SAO_BO_LEN; i++)
-            {
-                uint32_t absOffset = ((saoCtuParam.offset[i] < 0) ? -saoCtuParam.offset[i] : saoCtuParam.offset[i]);
-                codeSaoMaxUvlc(absOffset, offsetTh - 1);
-            }
-
-            for (i = 0; i < SAO_BO_LEN; i++)
-            {
-                if (saoCtuParam.offset[i] != 0)
-                {
-                    uint32_t sign = (saoCtuParam.offset[i] < 0) ? 1 : 0;
-                    codeSAOSign(sign);
-                }
-            }
-
-            symbol = (uint32_t)(saoCtuParam.subTypeIdx);
-            codeSaoUflc(5, symbol);
-        }
-        else // if (saoLcuParam->typeIdx < SAO_BO)
-        {
-            codeSaoMaxUvlc(saoCtuParam.offset[0], offsetTh - 1);
-            codeSaoMaxUvlc(saoCtuParam.offset[1], offsetTh - 1);
-            codeSaoMaxUvlc(-saoCtuParam.offset[2], offsetTh - 1);
-            codeSaoMaxUvlc(-saoCtuParam.offset[3], offsetTh - 1);
-            if (compIdx != 2)
-            {
-                symbol = (uint32_t)saoCtuParam.subTypeIdx;
-                codeSaoUflc(2, symbol);
-            }
-        }
+        encodeBin(typeIdx >= 0, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
+        if (typeIdx >= 0)
+            encodeBinEP(typeIdx < SAO_BO ? 1 : 0);
     }
-}
 
-void Entropy::codeSaoUnitInterleaving(int compIdx, bool saoFlag, int rx, int ry, SaoCtuParam& saoCtuParam,
-                                      int cuAddrInSlice, int cuAddrUpInSlice, int allowMergeLeft, int allowMergeUp)
-{
-    if (saoFlag)
+    if (typeIdx >= 0)
     {
-        if (rx > 0 && cuAddrInSlice != 0 && allowMergeLeft)
-            codeSaoMerge(saoCtuParam.mergeLeftFlag);
-        else
-            saoCtuParam.mergeLeftFlag = 0;
-
-        if (!saoCtuParam.mergeLeftFlag)
+        enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+        if (typeIdx == SAO_BO)
         {
-            if ((ry > 0) && (cuAddrUpInSlice >= 0) && allowMergeUp)
-                codeSaoMerge(saoCtuParam.mergeUpFlag);
-            else
-                saoCtuParam.mergeUpFlag = 0;
+            for (int i = 0; i < SAO_BO_LEN; i++)
+                codeSaoMaxUvlc(abs(ctuParam.offset[i]), OFFSET_THRESH - 1);
 
-            if (!saoCtuParam.mergeUpFlag)
-                codeSaoOffset(saoCtuParam, compIdx);
+            for (int i = 0; i < SAO_BO_LEN; i++)
+                if (ctuParam.offset[i] != 0)
+                    encodeBinEP(ctuParam.offset[i] < 0);
+
+            encodeBinsEP(ctuParam.bandPos, 5);
+        }
+        else // if (typeIdx < SAO_BO)
+        {
+            codeSaoMaxUvlc(ctuParam.offset[0], OFFSET_THRESH - 1);
+            codeSaoMaxUvlc(ctuParam.offset[1], OFFSET_THRESH - 1);
+            codeSaoMaxUvlc(-ctuParam.offset[2], OFFSET_THRESH - 1);
+            codeSaoMaxUvlc(-ctuParam.offset[3], OFFSET_THRESH - 1);
+            if (plane != 2)
+                encodeBinsEP((uint32_t)(typeIdx), 2);
         }
     }
 }
@@ -1749,26 +1733,18 @@ void Entropy::codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol)
 {
     X265_CHECK(maxSymbol > 0, "maxSymbol too small\n");
 
-    uint32_t isCodeLast = (maxSymbol > code) ? 1 : 0;
-    uint32_t isCodeNonZero = (code != 0) ? 1 : 0;
+    uint32_t isCodeNonZero = !!code;
 
     encodeBinEP(isCodeNonZero);
     if (isCodeNonZero)
     {
+        uint32_t isCodeLast = (maxSymbol > code);
         uint32_t mask = (1 << (code - 1)) - 1;
         uint32_t len = code - 1 + isCodeLast;
         mask <<= isCodeLast;
 
         encodeBinsEP(mask, len);
     }
-}
-
-/** Code SAO type index */
-void Entropy::codeSaoTypeIdx(uint32_t code)
-{
-    encodeBin((code == 0) ? 0 : 1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
-    if (code)
-        encodeBinEP(code <= 4 ? 1 : 0);
 }
 
 /* estimate bit cost for CBP, significant map and significant coefficients */

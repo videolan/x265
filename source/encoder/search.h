@@ -144,7 +144,7 @@ public:
 
     bool     initSearch(x265_param *param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
-    inline void updateModeCost(Mode& mode) const;
+    void     updateModeCost(Mode& mode) const;
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);

@@ -374,7 +374,7 @@ Profile, Level, Tier
 	their param structure. Any changes made to the param structure after
 	this call might make the encode non-compliant.
 
-	**Values:** main, main10, mainstillpicture
+	**Values:** main, main10, mainstillpicture, main422-8, main422-10, main444-8, main444-10
 
 	**CLI ONLY**
 
