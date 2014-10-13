@@ -126,12 +126,18 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
     }
     else
     {
-        /* In RD Level 0, copy source pixels into the reconstructed block so
-         * they are available for intra predictions */
-        if (!m_param->rdLevel)
+        if (m_param->rdLevel <= 1)
+        {
+            /* In RD Level 0/1, copy source pixels into the reconstructed block so
+             * they are available for intra predictions */
             m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPicYuv, ctu.m_cuAddr, 0);
+            
+            compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]); // TODO: this really wants to be compressInterCU_rd0_1
 
-        if (m_param->rdLevel < 5)
+            /* generate residual for entire CTU at once and copy to reconPic */
+            encodeResidue(ctu, ctu.m_cuLocalData[0]);
+        }
+        else if (m_param->rdLevel <= 4)
             compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]);
         else
             compressInterCU_rd5_6(ctu, ctu.m_cuLocalData[0]);
@@ -809,20 +815,10 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     /* Copy Best data to Picture for next partition prediction */
     md.bestMode->cu.copyToPic(depth);
 
-    if (m_param->rdLevel <= 1)
-    {
-        if (!depth)
-            // finish CTU, generate recon
-            encodeResidue(parentCTU, cuData);
-    }
-    else
-    {
-        /* Copy Yuv data to picture Yuv */
-        if (mightNotSplit)
-            md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
-    }
+    if (mightNotSplit && m_param->rdLevel > 1)
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
 
-    x265_emms();
+    x265_emms(); // TODO: Remove
 }
 
 void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData)
