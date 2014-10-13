@@ -99,11 +99,10 @@ struct DataCUMemPool
     uint8_t* cbfMemBlock;
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
-    pixel*   tqBypassYuvMemBlock;
 
     DataCUMemPool() { memset(this, 0, sizeof(*this)); }
 
-    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless)
+    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks)
     {
         CHECKED_MALLOC(qpMemBlock, char, numPartition * numBlocks);
 
@@ -125,9 +124,6 @@ struct DataCUMemPool
         CHECKED_MALLOC(cbfMemBlock, uint8_t, numPartition * 3 * numBlocks);
         CHECKED_MALLOC(mvpIdxMemBlock, uint8_t, numPartition * 2 * numBlocks);
         CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
-
-        if (isLossless)
-            CHECKED_MALLOC(tqBypassYuvMemBlock, pixel, (sizeL + sizeC * 2) * numBlocks);
 
         return true;
     fail:
@@ -152,7 +148,6 @@ struct DataCUMemPool
         X265_FREE(skipFlagMemBlock);
         X265_FREE(partSizeMemBlock);
         X265_FREE(predModeMemBlock);
-        X265_FREE(tqBypassYuvMemBlock);
     }
 };
 
@@ -252,7 +247,6 @@ public:
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
-    pixel*        m_tqBypassOrigYuv[3]; ///< Original Lossless YUV buffer (Y/Cb/Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -284,7 +278,7 @@ public:
 
     TComDataCU();
 
-    void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
+    void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index);
     void          initCU(Frame* pic, uint32_t cuAddr);
     void          initSubCU(const TComDataCU& cu, const CU& cuData);
     void          loadCTUData(uint32_t maxCUSize);

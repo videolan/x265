@@ -166,8 +166,6 @@ public:
     void     generateCoeffRecon(Mode& mode, const CU& cuData);
     void     residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
 
-    void     fillOrigYUVBuffer(TComDataCU& cu, const Yuv& origYuv);
-
     uint32_t getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t partOffset, uint32_t depth);
     uint32_t getIntraRemModeBits(TComDataCU & cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 

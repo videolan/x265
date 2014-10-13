@@ -69,12 +69,11 @@ bool TComPicSym::create(x265_param *param)
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
-    bool tqBypass = param->bCULossless || param->bLossless;
 
-    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame, tqBypass);
+    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame);
     m_mvFieldMemPool.create(m_numPartitions, m_numCUsInFrame);
     for (i = 0; i < m_numCUsInFrame; i++)
-        m_cuData[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i, tqBypass);
+        m_cuData[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
     return true;
 }

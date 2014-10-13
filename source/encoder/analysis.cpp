@@ -45,8 +45,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
 
     m_tld = tld;
 
-    int csp       = m_param->internalCsp;
-    bool tqBypass = m_param->bCULossless || m_param->bLossless;
+    int csp = m_param->internalCsp;
     bool ok = true;
     for (uint32_t i = 0; i < numCUDepth; i++)
     {
@@ -58,13 +57,13 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
 
-        md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES, tqBypass);
+        md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES);
         md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
         ok &= md.fencYuv.create(cuSize, cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j, tqBypass);
+            md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j);
             ok &= md.pred[j].predYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
@@ -169,10 +168,6 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             if (mightSplit)
                 addSplitFlagCost(*md.bestMode, cuData.depth);
 
-            // copy original YUV samples in lossless mode
-            if (md.bestMode->cu.isLosslessCoded(0))
-                fillOrigYUVBuffer(md.bestMode->cu, md.fencYuv);
-
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][depth];
             mightSplit = false;
@@ -193,10 +188,6 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
-
-        // copy original YUV samples in lossless mode
-        if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(md.bestMode->cu, md.fencYuv);
     }
 
     if (mightSplit)
@@ -683,10 +674,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
-
-        // copy original YUV samples in lossless mode
-        if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(md.bestMode->cu, md.fencYuv);
     }
 
     /* do not try splits if best mode is already a skip */
@@ -901,10 +888,6 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
-
-        // copy original YUV samples in lossless mode
-        if (md.bestMode->cu.isLosslessCoded(0))
-            fillOrigYUVBuffer(md.bestMode->cu, md.fencYuv);
     }
 
     // estimate split cost

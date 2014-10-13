@@ -1573,51 +1573,29 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
     PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
-    int hChromaShift = cu->m_hChromaShift;
-    int vChromaShift = cu->m_vChromaShift;
-    uint32_t lumaOffset   = absZOrderIdx << (LOG2_UNIT_SIZE * 2);
-    uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
+    PicYuv* fencPic = cu->m_frame->m_origPicYuv;
+    int csp = fencPic->m_picCsp;
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* src = cu->m_tqBypassOrigYuv[0] + lumaOffset;
-    uint32_t stride = reconPic->m_stride;
+    pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
+    uint32_t dstStride = reconPic->m_stride;
+    uint32_t srcStride = fencPic->m_stride;
     uint32_t width  = (g_maxCUSize >> depth);
     uint32_t height = (g_maxCUSize >> depth);
+    int part = partitionFromSizes(width, height);
 
-    // TODO Optimized Primitives
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-            dst[x] = src[x];
+    primitives.luma_copy_pp[part](dst, dstStride, src, srcStride);
+   
+    pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absZOrderIdx);
 
-        src += width;
-        dst += stride;
-    }
+    pixel* dstCr = reconPic->getCrAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absZOrderIdx);
 
-    pixel* dstCb = reconPic->getChromaAddr(1, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCb = cu->m_tqBypassOrigYuv[1] + chromaOffset;
-
-    pixel* dstCr = reconPic->getChromaAddr(2, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCr = cu->m_tqBypassOrigYuv[2] + chromaOffset;
-
-    stride = reconPic->m_strideC;
-    width  = ((g_maxCUSize >> depth) >> hChromaShift);
-    height = ((g_maxCUSize >> depth) >> vChromaShift);
-
-    // TODO Optimized Primitives
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-        {
-            dstCb[x] = srcCb[x];
-            dstCr[x] = srcCr[x];
-        }
-
-        srcCb += width;
-        dstCb += stride;
-        srcCr += width;
-        dstCr += stride;
-    }
+    dstStride = reconPic->m_strideC;
+    srcStride = fencPic->m_strideC;
+    primitives.chroma[csp].copy_pp[part](dstCb, dstStride, srcCb, srcStride);
+    primitives.chroma[csp].copy_pp[part](dstCr, dstStride, srcCr, srcStride);
 }
 
 }
