@@ -126,6 +126,11 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialConte
     }
     else
     {
+        /* In RD Level 0, copy source pixels into the reconstructed block so
+         * they are available for intra predictions */
+        if (!m_param->rdLevel)
+            m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPicYuv, ctu.m_cuAddr, 0);
+
         if (m_param->rdLevel < 5)
             compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]);
         else
