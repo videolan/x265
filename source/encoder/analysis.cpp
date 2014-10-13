@@ -927,7 +927,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         }
         nextContext->store(splitPred->contexts);
         if (mightNotSplit)
-            addSplitFlagCost(*md.bestMode, cuData.depth);
+            addSplitFlagCost(*splitPred, cuData.depth);
         else
             updateModeCost(*splitPred);
 
