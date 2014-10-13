@@ -3767,7 +3767,7 @@ uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t partOffset, uint32
 }
 
 /* swap the current mode/cost with the mode with the highest cost in the
- * current candidcate list, if its cost is better (maintain a top N list) */
+ * current candidate list, if its cost is better (maintain a top N list) */
 void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList)
 {
     uint32_t maxIndex = 0;

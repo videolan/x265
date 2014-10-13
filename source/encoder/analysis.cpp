@@ -865,8 +865,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                         checkInter_rd5_6(md.pred[PRED_2NxnU], cuData, SIZE_2NxnU, bMergeOnly);
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                         checkInter_rd5_6(md.pred[PRED_2NxnD], cuData, SIZE_2NxnD, bMergeOnly);
-                        }
-                    // Do horizontal AMP
+                }
                 if (bVer)
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
