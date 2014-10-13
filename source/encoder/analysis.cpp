@@ -577,9 +577,6 @@ void Analysis::compressIntraCU(TComDataCU*& outBestCU, TComDataCU*& outTempCU, u
         else
             outBestCU->m_totalRDCost = m_rdCost.calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
 
-        // copy original YUV samples in lossless mode
-        if (outBestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
     }
 
     // further split
@@ -704,10 +701,6 @@ void Analysis::compressSharedIntraCTU(TComDataCU*& outBestCU, TComDataCU*& outTe
         // increment zOrder offset to point to next best depth in sharedDepth buffer
         zOrder += g_depthInc[ctuToDepthIndex][sharedDepth[zOrder]];
     }
-
-    // copy original YUV samples in lossless mode
-    if (outBestCU->isLosslessCoded(0))
-        fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
 
     // further split
     if (cu_split_flag && bSubBranch)
@@ -1211,10 +1204,6 @@ void Analysis::compressInterCU_rd0_4(TComDataCU*& outBestCU, TComDataCU*& outTem
                 else
                     outBestCU->m_totalRDCost = m_rdCost.calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
             }
-
-            // copy original YUV samples in lossless mode
-            if (outBestCU->isLosslessCoded(0))
-                fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
         }
     }
 
@@ -1593,10 +1582,6 @@ void Analysis::compressInterCU_rd5_6(TComDataCU*& outBestCU, TComDataCU*& outTem
             outBestCU->m_totalRDCost = m_rdCost.calcPsyRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits, outBestCU->m_psyEnergy);
         else
             outBestCU->m_totalRDCost = m_rdCost.calcRdCost(outBestCU->m_totalDistortion, outBestCU->m_totalBits);
-
-        // copy original YUV samples in lossless mode
-        if (outBestCU->isLosslessCoded(0))
-            fillOrigYUVBuffer(outBestCU, m_origYuv[depth]);
     }
 
     // further split
@@ -2624,51 +2609,3 @@ void Analysis::checkDQP(TComDataCU* cu)
     }
 }
 
-/* Function for filling original YUV samples of a CU in lossless mode */
-void Analysis::fillOrigYUVBuffer(TComDataCU* cu, TComYuv* fencYuv)
-{
-    /* TODO: is this extra copy really necessary? the source pixels will still
-     * be available when getLumaOrigYuv() is used */
-
-    uint32_t width  = 1 << cu->getLog2CUSize(0);
-    uint32_t height = 1 << cu->getLog2CUSize(0);
-
-    pixel* srcY = fencYuv->getLumaAddr();
-    pixel* dstY = cu->getLumaOrigYuv();
-    uint32_t srcStride = fencYuv->getStride();
-
-    /* TODO: square block copy primitive */
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-            dstY[x] = srcY[x];
-
-        dstY += width;
-        srcY += srcStride;
-    }
-
-    pixel* srcCb = fencYuv->getChromaAddr(1);
-    pixel* srcCr = fencYuv->getChromaAddr(2);
-
-    pixel* dstCb = cu->getChromaOrigYuv(1);
-    pixel* dstCr = cu->getChromaOrigYuv(2);
-
-    uint32_t srcStrideC = fencYuv->getCStride();
-    uint32_t widthC  = width  >> cu->m_hChromaShift;
-    uint32_t heightC = height >> cu->m_vChromaShift;
-
-    /* TODO: block copy primitives */
-    for (uint32_t y = 0; y < heightC; y++)
-    {
-        for (uint32_t x = 0; x < widthC; x++)
-        {
-            dstCb[x] = srcCb[x];
-            dstCr[x] = srcCr[x];
-        }
-
-        dstCb += widthC;
-        dstCr += widthC;
-        srcCb += srcStrideC;
-        srcCr += srcStrideC;
-    }
-}

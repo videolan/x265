@@ -1576,54 +1576,30 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 /* Original Lossless YUV sample restoration */
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPicYuv* pcPicYuvRec = cu->m_pic->getPicYuvRec();
-    int hChromaShift = cu->m_hChromaShift;
-    int vChromaShift = cu->m_vChromaShift;
-    uint32_t lumaOffset   = absZOrderIdx << (LOG2_UNIT_SIZE * 2);
-    uint32_t chromaOffset = lumaOffset >> (hChromaShift + vChromaShift);
+    TComPicYuv* pcPicYuvRec  = cu->m_pic->getPicYuvRec();
+    TComPicYuv* pcPicYuvOrig = cu->m_pic->getPicYuvOrg();
+    int csp = pcPicYuvOrig->m_picCsp;
 
     pixel* dst = pcPicYuvRec->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* src = cu->getLumaOrigYuv() + lumaOffset;
-    uint32_t stride = pcPicYuvRec->getStride();
+    pixel* src = pcPicYuvOrig->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
+    uint32_t dstStride = pcPicYuvRec->getStride();
+    uint32_t srcStride = pcPicYuvOrig->getStride();
     uint32_t width  = (g_maxCUSize >> depth);
     uint32_t height = (g_maxCUSize >> depth);
+    int part = partitionFromSizes(width, height);
 
-    //TODO Optimized Primitives
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-        {
-            dst[x] = src[x];
-        }
+    primitives.luma_copy_pp[part](dst, dstStride, src, srcStride);
+   
+    pixel* dstCb = pcPicYuvRec->getCbAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCb = pcPicYuvOrig->getCbAddr(cu->m_cuAddr, absZOrderIdx);
 
-        src += width;
-        dst += stride;
-    }
+    pixel* dstCr = pcPicYuvRec->getCrAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCr = pcPicYuvOrig->getCrAddr(cu->m_cuAddr, absZOrderIdx);
 
-    pixel* dstCb = pcPicYuvRec->getChromaAddr(1, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCb = cu->getChromaOrigYuv(1) + chromaOffset;
-
-    pixel* dstCr = pcPicYuvRec->getChromaAddr(2, cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCr = cu->getChromaOrigYuv(2) + chromaOffset;
-
-    stride = pcPicYuvRec->getCStride();
-    width  = ((g_maxCUSize >> depth) >> hChromaShift);
-    height = ((g_maxCUSize >> depth) >> vChromaShift);
-
-    //TODO Optimized Primitives
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-        {
-            dstCb[x] = srcCb[x];
-            dstCr[x] = srcCr[x];
-        }
-
-        srcCb += width;
-        dstCb += stride;
-        srcCr += width;
-        dstCr += stride;
-    }
+    dstStride = pcPicYuvRec->getCStride();
+    srcStride = pcPicYuvOrig->getCStride();
+    primitives.chroma[csp].copy_pp[part](dstCb, dstStride, srcCb, srcStride);
+    primitives.chroma[csp].copy_pp[part](dstCr, dstStride, srcCr, srcStride);
 }
 
 }

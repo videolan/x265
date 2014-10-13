@@ -126,7 +126,7 @@ fail:
     return ok;
 }
 
-void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossless)
+void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool /*isLossless*/)
 {
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
@@ -170,15 +170,6 @@ void TComDataCU::create(TComDataCU *cu, uint32_t numPartition, uint32_t cuSize, 
     m_trCoeff[0]         = cu->m_dataCUMemPool.trCoeffMemBlock        + index * (sizeL + sizeC * 2);
     m_trCoeff[1]         = m_trCoeff[0]                               + sizeL;
     m_trCoeff[2]         = m_trCoeff[0]                               + sizeL + sizeC;
-
-    if (isLossless)
-    {
-        m_tqBypassOrigYuv[0] = cu->m_dataCUMemPool.m_tqBypassYuvMemBlock  + index * (sizeL + sizeC * 2);
-        m_tqBypassOrigYuv[1] = m_tqBypassOrigYuv[0]                       + sizeL;
-        m_tqBypassOrigYuv[2] = m_tqBypassOrigYuv[0]                       + sizeL + sizeC;
-    }
-    else
-        m_tqBypassOrigYuv[0] = m_tqBypassOrigYuv[1] = m_tqBypassOrigYuv[2] = NULL;
 
     memset(m_partSizes, SIZE_NONE, numPartition * sizeof(*m_partSizes));
 }
@@ -354,15 +345,6 @@ void TComDataCU::initCU(Frame* pic, uint32_t cuAddr)
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
-
-    if (m_slice->m_pps->bTransquantBypassEnabled)
-    {
-        uint32_t y_tmp = 1 << (g_maxLog2CUSize * 2);
-        uint32_t c_tmp = 1 << (g_maxLog2CUSize * 2 - m_hChromaShift - m_vChromaShift);
-        memset(m_tqBypassOrigYuv[0], 0, sizeof(pixel) * y_tmp);
-        memset(m_tqBypassOrigYuv[1], 0, sizeof(pixel) * c_tmp);
-        memset(m_tqBypassOrigYuv[2], 0, sizeof(pixel) * c_tmp);
-    }
 
     uint32_t widthInCU = pic->getFrameWidthInCU();
     m_cuLeft = (m_cuAddr % widthInCU) ? pic->getCU(m_cuAddr - 1) : NULL;
@@ -547,13 +529,6 @@ void TComDataCU::copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, 
     memcpy(m_trCoeff[1] + tmpC2, cu->m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(m_trCoeff[2] + tmpC2, cu->m_trCoeff[2], sizeof(coeff_t) * tmpC);
 
-    if (m_slice->m_pps->bTransquantBypassEnabled)
-    {
-        memcpy(m_tqBypassOrigYuv[0] + tmp2, cu->getLumaOrigYuv(), sizeof(pixel) * tmp);
-
-        memcpy(m_tqBypassOrigYuv[1] + tmpC2, cu->getChromaOrigYuv(1), sizeof(pixel) * tmpC);
-        memcpy(m_tqBypassOrigYuv[2] + tmpC2, cu->getChromaOrigYuv(2), sizeof(pixel) * tmpC);
-    }
 }
 
 // Copy current predicted part to a CU in picture.
@@ -609,16 +584,6 @@ void TComDataCU::copyToPic(uint32_t depth)
     uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
     memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
-
-    if (m_slice->m_pps->bTransquantBypassEnabled)
-    {
-        uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
-        uint32_t tmp2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-        memcpy(cu->getLumaOrigYuv() + tmp2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmp);
-
-        memcpy(cu->getChromaOrigYuv(1) + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
-        memcpy(cu->getChromaOrigYuv(2) + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
-    }
 }
 
 void TComDataCU::copyCodedToPic(uint32_t depth)
@@ -700,13 +665,6 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
 
-    if (m_slice->m_pps->bTransquantBypassEnabled)
-    {
-        memcpy(cu->getLumaOrigYuv() + tmpY2, m_tqBypassOrigYuv[0], sizeof(pixel) * tmpY);
-
-        memcpy(cu->getChromaOrigYuv(1) + tmpC2, m_tqBypassOrigYuv[1], sizeof(pixel) * tmpC);
-        memcpy(cu->getChromaOrigYuv(2) + tmpC2, m_tqBypassOrigYuv[2], sizeof(pixel) * tmpC);
-    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------

@@ -167,7 +167,6 @@ protected:
     void checkDQP(TComDataCU* cu);
     void deriveTestModeAMP(TComDataCU* bestCU, PartSize parentSize, bool &bTestAMP_Hor, bool &bTestAMP_Ver,
                            bool &bTestMergeAMP_Hor, bool &bTestMergeAMP_Ver);
-    void fillOrigYUVBuffer(TComDataCU* outCU, TComYuv* origYuv);
 };
 
 struct ThreadLocalData

@@ -197,7 +197,6 @@ public:
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
-    pixel*        m_tqBypassOrigYuv[3]; ///< Original Lossless YUV buffer (Y/Cb/Cr)
 
     // -------------------------------------------------------------------------------------------------------------------
     // neighbor access variables
@@ -339,10 +338,6 @@ public:
     coeff_t*      getCoeffCr()                { return m_trCoeff[2]; }
 
     coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
-
-    pixel*&       getLumaOrigYuv()             { return m_tqBypassOrigYuv[0]; }
-
-    pixel*&       getChromaOrigYuv(uint32_t chromaId) { return m_tqBypassOrigYuv[chromaId]; }
 
     uint8_t       getCbf(uint32_t idx, TextType ttype) const { return m_cbf[ttype][idx]; }
 
