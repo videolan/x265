@@ -1792,6 +1792,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.idct[IDCT_8x8] = x265_idct8_avx2;
         p.idct[IDCT_16x16] = x265_idct16_avx2;
         p.idct[IDCT_32x32] = x265_idct32_avx2;
+
+        p.transpose[BLOCK_8x8] = x265_transpose8_avx2;
+        p.transpose[BLOCK_16x16] = x265_transpose16_avx2;
+        p.transpose[BLOCK_32x32] = x265_transpose32_avx2;
+        p.transpose[BLOCK_64x64] = x265_transpose64_avx2;
 #endif
     }
 #endif // if HIGH_BIT_DEPTH
