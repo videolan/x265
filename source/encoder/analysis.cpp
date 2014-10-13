@@ -1547,24 +1547,12 @@ void Analysis::deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, b
 
 void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
 {
-    if (m_param->rdLevel >= 5)
+    if (m_param->rdLevel >= 3)
     {
-        /* advance CABAC contexts */
-        m_entropyCoder.load(mode.contexts);
-        m_entropyCoder.resetBits();
-        m_entropyCoder.codeSplitFlag(mode.cu, 0, depth);
-        uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
-        mode.mvBits += bits;
-        mode.totalBits += bits;
-        mode.contexts.load(m_entropyCoder);
-        updateModeCost(mode);
-    }
-    else if (m_param->rdLevel >= 3)
-    {
-        /* measure cost of signaling flag, ignore contexts */
-        m_entropyCoder.resetBits();
-        m_entropyCoder.codeSplitFlag(mode.cu, 0, depth);
-        uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
+        /* code the split flag (0 or 1) and update bit costs */
+        mode.contexts.resetBits();
+        mode.contexts.codeSplitFlag(mode.cu, 0, depth);
+        uint32_t bits = mode.contexts.getNumberOfWrittenBits();
         mode.mvBits += bits;
         mode.totalBits += bits;
         updateModeCost(mode);
