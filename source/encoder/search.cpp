@@ -215,7 +215,7 @@ void Search::xEncCoeffQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t 
             return;
     }
 
-    uint32_t qtLayer    = log2TrSize - 2;
+    uint32_t qtLayer = log2TrSize - 2;
 
     if (m_csp != X265_CSP_I422)
     {
@@ -367,11 +367,8 @@ uint32_t Search::xIntraCodingLumaBlk(Mode& mode, const CU& cuData, uint32_t absP
     }
     else
     {
-#if CHECKED_BUILD || _DEBUG
-        memset(coeff, 0, sizeof(coeff_t) << (log2TrSize * 2));
-#endif
-        // reconstruction
-        primitives.square_copy_ps[sizeIdx](reconQt,    reconQtStride,    pred, stride);
+        // no CBF reconstruction
+        primitives.square_copy_ps[sizeIdx](reconQt, reconQtStride, pred, stride);
         primitives.square_copy_pp[sizeIdx](recon, reconStride, pred, stride);
         cbf = 0;
         return primitives.sse_pp[part](pred, stride, fenc, stride);
