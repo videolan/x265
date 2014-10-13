@@ -89,28 +89,28 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
         ok &= m_memPool[i].initialize(numPartitions, sizeL, sizeC, 8, tqBypass);
 
         m_interCU_2Nx2N[i]  = new TComDataCU;
-        m_interCU_2Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 0, tqBypass);
+        m_interCU_2Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 0);
 
         m_interCU_2NxN[i]   = new TComDataCU;
-        m_interCU_2NxN[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 1, tqBypass);
+        m_interCU_2NxN[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 1);
 
         m_interCU_Nx2N[i]   = new TComDataCU;
-        m_interCU_Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 2, tqBypass);
+        m_interCU_Nx2N[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 2);
 
         m_intraInInterCU[i] = new TComDataCU;
-        m_intraInInterCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 3, tqBypass);
+        m_intraInInterCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 3);
 
         m_mergeCU[i]        = new TComDataCU;
-        m_mergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 4, tqBypass);
+        m_mergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 4);
 
         m_bestMergeCU[i]    = new TComDataCU;
-        m_bestMergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 5, tqBypass);
+        m_bestMergeCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 5);
 
         m_bestCU[i]         = new TComDataCU;
-        m_bestCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 6, tqBypass);
+        m_bestCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 6);
 
         m_tempCU[i]         = new TComDataCU;
-        m_tempCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 7, tqBypass);
+        m_tempCU[i]->create(&m_memPool[i], numPartitions, cuSize, csp, 7);
 
         m_bestPredYuv[i] = new TComYuv;
         ok &= m_bestPredYuv[i]->create(cuSize, cuSize, csp);

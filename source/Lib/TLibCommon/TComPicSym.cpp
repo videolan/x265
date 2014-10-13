@@ -75,7 +75,7 @@ bool TComPicSym::create(x265_param *param)
         if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
             return false;
 
-        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, param->internalCsp, 0, tqBypass);
+        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, param->internalCsp, 0);
     }
 
     return true;

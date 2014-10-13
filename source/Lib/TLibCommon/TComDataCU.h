@@ -242,7 +242,7 @@ public:
 
     TComDataCU();
 
-    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int csp, int index, bool isLossLess);
+    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int csp, int index);
     bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
     void          destroy();
 
