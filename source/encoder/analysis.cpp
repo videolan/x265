@@ -269,6 +269,12 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     intraMode.distortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
+    if (!m_slice->isIntra())
+    {
+        m_entropyCoder.codeSkipFlag(cu, 0);
+        m_entropyCoder.codePredMode(cu.getPredictionMode(0));
+    }
+
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.getCUTransquantBypass(0));
