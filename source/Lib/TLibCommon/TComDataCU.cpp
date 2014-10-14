@@ -1337,13 +1337,12 @@ bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, u
  * \param interDirNeighbours
  * \param maxNumMergeCand
  */
-void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours,
-                                         uint32_t& maxNumMergeCand)
+uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours)
 {
     uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
     const bool isInterB = m_slice->isInterB();
 
-    maxNumMergeCand = m_slice->m_maxNumMergeCand;
+    const uint32_t maxNumMergeCand = m_slice->m_maxNumMergeCand;
 
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
@@ -1380,7 +1379,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         count++;
     
         if (count == maxNumMergeCand)
-            return;
+            return maxNumMergeCand;
     }
 
     deriveLeftRightTopIdx(puIdx, partIdxLT, partIdxRT);
@@ -1404,7 +1403,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         count++;
    
         if (count == maxNumMergeCand)
-            return;
+            return maxNumMergeCand;
     }
 
     // above right
@@ -1425,7 +1424,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         count++;
 
         if (count == maxNumMergeCand)
-            return;
+            return maxNumMergeCand;
     }
 
     // left bottom
@@ -1446,7 +1445,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         count++;
 
         if (count == maxNumMergeCand)
-            return;
+            return maxNumMergeCand;
     }
 
     // above left
@@ -1470,7 +1469,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             count++;
 
             if (count == maxNumMergeCand)
-                return;
+                return maxNumMergeCand;
         }
     }
     // TMVP always enabled
@@ -1541,7 +1540,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             count++;
         
             if (count == maxNumMergeCand)
-                return;
+                return maxNumMergeCand;
         }
     }
 
@@ -1574,7 +1573,7 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
                     count++;
 
                     if (count == maxNumMergeCand)
-                        return;
+                        return maxNumMergeCand;
                 }
             }
         }
@@ -1603,6 +1602,8 @@ void TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             ++refcnt;
         }
     }
+
+    return count;
 }
 
 /** Check whether the current PU and a spatial neighboring PU are in a same ME region.
