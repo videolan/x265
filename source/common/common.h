@@ -215,14 +215,40 @@ namespace x265 {
 
 enum { SAO_NUM_OFFSET = 4 };
 
+#define NUM_CU_DEPTH            4                           // maximun number of CU depths
+#define NUM_FULL_DEPTH          5                           // maximun number of full depths
+#define MIN_LOG2_CU_SIZE        3                           // log2(minCUSize)
+#define MAX_LOG2_CU_SIZE        6                           // log2(maxCUSize)
+#define MIN_CU_SIZE             (1 << MIN_LOG2_CU_SIZE)     // minimum allowable size of CU
+#define MAX_CU_SIZE             (1 << MAX_LOG2_CU_SIZE)     // maximum allowable size of CU
+
+#define LOG2_UNIT_SIZE          2                           // log2(unitSize)
+#define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
+#define TMVP_UNIT_MASK          0xF0                        // mask for mapping index to CompressMV field
+
+#define MAX_NUM_PARTITIONS      256
+
+#define MIN_PU_SIZE             4
+#define MIN_TU_SIZE             4
+#define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
+#define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
+
+#define MAX_LOG2_TR_SIZE 5
+#define MAX_LOG2_TS_SIZE 2 // TODO: RExt
+#define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
+#define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
+
+#define MAX_NUM_TR_COEFFS MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
+#define MAX_NUM_TR_CATEGORIES    8   /* 32, 16, 8, 4 transform categories each for luma and chroma */
+
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
     /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t offsetDenoise[8][1024];
-    uint32_t residualSum[8][1024];
-    uint32_t count[8];
+    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t count[MAX_NUM_TR_CATEGORIES];
 };
 
 struct SaoCtuParam

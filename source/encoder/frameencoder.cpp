@@ -946,7 +946,7 @@ void FrameEncoder::noiseReductionUpdate()
 
     static const uint32_t maxBlocksPerTrSize[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
 
-    for (int cat = 0; cat < 8; cat++)
+    for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
     {
         int trSize = cat & 3;
         int coefCount = 1 << ((trSize + 2) * 2);
