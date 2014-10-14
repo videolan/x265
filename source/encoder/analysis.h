@@ -112,7 +112,6 @@ protected:
     void checkBestMode(Mode& mode, uint32_t depth);
 
     void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
-    void deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly);
 };
 
 struct ThreadLocalData

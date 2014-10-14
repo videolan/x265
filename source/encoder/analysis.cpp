@@ -860,10 +860,18 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
             if (m_slice->m_sps->maxAMPDepth > depth)
             {
-                bool bHor = false, bVer = false, bMergeOnly;
+                bool bMergeOnly = cuData.log2CUSize == 6;
 
-                /* TODO: Check how HM used parent size; ours was broken */
-                deriveTestModeAMP(md.bestMode->cu, bHor, bVer, bMergeOnly);
+                bool bHor = false, bVer = false;
+                if (md.bestMode->cu.getPartitionSize(0) == SIZE_2NxN)
+                    bHor = true;
+                else if (md.bestMode->cu.getPartitionSize(0) == SIZE_Nx2N)
+                    bVer = true;
+                else if (md.bestMode->cu.getPartitionSize(0) == SIZE_2Nx2N && !md.bestMode->cu.getMergeFlag(0) && !md.bestMode->cu.isSkipped(0))
+                {
+                    bHor = true;
+                    bVer = true;
+                }
 
                 if (bHor)
                 {
@@ -1534,21 +1542,6 @@ void Analysis::checkBestMode(Mode& mode, uint32_t depth)
     }
     else
         md.bestMode = &mode;
-}
-
-void Analysis::deriveTestModeAMP(const TComDataCU& cu, bool &bHor, bool &bVer, bool &bMergeOnly)
-{
-    bMergeOnly = cu.getLog2CUSize(0) == 6;
-
-    if (cu.getPartitionSize(0) == SIZE_2NxN)
-        bHor = true;
-    else if (cu.getPartitionSize(0) == SIZE_Nx2N)
-        bVer = true;
-    else if (cu.getPartitionSize(0) == SIZE_2Nx2N && cu.getMergeFlag(0) == false && cu.isSkipped(0) == false)
-    {
-        bHor = true;
-        bVer = true;
-    }
 }
 
 void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
