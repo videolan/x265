@@ -1482,8 +1482,6 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
         costShift = 2;
         log2TrSizeC = 5;
     }
-    int32_t sizeIdx = log2TrSizeC - 2;
-    pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
 
     Predict::initAdiPatternChroma(*cu, cuData, 0, 0, 1);
     Predict::initAdiPatternChroma(*cu, cuData, 0, 0, 2);
@@ -1495,17 +1493,19 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
         uint32_t chromaPredMode = modeList[mode];
         if (chromaPredMode == DM_CHROMA_IDX)
             chromaPredMode = cu->getLumaIntraDir(0);
-        chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
+        if (m_csp == X265_CSP_I422)
+            chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
+
         uint64_t cost = 0;
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            pixel* fenc = const_cast<pixel*>(fencYuv->getChromaAddr(chromaId, 0));
-            pixel* pred = predYuv->getChromaAddr(chromaId, 0);
+            pixel* fenc = fencYuv->m_buf[chromaId];
+            pixel* pred = predYuv->m_buf[chromaId];
             pixel* chromaPred = getAdiChromaBuf(chromaId, scaleTuSize);
 
             // get prediction signal
             predIntraChromaAng(chromaPred, chromaPredMode, pred, fencYuv->m_cwidth, log2TrSizeC, m_csp);
-            cost += sa8d(fenc, predYuv->m_cwidth, pred, fencYuv->m_cwidth) << costShift;
+            cost += primitives.sa8d[log2TrSizeC - 2](fenc, predYuv->m_cwidth, pred, fencYuv->m_cwidth) << costShift;
         }
 
         if (cost < bestCost)
