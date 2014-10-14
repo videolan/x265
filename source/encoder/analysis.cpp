@@ -1082,6 +1082,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
             continue;
         }
 
+        tempPred->cu.setSkipFlagSubParts(false, 0, depth); /* must be cleared between encode iterations */
         tempPred->cu.setMergeIndex(0, mergeCand);
         tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
         tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
@@ -1108,6 +1109,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 
             if (swapped)
             {
+                tempPred->cu.setSkipFlagSubParts(false, 0, depth);
                 tempPred->cu.setMergeIndex(0, mergeCand);
                 tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
                 tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
