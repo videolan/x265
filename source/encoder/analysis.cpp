@@ -93,10 +93,10 @@ void Analysis::destroy()
     }
 }
 
-Search::Mode& Analysis::compressCTU(TComDataCU& ctu, const Entropy& initialContext)
+Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy& initialContext)
 {
     m_slice = ctu.m_slice;
-    m_frame = ctu.m_frame;
+    m_frame = &frame;
 
     invalidateContexts(0);
     m_quant.setQPforQuant(ctu);

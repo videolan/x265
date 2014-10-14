@@ -670,7 +670,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         tld.analysis.m_quant.setQPforQuant(*ctu);
 
         // Does all the CU analysis, returns best top level mode decision
-        Search::Mode& best = tld.analysis.compressCTU(*ctu, rowCoder);
+        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, rowCoder);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */

@@ -48,7 +48,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
     if (cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
         return;
 
-    Frame* frame = cu->m_frame;
+    const Frame* frame = cu->m_frame;
     uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
 
     if (cu->getDepth(absZOrderIdx) > depth)
