@@ -43,29 +43,6 @@
 namespace x265 {
 // private namespace
 
-#define NUM_CU_DEPTH            4                           // maximun number of CU depths
-#define NUM_FULL_DEPTH          5                           // maximun number of full depths
-#define MIN_LOG2_CU_SIZE        3                           // log2(minCUSize)
-#define MAX_LOG2_CU_SIZE        6                           // log2(maxCUSize)
-#define MIN_CU_SIZE             (1 << MIN_LOG2_CU_SIZE)     // minimum allowable size of CU
-#define MAX_CU_SIZE             (1 << MAX_LOG2_CU_SIZE)     // maximum allowable size of CU
-
-#define LOG2_UNIT_SIZE          2                           // log2(unitSize)
-#define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
-#define TMVP_UNIT_MASK          0xF0                        // mask for mapping index to CompressMV field
-
-#define MAX_NUM_PARTITIONS      256
-
-#define MIN_PU_SIZE             4
-#define MIN_TU_SIZE             4
-#define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
-#define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
-
-#define MAX_LOG2_TR_SIZE 5
-#define MAX_LOG2_TS_SIZE 2 // TODO: RExt
-#define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
-#define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
-
 #define SLFASE_CONSTANT 0x5f4e4a53
 
 void initROM();
