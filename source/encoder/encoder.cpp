@@ -74,6 +74,7 @@ Encoder::Encoder()
     m_csvfpt = NULL;
     m_param = NULL;
     m_threadPool = 0;
+    m_numThreadLocalData = 0;
 }
 
 void Encoder::create()
@@ -162,15 +163,20 @@ void Encoder::create()
 
     /* Allocate thread local data, one for each thread pool worker and
      * if --no-wpp, one for each frame encoder */
-    int numLocalData = poolThreadCount;
+    m_numThreadLocalData = poolThreadCount;
     if (!m_param->bEnableWavefront)
-        numLocalData += m_param->frameNumThreads;
-    m_threadLocalData = new ThreadLocalData[numLocalData];
-    for (int i = 0; i < numLocalData; i++)
+        m_numThreadLocalData += m_param->frameNumThreads;
+    m_threadLocalData = new ThreadLocalData[m_numThreadLocalData];
+    for (int i = 0; i < m_numThreadLocalData; i++)
     {
         m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
         m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
         m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize, m_threadLocalData);
+        if (m_param->noiseReduction)
+        {
+            m_threadLocalData[i].nr = X265_MALLOC(NoiseReduction, m_param->frameNumThreads);
+            memset(m_threadLocalData[i].nr, 0, sizeof(NoiseReduction) * m_param->frameNumThreads);
+        }
     }
 
     if (!m_param->bEnableWavefront)
@@ -240,6 +246,11 @@ void Encoder::destroy()
         delete [] m_frameEncoder;
     }
 
+    for (int i = 0; i < m_numThreadLocalData; i++)
+    {
+        m_threadLocalData[i].destroy(m_param->noiseReduction);
+    }
+
     delete [] m_threadLocalData;
 
     if (m_lookahead)
@@ -272,7 +283,7 @@ void Encoder::init()
         int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
         for (int i = 0; i < m_param->frameNumThreads; i++)
         {
-            if (!m_frameEncoder[i].init(this, numRows, numCols))
+            if (!m_frameEncoder[i].init(this, numRows, numCols, i))
             {
                 x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
                 m_aborted = true;

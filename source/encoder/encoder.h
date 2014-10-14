@@ -116,6 +116,7 @@ public:
     PPS                m_pps;
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
+    int                m_numThreadLocalData;
 
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;

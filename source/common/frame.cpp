@@ -43,6 +43,7 @@ Frame::Frame()
     m_picSym = NULL;
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
+    m_frameEncoderID = 0;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_next = NULL;
     m_prev = NULL;

@@ -156,6 +156,7 @@ Quant::Quant()
     m_resiDctCoeff = NULL;
     m_fencDctCoeff = NULL;
     m_fencShortBuf = NULL;
+    m_nr           = NULL;
 }
 
 bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy)

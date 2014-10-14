@@ -50,6 +50,7 @@ public:
     TComPicSym*       m_picSym;
     TComPicYuv*       m_reconPicYuv;
     int               m_POC;
+    int               m_frameEncoderID;     // To identify the ID of the frameEncoder processing this frame
 
     //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
     ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference

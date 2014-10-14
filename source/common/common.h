@@ -238,8 +238,8 @@ enum { SAO_NUM_OFFSET = 4 };
 #define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
-#define MAX_NUM_TR_COEFFS MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
-#define MAX_NUM_TR_CATEGORIES    8   /* 32, 16, 8, 4 transform categories each for luma and chroma */
+#define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
+#define MAX_NUM_TR_CATEGORIES    8                        /* 32, 16, 8, 4 transform categories each for luma and chroma */
 
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction

@@ -292,7 +292,11 @@ void Analysis::parallelAnalysisJob(int threadId, int jobId)
         if (!jobId || m_param->rdLevel > 4)
         {
             slave->m_quant.setQPforQuant(cu);
-            slave->m_quant.m_nr = m_quant.m_nr;
+            if (m_param->noiseReduction)
+            {
+                int frameEncoderID = cu->m_pic->m_frameEncoderID;
+                slave->m_quant.m_nr = &m_tld[threadId].nr[frameEncoderID];
+            }
             slave->m_rdContexts[depth].cur.load(m_rdContexts[depth].cur);
         }
     }

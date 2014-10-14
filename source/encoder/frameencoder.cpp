@@ -45,6 +45,7 @@ FrameEncoder::FrameEncoder()
     , m_frame(NULL)
 {
     m_totalTime = 0;
+    m_frameEncoderID = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
@@ -81,7 +82,7 @@ void FrameEncoder::destroy()
     stop();
 }
 
-bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
+bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
 {
     m_top = top;
     m_param = top->m_param;
@@ -90,7 +91,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_filterRowDelay = (m_param->bEnableSAO && m_param->bSaoNonDeblocked) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
-
+    m_frameEncoderID = id;
     m_rows = new CTURow[m_numRows];
     bool ok = !!m_numRows;
 
@@ -156,6 +157,7 @@ void FrameEncoder::compressFrame()
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_picSym->m_slice;
+    m_frame->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -393,7 +395,35 @@ void FrameEncoder::compressFrame()
     if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
         m_top->m_aborted = true;
 
+    /* Accumulate NR statistics from all worker threads */
+    if (m_nr)
+    {
+        for (int i = 0; i < m_top->m_numThreadLocalData; i++)
+        {
+            NoiseReduction* nr = &m_top->m_threadLocalData[i].nr[m_frameEncoderID];
+            for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
+            {
+                for(int coeff = 0; coeff < MAX_NUM_TR_COEFFS; coeff++)
+                    m_nr->residualSum[cat][coeff] += nr->residualSum[cat][coeff];
+            
+                m_nr->count[cat] += nr->count[cat];
+            }
+        }
+    }
+
     noiseReductionUpdate();
+
+    /* Copy updated NR coefficients back to all worker threads */
+    if (m_nr)
+    {
+        for (int i = 0; i < m_top->m_numThreadLocalData; i++)
+        {
+            NoiseReduction* nr = &m_top->m_threadLocalData[i].nr[m_frameEncoderID];
+            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+            memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
+            memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+        }
+    }
 
     // Decrement referenced frame reference counts, allow them to be recycled
     for (int l = 0; l < numPredDir; l++)
@@ -616,7 +646,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     // setup thread-local data
     Slice *slice = m_frame->m_picSym->m_slice;
     TComPicYuv* fenc = m_frame->getPicYuvOrg();
-    tld.analysis.m_quant.m_nr = m_nr;
+    if (m_param->noiseReduction)
+        tld.analysis.m_quant.m_nr = &tld.nr[m_frameEncoderID];
     tld.analysis.m_me.setSourcePlane(fenc->getLumaAddr(), fenc->getStride());
     tld.analysis.m_log = &tld.analysis.m_sliceTypeLog[m_frame->m_picSym->m_slice->m_sliceType];
     tld.analysis.setQP(slice, slice->m_sliceQp);
