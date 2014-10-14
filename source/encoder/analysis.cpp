@@ -1070,6 +1070,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
     uint32_t maxNumMergeCand = merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours);
 
+    bool foundCbf0Merge = false;
     bestPred->rdCost = MAX_INT64;
     for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; mergeCand++)
     {
@@ -1088,12 +1089,15 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
         prepMotionCompensation(&tempPred->cu, cuData, 0);
         motionCompensation(&tempPred->predYuv, true, true);
 
+        uint8_t hasCbf = true;
         bool swapped = false;
-        if (bestPred->rdCost == MAX_INT64 || bestPred->cu.getQtRootCbf(0))
+        if (!foundCbf0Merge)
         {
             /* if the best prediction has CBF (not a skip) then try merge with residual */
 
             encodeResAndCalcRdInterCU(*tempPred, cuData);
+            hasCbf = tempPred->cu.getQtRootCbf(0);
+            foundCbf0Merge = !hasCbf;
 
             if (tempPred->rdCost < bestPred->rdCost)
             {
@@ -1101,7 +1105,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
                 swapped = true;
             }
         }
-        if (!m_param->bLossless)
+        if (!m_param->bLossless && hasCbf)
         {
             /* try merge without residual (skip), if not lossless coding */
 
@@ -1118,10 +1122,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
             encodeResAndCalcRdSkipCU(*tempPred);
 
             if (tempPred->rdCost < bestPred->rdCost)
-            {
                 std::swap(tempPred, bestPred);
-                X265_CHECK(!bestPred->cu.getQtRootCbf(0), "skip CU has coded block flags\n");
-            }
         }
     }
 
