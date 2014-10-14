@@ -45,18 +45,18 @@ class Analysis : public Search
 public:
 
     enum {
+        PRED_MERGE,
+        PRED_SKIP,
+        PRED_INTRA,
         PRED_2Nx2N,
         PRED_Nx2N,
         PRED_2NxN,
-        PRED_2NxnU,
+        PRED_SPLIT,     /* prediction modes up to here may be used for RD 0..4 */
+        PRED_2NxnU,     /* prediction modes below here only used for RD 5,6 */
         PRED_2NxnD,
         PRED_nLx2N,
         PRED_nRx2N,
-        PRED_MERGE,
-        PRED_SKIP,
-        PRED_INTRA,     // 2Nx2N intra
-        PRED_INTRA_NxN, // 4x4 PU blocks for 8x8 CU
-        PRED_SPLIT,
+        PRED_INTRA_NxN, /* 4x4 intra PU blocks for 8x8 CU */
         MAX_PRED_TYPES
     };
 
