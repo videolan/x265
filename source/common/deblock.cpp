@@ -202,7 +202,7 @@ void Deblock::setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *p
 
 void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t absPartIdx, uint8_t blockingStrength[])
 {
-    Slice* const slice = cu->m_slice;
+    const Slice* const slice = cu->m_slice;
     const uint32_t partQ = absPartIdx;
     TComDataCU* const cuQ = cu;
 

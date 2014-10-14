@@ -72,7 +72,7 @@ public:
     pixel*    m_refLeftFlt;
 
     /* Slice information */
-    Slice*    m_predSlice;
+    const Slice* m_predSlice;
     int       m_csp;
 
     /* CU information for prediction */

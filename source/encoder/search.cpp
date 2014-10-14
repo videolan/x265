@@ -1756,7 +1756,7 @@ void Search::singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, 
 void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma)
 {
     TComDataCU* cu = &interMode.cu;
-    Slice *slice = cu->m_slice;
+    const Slice *slice = cu->m_slice;
     PicYuv *fencPic = slice->m_frame->m_origPicYuv;
     PartSize partSize = cu->getPartitionSize(0);
     m_curMECu = cu;
@@ -1990,7 +1990,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
     MV amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
-    Slice *slice        = cu->m_slice;
+    const Slice *slice  = cu->m_slice;
     PicYuv *fencPic     = slice->m_frame->m_origPicYuv;
     PartSize partSize   = cu->getPartitionSize(0);
     int      numPart    = cu->getNumPartInter();

@@ -166,7 +166,7 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         X265_CHECK(refIdx0 >= 0, "invalid P refidx\n");
         X265_CHECK(refIdx0 < m_predSlice->m_numRefIdx[0], "P refidx out of range\n");
-        WeightParam *wp0 = m_predSlice->m_weightPredTable[0][refIdx0];
+        const WeightParam *wp0 = m_predSlice->m_weightPredTable[0][refIdx0];
 
         if (m_predSlice->m_pps->bUseWeightPred && wp0->bPresentFlag)
         {
@@ -200,7 +200,7 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
         /* B Slice */
 
         WeightValues wv0[3], wv1[3];
-        WeightParam *pwp0, *pwp1;
+        const WeightParam *pwp0, *pwp1;
 
         int refIdx0 = m_mvField[0]->getRefIdx(m_partAddr);
         int refIdx1 = m_mvField[1]->getRefIdx(m_partAddr);
@@ -229,7 +229,7 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
             else
             {
                 /* uniprediction weighting, always outputs to wv0 */
-                WeightParam* pwp = (refIdx0 >= 0) ? pwp0 : pwp1;
+                const WeightParam* pwp = (refIdx0 >= 0) ? pwp0 : pwp1;
                 for (int plane = 0; plane < 3; plane++)
                 {
                     wv0[plane].w = pwp[plane].inputWeight;

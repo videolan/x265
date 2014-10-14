@@ -509,7 +509,7 @@ void Entropy::encodeCTU(const TComDataCU& ctu)
 /* encode a CU block recursively */
 void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
 {
-    Slice* slice = cu.m_slice;
+    const Slice* slice = cu.m_slice;
 
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
