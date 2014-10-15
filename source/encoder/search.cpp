@@ -792,19 +792,6 @@ void Search::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
     }
 }
 
-void Search::xLoadIntraResultChromaQT(TComDataCU* cu, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId,
-                                      int16_t* reconQt, uint32_t reconQtStride)
-{
-    X265_CHECK(chromaId == 1 || chromaId == 2, "invalid chroma id");
-
-    // copy reconstruction
-    int sizeIdxC = log2TrSizeC - 2;
-    uint32_t zorder           = cuData.encodeIdx + absPartIdx;
-    pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
-    uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
-    primitives.square_copy_sp[sizeIdxC](reconIPred, reconIPredStride, reconQt, reconQtStride);
-}
-
 void Search::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx)
 {
     uint32_t depth = cu->getDepth(0);
@@ -1018,7 +1005,11 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
 
                 if (bestModeId == firstCheckId)
                 {
-                    xLoadIntraResultChromaQT(cu, cuData, absPartIdxC, log2TrSizeC, chromaId, reconQt, reconQtStride);
+                    /* copy from int16 recon buffer to reconPic (bad on two counts) */
+                    pixel*   reconIPred = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, cuData.encodeIdx + absPartIdxC);
+                    uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
+                    primitives.square_copy_sp[log2TrSizeC - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
+
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
                     m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
                 }
