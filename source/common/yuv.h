@@ -43,9 +43,10 @@ public:
     uint32_t m_size;
     uint32_t m_csize;
     int      m_part;         // cached partition enum size
+
+    int      m_csp;
     int      m_hChromaShift;
     int      m_vChromaShift;
-    int      m_csp;
 
     Yuv();
 
