@@ -765,13 +765,12 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     ctu.m_avgCost[nextDepth] = (temp + nextCost) / ctu.m_count[nextDepth];
                 }
 
-                if (m_param->rdLevel > 1)
-                {
+                if (m_param->rdLevel)
                     nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
-                    nextContext = &nd.bestMode->contexts;
-                }
                 else
                     nd.bestMode->predYuv.copyToPartYuv(splitPred->predYuv, childCuData.numPartitions * subPartIdx);
+                if (m_param->rdLevel > 1)
+                    nextContext = &nd.bestMode->contexts;
             }
             else
                 /* record the depth of this non-present sub-CU */
