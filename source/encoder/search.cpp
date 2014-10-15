@@ -2496,10 +2496,12 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
             }
             m_entropyCoder.codePartSize(*cu, 0, cu->getDepth(0));
             m_entropyCoder.codePredInfo(*cu, 0);
-            bool bDummy = false;
             uint32_t mvBits = m_entropyCoder.getNumberOfWrittenBits();
-            m_entropyCoder.codeCoeff(*cu, 0, cu->getDepth(0), bDummy, tuDepthRange);
+
+            bool bCodeDQP = cu->m_slice->m_pps->bUseDQP;
+            m_entropyCoder.codeCoeff(*cu, 0, cu->getDepth(0), bCodeDQP, tuDepthRange);
             bits = m_entropyCoder.getNumberOfWrittenBits();
+
             coeffBits = bits - mvBits;
         }
 
