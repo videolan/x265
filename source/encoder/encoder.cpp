@@ -180,6 +180,8 @@ void Encoder::create()
             else
                 m_param->noiseReduction = 0;
         }
+        else
+            m_threadLocalData[i].nr = NULL;
     }
 
     if (!m_param->bEnableWavefront)
