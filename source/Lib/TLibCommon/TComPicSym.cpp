@@ -36,7 +36,7 @@
 */
 
 #include "TComPicSym.h"
-#include "TComPicYuv.h"
+#include "picyuv.h"
 
 using namespace x265;
 
@@ -67,30 +67,22 @@ bool TComPicSym::create(x265_param *param)
     m_slice = new Slice;
     m_cuData = new TComDataCU[m_numCUsInFrame];
 
-    bool tqBypass = param->bCULossless || param->bLossless;
-    for (i = 0; i < m_numCUsInFrame; i++)
-    {
-        uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
-        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
-        if (!m_cuData[i].initialize(m_numPartitions, sizeL, sizeC, 1, tqBypass))
-            return false;
+    uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
+    uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
 
-        m_cuData[i].create(&m_cuData[i], m_numPartitions, g_maxCUSize, param->internalCsp, 0);
-    }
+    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame);
+    m_mvFieldMemPool.create(m_numPartitions, m_numCUsInFrame);
+    for (i = 0; i < m_numCUsInFrame; i++)
+        m_cuData[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
     return true;
 }
 
 void TComPicSym::destroy()
 {
+    m_cuMemPool.destroy();
+    m_mvFieldMemPool.destroy();
     delete m_slice;
-
-    if (m_cuData)
-    {
-        for (int i = 0; i < m_numCUsInFrame; i++)
-            m_cuData[i].destroy();
-        delete[] m_cuData;
-    }
-
+    delete [] m_cuData;
     delete m_saoParam;
 }

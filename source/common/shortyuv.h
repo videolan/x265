@@ -31,7 +31,7 @@
 namespace x265 {
 // private namespace
 
-class TComYuv;
+class Yuv;
 
 class ShortYuv
 {
@@ -44,14 +44,33 @@ public:
     uint32_t m_cwidth;
     uint32_t m_cheight;
 
-    int m_csp;
-    int m_hChromaShift;
-    int m_vChromaShift;
+    int      m_csp;
+    int      m_hChromaShift;
+    int      m_vChromaShift;
 
     ShortYuv();
-    ~ShortYuv();
 
-    int getChromaAddrOffset(uint32_t idx, uint32_t width)
+    bool create(uint32_t width, uint32_t height, int csp);
+    void destroy();
+    void clear();
+
+    int16_t* getLumaAddr(uint32_t absPartIdx)                       { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
+    int16_t* getCbAddr(uint32_t absPartIdx)                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    int16_t* getCrAddr(uint32_t absPartIdx)                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
+
+    const int16_t* getLumaAddr(uint32_t absPartIdx) const                       { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
+    const int16_t* getCbAddr(uint32_t absPartIdx) const                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    const int16_t* getCrAddr(uint32_t absPartIdx) const                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    const int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) const { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
+
+    void subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size);
+    void copyPartToPartLuma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t log2Size) const;
+    void copyPartToPartChroma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t log2SizeL) const;
+    void copyPartToPartLuma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2Size) const;
+    void copyPartToPartChroma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2SizeL) const;
+
+    int getChromaAddrOffset(uint32_t idx, uint32_t width) const
     {
         int blkX = g_zscanToPelX[idx] >> m_hChromaShift;
         int blkY = g_zscanToPelY[idx] >> m_vChromaShift;
@@ -66,35 +85,6 @@ public:
 
         return blkX + blkY * width;
     }
-
-    bool create(uint32_t width, uint32_t height, int csp);
-
-    void destroy();
-    void clear();
-
-    int16_t* getLumaAddr()  { return m_buf[0]; }
-
-    int16_t* getCbAddr()    { return m_buf[1]; }
-
-    int16_t* getCrAddr()    { return m_buf[2]; }
-
-    int16_t* getChromaAddr(uint32_t chromaId)    { return m_buf[chromaId]; }
-
-    // Access starting position of YUV partition unit buffer
-    int16_t* getLumaAddr(uint32_t partUnitIdx) { return m_buf[0] + getAddrOffset(partUnitIdx, m_width); }
-
-    int16_t* getCbAddr(uint32_t partUnitIdx) { return m_buf[1] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
-
-    int16_t* getCrAddr(uint32_t partUnitIdx) { return m_buf[2] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
-
-    int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
-
-    void subtract(TComYuv* srcYuv0, TComYuv* srcYuv1, uint32_t log2Size);
-
-    void copyPartToPartLuma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size);
-    void copyPartToPartChroma(ShortYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
-    void copyPartToPartLuma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2Size);
-    void copyPartToPartChroma(TComYuv* dstPicYuv, uint32_t partIdx, uint32_t log2SizeL);
 };
 }
 

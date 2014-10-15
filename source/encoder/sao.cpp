@@ -177,14 +177,14 @@ void SAO::resetSAOParam(SAOParam *saoParam)
     saoParam->bSaoFlag[1] = false;
 }
 
-void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
+void SAO::startSlice(Frame *frame, Entropy& initState, int qp)
 {
-    Slice* slice = pic->m_picSym->m_slice;
+    Slice* slice = frame->m_picSym->m_slice;
 
     int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
     m_lumaLambda = x265_lambda2_tab[qp];
     m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
-    m_pic = pic;
+    m_frame = frame;
 
     switch (slice->m_sliceType)
     {
@@ -205,12 +205,12 @@ void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
     m_rdContexts.next.load(initState);
     m_rdContexts.cur.load(initState);
 
-    SAOParam* saoParam = pic->getPicSym()->m_saoParam;
+    SAOParam* saoParam = frame->m_picSym->m_saoParam;
     if (!saoParam)
     {
         saoParam = new SAOParam;
         allocSaoParam(saoParam);
-        pic->getPicSym()->m_saoParam = saoParam;
+        frame->m_picSym->m_saoParam = saoParam;
     }
 
     resetSAOParam(saoParam);
@@ -229,9 +229,9 @@ void SAO::startSlice(Frame *pic, Entropy& initState, int qp)
 void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_pic->getCU(addr);
-    pixel* rec = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
-    int stride = plane ? m_pic->getCStride() : m_pic->getStride();
+    TComDataCU *cu = m_frame->m_picSym->getCU(addr);
+    pixel* rec = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
+    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -441,7 +441,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 /* Process SAO all units */
 void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 {
-    int stride = plane ? m_pic->getCStride() : m_pic->getStride();
+    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     int ctuWidth  = g_maxCUSize;
     int ctuHeight = g_maxCUSize;
@@ -454,12 +454,12 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 
     if (!idxY)
     {
-        pixel *rec = plane ? m_pic->getPicYuvRec()->getChromaAddr(plane) : m_pic->getPicYuvRec()->getLumaAddr();
+        pixel *rec = m_frame->m_reconPicYuv->m_picOrg[plane];
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidth);
     }
 
     int addr = idxY * m_numCuInWidth;
-    pixel *rec = plane ? m_pic->getPicYuvRec()->getChromaAddr(plane, addr) : m_pic->getPicYuvRec()->getLumaAddr(addr);
+    pixel *rec = plane ? m_frame->m_reconPicYuv->getChromaAddr(plane, addr) : m_frame->m_reconPicYuv->getLumaAddr(addr);
 
     for (int i = 0; i < ctuHeight + 1; i++)
     {
@@ -511,7 +511,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         }
         else if (idxX != (m_numCuInWidth - 1))
         {
-            rec = plane ? m_pic->getPicYuvRec()->getChromaAddr(plane, addr) : m_pic->getPicYuvRec()->getLumaAddr(addr);
+            rec = plane ? m_frame->m_reconPicYuv->getChromaAddr(plane, addr) : m_frame->m_reconPicYuv->getLumaAddr(addr);
 
             for (int i = 0; i < ctuHeight + 1; i++)
             {
@@ -550,12 +550,12 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_pic->getCU(addr);
-    const pixel* fenc0 = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
-    const pixel* rec0  = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
+    TComDataCU *cu = m_frame->m_picSym->getCU(addr);
+    const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+    const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     const pixel* fenc;
     const pixel* rec;
-    int stride = plane ? m_pic->getCStride() : m_pic->getStride();
+    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -791,15 +791,15 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     }
 }
 
-void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
+void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 {
     int addr    = idxX + m_numCuInWidth * idxY;
 
     int x, y;
-    TComDataCU *cu = pic->getCU(addr);
+    TComDataCU *cu = frame->m_picSym->getCU(addr);
     const pixel* fenc;
     const pixel* rec;
-    int stride = m_pic->getStride();
+    int stride = m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -833,7 +833,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
     {
         if (plane == 1)
         {
-            stride = pic->getCStride();
+            stride = frame->m_reconPicYuv->m_strideC;
             picWidth  >>= m_hChromaShift;
             picHeight >>= m_vChromaShift;
             ctuWidth  >>= m_hChromaShift;
@@ -852,8 +852,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY)
         stats = m_offsetOrgPreDblk[addr][plane][SAO_BO];
         count = m_countPreDblk[addr][plane][SAO_BO];
 
-        const pixel* fenc0 = m_pic->getPicYuvOrg()->getPlaneAddr(plane, addr);
-        const pixel* rec0  = m_pic->getPicYuvRec()->getPlaneAddr(plane, addr);
+        const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
+        const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
         fenc = fenc0;
         rec  = rec0;
 
@@ -1162,7 +1162,7 @@ void SAO::rdoSaoUnitRow(SAOParam *saoParam, int idxY)
             for (int plane = 0; plane < 3; plane++)
             {
                 if ((plane == 0 && saoParam->bSaoFlag[0]) || (plane > 0 && saoParam->bSaoFlag[1]))
-                    m_entropyCoder.codeSaoOffset(&saoParam->ctuParam[plane][addr], plane);
+                    m_entropyCoder.codeSaoOffset(saoParam->ctuParam[plane][addr], plane);
             }
 
             uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
@@ -1302,7 +1302,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo, 0);
     double dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_lumaLambda;
     copySaoUnit(lclCtuParam, &ctuParamRdo);
 
@@ -1342,7 +1342,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
         m_entropyCoder.load(m_rdContexts.temp);
         m_entropyCoder.resetBits();
-        m_entropyCoder.codeSaoOffset(&ctuParamRdo, 0);
+        m_entropyCoder.codeSaoOffset(ctuParamRdo, 0);
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
         double cost = (double)estDist + m_lumaLambda * (double)estRate;
@@ -1357,7 +1357,7 @@ void SAO::saoComponentParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *
 
     compDistortion[0] += ((double)bestDist / m_lumaLambda);
     m_entropyCoder.load(m_rdContexts.temp);
-    m_entropyCoder.codeSaoOffset(lclCtuParam, 0);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
@@ -1421,8 +1421,8 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo[0], 1);
-    m_entropyCoder.codeSaoOffset(&ctuParamRdo[1], 2);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo[0], 1);
+    m_entropyCoder.codeSaoOffset(ctuParamRdo[1], 2);
 
     double costPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_chromaLambda;
     copySaoUnit(lclCtuParam[0], &ctuParamRdo[0]);
@@ -1477,7 +1477,7 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
             for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
                 ctuParamRdo[compIdx].offset[classIdx] = (int)m_offset[compIdx + 1][typeIdx][classIdx + ctuParamRdo[compIdx].bandPos + 1];
 
-            m_entropyCoder.codeSaoOffset(&ctuParamRdo[compIdx], compIdx + 1);
+            m_entropyCoder.codeSaoOffset(ctuParamRdo[compIdx], compIdx + 1);
         }
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
@@ -1494,8 +1494,8 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 
     distortion[0] += ((double)bestDist / m_chromaLambda);
     m_entropyCoder.load(m_rdContexts.temp);
-    m_entropyCoder.codeSaoOffset(lclCtuParam[0], 1);
-    m_entropyCoder.codeSaoOffset(lclCtuParam[1], 2);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
+    m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
@@ -1536,16 +1536,12 @@ void SAO::sao2ChromaParamDist(int allowMergeLeft, int allowMergeUp, SAOParam *sa
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
 
 /* Original Lossless YUV LF disable process */
-void restoreLFDisabledOrigYuv(Frame* pic)
+void restoreLFDisabledOrigYuv(Frame* curFrame)
 {
-    if (pic->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
+    if (curFrame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
-        for (uint32_t cuAddr = 0; cuAddr < pic->getNumCUsInFrame(); cuAddr++)
-        {
-            TComDataCU* cu = pic->getCU(cuAddr);
-
-            origCUSampleRestoration(cu, 0, 0);
-        }
+        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_picSym->getNumberOfCUsInFrame(); cuAddr++)
+            origCUSampleRestoration(curFrame->m_picSym->getCU(cuAddr), 0, 0);
     }
 }
 
@@ -1576,28 +1572,28 @@ void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
 /* Original Lossless YUV sample restoration */
 static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
-    TComPicYuv* pcPicYuvRec  = cu->m_pic->getPicYuvRec();
-    TComPicYuv* pcPicYuvOrig = cu->m_pic->getPicYuvOrg();
-    int csp = pcPicYuvOrig->m_picCsp;
+    PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
+    PicYuv* fencPic = cu->m_frame->m_origPicYuv;
+    int csp = fencPic->m_picCsp;
 
-    pixel* dst = pcPicYuvRec->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* src = pcPicYuvOrig->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    uint32_t dstStride = pcPicYuvRec->getStride();
-    uint32_t srcStride = pcPicYuvOrig->getStride();
+    pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
+    uint32_t dstStride = reconPic->m_stride;
+    uint32_t srcStride = fencPic->m_stride;
     uint32_t width  = (g_maxCUSize >> depth);
     uint32_t height = (g_maxCUSize >> depth);
     int part = partitionFromSizes(width, height);
 
     primitives.luma_copy_pp[part](dst, dstStride, src, srcStride);
    
-    pixel* dstCb = pcPicYuvRec->getCbAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCb = pcPicYuvOrig->getCbAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absZOrderIdx);
 
-    pixel* dstCr = pcPicYuvRec->getCrAddr(cu->m_cuAddr, absZOrderIdx);
-    pixel* srcCr = pcPicYuvOrig->getCrAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* dstCr = reconPic->getCrAddr(cu->m_cuAddr, absZOrderIdx);
+    pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absZOrderIdx);
 
-    dstStride = pcPicYuvRec->getCStride();
-    srcStride = pcPicYuvOrig->getCStride();
+    dstStride = reconPic->m_strideC;
+    srcStride = fencPic->m_strideC;
     primitives.chroma[csp].copy_pp[part](dstCb, dstStride, srcCb, srcStride);
     primitives.chroma[csp].copy_pp[part](dstCr, dstStride, srcCr, srcStride);
 }

@@ -125,7 +125,7 @@ void Slice::setRefPicList(PicList& picList)
 
     for (int dir = 0; dir < 2; dir++)
         for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
-            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->getPOC();
+            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->m_POC;
 }
 
 void Slice::disableWeights()
@@ -179,13 +179,13 @@ void RPS::sortDeltaPOC()
     }
 }
 
-uint32_t Slice::realEndAddress(uint32_t endCUAddr)
+uint32_t Slice::realEndAddress(uint32_t endCUAddr) const
 {
     // Calculate end address
     uint32_t internalAddress = (endCUAddr - 1) % NUM_CU_PARTITIONS;
     uint32_t externalAddress = (endCUAddr - 1) / NUM_CU_PARTITIONS;
-    uint32_t xmax = m_sps->picWidthInLumaSamples  - (externalAddress % m_pic->getFrameWidthInCU()) * g_maxCUSize;
-    uint32_t ymax = m_sps->picHeightInLumaSamples - (externalAddress / m_pic->getFrameWidthInCU()) * g_maxCUSize;
+    uint32_t xmax = m_sps->picWidthInLumaSamples - (externalAddress % m_frame->m_picSym->getFrameWidthInCU()) * g_maxCUSize;
+    uint32_t ymax = m_sps->picHeightInLumaSamples - (externalAddress / m_frame->m_picSym->getFrameWidthInCU()) * g_maxCUSize;
 
     while (g_zscanToPelX[internalAddress] >= xmax || g_zscanToPelY[internalAddress] >= ymax)
         internalAddress--;

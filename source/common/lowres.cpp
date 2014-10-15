@@ -21,19 +21,19 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComPicYuv.h"
+#include "picyuv.h"
 #include "lowres.h"
 #include "mv.h"
 
 using namespace x265;
 
-bool Lowres::create(TComPicYuv *orig, int _bframes, bool bAQEnabled)
+bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
 {
     isLowres = true;
     bframes = _bframes;
-    width = orig->getWidth() / 2;
-    lines = orig->getHeight() / 2;
-    lumaStride = width + 2 * orig->getLumaMarginX();
+    width = origPic->m_picWidth / 2;
+    lines = origPic->m_picHeight / 2;
+    lumaStride = width + 2 * origPic->m_lumaMarginX;
     if (lumaStride & 31)
         lumaStride += 32 - (lumaStride & 31);
     int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
@@ -44,8 +44,8 @@ bool Lowres::create(TComPicYuv *orig, int _bframes, bool bAQEnabled)
     width = cuWidth * X265_LOWRES_CU_SIZE;
     lines = cuHeight * X265_LOWRES_CU_SIZE;
 
-    size_t planesize = lumaStride * (lines + 2 * orig->getLumaMarginY());
-    size_t padoffset = lumaStride * orig->getLumaMarginY() + orig->getLumaMarginX();
+    size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
+    size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
 
     if (bAQEnabled)
     {
@@ -96,9 +96,7 @@ fail:
 void Lowres::destroy()
 {
     for (int i = 0; i < 4; i++)
-    {
         X265_FREE(buffer[i]);
-    }
 
     X265_FREE(intraCost);
 
@@ -126,7 +124,7 @@ void Lowres::destroy()
 }
 
 // (re) initialize lowres state
-void Lowres::init(TComPicYuv *orig, int poc, int type)
+void Lowres::init(PicYuv *origPic, int poc, int type)
 {
     bIntraCalculated = false;
     bLastMiniGopBFrame = false;
@@ -144,12 +142,8 @@ void Lowres::init(TComPicYuv *orig, int poc, int type)
         memset(costEstAq, -1, sizeof(costEstAq));
 
     for (int y = 0; y < bframes + 2; y++)
-    {
         for (int x = 0; x < bframes + 2; x++)
-        {
             rowSatds[y][x][0] = -1;
-        }
-    }
 
     for (int i = 0; i < bframes + 1; i++)
     {
@@ -158,19 +152,17 @@ void Lowres::init(TComPicYuv *orig, int poc, int type)
     }
 
     for (int i = 0; i < bframes + 2; i++)
-    {
         intraMbs[i] = 0;
-    }
 
     /* downscale and generate 4 hpel planes for lookahead */
-    primitives.frame_init_lowres_core(orig->getLumaAddr(),
+    primitives.frame_init_lowres_core(origPic->m_picOrg[0],
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
-                                      orig->getStride(), lumaStride, width, lines);
+                                      origPic->m_stride, lumaStride, width, lines);
 
     /* extend hpel planes for motion search */
-    extendPicBorder(lowresPlane[0], lumaStride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    extendPicBorder(lowresPlane[1], lumaStride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    extendPicBorder(lowresPlane[2], lumaStride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
-    extendPicBorder(lowresPlane[3], lumaStride, width, lines, orig->getLumaMarginX(), orig->getLumaMarginY());
+    extendPicBorder(lowresPlane[0], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
+    extendPicBorder(lowresPlane[1], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
+    extendPicBorder(lowresPlane[2], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
+    extendPicBorder(lowresPlane[3], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
     fpelPlane = lowresPlane[0];
 }
