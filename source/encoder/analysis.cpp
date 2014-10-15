@@ -34,6 +34,37 @@
 
 using namespace x265;
 
+/* An explanation of rate distortion levels (--rd-level)
+ * 
+ * rd-level 0 generates no recon per CU (NO RDO or Quant)
+ *
+ *   sa8d selection between merge / skip / inter / intra and split
+ *   no recon pixels generated until CTU analysis is complete, requiring
+ *   intra predictions to use source pixels
+ *
+ * rd-level 1 uses RDO for merge and skip, sa8d for all else
+ *
+ *   RDO selection between merge and skip
+ *   sa8d selection between (merge/skip) / inter modes / intra and split
+ *   intra prediction uses reconstructed pixels
+ *
+ * rd-level 2 uses RDO for merge/skip and split
+ *
+ *   RDO selection between merge and skip
+ *   sa8d selection between (merge/skip) / inter modes / intra
+ *   RDO split decisions
+ *
+ * rd-level 3 uses RDO for merge/skip/best inter/intra
+ *
+ *   RDO selection between merge and skip
+ *   sa8d selection of best inter mode
+ *   RDO selection between (merge/skip) / best inter mode / intra / split
+ *
+ * rd-level 4 enables RDOQuant
+ *
+ * rd-level 5,6 does RDO for each inter mode
+ */
+
 Analysis::Analysis()
 {
     m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
