@@ -801,7 +801,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         if (!md.bestMode)
             md.bestMode = splitPred;
-        else if (m_param->rdLevel > 1)
+        else if (m_param->rdLevel >= 1)
         {
             if (splitPred->rdCost < md.bestMode->rdCost)
                 md.bestMode = splitPred;
