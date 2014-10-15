@@ -738,12 +738,13 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
         }
 
+        m_frame->m_totalBitsPerCTU[cuAddr] = best.totalBits;
+
         if (bIsVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
             m_frame->m_rowDiagSatd[row] += m_frame->m_cuCostsForVbv[cuAddr];
             m_frame->m_rowDiagIntraSatd[row] += m_frame->m_intraCuCostsForVbv[cuAddr];
-            m_frame->m_cuBitsForVbv[cuAddr] = best.totalBits;
             m_frame->m_rowEncodedBits[row] += best.totalBits;
             m_frame->m_numEncodedCusPerRow[row] = cuAddr;
             m_frame->m_qpaRc[row] += ctu->m_baseQp;
@@ -870,8 +871,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     if (row == rowCount)
     {
         m_rce.rowTotalBits = 0;
-        for (int i = 0; i < rowCount; i++)
-            m_rce.rowTotalBits += m_frame->m_rowEncodedBits[i];
+        if (bIsVbv)
+            for (int i = 0; i < rowCount; i++)
+                m_rce.rowTotalBits += m_frame->m_rowEncodedBits[i];
+        else
+            for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
+                m_rce.rowTotalBits += m_frame->m_totalBitsPerCTU[cuAddr];
 
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }

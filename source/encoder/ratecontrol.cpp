@@ -1874,7 +1874,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
                 for (uint32_t cuAddr = curFrame->m_numEncodedCusPerRow[row] + 1; cuAddr < endCuAddr; cuAddr++)
                 {
                     refRowSatdCost += refFrame->m_cuCostsForVbv[cuAddr];
-                    refRowBits += refFrame->m_cuBitsForVbv[cuAddr];
+                    refRowBits += refFrame->m_totalBitsPerCTU[cuAddr];
                     intraCost += curFrame->m_intraCuCostsForVbv[cuAddr];
                 }
 

@@ -80,13 +80,13 @@ public:
     /* TODO: all of this should be moved to RCE or PicSym */
     double*           m_rowDiagQp;
     double*           m_rowDiagQScale;
+    uint32_t*         m_totalBitsPerCTU;
     uint32_t*         m_rowDiagSatd;
     uint32_t*         m_rowDiagIntraSatd;
     uint32_t*         m_rowEncodedBits;
     uint32_t*         m_numEncodedCusPerRow;
     uint32_t*         m_rowSatdForVbv;
     uint32_t*         m_cuCostsForVbv;
-    uint32_t*         m_cuBitsForVbv;
     uint32_t*         m_intraCuCostsForVbv;
     double*           m_qpaRc;
     double            m_avgQpRc;    // avg QP as decided by ratecontrol
