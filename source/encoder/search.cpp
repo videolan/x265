@@ -237,9 +237,9 @@ void Search::xEncCoeffQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t 
     }
 }
 
-void Search::xEncIntraHeaderLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx)
+uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2])
 {
-    // CU header
+    m_entropyCoder.resetBits();
     if (!absPartIdx)
     {
         if (!cu.m_slice->isIntra())
@@ -252,7 +252,6 @@ void Search::xEncIntraHeaderLuma(const TComDataCU& cu, const CU& cuData, uint32_
 
         m_entropyCoder.codePartSize(cu, 0, cu.getDepth(0));
     }
-    // luma prediction mode
     if (cu.getPartitionSize(0) == SIZE_2Nx2N)
     {
         if (!absPartIdx)
@@ -270,13 +269,6 @@ void Search::xEncIntraHeaderLuma(const TComDataCU& cu, const CU& cuData, uint32_
         else if (!(absPartIdx & (qtNumParts - 1)))
             m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false);
     }
-}
-
-uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2])
-{
-    m_entropyCoder.resetBits();
-    xEncIntraHeaderLuma(cu, cuData, trDepth, absPartIdx);
-
     // Transform subdiv flag
     if (log2TrSize != *depthRange)
         m_entropyCoder.codeTransformSubdivFlag(0, 5 - log2TrSize);
