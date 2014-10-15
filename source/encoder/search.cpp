@@ -2432,13 +2432,12 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         m_entropyCoder.resetBits();
         m_entropyCoder.codeQtRootCbfZero();
         uint32_t zeroResiBits = m_entropyCoder.getNumberOfWrittenBits();
+
         uint64_t zeroCost = 0;
         uint32_t zeroPsyEnergyY = 0;
         if (m_rdCost.m_psyRd)
         {
-            // need to check whether zero distortion is similar to psy energy of fenc
-            int size = log2CUSize - 2;
-            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->m_buf[0], fencYuv->m_width, (pixel*)zeroPel, 0);
+            zeroPsyEnergyY = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
             zeroCost = m_rdCost.calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
         }
         else
