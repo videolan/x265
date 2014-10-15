@@ -786,7 +786,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         else
             updateModeCost(*splitPred);
 
-        checkDQP(*splitCU, cuData);
+        if (m_param->rdLevel)
+            checkDQP(*splitCU, cuData);
 
         if (!depth && md.bestMode)
         {
