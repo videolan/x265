@@ -54,25 +54,25 @@ public:
     void   destroy();
 
     // Copy YUV buffer to picture buffer
-    void   copyToPicYuv(PicYuv& destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx) const;
+    void   copyToPicYuv(PicYuv& destPicYuv, uint32_t cuAddr, uint32_t absPartIdx) const;
 
     // Copy YUV buffer from picture buffer
-    void   copyFromPicYuv(const PicYuv& srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
+    void   copyFromPicYuv(const PicYuv& srcPicYuv, uint32_t cuAddr, uint32_t absPartIdx);
 
     // Copy from same size YUV buffer
     void   copyFromYuv(const Yuv& srcYuv);
 
     // Copy Small YUV buffer to the part of other Big YUV buffer
-    void   copyToPartYuv(Yuv& dstYuv, uint32_t partIdx) const;
+    void   copyToPartYuv(Yuv& dstYuv, uint32_t absPartIdx) const;
 
     // Copy the part of Big YUV buffer to other Small YUV buffer
-    void   copyPartToYuv(Yuv& dstYuv, uint32_t partIdx) const;
+    void   copyPartToYuv(Yuv& dstYuv, uint32_t absPartIdx) const;
 
-    // Clip(srcYuv0 + srcYuv1) -> m_buf
-    void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
+    // Clip(srcYuv0 + srcYuv1) -> m_buf .. aka recon = clip(pred + residual)
+    void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL);
 
     // (srcYuv0 + srcYuv1)/2 for YUV partition
-    void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
+    void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t absPartIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     pixel* getLumaAddr(uint32_t absPartIdx)                      { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
     pixel* getCbAddr(uint32_t absPartIdx)                        { return m_buf[1] + getChromaAddrOffset(absPartIdx); }
@@ -84,18 +84,18 @@ public:
     const pixel* getCrAddr(uint32_t absPartIdx) const                        { return m_buf[2] + getChromaAddrOffset(absPartIdx); }
     const pixel* getChromaAddr(uint32_t chromaId, uint32_t absPartIdx) const { return m_buf[chromaId] + getChromaAddrOffset(absPartIdx); }
 
-    int getChromaAddrOffset(uint32_t idx) const
+    int getChromaAddrOffset(uint32_t absPartIdx) const
     {
-        int blkX = g_zscanToPelX[idx] >> m_hChromaShift;
-        int blkY = g_zscanToPelY[idx] >> m_vChromaShift;
+        int blkX = g_zscanToPelX[absPartIdx] >> m_hChromaShift;
+        int blkY = g_zscanToPelY[absPartIdx] >> m_vChromaShift;
 
         return blkX + blkY * m_csize;
     }
 
-    static int getAddrOffset(uint32_t idx, uint32_t width)
+    static int getAddrOffset(uint32_t absPartIdx, uint32_t width)
     {
-        int blkX = g_zscanToPelX[idx];
-        int blkY = g_zscanToPelY[idx];
+        int blkX = g_zscanToPelX[absPartIdx];
+        int blkY = g_zscanToPelY[absPartIdx];
 
         return blkX + blkY * width;
     }
