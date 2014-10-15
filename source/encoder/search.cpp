@@ -288,17 +288,6 @@ void Search::xEncIntraHeaderChroma(const TComDataCU& cu, const CU& cuData, uint3
     }
 }
 
-uint32_t Search::xGetIntraBitsQTChroma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep)
-{
-    int cuSize = 1 << cu.getLog2CUSize(absPartIdx);
-    m_entropyCoder.resetBits();
-    xEncIntraHeaderChroma(cu, cuData, absPartIdx);
-    xEncSubdivCbfQTChroma(cu, trDepth, absPartIdx, absPartIdxStep, cuSize, cuSize);
-    xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_U);
-    xEncCoeffQTChroma(cu, trDepth, absPartIdx, TEXT_CHROMA_V);
-    return m_entropyCoder.getNumberOfWrittenBits();
-}
-
 uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2])
 {
     m_entropyCoder.resetBits();
@@ -315,13 +304,6 @@ uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint3
     if (cu.getCbf(absPartIdx, TEXT_LUMA, trDepth))
         m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
 
-    return m_entropyCoder.getNumberOfWrittenBits();
-}
-
-uint32_t Search::xGetIntraBitsChroma(const TComDataCU& cu, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId, const coeff_t* coeff)
-{
-    m_entropyCoder.resetBits();
-    m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, (TextType)chromaId);
     return m_entropyCoder.getNumberOfWrittenBits();
 }
 
@@ -1002,7 +984,16 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                             break;
                         else
                         {
-                            uint32_t bitsTmp = singleCbfCTmp ? xGetIntraBitsChroma(*cu, absPartIdxC, log2TrSizeC, chromaId, coeff) : 0;
+                            uint32_t bitsTmp;
+                            if (singleCbfCTmp)
+                            {
+                                m_entropyCoder.resetBits();
+                                m_entropyCoder.codeCoeffNxN(*cu, coeff, absPartIdx, log2TrSizeC, (TextType)chromaId);
+                                bitsTmp = m_entropyCoder.getNumberOfWrittenBits();
+                            }
+                            else
+                                bitsTmp = 0;
+
                             if (m_rdCost.m_psyRd)
                             {
                                 uint32_t zorder = cuData.encodeIdx + absPartIdxC;
@@ -1536,6 +1527,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
     do
     {
         uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
+        int cuSize = 1 << cu->getLog2CUSize(absPartIdxC);
 
         uint32_t bestMode = 0;
         uint32_t bestDist = 0;
@@ -1563,12 +1555,13 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             if (cu->m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rdContexts[depth].cur);
 
-            uint32_t bits = xGetIntraBitsQTChroma(*cu, cuData, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep);
-            uint64_t cost = 0; 
-            if (m_rdCost.m_psyRd)
-                cost = m_rdCost.calcPsyRdCost(dist, bits, psyEnergy);
-            else
-                cost = m_rdCost.calcRdCost(dist, bits);
+            m_entropyCoder.resetBits();
+            xEncIntraHeaderChroma(*cu, cuData, absPartIdxC);
+            xEncSubdivCbfQTChroma(*cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep, cuSize, cuSize);
+            xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_U);
+            xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_V);
+            uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
+            uint64_t cost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(dist, bits, psyEnergy) : m_rdCost.calcRdCost(dist, bits);
 
             if (cost < bestCost)
             {
@@ -1607,9 +1600,8 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
     }
     while (tuIterator.isNextSection());
 
-    // restore context models
     if (initTrDepth != 0)
-    {   // set Cbf for all blocks
+    {
         uint32_t combCbfU = 0;
         uint32_t combCbfV = 0;
         uint32_t partIdx  = 0;
