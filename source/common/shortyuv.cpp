@@ -39,19 +39,15 @@ ShortYuv::ShortYuv()
 
 bool ShortYuv::create(uint32_t width, uint32_t height, int csp)
 {
-    // set width and height
-    m_width  = width;
-    m_height = height;
-
     m_csp = csp;
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
-    m_cwidth  = width  >> m_hChromaShift;
-    m_cheight = height >> m_vChromaShift;
+    m_width = width;
+    m_cwidth = width >> m_hChromaShift;
 
-    size_t sizeL = m_width * m_height;
-    size_t sizeC = m_cwidth * m_cheight;
+    size_t sizeL = width * height;
+    size_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
     X265_CHECK((sizeC & 15) == 0, "invalid size");
 
     CHECKED_MALLOC(m_buf[0], int16_t, sizeL + sizeC * 2);
@@ -70,9 +66,9 @@ void ShortYuv::destroy()
 
 void ShortYuv::clear()
 {
-    ::memset(m_buf[0], 0, (m_width  * m_height) *  sizeof(int16_t));
-    ::memset(m_buf[1], 0, (m_cwidth * m_cheight) * sizeof(int16_t));
-    ::memset(m_buf[2], 0, (m_cwidth * m_cheight) * sizeof(int16_t));
+    ::memset(m_buf[0], 0, (m_width  * m_width) *  sizeof(int16_t));
+    ::memset(m_buf[1], 0, (m_cwidth * m_cwidth) * sizeof(int16_t));
+    ::memset(m_buf[2], 0, (m_cwidth * m_cwidth) * sizeof(int16_t));
 }
 
 void ShortYuv::subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size)

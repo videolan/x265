@@ -40,9 +40,7 @@ public:
     int16_t* m_buf[3];
 
     uint32_t m_width;
-    uint32_t m_height;
     uint32_t m_cwidth;
-    uint32_t m_cheight;
 
     int      m_csp;
     int      m_hChromaShift;
