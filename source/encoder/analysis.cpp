@@ -638,12 +638,17 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             } // !earlyskip
         }  // !pmode
 
-        /* low RD levels require follow-up work on best mode */
-        if (m_param->rdLevel == 2)
+        /* low RD levels might require follow-up work on best mode */
+
+        if (md.bestMode->cu.getMergeFlag(0) && m_param->rdLevel >= 1)
         {
-            /* finally code the best mode selected from SA8D costs */
+            /* checkMerge2Nx2N_rd0_4() already did a full encode */
+        }
+        else if (m_param->rdLevel == 2)
+        {
             if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
             {
+                /* finally code the best mode selected from SA8D costs */
                 for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
                     prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
@@ -654,7 +659,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             else if (md.bestMode->cu.getPredictionMode(0) == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
         }
-        else if (m_param->rdLevel <= 1)
+        else
         {
             /* Generate recon YUV for this CU. Note: does not update any CABAC context! */
             if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
@@ -667,10 +672,11 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
                 md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuData.log2CUSize);
             }
+
             generateCoeffRecon(*md.bestMode, cuData);
         }
 
-        if (m_param->rdLevel > 0) // checkDQP can be done only after residual encoding is done
+        if (m_param->rdLevel) // checkDQP can be done only after residual encoding is done
             checkDQP(md.bestMode->cu, cuData);
 
         if (mightSplit)
