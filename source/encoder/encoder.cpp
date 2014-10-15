@@ -175,7 +175,10 @@ void Encoder::create()
         if (m_param->noiseReduction)
         {
             m_threadLocalData[i].nr = X265_MALLOC(NoiseReduction, m_param->frameNumThreads);
-            memset(m_threadLocalData[i].nr, 0, sizeof(NoiseReduction) * m_param->frameNumThreads);
+            if (m_threadLocalData[i].nr)
+                memset(m_threadLocalData[i].nr, 0, sizeof(NoiseReduction) * m_param->frameNumThreads);
+            else
+                m_param->noiseReduction = 0;
         }
     }
 
@@ -247,9 +250,7 @@ void Encoder::destroy()
     }
 
     for (int i = 0; i < m_numThreadLocalData; i++)
-    {
-        m_threadLocalData[i].destroy(m_param->noiseReduction);
-    }
+        m_threadLocalData[i].destroy();
 
     delete [] m_threadLocalData;
 

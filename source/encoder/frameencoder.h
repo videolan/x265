@@ -149,6 +149,7 @@ public:
     Event                    m_completionEvent;
     int64_t                  m_totalTime;
     int                      m_frameEncoderID;
+
 protected:
 
     /* analyze / compress frame, can be run in parallel within reference constraints */

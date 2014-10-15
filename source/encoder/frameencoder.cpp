@@ -133,6 +133,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
 void FrameEncoder::startCompressFrame(Frame* pic)
 {
     m_frame = pic;
+    m_frame->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     pic->m_picSym->m_slice->m_mref = m_mref;
     m_enable.trigger();
 }
@@ -157,7 +158,6 @@ void FrameEncoder::compressFrame()
     PPAScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_picSym->m_slice;
-    m_frame->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access

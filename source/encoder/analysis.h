@@ -174,11 +174,10 @@ struct ThreadLocalData
     Analysis analysis;
     NoiseReduction* nr; // Array of NR structures, one for each frameEncoder
 
-    void destroy(int noiseReduction)
+    void destroy()
     {
         analysis.destroy();
-        if (noiseReduction)
-            X265_FREE(nr);
+        X265_FREE(nr);
     }
 };
 
