@@ -66,7 +66,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
             md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j);
             ok &= md.pred[j].predYuv.create(cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
-            ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
+            ok &= md.pred[j].resiYuv.create(cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
         }
     }
@@ -1428,7 +1428,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             int16_t* dst = resiYuv.m_buf[0];
             uint32_t src2stride = bestMode->predYuv.m_size;
             uint32_t src1stride = origYuv.m_size;
-            uint32_t dststride = resiYuv.m_width;
+            uint32_t dststride = resiYuv.m_size;
             primitives.luma_sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
             src2 = predYuv.getCbAddr(absPartIdx);
@@ -1436,7 +1436,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             dst = resiYuv.m_buf[1];
             src2stride = bestMode->predYuv.m_csize;
             src1stride = origYuv.m_csize;
-            dststride = resiYuv.m_cwidth;
+            dststride = resiYuv.m_csize;
             primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
             src2 = bestMode->predYuv.getCrAddr(absPartIdx);
@@ -1467,7 +1467,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
                 pixel* reco = recoYuv.m_buf[0];
                 dststride = recoYuv.m_size;
                 src1stride = predYuv.m_size;
-                src2stride = resiYuv.m_width;
+                src2stride = resiYuv.m_size;
                 primitives.luma_add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
 
                 pred = predYuv.getCbAddr(absPartIdx);
@@ -1475,7 +1475,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
                 reco = recoYuv.m_buf[1];
                 dststride = recoYuv.m_csize;
                 src1stride = predYuv.m_csize;
-                src2stride = resiYuv.m_cwidth;
+                src2stride = resiYuv.m_csize;
                 primitives.chroma[m_param->internalCsp].add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
 
                 pred = predYuv.getCrAddr(absPartIdx);

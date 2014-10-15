@@ -68,8 +68,7 @@ bool Predict::allocBuffers(int csp)
     m_refLeft = m_refAboveFlt + 3 * MAX_CU_SIZE;
     m_refLeftFlt = m_refLeft + 3 * MAX_CU_SIZE;
 
-    return m_predShortYuv[0].create(MAX_CU_SIZE, MAX_CU_SIZE, csp) &&
-           m_predShortYuv[1].create(MAX_CU_SIZE, MAX_CU_SIZE, csp);
+    return m_predShortYuv[0].create(MAX_CU_SIZE, csp) && m_predShortYuv[1].create(MAX_CU_SIZE, csp);
 
 fail:
     return false;
@@ -351,7 +350,7 @@ void Predict::predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
     int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
     pixel *ref    = refPic->getLumaAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
 
-    int dstStride = dstSYuv->m_width;
+    int dstStride = dstSYuv->m_size;
     int16_t *dst  = dstSYuv->getLumaAddr(m_partAddr);
 
     int xFrac = mv->x & 0x3;
@@ -433,7 +432,7 @@ void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 void Predict::predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 {
     int refStride = refPic->m_strideC;
-    int dstStride = dstSYuv->m_cwidth;
+    int dstStride = dstSYuv->m_csize;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
@@ -515,8 +514,8 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[0].w;
 
-        src0Stride = srcYuv0->m_width;
-        src1Stride = srcYuv1->m_width;
+        src0Stride = srcYuv0->m_size;
+        src1Stride = srcYuv1->m_size;
         dststride = predYuv->m_size;
 
         // TODO: can we use weight_sp here?
@@ -551,8 +550,8 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
         round   = shift ? (1 << (shift - 1)) : 0;
         w1      = wp1[1].w;
 
-        src0Stride = srcYuv0->m_cwidth;
-        src1Stride = srcYuv1->m_cwidth;
+        src0Stride = srcYuv0->m_csize;
+        src1Stride = srcYuv1->m_csize;
         dststride  = predYuv->m_csize;
 
         m_width  >>= srcYuv0->m_hChromaShift;
@@ -622,7 +621,7 @@ void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* pred
         shiftNum = IF_INTERNAL_PREC - X265_DEPTH;
         shift   = wp[0].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
-        srcStride = srcYuv->m_width;
+        srcStride = srcYuv->m_size;
         dstStride = predYuv->m_size;
 
         primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
@@ -637,7 +636,7 @@ void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* pred
         shift   = wp[1].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
 
-        srcStride = srcYuv->m_cwidth;
+        srcStride = srcYuv->m_csize;
         dstStride = predYuv->m_csize;
 
         m_width  >>= srcYuv->m_hChromaShift;

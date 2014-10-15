@@ -37,16 +37,16 @@ ShortYuv::ShortYuv()
     m_buf[2] = NULL;
 }
 
-bool ShortYuv::create(uint32_t width, uint32_t height, int csp)
+bool ShortYuv::create(uint32_t size, int csp)
 {
     m_csp = csp;
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
-    m_width = width;
-    m_cwidth = width >> m_hChromaShift;
+    m_size = size;
+    m_csize = size >> m_hChromaShift;
 
-    size_t sizeL = width * height;
+    size_t sizeL = size * size;
     size_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
     X265_CHECK((sizeC & 15) == 0, "invalid size");
 
@@ -66,17 +66,17 @@ void ShortYuv::destroy()
 
 void ShortYuv::clear()
 {
-    ::memset(m_buf[0], 0, (m_width  * m_width) *  sizeof(int16_t));
-    ::memset(m_buf[1], 0, (m_cwidth * m_cwidth) * sizeof(int16_t));
-    ::memset(m_buf[2], 0, (m_cwidth * m_cwidth) * sizeof(int16_t));
+    ::memset(m_buf[0], 0, (m_size  * m_size) *  sizeof(int16_t));
+    ::memset(m_buf[1], 0, (m_csize * m_csize) * sizeof(int16_t));
+    ::memset(m_buf[2], 0, (m_csize * m_csize) * sizeof(int16_t));
 }
 
 void ShortYuv::subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size)
 {
     const int sizeIdx = log2Size - 2;
-    primitives.luma_sub_ps[sizeIdx](m_buf[0], m_width, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
-    primitives.chroma[m_csp].sub_ps[sizeIdx](m_buf[1], m_cwidth, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
-    primitives.chroma[m_csp].sub_ps[sizeIdx](m_buf[2], m_cwidth, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
+    primitives.luma_sub_ps[sizeIdx](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
+    primitives.chroma[m_csp].sub_ps[sizeIdx](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
+    primitives.chroma[m_csp].sub_ps[sizeIdx](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
 }
 
 void ShortYuv::copyPartToPartLuma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t log2Size) const
@@ -84,7 +84,7 @@ void ShortYuv::copyPartToPartLuma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t l
     const int16_t* src = getLumaAddr(partIdx);
     int16_t* dst = dstYuv.getLumaAddr(partIdx);
 
-    primitives.square_copy_ss[log2Size - 2](dst, dstYuv.m_width, const_cast<int16_t*>(src), m_width);
+    primitives.square_copy_ss[log2Size - 2](dst, dstYuv.m_size, const_cast<int16_t*>(src), m_size);
 }
 
 void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2Size) const
@@ -92,7 +92,7 @@ void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2Si
     const int16_t* src = getLumaAddr(partIdx);
     pixel* dst = dstYuv.getLumaAddr(partIdx);
 
-    primitives.square_copy_sp[log2Size - 2](dst, dstYuv.m_size, const_cast<int16_t*>(src), m_width);
+    primitives.square_copy_sp[log2Size - 2](dst, dstYuv.m_size, const_cast<int16_t*>(src), m_size);
 }
 
 void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t log2SizeL) const
@@ -103,8 +103,8 @@ void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t
     int16_t* dstU = dstYuv.getCbAddr(partIdx);
     int16_t* dstV = dstYuv.getCrAddr(partIdx);
 
-    primitives.chroma[m_csp].copy_ss[part](dstU, dstYuv.m_cwidth, const_cast<int16_t*>(srcU), m_cwidth);
-    primitives.chroma[m_csp].copy_ss[part](dstV, dstYuv.m_cwidth, const_cast<int16_t*>(srcV), m_cwidth);
+    primitives.chroma[m_csp].copy_ss[part](dstU, dstYuv.m_csize, const_cast<int16_t*>(srcU), m_csize);
+    primitives.chroma[m_csp].copy_ss[part](dstV, dstYuv.m_csize, const_cast<int16_t*>(srcV), m_csize);
 }
 
 void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2SizeL) const
@@ -115,6 +115,6 @@ void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t partIdx, uint32_t log2
     pixel* dstU = dstYuv.getCbAddr(partIdx);
     pixel* dstV = dstYuv.getCrAddr(partIdx);
 
-    primitives.chroma[m_csp].copy_sp[part](dstU, dstYuv.m_csize, const_cast<int16_t*>(srcU), m_cwidth);
-    primitives.chroma[m_csp].copy_sp[part](dstV, dstYuv.m_csize, const_cast<int16_t*>(srcV), m_cwidth);
+    primitives.chroma[m_csp].copy_sp[part](dstU, dstYuv.m_csize, const_cast<int16_t*>(srcU), m_csize);
+    primitives.chroma[m_csp].copy_sp[part](dstV, dstYuv.m_csize, const_cast<int16_t*>(srcV), m_csize);
 }

@@ -139,13 +139,13 @@ void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size
 
 void Yuv::addClipLuma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
 {
-    primitives.luma_add_ps[log2Size - 2](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_width);
+    primitives.luma_add_ps[log2Size - 2](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
 }
 
 void Yuv::addClipChroma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
 {
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_cwidth);
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_cwidth);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
 }
 
 void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
@@ -158,7 +158,7 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t part
         int16_t* srcY1 = const_cast<ShortYuv&>(srcYuv1).getLumaAddr(partUnitIdx);
         pixel* dstY = getLumaAddr(partUnitIdx);
 
-        primitives.luma_addAvg[part](srcY0, srcY1, dstY, srcYuv0.m_width, srcYuv1.m_width, m_size);
+        primitives.luma_addAvg[part](srcY0, srcY1, dstY, srcYuv0.m_size, srcYuv1.m_size, m_size);
     }
     if (bChroma)
     {
@@ -169,7 +169,7 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t part
         pixel* dstU = getCbAddr(partUnitIdx);
         pixel* dstV = getCrAddr(partUnitIdx);
 
-        primitives.chroma[m_csp].addAvg[part](srcU0, srcU1, dstU, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_csize);
-        primitives.chroma[m_csp].addAvg[part](srcV0, srcV1, dstV, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_csize);
+        primitives.chroma[m_csp].addAvg[part](srcU0, srcU1, dstU, srcYuv0.m_csize, srcYuv1.m_csize, m_csize);
+        primitives.chroma[m_csp].addAvg[part](srcV0, srcV1, dstV, srcYuv0.m_csize, srcYuv1.m_csize, m_csize);
     }
 }

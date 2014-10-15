@@ -39,8 +39,8 @@ public:
 
     int16_t* m_buf[3];
 
-    uint32_t m_width;
-    uint32_t m_cwidth;
+    uint32_t m_size;
+    uint32_t m_csize;
 
     int      m_csp;
     int      m_hChromaShift;
@@ -48,19 +48,19 @@ public:
 
     ShortYuv();
 
-    bool create(uint32_t width, uint32_t height, int csp);
+    bool create(uint32_t size, int csp);
     void destroy();
     void clear();
 
-    int16_t* getLumaAddr(uint32_t absPartIdx)                       { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
-    int16_t* getCbAddr(uint32_t absPartIdx)                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    int16_t* getCrAddr(uint32_t absPartIdx)                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
+    int16_t* getLumaAddr(uint32_t absPartIdx)                       { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
+    int16_t* getCbAddr(uint32_t absPartIdx)                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_csize); }
+    int16_t* getCrAddr(uint32_t absPartIdx)                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_csize); }
+    int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_csize); }
 
-    const int16_t* getLumaAddr(uint32_t absPartIdx) const                       { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
-    const int16_t* getCbAddr(uint32_t absPartIdx) const                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    const int16_t* getCrAddr(uint32_t absPartIdx) const                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    const int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) const { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_cwidth); }
+    const int16_t* getLumaAddr(uint32_t absPartIdx) const                       { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
+    const int16_t* getCbAddr(uint32_t absPartIdx) const                         { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_csize); }
+    const int16_t* getCrAddr(uint32_t absPartIdx) const                         { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_csize); }
+    const int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) const { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx, m_csize); }
 
     void subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size);
     void copyPartToPartLuma(ShortYuv& dstYuv, uint32_t partIdx, uint32_t log2Size) const;
