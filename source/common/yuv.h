@@ -34,6 +34,8 @@ namespace x265 {
 class ShortYuv;
 class PicYuv;
 
+/* A Yuv instance holds pixels for a square CU (64x64 down to 8x8) for all three planes
+ * these are typically used to hold fenc, predictions, or reconstructed blocks */
 class Yuv
 {
 public:
@@ -71,7 +73,7 @@ public:
     // Clip(srcYuv0 + srcYuv1) -> m_buf .. aka recon = clip(pred + residual)
     void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL);
 
-    // (srcYuv0 + srcYuv1)/2 for YUV partition
+    // (srcYuv0 + srcYuv1)/2 for YUV partition (bidir averaging)
     void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t absPartIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     pixel* getLumaAddr(uint32_t absPartIdx)                      { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }

@@ -33,6 +33,8 @@ namespace x265 {
 
 class Yuv;
 
+/* A ShortYuv instance holds int16_ts for a square CU (64x64 down to 8x8) for all three planes,
+ * these are typically used to hold residual or coefficients */
 class ShortYuv
 {
 public:
