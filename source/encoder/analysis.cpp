@@ -59,13 +59,13 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
 
         md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES);
         md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
-        ok &= md.fencYuv.create(cuSize, cuSize, csp);
+        ok &= md.fencYuv.create(cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
             md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j);
-            ok &= md.pred[j].predYuv.create(cuSize, cuSize, csp);
-            ok &= md.pred[j].reconYuv.create(cuSize, cuSize, csp);
+            ok &= md.pred[j].predYuv.create(cuSize, csp);
+            ok &= md.pred[j].reconYuv.create(cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
         }
@@ -280,7 +280,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, origYuv.m_buf[0], origYuv.m_width, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_width);
+        intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, origYuv.m_buf[0], origYuv.m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
 
     updateModeCost(intraMode);
     checkDQP(cu, cuData);
@@ -986,7 +986,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
             motionCompensation(&tempPred->predYuv, true, false);
 
             tempPred->totalBits = getTUBits(i, maxNumMergeCand);
-            tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_width);
+            tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
             tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->totalBits);
 
             if (tempPred->sa8dCost < bestPred->sa8dCost)
@@ -1133,12 +1133,12 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
     {
         parallelInterSearch(interMode, cuData, false);
         x265_emms(); // TODO: Remove from here and predInterSearch()
-        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
+        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
     }
     else if (predInterSearch(interMode, cuData, false, false))
     {
-        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
+        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
     }
     else
@@ -1191,7 +1191,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     initAdiPattern(*cu, cuData, partOffset, initTrDepth, ALL_IDX);
 
     pixel* fenc = m_modeDepth[depth].fencYuv.m_buf[0];
-    uint32_t stride = m_modeDepth[depth].fencYuv.m_width;
+    uint32_t stride = m_modeDepth[depth].fencYuv.m_size;
 
     pixel *above         = m_refAbove    + tuSize - 1;
     pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
@@ -1378,7 +1378,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
+        intraMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
@@ -1426,16 +1426,16 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             pixel* src2 = predYuv.getLumaAddr(absPartIdx);
             pixel* src1 = origYuv.getLumaAddr(absPartIdx);
             int16_t* dst = resiYuv.m_buf[0];
-            uint32_t src2stride = bestMode->predYuv.m_width;
-            uint32_t src1stride = origYuv.m_width;
+            uint32_t src2stride = bestMode->predYuv.m_size;
+            uint32_t src1stride = origYuv.m_size;
             uint32_t dststride = resiYuv.m_width;
             primitives.luma_sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
             src2 = predYuv.getCbAddr(absPartIdx);
             src1 = origYuv.getCbAddr(absPartIdx);
             dst = resiYuv.m_buf[1];
-            src2stride = bestMode->predYuv.m_cwidth;
-            src1stride = origYuv.m_cwidth;
+            src2stride = bestMode->predYuv.m_csize;
+            src1stride = origYuv.m_csize;
             dststride = resiYuv.m_cwidth;
             primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
@@ -1465,16 +1465,16 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
                 pixel* pred = predYuv.getLumaAddr(absPartIdx);
                 int16_t* res = resiYuv.m_buf[0];
                 pixel* reco = recoYuv.m_buf[0];
-                dststride = recoYuv.m_width;
-                src1stride = predYuv.m_width;
+                dststride = recoYuv.m_size;
+                src1stride = predYuv.m_size;
                 src2stride = resiYuv.m_width;
                 primitives.luma_add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
 
                 pred = predYuv.getCbAddr(absPartIdx);
                 res = resiYuv.m_buf[1];
                 reco = recoYuv.m_buf[1];
-                dststride = recoYuv.m_cwidth;
-                src1stride = predYuv.m_cwidth;
+                dststride = recoYuv.m_csize;
+                src1stride = predYuv.m_csize;
                 src2stride = resiYuv.m_cwidth;
                 primitives.chroma[m_param->internalCsp].add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
 
@@ -1492,13 +1492,13 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
         PicYuv& reconPic = *m_frame->m_reconPicYuv;
         pixel* src = predYuv.getLumaAddr(absPartIdx);
         pixel* dst = reconPic.getLumaAddr(cuAddr, absPartIdx);
-        uint32_t srcstride = predYuv.m_width;
+        uint32_t srcstride = predYuv.m_size;
         uint32_t dststride = reconPic.m_stride;
         primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 
         src = predYuv.getCbAddr(absPartIdx);
         dst = reconPic.getCbAddr(cuAddr, absPartIdx);
-        srcstride = predYuv.m_cwidth;
+        srcstride = predYuv.m_csize;
         dststride = reconPic.m_strideC;
         primitives.chroma[m_param->internalCsp].copy_pp[part](dst, dststride, src, srcstride);
 

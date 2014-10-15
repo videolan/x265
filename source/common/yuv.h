@@ -40,8 +40,8 @@ public:
 
     pixel*   m_buf[3];
 
-    uint32_t m_width;
-    uint32_t m_cwidth;
+    uint32_t m_size;
+    uint32_t m_csize;
     int      m_part;         // cached partition enum size
     int      m_hChromaShift;
     int      m_vChromaShift;
@@ -49,7 +49,7 @@ public:
 
     Yuv();
 
-    bool   create(uint32_t width, uint32_t height, int csp);
+    bool   create(uint32_t size, int csp);
     void   destroy();
 
     //  Copy YUV buffer to picture buffer

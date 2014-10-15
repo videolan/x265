@@ -318,7 +318,7 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
 
 void Predict::predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
-    int dstStride = dstYuv->m_width;
+    int dstStride = dstYuv->m_size;
     pixel *dst    = dstYuv->getLumaAddr(m_partAddr);
 
     int srcStride = refPic->m_stride;
@@ -381,7 +381,7 @@ void Predict::predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
     int refStride = refPic->m_strideC;
-    int dstStride = dstYuv->m_cwidth;
+    int dstStride = dstYuv->m_csize;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
@@ -517,7 +517,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
 
         src0Stride = srcYuv0->m_width;
         src1Stride = srcYuv1->m_width;
-        dststride = predYuv->m_width;
+        dststride = predYuv->m_size;
 
         // TODO: can we use weight_sp here?
         for (y = m_height - 1; y >= 0; y--)
@@ -553,7 +553,7 @@ void Predict::addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValu
 
         src0Stride = srcYuv0->m_cwidth;
         src1Stride = srcYuv1->m_cwidth;
-        dststride  = predYuv->m_cwidth;
+        dststride  = predYuv->m_csize;
 
         m_width  >>= srcYuv0->m_hChromaShift;
         m_height >>= srcYuv0->m_vChromaShift;
@@ -623,7 +623,7 @@ void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* pred
         shift   = wp[0].shift + shiftNum;
         round   = shift ? (1 << (shift - 1)) : 0;
         srcStride = srcYuv->m_width;
-        dstStride = predYuv->m_width;
+        dstStride = predYuv->m_size;
 
         primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_width, m_height, w0, round, shift, offset);
     }
@@ -638,7 +638,7 @@ void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* pred
         round   = shift ? (1 << (shift - 1)) : 0;
 
         srcStride = srcYuv->m_cwidth;
-        dstStride = predYuv->m_cwidth;
+        dstStride = predYuv->m_csize;
 
         m_width  >>= srcYuv->m_hChromaShift;
         m_height >>= srcYuv->m_vChromaShift;

@@ -37,18 +37,18 @@ Yuv::Yuv()
     m_buf[2] = NULL;
 }
 
-bool Yuv::create(uint32_t width, uint32_t height, int csp)
+bool Yuv::create(uint32_t size, int csp)
 {
     m_csp = csp;
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
     // set width and height
-    m_width  = width;
-    m_cwidth = width >> m_hChromaShift;
-    m_part = partitionFromSizes(width, height);
+    m_size  = size;
+    m_csize = size >> m_hChromaShift;
+    m_part = partitionFromSizes(size, size);
 
-    size_t sizeL = width * height;
+    size_t sizeL = size * size;
     size_t sizeC = sizeL >> (m_vChromaShift + m_hChromaShift);
 
     X265_CHECK((sizeC & 15) == 0, "invalid size");
@@ -72,12 +72,12 @@ void Yuv::copyToPicYuv(PicYuv& dstPic, uint32_t cuAddr, uint32_t absZOrderIdx) c
 {
     pixel* dstY = dstPic.getLumaAddr(cuAddr, absZOrderIdx);
 
-    primitives.luma_copy_pp[m_part](dstY, dstPic.m_stride, m_buf[0], m_width);
+    primitives.luma_copy_pp[m_part](dstY, dstPic.m_stride, m_buf[0], m_size);
 
     pixel* dstU = dstPic.getCbAddr(cuAddr, absZOrderIdx);
     pixel* dstV = dstPic.getCrAddr(cuAddr, absZOrderIdx);
-    primitives.chroma[m_csp].copy_pp[m_part](dstU, dstPic.m_strideC, m_buf[1], m_cwidth);
-    primitives.chroma[m_csp].copy_pp[m_part](dstV, dstPic.m_strideC, m_buf[2], m_cwidth);
+    primitives.chroma[m_csp].copy_pp[m_part](dstU, dstPic.m_strideC, m_buf[1], m_csize);
+    primitives.chroma[m_csp].copy_pp[m_part](dstV, dstPic.m_strideC, m_buf[2], m_csize);
 }
 
 void Yuv::copyFromPicYuv(const PicYuv& srcPic, uint32_t cuAddr, uint32_t absZOrderIdx)
@@ -88,47 +88,47 @@ void Yuv::copyFromPicYuv(const PicYuv& srcPic, uint32_t cuAddr, uint32_t absZOrd
     PicYuv& srcPicSafe = const_cast<PicYuv&>(srcPic);
     pixel* srcY = srcPicSafe.getLumaAddr(cuAddr, absZOrderIdx);
 
-    primitives.luma_copy_pp[m_part](m_buf[0], m_width, srcY, srcPic.m_stride);
+    primitives.luma_copy_pp[m_part](m_buf[0], m_size, srcY, srcPic.m_stride);
 
     pixel* srcU = srcPicSafe.getCbAddr(cuAddr, absZOrderIdx);
     pixel* srcV = srcPicSafe.getCrAddr(cuAddr, absZOrderIdx);
-    primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_cwidth, srcU, srcPicSafe.m_strideC);
-    primitives.chroma[m_csp].copy_pp[m_part](m_buf[2], m_cwidth, srcV, srcPicSafe.m_strideC);
+    primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_csize, srcU, srcPicSafe.m_strideC);
+    primitives.chroma[m_csp].copy_pp[m_part](m_buf[2], m_csize, srcV, srcPicSafe.m_strideC);
 }
 
 void Yuv::copyFromYuv(const Yuv& srcYuv)
 {
-    X265_CHECK(m_width <= srcYuv.m_width, "invalid size\n");
+    X265_CHECK(m_size <= srcYuv.m_size, "invalid size\n");
 
-    primitives.luma_copy_pp[m_part](m_buf[0], m_width, srcYuv.m_buf[0], srcYuv.m_width);
-    primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_cwidth, srcYuv.m_buf[1], srcYuv.m_cwidth);
-    primitives.chroma[m_csp].copy_pp[m_part](m_buf[2], m_cwidth, srcYuv.m_buf[2], srcYuv.m_cwidth);
+    primitives.luma_copy_pp[m_part](m_buf[0], m_size, srcYuv.m_buf[0], srcYuv.m_size);
+    primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_csize, srcYuv.m_buf[1], srcYuv.m_csize);
+    primitives.chroma[m_csp].copy_pp[m_part](m_buf[2], m_csize, srcYuv.m_buf[2], srcYuv.m_csize);
 }
 
 void Yuv::copyToPartYuv(Yuv& dstYuv, uint32_t partIdx) const
 {
     pixel* dstY = dstYuv.getLumaAddr(partIdx);
-    primitives.luma_copy_pp[m_part](dstY, dstYuv.m_width, m_buf[0], m_width);
+    primitives.luma_copy_pp[m_part](dstY, dstYuv.m_size, m_buf[0], m_size);
 
     pixel* dstU = dstYuv.getCbAddr(partIdx);
     pixel* dstV = dstYuv.getCrAddr(partIdx);
-    primitives.chroma[m_csp].copy_pp[m_part](dstU, dstYuv.m_cwidth, m_buf[1], m_cwidth);
-    primitives.chroma[m_csp].copy_pp[m_part](dstV, dstYuv.m_cwidth, m_buf[2], m_cwidth);
+    primitives.chroma[m_csp].copy_pp[m_part](dstU, dstYuv.m_csize, m_buf[1], m_csize);
+    primitives.chroma[m_csp].copy_pp[m_part](dstV, dstYuv.m_csize, m_buf[2], m_csize);
 }
 
 void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t partIdx) const
 {
-    pixel* srcY = m_buf[0] + getAddrOffset(partIdx, m_width);
+    pixel* srcY = m_buf[0] + getAddrOffset(partIdx, m_size);
     pixel* dstY = dstYuv.m_buf[0];
 
-    primitives.luma_copy_pp[dstYuv.m_part](dstY, dstYuv.m_width, srcY, m_width);
+    primitives.luma_copy_pp[dstYuv.m_part](dstY, dstYuv.m_size, srcY, m_size);
 
     pixel* srcU = m_buf[1] + getChromaAddrOffset(partIdx, m_cwidth);
     pixel* srcV = m_buf[2] + getChromaAddrOffset(partIdx, m_cwidth);
     pixel* dstU = dstYuv.m_buf[1];
     pixel* dstV = dstYuv.m_buf[2];
-    primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstU, dstYuv.m_cwidth, srcU, m_cwidth);
-    primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstV, dstYuv.m_cwidth, srcV, m_cwidth);
+    primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstU, dstYuv.m_csize, srcU, m_csize);
+    primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstV, dstYuv.m_csize, srcV, m_csize);
 }
 
 void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
@@ -139,13 +139,13 @@ void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size
 
 void Yuv::addClipLuma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
 {
-    primitives.luma_add_ps[log2Size - 2](m_buf[0], m_width, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_width, srcYuv1.m_width);
+    primitives.luma_add_ps[log2Size - 2](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_width);
 }
 
 void Yuv::addClipChroma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
 {
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[1], m_cwidth, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_cwidth, srcYuv1.m_cwidth);
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[2], m_cwidth, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_cwidth, srcYuv1.m_cwidth);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_cwidth);
+    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_cwidth);
 }
 
 void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)
@@ -158,7 +158,7 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t part
         int16_t* srcY1 = const_cast<ShortYuv&>(srcYuv1).getLumaAddr(partUnitIdx);
         pixel* dstY = getLumaAddr(partUnitIdx);
 
-        primitives.luma_addAvg[part](srcY0, srcY1, dstY, srcYuv0.m_width, srcYuv1.m_width, m_width);
+        primitives.luma_addAvg[part](srcY0, srcY1, dstY, srcYuv0.m_width, srcYuv1.m_width, m_size);
     }
     if (bChroma)
     {
@@ -169,7 +169,7 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t part
         pixel* dstU = getCbAddr(partUnitIdx);
         pixel* dstV = getCrAddr(partUnitIdx);
 
-        primitives.chroma[m_csp].addAvg[part](srcU0, srcU1, dstU, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_cwidth);
-        primitives.chroma[m_csp].addAvg[part](srcV0, srcV1, dstV, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_cwidth);
+        primitives.chroma[m_csp].addAvg[part](srcU0, srcU1, dstU, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_csize);
+        primitives.chroma[m_csp].addAvg[part](srcV0, srcV1, dstV, srcYuv0.m_cwidth, srcYuv1.m_cwidth, m_csize);
     }
 }
