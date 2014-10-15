@@ -2381,7 +2381,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;
     ShortYuv* resiYuv = &interMode.resiYuv;
-    ShortYuv* tmpResiYuv = &m_rdContexts[cuData.depth].tempResi;
     const Yuv* fencYuv = interMode.fencYuv;
 
     /* TODO: is this temp residual buffer really necessary? it's somewhat annoying */
@@ -2399,75 +2398,65 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     m_quant.setQPforQuant(interMode.cu);
 
-    tmpResiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
-
-    bool bIsTQBypassEnable = cu->m_slice->m_pps->bTransquantBypassEnabled;
-    uint32_t numModes = 1;
-
-    if (bIsTQBypassEnable && !m_param->bLossless)
-    {
-        /* When cu-lossless mode is enabled, and lossless mode is not,
-         * 2 modes need to be checked, normal and lossless mode */
-        numModes = 2;
-    }
+    ShortYuv* inputResiYuv = &m_rdContexts[cuData.depth].tempResi;
+    inputResiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
     uint64_t bestCost = MAX_INT64;
     uint32_t bestMode = 0;
+    bool bIsLosslessMode = cu->m_slice->m_pps->bTransquantBypassEnabled;
 
-    for (uint32_t modeId = 0; modeId < numModes; modeId++)
+    /* When cu-lossless mode is enabled, and lossless mode is not,
+     * 2 modes need to be checked, normal and lossless mode */
+    uint32_t numModes = 1 + (bIsLosslessMode && !m_param->bLossless);
+
+    for (uint32_t modeId = 0; modeId < numModes; modeId++, bIsLosslessMode = false)
     {
-        bool bIsLosslessMode = bIsTQBypassEnable && !modeId;
-
         cu->setCUTransquantBypassSubParts(bIsLosslessMode, 0, depth);
+
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
         uint64_t cost = 0;
-        uint32_t zeroDistortion = 0;
-        uint32_t bits = 0;
-        uint32_t distortion = xEstimateResidualQT(interMode, cuData, 0, tmpResiYuv, depth, cost, bits, &zeroDistortion, tuDepthRange);
-
-        m_entropyCoder.resetBits();
-        m_entropyCoder.codeQtRootCbfZero();
-        uint32_t zeroResiBits = m_entropyCoder.getNumberOfWrittenBits();
-
-        uint64_t zeroCost = 0;
-        uint32_t zeroPsyEnergyY = 0;
-        if (m_rdCost.m_psyRd)
-        {
-            zeroPsyEnergyY = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
-            zeroCost = m_rdCost.calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
-        }
-        else
-            zeroCost = m_rdCost.calcRdCost(zeroDistortion, zeroResiBits);
+        uint32_t cbf0Distortion = 0, bits = 0; /* xEstimateResidualQT also sets interMode.psyEnergy */
+        uint32_t distortion = xEstimateResidualQT(interMode, cuData, 0, inputResiYuv, depth, cost, bits, &cbf0Distortion, tuDepthRange);
 
         if (bIsLosslessMode)
-            zeroCost = cost + 1;
-
-        if (zeroCost < cost)
-        {
-            distortion = zeroDistortion;
-            interMode.psyEnergy = zeroPsyEnergyY;
-
-            const uint32_t qpartnum = NUM_CU_PARTITIONS >> (depth << 1);
-            ::memset(cu->getTransformIdx(), 0, qpartnum * sizeof(uint8_t));
-            ::memset(cu->getCbf(TEXT_LUMA), 0, qpartnum * sizeof(uint8_t));
-            ::memset(cu->getCbf(TEXT_CHROMA_U), 0, qpartnum * sizeof(uint8_t));
-            ::memset(cu->getCbf(TEXT_CHROMA_V), 0, qpartnum * sizeof(uint8_t));
-#if CHECKED_BUILD || _DEBUG
-            ::memset(cu->getCoeffY(), 0, cuSize * cuSize * sizeof(coeff_t));
-            ::memset(cu->getCoeffCb(), 0, cuSize * cuSize * sizeof(coeff_t) >> (hChromaShift + vChromaShift));
-            ::memset(cu->getCoeffCr(), 0, cuSize * cuSize * sizeof(coeff_t) >> (hChromaShift + vChromaShift));
-#endif
-            cu->setTransformSkipSubParts(0, 0, 0, 0, depth);
-        }
-        else
             xSetResidualQTData(cu, 0, NULL, depth, false);
+        else
+        {
+            /* Consider the RD cost of not signaling any residual */
+            m_entropyCoder.resetBits();
+            m_entropyCoder.codeQtRootCbfZero();
+            uint32_t zeroResiBits = m_entropyCoder.getNumberOfWrittenBits();
+
+            uint64_t cbf0Cost = 0;
+            uint32_t cbf0Energy = 0;
+            if (m_rdCost.m_psyRd)
+            {
+                cbf0Energy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_width, predYuv->m_buf[0], predYuv->m_width);
+                cbf0Cost = m_rdCost.calcPsyRdCost(cbf0Distortion, zeroResiBits, cbf0Energy);
+            }
+            else
+                cbf0Cost = m_rdCost.calcRdCost(cbf0Distortion, zeroResiBits);
+
+            if (cbf0Cost < cost)
+            {
+                distortion = cbf0Distortion;
+                interMode.psyEnergy = cbf0Energy;
+                cu->clearCbf(0, depth);
+                cu->setTransformSkipSubParts(0, 0, 0, 0, depth);
+                const uint32_t qpartnum = NUM_CU_PARTITIONS >> (depth << 1);
+                memset(cu->getTransformIdx(), 0, qpartnum * sizeof(uint8_t));
+            }
+            else
+                xSetResidualQTData(cu, 0, NULL, depth, false);
+        }
 
         /* calculate signal bits for inter/merge/skip coded CU */
         m_entropyCoder.load(m_rdContexts[depth].cur);
+
         uint32_t coeffBits;
         if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
         {
@@ -2507,7 +2496,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
         if (cost < bestCost)
         {
-            if (cu->getQtRootCbf(0))
+            if (cu->getQtRootCbf(0)) /* Save residual */
                 xSetResidualQTData(cu, 0, resiYuv, depth, true);
 
             bestMode = modeId; // 0 for lossless
@@ -2520,13 +2509,13 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     X265_CHECK(bestCost != MAX_INT64, "no best cost\n");
 
-    if (bIsTQBypassEnable && !bestMode)
+    if (cu->m_slice->m_pps->bTransquantBypassEnabled && !bestMode)
     {
         cu->setCUTransquantBypassSubParts(true, 0, depth);
         m_entropyCoder.load(m_rdContexts[depth].cur);
         uint64_t cost = 0;
         uint32_t bits = 0;
-        xEstimateResidualQT(interMode, cuData, 0, tmpResiYuv, depth, cost, bits, NULL, tuDepthRange);
+        xEstimateResidualQT(interMode, cuData, 0, inputResiYuv, depth, cost, bits, NULL, tuDepthRange);
         xSetResidualQTData(cu, 0, NULL, depth, false);
         m_entropyCoder.store(interMode.contexts);
     }
