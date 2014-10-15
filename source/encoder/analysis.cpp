@@ -1209,7 +1209,8 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     uint64_t cost, bcost;
 
     // 33 Angle modes once
-    ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
+    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+    ALIGN_VAR_32(pixel, bufTrans[32 * 32]);
     ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
     int scaleTuSize = tuSize;
     int scaleStride = stride;
@@ -1219,7 +1220,6 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     if (tuSize > 32)
     {
         // origin is 64x64, we scale to 32x32 and setup required parameters
-        ALIGN_VAR_32(pixel, bufScale[32 * 32]);
         primitives.scale2D_64to32(bufScale, fenc, stride);
         fenc = bufScale;
 
@@ -1279,7 +1279,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
     // Transpose NxN
-    primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
+    primitives.transpose[sizeIdx](bufTrans, fenc, scaleStride);
 
     primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
 
@@ -1289,7 +1289,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
 
 #define TRY_ANGLE(angle) \
     modeHor = angle < 18; \
-    cmp = modeHor ? buf_trans : fenc; \
+    cmp = modeHor ? bufTrans : fenc; \
     srcStride = modeHor ? scaleTuSize : scaleStride; \
     sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
     bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(*cu, angle, partOffset, depth) : rbits; \
