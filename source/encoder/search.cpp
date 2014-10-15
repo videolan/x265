@@ -547,7 +547,11 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
             if (bestModeId == firstCheckId)
             {
-                xLoadIntraResultQT(cu, cuData, absPartIdx, log2TrSize, reconQt, reconQtStride);
+                /* copy from int16 recon buffer to reconPic (bad on two counts) */
+                pixel*   reconIPred = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+                uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_stride;
+                primitives.square_copy_sp[log2TrSize - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
+
                 cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
                 m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
             }
@@ -786,16 +790,6 @@ void Search::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
         for (uint32_t part = 0; part < 4; part++)
             xSetIntraResultQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
     }
-}
-
-void Search::xLoadIntraResultQT(TComDataCU* cu, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride)
-{
-    // copy reconstruction
-    int sizeIdx = log2TrSize - 2;
-    uint32_t zorder           = cuData.encodeIdx + absPartIdx;
-    pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
-    uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_stride;
-    primitives.square_copy_sp[sizeIdx](reconIPred, reconIPredStride, reconQt, reconQtStride);
 }
 
 void Search::xLoadIntraResultChromaQT(TComDataCU* cu, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSizeC, uint32_t chromaId,
