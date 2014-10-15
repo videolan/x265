@@ -2532,7 +2532,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_cwidth, reconYuv->m_buf[1], reconYuv->m_cwidth));
     bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_cwidth, reconYuv->m_buf[2], reconYuv->m_cwidth));
 
-    if (m_rdCost.m_psyRd)
+    if (m_rdCost.m_psyRd) /* TODO: this seems redundant with above */
         interMode.psyEnergy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_width, reconYuv->m_buf[0], reconYuv->m_width);
 
     interMode.totalBits = bestBits;
@@ -2541,7 +2541,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     interMode.mvBits = bestBits - bestCoeffBits;
     updateModeCost(interMode);
 
-    if (cu->isSkipped(0))
+    if (cu->isSkipped(0)) /* TODO: it seems rather late to be doing this */
         cu->clearCbf(0, depth);
 }
 
