@@ -53,7 +53,6 @@ public:
 
     bool   create(uint32_t width, uint32_t height, int csp);
     void   destroy();
-    void   clear();
 
     //  Copy YUV buffer to picture buffer
     void   copyToPicYuv(PicYuv& destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx) const;

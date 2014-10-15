@@ -71,13 +71,6 @@ void Yuv::destroy()
     X265_FREE(m_buf[0]);
 }
 
-void Yuv::clear()
-{
-    ::memset(m_buf[0], 0, (m_width  * m_height)  * sizeof(pixel));
-    ::memset(m_buf[1], 0, (m_cwidth * m_cheight) * sizeof(pixel));
-    ::memset(m_buf[2], 0, (m_cwidth * m_cheight) * sizeof(pixel));
-}
-
 void Yuv::copyToPicYuv(PicYuv& dstPic, uint32_t cuAddr, uint32_t absZOrderIdx) const
 {
     pixel* dstY = dstPic.getLumaAddr(cuAddr, absZOrderIdx);
