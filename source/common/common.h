@@ -250,18 +250,23 @@ struct NoiseReduction
     uint32_t count[MAX_NUM_TR_CATEGORIES];
 };
 
+enum SaoMergeMode
+{
+    SAO_MERGE_NONE,
+    SAO_MERGE_LEFT,
+    SAO_MERGE_UP
+};
+
 struct SaoCtuParam
 {
-    bool mergeUpFlag;
-    bool mergeLeftFlag;
+    SaoMergeMode mergeMode;
     int  typeIdx;
     uint32_t bandPos;    // BO band position
     int  offset[SAO_NUM_OFFSET];
 
     void reset()
     {
-        mergeUpFlag = false;
-        mergeLeftFlag = false;
+        mergeMode = SAO_MERGE_NONE;
         typeIdx = -1;
         bandPos = 0;
         offset[0] = 0;

@@ -443,7 +443,7 @@ void FrameEncoder::encodeSlice()
     const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
     const uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_origPicYuv->m_numCuInHeight : 1;
 
-    SAOParam *saoParam = slice->m_frame->m_encData->m_saoParam;
+    SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
@@ -460,12 +460,12 @@ void FrameEncoder::encodeSlice()
             m_entropyCoder.loadContexts(m_rows[lin - 1].bufferedEntropy);
         }
 
-        if (slice->m_sps->bUseSAO)
+        if (saoParam)
         {
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
-                int mergeLeft = saoParam->ctuParam[0][cuAddr].mergeLeftFlag && col;
-                int mergeUp = saoParam->ctuParam[0][cuAddr].mergeUpFlag && lin;
+                int mergeLeft = col && saoParam->ctuParam[0][cuAddr].mergeMode == SAO_MERGE_LEFT;
+                int mergeUp = lin && saoParam->ctuParam[0][cuAddr].mergeMode == SAO_MERGE_UP;
                 if (col)
                     m_entropyCoder.codeSaoMerge(mergeLeft);
                 if (lin && !mergeLeft)
