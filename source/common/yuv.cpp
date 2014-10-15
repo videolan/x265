@@ -39,21 +39,18 @@ Yuv::Yuv()
 
 bool Yuv::create(uint32_t width, uint32_t height, int csp)
 {
+    m_csp = csp;
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
     // set width and height
-    m_width   = width;
-    m_height  = height;
+    m_width  = width;
+    m_cwidth = width >> m_hChromaShift;
+    m_part = partitionFromSizes(width, height);
 
-    m_cwidth  = width  >> m_hChromaShift;
-    m_cheight = height >> m_vChromaShift;
+    size_t sizeL = width * height;
+    size_t sizeC = sizeL >> (m_vChromaShift + m_hChromaShift);
 
-    m_csp     = csp;
-    m_part    = partitionFromSizes(m_width, m_height);
-
-    size_t sizeL = m_width * m_height;
-    size_t sizeC = m_cwidth * m_cheight;
     X265_CHECK((sizeC & 15) == 0, "invalid size");
 
     // memory allocation (padded for SIMD reads)
@@ -101,7 +98,7 @@ void Yuv::copyFromPicYuv(const PicYuv& srcPic, uint32_t cuAddr, uint32_t absZOrd
 
 void Yuv::copyFromYuv(const Yuv& srcYuv)
 {
-    X265_CHECK(m_width <= srcYuv.m_width && m_height <= srcYuv.m_height, "invalid size\n");
+    X265_CHECK(m_width <= srcYuv.m_width, "invalid size\n");
 
     primitives.luma_copy_pp[m_part](m_buf[0], m_width, srcYuv.m_buf[0], srcYuv.m_width);
     primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_cwidth, srcYuv.m_buf[1], srcYuv.m_cwidth);

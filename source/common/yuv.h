@@ -41,9 +41,7 @@ public:
     pixel*   m_buf[3];
 
     uint32_t m_width;
-    uint32_t m_height;
     uint32_t m_cwidth;
-    uint32_t m_cheight;
     int      m_part;         // cached partition enum size
     int      m_hChromaShift;
     int      m_vChromaShift;
