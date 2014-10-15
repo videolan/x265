@@ -75,22 +75,22 @@ public:
     //  (srcYuv0 + srcYuv1)/2 for YUV partition
     void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
-    pixel* getLumaAddr(uint32_t absPartIdx)                      { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
-    pixel* getCbAddr(uint32_t absPartIdx)                        { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    pixel* getCrAddr(uint32_t absPartIdx)                        { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    pixel* getChromaAddr(uint32_t chromaId, uint32_t absPartIdx) { return m_buf[chromaId] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    pixel* getLumaAddr(uint32_t absPartIdx)                      { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
+    pixel* getCbAddr(uint32_t absPartIdx)                        { return m_buf[1] + getChromaAddrOffset(absPartIdx); }
+    pixel* getCrAddr(uint32_t absPartIdx)                        { return m_buf[2] + getChromaAddrOffset(absPartIdx); }
+    pixel* getChromaAddr(uint32_t chromaId, uint32_t absPartIdx) { return m_buf[chromaId] + getChromaAddrOffset(absPartIdx); }
 
-    const pixel* getLumaAddr(uint32_t absPartIdx) const                      { return m_buf[0] + getAddrOffset(absPartIdx, m_width); }
-    const pixel* getCbAddr(uint32_t absPartIdx) const                        { return m_buf[1] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    const pixel* getCrAddr(uint32_t absPartIdx) const                        { return m_buf[2] + getChromaAddrOffset(absPartIdx, m_cwidth); }
-    const pixel* getChromaAddr(uint32_t chromaId, uint32_t absPartIdx) const { return m_buf[chromaId] + getChromaAddrOffset(absPartIdx, m_cwidth); }
+    const pixel* getLumaAddr(uint32_t absPartIdx) const                      { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
+    const pixel* getCbAddr(uint32_t absPartIdx) const                        { return m_buf[1] + getChromaAddrOffset(absPartIdx); }
+    const pixel* getCrAddr(uint32_t absPartIdx) const                        { return m_buf[2] + getChromaAddrOffset(absPartIdx); }
+    const pixel* getChromaAddr(uint32_t chromaId, uint32_t absPartIdx) const { return m_buf[chromaId] + getChromaAddrOffset(absPartIdx); }
 
-    int getChromaAddrOffset(uint32_t idx, uint32_t width) const
+    int getChromaAddrOffset(uint32_t idx) const
     {
         int blkX = g_zscanToPelX[idx] >> m_hChromaShift;
         int blkY = g_zscanToPelY[idx] >> m_vChromaShift;
 
-        return blkX + blkY * width;
+        return blkX + blkY * m_csize;
     }
 
     static int getAddrOffset(uint32_t idx, uint32_t width)

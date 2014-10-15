@@ -123,8 +123,8 @@ void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t partIdx) const
 
     primitives.luma_copy_pp[dstYuv.m_part](dstY, dstYuv.m_size, srcY, m_size);
 
-    pixel* srcU = m_buf[1] + getChromaAddrOffset(partIdx, m_cwidth);
-    pixel* srcV = m_buf[2] + getChromaAddrOffset(partIdx, m_cwidth);
+    pixel* srcU = m_buf[1] + getChromaAddrOffset(partIdx);
+    pixel* srcV = m_buf[2] + getChromaAddrOffset(partIdx);
     pixel* dstU = dstYuv.m_buf[1];
     pixel* dstV = dstYuv.m_buf[2];
     primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstU, dstYuv.m_csize, srcU, m_csize);
