@@ -52,27 +52,27 @@ public:
     bool   create(uint32_t size, int csp);
     void   destroy();
 
-    //  Copy YUV buffer to picture buffer
+    // Copy YUV buffer to picture buffer
     void   copyToPicYuv(PicYuv& destPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx) const;
 
-    //  Copy YUV buffer from picture buffer
+    // Copy YUV buffer from picture buffer
     void   copyFromPicYuv(const PicYuv& srcPicYuv, uint32_t cuAddr, uint32_t absZOrderIdx);
 
-    //  Copy from same size YUV buffer
+    // Copy from same size YUV buffer
     void   copyFromYuv(const Yuv& srcYuv);
 
-    //  Copy Small YUV buffer to the part of other Big YUV buffer
+    // Copy Small YUV buffer to the part of other Big YUV buffer
     void   copyToPartYuv(Yuv& dstYuv, uint32_t partIdx) const;
 
-    //  Copy the part of Big YUV buffer to other Small YUV buffer
+    // Copy the part of Big YUV buffer to other Small YUV buffer
     void   copyPartToYuv(Yuv& dstYuv, uint32_t partIdx) const;
 
-    //  Clip(srcYuv0 + srcYuv1) -> m_buf
+    // Clip(srcYuv0 + srcYuv1) -> m_buf
     void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
     void   addClipLuma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
     void   addClipChroma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
 
-    //  (srcYuv0 + srcYuv1)/2 for YUV partition
+    // (srcYuv0 + srcYuv1)/2 for YUV partition
     void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
 
     pixel* getLumaAddr(uint32_t absPartIdx)                      { return m_buf[0] + getAddrOffset(absPartIdx, m_size); }
