@@ -272,22 +272,6 @@ void Search::xEncIntraHeaderLuma(const TComDataCU& cu, const CU& cuData, uint32_
     }
 }
 
-void Search::xEncIntraHeaderChroma(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx)
-{
-    // chroma prediction mode
-    if (cu.getPartitionSize(0) == SIZE_2Nx2N || cu.m_chromaFormat != X265_CSP_I444)
-    {
-        if (!absPartIdx)
-            m_entropyCoder.codeIntraDirChroma(cu, absPartIdx);
-    }
-    else
-    {
-        uint32_t qtNumParts = cuData.numPartitions >> 2;
-        if (!(absPartIdx & (qtNumParts - 1)))
-            m_entropyCoder.codeIntraDirChroma(cu, absPartIdx);
-    }
-}
-
 uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2])
 {
     m_entropyCoder.resetBits();
@@ -1556,7 +1540,18 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
                 m_entropyCoder.load(m_rdContexts[depth].cur);
 
             m_entropyCoder.resetBits();
-            xEncIntraHeaderChroma(*cu, cuData, absPartIdxC);
+            // chroma prediction mode
+            if (cu->getPartitionSize(0) == SIZE_2Nx2N || cu->m_chromaFormat != X265_CSP_I444)
+            {
+                if (!absPartIdxC)
+                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC);
+            }
+            else
+            {
+                uint32_t qtNumParts = cuData.numPartitions >> 2;
+                if (!(absPartIdxC & (qtNumParts - 1)))
+                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC);
+            }
             xEncSubdivCbfQTChroma(*cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep, cuSize, cuSize);
             xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_U);
             xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_V);
