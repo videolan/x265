@@ -131,21 +131,11 @@ void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t partIdx) const
     primitives.chroma[m_csp].copy_pp[dstYuv.m_part](dstV, dstYuv.m_csize, srcV, m_csize);
 }
 
-void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
+void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL)
 {
-    addClipLuma(srcYuv0, srcYuv1, log2Size);
-    addClipChroma(srcYuv0, srcYuv1, log2Size);
-}
-
-void Yuv::addClipLuma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
-{
-    primitives.luma_add_ps[log2Size - 2](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
-}
-
-void Yuv::addClipChroma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size)
-{
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
-    primitives.chroma[m_csp].add_ps[log2Size - 2](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
+    primitives.luma_add_ps[log2SizeL - 2](m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
+    primitives.chroma[m_csp].add_ps[log2SizeL - 2](m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
+    primitives.chroma[m_csp].add_ps[log2SizeL - 2](m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
 }
 
 void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma)

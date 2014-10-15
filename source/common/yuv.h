@@ -70,8 +70,6 @@ public:
 
     // Clip(srcYuv0 + srcYuv1) -> m_buf
     void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
-    void   addClipLuma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
-    void   addClipChroma(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2Size);
 
     // (srcYuv0 + srcYuv1)/2 for YUV partition
     void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t partUnitIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);
