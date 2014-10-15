@@ -2478,8 +2478,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
             m_entropyCoder.resetBits();
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
-            if (!cu->m_slice->isIntra())
-                m_entropyCoder.codeSkipFlag(*cu, 0);
+            m_entropyCoder.codeSkipFlag(*cu, 0);
             m_entropyCoder.codeMergeIndex(*cu, 0);
             coeffBits = 0;
             bits = m_entropyCoder.getNumberOfWrittenBits();
@@ -2489,11 +2488,8 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
             m_entropyCoder.resetBits();
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
-            if (!cu->m_slice->isIntra())
-            {
-                m_entropyCoder.codeSkipFlag(*cu, 0);
-                m_entropyCoder.codePredMode(cu->getPredictionMode(0));
-            }
+            m_entropyCoder.codeSkipFlag(*cu, 0);
+            m_entropyCoder.codePredMode(cu->getPredictionMode(0));
             m_entropyCoder.codePartSize(*cu, 0, cu->getDepth(0));
             m_entropyCoder.codePredInfo(*cu, 0);
             uint32_t mvBits = m_entropyCoder.getNumberOfWrittenBits();
