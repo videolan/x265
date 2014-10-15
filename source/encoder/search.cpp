@@ -2469,8 +2469,39 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
         /* calculate signal bits for inter/merge/skip coded CU */
         m_entropyCoder.load(m_rdContexts[depth].cur);
+        uint32_t coeffBits;
+        if (cu->getMergeFlag(0) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+        {
+            cu->setSkipFlagSubParts(true, 0, cu->getDepth(0)); /* TODO: should be done earlier*/
 
-        bits = getInterSymbolBits(interMode, tuDepthRange);
+            /* Merge/Skip */
+            m_entropyCoder.resetBits();
+            if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+                m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
+            if (!cu->m_slice->isIntra())
+                m_entropyCoder.codeSkipFlag(*cu, 0);
+            m_entropyCoder.codeMergeIndex(*cu, 0);
+            coeffBits = 0;
+            bits = m_entropyCoder.getNumberOfWrittenBits();
+        }
+        else
+        {
+            m_entropyCoder.resetBits();
+            if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+                m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
+            if (!cu->m_slice->isIntra())
+            {
+                m_entropyCoder.codeSkipFlag(*cu, 0);
+                m_entropyCoder.codePredMode(cu->getPredictionMode(0));
+            }
+            m_entropyCoder.codePartSize(*cu, 0, cu->getDepth(0));
+            m_entropyCoder.codePredInfo(*cu, 0);
+            bool bDummy = false;
+            uint32_t mvBits = m_entropyCoder.getNumberOfWrittenBits();
+            m_entropyCoder.codeCoeff(*cu, 0, cu->getDepth(0), bDummy, tuDepthRange);
+            bits = m_entropyCoder.getNumberOfWrittenBits();
+            coeffBits = bits - mvBits;
+        }
 
         if (m_rdCost.m_psyRd)
             cost = m_rdCost.calcPsyRdCost(distortion, bits, interMode.psyEnergy);
@@ -2485,7 +2516,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
             bestMode = modeId; // 0 for lossless
             bestBits = bits;
             bestCost = cost;
-            bestCoeffBits = interMode.coeffBits;
+            bestCoeffBits = coeffBits;
             m_entropyCoder.store(interMode.contexts);
         }
     }
@@ -3747,45 +3778,5 @@ void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint
     {
         candCostList[maxIndex] = cost;
         candModeList[maxIndex] = mode;
-    }
-}
-
-/* code inter-prediction syntax elements for a CU, record bit sizes */
-uint32_t Search::getInterSymbolBits(Mode& mode, uint32_t depthRange[2])
-{
-    TComDataCU& cu = mode.cu;
-
-    if (cu.getMergeFlag(0) && cu.getPartitionSize(0) == SIZE_2Nx2N && !cu.getQtRootCbf(0))
-    {
-        cu.setSkipFlagSubParts(true, 0, cu.getDepth(0));
-
-        m_entropyCoder.resetBits();
-        if (cu.m_slice->m_pps->bTransquantBypassEnabled)
-            m_entropyCoder.codeCUTransquantBypassFlag(cu.getCUTransquantBypass(0));
-        if (!cu.m_slice->isIntra())
-            m_entropyCoder.codeSkipFlag(cu, 0);
-        m_entropyCoder.codeMergeIndex(cu, 0);
-        mode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
-        mode.coeffBits = 0;
-        return m_entropyCoder.getNumberOfWrittenBits();
-    }
-    else
-    {
-        m_entropyCoder.resetBits();
-        if (cu.m_slice->m_pps->bTransquantBypassEnabled)
-            m_entropyCoder.codeCUTransquantBypassFlag(cu.getCUTransquantBypass(0));
-        if (!cu.m_slice->isIntra())
-        {
-            m_entropyCoder.codeSkipFlag(cu, 0);
-            m_entropyCoder.codePredMode(cu.getPredictionMode(0));
-        }
-        m_entropyCoder.codePartSize(cu, 0, cu.getDepth(0));
-        m_entropyCoder.codePredInfo(cu, 0);
-        bool bDummy = false;
-        mode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
-        m_entropyCoder.codeCoeff(cu, 0, cu.getDepth(0), bDummy, depthRange);
-        int totalBits = m_entropyCoder.getNumberOfWrittenBits();
-        mode.coeffBits = totalBits - mode.mvBits;
-        return totalBits;
     }
 }

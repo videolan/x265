@@ -238,7 +238,6 @@ protected:
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]) const;
     void     setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t getInterSymbolBits(Mode& mode, uint32_t depthRange[2]);
     uint32_t mergeEstimation(TComDataCU* cu, const CU& cuData, int partIdx, MergeData& m);
 
     /* intra helper functions */
