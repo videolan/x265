@@ -125,7 +125,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
     }
     else
     {
-        if (m_param->rdLevel <= 1)
+        if (!m_param->rdLevel)
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
              * they are available for intra predictions */
