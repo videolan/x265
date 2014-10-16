@@ -1454,7 +1454,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
 
     if (ctu.getPredictionMode(absPartIdx) == MODE_INTER)
     {
-        if (!ctu.getSkipFlag(absPartIdx))
+        if (!ctu.m_skipFlag[absPartIdx])
         {
             const int sizeIdx = cuData.log2CUSize - 2;
             Yuv& origYuv = m_modeDepth[0].fencYuv;

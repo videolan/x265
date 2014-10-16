@@ -234,11 +234,11 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
      * we know we are only reading from the returned pointers so this is not violating
      * the const contract */
     TComDataCU& ctuSafe = const_cast<TComDataCU&>(ctu);
-    memcpy(m_skipFlag, ctuSafe.getSkipFlag() + m_absIdxInCTU, sizeInChar);
     memcpy(m_predModes, ctuSafe.getPredictionMode() + m_absIdxInCTU, sizeInChar);
     memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
     memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 
+    memcpy(m_skipFlag,  ctu.m_skipFlag + m_absIdxInCTU, sizeInChar);
     memcpy(m_qp,        ctu.m_qp + m_absIdxInCTU, sizeInChar);
     memcpy(m_depth,     ctu.m_depth + m_absIdxInCTU, sizeInChar);
     memcpy(m_partSizes, ctu.m_partSizes + m_absIdxInCTU, sizeInChar);
@@ -262,7 +262,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_transformSkip[0] + offset, cu->m_transformSkip[0],  sizeInChar);
     memcpy(m_transformSkip[1] + offset, cu->m_transformSkip[1],  sizeInChar);
     memcpy(m_transformSkip[2] + offset, cu->m_transformSkip[2],  sizeInChar);
-    memcpy(m_skipFlag         + offset, cu->getSkipFlag(),       sizeInChar);
+    memcpy(m_skipFlag         + offset, cu->m_skipFlag,          sizeInChar);
     memcpy(m_predModes        + offset, cu->getPredictionMode(), sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
@@ -307,8 +307,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_transformSkip[1]   + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
     memcpy(cu->m_transformSkip[2]   + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
     memcpy(cu->m_depth              + m_absIdxInCTU, m_depth, sizeInChar);
+    memcpy(cu->m_skipFlag           + m_absIdxInCTU, m_skipFlag, sizeInChar);
 
-    memcpy(cu->getSkipFlag()        + m_absIdxInCTU, m_skipFlag,         sizeInChar);
     memcpy(cu->getPredictionMode()  + m_absIdxInCTU, m_predModes,        sizeInChar);
     memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
@@ -346,8 +346,8 @@ void TComDataCU::updatePic(uint32_t depth)
     memcpy(cu->m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0], sizeInChar);
     memcpy(cu->m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
     memcpy(cu->m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
+    memcpy(cu->m_skipFlag + m_absIdxInCTU, m_skipFlag, sizeInChar);
     memcpy(cu->getChromaIntraDir() + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->getSkipFlag() + m_absIdxInCTU, m_skipFlag, sizeInChar);
     memcpy(cu->getTransformIdx() + m_absIdxInCTU, m_trIdx, sizeInChar);
     memcpy(cu->getCbf(TEXT_LUMA) + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
@@ -382,7 +382,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_transformSkip[0]    + partOffset, m_transformSkip[0], sizeInChar);
     memcpy(cu->m_transformSkip[1]    + partOffset, m_transformSkip[1], sizeInChar);
     memcpy(cu->m_transformSkip[2]    + partOffset, m_transformSkip[2], sizeInChar);
-    memcpy(cu->getSkipFlag()         + partOffset, m_skipFlag, sizeInChar);
+    memcpy(cu->m_skipFlag            + partOffset, m_skipFlag, sizeInChar);
     memcpy(cu->getPredictionMode()   + partOffset, m_predModes, sizeInChar);
     memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);

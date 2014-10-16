@@ -268,8 +268,6 @@ public:
     void          setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
-    uint8_t*      getSkipFlag()                        { return m_skipFlag; }
-    uint8_t       getSkipFlag(uint32_t idx) const      { return m_skipFlag[idx]; }
     void          setSkipFlagSubParts(uint8_t skip, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t*      getPredictionMode()                 { return m_predModes; }
