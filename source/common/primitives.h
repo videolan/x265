@@ -217,7 +217,8 @@ struct EncoderPrimitives
     pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
     pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
     pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
-    pixelcmp_t      psy_cost[NUM_SQUARE_BLOCKS];     // difference in AC energy between two blocks
+    pixelcmp_t      psy_cost_pp[NUM_SQUARE_BLOCKS];     // difference in AC energy between two blocks
+    pixelcmp_ss_t   psy_cost_ss[NUM_SQUARE_BLOCKS];
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
     cvt16to32_shl_t cvt16to32_shl;

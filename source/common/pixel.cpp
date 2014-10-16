@@ -108,6 +108,27 @@ int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
     return sum;
 }
 
+#if !HIGH_BIT_DEPTH
+template<int lx, int ly>
+int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
+{
+    int sum = 0;
+
+    for (int y = 0; y < ly; y++)
+    {
+        for (int x = 0; x < lx; x++)
+        {
+            sum += abs(pix1[x] - pix2[x]);
+        }
+
+        pix1 += stride_pix1;
+        pix2 += stride_pix2;
+    }
+
+    return sum;
+}
+#endif
+
 template<int lx, int ly>
 void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int32_t *res)
 {
@@ -226,6 +247,36 @@ int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
     return (int)(sum >> 1);
 }
 
+#if !HIGH_BIT_DEPTH
+int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
+{
+    sum2_t tmp[4][2];
+    sum2_t a0, a1, a2, a3, b0, b1;
+    sum2_t sum = 0;
+
+    for (int i = 0; i < 4; i++, pix1 += stride_pix1, pix2 += stride_pix2)
+    {
+        a0 = pix1[0] - pix2[0];
+        a1 = pix1[1] - pix2[1];
+        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
+        a2 = pix1[2] - pix2[2];
+        a3 = pix1[3] - pix2[3];
+        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
+        tmp[i][0] = b0 + b1;
+        tmp[i][1] = b0 - b1;
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
+        a0 = abs2(a0) + abs2(a1) + abs2(a2) + abs2(a3);
+        sum += ((sum_t)a0) + (a0 >> BITS_PER_SUM);
+    }
+
+    return (int)(sum >> 1);
+}
+#endif
+
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
 int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
@@ -328,6 +379,50 @@ int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
+
+#if !HIGH_BIT_DEPTH
+inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+{
+    sum2_t tmp[8][4];
+    sum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
+    sum2_t sum = 0;
+
+    for (int i = 0; i < 8; i++, pix1 += i_pix1, pix2 += i_pix2)
+    {
+        a0 = pix1[0] - pix2[0];
+        a1 = pix1[1] - pix2[1];
+        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
+        a2 = pix1[2] - pix2[2];
+        a3 = pix1[3] - pix2[3];
+        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
+        a4 = pix1[4] - pix2[4];
+        a5 = pix1[5] - pix2[5];
+        b2 = (a4 + a5) + ((a4 - a5) << BITS_PER_SUM);
+        a6 = pix1[6] - pix2[6];
+        a7 = pix1[7] - pix2[7];
+        b3 = (a6 + a7) + ((a6 - a7) << BITS_PER_SUM);
+        HADAMARD4(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3], b0, b1, b2, b3);
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
+        HADAMARD4(a4, a5, a6, a7, tmp[4][i], tmp[5][i], tmp[6][i], tmp[7][i]);
+        b0  = abs2(a0 + a4) + abs2(a0 - a4);
+        b0 += abs2(a1 + a5) + abs2(a1 - a5);
+        b0 += abs2(a2 + a6) + abs2(a2 - a6);
+        b0 += abs2(a3 + a7) + abs2(a3 - a7);
+        sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
+    }
+
+    return (int)sum;
+}
+
+int sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+{
+    return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
+}
+#endif
 
 int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
@@ -744,7 +839,7 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 #endif
 
 template<int size>
-int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+int psyCost_pp(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
 {
     static pixel zeroBuf[8] /* = { 0 } */;
 
@@ -775,6 +870,41 @@ int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
         return abs(sourceEnergy - reconEnergy);
     }
 }
+
+#if !HIGH_BIT_DEPTH
+template<int size>
+int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride)
+{
+    static int16_t zeroBuf[8] /* = { 0 } */;
+
+    if (size)
+    {
+        int dim = 1 << (size + 2);
+        uint32_t totEnergy = 0;
+        for (int i = 0; i < dim; i += 8)
+        {
+            for (int j = 0; j < dim; j+= 8)
+            {
+                /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
+                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
+                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
+
+                totEnergy += abs(sourceEnergy - reconEnergy);
+            }
+        }
+        return totEnergy;
+    }
+    else
+    {
+        /* 4x4 is too small for sa8d */
+        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 0) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 0) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
+        return abs(sourceEnergy - reconEnergy);
+    }
+}
+#endif
 
 void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride,
                                     pixel *src,  intptr_t srcStride, int w, int h)
@@ -1209,11 +1339,19 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.sa8d[BLOCK_32x32] = sa8d16<32, 32>;
     p.sa8d[BLOCK_64x64] = sa8d16<64, 64>;
 
-    p.psy_cost[BLOCK_4x4] = psyCost<BLOCK_4x4>;
-    p.psy_cost[BLOCK_8x8] = psyCost<BLOCK_8x8>;
-    p.psy_cost[BLOCK_16x16] = psyCost<BLOCK_16x16>;
-    p.psy_cost[BLOCK_32x32] = psyCost<BLOCK_32x32>;
-    p.psy_cost[BLOCK_64x64] = psyCost<BLOCK_64x64>;
+    p.psy_cost_pp[BLOCK_4x4] = psyCost_pp<BLOCK_4x4>;
+    p.psy_cost_pp[BLOCK_8x8] = psyCost_pp<BLOCK_8x8>;
+    p.psy_cost_pp[BLOCK_16x16] = psyCost_pp<BLOCK_16x16>;
+    p.psy_cost_pp[BLOCK_32x32] = psyCost_pp<BLOCK_32x32>;
+    p.psy_cost_pp[BLOCK_64x64] = psyCost_pp<BLOCK_64x64>;
+
+#if !HIGH_BIT_DEPTH
+    p.psy_cost_ss[BLOCK_4x4] = psyCost_ss<BLOCK_4x4>;
+    p.psy_cost_ss[BLOCK_8x8] = psyCost_ss<BLOCK_8x8>;
+    p.psy_cost_ss[BLOCK_16x16] = psyCost_ss<BLOCK_16x16>;
+    p.psy_cost_ss[BLOCK_32x32] = psyCost_ss<BLOCK_32x32>;
+    p.psy_cost_ss[BLOCK_64x64] = psyCost_ss<BLOCK_64x64>;
+#endif
 
     p.sa8d_inter[LUMA_4x4]   = satd_4x4;
     p.sa8d_inter[LUMA_8x8]   = sa8d_8x8;
