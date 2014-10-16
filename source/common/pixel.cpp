@@ -108,7 +108,6 @@ int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
     return sum;
 }
 
-#if !HIGH_BIT_DEPTH
 template<int lx, int ly>
 int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
 {
@@ -127,7 +126,6 @@ int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2
 
     return sum;
 }
-#endif
 
 template<int lx, int ly>
 void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int32_t *res)
@@ -247,7 +245,6 @@ int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
     return (int)(sum >> 1);
 }
 
-#if !HIGH_BIT_DEPTH
 int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][2];
@@ -275,7 +272,6 @@ int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride
 
     return (int)(sum >> 1);
 }
-#endif
 
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
 int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
@@ -380,7 +376,6 @@ int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-#if !HIGH_BIT_DEPTH
 inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
 {
     sum2_t tmp[8][4];
@@ -422,7 +417,6 @@ int sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
-#endif
 
 int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
@@ -871,7 +865,6 @@ int psyCost_pp(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
     }
 }
 
-#if !HIGH_BIT_DEPTH
 template<int size>
 int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride)
 {
@@ -904,7 +897,6 @@ int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstri
         return abs(sourceEnergy - reconEnergy);
     }
 }
-#endif
 
 void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride,
                                     pixel *src,  intptr_t srcStride, int w, int h)
@@ -1345,13 +1337,11 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.psy_cost_pp[BLOCK_32x32] = psyCost_pp<BLOCK_32x32>;
     p.psy_cost_pp[BLOCK_64x64] = psyCost_pp<BLOCK_64x64>;
 
-#if !HIGH_BIT_DEPTH
     p.psy_cost_ss[BLOCK_4x4] = psyCost_ss<BLOCK_4x4>;
     p.psy_cost_ss[BLOCK_8x8] = psyCost_ss<BLOCK_8x8>;
     p.psy_cost_ss[BLOCK_16x16] = psyCost_ss<BLOCK_16x16>;
     p.psy_cost_ss[BLOCK_32x32] = psyCost_ss<BLOCK_32x32>;
     p.psy_cost_ss[BLOCK_64x64] = psyCost_ss<BLOCK_64x64>;
-#endif
 
     p.sa8d_inter[LUMA_4x4]   = satd_4x4;
     p.sa8d_inter[LUMA_8x8]   = sa8d_8x8;
