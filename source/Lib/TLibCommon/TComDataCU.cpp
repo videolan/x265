@@ -65,48 +65,45 @@ TComDataCU::TComDataCU()
 
 void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index)
 {
-    m_hChromaShift = CHROMA_H_SHIFT(csp);
-    m_vChromaShift = CHROMA_V_SHIFT(csp);
-    m_chromaFormat = csp;
-
-    m_frame         = NULL;
-    m_slice         = NULL;
+    m_hChromaShift  = CHROMA_H_SHIFT(csp);
+    m_vChromaShift  = CHROMA_V_SHIFT(csp);
+    m_chromaFormat  = csp;
     m_numPartitions = numPartition;
-
-    uint32_t sizeL = cuSize * cuSize;
-    uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
 
     m_cuMvField[0].initialize(mvPool, numPartition, index, 0);
     m_cuMvField[1].initialize(mvPool, numPartition, index, 1);
 
-    m_qp                 = dataPool->qpMemBlock             + index * numPartition;
-    m_depth              = dataPool->depthMemBlock          + index * numPartition;
-    m_log2CUSize         = dataPool->log2CUSizeMemBlock     + index * numPartition;
-    m_skipFlag           = dataPool->skipFlagMemBlock       + index * numPartition;
-    m_partSizes          = dataPool->partSizeMemBlock       + index * numPartition;
-    m_predModes          = dataPool->predModeMemBlock       + index * numPartition;
-    m_cuTransquantBypass = dataPool->cuTQBypassMemBlock     + index * numPartition;
+    /* Each CU's data is layed out sequentially within the charMemBlock */
+    uint8_t *charBuf = dataPool->charMemBlock + (numPartition * BytesPerPartition) * index;
 
-    m_bMergeFlags        = dataPool->mergeFlagMemBlock      + index * numPartition;
-    m_lumaIntraDir       = dataPool->lumaIntraDirMemBlock   + index * numPartition;
-    m_chromaIntraDir     = dataPool->chromaIntraDirMemBlock + index * numPartition;
-    m_interDir           = dataPool->interDirMemBlock       + index * numPartition;
+    m_qp          = (char*)charBuf; charBuf += numPartition;
+    m_depth              = charBuf; charBuf += numPartition;
+    m_log2CUSize         = charBuf; charBuf += numPartition;
+    m_partSizes          = charBuf; charBuf += numPartition;
+    m_predModes          = charBuf; charBuf += numPartition;
+    m_skipFlag           = charBuf; charBuf += numPartition;
+    m_bMergeFlags        = charBuf; charBuf += numPartition;
+    m_interDir           = charBuf; charBuf += numPartition;
+    m_mvpIdx[0]          = charBuf; charBuf += numPartition;
+    m_mvpIdx[1]          = charBuf; charBuf += numPartition;
+    m_trIdx              = charBuf; charBuf += numPartition;
+    m_transformSkip[0]   = charBuf; charBuf += numPartition;
+    m_transformSkip[1]   = charBuf; charBuf += numPartition;
+    m_transformSkip[2]   = charBuf; charBuf += numPartition;
+    m_cuTransquantBypass = charBuf; charBuf += numPartition;
+    m_cbf[0]             = charBuf; charBuf += numPartition;
+    m_cbf[1]             = charBuf; charBuf += numPartition;
+    m_cbf[2]             = charBuf; charBuf += numPartition;
+    m_lumaIntraDir       = charBuf; charBuf += numPartition;
+    m_chromaIntraDir     = charBuf; charBuf += numPartition;
 
-    m_trIdx              = dataPool->trIdxMemBlock          + index * numPartition;
-    m_transformSkip[0]   = dataPool->transformSkipMemBlock  + index * numPartition * 3;
-    m_transformSkip[1]   = m_transformSkip[0]               + numPartition;
-    m_transformSkip[2]   = m_transformSkip[0]               + numPartition * 2;
+    X265_CHECK(charBuf == dataPool->charMemBlock + (numPartition * BytesPerPartition) * (index + 1), "CU data layout is broken\n");
 
-    m_cbf[0]             = dataPool->cbfMemBlock            + index * numPartition * 3;
-    m_cbf[1]             = m_cbf[0]                         + numPartition;
-    m_cbf[2]             = m_cbf[0]                         + numPartition * 2;
-
-    m_mvpIdx[0]          = dataPool->mvpIdxMemBlock         + index * numPartition * 2;
-    m_mvpIdx[1]          = m_mvpIdx[0]                      + numPartition;
-
-    m_trCoeff[0]         = dataPool->trCoeffMemBlock        + index * (sizeL + sizeC * 2);
-    m_trCoeff[1]         = m_trCoeff[0]                     + sizeL;
-    m_trCoeff[2]         = m_trCoeff[0]                     + sizeL + sizeC;
+    uint32_t sizeL = cuSize * cuSize;
+    uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
+    m_trCoeff[0] = dataPool->trCoeffMemBlock + index * (sizeL + sizeC * 2);
+    m_trCoeff[1] = m_trCoeff[0] + sizeL;
+    m_trCoeff[2] = m_trCoeff[0] + sizeL + sizeC;
 }
 
 // ====================================================================================================================

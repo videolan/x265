@@ -69,72 +69,7 @@ enum NDBFBlockBorderTag
     NUM_SGU_BORDER
 };
 
-struct DataCUMemPool
-{
-    char*    qpMemBlock;
-    uint8_t* depthMemBlock;
-    uint8_t* log2CUSizeMemBlock;
-    uint8_t* skipFlagMemBlock;
-    uint8_t* partSizeMemBlock;
-    uint8_t* predModeMemBlock;
-    uint8_t* cuTQBypassMemBlock;
-    uint8_t* mergeFlagMemBlock;
-    uint8_t* lumaIntraDirMemBlock;
-    uint8_t* chromaIntraDirMemBlock;
-    uint8_t* interDirMemBlock;
-    uint8_t* trIdxMemBlock;
-    uint8_t* transformSkipMemBlock;
-    uint8_t* cbfMemBlock;
-    uint8_t* mvpIdxMemBlock;
-    coeff_t* trCoeffMemBlock;
-
-    DataCUMemPool() { memset(this, 0, sizeof(*this)); }
-
-    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numInstances)
-    {
-        CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
-        CHECKED_MALLOC(qpMemBlock,                char, numPartition * numInstances);
-
-        CHECKED_MALLOC(depthMemBlock,          uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(log2CUSizeMemBlock,     uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(skipFlagMemBlock,       uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(partSizeMemBlock,       uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(predModeMemBlock,       uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(cuTQBypassMemBlock,     uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(mergeFlagMemBlock,      uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(lumaIntraDirMemBlock,   uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(chromaIntraDirMemBlock, uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(interDirMemBlock,       uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(trIdxMemBlock,          uint8_t, numPartition * numInstances);
-        CHECKED_MALLOC(transformSkipMemBlock,  uint8_t, numPartition * 3 * numInstances);
-        CHECKED_MALLOC(cbfMemBlock,            uint8_t, numPartition * 3 * numInstances);
-        CHECKED_MALLOC(mvpIdxMemBlock,         uint8_t, numPartition * 2 * numInstances);
-
-        return true;
-    fail:
-        return false;
-    }
-
-    void destroy()
-    {
-        X265_FREE(trCoeffMemBlock);
-        X265_FREE(qpMemBlock);
-        X265_FREE(depthMemBlock);
-        X265_FREE(log2CUSizeMemBlock);
-        X265_FREE(cbfMemBlock);
-        X265_FREE(interDirMemBlock);
-        X265_FREE(mergeFlagMemBlock);
-        X265_FREE(lumaIntraDirMemBlock);
-        X265_FREE(chromaIntraDirMemBlock);
-        X265_FREE(trIdxMemBlock);
-        X265_FREE(transformSkipMemBlock);
-        X265_FREE(mvpIdxMemBlock);
-        X265_FREE(cuTQBypassMemBlock);
-        X265_FREE(skipFlagMemBlock);
-        X265_FREE(partSizeMemBlock);
-        X265_FREE(predModeMemBlock);
-    }
-};
+struct DataCUMemPool;
 
 struct CU
 {
@@ -206,6 +141,7 @@ public:
     int           m_hChromaShift;
     int           m_vChromaShift;
 
+    /* Per-part data */
     uint8_t*      m_log2CUSize;         ///< array of cu log2Size
     uint8_t*      m_depth;              ///< array of depths
     uint8_t*      m_skipFlag;           ///< array of skip flags
@@ -221,8 +157,10 @@ public:
     uint8_t*      m_interDir;           ///< array of inter directions
     uint8_t*      m_mvpIdx[2];          ///< array of motion vector predictor candidates or merge candidate indices [0]
     char*         m_qp;                 ///< array of QP values
+    enum { BytesPerPartition = 20 };    // combined sizeof() of all per-part data
 
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
+
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
 
     uint64_t      m_avgCost[4];        // stores the avg cost of CU's in frame for each depth
@@ -361,6 +299,30 @@ protected:
     int  getDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
     void deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const;
+};
+
+struct DataCUMemPool
+{
+    uint8_t* charMemBlock;
+    coeff_t* trCoeffMemBlock;
+
+    DataCUMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; }
+
+    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numInstances)
+    {
+        CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
+        CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * TComDataCU::BytesPerPartition);
+
+        return true;
+    fail:
+        return false;
+    }
+
+    void destroy()
+    {
+        X265_FREE(trCoeffMemBlock);
+        X265_FREE(charMemBlock);
+    }
 };
 
 namespace RasterAddress {
