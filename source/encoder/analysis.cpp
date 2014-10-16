@@ -670,7 +670,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         /* low RD levels might require follow-up work on best mode */
 
-        if (md.bestMode->cu.getMergeFlag(0) && m_param->rdLevel >= 1)
+        if (md.bestMode->cu.m_bMergeFlags[0] && m_param->rdLevel >= 1)
         {
             /* checkMerge2Nx2N_rd0_4() already did a full encode */
         }
@@ -891,7 +891,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                     bHor = true;
                 else if (md.bestMode->cu.m_partSizes[0] == SIZE_Nx2N)
                     bVer = true;
-                else if (md.bestMode->cu.m_partSizes[0] == SIZE_2Nx2N && !md.bestMode->cu.getMergeFlag(0) && !md.bestMode->cu.isSkipped(0))
+                else if (md.bestMode->cu.m_partSizes[0] == SIZE_2Nx2N && !md.bestMode->cu.m_bMergeFlags[0] && !md.bestMode->cu.isSkipped(0))
                 {
                     bHor = true;
                     bVer = true;
@@ -990,12 +990,12 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
     tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     tempPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     tempPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    tempPred->cu.setMergeFlag(0, true);
+    tempPred->cu.m_bMergeFlags[0] = true;
 
     bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
     bestPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     bestPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    bestPred->cu.setMergeFlag(0, true);
+    bestPred->cu.m_bMergeFlags[0] = true;
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
@@ -1079,12 +1079,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
     merge.cu.setPredModeSubParts(MODE_INTER, 0, depth);
     merge.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     merge.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    merge.cu.setMergeFlag(0, true);
+    merge.cu.m_bMergeFlags[0] = true;
 
     skip.cu.setPredModeSubParts(MODE_INTER, 0, depth);
     skip.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     skip.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    skip.cu.setMergeFlag(0, true);
+    skip.cu.m_bMergeFlags[0] = true;
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
     uint8_t interDirNeighbours[MRG_MAX_NUM_CANDS];
@@ -1488,7 +1488,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             residualTransformQuantInter(*bestMode, cuData, 0, depth, tuDepthRange);
             checkDQP(*cu, cuData);
 
-            if (ctu.getMergeFlag(absPartIdx) && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+            if (ctu.m_bMergeFlags[absPartIdx] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
                 cu->setSkipFlagSubParts(true, 0, depth);
                 cu->updatePic(depth);

@@ -268,7 +268,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_cbf[0]           + offset, cu->m_cbf[0],            sizeInChar);
     memcpy(m_cbf[1]           + offset, cu->m_cbf[1],            sizeInChar);
     memcpy(m_cbf[2]           + offset, cu->m_cbf[2],            sizeInChar);
-    memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
+    memcpy(m_bMergeFlags      + offset, cu->m_bMergeFlags,       sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
     memcpy(m_interDir         + offset, cu->getInterDir(),       sizeInChar);
@@ -313,8 +313,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_cbf[0]             + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->m_cbf[1]             + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
+    memcpy(cu->m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, sizeInChar);
 
-    memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
     memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
     memcpy(cu->getInterDir()        + m_absIdxInCTU, m_interDir,         sizeInChar);
@@ -388,7 +388,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_cbf[0]              + partOffset, m_cbf[0], sizeInChar);
     memcpy(cu->m_cbf[1]              + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->m_cbf[2]              + partOffset, m_cbf[2], sizeInChar);
-    memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
+    memcpy(cu->m_bMergeFlags         + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
     memcpy(cu->getInterDir()         + partOffset, m_interDir, sizeInChar);

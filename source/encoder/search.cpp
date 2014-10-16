@@ -1887,7 +1887,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
 
         if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
         {
-            cu->setMergeFlag(absPartIdx, true);
+            cu->m_bMergeFlags[absPartIdx] = true;
             cu->setMergeIndex(absPartIdx, merge.index);
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
@@ -1899,7 +1899,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
         {
             lastMode = 2;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
@@ -1917,7 +1917,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
         {
             lastMode = 0;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(m_bestME[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
@@ -1930,7 +1930,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
         {
             lastMode = 1;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(m_bestME[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
@@ -2002,7 +2002,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
                     return false;
                 }
                 // set merge result
-                cu->setMergeFlag(absPartIdx, true);
+                cu->m_bMergeFlags[absPartIdx] = true;
                 cu->setMergeIndex(absPartIdx, merge.index);
                 cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
                 cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
@@ -2170,7 +2170,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
 
         if (mrgCost < bidirCost && mrgCost < list[0].cost && mrgCost < list[1].cost)
         {
-            cu->setMergeFlag(absPartIdx, true);
+            cu->m_bMergeFlags[absPartIdx] = true;
             cu->setMergeIndex(absPartIdx, merge.index);
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
@@ -2182,7 +2182,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
         {
             lastMode = 2;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
@@ -2200,7 +2200,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
         {
             lastMode = 0;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(list[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
@@ -2213,7 +2213,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
         {
             lastMode = 1;
 
-            cu->setMergeFlag(absPartIdx, false);
+            cu->m_bMergeFlags[absPartIdx] = false;
             cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(list[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
@@ -2462,7 +2462,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         m_entropyCoder.load(m_rdContexts[depth].cur);
 
         uint32_t coeffBits;
-        if (cu->getMergeFlag(0) && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+        if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
         {
             cu->setSkipFlagSubParts(true, 0, cu->m_depth[0]); /* TODO: should be done earlier*/
 
@@ -2566,7 +2566,7 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
         else
         {
             mode.reconYuv.copyFromYuv(mode.predYuv);
-            if (cu->getMergeFlag(0) && cu->m_partSizes[0] == SIZE_2Nx2N)
+            if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N)
                 cu->setSkipFlagSubParts(true, 0, cu->m_depth[0]);
         }
     }

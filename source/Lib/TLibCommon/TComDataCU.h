@@ -280,10 +280,6 @@ public:
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
-    uint8_t*      getMergeFlag()                   { return m_bMergeFlags; }
-    uint8_t       getMergeFlag(uint32_t idx) const { return m_bMergeFlags[idx]; }
-    void          setMergeFlag(uint32_t idx, uint8_t bMergeFlag) { m_bMergeFlags[idx] = bMergeFlag; }
-
     uint8_t*      getMergeIndex()                   { return m_mvpIdx[0]; }
     uint8_t       getMergeIndex(uint32_t idx) const { return m_mvpIdx[0][idx]; }
     void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }

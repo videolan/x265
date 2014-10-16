@@ -824,10 +824,10 @@ void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
     uint32_t depth = cu.m_depth[absPartIdx];
     uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_maxFullDepth - depth) * 2) >> 4;
 
-    for (uint32_t partIdx = 0, subPartIdx = absPartIdx; partIdx < numPU; partIdx++, subPartIdx += puOffset)
+    for (uint32_t puIdx = 0, subPartIdx = absPartIdx; puIdx < numPU; puIdx++, subPartIdx += puOffset)
     {
         codeMergeFlag(cu, subPartIdx);
-        if (cu.getMergeFlag(subPartIdx))
+        if (cu.m_bMergeFlags[subPartIdx])
             codeMergeIndex(cu, subPartIdx);
         else
         {
@@ -863,7 +863,7 @@ void Entropy::codeCoeff(const TComDataCU& cu, uint32_t absPartIdx, uint32_t dept
 {
     if (!cu.isIntra(absPartIdx))
     {
-        if (!(cu.getMergeFlag(absPartIdx) && cu.m_partSizes[absPartIdx] == SIZE_2Nx2N))
+        if (!(cu.m_bMergeFlags[absPartIdx] && cu.m_partSizes[absPartIdx] == SIZE_2Nx2N))
             codeQtRootCbf(cu.getQtRootCbf(absPartIdx));
         if (!cu.getQtRootCbf(absPartIdx))
             return;
@@ -1216,7 +1216,7 @@ void Entropy::codeSkipFlag(const TComDataCU& cu, uint32_t absPartIdx)
 
 void Entropy::codeMergeFlag(const TComDataCU& cu, uint32_t absPartIdx)
 {
-    const uint32_t symbol = cu.getMergeFlag(absPartIdx) ? 1 : 0;
+    const uint32_t symbol = cu.m_bMergeFlags[absPartIdx] ? 1 : 0;
 
     encodeBin(symbol, m_contextState[OFF_MERGE_FLAG_EXT_CTX]);
 }
