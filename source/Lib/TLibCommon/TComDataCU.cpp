@@ -234,7 +234,7 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
      * we know we are only reading from the returned pointers so this is not violating
      * the const contract */
     TComDataCU& ctuSafe = const_cast<TComDataCU&>(ctu);
-    memcpy(m_predModes, ctuSafe.getPredictionMode() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_predModes, ctuSafe.m_predModes + m_absIdxInCTU, sizeInChar);
     memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
     memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 
@@ -263,7 +263,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_transformSkip[1] + offset, cu->m_transformSkip[1],  sizeInChar);
     memcpy(m_transformSkip[2] + offset, cu->m_transformSkip[2],  sizeInChar);
     memcpy(m_skipFlag         + offset, cu->m_skipFlag,          sizeInChar);
-    memcpy(m_predModes        + offset, cu->getPredictionMode(), sizeInChar);
+    memcpy(m_predModes        + offset, cu->m_predModes,         sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
@@ -308,8 +308,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_transformSkip[2]   + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
     memcpy(cu->m_depth              + m_absIdxInCTU, m_depth, sizeInChar);
     memcpy(cu->m_skipFlag           + m_absIdxInCTU, m_skipFlag, sizeInChar);
+    memcpy(cu->m_predModes          + m_absIdxInCTU, m_predModes, sizeInChar);
 
-    memcpy(cu->getPredictionMode()  + m_absIdxInCTU, m_predModes,        sizeInChar);
     memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
     memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
@@ -383,7 +383,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_transformSkip[1]    + partOffset, m_transformSkip[1], sizeInChar);
     memcpy(cu->m_transformSkip[2]    + partOffset, m_transformSkip[2], sizeInChar);
     memcpy(cu->m_skipFlag            + partOffset, m_skipFlag, sizeInChar);
-    memcpy(cu->getPredictionMode()   + partOffset, m_predModes, sizeInChar);
+    memcpy(cu->m_predModes           + partOffset, m_predModes, sizeInChar);
     memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
@@ -710,7 +710,7 @@ int TComDataCU::getLastValidPartIdx(int absPartIdx) const
 {
     int lastValidPartIdx = absPartIdx - 1;
 
-    while (lastValidPartIdx >= 0 && getPredictionMode(lastValidPartIdx) == MODE_NONE)
+    while (lastValidPartIdx >= 0 && m_predModes[lastValidPartIdx] == MODE_NONE)
     {
         uint32_t depth = m_depth[lastValidPartIdx];
         lastValidPartIdx -= m_numPartitions >> (depth << 1);
@@ -840,9 +840,9 @@ void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t
 {
     uint32_t log2CUSize = getLog2CUSize(absPartIdx);
     PartSize partSize   = (PartSize)m_partSizes[absPartIdx];
-    uint32_t quadtreeTUMaxDepth = getPredictionMode(absPartIdx) == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
-    uint32_t intraSplitFlag = (getPredictionMode(absPartIdx) == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
-    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (getPredictionMode(absPartIdx) == MODE_INTER) && (partSize != SIZE_2Nx2N));
+    uint32_t quadtreeTUMaxDepth = m_predModes[absPartIdx] == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
+    uint32_t intraSplitFlag = (m_predModes[absPartIdx] == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
+    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (m_predModes[absPartIdx] == MODE_INTER) && (partSize != SIZE_2Nx2N));
 
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;

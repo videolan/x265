@@ -270,8 +270,6 @@ public:
 
     void          setSkipFlagSubParts(uint8_t skip, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getPredictionMode()                 { return m_predModes; }
-    PredMode      getPredictionMode(uint32_t idx) const { return static_cast<PredMode>(m_predModes[idx]); }
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t*      getLog2CUSize()                     { return m_log2CUSize; }

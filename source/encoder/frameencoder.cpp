@@ -944,7 +944,7 @@ void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
                 log->cntSkipCu[depth]++;
                 log->qTreeSkipCnt[depth]++;
             }
-            else if (ctu.getPredictionMode(absPartIdx) == MODE_INTER)
+            else if (ctu.m_predModes[absPartIdx] == MODE_INTER)
             {
                 log->cntInter[depth]++;
                 log->qTreeInterCnt[depth]++;
@@ -954,7 +954,7 @@ void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
                 else
                     log->cuInterDistribution[depth][AMP_ID]++;
             }
-            else if (ctu.getPredictionMode(absPartIdx) == MODE_INTRA)
+            else if (ctu.m_predModes[absPartIdx] == MODE_INTRA)
             {
                 log->cntIntra[depth]++;
                 log->qTreeIntraCnt[depth]++;

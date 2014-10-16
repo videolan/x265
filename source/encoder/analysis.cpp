@@ -298,7 +298,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
     if (!m_slice->isIntra())
     {
         m_entropyCoder.codeSkipFlag(cu, 0);
-        m_entropyCoder.codePredMode(cu.getPredictionMode(0));
+        m_entropyCoder.codePredMode(cu.m_predModes[0]);
     }
 
     m_entropyCoder.codePartSize(cu, 0, depth);
@@ -677,7 +677,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         }
         else if (m_param->rdLevel == 2)
         {
-            if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
+            if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
             {
                 /* finally code the best mode selected from SA8D costs */
                 for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
@@ -687,13 +687,13 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 }
                 encodeResAndCalcRdInterCU(*md.bestMode, cuData);
             }
-            else if (md.bestMode->cu.getPredictionMode(0) == MODE_INTRA)
+            else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
         }
         else
         {
             /* Generate recon YUV for this CU. Note: does not update any CABAC context! */
-            if (md.bestMode->cu.getPredictionMode(0) == MODE_INTER)
+            if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
             {
                 for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
@@ -786,7 +786,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
                 splitPred->addSubCosts(*nd.bestMode);
 
-                if (nd.bestMode->cu.getPredictionMode(0) != MODE_INTRA)
+                if (nd.bestMode->cu.m_predModes[0] != MODE_INTRA)
                 {
                     /* more early-out statistics */
                     TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
@@ -1404,7 +1404,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
     m_entropyCoder.codeSkipFlag(*cu, 0);
-    m_entropyCoder.codePredMode(cu->getPredictionMode(0));
+    m_entropyCoder.codePredMode(cu->m_predModes[0]);
     m_entropyCoder.codePartSize(*cu, 0, cuData.depth);
     m_entropyCoder.codePredInfo(*cu, 0);
     intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
@@ -1452,7 +1452,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
     ShortYuv& resiYuv = bestMode->resiYuv;
     Yuv& recoYuv = bestMode->reconYuv;
 
-    if (ctu.getPredictionMode(absPartIdx) == MODE_INTER)
+    if (ctu.m_predModes[absPartIdx] == MODE_INTER)
     {
         if (!ctu.m_skipFlag[absPartIdx])
         {

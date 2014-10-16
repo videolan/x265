@@ -559,7 +559,7 @@ void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartI
     }
 
     if (!slice->isIntra())
-        codePredMode(cu.getPredictionMode(absPartIdx));
+        codePredMode(cu.m_predModes[absPartIdx]);
 
     codePartSize(cu, absPartIdx, depth);
 
@@ -635,11 +635,11 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
         }
     }
 
-    if (cu.getPredictionMode(absPartIdx) == MODE_INTRA && cu.m_partSizes[absPartIdx] == SIZE_NxN && depth == cu.m_depth[absPartIdx])
+    if (cu.m_predModes[absPartIdx] == MODE_INTRA && cu.m_partSizes[absPartIdx] == SIZE_NxN && depth == cu.m_depth[absPartIdx])
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (cu.getPredictionMode(absPartIdx) == MODE_INTER && (cu.m_partSizes[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_depth[absPartIdx] &&
+    else if (cu.m_predModes[absPartIdx] == MODE_INTER && (cu.m_partSizes[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_depth[absPartIdx] &&
              (cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
     {
         if (log2TrSize > *depthRange)
@@ -720,7 +720,7 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
     }
     else
     {
-        if (cu.getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu.m_depth[absPartIdx] && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
+        if (cu.m_predModes[absPartIdx] != MODE_INTRA && depth == cu.m_depth[absPartIdx] && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
             X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
