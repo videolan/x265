@@ -65,36 +65,33 @@ bool Frame::create(x265_param *param)
     ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     ok &= m_lowres.create(m_origPicYuv, param->bframes, !!param->rc.aqMode);
 
-    bool isVbv = param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0;
-    if (ok && (isVbv || param->rc.aqMode))
-    {
-        int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-        int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
-        CHECKED_MALLOC(m_totalBitsPerCTU, uint32_t, numRows * numCols);
+    int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
-        if (param->rc.aqMode)
-            CHECKED_MALLOC(m_qpaAq, double, numRows);
-        if (isVbv)
-        {
-            CHECKED_MALLOC(m_rowDiagQp, double, numRows);
-            CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
-            CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
-            CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
-            CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
-            CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
-            CHECKED_MALLOC(m_qpaRc, double, numRows);
-        }
-        reinit(param);
+    CHECKED_MALLOC(m_totalBitsPerCTU, uint32_t, numRows * numCols);
+    if (param->rc.aqMode)
+        CHECKED_MALLOC(m_qpaAq, double, numRows);
+
+    if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
+    {
+        CHECKED_MALLOC(m_rowDiagQp, double, numRows);
+        CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
+        CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
+        CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
+        CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
+        CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
+        CHECKED_MALLOC(m_qpaRc, double, numRows);
     }
+
+    reinit(param);
 
     return ok;
 
 fail:
-    ok = false;
-    return ok;
+    return false;
 }
 
 bool Frame::allocPicSym(x265_param *param)
