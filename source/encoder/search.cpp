@@ -921,7 +921,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
             initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, chromaId);
             pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
-            uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdxC);
+            uint32_t chromaPredMode = cu->m_chromaIntraDir[absPartIdxC];
             if (chromaPredMode == DM_CHROMA_IDX)
                 chromaPredMode = cu->getLumaIntraDir((m_csp == X265_CSP_I444) ? absPartIdxC : 0);
             if (m_csp == X265_CSP_I422)
@@ -1159,7 +1159,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
                 const bool useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdxC];
                 cu->setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
-                uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdxC);
+                uint32_t chromaPredMode = cu->m_chromaIntraDir[absPartIdxC];
 
                 // update chroma mode
                 if (chromaPredMode == DM_CHROMA_IDX)

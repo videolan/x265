@@ -270,7 +270,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_cbf[2]           + offset, cu->m_cbf[2],            sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->m_bMergeFlags,       sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
-    memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
+    memcpy(m_chromaIntraDir   + offset, cu->m_chromaIntraDir,    sizeInChar);
     memcpy(m_interDir         + offset, cu->m_interDir,          sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
@@ -315,9 +315,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
     memcpy(cu->m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, sizeInChar);
     memcpy(cu->m_interDir           + m_absIdxInCTU, m_interDir, sizeInChar);
-
-    memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
-    memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
+    memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir, sizeInChar);
+    memcpy(cu->m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
@@ -351,8 +350,7 @@ void TComDataCU::updatePic(uint32_t depth)
     memcpy(cu->m_cbf[0] + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->m_cbf[1] + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->m_cbf[2] + m_absIdxInCTU, m_cbf[2], sizeInChar);
-
-    memcpy(cu->getChromaIntraDir() + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
+    memcpy(cu->m_chromaIntraDir + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -391,7 +389,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_bMergeFlags         + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->m_interDir            + partOffset, m_interDir, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
-    memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
+    memcpy(cu->m_chromaIntraDir      + partOffset, m_chromaIntraDir, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
@@ -1994,7 +1992,7 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         if (log2TrSize > (MDCS_LOG2_MAX_SIZE - m_hChromaShift))
             return SCAN_DIAG;
 
-        dirMode = getChromaIntraDir(absPartIdx);
+        dirMode = m_chromaIntraDir[absPartIdx];
         if (dirMode == DM_CHROMA_IDX)
         {
             dirMode = getLumaIntraDir((m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC);

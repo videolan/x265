@@ -286,8 +286,6 @@ public:
     uint8_t  getLumaIntraDir(uint32_t idx) const { return m_lumaIntraDir[idx]; }
     void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t* getChromaIntraDir()       { return m_chromaIntraDir; }
-    uint8_t  getChromaIntraDir(uint32_t idx) const { return m_chromaIntraDir[idx]; }
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);

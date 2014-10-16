@@ -1312,7 +1312,7 @@ void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, boo
 
 void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx)
 {
-    uint32_t intraDirChroma = cu.getChromaIntraDir(absPartIdx);
+    uint32_t intraDirChroma = cu.m_chromaIntraDir[absPartIdx];
 
     if (intraDirChroma == DM_CHROMA_IDX)
         encodeBin(0, m_contextState[OFF_CHROMA_PRED_CTX]);
