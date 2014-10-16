@@ -389,10 +389,6 @@ public:
 
     /* Death Row, remove at earliest convenience */
     TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
-    coeff_t*      getCoeffY()                 { return m_trCoeff[0]; }
-    coeff_t*      getCoeffCb()                { return m_trCoeff[1]; }
-    coeff_t*      getCoeffCr()                { return m_trCoeff[2]; }
-    coeff_t*      getCoeff(TextType ttype)    { return m_trCoeff[ttype]; }
 
 protected:
 

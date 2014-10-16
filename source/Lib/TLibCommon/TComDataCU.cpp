@@ -291,7 +291,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
 
     uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmp2 = partUnitIdx * tmp;
-    memcpy(m_trCoeff[0] + tmp2, cu->getCoeffY(), sizeof(coeff_t) * tmp);
+    memcpy(m_trCoeff[0] + tmp2, cu->m_trCoeff[0], sizeof(coeff_t) * tmp);
 
     uint32_t tmpC  = tmp  >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmp2 >> (m_hChromaShift + m_vChromaShift);
@@ -337,7 +337,7 @@ void TComDataCU::copyToPic(uint32_t depth)
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY  >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
@@ -366,7 +366,7 @@ void TComDataCU::copyCodedToPic(uint32_t depth)
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
     tmpY  >>= m_hChromaShift + m_vChromaShift;
     tmpY2 >>= m_hChromaShift + m_vChromaShift;
     memcpy(cu->m_trCoeff[1] + tmpY2, m_trCoeff[1], sizeof(coeff_t) * tmpY);
@@ -411,7 +411,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth - partDepth) * 2);
     uint32_t tmpY2 = partOffset << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->getCoeffY() + tmpY2, m_trCoeff[0],  sizeof(coeff_t) * tmpY);
+    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);

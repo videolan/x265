@@ -703,7 +703,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
         int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
         pixel*   recon        = reconYuv->getLumaAddr(absPartIdx);
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        coeff_t* coeff        = cu->getCoeffY() + coeffOffsetY;
+        coeff_t* coeff        = cu->m_trCoeff[0] + coeffOffsetY;
 
         uint32_t zorder           = cuData.encodeIdx + absPartIdx;
         pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
@@ -781,7 +781,7 @@ void Search::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
         // copy transform coefficients
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffSrcY    = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
-        coeff_t* coeffDestY   = cu->getCoeffY()           + coeffOffsetY;
+        coeff_t* coeffDestY   = cu->m_trCoeff[0]          + coeffOffsetY;
         ::memcpy(coeffDestY, coeffSrcY, sizeof(coeff_t) << (log2TrSize * 2));
 
         // copy reconstruction
@@ -1085,10 +1085,10 @@ void Search::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         uint32_t qtLayer   = log2TrSize - 2;
         coeff_t* coeffSrcU = m_qtTempCoeff[1][qtLayer] + coeffOffsetC;
         coeff_t* coeffSrcV = m_qtTempCoeff[2][qtLayer] + coeffOffsetC;
-        coeff_t* coeffDstU = cu->getCoeffCb()          + coeffOffsetC;
-        coeff_t* coeffDstV = cu->getCoeffCr()          + coeffOffsetC;
-        ::memcpy(coeffDstU, coeffSrcU, sizeof(coeff_t) * numCoeffC);
-        ::memcpy(coeffDstV, coeffSrcV, sizeof(coeff_t) * numCoeffC);
+        coeff_t* coeffDstU = cu->m_trCoeff[1]          + coeffOffsetC;
+        coeff_t* coeffDstV = cu->m_trCoeff[2]          + coeffOffsetC;
+        memcpy(coeffDstU, coeffSrcU, sizeof(coeff_t) * numCoeffC);
+        memcpy(coeffDstV, coeffSrcV, sizeof(coeff_t) * numCoeffC);
 
         // copy reconstruction
         m_qtTempShortYuv[qtLayer].copyPartToPartChroma(*reconYuv, absPartIdx, log2TrSizeC + hChromaShift);
@@ -1150,7 +1150,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
                 int16_t* residual       = resiYuv->getChromaAddr(chromaId, absPartIdxC);
                 pixel*   recon          = reconYuv->getChromaAddr(chromaId, absPartIdxC);
                 uint32_t coeffOffsetC   = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
-                coeff_t* coeff          = cu->getCoeff(ttype) + coeffOffsetC;
+                coeff_t* coeff          = cu->m_trCoeff[ttype] + coeffOffsetC;
                 uint32_t zorder         = cuData.encodeIdx + absPartIdxC;
                 pixel*   reconIPred     = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
                 uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
@@ -2619,9 +2619,9 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);
-        coeff_t *coeffCurY = cu->getCoeffY()  + coeffOffsetY;
-        coeff_t *coeffCurU = cu->getCoeffCb() + coeffOffsetC;
-        coeff_t *coeffCurV = cu->getCoeffCr() + coeffOffsetC;
+        coeff_t *coeffCurY = cu->m_trCoeff[0]  + coeffOffsetY;
+        coeff_t *coeffCurU = cu->m_trCoeff[1] + coeffOffsetC;
+        coeff_t *coeffCurV = cu->m_trCoeff[2] + coeffOffsetC;
 
         uint32_t sizeIdx  = log2TrSize  - 2;
         uint32_t sizeIdxC = log2TrSizeC - 2;
@@ -3635,7 +3635,7 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
             uint32_t numCoeffY = 1 << (log2TrSize * 2);
             uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
             coeff_t* coeffSrcY = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
-            coeff_t* coeffDstY = cu->getCoeffY()           + coeffOffsetY;
+            coeff_t* coeffDstY = cu->m_trCoeff[0]           + coeffOffsetY;
             ::memcpy(coeffDstY, coeffSrcY, sizeof(coeff_t) * numCoeffY);
             if (bCodeChroma)
             {
@@ -3644,8 +3644,8 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
 
                 coeff_t* coeffSrcU = m_qtTempCoeff[1][qtLayer] + coeffOffsetC;
                 coeff_t* coeffSrcV = m_qtTempCoeff[2][qtLayer] + coeffOffsetC;
-                coeff_t* coeffDstU = cu->getCoeffCb()          + coeffOffsetC;
-                coeff_t* coeffDstV = cu->getCoeffCr()          + coeffOffsetC;
+                coeff_t* coeffDstU = cu->m_trCoeff[1]          + coeffOffsetC;
+                coeff_t* coeffDstV = cu->m_trCoeff[2]          + coeffOffsetC;
                 ::memcpy(coeffDstU, coeffSrcU, sizeof(coeff_t) * numCoeffC);
                 ::memcpy(coeffDstV, coeffSrcV, sizeof(coeff_t) * numCoeffC);
             }
