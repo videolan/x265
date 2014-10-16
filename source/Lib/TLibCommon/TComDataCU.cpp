@@ -873,13 +873,6 @@ void TComDataCU::setDepthSubParts(uint32_t depth)
     memset(m_depth, depth, sizeof(uint8_t) * curPartNum);
 }
 
-bool TComDataCU::isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth) const
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    return ((m_absIdxInCTU + absPartIdx) & (curPartNum - 1)) == 0;
-}
-
 void TComDataCU::setPartSizeSubParts(PartSize mode, uint32_t absPartIdx, uint32_t depth)
 {
     X265_CHECK(sizeof(*m_partSizes) == 1, "size check failure\n");

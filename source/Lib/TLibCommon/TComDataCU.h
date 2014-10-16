@@ -228,7 +228,6 @@ public:
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
     uint8_t  getNumPartInter() const { return nbPartsTable[(int)m_partSizes[0]]; }
-    bool     isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth) const;
 
     void     getMvField(const TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;
 
