@@ -31,11 +31,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComDataCU.h
-    \brief    CU data structure (header)
-    \todo     not all entities are documented
-*/
-
 #ifndef X265_TCOMDATACU_H
 #define X265_TCOMDATACU_H
 
@@ -56,16 +51,6 @@ struct TUEntropyCodingParameters
     uint32_t        log2TrSizeCG;
     uint32_t        firstSignificanceMapContext;
 };
-
-class Frame;
-class Slice;
-
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Non-deblocking in-loop filter processing block data structure
-// ====================================================================================================================
 
 /// Non-deblocking filter processing block border tag
 enum NDBFBlockBorderTag
