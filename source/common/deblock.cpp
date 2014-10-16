@@ -51,7 +51,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
     const Frame* frame = cu->m_frame;
     uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
 
-    if (cu->getDepth(absZOrderIdx) > depth)
+    if (cu->m_depth[absZOrderIdx] > depth)
     {
         uint32_t qNumParts   = curNumParts >> 2;
         uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
@@ -114,7 +114,7 @@ void Deblock::setEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, int32_t di
 
 void Deblock::setEdgefilterTU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[])
 {
-    if (cu->getTransformIdx(absZOrderIdx) + cu->getDepth(absZOrderIdx) > (uint8_t)depth)
+    if (cu->getTransformIdx(absZOrderIdx) + cu->m_depth[absZOrderIdx] > depth)
     {
         const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;

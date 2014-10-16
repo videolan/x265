@@ -533,7 +533,7 @@ void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartI
     if (cuSplitFlag) 
         codeSplitFlag(cu, absPartIdx, depth);
 
-    if (depth < cu.getDepth(absPartIdx) && depth < g_maxCUDepth)
+    if (depth < cu.m_depth[absPartIdx] && depth < g_maxCUDepth)
     {
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
 
@@ -610,7 +610,7 @@ void Entropy::finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth
 void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP, uint32_t depthRange[2])
 {
-    const bool subdiv = cu.getTransformIdx(absPartIdx) + cu.getDepth(absPartIdx) > (uint8_t)depth;
+    const bool subdiv = cu.getTransformIdx(absPartIdx) + cu.m_depth[absPartIdx] > (uint8_t)depth;
     uint32_t hChromaShift = cu.m_hChromaShift;
     uint32_t vChromaShift = cu.m_vChromaShift;
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -635,11 +635,11 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
         }
     }
 
-    if (cu.getPredictionMode(absPartIdx) == MODE_INTRA && cu.getPartitionSize(absPartIdx) == SIZE_NxN && depth == cu.getDepth(absPartIdx))
+    if (cu.getPredictionMode(absPartIdx) == MODE_INTRA && cu.getPartitionSize(absPartIdx) == SIZE_NxN && depth == cu.m_depth[absPartIdx])
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
-    else if (cu.getPredictionMode(absPartIdx) == MODE_INTER && (cu.getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu.getDepth(absPartIdx) &&
+    else if (cu.getPredictionMode(absPartIdx) == MODE_INTER && (cu.getPartitionSize(absPartIdx) != SIZE_2Nx2N) && depth == cu.m_depth[absPartIdx] &&
              (cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
     {
         if (log2TrSize > *depthRange)
@@ -669,7 +669,7 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
         codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
-    const uint32_t trDepthCurr = depth - cu.getDepth(absPartIdx);
+    const uint32_t trDepthCurr = depth - cu.m_depth[absPartIdx];
     const bool bFirstCbfOfCU = trDepthCurr == 0;
 
     bool mCodeAll = true;
@@ -720,7 +720,7 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
     }
     else
     {
-        if (cu.getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu.getDepth(absPartIdx) && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
+        if (cu.getPredictionMode(absPartIdx) != MODE_INTRA && depth == cu.m_depth[absPartIdx] && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
             X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
@@ -805,7 +805,7 @@ void Entropy::codePredInfo(const TComDataCU& cu, uint32_t absPartIdx)
 
             if ((cu.m_chromaFormat == X265_CSP_I444) && (cu.getPartitionSize(absPartIdx) == SIZE_NxN))
             {
-                uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.getDepth(absPartIdx) << 1)) >> 2;
+                uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.m_depth[absPartIdx] << 1)) >> 2;
                 codeIntraDirChroma(cu, absPartIdx + partOffset);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 2);
                 codeIntraDirChroma(cu, absPartIdx + partOffset * 3);
@@ -821,7 +821,7 @@ void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
 {
     PartSize partSize = cu.getPartitionSize(absPartIdx);
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
-    uint32_t depth = cu.getDepth(absPartIdx);
+    uint32_t depth = cu.m_depth[absPartIdx];
     uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_maxFullDepth - depth) * 2) >> 4;
 
     for (uint32_t partIdx = 0, subPartIdx = absPartIdx; partIdx < numPU; partIdx++, subPartIdx += puOffset)
@@ -1246,7 +1246,7 @@ void Entropy::codeSplitFlag(const TComDataCU& cu, uint32_t absPartIdx, uint32_t 
     X265_CHECK(depth < g_maxCUDepth, "invalid depth\n");
 
     uint32_t ctx           = cu.getCtxSplitFlag(absPartIdx, depth);
-    uint32_t currSplitFlag = (cu.getDepth(absPartIdx) > depth) ? 1 : 0;
+    uint32_t currSplitFlag = (cu.m_depth[absPartIdx] > depth) ? 1 : 0;
 
     X265_CHECK(ctx < 3, "ctx out of range\n");
     encodeBin(currSplitFlag, m_contextState[OFF_SPLIT_FLAG_CTX + ctx]);
@@ -1264,7 +1264,7 @@ void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, boo
     int predIdx[4];
     PartSize mode = cu.getPartitionSize(absPartIdx);
     uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
-    uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.getDepth(absPartIdx) << 1)) >> 2;
+    uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.m_depth[absPartIdx] << 1)) >> 2;
 
     for (j = 0; j < partNum; j++)
     {

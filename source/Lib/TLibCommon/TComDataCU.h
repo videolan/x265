@@ -266,8 +266,6 @@ public:
 
     uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
 
-    uint8_t*      getDepth()                       { return m_depth; }
-    uint8_t       getDepth(uint32_t idx) const     { return m_depth[idx]; }
     void          setDepthSubParts(uint32_t depth);
 
     char*         getQP()                         { return m_qp; }

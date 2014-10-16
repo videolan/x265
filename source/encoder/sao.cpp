@@ -1549,7 +1549,7 @@ void restoreLFDisabledOrigYuv(Frame* curFrame)
 void origCUSampleRestoration(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth)
 {
     // go to sub-CU
-    if (cu->getDepth(absZOrderIdx) > depth)
+    if (cu->m_depth[absZOrderIdx] > depth)
     {
         uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         uint32_t qNumParts   = curNumParts >> 2;

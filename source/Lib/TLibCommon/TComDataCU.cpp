@@ -243,7 +243,7 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     memcpy(m_predModes, ctuSafe.getPredictionMode() + m_absIdxInCTU, sizeof(*m_predModes) * m_numPartitions);
 
     memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_depth, ctuSafe.getDepth() + m_absIdxInCTU, sizeInChar);
+    memcpy(m_depth, ctu.m_depth + m_absIdxInCTU, sizeInChar);
     memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 }
 
@@ -278,7 +278,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_cbf[0]           + offset, cu->getCbf(TEXT_LUMA), sizeInChar);
     memcpy(m_cbf[1]           + offset, cu->getCbf(TEXT_CHROMA_U), sizeInChar);
     memcpy(m_cbf[2]           + offset, cu->getCbf(TEXT_CHROMA_V), sizeInChar);
-    memcpy(m_depth            + offset, cu->getDepth(),  sizeInChar);
+    memcpy(m_depth            + offset, cu->m_depth,  sizeInChar);
     memcpy(m_log2CUSize       + offset, cu->getLog2CUSize(), sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
@@ -326,7 +326,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
 
-    memcpy(cu->getDepth()  + m_absIdxInCTU, m_depth,  sizeInChar);
+    memcpy(cu->m_depth  + m_absIdxInCTU, m_depth,  sizeInChar);
     memcpy(cu->getLog2CUSize() + m_absIdxInCTU, m_log2CUSize, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
@@ -401,7 +401,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_cbf[2], sizeInChar);
 
-    memcpy(cu->getDepth()  + partOffset, m_depth,  sizeInChar);
+    memcpy(cu->m_depth  + partOffset, m_depth,  sizeInChar);
     memcpy(cu->getLog2CUSize() + partOffset, m_log2CUSize, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
@@ -722,7 +722,7 @@ int TComDataCU::getLastValidPartIdx(int absPartIdx) const
 
     while (lastValidPartIdx >= 0 && getPredictionMode(lastValidPartIdx) == MODE_NONE)
     {
-        uint32_t depth = getDepth(lastValidPartIdx);
+        uint32_t depth = m_depth[lastValidPartIdx];
         lastValidPartIdx -= m_numPartitions >> (depth << 1);
     }
 
@@ -837,11 +837,11 @@ uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const
 
     // Get left split flag
     tempCU = getPULeft(tempPartIdx, m_absIdxInCTU + absPartIdx);
-    ctx  = (tempCU) ? ((tempCU->getDepth(tempPartIdx) > depth) ? 1 : 0) : 0;
+    ctx  = (tempCU) ? ((tempCU->m_depth[tempPartIdx] > depth) ? 1 : 0) : 0;
 
     // Get above split flag
     tempCU = getPUAbove(tempPartIdx, m_absIdxInCTU + absPartIdx);
-    ctx += (tempCU) ? ((tempCU->getDepth(tempPartIdx) > depth) ? 1 : 0) : 0;
+    ctx += (tempCU) ? ((tempCU->m_depth[tempPartIdx] > depth) ? 1 : 0) : 0;
 
     return ctx;
 }
@@ -943,7 +943,7 @@ void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32
 
     if (!foundNonZeroCbf)
     {
-        if (cu->getDepth(absPartIdx) > depth)
+        if (cu->m_depth[absPartIdx] > depth)
         {
             for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
                 cu->setQPSubCUs(qp, cu, absPartIdx + partUnitIdx * curPartNumQ, depth + 1, foundNonZeroCbf);

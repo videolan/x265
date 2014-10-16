@@ -146,7 +146,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
                 TComDataCU *bestCU = &m_modeDepth[0].bestMode->cu;
-                memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->getDepth(), sizeof(uint8_t) * numPartition);
+                memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_depth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->getLumaIntraDir(), sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->getPartitionSize(), sizeof(char) * numPartition);
                 m_frame->m_intraData->cuAddr[ctu.m_cuAddr] = ctu.m_cuAddr;
@@ -450,7 +450,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             previousQP = cu.getQP(0);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
             {
-                uint32_t d = cu.getDepth(cuData.encodeIdx + i);
+                uint32_t d = cu.m_depth[cuData.encodeIdx + i];
                 minDepth0 = X265_MIN(d, minDepth0);
                 sum0 += d;
             }
@@ -460,7 +460,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(cuAddr);
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth1; i += 4)
             {
-                uint32_t d = cu.getDepth(cuData.encodeIdx + i);
+                uint32_t d = cu.m_depth[cuData.encodeIdx + i];
                 minDepth1 = X265_MIN(d, minDepth1);
                 sum1 += d;
             }
@@ -1213,7 +1213,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
 void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
 {
     TComDataCU* cu = &intraMode.cu;
-    uint32_t depth = cu->getDepth(0);
+    uint32_t depth = cu->m_depth[0];
 
     cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     cu->setPredModeSubParts(MODE_INTRA, 0, depth);
@@ -1397,7 +1397,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     uint32_t puBits, psyEnergy;
     intraMode.distortion = xRecurIntraCodingQT(intraMode, cuData, 0, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, 0, 0, reconYuv);  /* TODO: why is recon a second call? */
-    cu->copyToPic(cu->getDepth(0), 0, 0);
+    cu->copyToPic(cu->m_depth[0], 0, 0);
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();
@@ -1423,7 +1423,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
 
 void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
 {
-    if (cuData.depth < ctu.getDepth(cuData.encodeIdx) && cuData.depth < g_maxCUDepth)
+    if (cuData.depth < ctu.m_depth[cuData.encodeIdx] && cuData.depth < g_maxCUDepth)
     {
         for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
         {
@@ -1598,7 +1598,7 @@ void Analysis::checkDQP(TComDataCU& cu, const CU& cuData)
 {
     if (m_slice->m_pps->bUseDQP && cuData.depth <= m_slice->m_pps->maxCuDQPDepth)
     {
-        if (cu.getDepth(0) > cuData.depth) // detect splits
+        if (cu.m_depth[0] > cuData.depth) // detect splits
         {
             bool hasResidual = false;
             for (uint32_t blkIdx = 0; blkIdx < cu.m_numPartitions; blkIdx++)
