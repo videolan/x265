@@ -1486,7 +1486,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
 
             // Residual encoding
             m_quant.setQPforQuant(*cu);
-            residualTransformQuantInter(*bestMode, cuData, absPartIdx, depth, tuDepthRange);
+            residualTransformQuantInter(*bestMode, cuData, 0, depth, tuDepthRange);
             checkDQP(*cu, cuData);
 
             if (ctu.getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
