@@ -114,7 +114,7 @@ void Deblock::setEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, int32_t di
 
 void Deblock::setEdgefilterTU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[])
 {
-    if (cu->getTransformIdx(absZOrderIdx) + cu->m_depth[absZOrderIdx] > depth)
+    if ((uint32_t)cu->getTransformIdx(absZOrderIdx) + cu->m_depth[absZOrderIdx] > depth)
     {
         const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;
@@ -479,7 +479,7 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
         uint32_t bs = blockingStrength[bsAbsIdx];
         if (bs)
         {
-            int32_t qpQ = cu->getQP(bsAbsIdx);
+            int32_t qpQ = cu->m_qp[bsAbsIdx];
             partQ = bsAbsIdx;
 
             // Derive neighboring PU index
@@ -488,7 +488,7 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
             else // (dir == EDGE_HOR)
                 cuP = cuQ->getPUAbove(partP, partQ);
 
-            int32_t qpP = cuP->getQP(partP);
+            int32_t qpP = cuP->m_qp[partP];
             int32_t qp = (qpP + qpQ + 1) >> 1;
 
             int32_t indexB = Clip3(0, QP_MAX_SPEC, qp + betaOffset);
@@ -591,7 +591,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
 
         if (bs > 1)
         {
-            int32_t qpQ = cu->getQP(bsAbsIdx);
+            int32_t qpQ = cu->m_qp[bsAbsIdx];
             partQ = bsAbsIdx;
 
             // Derive neighboring PU index
@@ -600,7 +600,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
             else // (dir == EDGE_HOR)
                 cuP = cuQ->getPUAbove(partP, partQ);
 
-            int32_t qpP = cuP->getQP(partP);
+            int32_t qpP = cuP->m_qp[partP];
 
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {

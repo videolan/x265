@@ -440,14 +440,14 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     {
         /* Do not attempt to code a block larger than the largest block in the
          * co-located CTUs in L0 and L1 */
-        int currentQP = parentCTU.getQP(0);
+        int currentQP = parentCTU.m_qp[0];
         int previousQP = currentQP;
         uint32_t minDepth0 = minDepth, minDepth1 = minDepth;
         uint32_t sum0 = 0, sum1 = 0;
         if (m_slice->m_numRefIdx[0])
         {
             const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getCU(cuAddr);
-            previousQP = cu.getQP(0);
+            previousQP = cu.m_qp[0];
             for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
             {
                 uint32_t d = cu.m_depth[cuData.encodeIdx + i];

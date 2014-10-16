@@ -268,9 +268,6 @@ public:
 
     void          setDepthSubParts(uint32_t depth);
 
-    char*         getQP()                         { return m_qp; }
-    char          getQP(uint32_t idx) const       { return m_qp[idx]; }
-    void          setQP(uint32_t idx, uint8_t value) { m_qp[idx] = value; }
     void          setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     int           getLastValidPartIdx(int absPartIdx) const;
     char          getLastCodedQP(uint32_t absPartIdx) const;

@@ -449,7 +449,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                                    !cu->getCUTransquantBypass(0));
         if (checkTransformSkip)
         {
-            checkTransformSkip &= !((cu->getQP(0) == 0));
+            checkTransformSkip &= !((cu->m_qp[0] == 0));
             if (m_param->bEnableTSkipFast)
                 checkTransformSkip &= (cu->getPartitionSize(absPartIdx) == SIZE_NxN);
         }

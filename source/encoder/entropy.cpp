@@ -1408,7 +1408,7 @@ void Entropy::codeMvd(const TComDataCU& cu, uint32_t absPartIdx, int list)
 
 void Entropy::codeDeltaQP(const TComDataCU& cu, uint32_t absPartIdx)
 {
-    int dqp = cu.getQP(absPartIdx) - cu.getRefQP(absPartIdx);
+    int dqp = cu.m_qp[absPartIdx] - cu.getRefQP(absPartIdx);
 
     int qpBdOffsetY = QP_BD_OFFSET;
 

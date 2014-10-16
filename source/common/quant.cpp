@@ -180,7 +180,7 @@ Quant::~Quant()
 
 void Quant::setQPforQuant(const TComDataCU& ctu)
 {
-    int qpy = ctu.getQP(0);
+    int qpy = ctu.m_qp[0];
 
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
     setChromaQP(qpy + ctu.m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, ctu.m_chromaFormat);
