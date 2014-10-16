@@ -1470,7 +1470,7 @@ void Entropy::codeTransformSkipFlags(const TComDataCU& cu, uint32_t absPartIdx, 
     if (trSize != 4)
         return;
 
-    uint32_t useTransformSkip = cu.getTransformSkip(absPartIdx, ttype);
+    uint32_t useTransformSkip = cu.m_transformSkip[ttype][absPartIdx];
     encodeBin(useTransformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
 }
 

@@ -302,7 +302,7 @@ uint32_t Search::calcIntraLumaRecon(Mode& mode, const CU& cuData, uint32_t absPa
     int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
     pixel*   recon        = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
     uint32_t reconStride  = cu->m_frame->m_reconPicYuv->m_stride;
-    bool     useTransformSkip = !!cu->getTransformSkip(absPartIdx, TEXT_LUMA);
+    bool     useTransformSkip = !!cu->m_transformSkip[0][absPartIdx];
     int      part = partitionFromLog2Size(log2TrSize);
     int      sizeIdx = log2TrSize - 2;
 
@@ -355,7 +355,7 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t abs
     uint32_t zorder           = cuData.encodeIdx + absPartIdx;
     pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
     uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
-    bool     useTransformSkipC = !!cu->getTransformSkip(absPartIdx, ttype);
+    bool     useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdx];
     int      part = partitionFromLog2Size(log2TrSizeC);
     int      sizeIdxC = log2TrSizeC - 2;
     uint32_t dist;
@@ -709,7 +709,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
         pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
         uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_stride;
 
-        bool     useTransformSkip = !!cu->getTransformSkip(absPartIdx, TEXT_LUMA);
+        bool     useTransformSkip = !!cu->m_transformSkip[0][absPartIdx];
 
         initAdiPattern(*cu, cuData, absPartIdx, trDepth, lumaPredMode);
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
@@ -900,11 +900,12 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
         {
             int nbLumaSkip = 0;
             for (uint32_t absPartIdxSub = absPartIdx; absPartIdxSub < absPartIdx + 4; absPartIdxSub++)
-                nbLumaSkip += cu->getTransformSkip(absPartIdxSub, TEXT_LUMA);
+                nbLumaSkip += cu->m_transformSkip[0][absPartIdxSub];
 
             checkTransformSkip &= (nbLumaSkip > 0);
         }
     }
+
     uint32_t singlePsyEnergy = 0;
     for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
     {
@@ -1155,7 +1156,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
                 pixel*   reconIPred     = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
                 uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
 
-                const bool useTransformSkipC = !!cu->getTransformSkip(absPartIdxC, ttype);
+                const bool useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdxC];
                 cu->setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
                 uint32_t chromaPredMode = cu->getChromaIntraDir(absPartIdxC);
@@ -1544,10 +1545,10 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
                 bestDist = dist;
                 bestMode = modeList[mode];
                 xSetIntraResultChromaQT(cu, initTrDepth, absPartIdxC, reconYuv);
-                ::memcpy(m_qtTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
-                ::memcpy(m_qtTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
-                ::memcpy(m_qtTempTransformSkipFlag[1], cu->getTransformSkip(TEXT_CHROMA_U) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
-                ::memcpy(m_qtTempTransformSkipFlag[2], cu->getTransformSkip(TEXT_CHROMA_V) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempTransformSkipFlag[1], cu->m_transformSkip[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempTransformSkipFlag[2], cu->m_transformSkip[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
             }
         }
 
@@ -1566,10 +1567,10 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
         }
 
-        ::memcpy(cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, m_qtTempCbf[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
-        ::memcpy(cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, m_qtTempCbf[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
-        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + absPartIdxC, m_qtTempTransformSkipFlag[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
-        ::memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + absPartIdxC, m_qtTempTransformSkipFlag[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, m_qtTempCbf[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, m_qtTempCbf[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->m_transformSkip[1] + absPartIdxC, m_qtTempTransformSkipFlag[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->m_transformSkip[2] + absPartIdxC, m_qtTempTransformSkipFlag[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
         cu->setChromIntraDirSubParts(bestMode, absPartIdxC, depth + initTrDepth);
         totalDistortion += bestDist;
     }

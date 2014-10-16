@@ -264,8 +264,6 @@ public:
     uint8_t       isLosslessCoded(uint32_t idx) const { return m_cuTransquantBypass[idx] && m_slice->m_pps->bTransquantBypassEnabled; }
     void          setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getTransformSkip(TextType ttype) const { return m_transformSkip[ttype]; }
-    uint8_t       getTransformSkip(uint32_t idx, TextType ttype) const { return m_transformSkip[ttype][idx]; }
     void          setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
     void          setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
