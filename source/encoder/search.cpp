@@ -2226,7 +2226,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
     return true;
 }
 
-void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]) const
+void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
 {
     if (cuMode == SIZE_2Nx2N)
     {
