@@ -252,8 +252,6 @@ public:
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
     void          updatePic(uint32_t depth);
 
-    uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
-
     void          setDepthSubParts(uint32_t depth);
 
     void          setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
@@ -283,9 +281,6 @@ public:
     uint8_t*      getMergeIndex()                   { return m_mvpIdx[0]; }
     uint8_t       getMergeIndex(uint32_t idx) const { return m_mvpIdx[0][idx]; }
     void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
-
-    template<typename T>
-    void          setSubPart(T bParameter, T* baseCTU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
 
     uint8_t*      getLumaIntraDir()         { return m_lumaIntraDir; }
     uint8_t       getLumaIntraDir(uint32_t idx) const { return m_lumaIntraDir[idx]; }
@@ -331,6 +326,7 @@ public:
     uint32_t      getCtxSkipFlag(uint32_t absPartIdx) const;
     uint32_t      getCtxInterDir(uint32_t idx) const { return m_depth[idx]; }
 
+    uint32_t      getSCUAddr() const { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     ScanType      getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;
     void          getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
@@ -347,6 +343,9 @@ public:
     const TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
 
 protected:
+
+    template<typename T>
+    void setSubPart(T bParameter, T* baseCTU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
 
     char getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
