@@ -2859,10 +2859,10 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
         int partSize = partitionFromLog2Size(log2TrSize);
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
-        uint32_t distY = primitives.ssd_s[log2TrSize - 2](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size);
+        uint32_t distY = primitives.ssd_s[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size);
         uint32_t psyEnergyY = 0;
         if (m_rdCost.m_psyRd)
-            psyEnergyY = m_rdCost.psyCost(log2TrSize - 2, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size, (int16_t*)zeroShort, 0);
+            psyEnergyY = m_rdCost.psyCost(partSize, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size, (int16_t*)zeroShort, 0);
 
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width not full CU\n");
