@@ -626,7 +626,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
-            cu->getCbf(TEXT_LUMA)[absPartIdx + offs] |= (splitCbfY << trDepth);
+            cu->m_cbf[0][absPartIdx + offs] |= (splitCbfY << trDepth);
 
         if (m_rdCost.m_psyRd)
             splitCost = m_rdCost.calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
@@ -764,7 +764,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
-            cu->getCbf(TEXT_LUMA)[absPartIdx + offs] |= (splitCbfY << trDepth);
+            cu->m_cbf[0][absPartIdx + offs] |= (splitCbfY << trDepth);
     }
 }
 
@@ -863,8 +863,8 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
         {
-            cu->getCbf(TEXT_CHROMA_U)[absPartIdx + offs] |= (splitCbfU << trDepth);
-            cu->getCbf(TEXT_CHROMA_V)[absPartIdx + offs] |= (splitCbfV << trDepth);
+            cu->m_cbf[1][absPartIdx + offs] |= (splitCbfU << trDepth);
+            cu->m_cbf[2][absPartIdx + offs] |= (splitCbfV << trDepth);
         }
 
         psyEnergy = splitPsyEnergy;
@@ -1218,8 +1218,8 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
         {
-            cu->getCbf(TEXT_CHROMA_U)[absPartIdx + offs] |= (splitCbfU << trDepth);
-            cu->getCbf(TEXT_CHROMA_V)[absPartIdx + offs] |= (splitCbfV << trDepth);
+            cu->m_cbf[1][absPartIdx + offs] |= (splitCbfU << trDepth);
+            cu->m_cbf[2][absPartIdx + offs] |= (splitCbfV << trDepth);
         }
     }
 }
@@ -1409,7 +1409,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
             combCbfY |= cu->getCbf(partIdx, TEXT_LUMA, 1);
 
         for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu->getCbf(TEXT_LUMA)[offs] |= combCbfY;
+            cu->m_cbf[0][offs] |= combCbfY;
     }
 
     // TODO: remove these two lines
@@ -1545,8 +1545,8 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
                 bestDist = dist;
                 bestMode = modeList[mode];
                 xSetIntraResultChromaQT(cu, initTrDepth, absPartIdxC, reconYuv);
-                memcpy(m_qtTempCbf[1], cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
-                memcpy(m_qtTempCbf[2], cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempCbf[1], cu->m_cbf[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
+                memcpy(m_qtTempCbf[2], cu->m_cbf[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempTransformSkipFlag[1], cu->m_transformSkip[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempTransformSkipFlag[2], cu->m_transformSkip[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
             }
@@ -1567,8 +1567,8 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
         }
 
-        memcpy(cu->getCbf(TEXT_CHROMA_U) + absPartIdxC, m_qtTempCbf[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
-        memcpy(cu->getCbf(TEXT_CHROMA_V) + absPartIdxC, m_qtTempCbf[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->m_cbf[1] + absPartIdxC, m_qtTempCbf[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
+        memcpy(cu->m_cbf[2] + absPartIdxC, m_qtTempCbf[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
         memcpy(cu->m_transformSkip[1] + absPartIdxC, m_qtTempTransformSkipFlag[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
         memcpy(cu->m_transformSkip[2] + absPartIdxC, m_qtTempTransformSkipFlag[2], tuIterator.absPartIdxStep * sizeof(uint8_t));
         cu->setChromIntraDirSubParts(bestMode, absPartIdxC, depth + initTrDepth);
@@ -1589,8 +1589,8 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 
         for (uint32_t offs = 0; offs < 4 * tuIterator.absPartIdxStep; offs++)
         {
-            cu->getCbf(TEXT_CHROMA_U)[offs] |= combCbfU;
-            cu->getCbf(TEXT_CHROMA_V)[offs] |= combCbfV;
+            cu->m_cbf[1][offs] |= combCbfU;
+            cu->m_cbf[2][offs] |= combCbfV;
         }
     }
 
@@ -2707,9 +2707,9 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
 
         for (uint32_t i = 0; i < 4 * qPartNumSubdiv; ++i)
         {
-            cu->getCbf(TEXT_LUMA)[absPartIdx + i] |= ycbf << trMode;
-            cu->getCbf(TEXT_CHROMA_U)[absPartIdx + i] |= ucbf << trMode;
-            cu->getCbf(TEXT_CHROMA_V)[absPartIdx + i] |= vcbf << trMode;
+            cu->m_cbf[0][absPartIdx + i] |= ycbf << trMode;
+            cu->m_cbf[1][absPartIdx + i] |= ucbf << trMode;
+            cu->m_cbf[2][absPartIdx + i] |= vcbf << trMode;
         }
     }
 }
@@ -3399,9 +3399,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
         for (uint32_t i = 0; i < 4 * qPartNumSubdiv; ++i)
         {
-            cu->getCbf(TEXT_LUMA)[absPartIdx + i]     |= ycbf << trMode;
-            cu->getCbf(TEXT_CHROMA_U)[absPartIdx + i] |= ucbf << trMode;
-            cu->getCbf(TEXT_CHROMA_V)[absPartIdx + i] |= vcbf << trMode;
+            cu->m_cbf[0][absPartIdx + i] |= ycbf << trMode;
+            cu->m_cbf[1][absPartIdx + i] |= ucbf << trMode;
+            cu->m_cbf[2][absPartIdx + i] |= vcbf << trMode;
         }
 
         m_entropyCoder.load(m_rdContexts[depth].rqtRoot);

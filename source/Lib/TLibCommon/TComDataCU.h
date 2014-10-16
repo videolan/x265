@@ -274,11 +274,8 @@ public:
 
     void          setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t       getCbf(uint32_t idx, TextType ttype) const { return m_cbf[ttype][idx]; }
-    uint8_t*      getCbf(TextType ttype) { return m_cbf[ttype]; }
     uint8_t       getCbf(uint32_t idx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][idx] >> trDepth) & 0x1; }
-    void          setCbf(uint32_t idx, TextType ttype, uint8_t uh)       { m_cbf[ttype][idx] = uh; }
-    uint8_t       getQtRootCbf(uint32_t idx) const { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
+    uint8_t       getQtRootCbf(uint32_t idx) const { return m_cbf[0][idx] || m_cbf[1][idx] || m_cbf[2][idx]; }
     void          clearCbf(uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void          setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);

@@ -644,8 +644,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     if (bestInter->rdCost < md.bestMode->rdCost)
                         md.bestMode = bestInter;
 
-                    bool bdoIntra = md.bestMode->cu.getCbf(0, TEXT_LUMA) || md.bestMode->cu.getCbf(0, TEXT_CHROMA_U) || md.bestMode->cu.getCbf(0, TEXT_CHROMA_V);
-                    if (m_slice->m_sliceType == P_SLICE && bdoIntra)
+                    if (m_slice->m_sliceType == P_SLICE && md.bestMode->cu.getQtRootCbf(0))
                     {
                         checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                         encodeIntraInInter(md.pred[PRED_INTRA], cuData);
@@ -1603,7 +1602,7 @@ void Analysis::checkDQP(TComDataCU& cu, const CU& cuData)
             bool hasResidual = false;
             for (uint32_t blkIdx = 0; blkIdx < cu.m_numPartitions; blkIdx++)
             {
-                if (cu.getCbf(blkIdx, TEXT_LUMA) || cu.getCbf(blkIdx, TEXT_CHROMA_U) || cu.getCbf(blkIdx, TEXT_CHROMA_V))
+                if (cu.getQtRootCbf(blkIdx))
                 {
                     hasResidual = true;
                     break;

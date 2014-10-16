@@ -124,14 +124,14 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
  */
 void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
 {
-    m_frame            = frame;
-    m_slice            = frame->m_picSym->m_slice;
-    m_baseQp           = frame->m_picSym->getCU(m_cuAddr)->m_baseQp;
-    m_cuAddr           = cuAddr;
-    m_cuPelX           = (cuAddr % frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
-    m_cuPelY           = (cuAddr / frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
-    m_absIdxInCTU      = 0;
-    m_numPartitions    = NUM_CU_PARTITIONS;
+    m_frame         = frame;
+    m_slice         = frame->m_picSym->m_slice;
+    m_baseQp        = frame->m_picSym->getCU(m_cuAddr)->m_baseQp;
+    m_cuAddr        = cuAddr;
+    m_cuPelX        = (cuAddr % frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
+    m_cuPelY        = (cuAddr / frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
+    m_absIdxInCTU   = 0;
+    m_numPartitions = NUM_CU_PARTITIONS;
 
     for (int i = 0; i < 4; i++)
     {
@@ -216,14 +216,13 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
 /* TODO: Remove me. this is only called from encodeResidue() */
 void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 {
+    m_frame  = ctu.m_frame;
+    m_slice  = ctu.m_slice;
+    m_cuAddr = ctu.m_cuAddr;
+    m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
+    m_cuPelY = ctu.m_cuPelY + g_zscanToPelY[cuData.encodeIdx];
     m_absIdxInCTU   = cuData.encodeIdx;
     m_numPartitions = cuData.numPartitions;
-
-    m_frame         = ctu.m_frame;
-    m_slice         = ctu.m_slice;
-    m_cuAddr        = ctu.m_cuAddr;
-    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[m_absIdxInCTU];
-    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[m_absIdxInCTU];
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
@@ -266,13 +265,13 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_predModes        + offset, cu->m_predModes,         sizeInChar);
     memcpy(m_log2CUSize       + offset, cu->m_log2CUSize,        sizeInChar);
     memcpy(m_trIdx            + offset, cu->m_trIdx,             sizeInChar);
+    memcpy(m_cbf[0]           + offset, cu->m_cbf[0],            sizeInChar);
+    memcpy(m_cbf[1]           + offset, cu->m_cbf[1],            sizeInChar);
+    memcpy(m_cbf[2]           + offset, cu->m_cbf[2],            sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
     memcpy(m_interDir         + offset, cu->getInterDir(),       sizeInChar);
-    memcpy(m_cbf[0]           + offset, cu->getCbf(TEXT_LUMA),   sizeInChar);
-    memcpy(m_cbf[1]           + offset, cu->getCbf(TEXT_CHROMA_U), sizeInChar);
-    memcpy(m_cbf[2]           + offset, cu->getCbf(TEXT_CHROMA_V), sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
@@ -311,14 +310,14 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_predModes          + m_absIdxInCTU, m_predModes, sizeInChar);
     memcpy(cu->m_log2CUSize         + m_absIdxInCTU, m_log2CUSize, sizeInChar);
     memcpy(cu->m_trIdx              + m_absIdxInCTU, m_trIdx, sizeInChar);
+    memcpy(cu->m_cbf[0]             + m_absIdxInCTU, m_cbf[0], sizeInChar);
+    memcpy(cu->m_cbf[1]             + m_absIdxInCTU, m_cbf[1], sizeInChar);
+    memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
 
     memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
     memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
     memcpy(cu->getInterDir()        + m_absIdxInCTU, m_interDir,         sizeInChar);
-    memcpy(cu->getCbf(TEXT_LUMA)     + m_absIdxInCTU, m_cbf[0], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
@@ -349,11 +348,11 @@ void TComDataCU::updatePic(uint32_t depth)
     memcpy(cu->m_skipFlag + m_absIdxInCTU, m_skipFlag, sizeInChar);
     memcpy(cu->m_trIdx + m_absIdxInCTU, m_trIdx, sizeInChar);
     memcpy(cu->m_qp + m_absIdxInCTU, m_qp, sizeInChar);
+    memcpy(cu->m_cbf[0] + m_absIdxInCTU, m_cbf[0], sizeInChar);
+    memcpy(cu->m_cbf[1] + m_absIdxInCTU, m_cbf[1], sizeInChar);
+    memcpy(cu->m_cbf[2] + m_absIdxInCTU, m_cbf[2], sizeInChar);
 
     memcpy(cu->getChromaIntraDir() + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->getCbf(TEXT_LUMA) + m_absIdxInCTU, m_cbf[0], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -386,13 +385,13 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_predModes           + partOffset, m_predModes, sizeInChar);
     memcpy(cu->m_log2CUSize          + partOffset, m_log2CUSize, sizeInChar);
     memcpy(cu->m_trIdx               + partOffset, m_trIdx, sizeInChar);
+    memcpy(cu->m_cbf[0]              + partOffset, m_cbf[0], sizeInChar);
+    memcpy(cu->m_cbf[1]              + partOffset, m_cbf[1], sizeInChar);
+    memcpy(cu->m_cbf[2]              + partOffset, m_cbf[2], sizeInChar);
     memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
     memcpy(cu->getInterDir()         + partOffset, m_interDir, sizeInChar);
-    memcpy(cu->getCbf(TEXT_LUMA)     + partOffset, m_cbf[0], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_cbf[1], sizeInChar);
-    memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_cbf[2], sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
@@ -423,9 +422,7 @@ const TComDataCU* TComDataCU::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPart
         uint32_t absZorderCUIdx   = g_zscanToRaster[m_absIdxInCTU];
         lPartUnitIdx = g_rasterToZscan[absPartIdx - 1];
         if (RasterAddress::isEqualCol(absPartIdx, absZorderCUIdx, numPartInCUSize))
-        {
             return m_frame->m_picSym->getCU(m_cuAddr);
-        }
         else
         {
             lPartUnitIdx -= m_absIdxInCTU;
@@ -447,9 +444,7 @@ const TComDataCU* TComDataCU::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPar
         uint32_t absZorderCUIdx   = g_zscanToRaster[m_absIdxInCTU];
         aPartUnitIdx = g_rasterToZscan[absPartIdx - numPartInCUSize];
         if (RasterAddress::isEqualRow(absPartIdx, absZorderCUIdx, numPartInCUSize))
-        {
             return m_frame->m_picSym->getCU(m_cuAddr);
-        }
         else
         {
             aPartUnitIdx -= m_absIdxInCTU;
@@ -476,9 +471,7 @@ const TComDataCU* TComDataCU::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t c
             uint32_t absZorderCUIdx  = g_zscanToRaster[m_absIdxInCTU];
             alPartUnitIdx = g_rasterToZscan[absPartIdx - numPartInCUSize - 1];
             if (RasterAddress::isEqualRowOrCol(absPartIdx, absZorderCUIdx, numPartInCUSize))
-            {
                 return m_frame->m_picSym->getCU(m_cuAddr);
-            }
             else
             {
                 alPartUnitIdx -= m_absIdxInCTU;
@@ -516,9 +509,7 @@ const TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t 
                 uint32_t absZorderCUIdx  = g_zscanToRaster[m_absIdxInCTU] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1;
                 arPartUnitIdx = g_rasterToZscan[absPartIdxRT - numPartInCUSize + 1];
                 if (RasterAddress::isEqualRowOrCol(absPartIdxRT, absZorderCUIdx, numPartInCUSize))
-                {
                     return m_frame->m_picSym->getCU(m_cuAddr);
-                }
                 else
                 {
                     arPartUnitIdx -= m_absIdxInCTU;
@@ -532,9 +523,7 @@ const TComDataCU* TComDataCU::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t 
     }
 
     if (!RasterAddress::isZeroRow(absPartIdxRT, numPartInCUSize))
-    {
         return NULL;
-    }
 
     arPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - numPartInCUSize];
     return m_cuAboveRight;
@@ -940,7 +929,7 @@ void TComDataCU::setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32
         }
         else
         {
-            if (cu->getCbf(absPartIdx, TEXT_LUMA) || cu->getCbf(absPartIdx, TEXT_CHROMA_U) || cu->getCbf(absPartIdx, TEXT_CHROMA_V))
+            if (cu->getQtRootCbf(absPartIdx))
                 foundNonZeroCbf = true;
             else
                 setQPSubParts(qp, absPartIdx, depth);
