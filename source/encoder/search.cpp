@@ -1889,7 +1889,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
         if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
         {
             cu->m_bMergeFlags[absPartIdx] = true;
-            cu->setMergeIndex(absPartIdx, merge.index);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
@@ -2004,7 +2004,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
                 }
                 // set merge result
                 cu->m_bMergeFlags[absPartIdx] = true;
-                cu->setMergeIndex(absPartIdx, merge.index);
+                cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
                 cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
                 cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
                 cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
@@ -2172,7 +2172,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
         if (mrgCost < bidirCost && mrgCost < list[0].cost && mrgCost < list[1].cost)
         {
             cu->m_bMergeFlags[absPartIdx] = true;
-            cu->setMergeIndex(absPartIdx, merge.index);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);

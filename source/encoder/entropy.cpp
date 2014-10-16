@@ -1227,7 +1227,7 @@ void Entropy::codeMergeIndex(const TComDataCU& cu, uint32_t absPartIdx)
 
     if (numCand > 1)
     {
-        uint32_t unaryIdx = cu.getMergeIndex(absPartIdx);
+        uint32_t unaryIdx = cu.m_mvpIdx[0][absPartIdx]; // merge candidate index was stored in L0 MVP idx 
         encodeBin((unaryIdx != 0), m_contextState[OFF_MERGE_IDX_EXT_CTX]);
 
         X265_CHECK(unaryIdx < numCand, "unaryIdx out of range\n");
