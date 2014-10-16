@@ -834,7 +834,7 @@ void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
             if (cu.m_slice->isInterB())
                 codeInterDir(cu, subPartIdx);
 
-            uint32_t interDir = cu.getInterDir(subPartIdx);
+            uint32_t interDir = cu.m_interDir[subPartIdx];
             for (uint32_t list = 0; list < 2; list++)
             {
                 if (interDir & (1 << list))
@@ -1337,7 +1337,7 @@ void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx)
 
 void Entropy::codeInterDir(const TComDataCU& cu, uint32_t absPartIdx)
 {
-    const uint32_t interDir = cu.getInterDir(absPartIdx) - 1;
+    const uint32_t interDir = cu.m_interDir[absPartIdx] - 1;
     const uint32_t ctx      = cu.getCtxInterDir(absPartIdx);
 
     if (cu.m_partSizes[absPartIdx] == SIZE_2Nx2N || cu.m_log2CUSize[absPartIdx] != 3)

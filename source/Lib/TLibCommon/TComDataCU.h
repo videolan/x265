@@ -290,8 +290,6 @@ public:
     uint8_t  getChromaIntraDir(uint32_t idx) const { return m_chromaIntraDir[idx]; }
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t* getInterDir()             { return m_interDir; }
-    uint8_t  getInterDir(uint32_t idx) const { return m_interDir[idx]; }
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;

@@ -271,7 +271,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_bMergeFlags      + offset, cu->m_bMergeFlags,       sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
-    memcpy(m_interDir         + offset, cu->getInterDir(),       sizeInChar);
+    memcpy(m_interDir         + offset, cu->m_interDir,          sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
@@ -314,10 +314,10 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_cbf[1]             + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
     memcpy(cu->m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, sizeInChar);
+    memcpy(cu->m_interDir           + m_absIdxInCTU, m_interDir, sizeInChar);
 
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
     memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
-    memcpy(cu->getInterDir()        + m_absIdxInCTU, m_interDir,         sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
@@ -389,9 +389,9 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_cbf[1]              + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->m_cbf[2]              + partOffset, m_cbf[2], sizeInChar);
     memcpy(cu->m_bMergeFlags         + partOffset, m_bMergeFlags, sizeInChar);
+    memcpy(cu->m_interDir            + partOffset, m_interDir, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->getInterDir()         + partOffset, m_interDir, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
@@ -1245,12 +1245,12 @@ void TComDataCU::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outP
 
 bool TComDataCU::hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, uint32_t candAbsPartIdx) const
 {
-    if (getInterDir(absPartIdx) != candCU->getInterDir(candAbsPartIdx))
+    if (m_interDir[absPartIdx] != candCU->m_interDir[candAbsPartIdx])
         return false;
 
     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
     {
-        if (getInterDir(absPartIdx) & (1 << refListIdx))
+        if (m_interDir[absPartIdx] & (1 << refListIdx))
         {
             if (m_cuMvField[refListIdx].getMv(absPartIdx) != candCU->m_cuMvField[refListIdx].getMv(candAbsPartIdx) ||
                 m_cuMvField[refListIdx].getRefIdx(absPartIdx) != candCU->m_cuMvField[refListIdx].getRefIdx(candAbsPartIdx))
@@ -1302,7 +1302,7 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
     if (isAvailableA1)
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuLeft->getInterDir(leftPartIdx);
+        interDirNeighbours[count] = cuLeft->m_interDir[leftPartIdx];
         // get Mv from Left
         cuLeft->getMvField(cuLeft, leftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
         if (isInterB)
@@ -1326,7 +1326,7 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
     if (isAvailableB1 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAbove, abovePartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuAbove->getInterDir(abovePartIdx);
+        interDirNeighbours[count] = cuAbove->m_interDir[abovePartIdx];
         // get Mv from Left
         cuAbove->getMvField(cuAbove, abovePartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
         if (isInterB)
@@ -1347,7 +1347,7 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
     if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveRight, aboveRightPartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuAboveRight->getInterDir(aboveRightPartIdx);
+        interDirNeighbours[count] = cuAboveRight->m_interDir[aboveRightPartIdx];
         // get Mv from Left
         cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
         if (isInterB)
@@ -1368,7 +1368,7 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
     if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuLeftBottom, leftBottomPartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuLeftBottom->getInterDir(leftBottomPartIdx);
+        interDirNeighbours[count] = cuLeftBottom->m_interDir[leftBottomPartIdx];
         // get Mv from Left
         cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
         if (isInterB)
@@ -1392,7 +1392,7 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
             && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveLeft, aboveLeftPartIdx)))
         {
             // get Inter Dir
-            interDirNeighbours[count] = cuAboveLeft->getInterDir(aboveLeftPartIdx);
+            interDirNeighbours[count] = cuAboveLeft->m_interDir[aboveLeftPartIdx];
             // get Mv from Left
             cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
             if (isInterB)
