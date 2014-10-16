@@ -33,7 +33,8 @@
 
 using namespace x265;
 
-ALIGN_VAR_32(const pixel, Search::zeroPel[MAX_CU_SIZE]) = { 0 };
+ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
+ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 
 Search::Search()
 {
@@ -2163,7 +2164,7 @@ void Search::encodeResAndCalcRdInterCU(TComDataCU* cu, CU* cuData, TComYuv* fenc
         {
             // need to check whether zero distortion is similar to psy energy of fenc
             int size = log2CUSize - 2;
-            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), (pixel*)zeroPel, 0);
+            zeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(), fencYuv->getStride(), predYuv->getLumaAddr(), predYuv->getStride());
             zeroCost = m_rdCost.calcPsyRdCost(zeroDistortion, zeroResiBits, zeroPsyEnergyY);
         }
         else
@@ -2567,7 +2568,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
         {
             // need to check whether zero distortion is similar to psyenergy of fenc
             int size = log2TrSize - 2;
-            psyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(), (pixel*)zeroPel, 0);
+            psyEnergyY = m_rdCost.psyCost(size, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, (int16_t*)zeroShort, 0);
         }
         int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_width == MAX_CU_SIZE, "width not full CU\n");
@@ -2582,20 +2583,11 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
             m_quant.invtransformNxN(cu->getCUTransquantBypass(absPartIdx), curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY); //this is for inter mode only
 
             const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, curResiY, strideResiY);
+
             uint32_t nonZeroPsyEnergyY = 0;
             if (m_rdCost.m_psyRd)
-            {
-                pixel*   pred = predYuv->getLumaAddr(absPartIdx);
-                uint32_t zorder = cuData->encodeIdx + absPartIdx;
-                pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->m_cuAddr, zorder);
-                uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getStride();
-                uint32_t stride = fencYuv->getStride();
-                //===== reconstruction =====
-                primitives.luma_add_ps[sizeIdx](reconIPred, reconIPredStride, pred, curResiY, stride, strideResiY);
-                int size = log2TrSize - 2;
-                nonZeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
-                    cu->m_pic->getPicYuvRec()->getLumaAddr(cu->m_cuAddr, zorder), cu->m_pic->getPicYuvRec()->getStride());
-            }
+                nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, curResiY, strideResiY);
+
             if (cu->getCUTransquantBypass(0))
             {
                 distY = nonZeroDistY;
@@ -2680,22 +2672,11 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiU, strideResiC);
                     const uint32_t nonZeroDistU = m_rdCost.scaleChromaDistCb(dist);
+                    
                     uint32_t nonZeroPsyEnergyU = 0;
-
                     if (m_rdCost.m_psyRd)
-                    {
-                        pixel*   pred = predYuv->getCbAddr(absPartIdxC);
-                        uint32_t zorder = cuData->encodeIdx + absPartIdxC;
-                        pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getCbAddr(cu->m_cuAddr, zorder);
-                        uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getCStride();
-                        uint32_t stride = fencYuv->getCStride();
-                        //===== reconstruction =====
-                        int size = log2TrSizeC - 2;
-                        primitives.luma_add_ps[size](reconIPred, reconIPredStride, pred, curResiU, stride, strideResiC);
-                        nonZeroPsyEnergyU = m_rdCost.psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
-                                                             cu->m_pic->getPicYuvRec()->getCbAddr(cu->m_cuAddr, zorder),
-                                                             cu->m_pic->getPicYuvRec()->getCStride());
-                    }
+                        nonZeroPsyEnergyU = m_rdCost.psyCost(partSizeC, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, curResiU, strideResiC);
+
                     if (cu->getCUTransquantBypass(0))
                     {
                         distU = nonZeroDistU;
@@ -2762,22 +2743,11 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth,
                                                                  curResiV, strideResiC);
                     const uint32_t nonZeroDistV = m_rdCost.scaleChromaDistCr(dist);
-                    uint32_t nonZeroPsyEnergyV = 0;
 
+                    uint32_t nonZeroPsyEnergyV = 0;
                     if (m_rdCost.m_psyRd)
-                    {
-                        pixel*   pred = predYuv->getCrAddr(absPartIdxC);
-                        uint32_t zorder = cuData->encodeIdx + absPartIdxC;
-                        pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getCrAddr(cu->m_cuAddr, zorder);
-                        uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getCStride();
-                        uint32_t stride = fencYuv->getCStride();
-                        //===== reconstruction =====
-                        int size = log2TrSizeC - 2;
-                        primitives.luma_add_ps[size](reconIPred, reconIPredStride, pred, curResiV, stride, strideResiC);
-                        nonZeroPsyEnergyV = m_rdCost.psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
-                                                             cu->m_pic->getPicYuvRec()->getCrAddr(cu->m_cuAddr, zorder),
-                                                             cu->m_pic->getPicYuvRec()->getCStride());
-                    }
+                        nonZeroPsyEnergyV = m_rdCost.psyCost(partSizeC, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, curResiV, strideResiC);
+
                     if (cu->getCUTransquantBypass(0))
                     {
                         distV = nonZeroDistV;
@@ -2872,17 +2842,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
 
                 if (m_rdCost.m_psyRd)
                 {
-                    pixel*   pred = predYuv->getLumaAddr(absPartIdx);
-                    uint32_t zorder = cuData->encodeIdx + absPartIdx;
-                    pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getLumaAddr(cu->m_cuAddr, zorder);
-                    uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getStride();
-                    uint32_t stride = fencYuv->getStride();
-                    //===== reconstruction =====
-                    int size = log2TrSize - 2;
-                    primitives.luma_add_ps[size](reconIPred, reconIPredStride, pred, tsResiY, stride, trSize);
-                    nonZeroPsyEnergyY = m_rdCost.psyCost(size, fencYuv->getLumaAddr(absPartIdx), fencYuv->getStride(),
-                                                         cu->m_pic->getPicYuvRec()->getLumaAddr(cu->m_cuAddr, zorder),
-                                                         cu->m_pic->getPicYuvRec()->getStride());
+                    nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_width, tsResiY, trSize);
                     singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, skipSingleBitsY, nonZeroPsyEnergyY);
                 }
                 else
@@ -2960,16 +2920,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
                     nonZeroDistU = m_rdCost.scaleChromaDistCb(dist);
                     if (m_rdCost.m_psyRd)
                     {
-                        pixel*   pred = predYuv->getCbAddr(absPartIdxC);
-                        uint32_t zorder = cuData->encodeIdx + absPartIdxC;
-                        pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getCbAddr(cu->m_cuAddr, zorder);
-                        uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getCStride();
-                        uint32_t stride = fencYuv->getCStride();
-                        //===== reconstruction =====
-                        int size = log2TrSizeC - 2;
-                        primitives.luma_add_ps[size](reconIPred, reconIPredStride, pred, tsResiU, stride, trSizeC);
-                        nonZeroPsyEnergyU = m_rdCost.psyCost(size, fencYuv->getCbAddr(absPartIdxC), fencYuv->getCStride(),
-                            cu->m_pic->getPicYuvRec()->getCbAddr(cu->m_cuAddr, zorder), cu->m_pic->getPicYuvRec()->getCStride());
+                        nonZeroPsyEnergyU = m_rdCost.psyCost(partSizeC, resiYuv->getCbAddr(absPartIdxC), resiYuv->m_cwidth, tsResiU, trSizeC);
                         singleCostU = m_rdCost.calcPsyRdCost(nonZeroDistU, singleBitsComp[TEXT_CHROMA_U][tuIterator.section], nonZeroPsyEnergyU);
                     }
                     else
@@ -3001,16 +2952,7 @@ uint32_t Search::xEstimateResidualQT(TComDataCU* cu, CU* cuData, uint32_t absPar
                     nonZeroDistV = m_rdCost.scaleChromaDistCr(dist);
                     if (m_rdCost.m_psyRd)
                     {
-                        pixel*   pred = predYuv->getCrAddr(absPartIdxC);
-                        uint32_t zorder = cuData->encodeIdx + absPartIdxC;
-                        pixel*   reconIPred = cu->m_pic->getPicYuvRec()->getCrAddr(cu->m_cuAddr, zorder);
-                        uint32_t reconIPredStride = cu->m_pic->getPicYuvRec()->getCStride();
-                        uint32_t stride = fencYuv->getCStride();
-                        //===== reconstruction =====
-                        int size = log2TrSizeC - 2;
-                        primitives.luma_add_ps[size](reconIPred, reconIPredStride, pred, tsResiV, stride, trSizeC);
-                        nonZeroPsyEnergyV = m_rdCost.psyCost(size, fencYuv->getCrAddr(absPartIdxC), fencYuv->getCStride(),
-                            cu->m_pic->getPicYuvRec()->getCrAddr(cu->m_cuAddr, zorder), cu->m_pic->getPicYuvRec()->getCStride());
+                        nonZeroPsyEnergyV = m_rdCost.psyCost(partSizeC, resiYuv->getCrAddr(absPartIdxC), resiYuv->m_cwidth, tsResiV, trSizeC);
                         singleCostV = m_rdCost.calcPsyRdCost(nonZeroDistV, singleBitsComp[TEXT_CHROMA_V][tuIterator.section], nonZeroPsyEnergyV);
                     }
                     else

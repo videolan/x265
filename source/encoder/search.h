@@ -67,7 +67,8 @@ class Search : public Predict
 {
 public:
 
-    static const pixel zeroPel[MAX_CU_SIZE];
+    static const pixel   zeroPixel[MAX_CU_SIZE];
+    static const int16_t zeroShort[MAX_CU_SIZE];
 
     MotionEstimate  m_me;
     Quant           m_quant;
