@@ -610,7 +610,7 @@ void Entropy::finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth
 void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP, uint32_t depthRange[2])
 {
-    const bool subdiv = cu.getTransformIdx(absPartIdx) + cu.m_depth[absPartIdx] > (uint8_t)depth;
+    const bool subdiv = cu.m_trIdx[absPartIdx] + cu.m_depth[absPartIdx] > (uint8_t)depth;
     uint32_t hChromaShift = cu.m_hChromaShift;
     uint32_t vChromaShift = cu.m_vChromaShift;
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, trIdx);
@@ -725,7 +725,7 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
             X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
         else
-            codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu.getTransformIdx(absPartIdx));
+            codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu.m_trIdx[absPartIdx]);
 
         if (cbfY || cbfU || cbfV)
         {

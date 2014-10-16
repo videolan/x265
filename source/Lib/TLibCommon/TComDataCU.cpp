@@ -265,11 +265,11 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_skipFlag         + offset, cu->m_skipFlag,          sizeInChar);
     memcpy(m_predModes        + offset, cu->m_predModes,         sizeInChar);
     memcpy(m_log2CUSize       + offset, cu->m_log2CUSize,        sizeInChar);
+    memcpy(m_trIdx            + offset, cu->m_trIdx,             sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
     memcpy(m_interDir         + offset, cu->getInterDir(),       sizeInChar);
-    memcpy(m_trIdx            + offset, cu->getTransformIdx(),   sizeInChar);
     memcpy(m_cbf[0]           + offset, cu->getCbf(TEXT_LUMA),   sizeInChar);
     memcpy(m_cbf[1]           + offset, cu->getCbf(TEXT_CHROMA_U), sizeInChar);
     memcpy(m_cbf[2]           + offset, cu->getCbf(TEXT_CHROMA_V), sizeInChar);
@@ -310,12 +310,12 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_skipFlag           + m_absIdxInCTU, m_skipFlag, sizeInChar);
     memcpy(cu->m_predModes          + m_absIdxInCTU, m_predModes, sizeInChar);
     memcpy(cu->m_log2CUSize         + m_absIdxInCTU, m_log2CUSize, sizeInChar);
+    memcpy(cu->m_trIdx              + m_absIdxInCTU, m_trIdx, sizeInChar);
 
     memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
     memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
     memcpy(cu->getInterDir()        + m_absIdxInCTU, m_interDir,         sizeInChar);
-    memcpy(cu->getTransformIdx()    + m_absIdxInCTU, m_trIdx,            sizeInChar);
     memcpy(cu->getCbf(TEXT_LUMA)     + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
@@ -347,13 +347,13 @@ void TComDataCU::updatePic(uint32_t depth)
     memcpy(cu->m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
     memcpy(cu->m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
     memcpy(cu->m_skipFlag + m_absIdxInCTU, m_skipFlag, sizeInChar);
+    memcpy(cu->m_trIdx + m_absIdxInCTU, m_trIdx, sizeInChar);
+    memcpy(cu->m_qp + m_absIdxInCTU, m_qp, sizeInChar);
+
     memcpy(cu->getChromaIntraDir() + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->getTransformIdx() + m_absIdxInCTU, m_trIdx, sizeInChar);
     memcpy(cu->getCbf(TEXT_LUMA) + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
-
-    memcpy(cu->m_qp + m_absIdxInCTU, m_qp, sizeInChar);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -385,11 +385,11 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_skipFlag            + partOffset, m_skipFlag, sizeInChar);
     memcpy(cu->m_predModes           + partOffset, m_predModes, sizeInChar);
     memcpy(cu->m_log2CUSize          + partOffset, m_log2CUSize, sizeInChar);
+    memcpy(cu->m_trIdx               + partOffset, m_trIdx, sizeInChar);
     memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
     memcpy(cu->getInterDir()         + partOffset, m_interDir, sizeInChar);
-    memcpy(cu->getTransformIdx()     + partOffset, m_trIdx, sizeInChar);
     memcpy(cu->getCbf(TEXT_LUMA)     + partOffset, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_cbf[2], sizeInChar);

@@ -272,9 +272,7 @@ public:
 
     void          setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getTransformIdx()                   { return m_trIdx; }
-    uint8_t       getTransformIdx(uint32_t idx) const{ return m_trIdx[idx]; }
-    void          setTrIdxSubParts(uint32_t uiTrIdx, uint32_t absPartIdx, uint32_t depth);
+    void          setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t       getCbf(uint32_t idx, TextType ttype) const { return m_cbf[ttype][idx]; }
     uint8_t*      getCbf(TextType ttype) { return m_cbf[ttype]; }
