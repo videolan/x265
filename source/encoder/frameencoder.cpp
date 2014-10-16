@@ -922,10 +922,10 @@ void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
                 log->cntIntraNxN++;
                 log->cntIntra[depth]--;
             }
-            else if (ctu.getLumaIntraDir(absPartIdx) > 1)
+            else if (ctu.m_lumaIntraDir[absPartIdx] > 1)
                 log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
             else
-                log->cuIntraDistribution[depth][ctu.getLumaIntraDir(absPartIdx)]++;
+                log->cuIntraDistribution[depth][ctu.m_lumaIntraDir[absPartIdx]]++;
         }
     }
     else
@@ -965,10 +965,10 @@ void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
                     log->cntIntraNxN++;
                     /* TODO: log intra modes at absPartIdx +0 to +3 */
                 }
-                else if (ctu.getLumaIntraDir(absPartIdx) > 1)
+                else if (ctu.m_lumaIntraDir[absPartIdx] > 1)
                     log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
                 else
-                    log->cuIntraDistribution[depth][ctu.getLumaIntraDir(absPartIdx)]++;
+                    log->cuIntraDistribution[depth][ctu.m_lumaIntraDir[absPartIdx]]++;
             }
         }
     }

@@ -282,8 +282,6 @@ public:
     uint8_t  getMergeIndex(uint32_t idx) const { return m_mvpIdx[0][idx]; }
     void     setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
 
-    uint8_t* getLumaIntraDir()         { return m_lumaIntraDir; }
-    uint8_t  getLumaIntraDir(uint32_t idx) const { return m_lumaIntraDir[idx]; }
     void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);

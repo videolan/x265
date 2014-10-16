@@ -464,7 +464,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
 
         // init availability pattern
-        uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
+        uint32_t lumaPredMode = cu->m_lumaIntraDir[absPartIdx];
         initAdiPattern(*cu, cuData, absPartIdx, trDepth, lumaPredMode);
 
         // get prediction signal
@@ -696,7 +696,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
         cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
 
         // code luma block with given intra prediction mode and store Cbf
-        uint32_t lumaPredMode = cu->getLumaIntraDir(absPartIdx);
+        uint32_t lumaPredMode = cu->m_lumaIntraDir[absPartIdx];
         uint32_t stride       = fencYuv->m_size;
         pixel*   fenc         = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
         pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
@@ -923,7 +923,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
 
             uint32_t chromaPredMode = cu->m_chromaIntraDir[absPartIdxC];
             if (chromaPredMode == DM_CHROMA_IDX)
-                chromaPredMode = cu->getLumaIntraDir((m_csp == X265_CSP_I444) ? absPartIdxC : 0);
+                chromaPredMode = cu->m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
             if (m_csp == X265_CSP_I422)
                 chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
 
@@ -1163,7 +1163,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
 
                 // update chroma mode
                 if (chromaPredMode == DM_CHROMA_IDX)
-                    chromaPredMode = cu->getLumaIntraDir((m_csp == X265_CSP_I444) ? absPartIdxC : 0);
+                    chromaPredMode = cu->m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
                 chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
                 initAdiPatternChroma(*cu, cuData, absPartIdxC, trDepthC, chromaId);
                 pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
@@ -1450,7 +1450,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
     {
         uint32_t chromaPredMode = modeList[mode];
         if (chromaPredMode == DM_CHROMA_IDX)
-            chromaPredMode = cu->getLumaIntraDir(0);
+            chromaPredMode = cu->m_lumaIntraDir[0];
         if (m_csp == X265_CSP_I422)
             chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
 
@@ -3662,7 +3662,7 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
 
 uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
 {
-    cu.getLumaIntraDir()[partOffset] = (uint8_t)mode;
+    cu.m_lumaIntraDir[partOffset] = (uint8_t)mode;
 
     // Reload only contexts required for coding intra mode information
     m_entropyCoder.loadIntraDirModeLuma(m_rdContexts[depth].cur);

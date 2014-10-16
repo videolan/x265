@@ -216,7 +216,10 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
 /* TODO: Remove me. this is only called from encodeResidue() */
 void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 {
-    m_frame  = ctu.m_frame;
+    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossess,
+     * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
+
+    m_frame = ctu.m_frame;
     m_slice  = ctu.m_slice;
     m_cuAddr = ctu.m_cuAddr;
     m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
@@ -225,16 +228,7 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     m_numPartitions = cuData.numPartitions;
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
-
-    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossess,
-     * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
-
-    /* we need an un-const reference to CTU for these pointer access methods, but
-     * we know we are only reading from the returned pointers so this is not violating
-     * the const contract */
-    TComDataCU& ctuSafe = const_cast<TComDataCU&>(ctu);
-    memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
-
+    memcpy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU, sizeInChar);
     memcpy(m_log2CUSize, ctu.m_log2CUSize + m_absIdxInCTU, sizeInChar);
     memcpy(m_predModes,  ctu.m_predModes + m_absIdxInCTU, sizeInChar);
     memcpy(m_skipFlag,   ctu.m_skipFlag + m_absIdxInCTU, sizeInChar);
@@ -269,7 +263,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_cbf[1]           + offset, cu->m_cbf[1],            sizeInChar);
     memcpy(m_cbf[2]           + offset, cu->m_cbf[2],            sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->m_bMergeFlags,       sizeInChar);
-    memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
+    memcpy(m_lumaIntraDir     + offset, cu->m_lumaIntraDir,      sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->m_chromaIntraDir,    sizeInChar);
     memcpy(m_interDir         + offset, cu->m_interDir,          sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
@@ -315,7 +309,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
     memcpy(cu->m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, sizeInChar);
     memcpy(cu->m_interDir           + m_absIdxInCTU, m_interDir, sizeInChar);
-    memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir, sizeInChar);
+    memcpy(cu->m_lumaIntraDir       + m_absIdxInCTU, m_lumaIntraDir, sizeInChar);
     memcpy(cu->m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
@@ -388,7 +382,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_cbf[2]              + partOffset, m_cbf[2], sizeInChar);
     memcpy(cu->m_bMergeFlags         + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->m_interDir            + partOffset, m_interDir, sizeInChar);
-    memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
+    memcpy(cu->m_lumaIntraDir        + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->m_chromaIntraDir      + partOffset, m_chromaIntraDir, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
@@ -739,7 +733,7 @@ void TComDataCU::getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) co
     modeList[3] = DC_IDX;
     modeList[4] = DM_CHROMA_IDX;
 
-    uint32_t lumaMode = getLumaIntraDir(absPartIdx);
+    uint32_t lumaMode = m_lumaIntraDir[absPartIdx];
 
     for (int i = 0; i < NUM_CHROMA_MODE - 1; i++)
     {
@@ -766,12 +760,12 @@ int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDir
     // Get intra direction of left PU
     tempCU = getPULeft(tempPartIdx, m_absIdxInCTU + absPartIdx);
 
-    leftIntraDir  = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX;
+    leftIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->m_lumaIntraDir[tempPartIdx] : DC_IDX;
 
     // Get intra direction of above PU
     tempCU = getPUAbove(tempPartIdx, m_absIdxInCTU + absPartIdx, true);
 
-    aboveIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->getLumaIntraDir(tempPartIdx) : DC_IDX;
+    aboveIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->m_lumaIntraDir[tempPartIdx] : DC_IDX;
 
     if (leftIntraDir == aboveIntraDir)
     {
@@ -1985,7 +1979,7 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         if (log2TrSize > MDCS_LOG2_MAX_SIZE)
             return SCAN_DIAG;
 
-        dirMode = getLumaIntraDir(absPartIdx);
+        dirMode = m_lumaIntraDir[absPartIdx];
     }
     else
     {
@@ -1995,7 +1989,7 @@ ScanType TComDataCU::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bo
         dirMode = m_chromaIntraDir[absPartIdx];
         if (dirMode == DM_CHROMA_IDX)
         {
-            dirMode = getLumaIntraDir((m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC);
+            dirMode = m_lumaIntraDir[(m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC];
             dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
         }
     }

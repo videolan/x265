@@ -147,7 +147,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
             {
                 TComDataCU *bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_depth, sizeof(uint8_t) * numPartition);
-                memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->getLumaIntraDir(), sizeof(uint8_t) * numPartition);
+                memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSizes, sizeof(uint8_t) * numPartition);
                 m_frame->m_intraData->cuAddr[ctu.m_cuAddr] = ctu.m_cuAddr;
                 m_frame->m_intraData->poc[ctu.m_cuAddr] = m_frame->m_POC;

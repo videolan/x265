@@ -1268,7 +1268,7 @@ void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, boo
 
     for (j = 0; j < partNum; j++)
     {
-        dir[j] = cu.getLumaIntraDir(absPartIdx + partOffset * j);
+        dir[j] = cu.m_lumaIntraDir[absPartIdx + partOffset * j];
         cu.getIntraDirLumaPredictor(absPartIdx + partOffset * j, preds[j]);
         predIdx[j] = -1;
         for (uint32_t i = 0; i < 3; i++)
