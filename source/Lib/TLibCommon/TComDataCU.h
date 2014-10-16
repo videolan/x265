@@ -42,6 +42,9 @@
 namespace x265 {
 // private namespace
 
+class Frame;
+class Slice;
+
 // TU settings for entropy encoding
 struct TUEntropyCodingParameters
 {
@@ -247,7 +250,7 @@ public:
     void          copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
-    void          copyCodedToPic(uint32_t depth);
+    void          updatePic(uint32_t depth);
 
     uint32_t      getSCUAddr() const               { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
 
@@ -256,8 +259,6 @@ public:
     void          setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     void          setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf); /* TODO: return foundCbf */
 
-    uint8_t*      getPartitionSize()                      { return m_partSizes; }
-    PartSize      getPartitionSize(uint32_t idx) const    { return static_cast<PartSize>(m_partSizes[idx]); }
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t*      getCUTransquantBypass()             { return m_cuTransquantBypass; }

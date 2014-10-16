@@ -45,7 +45,7 @@ void Deblock::deblockCTU(TComDataCU* cu, int32_t dir)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
 void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, const int32_t dir, uint8_t blockingStrength[])
 {
-    if (cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
+    if (cu->m_partSizes[absZOrderIdx] == SIZE_NONE)
         return;
 
     const Frame* frame = cu->m_frame;
@@ -133,7 +133,7 @@ void Deblock::setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir
     const uint32_t hWidthInBaseUnits = widthInBaseUnits >> 1;
     const uint32_t qWidthInBaseUnits = widthInBaseUnits >> 2;
 
-    switch (cu->getPartitionSize(absZOrderIdx))
+    switch (cu->m_partSizes[absZOrderIdx])
     {
     case SIZE_2NxN:
         if (EDGE_HOR == dir)

@@ -148,7 +148,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
                 TComDataCU *bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_depth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->getLumaIntraDir(), sizeof(uint8_t) * numPartition);
-                memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->getPartitionSize(), sizeof(char) * numPartition);
+                memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSizes, sizeof(uint8_t) * numPartition);
                 m_frame->m_intraData->cuAddr[ctu.m_cuAddr] = ctu.m_cuAddr;
                 m_frame->m_intraData->poc[ctu.m_cuAddr] = m_frame->m_POC;
             }
@@ -888,11 +888,11 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 bool bMergeOnly = cuData.log2CUSize == 6;
 
                 bool bHor = false, bVer = false;
-                if (md.bestMode->cu.getPartitionSize(0) == SIZE_2NxN)
+                if (md.bestMode->cu.m_partSizes[0] == SIZE_2NxN)
                     bHor = true;
-                else if (md.bestMode->cu.getPartitionSize(0) == SIZE_Nx2N)
+                else if (md.bestMode->cu.m_partSizes[0] == SIZE_Nx2N)
                     bVer = true;
-                else if (md.bestMode->cu.getPartitionSize(0) == SIZE_2Nx2N && !md.bestMode->cu.getMergeFlag(0) && !md.bestMode->cu.isSkipped(0))
+                else if (md.bestMode->cu.m_partSizes[0] == SIZE_2Nx2N && !md.bestMode->cu.getMergeFlag(0) && !md.bestMode->cu.isSkipped(0))
                 {
                     bHor = true;
                     bVer = true;
@@ -1383,7 +1383,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[cuData.depth].fencYuv;
 
-    X265_CHECK(cu->getPartitionSize(0) == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
+    X265_CHECK(cu->m_partSizes[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
     X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
     m_quant.setQPforQuant(intraMode.cu);
@@ -1489,14 +1489,14 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             residualTransformQuantInter(*bestMode, cuData, 0, depth, tuDepthRange);
             checkDQP(*cu, cuData);
 
-            if (ctu.getMergeFlag(absPartIdx) && cu->getPartitionSize(0) == SIZE_2Nx2N && !cu->getQtRootCbf(0))
+            if (ctu.getMergeFlag(absPartIdx) && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
                 cu->setSkipFlagSubParts(true, 0, depth);
-                cu->copyCodedToPic(depth);
+                cu->updatePic(depth);
             }
             else
             {
-                cu->copyCodedToPic(depth);
+                cu->updatePic(depth);
 
                 // Generate Recon
                 pixel* pred = predYuv.getLumaAddr(absPartIdx);
@@ -1549,7 +1549,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
         generateCoeffRecon(*bestMode, cuData);
         checkDQP(*cu, cuData);
         recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
-        cu->copyCodedToPic(depth);
+        cu->updatePic(depth);
     }
 }
 
