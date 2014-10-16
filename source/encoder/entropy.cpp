@@ -546,7 +546,7 @@ void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartI
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        codeCUTransquantBypassFlag(cu.getCUTransquantBypass(absPartIdx));
+        codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[absPartIdx]);
 
     if (!slice->isIntra())
         codeSkipFlag(cu, absPartIdx);
@@ -1465,7 +1465,7 @@ void Entropy::codeQtCbf(const TComDataCU& cu, uint32_t absPartIdx, TextType ttyp
 
 void Entropy::codeTransformSkipFlags(const TComDataCU& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
-    if (cu.getCUTransquantBypass(absPartIdx))
+    if (cu.m_cuTransquantBypass[absPartIdx])
         return;
     if (trSize != 4)
         return;
@@ -1555,7 +1555,7 @@ void Entropy::codeCoeffNxN(const TComDataCU& cu, const coeff_t* coeff, uint32_t 
 
     X265_CHECK(numSig > 0, "cbf check fail\n");
 
-    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !cu.getCUTransquantBypass(absPartIdx);
+    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !cu.m_cuTransquantBypass[absPartIdx];
 
     if (cu.m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);

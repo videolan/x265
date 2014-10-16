@@ -293,7 +293,7 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder.codeCUTransquantBypassFlag(cu.getCUTransquantBypass(0));
+        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[0]);
 
     if (!m_slice->isIntra())
     {
@@ -1402,7 +1402,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder.codeCUTransquantBypassFlag(cu->getCUTransquantBypass(0));
+        m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
     m_entropyCoder.codeSkipFlag(*cu, 0);
     m_entropyCoder.codePredMode(cu->getPredictionMode(0));
     m_entropyCoder.codePartSize(*cu, 0, cuData.depth);

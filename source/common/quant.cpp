@@ -313,7 +313,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
 uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
-    if (cu->getCUTransquantBypass(absPartIdx))
+    if (cu->m_cuTransquantBypass[absPartIdx])
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
         return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);

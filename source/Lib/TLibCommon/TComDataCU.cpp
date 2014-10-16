@@ -227,6 +227,9 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 
     int sizeInChar  = sizeof(char) * m_numPartitions;
 
+    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossess,
+     * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
+
     /* we need an un-const reference to CTU for these pointer access methods, but
      * we know we are only reading from the returned pointers so this is not violating
      * the const contract */
@@ -236,14 +239,10 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
     memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 
-    memcpy(m_qp,        ctuSafe.m_qp + m_absIdxInCTU, sizeInChar);
+    memcpy(m_qp,        ctu.m_qp + m_absIdxInCTU, sizeInChar);
     memcpy(m_depth,     ctu.m_depth + m_absIdxInCTU, sizeInChar);
     memcpy(m_partSizes, ctu.m_partSizes + m_absIdxInCTU, sizeInChar);
 }
-
-// --------------------------------------------------------------------------------------------------------------------
-// Copy
-// --------------------------------------------------------------------------------------------------------------------
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
@@ -278,7 +277,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
     /* TODO: can this be moved within if(bTransquantBypassEnabled)? */
-    memcpy(m_cuTransquantBypass + offset, cu->getCUTransquantBypass(), sizeof(*m_cuTransquantBypass) * numPartitions);
+    memcpy(m_cuTransquantBypass + offset, cu->m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * numPartitions);
 
     m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
     m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
@@ -305,14 +304,14 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_qp + m_absIdxInCTU, m_qp, sizeInChar);
     memcpy(cu->m_partSizes + m_absIdxInCTU, m_partSizes, sizeInChar);
 
-    memcpy(cu->getSkipFlag()          + m_absIdxInCTU, m_skipFlag,         sizeInChar);
-    memcpy(cu->getPredictionMode()    + m_absIdxInCTU, m_predModes,        sizeInChar);
-    memcpy(cu->getMergeFlag()         + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
-    memcpy(cu->getLumaIntraDir()      + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
-    memcpy(cu->getChromaIntraDir()    + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
-    memcpy(cu->getInterDir()          + m_absIdxInCTU, m_interDir,         sizeInChar);
-    memcpy(cu->getTransformIdx()      + m_absIdxInCTU, m_trIdx,            sizeInChar);
-    memcpy(cu->getCUTransquantBypass() + m_absIdxInCTU, m_cuTransquantBypass, sizeInChar);
+    memcpy(cu->getSkipFlag()        + m_absIdxInCTU, m_skipFlag,         sizeInChar);
+    memcpy(cu->getPredictionMode()  + m_absIdxInCTU, m_predModes,        sizeInChar);
+    memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
+    memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
+    memcpy(cu->getChromaIntraDir()  + m_absIdxInCTU, m_chromaIntraDir,   sizeInChar);
+    memcpy(cu->getInterDir()        + m_absIdxInCTU, m_interDir,         sizeInChar);
+    memcpy(cu->getTransformIdx()    + m_absIdxInCTU, m_trIdx,            sizeInChar);
+    memcpy(cu->m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass, sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_LUMA)     + m_absIdxInCTU, m_transformSkip[0], sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
@@ -394,7 +393,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_cbf[2], sizeInChar);
     memcpy(cu->getLog2CUSize()       + partOffset, m_log2CUSize, sizeInChar);
-    memcpy(cu->getCUTransquantBypass() + partOffset, m_cuTransquantBypass, sizeInChar);
+    memcpy(cu->m_cuTransquantBypass  + partOffset, m_cuTransquantBypass, sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_LUMA)     + partOffset, m_transformSkip[0], sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_CHROMA_U) + partOffset, m_transformSkip[1], sizeInChar);
     memcpy(cu->getTransformSkip(TEXT_CHROMA_V) + partOffset, m_transformSkip[2], sizeInChar);

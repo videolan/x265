@@ -257,12 +257,10 @@ public:
     void          setDepthSubParts(uint32_t depth);
 
     void          setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
-    void          setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf); /* TODO: return foundCbf */
+    void          setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
 
     void          setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t*      getCUTransquantBypass()             { return m_cuTransquantBypass; }
-    uint8_t       getCUTransquantBypass(uint32_t idx) const { return m_cuTransquantBypass[idx]; }
     uint8_t       isLosslessCoded(uint32_t idx) const { return m_cuTransquantBypass[idx] && m_slice->m_pps->bTransquantBypassEnabled; }
     void          setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth);
 
