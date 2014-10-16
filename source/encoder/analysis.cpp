@@ -1014,8 +1014,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
             // set MC parameters, interprets depth relative to CTU level
             tempPred->cu.setMergeIndex(0, i);
             tempPred->cu.setInterDirSubParts(interDirNeighbours[i], 0, 0, depth);
-            tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[i][0], SIZE_2Nx2N, 0, 0);
-            tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[i][1], SIZE_2Nx2N, 0, 0);
+            tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[i][0], SIZE_2Nx2N, 0, 0);
+            tempPred->cu.m_cuMvField[REF_PIC_LIST_1].setAllMvField(mvFieldNeighbours[i][1], SIZE_2Nx2N, 0, 0);
             tempPred->initCosts();
 
             // do MC only for Luma part
@@ -1059,8 +1059,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
         // Encode with residue
         tempPred->cu.setMergeIndex(0, bestSadCand);
         tempPred->cu.setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0, depth);
-        tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[bestSadCand][0], SIZE_2Nx2N, 0, 0);
-        tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[bestSadCand][1], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[bestSadCand][0], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.m_cuMvField[REF_PIC_LIST_1].setAllMvField(mvFieldNeighbours[bestSadCand][1], SIZE_2Nx2N, 0, 0);
         tempPred->sa8dCost = bestPred->sa8dCost;
         tempPred->predYuv.copyFromYuv(bestPred->predYuv);
 
@@ -1105,8 +1105,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
         tempPred->cu.setSkipFlagSubParts(false, 0, depth); /* must be cleared between encode iterations */
         tempPred->cu.setMergeIndex(0, mergeCand);
         tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
-        tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
-        tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+        tempPred->cu.m_cuMvField[REF_PIC_LIST_1].setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
         prepMotionCompensation(&tempPred->cu, cuData, 0);
         motionCompensation(&tempPred->predYuv, true, true);
 
@@ -1135,8 +1135,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
                 tempPred->cu.setSkipFlagSubParts(false, 0, depth);
                 tempPred->cu.setMergeIndex(0, mergeCand);
                 tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
-                tempPred->cu.getCUMvField(REF_PIC_LIST_0)->setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
-                tempPred->cu.getCUMvField(REF_PIC_LIST_1)->setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
+                tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
+                tempPred->cu.m_cuMvField[REF_PIC_LIST_1].setAllMvField(mvFieldNeighbours[mergeCand][1], SIZE_2Nx2N, 0, 0);
                 tempPred->predYuv.copyFromYuv(bestPred->predYuv);
             }
             

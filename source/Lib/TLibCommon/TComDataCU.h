@@ -387,9 +387,6 @@ public:
     const TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
     const TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
 
-    /* Death Row, remove at earliest convenience */
-    TComCUMvField* getCUMvField(int e)        { return &m_cuMvField[e]; }
-
 protected:
 
     bool hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, uint32_t candAbsPartIdx) const;
