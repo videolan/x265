@@ -823,7 +823,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         {
             /* TODO: this is a bizarre place to have this check */
             TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
-            uint64_t curCost = m_param->rdLevel > 1 ? nd.bestMode->rdCost : nd.bestMode->sa8dCost;
+            uint64_t curCost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
             uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
             ctu.m_count[depth] += 1;
             ctu.m_avgCost[depth] = (temp + curCost) / ctu.m_count[depth];
