@@ -166,7 +166,7 @@ ScalingList::~ScalingList()
 }
 
 /* returns predicted list index if a match is found, else -1 */ 
-int ScalingList::checkPredMode(int size, int list)
+int ScalingList::checkPredMode(int size, int list) const
 {
     for (int predList = list; predList >= 0; predList--)
     {
@@ -186,7 +186,7 @@ int ScalingList::checkPredMode(int size, int list)
 
 /* check if use default quantization matrix
  * returns true if default quantization matrix is used in all sizes */
-bool ScalingList::checkDefaultScalingList()
+bool ScalingList::checkDefaultScalingList() const
 {
     int defaultCounter = 0;
 
@@ -201,7 +201,7 @@ bool ScalingList::checkDefaultScalingList()
 }
 
 /* get address of default quantization matrix */
-int32_t* ScalingList::getScalingListDefaultAddress(int sizeId, int listId)
+const int32_t* ScalingList::getScalingListDefaultAddress(int sizeId, int listId) const
 {
     switch (sizeId)
     {

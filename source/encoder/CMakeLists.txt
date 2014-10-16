@@ -3,7 +3,6 @@
 add_library(encoder OBJECT ../x265.h
     analysis.cpp analysis.h
     search.cpp search.h
-    predict.cpp  predict.h
     bitcost.cpp bitcost.h rdcost.h
     motion.cpp motion.h
     slicetype.cpp slicetype.h

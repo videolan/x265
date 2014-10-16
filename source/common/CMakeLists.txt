@@ -2,23 +2,16 @@
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
-    ../Lib/TLibCommon/TComPattern.cpp
     ../Lib/TLibCommon/TComPicSym.cpp
-    ../Lib/TLibCommon/TComPicYuv.cpp
-    ../Lib/TLibCommon/TComPicYuvMD5.cpp
-    ../Lib/TLibCommon/TComRom.cpp
-    ../Lib/TLibCommon/TComYuv.cpp)
+    ../Lib/TLibCommon/TComRom.cpp)
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPattern.h
     ../Lib/TLibCommon/TComPicSym.h
-    ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComYuv.h)
+    ../Lib/TLibCommon/TComRom.h)
 
 source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
@@ -132,13 +125,16 @@ add_library(common OBJECT
     md5.cpp md5.h
     bitstream.h bitstream.cpp
     mv.h
+    yuv.cpp yuv.h
     shortyuv.cpp shortyuv.h
+    picyuv.cpp picyuv.h
     common.cpp common.h
     param.cpp param.h
     frame.cpp frame.h
     slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h
+    predict.cpp  predict.h
     scalinglist.cpp scalinglist.h
     quant.cpp quant.h
     deblock.cpp deblock.h)

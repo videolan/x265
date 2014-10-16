@@ -231,7 +231,6 @@ enum { SAO_NUM_OFFSET = 4 };
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
 #define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
-#define ADI_BUF_STRIDE          (2 * MAX_CU_SIZE + 1 + 15)  // alignment to 16 bytes
 
 #define MAX_LOG2_TR_SIZE 5
 #define MAX_LOG2_TS_SIZE 2 // TODO: RExt

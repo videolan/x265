@@ -223,8 +223,8 @@ namespace x265 {
 void weightAnalyse(Slice& slice, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    TComPicYuv *fencYuv = slice.m_pic->getPicYuvOrg();
-    Lowres& fenc        = slice.m_pic->m_lowres;
+    PicYuv *fencPic = slice.m_frame->m_origPicYuv;
+    Lowres& fenc    = slice.m_frame->m_lowres;
 
     Cache cache;
 
@@ -233,18 +233,18 @@ void weightAnalyse(Slice& slice, x265_param& param)
     cache.numPredDir = slice.isInterP() ? 1 : 2;
     cache.lowresWidthInCU = fenc.width >> 3;
     cache.lowresHeightInCU = fenc.lines >> 3;
-    cache.csp = fencYuv->m_picCsp;
+    cache.csp = fencPic->m_picCsp;
     cache.hshift = CHROMA_H_SHIFT(cache.csp);
     cache.vshift = CHROMA_V_SHIFT(cache.csp);
 
     /* Use single allocation for motion compensated ref and weight buffers */
-    pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
+    pixel *mcbuf = X265_MALLOC(pixel, 2 * fencPic->m_stride * fencPic->m_picHeight);
     if (!mcbuf)
     {
         slice.disableWeights();
         return;
     }
-    pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
+    pixel *weightTemp = mcbuf + fencPic->m_stride * fencPic->m_picHeight;
 
     int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     int curPoc = slice.m_poc;
@@ -253,17 +253,17 @@ void weightAnalyse(Slice& slice, x265_param& param)
     int chromaDenom, lumaDenom, denom;
     chromaDenom = lumaDenom = 7;
     int numpixels[3];
-    int w16 = ((fencYuv->getWidth()  + 15) >> 4) << 4;
-    int h16 = ((fencYuv->getHeight() + 15) >> 4) << 4;
+    int w16 = ((fencPic->m_picWidth  + 15) >> 4) << 4;
+    int h16 = ((fencPic->m_picHeight + 15) >> 4) << 4;
     numpixels[0] = w16 * h16;
     numpixels[1] = numpixels[2] = numpixels[0] >> (cache.hshift + cache.vshift);
 
     for (int list = 0; list < cache.numPredDir; list++)
     {
         WeightParam *weights = wp[list][0];
-        Frame *refPic = slice.m_refPicList[list][0];
-        Lowres& refLowres = refPic->m_lowres;
-        int diffPoc = abs(curPoc - refPic->getPOC());
+        Frame *refFrame = slice.m_refPicList[list][0];
+        Lowres& refLowres = refFrame->m_lowres;
+        int diffPoc = abs(curPoc - refFrame->m_POC);
 
         /* prepare estimates */
         float guessScale[3], fencMean[3], refMean[3];
@@ -330,17 +330,14 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refPic->m_bChromaPlanesExtended)
+                    if (!refFrame->m_bChromaPlanesExtended)
                     {
-                        refPic->m_bChromaPlanesExtended = true;
-                        TComPicYuv *refyuv = refPic->getPicYuvOrg();
-                        int stride = refyuv->getCStride();
-                        int width = refyuv->getWidth() >> cache.hshift;
-                        int height = refyuv->getHeight() >> cache.vshift;
-                        int marginX = refyuv->getChromaMarginX();
-                        int marginY = refyuv->getChromaMarginY();
-                        extendPicBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
-                        extendPicBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                        refFrame->m_bChromaPlanesExtended = true;
+                        PicYuv *refPic = refFrame->m_origPicYuv;
+                        int width = refPic->m_picWidth >> cache.hshift;
+                        int height = refPic->m_picHeight >> cache.vshift;
+                        extendPicBorder(refPic->m_picOrg[1], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
+                        extendPicBorder(refPic->m_picOrg[2], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
                     }
                 }
                 else
@@ -368,9 +365,9 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 break;
 
             case 1:
-                orig = fencYuv->getCbAddr();
-                stride = fencYuv->getCStride();
-                fref = refPic->getPicYuvOrg()->getCbAddr();
+                orig = fencPic->m_picOrg[1];
+                stride = fencPic->m_strideC;
+                fref = refFrame->m_origPicYuv->m_picOrg[1];
 
                 /* Clamp the chroma dimensions to the nearest multiple of
                  * 8x8 blocks (or 16x16 for 4:4:4) since mcChroma uses lowres
@@ -378,8 +375,8 @@ void weightAnalyse(Slice& slice, x265_param& param)
                  * potentially ignores some edge pixels, but simplifies the
                  * logic and prevents reading uninitialized pixels. Lowres
                  * planes are border extended and require no clamping. */
-                width =  ((fencYuv->getWidth()  >> 4) << 4) >> cache.hshift;
-                height = ((fencYuv->getHeight() >> 4) << 4) >> cache.vshift;
+                width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;
+                height = ((fencPic->m_picHeight >> 4) << 4) >> cache.vshift;
                 if (mvs)
                 {
                     mcChroma(mcbuf, fref, stride, mvs, cache, height, width);
@@ -388,11 +385,11 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 break;
 
             case 2:
-                fref = refPic->getPicYuvOrg()->getCrAddr();
-                orig = fencYuv->getCrAddr();
-                stride = fencYuv->getCStride();
-                width =  ((fencYuv->getWidth()  >> 4) << 4) >> cache.hshift;
-                height = ((fencYuv->getHeight() >> 4) << 4) >> cache.vshift;
+                fref = refFrame->m_origPicYuv->m_picOrg[2];
+                orig = fencPic->m_picOrg[2];
+                stride = fencPic->m_strideC;
+                width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;
+                height = ((fencPic->m_picHeight >> 4) << 4) >> cache.vshift;
                 if (mvs)
                 {
                     mcChroma(mcbuf, fref, stride, mvs, cache, height, width);

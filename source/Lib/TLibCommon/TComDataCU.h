@@ -42,7 +42,7 @@
 #include "common.h"
 #include "slice.h"
 #include "TComMotionInfo.h"
-#include "TComPattern.h"
+#include "TComRom.h"
 
 namespace x265 {
 // private namespace
@@ -99,7 +99,56 @@ struct DataCUMemPool
     uint8_t* cbfMemBlock;
     uint8_t* mvpIdxMemBlock;
     coeff_t* trCoeffMemBlock;
-    pixel*   m_tqBypassYuvMemBlock;
+
+    DataCUMemPool() { memset(this, 0, sizeof(*this)); }
+
+    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks)
+    {
+        CHECKED_MALLOC(qpMemBlock, char, numPartition * numBlocks);
+
+        CHECKED_MALLOC(depthMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(log2CUSizeMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(skipFlagMemBlock, bool, numPartition * numBlocks);
+        CHECKED_MALLOC(partSizeMemBlock, char, numPartition * numBlocks);
+        CHECKED_MALLOC(predModeMemBlock, char, numPartition * numBlocks);
+        CHECKED_MALLOC(cuTQBypassMemBlock, bool, numPartition * numBlocks);
+
+        CHECKED_MALLOC(mergeFlagMemBlock, bool, numPartition * numBlocks);
+        CHECKED_MALLOC(lumaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(chromaIntraDirMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(interDirMemBlock, uint8_t, numPartition * numBlocks);
+
+        CHECKED_MALLOC(trIdxMemBlock, uint8_t, numPartition * numBlocks);
+        CHECKED_MALLOC(transformSkipMemBlock, uint8_t, numPartition * 3 * numBlocks);
+
+        CHECKED_MALLOC(cbfMemBlock, uint8_t, numPartition * 3 * numBlocks);
+        CHECKED_MALLOC(mvpIdxMemBlock, uint8_t, numPartition * 2 * numBlocks);
+        CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numBlocks);
+
+        return true;
+    fail:
+        return false;
+    }
+
+    void destroy()
+    {
+        X265_FREE(qpMemBlock);
+        X265_FREE(depthMemBlock);
+        X265_FREE(log2CUSizeMemBlock);
+        X265_FREE(cbfMemBlock);
+        X265_FREE(interDirMemBlock);
+        X265_FREE(mergeFlagMemBlock);
+        X265_FREE(lumaIntraDirMemBlock);
+        X265_FREE(chromaIntraDirMemBlock);
+        X265_FREE(trIdxMemBlock);
+        X265_FREE(transformSkipMemBlock);
+        X265_FREE(trCoeffMemBlock);
+        X265_FREE(mvpIdxMemBlock);
+        X265_FREE(cuTQBypassMemBlock);
+        X265_FREE(skipFlagMemBlock);
+        X265_FREE(partSizeMemBlock);
+        X265_FREE(predModeMemBlock);
+    }
 };
 
 struct CU
@@ -107,15 +156,16 @@ struct CU
     enum {
         INTRA           = 1<<0, // CU is intra predicted
         PRESENT         = 1<<1, // CU is not completely outside the frame
-        SPLIT_MANDATORY = 1<<2, // CU split is mandatory if CU is inside frame and can be splitted
+        SPLIT_MANDATORY = 1<<2, // CU split is mandatory if CU is inside frame and can be split
         LEAF            = 1<<3, // CU is a leaf node of the CTU
         SPLIT           = 1<<4, // CU is currently split in four child CUs.
     };
-    uint32_t log2CUSize; // Log of the CU size.
-    uint32_t childIdx;   // Index of the first child CU
-    uint32_t encodeIdx;  // Encoding index of this CU in terms of 8x8 blocks.
-    uint32_t flags;      // CU flags.
-    uint32_t numPartitions;// Number of 4x4 blocks in the CU
+    uint32_t log2CUSize;    // Log of the CU size.
+    uint32_t childIdx;      // offset of the first child CU in m_cuLocalData
+    uint32_t encodeIdx;     // Encoding index of this CU in terms of 4x4 blocks.
+    uint32_t numPartitions; // Number of 4x4 blocks in the CU
+    uint32_t depth;         // depth of this CU relative from CTU
+    uint32_t flags;         // CU flags.
 };
 
 // Partition count table, index represents partitioning mode.
@@ -166,15 +216,15 @@ public:
     // class pointers
     // -------------------------------------------------------------------------------------------------------------------
 
-    Frame*        m_pic;            ///< picture class pointer
-    Slice*        m_slice;          ///< slice header pointer
+    const Frame*  m_frame;          ///< picture class pointer
+    const Slice*  m_slice;          ///< slice header pointer
 
     // -------------------------------------------------------------------------------------------------------------------
     // CU description
     // -------------------------------------------------------------------------------------------------------------------
 
     uint32_t      m_cuAddr;          ///< CU address in a slice
-    uint32_t      m_absIdxInCTU;     ///< absolute address in a CU. It's Z scan order
+    uint32_t      m_absIdxInCTU;     ///< absolute address of CU within a CTU. Its Z scan order
     uint32_t      m_cuPelX;          ///< CU position in a pixel (X)
     uint32_t      m_cuPelY;          ///< CU position in a pixel (Y)
     uint32_t      m_numPartitions;   ///< total number of minimum partitions in a CU
@@ -217,42 +267,24 @@ public:
     uint8_t*      m_interDir;         ///< array of inter directions
     uint8_t*      m_mvpIdx[2];        ///< array of motion vector predictor candidates or merge candidate indices [0]
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // misc. variables
-    // -------------------------------------------------------------------------------------------------------------------
-
-    DataCUMemPool m_dataCUMemPool;
-    TComCUMvField m_cuMvFieldMemPool;
-
     // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
     // required for prediction of current CU.
     // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
     CU            m_cuLocalData[104]; 
 
-    uint32_t      m_psyEnergy;
-    uint64_t      m_totalRDCost;     // sum of partition (psy) RD costs
-    uint32_t      m_totalDistortion; // sum of partition distortion
-    uint32_t      m_totalBits;       // sum of partition signal bits
     uint64_t      m_avgCost[4];      // stores the avg cost of CU's in frame for each depth
     uint32_t      m_count[4];
-    uint64_t      m_sa8dCost;
     double        m_baseQp;          // Qp of Cu set from RateControl/Vbv.
-    uint32_t      m_mvBits;          // Mv bits + Ref + block type
-    uint32_t      m_coeffBits;       // Texture bits (DCT Coeffs)
 
     TComDataCU();
 
-    void          create(TComDataCU *p, uint32_t numPartition, uint32_t cuSize, int csp, int index);
-    bool          initialize(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numBlocks, bool isLossless);
-    void          destroy();
-
+    void          initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index);
     void          initCU(Frame* pic, uint32_t cuAddr);
-    void          initEstData();
-    void          initSubCU(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, int qp);
+    void          initSubCU(const TComDataCU& cu, const CU& cuData);
     void          loadCTUData(uint32_t maxCUSize);
 
-    void          copyFromPic(TComDataCU* ctu, CU* cuData);
-    void          copyPartFrom(TComDataCU* cu, CU* cuData, uint32_t partUnitIdx, uint32_t depth, bool isRDObasedAnalysis = true);
+    void          copyFromPic(const TComDataCU& ctu, const CU& cuData);
+    void          copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void          copyToPic(uint32_t depth);
     void          copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
@@ -347,7 +379,7 @@ public:
 
     void          setCbf(uint32_t idx, TextType ttype, uint8_t uh)       { m_cbf[ttype][idx] = uh; }
 
-    uint8_t       getQtRootCbf(uint32_t idx)  { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
+    uint8_t       getQtRootCbf(uint32_t idx) const { return getCbf(idx, TEXT_LUMA) || getCbf(idx, TEXT_CHROMA_U) || getCbf(idx, TEXT_CHROMA_V); }
 
     void          clearCbf(uint32_t absPartIdx, uint32_t depth);
     void          setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
@@ -360,13 +392,13 @@ public:
 
     bool*         getMergeFlag()                    { return m_bMergeFlags; }
 
-    bool          getMergeFlag(uint32_t idx)        { return m_bMergeFlags[idx]; }
+    bool          getMergeFlag(uint32_t idx) const { return m_bMergeFlags[idx]; }
 
     void          setMergeFlag(uint32_t idx, bool bMergeFlag) { m_bMergeFlags[idx] = bMergeFlag; }
 
     uint8_t*      getMergeIndex()                   { return m_mvpIdx[0]; }
 
-    uint8_t       getMergeIndex(uint32_t idx)       { return m_mvpIdx[0][idx]; }
+    uint8_t       getMergeIndex(uint32_t idx) const { return m_mvpIdx[0][idx]; }
 
     void          setMergeIndex(uint32_t idx, int mergeIndex) { m_mvpIdx[0][idx] = (uint8_t)mergeIndex; }
 
@@ -416,15 +448,6 @@ public:
 
     void          clipMv(MV& outMV) const;
 
-    // -------------------------------------------------------------------------------------------------------------------
-    // utility functions for neighboring information
-    // -------------------------------------------------------------------------------------------------------------------
-
-    const TComDataCU*   getCULeft() const       { return m_cuLeft; }
-    const TComDataCU*   getCUAbove() const      { return m_cuAbove; }
-    const TComDataCU*   getCUAboveLeft() const  { return m_cuAboveLeft; }
-    const TComDataCU*   getCUAboveRight() const { return m_cuAboveRight; }
-
     const TComDataCU*   getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
     const TComDataCU*   getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary = false) const;
     const TComDataCU*   getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const;
@@ -433,17 +456,17 @@ public:
 
     const TComDataCU*   getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t currAbsIdxInCTU) const;
     const TComDataCU*   getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t currAbsIdxInCTU) const;
-    char          getRefQP(uint32_t currAbsIdxInCTU) const;
 
     const TComDataCU*   getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
     const TComDataCU*   getPUBelowLeftAdi(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx, uint32_t partUnitOffset = 1) const;
 
+    char          getRefQP(uint32_t currAbsIdxInCTU) const;
     void          deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
     void          deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
     void          deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
 
     bool          hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, uint32_t candAbsPartIdx) const;
-    void          getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours, uint32_t& maxNumMergeCand);
+    uint32_t      getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours);
 
     // -------------------------------------------------------------------------------------------------------------------
     // member functions for modes

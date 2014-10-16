@@ -28,17 +28,6 @@
 using namespace x265;
 
 Frame::Frame()
-    : m_origPicYuv(NULL)
-    , m_reconPicYuv(NULL)
-    , m_rowDiagQp(NULL)
-    , m_rowDiagQScale(NULL)
-    , m_rowDiagSatd(NULL)
-    , m_rowDiagIntraSatd(NULL)
-    , m_rowEncodedBits(NULL)
-    , m_numEncodedCusPerRow(NULL)
-    , m_rowSatdForVbv(NULL)
-    , m_cuCostsForVbv(NULL)
-    , m_intraCuCostsForVbv(NULL)
 {
     m_picSym = NULL;
     m_reconRowCount.set(0);
@@ -54,57 +43,63 @@ Frame::Frame()
     m_bChromaPlanesExtended = false;
     m_intraData = NULL;
     m_interData = NULL;
+    m_origPicYuv = NULL;
+    m_reconPicYuv = NULL;
+    m_rowDiagQp = NULL;
+    m_rowDiagQScale = NULL;
+    m_rowDiagSatd = NULL;
+    m_rowDiagIntraSatd = NULL;
+    m_rowEncodedBits = NULL;
+    m_numEncodedCusPerRow = NULL;
+    m_rowSatdForVbv = NULL;
+    m_cuCostsForVbv = NULL;
+    m_intraCuCostsForVbv = NULL;
+    m_totalBitsPerCTU = NULL;
 }
 
-bool Frame::create(x265_param *param, Window& display, Window& conformance)
+bool Frame::create(x265_param *param)
 {
-    m_conformanceWindow = conformance;
-    m_defaultDisplayWindow = display;
-
-    m_origPicYuv = new TComPicYuv;
+    m_origPicYuv = new PicYuv;
 
     bool ok = true;
-    ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
+    ok &= m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     ok &= m_lowres.create(m_origPicYuv, param->bframes, !!param->rc.aqMode);
 
-    bool isVbv = param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0;
-    if (ok && (isVbv || param->rc.aqMode))
-    {
-        int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-        int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    int numCols = (param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    int numRows = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
-        if (param->rc.aqMode)
-            CHECKED_MALLOC(m_qpaAq, double, numRows);
-        if (isVbv)
-        {
-            CHECKED_MALLOC(m_rowDiagQp, double, numRows);
-            CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
-            CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
-            CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
-            CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
-            CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
-            CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
-            CHECKED_MALLOC(m_qpaRc, double, numRows);
-        }
-        reinit(param);
+    CHECKED_MALLOC(m_totalBitsPerCTU, uint32_t, numRows * numCols);
+    if (param->rc.aqMode)
+        CHECKED_MALLOC(m_qpaAq, double, numRows);
+
+    if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
+    {
+        CHECKED_MALLOC(m_rowDiagQp, double, numRows);
+        CHECKED_MALLOC(m_rowDiagQScale, double, numRows);
+        CHECKED_MALLOC(m_rowDiagSatd, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowEncodedBits, uint32_t, numRows);
+        CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, numRows);
+        CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, numRows);
+        CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, numRows * numCols);
+        CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, numRows * numCols);
+        CHECKED_MALLOC(m_qpaRc, double, numRows);
     }
+
+    reinit(param);
 
     return ok;
 
 fail:
-    ok = false;
-    return ok;
+    return false;
 }
 
 bool Frame::allocPicSym(x265_param *param)
 {
     m_picSym = new TComPicSym;
-    m_reconPicYuv = new TComPicYuv;
+    m_reconPicYuv = new PicYuv;
     m_picSym->m_reconPicYuv = m_reconPicYuv;
-    bool ok = m_picSym->create(param) &&
-            m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp, g_maxCUSize, g_maxFullDepth);
+    bool ok = m_picSym->create(param) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels
@@ -129,7 +124,8 @@ void Frame::reinit(x265_param *param)
         memset(m_rowEncodedBits, 0, numRows * sizeof(uint32_t));
         memset(m_numEncodedCusPerRow, 0, numRows * sizeof(uint32_t));
         memset(m_rowSatdForVbv, 0, numRows * sizeof(uint32_t));
-        memset(m_cuCostsForVbv, 0,  numRows * numCols * sizeof(uint32_t));
+        memset(m_cuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
+        memset(m_totalBitsPerCTU, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_intraCuCostsForVbv, 0, numRows * numCols * sizeof(uint32_t));
         memset(m_qpaRc, 0, numRows * sizeof(double));
     }
@@ -169,6 +165,7 @@ void Frame::destroy()
     X265_FREE(m_numEncodedCusPerRow);
     X265_FREE(m_rowSatdForVbv);
     X265_FREE(m_cuCostsForVbv);
+    X265_FREE(m_totalBitsPerCTU);
     X265_FREE(m_intraCuCostsForVbv);
     X265_FREE(m_qpaAq);
     X265_FREE(m_qpaRc);

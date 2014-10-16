@@ -61,15 +61,15 @@ public:
     void     setupQuantMatrices();
 
     /* used during SPS coding */
-    int      checkPredMode(int sizeId, int listId);
+    int      checkPredMode(int sizeId, int listId) const;
 
 protected:
 
     static const int SCALING_LIST_DC = 16;    // default DC value
 
-    int32_t* getScalingListDefaultAddress(int sizeId, int listId);
+    const int32_t* getScalingListDefaultAddress(int sizeId, int listId) const;
     void     processDefaultMarix(int sizeId, int listId);
-    bool     checkDefaultScalingList();
+    bool     checkDefaultScalingList() const;
 
     void     processScalingListEnc(int32_t *coeff, int32_t *quantcoeff, int32_t quantScales, int height, int width, int ratio, int stride, int32_t dc);
     void     processScalingListDec(int32_t *coeff, int32_t *dequantcoeff, int32_t invQuantScales, int height, int width, int ratio, int stride, int32_t dc);

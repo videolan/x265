@@ -46,7 +46,7 @@
 namespace x265 {
 // private namespace
 
-class TComPicYuv;
+class PicYuv;
 
 class TComPicSym
 {
@@ -59,13 +59,16 @@ public:
     uint32_t      m_numPartInCUSize;
     uint32_t      m_numCUsInFrame;
 
+    DataCUMemPool  m_cuMemPool;
+    MVFieldMemPool m_mvFieldMemPool;
+
     Slice*        m_slice;
     TComDataCU*   m_cuData;
 
     SAOParam*     m_saoParam;
 
     TComPicSym*   m_freeListNext;
-    TComPicYuv*   m_reconPicYuv;
+    PicYuv*       m_reconPicYuv;
 
     bool          m_bHasReferences; // used during DPB/RPS updates
 

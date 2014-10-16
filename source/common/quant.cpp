@@ -26,8 +26,8 @@
 #include "quant.h"
 #include "frame.h"
 #include "entropy.h"
+#include "yuv.h"
 #include "TLibCommon/TComDataCU.h"
-#include "TLibCommon/TComYuv.h"
 #include "TLibCommon/ContextTables.h"
 
 using namespace x265;
@@ -178,13 +178,13 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(const TComDataCU* cu)
+void Quant::setQPforQuant(const TComDataCU& ctu)
 {
-    int qpy = cu->getQP(0);
+    int qpy = ctu.getQP(0);
 
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + cu->m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, cu->m_chromaFormat);
-    setChromaQP(qpy + cu->m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, cu->m_chromaFormat);
+    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, ctu.m_chromaFormat);
+    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, ctu.m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)

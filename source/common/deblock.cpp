@@ -45,10 +45,10 @@ void Deblock::deblockCTU(TComDataCU* cu, int32_t dir)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
 void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, const int32_t dir, uint8_t blockingStrength[])
 {
-    if (!cu->m_pic || cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
+    if (cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
         return;
 
-    Frame* pic = cu->m_pic;
+    const Frame* frame = cu->m_frame;
     uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
 
     if (cu->getDepth(absZOrderIdx) > depth)
@@ -62,7 +62,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
         return;
     }
 
-    const uint32_t widthInBaseUnits  = cu->m_pic->getNumPartInCUSize() >> depth;
+    const uint32_t widthInBaseUnits = cu->m_frame->m_picSym->getNumPartInCUSize() >> depth;
     Param params;
     setLoopfilterParam(cu, absZOrderIdx, &params);
     setEdgefilterPU(cu, absZOrderIdx, dir, blockingStrength, widthInBaseUnits);
@@ -78,7 +78,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
     }
 
     const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
-    uint32_t sizeInPU = pic->getNumPartInCUSize() >> depth;
+    uint32_t sizeInPU = frame->m_picSym->getNumPartInCUSize() >> depth;
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
     uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
     uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absZOrderIdx] : g_zscanToPelY[absZOrderIdx]) >> LOG2_UNIT_SIZE;
@@ -93,7 +93,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, c
 
 static inline uint32_t calcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t ctuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
+    uint32_t ctuWidthInBaseUnits = cu->m_frame->m_picSym->getNumPartInCUSize();
 
     if (dir)
         return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + edgeIdx * ctuWidthInBaseUnits + baseUnitIdx];
@@ -202,7 +202,7 @@ void Deblock::setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *p
 
 void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t absPartIdx, uint8_t blockingStrength[])
 {
-    Slice* const slice = cu->m_slice;
+    const Slice* const slice = cu->m_slice;
     const uint32_t partQ = absPartIdx;
     TComDataCU* const cuQ = cu;
 
@@ -442,11 +442,11 @@ static inline void pelFilterChroma(pixel* src, int32_t srcStep, int32_t offset, 
 
 void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
+    PicYuv* reconYuv = cu->m_frame->m_reconPicYuv;
     pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
 
-    int32_t stride = reconYuv->getStride();
-    uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
+    int32_t stride = reconYuv->m_stride;
+    uint32_t numParts = cu->m_frame->m_picSym->getNumPartInCUSize() >> depth;
 
     int32_t offset, srcStep;
 
@@ -558,9 +558,9 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
                "invalid edge\n");
 
 
-    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
-    int32_t stride = reconYuv->getCStride();
-    int32_t srcOffset = reconYuv->getChromaAddrOffset(cu->m_cuAddr, absZOrderIdx);
+    PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
+    int32_t stride = reconPic->m_strideC;
+    int32_t srcOffset = reconPic->getChromaAddrOffset(cu->m_cuAddr, absZOrderIdx);
 
     if (dir == EDGE_VER)
     {
@@ -578,10 +578,10 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
     }
 
     pixel* srcChroma[2];
-    srcChroma[0] = reconYuv->getCbAddr() + srcOffset;
-    srcChroma[1] = reconYuv->getCrAddr() + srcOffset;
+    srcChroma[0] = reconPic->m_picOrg[1] + srcOffset;
+    srcChroma[1] = reconPic->m_picOrg[2] + srcOffset;
 
-    uint32_t numUnits = cu->m_pic->getNumPartInCUSize() >> (depth + chromaShift);
+    uint32_t numUnits = cu->m_frame->m_picSym->getNumPartInCUSize() >> (depth + chromaShift);
 
     for (uint32_t idx = 0; idx < numUnits; idx++)
     {

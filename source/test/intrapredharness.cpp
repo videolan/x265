@@ -21,9 +21,9 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
-#include "intrapredharness.h"
 #include "common.h"
+#include "predict.h"
+#include "intrapredharness.h"
 
 using namespace x265;
 
@@ -37,7 +37,7 @@ IntraPredHarness::IntraPredHarness()
 
 bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width)
 {
-    int j = ADI_BUF_STRIDE;
+    int j = Predict::ADI_BUF_STRIDE;
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
@@ -54,11 +54,11 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
         pixel left[MAX_CU_SIZE * 2 + 1];
         for (int k = 0; k < width * 2 + 1; k++)
         {
-            left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
+            left[k] = pixel_buff[j - 1 + k * Predict::ADI_BUF_STRIDE];
         }
 
-        ref(pixel_out_c, stride, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
-        checked(opt, pixel_out_vec, stride, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, rand_filter);
+        ref(pixel_out_c, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, left + 1, 0, rand_filter);
+        checked(opt, pixel_out_vec, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, left + 1, 0, rand_filter);
 
         for (int k = 0; k < width; k++)
         {
@@ -75,7 +75,7 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
 
 bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt, int width)
 {
-    int j = ADI_BUF_STRIDE;
+    int j = Predict::ADI_BUF_STRIDE;
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
@@ -88,11 +88,11 @@ bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt
         pixel left[MAX_CU_SIZE * 2 + 1];
         for (int k = 0; k < width * 2 + 1; k++)
         {
-            left[k] = pixel_buff[j - 1 + k * ADI_BUF_STRIDE];
+            left[k] = pixel_buff[j - 1 + k * Predict::ADI_BUF_STRIDE];
         }
 
-        ref(pixel_out_c, stride, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
-        checked(opt, pixel_out_vec, stride, pixel_buff + j - ADI_BUF_STRIDE, left + 1, 0, 0);
+        ref(pixel_out_c, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, left + 1, 0, 0);
+        checked(opt, pixel_out_vec, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, left + 1, 0, 0);
 
         for (int k = 0; k < width; k++)
         {
@@ -109,7 +109,7 @@ bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt
 
 bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_TR_SIZE], const intra_pred_t opt[][NUM_TR_SIZE])
 {
-    int j = ADI_BUF_STRIDE;
+    int j = Predict::ADI_BUF_STRIDE;
     intptr_t stride = FENC_STRIDE;
 
 #if _DEBUG
@@ -153,7 +153,7 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_TR_S
 
 bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[])
 {
-    int j = ADI_BUF_STRIDE;
+    int j = Predict::ADI_BUF_STRIDE;
     int isLuma;
 
 #if _DEBUG

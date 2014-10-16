@@ -277,7 +277,7 @@ public:
 
     const SPS*  m_sps;
     const PPS*  m_pps;
-    Frame*      m_pic;
+    Frame*      m_frame;
     WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
     RPS         m_rps;
@@ -340,10 +340,10 @@ public:
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
 
-    uint32_t realEndAddress(uint32_t endCUAddr);
+    uint32_t realEndAddress(uint32_t endCUAddr) const;
 };
 
-#define IS_REFERENCED(slice) (slice->m_pic->m_lowres.sliceType != X265_TYPE_B) 
+#define IS_REFERENCED(slice) (slice->m_frame->m_lowres.sliceType != X265_TYPE_B) 
 
 }
 
