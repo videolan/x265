@@ -1459,10 +1459,10 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
         uint32_t partIdxCenter;
         uint32_t curCTUIdx = m_cuAddr;
         int dir = 0;
-        xDeriveCenterIdx(puIdx, partIdxCenter);
-        bool bExistMV = ctuIdx >= 0 && xGetColMVP(REF_PIC_LIST_0, ctuIdx, absPartAddr, colmv, refIdx);
+        deriveCenterIdx(puIdx, partIdxCenter);
+        bool bExistMV = ctuIdx >= 0 && getColMVP(REF_PIC_LIST_0, ctuIdx, absPartAddr, colmv, refIdx);
         if (!bExistMV)
-            bExistMV = xGetColMVP(REF_PIC_LIST_0, curCTUIdx, partIdxCenter, colmv, refIdx);
+            bExistMV = getColMVP(REF_PIC_LIST_0, curCTUIdx, partIdxCenter, colmv, refIdx);
         if (bExistMV)
         {
             dir |= 1;
@@ -1471,9 +1471,9 @@ uint32_t TComDataCU::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx
 
         if (isInterB)
         {
-            bExistMV = ctuIdx >= 0 && xGetColMVP(REF_PIC_LIST_1, ctuIdx, absPartAddr, colmv, refIdx);
+            bExistMV = ctuIdx >= 0 && getColMVP(REF_PIC_LIST_1, ctuIdx, absPartAddr, colmv, refIdx);
             if (!bExistMV)
-                bExistMV = xGetColMVP(REF_PIC_LIST_1, curCTUIdx, partIdxCenter, colmv, refIdx);
+                bExistMV = getColMVP(REF_PIC_LIST_1, curCTUIdx, partIdxCenter, colmv, refIdx);
 
             if (bExistMV)
             {
@@ -1615,17 +1615,17 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
     bool valid[MD_ABOVE_LEFT + 1];
     bool validOrder[MD_ABOVE_LEFT + 1];
 
-    valid[MD_BELOW_LEFT]  = xAddMVPCand(mv[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
-    valid[MD_LEFT]        = xAddMVPCand(mv[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
-    valid[MD_ABOVE_RIGHT] = xAddMVPCand(mv[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
-    valid[MD_ABOVE]       = xAddMVPCand(mv[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
-    valid[MD_ABOVE_LEFT]  = xAddMVPCand(mv[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+    valid[MD_BELOW_LEFT]  = addMVPCand(mv[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
+    valid[MD_LEFT]        = addMVPCand(mv[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
+    valid[MD_ABOVE_RIGHT] = addMVPCand(mv[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
+    valid[MD_ABOVE]       = addMVPCand(mv[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
+    valid[MD_ABOVE_LEFT]  = addMVPCand(mv[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
 
-    validOrder[MD_BELOW_LEFT]  = xAddMVPCandOrder(mvOrder[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
-    validOrder[MD_LEFT]        = xAddMVPCandOrder(mvOrder[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
-    validOrder[MD_ABOVE_RIGHT] = xAddMVPCandOrder(mvOrder[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
-    validOrder[MD_ABOVE]       = xAddMVPCandOrder(mvOrder[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
-    validOrder[MD_ABOVE_LEFT]  = xAddMVPCandOrder(mvOrder[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
+    validOrder[MD_BELOW_LEFT]  = addMVPCandOrder(mvOrder[MD_BELOW_LEFT], picList, refIdx, partIdxLB, MD_BELOW_LEFT);
+    validOrder[MD_LEFT]        = addMVPCandOrder(mvOrder[MD_LEFT], picList, refIdx, partIdxLB, MD_LEFT);
+    validOrder[MD_ABOVE_RIGHT] = addMVPCandOrder(mvOrder[MD_ABOVE_RIGHT], picList, refIdx, partIdxRT, MD_ABOVE_RIGHT);
+    validOrder[MD_ABOVE]       = addMVPCandOrder(mvOrder[MD_ABOVE], picList, refIdx, partIdxRT, MD_ABOVE);
+    validOrder[MD_ABOVE_LEFT]  = addMVPCandOrder(mvOrder[MD_ABOVE_LEFT], picList, refIdx, partIdxLT, MD_ABOVE_LEFT);
 
     // Left predictor search
     if (valid[MD_BELOW_LEFT])
@@ -1711,7 +1711,7 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
             else // is the right bottom corner of CTU
                 absPartAddr = 0;
         }
-        if (ctuIdx >= 0 && xGetColMVP(picList, ctuIdx, absPartAddr, colmv, refIdx))
+        if (ctuIdx >= 0 && getColMVP(picList, ctuIdx, absPartAddr, colmv, refIdx))
         {
             amvpCand[num++] = colmv;
             mvc[numMvc++] = colmv;
@@ -1720,8 +1720,8 @@ int TComDataCU::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, in
         {
             uint32_t partIdxCenter;
             uint32_t curCTUIdx = m_cuAddr;
-            xDeriveCenterIdx(partIdx, partIdxCenter);
-            if (xGetColMVP(picList, curCTUIdx, partIdxCenter, colmv, refIdx))
+            deriveCenterIdx(partIdx, partIdxCenter);
+            if (getColMVP(picList, curCTUIdx, partIdxCenter, colmv, refIdx))
             {
                 amvpCand[num++] = colmv;
                 mvc[numMvc++] = colmv;
@@ -1754,7 +1754,7 @@ void TComDataCU::clipMv(MV& outMV) const
 // Protected member functions
 // ====================================================================================================================
 
-bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
+bool TComDataCU::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
 {
     const TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
@@ -1821,7 +1821,7 @@ bool TComDataCU::xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnit
  * \param dir
  * \returns bool
  */
-bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
+bool TComDataCU::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
 {
     const TComDataCU* tmpCU = NULL;
     uint32_t idx = 0;
@@ -1867,7 +1867,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
         neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].getRefIdx(idx)];
         MV mvp = tmpCU->m_cuMvField[picList].getMv(idx);
 
-        int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
+        int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
             outMV = mvp;
         else
@@ -1882,7 +1882,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
         neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx)];
         MV mvp = tmpCU->m_cuMvField[refPicList2nd].getMv(idx);
 
-        int scale = xGetDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
+        int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
             outMV = mvp;
         else
@@ -1902,7 +1902,7 @@ bool TComDataCU::xAddMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t p
  * \param outRefIdx
  * \returns bool
  */
-bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const
+bool TComDataCU::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const
 {
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
 
@@ -1942,7 +1942,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
 
     curRefPOC = m_slice->m_refPOCList[picList][outRefIdx];
 
-    scale = xGetDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
+    scale = getDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
     if (scale == 4096)
         outMV = colmv;
     else
@@ -1951,7 +1951,7 @@ bool TComDataCU::xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV,
     return true;
 }
 
-int TComDataCU::xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const
+int TComDataCU::getDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const
 {
     int diffPocD = colPOC - colRefPOC;
     int diffPocB = curPOC - curRefPOC;
@@ -1976,7 +1976,7 @@ int TComDataCU::xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int c
  * \param outPartIdxCenter
  * \returns void
  */
-void TComDataCU::xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const
+void TComDataCU::deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const
 {
     uint32_t partAddr;
     int partWidth;

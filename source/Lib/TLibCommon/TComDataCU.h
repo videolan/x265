@@ -269,8 +269,6 @@ public:
     void          setDepthSubParts(uint32_t depth);
 
     void          setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
-    int           getLastValidPartIdx(int absPartIdx) const;
-    char          getLastCodedQP(uint32_t absPartIdx) const;
     void          setQPSubCUs(int qp, TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf); /* TODO: return foundCbf */
 
     uint8_t*      getPartitionSize()                      { return m_partSizes; }
@@ -384,23 +382,26 @@ public:
 
 protected:
 
+    char getLastCodedQP(uint32_t absPartIdx) const;
+    int  getLastValidPartIdx(int absPartIdx) const;
+
     bool hasEqualMotion(uint32_t absPartIdx, const TComDataCU* candCU, uint32_t candAbsPartIdx) const;
 
     bool isDiffMER(int xN, int yN, int xP, int yP) const;
 
     /// add possible motion vector predictor candidates
-    bool xAddMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
+    bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
 
-    bool xAddMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
+    bool addMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
 
     void deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) const;
 
-    bool xGetColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const;
+    bool getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const;
 
     /// compute scaling factor from POC difference
-    int  xGetDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
+    int  getDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
-    void xDeriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const;
+    void deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const;
 };
 
 namespace RasterAddress {
