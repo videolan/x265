@@ -33,6 +33,10 @@
 
 using namespace x265;
 
+#if _MSC_VER
+#pragma warning(disable: 4800) // 'uint8_t' : forcing value to bool 'true' or 'false' (performance warning)
+#endif
+
 ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
 ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 
@@ -453,7 +457,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         bool checkTQbypass = cu->m_slice->m_pps->bTransquantBypassEnabled && !m_param->bLossless;
 
         // NOTE: transform_quant_bypass just at cu level
-        if ((cu->m_slice->m_pps->bTransquantBypassEnabled) && cu->getCUTransquantBypass(0) != checkTQbypass)
+        if ((cu->m_slice->m_pps->bTransquantBypassEnabled) && !!cu->getCUTransquantBypass(0) != checkTQbypass)
             checkTQbypass = cu->getCUTransquantBypass(0) && !m_param->bLossless;
 
         uint32_t stride = fencYuv->m_size;
