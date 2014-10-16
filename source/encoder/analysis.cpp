@@ -1221,10 +1221,10 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     uint32_t initTrDepth = 0;
     uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize      = 1 << log2TrSize;
-    const uint32_t partOffset  = 0;
+    const uint32_t absPartIdx  = 0;
 
     // Reference sample smoothing
-    initAdiPattern(*cu, cuData, partOffset, initTrDepth, ALL_IDX);
+    initAdiPattern(*cu, cuData, absPartIdx, initTrDepth, ALL_IDX);
 
     pixel* fenc = m_modeDepth[depth].fencYuv.m_buf[0];
     uint32_t stride = m_modeDepth[depth].fencYuv.m_size;
@@ -1278,16 +1278,16 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     int predsize = scaleTuSize * scaleTuSize;
 
     uint32_t preds[3];
-    cu->getIntraDirLumaPredictor(partOffset, preds);
+    cu->getIntraDirLumaPredictor(absPartIdx, preds);
 
     uint64_t mpms;
-    uint32_t rbits = getIntraRemModeBits(*cu, partOffset, depth, preds, mpms);
+    uint32_t rbits = getIntraRemModeBits(*cu, absPartIdx, depth, preds, mpms);
 
     // DC
     primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
     bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     bmode = mode = DC_IDX;
-    bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, partOffset, depth) : rbits;
+    bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, absPartIdx, depth) : rbits;
     bcost = m_rdCost.calcRdSADCost(bsad, bbits);
 
     pixel *abovePlanar = above;
@@ -1303,7 +1303,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
     sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     mode = PLANAR_IDX;
-    bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, partOffset, depth) : rbits;
+    bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, absPartIdx, depth) : rbits;
     cost = m_rdCost.calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
@@ -1321,7 +1321,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     cmp = modeHor ? bufTrans : fenc; \
     srcStride = modeHor ? scaleTuSize : scaleStride; \
     sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
-    bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(*cu, angle, partOffset, depth) : rbits; \
+    bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(*cu, angle, absPartIdx, depth) : rbits; \
     cost = m_rdCost.calcRdSADCost(sad, bits)
 
     if (m_param->bEnableFastIntra)
@@ -1369,7 +1369,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
         }
     }
 
-    cu->setLumaIntraDirSubParts(bmode, partOffset, depth + initTrDepth);
+    cu->setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTrDepth);
     intraMode.initCosts();
     intraMode.totalBits = bbits;
     intraMode.distortion = bsad;

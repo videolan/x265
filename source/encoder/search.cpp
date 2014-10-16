@@ -3660,20 +3660,20 @@ void Search::xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* r
     }
 }
 
-uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t partOffset, uint32_t depth)
+uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth)
 {
-    cu.m_lumaIntraDir[partOffset] = (uint8_t)mode;
+    cu.m_lumaIntraDir[absPartIdx] = (uint8_t)mode;
 
     // Reload only contexts required for coding intra mode information
     m_entropyCoder.loadIntraDirModeLuma(m_rdContexts[depth].cur);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeIntraDirLumaAng(cu, partOffset, false); /* TODO: Pass mode here so this func can take const cu ref */
+    m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false); /* TODO: Pass mode here so this func can take const cu ref */
     return m_entropyCoder.getNumberOfWrittenBits();
 }
 
 /* returns the number of bits required to signal a non-most-probable mode.
  * on return mpm contains bitmap of most probable modes */
-uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t partOffset, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
+uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
 {
     mpms = 0;
     for (int i = 0; i < 3; ++i)
@@ -3683,7 +3683,7 @@ uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t partOffset, uint32
     while (mpms & ((uint64_t)1 << mode))
         --mode;
 
-    return getIntraModeBits(cu, mode, partOffset, depth);
+    return getIntraModeBits(cu, mode, absPartIdx, depth);
 }
 
 /* swap the current mode/cost with the mode with the highest cost in the
