@@ -234,14 +234,14 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
      * we know we are only reading from the returned pointers so this is not violating
      * the const contract */
     TComDataCU& ctuSafe = const_cast<TComDataCU&>(ctu);
-    memcpy(m_predModes, ctuSafe.m_predModes + m_absIdxInCTU, sizeInChar);
     memcpy(m_lumaIntraDir, ctuSafe.getLumaIntraDir() + m_absIdxInCTU, sizeInChar);
-    memcpy(m_log2CUSize, ctuSafe.getLog2CUSize() + m_absIdxInCTU, sizeInChar);
 
-    memcpy(m_skipFlag,  ctu.m_skipFlag + m_absIdxInCTU, sizeInChar);
-    memcpy(m_qp,        ctu.m_qp + m_absIdxInCTU, sizeInChar);
-    memcpy(m_depth,     ctu.m_depth + m_absIdxInCTU, sizeInChar);
-    memcpy(m_partSizes, ctu.m_partSizes + m_absIdxInCTU, sizeInChar);
+    memcpy(m_log2CUSize, ctu.m_log2CUSize + m_absIdxInCTU, sizeInChar);
+    memcpy(m_predModes,  ctu.m_predModes + m_absIdxInCTU, sizeInChar);
+    memcpy(m_skipFlag,   ctu.m_skipFlag + m_absIdxInCTU, sizeInChar);
+    memcpy(m_qp,         ctu.m_qp + m_absIdxInCTU, sizeInChar);
+    memcpy(m_depth,      ctu.m_depth + m_absIdxInCTU, sizeInChar);
+    memcpy(m_partSizes,  ctu.m_partSizes + m_absIdxInCTU, sizeInChar);
 }
 
 // Copy small CU to bigger CU.
@@ -264,6 +264,7 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_transformSkip[2] + offset, cu->m_transformSkip[2],  sizeInChar);
     memcpy(m_skipFlag         + offset, cu->m_skipFlag,          sizeInChar);
     memcpy(m_predModes        + offset, cu->m_predModes,         sizeInChar);
+    memcpy(m_log2CUSize       + offset, cu->m_log2CUSize,        sizeInChar);
     memcpy(m_bMergeFlags      + offset, cu->getMergeFlag(),      sizeInChar);
     memcpy(m_lumaIntraDir     + offset, cu->getLumaIntraDir(),   sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->getChromaIntraDir(), sizeInChar);
@@ -272,7 +273,6 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_cbf[0]           + offset, cu->getCbf(TEXT_LUMA),   sizeInChar);
     memcpy(m_cbf[1]           + offset, cu->getCbf(TEXT_CHROMA_U), sizeInChar);
     memcpy(m_cbf[2]           + offset, cu->getCbf(TEXT_CHROMA_V), sizeInChar);
-    memcpy(m_log2CUSize       + offset, cu->getLog2CUSize(),     sizeInChar);
     memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
     memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
 
@@ -309,6 +309,7 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_depth              + m_absIdxInCTU, m_depth, sizeInChar);
     memcpy(cu->m_skipFlag           + m_absIdxInCTU, m_skipFlag, sizeInChar);
     memcpy(cu->m_predModes          + m_absIdxInCTU, m_predModes, sizeInChar);
+    memcpy(cu->m_log2CUSize         + m_absIdxInCTU, m_log2CUSize, sizeInChar);
 
     memcpy(cu->getMergeFlag()       + m_absIdxInCTU, m_bMergeFlags,      sizeInChar);
     memcpy(cu->getLumaIntraDir()    + m_absIdxInCTU, m_lumaIntraDir,     sizeInChar);
@@ -318,7 +319,6 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->getCbf(TEXT_LUMA)     + m_absIdxInCTU, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + m_absIdxInCTU, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + m_absIdxInCTU, m_cbf[2], sizeInChar);
-    memcpy(cu->getLog2CUSize()      + m_absIdxInCTU, m_log2CUSize, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
@@ -384,6 +384,7 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_transformSkip[2]    + partOffset, m_transformSkip[2], sizeInChar);
     memcpy(cu->m_skipFlag            + partOffset, m_skipFlag, sizeInChar);
     memcpy(cu->m_predModes           + partOffset, m_predModes, sizeInChar);
+    memcpy(cu->m_log2CUSize          + partOffset, m_log2CUSize, sizeInChar);
     memcpy(cu->getMergeFlag()        + partOffset, m_bMergeFlags, sizeInChar);
     memcpy(cu->getLumaIntraDir()     + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->getChromaIntraDir()   + partOffset, m_chromaIntraDir, sizeInChar);
@@ -392,7 +393,6 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->getCbf(TEXT_LUMA)     + partOffset, m_cbf[0], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_U) + partOffset, m_cbf[1], sizeInChar);
     memcpy(cu->getCbf(TEXT_CHROMA_V) + partOffset, m_cbf[2], sizeInChar);
-    memcpy(cu->getLog2CUSize()       + partOffset, m_log2CUSize, sizeInChar);
 
     memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
     memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
@@ -838,7 +838,7 @@ uint32_t TComDataCU::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const
 
 void TComDataCU::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
 {
-    uint32_t log2CUSize = getLog2CUSize(absPartIdx);
+    uint32_t log2CUSize = m_log2CUSize[absPartIdx];
     PartSize partSize   = (PartSize)m_partSizes[absPartIdx];
     uint32_t quadtreeTUMaxDepth = m_predModes[absPartIdx] == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
     uint32_t intraSplitFlag = (m_predModes[absPartIdx] == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
@@ -1103,7 +1103,7 @@ void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType t
 
 void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const
 {
-    int cuSize = 1 << getLog2CUSize(0);
+    int cuSize = 1 << m_log2CUSize[0];
     int part_mode = m_partSizes[0];
     int part_idx  = partIdx;
 
@@ -1573,7 +1573,7 @@ bool TComDataCU::isDiffMER(int xN, int yN, int xP, int yP) const
  */
 void TComDataCU::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH) const
 {
-    int cuSize = 1 << getLog2CUSize(0);
+    int cuSize = 1 << m_log2CUSize[0];
     int part_mode = m_partSizes[0];
     int part_idx  = partIdx;
 

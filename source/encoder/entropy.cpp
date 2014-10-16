@@ -585,7 +585,7 @@ void Entropy::finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth
     uint32_t cuAddr = cu.getSCUAddr() + absPartIdx;
 
     uint32_t granularityMask = g_maxCUSize - 1;
-    uint32_t cuSize = 1 << cu.getLog2CUSize(absPartIdx);
+    uint32_t cuSize = 1 << cu.m_log2CUSize[absPartIdx];
     uint32_t rpelx = cu.m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
     uint32_t bpely = cu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
     bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
@@ -869,7 +869,7 @@ void Entropy::codeCoeff(const TComDataCU& cu, uint32_t absPartIdx, uint32_t dept
             return;
     }
 
-    uint32_t log2CUSize   = cu.getLog2CUSize(absPartIdx);
+    uint32_t log2CUSize   = cu.m_log2CUSize[absPartIdx];
     uint32_t lumaOffset   = absPartIdx << (LOG2_UNIT_SIZE * 2);
     uint32_t chromaOffset = lumaOffset >> (cu.m_hChromaShift + cu.m_vChromaShift);
     uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> (depth << 1);
@@ -1180,7 +1180,7 @@ void Entropy::codePartSize(const TComDataCU& cu, uint32_t absPartIdx, uint32_t d
     case SIZE_nRx2N:
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth && !(cu.getLog2CUSize(absPartIdx) == 3))
+        if (depth == g_maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
             encodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
         if (cu.m_slice->m_sps->maxAMPDepth > depth)
         {
@@ -1340,7 +1340,7 @@ void Entropy::codeInterDir(const TComDataCU& cu, uint32_t absPartIdx)
     const uint32_t interDir = cu.getInterDir(absPartIdx) - 1;
     const uint32_t ctx      = cu.getCtxInterDir(absPartIdx);
 
-    if (cu.m_partSizes[absPartIdx] == SIZE_2Nx2N || cu.getLog2CUSize(absPartIdx) != 3)
+    if (cu.m_partSizes[absPartIdx] == SIZE_2Nx2N || cu.m_log2CUSize[absPartIdx] != 3)
         encodeBin(interDir == 2 ? 1 : 0, m_contextState[OFF_INTER_DIR_CTX + ctx]);
     if (interDir < 2)
         encodeBin(interDir, m_contextState[OFF_INTER_DIR_CTX + 4]);

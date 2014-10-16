@@ -753,7 +753,7 @@ void Predict::initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, uint3
 
 void Predict::initIntraNeighbors(const TComDataCU& cu, uint32_t absPartIdx, uint32_t partDepth, bool isLuma, IntraNeighbors *intraNeighbors)
 {
-    uint32_t log2TrSize = cu.getLog2CUSize(0) - partDepth;
+    uint32_t log2TrSize = cu.m_log2CUSize[0] - partDepth;
     int log2UnitWidth = LOG2_UNIT_SIZE;
     int log2UnitHeight = LOG2_UNIT_SIZE;
 

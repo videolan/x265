@@ -1234,7 +1234,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
     uint32_t depth        = cu->m_depth[0];
     uint32_t initTrDepth  = cu->m_partSizes[0] == SIZE_2Nx2N ? 0 : 1;
     uint32_t numPU        = 1 << (2 * initTrDepth);
-    uint32_t log2TrSize   = cu->getLog2CUSize(0) - initTrDepth;
+    uint32_t log2TrSize   = cu->m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
     uint32_t qNumParts    = cuData.numPartitions >> 2;
     uint32_t sizeIdx      = log2TrSize - 2;
@@ -1429,7 +1429,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CU& cuData)
     uint64_t bestCost  = MAX_INT64;
     uint32_t modeList[NUM_CHROMA_MODE];
 
-    uint32_t log2TrSizeC = cu->getLog2CUSize(0) - CHROMA_H_SHIFT(m_csp);
+    uint32_t log2TrSizeC = cu->m_log2CUSize[0] - CHROMA_H_SHIFT(m_csp);
     uint32_t tuSize = 1 << log2TrSizeC;
     int32_t scaleTuSize = tuSize;
     int32_t costShift = 0;
@@ -1483,7 +1483,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 
     uint32_t depth       = cu->m_depth[0];
     uint32_t initTrDepth = (cu->m_partSizes[0] != SIZE_2Nx2N) && (cu->m_chromaFormat == X265_CSP_I444 ? 1 : 0);
-    uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
+    uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
     uint32_t absPartIdx  = (NUM_CU_PARTITIONS >> (depth << 1));
     uint32_t totalDistortion = 0;
 
@@ -1494,7 +1494,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
     do
     {
         uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
-        int cuSize = 1 << cu->getLog2CUSize(absPartIdxC);
+        int cuSize = 1 << cu->m_log2CUSize[absPartIdxC];
 
         uint32_t bestMode = 0;
         uint32_t bestDist = 0;
@@ -1993,7 +1993,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
             merge.height = puHeight;
             mrgCost = mergeEstimation(cu, cuData, puIdx, merge);
 
-            if (bMergeOnly && cu->getLog2CUSize(0) > 3)
+            if (bMergeOnly && cu->m_log2CUSize[0] > 3)
             {
                 if (mrgCost == MAX_UINT)
                 {
@@ -2338,7 +2338,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     X265_CHECK(!cu->isIntra(0), "intra CU not expected\n");
 
-    uint32_t cuSize = 1 << cu->getLog2CUSize(0);
+    uint32_t cuSize = 1 << cu->m_log2CUSize[0];
     uint32_t depth  = cu->m_depth[0];
 
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
@@ -2353,7 +2353,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     reconYuv->copyFromYuv(interMode.predYuv);
 
     // Luma
-    int part = partitionFromLog2Size(cu->getLog2CUSize(0));
+    int part = partitionFromLog2Size(cu->m_log2CUSize[0]);
     interMode.distortion = primitives.sse_pp[part](fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
     // Chroma
     part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
@@ -2371,7 +2371,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     interMode.coeffBits = 0;
     interMode.totalBits = interMode.mvBits;
     if (m_rdCost.m_psyRd)
-        interMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        interMode.psyEnergy = m_rdCost.psyCost(cu->m_log2CUSize[0] - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
@@ -2393,7 +2393,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     uint32_t bestBits = 0, bestCoeffBits = 0;
 
-    uint32_t log2CUSize = cu->getLog2CUSize(0);
+    uint32_t log2CUSize = cu->m_log2CUSize[0];
     uint32_t cuSize = 1 << log2CUSize;
     uint32_t depth  = cu->m_depth[0];
 
@@ -2562,7 +2562,7 @@ void Search::generateCoeffRecon(Mode& mode, const CU& cuData)
     {
         residualTransformQuantInter(mode, cuData, 0, cu->m_depth[0], tuDepthRange);
         if (cu->getQtRootCbf(0))
-            mode.reconYuv.addClip(mode.predYuv, mode.resiYuv, cu->getLog2CUSize(0));
+            mode.reconYuv.addClip(mode.predYuv, mode.resiYuv, cu->m_log2CUSize[0]);
         else
         {
             mode.reconYuv.copyFromYuv(mode.predYuv);

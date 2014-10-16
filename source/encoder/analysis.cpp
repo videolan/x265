@@ -1220,7 +1220,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
     cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
     uint32_t initTrDepth = 0;
-    uint32_t log2TrSize  = cu->getLog2CUSize(0) - initTrDepth;
+    uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize      = 1 << log2TrSize;
     const uint32_t partOffset  = 0;
 
@@ -1415,7 +1415,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cu->getLog2CUSize(0) - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        intraMode.psyEnergy = m_rdCost.psyCost(cu->m_log2CUSize[0] - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
