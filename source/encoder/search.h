@@ -100,6 +100,7 @@ public:
 
         uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
         uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
+        uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
         uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
         uint32_t   distortion; // sum of partition SSE distortion
         uint32_t   totalBits;  // sum of partition bits (mv + coeff)
@@ -110,6 +111,7 @@ public:
         {
             rdCost = 0;
             sa8dCost = 0;
+            sa8dBits = 0;
             psyEnergy = 0;
             distortion = 0;
             totalBits = 0;
@@ -121,6 +123,7 @@ public:
         {
             rdCost += subMode.rdCost;
             sa8dCost += subMode.sa8dCost;
+            sa8dBits += subMode.sa8dBits;
             psyEnergy += subMode.psyEnergy;
             distortion += subMode.distortion;
             totalBits += subMode.totalBits;

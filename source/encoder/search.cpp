@@ -1887,7 +1887,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_0)->setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
             cu->getCUMvField(REF_PIC_LIST_1)->setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
 
-            interMode.totalBits += merge.bits;
+            interMode.sa8dBits += merge.bits;
         }
         else if (bidirCost < m_bestME[0].cost && bidirCost < m_bestME[1].cost)
         {
@@ -1905,7 +1905,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_1)->setMvd(absPartIdx, bidir[1].mv - bidir[1].mvp);
             cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, bidir[1].mvpIdx);
 
-            interMode.totalBits += bidirBits;
+            interMode.sa8dBits += bidirBits;
         }
         else if (m_bestME[0].cost <= m_bestME[1].cost)
         {
@@ -1918,7 +1918,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_0)->setMvd(absPartIdx, m_bestME[0].mv - m_bestME[0].mvp);
             cu->setMVPIdx(REF_PIC_LIST_0, absPartIdx, m_bestME[0].mvpIdx);
 
-            interMode.totalBits += m_bestME[0].bits;
+            interMode.sa8dBits += m_bestME[0].bits;
         }
         else
         {
@@ -1931,7 +1931,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->getCUMvField(REF_PIC_LIST_1)->setMvd(absPartIdx, m_bestME[1].mv - m_bestME[1].mvp);
             cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, m_bestME[1].mvpIdx);
 
-            interMode.totalBits += m_bestME[1].bits;
+            interMode.sa8dBits += m_bestME[1].bits;
         }
 
         prepMotionCompensation(cu, cuData, puIdx);
@@ -2222,7 +2222,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
     }
 
     x265_emms();
-    interMode.totalBits += totalmebits;
+    interMode.sa8dBits += totalmebits;
     return true;
 }
 

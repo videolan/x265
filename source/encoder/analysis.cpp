@@ -1022,9 +1022,9 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
             prepMotionCompensation(&tempPred->cu, cuData, 0);
             motionCompensation(&tempPred->predYuv, true, false);
 
-            tempPred->totalBits = getTUBits(i, maxNumMergeCand);
+            tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
             tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
-            tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->totalBits);
+            tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
 
             if (tempPred->sa8dCost < bestPred->sa8dCost)
             {
@@ -1157,10 +1157,10 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize)
 {
+    interMode.initCosts();
     interMode.cu.setPartSizeSubParts(partSize, 0, cuData.depth);
     interMode.cu.setPredModeSubParts(MODE_INTER, 0, cuData.depth);
     interMode.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, cuData.depth);
-    interMode.initCosts();
 
     Yuv* fencYuv = &m_modeDepth[cuData.depth].fencYuv;
     Yuv* predYuv = &interMode.predYuv;
@@ -1171,12 +1171,12 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
         parallelInterSearch(interMode, cuData, false);
         x265_emms(); // TODO: Remove from here and predInterSearch()
         interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
-        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
+        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
     }
     else if (predInterSearch(interMode, cuData, false, false))
     {
         interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
-        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.totalBits);
+        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
     }
     else
     {
@@ -1580,12 +1580,17 @@ void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
     }
     else
     {
-        mode.mvBits++;
-        mode.totalBits++;
         if (m_param->rdLevel <= 1)
-            mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.totalBits);
+        {
+            mode.sa8dCost++;
+            mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.sa8dBits);
+        }
         else
+        {
+            mode.mvBits++;
+            mode.totalBits++;
             updateModeCost(mode);
+        }
     }
 }
 
