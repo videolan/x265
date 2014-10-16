@@ -263,8 +263,8 @@ void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions
     memcpy(m_lumaIntraDir     + offset, cu->m_lumaIntraDir,      sizeInChar);
     memcpy(m_chromaIntraDir   + offset, cu->m_chromaIntraDir,    sizeInChar);
     memcpy(m_interDir         + offset, cu->m_interDir,          sizeInChar);
-    memcpy(m_mvpIdx[0]        + offset, cu->getMVPIdx(REF_PIC_LIST_0), sizeInChar);
-    memcpy(m_mvpIdx[1]        + offset, cu->getMVPIdx(REF_PIC_LIST_1), sizeInChar);
+    memcpy(m_mvpIdx[0]        + offset, cu->m_mvpIdx[0],         sizeInChar);
+    memcpy(m_mvpIdx[1]        + offset, cu->m_mvpIdx[1],         sizeInChar);
 
     /* TODO: can this be moved within if(bTransquantBypassEnabled)? */
     memcpy(m_cuTransquantBypass + offset, cu->m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * numPartitions);
@@ -308,9 +308,8 @@ void TComDataCU::copyToPic(uint32_t depth)
     memcpy(cu->m_interDir           + m_absIdxInCTU, m_interDir, sizeInChar);
     memcpy(cu->m_lumaIntraDir       + m_absIdxInCTU, m_lumaIntraDir, sizeInChar);
     memcpy(cu->m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
-
-    memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
-    memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
+    memcpy(cu->m_mvpIdx[0]          + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
+    memcpy(cu->m_mvpIdx[1]          + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
 
     m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
     m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
@@ -381,9 +380,9 @@ void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
     memcpy(cu->m_interDir            + partOffset, m_interDir, sizeInChar);
     memcpy(cu->m_lumaIntraDir        + partOffset, m_lumaIntraDir, sizeInChar);
     memcpy(cu->m_chromaIntraDir      + partOffset, m_chromaIntraDir, sizeInChar);
+    memcpy(cu->m_mvpIdx[0]           + partOffset, m_mvpIdx[0], sizeInChar);
+    memcpy(cu->m_mvpIdx[1]           + partOffset, m_mvpIdx[1], sizeInChar);
 
-    memcpy(cu->getMVPIdx(REF_PIC_LIST_0) + partOffset, m_mvpIdx[0], sizeInChar);
-    memcpy(cu->getMVPIdx(REF_PIC_LIST_1) + partOffset, m_mvpIdx[1], sizeInChar);
     m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU, partStart, qNumPart);
     m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU, partStart, qNumPart);
 

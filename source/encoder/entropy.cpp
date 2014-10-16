@@ -843,7 +843,7 @@ void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
 
                     codeRefFrmIdxPU(cu, subPartIdx, list);
                     codeMvd(cu, subPartIdx, list);
-                    codeMVPIdx(cu.getMVPIdx(list, subPartIdx));
+                    codeMVPIdx(cu.m_mvpIdx[list][subPartIdx]);
                 }
             }
         }

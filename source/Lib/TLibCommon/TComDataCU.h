@@ -230,11 +230,7 @@ public:
     uint8_t  getNumPartInter() const { return nbPartsTable[(int)m_partSizes[0]]; }
     bool     isFirstAbsZorderIdxInDepth(uint32_t absPartIdx, uint32_t depth) const;
 
-    void     getMvField(const TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& rcMvField) const;
-
-    void     setMVPIdx(int picList, uint32_t idx, int mvpIdx) { m_mvpIdx[picList][idx] = (uint8_t)mvpIdx; }
-    uint8_t  getMVPIdx(int picList, uint32_t idx) const   { return m_mvpIdx[picList][idx]; }
-    uint8_t* getMVPIdx(int picList) const                 { return m_mvpIdx[picList]; }
+    void     getMvField(const TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;
 
     char     getRefQP(uint32_t currAbsIdxInCTU) const;
     void     deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;

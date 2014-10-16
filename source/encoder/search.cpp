@@ -35,6 +35,7 @@ using namespace x265;
 
 #if _MSC_VER
 #pragma warning(disable: 4800) // 'uint8_t' : forcing value to bool 'true' or 'false' (performance warning)
+#pragma warning(disable: 4244) // '=' : conversion from 'int' to 'uint8_t', possible loss of data)
 #endif
 
 ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
@@ -1904,12 +1905,12 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setMvd(absPartIdx, bidir[0].mv - bidir[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, absPartIdx, bidir[0].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = bidir[0].mvpIdx;
 
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setMvd(absPartIdx, bidir[1].mv - bidir[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, bidir[1].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = bidir[1].mvpIdx;
 
             interMode.sa8dBits += bidirBits;
         }
@@ -1922,7 +1923,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(m_bestME[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setMvd(absPartIdx, m_bestME[0].mv - m_bestME[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, absPartIdx, m_bestME[0].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = m_bestME[0].mvpIdx;
 
             interMode.sa8dBits += m_bestME[0].bits;
         }
@@ -1935,7 +1936,7 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(m_bestME[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setMvd(absPartIdx, m_bestME[1].mv - m_bestME[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, m_bestME[1].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = m_bestME[1].mvpIdx;
 
             interMode.sa8dBits += m_bestME[1].bits;
         }
@@ -2187,12 +2188,12 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setMvd(absPartIdx, bidir[0].mv - bidir[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, absPartIdx, bidir[0].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = bidir[0].mvpIdx;
 
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setMvd(absPartIdx, bidir[1].mv - bidir[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, bidir[1].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = bidir[1].mvpIdx;
 
             totalmebits += bidirBits;
         }
@@ -2205,7 +2206,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
             cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(list[0].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_0].setMvd(absPartIdx, list[0].mv - list[0].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_0, absPartIdx, list[0].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = list[0].mvpIdx;
 
             totalmebits += list[0].bits;
         }
@@ -2218,7 +2219,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
             cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(list[1].mv, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[REF_PIC_LIST_1].setMvd(absPartIdx, list[1].mv - list[1].mvp);
-            cu->setMVPIdx(REF_PIC_LIST_1, absPartIdx, list[1].mvpIdx);
+            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = list[1].mvpIdx;
 
             totalmebits += list[1].bits;
         }
