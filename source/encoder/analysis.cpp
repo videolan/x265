@@ -377,30 +377,26 @@ void Analysis::parallelME(int threadId, int meId)
 void Analysis::parallelModeAnalysis(int threadId, int jobId)
 {
     Analysis* slave;
-    int depth = m_curCUData->depth;
-    ModeDepth& md = m_modeDepth[depth];
 
     if (threadId == -1)
         slave = this;
     else
     {
-        TComDataCU& cu = md.pred[PRED_2Nx2N].cu;
-        PicYuv* fencPic = m_frame->m_origPicYuv;
-
         slave = &m_tld[threadId].analysis;
-        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-        m_modeDepth[0].fencYuv.copyPartToYuv(slave->m_modeDepth[depth].fencYuv, m_curCUData->encodeIdx);
-        slave->setQP(*cu.m_slice, m_rdCost.m_qp);
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
-        if (!jobId || m_param->rdLevel > 4)
+        slave->setQP(*m_slice, m_rdCost.m_qp);
+        if (jobId)
+            slave->m_me.setSourcePlane(m_frame->m_origPicYuv->m_picOrg[0], m_frame->m_origPicYuv->m_stride);
+        else
         {
-            slave->m_quant.setQPforQuant(cu);
-            if (m_param->noiseReduction)
+            if (m_param->noiseReduction) /* TODO: move to setQPforQuant() */
                 slave->m_quant.m_nr = &m_tld[threadId].nr[m_frame->m_frameEncoderID];
-            slave->m_rdContexts[depth].cur.load(m_rdContexts[depth].cur);
+            slave->m_rdContexts[m_curCUData->depth].cur.load(m_rdContexts[m_curCUData->depth].cur);
         }
     }
+
+    ModeDepth& md = m_modeDepth[m_curCUData->depth];
 
     switch (jobId)
     {
