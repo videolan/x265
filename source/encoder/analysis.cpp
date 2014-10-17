@@ -740,7 +740,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuData.log2CUSize);
             }
 
-            generateCoeffRecon(*md.bestMode, cuData);
+            if (m_param->rdLevel)
+                generateCoeffRecon(*md.bestMode, cuData);
         }
 
         if (m_param->rdLevel) // checkDQP can be done only after residual encoding is done
