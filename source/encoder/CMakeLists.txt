@@ -1,5 +1,9 @@
 # vim: syntax=cmake
 
+if(GCC)
+   add_definitions(-Wno-maybe-uninitialized)
+endif()
+
 add_library(encoder OBJECT ../x265.h
     analysis.cpp analysis.h
     search.cpp search.h
