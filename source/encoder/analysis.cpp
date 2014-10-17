@@ -331,6 +331,7 @@ bool Analysis::findJob(int threadId)
         if (m_totalNumJobs >= id)
         {
             parallelModeAnalysis(threadId, id - 1);
+
             if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
                 m_modeCompletionEvent.trigger();
             return true;
@@ -343,6 +344,7 @@ bool Analysis::findJob(int threadId)
         if (m_totalNumME >= id)
         {
             parallelME(threadId, id - 1);
+
             if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
                 m_meCompletionEvent.trigger();
             return true;
@@ -433,12 +435,9 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
+    uint32_t minDepth = mightNotSplit ? topSkipMinDepth(parentCTU, cuData) : 4;
 
     X265_CHECK(m_param->rdLevel >= 2, "compressInterCU_dist does not support RD 0 or 1\n");
-
-    uint32_t minDepth = 4;
-    if (mightNotSplit)
-        minDepth = topSkipMinDepth(parentCTU, cuData);
 
     if (mightNotSplit && depth >= minDepth)
     {
@@ -464,9 +463,10 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
         for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
             m_pool->pokeIdleThread();
 
-        /* participate in processing jobs, until all are in process */
+        /* participate in processing jobs, until all are distributed */
         while (findJob(-1))
             ;
+
         JobProvider::dequeue();
         m_bJobsQueued = false;
 
@@ -493,16 +493,15 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
         if (m_param->rdLevel > 2)
         {
-            /* build chroma prediction for best inter */
+            /* encode best inter */
             for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
             {
                 prepMotionCompensation(&bestInter->cu, cuData, puIdx);
                 motionCompensation(&bestInter->predYuv, false, true);
             }
-
-            /* RD selection between inter and merge */
             encodeResAndCalcRdInterCU(*bestInter, cuData);
 
+            /* RD selection between merge, inter and intra */
             checkBestMode(*bestInter, depth);
             checkBestMode(md.pred[PRED_INTRA], depth);
         }
@@ -614,10 +613,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
     bool mightSplit = !(cuData.flags & CU::LEAF);
     bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
-
-    uint32_t minDepth = 4;
-    if (mightNotSplit)
-        minDepth = topSkipMinDepth(parentCTU, cuData);
+    uint32_t minDepth = mightNotSplit ? topSkipMinDepth(parentCTU, cuData) : 4;
 
     if (mightNotSplit && depth >= minDepth)
     {
