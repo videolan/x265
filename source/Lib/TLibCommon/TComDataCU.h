@@ -247,7 +247,6 @@ public:
 
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
     uint32_t getCtxSkipFlag(uint32_t absPartIdx) const;
-    uint32_t getCtxInterDir(uint32_t idx) const { return m_depth[idx]; }
 
     uint32_t getSCUAddr() const { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     ScanType getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;

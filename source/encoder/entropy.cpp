@@ -1338,7 +1338,7 @@ void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx)
 void Entropy::codeInterDir(const TComDataCU& cu, uint32_t absPartIdx)
 {
     const uint32_t interDir = cu.m_interDir[absPartIdx] - 1;
-    const uint32_t ctx      = cu.getCtxInterDir(absPartIdx);
+    const uint32_t ctx      = cu.m_depth[absPartIdx]; // the context of the inter dir is the depth of the CU
 
     if (cu.m_partSizes[absPartIdx] == SIZE_2Nx2N || cu.m_log2CUSize[absPartIdx] != 3)
         encodeBin(interDir == 2 ? 1 : 0, m_contextState[OFF_INTER_DIR_CTX + ctx]);
