@@ -286,7 +286,7 @@ static void md5_block(MD5Context& md5, const pixel* plane, uint32_t n)
         pixel pel = plane[i];
         /* perform bitdepth and endian conversion */
         for (uint32_t d = 0; d < OUTPUT_BITDEPTH_DIV8; d++)
-            buf[i][d] = pel >> (d * 8);
+            buf[i][d] = (uint8_t)(pel >> (d * 8));
     }
 
     MD5Update(&md5, (uint8_t*)buf, n * OUTPUT_BITDEPTH_DIV8);
