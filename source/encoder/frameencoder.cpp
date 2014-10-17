@@ -661,7 +661,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
-        ctu->initCTU(m_frame, cuAddr, slice->m_sliceQp);
+        ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
 
         if (bIsVbv)
         {

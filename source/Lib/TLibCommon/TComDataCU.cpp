@@ -51,13 +51,6 @@ static MV scaleMv(MV mv, int scale)
     return MV((int16_t)mvx, (int16_t)mvy);
 }
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Constructor / destructor / create / destroy
-// ====================================================================================================================
-
 TComDataCU::TComDataCU()
 {
     memset(this, 0, sizeof(*this));
@@ -77,11 +70,12 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
     uint8_t *charBuf = dataPool->charMemBlock + (numPartition * BytesPerPartition) * index;
 
     m_qp          = (char*)charBuf; charBuf += numPartition;
-    m_depth              = charBuf; charBuf += numPartition;
     m_log2CUSize         = charBuf; charBuf += numPartition;
     m_partSizes          = charBuf; charBuf += numPartition;
     m_predModes          = charBuf; charBuf += numPartition;
-    m_skipFlag           = charBuf; charBuf += numPartition;
+    m_lumaIntraDir       = charBuf; charBuf += numPartition;
+    m_depth              = charBuf; charBuf += numPartition;
+    m_skipFlag           = charBuf; charBuf += numPartition; /* the order up to here is important in initCTU() and initSubCU() */
     m_bMergeFlags        = charBuf; charBuf += numPartition;
     m_interDir           = charBuf; charBuf += numPartition;
     m_mvpIdx[0]          = charBuf; charBuf += numPartition;
@@ -94,7 +88,6 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
     m_cbf[0]             = charBuf; charBuf += numPartition;
     m_cbf[1]             = charBuf; charBuf += numPartition;
     m_cbf[2]             = charBuf; charBuf += numPartition;
-    m_lumaIntraDir       = charBuf; charBuf += numPartition;
     m_chromaIntraDir     = charBuf; charBuf += numPartition;
 
     X265_CHECK(charBuf == dataPool->charMemBlock + (numPartition * BytesPerPartition) * (index + 1), "CU data layout is broken\n");
@@ -106,64 +99,38 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
     m_trCoeff[2] = m_trCoeff[0] + sizeL + sizeC;
 }
 
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-
-// --------------------------------------------------------------------------------------------------------------------
-// Initialization
-// --------------------------------------------------------------------------------------------------------------------
-
-/**
- - initialize top-level CU
- - internal buffers are already created
- - set values before encoding a CU
- */
-void TComDataCU::initCTU(Frame* frame, uint32_t cuAddr, int qp)
+void TComDataCU::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 {
-    m_frame         = frame;
-    m_slice         = frame->m_picSym->m_slice;
-    m_baseQp        = frame->m_picSym->getCU(m_cuAddr)->m_baseQp;
+    m_frame         = &frame;
+    m_slice         = frame.m_picSym->m_slice;
+    m_baseQp        = frame.m_picSym->getCU(m_cuAddr)->m_baseQp;
     m_cuAddr        = cuAddr;
-    m_cuPelX        = (cuAddr % frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
-    m_cuPelY        = (cuAddr / frame->m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
+    m_cuPelX        = (cuAddr % frame.m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
+    m_cuPelY        = (cuAddr / frame.m_picSym->getFrameWidthInCU()) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_CU_PARTITIONS;
 
     for (int i = 0; i < 4; i++)
-    {
-        m_avgCost[i] = 0;
-        m_count[i] = 0;
-    }
+        m_avgCost[i] = m_count[i] = 0;
 
-    memset(m_skipFlag,           false,         m_numPartitions * sizeof(*m_skipFlag));
-    memset(m_cuTransquantBypass, false,         m_numPartitions * sizeof(*m_cuTransquantBypass));
-    memset(m_depth,              0,             m_numPartitions * sizeof(*m_depth));
-    memset(m_trIdx,              0,             m_numPartitions * sizeof(*m_trIdx));
-    memset(m_transformSkip[0],   0,             m_numPartitions * sizeof(*m_transformSkip[0]));
-    memset(m_transformSkip[1],   0,             m_numPartitions * sizeof(*m_transformSkip[1]));
-    memset(m_transformSkip[2],   0,             m_numPartitions * sizeof(*m_transformSkip[2]));
-    memset(m_bMergeFlags,        false,         m_numPartitions * sizeof(*m_bMergeFlags));
-    memset(m_chromaIntraDir,     0,             m_numPartitions * sizeof(*m_chromaIntraDir));
-    memset(m_interDir,           0,             m_numPartitions * sizeof(*m_interDir));
-    memset(m_cbf[0],             0,             m_numPartitions * sizeof(*m_cbf[0]));
-    memset(m_cbf[1],             0,             m_numPartitions * sizeof(*m_cbf[1]));
-    memset(m_cbf[2],             0,             m_numPartitions * sizeof(*m_cbf[2]));
+    /* sequential memsets */
+    memset(m_qp, qp, m_numPartitions);
+    memset(m_log2CUSize, g_maxLog2CUSize, m_numPartitions);
+    memset(m_partSizes, SIZE_NONE, m_numPartitions);
+    memset(m_predModes, MODE_NONE, m_numPartitions);
+    memset(m_lumaIntraDir, DC_IDX, m_numPartitions);
 
-    memset(m_qp,                 qp,            m_numPartitions * sizeof(*m_qp));
-    memset(m_log2CUSize,         g_maxLog2CUSize, m_numPartitions * sizeof(*m_log2CUSize));
-    memset(m_lumaIntraDir,       DC_IDX,        m_numPartitions * sizeof(*m_lumaIntraDir));
-    memset(m_predModes,          MODE_NONE,     m_numPartitions * sizeof(*m_predModes));
-    memset(m_partSizes,          SIZE_NONE,     m_numPartitions * sizeof(*m_partSizes));
+    /* initialize the remaining CU data in one memset */
+    memset(m_depth, 0, (BytesPerPartition - 5) * m_numPartitions);
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
 
-    uint32_t widthInCU = frame->m_picSym->getFrameWidthInCU();
-    m_cuLeft = (m_cuAddr % widthInCU) ? frame->m_picSym->getCU(m_cuAddr - 1) : NULL;
-    m_cuAbove = (m_cuAddr / widthInCU) ? frame->m_picSym->getCU(m_cuAddr - widthInCU) : NULL;
-    m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? frame->m_picSym->getCU(m_cuAddr - widthInCU - 1) : NULL;
-    m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? frame->m_picSym->getCU(m_cuAddr - widthInCU + 1) : NULL;
+    uint32_t widthInCU = frame.m_picSym->getFrameWidthInCU();
+    m_cuLeft = (m_cuAddr % widthInCU) ? frame.m_picSym->getCU(m_cuAddr - 1) : NULL;
+    m_cuAbove = (m_cuAddr / widthInCU) ? frame.m_picSym->getCU(m_cuAddr - widthInCU) : NULL;
+    m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? frame.m_picSym->getCU(m_cuAddr - widthInCU - 1) : NULL;
+    m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? frame.m_picSym->getCU(m_cuAddr - widthInCU + 1) : NULL;
 }
 
 // initialize Sub partition
@@ -181,30 +148,19 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
     m_cuAboveRight  = ctu.m_cuAboveRight;
 
-    int sizeInChar = sizeof(char) * m_numPartitions;
-    memset(m_chromaIntraDir,     0,      sizeInChar);
-    memset(m_trIdx,              0,      sizeInChar);
-    memset(m_transformSkip[0],   0,      sizeInChar);
-    memset(m_transformSkip[1],   0,      sizeInChar);
-    memset(m_transformSkip[2],   0,      sizeInChar);
-    memset(m_cbf[0],             0,      sizeInChar);
-    memset(m_cbf[1],             0,      sizeInChar);
-    memset(m_cbf[2],             0,      sizeInChar);
-    memset(m_skipFlag,           false,  sizeInChar);
-    memset(m_cuTransquantBypass, false,  sizeInChar);
+    /* sequential memsets */
+    memset(m_qp,           ctu.m_qp[0],       m_numPartitions);
+    memset(m_log2CUSize,   cuData.log2CUSize, m_numPartitions);
+    memset(m_partSizes,    SIZE_NONE,         m_numPartitions);
+    memset(m_predModes,    MODE_NONE,         m_numPartitions);
+    memset(m_lumaIntraDir, DC_IDX,            m_numPartitions);
+    memset(m_depth,        cuData.depth,      m_numPartitions);
 
-    memset(m_qp,                 ctu.m_qp[0], sizeInChar);
-    memset(m_lumaIntraDir,       DC_IDX, sizeInChar);
-    memset(m_depth,              cuData.depth, sizeInChar);
-    memset(m_log2CUSize,         cuData.log2CUSize, sizeInChar);
-    memset(m_partSizes,          SIZE_NONE, sizeInChar);
-    memset(m_predModes,          MODE_NONE, sizeInChar);
+    /* initialize the remaining CU data in one memset */
+    memset(m_skipFlag, 0, (BytesPerPartition - 6) * m_numPartitions);
 
     if (m_slice->m_sliceType != I_SLICE)
     {
-        memset(m_bMergeFlags, 0, sizeInChar);
-        memset(m_interDir,    0, sizeInChar);
-
         m_cuMvField[0].clearMvField();
         m_cuMvField[1].clearMvField();
     }

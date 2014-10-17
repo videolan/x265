@@ -180,7 +180,7 @@ public:
     TComDataCU();
 
     void     initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
-    void     initCTU(Frame* pic, uint32_t cuAddr, int qp);
+    void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const TComDataCU& cu, const CU& cuData);
     void     loadCTUData(uint32_t maxCUSize);
 
