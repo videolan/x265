@@ -437,48 +437,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
     uint32_t minDepth = 4;
     if (mightNotSplit)
-    {
-        /* Do not attempt to code a block larger than the largest block in the
-         * co-located CTUs in L0 and L1 */
-        int currentQP = parentCTU.m_qp[0];
-        int previousQP = currentQP;
-        uint32_t minDepth0 = minDepth, minDepth1 = minDepth;
-        uint32_t sum0 = 0, sum1 = 0;
-        if (m_slice->m_numRefIdx[0])
-        {
-            const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getCU(cuAddr);
-            previousQP = cu.m_qp[0];
-            for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
-            {
-                uint32_t d = cu.m_depth[cuData.encodeIdx + i];
-                minDepth0 = X265_MIN(d, minDepth0);
-                sum0 += d;
-            }
-        }
-        if (m_slice->m_numRefIdx[1])
-        {
-            const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(cuAddr);
-            for (uint32_t i = 0; i < cuData.numPartitions && minDepth1; i += 4)
-            {
-                uint32_t d = cu.m_depth[cuData.encodeIdx + i];
-                minDepth1 = X265_MIN(d, minDepth1);
-                sum1 += d;
-            }
-        }
-        minDepth = X265_MIN(minDepth0, minDepth1);
-
-        /* allow block size growth if QP is raising */
-        if (!minDepth || currentQP < previousQP)
-        {
-            /* minDepth is already as low as it can go, or quantizer is lower */
-        }
-        else
-        {
-            uint32_t avgDepth2 = (sum0 + sum1) / (cuData.numPartitions >> 2);
-            if (avgDepth2 <= 2 * minDepth + 1)
-                minDepth -= 1;
-        }
-    }
+        minDepth = topSkipMinDepth(parentCTU, cuData);
 
     if (mightNotSplit && depth >= minDepth)
     {
@@ -1619,4 +1578,55 @@ void Analysis::checkDQP(TComDataCU& cu, const CU& cuData)
                 cu.setQPSubParts(cu.getRefQP(0), 0, cuData.depth);
         }
     }
+}
+
+uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData)
+{
+    /* Do not attempt to code a block larger than the largest block in the
+     * co-located CTUs in L0 and L1 */
+    int currentQP = parentCTU.m_qp[0];
+    int previousQP = currentQP;
+    uint32_t minDepth0 = 4, minDepth1 = 4;
+    uint32_t sum0 = 0, sum1 = 0;
+    if (m_slice->m_numRefIdx[0])
+    {
+        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getCU(parentCTU.m_cuAddr);
+        previousQP = cu.m_qp[0];
+        if (!cu.m_depth[cuData.encodeIdx])
+            return 0;
+        for (uint32_t i = 0; i < cuData.numPartitions && minDepth0; i += 4)
+        {
+            uint32_t d = cu.m_depth[cuData.encodeIdx + i];
+            minDepth0 = X265_MIN(d, minDepth0);
+            sum0 += d;
+        }
+    }
+    if (m_slice->m_numRefIdx[1])
+    {
+        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(parentCTU.m_cuAddr);
+        if (!cu.m_depth[cuData.encodeIdx])
+            return 0;
+        for (uint32_t i = 0; i < cuData.numPartitions; i += 4)
+        {
+            uint32_t d = cu.m_depth[cuData.encodeIdx + i];
+            minDepth1 = X265_MIN(d, minDepth1);
+            sum1 += d;
+        }
+    }
+
+    uint32_t minDepth = X265_MIN(minDepth0, minDepth1);
+
+    /* allow block size growth if QP is raising */
+    if (!minDepth || currentQP < previousQP)
+    {
+        /* minDepth is already as low as it can go, or quantizer is lower */
+    }
+    else
+    {
+        uint32_t avgDepth2 = (sum0 + sum1) / (cuData.numPartitions >> 2);
+        if (avgDepth2 <= 2 * minDepth + 1)
+            minDepth -= 1;
+    }
+
+    return minDepth;
 }

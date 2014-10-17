@@ -110,6 +110,7 @@ protected:
     void checkDQP(TComDataCU& cu, const CU& cuData);
     void addSplitFlagCost(Mode& mode, uint32_t depth);
     void checkBestMode(Mode& mode, uint32_t depth);
+    uint32_t topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData);
 
     void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
 };
