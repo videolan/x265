@@ -1017,13 +1017,12 @@ void TComDataCU::setTransformSkipPartRange(uint32_t useTransformSkip, TextType t
 void TComDataCU::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const
 {
     int cuSize = 1 << m_log2CUSize[0];
-    int part_mode = m_partSizes[0];
-    int part_idx  = partIdx;
+    int partType = m_partSizes[0];
 
-    int tmp = partTable[part_mode][part_idx][0];
+    int tmp = partTable[partType][partIdx][0];
     outWidth = ((tmp >> 4) * cuSize) >> 2;
     outHeight = ((tmp & 0xF) * cuSize) >> 2;
-    outPartAddr = (partAddrTable[part_mode][part_idx] * m_numPartitions) >> 4;
+    outPartAddr = (partAddrTable[partType][partIdx] * m_numPartitions) >> 4;
 }
 
 void TComDataCU::getMvField(const TComDataCU* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField) const
