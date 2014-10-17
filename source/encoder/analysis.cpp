@@ -1647,16 +1647,9 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     uint32_t minDepth = X265_MIN(minDepth0, minDepth1);
 
     /* allow block size growth if QP is raising */
-    if (!minDepth || currentQP < previousQP)
-    {
-        /* minDepth is already as low as it can go, or quantizer is lower */
-    }
-    else
-    {
-        uint32_t avgDepth2 = (sum0 + sum1) / (cuData.numPartitions >> 2);
-        if (avgDepth2 <= 2 * minDepth + 1)
-            minDepth -= 1;
-    }
+    if (minDepth && currentQP >= previousQP &&
+        (sum0 + sum1 <= (2 * minDepth + 1) * (cuData.numPartitions >> 2)))
+        minDepth -= 1;
 
     return minDepth;
 }
