@@ -91,6 +91,7 @@ protected:
     void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x265_intra_data* sdata, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
+    void compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuData);
     void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData);
     void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData);
 

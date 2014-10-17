@@ -167,6 +167,8 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, ctu.m_cuLocalData[0]);
         }
+        else if (m_param->bDistributeModeAnalysis && m_param->rdLevel >= 2)
+            compressInterCU_dist(ctu, ctu.m_cuLocalData[0]);
         else if (m_param->rdLevel <= 4)
             compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]);
         else
@@ -425,6 +427,187 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
     }
 }
 
+void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuData)
+{
+    uint32_t depth = cuData.depth;
+    uint32_t cuAddr = parentCTU.m_cuAddr;
+    ModeDepth& md = m_modeDepth[depth];
+    md.bestMode = NULL;
+
+    bool mightSplit = !(cuData.flags & CU::LEAF);
+    bool mightNotSplit = !(cuData.flags & CU::SPLIT_MANDATORY);
+
+    X265_CHECK(m_param->rdLevel >= 2, "compressInterCU_dist does not support RD 0 or 1\n");
+
+    uint32_t minDepth = 4;
+    if (mightNotSplit)
+        minDepth = topSkipMinDepth(parentCTU, cuData);
+
+    if (mightNotSplit && depth >= minDepth)
+    {
+        /* Initialize all prediction CUs based on parentCTU */
+        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuData);
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuData);
+        if (m_param->bEnableRectInter)
+        {
+            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuData);
+        }
+        if (m_slice->m_sliceType == P_SLICE)
+            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
+
+        m_totalNumJobs = 2 + m_param->bEnableRectInter * 2;
+        m_numAcquiredJobs = m_slice->m_sliceType != P_SLICE; /* skip intra for B slices */
+        m_numCompletedJobs = m_numAcquiredJobs;
+        m_curCUData = &cuData;
+        m_bJobsQueued = true;
+        JobProvider::enqueue();
+
+        for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
+            m_pool->pokeIdleThread();
+
+        /* participate in processing jobs, until all are in process */
+        while (findJob(-1))
+            ;
+        JobProvider::dequeue();
+        m_bJobsQueued = false;
+
+        /* the master worker thread (this one) does merge analysis. By doing
+         * merge after all the other jobs are at least started, we usually avoid
+         * blocking on another thread. */
+        checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
+
+        md.bestMode = &md.pred[PRED_SKIP];
+        if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
+            md.bestMode = &md.pred[PRED_MERGE];
+
+        m_modeCompletionEvent.wait();
+
+        /* select best inter mode based on sa8d cost */
+        Mode *bestInter = &md.pred[PRED_2Nx2N];
+        if (m_param->bEnableRectInter)
+        {
+            if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_Nx2N];
+            if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_Nx2N];
+        }
+
+        if (m_param->rdLevel > 2)
+        {
+            /* build chroma prediction for best inter */
+            for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+            {
+                prepMotionCompensation(&bestInter->cu, cuData, puIdx);
+                motionCompensation(&bestInter->predYuv, false, true);
+            }
+
+            /* RD selection between inter and merge */
+            encodeResAndCalcRdInterCU(*bestInter, cuData);
+
+            checkBestMode(*bestInter, depth);
+            checkBestMode(md.pred[PRED_INTRA], depth);
+        }
+        else
+        {
+            if (bestInter->sa8dCost < md.bestMode->sa8dCost)
+                md.bestMode = bestInter;
+
+            if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
+                md.bestMode = &md.pred[PRED_INTRA];
+
+            if (md.bestMode->cu.m_bMergeFlags[0])
+            {
+                /* checkMerge2Nx2N_rd0_4() already did a full encode */
+            }
+            else if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
+            {
+                /* finally code the best mode selected from SA8D costs */
+                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                {
+                    prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
+                    motionCompensation(&md.bestMode->predYuv, false, true);
+                }
+                encodeResAndCalcRdInterCU(*md.bestMode, cuData);
+            }
+            else
+                encodeIntraInInter(*md.bestMode, cuData);
+        }
+
+        checkDQP(md.bestMode->cu, cuData);
+
+        if (mightSplit)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
+    }
+
+    bool bNoSplit = false;
+    if (md.bestMode)
+    {
+        bNoSplit = md.bestMode->cu.isSkipped(0);
+        if (mightSplit && depth && depth >= minDepth && !bNoSplit)
+            bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
+    }
+
+    if (mightSplit && !bNoSplit)
+    {
+        Mode* splitPred = &md.pred[PRED_SPLIT];
+        splitPred->initCosts();
+        TComDataCU* splitCU = &splitPred->cu;
+        splitCU->initSubCU(parentCTU, cuData);
+
+        uint32_t nextDepth = depth + 1;
+        ModeDepth& nd = m_modeDepth[nextDepth];
+        invalidateContexts(nextDepth);
+        Entropy* nextContext = &m_rdContexts[depth].cur;
+
+        for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
+        {
+            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
+            if (childCuData.flags & CU::PRESENT)
+            {
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
+                m_rdContexts[nextDepth].cur.load(*nextContext);
+                compressInterCU_dist(parentCTU, childCuData);
+
+                // Save best CU and pred data for this sub CU
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
+                splitPred->addSubCosts(*nd.bestMode);
+
+                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
+                nextContext = &nd.bestMode->contexts;
+            }
+            else
+                /* record the depth of this non-present sub-CU */
+                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
+        }
+        nextContext->store(splitPred->contexts);
+
+        if (mightNotSplit)
+            addSplitFlagCost(*splitPred, cuData.depth);
+        else
+            updateModeCost(*splitPred);
+
+        checkDQP(*splitCU, cuData);
+        checkBestMode(*splitPred, depth);
+    }
+
+    if (!depth || md.bestMode->cu.m_predModes[0] != MODE_INTRA)
+    {
+        /* early-out statistics */
+        TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+        uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
+        ctu.m_count[depth] += 1;
+        ctu.m_avgCost[depth] = (temp + md.bestMode->rdCost) / ctu.m_count[depth];
+    }
+
+    /* Copy Best data to Picture for next partition prediction */
+    md.bestMode->cu.copyToPic(depth);
+
+    if (md.bestMode != &md.pred[PRED_SPLIT])
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
+}
+
 void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData)
 {
     uint32_t depth = cuData.depth;
@@ -453,179 +636,74 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         if (m_slice->m_sliceType == P_SLICE)
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
 
-        if (m_param->bDistributeModeAnalysis)
+        /* Compute Merge Cost */
+        checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
+
+        bool earlyskip = false;
+        md.bestMode = &md.pred[PRED_SKIP];
+        if (m_param->rdLevel >= 1)
         {
-            /* with distributed analysis, we perform more speculative work.
-             * We do not have early outs for when skips are found so we
-             * always evaluate intra and all inter and merge modes
-             *
-             * jobs are numbered as:
-             *  0 = intra
-             *  1 = inter 2Nx2N
-             *  2 = inter Nx2N
-             *  3 = inter 2NxN */
-            m_totalNumJobs = 2 + m_param->bEnableRectInter * 2;
-            m_numAcquiredJobs = m_slice->m_sliceType != P_SLICE; /* skip intra for B slices */
-            m_numCompletedJobs = m_numAcquiredJobs;
-            m_curCUData = &cuData;
-            m_bJobsQueued = true;
-            JobProvider::enqueue();
+            if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
+                md.bestMode = &md.pred[PRED_MERGE];
+            earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
+        }
+        else
+        {
+            if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
+                md.bestMode = &md.pred[PRED_MERGE];
+        }
 
-            for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
-                m_pool->pokeIdleThread();
+        if (!earlyskip)
+        {
+            checkInter_rd0_4(md.pred[PRED_2Nx2N], cuData, SIZE_2Nx2N);
+            Mode *bestInter = &md.pred[PRED_2Nx2N];
 
-            /* the master worker thread (this one) does merge analysis */
-            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
-
-            bool earlyskip = false;
-            md.bestMode = &md.pred[PRED_SKIP];
-            if (m_param->rdLevel >= 1)
+            if (m_param->bEnableRectInter)
             {
-                if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
-                    md.bestMode = &md.pred[PRED_MERGE];
-                earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
-            }
-            else
-            {
-                if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
-                    md.bestMode = &md.pred[PRED_MERGE];
+                checkInter_rd0_4(md.pred[PRED_Nx2N], cuData, SIZE_Nx2N);
+                if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_Nx2N];
+                checkInter_rd0_4(md.pred[PRED_2NxN], cuData, SIZE_2NxN);
+                if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_2NxN];
             }
 
-            if (earlyskip)
+            if (m_param->rdLevel > 2)
             {
-                /* a SKIP was found, consume remaining jobs to conserve work */
-                JobProvider::dequeue();
-                while (m_totalNumJobs > m_numAcquiredJobs)
+                /* Calculate RD cost of best inter option */
+                for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                 {
-                    int id = ATOMIC_INC(&m_numAcquiredJobs);
-                    if (m_totalNumJobs >= id)
-                    {
-                        if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
-                            m_modeCompletionEvent.trigger();
-                    }
-                }
-            }
-            else
-            {
-                /* participate in processing remaining jobs */
-                while (findJob(-1))
-                    ;
-                JobProvider::dequeue();
-            }
-            m_bJobsQueued = false;
-            m_modeCompletionEvent.wait();
-
-            if (!earlyskip)
-            {
-                /* select best inter mode based on sa8d cost */
-                Mode *bestInter = &md.pred[PRED_2Nx2N];
-                if (m_param->bEnableRectInter)
-                {
-                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                        bestInter = &md.pred[PRED_Nx2N];
-                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                        bestInter = &md.pred[PRED_Nx2N];
+                    prepMotionCompensation(&bestInter->cu, cuData, puIdx);
+                    motionCompensation(&bestInter->predYuv, false, true);
                 }
 
-                if (m_param->rdLevel > 2)
+                encodeResAndCalcRdInterCU(*bestInter, cuData);
+
+                if (bestInter->rdCost < md.bestMode->rdCost)
+                    md.bestMode = bestInter;
+
+                if (m_slice->m_sliceType == P_SLICE && md.bestMode->cu.getQtRootCbf(0))
                 {
-                    /* build chroma prediction for best inter */
-                    for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
-                    {
-                        prepMotionCompensation(&bestInter->cu, cuData, puIdx);
-                        motionCompensation(&bestInter->predYuv, false, true);
-                    }
-
-                    /* RD selection between inter and merge */
-                    encodeResAndCalcRdInterCU(*bestInter, cuData);
-
-                    if (bestInter->rdCost < md.bestMode->rdCost)
-                        md.bestMode = bestInter;
-
+                    checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
+                    encodeIntraInInter(md.pred[PRED_INTRA], cuData);
                     if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
                         md.bestMode = &md.pred[PRED_INTRA];
                 }
-                else
-                {
-                    if (bestInter->sa8dCost < md.bestMode->sa8dCost)
-                        md.bestMode = bestInter;
+            }
+            else
+            {
+                /* SA8D choice between merge/skip, inter, and intra */
+                if (bestInter->sa8dCost < md.bestMode->sa8dCost)
+                    md.bestMode = bestInter;
 
+                if (m_slice->m_sliceType == P_SLICE)
+                {
+                    checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                     if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = &md.pred[PRED_INTRA];
                 }
             }
-        }
-        else
-        {
-            /* Compute Merge Cost */
-            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
-
-            bool earlyskip = false;
-            md.bestMode = &md.pred[PRED_SKIP];
-            if (m_param->rdLevel >= 1)
-            {
-                if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
-                    md.bestMode = &md.pred[PRED_MERGE];
-                earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
-            }
-            else
-            {
-                if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
-                    md.bestMode = &md.pred[PRED_MERGE];
-            }
-
-            if (!earlyskip)
-            {
-                checkInter_rd0_4(md.pred[PRED_2Nx2N], cuData, SIZE_2Nx2N);
-                Mode *bestInter = &md.pred[PRED_2Nx2N];
-
-                if (m_param->bEnableRectInter)
-                {
-                    checkInter_rd0_4(md.pred[PRED_Nx2N], cuData, SIZE_Nx2N);
-                    if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                        bestInter = &md.pred[PRED_Nx2N];
-                    checkInter_rd0_4(md.pred[PRED_2NxN], cuData, SIZE_2NxN);
-                    if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
-                        bestInter = &md.pred[PRED_2NxN];
-                }
-
-                if (m_param->rdLevel > 2)
-                {
-                    /* Calculate RD cost of best inter option */
-                    for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
-                    {
-                        prepMotionCompensation(&bestInter->cu, cuData, puIdx);
-                        motionCompensation(&bestInter->predYuv, false, true);
-                    }
-
-                    encodeResAndCalcRdInterCU(*bestInter, cuData);
-
-                    if (bestInter->rdCost < md.bestMode->rdCost)
-                        md.bestMode = bestInter;
-
-                    if (m_slice->m_sliceType == P_SLICE && md.bestMode->cu.getQtRootCbf(0))
-                    {
-                        checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
-                        encodeIntraInInter(md.pred[PRED_INTRA], cuData);
-                        if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
-                            md.bestMode = &md.pred[PRED_INTRA];
-                    }
-                }
-                else
-                {
-                    /* SA8D choice between merge/skip, inter, and intra */
-                    if (bestInter->sa8dCost < md.bestMode->sa8dCost)
-                        md.bestMode = bestInter;
-
-                    if (m_slice->m_sliceType == P_SLICE)
-                    {
-                        checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
-                        if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
-                            md.bestMode = &md.pred[PRED_INTRA];
-                    }
-                }
-            } // !earlyskip
-        }  // !pmode
+        } // !earlyskip
 
         /* low RD levels might require follow-up work on best mode */
 
