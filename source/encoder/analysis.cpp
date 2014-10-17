@@ -926,9 +926,9 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         invalidateContexts(nextDepth);
         Entropy* nextContext = &m_rdContexts[depth].cur;
 
-        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
+        for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
@@ -936,14 +936,14 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 compressInterCU_rd5_6(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, partUnitIdx, nextDepth);
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
                 splitPred->addSubCosts(*nd.bestMode);
-                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * partUnitIdx);
+                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
                 /* record the depth of this non-present sub-CU */
-                memset(splitCU->m_depth + childCuData.numPartitions * partUnitIdx, nextDepth, childCuData.numPartitions);
+                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
         }
         nextContext->store(splitPred->contexts);
         if (mightNotSplit)
@@ -1409,9 +1409,9 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
 {
     if (cuData.depth < ctu.m_depth[cuData.encodeIdx] && cuData.depth < g_maxCUDepth)
     {
-        for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
+        for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCUData = ctu.m_cuLocalData[cuData.childIdx + partUnitIdx];
+            const CU& childCUData = ctu.m_cuLocalData[cuData.childIdx + subPartIdx];
             if (childCUData.flags & CU::PRESENT)
                 encodeResidue(ctu, childCUData);
         }
