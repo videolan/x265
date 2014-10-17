@@ -544,7 +544,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
     bool bNoSplit = false;
     if (md.bestMode)
     {
-        bNoSplit = md.bestMode->cu.isSkipped(0);
+        bNoSplit = !!md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit)
             bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
     }
@@ -754,7 +754,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     bool bNoSplit = false;
     if (md.bestMode)
     {
-        bNoSplit = md.bestMode->cu.isSkipped(0);
+        bNoSplit = !!md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit)
             bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
     }
