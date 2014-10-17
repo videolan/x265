@@ -726,7 +726,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
                 encodeIntraInInter(*md.bestMode, cuData);
         }
-        else
+        else if (m_param->rdLevel < 2)
         {
             /* Generate recon YUV for this CU. Note: does not update any CABAC context! */
             if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
