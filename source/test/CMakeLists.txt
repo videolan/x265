@@ -11,6 +11,11 @@ else()
     set(YASM_SRC checkasm-a.asm)
 endif()
 
+check_symbol_exists(__rdtsc "intrin.h" HAVE_RDTSC)
+if(HAVE_RDTSC)
+    add_definitions(-DHAVE_RDTSC=1)
+endif()
+
 add_executable(TestBench ${YASM_SRC}
     testbench.cpp testharness.h
     pixelharness.cpp pixelharness.h

@@ -71,7 +71,10 @@ protected:
 
 #ifdef _MSC_VER
 #include <intrin.h>
+#elif HAVE_RDTSC
+#include <intrin.h>
 #elif defined(__GNUC__)
+/* fallback for older GCC/MinGW */
 static inline uint32_t __rdtsc(void)
 {
     uint32_t a = 0;
