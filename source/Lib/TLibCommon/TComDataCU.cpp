@@ -173,7 +173,7 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossess,
      * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
 
-    m_frame = ctu.m_frame;
+    m_frame  = ctu.m_frame;
     m_slice  = ctu.m_slice;
     m_cuAddr = ctu.m_cuAddr;
     m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
@@ -181,176 +181,162 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     m_absIdxInCTU   = cuData.encodeIdx;
     m_numPartitions = cuData.numPartitions;
 
-    int sizeInChar  = sizeof(char) * m_numPartitions;
-    memcpy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU, sizeInChar);
-    memcpy(m_log2CUSize, ctu.m_log2CUSize + m_absIdxInCTU, sizeInChar);
-    memcpy(m_predModes,  ctu.m_predModes + m_absIdxInCTU, sizeInChar);
-    memcpy(m_skipFlag,   ctu.m_skipFlag + m_absIdxInCTU, sizeInChar);
-    memcpy(m_qp,         ctu.m_qp + m_absIdxInCTU, sizeInChar);
-    memcpy(m_depth,      ctu.m_depth + m_absIdxInCTU, sizeInChar);
-    memcpy(m_partSizes,  ctu.m_partSizes + m_absIdxInCTU, sizeInChar);
+    memcpy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_log2CUSize, ctu.m_log2CUSize + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_predModes,  ctu.m_predModes + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_skipFlag,   ctu.m_skipFlag + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_qp,         ctu.m_qp + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_depth,      ctu.m_depth + m_absIdxInCTU, m_numPartitions);
+    memcpy(m_partSizes,  ctu.m_partSizes + m_absIdxInCTU, m_numPartitions);
 }
 
 // Copy small CU to bigger CU.
 // One of quarter parts overwritten by predicted sub part.
-void TComDataCU::copyPartFrom(const TComDataCU& cuConst, const int numPartitions, uint32_t partUnitIdx, uint32_t depth)
+void TComDataCU::copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth)
 {
     X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
 
     uint32_t offset = numPartitions * partUnitIdx;
-    int sizeInChar  = sizeof(char) * numPartitions;
 
-    /* we have to cheat and get a non-const reference to the passed CU, but we are only copying data from it */
-    TComDataCU* cu = const_cast<TComDataCU*>(&cuConst);
+    memcpy(m_qp               + offset, cu.m_qp,                numPartitions);
+    memcpy(m_partSizes        + offset, cu.m_partSizes,         numPartitions);
+    memcpy(m_depth            + offset, cu.m_depth,             numPartitions);
+    memcpy(m_transformSkip[0] + offset, cu.m_transformSkip[0],  numPartitions);
+    memcpy(m_transformSkip[1] + offset, cu.m_transformSkip[1],  numPartitions);
+    memcpy(m_transformSkip[2] + offset, cu.m_transformSkip[2],  numPartitions);
+    memcpy(m_skipFlag         + offset, cu.m_skipFlag,          numPartitions);
+    memcpy(m_predModes        + offset, cu.m_predModes,         numPartitions);
+    memcpy(m_log2CUSize       + offset, cu.m_log2CUSize,        numPartitions);
+    memcpy(m_trIdx            + offset, cu.m_trIdx,             numPartitions);
+    memcpy(m_cbf[0]           + offset, cu.m_cbf[0],            numPartitions);
+    memcpy(m_cbf[1]           + offset, cu.m_cbf[1],            numPartitions);
+    memcpy(m_cbf[2]           + offset, cu.m_cbf[2],            numPartitions);
+    memcpy(m_bMergeFlags      + offset, cu.m_bMergeFlags,       numPartitions);
+    memcpy(m_lumaIntraDir     + offset, cu.m_lumaIntraDir,      numPartitions);
+    memcpy(m_chromaIntraDir   + offset, cu.m_chromaIntraDir,    numPartitions);
+    memcpy(m_interDir         + offset, cu.m_interDir,          numPartitions);
+    memcpy(m_mvpIdx[0]        + offset, cu.m_mvpIdx[0],         numPartitions);
+    memcpy(m_mvpIdx[1]        + offset, cu.m_mvpIdx[1],         numPartitions);
+    memcpy(m_cuTransquantBypass + offset, cu.m_cuTransquantBypass, numPartitions);
 
-    memcpy(m_qp               + offset, cu->m_qp,                sizeInChar);
-    memcpy(m_partSizes        + offset, cu->m_partSizes,         sizeInChar);
-    memcpy(m_depth            + offset, cu->m_depth,             sizeInChar);
-    memcpy(m_transformSkip[0] + offset, cu->m_transformSkip[0],  sizeInChar);
-    memcpy(m_transformSkip[1] + offset, cu->m_transformSkip[1],  sizeInChar);
-    memcpy(m_transformSkip[2] + offset, cu->m_transformSkip[2],  sizeInChar);
-    memcpy(m_skipFlag         + offset, cu->m_skipFlag,          sizeInChar);
-    memcpy(m_predModes        + offset, cu->m_predModes,         sizeInChar);
-    memcpy(m_log2CUSize       + offset, cu->m_log2CUSize,        sizeInChar);
-    memcpy(m_trIdx            + offset, cu->m_trIdx,             sizeInChar);
-    memcpy(m_cbf[0]           + offset, cu->m_cbf[0],            sizeInChar);
-    memcpy(m_cbf[1]           + offset, cu->m_cbf[1],            sizeInChar);
-    memcpy(m_cbf[2]           + offset, cu->m_cbf[2],            sizeInChar);
-    memcpy(m_bMergeFlags      + offset, cu->m_bMergeFlags,       sizeInChar);
-    memcpy(m_lumaIntraDir     + offset, cu->m_lumaIntraDir,      sizeInChar);
-    memcpy(m_chromaIntraDir   + offset, cu->m_chromaIntraDir,    sizeInChar);
-    memcpy(m_interDir         + offset, cu->m_interDir,          sizeInChar);
-    memcpy(m_mvpIdx[0]        + offset, cu->m_mvpIdx[0],         sizeInChar);
-    memcpy(m_mvpIdx[1]        + offset, cu->m_mvpIdx[1],         sizeInChar);
-
-    /* TODO: can this be moved within if(bTransquantBypassEnabled)? */
-    memcpy(m_cuTransquantBypass + offset, cu->m_cuTransquantBypass, sizeof(*m_cuTransquantBypass) * numPartitions);
-
-    m_cuMvField[0].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
-    m_cuMvField[1].copyFrom(&cu->m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
+    m_cuMvField[0].copyFrom(&cu.m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
+    m_cuMvField[1].copyFrom(&cu.m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
 
     uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmp2 = partUnitIdx * tmp;
-    memcpy(m_trCoeff[0] + tmp2, cu->m_trCoeff[0], sizeof(coeff_t) * tmp);
+    memcpy(m_trCoeff[0] + tmp2, cu.m_trCoeff[0], sizeof(coeff_t) * tmp);
 
     uint32_t tmpC  = tmp  >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmp2 >> (m_hChromaShift + m_vChromaShift);
-    memcpy(m_trCoeff[1] + tmpC2, cu->m_trCoeff[1], sizeof(coeff_t) * tmpC);
-    memcpy(m_trCoeff[2] + tmpC2, cu->m_trCoeff[2], sizeof(coeff_t) * tmpC);
+    memcpy(m_trCoeff[1] + tmpC2, cu.m_trCoeff[1], sizeof(coeff_t) * tmpC);
+    memcpy(m_trCoeff[2] + tmpC2, cu.m_trCoeff[2], sizeof(coeff_t) * tmpC);
 }
 
-// Copy current predicted part to a CU in picture.
-// It is used to predict for next part
-void TComDataCU::copyToPic(uint32_t depth)
+// Copy current predicted part to CTU in picture.
+void TComDataCU::copyToPic(uint32_t depth) const
 {
-    TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
+    TComDataCU& ctu = *m_frame->m_picSym->getCU(m_cuAddr);
 
-    int sizeInChar = sizeof(char) * m_numPartitions;
+    memcpy(ctu.m_qp                 + m_absIdxInCTU, m_qp, m_numPartitions);
+    memcpy(ctu.m_partSizes          + m_absIdxInCTU, m_partSizes, m_numPartitions);
+    memcpy(ctu.m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass, m_numPartitions);
+    memcpy(ctu.m_transformSkip[0]   + m_absIdxInCTU, m_transformSkip[0], m_numPartitions);
+    memcpy(ctu.m_transformSkip[1]   + m_absIdxInCTU, m_transformSkip[1], m_numPartitions);
+    memcpy(ctu.m_transformSkip[2]   + m_absIdxInCTU, m_transformSkip[2], m_numPartitions);
+    memcpy(ctu.m_depth              + m_absIdxInCTU, m_depth, m_numPartitions);
+    memcpy(ctu.m_skipFlag           + m_absIdxInCTU, m_skipFlag, m_numPartitions);
+    memcpy(ctu.m_predModes          + m_absIdxInCTU, m_predModes, m_numPartitions);
+    memcpy(ctu.m_log2CUSize         + m_absIdxInCTU, m_log2CUSize, m_numPartitions);
+    memcpy(ctu.m_trIdx              + m_absIdxInCTU, m_trIdx, m_numPartitions);
+    memcpy(ctu.m_cbf[0]             + m_absIdxInCTU, m_cbf[0], m_numPartitions);
+    memcpy(ctu.m_cbf[1]             + m_absIdxInCTU, m_cbf[1], m_numPartitions);
+    memcpy(ctu.m_cbf[2]             + m_absIdxInCTU, m_cbf[2], m_numPartitions);
+    memcpy(ctu.m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, m_numPartitions);
+    memcpy(ctu.m_interDir           + m_absIdxInCTU, m_interDir, m_numPartitions);
+    memcpy(ctu.m_lumaIntraDir       + m_absIdxInCTU, m_lumaIntraDir, m_numPartitions);
+    memcpy(ctu.m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir, m_numPartitions);
+    memcpy(ctu.m_mvpIdx[0]          + m_absIdxInCTU, m_mvpIdx[0], m_numPartitions);
+    memcpy(ctu.m_mvpIdx[1]          + m_absIdxInCTU, m_mvpIdx[1], m_numPartitions);
 
-    memcpy(cu->m_qp                 + m_absIdxInCTU, m_qp, sizeInChar);
-    memcpy(cu->m_partSizes          + m_absIdxInCTU, m_partSizes, sizeInChar);
-    memcpy(cu->m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass, sizeInChar);
-    memcpy(cu->m_transformSkip[0]   + m_absIdxInCTU, m_transformSkip[0], sizeInChar);
-    memcpy(cu->m_transformSkip[1]   + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
-    memcpy(cu->m_transformSkip[2]   + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
-    memcpy(cu->m_depth              + m_absIdxInCTU, m_depth, sizeInChar);
-    memcpy(cu->m_skipFlag           + m_absIdxInCTU, m_skipFlag, sizeInChar);
-    memcpy(cu->m_predModes          + m_absIdxInCTU, m_predModes, sizeInChar);
-    memcpy(cu->m_log2CUSize         + m_absIdxInCTU, m_log2CUSize, sizeInChar);
-    memcpy(cu->m_trIdx              + m_absIdxInCTU, m_trIdx, sizeInChar);
-    memcpy(cu->m_cbf[0]             + m_absIdxInCTU, m_cbf[0], sizeInChar);
-    memcpy(cu->m_cbf[1]             + m_absIdxInCTU, m_cbf[1], sizeInChar);
-    memcpy(cu->m_cbf[2]             + m_absIdxInCTU, m_cbf[2], sizeInChar);
-    memcpy(cu->m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags, sizeInChar);
-    memcpy(cu->m_interDir           + m_absIdxInCTU, m_interDir, sizeInChar);
-    memcpy(cu->m_lumaIntraDir       + m_absIdxInCTU, m_lumaIntraDir, sizeInChar);
-    memcpy(cu->m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->m_mvpIdx[0]          + m_absIdxInCTU, m_mvpIdx[0], sizeInChar);
-    memcpy(cu->m_mvpIdx[1]          + m_absIdxInCTU, m_mvpIdx[1], sizeInChar);
-
-    m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
-    m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
+    m_cuMvField[0].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
+    m_cuMvField[1].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+    memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY  >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
-    memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
-    memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
+    memcpy(ctu.m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
+    memcpy(ctu.m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
 }
 
 /* Only called by encodeResidue, these fields can be modified during inter/intra coding */
-void TComDataCU::updatePic(uint32_t depth)
+void TComDataCU::updatePic(uint32_t depth) const
 {
-    TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
+    TComDataCU& ctu = *m_frame->m_picSym->getCU(m_cuAddr);
 
-    int sizeInChar = sizeof(uint8_t) * m_numPartitions;
-
-    memcpy(cu->m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0], sizeInChar);
-    memcpy(cu->m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1], sizeInChar);
-    memcpy(cu->m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2], sizeInChar);
-    memcpy(cu->m_skipFlag + m_absIdxInCTU, m_skipFlag, sizeInChar);
-    memcpy(cu->m_trIdx + m_absIdxInCTU, m_trIdx, sizeInChar);
-    memcpy(cu->m_qp + m_absIdxInCTU, m_qp, sizeInChar);
-    memcpy(cu->m_cbf[0] + m_absIdxInCTU, m_cbf[0], sizeInChar);
-    memcpy(cu->m_cbf[1] + m_absIdxInCTU, m_cbf[1], sizeInChar);
-    memcpy(cu->m_cbf[2] + m_absIdxInCTU, m_cbf[2], sizeInChar);
-    memcpy(cu->m_chromaIntraDir + m_absIdxInCTU, m_chromaIntraDir, sizeInChar);
+    memcpy(ctu.m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0], m_numPartitions);
+    memcpy(ctu.m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1], m_numPartitions);
+    memcpy(ctu.m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2], m_numPartitions);
+    memcpy(ctu.m_skipFlag + m_absIdxInCTU, m_skipFlag, m_numPartitions);
+    memcpy(ctu.m_trIdx + m_absIdxInCTU, m_trIdx, m_numPartitions);
+    memcpy(ctu.m_qp + m_absIdxInCTU, m_qp, m_numPartitions);
+    memcpy(ctu.m_cbf[0] + m_absIdxInCTU, m_cbf[0], m_numPartitions);
+    memcpy(ctu.m_cbf[1] + m_absIdxInCTU, m_cbf[1], m_numPartitions);
+    memcpy(ctu.m_cbf[2] + m_absIdxInCTU, m_cbf[2], m_numPartitions);
+    memcpy(ctu.m_chromaIntraDir + m_absIdxInCTU, m_chromaIntraDir, m_numPartitions);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+    memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
     tmpY  >>= m_hChromaShift + m_vChromaShift;
     tmpY2 >>= m_hChromaShift + m_vChromaShift;
-    memcpy(cu->m_trCoeff[1] + tmpY2, m_trCoeff[1], sizeof(coeff_t) * tmpY);
-    memcpy(cu->m_trCoeff[2] + tmpY2, m_trCoeff[2], sizeof(coeff_t) * tmpY);
+    memcpy(ctu.m_trCoeff[1] + tmpY2, m_trCoeff[1], sizeof(coeff_t) * tmpY);
+    memcpy(ctu.m_trCoeff[2] + tmpY2, m_trCoeff[2], sizeof(coeff_t) * tmpY);
 }
 
 /* TODO: Only called by encodeIntraInInter; and probably shouldn't be */
-void TComDataCU::copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth)
+void TComDataCU::copyToPic(uint32_t depth, uint32_t absPartIdx, uint32_t partDepth) const
 {
-    TComDataCU* cu = m_frame->m_picSym->getCU(m_cuAddr);
+    TComDataCU& ctu = *m_frame->m_picSym->getCU(m_cuAddr);
     uint32_t qNumPart = m_numPartitions >> (partDepth << 1);
 
-    uint32_t partStart = partIdx * qNumPart;
+    uint32_t partStart = absPartIdx * qNumPart;
     uint32_t partOffset = m_absIdxInCTU + partStart;
 
-    int sizeInChar = sizeof(char) * qNumPart;
+    memcpy(ctu.m_qp                  + partOffset, m_qp, qNumPart);
+    memcpy(ctu.m_partSizes           + partOffset, m_partSizes, qNumPart);
+    memcpy(ctu.m_depth               + partOffset, m_depth,  qNumPart);
+    memcpy(ctu.m_cuTransquantBypass  + partOffset, m_cuTransquantBypass, qNumPart);
+    memcpy(ctu.m_transformSkip[0]    + partOffset, m_transformSkip[0], qNumPart);
+    memcpy(ctu.m_transformSkip[1]    + partOffset, m_transformSkip[1], qNumPart);
+    memcpy(ctu.m_transformSkip[2]    + partOffset, m_transformSkip[2], qNumPart);
+    memcpy(ctu.m_skipFlag            + partOffset, m_skipFlag, qNumPart);
+    memcpy(ctu.m_predModes           + partOffset, m_predModes, qNumPart);
+    memcpy(ctu.m_log2CUSize          + partOffset, m_log2CUSize, qNumPart);
+    memcpy(ctu.m_trIdx               + partOffset, m_trIdx, qNumPart);
+    memcpy(ctu.m_cbf[0]              + partOffset, m_cbf[0], qNumPart);
+    memcpy(ctu.m_cbf[1]              + partOffset, m_cbf[1], qNumPart);
+    memcpy(ctu.m_cbf[2]              + partOffset, m_cbf[2], qNumPart);
+    memcpy(ctu.m_bMergeFlags         + partOffset, m_bMergeFlags, qNumPart);
+    memcpy(ctu.m_interDir            + partOffset, m_interDir, qNumPart);
+    memcpy(ctu.m_lumaIntraDir        + partOffset, m_lumaIntraDir, qNumPart);
+    memcpy(ctu.m_chromaIntraDir      + partOffset, m_chromaIntraDir, qNumPart);
+    memcpy(ctu.m_mvpIdx[0]           + partOffset, m_mvpIdx[0], qNumPart);
+    memcpy(ctu.m_mvpIdx[1]           + partOffset, m_mvpIdx[1], qNumPart);
 
-    memcpy(cu->m_qp                  + partOffset, m_qp, sizeInChar);
-    memcpy(cu->m_partSizes           + partOffset, m_partSizes, sizeInChar);
-    memcpy(cu->m_depth               + partOffset, m_depth,  sizeInChar);
-    memcpy(cu->m_cuTransquantBypass  + partOffset, m_cuTransquantBypass, sizeInChar);
-    memcpy(cu->m_transformSkip[0]    + partOffset, m_transformSkip[0], sizeInChar);
-    memcpy(cu->m_transformSkip[1]    + partOffset, m_transformSkip[1], sizeInChar);
-    memcpy(cu->m_transformSkip[2]    + partOffset, m_transformSkip[2], sizeInChar);
-    memcpy(cu->m_skipFlag            + partOffset, m_skipFlag, sizeInChar);
-    memcpy(cu->m_predModes           + partOffset, m_predModes, sizeInChar);
-    memcpy(cu->m_log2CUSize          + partOffset, m_log2CUSize, sizeInChar);
-    memcpy(cu->m_trIdx               + partOffset, m_trIdx, sizeInChar);
-    memcpy(cu->m_cbf[0]              + partOffset, m_cbf[0], sizeInChar);
-    memcpy(cu->m_cbf[1]              + partOffset, m_cbf[1], sizeInChar);
-    memcpy(cu->m_cbf[2]              + partOffset, m_cbf[2], sizeInChar);
-    memcpy(cu->m_bMergeFlags         + partOffset, m_bMergeFlags, sizeInChar);
-    memcpy(cu->m_interDir            + partOffset, m_interDir, sizeInChar);
-    memcpy(cu->m_lumaIntraDir        + partOffset, m_lumaIntraDir, sizeInChar);
-    memcpy(cu->m_chromaIntraDir      + partOffset, m_chromaIntraDir, sizeInChar);
-    memcpy(cu->m_mvpIdx[0]           + partOffset, m_mvpIdx[0], sizeInChar);
-    memcpy(cu->m_mvpIdx[1]           + partOffset, m_mvpIdx[1], sizeInChar);
-
-    m_cuMvField[0].copyTo(&cu->m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU, partStart, qNumPart);
-    m_cuMvField[1].copyTo(&cu->m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU, partStart, qNumPart);
+    m_cuMvField[0].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU, partStart, qNumPart);
+    m_cuMvField[1].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU, partStart, qNumPart);
 
     uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth - partDepth) * 2);
     uint32_t tmpY2 = partOffset << (LOG2_UNIT_SIZE * 2);
-    memcpy(cu->m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+    memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
 
     uint32_t tmpC  = tmpY >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
-    memcpy(cu->m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
-    memcpy(cu->m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
+    memcpy(ctu.m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
+    memcpy(ctu.m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
 }
 
 // --------------------------------------------------------------------------------------------------------------------

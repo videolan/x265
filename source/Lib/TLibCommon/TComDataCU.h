@@ -186,9 +186,10 @@ public:
 
     void     copyFromPic(const TComDataCU& ctu, const CU& cuData);
     void     copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
-    void     copyToPic(uint32_t depth);
-    void     copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth);
-    void     updatePic(uint32_t depth);
+
+    void     copyToPic(uint32_t depth) const;
+    void     copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth) const;
+    void     updatePic(uint32_t depth) const;
 
     void     setDepthSubParts(uint32_t depth);
 
