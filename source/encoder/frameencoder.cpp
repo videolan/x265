@@ -661,8 +661,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
-        ctu->initCU(m_frame, cuAddr);
-        ctu->setQPSubParts(m_frame->m_picSym->m_slice->m_sliceQp, 0, 0);
+        ctu->initCU(m_frame, cuAddr, slice->m_sliceQp);
 
         if (bIsVbv)
         {
@@ -685,7 +684,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             int qp = calcQpForCu(cuAddr, ctu->m_baseQp);
             tld.analysis.setQP(*slice, qp);
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
-            ctu->setQPSubParts(char(qp), 0, 0);
+            ctu->setQPSubParts(qp, 0, 0);
             if (m_param->rc.aqMode)
                 m_frame->m_qpaAq[row] += qp;
         }

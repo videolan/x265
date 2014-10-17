@@ -119,7 +119,7 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
  - internal buffers are already created
  - set values before encoding a CU
  */
-void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
+void TComDataCU::initCU(Frame* frame, uint32_t cuAddr, int qp)
 {
     m_frame         = frame;
     m_slice         = frame->m_picSym->m_slice;
@@ -150,6 +150,7 @@ void TComDataCU::initCU(Frame* frame, uint32_t cuAddr)
     memset(m_cbf[1],             0,             m_numPartitions * sizeof(*m_cbf[1]));
     memset(m_cbf[2],             0,             m_numPartitions * sizeof(*m_cbf[2]));
 
+    memset(m_qp,                 qp,            m_numPartitions * sizeof(*m_qp));
     memset(m_log2CUSize,         g_maxLog2CUSize, m_numPartitions * sizeof(*m_log2CUSize));
     memset(m_lumaIntraDir,       DC_IDX,        m_numPartitions * sizeof(*m_lumaIntraDir));
     memset(m_predModes,          MODE_NONE,     m_numPartitions * sizeof(*m_predModes));
