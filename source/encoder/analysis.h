@@ -51,8 +51,8 @@ public:
         PRED_2Nx2N,
         PRED_Nx2N,
         PRED_2NxN,
-        PRED_SPLIT,     /* prediction modes up to here may be used for RD 0..4 */
-        PRED_2NxnU,     /* prediction modes below here only used for RD 5,6 */
+        PRED_SPLIT,
+        PRED_2NxnU,
         PRED_2NxnD,
         PRED_nLx2N,
         PRED_nRx2N,

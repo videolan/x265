@@ -418,6 +418,22 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curCUData, SIZE_2NxN);
         break;
 
+    case 4:
+        slave->checkInter_rd0_4(md.pred[PRED_2NxnU], *m_curCUData, SIZE_2NxnU);
+        break;
+
+    case 5:
+        slave->checkInter_rd0_4(md.pred[PRED_2NxnD], *m_curCUData, SIZE_2NxnD);
+        break;
+
+    case 6:
+        slave->checkInter_rd0_4(md.pred[PRED_nLx2N], *m_curCUData, SIZE_nLx2N);
+        break;
+
+    case 7:
+        slave->checkInter_rd0_4(md.pred[PRED_nRx2N], *m_curCUData, SIZE_nRx2N);
+        break;
+
     default:
         X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
         break;
@@ -439,6 +455,8 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
     if (mightNotSplit && depth >= minDepth)
     {
+        int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && cuData.log2CUSize < 6;
+
         /* Initialize all prediction CUs based on parentCTU */
         md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuData);
@@ -448,10 +466,17 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuData);
             md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuData);
         }
+        if (bTryAmp)
+        {
+            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuData);
+        }
         if (m_slice->m_sliceType == P_SLICE)
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
 
-        m_totalNumJobs = 2 + m_param->bEnableRectInter * 2;
+        m_totalNumJobs = 2 + m_param->bEnableRectInter * 2 + bTryAmp * 4;
         m_numAcquiredJobs = m_slice->m_sliceType != P_SLICE; /* skip intra for B slices */
         m_numCompletedJobs = m_numAcquiredJobs;
         m_curCUData = &cuData;
@@ -487,6 +512,18 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
                 bestInter = &md.pred[PRED_Nx2N];
             if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                 bestInter = &md.pred[PRED_Nx2N];
+        }
+
+        if (bTryAmp)
+        {
+            if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_2NxnU];
+            if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_2NxnD];
+            if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_nLx2N];
+            if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
+                bestInter = &md.pred[PRED_nRx2N];
         }
 
         if (m_param->rdLevel > 2)
@@ -624,6 +661,14 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuData);
             md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuData);
         }
+        if (m_slice->m_sps->maxAMPDepth > depth && cuData.log2CUSize < 6)
+        {
+            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuData);
+            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuData);
+        }
+
         if (m_slice->m_sliceType == P_SLICE)
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
 
@@ -657,6 +702,39 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 checkInter_rd0_4(md.pred[PRED_2NxN], cuData, SIZE_2NxN);
                 if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxN];
+            }
+
+            if (m_slice->m_sps->maxAMPDepth > depth && cuData.log2CUSize < 6)
+            {
+                bool bHor = false, bVer = false;
+                if (bestInter->cu.m_partSizes[0] == SIZE_2NxN)
+                    bHor = true;
+                else if (bestInter->cu.m_partSizes[0] == SIZE_Nx2N)
+                    bVer = true;
+                else if (bestInter->cu.m_partSizes[0] == SIZE_2Nx2N && md.bestMode->cu.getQtRootCbf(0))
+                {
+                    bHor = true;
+                    bVer = true;
+                }
+
+                if (bHor)
+                {
+                    checkInter_rd0_4(md.pred[PRED_2NxnU], cuData, SIZE_2NxnU);
+                    if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
+                        bestInter = &md.pred[PRED_2NxnU];
+                    checkInter_rd0_4(md.pred[PRED_2NxnD], cuData, SIZE_2NxnD);
+                    if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
+                        bestInter = &md.pred[PRED_2NxnD];
+                }
+                if (bVer)
+                {
+                    checkInter_rd0_4(md.pred[PRED_nLx2N], cuData, SIZE_nLx2N);
+                    if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
+                        bestInter = &md.pred[PRED_nLx2N];
+                    checkInter_rd0_4(md.pred[PRED_nRx2N], cuData, SIZE_nRx2N);
+                    if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
+                        bestInter = &md.pred[PRED_nRx2N];
+                }
             }
 
             if (m_param->rdLevel > 2)

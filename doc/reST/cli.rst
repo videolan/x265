@@ -566,10 +566,21 @@ Mode decision / Analysis
 .. option:: --amp, --no-amp
 
 	Enable analysis of asymmetric motion partitions (75/25 splits, four
-	directions). This setting has no effect if rectangular partitions
-	are disabled. Even though there are four possible AMP partitions,
-	only the most likely candidate is tested, based on the results of
-	the rectangular mode tests. Default disabled
+	directions). At RD levels 0 through 4, AMP partitions are only
+	considered at CU sizes 32x32 and below. At RD levels 5 and 6, it
+	will only consider AMP partitions as merge candidates (no motion
+	search) at 64x64, and as merge or inter candidates below 64x64.
+
+	The AMP partitions which are searched are derived from the current
+	best inter partition. If Nx2N (vertical rectangular) is the best
+	current prediction, then left and right asymmetrical splits will be
+	evaluated. If 2NxN (horizontal rectangular) is the best current
+	prediction, then top and bottom asymmetrical splits will be
+	evaluated, If 2Nx2N is the best prediction, and the block is not a
+	merge/skip, then all four AMP partitions are evaluated.
+
+	This setting has no effect if rectangular partitions are disabled.
+	Default disabled
 
 .. option:: --early-skip, --no-early-skip
 
