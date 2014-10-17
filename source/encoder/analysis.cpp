@@ -705,16 +705,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
                 splitPred->addSubCosts(*nd.bestMode);
 
-                if (nd.bestMode->cu.m_predModes[0] != MODE_INTRA)
-                {
-                    /* more early-out statistics */
-                    TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
-                    uint64_t nextCost = m_param->rdLevel > 1 ? nd.bestMode->rdCost : nd.bestMode->sa8dCost;
-                    uint64_t temp = ctu.m_avgCost[nextDepth] * ctu.m_count[nextDepth];
-                    ctu.m_count[nextDepth] += 1;
-                    ctu.m_avgCost[nextDepth] = (temp + nextCost) / ctu.m_count[nextDepth];
-                }
-
                 if (m_param->rdLevel)
                     nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
                 else
@@ -738,16 +728,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         if (m_param->rdLevel)
             checkDQP(*splitCU, cuData);
 
-        if (!depth && md.bestMode)
-        {
-            /* TODO: this is a bizarre place to have this check */
-            TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
-            uint64_t curCost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
-            uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
-            ctu.m_count[depth] += 1;
-            ctu.m_avgCost[depth] = (temp + curCost) / ctu.m_count[depth];
-        }
-
         if (!md.bestMode)
             md.bestMode = splitPred;
         else if (m_param->rdLevel >= 1)
@@ -760,6 +740,16 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             if (splitPred->sa8dCost < md.bestMode->sa8dCost)
                 md.bestMode = splitPred;
         }
+    }
+
+    if (!depth || md.bestMode->cu.m_predModes[0] != MODE_INTRA)
+    {
+        /* early-out statistics */
+        TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
+        uint64_t cost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
+        uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
+        ctu.m_count[depth] += 1;
+        ctu.m_avgCost[depth] = (temp + cost) / ctu.m_count[depth];
     }
 
     /* Copy Best data to Picture for next partition prediction */
