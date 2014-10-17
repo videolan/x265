@@ -1617,9 +1617,11 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     int currentQP = parentCTU.m_qp[0];
     int previousQP = currentQP;
     uint32_t minDepth0 = 4, minDepth1 = 4;
-    uint32_t sum0 = 0, sum1 = 0;
+    uint32_t sum = 0;
+    int numRefs = 0;
     if (m_slice->m_numRefIdx[0])
     {
+        numRefs++;
         const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getCU(parentCTU.m_cuAddr);
         previousQP = cu.m_qp[0];
         if (!cu.m_depth[cuData.encodeIdx])
@@ -1628,11 +1630,12 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
         {
             uint32_t d = cu.m_depth[cuData.encodeIdx + i];
             minDepth0 = X265_MIN(d, minDepth0);
-            sum0 += d;
+            sum += d;
         }
     }
     if (m_slice->m_numRefIdx[1])
     {
+        numRefs++;
         const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(parentCTU.m_cuAddr);
         if (!cu.m_depth[cuData.encodeIdx])
             return 0;
@@ -1640,15 +1643,18 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
         {
             uint32_t d = cu.m_depth[cuData.encodeIdx + i];
             minDepth1 = X265_MIN(d, minDepth1);
-            sum1 += d;
+            sum += d;
         }
     }
+    if (!numRefs)
+        return 0;
 
     uint32_t minDepth = X265_MIN(minDepth0, minDepth1);
+    uint32_t thresh = minDepth * numRefs * (cuData.numPartitions >> 2);
 
-    /* allow block size growth if QP is raising */
-    if (minDepth && currentQP >= previousQP &&
-        (sum0 + sum1 <= (2 * minDepth + 1) * (cuData.numPartitions >> 2)))
+    /* allow block size growth if QP is raising or avg depth is
+     * less than 1.5 of min depth */
+    if (minDepth && currentQP >= previousQP && (sum <= thresh + (thresh >> 1)))
         minDepth -= 1;
 
     return minDepth;
