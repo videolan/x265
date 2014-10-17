@@ -755,7 +755,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     /* Copy Best data to Picture for next partition prediction */
     md.bestMode->cu.copyToPic(depth);
 
-    if (mightNotSplit && m_param->rdLevel)
+    if (md.bestMode != &md.pred[PRED_SPLIT] && m_param->rdLevel)
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
 
     x265_emms(); // TODO: Remove
