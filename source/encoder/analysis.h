@@ -111,6 +111,7 @@ protected:
     void addSplitFlagCost(Mode& mode, uint32_t depth);
     void checkBestMode(Mode& mode, uint32_t depth);
     uint32_t topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData);
+    bool recursionDepthCheck(const TComDataCU& parentCTU, const CU& cuData, const Mode& bestMode);
 
     void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
 };

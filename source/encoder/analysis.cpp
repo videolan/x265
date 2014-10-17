@@ -672,54 +672,15 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             addSplitFlagCost(*md.bestMode, cuData.depth);
     }
 
-    /* do not try splits if best mode is already a skip */
-    mightSplit &= !md.bestMode || !md.bestMode->cu.isSkipped(0);
-
-    if (mightSplit && depth && depth >= minDepth)
+    bool bNoSplit = false;
+    if (md.bestMode)
     {
-        // early exit when the RD cost of best mode at depth n is less than the sum of average of RD cost of the neighbor
-        // CU's(above, aboveleft, aboveright, left, colocated) and avg cost of that CU at depth "n" with weightage for each quantity
-
-        const TComDataCU* above = parentCTU.m_cuAbove;
-        const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
-        const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
-        const TComDataCU* left = parentCTU.m_cuLeft;
-        uint64_t neighCost = 0, cuCost = 0, neighCount = 0, cuCount = 0;
-
-        cuCost += parentCTU.m_avgCost[depth] * parentCTU.m_count[depth];
-        cuCount += parentCTU.m_count[depth];
-        if (above)
-        {
-            neighCost += above->m_avgCost[depth] * above->m_count[depth];
-            neighCount += above->m_count[depth];
-        }
-        if (aboveLeft)
-        {
-            neighCost += aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
-            neighCount += aboveLeft->m_count[depth];
-        }
-        if (aboveRight)
-        {
-            neighCost += aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
-            neighCount += aboveRight->m_count[depth];
-        }
-        if (left)
-        {
-            neighCost += left->m_avgCost[depth] * left->m_count[depth];
-            neighCount += left->m_count[depth];
-        }
-
-        // give 60% weight to all CU's and 40% weight to neighbour CU's
-        if (neighCost + cuCount)
-        {
-            uint64_t avgCost = ((3 * cuCost) + (2 * neighCost)) / ((3 * cuCount) + (2 * neighCount));
-            uint64_t curCost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
-            if (curCost < avgCost && avgCost)
-                mightSplit = false;
-        }
+        bNoSplit = md.bestMode->cu.isSkipped(0);
+        if (mightSplit && depth && depth >= minDepth && !bNoSplit)
+            bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
     }
 
-    if (mightSplit)
+    if (mightSplit && !bNoSplit)
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
@@ -1629,4 +1590,54 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     }
 
     return minDepth;
+}
+
+/* returns true if recursion should be stopped */
+bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CU& cuData, const Mode& bestMode)
+{
+    /* early exit when the RD cost of best mode at depth n is less than the sum
+     * of average of RD cost of the neighbor CU's(above, aboveleft, aboveright,
+     * left, colocated) and avg cost of that CU at depth "n" with weightage for
+     * each quantity */
+
+    const TComDataCU* above = parentCTU.m_cuAbove;
+    const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
+    const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
+    const TComDataCU* left = parentCTU.m_cuLeft;
+    uint64_t neighCost = 0, cuCost = 0, neighCount = 0, cuCount = 0;
+    uint32_t depth = cuData.depth;
+
+    cuCost += parentCTU.m_avgCost[depth] * parentCTU.m_count[depth];
+    cuCount += parentCTU.m_count[depth];
+    if (above)
+    {
+        neighCost += above->m_avgCost[depth] * above->m_count[depth];
+        neighCount += above->m_count[depth];
+    }
+    if (aboveLeft)
+    {
+        neighCost += aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
+        neighCount += aboveLeft->m_count[depth];
+    }
+    if (aboveRight)
+    {
+        neighCost += aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
+        neighCount += aboveRight->m_count[depth];
+    }
+    if (left)
+    {
+        neighCost += left->m_avgCost[depth] * left->m_count[depth];
+        neighCount += left->m_count[depth];
+    }
+
+    // give 60% weight to all CU's and 40% weight to neighbour CU's
+    if (neighCost + cuCount)
+    {
+        uint64_t avgCost = ((3 * cuCost) + (2 * neighCost)) / ((3 * cuCount) + (2 * neighCount));
+        uint64_t curCost = m_param->rdLevel > 1 ? bestMode.rdCost : bestMode.sa8dCost;
+        if (curCost < avgCost && avgCost)
+            return true;
+    }
+
+    return false;
 }
