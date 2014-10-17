@@ -24,6 +24,7 @@
 #include "common.h"
 #include "deblock.h"
 #include "frame.h"
+#include "picyuv.h"
 #include "slice.h"
 #include "mv.h"
 
@@ -62,7 +63,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
         return;
     }
 
-    const uint32_t widthInBaseUnits = cu->m_frame->m_picSym->m_numPartInCUSize >> depth;
+    const uint32_t widthInBaseUnits = cu->m_frame->m_encData->m_numPartInCUSize >> depth;
     Param params;
     setLoopfilterParam(cu, absPartIdx, &params);
     setEdgefilterPU(cu, absPartIdx, dir, blockingStrength, widthInBaseUnits);
@@ -78,7 +79,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
     }
 
     const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
-    uint32_t sizeInPU = frame->m_picSym->m_numPartInCUSize >> depth;
+    uint32_t sizeInPU = frame->m_encData->m_numPartInCUSize >> depth;
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
     uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
     uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absPartIdx] : g_zscanToPelY[absPartIdx]) >> LOG2_UNIT_SIZE;
@@ -93,7 +94,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
 
 static inline uint32_t calcBsIdx(TComDataCU* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t ctuWidthInBaseUnits = cu->m_frame->m_picSym->m_numPartInCUSize;
+    uint32_t ctuWidthInBaseUnits = cu->m_frame->m_encData->m_numPartInCUSize;
 
     if (dir)
         return g_rasterToZscan[g_zscanToRaster[absPartIdx] + edgeIdx * ctuWidthInBaseUnits + baseUnitIdx];
@@ -446,7 +447,7 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
     intptr_t stride = reconYuv->m_stride;
-    uint32_t numParts = cu->m_frame->m_picSym->m_numPartInCUSize >> depth;
+    uint32_t numParts = cu->m_frame->m_encData->m_numPartInCUSize >> depth;
 
     intptr_t offset, srcStep;
 
@@ -580,7 +581,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t dep
     srcChroma[0] = reconPic->m_picOrg[1] + srcOffset;
     srcChroma[1] = reconPic->m_picOrg[2] + srcOffset;
 
-    uint32_t numUnits = cu->m_frame->m_picSym->m_numPartInCUSize >> (depth + chromaShift);
+    uint32_t numUnits = cu->m_frame->m_encData->m_numPartInCUSize >> (depth + chromaShift);
 
     for (uint32_t idx = 0; idx < numUnits; idx++)
     {

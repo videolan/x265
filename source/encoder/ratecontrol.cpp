@@ -26,6 +26,7 @@
 #include "common.h"
 #include "param.h"
 #include "frame.h"
+#include "picyuv.h"
 
 #include "encoder.h"
 #include "slicetype.h"
@@ -1061,7 +1062,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         return 0;
     }
 
-    m_curSlice = curFrame->m_picSym->m_slice;
+    m_curSlice = curFrame->m_encData->m_slice;
     m_sliceType = m_curSlice->m_sliceType;
     rce->sliceType = m_sliceType;
     rce->poc = m_curSlice->m_poc;
@@ -1299,9 +1300,9 @@ bool RateControl::fixUnderflow(int t0, int t1, double adjustment, double qscaleM
 
 bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 {
-    uint8_t sliceTypeActual = (uint8_t)m_rce2Pass[frame->m_POC].sliceType;
+    uint8_t sliceTypeActual = (uint8_t)m_rce2Pass[frame->m_poc].sliceType;
 
-    if (m_rce2Pass[frame->m_POC].keptAsRef)
+    if (m_rce2Pass[frame->m_poc].keptAsRef)
     {
         uint8_t type;
         if (m_cuTreeStats.qpBufPos < 0)
@@ -1375,8 +1376,8 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
     {
         /* B-frames don't have independent rate control, but rather get the
          * average QP of the two adjacent P-frames + an offset */
-        Slice* prevRefSlice = m_curSlice->m_refPicList[0][0]->m_picSym->m_slice;
-        Slice* nextRefSlice = m_curSlice->m_refPicList[1][0]->m_picSym->m_slice;
+        Slice* prevRefSlice = m_curSlice->m_refPicList[0][0]->m_encData->m_slice;
+        Slice* nextRefSlice = m_curSlice->m_refPicList[1][0]->m_encData->m_slice;
         double q0 = m_curSlice->m_refPicList[0][0]->m_avgQpRc;
         double q1 = m_curSlice->m_refPicList[1][0]->m_avgQpRc;
         bool i0 = prevRefSlice->m_sliceType == I_SLICE;
@@ -1853,8 +1854,8 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
 
     encodedBitsSoFar = 0;
     double qScale = x265_qp2qScale(qpVbv);
-    int picType = curFrame->m_picSym->m_slice->m_sliceType;
-    Frame* refFrame = curFrame->m_picSym->m_slice->m_refPicList[0][0];
+    int picType = curFrame->m_encData->m_slice->m_sliceType;
+    Frame* refFrame = curFrame->m_encData->m_slice->m_refPicList[0][0];
     uint32_t maxRows = curFrame->m_origPicYuv->m_numCuInHeight;
     for (uint32_t row = 0; row < maxRows; row++)
     {
@@ -1885,7 +1886,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             if (picType == I_SLICE || qScale >= refQScale)
             {
                 if (picType == P_SLICE
-                    && refFrame->m_picSym->m_slice->m_sliceType == picType
+                    && refFrame->m_encData->m_slice->m_sliceType == picType
                     && refQScale > 0
                     && refRowSatdCost > 0)
                 {
@@ -1925,9 +1926,9 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
-    if (curFrame->m_picSym->m_slice->m_sliceType == P_SLICE)
+    if (curFrame->m_encData->m_slice->m_sliceType == P_SLICE)
     {
-        Frame* refSlice = curFrame->m_picSym->m_slice->m_refPicList[0][0];
+        Frame* refSlice = curFrame->m_encData->m_slice->m_refPicList[0][0];
         if (qpVbv < refSlice->m_rowDiagQp[row])
         {
             uint64_t intraRowSatdCost = curFrame->m_rowDiagIntraSatd[row];
@@ -1961,8 +1962,8 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
         {
-            Frame* refSlice1 = curFrame->m_picSym->m_slice->m_refPicList[0][0];
-            Frame* refSlice2 = curFrame->m_picSym->m_slice->m_refPicList[1][0];
+            Frame* refSlice1 = curFrame->m_encData->m_slice->m_refPicList[0][0];
+            Frame* refSlice2 = curFrame->m_encData->m_slice->m_refPicList[1][0];
             qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_rowDiagQp[row], refSlice2->m_rowDiagQp[row]));
             qpVbv = X265_MAX(qpVbv, qpMin);
         }
@@ -2124,7 +2125,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     }
 
     int64_t actualBits = bits;
-    Slice *slice = curFrame->m_picSym->m_slice;
+    Slice *slice = curFrame->m_encData->m_slice;
     if (m_isAbr)
     {
         if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
@@ -2258,10 +2259,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
         if (m_param->bEmitHRDSEI)
         {
-            const VUI *vui = &curFrame->m_picSym->m_slice->m_sps->vuiParameters;
+            const VUI *vui = &curFrame->m_encData->m_slice->m_sps->vuiParameters;
             const HRDInfo *hrd = &vui->hrdParameters;
             const TimingInfo *time = &vui->timingInfo;
-            if (!curFrame->m_POC)
+            if (!curFrame->m_poc)
             {
                 // first access unit initializes the HRD
                 rce->hrdTiming->cpbInitialAT = 0;

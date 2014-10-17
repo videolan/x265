@@ -2,7 +2,6 @@
 set(LIBCOMMON_SRC
     ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
-    ../Lib/TLibCommon/TComPicSym.cpp
     ../Lib/TLibCommon/TComRom.cpp)
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
@@ -10,7 +9,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/ContextTables.h
     ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPicSym.h
     ../Lib/TLibCommon/TComRom.h)
 
 source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
@@ -131,6 +129,7 @@ add_library(common OBJECT
     common.cpp common.h
     param.cpp param.h
     frame.cpp frame.h
+    framedata.cpp framedata.h
     slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h

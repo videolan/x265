@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "scalinglist.h"
+#include "picyuv.h"
 #include "quant.h"
 #include "sao.h"
 #include "entropy.h"
@@ -398,7 +399,7 @@ void Entropy::codeSliceHeader(const Slice& slice)
 
         WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
-    const SAOParam *saoParam = slice.m_frame->m_picSym->m_saoParam;
+    const SAOParam *saoParam = slice.m_frame->m_encData->m_saoParam;
     if (slice.m_sps->bUseSAO)
     {
         WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");

@@ -374,7 +374,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             pic = m_dpb->m_freeList.popBack();
 
         /* Copy input picture into a TComPic, send to lookahead */
-        pic->m_POC = ++m_pocLast;
+        pic->m_poc = ++m_pocLast;
         pic->reinit(m_param);
         pic->m_origPicYuv->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         pic->m_userData = pic_in->userData;
@@ -424,7 +424,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
     if (out)
     {
-        Slice *slice = out->m_picSym->m_slice;
+        Slice *slice = out->m_encData->m_slice;
         if (pic_out)
         {
             PicYuv *recpic = out->m_reconPicYuv;
@@ -461,8 +461,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             pic_out->analysisData.interData = out->m_interData;
             pic_out->analysisData.intraData = out->m_intraData;
-            pic_out->analysisData.numCUsInFrame = out->m_picSym->m_numCUsInFrame;
-            pic_out->analysisData.numPartitions = out->m_picSym->m_numPartitions;
+            pic_out->analysisData.numCUsInFrame = out->m_encData->m_numCUsInFrame;
+            pic_out->analysisData.numPartitions = out->m_encData->m_numPartitions;
         }
 
         if (slice->m_sliceType == P_SLICE)
@@ -516,19 +516,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         // give this picture a TComPicSym instance before encoding
         if (m_dpb->m_picSymFreeList)
         {
-            frameEnc->m_picSym = m_dpb->m_picSymFreeList;
+            frameEnc->m_encData = m_dpb->m_picSymFreeList;
             m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
-            frameEnc->m_reconPicYuv = frameEnc->m_picSym->m_reconPicYuv;
+            frameEnc->m_reconPicYuv = frameEnc->m_encData->m_reconPicYuv;
         }
         else
         {
-            frameEnc->allocPicSym(m_param);
-            Slice* slice = frameEnc->m_picSym->m_slice;
+            frameEnc->allocEncodeData(m_param);
+            Slice* slice = frameEnc->m_encData->m_slice;
             slice->m_frame = frameEnc;
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_picSym->m_numCUsInFrame * NUM_CU_PARTITIONS);
+            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_encData->m_numCUsInFrame * NUM_CU_PARTITIONS);
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
@@ -952,7 +952,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
     double psnrU = (ssdU ? 10.0 * log10(refValueC / (double)ssdU) : 99.99);
     double psnrV = (ssdV ? 10.0 * log10(refValueC / (double)ssdV) : 99.99);
 
-    Slice*  slice = curFrame->m_picSym->m_slice;
+    Slice*  slice = curFrame->m_encData->m_slice;
 
     //===== add bits, psnr and ssim =====
     m_analyzeAll.addBits(bits);

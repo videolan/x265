@@ -30,7 +30,7 @@ namespace x265 {
 // private namespace for x265
 
 class Frame;
-class TComPicSym;
+class FrameData;
 class Slice;
 
 class DPB
@@ -45,7 +45,7 @@ public:
     int                m_bOpenGOP;
     PicList            m_picList;
     PicList            m_freeList;
-    TComPicSym*        m_picSymFreeList;
+    FrameData*         m_picSymFreeList;
 
     DPB(x265_param *param)
     {

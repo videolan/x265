@@ -26,58 +26,55 @@
 #define NUM_CU_PARTITIONS (1U << (g_maxFullDepth << 1))
 
 #include "common.h"
-#include "TLibCommon/TComPicSym.h"
-#include "picyuv.h"
+#include "framedata.h"
 #include "lowres.h"
 #include "threading.h"
-#include "md5.h"
-#include "sei.h"
 
 namespace x265 {
 // private namespace
 
 class Encoder;
+class PicYuv;
 
 class Frame
 {
 public:
 
-    PicYuv*           m_origPicYuv;
-
-    TComPicSym*       m_picSym;
+    /* These two items will be NULL until the Frame begins to be encoded, at which point
+     * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
+    FrameData*        m_encData;
     PicYuv*           m_reconPicYuv;
-    int               m_POC;
-    int               m_frameEncoderID;     // To identify the ID of the frameEncoder processing this frame
+    int               m_frameEncoderID;     // the ID of the FrameEncoder encoding this frame
 
-    bool              m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
-
-    //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
-    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
-    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
-    void*             m_userData;           // user provided pointer passed in with this picture
-
+    /* Data associated with x265_picture */
+    PicYuv*           m_origPicYuv;
+    int               m_poc;
     int64_t           m_pts;                // user provided presentation time stamp
     int64_t           m_reorderedPts;
     int64_t           m_dts;
     int32_t           m_forceqp;            // Force to use the qp specified in qp file
-
-    Lowres            m_lowres;
-    double*           m_qpaAq;
-
-    Frame*            m_next;                // PicList doubly linked list pointers
-    Frame*            m_prev;
-
     x265_intra_data*  m_intraData;
     x265_inter_data*  m_interData;
+    void*             m_userData;           // user provided pointer passed in with this picture
+
+    Lowres            m_lowres;
+    double*           m_qpaAq;              // adaptive quant offsets (from lookahead)
+    bool              m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
+
+    /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
+    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
+
+    Frame*            m_next;               // PicList doubly linked list pointers
+    Frame*            m_prev;
 
     Frame();
 
     bool create(x265_param *param);
-    bool allocPicSym(x265_param *param);
+    bool allocEncodeData(x265_param *param);
     void destroy();
 
-
-    /* TODO: all of this should be moved to RCE or PicSym */
+    /* TODO: all of this should be moved to RateControlEntry or FrameData */
     double*           m_rowDiagQp;
     double*           m_rowDiagQScale;
     uint32_t*         m_totalBitsPerCTU;
@@ -89,8 +86,8 @@ public:
     uint32_t*         m_cuCostsForVbv;
     uint32_t*         m_intraCuCostsForVbv;
     double*           m_qpaRc;
-    double            m_avgQpRc;    // avg QP as decided by ratecontrol
-    double            m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
+    double            m_avgQpRc;    // avg QP as decided by rate-control
+    double            m_avgQpAq;    // avg QP as decided by AQ in addition to rate-control
     double            m_rateFactor; // calculated based on the Frame QP
     void reinit(x265_param *param);
 };

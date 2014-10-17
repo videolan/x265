@@ -25,6 +25,7 @@
 #include "common.h"
 #include "primitives.h"
 #include "threading.h"
+#include "picyuv.h"
 
 #include "analysis.h"
 #include "rdcost.h"
@@ -150,7 +151,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSizes, sizeof(uint8_t) * numPartition);
                 m_frame->m_intraData->cuAddr[ctu.m_cuAddr] = ctu.m_cuAddr;
-                m_frame->m_intraData->poc[ctu.m_cuAddr] = m_frame->m_POC;
+                m_frame->m_intraData->poc[ctu.m_cuAddr] = m_frame->m_poc;
             }
         }
     }
@@ -1622,7 +1623,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     if (m_slice->m_numRefIdx[0])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getPicCTU(parentCTU.m_cuAddr);
+        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
         previousQP = cu.m_qp[0];
         if (!cu.m_depth[cuData.encodeIdx])
             return 0;
@@ -1636,7 +1637,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     if (m_slice->m_numRefIdx[1])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getPicCTU(parentCTU.m_cuAddr);
+        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
         if (!cu.m_depth[cuData.encodeIdx])
             return 0;
         for (uint32_t i = 0; i < cuData.numPartitions; i += 4)

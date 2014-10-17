@@ -35,17 +35,17 @@
     \brief    picture symbol class
 */
 
-#include "TComPicSym.h"
+#include "framedata.h"
 #include "picyuv.h"
 
 using namespace x265;
 
-TComPicSym::TComPicSym()
+FrameData::FrameData()
 {
     memset(this, 0, sizeof(*this));
 }
 
-bool TComPicSym::create(x265_param *param)
+bool FrameData::create(x265_param *param)
 {
     uint32_t i;
 
@@ -70,7 +70,7 @@ bool TComPicSym::create(x265_param *param)
     return true;
 }
 
-void TComPicSym::destroy()
+void FrameData::destroy()
 {
     m_cuMemPool.destroy();
     m_mvFieldMemPool.destroy();

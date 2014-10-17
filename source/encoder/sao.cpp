@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "picyuv.h"
 #include "sao.h"
 
 namespace {
@@ -179,7 +180,7 @@ void SAO::resetSAOParam(SAOParam *saoParam)
 
 void SAO::startSlice(Frame *frame, Entropy& initState, int qp)
 {
-    Slice* slice = frame->m_picSym->m_slice;
+    Slice* slice = frame->m_encData->m_slice;
 
     int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
     m_lumaLambda = x265_lambda2_tab[qp];
@@ -205,12 +206,12 @@ void SAO::startSlice(Frame *frame, Entropy& initState, int qp)
     m_rdContexts.next.load(initState);
     m_rdContexts.cur.load(initState);
 
-    SAOParam* saoParam = frame->m_picSym->m_saoParam;
+    SAOParam* saoParam = frame->m_encData->m_saoParam;
     if (!saoParam)
     {
         saoParam = new SAOParam;
         allocSaoParam(saoParam);
-        frame->m_picSym->m_saoParam = saoParam;
+        frame->m_encData->m_saoParam = saoParam;
     }
 
     resetSAOParam(saoParam);
@@ -229,7 +230,7 @@ void SAO::startSlice(Frame *frame, Entropy& initState, int qp)
 void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_frame->m_picSym->getPicCTU(addr);
+    TComDataCU *cu = m_frame->m_encData->getPicCTU(addr);
     pixel* rec = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
@@ -550,7 +551,7 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_frame->m_picSym->getPicCTU(addr);
+    TComDataCU *cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
     const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     const pixel* fenc;
@@ -796,7 +797,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     int addr    = idxX + m_numCuInWidth * idxY;
 
     int x, y;
-    TComDataCU *cu = frame->m_picSym->getPicCTU(addr);
+    TComDataCU *cu = frame->m_encData->getPicCTU(addr);
     const pixel* fenc;
     const pixel* rec;
     intptr_t stride = m_frame->m_reconPicYuv->m_stride;
@@ -1538,10 +1539,10 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
 /* Original Lossless YUV LF disable process */
 void restoreLFDisabledOrigYuv(Frame* curFrame)
 {
-    if (curFrame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
+    if (curFrame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
-        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_picSym->m_numCUsInFrame; cuAddr++)
-            origCUSampleRestoration(curFrame->m_picSym->getPicCTU(cuAddr), 0, 0);
+        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_encData->m_numCUsInFrame; cuAddr++)
+            origCUSampleRestoration(curFrame->m_encData->getPicCTU(cuAddr), 0, 0);
     }
 }
 

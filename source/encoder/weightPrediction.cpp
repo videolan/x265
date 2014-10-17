@@ -25,6 +25,7 @@
 
 #include "common.h"
 #include "frame.h"
+#include "picyuv.h"
 #include "lowres.h"
 #include "mv.h"
 #include "slicetype.h"
@@ -263,7 +264,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
         WeightParam *weights = wp[list][0];
         Frame *refFrame = slice.m_refPicList[list][0];
         Lowres& refLowres = refFrame->m_lowres;
-        int diffPoc = abs(curPoc - refFrame->m_POC);
+        int diffPoc = abs(curPoc - refFrame->m_poc);
 
         /* prepare estimates */
         float guessScale[3], fencMean[3], refMean[3];
@@ -330,9 +331,9 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refFrame->m_bChromaPlanesExtended)
+                    if (!refFrame->m_bChromaExtended)
                     {
-                        refFrame->m_bChromaPlanesExtended = true;
+                        refFrame->m_bChromaExtended = true;
                         PicYuv *refPic = refFrame->m_origPicYuv;
                         int width = refPic->m_picWidth >> cache.hshift;
                         int height = refPic->m_picHeight >> cache.vshift;

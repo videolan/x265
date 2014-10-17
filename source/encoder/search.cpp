@@ -21,11 +21,13 @@
 * For more information, contact us at license @ x265.com.
 *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
-#include "TLibCommon/TComMotionInfo.h"
-
 #include "common.h"
 #include "primitives.h"
+#include "picyuv.h"
+
+#include "TLibCommon/TComDataCU.h"
+#include "TLibCommon/TComRom.h"
+#include "TLibCommon/TComMotionInfo.h"
 
 #include "search.h"
 #include "entropy.h"

@@ -23,13 +23,13 @@
 
 #include "common.h"
 #include "frame.h"
-#include "mv.h"
+#include "picyuv.h"
 
 using namespace x265;
 
 Frame::Frame()
 {
-    m_picSym = NULL;
+    m_encData = NULL;
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     m_frameEncoderID = 0;
@@ -40,7 +40,7 @@ Frame::Frame()
     m_qpaRc = NULL;
     m_avgQpRc = 0;
     m_avgQpAq = 0;
-    m_bChromaPlanesExtended = false;
+    m_bChromaExtended = false;
     m_intraData = NULL;
     m_interData = NULL;
     m_origPicYuv = NULL;
@@ -94,12 +94,12 @@ fail:
     return false;
 }
 
-bool Frame::allocPicSym(x265_param *param)
+bool Frame::allocEncodeData(x265_param *param)
 {
-    m_picSym = new TComPicSym;
+    m_encData = new FrameData;
     m_reconPicYuv = new PicYuv;
-    m_picSym->m_reconPicYuv = m_reconPicYuv;
-    bool ok = m_picSym->create(param) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    m_encData->m_reconPicYuv = m_reconPicYuv;
+    bool ok = m_encData->create(param) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         // initialize m_reconpicYuv as SAO may read beyond the end of the picture accessing uninitialized pixels
@@ -135,11 +135,11 @@ void Frame::reinit(x265_param *param)
 
 void Frame::destroy()
 {
-    if (m_picSym)
+    if (m_encData)
     {
-        m_picSym->destroy();
-        delete m_picSym;
-        m_picSym = NULL;
+        m_encData->destroy();
+        delete m_encData;
+        m_encData = NULL;
     }
 
     if (m_origPicYuv)

@@ -24,10 +24,12 @@
 
 #include "common.h"
 #include "frame.h"
+#include "picyuv.h"
 #include "primitives.h"
 #include "lowres.h"
-#include "TLibCommon/TComRom.h"
 #include "mv.h"
+
+#include "TLibCommon/TComRom.h"
 
 #include "encoder.h"
 #include "slicetype.h"
@@ -114,7 +116,7 @@ void Lookahead::addPicture(Frame *curFrame, int sliceType)
 {
     PicYuv *orig = curFrame->m_origPicYuv;
 
-    curFrame->m_lowres.init(orig, curFrame->m_POC, sliceType);
+    curFrame->m_lowres.init(orig, curFrame->m_poc, sliceType);
 
     m_inputQueueLock.acquire();
     m_inputQueue.pushBack(*curFrame);
@@ -211,7 +213,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     Lowres *frames[X265_LOOKAHEAD_MAX];
 
     // POC distances to each reference
-    Slice *slice = curFrame->m_picSym->m_slice;
+    Slice *slice = curFrame->m_encData->m_slice;
     int p0 = 0, p1, b;
     int poc = slice->m_poc;
     int l0poc = slice->m_refPOCList[0][0];
@@ -331,7 +333,7 @@ void Lookahead::slicetypeDecide()
     {
         /* Use the frame types from the first pass */
         for (int i = 0; i < numFrames; i++)
-            list[i]->m_lowres.sliceType = m_top->m_rateControl->rateControlSliceType(list[i]->m_POC);
+            list[i]->m_lowres.sliceType = m_top->m_rateControl->rateControlSliceType(list[i]->m_poc);
     }
     else if (m_lastNonB &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||

@@ -26,6 +26,9 @@
 #ifndef X265_RATECONTROL_H
 #define X265_RATECONTROL_H
 
+#include "common.h"
+#include "sei.h"
+
 namespace x265 {
 // encoder namespace
 

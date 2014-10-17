@@ -89,7 +89,7 @@ Frame *PicList::popFront()
 Frame* PicList::getPOC(int poc)
 {
     Frame *curFrame = m_start;
-    while (curFrame && curFrame->m_POC != poc)
+    while (curFrame && curFrame->m_poc != poc)
         curFrame = curFrame->m_next;
     return curFrame;
 }

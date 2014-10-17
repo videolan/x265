@@ -96,23 +96,23 @@ void FrameFilter::processRow(int row)
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_frame->m_picSym->getPicCTU(cuAddr);
+            TComDataCU* cu = m_frame->m_encData->getPicCTU(cuAddr);
 
             m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                TComDataCU* cu_prev = m_frame->m_picSym->getPicCTU(cuAddr - 1);
-                m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
+                TComDataCU* cuPrev = m_frame->m_encData->getPicCTU(cuAddr - 1);
+                m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
             }
         }
 
-        TComDataCU* cu_prev = m_frame->m_picSym->getPicCTU(lineStartCUAddr + numCols - 1);
-        m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
+        TComDataCU* cuPrev = m_frame->m_encData->getPicCTU(lineStartCUAddr + numCols - 1);
+        m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
     }
 
     // SAO
-    SAOParam* saoParam = m_frame->m_picSym->m_saoParam;
+    SAOParam* saoParam = m_frame->m_encData->m_saoParam;
     if (m_param->bEnableSAO)
     {
         m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
@@ -135,7 +135,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_picSym->m_numCUsInFrame);
+            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_encData->m_numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);
@@ -417,7 +417,7 @@ void FrameFilter::processSao(int row)
 {
     const uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
-    SAOParam* saoParam = m_frame->m_picSym->m_saoParam;
+    SAOParam* saoParam = m_frame->m_encData->m_saoParam;
 
     if (saoParam->bSaoFlag[0])
         m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
@@ -428,9 +428,9 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
     }
 
-    if (m_frame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
+    if (m_frame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t col = 0; col < numCols; col++)
-            origCUSampleRestoration(m_frame->m_picSym->getPicCTU(lineStartCUAddr + col), 0, 0);
+            origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), 0, 0);
     }
 }

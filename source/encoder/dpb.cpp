@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "frame.h"
+#include "picyuv.h"
 #include "slice.h"
 
 #include "dpb.h"
@@ -47,7 +48,7 @@ DPB::~DPB()
 
     while (m_picSymFreeList)
     {
-        TComPicSym* next = m_picSymFreeList->m_freeListNext;
+        FrameData* next = m_picSymFreeList->m_freeListNext;
         m_picSymFreeList->destroy();
 
         m_picSymFreeList->m_reconPicYuv->destroy();
@@ -67,19 +68,19 @@ void DPB::recycleUnreferenced()
     {
         Frame *curFrame = iterFrame;
         iterFrame = iterFrame->m_next;
-        if (!curFrame->m_picSym->m_bHasReferences && !curFrame->m_countRefEncoders)
+        if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders)
         {
             curFrame->m_reconRowCount.set(0);
-            curFrame->m_bChromaPlanesExtended = false;
+            curFrame->m_bChromaExtended = false;
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(*curFrame);
             iterFrame = m_picList.first();
 
             m_freeList.pushBack(*curFrame);
-            curFrame->m_picSym->m_freeListNext = m_picSymFreeList;
-            m_picSymFreeList = curFrame->m_picSym;
-            curFrame->m_picSym = NULL;
+            curFrame->m_encData->m_freeListNext = m_picSymFreeList;
+            m_picSymFreeList = curFrame->m_encData;
+            curFrame->m_encData = NULL;
             curFrame->m_reconPicYuv = NULL;
         }
     }
@@ -87,9 +88,9 @@ void DPB::recycleUnreferenced()
 
 void DPB::prepareEncode(Frame *newFrame)
 {
-    Slice* slice = newFrame->m_picSym->m_slice;
+    Slice* slice = newFrame->m_encData->m_slice;
     slice->m_frame = newFrame;
-    slice->m_poc = newFrame->m_POC;
+    slice->m_poc = newFrame->m_poc;
 
     int pocCurr = slice->m_poc;
     int type = newFrame->m_lowres.sliceType;
@@ -122,7 +123,7 @@ void DPB::prepareEncode(Frame *newFrame)
 
     /* m_bHasReferences starts out as true for non-B pictures, and is set to false
      * once no more pictures reference it */
-    newFrame->m_picSym->m_bHasReferences = IS_REFERENCED(slice);
+    newFrame->m_encData->m_bHasReferences = IS_REFERENCED(slice);
 
     m_picList.pushFront(*newFrame);
 
@@ -179,9 +180,9 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
 
     while (iterPic && (poci < maxDecPicBuffer - 1))
     {
-        if ((iterPic->m_POC != curPoc) && iterPic->m_picSym->m_bHasReferences)
+        if ((iterPic->m_poc != curPoc) && iterPic->m_encData->m_bHasReferences)
         {
-            rps->poc[poci] = iterPic->m_POC;
+            rps->poc[poci] = iterPic->m_poc;
             rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
             (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;
             rps->bUsed[poci] = !isRAP;
@@ -207,8 +208,8 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
         Frame* iterFrame = m_picList.first();
         while (iterFrame)
         {
-            if (iterFrame->m_POC != pocCurr)
-                iterFrame->m_picSym->m_bHasReferences = false;
+            if (iterFrame->m_poc != pocCurr)
+                iterFrame->m_encData->m_bHasReferences = false;
             iterFrame = iterFrame->m_next;
         }
     }
@@ -224,8 +225,8 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
             Frame* iterFrame = m_picList.first();
             while (iterFrame)
             {
-                if (iterFrame->m_POC != pocCurr && iterFrame->m_POC != m_pocCRA)
-                    iterFrame->m_picSym->m_bHasReferences = false;
+                if (iterFrame->m_poc != pocCurr && iterFrame->m_poc != m_pocCRA)
+                    iterFrame->m_encData->m_bHasReferences = false;
                 iterFrame = iterFrame->m_next;
             }
 
@@ -252,21 +253,21 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
     Frame* iterFrame = m_picList.first();
     while (iterFrame)
     {
-        if (iterFrame->m_POC != curPoc && iterFrame->m_picSym->m_bHasReferences)
+        if (iterFrame->m_poc != curPoc && iterFrame->m_encData->m_bHasReferences)
         {
             // loop through all pictures in the Reference Picture Set
             // to see if the picture should be kept as reference picture
             bool referenced = false;
             for (int i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
             {
-                if (iterFrame->m_POC == curPoc + rps->deltaPOC[i])
+                if (iterFrame->m_poc == curPoc + rps->deltaPOC[i])
                 {
                     referenced = true;
                     break;
                 }
             }
             if (!referenced)
-                iterFrame->m_picSym->m_bHasReferences = false;
+                iterFrame->m_encData->m_bHasReferences = false;
         }
         iterFrame = iterFrame->m_next;
     }

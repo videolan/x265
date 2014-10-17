@@ -24,6 +24,7 @@
 #include "common.h"
 #include "frame.h"
 #include "piclist.h"
+#include "picyuv.h"
 #include "slice.h"
 
 using namespace x265;
@@ -125,7 +126,7 @@ void Slice::setRefPicList(PicList& picList)
 
     for (int dir = 0; dir < 2; dir++)
         for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
-            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->m_POC;
+            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->m_poc;
 }
 
 void Slice::disableWeights()

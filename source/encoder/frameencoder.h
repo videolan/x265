@@ -29,6 +29,8 @@
 #include "wavefront.h"
 #include "bitstream.h"
 #include "frame.h"
+#include "picyuv.h"
+#include "md5.h"
 
 #include "analysis.h"
 #include "sao.h"
