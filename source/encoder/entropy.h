@@ -177,7 +177,7 @@ public:
     void codeCoeffNxN(const TComDataCU& cu, const coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
     void codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, bool isMultiple);
-    void codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx);
+    void codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx, uint32_t *chromaDirMode);
 
     // RDO functions
     void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma) const;

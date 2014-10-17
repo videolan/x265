@@ -1528,14 +1528,15 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             if (cu->m_partSizes[0] == SIZE_2Nx2N || cu->m_chromaFormat != X265_CSP_I444)
             {
                 if (!absPartIdxC)
-                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC);
+                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC, modeList);
             }
             else
             {
                 uint32_t qtNumParts = cuData.numPartitions >> 2;
                 if (!(absPartIdxC & (qtNumParts - 1)))
-                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC);
+                    m_entropyCoder.codeIntraDirChroma(*cu, absPartIdxC, modeList);
             }
+
             xEncSubdivCbfQTChroma(*cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep, cuSize, cuSize);
             xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_U);
             xEncCoeffQTChroma(*cu, initTrDepth, absPartIdxC, TEXT_CHROMA_V);

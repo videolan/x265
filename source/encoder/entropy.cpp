@@ -802,14 +802,20 @@ void Entropy::codePredInfo(const TComDataCU& cu, uint32_t absPartIdx)
         codeIntraDirLumaAng(cu, absPartIdx, true);
         if (cu.m_chromaFormat != X265_CSP_I400)
         {
-            codeIntraDirChroma(cu, absPartIdx);
+            uint32_t chromaDirMode[NUM_CHROMA_MODE];
+            cu.getAllowedChromaDir(absPartIdx, chromaDirMode);
+
+            codeIntraDirChroma(cu, absPartIdx, chromaDirMode);
 
             if ((cu.m_chromaFormat == X265_CSP_I444) && (cu.m_partSizes[absPartIdx] == SIZE_NxN))
             {
                 uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.m_depth[absPartIdx] << 1)) >> 2;
-                codeIntraDirChroma(cu, absPartIdx + partOffset);
-                codeIntraDirChroma(cu, absPartIdx + partOffset * 2);
-                codeIntraDirChroma(cu, absPartIdx + partOffset * 3);
+                for (uint32_t i = 1; i <= 3; i++)
+                {
+                    uint32_t offset = absPartIdx + i * partOffset;
+                    cu.getAllowedChromaDir(offset, chromaDirMode);
+                    codeIntraDirChroma(cu, offset, chromaDirMode);
+                }
             }
         }
     }
@@ -1311,7 +1317,7 @@ void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, boo
     }
 }
 
-void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx, uint32_t *chromaDirMode)
 {
     uint32_t intraDirChroma = cu.m_chromaIntraDir[absPartIdx];
 
@@ -1319,12 +1325,9 @@ void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx)
         encodeBin(0, m_contextState[OFF_CHROMA_PRED_CTX]);
     else
     {
-        uint32_t allowedChromaDir[NUM_CHROMA_MODE];
-        cu.getAllowedChromaDir(absPartIdx, allowedChromaDir);
-
         for (int i = 0; i < NUM_CHROMA_MODE - 1; i++)
         {
-            if (intraDirChroma == allowedChromaDir[i])
+            if (intraDirChroma == chromaDirMode[i])
             {
                 intraDirChroma = i;
                 break;
