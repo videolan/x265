@@ -482,11 +482,11 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
+        // store original entropy coding status
+        m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
+
         if (checkTransformSkip || checkTQbypass)
         {
-            // store original entropy coding status
-            m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
-
             uint32_t  singleDistYTmp = 0;
             uint32_t  singlePsyEnergyYTmp = 0;
             uint32_t  singleCbfYTmp  = 0;
@@ -571,8 +571,6 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         }
         else
         {
-            m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
-
             cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
             singleDistY = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, reconQt, reconQtStride, coeffY, singleCbfY);
             if (m_rdCost.m_psyRd)
@@ -603,8 +601,6 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
             m_entropyCoder.store(m_rdContexts[fullDepth].rqtTest);
             m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
         }
-        else
-            m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
 
         // code splitted block
         uint64_t splitCost     = 0;
