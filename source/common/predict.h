@@ -75,18 +75,17 @@ public:
     const Slice* m_predSlice;
     int       m_csp;
 
-    /* CU information for prediction */
+    /* cached CU information for prediction */
     int       m_width;
     int       m_height; 
     uint32_t  m_partAddr;
     uint32_t  m_cuAddr;
-    uint32_t  m_zOrderIdxinCU;
+    uint32_t  m_zOrderIdxinCU; // sub-part absPartIdx
+    int       m_refIdx0;
+    int       m_refIdx1;
 
     /* TODO: Need to investigate clipping while writing into the TComDataCU fields itself */
     MV        m_clippedMv[2];
-
-    /* Motion information */
-    const TComCUMvField* m_mvField[2];
 
     Predict();
     ~Predict();
