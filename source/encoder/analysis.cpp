@@ -1517,7 +1517,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
         pixel* src = predYuv.getLumaAddr(absPartIdx);
         pixel* dst = reconPic.getLumaAddr(cuAddr, absPartIdx);
         uint32_t srcstride = predYuv.m_size;
-        uint32_t dststride = reconPic.m_stride;
+        intptr_t dststride = reconPic.m_stride;
         primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
 
         src = predYuv.getCbAddr(absPartIdx);
@@ -1622,7 +1622,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     if (m_slice->m_numRefIdx[0])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getCU(parentCTU.m_cuAddr);
+        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_picSym->getPicCTU(parentCTU.m_cuAddr);
         previousQP = cu.m_qp[0];
         if (!cu.m_depth[cuData.encodeIdx])
             return 0;
@@ -1636,7 +1636,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData
     if (m_slice->m_numRefIdx[1])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getCU(parentCTU.m_cuAddr);
+        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_picSym->getPicCTU(parentCTU.m_cuAddr);
         if (!cu.m_depth[cuData.encodeIdx])
             return 0;
         for (uint32_t i = 0; i < cuData.numPartitions; i += 4)

@@ -30,8 +30,8 @@
 
 using namespace x265;
 
-static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height);
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt);
+static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
 FrameFilter::FrameFilter()
     : m_param(NULL)
@@ -88,7 +88,7 @@ void FrameFilter::processRow(int row)
         return;
     }
 
-    const uint32_t numCols = m_frame->m_picSym->getFrameWidthInCU();
+    const uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
 
     if (m_param->bEnableLoopFilter)
@@ -96,18 +96,18 @@ void FrameFilter::processRow(int row)
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_frame->m_picSym->getCU(cuAddr);
+            TComDataCU* cu = m_frame->m_picSym->getPicCTU(cuAddr);
 
             m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                TComDataCU* cu_prev = m_frame->m_picSym->getCU(cuAddr - 1);
+                TComDataCU* cu_prev = m_frame->m_picSym->getPicCTU(cuAddr - 1);
                 m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
             }
         }
 
-        TComDataCU* cu_prev = m_frame->m_picSym->getCU(lineStartCUAddr + numCols - 1);
+        TComDataCU* cu_prev = m_frame->m_picSym->getPicCTU(lineStartCUAddr + numCols - 1);
         m_deblock.deblockCTU(cu_prev, Deblock::EDGE_HOR);
     }
 
@@ -135,7 +135,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_picSym->getNumberOfCUsInFrame());
+            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_picSym->m_numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);
@@ -147,9 +147,9 @@ void FrameFilter::processRow(int row)
 
 void FrameFilter::processRowPost(int row)
 {
-    const uint32_t numCols = m_frame->m_picSym->getFrameWidthInCU();
-    const uint32_t lineStartCUAddr = row * numCols;
     PicYuv *reconPic = m_frame->m_reconPicYuv;
+    const uint32_t numCols = reconPic->m_numCuInWidth;
+    const uint32_t lineStartCUAddr = row * numCols;
     const int lastH = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
     const int realH = (row != m_numRows - 1) ? g_maxCUSize : lastH;
 
@@ -167,10 +167,10 @@ void FrameFilter::processRowPost(int row)
         pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
         pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
 
-        for (int y = 0; y < reconPic->m_lumaMarginY; y++)
+        for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
             memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
 
-        for (int y = 0; y < reconPic->m_chromaMarginY; y++)
+        for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
         {
             memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(pixel));
             memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(pixel));
@@ -185,10 +185,10 @@ void FrameFilter::processRowPost(int row)
         pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr) - reconPic->m_lumaMarginX + (realH - 1) * stride;
         pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
         pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
-        for (int y = 0; y < reconPic->m_lumaMarginY; y++)
+        for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
             memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
 
-        for (int y = 0; y < reconPic->m_chromaMarginY; y++)
+        for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
         {
             memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(pixel));
             memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(pixel));
@@ -198,14 +198,14 @@ void FrameFilter::processRowPost(int row)
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_frame->m_reconRowCount.incr();
 
-    int cuAddr = lineStartCUAddr;
+    uint32_t cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)
     {
         PicYuv* origPic = m_frame->m_origPicYuv;
 
-        int stride = reconPic->m_stride;
-        int width  = reconPic->m_picWidth - m_pad[0];
-        int height;
+        intptr_t stride = reconPic->m_stride;
+        uint32_t width  = reconPic->m_picWidth - m_pad[0];
+        uint32_t height;
 
         if (row == m_numRows - 1)
             height = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
@@ -228,12 +228,12 @@ void FrameFilter::processRowPost(int row)
     {
         pixel *rec = m_frame->m_reconPicYuv->m_picOrg[0];
         pixel *org = m_frame->m_origPicYuv->m_picOrg[0];
-        int stride1 = m_frame->m_origPicYuv->m_stride;
-        int stride2 = m_frame->m_reconPicYuv->m_stride;
-        int bEnd = ((row + 1) == (this->m_numRows - 1));
-        int bStart = (row == 0);
-        int minPixY = row * g_maxCUSize - 4 * !bStart;
-        int maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
+        intptr_t stride1 = m_frame->m_origPicYuv->m_stride;
+        intptr_t stride2 = m_frame->m_reconPicYuv->m_stride;
+        uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
+        uint32_t bStart = (row == 0);
+        uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
+        uint32_t maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
         uint32_t ssim_cnt;
         x265_emms();
 
@@ -241,14 +241,14 @@ void FrameFilter::processRowPost(int row)
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
         m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
-                                         m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
+                                                m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
         m_frameEncoder->m_ssimCnt += ssim_cnt;
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
         uint32_t height = reconPic->getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
-        uint32_t stride = reconPic->m_stride;
+        intptr_t stride = reconPic->m_stride;
 
         if (!row)
         {
@@ -268,7 +268,7 @@ void FrameFilter::processRowPost(int row)
     {
         uint32_t height = reconPic->getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
-        uint32_t stride = reconPic->m_stride;
+        intptr_t stride = reconPic->m_stride;
         if (!row)
             m_frameEncoder->m_crc[0] = m_frameEncoder->m_crc[1] = m_frameEncoder->m_crc[2] = 0xffff;
         updateCRC(reconPic->getLumaAddr(cuAddr), m_frameEncoder->m_crc[0], height, width, stride);
@@ -283,7 +283,7 @@ void FrameFilter::processRowPost(int row)
     {
         uint32_t width = reconPic->m_picWidth;
         uint32_t height = reconPic->getCUHeight(row);
-        uint32_t stride = reconPic->m_stride;
+        intptr_t stride = reconPic->m_stride;
         uint32_t cuHeight = g_maxCUSize;
         if (!row)
             m_frameEncoder->m_checksum[0] = m_frameEncoder->m_checksum[1] = m_frameEncoder->m_checksum[2] = 0;
@@ -298,16 +298,16 @@ void FrameFilter::processRowPost(int row)
     }
 }
 
-static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int height)
+static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height)
 {
     uint64_t ssd = 0;
 
     if ((width | height) & 3)
     {
         /* Slow Path */
-        for (int y = 0; y < height; y++)
+        for (uint32_t y = 0; y < height; y++)
         {
-            for (int x = 0; x < width; x++)
+            for (uint32_t x = 0; x < width; x++)
             {
                 int diff = (int)(fenc[x] - rec[x]);
                 ssd += diff * diff;
@@ -320,11 +320,11 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
         return ssd;
     }
 
-    int y = 0;
+    uint32_t y = 0;
     /* Consume Y in chunks of 64 */
     for (; y + 64 <= height; y += 64)
     {
-        int x = 0;
+        uint32_t x = 0;
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
@@ -349,7 +349,7 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
     /* Consume Y in chunks of 16 */
     for (; y + 16 <= height; y += 16)
     {
-        int x = 0;
+        uint32_t x = 0;
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
@@ -369,7 +369,7 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
     /* Consume Y in chunks of 4 */
     for (; y + 4 <= height; y += 4)
     {
-        int x = 0;
+        uint32_t x = 0;
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
@@ -386,9 +386,9 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, int stride, int width, int h
 }
 
 /* Function to calculate SSIM for each row */
-static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, int width, int height, void *buf, uint32_t& cnt)
+static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt)
 {
-    int z = 0;
+    uint32_t z = 0;
     float ssim = 0.0;
 
     int(*sum0)[4] = (int(*)[4])buf;
@@ -396,16 +396,16 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     width >>= 2;
     height >>= 2;
 
-    for (int y = 1; y < height; y++)
+    for (uint32_t y = 1; y < height; y++)
     {
         for (; z <= y; z++)
         {
             std::swap(sum0, sum1);
-            for (int x = 0; x < width; x += 2)
+            for (uint32_t x = 0; x < width; x += 2)
                 primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
         }
 
-        for (int x = 0; x < width - 1; x += 4)
+        for (uint32_t x = 0; x < width - 1; x += 4)
             ssim += primitives.ssim_end_4(sum0 + x, sum1 + x, X265_MIN(4, width - x - 1));
     }
 
@@ -415,7 +415,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 
 void FrameFilter::processSao(int row)
 {
-    const uint32_t numCols = m_frame->m_picSym->getFrameWidthInCU();
+    const uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
     SAOParam* saoParam = m_frame->m_picSym->m_saoParam;
 
@@ -431,6 +431,6 @@ void FrameFilter::processSao(int row)
     if (m_frame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
         for (uint32_t col = 0; col < numCols; col++)
-            origCUSampleRestoration(m_frame->m_picSym->getCU(lineStartCUAddr + col), 0, 0);
+            origCUSampleRestoration(m_frame->m_picSym->getPicCTU(lineStartCUAddr + col), 0, 0);
     }
 }

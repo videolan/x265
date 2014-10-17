@@ -470,7 +470,7 @@ void Entropy::codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *
         X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
     }
 
-    uint32_t numRows = slice.m_frame->m_picSym->getFrameHeightInCU() - 1;
+    uint32_t numRows = slice.m_frame->m_origPicYuv->m_numCuInHeight - 1;
     WRITE_UVLC(numRows, "num_entry_point_offsets");
     if (numRows > 0)
         WRITE_UVLC(offsetLen - 1, "offset_len_minus1");

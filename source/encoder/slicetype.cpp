@@ -262,7 +262,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         if (m_param->rc.aqMode)
             qp_offset = (frames[b]->sliceType == X265_TYPE_B || !m_param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
 
-        for (uint32_t row = 0; row < curFrame->m_picSym->getFrameHeightInCU(); row++)
+        for (uint32_t row = 0; row < curFrame->m_origPicYuv->m_numCuInHeight; row++)
         {
             lowresRow = row * scale;
             for (uint32_t cnt = 0; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
@@ -1258,7 +1258,7 @@ void CostEstimate::init(x265_param *_param, Frame *pic)
     {
         PicYuv *orig = pic->m_origPicYuv;
         m_paddedLines = pic->m_lowres.lines + 2 * orig->m_lumaMarginY;
-        int padoffset = pic->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
+        intptr_t padoffset = pic->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
 
         /* allocate weighted lowres buffers */
         for (int i = 0; i < 4; i++)
@@ -1374,7 +1374,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
     Lowres *fenc = frames[b];
     Lowres *ref  = frames[p0];
     pixel *src = ref->fpelPlane;
-    int stride = fenc->lumaStride;
+    intptr_t stride = fenc->lumaStride;
 
     if (wp)
     {
@@ -1383,14 +1383,15 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
         int denom = wp->log2WeightDenom;
         int round = denom ? 1 << (denom - 1) : 0;
         int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
+        int widthHeight = (int)stride;
 
-        primitives.weight_pp(ref->buffer[0], m_wbuffer[0], stride, stride, stride, m_paddedLines,
+        primitives.weight_pp(ref->buffer[0], m_wbuffer[0], stride, widthHeight, widthHeight, m_paddedLines,
                              scale, round << correction, denom + correction, offset);
         src = m_weightedRef.fpelPlane;
     }
 
     uint32_t cost = 0;
-    int pixoff = 0;
+    intptr_t pixoff = 0;
     int mb = 0;
 
     for (int y = 0; y < fenc->lines; y += 8, pixoff = y * stride)
@@ -1478,13 +1479,12 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
         int denom = m_w.log2WeightDenom;
         int round = denom ? 1 << (denom - 1) : 0;
         int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
-        int stride = ref->lumaStride;
+        intptr_t stride = ref->lumaStride;
+        int widthHeight = (int)stride;
 
         for (int i = 0; i < 4; i++)
-        {
-            primitives.weight_pp(ref->buffer[i], m_wbuffer[i], stride, stride, stride, m_paddedLines,
+            primitives.weight_pp(ref->buffer[i], m_wbuffer[i], stride, widthHeight, widthHeight, m_paddedLines,
                                  scale, round << correction, denom + correction, offset);
-        }
 
         m_weightedRef.isWeighted = true;
     }
@@ -1552,7 +1552,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     const int bBidir = (b < p1);
     const int cuXY = cux + cuy * m_widthInCU;
     const int cuSize = X265_LOWRES_CU_SIZE;
-    const int pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
+    const intptr_t pelOffset = cuSize * cux + cuSize * cuy * fenc->lumaStride;
 
     // should this CU's cost contribute to the frame cost?
     const bool bFrameScoreCU = (cux > 0 && cux < m_widthInCU - 1 &&

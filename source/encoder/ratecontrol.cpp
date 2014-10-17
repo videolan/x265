@@ -156,7 +156,7 @@ static inline uint32_t acEnergyVar(Frame *curFrame, uint64_t sum_ssd, int shift,
 }
 
 /* Find the energy of each block in Y/Cb/Cr plane */
-static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, int srcStride, int bChroma, int colorFormat)
+static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, int bChroma, int colorFormat)
 {
     if ((colorFormat != X265_CSP_I444) && bChroma)
     {
@@ -171,13 +171,13 @@ static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, int srcStride,
 /* Find the total AC energy of each block in all planes */
 uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t block_y)
 {
-    int stride = curFrame->m_origPicYuv->m_stride;
-    int cStride = curFrame->m_origPicYuv->m_strideC;
-    uint32_t blockOffsetLuma = block_x + (block_y * stride);
+    intptr_t stride = curFrame->m_origPicYuv->m_stride;
+    intptr_t cStride = curFrame->m_origPicYuv->m_strideC;
+    intptr_t blockOffsetLuma = block_x + (block_y * stride);
     int colorFormat = m_param->internalCsp;
     int hShift = CHROMA_H_SHIFT(colorFormat);
     int vShift = CHROMA_V_SHIFT(colorFormat);
-    uint32_t blockOffsetChroma = (block_x >> hShift) + ((block_y >> vShift) * cStride);
+    intptr_t blockOffsetChroma = (block_x >> hShift) + ((block_y >> vShift) * cStride);
 
     uint32_t var;
 
@@ -1855,8 +1855,8 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     double qScale = x265_qp2qScale(qpVbv);
     int picType = curFrame->m_picSym->m_slice->m_sliceType;
     Frame* refFrame = curFrame->m_picSym->m_slice->m_refPicList[0][0];
-    int maxRows = curFrame->m_picSym->getFrameHeightInCU();
-    for (int row = 0; row < maxRows; row++)
+    uint32_t maxRows = curFrame->m_origPicYuv->m_numCuInHeight;
+    for (uint32_t row = 0; row < maxRows; row++)
     {
         encodedBitsSoFar += curFrame->m_rowEncodedBits[row];
         rowSatdCostSoFar = curFrame->m_rowDiagSatd[row];
@@ -1870,7 +1870,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
 
             if (picType != I_SLICE)
             {
-                uint32_t endCuAddr = curFrame->m_picSym->getFrameWidthInCU() * (row + 1);
+                uint32_t endCuAddr = curFrame->m_origPicYuv->m_numCuInWidth * (row + 1);
                 for (uint32_t cuAddr = curFrame->m_numEncodedCusPerRow[row] + 1; cuAddr < endCuAddr; cuAddr++)
                 {
                     refRowSatdCost += refFrame->m_cuCostsForVbv[cuAddr];
@@ -1954,9 +1954,9 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     double stepSize = 0.5;
     double bufferLeftPlanned = rce->bufferFill - rce->frameSizePlanned;
 
-    double maxFrameError = X265_MAX(0.05, 1.0 / curFrame->m_picSym->getFrameHeightInCU());
+    double maxFrameError = X265_MAX(0.05, 1.0 / curFrame->m_origPicYuv->m_numCuInHeight);
 
-    if (row < curFrame->m_picSym->getFrameHeightInCU() - 1)
+    if (row < curFrame->m_origPicYuv->m_numCuInHeight - 1)
     {
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
@@ -2149,10 +2149,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (curFrame->m_qpaRc)
         {
-            for (uint32_t i = 0; i < curFrame->m_picSym->getFrameHeightInCU(); i++)
+            for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
                 curFrame->m_avgQpRc += curFrame->m_qpaRc[i];
 
-            curFrame->m_avgQpRc /= (curFrame->m_picSym->getFrameHeightInCU() * curFrame->m_picSym->getFrameWidthInCU());
+            curFrame->m_avgQpRc /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
             rce->qpaRc = curFrame->m_avgQpRc;
             // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
             curFrame->m_avgQpAq = curFrame->m_avgQpRc;
@@ -2160,10 +2160,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
         if (curFrame->m_qpaAq)
         {
-            for (uint32_t i = 0; i < curFrame->m_picSym->getFrameHeightInCU(); i++)
+            for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
                 curFrame->m_avgQpAq += curFrame->m_qpaAq[i];
 
-            curFrame->m_avgQpAq /= (curFrame->m_picSym->getFrameHeightInCU() * curFrame->m_picSym->getFrameWidthInCU());
+            curFrame->m_avgQpAq /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
         }
     }
 

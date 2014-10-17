@@ -105,7 +105,7 @@ public:
 
     /* Intra prediction helper functions */
     static void initIntraNeighbors(const TComDataCU& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
-    static void fillReferenceSamples(const pixel* adiOrigin, int picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors);
+    static void fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors);
 
     static bool isAboveLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT);
     static int  isAboveAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);

@@ -450,19 +450,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
 
             pic_out->planes[0] = recpic->m_picOrg[0];
-            pic_out->stride[0] = recpic->m_stride * sizeof(pixel);
+            pic_out->stride[0] = (int)(recpic->m_stride * sizeof(pixel));
             pic_out->planes[1] = recpic->m_picOrg[1];
-            pic_out->stride[1] = recpic->m_strideC * sizeof(pixel);
+            pic_out->stride[1] = (int)(recpic->m_strideC * sizeof(pixel));
             pic_out->planes[2] = recpic->m_picOrg[2];
-            pic_out->stride[2] = recpic->m_strideC * sizeof(pixel);
+            pic_out->stride[2] = (int)(recpic->m_strideC * sizeof(pixel));
         }
 
         if (m_param->analysisMode)
         {
             pic_out->analysisData.interData = out->m_interData;
             pic_out->analysisData.intraData = out->m_intraData;
-            pic_out->analysisData.numCUsInFrame = out->m_picSym->getNumberOfCUsInFrame();
-            pic_out->analysisData.numPartitions = out->m_picSym->getNumPartition();
+            pic_out->analysisData.numCUsInFrame = out->m_picSym->m_numCUsInFrame;
+            pic_out->analysisData.numPartitions = out->m_picSym->m_numPartitions;
         }
 
         if (slice->m_sliceType == P_SLICE)
@@ -528,7 +528,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_picSym->getNumberOfCUsInFrame() * NUM_CU_PARTITIONS);
+            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_picSym->m_numCUsInFrame * NUM_CU_PARTITIONS);
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)

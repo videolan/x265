@@ -41,15 +41,8 @@
 using namespace x265;
 
 TComPicSym::TComPicSym()
-    : m_widthInCU(0)
-    , m_heightInCU(0)
-    , m_numPartitions(0)
-    , m_numPartInCUSize(0)
-    , m_numCUsInFrame(0)
-    , m_slice(NULL)
-    , m_cuData(NULL)
 {
-    m_saoParam = NULL;
+    memset(this, 0, sizeof(*this));
 }
 
 bool TComPicSym::create(x265_param *param)
@@ -59,13 +52,12 @@ bool TComPicSym::create(x265_param *param)
     m_numPartitions   = 1 << (g_maxFullDepth * 2);
     m_numPartInCUSize = 1 << g_maxFullDepth;
 
-    m_widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    m_heightInCU      = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
-
-    m_numCUsInFrame   = m_widthInCU * m_heightInCU;
+    uint32_t widthInCU  = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    m_numCUsInFrame = widthInCU * heightInCU;
 
     m_slice = new Slice;
-    m_cuData = new TComDataCU[m_numCUsInFrame];
+    m_picCTU = new TComDataCU[m_numCUsInFrame];
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
@@ -73,7 +65,7 @@ bool TComPicSym::create(x265_param *param)
     m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame);
     m_mvFieldMemPool.create(m_numPartitions, m_numCUsInFrame);
     for (i = 0; i < m_numCUsInFrame; i++)
-        m_cuData[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
+        m_picCTU[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
     return true;
 }
@@ -83,6 +75,6 @@ void TComPicSym::destroy()
     m_cuMemPool.destroy();
     m_mvFieldMemPool.destroy();
     delete m_slice;
-    delete [] m_cuData;
+    delete [] m_picCTU;
     delete m_saoParam;
 }

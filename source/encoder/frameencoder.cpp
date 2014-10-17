@@ -211,7 +211,7 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
 
-    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_picSym->getFrameHeightInCU() : 1;
+    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_origPicYuv->m_numCuInHeight : 1;
     if (!m_outStreams)
     {
         m_outStreams = new Bitstream[numSubstreams];
@@ -439,9 +439,9 @@ void FrameEncoder::compressFrame()
 void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_picSym->m_slice;
-    const uint32_t widthInLCUs = m_frame->m_picSym->getFrameWidthInCU();
+    const uint32_t widthInLCUs = m_frame->m_origPicYuv->m_numCuInWidth;
     const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
-    const int numSubstreams = m_param->bEnableWavefront ? m_frame->m_picSym->getFrameHeightInCU() : 1;
+    const uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_origPicYuv->m_numCuInHeight : 1;
 
     SAOParam *saoParam = slice->m_frame->m_picSym->m_saoParam;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
@@ -449,7 +449,7 @@ void FrameEncoder::encodeSlice()
         uint32_t col = cuAddr % widthInLCUs;
         uint32_t lin = cuAddr / widthInLCUs;
         uint32_t subStrm = lin % numSubstreams;
-        TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
+        TComDataCU* ctu = m_frame->m_picSym->getPicCTU(cuAddr);
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
@@ -660,7 +660,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* ctu = m_frame->m_picSym->getCU(cuAddr);
+        TComDataCU* ctu = m_frame->m_picSym->getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
 
         if (bIsVbv)
@@ -672,7 +672,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
-                ctu->m_baseQp = m_frame->m_picSym->getCU(cuAddr - numCols + 1)->m_baseQp;
+                ctu->m_baseQp = m_frame->m_picSym->getPicCTU(cuAddr - numCols + 1)->m_baseQp;
             else
                 ctu->m_baseQp = m_frame->m_rowDiagQp[row];
         }
@@ -1022,20 +1022,20 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    int maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
-    int maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
-    int noOfBlocks = g_maxCUSize / 16;
-    int block_y = (ctuAddr / m_frame->m_picSym->getFrameWidthInCU()) * noOfBlocks;
-    int block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_picSym->getFrameWidthInCU();
+    uint32_t maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
+    uint32_t maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
+    uint32_t noOfBlocks = g_maxCUSize / 16;
+    uint32_t block_y = (ctuAddr / m_frame->m_origPicYuv->m_numCuInWidth) * noOfBlocks;
+    uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_origPicYuv->m_numCuInWidth;
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame->m_picSym->m_slice);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
 
-    int cnt = 0, idx = 0;
-    for (int h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
+    uint32_t cnt = 0, idx = 0;
+    for (uint32_t h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
     {
-        for (int w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
+        for (uint32_t w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
         {
             idx = block_x + w + (block_y * maxBlockCols);
             if (m_param->rc.aqMode)

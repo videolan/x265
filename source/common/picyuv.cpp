@@ -43,7 +43,7 @@ PicYuv::PicYuv()
     m_buOffsetC = NULL;
 }
 
-bool PicYuv::create(int picWidth, int picHeight, int picCsp)
+bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -74,23 +74,23 @@ bool PicYuv::create(int picWidth, int picHeight, int picCsp)
     m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * m_strideC + m_chromaMarginX;
 
     /* TODO: these four buffers are the same for every PicYuv in the encoder */
-    CHECKED_MALLOC(m_cuOffsetY, int, m_numCuInWidth * m_numCuInHeight);
-    CHECKED_MALLOC(m_cuOffsetC, int, m_numCuInWidth * m_numCuInHeight);
-    for (int cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
+    CHECKED_MALLOC(m_cuOffsetY, intptr_t, m_numCuInWidth * m_numCuInHeight);
+    CHECKED_MALLOC(m_cuOffsetC, intptr_t, m_numCuInWidth * m_numCuInHeight);
+    for (uint32_t cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
     {
-        for (int cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
+        for (uint32_t cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
         {
             m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = m_stride * cuRow * g_maxCUSize + cuCol * g_maxCUSize;
             m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = m_strideC * cuRow * (g_maxCUSize >> m_vChromaShift) + cuCol * (g_maxCUSize >> m_hChromaShift);
         }
     }
 
-    CHECKED_MALLOC(m_buOffsetY, int, (size_t)numPartitions);
-    CHECKED_MALLOC(m_buOffsetC, int, (size_t)numPartitions);
+    CHECKED_MALLOC(m_buOffsetY, intptr_t, (size_t)numPartitions);
+    CHECKED_MALLOC(m_buOffsetC, intptr_t, (size_t)numPartitions);
     for (uint32_t idx = 0; idx < numPartitions; ++idx)
     {
-        int x = g_zscanToPelX[idx];
-        int y = g_zscanToPelY[idx];
+        intptr_t x = g_zscanToPelX[idx];
+        intptr_t y = g_zscanToPelY[idx];
         m_buOffsetY[idx] = m_stride * y + x;
         m_buOffsetC[idx] = m_strideC * (y >> m_vChromaShift) + (x >> m_hChromaShift);
     }
@@ -112,7 +112,7 @@ void PicYuv::destroy()
     X265_FREE(m_buOffsetC);
 }
 
-uint32_t PicYuv::getCUHeight(int rowNum) const
+uint32_t PicYuv::getCUHeight(uint32_t rowNum) const
 {
     uint32_t height;
 
@@ -295,7 +295,7 @@ static void md5_block(MD5Context& md5, const pixel* plane, uint32_t n)
 /* Update md5 with all samples in plane in raster order, each sample
  * is adjusted to OUTBIT_BITDEPTH_DIV8 */
 template<uint32_t OUTPUT_BITDEPTH_DIV8>
-static void md5_plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, uint32_t stride)
+static void md5_plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, intptr_t stride)
 {
     /* N is the number of samples to process per md5 update.
      * All N samples must fit in buf */
@@ -315,7 +315,7 @@ static void md5_plane(MD5Context& md5, const pixel* plane, uint32_t width, uint3
     }
 }
 
-void updateCRC(const pixel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride)
+void updateCRC(const pixel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, intptr_t stride)
 {
     uint32_t crcMsb;
     uint32_t bitVal;
@@ -364,7 +364,7 @@ void crcFinish(uint32_t& crcVal, uint8_t digest[16])
     digest[1] =  crcVal        & 0xff;
 }
 
-void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight)
+void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, intptr_t stride, int row, uint32_t cuHeight)
 {
     uint8_t xor_mask;
 
@@ -389,10 +389,10 @@ void checksumFinish(uint32_t checksum, uint8_t digest[16])
     digest[3] =  checksum        & 0xff;
 }
 
-void updateMD5Plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, uint32_t stride)
+void updateMD5Plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, intptr_t stride)
 {
     /* choose an md5_plane packing function based on the system bitdepth */
-    typedef void (*MD5PlaneFunc)(MD5Context&, const pixel*, uint32_t, uint32_t, uint32_t);
+    typedef void(*MD5PlaneFunc)(MD5Context&, const pixel*, uint32_t, uint32_t, intptr_t);
     MD5PlaneFunc md5_plane_func;
     md5_plane_func = X265_DEPTH <= 8 ? (MD5PlaneFunc)md5_plane<1> : (MD5PlaneFunc)md5_plane<2>;
 

@@ -38,59 +38,59 @@ class PicYuv
 {
 public:
 
-    pixel*  m_picBuf[3];  // full allocated buffers, including margins
-    pixel*  m_picOrg[3];  // pointers to plane starts
+    pixel*   m_picBuf[3];  // full allocated buffers, including margins
+    pixel*   m_picOrg[3];  // pointers to plane starts
 
-    int      m_picWidth;
-    int      m_picHeight;
-    int      m_stride;
-    int      m_strideC;
+    uint32_t m_picWidth;
+    uint32_t m_picHeight;
+    intptr_t m_stride;
+    intptr_t m_strideC;
 
-    int      m_numCuInWidth;
-    int      m_numCuInHeight;
+    uint32_t m_numCuInWidth;
+    uint32_t m_numCuInHeight;
 
-    int      m_picCsp;
-    int      m_hChromaShift;
-    int      m_vChromaShift;
+    uint32_t m_picCsp;
+    uint32_t m_hChromaShift;
+    uint32_t m_vChromaShift;
 
-    int32_t* m_cuOffsetY;
-    int32_t* m_cuOffsetC;
-    int32_t* m_buOffsetY;
-    int32_t* m_buOffsetC;
+    intptr_t* m_cuOffsetY;
+    intptr_t* m_cuOffsetC;
+    intptr_t* m_buOffsetY;
+    intptr_t* m_buOffsetC;
 
-    int      m_lumaMarginX;
-    int      m_lumaMarginY;
-    int      m_chromaMarginX;
-    int      m_chromaMarginY;
+    uint32_t m_lumaMarginX;
+    uint32_t m_lumaMarginY;
+    uint32_t m_chromaMarginX;
+    uint32_t m_chromaMarginY;
 
     PicYuv();
 
-    bool  create(int picWidth, int picHeight, int csp);
+    bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
     void  destroy();
     void  copyFromPicture(const x265_picture&, int padx, int pady);
 
-    uint32_t getCUHeight(int rowNum) const;
-    int32_t  getChromaAddrOffset(int ctuAddr, int absZOrderIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absZOrderIdx]; }
+    uint32_t getCUHeight(uint32_t rowNum) const;
+    intptr_t getChromaAddrOffset(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 
     /* get pointer to CTU start address */
-    pixel*  getLumaAddr(int ctuAddr)                                   { return m_picOrg[0] + m_cuOffsetY[ctuAddr]; }
-    pixel*  getCbAddr(int ctuAddr)                                     { return m_picOrg[1] + m_cuOffsetC[ctuAddr]; }
-    pixel*  getCrAddr(int ctuAddr)                                     { return m_picOrg[2] + m_cuOffsetC[ctuAddr]; }
-    pixel*  getChromaAddr(int chromaId, int ctuAddr)                   { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr]; }
-    pixel*  getPlaneAddr(int plane, int ctuAddr)                       { return m_picOrg[plane] + (plane ? m_cuOffsetC[ctuAddr] : m_cuOffsetY[ctuAddr]); }
+    pixel*  getLumaAddr(uint32_t ctuAddr)                      { return m_picOrg[0] + m_cuOffsetY[ctuAddr]; }
+    pixel*  getCbAddr(uint32_t ctuAddr)                        { return m_picOrg[1] + m_cuOffsetC[ctuAddr]; }
+    pixel*  getCrAddr(uint32_t ctuAddr)                        { return m_picOrg[2] + m_cuOffsetC[ctuAddr]; }
+    pixel*  getChromaAddr(uint32_t chromaId, uint32_t ctuAddr) { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr]; }
+    pixel*  getPlaneAddr(uint32_t plane, uint32_t ctuAddr)     { return m_picOrg[plane] + (plane ? m_cuOffsetC[ctuAddr] : m_cuOffsetY[ctuAddr]); }
 
     /* get pointer to CU start address */
-    pixel*  getLumaAddr(int ctuAddr, int absZOrderIdx)                 { return m_picOrg[0] + m_cuOffsetY[ctuAddr] + m_buOffsetY[absZOrderIdx]; }
-    pixel*  getCbAddr(int ctuAddr, int absZOrderIdx)                   { return m_picOrg[1] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absZOrderIdx]; }
-    pixel*  getCrAddr(int ctuAddr, int absZOrderIdx)                   { return m_picOrg[2] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absZOrderIdx]; }
-    pixel*  getChromaAddr(int chromaId, int ctuAddr, int absZOrderIdx) { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absZOrderIdx]; }
+    pixel*  getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return m_picOrg[0] + m_cuOffsetY[ctuAddr] + m_buOffsetY[absPartIdx]; }
+    pixel*  getCbAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return m_picOrg[1] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
+    pixel*  getCrAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return m_picOrg[2] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
+    pixel*  getChromaAddr(uint32_t chromaId, uint32_t ctuAddr, uint32_t absPartIdx) { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 };
 
-void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, uint32_t stride, int row, uint32_t cuHeight);
-void updateCRC(const pixel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, uint32_t stride);
+void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, intptr_t stride, int row, uint32_t cuHeight);
+void updateCRC(const pixel* plane, uint32_t& crcVal, uint32_t height, uint32_t width, intptr_t stride);
 void crcFinish(uint32_t & crc, uint8_t digest[16]);
 void checksumFinish(uint32_t checksum, uint8_t digest[16]);
-void updateMD5Plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, uint32_t stride);
+void updateMD5Plane(MD5Context& md5, const pixel* plane, uint32_t width, uint32_t height, intptr_t stride);
 }
 
 #endif // ifndef X265_PICYUV_H

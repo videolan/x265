@@ -31,14 +31,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComPicSym.h
-    \brief    picture symbol class (header)
-*/
-
 #ifndef X265_TCOMPICSYM_H
 #define X265_TCOMPICSYM_H
 
-// Include files
 #include "common.h"
 #include "slice.h"
 #include "TComDataCU.h"
@@ -52,42 +47,26 @@ class TComPicSym
 {
 public:
 
-    uint32_t      m_widthInCU;
-    uint32_t      m_heightInCU;
+    Slice*         m_slice;
+    SAOParam*      m_saoParam;
 
-    uint32_t      m_numPartitions;
-    uint32_t      m_numPartInCUSize;
-    uint32_t      m_numCUsInFrame;
+    TComPicSym*    m_freeListNext;
+    PicYuv*        m_reconPicYuv;
+    bool           m_bHasReferences; // used during DPB/RPS updates
 
     DataCUMemPool  m_cuMemPool;
     MVFieldMemPool m_mvFieldMemPool;
+    TComDataCU*    m_picCTU;
 
-    Slice*        m_slice;
-    TComDataCU*   m_cuData;
-
-    SAOParam*     m_saoParam;
-
-    TComPicSym*   m_freeListNext;
-    PicYuv*       m_reconPicYuv;
-
-    bool          m_bHasReferences; // used during DPB/RPS updates
+    uint32_t       m_numPartitions;    /* based on g_maxFullDepth, could be CU static */
+    uint32_t       m_numPartInCUSize;  /* based on g_maxFullDepth, could be CU static */
+    uint32_t       m_numCUsInFrame;    /* based on param, should perhaps be in Frame */
 
     TComPicSym();
 
     bool        create(x265_param *param);
     void        destroy();
-
-    uint32_t    getFrameWidthInCU() const { return m_widthInCU; }
-
-    uint32_t    getFrameHeightInCU() const { return m_heightInCU; }
-
-    uint32_t    getNumberOfCUsInFrame() const { return m_numCUsInFrame; }
-
-    TComDataCU* getCU(uint32_t cuAddr)    { return &m_cuData[cuAddr]; }
-
-    uint32_t    getNumPartition() const   { return m_numPartitions; }
-
-    uint32_t    getNumPartInCUSize() const { return m_numPartInCUSize; }
+    TComDataCU* getPicCTU(uint32_t ctuAddr)    { return &m_picCTU[ctuAddr]; }
 };
 }
 

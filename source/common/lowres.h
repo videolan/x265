@@ -37,16 +37,16 @@ struct ReferencePlanes
 {
     ReferencePlanes() { memset(this, 0, sizeof(ReferencePlanes)); }
 
-    pixel* fpelPlane;
-    pixel* lowresPlane[4];
+    pixel*   fpelPlane;
+    pixel*   lowresPlane[4];
 
-    bool isWeighted;
-    bool isLowres;
-    int  lumaStride;
-    int  weight;
-    int  offset;
-    int  shift;
-    int  round;
+    bool     isWeighted;
+    bool     isLowres;
+    intptr_t lumaStride;
+    int      weight;
+    int      offset;
+    int      shift;
+    int      round;
 
     /* lowres motion compensation, you must provide a buffer and stride for QPEL averaged pixels
      * in case QPEL is required.  Else it returns a pointer to the HPEL pixels */

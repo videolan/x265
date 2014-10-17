@@ -62,7 +62,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
         return;
     }
 
-    const uint32_t widthInBaseUnits = cu->m_frame->m_picSym->getNumPartInCUSize() >> depth;
+    const uint32_t widthInBaseUnits = cu->m_frame->m_picSym->m_numPartInCUSize >> depth;
     Param params;
     setLoopfilterParam(cu, absPartIdx, &params);
     setEdgefilterPU(cu, absPartIdx, dir, blockingStrength, widthInBaseUnits);
@@ -78,7 +78,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
     }
 
     const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
-    uint32_t sizeInPU = frame->m_picSym->getNumPartInCUSize() >> depth;
+    uint32_t sizeInPU = frame->m_picSym->m_numPartInCUSize >> depth;
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
     uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
     uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absPartIdx] : g_zscanToPelY[absPartIdx]) >> LOG2_UNIT_SIZE;
@@ -93,7 +93,7 @@ void Deblock::deblockCU(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, con
 
 static inline uint32_t calcBsIdx(TComDataCU* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t ctuWidthInBaseUnits = cu->m_frame->m_picSym->getNumPartInCUSize();
+    uint32_t ctuWidthInBaseUnits = cu->m_frame->m_picSym->m_numPartInCUSize;
 
     if (dir)
         return g_rasterToZscan[g_zscanToRaster[absPartIdx] + edgeIdx * ctuWidthInBaseUnits + baseUnitIdx];
@@ -316,17 +316,17 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
     blockingStrength[absPartIdx] = bs;
 }
 
-static inline int32_t calcDP(pixel* src, int32_t offset)
+static inline int32_t calcDP(pixel* src, intptr_t offset)
 {
     return abs(static_cast<int32_t>(src[-offset * 3]) - 2 * src[-offset * 2] + src[-offset]);
 }
 
-static inline int32_t calcDQ(pixel* src, int32_t offset)
+static inline int32_t calcDQ(pixel* src, intptr_t offset)
 {
     return abs(static_cast<int32_t>(src[0]) - 2 * src[offset] + src[offset * 2]);
 }
 
-static inline bool useStrongFiltering(int32_t offset, int32_t beta, int32_t tc, pixel* src)
+static inline bool useStrongFiltering(intptr_t offset, int32_t beta, int32_t tc, pixel* src)
 {
     int16_t m4     = (int16_t)src[0];
     int16_t m3     = (int16_t)src[-offset];
@@ -345,7 +345,7 @@ static inline bool useStrongFiltering(int32_t offset, int32_t beta, int32_t tc, 
  * \param partQNoFilter  indicator to disable filtering on partQ
  * \param filterSecondP  decision weak filter/no filter for partP
  * \param filterSecondQ  decision weak filter/no filter for partQ */
-static inline void pelFilterLumaStrong(pixel* src, int32_t srcStep, int32_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
+static inline void pelFilterLumaStrong(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
 {
     for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
     {
@@ -374,7 +374,7 @@ static inline void pelFilterLumaStrong(pixel* src, int32_t srcStep, int32_t offs
 }
 
 /* Weak filter */
-static inline void pelFilterLuma(pixel* src, int32_t srcStep, int32_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter,
+static inline void pelFilterLuma(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter,
                                  bool filterSecondP, bool filterSecondQ)
 {
     int32_t thrCut = tc * 10;
@@ -423,7 +423,7 @@ static inline void pelFilterLuma(pixel* src, int32_t srcStep, int32_t offset, in
  * \param tc             tc value
  * \param partPNoFilter  indicator to disable filtering on partP
  * \param partQNoFilter  indicator to disable filtering on partQ */
-static inline void pelFilterChroma(pixel* src, int32_t srcStep, int32_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
+static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
 {
     for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
     {
@@ -445,10 +445,10 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
     PicYuv* reconYuv = cu->m_frame->m_reconPicYuv;
     pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
-    int32_t stride = reconYuv->m_stride;
-    uint32_t numParts = cu->m_frame->m_picSym->getNumPartInCUSize() >> depth;
+    intptr_t stride = reconYuv->m_stride;
+    uint32_t numParts = cu->m_frame->m_picSym->m_numPartInCUSize >> depth;
 
-    int32_t offset, srcStep;
+    intptr_t offset, srcStep;
 
     bool  partPNoFilter = false;
     bool  partQNoFilter = false;
@@ -541,8 +541,8 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth
 
 void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    int32_t chFmt = cu->m_chromaFormat;
-    int32_t offset, srcStep, chromaShift;
+    int32_t chFmt = cu->m_chromaFormat, chromaShift;
+    intptr_t offset, srcStep;
 
     bool partPNoFilter = false;
     bool partQNoFilter = false;
@@ -558,8 +558,8 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t dep
                "invalid edge\n");
 
     PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
-    int32_t stride = reconPic->m_strideC;
-    int32_t srcOffset = reconPic->getChromaAddrOffset(cu->m_cuAddr, absPartIdx);
+    intptr_t stride = reconPic->m_strideC;
+    intptr_t srcOffset = reconPic->getChromaAddrOffset(cu->m_cuAddr, absPartIdx);
 
     if (dir == EDGE_VER)
     {
@@ -580,7 +580,7 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absPartIdx, uint32_t dep
     srcChroma[0] = reconPic->m_picOrg[1] + srcOffset;
     srcChroma[1] = reconPic->m_picOrg[2] + srcOffset;
 
-    uint32_t numUnits = cu->m_frame->m_picSym->getNumPartInCUSize() >> (depth + chromaShift);
+    uint32_t numUnits = cu->m_frame->m_picSym->m_numPartInCUSize >> (depth + chromaShift);
 
     for (uint32_t idx = 0; idx < numUnits; idx++)
     {

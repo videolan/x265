@@ -56,7 +56,7 @@ int sliceHeaderCost(WeightParam *w, int lambda, int bChroma)
  * The borders of mcout are not extended */
 void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
 {
-    int stride = ref.lumaStride;
+    intptr_t stride = ref.lumaStride;
     const int cuSize = 8;
     MV mvmin, mvmax;
 
@@ -64,7 +64,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
 
     for (int y = 0; y < ref.lines; y += cuSize)
     {
-        int pixoff = y * stride;
+        intptr_t pixoff = y * stride;
         mvmin.y = (int16_t)((-y - 8) << 2);
         mvmax.y = (int16_t)((ref.lines - y - 1 + 8) << 2);
 
@@ -90,7 +90,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
  * if a block had cheaper lowres cost as intra, we treat it as MV 0 */
 void mcChroma(pixel *      mcout,
               pixel *      src,
-              int          stride,
+              intptr_t     stride,
               const MV *   mvs,
               const Cache& cache,
               int          height,
@@ -109,7 +109,7 @@ void mcChroma(pixel *      mcout,
          * count per row because of rounding issues, so be very careful with indexing
          * into the lowres structures */
         int cu = y * cache.lowresWidthInCU;
-        int pixoff = y * stride;
+        intptr_t pixoff = y * stride;
         mvmin.y = (int16_t)((-y - 8) << 2);
         mvmax.y = (int16_t)((height - y - 1 + 8) << 2);
 
@@ -127,7 +127,7 @@ void mcChroma(pixel *      mcout,
                 mvmax.x = (int16_t)((width - x - 1 + 8) << 2);
                 mv = mv.clipped(mvmin, mvmax);
 
-                int fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
+                intptr_t fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
                 pixel *temp = src + pixoff + fpeloffset;
 
                 int xFrac = mv.x & 0x7;
@@ -168,11 +168,11 @@ void mcChroma(pixel *      mcout,
 uint32_t weightCost(pixel *         fenc,
                     pixel *         ref,
                     pixel *         weightTemp,
-                    int             stride,
+                    intptr_t        stride,
                     const Cache &   cache,
                     int             width,
                     int             height,
-                    WeightParam *w,
+                    WeightParam *   w,
                     bool            bLuma)
 {
     if (w)
@@ -347,7 +347,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
             /* prepare inputs to weight analysis */
             pixel *orig;
             pixel *fref;
-            int    stride;
+            intptr_t stride;
             int    width, height;
             switch (plane)
             {

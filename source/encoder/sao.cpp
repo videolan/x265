@@ -229,9 +229,9 @@ void SAO::startSlice(Frame *frame, Entropy& initState, int qp)
 void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_frame->m_picSym->getCU(addr);
+    TComDataCU *cu = m_frame->m_picSym->getPicCTU(addr);
     pixel* rec = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
-    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -441,7 +441,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 /* Process SAO all units */
 void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 {
-    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     int ctuWidth  = g_maxCUSize;
     int ctuHeight = g_maxCUSize;
@@ -550,12 +550,12 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    TComDataCU *cu = m_frame->m_picSym->getCU(addr);
+    TComDataCU *cu = m_frame->m_picSym->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
     const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     const pixel* fenc;
     const pixel* rec;
-    int stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -796,10 +796,10 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     int addr    = idxX + m_numCuInWidth * idxY;
 
     int x, y;
-    TComDataCU *cu = frame->m_picSym->getCU(addr);
+    TComDataCU *cu = frame->m_picSym->getPicCTU(addr);
     const pixel* fenc;
     const pixel* rec;
-    int stride = m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -1540,8 +1540,8 @@ void restoreLFDisabledOrigYuv(Frame* curFrame)
 {
     if (curFrame->m_picSym->m_slice->m_pps->bTransquantBypassEnabled)
     {
-        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_picSym->getNumberOfCUsInFrame(); cuAddr++)
-            origCUSampleRestoration(curFrame->m_picSym->getCU(cuAddr), 0, 0);
+        for (uint32_t cuAddr = 0; cuAddr < curFrame->m_picSym->m_numCUsInFrame; cuAddr++)
+            origCUSampleRestoration(curFrame->m_picSym->getPicCTU(cuAddr), 0, 0);
     }
 }
 
@@ -1578,8 +1578,8 @@ static void restoreOrigLosslessYuv(TComDataCU* cu, uint32_t absZOrderIdx, uint32
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absZOrderIdx);
-    uint32_t dstStride = reconPic->m_stride;
-    uint32_t srcStride = fencPic->m_stride;
+    intptr_t dstStride = reconPic->m_stride;
+    intptr_t srcStride = fencPic->m_stride;
     uint32_t width  = (g_maxCUSize >> depth);
     uint32_t height = (g_maxCUSize >> depth);
     int part = partitionFromSizes(width, height);

@@ -317,11 +317,11 @@ void Predict::motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma)
 
 void Predict::predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
-    int dstStride = dstYuv->m_size;
-    pixel *dst    = dstYuv->getLumaAddr(m_partAddr);
+    intptr_t dstStride = dstYuv->m_size;
+    pixel *dst = dstYuv->getLumaAddr(m_partAddr);
 
-    int srcStride = refPic->m_stride;
-    int srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
+    intptr_t srcStride = refPic->m_stride;
+    intptr_t srcOffset = (mv->x >> 2) + (mv->y >> 2) * srcStride;
     int partEnum = partitionFromSizes(m_width, m_height);
     pixel* src = refPic->getLumaAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + srcOffset;
 
@@ -346,8 +346,8 @@ void Predict::predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 
 void Predict::predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 {
-    int refStride = refPic->m_stride;
-    int refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
+    intptr_t refStride = refPic->m_stride;
+    intptr_t refOffset = (mv->x >> 2) + (mv->y >> 2) * refStride;
     pixel *ref    = refPic->getLumaAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
 
     int dstStride = dstSYuv->m_size;
@@ -379,7 +379,7 @@ void Predict::predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 
 void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 {
-    int refStride = refPic->m_strideC;
+    intptr_t refStride = refPic->m_strideC;
     int dstStride = dstYuv->m_csize;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
@@ -387,7 +387,7 @@ void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
     int shiftHor = (2 + hChromaShift);
     int shiftVer = (2 + vChromaShift);
 
-    int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
+    intptr_t refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
     pixel* refCb = refPic->getCbAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
     pixel* refCr = refPic->getCrAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
@@ -431,7 +431,7 @@ void Predict::predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv)
 
 void Predict::predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
 {
-    int refStride = refPic->m_strideC;
+    intptr_t refStride = refPic->m_strideC;
     int dstStride = dstSYuv->m_csize;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
@@ -439,7 +439,7 @@ void Predict::predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv)
     int shiftHor = (2 + hChromaShift);
     int shiftVer = (2 + vChromaShift);
 
-    int refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
+    intptr_t refOffset = (mv->x >> shiftHor) + (mv->y >> shiftVer) * refStride;
 
     pixel* refCb = refPic->getCbAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
     pixel* refCr = refPic->getCrAddr(m_cuAddr, m_zOrderIdxinCU + m_partAddr) + refOffset;
@@ -669,7 +669,7 @@ void Predict::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t ab
     int tuSize2 = tuSize << 1;
 
     pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
-    int picStride = cu.m_frame->m_origPicYuv->m_stride;
+    intptr_t picStride = cu.m_frame->m_origPicYuv->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
 
@@ -745,7 +745,7 @@ void Predict::initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, uint3
     uint32_t tuSize = intraNeighbors.tuSize;
 
     const pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
-    int picStride = cu.m_frame->m_origPicYuv->m_strideC;
+    intptr_t picStride = cu.m_frame->m_origPicYuv->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize);
 
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);
@@ -776,7 +776,7 @@ void Predict::initIntraNeighbors(const TComDataCU& cu, uint32_t absPartIdx, uint
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits = tuWidthInUnits << 1;
     int  leftUnits = tuHeightInUnits << 1;
-    int  partIdxStride = cu.m_frame->m_picSym->getNumPartInCUSize();
+    int  partIdxStride = cu.m_frame->m_picSym->m_numPartInCUSize;
     partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
@@ -796,7 +796,7 @@ void Predict::initIntraNeighbors(const TComDataCU& cu, uint32_t absPartIdx, uint
     intraNeighbors->log2TrSize = log2TrSize;
 }
 
-void Predict::fillReferenceSamples(const pixel* adiOrigin, int picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors)
+void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors)
 {
     const pixel dcValue = (pixel)(1 << (X265_DEPTH - 1));
     int numIntraNeighbor = intraNeighbors.numIntraNeighbor;
@@ -989,7 +989,7 @@ int Predict::isLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t 
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu.m_frame->m_picSym->getNumPartInCUSize();
+    const uint32_t idxStep = cu.m_frame->m_picSym->m_numPartInCUSize;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -1037,7 +1037,7 @@ int Predict::isAboveRightAvailable(const TComDataCU& cu, uint32_t partIdxLT, uin
 
 int Predict::isBelowLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_frame->m_picSym->getNumPartInCUSize() + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_frame->m_picSym->m_numPartInCUSize + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
