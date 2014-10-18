@@ -249,7 +249,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
             param->bEnableEarlySkip = 1;
-            param->bEnableCbfFastMode = 1;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
@@ -269,7 +268,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
             param->bEnableEarlySkip = 1;
-            param->bEnableCbfFastMode = 1;
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
@@ -286,7 +284,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
             param->bEnableEarlySkip = 1;
-            param->bEnableCbfFastMode = 1;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
@@ -297,7 +294,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
             param->bEnableEarlySkip = 1;
-            param->bEnableCbfFastMode = 1;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
