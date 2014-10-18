@@ -283,7 +283,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
                     curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
                     sum += lowresCuCost;
                 }
-                curFrame->m_rowSatdForVbv[row] += sum;
+                curFrame->m_encData->m_rowSatdForVbv[row] += sum;
             }
         }
     }
@@ -302,23 +302,23 @@ void Lookahead::slicetypeDecide()
     memset(list, 0, sizeof(list));
     int numFrames = 0;
     {
-        Frame *pic = m_inputQueue.first();
+        Frame *curFrame = m_inputQueue.first();
         int j;
         for (j = 0; j < m_param->bframes + 2; j++)
         {
-            if (!pic) break;
-            list[j] = pic;
-            pic = pic->m_next;
+            if (!curFrame) break;
+            list[j] = curFrame;
+            curFrame = curFrame->m_next;
         }
         numFrames = j;
 
-        pic = m_inputQueue.first();
+        curFrame = m_inputQueue.first();
         frames[0] = m_lastNonB;
         for (j = 0; j < maxSearch; j++)
         {
-            if (!pic) break;
-            frames[j + 1] = &pic->m_lowres;
-            pic = pic->m_next;
+            if (!curFrame) break;
+            frames[j + 1] = &curFrame->m_lowres;
+            curFrame = curFrame->m_next;
         }
 
         maxSearch = j;
@@ -466,14 +466,14 @@ void Lookahead::slicetypeDecide()
     m_inputQueueLock.acquire();
 
     /* dequeue all frames from inputQueue that are about to be enqueued
-     * in the output queue. The order is important because TComPic can
+     * in the output queue. The order is important because Frame can
      * only be in one list at a time */
     int64_t pts[X265_BFRAME_MAX + 1];
     for (int i = 0; i <= bframes; i++)
     {
-        Frame *pic;
-        pic = m_inputQueue.popFront();
-        pts[i] = pic->m_pts;
+        Frame *curFrame;
+        curFrame = m_inputQueue.popFront();
+        pts[i] = curFrame->m_pts;
         maxSearch--;
     }
 
@@ -513,13 +513,13 @@ void Lookahead::slicetypeDecide()
     if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
     {
         m_inputQueueLock.acquire();
-        Frame *pic = m_inputQueue.first();
+        Frame *curFrame = m_inputQueue.first();
         frames[0] = m_lastNonB;
         int j;
         for (j = 0; j < maxSearch; j++)
         {
-            frames[j + 1] = &pic->m_lowres;
-            pic = pic->m_next;
+            frames[j + 1] = &curFrame->m_lowres;
+            curFrame = curFrame->m_next;
         }
 
         frames[j + 1] = NULL;
@@ -1233,7 +1233,7 @@ CostEstimate::~CostEstimate()
     delete[] m_rows;
 }
 
-void CostEstimate::init(x265_param *_param, Frame *pic)
+void CostEstimate::init(x265_param *_param, Frame *curFrame)
 {
     m_param = _param;
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
@@ -1247,30 +1247,26 @@ void CostEstimate::init(x265_param *_param, Frame *pic)
         m_rows[i].m_param = m_param;
     }
 
-    if (!WaveFront::init(m_heightInCU))
-    {
-        m_pool = NULL;
-    }
-    else
-    {
+    if (WaveFront::init(m_heightInCU))
         WaveFront::enableAllRows();
-    }
+    else
+        m_pool = NULL;
 
     if (m_param->bEnableWeightedPred)
     {
-        PicYuv *orig = pic->m_origPicYuv;
-        m_paddedLines = pic->m_lowres.lines + 2 * orig->m_lumaMarginY;
-        intptr_t padoffset = pic->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
+        PicYuv *orig = curFrame->m_origPicYuv;
+        m_paddedLines = curFrame->m_lowres.lines + 2 * orig->m_lumaMarginY;
+        intptr_t padoffset = curFrame->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
 
         /* allocate weighted lowres buffers */
         for (int i = 0; i < 4; i++)
         {
-            m_wbuffer[i] = (pixel*)x265_malloc(sizeof(pixel) * (pic->m_lowres.lumaStride * m_paddedLines));
+            m_wbuffer[i] = (pixel*)x265_malloc(sizeof(pixel) * (curFrame->m_lowres.lumaStride * m_paddedLines));
             m_weightedRef.lowresPlane[i] = m_wbuffer[i] + padoffset;
         }
 
         m_weightedRef.fpelPlane = m_weightedRef.lowresPlane[0];
-        m_weightedRef.lumaStride = pic->m_lowres.lumaStride;
+        m_weightedRef.lumaStride = curFrame->m_lowres.lumaStride;
         m_weightedRef.isLowres = true;
         m_weightedRef.isWeighted = false;
     }

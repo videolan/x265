@@ -42,7 +42,7 @@ bool FrameData::create(x265_param *param)
     uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
     m_numCUsInFrame = widthInCU * heightInCU;
 
-    m_slice = new Slice;
+    m_slice  = new Slice;
     m_picCTU = new TComDataCU[m_numCUsInFrame];
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
@@ -53,14 +53,80 @@ bool FrameData::create(x265_param *param)
     for (i = 0; i < m_numCUsInFrame; i++)
         m_picCTU[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
+    CHECKED_MALLOC(m_totalBitsPerCTU, uint32_t, heightInCU * widthInCU);
+
+    if (param->rc.aqMode)
+        CHECKED_MALLOC(m_qpaAq, double, heightInCU);
+
+    if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
+    {
+        CHECKED_MALLOC(m_cuCostsForVbv, uint32_t, heightInCU * widthInCU);
+        CHECKED_MALLOC(m_intraCuCostsForVbv, uint32_t, heightInCU * widthInCU);
+
+        CHECKED_MALLOC(m_rowDiagQp, double, heightInCU);
+        CHECKED_MALLOC(m_rowDiagQScale, double, heightInCU);
+        CHECKED_MALLOC(m_rowDiagSatd, uint32_t, heightInCU);
+        CHECKED_MALLOC(m_rowDiagIntraSatd, uint32_t, heightInCU);
+        CHECKED_MALLOC(m_rowEncodedBits, uint32_t, heightInCU);
+        CHECKED_MALLOC(m_numEncodedCusPerRow, uint32_t, heightInCU);
+        CHECKED_MALLOC(m_rowSatdForVbv, uint32_t, heightInCU);
+        CHECKED_MALLOC(m_qpaRc, double, heightInCU);
+    }
+
+    reinit(param);
     return true;
+
+fail:
+    return false;
+}
+
+void FrameData::reinit(x265_param *param)
+{
+    uint32_t widthInCU  = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+
+    memset(m_totalBitsPerCTU, 0, heightInCU * widthInCU * sizeof(uint32_t));
+
+    if (param->rc.aqMode)
+        memset(m_qpaAq, 0, heightInCU * sizeof(double));
+
+    if (param->rc.vbvBufferSize > 0 && param->rc.vbvMaxBitrate > 0)
+    {
+        memset(m_cuCostsForVbv, 0, heightInCU * widthInCU * sizeof(uint32_t));
+        memset(m_intraCuCostsForVbv, 0, heightInCU * widthInCU * sizeof(uint32_t));
+
+        memset(m_rowDiagQp, 0, heightInCU * sizeof(double));
+        memset(m_rowDiagQScale, 0, heightInCU * sizeof(double));
+        memset(m_rowDiagSatd, 0, heightInCU * sizeof(uint32_t));
+        memset(m_rowDiagIntraSatd, 0, heightInCU * sizeof(uint32_t));
+        memset(m_rowEncodedBits, 0, heightInCU * sizeof(uint32_t));
+        memset(m_numEncodedCusPerRow, 0, heightInCU * sizeof(uint32_t));
+        memset(m_rowSatdForVbv, 0, heightInCU * sizeof(uint32_t));
+        memset(m_qpaRc, 0, heightInCU * sizeof(double));
+    }
 }
 
 void FrameData::destroy()
 {
+    delete [] m_picCTU;
+    delete m_slice;
+    delete m_saoParam;
+
     m_cuMemPool.destroy();
     m_mvFieldMemPool.destroy();
-    delete m_slice;
-    delete [] m_picCTU;
-    delete m_saoParam;
+
+    X265_FREE(m_totalBitsPerCTU);
+    X265_FREE(m_qpaAq);
+
+    X265_FREE(m_cuCostsForVbv);
+    X265_FREE(m_intraCuCostsForVbv);
+
+    X265_FREE(m_rowDiagQp);
+    X265_FREE(m_rowDiagQScale);
+    X265_FREE(m_rowDiagSatd);
+    X265_FREE(m_rowDiagIntraSatd);
+    X265_FREE(m_rowEncodedBits);
+    X265_FREE(m_numEncodedCusPerRow);
+    X265_FREE(m_rowSatdForVbv);
+    X265_FREE(m_qpaRc);
 }

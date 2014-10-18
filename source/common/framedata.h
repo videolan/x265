@@ -59,9 +59,27 @@ public:
     uint32_t       m_numPartInCUSize;  /* based on g_maxFullDepth, could be CU static */
     uint32_t       m_numCUsInFrame;    /* based on param, should perhaps be in Frame */
 
+    /* Rate control data used during encode and by references */
+    uint32_t*      m_totalBitsPerCTU;
+    uint32_t*      m_cuCostsForVbv;
+    uint32_t*      m_intraCuCostsForVbv;
+    uint32_t*      m_numEncodedCusPerRow;
+    uint32_t*      m_rowDiagSatd;
+    uint32_t*      m_rowDiagIntraSatd;
+    uint32_t*      m_rowEncodedBits;
+    uint32_t*      m_rowSatdForVbv;
+    double*        m_rowDiagQp;
+    double*        m_rowDiagQScale;
+    double*        m_qpaRc;
+    double*        m_qpaAq;
+    double         m_avgQpRc;    /* avg QP as decided by rate-control */
+    double         m_avgQpAq;    /* avg QP as decided by AQ in addition to rate-control */
+    double         m_rateFactor; /* calculated based on the Frame QP */
+
     FrameData();
 
     bool create(x265_param *param);
+    void reinit(x265_param *param);
     void destroy();
 
     TComDataCU* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }

@@ -643,9 +643,11 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     /* When WPP is enabled, every row has its own row coder instance. Otherwise
      * they share row 0 */
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
-    // setup thread-local data
-    Slice *slice = m_frame->m_encData->m_slice;
+    FrameData& curEncData = *m_frame->m_encData;
+    Slice *slice = curEncData.m_slice;
     PicYuv* fencPic = m_frame->m_origPicYuv;
+
+    // setup thread-local data
     if (m_param->noiseReduction)
         tld.analysis.m_quant.m_nr = &tld.nr[m_frameEncoderID];
     tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
@@ -660,24 +662,24 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* ctu = m_frame->m_encData->getPicCTU(cuAddr);
+        TComDataCU* ctu = curEncData.getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
 
         if (bIsVbv)
         {
             if (!row)
             {
-                m_frame->m_rowDiagQp[row] = m_frame->m_avgQpRc;
-                m_frame->m_rowDiagQScale[row] = x265_qp2qScale(m_frame->m_avgQpRc);
+                curEncData.m_rowDiagQp[row] = curEncData.m_avgQpRc;
+                curEncData.m_rowDiagQScale[row] = x265_qp2qScale(curEncData.m_avgQpRc);
             }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
-                ctu->m_baseQp = m_frame->m_encData->getPicCTU(cuAddr - numCols + 1)->m_baseQp;
+                ctu->m_baseQp = curEncData.getPicCTU(cuAddr - numCols + 1)->m_baseQp;
             else
-                ctu->m_baseQp = m_frame->m_rowDiagQp[row];
+                ctu->m_baseQp = curEncData.m_rowDiagQp[row];
         }
         else
-            ctu->m_baseQp = m_frame->m_avgQpRc;
+            ctu->m_baseQp = curEncData.m_avgQpRc;
 
         if (m_param->rc.aqMode || bIsVbv)
         {
@@ -686,7 +688,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
             ctu->setQPSubParts(qp, 0, 0);
             if (m_param->rc.aqMode)
-                m_frame->m_qpaAq[row] += qp;
+                curEncData.m_qpaAq[row] += qp;
         }
 
         if (m_param->bEnableWavefront && !col && row)
@@ -737,16 +739,16 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
         }
 
-        m_frame->m_totalBitsPerCTU[cuAddr] = best.totalBits;
+        curEncData.m_totalBitsPerCTU[cuAddr] = best.totalBits;
 
         if (bIsVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
-            m_frame->m_rowDiagSatd[row] += m_frame->m_cuCostsForVbv[cuAddr];
-            m_frame->m_rowDiagIntraSatd[row] += m_frame->m_intraCuCostsForVbv[cuAddr];
-            m_frame->m_rowEncodedBits[row] += best.totalBits;
-            m_frame->m_numEncodedCusPerRow[row] = cuAddr;
-            m_frame->m_qpaRc[row] += ctu->m_baseQp;
+            curEncData.m_rowDiagSatd[row] += curEncData.m_cuCostsForVbv[cuAddr];
+            curEncData.m_rowDiagIntraSatd[row] += curEncData.m_intraCuCostsForVbv[cuAddr];
+            curEncData.m_rowEncodedBits[row] += best.totalBits;
+            curEncData.m_numEncodedCusPerRow[row] = cuAddr;
+            curEncData.m_qpaRc[row] += ctu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
 
@@ -756,8 +758,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 double qpBase = ctu->m_baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
-                m_frame->m_rowDiagQp[row] = qpBase;
-                m_frame->m_rowDiagQScale[row] =  x265_qp2qScale(qpBase);
+                curEncData.m_rowDiagQp[row] = qpBase;
+                curEncData.m_rowDiagQScale[row] =  x265_qp2qScale(qpBase);
 
                 if (reEncode < 0)
                 {
@@ -804,13 +806,13 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                         m_outStreams[r].resetBits();
                         stopRow.completed = 0;
                         memset(&stopRow.rowStats, 0, sizeof(stopRow.rowStats));
-                        if (m_frame->m_qpaAq)
-                            m_frame->m_qpaAq[r] = 0;
-                        m_frame->m_qpaRc[r] = 0;
-                        m_frame->m_rowEncodedBits[r] = 0;
-                        m_frame->m_numEncodedCusPerRow[r] = 0;
-                        m_frame->m_rowDiagSatd[r] = 0;
-                        m_frame->m_rowDiagIntraSatd[r] = 0;
+                        if (curEncData.m_qpaAq)
+                            curEncData.m_qpaAq[r] = 0;
+                        curEncData.m_qpaRc[r] = 0;
+                        curEncData.m_rowEncodedBits[r] = 0;
+                        curEncData.m_numEncodedCusPerRow[r] = 0;
+                        curEncData.m_rowDiagSatd[r] = 0;
+                        curEncData.m_rowDiagIntraSatd[r] = 0;
                     }
 
                     m_bAllRowsStop = false;
@@ -872,10 +874,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         m_rce.rowTotalBits = 0;
         if (bIsVbv)
             for (int i = 0; i < rowCount; i++)
-                m_rce.rowTotalBits += m_frame->m_rowEncodedBits[i];
+                m_rce.rowTotalBits += curEncData.m_rowEncodedBits[i];
         else
             for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
-                m_rce.rowTotalBits += m_frame->m_totalBitsPerCTU[cuAddr];
+                m_rce.rowTotalBits += curEncData.m_totalBitsPerCTU[cuAddr];
 
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }
@@ -1012,12 +1014,13 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
     x265_emms();
     double qp = baseQp;
 
+    FrameData& curEncData = *m_frame->m_encData;
     /* clear cuCostsForVbv from when vbv row reset was triggered */
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (bIsVbv)
     {
-        m_frame->m_cuCostsForVbv[ctuAddr] = 0;
-        m_frame->m_intraCuCostsForVbv[ctuAddr] = 0;
+        curEncData.m_cuCostsForVbv[ctuAddr] = 0;
+        curEncData.m_intraCuCostsForVbv[ctuAddr] = 0;
     }
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
@@ -1029,7 +1032,7 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
     uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_origPicYuv->m_numCuInWidth;
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
-    bool isReferenced = IS_REFERENCED(m_frame->m_encData->m_slice);
+    bool isReferenced = IS_REFERENCED(curEncData.m_slice);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
 
     uint32_t cnt = 0, idx = 0;
@@ -1042,8 +1045,8 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
                 qp_offset += qpoffs[idx];
             if (bIsVbv)
             {
-                m_frame->m_cuCostsForVbv[ctuAddr] += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
-                m_frame->m_intraCuCostsForVbv[ctuAddr] += m_frame->m_lowres.intraCost[idx];
+                curEncData.m_cuCostsForVbv[ctuAddr] += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
+                curEncData.m_intraCuCostsForVbv[ctuAddr] += m_frame->m_lowres.intraCost[idx];
             }
             cnt++;
         }

@@ -58,7 +58,6 @@ public:
     void*             m_userData;           // user provided pointer passed in with this picture
 
     Lowres            m_lowres;
-    double*           m_qpaAq;              // adaptive quant offsets (from lookahead)
     bool              m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
@@ -73,23 +72,6 @@ public:
     bool create(x265_param *param);
     bool allocEncodeData(x265_param *param);
     void destroy();
-
-    /* TODO: all of this should be moved to RateControlEntry or FrameData */
-    double*           m_rowDiagQp;
-    double*           m_rowDiagQScale;
-    uint32_t*         m_totalBitsPerCTU;
-    uint32_t*         m_rowDiagSatd;
-    uint32_t*         m_rowDiagIntraSatd;
-    uint32_t*         m_rowEncodedBits;
-    uint32_t*         m_numEncodedCusPerRow;
-    uint32_t*         m_rowSatdForVbv;
-    uint32_t*         m_cuCostsForVbv;
-    uint32_t*         m_intraCuCostsForVbv;
-    double*           m_qpaRc;
-    double            m_avgQpRc;    // avg QP as decided by rate-control
-    double            m_avgQpAq;    // avg QP as decided by AQ in addition to rate-control
-    double            m_rateFactor; // calculated based on the Frame QP
-    void reinit(x265_param *param);
 };
 }
 
