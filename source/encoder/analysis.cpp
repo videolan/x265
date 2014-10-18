@@ -538,19 +538,19 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
             /* RD selection between merge, inter and intra */
             checkBestMode(*bestInter, depth);
-            checkBestMode(md.pred[PRED_INTRA], depth);
+
+            if (m_slice->m_sliceType == P_SLICE)
+                checkBestMode(md.pred[PRED_INTRA], depth);
         }
-        else
+        else /* m_param->rdLevel == 2 */
         {
             if (bestInter->sa8dCost < md.bestMode->sa8dCost)
                 md.bestMode = bestInter;
 
-            if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
-                md.bestMode = &md.pred[PRED_INTRA];
-
-            if (md.bestMode->cu.m_bMergeFlags[0])
+            if (m_slice->m_sliceType == P_SLICE && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
             {
-                /* checkMerge2Nx2N_rd0_4() already did a full encode */
+                md.bestMode = &md.pred[PRED_INTRA];
+                encodeIntraInInter(*md.bestMode, cuData);
             }
             else if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
             {
@@ -562,8 +562,6 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
                 }
                 encodeResAndCalcRdInterCU(*md.bestMode, cuData);
             }
-            else
-                encodeIntraInInter(*md.bestMode, cuData);
         }
 
         checkDQP(md.bestMode->cu, cuData);
