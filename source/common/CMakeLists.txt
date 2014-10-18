@@ -11,7 +11,6 @@ set(LIBCOMMON_HDR
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComRom.h)
 
-source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
 if(GCC)
     set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
         "-Wno-sign-compare")
