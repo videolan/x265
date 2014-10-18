@@ -146,9 +146,6 @@ public:
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
 };
 
-void restoreLFDisabledOrigYuv(Frame* pic);
-void origCUSampleRestoration(const TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth);
-
 }
 
 #endif // ifndef X265_SAO_H

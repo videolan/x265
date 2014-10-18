@@ -413,10 +413,59 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
     return ssim;
 }
 
+/* restore original YUV samples to recon after SAO (if lossless) */
+static void restoreOrigLosslessYuv(const TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+{
+    uint32_t size = g_maxCUSize >> depth;
+    int part = partitionFromSizes(size, size);
+
+    PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
+    PicYuv* fencPic = cu->m_frame->m_origPicYuv;
+
+    pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
+    pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
+
+    primitives.luma_copy_pp[part](dst, reconPic->m_stride, src, fencPic->m_stride);
+   
+    pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absPartIdx);
+    pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absPartIdx);
+
+    pixel* dstCr = reconPic->getCrAddr(cu->m_cuAddr, absPartIdx);
+    pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absPartIdx);
+
+    int csp = fencPic->m_picCsp;
+    primitives.chroma[csp].copy_pp[part](dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
+    primitives.chroma[csp].copy_pp[part](dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
+}
+
+/* Original YUV restoration for CU in lossless coding */
+static void origCUSampleRestoration(const TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+{
+    if (cu->m_depth[absPartIdx] > depth)
+    {
+        /* TODO: this could use cuData.numPartition and flags */
+        uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
+        uint32_t qNumParts   = curNumParts >> 2;
+        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
+        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->m_cuPelY;
+
+        /* process four split sub-cu at next depth */
+        for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
+        {
+            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
+                origCUSampleRestoration(cu, absPartIdx, depth + 1);
+        }
+
+        return;
+    }
+
+    // restore original YUV samples
+    if (cu->isLosslessCoded(absPartIdx))
+        restoreOrigLosslessYuv(cu, absPartIdx, depth);
+}
+
 void FrameFilter::processSao(int row)
 {
-    const uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
-    const uint32_t lineStartCUAddr = row * numCols;
     SAOParam* saoParam = m_frame->m_encData->m_saoParam;
 
     if (saoParam->bSaoFlag[0])
@@ -430,6 +479,9 @@ void FrameFilter::processSao(int row)
 
     if (m_frame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
+        uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
+        uint32_t lineStartCUAddr = row * numCols;
+
         for (uint32_t col = 0; col < numCols; col++)
             origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), 0, 0);
     }
