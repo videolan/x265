@@ -1,7 +1,7 @@
 # vim: syntax=cmake
 
 if(GCC)
-   add_definitions(-Wno-maybe-uninitialized)
+   add_definitions(-Wno-uninitialized)
 endif()
 
 add_library(encoder OBJECT ../x265.h
