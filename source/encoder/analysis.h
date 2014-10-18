@@ -72,7 +72,7 @@ public:
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
 
     Analysis();
-    bool create(uint32_t totalDepth, uint32_t maxWidth, ThreadLocalData* tld);
+    bool create(ThreadLocalData* tld);
     void destroy();
     Search::Mode& compressCTU(TComDataCU& ctu, Frame& frame, const Entropy& initialContext);
 

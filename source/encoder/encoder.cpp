@@ -171,7 +171,7 @@ void Encoder::create()
     {
         m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
         m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
-        m_threadLocalData[i].analysis.create(g_maxCUDepth + 1, g_maxCUSize, m_threadLocalData);
+        m_threadLocalData[i].analysis.create(m_threadLocalData);
         if (m_param->noiseReduction)
         {
             m_threadLocalData[i].nr = X265_MALLOC(NoiseReduction, m_param->frameNumThreads);

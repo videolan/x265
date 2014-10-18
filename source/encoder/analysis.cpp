@@ -71,23 +71,22 @@ Analysis::Analysis()
     m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
 }
 
-bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *tld)
+bool Analysis::create(ThreadLocalData *tld)
 {
-    X265_CHECK(numCUDepth <= NUM_CU_DEPTH, "invalid numCUDepth\n");
-
     m_tld = tld;
 
     int csp = m_param->internalCsp;
+    int chromaShift = CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp);
+    uint32_t numPartitions = NUM_CU_PARTITIONS;
+    uint32_t cuSize = g_maxCUSize;
+
     bool ok = true;
-    for (uint32_t i = 0; i < numCUDepth; i++)
+    for (uint32_t i = 0; i <= g_maxCUDepth; i++, cuSize >>= 1, numPartitions >>= 2)
     {
         ModeDepth &md = m_modeDepth[i];
 
-        uint32_t numPartitions = 1 << (g_maxFullDepth - i) * 2;
-        uint32_t cuSize = maxWidth >> i;
-
         uint32_t sizeL = cuSize * cuSize;
-        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
+        uint32_t sizeC = sizeL >> chromaShift;
 
         md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES);
         md.mvFieldMemPool.create(numPartitions, MAX_PRED_TYPES);
@@ -108,8 +107,7 @@ bool Analysis::create(uint32_t numCUDepth, uint32_t maxWidth, ThreadLocalData *t
 
 void Analysis::destroy()
 {
-    uint32_t numCUDepth = g_maxCUDepth + 1;
-    for (uint32_t i = 0; i < numCUDepth; i++)
+    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
     {
         m_modeDepth[i].cuMemPool.destroy();
         m_modeDepth[i].mvFieldMemPool.destroy();
