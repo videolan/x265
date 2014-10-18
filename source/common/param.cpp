@@ -176,7 +176,7 @@ void x265_param_default(x265_param *param)
     param->rdPenalty = 0;
     param->psyRd = 0.0;
     param->psyRdoq = 0.0;
-    param->bIntraInBFrames = 1;
+    param->bIntraInBFrames = 0;
     param->bLossless = 0;
     param->bCULossless = 0;
 
@@ -333,6 +333,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
+            param->bIntraInBFrames = 1;
         }
         else if (!strcmp(preset, "veryslow"))
         {
@@ -348,6 +349,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
+            param->bIntraInBFrames = 1;
         }
         else if (!strcmp(preset, "placebo"))
         {
@@ -366,6 +368,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableTransformSkip = 1;
             param->maxNumReferences = 5;
             param->rc.bEnableSlowFirstPass = 1;
+            param->bIntraInBFrames = 1;
             // TODO: optimized esa
         }
         else
@@ -1149,25 +1152,25 @@ void x265_print_params(x265_param *param)
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
-    TOOLOPT(param->bEnableCbfFastMode, "cfm");
-    TOOLOPT(param->bEnableConstrainedIntra, "cip");
-    TOOLOPT(param->bEnableEarlySkip, "esd");
     fprintf(stderr, "rd=%d ", param->rdLevel);
     if (param->psyRd > 0.)
         fprintf(stderr, "psy-rd=%.2lf ", param->psyRd);
     if (param->psyRdoq > 0.)
         fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
+    TOOLOPT(param->bEnableEarlySkip, "esd");
+    TOOLOPT(param->bEnableCbfFastMode, "cfm");
     if (param->noiseReduction)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
-
     TOOLOPT(param->bEnableLoopFilter, "lft");
     if (param->bEnableSAO)
         fprintf(stderr, "sao%s ", param->bSaoNonDeblocked ? "-non-deblock" : "");
     TOOLOPT(param->bEnableSignHiding, "signhide");
-    TOOLOPT(param->bCULossless, "cu-lossless");
+    TOOLOPT(param->bEnableConstrainedIntra, "cip");
+    TOOLOPT(param->bIntraInBFrames, "b-intra");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     if (param->bEnableTransformSkip)
         fprintf(stderr, "tskip%s ", param->bEnableTSkipFast ? "-fast" : "");
+    TOOLOPT(param->bCULossless, "cu-lossless");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
     fprintf(stderr, "\n");

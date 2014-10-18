@@ -456,6 +456,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
     if (mightNotSplit && depth >= minDepth)
     {
         int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && cuData.log2CUSize < 6;
+        int bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
 
         /* Initialize all prediction CUs based on parentCTU */
         md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData);
@@ -473,11 +474,11 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuData);
             md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuData);
         }
-        if (m_slice->m_sliceType == P_SLICE)
+        if (bTryIntra)
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
 
         m_totalNumJobs = 2 + m_param->bEnableRectInter * 2 + bTryAmp * 4;
-        m_numAcquiredJobs = m_slice->m_sliceType != P_SLICE; /* skip intra for B slices */
+        m_numAcquiredJobs = !bTryIntra;
         m_numCompletedJobs = m_numAcquiredJobs;
         m_curCUData = &cuData;
         m_bJobsQueued = true;
@@ -539,7 +540,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             /* RD selection between merge, inter and intra */
             checkBestMode(*bestInter, depth);
 
-            if (m_slice->m_sliceType == P_SLICE)
+            if (bTryIntra)
                 checkBestMode(md.pred[PRED_INTRA], depth);
         }
         else /* m_param->rdLevel == 2 */
@@ -547,7 +548,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             if (bestInter->sa8dCost < md.bestMode->sa8dCost)
                 md.bestMode = bestInter;
 
-            if (m_slice->m_sliceType == P_SLICE && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
+            if (bTryIntra && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
             {
                 md.bestMode = &md.pred[PRED_INTRA];
                 encodeIntraInInter(*md.bestMode, cuData);
@@ -650,6 +651,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
     if (mightNotSplit && depth >= minDepth)
     {
+        bool bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
+
         /* Initialize all prediction CUs based on parentCTU */
         md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuData);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuData);
@@ -666,9 +669,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuData);
             md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuData);
         }
-
-        if (m_slice->m_sliceType == P_SLICE)
-            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
 
         /* Compute Merge Cost */
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
@@ -749,8 +749,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (bestInter->rdCost < md.bestMode->rdCost)
                     md.bestMode = bestInter;
 
-                if (m_slice->m_sliceType == P_SLICE && md.bestMode->cu.getQtRootCbf(0))
+                if (bTryIntra && md.bestMode->cu.getQtRootCbf(0))
                 {
+                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
                     checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                     encodeIntraInInter(md.pred[PRED_INTRA], cuData);
                     if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
@@ -763,8 +764,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 if (bestInter->sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = bestInter;
 
-                if (m_slice->m_sliceType == P_SLICE)
+                if (bTryIntra)
                 {
+                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
                     checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                     if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = &md.pred[PRED_INTRA];

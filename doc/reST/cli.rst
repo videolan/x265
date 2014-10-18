@@ -528,9 +528,7 @@ Spatial/intra options
 
 .. option:: --b-intra, --no-b-intra
 
-	Enables the use of intra modes in very slow presets (:option:`--rd`
-	5 or 6). Presets slow to ultrafast do not try intra in B frames
-	regardless of this setting. Default enabled.
+	Enables the evaluation of intra modes in B slices. Default disabled.
 
 .. option:: --tskip, --no-tskip
 
