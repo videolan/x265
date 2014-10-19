@@ -629,10 +629,11 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
     if (!depth || md.bestMode->cu.m_predModes[0] != MODE_INTRA)
     {
         /* early-out statistics */
-        TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
-        uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
-        ctu.m_count[depth] += 1;
-        ctu.m_avgCost[depth] = (temp + md.bestMode->rdCost) / ctu.m_count[depth];
+        FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+        FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
+        uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
+        cuStat.count[depth] += 1;
+        cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
 
     /* Copy Best data to Picture for next partition prediction */
@@ -877,11 +878,11 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     if (!depth || md.bestMode->cu.m_predModes[0] != MODE_INTRA)
     {
         /* early-out statistics */
-        TComDataCU& ctu = const_cast<TComDataCU&>(parentCTU);
-        uint64_t cost = m_param->rdLevel > 1 ? md.bestMode->rdCost : md.bestMode->sa8dCost;
-        uint64_t temp = ctu.m_avgCost[depth] * ctu.m_count[depth];
-        ctu.m_count[depth] += 1;
-        ctu.m_avgCost[depth] = (temp + cost) / ctu.m_count[depth];
+        FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+        FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
+        uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
+        cuStat.count[depth] += 1;
+        cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
 
     /* Copy Best data to Picture for next partition prediction */
@@ -1720,34 +1721,42 @@ bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CU& cuData
      * left, colocated) and avg cost of that CU at depth "n" with weightage for
      * each quantity */
 
-    const TComDataCU* above = parentCTU.m_cuAbove;
-    const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
-    const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
-    const TComDataCU* left = parentCTU.m_cuLeft;
-    uint64_t neighCost = 0, cuCost = 0, neighCount = 0, cuCount = 0;
     uint32_t depth = cuData.depth;
+    FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+    FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
+    uint64_t cuCost = cuStat.avgCost[depth] * cuStat.count[depth];
+    uint64_t cuCount = cuStat.count[depth];
 
-    cuCost += parentCTU.m_avgCost[depth] * parentCTU.m_count[depth];
-    cuCount += parentCTU.m_count[depth];
+    uint64_t neighCost = 0, neighCount = 0;
+    const TComDataCU* above = parentCTU.m_cuAbove;
     if (above)
     {
-        neighCost += above->m_avgCost[depth] * above->m_count[depth];
-        neighCount += above->m_count[depth];
+        FrameData::RCStatCU& astat = curEncData.m_cuStat[above->m_cuAddr];
+        neighCost += astat.avgCost[depth] * astat.count[depth];
+        neighCount += astat.count[depth];
+
+        const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
+        if (aboveLeft)
+        {
+            FrameData::RCStatCU& lstat = curEncData.m_cuStat[aboveLeft->m_cuAddr];
+            neighCost += lstat.avgCost[depth] * lstat.count[depth];
+            neighCount += lstat.count[depth];
+        }
+
+        const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
+        if (aboveRight)
+        {
+            FrameData::RCStatCU& rstat = curEncData.m_cuStat[aboveRight->m_cuAddr];
+            neighCost += rstat.avgCost[depth] * rstat.count[depth];
+            neighCount += rstat.count[depth];
+        }
     }
-    if (aboveLeft)
-    {
-        neighCost += aboveLeft->m_avgCost[depth] * aboveLeft->m_count[depth];
-        neighCount += aboveLeft->m_count[depth];
-    }
-    if (aboveRight)
-    {
-        neighCost += aboveRight->m_avgCost[depth] * aboveRight->m_count[depth];
-        neighCount += aboveRight->m_count[depth];
-    }
+    const TComDataCU* left = parentCTU.m_cuLeft;
     if (left)
     {
-        neighCost += left->m_avgCost[depth] * left->m_count[depth];
-        neighCount += left->m_count[depth];
+        FrameData::RCStatCU& nstat = curEncData.m_cuStat[left->m_cuAddr];
+        neighCost += nstat.avgCost[depth] * nstat.count[depth];
+        neighCount += nstat.count[depth];
     }
 
     // give 60% weight to all CU's and 40% weight to neighbour CU's

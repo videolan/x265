@@ -65,6 +65,9 @@ public:
         uint32_t totalBits;     /* total bits to encode this CTU */
         uint32_t vbvCost;       /* sum of lowres costs for 16x16 sub-blocks */
         uint32_t intraVbvCost;  /* sum of lowres intra costs for 16x16 sub-blocks */
+        uint64_t avgCost[4];    /* stores the avg cost of CU's in frame for each depth */
+        uint32_t count[4];      /* count and avgCost only used by Analysis at RD0..4 */
+        double   baseQp;        /* Qp of Cu set from RateControl/Vbv (only used by frame encoder) */
     };
 
     struct RCStatRow

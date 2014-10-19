@@ -163,10 +163,6 @@ public:
 
     coeff_t*      m_trCoeff[3];         ///< transformed coefficient buffer
 
-    uint64_t      m_avgCost[4];        // stores the avg cost of CU's in frame for each depth
-    uint32_t      m_count[4];          // count and avgCost only used by Analysis at RD0..4
-    double        m_baseQp;            // Qp of Cu set from RateControl/Vbv (only used by frame encoder)
-
     const TComDataCU* m_cuAboveLeft;    ///< pointer of above-left neighbor CTU
     const TComDataCU* m_cuAboveRight;   ///< pointer of above-right neighbor CTU
     const TComDataCU* m_cuAbove;        ///< pointer of above neighbor CTU

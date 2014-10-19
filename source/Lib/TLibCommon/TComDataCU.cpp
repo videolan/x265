@@ -105,15 +105,11 @@ void TComDataCU::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 {
     m_frame         = &frame;
     m_slice         = frame.m_encData->m_slice;
-    m_baseQp        = frame.m_encData->getPicCTU(m_cuAddr)->m_baseQp;
     m_cuAddr        = cuAddr;
     m_cuPelX        = (cuAddr % frame.m_origPicYuv->m_numCuInWidth) << g_maxLog2CUSize;
     m_cuPelY        = (cuAddr / frame.m_origPicYuv->m_numCuInWidth) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_CU_PARTITIONS;
-
-    for (int i = 0; i < 4; i++)
-        m_avgCost[i] = m_count[i] = 0;
 
     /* sequential memsets */
     memset(m_qp, qp, m_numPartitions);

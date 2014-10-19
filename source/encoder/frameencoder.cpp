@@ -674,16 +674,16 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             }
 
             if (row >= col && row && m_vbvResetTriggerRow != row)
-                ctu->m_baseQp = curEncData.getPicCTU(cuAddr - numCols + 1)->m_baseQp;
+                curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
             else
-                ctu->m_baseQp = curEncData.m_rowStat[row].diagQp;
+                curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_rowStat[row].diagQp;
         }
         else
-            ctu->m_baseQp = curEncData.m_avgQpRc;
+            curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_avgQpRc;
 
         if (m_param->rc.aqMode || bIsVbv)
         {
-            int qp = calcQpForCu(cuAddr, ctu->m_baseQp);
+            int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
             tld.analysis.setQP(*slice, qp);
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
             ctu->setQPSubParts(qp, 0, 0);
@@ -746,15 +746,15 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             curEncData.m_rowStat[row].diagSatd      += curEncData.m_cuStat[cuAddr].vbvCost;
             curEncData.m_rowStat[row].diagIntraSatd += curEncData.m_cuStat[cuAddr].intraVbvCost;
             curEncData.m_rowStat[row].encodedBits   += curEncData.m_cuStat[cuAddr].totalBits;
+            curEncData.m_rowStat[row].sumQpRc       += curEncData.m_cuStat[cuAddr].baseQp;
             curEncData.m_rowStat[row].numEncodedCUs = cuAddr;
-            curEncData.m_rowStat[row].sumQpRc       += ctu->m_baseQp;
 
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
 
             if (row == col && row)
             {
                 x265_emms();
-                double qpBase = ctu->m_baseQp;
+                double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
                 curEncData.m_rowStat[row].diagQp = qpBase;
@@ -763,7 +763,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 if (reEncode < 0)
                 {
                     x265_log(m_param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
-                             m_frame->m_poc, row, qpBase, ctu->m_baseQp);
+                             m_frame->m_poc, row, qpBase, curEncData.m_cuStat[cuAddr].baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
                     m_vbvResetTriggerRow = row;
