@@ -499,10 +499,6 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
          * blocking on another thread. */
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
 
-        md.bestMode = &md.pred[PRED_SKIP];
-        if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
-            md.bestMode = &md.pred[PRED_MERGE];
-
         m_modeCompletionEvent.wait();
 
         /* select best inter mode based on sa8d cost */
@@ -545,7 +541,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
         }
         else /* m_param->rdLevel == 2 */
         {
-            if (bestInter->sa8dCost < md.bestMode->sa8dCost)
+            if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
                 md.bestMode = bestInter;
 
             if (bTryIntra && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
@@ -673,19 +669,11 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         /* Compute Merge Cost */
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuData);
 
-        bool earlyskip = false;
-        md.bestMode = &md.pred[PRED_SKIP];
-        if (m_param->rdLevel >= 1)
-        {
-            if (md.pred[PRED_MERGE].rdCost < md.bestMode->rdCost)
-                md.bestMode = &md.pred[PRED_MERGE];
-            earlyskip = m_param->bEnableEarlySkip && md.bestMode->cu.isSkipped(0);
-        }
+        bool earlyskip;
+        if (m_param->rdLevel)
+            earlyskip = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0);
         else
-        {
-            if (md.pred[PRED_MERGE].sa8dCost < md.bestMode->sa8dCost)
-                md.bestMode = &md.pred[PRED_MERGE];
-        }
+            earlyskip = m_param->bEnableEarlySkip && md.bestMode && false; /* TODO: sa8d threshold per depth */
 
         if (!earlyskip)
         {
@@ -709,7 +697,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                     bHor = true;
                 else if (bestInter->cu.m_partSizes[0] == SIZE_Nx2N)
                     bVer = true;
-                else if (bestInter->cu.m_partSizes[0] == SIZE_2Nx2N && md.bestMode->cu.getQtRootCbf(0))
+                else if (bestInter->cu.m_partSizes[0] == SIZE_2Nx2N &&
+                         md.bestMode && md.bestMode->cu.getQtRootCbf(0))
                 {
                     bHor = true;
                     bVer = true;
@@ -735,7 +724,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
                 }
             }
 
-            if (m_param->rdLevel > 2)
+            if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
                 for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
@@ -746,10 +735,11 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
                 encodeResAndCalcRdInterCU(*bestInter, cuData);
 
-                if (bestInter->rdCost < md.bestMode->rdCost)
+                if (!md.bestMode || bestInter->rdCost < md.bestMode->rdCost)
                     md.bestMode = bestInter;
 
-                if (bTryIntra && md.bestMode->cu.getQtRootCbf(0))
+                if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
+                    md.bestMode->sa8dCost == MAX_INT64)
                 {
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
                     checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
@@ -761,63 +751,50 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             else
             {
                 /* SA8D choice between merge/skip, inter, and intra */
-                if (bestInter->sa8dCost < md.bestMode->sa8dCost)
+                if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = bestInter;
 
-                if (bTryIntra)
+                if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
                 {
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
                     checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
                     if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = &md.pred[PRED_INTRA];
                 }
+
+                /* finally code the best mode selected by SA8D costs:
+                 * RD level 2 - fully encode the best mode
+                 * RD level 1 - generate recon pixels
+                 * RD level 0 - generate chroma prediction */
+                if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
+                {
+                    for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                    {
+                        prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
+                        motionCompensation(&md.bestMode->predYuv, false, true);
+                    }
+                    if (m_param->rdLevel == 2)
+                        encodeResAndCalcRdInterCU(*md.bestMode, cuData);
+                }
+                else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
+                {
+                    if (m_param->rdLevel == 2)
+                        encodeIntraInInter(*md.bestMode, cuData);
+                }
+
+                if (m_param->rdLevel == 1)
+                {
+                    md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuData.log2CUSize);
+                    generateCoeffRecon(*md.bestMode, cuData);
+                }
             }
         } // !earlyskip
 
-        /* low RD levels might require follow-up work on best mode */
-
-        if (md.bestMode->cu.m_bMergeFlags[0] && m_param->rdLevel >= 1)
-        {
-            /* checkMerge2Nx2N_rd0_4() already did a full encode */
-        }
-        else if (m_param->rdLevel == 2)
-        {
-            if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
-            {
-                /* finally code the best mode selected from SA8D costs */
-                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
-                {
-                    prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
-                    motionCompensation(&md.bestMode->predYuv, false, true);
-                }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuData);
-            }
-            else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
-                encodeIntraInInter(*md.bestMode, cuData);
-        }
-        else if (m_param->rdLevel < 2)
-        {
-            /* Generate recon YUV for this CU. Note: does not update any CABAC context! */
-            if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
-            {
-                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
-                {
-                    prepMotionCompensation(&md.bestMode->cu, cuData, puIdx);
-                    motionCompensation(&md.bestMode->predYuv, false, true);
-                }
-
-                md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuData.log2CUSize);
-            }
-
-            if (m_param->rdLevel)
-                generateCoeffRecon(*md.bestMode, cuData);
-        }
-
         if (m_param->rdLevel) // checkDQP can be done only after residual encoding is done
+        {
             checkDQP(md.bestMode->cu, cuData);
-
-        if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
+        }
     }
 
     bool bNoSplit = false;
@@ -1032,6 +1009,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
     md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
 
+/* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
 void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
 {
     uint32_t depth = cuData.depth;
@@ -1090,18 +1068,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
         }
     }
 
-    /* force mode decision to pick bestPred */
-    tempPred->sa8dCost = MAX_INT64;
-    tempPred->rdCost = MAX_INT64;
+    /* force mode decision to take inter or intra */
     if (bestSadCand < 0)
-    {
-        /* force mode decision to take inter or intra */
-        bestPred->sa8dCost = MAX_INT64;
-        bestPred->rdCost = MAX_INT64;
         return;
-    }
 
-    if (m_param->rdLevel >= 1)
+    if (m_param->rdLevel)
     {
         // calculate the motion compensation for chroma for the best mode selected
         prepMotionCompensation(&bestPred->cu, cuData, 0);
@@ -1121,9 +1092,14 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
         tempPred->predYuv.copyFromYuv(bestPred->predYuv);
 
         encodeResAndCalcRdInterCU(*tempPred, cuData);
+
+        md.bestMode = tempPred->rdCost < bestPred->rdCost ? tempPred : bestPred;
     }
+    else
+        md.bestMode = bestPred;
 }
 
+/* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
 void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 {
     uint32_t depth = cuData.depth;
