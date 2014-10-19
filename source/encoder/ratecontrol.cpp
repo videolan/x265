@@ -2160,7 +2160,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
                 curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
-            curEncData.m_avgQpRc /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
+            curEncData.m_avgQpRc /= curEncData.m_numCUsInFrame;
             rce->qpaRc = curEncData.m_avgQpRc;
 
             // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
@@ -2172,7 +2172,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
                 curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            curEncData.m_avgQpAq /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
+            curEncData.m_avgQpAq /= curEncData.m_numCUsInFrame;
         }
     }
 
