@@ -561,6 +561,14 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             }
         }
 
+        if (md.bestMode->rdCost == MAX_INT64 && !bTryIntra)
+        {
+            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
+            checkIntraInInter_rd0_4(md.pred[PRED_INTRA], cuData);
+            encodeIntraInInter(md.pred[PRED_INTRA], cuData);
+            checkBestMode(md.pred[PRED_INTRA], depth);
+        }
+
         checkDQP(md.bestMode->cu, cuData);
 
         if (mightSplit)
