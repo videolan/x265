@@ -283,7 +283,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
                     curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
                     sum += lowresCuCost;
                 }
-                curFrame->m_encData->m_rowSatdForVbv[row] += sum;
+                curFrame->m_encData->m_rowStat[row].satdForVbv += sum;
             }
         }
     }

@@ -1859,34 +1859,34 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     FrameData& curEncData = *curFrame->m_encData;
     int picType = curEncData.m_slice->m_sliceType;
     Frame* refFrame = curEncData.m_slice->m_refPicList[0][0];
-    FrameData& refEncData = *refFrame->m_encData;
 
     uint32_t maxRows = curFrame->m_origPicYuv->m_numCuInHeight;
 
     for (uint32_t row = 0; row < maxRows; row++)
     {
-        encodedBitsSoFar += curEncData.m_rowEncodedBits[row];
-        rowSatdCostSoFar = curEncData.m_rowDiagSatd[row];
-        uint32_t satdCostForPendingCus = curEncData.m_rowSatdForVbv[row] - rowSatdCostSoFar;
+        encodedBitsSoFar += curEncData.m_rowStat[row].encodedBits;
+        rowSatdCostSoFar = curEncData.m_rowStat[row].diagSatd;
+        uint32_t satdCostForPendingCus = curEncData.m_rowStat[row].satdForVbv - rowSatdCostSoFar;
         satdCostForPendingCus >>= X265_DEPTH - 8;
         if (satdCostForPendingCus  > 0)
         {
             double pred_s = predictSize(rce->rowPred[0], qScale, satdCostForPendingCus);
             uint32_t refRowSatdCost = 0, refRowBits = 0, intraCost = 0;
             double refQScale = 0;
+            FrameData& refEncData = *refFrame->m_encData;
 
             if (picType != I_SLICE)
             {
                 uint32_t endCuAddr = curFrame->m_origPicYuv->m_numCuInWidth * (row + 1);
-                for (uint32_t cuAddr = curEncData.m_numEncodedCusPerRow[row] + 1; cuAddr < endCuAddr; cuAddr++)
+                for (uint32_t cuAddr = curEncData.m_rowStat[row].numEncodedCUs + 1; cuAddr < endCuAddr; cuAddr++)
                 {
-                    refRowSatdCost += refEncData.m_cuCostsForVbv[cuAddr];
-                    refRowBits += refEncData.m_totalBitsPerCTU[cuAddr];
-                    intraCost += curEncData.m_intraCuCostsForVbv[cuAddr];
+                    refRowSatdCost += refEncData.m_cuStat[cuAddr].vbvCost;
+                    refRowBits += refEncData.m_cuStat[cuAddr].totalBits;
+                    intraCost += curEncData.m_cuStat[cuAddr].intraVbvCost;
                 }
 
                 refRowSatdCost >>= X265_DEPTH - 8;
-                refQScale = refEncData.m_rowDiagQScale[row];
+                refQScale = refEncData.m_rowStat[row].diagQpScale;
             }
 
             if (picType == I_SLICE || qScale >= refQScale)
@@ -1922,24 +1922,24 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
 {
     FrameData& curEncData = *curFrame->m_encData;
     double qScaleVbv = x265_qp2qScale(qpVbv);
-    uint64_t rowSatdCost = curEncData.m_rowDiagSatd[row];
-    double encodedBits = curEncData.m_rowEncodedBits[row];
+    uint64_t rowSatdCost = curEncData.m_rowStat[row].diagSatd;
+    double encodedBits = curEncData.m_rowStat[row].encodedBits;
 
     if (row == 1)
     {
-        rowSatdCost += curEncData.m_rowDiagSatd[0];
-        encodedBits += curEncData.m_rowEncodedBits[0];
+        rowSatdCost += curEncData.m_rowStat[0].diagSatd;
+        encodedBits += curEncData.m_rowStat[0].encodedBits;
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
     if (curEncData.m_slice->m_sliceType == P_SLICE)
     {
         Frame* refFrame = curEncData.m_slice->m_refPicList[0][0];
-        if (qpVbv < refFrame->m_encData->m_rowDiagQp[row])
+        if (qpVbv < refFrame->m_encData->m_rowStat[row].diagQp)
         {
-            uint64_t intraRowSatdCost = curEncData.m_rowDiagIntraSatd[row];
+            uint64_t intraRowSatdCost = curEncData.m_rowStat[row].diagIntraSatd;
             if (row == 1)
-                intraRowSatdCost += curEncData.m_rowDiagIntraSatd[0];
+                intraRowSatdCost += curEncData.m_rowStat[0].diagIntraSatd;
 
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
@@ -1970,7 +1970,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         {
             Frame* refSlice1 = curEncData.m_slice->m_refPicList[0][0];
             Frame* refSlice2 = curEncData.m_slice->m_refPicList[1][0];
-            qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_encData->m_rowDiagQp[row], refSlice2->m_encData->m_rowDiagQp[row]));
+            qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_encData->m_rowStat[row].diagQp, refSlice2->m_encData->m_rowStat[row].diagQp));
             qpVbv = X265_MAX(qpVbv, qpMin);
         }
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
@@ -2000,7 +2000,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         }
 
         while (qpVbv > qpMin
-               && (qpVbv > curEncData.m_rowDiagQp[0] || m_singleFrameVbv)
+               && (qpVbv > curEncData.m_rowStat[0].diagQp || m_singleFrameVbv)
                && ((accFrameBits < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
                    || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1))
         {
@@ -2155,21 +2155,22 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
     if (m_param->rc.aqMode || m_isVbv)
     {
-        if (curEncData.m_qpaRc)
+        if (m_isVbv)
         {
             for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
-                curEncData.m_avgQpRc += curEncData.m_qpaRc[i];
+                curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
             curEncData.m_avgQpRc /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
             rce->qpaRc = curEncData.m_avgQpRc;
+
             // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
             curEncData.m_avgQpAq = curEncData.m_avgQpRc;
         }
 
-        if (curEncData.m_qpaAq)
+        if (m_param->rc.aqMode)
         {
             for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
-                curEncData.m_avgQpAq += curEncData.m_qpaAq[i];
+                curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
             curEncData.m_avgQpAq /= (curFrame->m_origPicYuv->m_numCuInHeight * curFrame->m_origPicYuv->m_numCuInHeight);
         }

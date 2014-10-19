@@ -60,18 +60,29 @@ public:
     uint32_t       m_numCUsInFrame;    /* based on param, should perhaps be in Frame */
 
     /* Rate control data used during encode and by references */
-    uint32_t*      m_totalBitsPerCTU;
-    uint32_t*      m_cuCostsForVbv;
-    uint32_t*      m_intraCuCostsForVbv;
-    uint32_t*      m_numEncodedCusPerRow;
-    uint32_t*      m_rowDiagSatd;
-    uint32_t*      m_rowDiagIntraSatd;
-    uint32_t*      m_rowEncodedBits;
-    uint32_t*      m_rowSatdForVbv;
-    double*        m_rowDiagQp;
-    double*        m_rowDiagQScale;
-    double*        m_qpaRc;
-    double*        m_qpaAq;
+    struct RCStatCU
+    {
+        uint32_t totalBits;     /* total bits to encode this CTU */
+        uint32_t vbvCost;       /* sum of lowres costs for 16x16 sub-blocks */
+        uint32_t intraVbvCost;  /* sum of lowres intra costs for 16x16 sub-blocks */
+    };
+
+    struct RCStatRow
+    {
+        uint32_t numEncodedCUs; /* ctuAddr of last encoded CTU in row */
+        uint32_t encodedBits;   /* sum of 'totalBits' of encoded CTUs */
+        uint32_t satdForVbv;    /* sum of lowres (estimated) costs for entire row */
+        uint32_t diagSatd;
+        uint32_t diagIntraSatd;
+        double   diagQp;
+        double   diagQpScale;
+        double   sumQpRc;
+        double   sumQpAq;
+    };
+
+    RCStatCU*      m_cuStat;
+    RCStatRow*     m_rowStat;
+
     double         m_avgQpRc;    /* avg QP as decided by rate-control */
     double         m_avgQpAq;    /* avg QP as decided by AQ in addition to rate-control */
     double         m_rateFactor; /* calculated based on the Frame QP */
