@@ -689,7 +689,7 @@ bool RateControl::init(const SPS *sps)
             X265_FREE(statFileTmpname);
             if (!m_statFileOut)
             {
-                x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n, statFileTmpname");
+                x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", statFileTmpname);
                 return false;
             }
             p = x265_param2string(m_param);
