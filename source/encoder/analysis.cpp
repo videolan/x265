@@ -207,14 +207,18 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
 
     if (shared)
     {
-        if (mightNotSplit && depth == shared->depth[zOrder] && zOrder == cuData.encodeIdx)
+        uint8_t* sharedDepth = &shared->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        char* sharedPartSizes = &shared->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* sharedModes = &shared->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+
+        if (mightNotSplit && depth == sharedDepth[zOrder] && zOrder == cuData.encodeIdx)
         {
             m_quant.setQPforQuant(parentCTU);
 
-            PartSize size = (PartSize)shared->partSizes[zOrder];
+            PartSize size = (PartSize)sharedPartSizes[zOrder];
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuData);
-            checkIntra(mode, cuData, size, shared->modes);
+            checkIntra(mode, cuData, size, sharedModes);
 
             if (m_bTryLossless)
                 tryLossless(cuData);
@@ -223,7 +227,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
                 addSplitFlagCost(*md.bestMode, cuData.depth);
 
             // increment zOrder offset to point to next best depth in sharedDepth buffer
-            zOrder += g_depthInc[g_maxCUDepth - 1][depth];
+            zOrder += g_depthInc[g_maxCUDepth - 1][sharedDepth[zOrder]];
             mightSplit = false;
         }
     }
