@@ -182,21 +182,24 @@ void Analysis::tryLossless(const CU& cuData)
 {
     ModeDepth& md = m_modeDepth[cuData.depth];
 
-    md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuData);
-
-    if (md.pred[PRED_LOSSLESS].cu.m_predModes[0] == MODE_INTRA)
+    if (md.bestMode->distortion == 0)
+        /* already lossless */
+        return;
+    else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
     {
+        md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuData);
         PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSizes[0];
         uint8_t* modes = md.pred[PRED_LOSSLESS].cu.m_lumaIntraDir;
         checkIntra(md.pred[PRED_LOSSLESS], cuData, size, modes);
+        checkBestMode(md.pred[PRED_LOSSLESS], cuData.depth);
     }
     else
     {
+        md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuData);
         md.pred[PRED_LOSSLESS].predYuv.copyFromYuv(md.bestMode->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_LOSSLESS], cuData);
+        checkBestMode(md.pred[PRED_LOSSLESS], cuData.depth);
     }
-
-    checkBestMode(md.pred[PRED_LOSSLESS], cuData.depth);
 }
 
 void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x265_intra_data* shared, uint32_t& zOrder)
