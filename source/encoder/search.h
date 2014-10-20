@@ -190,7 +190,8 @@ protected:
     bool          m_bJobsQueued;
     void     singleMotionEstimation(Search& master, const TComDataCU& cu, const CU& cuData, int part, int list, int ref);
 
-    void     xSetResidualQTData(TComDataCU* cu, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, bool bSpatial);
+    void     saveResidualQTData(TComDataCU& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
+
     void     xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
     void     xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
 
