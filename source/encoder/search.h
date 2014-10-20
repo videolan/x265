@@ -53,7 +53,8 @@ struct RDContexts
     Entropy  rqtTemp; /* residual quad-tree temp context */
     Entropy  rqtRoot; /* residual quad-tree start context */
     Entropy  rqtTest; /* residual quad-tree test context */
-    ShortYuv tempResi;
+    ShortYuv tmpResiYuv;
+    Yuv      tmpReconYuv; /* used for psy-rd or other quick measurements */
 };
 
 inline int getTUBits(int idx, int numIdx)

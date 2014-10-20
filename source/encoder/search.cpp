@@ -67,7 +67,8 @@ Search::~Search()
     {
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
-        m_rdContexts[i].tempResi.destroy();
+        m_rdContexts[i].tmpResiYuv.destroy();
+        m_rdContexts[i].tmpReconYuv.destroy();
     }
 
     X265_FREE(m_qtTempCbf[0]);
@@ -111,7 +112,8 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
         ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
-        ok &= m_rdContexts[i].tempResi.create(g_maxCUSize >> i, m_param->internalCsp);
+        ok &= m_rdContexts[i].tmpResiYuv.create(g_maxCUSize >> i, m_param->internalCsp);
+        ok &= m_rdContexts[i].tmpReconYuv.create(g_maxCUSize >> i, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
@@ -2425,7 +2427,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     m_quant.setQPforQuant(interMode.cu);
 
-    ShortYuv* inputResiYuv = &m_rdContexts[cuData.depth].tempResi;
+    ShortYuv* inputResiYuv = &m_rdContexts[cuData.depth].tmpResiYuv;
     inputResiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
