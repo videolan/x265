@@ -799,10 +799,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         } // !earlyskip
 
         if (m_param->rdLevel) // checkDQP can be done only after residual encoding is done
-        {
             checkDQP(md.bestMode->cu, cuData);
-            addSplitFlagCost(*md.bestMode, cuData.depth);
-        }
     }
 
     bool bNoSplit = false;
@@ -811,6 +808,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         bNoSplit = !!md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit)
             bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
+        if (m_param->rdLevel > 1 && depth < g_maxCUDepth)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
     }
 
     if (mightSplit && !bNoSplit)
