@@ -266,9 +266,8 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
 
     checkDQP(md.bestMode->cu, cuData);
 
-    // Copy best data to picsym
+    /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
-
     if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
@@ -633,9 +632,8 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
     checkDQP(md.bestMode->cu, cuData);
 
-    /* Copy Best data to Picture for next partition prediction */
+    /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
-
     if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
 }
@@ -880,9 +878,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
     if (m_param->rdLevel)
         checkDQP(md.bestMode->cu, cuData);
 
-    /* Copy Best data to Picture for next partition prediction */
+    /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
-
     if (md.bestMode != &md.pred[PRED_SPLIT] && m_param->rdLevel)
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuData.encodeIdx);
 
@@ -1006,8 +1003,9 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         checkBestMode(*splitPred, depth);
     }
 
-    // Copy best data to picsym and recon
     checkDQP(md.bestMode->cu, cuData);
+
+    /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
