@@ -303,8 +303,8 @@ uint32_t Search::calcIntraLumaRecon(Mode& mode, const CU& cuData, uint32_t absPa
     pixel*   fenc         = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
     pixel*   pred         = predYuv->getLumaAddr(absPartIdx);
     int16_t* residual     = resiYuv->getLumaAddr(absPartIdx);
-    pixel*   recon        = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
-    uint32_t reconStride  = cu->m_frame->m_reconPicYuv->m_stride;
+    pixel*   recon        = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+    uint32_t reconStride  = m_frame->m_reconPicYuv->m_stride;
     bool     useTransformSkip = !!cu->m_transformSkip[0][absPartIdx];
     int      part = partitionFromLog2Size(log2TrSize);
     int      sizeIdx = log2TrSize - 2;
@@ -356,8 +356,8 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t abs
     int16_t* residual     = resiYuv->getChromaAddr(chromaId, absPartIdx);
 
     uint32_t zorder           = cuData.encodeIdx + absPartIdx;
-    pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
-    uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
+    pixel*   reconIPred       = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
+    uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
     bool     useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdx];
     int      part = partitionFromLog2Size(log2TrSizeC);
     int      sizeIdxC = log2TrSizeC - 2;
@@ -447,7 +447,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     {
         uint32_t tuSize = 1 << log2TrSize;
 
-        bool checkTransformSkip = cu->m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
+        bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
         if (m_param->bEnableTSkipFast)
             checkTransformSkip &= cu->m_partSizes[absPartIdx] == SIZE_NxN;
 
@@ -494,7 +494,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                 cu->setTransformSkipSubParts(checkTransformSkip ? modeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
 
                 bool bIsLossLess = modeId != firstCheckId;
-                if ((cu->m_slice->m_pps->bTransquantBypassEnabled))
+                if ((m_slice->m_pps->bTransquantBypassEnabled))
                     cu->setCUTransquantBypassSubParts(bIsLossLess, absPartIdx, fullDepth);
 
                 singleDistYTmp = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, singleCbfYTmp);
@@ -504,7 +504,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                     uint32_t zorder = cuData.encodeIdx + absPartIdx;
                     pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                     singlePsyEnergyYTmp = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
-                        cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), cu->m_frame->m_reconPicYuv->m_stride);
+                        m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
                 }
                 cu->setCbfSubParts(singleCbfYTmp << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
                 singleTQbypass = cu->m_cuTransquantBypass[absPartIdx];
@@ -537,14 +537,14 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
             }
 
             cu->setTransformSkipSubParts(checkTransformSkip ? bestModeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
-            if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+            if (m_slice->m_pps->bTransquantBypassEnabled)
                 cu->setCUTransquantBypassSubParts(bestTQbypass, absPartIdx, fullDepth);
 
             if (bestModeId == firstCheckId)
             {
                 /* copy from int16 recon buffer to reconPic (bad on two counts) */
-                pixel*   reconIPred = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
-                uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_stride;
+                pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+                uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
                 primitives.square_copy_sp[log2TrSize - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
                 cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
@@ -566,7 +566,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                 uint32_t zorder = cuData.encodeIdx + absPartIdx;
                 pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                 singlePsyEnergyY = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
-                    cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), cu->m_frame->m_reconPicYuv->m_stride);
+                    m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
             }
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
@@ -644,8 +644,8 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
-        pixel*   dst       = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
-        uint32_t dststride = cu->m_frame->m_reconPicYuv->m_stride;
+        pixel*   dst       = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
+        uint32_t dststride = m_frame->m_reconPicYuv->m_stride;
         int sizeIdx = log2TrSize - 2;
         primitives.square_copy_sp[sizeIdx](dst, dststride, reconQt, reconQtStride);
     }
@@ -691,8 +691,8 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
         coeff_t* coeff        = cu->m_trCoeff[0] + coeffOffsetY;
 
         uint32_t zorder           = cuData.encodeIdx + absPartIdx;
-        pixel*   reconIPred       = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
-        uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_stride;
+        pixel*   reconIPred       = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
+        uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
 
         bool     useTransformSkip = !!cu->m_transformSkip[0][absPartIdx];
 
@@ -876,7 +876,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
     uint32_t stride = fencYuv->m_csize;
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
-    bool checkTransformSkip = cu->m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
+    bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
 
     if (m_param->bEnableTSkipFast)
     {
@@ -971,7 +971,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                             uint32_t zorder = cuData.encodeIdx + absPartIdxC;
                             pixel*   fenc = const_cast<pixel*>(fencYuv->getChromaAddr(chromaId, absPartIdxC));
                             singlePsyEnergyTmp = m_rdCost.psyCost(log2TrSizeC - 2, fenc, fencYuv->m_csize,
-                                cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder), cu->m_frame->m_reconPicYuv->m_strideC);
+                                m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_strideC);
                             singleCostTmp = m_rdCost.calcPsyRdCost(singleDistCTmp, bitsTmp, singlePsyEnergyTmp);
                         }
                         else
@@ -995,8 +995,8 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                 if (bestModeId == firstCheckId)
                 {
                     /* copy from int16 recon buffer to reconPic (bad on two counts) */
-                    pixel*   reconIPred = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, cuData.encodeIdx + absPartIdxC);
-                    uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
+                    pixel*   reconIPred = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, cuData.encodeIdx + absPartIdxC);
+                    uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
                     primitives.square_copy_sp[log2TrSizeC - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
@@ -1025,7 +1025,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
                     uint32_t zorder = cuData.encodeIdx + absPartIdxC;
                     pixel *fenc = const_cast<pixel*>(fencYuv->getChromaAddr(chromaId, absPartIdxC));
                     singlePsyEnergyTmp = m_rdCost.psyCost(log2TrSizeC - 2, fenc, fencYuv->m_csize,
-                        cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder), cu->m_frame->m_reconPicYuv->m_strideC);
+                        m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_strideC);
                 }
                 cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
             }
@@ -1138,8 +1138,8 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
                 uint32_t coeffOffsetC   = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
                 coeff_t* coeff          = cu->m_trCoeff[ttype] + coeffOffsetC;
                 uint32_t zorder         = cuData.encodeIdx + absPartIdxC;
-                pixel*   reconIPred     = cu->m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
-                uint32_t reconIPredStride = cu->m_frame->m_reconPicYuv->m_strideC;
+                pixel*   reconIPred     = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
+                uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
 
                 const bool useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdxC];
                 cu->setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
@@ -1418,8 +1418,8 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
              * output recon picture, so it cannot proceed in parallel with anything else when doing INTRA_NXN. Also
              * it is not updating m_rdContexts[depth].cur for the later PUs which I suspect is slightly wrong. I think
              * that the contexts should be tracked through each PU */
-            pixel*   dst         = cu->m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
-            uint32_t dststride   = cu->m_frame->m_reconPicYuv->m_stride;
+            pixel*   dst         = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+            uint32_t dststride   = m_frame->m_reconPicYuv->m_stride;
             pixel*   src         = reconYuv->getLumaAddr(absPartIdx);
             uint32_t srcstride   = reconYuv->m_size;
             primitives.square_copy_pp[log2TrSize - 2](dst, dststride, src, srcstride);
@@ -1542,7 +1542,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
             uint32_t psyEnergy = 0;
             uint32_t dist = xRecurIntraChromaCodingQT(intraMode, cuData, initTrDepth, absPartIdxC, psyEnergy);
 
-            if (cu->m_slice->m_pps->bTransformSkipEnabled)
+            if (m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rdContexts[depth].cur);
 
             m_entropyCoder.resetBits();
@@ -1581,14 +1581,14 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
         if (!tuIterator.isLastSection())
         {
             uint32_t zorder    = cuData.encodeIdx + absPartIdxC;
-            uint32_t dststride = cu->m_frame->m_reconPicYuv->m_strideC;
+            uint32_t dststride = m_frame->m_reconPicYuv->m_strideC;
             pixel *src, *dst;
 
-            dst = cu->m_frame->m_reconPicYuv->getCbAddr(cu->m_cuAddr, zorder);
+            dst = m_frame->m_reconPicYuv->getCbAddr(cu->m_cuAddr, zorder);
             src = reconYuv->getCbAddr(absPartIdxC);
             primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
 
-            dst = cu->m_frame->m_reconPicYuv->getCrAddr(cu->m_cuAddr, zorder);
+            dst = m_frame->m_reconPicYuv->getCrAddr(cu->m_cuAddr, zorder);
             src = reconYuv->getCrAddr(absPartIdxC);
             primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
         }
@@ -1750,7 +1750,7 @@ void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const 
 void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma)
 {
     TComDataCU* cu = &interMode.cu;
-    const Slice *slice = cu->m_slice;
+    const Slice *slice = m_slice;
     PicYuv *fencPic = slice->m_frame->m_origPicYuv;
     PartSize partSize = (PartSize)cu->m_partSizes[0];
     m_curMECu = cu;
@@ -1984,7 +1984,7 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
     MV amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
-    const Slice *slice  = cu->m_slice;
+    const Slice *slice  = m_slice;
     PicYuv *fencPic     = slice->m_frame->m_origPicYuv;
     PartSize partSize   = (PartSize)cu->m_partSizes[0];
     int      numPart    = cu->getNumPartInter();
@@ -2388,7 +2388,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     m_entropyCoder.load(m_rdContexts[depth].cur);
     m_entropyCoder.resetBits();
-    if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+    if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
     m_entropyCoder.codeSkipFlag(*cu, 0);
     m_entropyCoder.codeMergeIndex(*cu, 0);
@@ -2482,7 +2482,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
         /* Merge/Skip */
         m_entropyCoder.resetBits();
-        if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+        if (m_slice->m_pps->bTransquantBypassEnabled)
             m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
         m_entropyCoder.codeSkipFlag(*cu, 0);
         m_entropyCoder.codeMergeIndex(*cu, 0);
@@ -2492,7 +2492,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     else
     {
         m_entropyCoder.resetBits();
-        if (cu->m_slice->m_pps->bTransquantBypassEnabled)
+        if (m_slice->m_pps->bTransquantBypassEnabled)
             m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
         m_entropyCoder.codeSkipFlag(*cu, 0);
         m_entropyCoder.codePredMode(cu->m_predModes[0]);
@@ -2500,7 +2500,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         m_entropyCoder.codePredInfo(*cu, 0);
         uint32_t mvBits = m_entropyCoder.getNumberOfWrittenBits();
 
-        bool bCodeDQP = cu->m_slice->m_pps->bUseDQP;
+        bool bCodeDQP = m_slice->m_pps->bUseDQP;
         m_entropyCoder.codeCoeff(*cu, 0, cu->m_depth[0], bCodeDQP, tuDepthRange);
         bits = m_entropyCoder.getNumberOfWrittenBits();
 
@@ -2571,7 +2571,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->m_predModes[absPartIdx] == MODE_INTER && (cu->m_partSizes[absPartIdx] != SIZE_2Nx2N));
+    bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->m_predModes[absPartIdx] == MODE_INTER && (cu->m_partSizes[absPartIdx] != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu->m_depth[absPartIdx] && log2TrSize > depthRange[0])
         bCheckFull = false;
@@ -2708,7 +2708,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    bool bSplitFlag = ((cu->m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->m_predModes[absPartIdx] == MODE_INTER && (cu->m_partSizes[absPartIdx] != SIZE_2Nx2N));
+    bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu->m_predModes[absPartIdx] == MODE_INTER && (cu->m_partSizes[absPartIdx] != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu->m_depth[absPartIdx] && log2TrSize > depthRange[0])
         bCheckFull = false;
@@ -2765,7 +2765,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         coeff_t* coeffCurV = m_qtTempCoeff[2][qtLayer] + coeffOffsetC;
 
         cu->setTrIdxSubParts(depth - cu->m_depth[0], absPartIdx, depth);
-        bool checkTransformSkip   = cu->m_slice->m_pps->bTransformSkipEnabled && !cu->m_cuTransquantBypass[0];
+        bool checkTransformSkip   = m_slice->m_pps->bTransformSkipEnabled && !cu->m_cuTransquantBypass[0];
         bool checkTransformSkipY  = checkTransformSkip && log2TrSize  <= MAX_LOG2_TS_SIZE;
         bool checkTransformSkipUV = checkTransformSkip && log2TrSizeC <= MAX_LOG2_TS_SIZE;
 
