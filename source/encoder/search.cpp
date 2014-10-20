@@ -342,7 +342,7 @@ uint32_t Search::calcIntraLumaRecon(Mode& mode, const CU& cuData, uint32_t absPa
 }
 
 uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t chromaId, uint32_t log2TrSizeC,
-                                       int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
+                                      int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
