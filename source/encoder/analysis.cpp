@@ -191,7 +191,10 @@ void Analysis::tryLossless(const CU& cuData)
         checkIntra(md.pred[PRED_LOSSLESS], cuData, size, modes);
     }
     else
+    {
+        md.pred[PRED_LOSSLESS].predYuv.copyFromYuv(md.bestMode->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_LOSSLESS], cuData);
+    }
 
     checkBestMode(md.pred[PRED_LOSSLESS], cuData.depth);
 }
