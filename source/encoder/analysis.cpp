@@ -261,20 +261,19 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             addSplitFlagCost(*splitPred, cuData.depth);
         else
             updateModeCost(*splitPred);
-        checkDQP(*splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
+
+    checkDQP(md.bestMode->cu, cuData);
 
     // Copy best data to picsym
     md.bestMode->cu.copyToPic(depth);
 
-    // TODO: can this be written as "if (md.bestMode->cu is not split)" to avoid copies?
-    // if split was not required, write recon
-    if (mightNotSplit)
+    if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
 
-/* TODO: move to Search except checkDQP() and checkBestMode() */
+/* TODO: move to Search except checkBestMode() */
 void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes)
 {
     uint32_t depth = cuData.depth;
@@ -315,7 +314,6 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
         intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, origYuv.m_buf[0], origYuv.m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
 
     updateModeCost(intraMode);
-    checkDQP(cu, cuData);
     checkBestMode(intraMode, depth);
 }
 
@@ -569,8 +567,6 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             checkBestMode(md.pred[PRED_INTRA], depth);
         }
 
-        checkDQP(md.bestMode->cu, cuData);
-
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
     }
@@ -622,7 +618,6 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
         else
             updateModeCost(*splitPred);
 
-        checkDQP(*splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
 
@@ -635,6 +630,8 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
         cuStat.count[depth] += 1;
         cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
+
+    checkDQP(md.bestMode->cu, cuData);
 
     /* Copy Best data to Picture for next partition prediction */
     md.bestMode->cu.copyToPic(depth);
@@ -799,8 +796,8 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             }
         } // !earlyskip
 
-        if (m_param->rdLevel) // checkDQP can be done only after residual encoding is done
-            checkDQP(md.bestMode->cu, cuData);
+        if (mightSplit && m_param->rdLevel > 1)
+            addSplitFlagCost(*md.bestMode, cuData.depth);
     }
 
     bool bNoSplit = false;
@@ -809,8 +806,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         bNoSplit = !!md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit)
             bNoSplit = recursionDepthCheck(parentCTU, cuData, *md.bestMode);
-        if (m_param->rdLevel > 1 && depth < g_maxCUDepth)
-            addSplitFlagCost(*md.bestMode, cuData.depth);
     }
 
     if (mightSplit && !bNoSplit)
@@ -858,9 +853,6 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         else
             updateModeCost(*splitPred);
 
-        if (m_param->rdLevel)
-            checkDQP(*splitCU, cuData);
-
         if (!md.bestMode)
             md.bestMode = splitPred;
         else if (m_param->rdLevel >= 1)
@@ -884,6 +876,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         cuStat.count[depth] += 1;
         cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
+
+    if (m_param->rdLevel)
+        checkDQP(md.bestMode->cu, cuData);
 
     /* Copy Best data to Picture for next partition prediction */
     md.bestMode->cu.copyToPic(depth);
@@ -1008,13 +1003,14 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         else
             updateModeCost(*splitPred);
 
-        checkDQP(*splitCU, cuData);
         checkBestMode(*splitPred, depth);
     }
 
     // Copy best data to picsym and recon
+    checkDQP(md.bestMode->cu, cuData);
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
+    if (md.bestMode != &md.pred[PRED_SPLIT])
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -1189,9 +1185,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
 
     if (bestPred->rdCost < MAX_INT64)
     {
-        checkDQP(bestPred->cu, cuData);
         m_modeDepth[depth].bestMode = bestPred;
-        bestPred->cu.setSkipFlagSubParts(!bestPred->cu.getQtRootCbf(0), 0, depth);
+        bestPred->cu.setSkipFlagSubParts(!bestPred->cu.getQtRootCbf(0), 0, depth); /* TODO: necessary? */
     }
 }
 
@@ -1237,13 +1232,11 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     {
         parallelInterSearch(interMode, cuData, true);
         encodeResAndCalcRdInterCU(interMode, cuData);
-        checkDQP(interMode.cu, cuData);
         checkBestMode(interMode, cuData.depth);
     }
     else if (predInterSearch(interMode, cuData, bMergeOnly, true))
     {
         encodeResAndCalcRdInterCU(interMode, cuData);
-        checkDQP(interMode.cu, cuData);
         checkBestMode(interMode, cuData.depth);
     }
 }
@@ -1527,7 +1520,6 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
             // Residual encoding
             m_quant.setQPforQuant(*cu);
             residualTransformQuantInter(*bestMode, cuData, 0, depth, tuDepthRange);
-            checkDQP(*cu, cuData);
 
             if (ctu.m_bMergeFlags[absPartIdx] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
@@ -1560,6 +1552,7 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
                 reco = recoYuv.m_buf[2];
                 primitives.chroma[m_param->internalCsp].add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
                 recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
+                checkDQP(*cu, cuData);
                 return;
             }
         }
@@ -1587,10 +1580,11 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
     {
         m_quant.setQPforQuant(*cu);
         generateCoeffRecon(*bestMode, cuData);
-        checkDQP(*cu, cuData);
         recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
         cu->updatePic(depth);
     }
+
+    checkDQP(*cu, cuData);
 }
 
 /* check whether current try is the best with identifying the depth of current try */
