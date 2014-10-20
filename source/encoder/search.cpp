@@ -447,10 +447,6 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     {
         uint32_t tuSize = 1 << log2TrSize;
 
-        bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
-        if (m_param->bEnableTSkipFast)
-            checkTransformSkip &= cu->m_partSizes[absPartIdx] == SIZE_NxN;
-
         uint32_t stride = fencYuv->m_size;
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
 
@@ -473,95 +469,78 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         // store original entropy coding status
         m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
 
-        if (checkTransformSkip)
+        ALIGN_VAR_32(coeff_t, tsCoeffY[32 * 32]);
+        ALIGN_VAR_32(int16_t, tsReconY[32 * 32]);
+
+        int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
+        if (m_param->bEnableTSkipFast)
+            checkTransformSkip &= cu->m_partSizes[absPartIdx] == SIZE_NxN;
+
+        for (int useTSkip = 0; useTSkip <= checkTransformSkip; useTSkip++)
         {
-            ALIGN_VAR_32(coeff_t, tsCoeffY[32 * 32]);
-            ALIGN_VAR_32(int16_t, tsReconY[32 * 32]);
+            uint64_t tmpCost;
+            uint32_t tmpEnergy = 0, tmpCbf;
 
-            for (int useTSkip = 0; useTSkip < 2; useTSkip++)
-            {
-                uint64_t tmpCost;
-                uint32_t tmpEnergy = 0, tmpCbf;
+            coeff_t* coeff = (useTSkip ? tsCoeffY : coeffY);
+            int16_t* recon = (useTSkip ? tsReconY : reconQt);
+            uint32_t reconStride = (useTSkip ? tuSize : reconQtStride);
 
-                coeff_t* coeff = (useTSkip ? tsCoeffY : coeffY);
-                int16_t* recon = (useTSkip ? tsReconY : reconQt);
-                uint32_t reconStride = (useTSkip ? tuSize : reconQtStride);
+            cu->setTransformSkipSubParts(useTSkip, TEXT_LUMA, absPartIdx, fullDepth);
 
-                cu->setTransformSkipSubParts(checkTransformSkip ? useTSkip : 0, TEXT_LUMA, absPartIdx, fullDepth);
+            uint32_t tmpDist = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, tmpCbf);
+            if (useTSkip && !tmpCbf)
+                /* do not allow tskip if CBF=0 */
+                break;
 
-                uint32_t tmpDist = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, tmpCbf);
-                if (useTSkip && !tmpCbf)
-                    /* do not allow tskip if CBF=0 */
-                    break;
+            cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+            uint32_t tmpBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
 
-                cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-                uint32_t tmpBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
-                if (m_rdCost.m_psyRd)
-                {
-                    uint32_t zorder = cuData.encodeIdx + absPartIdx;
-                    pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
-                    tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
-                        m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
-                    tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
-                }
-                else
-                    tmpCost = m_rdCost.calcRdCost(tmpDist, tmpBits);
+            if (m_param->rdPenalty && log2TrSize == 5 && m_slice->m_sliceType != I_SLICE)
+                tmpBits *= 4;
 
-                if (tmpCost < singleCost)
-                {
-                    singleCost   = tmpCost;
-                    singleDistY  = tmpDist;
-                    singleBits   = tmpBits;
-                    singlePsyEnergyY = tmpEnergy;
-                    singleCbfY   = tmpCbf;
-                    bestTSkip    = useTSkip;
-                    if (!bestTSkip)
-                        m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
-                }
-                if (!useTSkip)
-                    m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
-            }
-
-            cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
-
-            if (!bestTSkip) /* best was no tskip */
-            {
-                /* copy from int16 recon buffer to reconPic (bad on two counts) */
-                pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
-                uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
-                primitives.square_copy_sp[log2TrSize - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
-
-                cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-                m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
-            }
-            else
-            {
-                ::memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
-                int sizeIdx = log2TrSize - 2;
-                primitives.square_copy_ss[sizeIdx](reconQt, reconQtStride, tsReconY, tuSize);
-            }
-        }
-        else
-        {
-            cu->setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
-            singleDistY = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, reconQt, reconQtStride, coeffY, singleCbfY);
             if (m_rdCost.m_psyRd)
             {
                 uint32_t zorder = cuData.encodeIdx + absPartIdx;
                 pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
-                singlePsyEnergyY = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
+                tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
                     m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
+                tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
             }
-            cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-
-            singleBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
-            if (m_param->rdPenalty && log2TrSize == 5 && m_slice->m_sliceType != I_SLICE)
-                singleBits *= 4;
-
-            if (m_rdCost.m_psyRd)
-                singleCost = m_rdCost.calcPsyRdCost(singleDistY, singleBits, singlePsyEnergyY);
             else
-                singleCost = m_rdCost.calcRdCost(singleDistY, singleBits);
+                tmpCost = m_rdCost.calcRdCost(tmpDist, tmpBits);
+
+            if (tmpCost < singleCost)
+            {
+                singleCost   = tmpCost;
+                singleDistY  = tmpDist;
+                singleBits   = tmpBits;
+                singlePsyEnergyY = tmpEnergy;
+                singleCbfY   = tmpCbf;
+                bestTSkip    = useTSkip;
+                if (!bestTSkip)
+                    m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
+            }
+            if (!useTSkip)
+                m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
+        }
+
+        cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
+
+        if (!bestTSkip) /* best was no tskip */
+        {
+            /* copy from int16 recon buffer to reconPic (bad on two counts) */
+            pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+            uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
+            primitives.square_copy_sp[log2TrSize - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
+
+            cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+            m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
+        }
+        else
+        {
+            ::memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
+            int sizeIdx = log2TrSize - 2;
+            primitives.square_copy_ss[sizeIdx](reconQt, reconQtStride, tsReconY, tuSize);
         }
     }
 
@@ -578,10 +557,10 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         uint64_t splitCost     = 0;
         uint32_t splitDistY    = 0;
         uint32_t splitPsyEnergyY = 0;
-        uint32_t qPartsDiv     = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
-        uint32_t absPartIdxSub = absPartIdx;
         uint32_t splitCbfY     = 0;
         uint32_t splitBits     = 0;
+        uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
+        uint32_t absPartIdxSub = absPartIdx;
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
@@ -616,7 +595,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         // set entropy coding status
         m_entropyCoder.load(m_rdContexts[fullDepth].rqtTest);
 
-        // set transform index and Cbf values
+        // recover transform index and Cbf values
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
         cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
         cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
