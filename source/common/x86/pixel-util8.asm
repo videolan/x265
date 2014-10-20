@@ -1298,36 +1298,29 @@ cglobal count_nonzero, 2,2,3
 
 
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
-;void weight_pp(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+;void weight_pp(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal weight_pp, 6, 7, 6
 
+    shl         r5d, 6      ; m0 = [w0<<6]
     mov         r6d, r6m
-    shl         r6d, 6
-    movd        m0, r6d         ; m0 = [w0<<6]
-
-    movd        m1, r7m         ; m1 = [round]
-    punpcklwd   m0, m1          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
-    pshufd      m0, m0, 0       ; m0 = [w0<<6 round]
-
-    movd        m1, r8m
-
-    movd        m2, r9m
+    shl         r6d, 16
+    or          r6d, r5d    ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    movd        m0, r6d
+    pshufd      m0, m0, 0   ; m0 = [w0<<6, round]
+    movd        m1, r7m
+    movd        m2, r8m
     pshufd      m2, m2, 0
-
     mova        m5, [pw_1]
-
-    sub         r2d, r4d
-    sub         r3d, r4d
+    sub         r2d, r3d
+    shr         r3d, 4
 
 .loopH:
-    mov         r6d, r4d
-    shr         r6d, 4
-.loopW:
-    movh        m4, [r0]
-    pmovzxbw    m4, m4
+    mov         r5d, r3d
 
+.loopW:
+    pmovzxbw    m4, [r0]
     punpcklwd   m3, m4, m5
     pmaddwd     m3, m0
     psrad       m3, m1
@@ -1340,12 +1333,9 @@ cglobal weight_pp, 6, 7, 6
 
     packssdw    m3, m4
     packuswb    m3, m3
-
     movh        [r1], m3
 
-    movh        m4, [r0 + 8]
-    pmovzxbw    m4, m4
-
+    pmovzxbw    m4, [r0 + 8]
     punpcklwd   m3, m4, m5
     pmaddwd     m3, m0
     psrad       m3, m1
@@ -1358,21 +1348,19 @@ cglobal weight_pp, 6, 7, 6
 
     packssdw    m3, m4
     packuswb    m3, m3
-
     movh        [r1 + 8], m3
 
     add         r0, 16
     add         r1, 16
 
-    dec         r6d
+    dec         r5d
     jnz         .loopW
 
     lea         r0, [r0 + r2]
-    lea         r1, [r1 + r3]
+    lea         r1, [r1 + r2]
 
-    dec         r5d
+    dec         r4d
     jnz         .loopH
-
     RET
 
 ;-------------------------------------------------------------------------------------------------------------------------------------------------

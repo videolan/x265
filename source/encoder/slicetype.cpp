@@ -1383,7 +1383,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
         int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
         int widthHeight = (int)stride;
 
-        primitives.weight_pp(ref->buffer[0], m_wbuffer[0], stride, widthHeight, widthHeight, m_paddedLines,
+        primitives.weight_pp(ref->buffer[0], m_wbuffer[0], stride, widthHeight, m_paddedLines,
                              scale, round << correction, denom + correction, offset);
         src = m_weightedRef.fpelPlane;
     }
@@ -1481,7 +1481,7 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
         int widthHeight = (int)stride;
 
         for (int i = 0; i < 4; i++)
-            primitives.weight_pp(ref->buffer[i], m_wbuffer[i], stride, widthHeight, widthHeight, m_paddedLines,
+            primitives.weight_pp(ref->buffer[i], m_wbuffer[i], stride, widthHeight, m_paddedLines,
                                  scale, round << correction, denom + correction, offset);
 
         m_weightedRef.isWeighted = true;

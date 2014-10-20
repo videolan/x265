@@ -92,7 +92,7 @@ void MotionReference::applyWeight(int rows, int numRows)
     // Computing weighted CU rows
     int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
     int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
-    primitives.weight_pp(src, dst, lumaStride, lumaStride, padwidth, height,
+    primitives.weight_pp(src, dst, lumaStride, padwidth, height,
                          weight, round << correction, shift + correction, offset);
 
     // Extending Left & Right

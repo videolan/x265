@@ -334,8 +334,8 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-        checked(opt, pixel_test_buff[index] + j, opt_dest, stride, stride, width, height, w0, round, shift, offset);
-        ref(pixel_test_buff[index] + j, ref_dest, stride, stride, width, height, w0, round, shift, offset);
+        checked(opt, pixel_test_buff[index] + j, opt_dest, stride, width, height, w0, round, shift, offset);
+        ref(pixel_test_buff[index] + j, ref_dest, stride, width, height, w0, round, shift, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -1775,7 +1775,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.weight_pp)
     {
         HEADER0("weight_pp");
-        REPORT_SPEEDUP(opt.weight_pp, ref.weight_pp, pbuf1, pbuf2, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
+        REPORT_SPEEDUP(opt.weight_pp, ref.weight_pp, pbuf1, pbuf2, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
     if (opt.weight_sp)

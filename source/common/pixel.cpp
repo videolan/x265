@@ -640,11 +640,13 @@ void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStrid
     }
 }
 
-void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_pp_c(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
     X265_CHECK(!(width & 15), "weightp alignment error\n");
+    X265_CHECK(!((w0 << 6) > 32767), "w0 using more than 16 bits, asm output will mismatch\n");
+    X265_CHECK(!(round > 32767), "round using more than 16 bits, asm output will mismatch\n");
 
     for (y = 0; y <= height - 1; y++)
     {
@@ -656,8 +658,8 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride,
             x++;
         }
 
-        src += srcStride;
-        dst += dstStride;
+        src += stride;
+        dst += stride;
     }
 }
 

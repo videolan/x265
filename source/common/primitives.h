@@ -168,7 +168,7 @@ typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t *dequantCoef
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
 typedef int  (*count_nonzero_t)(const int16_t *quantCoeff, int numCoeff);
 
-typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
 typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
