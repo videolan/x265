@@ -2387,6 +2387,8 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
+    int part = partitionFromLog2Size(log2CUSize);
+    int cpart = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
 
     m_quant.setQPforQuant(interMode.cu);
 
@@ -2398,33 +2400,36 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     m_entropyCoder.load(m_rdContexts[depth].cur);
 
-    uint64_t cbf0Cost = 0;
-    uint32_t cbf0Distortion = 0, cbf0Energy = 0;
-    uint64_t cost = 0; /* TODO: cbf0Distortion can be calculated after by sse(fenc, pred) */
-    uint32_t bits = 0; /* xEstimateResidualQT also sets interMode.psyEnergy */
-    xEstimateResidualQT(interMode, cuData, 0, inputResiYuv, depth, cost, bits, &cbf0Distortion, tuDepthRange);
+    uint64_t cost = 0;
+    uint32_t bits = 0;
+    xEstimateResidualQT(interMode, cuData, 0, inputResiYuv, depth, cost, bits, tuDepthRange);
 
     if (cu->m_cuTransquantBypass[0])
         xSetResidualQTData(cu, 0, NULL, depth, false);
     else
     {
+        uint32_t cbf0Dist = primitives.sse_pp[part](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
+        cbf0Dist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[cpart](fencYuv->m_buf[1], predYuv->m_csize, predYuv->m_buf[1], predYuv->m_csize));
+        cbf0Dist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[cpart](fencYuv->m_buf[2], predYuv->m_csize, predYuv->m_buf[2], predYuv->m_csize));
+
         /* Consider the RD cost of not signaling any residual */
         m_entropyCoder.load(m_rdContexts[depth].cur);
         m_entropyCoder.resetBits();
         m_entropyCoder.codeQtRootCbfZero();
-        uint32_t zeroResiBits = m_entropyCoder.getNumberOfWrittenBits();
+        uint32_t cbf0Bits = m_entropyCoder.getNumberOfWrittenBits();
 
+        uint64_t cbf0Cost;
+        uint32_t cbf0Energy;
         if (m_rdCost.m_psyRd)
         {
             cbf0Energy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
-            cbf0Cost = m_rdCost.calcPsyRdCost(cbf0Distortion, zeroResiBits, cbf0Energy);
+            cbf0Cost = m_rdCost.calcPsyRdCost(cbf0Dist, cbf0Bits, cbf0Energy);
         }
         else
-            cbf0Cost = m_rdCost.calcRdCost(cbf0Distortion, zeroResiBits);
+            cbf0Cost = m_rdCost.calcRdCost(cbf0Dist, cbf0Bits);
 
         if (cbf0Cost < cost)
         {
-            interMode.psyEnergy = cbf0Energy;
             cu->clearCbf(0, depth);
             cu->setTransformSkipSubParts(0, 0, 0, 0, depth);
             const uint32_t qpartnum = NUM_CU_PARTITIONS >> (depth << 1); /* TODO is this necessary with CBF=0? */
@@ -2481,11 +2486,9 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         reconYuv->copyFromYuv(*predYuv);
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    int part = partitionFromLog2Size(log2CUSize);
     uint32_t bestDist = primitives.sse_pp[part](fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
-    part = partitionFromSizes(cuSize >> hChromaShift, cuSize >> vChromaShift);
-    bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
-    bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
+    bestDist += m_rdCost.scaleChromaDistCb(primitives.sse_pp[cpart](fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
+    bestDist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[cpart](fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
     if (m_rdCost.m_psyRd)
         interMode.psyEnergy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
@@ -2662,7 +2665,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t 
 }
 
 uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, ShortYuv* resiYuv, uint32_t depth, uint64_t& rdCost,
-                                     uint32_t& outBits, uint32_t* outZeroDist, uint32_t depthRange[2])
+                                     uint32_t& outBits, uint32_t depthRange[2])
 {
     TComDataCU* cu = &mode.cu;
     const Yuv* fencYuv = mode.fencYuv;
@@ -2820,9 +2823,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         const uint32_t strideResiY = MAX_CU_SIZE;
         const uint32_t strideResiC = m_qtTempShortYuv[qtLayer].m_csize;
 
-        if (outZeroDist)
-            *outZeroDist += distY;
-
         if (numSigY)
         {
             m_quant.invtransformNxN(cu->m_cuTransquantBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY); //this is for inter mode only
@@ -2904,8 +2904,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
 
                 distU = m_rdCost.scaleChromaDistCb(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_csize));
-                if (outZeroDist)
-                    *outZeroDist += distU;
 
                 if (numSigU[tuIterator.section])
                 {
@@ -2973,8 +2971,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                     primitives.blockfill_s[partSizeC](curResiU, strideResiC, 0);
 
                 distV = m_rdCost.scaleChromaDistCr(primitives.ssd_s[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_csize));
-                if (outZeroDist)
-                    *outZeroDist += distV;
 
                 if (numSigV[tuIterator.section])
                 {
@@ -3325,7 +3321,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         for (uint32_t i = 0; i < 4; ++i)
         {
             mode.psyEnergy = 0;
-            subdivDist += xEstimateResidualQT(mode, cuData, absPartIdx + i * qPartNumSubdiv, resiYuv, depth + 1, subDivCost, subdivBits, bCheckFull ? NULL : outZeroDist, depthRange);
+            subdivDist += xEstimateResidualQT(mode, cuData, absPartIdx + i * qPartNumSubdiv, resiYuv, depth + 1, subDivCost, subdivBits, depthRange);
             subDivPsyEnergy += mode.psyEnergy;
         }
 
