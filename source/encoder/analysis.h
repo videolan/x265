@@ -57,6 +57,7 @@ public:
         PRED_nLx2N,
         PRED_nRx2N,
         PRED_INTRA_NxN, /* 4x4 intra PU blocks for 8x8 CU */
+        PRED_LOSSLESS,  /* lossless encode of best mode */
         MAX_PRED_TYPES
     };
 
@@ -70,6 +71,7 @@ public:
     };
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
+    bool      m_bTryLossless;
 
     Analysis();
     bool create(ThreadLocalData* tld);
@@ -107,6 +109,9 @@ protected:
     void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
     void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
     void encodeIntraInInter(Mode& intraMode, const CU& cuData);
+
+    /* encode current bestMode losslessly, pick best RD cost */
+    void tryLossless(const CU& cuData);
 
     void checkDQP(TComDataCU& cu, const CU& cuData);
     void addSplitFlagCost(Mode& mode, uint32_t depth);

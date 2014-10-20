@@ -76,6 +76,7 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
     m_partSizes          = charBuf; charBuf += numPartition;
     m_predModes          = charBuf; charBuf += numPartition;
     m_lumaIntraDir       = charBuf; charBuf += numPartition;
+    m_cuTransquantBypass = charBuf; charBuf += numPartition;
     m_depth              = charBuf; charBuf += numPartition;
     m_skipFlag           = charBuf; charBuf += numPartition; /* the order up to here is important in initCTU() and initSubCU() */
     m_bMergeFlags        = charBuf; charBuf += numPartition;
@@ -86,7 +87,6 @@ void TComDataCU::initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uin
     m_transformSkip[0]   = charBuf; charBuf += numPartition;
     m_transformSkip[1]   = charBuf; charBuf += numPartition;
     m_transformSkip[2]   = charBuf; charBuf += numPartition;
-    m_cuTransquantBypass = charBuf; charBuf += numPartition;
     m_cbf[0]             = charBuf; charBuf += numPartition;
     m_cbf[1]             = charBuf; charBuf += numPartition;
     m_cbf[2]             = charBuf; charBuf += numPartition;
@@ -117,9 +117,10 @@ void TComDataCU::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     memset(m_partSizes, SIZE_NONE, m_numPartitions);
     memset(m_predModes, MODE_NONE, m_numPartitions);
     memset(m_lumaIntraDir, DC_IDX, m_numPartitions);
+    memset(m_cuTransquantBypass, frame.m_encData->m_param->bLossless, m_numPartitions);
 
     /* initialize the remaining CU data in one memset */
-    memset(m_depth, 0, (BytesPerPartition - 5) * m_numPartitions);
+    memset(m_depth, 0, (BytesPerPartition - 6) * m_numPartitions);
 
     m_cuMvField[0].clearMvField();
     m_cuMvField[1].clearMvField();
@@ -152,10 +153,11 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
     memset(m_partSizes,    SIZE_NONE,         m_numPartitions);
     memset(m_predModes,    MODE_NONE,         m_numPartitions);
     memset(m_lumaIntraDir, DC_IDX,            m_numPartitions);
+    memset(m_cuTransquantBypass, m_frame->m_encData->m_param->bLossless, m_numPartitions);
     memset(m_depth,        cuData.depth,      m_numPartitions);
 
     /* initialize the remaining CU data in one memset */
-    memset(m_skipFlag, 0, (BytesPerPartition - 6) * m_numPartitions);
+    memset(m_skipFlag, 0, (BytesPerPartition - 7) * m_numPartitions);
 
     if (m_slice->m_sliceType != I_SLICE)
     {
@@ -164,11 +166,41 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
     }
 }
 
+/* Copy all CU data from one instance to the next, except set lossless flag
+ * This will only get used when --cu-lossless is enabled but --lossless is not. */
+void TComDataCU::initLosslessCU(const TComDataCU& cu, const CU& cuData)
+{
+    /* Start by making an exact copy */
+    m_absIdxInCTU = cuData.encodeIdx;
+    m_numPartitions = cuData.numPartitions;
+    m_frame = cu.m_frame;
+    m_slice = cu.m_slice;
+    m_cuAddr = cu.m_cuAddr;
+    m_cuPelX = cu.m_cuPelX;
+    m_cuPelY = cu.m_cuPelY;
+    m_cuLeft = cu.m_cuLeft;
+    m_cuAbove = cu.m_cuAbove;
+    m_cuAboveLeft = cu.m_cuAboveLeft;
+    m_cuAboveRight = cu.m_cuAboveRight;
+    memcpy(m_qp, cu.m_qp, BytesPerPartition * m_numPartitions);
+
+    m_cuMvField[0].copyFrom(&cu.m_cuMvField[0], m_numPartitions, 0);
+    m_cuMvField[1].copyFrom(&cu.m_cuMvField[1], m_numPartitions, 0);
+
+    /* force TQBypass to true */
+    memset(m_cuTransquantBypass, true, m_numPartitions);
+
+    /* clear residual coding flags */
+    memset(m_skipFlag, 0, m_numPartitions);
+    memset(m_cbf[0],   0, 3 * m_numPartitions);
+    memset(m_trIdx,    0, m_numPartitions);
+}
+
 
 /* TODO: Remove me. this is only called from encodeResidue() */
 void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
 {
-    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossess,
+    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossless,
      * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
 
     m_frame  = ctu.m_frame;

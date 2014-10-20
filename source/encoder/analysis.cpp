@@ -74,6 +74,7 @@ Analysis::Analysis()
 bool Analysis::create(ThreadLocalData *tld)
 {
     m_tld = tld;
+    m_bTryLossless = m_param->bCULossless && !m_param->bLossless && m_param->rdLevel >= 2;
 
     int csp = m_param->internalCsp;
     int chromaShift = CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp);
@@ -177,6 +178,24 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
     return *m_modeDepth[0].bestMode;
 }
 
+void Analysis::tryLossless(const CU& cuData)
+{
+    ModeDepth& md = m_modeDepth[cuData.depth];
+
+    md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuData);
+
+    if (md.pred[PRED_LOSSLESS].cu.m_predModes[0] == MODE_INTRA)
+    {
+        PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSizes[0];
+        uint8_t* modes = md.pred[PRED_LOSSLESS].cu.m_lumaIntraDir;
+        checkIntra(md.pred[PRED_LOSSLESS], cuData, size, modes);
+    }
+    else
+        encodeResAndCalcRdInterCU(md.pred[PRED_LOSSLESS], cuData);
+
+    checkBestMode(md.pred[PRED_LOSSLESS], cuData.depth);
+}
+
 void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x265_intra_data* shared, uint32_t& zOrder)
 {
     uint32_t depth = cuData.depth;
@@ -196,6 +215,9 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuData);
             checkIntra(mode, cuData, size, shared->modes);
+
+            if (m_bTryLossless)
+                tryLossless(cuData);
 
             if (mightSplit)
                 addSplitFlagCost(*md.bestMode, cuData.depth);
@@ -217,6 +239,9 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuData);
             checkIntra(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN, NULL);
         }
+
+        if (m_bTryLossless)
+            tryLossless(cuData);
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
@@ -281,7 +306,6 @@ void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, 
 
     cu.setPartSizeSubParts(partSize, 0, depth);
     cu.setPredModeSubParts(MODE_INTRA, 0, depth);
-    cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
@@ -566,6 +590,9 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             checkBestMode(md.pred[PRED_INTRA], depth);
         }
 
+        if (m_bTryLossless)
+            tryLossless(cuData);
+
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
     }
@@ -794,6 +821,9 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             }
         } // !earlyskip
 
+        if (m_bTryLossless)
+            tryLossless(cuData);
+
         if (mightSplit && m_param->rdLevel > 1)
             addSplitFlagCost(*md.bestMode, cuData.depth);
     }
@@ -958,6 +988,9 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             }
         }
 
+        if (m_bTryLossless)
+            tryLossless(cuData);
+
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuData.depth);
     }
@@ -1026,12 +1059,10 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData)
     X265_CHECK(m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
     tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    tempPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     tempPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
     tempPred->cu.m_bMergeFlags[0] = true;
 
     bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    bestPred->cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     bestPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
     bestPred->cu.m_bMergeFlags[0] = true;
 
@@ -1112,12 +1143,10 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData)
     Mode* bestPred = &skip;
 
     merge.cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    merge.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     merge.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     merge.cu.m_bMergeFlags[0] = true;
 
     skip.cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    skip.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
     skip.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     skip.cu.m_bMergeFlags[0] = true;
 
@@ -1193,7 +1222,6 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize part
     interMode.initCosts();
     interMode.cu.setPartSizeSubParts(partSize, 0, cuData.depth);
     interMode.cu.setPredModeSubParts(MODE_INTER, 0, cuData.depth);
-    interMode.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, cuData.depth);
 
     Yuv* fencYuv = &m_modeDepth[cuData.depth].fencYuv;
     Yuv* predYuv = &interMode.predYuv;
@@ -1224,7 +1252,6 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize part
     interMode.cu.setSkipFlagSubParts(false, 0, cuData.depth);
     interMode.cu.setPartSizeSubParts(partSize, 0, cuData.depth);
     interMode.cu.setPredModeSubParts(MODE_INTER, 0, cuData.depth);
-    interMode.cu.setCUTransquantBypassSubParts(!!m_param->bLossless, 0, cuData.depth);
 
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
     {
@@ -1248,7 +1275,6 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData)
 
     cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
     cu->setPredModeSubParts(MODE_INTRA, 0, depth);
-    cu->setCUTransquantBypassSubParts(!!m_param->bLossless, 0, depth);
 
     uint32_t initTrDepth = 0;
     uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
