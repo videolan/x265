@@ -182,7 +182,7 @@ void Analysis::tryLossless(const CU& cuData)
 {
     ModeDepth& md = m_modeDepth[cuData.depth];
 
-    if (md.bestMode->distortion == 0)
+    if (!md.bestMode->distortion)
         /* already lossless */
         return;
     else if (md.bestMode->cu.m_predModes[0] == MODE_INTRA)
