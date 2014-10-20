@@ -441,8 +441,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     uint32_t singleBits  = 0;
     uint32_t singlePsyEnergyY = 0;
     uint32_t singleCbfY   = 0;
-    int      bestModeId   = 0;
-    bool     bestTQbypass = 0;
+    int      bestTSkip = 0;
 
     if (bCheckFull)
     {
@@ -476,72 +475,60 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
         if (checkTransformSkip)
         {
-            uint32_t  singleDistYTmp = 0;
-            uint32_t  singlePsyEnergyYTmp = 0;
-            uint32_t  singleCbfYTmp  = 0;
-            uint64_t  singleCostTmp  = 0;
-            bool      singleTQbypass = 0;
-            const int firstCheckId   = 0;
-
             ALIGN_VAR_32(coeff_t, tsCoeffY[32 * 32]);
             ALIGN_VAR_32(int16_t, tsReconY[32 * 32]);
 
-            for (int modeId = firstCheckId; modeId < 2; modeId++)
+            for (int useTSkip = 0; useTSkip < 2; useTSkip++)
             {
-                coeff_t* coeff = (modeId ? tsCoeffY : coeffY);
-                int16_t* recon = (modeId ? tsReconY : reconQt);
-                uint32_t reconStride = (modeId ? tuSize : reconQtStride);
+                uint64_t  tmpCost;
+                uint32_t  tmpDist, tmpEnergy, tmpCbf;
 
-                cu->setTransformSkipSubParts(checkTransformSkip ? modeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
+                coeff_t* coeff = (useTSkip ? tsCoeffY : coeffY);
+                int16_t* recon = (useTSkip ? tsReconY : reconQt);
+                uint32_t reconStride = (useTSkip ? tuSize : reconQtStride);
 
-                bool bIsLossLess = modeId != firstCheckId;
-                if ((m_slice->m_pps->bTransquantBypassEnabled))
-                    cu->setCUTransquantBypassSubParts(bIsLossLess, absPartIdx, fullDepth);
+                cu->setTransformSkipSubParts(checkTransformSkip ? useTSkip : 0, TEXT_LUMA, absPartIdx, fullDepth);
 
-                singleDistYTmp = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, singleCbfYTmp);
-                singlePsyEnergyYTmp = 0;
+                tmpDist = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, tmpCbf);
                 if (m_rdCost.m_psyRd)
                 {
                     uint32_t zorder = cuData.encodeIdx + absPartIdx;
                     pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
-                    singlePsyEnergyYTmp = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
+                    tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
                         m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
                 }
-                cu->setCbfSubParts(singleCbfYTmp << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-                singleTQbypass = cu->m_cuTransquantBypass[absPartIdx];
+                cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
-                if ((modeId == 1) && !singleCbfYTmp && checkTransformSkip)
+                if (useTSkip && !tmpCbf)
                     // In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
                     break;
                 else
                 {
+                    /* TODO: no temp var for bits? looks like a bug to me */
                     singleBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
                     if (m_rdCost.m_psyRd)
-                        singleCostTmp = m_rdCost.calcPsyRdCost(singleDistYTmp, singleBits, singlePsyEnergyYTmp);
+                        tmpCost = m_rdCost.calcPsyRdCost(tmpDist, singleBits, tmpEnergy);
                     else
-                        singleCostTmp = m_rdCost.calcRdCost(singleDistYTmp, singleBits);
+                        tmpCost = m_rdCost.calcRdCost(tmpDist, singleBits);
                 }
 
-                if (singleCostTmp < singleCost)
+                if (tmpCost < singleCost)
                 {
-                    singleCost   = singleCostTmp;
-                    singleDistY  = singleDistYTmp;
-                    singlePsyEnergyY = singlePsyEnergyYTmp;
-                    singleCbfY   = singleCbfYTmp;
-                    bestTQbypass = singleTQbypass;
-                    bestModeId   = modeId;
-                    if (bestModeId == firstCheckId)
+                    singleCost   = tmpCost;
+                    singleDistY  = tmpDist;
+                    singlePsyEnergyY = tmpEnergy;
+                    singleCbfY   = tmpCbf;
+                    bestTSkip   = useTSkip;
+                    if (!bestTSkip)
                         m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
                 }
-                if (modeId == firstCheckId)
+                if (!useTSkip)
                     m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
             }
 
-            cu->setTransformSkipSubParts(checkTransformSkip ? bestModeId : 0, TEXT_LUMA, absPartIdx, fullDepth);
-            if (m_slice->m_pps->bTransquantBypassEnabled)
-                cu->setCUTransquantBypassSubParts(bestTQbypass, absPartIdx, fullDepth);
+            cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
 
-            if (bestModeId == firstCheckId)
+            if (!bestTSkip) /* best was no tskip */
             {
                 /* copy from int16 recon buffer to reconPic (bad on two counts) */
                 pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
@@ -636,7 +623,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         // set transform index and Cbf values
         cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
         cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-        cu->setTransformSkipSubParts(bestModeId, TEXT_LUMA, absPartIdx, fullDepth);
+        cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
 
         // set reconstruction for next intra prediction blocks
         uint32_t qtLayer   = log2TrSize - 2;
