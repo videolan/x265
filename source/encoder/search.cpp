@@ -426,7 +426,6 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
 
-        // TODO: this check for tuQTMaxIntraDepth depth is a hack, it needs a better fix
         if (m_param->rdPenalty == 2 && m_param->tuQTMaxIntraDepth > fullDepth)
             // if maximum RD-penalty don't check TU size 32x32
             bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
@@ -669,7 +668,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
     bool     bCheckFull  = log2TrSize <= depthRange[1];
     bool     bCheckSplit = log2TrSize > depthRange[0];
 
-    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE)
+    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && m_param->tuQTMaxIntraDepth > fullDepth)
     {
         int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
         // if maximum RD-penalty don't check TU size 32x32
