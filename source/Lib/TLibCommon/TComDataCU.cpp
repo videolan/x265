@@ -192,7 +192,8 @@ void TComDataCU::initLosslessCU(const TComDataCU& cu, const CU& cuData)
 
     /* clear residual coding flags */
     memset(m_skipFlag, 0, m_numPartitions);
-    memset(m_cbf[0],   0, 3 * m_numPartitions);
+    memset(m_cbf[0], 0, 3 * m_numPartitions);
+    memset(m_transformSkip[0], 0, 3 * m_numPartitions);
     memset(m_trIdx,    0, m_numPartitions);
 }
 
