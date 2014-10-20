@@ -1873,10 +1873,10 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             double pred_s = predictSize(rce->rowPred[0], qScale, satdCostForPendingCus);
             uint32_t refRowSatdCost = 0, refRowBits = 0, intraCost = 0;
             double refQScale = 0;
-            FrameData& refEncData = *refFrame->m_encData;
 
             if (picType != I_SLICE)
             {
+                FrameData& refEncData = *refFrame->m_encData;
                 uint32_t endCuAddr = curFrame->m_origPicYuv->m_numCuInWidth * (row + 1);
                 for (uint32_t cuAddr = curEncData.m_rowStat[row].numEncodedCUs + 1; cuAddr < endCuAddr; cuAddr++)
                 {
@@ -1891,8 +1891,9 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
 
             if (picType == I_SLICE || qScale >= refQScale)
             {
-                if (picType == P_SLICE
-                    && refEncData.m_slice->m_sliceType == picType
+                if (picType == P_SLICE 
+                    && !refFrame 
+                    && refFrame->m_encData->m_slice->m_sliceType == picType
                     && refQScale > 0
                     && refRowSatdCost > 0)
                 {
