@@ -247,9 +247,9 @@ int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
 
 int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
 {
-    sum2_t tmp[4][2];
-    sum2_t a0, a1, a2, a3, b0, b1;
-    sum2_t sum = 0;
+    ssum2_t tmp[4][2];
+    ssum2_t a0, a1, a2, a3, b0, b1;
+    ssum2_t sum = 0;
 
     for (int i = 0; i < 4; i++, pix1 += stride_pix1, pix2 += stride_pix2)
     {
@@ -378,9 +378,9 @@ int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 
 inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
 {
-    sum2_t tmp[8][4];
-    sum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
-    sum2_t sum = 0;
+    ssum2_t tmp[8][4];
+    ssum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
+    ssum2_t sum = 0;
 
     for (int i = 0; i < 8; i++, pix1 += i_pix1, pix2 += i_pix2)
     {
