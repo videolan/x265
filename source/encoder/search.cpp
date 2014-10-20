@@ -405,9 +405,9 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t abs
 uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowRQTSplit,
                                      uint64_t& rdCost, uint32_t& rdBits, uint32_t& psyEnergy, uint32_t depthRange[2])
 {
-    uint32_t fullDepth   = mode.cu.m_depth[0] + trDepth;
-    uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    uint32_t outDist     = 0;
+    uint32_t fullDepth  = mode.cu.m_depth[0] + trDepth;
+    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
+    uint32_t outDist    = 0;
 
     bool bCheckSplit = log2TrSize > *depthRange;
     bool bCheckFull  = log2TrSize <= *(depthRange + 1);
@@ -416,14 +416,12 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     TComDataCU* cu = &mode.cu;
     const Yuv* fencYuv = mode.fencYuv;
 
-    int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
-
     // don't check split if TU size is less or equal to max TU size
     bool noSplitIntraMaxTuSize = bCheckFull;
 
-    if (m_param->rdPenalty && !isIntraSlice)
+    if (m_param->rdPenalty && m_slice->m_sliceType != I_SLICE)
     {
-        int maxTuSize = cu->m_slice->m_sps->quadtreeTULog2MaxSize;
+        int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
 
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
@@ -433,6 +431,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
             // if maximum RD-penalty don't check TU size 32x32
             bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
+
     if (!bAllowRQTSplit && noSplitIntraMaxTuSize)
         bCheckSplit = false;
 
@@ -572,7 +571,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
             cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
             singleBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeffY, depthRange);
-            if (m_param->rdPenalty && (log2TrSize == 5) && !isIntraSlice)
+            if (m_param->rdPenalty && log2TrSize == 5 && m_slice->m_sliceType != I_SLICE)
                 singleBits *= 4;
 
             if (m_rdCost.m_psyRd)
@@ -670,11 +669,9 @@ void Search::residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t 
     bool     bCheckFull  = log2TrSize <= depthRange[1];
     bool     bCheckSplit = log2TrSize > depthRange[0];
 
-    int isIntraSlice = (cu->m_slice->m_sliceType == I_SLICE);
-
-    if (m_param->rdPenalty == 2 && !isIntraSlice)
+    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE)
     {
-        int maxTuSize = cu->m_slice->m_sps->quadtreeTULog2MaxSize;
+        int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
         // if maximum RD-penalty don't check TU size 32x32
         bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }

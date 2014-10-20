@@ -522,7 +522,14 @@ Spatial/intra options
 
 .. option:: --rdpenalty <0..2>
 
-	Penalty for 32x32 intra TU in non-I slices. Default 0
+	When set to 1, transform units of size 32x32 are given a 4x bit cost
+	penalty compared to smaller transform units, in intra coded CUs in P
+	or B slices.
+
+	When set to 2, transform units of size 32x32 are not even attempted,
+	unless otherwise required by the maximum recursion depth.
+
+	Default 0, disabled.
 
 	**Values:** 0:disabled 1:RD-penalty 2:maximum
 
