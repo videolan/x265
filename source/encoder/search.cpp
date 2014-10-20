@@ -480,8 +480,8 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
             for (int useTSkip = 0; useTSkip < 2; useTSkip++)
             {
-                uint64_t  tmpCost;
-                uint32_t  tmpDist, tmpEnergy, tmpCbf;
+                uint64_t tmpCost;
+                uint32_t tmpEnergy = 0, tmpCbf;
 
                 coeff_t* coeff = (useTSkip ? tsCoeffY : coeffY);
                 int16_t* recon = (useTSkip ? tsReconY : reconQt);
@@ -489,36 +489,32 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
                 cu->setTransformSkipSubParts(checkTransformSkip ? useTSkip : 0, TEXT_LUMA, absPartIdx, fullDepth);
 
-                tmpDist = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, tmpCbf);
+                uint32_t tmpDist = calcIntraLumaRecon(mode, cuData, absPartIdx, log2TrSize, recon, reconStride, coeff, tmpCbf);
+                if (useTSkip && !tmpCbf)
+                    /* do not allow tskip if CBF=0 */
+                    break;
+
+                cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+                uint32_t tmpBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
                 if (m_rdCost.m_psyRd)
                 {
                     uint32_t zorder = cuData.encodeIdx + absPartIdx;
                     pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                     tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
                         m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
+                    tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
                 }
-                cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-
-                if (useTSkip && !tmpCbf)
-                    // In order not to code TS flag when cbf is zero, the case for TS with cbf being zero is forbidden.
-                    break;
                 else
-                {
-                    /* TODO: no temp var for bits? looks like a bug to me */
-                    singleBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
-                    if (m_rdCost.m_psyRd)
-                        tmpCost = m_rdCost.calcPsyRdCost(tmpDist, singleBits, tmpEnergy);
-                    else
-                        tmpCost = m_rdCost.calcRdCost(tmpDist, singleBits);
-                }
+                    tmpCost = m_rdCost.calcRdCost(tmpDist, tmpBits);
 
                 if (tmpCost < singleCost)
                 {
                     singleCost   = tmpCost;
                     singleDistY  = tmpDist;
+                    singleBits   = tmpBits;
                     singlePsyEnergyY = tmpEnergy;
                     singleCbfY   = tmpCbf;
-                    bestTSkip   = useTSkip;
+                    bestTSkip    = useTSkip;
                     if (!bestTSkip)
                         m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
                 }
