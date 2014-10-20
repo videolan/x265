@@ -2776,8 +2776,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         uint32_t numSigU[2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { 0, 0 };
         uint32_t numSigV[2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { 0, 0 };
         uint32_t trSizeC = 1 << log2TrSizeC;
-        int sizeIdx  = log2TrSize - 2;
-        int sizeIdxC = log2TrSizeC - 2;
+        int partSize  = partitionFromLog2Size(log2TrSize);
+        int partSizeC = partitionFromLog2Size(log2TrSizeC);
         const uint32_t qtLayer = log2TrSize - 2;
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);
@@ -2862,7 +2862,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             minCost[TEXT_CHROMA_V][subTUIndex] = MAX_INT64;
         }
 
-        int partSize = partitionFromLog2Size(log2TrSize);
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
         uint32_t distY = primitives.ssd_s[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size);
         uint32_t psyEnergyY = 0;
@@ -2938,7 +2937,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         singleDistComp[TEXT_LUMA][0] = distY;
         singlePsyEnergyComp[TEXT_LUMA][0] = psyEnergyY;
         if (!numSigY)
-            primitives.blockfill_s[sizeIdx](curResiY, strideResiY, 0);
+            primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
         cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
         uint32_t distU = 0;
@@ -2948,8 +2947,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         if (bCodeChroma)
         {
             TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
-
-            int partSizeC = partitionFromLog2Size(log2TrSizeC);
 
             do
             {
@@ -3026,9 +3023,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 singlePsyEnergyComp[TEXT_CHROMA_U][tuIterator.section] = psyEnergyU;
 
                 if (!numSigU[tuIterator.section])
-                    primitives.blockfill_s[sizeIdxC](curResiU, strideResiC, 0);
+                    primitives.blockfill_s[partSizeC](curResiU, strideResiC, 0);
 
-                distV = m_rdCost.scaleChromaDistCr(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_csize));
+                distV = m_rdCost.scaleChromaDistCr(primitives.ssd_s[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_csize));
                 if (outZeroDist)
                     *outZeroDist += distV;
 
@@ -3095,7 +3092,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 singlePsyEnergyComp[TEXT_CHROMA_V][tuIterator.section] = psyEnergyV;
 
                 if (!numSigV[tuIterator.section])
-                    primitives.blockfill_s[sizeIdxC](curResiV, strideResiC, 0);
+                    primitives.blockfill_s[partSizeC](curResiV, strideResiC, 0);
 
                 cu->setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu->setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
@@ -3153,7 +3150,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 numSigY = numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
                 memcpy(coeffCurY, tsCoeffY, sizeof(coeff_t) * numCoeffY);
-                primitives.square_copy_ss[sizeIdx](curResiY, strideResiY, tsResiY, trSize);
+                primitives.square_copy_ss[partSize](curResiY, strideResiY, tsResiY, trSize);
             }
 
             cu->setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
@@ -3169,8 +3166,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
 
             TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
-
-            int partSizeC = partitionFromLog2Size(log2TrSizeC);
 
             do
             {
@@ -3233,7 +3228,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                     numSigU[tuIterator.section] = numSigTSkipU;
                     bestTransformMode[TEXT_CHROMA_U][tuIterator.section] = 1;
                     memcpy(coeffCurU + subTUOffset, tsCoeffU, sizeof(coeff_t) * numCoeffC);
-                    primitives.square_copy_ss[sizeIdxC](curResiU, strideResiC, tsResiU, trSizeC);
+                    primitives.square_copy_ss[partSizeC](curResiU, strideResiC, tsResiU, trSizeC);
                 }
 
                 if (numSigTSkipV)
@@ -3264,7 +3259,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                     numSigV[tuIterator.section] = numSigTSkipV;
                     bestTransformMode[TEXT_CHROMA_V][tuIterator.section] = 1;
                     memcpy(coeffCurV + subTUOffset, tsCoeffV, sizeof(coeff_t) * numCoeffC);
-                    primitives.square_copy_ss[sizeIdxC](curResiV, strideResiC, tsResiV, trSizeC);
+                    primitives.square_copy_ss[partSizeC](curResiV, strideResiC, tsResiV, trSizeC);
                 }
 
                 cu->setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
