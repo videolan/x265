@@ -142,21 +142,21 @@ public:
     int           m_vChromaShift;
 
     /* Per-part data */
+    char*         m_qp;                 ///< array of QP values
     uint8_t*      m_log2CUSize;         ///< array of cu log2Size
-    uint8_t*      m_depth;              ///< array of depths
-    uint8_t*      m_skipFlag;           ///< array of skip flags
     uint8_t*      m_partSizes;          ///< array of partition sizes
     uint8_t*      m_predModes;          ///< array of prediction modes
+    uint8_t*      m_lumaIntraDir;       ///< array of intra directions (luma)
     uint8_t*      m_cuTransquantBypass; ///< array of CU lossless flags
+    uint8_t*      m_depth;              ///< array of depths
+    uint8_t*      m_skipFlag;           ///< array of skip flags
+    uint8_t*      m_bMergeFlags;        ///< array of merge flags
+    uint8_t*      m_interDir;           ///< array of inter directions
+    uint8_t*      m_mvpIdx[2];          ///< array of motion vector predictor candidates or merge candidate indices [0]
     uint8_t*      m_trIdx;              ///< array of transform indices
     uint8_t*      m_transformSkip[3];   ///< array of transform skipping flags
     uint8_t*      m_cbf[3];             ///< array of coded block flags (CBF)
-    uint8_t*      m_bMergeFlags;        ///< array of merge flags
-    uint8_t*      m_lumaIntraDir;       ///< array of intra directions (luma)
     uint8_t*      m_chromaIntraDir;     ///< array of intra directions (chroma)
-    uint8_t*      m_interDir;           ///< array of inter directions
-    uint8_t*      m_mvpIdx[2];          ///< array of motion vector predictor candidates or merge candidate indices [0]
-    char*         m_qp;                 ///< array of QP values
     enum { BytesPerPartition = 20 };    // combined sizeof() of all per-part data
 
     TComCUMvField m_cuMvField[2];       ///< array of motion vectors
