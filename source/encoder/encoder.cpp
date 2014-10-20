@@ -401,11 +401,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             else
                 m_rateControl->calcAdaptiveQuantFrame(inFrame);
         }
-        if (pic_in->analysisData.intraData)
-        {
-            inFrame->m_intraData = pic_in->analysisData.intraData;
-            inFrame->m_interData = pic_in->analysisData.interData;
-        }
+        inFrame->m_intraData = pic_in->analysisData.intraData;
+        inFrame->m_interData = pic_in->analysisData.interData;
         m_lookahead->addPicture(inFrame, pic_in->sliceType);
         m_numDelayedPic++;
     }
