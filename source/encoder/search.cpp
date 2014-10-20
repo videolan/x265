@@ -2485,7 +2485,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
     if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
     {
         cu->setSkipFlagSubParts(true, 0, cu->m_depth[0]);
-        cu->clearCbf(0, depth);
 
         /* Merge/Skip */
         m_entropyCoder.resetBits();
