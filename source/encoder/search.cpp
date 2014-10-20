@@ -401,7 +401,7 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t abs
     return (ttype == TEXT_CHROMA_U) ? m_rdCost.scaleChromaDistCb(dist) : m_rdCost.scaleChromaDistCr(dist);
 }
 
-/* returns distortion. TODO reorder params */
+/* returns distortion */
 uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowRQTSplit,
                                      uint64_t& rdCost, uint32_t& rdBits, uint32_t& psyEnergy, uint32_t depthRange[2])
 {
@@ -424,6 +424,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
     if (m_param->rdPenalty && !isIntraSlice)
     {
         int maxTuSize = cu->m_slice->m_sps->quadtreeTULog2MaxSize;
+
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
         noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
 
@@ -448,12 +449,8 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
         uint32_t tuSize = 1 << log2TrSize;
 
         bool checkTransformSkip = cu->m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
-        if (checkTransformSkip)
-        {
-            checkTransformSkip &= !((cu->m_qp[0] == 0));
-            if (m_param->bEnableTSkipFast)
-                checkTransformSkip &= (cu->m_partSizes[absPartIdx] == SIZE_NxN);
-        }
+        if (m_param->bEnableTSkipFast)
+            checkTransformSkip &= cu->m_partSizes[absPartIdx] == SIZE_NxN;
 
         uint32_t stride = fencYuv->m_size;
         pixel*   pred   = predYuv->getLumaAddr(absPartIdx);
