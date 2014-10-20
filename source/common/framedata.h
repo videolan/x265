@@ -46,6 +46,7 @@ public:
 
     Slice*         m_slice;
     SAOParam*      m_saoParam;
+    x265_param*    m_param;
 
     FrameData*     m_freeListNext;
     PicYuv*        m_reconPicYuv;

@@ -37,6 +37,7 @@ bool FrameData::create(x265_param *param)
 
     m_numPartitions   = 1 << (g_maxFullDepth * 2);
     m_numPartInCUSize = 1 << g_maxFullDepth;
+    m_param = param;
 
     uint32_t widthInCU  = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
     uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
