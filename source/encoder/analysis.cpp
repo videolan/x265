@@ -366,9 +366,9 @@ void Analysis::parallelME(int threadId, int meId)
     }
 
     if (meId < m_slice->m_numRefIdx[0])
-        slave->singleMotionEstimation(m_curMECu, *m_curCUData, m_curPart, 0, meId);
+        slave->singleMotionEstimation(*this, *m_curMECu, *m_curCUData, m_curPart, 0, meId);
     else
-        slave->singleMotionEstimation(m_curMECu, *m_curCUData, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
+        slave->singleMotionEstimation(*this, *m_curMECu, *m_curCUData, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
 }
 
 void Analysis::parallelModeAnalysis(int threadId, int jobId)

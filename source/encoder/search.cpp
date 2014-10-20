@@ -1654,24 +1654,24 @@ uint32_t Search::mergeEstimation(TComDataCU* cu, const CU& cuData, int puIdx, Me
     return outCost;
 }
 
-void Search::singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, int list, int ref)
+void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const CU& cuData, int part, int list, int ref)
 {
     PicYuv*  fencPic = m_frame->m_origPicYuv;
 
     uint32_t partAddr;
     int      puWidth, puHeight;
-    cu->getPartIndexAndSize(part, partAddr, puWidth, puHeight);
-    prepMotionCompensation(cu, cuData, part);
+    cu.getPartIndexAndSize(part, partAddr, puWidth, puHeight);
+    prepMotionCompensation(&cu, cuData, part);
 
-    pixel* pu = fencPic->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + partAddr);
+    pixel* pu = fencPic->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + partAddr);
     m_me.setSourcePU(pu - fencPic->m_picOrg[0], puWidth, puHeight);
 
-    uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
+    uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
 
     MV amvpCand[AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-    int numMvc = cu->fillMvpCand(part, partAddr, list, ref, amvpCand, mvc);
+    int numMvc = cu.fillMvpCand(part, partAddr, list, ref, amvpCand, mvc);
 
     uint32_t bestCost = MAX_INT;
     int mvpIdx = 0;
@@ -1684,7 +1684,7 @@ void Search::singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, 
         if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
             continue;
 
-        cu->clipMv(mvCand);
+        cu.clipMv(mvCand);
 
         predInterLumaBlk(m_slice->m_refPicList[list][ref]->m_reconPicYuv, &m_predTempYuv, &mvCand);
         uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.m_size);
@@ -1697,7 +1697,7 @@ void Search::singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, 
     }
 
     MV mvmin, mvmax, outmv, mvp = amvpCand[mvpIdx];
-    setSearchRange(*cu, mvp, merange, mvmin, mvmax);
+    setSearchRange(cu, mvp, merange, mvmin, mvmax);
 
     int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -1708,15 +1708,15 @@ void Search::singleMotionEstimation(TComDataCU* cu, const CU& cuData, int part, 
     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
     checkBestMVP(amvpCand, outmv, mvp, mvpIdx, bits, cost);
 
-    ScopedLock _lock(m_outputLock);
-    if (cost < m_bestME[list].cost)
+    ScopedLock _lock(master.m_outputLock);
+    if (cost < master.m_bestME[list].cost)
     {
-        m_bestME[list].mv = outmv;
-        m_bestME[list].mvp = mvp;
-        m_bestME[list].mvpIdx = mvpIdx;
-        m_bestME[list].ref = ref;
-        m_bestME[list].cost = cost;
-        m_bestME[list].bits = bits;
+        master.m_bestME[list].mv = outmv;
+        master.m_bestME[list].mvp = mvp;
+        master.m_bestME[list].mvpIdx = mvpIdx;
+        master.m_bestME[list].ref = ref;
+        master.m_bestME[list].cost = cost;
+        master.m_bestME[list].bits = bits;
     }
 }
 
@@ -1785,9 +1785,9 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             {
                 id -= 1;
                 if (id < m_slice->m_numRefIdx[0])
-                    singleMotionEstimation(cu, cuData, puIdx, 0, id);
+                    singleMotionEstimation(*this, *cu, cuData, puIdx, 0, id);
                 else
-                    singleMotionEstimation(cu, cuData, puIdx, 1, id - m_slice->m_numRefIdx[0]);
+                    singleMotionEstimation(*this, *cu, cuData, puIdx, 1, id - m_slice->m_numRefIdx[0]);
 
                 if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
                     m_meCompletionEvent.trigger();
