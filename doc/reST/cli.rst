@@ -648,11 +648,11 @@ Mode decision / Analysis
 
 .. option:: --cu-lossless, --no-cu-lossless
 
-	For each CU, evaluate lossless encode (transform and quant bypass)
-	as a potential rate distortion optimization. If the global option
-	:option:`--lossless` has been specified, all CUs will be encoded
-	this way unconditionally regardless of whether this option was
-	enabled. Default disabled.
+	For each CU, evaluate lossless (transform and quant bypass) encode
+	of the best non-lossless mode option as a potential rate distortion
+	optimization. If the global option :option:`--lossless` has been
+	specified, all CUs will be encoded as lossless unconditionally
+	regardless of whether this option was enabled. Default disabled.
 
 .. option:: --signhide, --no-signhide
 
