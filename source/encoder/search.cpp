@@ -1215,6 +1215,46 @@ void Search::residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDept
     }
 }
 
+void Search::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes)
+{
+    uint32_t depth = cuData.depth;
+    TComDataCU& cu = intraMode.cu;
+
+    cu.setPartSizeSubParts(partSize, 0, depth);
+    cu.setPredModeSubParts(MODE_INTRA, 0, depth);
+
+    uint32_t tuDepthRange[2];
+    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
+    intraMode.initCosts();
+    intraMode.distortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
+
+    m_entropyCoder.resetBits();
+    if (m_slice->m_pps->bTransquantBypassEnabled)
+        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[0]);
+
+    if (!m_slice->isIntra())
+    {
+        m_entropyCoder.codeSkipFlag(cu, 0);
+        m_entropyCoder.codePredMode(cu.m_predModes[0]);
+    }
+
+    m_entropyCoder.codePartSize(cu, 0, depth);
+    m_entropyCoder.codePredInfo(cu, 0);
+    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
+
+    bool bCodeDQP = m_slice->m_pps->bUseDQP;
+    m_entropyCoder.codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
+    m_entropyCoder.store(intraMode.contexts);
+    intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
+    if (m_rdCost.m_psyRd)
+        intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, intraMode.fencYuv->m_buf[0], intraMode.fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
+
+    updateModeCost(intraMode);
+}
+
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes)
 {
     TComDataCU* cu = &intraMode.cu;
@@ -3601,7 +3641,7 @@ uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t absPar
 }
 
 /* returns the number of bits required to signal a non-most-probable mode.
- * on return mpm contains bitmap of most probable modes */
+ * on return mpms contains bitmap of most probable modes */
 uint32_t Search::getIntraRemModeBits(TComDataCU& cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
 {
     mpms = 0;

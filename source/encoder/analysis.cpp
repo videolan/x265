@@ -225,6 +225,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuData);
             checkIntra(mode, cuData, size, sharedModes);
+            checkBestMode(mode, depth);
 
             if (m_bTryLossless)
                 tryLossless(cuData);
@@ -243,11 +244,13 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
 
         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuData);
         checkIntra(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N, NULL);
+        checkBestMode(md.pred[PRED_INTRA], depth);
 
         if (depth == g_maxCUDepth)
         {
             md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuData);
             checkIntra(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN, NULL);
+            checkBestMode(md.pred[PRED_INTRA_NxN], depth);
         }
 
         if (m_bTryLossless)
@@ -305,49 +308,6 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuData.encodeIdx);
-}
-
-/* TODO: move to Search except checkBestMode() */
-void Analysis::checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes)
-{
-    uint32_t depth = cuData.depth;
-    TComDataCU& cu = intraMode.cu;
-    Yuv& origYuv = m_modeDepth[depth].fencYuv;
-
-    cu.setPartSizeSubParts(partSize, 0, depth);
-    cu.setPredModeSubParts(MODE_INTRA, 0, depth);
-
-    uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
-
-    intraMode.initCosts();
-    intraMode.distortion += estIntraPredQT(intraMode, cuData, tuDepthRange, sharedModes);
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
-
-    m_entropyCoder.resetBits();
-    if (m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[0]);
-
-    if (!m_slice->isIntra())
-    {
-        m_entropyCoder.codeSkipFlag(cu, 0);
-        m_entropyCoder.codePredMode(cu.m_predModes[0]);
-    }
-
-    m_entropyCoder.codePartSize(cu, 0, depth);
-    m_entropyCoder.codePredInfo(cu, 0);
-    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
-
-    bool bCodeDQP = m_slice->m_pps->bUseDQP;
-    m_entropyCoder.codeCoeff(cu, 0, depth, bCodeDQP, tuDepthRange);
-    m_entropyCoder.store(intraMode.contexts);
-    intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
-    if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cuData.log2CUSize - 2, origYuv.m_buf[0], origYuv.m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
-
-    updateModeCost(intraMode);
-    checkBestMode(intraMode, depth);
 }
 
 bool Analysis::findJob(int threadId)
@@ -992,9 +952,13 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
                 (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0)))
             {
                 checkIntra(md.pred[PRED_INTRA], cuData, SIZE_2Nx2N, NULL);
+                checkBestMode(md.pred[PRED_INTRA], depth);
 
                 if (depth == g_maxCUDepth && cuData.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                {
                     checkIntra(md.pred[PRED_INTRA_NxN], cuData, SIZE_NxN, NULL);
+                    checkBestMode(md.pred[PRED_INTRA_NxN], depth);
+                }
             }
         }
 

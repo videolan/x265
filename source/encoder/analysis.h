@@ -106,7 +106,6 @@ protected:
     void checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize partSize, bool bMergeOnly);
 
     /* measure intra options */
-    void checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
     void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
     void encodeIntraInInter(Mode& intraMode, const CU& cuData);
 
