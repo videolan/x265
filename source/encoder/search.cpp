@@ -312,30 +312,24 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
     uint32_t fullDepth  = mode.cu.m_depth[0] + trDepth;
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
-    bool mightSplit     = log2TrSize > *depthRange;
     bool mightNotSplit  = log2TrSize <= *(depthRange + 1);
+    bool mightSplit     = (log2TrSize > *depthRange) && (bAllowSplit || !mightNotSplit);
 
     TComDataCU& cu = mode.cu;
     Yuv* predYuv = &mode.predYuv;
     const Yuv* fencYuv = mode.fencYuv;
-
-    // don't check split if TU size is less or equal to max TU size
-    bool noSplitIntraMaxTuSize = mightNotSplit;
 
     if (m_param->rdPenalty && m_slice->m_sliceType != I_SLICE)
     {
         int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
 
         // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
-        noSplitIntraMaxTuSize = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
+        mightSplit &= (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
 
         if (m_param->rdPenalty == 2 && m_param->tuQTMaxIntraDepth > fullDepth)
             // if maximum RD-penalty don't check TU size 32x32
             mightNotSplit = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
-
-    if (!bAllowSplit && noSplitIntraMaxTuSize)
-        mightSplit = false;
 
     Cost fullCost;
     fullCost.rdcost = MAX_INT64;
