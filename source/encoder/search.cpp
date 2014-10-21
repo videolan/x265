@@ -476,7 +476,6 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
             if (m_rdCost.m_psyRd)
             {
                 uint32_t zorder = cuData.encodeIdx + absPartIdx;
-                pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                 tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
                     m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
                 tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
