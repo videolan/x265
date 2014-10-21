@@ -895,8 +895,8 @@ void TComDataCU::setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
 
-    for (uint32_t scuIdx = absPartIdx; scuIdx < absPartIdx + curPartNum; scuIdx++)
-        m_qp[scuIdx] = qp;
+    char cqp = (char)qp;
+    memset(m_qp + absPartIdx, cqp, sizeof(char) * curPartNum);
 }
 
 void TComDataCU::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
