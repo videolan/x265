@@ -1655,8 +1655,10 @@ void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const 
     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
     checkBestMVP(amvpCand, outmv, mvp, mvpIdx, bits, cost);
 
+    /* tie goes to the smallest ref ID, just like --no-pme */
     ScopedLock _lock(master.m_outputLock);
-    if (cost < master.m_bestME[list].cost)
+    if (cost < master.m_bestME[list].cost ||
+       (cost == master.m_bestME[list].cost && ref < master.m_bestME[list].ref))
     {
         master.m_bestME[list].mv = outmv;
         master.m_bestME[list].mvp = mvp;
@@ -1666,7 +1668,6 @@ void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const 
         master.m_bestME[list].bits = bits;
     }
 }
-
 
 void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma)
 {
@@ -1681,7 +1682,9 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
     memset(&merge, 0, sizeof(merge));
 
     uint32_t lastMode = 0;
-    for (int puIdx = 0; puIdx < 2; puIdx++)
+    int numPart = cu->getNumPartInter();
+
+    for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
         uint32_t absPartIdx;
         int      puWidth, puHeight;
