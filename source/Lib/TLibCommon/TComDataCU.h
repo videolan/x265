@@ -244,9 +244,6 @@ public:
 
 protected:
 
-    template<typename T>
-    void setSubPart(T bParameter, T* baseCTU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx);
-
     char getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
 

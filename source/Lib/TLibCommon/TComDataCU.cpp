@@ -906,104 +906,6 @@ void TComDataCU::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint
     memset(m_lumaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
 }
 
-template<typename T>
-void TComDataCU::setSubPart(T param, T* baseCTU, uint32_t cuAddr, uint32_t cuDepth, uint32_t puIdx)
-{
-    X265_CHECK(sizeof(T) == 1, "size check failure\n"); // Using memset() works only for types of size 1
-
-    uint32_t curPartNumQ = (NUM_CU_PARTITIONS >> (2 * cuDepth)) >> 2;
-    switch (m_partSizes[cuAddr])
-    {
-    case SIZE_2Nx2N:
-        memset(baseCTU + cuAddr, param, 4 * curPartNumQ);
-        break;
-    case SIZE_2NxN:
-        memset(baseCTU + cuAddr, param, 2 * curPartNumQ);
-        break;
-    case SIZE_Nx2N:
-        memset(baseCTU + cuAddr, param, curPartNumQ);
-        memset(baseCTU + cuAddr + 2 * curPartNumQ, param, curPartNumQ);
-        break;
-    case SIZE_NxN:
-        memset(baseCTU + cuAddr, param, curPartNumQ);
-        break;
-    case SIZE_2NxnU:
-        if (puIdx == 0)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 1));
-            memset(baseCTU + cuAddr + curPartNumQ, param, (curPartNumQ >> 1));
-        }
-        else if (puIdx == 1)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 1));
-            memset(baseCTU + cuAddr + curPartNumQ, param, ((curPartNumQ >> 1) + (curPartNumQ << 1)));
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part unit index\n");
-        }
-        break;
-    case SIZE_2NxnD:
-        if (puIdx == 0)
-        {
-            memset(baseCTU + cuAddr, param, ((curPartNumQ << 1) + (curPartNumQ >> 1)));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1) + curPartNumQ, param, (curPartNumQ >> 1));
-        }
-        else if (puIdx == 1)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 1));
-            memset(baseCTU + cuAddr + curPartNumQ, param, (curPartNumQ >> 1));
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part unit index\n");
-        }
-        break;
-    case SIZE_nLx2N:
-        if (puIdx == 0)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1) + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-        }
-        else if (puIdx == 1)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ >> 1), param, (curPartNumQ + (curPartNumQ >> 2)));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1) + (curPartNumQ >> 1), param, (curPartNumQ + (curPartNumQ >> 2)));
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part unit index\n");
-        }
-        break;
-    case SIZE_nRx2N:
-        if (puIdx == 0)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ + (curPartNumQ >> 2)));
-            memset(baseCTU + cuAddr + curPartNumQ + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1), param, (curPartNumQ + (curPartNumQ >> 2)));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1) + curPartNumQ + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-        }
-        else if (puIdx == 1)
-        {
-            memset(baseCTU + cuAddr, param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1), param, (curPartNumQ >> 2));
-            memset(baseCTU + cuAddr + (curPartNumQ << 1) + (curPartNumQ >> 1), param, (curPartNumQ >> 2));
-        }
-        else
-        {
-            X265_CHECK(0, "unexpected part unit index\n");
-        }
-        break;
-    default:
-        X265_CHECK(0, "unexpected part type\n");
-    }
-}
-
 void TComDataCU::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
@@ -1011,9 +913,86 @@ void TComDataCU::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uin
     memset(m_chromaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
 }
 
-void TComDataCU::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth)
+void TComDataCU::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth)
 {
-    setSubPart<uint8_t>(dir, m_interDir, absPartIdx, depth, partIdx);
+    uint32_t curPartNumQ = (NUM_CU_PARTITIONS >> (2 * depth)) >> 2;
+    X265_CHECK(puIdx < 2, "unexpected part unit index\n");
+
+    switch (m_partSizes[absPartIdx])
+    {
+    case SIZE_2Nx2N:
+        memset(m_interDir + absPartIdx, dir, 4 * curPartNumQ);
+        break;
+    case SIZE_2NxN:
+        memset(m_interDir + absPartIdx, dir, 2 * curPartNumQ);
+        break;
+    case SIZE_Nx2N:
+        memset(m_interDir + absPartIdx, dir, curPartNumQ);
+        memset(m_interDir + absPartIdx + 2 * curPartNumQ, dir, curPartNumQ);
+        break;
+    case SIZE_NxN:
+        memset(m_interDir + absPartIdx, dir, curPartNumQ);
+        break;
+    case SIZE_2NxnU:
+        if (!puIdx)
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 1));
+            memset(m_interDir + absPartIdx + curPartNumQ, dir, (curPartNumQ >> 1));
+        }
+        else
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 1));
+            memset(m_interDir + absPartIdx + curPartNumQ, dir, ((curPartNumQ >> 1) + (curPartNumQ << 1)));
+        }
+        break;
+    case SIZE_2NxnD:
+        if (!puIdx)
+        {
+            memset(m_interDir + absPartIdx, dir, ((curPartNumQ << 1) + (curPartNumQ >> 1)));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1) + curPartNumQ, dir, (curPartNumQ >> 1));
+        }
+        else
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 1));
+            memset(m_interDir + absPartIdx + curPartNumQ, dir, (curPartNumQ >> 1));
+        }
+        break;
+    case SIZE_nLx2N:
+        if (!puIdx)
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1) + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+        }
+        else
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ >> 1), dir, (curPartNumQ + (curPartNumQ >> 2)));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1) + (curPartNumQ >> 1), dir, (curPartNumQ + (curPartNumQ >> 2)));
+        }
+        break;
+    case SIZE_nRx2N:
+        if (!puIdx)
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ + (curPartNumQ >> 2)));
+            memset(m_interDir + absPartIdx + curPartNumQ + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1), dir, (curPartNumQ + (curPartNumQ >> 2)));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1) + curPartNumQ + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+        }
+        else
+        {
+            memset(m_interDir + absPartIdx, dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1), dir, (curPartNumQ >> 2));
+            memset(m_interDir + absPartIdx + (curPartNumQ << 1) + (curPartNumQ >> 1), dir, (curPartNumQ >> 2));
+        }
+        break;
+    default:
+        X265_CHECK(0, "unexpected part type\n");
+        break;
+    }
 }
 
 void TComDataCU::setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)
