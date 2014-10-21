@@ -130,7 +130,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
 
     invalidateContexts(0);
     m_quant.setQPforQuant(ctu);
-    m_rdContexts[0].cur.load(initialContext);
+    m_rqt[0].cur.load(initialContext);
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
 
     uint32_t numPartition = ctu.m_numPartitions;
@@ -270,7 +270,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-        Entropy* nextContext = &m_rdContexts[depth].cur;
+        Entropy* nextContext = &m_rqt[depth].cur;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -278,7 +278,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
-                m_rdContexts[nextDepth].cur.load(*nextContext);
+                m_rqt[nextDepth].cur.load(*nextContext);
                 compressIntraCU(parentCTU, childCuData, shared, zOrder);
 
                 // Save best CU and pred data for this sub CU
@@ -383,7 +383,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         {
             if (m_param->noiseReduction) /* TODO: move to setQPforQuant() */
                 slave->m_quant.m_nr = &m_tld[threadId].nr[m_frame->m_frameEncoderID];
-            slave->m_rdContexts[m_curCUData->depth].cur.load(m_rdContexts[m_curCUData->depth].cur);
+            slave->m_rqt[m_curCUData->depth].cur.load(m_rqt[m_curCUData->depth].cur);
         }
     }
 
@@ -585,7 +585,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-        Entropy* nextContext = &m_rdContexts[depth].cur;
+        Entropy* nextContext = &m_rqt[depth].cur;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -593,7 +593,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
-                m_rdContexts[nextDepth].cur.load(*nextContext);
+                m_rqt[nextDepth].cur.load(*nextContext);
                 compressInterCU_dist(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
@@ -816,7 +816,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-        Entropy* nextContext = &m_rdContexts[depth].cur;
+        Entropy* nextContext = &m_rqt[depth].cur;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -824,7 +824,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
-                m_rdContexts[nextDepth].cur.load(*nextContext);
+                m_rqt[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd0_4(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
@@ -980,7 +980,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
         invalidateContexts(nextDepth);
-        Entropy* nextContext = &m_rdContexts[depth].cur;
+        Entropy* nextContext = &m_rqt[depth].cur;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -988,7 +988,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
-                m_rdContexts[nextDepth].cur.load(*nextContext);
+                m_rqt[nextDepth].cur.load(*nextContext);
                 compressInterCU_rd5_6(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
@@ -1422,7 +1422,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    m_entropyCoder.load(m_rdContexts[cuData.depth].cur);
+    m_entropyCoder.load(m_rqt[cuData.depth].cur);
 
     Cost icosts;
     codeIntraLumaQT(intraMode, cuData, 0, 0, false, icosts, tuDepthRange);

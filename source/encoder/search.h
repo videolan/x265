@@ -46,10 +46,13 @@ namespace x265 {
 class Entropy;
 struct ThreadLocalData;
 
-/* All the CABAC contexts that Analysis needs to keep track of at each depth */
-struct RDContexts
+/* All the CABAC contexts that Analysis needs to keep track of at each depth
+ * and temp buffers for residual, coeff, and recon for use during residual
+ * quad-tree depth recursion */
+struct RQTData
 {
     Entropy  cur;     /* input context for current CU */
+
     Entropy  rqtTemp; /* residual quad-tree temp context */
     Entropy  rqtRoot; /* residual quad-tree start context */
     Entropy  rqtTest; /* residual quad-tree test context */
@@ -77,7 +80,7 @@ public:
     const Slice*    m_slice;
 
     Entropy         m_entropyCoder;
-    RDContexts      m_rdContexts[NUM_FULL_DEPTH];
+    RQTData         m_rqt[NUM_LAYERS];
 
     Yuv             m_predTempYuv;
     Yuv             m_bidirPredYuv[2];

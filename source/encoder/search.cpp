@@ -93,8 +93,8 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
         ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
-        ok &= m_rdContexts[i].tmpResiYuv.create(g_maxCUSize >> i, m_param->internalCsp);
-        ok &= m_rdContexts[i].tmpReconYuv.create(g_maxCUSize >> i, m_param->internalCsp);
+        ok &= m_rqt[i].tmpResiYuv.create(g_maxCUSize >> i, m_param->internalCsp);
+        ok &= m_rqt[i].tmpReconYuv.create(g_maxCUSize >> i, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
@@ -117,8 +117,8 @@ Search::~Search()
     {
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
-        m_rdContexts[i].tmpResiYuv.destroy();
-        m_rdContexts[i].tmpReconYuv.destroy();
+        m_rqt[i].tmpResiYuv.destroy();
+        m_rqt[i].tmpReconYuv.destroy();
     }
 
     X265_FREE(m_qtTempCbf[0]);
@@ -142,10 +142,10 @@ void Search::invalidateContexts(int fromDepth)
     /* catch reads without previous writes */
     for (int d = fromDepth; d < NUM_FULL_DEPTH; d++)
     {
-        m_rdContexts[d].cur.markInvalid();
-        m_rdContexts[d].rqtTemp.markInvalid();
-        m_rdContexts[d].rqtRoot.markInvalid();
-        m_rdContexts[d].rqtTest.markInvalid();
+        m_rqt[d].cur.markInvalid();
+        m_rqt[d].rqtTemp.markInvalid();
+        m_rqt[d].rqtRoot.markInvalid();
+        m_rqt[d].rqtTest.markInvalid();
     }
 }
 #else
@@ -369,7 +369,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
         if (m_bEnableRDOQ)
             m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
-        m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
+        m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
 
         ALIGN_VAR_32(coeff_t, tsCoeffY[32 * 32]);
         ALIGN_VAR_32(int16_t, tsReconY[32 * 32]);
@@ -415,7 +415,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
             cu.setCbfSubParts((!!numSig) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
 
             if (useTSkip)
-                m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
+                m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);
 
             m_entropyCoder.resetBits();
             if (!absPartIdx)
@@ -460,7 +460,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
                 tmpBits *= 4;
 
             if (!useTSkip && checkTransformSkip)
-                m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
+                m_entropyCoder.store(m_rqt[fullDepth].rqtTemp);
 
             if (m_rdCost.m_psyRd)
             {
@@ -499,7 +499,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
             {
                 cu.setTransformSkipSubParts(false, TEXT_LUMA, absPartIdx, fullDepth);
                 cu.setCbfSubParts(bCBF << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-                m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
+                m_entropyCoder.load(m_rqt[fullDepth].rqtTemp);
             }
         }
     }
@@ -508,8 +508,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
     {
         if (mightNotSplit)
         {
-            m_entropyCoder.store(m_rdContexts[fullDepth].rqtTest);  // save state after full TU encode
-            m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);   // prep state of split encode
+            m_entropyCoder.store(m_rqt[fullDepth].rqtTest);  // save state after full TU encode
+            m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);   // prep state of split encode
         }
 
         // code splitted block
@@ -552,7 +552,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
         else
         {
             // recover state of full-size TU encode
-            m_entropyCoder.load(m_rdContexts[fullDepth].rqtTest);
+            m_entropyCoder.load(m_rqt[fullDepth].rqtTest);
 
             // recover transform index and Cbf values
             cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
@@ -849,7 +849,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDept
             if (checkTransformSkip)
             {
                 // use RDO to decide whether Cr/Cb takes TS
-                m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
+                m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
 
                 uint64_t singleCost     = MAX_INT64;
                 int      bestModeId     = 0;
@@ -909,10 +909,10 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDept
                         singleCbfC  = singleCbfCTmp;
                         singlePsyEnergy = singlePsyEnergyTmp;
                         if (bestModeId == firstCheckId)
-                            m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
+                            m_entropyCoder.store(m_rqt[fullDepth].rqtTemp);
                     }
                     if (chromaModeId == firstCheckId)
-                        m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
+                        m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);
                 }
 
                 if (bestModeId == firstCheckId)
@@ -923,7 +923,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDept
                     primitives.square_copy_sp[log2TrSizeC - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
-                    m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
+                    m_entropyCoder.load(m_rqt[fullDepth].rqtTemp);
                 }
                 else
                 {
@@ -937,7 +937,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDept
                 outDist += singleDistC;
 
                 if (chromaId == 1)
-                    m_entropyCoder.store(m_rdContexts[fullDepth].rqtRoot);
+                    m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
             }
             else
             {
@@ -1313,7 +1313,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
             {
                 if (candCostList[i] == MAX_INT64)
                     break;
-                m_entropyCoder.load(m_rdContexts[depth].cur);
+                m_entropyCoder.load(m_rqt[depth].cur);
                 cu->setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTrDepth);
 
                 Cost icosts;
@@ -1324,7 +1324,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
 
         /* remeasure best mode, allowing TU splits */
         cu->setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTrDepth);
-        m_entropyCoder.load(m_rdContexts[depth].cur);
+        m_entropyCoder.load(m_rqt[depth].cur);
 
         Cost icosts;
         codeIntraLumaQT(intraMode, cuData, initTrDepth, absPartIdx, true, icosts, depthRange);
@@ -1359,7 +1359,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
     }
 
     // TODO: remove these two lines
-    m_entropyCoder.load(m_rdContexts[depth].cur);
+    m_entropyCoder.load(m_rqt[depth].cur);
     x265_emms();
 
     return totalDistortion;
@@ -1457,14 +1457,14 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
         for (uint32_t mode = minMode; mode < maxMode; mode++)
         {
             // restore context models
-            m_entropyCoder.load(m_rdContexts[depth].cur);
+            m_entropyCoder.load(m_rqt[depth].cur);
 
             cu->setChromIntraDirSubParts(modeList[mode], absPartIdxC, depth + initTrDepth);
             uint32_t psyEnergy = 0;
             uint32_t dist = codeIntraChromaQt(intraMode, cuData, initTrDepth, absPartIdxC, psyEnergy);
 
             if (m_slice->m_pps->bTransformSkipEnabled)
-                m_entropyCoder.load(m_rdContexts[depth].cur);
+                m_entropyCoder.load(m_rqt[depth].cur);
 
             m_entropyCoder.resetBits();
             // chroma prediction mode
@@ -1542,7 +1542,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
     }
 
     /* TODO: remove this */
-    m_entropyCoder.load(m_rdContexts[depth].cur);
+    m_entropyCoder.load(m_rqt[depth].cur);
     return totalDistortion;
 }
 
@@ -2310,7 +2310,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     interMode.distortion += m_rdCost.scaleChromaDistCb(primitives.sse_pp[part](fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
     interMode.distortion += m_rdCost.scaleChromaDistCr(primitives.sse_pp[part](fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
 
-    m_entropyCoder.load(m_rdContexts[depth].cur);
+    m_entropyCoder.load(m_rqt[depth].cur);
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu->m_cuTransquantBypass[0]);
@@ -2350,13 +2350,13 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
 
     m_quant.setQPforQuant(interMode.cu);
 
-    ShortYuv* inputResiYuv = &m_rdContexts[cuData.depth].tmpResiYuv;
+    ShortYuv* inputResiYuv = &m_rqt[cuData.depth].tmpResiYuv;
     inputResiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
     cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
-    m_entropyCoder.load(m_rdContexts[depth].cur);
+    m_entropyCoder.load(m_rqt[depth].cur);
 
     uint64_t cost = 0;
     uint32_t bits = 0;
@@ -2369,7 +2369,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         cbf0Dist += m_rdCost.scaleChromaDistCr(primitives.sse_pp[cpart](fencYuv->m_buf[2], predYuv->m_csize, predYuv->m_buf[2], predYuv->m_csize));
 
         /* Consider the RD cost of not signaling any residual */
-        m_entropyCoder.load(m_rdContexts[depth].cur);
+        m_entropyCoder.load(m_rqt[depth].cur);
         m_entropyCoder.resetBits();
         m_entropyCoder.codeQtRootCbfZero();
         uint32_t cbf0Bits = m_entropyCoder.getNumberOfWrittenBits();
@@ -2397,7 +2397,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData)
         saveResidualQTData(*cu, interMode.resiYuv, 0, depth);
 
     /* calculate signal bits for inter/merge/skip coded CU */
-    m_entropyCoder.load(m_rdContexts[depth].cur);
+    m_entropyCoder.load(m_rqt[depth].cur);
 
     uint32_t coeffBits;
     if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
@@ -2667,7 +2667,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
 
     uint32_t bestCBF[MAX_NUM_COMPONENT];
     uint32_t bestsubTUCBF[MAX_NUM_COMPONENT][2];
-    m_entropyCoder.store(m_rdContexts[depth].rqtRoot);
+    m_entropyCoder.store(m_rqt[depth].rqtRoot);
 
     uint32_t trSize = 1 << log2TrSize;
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
@@ -3005,7 +3005,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             ALIGN_VAR_32(coeff_t, tsCoeffY[MAX_TS_SIZE * MAX_TS_SIZE]);
             ALIGN_VAR_32(int16_t, tsResiY[MAX_TS_SIZE * MAX_TS_SIZE]);
 
-            m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
+            m_entropyCoder.load(m_rqt[depth].rqtRoot);
 
             cu->setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
@@ -3059,7 +3059,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             uint64_t singleCostU = MAX_INT64;
             uint64_t singleCostV = MAX_INT64;
 
-            m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
+            m_entropyCoder.load(m_rqt[depth].rqtRoot);
 
             TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
@@ -3164,7 +3164,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             while (tuIterator.isNextSection());
         }
 
-        m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
+        m_entropyCoder.load(m_rqt[depth].rqtRoot);
 
         m_entropyCoder.resetBits();
 
@@ -3248,8 +3248,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
     {
         if (bCheckFull)
         {
-            m_entropyCoder.store(m_rdContexts[depth].rqtTest);
-            m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
+            m_entropyCoder.store(m_rqt[depth].rqtTest);
+            m_entropyCoder.load(m_rqt[depth].rqtRoot);
         }
         uint32_t subdivDist = 0;
         uint32_t subdivBits = 0;
@@ -3295,7 +3295,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             cu->m_cbf[2][absPartIdx + i] |= vcbf << trMode;
         }
 
-        m_entropyCoder.load(m_rdContexts[depth].rqtRoot);
+        m_entropyCoder.load(m_rqt[depth].rqtRoot);
         m_entropyCoder.resetBits();
 
         xEncodeResidualQT(cu, absPartIdx, depth, true,  TEXT_LUMA, depthRange);
@@ -3339,7 +3339,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
             }
         }
         X265_CHECK(bCheckFull, "check-full must be set\n");
-        m_entropyCoder.load(m_rdContexts[depth].rqtTest);
+        m_entropyCoder.load(m_rqt[depth].rqtTest);
     }
 
     rdCost += singleCost;
@@ -3551,7 +3551,7 @@ uint32_t Search::getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t absPar
     cu.m_lumaIntraDir[absPartIdx] = (uint8_t)mode;
 
     // Reload only contexts required for coding intra mode information
-    m_entropyCoder.loadIntraDirModeLuma(m_rdContexts[depth].cur);
+    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false); /* TODO: Pass mode here so this func can take const cu ref */
     return m_entropyCoder.getNumberOfWrittenBits();
