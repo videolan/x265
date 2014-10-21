@@ -312,15 +312,15 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
     uint32_t fullDepth  = mode.cu.m_depth[0] + trDepth;
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
-    bool bCheckSplit = log2TrSize > *depthRange;
-    bool bCheckFull  = log2TrSize <= *(depthRange + 1);
+    bool mightSplit     = log2TrSize > *depthRange;
+    bool mightNotSplit  = log2TrSize <= *(depthRange + 1);
 
     TComDataCU& cu = mode.cu;
     Yuv* predYuv = &mode.predYuv;
     const Yuv* fencYuv = mode.fencYuv;
 
     // don't check split if TU size is less or equal to max TU size
-    bool noSplitIntraMaxTuSize = bCheckFull;
+    bool noSplitIntraMaxTuSize = mightNotSplit;
 
     if (m_param->rdPenalty && m_slice->m_sliceType != I_SLICE)
     {
@@ -331,18 +331,18 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
 
         if (m_param->rdPenalty == 2 && m_param->tuQTMaxIntraDepth > fullDepth)
             // if maximum RD-penalty don't check TU size 32x32
-            bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
+            mightNotSplit = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
     }
 
     if (!bAllowSplit && noSplitIntraMaxTuSize)
-        bCheckSplit = false;
+        mightSplit = false;
 
     Cost fullCost;
     fullCost.rdcost = MAX_INT64;
     int      bTSkip = 0;
     uint32_t bCBF   = 0;
 
-    if (bCheckFull)
+    if (mightNotSplit)
     {
         uint32_t tuSize = 1 << log2TrSize;
 
@@ -510,9 +510,9 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
         }
     }
 
-    if (bCheckSplit)
+    if (mightSplit)
     {
-        if (bCheckFull)
+        if (mightNotSplit)
         {
             m_entropyCoder.store(m_rdContexts[fullDepth].rqtTest);  // save state after full TU encode
             m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);   // prep state of split encode
@@ -534,7 +534,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
             cu.m_cbf[0][absPartIdx + offs] |= (cbf << trDepth);
 
         /* TODO: can't we do this before the splits? */
-        if (bCheckFull && log2TrSize != depthRange[0])
+        if (mightNotSplit && log2TrSize != depthRange[0])
         {
             /* If we could have coded this TU depth, include cost of subdiv flag */
             m_entropyCoder.resetBits();
