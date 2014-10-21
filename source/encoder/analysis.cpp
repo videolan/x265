@@ -1424,11 +1424,13 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
 
     m_entropyCoder.load(m_rdContexts[cuData.depth].cur);
 
-    uint64_t puCost;
-    uint32_t puBits, psyEnergy;
-    intraMode.distortion = codeIntraLumaQT(intraMode, cuData, 0, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
+    Cost icosts;
+    codeIntraLumaQT(intraMode, cuData, 0, 0, false, icosts, tuDepthRange);
+
     xSetIntraResultQT(cu, 0, 0, reconYuv);  /* TODO: why is recon a second call? */
-    cu->copyToPic(cu->m_depth[0], 0, 0);
+    cu->copyToPic(cu->m_depth[0], 0, 0);    /* TODO: remove me */
+
+    intraMode.distortion  = icosts.distortion;
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);
 
     m_entropyCoder.resetBits();

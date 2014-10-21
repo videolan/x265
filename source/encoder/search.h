@@ -202,12 +202,20 @@ protected:
     void     xEncSubdivCbfQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
     void     xEncCoeffQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
 
+    struct Cost
+    {
+        uint64_t rdcost;
+        uint32_t bits;
+        uint32_t distortion;
+        uint32_t energy;
+        Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
+    };
+
     uint32_t xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, ShortYuv* inResiYuv, uint32_t depth,
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t tuDepthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowRQTSplit, find optimal RQT splits
-    uint32_t codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowRQTSplit,
-                             uint64_t& rdCost, uint32_t& puBits, uint32_t& psyEnergy, uint32_t depthRange[2]);
+    void     codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowRQTSplit, find optimal RQT splits
     uint32_t codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
