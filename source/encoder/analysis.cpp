@@ -1426,7 +1426,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CU& cuData)
 
     uint64_t puCost;
     uint32_t puBits, psyEnergy;
-    intraMode.distortion = xRecurIntraCodingQT(intraMode, cuData, 0, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
+    intraMode.distortion = codeIntraLumaQT(intraMode, cuData, 0, 0, false, puCost, puBits, psyEnergy, tuDepthRange);
     xSetIntraResultQT(cu, 0, 0, reconYuv);  /* TODO: why is recon a second call? */
     cu->copyToPic(cu->m_depth[0], 0, 0);
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuData);

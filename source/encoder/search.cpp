@@ -404,8 +404,8 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t abs
 }
 
 /* returns distortion */
-uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowRQTSplit,
-                                     uint64_t& rdCost, uint32_t& rdBits, uint32_t& psyEnergy, uint32_t depthRange[2])
+uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowRQTSplit,
+                                 uint64_t& rdCost, uint32_t& rdBits, uint32_t& psyEnergy, uint32_t depthRange[2])
 {
     uint32_t fullDepth  = mode.cu.m_depth[0] + trDepth;
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
@@ -494,6 +494,8 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
             cu->setCbfSubParts(tmpCbf << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
             uint32_t tmpBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
+            if (!useTSkip && checkTransformSkip)
+                m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
 
             if (m_param->rdPenalty && log2TrSize == 5 && m_slice->m_sliceType != I_SLICE)
                 tmpBits *= 4;
@@ -517,10 +519,8 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
                 singlePsyEnergyY = tmpEnergy;
                 singleCbfY   = tmpCbf;
                 bestTSkip    = useTSkip;
-                if (!bestTSkip)
-                    m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
             }
-            if (!useTSkip)
+            if (!useTSkip && checkTransformSkip)
                 m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
         }
 
@@ -564,7 +564,7 @@ uint32_t Search::xRecurIntraCodingQT(Mode& mode, const CU& cuData, uint32_t trDe
 
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
-            splitDistY += xRecurIntraCodingQT(mode, cuData, trDepth + 1, absPartIdxSub, bAllowRQTSplit, splitCost, splitBits, splitPsyEnergyY, depthRange);
+            splitDistY += codeIntraLumaQT(mode, cuData, trDepth + 1, absPartIdxSub, bAllowRQTSplit, splitCost, splitBits, splitPsyEnergyY, depthRange);
             splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
@@ -780,7 +780,7 @@ void Search::offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, u
 }
 
 /* returns distortion */
-uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy)
+uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy)
 {
     TComDataCU* cu = &mode.cu;
     Yuv* predYuv = &mode.predYuv;
@@ -803,7 +803,7 @@ uint32_t Search::xRecurIntraChromaCodingQT(Mode& mode, const CU& cuData, uint32_
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             uint32_t psyEnergyTemp = 0;
-            outDist += xRecurIntraChromaCodingQT(mode, cuData, trDepth + 1, absPartIdxSub, psyEnergyTemp);
+            outDist += codeIntraChromaQt(mode, cuData, trDepth + 1, absPartIdxSub, psyEnergyTemp);
             splitPsyEnergy += psyEnergyTemp;
             splitCbfU |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
             splitCbfV |= cu->getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
@@ -1358,7 +1358,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
                 cu->setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTrDepth);
                 cost = bits = 0;
                 uint32_t psyEnergy = 0;
-                xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, false, cost, bits, psyEnergy, depthRange);
+                codeIntraLumaQT(intraMode, cuData, initTrDepth, absPartIdx, false, cost, bits, psyEnergy, depthRange);
                 COPY2_IF_LT(bcost, cost, bmode, rdModeList[i]);
             }
         }
@@ -1370,7 +1370,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t dept
         uint32_t psyEnergy = 0, rdBits = 0;
         uint64_t tmpcost = 0;
         // update distortion (rate and r-d costs are determined later)
-        totalDistortion += xRecurIntraCodingQT(intraMode, cuData, initTrDepth, absPartIdx, true, tmpcost, rdBits, psyEnergy, depthRange);
+        totalDistortion += codeIntraLumaQT(intraMode, cuData, initTrDepth, absPartIdx, true, tmpcost, rdBits, psyEnergy, depthRange);
 
         xSetIntraResultQT(cu, initTrDepth, absPartIdx, reconYuv);
 
@@ -1503,7 +1503,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CU& cuData)
 
             cu->setChromIntraDirSubParts(modeList[mode], absPartIdxC, depth + initTrDepth);
             uint32_t psyEnergy = 0;
-            uint32_t dist = xRecurIntraChromaCodingQT(intraMode, cuData, initTrDepth, absPartIdxC, psyEnergy);
+            uint32_t dist = codeIntraChromaQt(intraMode, cuData, initTrDepth, absPartIdxC, psyEnergy);
 
             if (m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rdContexts[depth].cur);
