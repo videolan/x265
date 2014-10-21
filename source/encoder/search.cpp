@@ -61,25 +61,6 @@ Search::Search() : JobProvider(NULL)
     m_totalNumME = m_numAcquiredME = m_numCompletedME = 0;
 }
 
-Search::~Search()
-{
-    for (int i = 0; i < m_numLayers; ++i)
-    {
-        X265_FREE(m_qtTempCoeff[0][i]);
-        m_qtTempShortYuv[i].destroy();
-        m_rdContexts[i].tmpResiYuv.destroy();
-        m_rdContexts[i].tmpReconYuv.destroy();
-    }
-
-    X265_FREE(m_qtTempCbf[0]);
-    X265_FREE(m_qtTempTransformSkipFlag[0]);
-    m_predTempYuv.destroy();
-    m_bidirPredYuv[0].destroy();
-    m_bidirPredYuv[1].destroy();
-
-    delete[] m_qtTempShortYuv;
-}
-
 bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 {
     m_param = param;
@@ -128,6 +109,25 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 
 fail:
     return false;
+}
+
+Search::~Search()
+{
+    for (int i = 0; i < m_numLayers; ++i)
+    {
+        X265_FREE(m_qtTempCoeff[0][i]);
+        m_qtTempShortYuv[i].destroy();
+        m_rdContexts[i].tmpResiYuv.destroy();
+        m_rdContexts[i].tmpReconYuv.destroy();
+    }
+
+    X265_FREE(m_qtTempCbf[0]);
+    X265_FREE(m_qtTempTransformSkipFlag[0]);
+    m_predTempYuv.destroy();
+    m_bidirPredYuv[0].destroy();
+    m_bidirPredYuv[1].destroy();
+
+    delete[] m_qtTempShortYuv;
 }
 
 void Search::setQP(const Slice& slice, int qp)
