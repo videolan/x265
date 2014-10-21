@@ -198,7 +198,7 @@ protected:
 
     void threadMain();
     int  calcQpForCu(uint32_t cuAddr, double baseQp);
-    void collectCTUStatistics(TComDataCU& ctu);
+    void collectCTUStatistics(CUData& ctu);
     void noiseReductionUpdate();
 
     /* Called by WaveFront::findJob() */

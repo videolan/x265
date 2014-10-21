@@ -99,7 +99,7 @@ public:
 
     struct Mode
     {
-        TComDataCU cu;
+        CUData     cu;
         const Yuv* fencYuv;
         Yuv        predYuv;
         Yuv        reconYuv;
@@ -174,14 +174,14 @@ public:
     void     generateCoeffRecon(Mode& mode, const CUGeom& cuGeom);
     void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
 
-    uint32_t getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth);
-    uint32_t getIntraRemModeBits(TComDataCU & cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
+    uint32_t getIntraModeBits(CUData& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth);
+    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 
 protected:
 
     /* motion estimation distribution */
     ThreadLocalData* m_tld;
-    TComDataCU*   m_curMECu;
+    CUData*       m_curMECu;
     const CUGeom* m_curGeom;
     int           m_curPart;
     MotionData    m_bestME[2];
@@ -192,9 +192,9 @@ protected:
     Event         m_meCompletionEvent;
     Lock          m_outputLock;
     bool          m_bJobsQueued;
-    void     singleMotionEstimation(Search& master, const TComDataCU& cu, const CUGeom& cuGeom, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, const CUData& cu, const CUGeom& cuGeom, int part, int list, int ref);
 
-    void     saveResidualQTData(TComDataCU& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
+    void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
 
     // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
     uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t depthRange[2], uint8_t* sharedModes);
@@ -202,11 +202,11 @@ protected:
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
-    void     xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
-    void     xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
+    void     xSetIntraResultQT(CUData* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
+    void     xSetIntraResultChromaQT(CUData* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
 
-    void     xEncSubdivCbfQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
-    void     xEncCoeffQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
+    void     xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
+    void     xEncCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
 
     struct Cost
     {
@@ -232,9 +232,9 @@ protected:
     void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
     void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx);
 
-    void     xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
+    void     xEncodeResidualQT(CUData* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
-    void     offsetSubTUCBFs(TComDataCU* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
+    void     offsetSubTUCBFs(CUData* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
     struct MergeData
     {
@@ -257,8 +257,8 @@ protected:
 
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
-    void     setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(TComDataCU* cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
+    void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
+    uint32_t mergeEstimation(CUData* cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */

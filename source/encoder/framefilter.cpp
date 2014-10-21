@@ -96,18 +96,18 @@ void FrameFilter::processRow(int row)
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            TComDataCU* cu = m_frame->m_encData->getPicCTU(cuAddr);
+            CUData* cu = m_frame->m_encData->getPicCTU(cuAddr);
 
             m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                TComDataCU* cuPrev = m_frame->m_encData->getPicCTU(cuAddr - 1);
+                CUData* cuPrev = m_frame->m_encData->getPicCTU(cuAddr - 1);
                 m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
             }
         }
 
-        TComDataCU* cuPrev = m_frame->m_encData->getPicCTU(lineStartCUAddr + numCols - 1);
+        CUData* cuPrev = m_frame->m_encData->getPicCTU(lineStartCUAddr + numCols - 1);
         m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
     }
 
@@ -414,7 +414,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 }
 
 /* restore original YUV samples to recon after SAO (if lossless) */
-static void restoreOrigLosslessYuv(const TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+static void restoreOrigLosslessYuv(const CUData* cu, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t size = g_maxCUSize >> depth;
     int part = partitionFromSizes(size, size);
@@ -439,7 +439,7 @@ static void restoreOrigLosslessYuv(const TComDataCU* cu, uint32_t absPartIdx, ui
 }
 
 /* Original YUV restoration for CU in lossless coding */
-static void origCUSampleRestoration(const TComDataCU* cu, uint32_t absPartIdx, uint32_t depth)
+static void origCUSampleRestoration(const CUData* cu, uint32_t absPartIdx, uint32_t depth)
 {
     if (cu->m_depth[absPartIdx] > depth)
     {

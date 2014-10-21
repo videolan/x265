@@ -1,13 +1,11 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComDataCU.cpp
     ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComRom.cpp)
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComDataCU.h
     ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComRom.h)
 
@@ -129,6 +127,7 @@ add_library(common OBJECT
     param.cpp param.h
     frame.cpp frame.h
     framedata.cpp framedata.h
+    cudata.cpp cudata.h
     slice.cpp slice.h
     lowres.cpp lowres.h
     piclist.cpp piclist.h

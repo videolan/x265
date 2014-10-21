@@ -30,7 +30,7 @@
 namespace x265 {
 // private namespace
 
-class TComDataCU;
+class CUData;
 
 class Deblock
 {
@@ -43,12 +43,12 @@ public:
 
     void init() { m_numPartitions = 1 << (g_maxFullDepth * 2); }
 
-    void deblockCTU(TComDataCU* cu, int32_t dir);
+    void deblockCTU(CUData* cu, int32_t dir);
 
 protected:
 
     // CU-level deblocking function
-    void deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, const int32_t Edge, uint8_t blockingStrength[]);
+    void deblockCU(CUData* cu, uint32_t absZOrderIdx, uint32_t depth, const int32_t Edge, uint8_t blockingStrength[]);
 
     struct Param
     {
@@ -57,17 +57,17 @@ protected:
     };
 
     // set filtering functions
-    void setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *params);
-    void setEdgefilterTU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[]);
-    void setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, uint8_t blockingStrength[], uint32_t widthInBaseUnits);
-    void setEdgefilterMultiple(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockingStrength[], uint32_t widthInBaseUnits);
+    void setLoopfilterParam(CUData* cu, uint32_t absZOrderIdx, Param *params);
+    void setEdgefilterTU(CUData* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[]);
+    void setEdgefilterPU(CUData* cu, uint32_t absZOrderIdx, int32_t dir, uint8_t blockingStrength[], uint32_t widthInBaseUnits);
+    void setEdgefilterMultiple(CUData* cu, uint32_t absZOrderIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockingStrength[], uint32_t widthInBaseUnits);
 
     // get filtering functions
-    void getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t partIdx, uint8_t blockingStrength[]);
+    void getBoundaryStrengthSingle(CUData* cu, int32_t dir, uint32_t partIdx, uint8_t blockingStrength[]);
 
     // filter luma/chroma functions
-    void edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[]);
-    void edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[]);
+    void edgeFilterLuma(CUData* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[]);
+    void edgeFilterChroma(CUData* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[]);
 
     static const uint8_t s_tcTable[54];
     static const uint8_t s_betaTable[52];

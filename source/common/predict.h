@@ -33,7 +33,7 @@
 
 namespace x265 {
 
-class TComDataCU;
+class CUData;
 struct CUGeom;
 
 class Predict
@@ -103,27 +103,27 @@ public:
     void addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], Yuv* predYuv, bool bLuma, bool bChroma);
 
     /* Intra prediction helper functions */
-    static void initIntraNeighbors(const TComDataCU& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
+    static void initIntraNeighbors(const CUData& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
     static void fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors);
 
-    static bool isAboveLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT);
-    static int  isAboveAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    static int  isLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
-    static int  isAboveRightAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    static int  isBelowLeftAvailable(const TComDataCU& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    static bool isAboveLeftAvailable(const CUData& cu, uint32_t partIdxLT);
+    static int  isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int  isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    static int  isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    static int  isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
 
 public:
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
-    void prepMotionCompensation(const TComDataCU* cu, const CUGeom& cuGeom, int partIdx);
+    void prepMotionCompensation(const CUData* cu, const CUGeom& cuGeom, int partIdx);
     void motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
     void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
 
-    void initAdiPattern(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode);
-    void initAdiPatternChroma(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId);
+    void initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode);
+    void initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId);
     pixel* getAdiChromaBuf(uint32_t chromaId, int tuSize)
     {
         return m_predBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (tuSize * 2 + 1));

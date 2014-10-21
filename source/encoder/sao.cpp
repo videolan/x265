@@ -222,7 +222,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
 void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
     int x, y;
-    const TComDataCU* cu = m_frame->m_encData->getPicCTU(addr);
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     pixel* rec = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
@@ -541,7 +541,7 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    TComDataCU* cu = m_frame->m_encData->getPicCTU(addr);
+    CUData* cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
     const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
     const pixel* fenc;
@@ -787,7 +787,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     int addr = idxX + m_numCuInWidth * idxY;
 
     int x, y;
-    TComDataCU* cu = frame->m_encData->getPicCTU(addr);
+    CUData* cu = frame->m_encData->getPicCTU(addr);
     const pixel* fenc;
     const pixel* rec;
     intptr_t stride = m_frame->m_reconPicYuv->m_stride;

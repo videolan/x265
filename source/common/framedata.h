@@ -26,7 +26,7 @@
 
 #include "common.h"
 #include "slice.h"
-#include "TLibCommon/TComDataCU.h"
+#include "cudata.h"
 
 namespace x265 {
 // private namespace
@@ -52,9 +52,9 @@ public:
     PicYuv*        m_reconPicYuv;
     bool           m_bHasReferences;   /* used during DPB/RPS updates */
 
-    DataCUMemPool  m_cuMemPool;
+    CUDataMemPool  m_cuMemPool;
     MVFieldMemPool m_mvFieldMemPool;
-    TComDataCU*    m_picCTU;
+    CUData*        m_picCTU;
 
     uint32_t       m_numPartitions;    /* based on g_maxFullDepth, could be CU static */
     uint32_t       m_numPartInCUSize;  /* based on g_maxFullDepth, could be CU static */
@@ -97,7 +97,7 @@ public:
     void reinit(x265_param *param);
     void destroy();
 
-    TComDataCU* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
+    CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
 };
 }
 

@@ -44,7 +44,7 @@ bool FrameData::create(x265_param *param)
     m_numCUsInFrame = widthInCU * heightInCU;
 
     m_slice  = new Slice;
-    m_picCTU = new TComDataCU[m_numCUsInFrame];
+    m_picCTU = new CUData[m_numCUsInFrame];
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));

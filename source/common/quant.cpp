@@ -27,7 +27,7 @@
 #include "frame.h"
 #include "entropy.h"
 #include "yuv.h"
-#include "TLibCommon/TComDataCU.h"
+#include "cudata.h"
 #include "TLibCommon/ContextTables.h"
 
 using namespace x265;
@@ -178,7 +178,7 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(const TComDataCU& ctu)
+void Quant::setQPforQuant(const CUData& ctu)
 {
     int qpy = ctu.m_qp[0];
 
@@ -310,7 +310,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     return numSig;
 }
 
-uint32_t Quant::transformNxN(TComDataCU* cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
+uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
     if (cu->m_cuTransquantBypass[absPartIdx])
@@ -463,7 +463,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(TComDataCU* cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+uint32_t Quant::rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;

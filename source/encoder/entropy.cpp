@@ -501,14 +501,14 @@ void Entropy::codeShortTermRefPicSet(const RPS& rps)
     }
 }
 
-void Entropy::encodeCTU(const TComDataCU& ctu, const CUGeom& cuGeom)
+void Entropy::encodeCTU(const CUData& ctu, const CUGeom& cuGeom)
 {
     bool bEncodeDQP = ctu.m_slice->m_pps->bUseDQP;
     encodeCU(ctu, cuGeom, 0, 0, bEncodeDQP);
 }
 
 /* encode a CU block recursively */
-void Entropy::encodeCU(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
+void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
 {
     const Slice* slice = cu.m_slice;
 
@@ -578,7 +578,7 @@ void Entropy::encodeCU(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absP
 }
 
 /* finish encoding a cu and handle end-of-slice conditions */
-void Entropy::finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
 {
     const Slice* slice = cu.m_slice;
     X265_CHECK(cu.m_slice->m_endCUAddr == cu.m_slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
@@ -608,7 +608,7 @@ void Entropy::finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth
     }
 }
 
-void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
+void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t offsetLuma, uint32_t offsetChroma, uint32_t absPartIdx,
                               uint32_t absPartIdxStep, uint32_t depth, uint32_t log2TrSize, uint32_t trIdx, bool& bCodeDQP, uint32_t depthRange[2])
 {
     const bool subdiv = cu.m_trIdx[absPartIdx] + cu.m_depth[absPartIdx] > (uint8_t)depth;
@@ -795,7 +795,7 @@ void Entropy::encodeTransform(const TComDataCU& cu, CoeffCodeState& state, uint3
     }
 }
 
-void Entropy::codePredInfo(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codePredInfo(const CUData& cu, uint32_t absPartIdx)
 {
     if (cu.isIntra(absPartIdx)) // If it is intra mode, encode intra prediction mode.
     {
@@ -824,7 +824,7 @@ void Entropy::codePredInfo(const TComDataCU& cu, uint32_t absPartIdx)
 }
 
 /** encode motion information for every PU block */
-void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codePUWise(const CUData& cu, uint32_t absPartIdx)
 {
     PartSize partSize = (PartSize)cu.m_partSizes[absPartIdx];
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
@@ -858,7 +858,7 @@ void Entropy::codePUWise(const TComDataCU& cu, uint32_t absPartIdx)
 }
 
 /** encode reference frame index for a PU block */
-void Entropy::codeRefFrmIdxPU(const TComDataCU& cu, uint32_t absPartIdx, int list)
+void Entropy::codeRefFrmIdxPU(const CUData& cu, uint32_t absPartIdx, int list)
 {
     X265_CHECK(!cu.isIntra(absPartIdx), "intra block not expected\n");
 
@@ -866,7 +866,7 @@ void Entropy::codeRefFrmIdxPU(const TComDataCU& cu, uint32_t absPartIdx, int lis
         codeRefFrmIdx(cu, absPartIdx, list);
 }
 
-void Entropy::codeCoeff(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t depthRange[2])
+void Entropy::codeCoeff(const CUData& cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t depthRange[2])
 {
     if (!cu.isIntra(absPartIdx))
     {
@@ -1152,7 +1152,7 @@ void Entropy::codeMVPIdx(uint32_t symbol)
     encodeBin(symbol, m_contextState[OFF_MVP_IDX_CTX]);
 }
 
-void Entropy::codePartSize(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
 {
     PartSize partSize = (PartSize)cu.m_partSizes[absPartIdx];
 
@@ -1212,7 +1212,7 @@ void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)
     encodeBin(symbol, m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
 }
 
-void Entropy::codeSkipFlag(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeSkipFlag(const CUData& cu, uint32_t absPartIdx)
 {
     // get context function is here
     uint32_t symbol = cu.isSkipped(absPartIdx) ? 1 : 0;
@@ -1221,14 +1221,14 @@ void Entropy::codeSkipFlag(const TComDataCU& cu, uint32_t absPartIdx)
     encodeBin(symbol, m_contextState[OFF_SKIP_FLAG_CTX + ctxSkip]);
 }
 
-void Entropy::codeMergeFlag(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeMergeFlag(const CUData& cu, uint32_t absPartIdx)
 {
     const uint32_t symbol = cu.m_bMergeFlags[absPartIdx] ? 1 : 0;
 
     encodeBin(symbol, m_contextState[OFF_MERGE_FLAG_EXT_CTX]);
 }
 
-void Entropy::codeMergeIndex(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeMergeIndex(const CUData& cu, uint32_t absPartIdx)
 {
     uint32_t numCand = cu.m_slice->m_maxNumMergeCand;
 
@@ -1248,7 +1248,7 @@ void Entropy::codeMergeIndex(const TComDataCU& cu, uint32_t absPartIdx)
     }
 }
 
-void Entropy::codeSplitFlag(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::codeSplitFlag(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
 {
     X265_CHECK(depth < g_maxCUDepth, "invalid depth\n");
 
@@ -1264,7 +1264,7 @@ void Entropy::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
     encodeBin(symbol, m_contextState[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
 }
 
-void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, bool isMultiple)
+void Entropy::codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple)
 {
     uint32_t dir[4], j;
     uint32_t preds[4][3];
@@ -1317,7 +1317,7 @@ void Entropy::codeIntraDirLumaAng(const TComDataCU& cu, uint32_t absPartIdx, boo
     }
 }
 
-void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx, uint32_t *chromaDirMode)
+void Entropy::codeIntraDirChroma(const CUData& cu, uint32_t absPartIdx, uint32_t *chromaDirMode)
 {
     uint32_t intraDirChroma = cu.m_chromaIntraDir[absPartIdx];
 
@@ -1339,7 +1339,7 @@ void Entropy::codeIntraDirChroma(const TComDataCU& cu, uint32_t absPartIdx, uint
     }
 }
 
-void Entropy::codeInterDir(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeInterDir(const CUData& cu, uint32_t absPartIdx)
 {
     const uint32_t interDir = cu.m_interDir[absPartIdx] - 1;
     const uint32_t ctx      = cu.m_depth[absPartIdx]; // the context of the inter dir is the depth of the CU
@@ -1350,7 +1350,7 @@ void Entropy::codeInterDir(const TComDataCU& cu, uint32_t absPartIdx)
         encodeBin(interDir, m_contextState[OFF_INTER_DIR_CTX + 4]);
 }
 
-void Entropy::codeRefFrmIdx(const TComDataCU& cu, uint32_t absPartIdx, int list)
+void Entropy::codeRefFrmIdx(const CUData& cu, uint32_t absPartIdx, int list)
 {
     uint32_t refFrame = cu.m_cuMvField[list].m_refIdx[absPartIdx];
 
@@ -1373,7 +1373,7 @@ void Entropy::codeRefFrmIdx(const TComDataCU& cu, uint32_t absPartIdx, int list)
     }
 }
 
-void Entropy::codeMvd(const TComDataCU& cu, uint32_t absPartIdx, int list)
+void Entropy::codeMvd(const CUData& cu, uint32_t absPartIdx, int list)
 {
     const TComCUMvField& cuMvField = cu.m_cuMvField[list];
     const int hor = cuMvField.m_mvd[absPartIdx].x;
@@ -1410,7 +1410,7 @@ void Entropy::codeMvd(const TComDataCU& cu, uint32_t absPartIdx, int list)
     }
 }
 
-void Entropy::codeDeltaQP(const TComDataCU& cu, uint32_t absPartIdx)
+void Entropy::codeDeltaQP(const CUData& cu, uint32_t absPartIdx)
 {
     int dqp = cu.m_qp[absPartIdx] - cu.getRefQP(absPartIdx);
 
@@ -1431,7 +1431,7 @@ void Entropy::codeDeltaQP(const TComDataCU& cu, uint32_t absPartIdx)
     }
 }
 
-void Entropy::codeQtCbf(const TComDataCU& cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
+void Entropy::codeQtCbf(const CUData& cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel)
 {
     uint32_t ctx = ctxCbf[ttype][trDepth];
 
@@ -1460,14 +1460,14 @@ void Entropy::codeQtCbf(const TComDataCU& cu, uint32_t absPartIdx, uint32_t absP
     }
 }
 
-void Entropy::codeQtCbf(const TComDataCU& cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
+void Entropy::codeQtCbf(const CUData& cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth)
 {
     uint32_t ctx = ctxCbf[ttype][trDepth];
     uint32_t cbf = cu.getCbf(absPartIdx, ttype, trDepth);
     encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
-void Entropy::codeTransformSkipFlags(const TComDataCU& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
+void Entropy::codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu.m_cuTransquantBypass[absPartIdx])
         return;
@@ -1550,7 +1550,7 @@ void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2T
     }
 }
 
-void Entropy::codeCoeffNxN(const TComDataCU& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
+void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
 

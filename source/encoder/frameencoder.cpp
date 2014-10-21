@@ -504,7 +504,7 @@ void FrameEncoder::encodeSlice()
         uint32_t col = cuAddr % widthInLCUs;
         uint32_t lin = cuAddr / widthInLCUs;
         uint32_t subStrm = lin % numSubstreams;
-        TComDataCU* ctu = m_frame->m_encData->getPicCTU(cuAddr);
+        CUData* ctu = m_frame->m_encData->getPicCTU(cuAddr);
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
@@ -717,7 +717,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         int col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
-        TComDataCU* ctu = curEncData.getPicCTU(cuAddr);
+        CUData* ctu = curEncData.getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
 
         if (bIsVbv)
@@ -951,7 +951,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     curRow.busy = false;
 }
 
-void FrameEncoder::collectCTUStatistics(TComDataCU& ctu)
+void FrameEncoder::collectCTUStatistics(CUData& ctu)
 {
     StatisticLog* log = &m_sliceTypeLog[ctu.m_slice->m_sliceType];
 

@@ -123,7 +123,7 @@ void Analysis::destroy()
     }
 }
 
-Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext)
+Search::Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext)
 {
     m_slice = ctu.m_slice;
     m_frame = &frame;
@@ -145,7 +145,7 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const CUGeom&
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
-                TComDataCU *bestCU = &m_modeDepth[0].bestMode->cu;
+                CUData *bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_depth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSizes, sizeof(uint8_t) * numPartition);
@@ -202,7 +202,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     }
 }
 
-void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CUGeom& cuGeom, x265_intra_data* shared, uint32_t& zOrder)
+void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x265_intra_data* shared, uint32_t& zOrder)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -264,7 +264,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CUGeom& cuGeom
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
-        TComDataCU* splitCU = &splitPred->cu;
+        CUData* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
@@ -431,7 +431,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
     }
 }
 
-void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& cuGeom)
+void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
@@ -517,7 +517,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& c
         if (m_param->rdLevel > 2)
         {
             /* encode best inter */
-            for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+            for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
             {
                 prepMotionCompensation(&bestInter->cu, cuGeom, puIdx);
                 motionCompensation(&bestInter->predYuv, false, true);
@@ -543,7 +543,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& c
             else if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
             {
                 /* finally code the best mode selected from SA8D costs */
-                for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
                     prepMotionCompensation(&md.bestMode->cu, cuGeom, puIdx);
                     motionCompensation(&md.bestMode->predYuv, false, true);
@@ -579,7 +579,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& c
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
-        TComDataCU* splitCU = &splitPred->cu;
+        CUData* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
@@ -635,7 +635,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& c
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuGeom.encodeIdx);
 }
 
-void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& cuGeom)
+void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
@@ -728,7 +728,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& 
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
-                for (int puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                 {
                     prepMotionCompensation(&bestInter->cu, cuGeom, puIdx);
                     motionCompensation(&bestInter->predYuv, false, true);
@@ -769,7 +769,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& 
                  * RD level 0 - generate chroma prediction */
                 if (md.bestMode->cu.m_predModes[0] == MODE_INTER)
                 {
-                    for (int puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                    for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                     {
                         prepMotionCompensation(&md.bestMode->cu, cuGeom, puIdx);
                         motionCompensation(&md.bestMode->predYuv, false, true);
@@ -810,7 +810,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& 
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
-        TComDataCU* splitCU = &splitPred->cu;
+        CUData* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
@@ -886,7 +886,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& 
     x265_emms(); // TODO: Remove
 }
 
-void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CUGeom& cuGeom)
+void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -974,7 +974,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CUGeom& 
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
-        TComDataCU* splitCU = &splitPred->cu;
+        CUData* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
@@ -1244,7 +1244,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
  * be generated later. It records the best mode in the cu */
 void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
 {
-    TComDataCU* cu = &intraMode.cu;
+    CUData* cu = &intraMode.cu;
     uint32_t depth = cu->m_depth[0];
 
     cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
@@ -1410,7 +1410,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
 
 void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
-    TComDataCU* cu = &intraMode.cu;
+    CUData* cu = &intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[cuGeom.depth].fencYuv;
 
@@ -1454,7 +1454,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     updateModeCost(intraMode);
 }
 
-void Analysis::encodeResidue(const TComDataCU& ctu, const CUGeom& cuGeom)
+void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 {
     if (cuGeom.depth < ctu.m_depth[cuGeom.encodeIdx] && cuGeom.depth < g_maxCUDepth)
     {
@@ -1472,14 +1472,14 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CUGeom& cuGeom)
     uint32_t absPartIdx = cuGeom.encodeIdx;
 
     Mode *bestMode = m_modeDepth[depth].bestMode;
-    TComDataCU* cu;
+    CUData* cu;
     if (depth)
     {
         cu = &bestMode->cu;
         cu->copyFromPic(ctu, cuGeom);
     }
     else
-        cu = const_cast<TComDataCU*>(&ctu);
+        cu = const_cast<CUData*>(&ctu);
 
     Yuv& predYuv = m_modeDepth[0].bestMode->predYuv;
     ShortYuv& resiYuv = bestMode->resiYuv;
@@ -1625,7 +1625,7 @@ void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
     }
 }
 
-void Analysis::checkDQP(TComDataCU& cu, const CUGeom& cuGeom)
+void Analysis::checkDQP(CUData& cu, const CUGeom& cuGeom)
 {
     if (m_slice->m_pps->bUseDQP && cuGeom.depth <= m_slice->m_pps->maxCuDQPDepth)
     {
@@ -1657,7 +1657,7 @@ void Analysis::checkDQP(TComDataCU& cu, const CUGeom& cuGeom)
     }
 }
 
-uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CUGeom& cuGeom)
+uint32_t Analysis::topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     /* Do not attempt to code a block larger than the largest block in the
      * co-located CTUs in L0 and L1 */
@@ -1669,7 +1669,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CUGeom& cu
     if (m_slice->m_numRefIdx[0])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[0][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
+        const CUData& cu = *m_slice->m_refPicList[0][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
         previousQP = cu.m_qp[0];
         if (!cu.m_depth[cuGeom.encodeIdx])
             return 0;
@@ -1683,7 +1683,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CUGeom& cu
     if (m_slice->m_numRefIdx[1])
     {
         numRefs++;
-        const TComDataCU& cu = *m_slice->m_refPicList[1][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
+        const CUData& cu = *m_slice->m_refPicList[1][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
         if (!cu.m_depth[cuGeom.encodeIdx])
             return 0;
         for (uint32_t i = 0; i < cuGeom.numPartitions; i += 4)
@@ -1708,7 +1708,7 @@ uint32_t Analysis::topSkipMinDepth(const TComDataCU& parentCTU, const CUGeom& cu
 }
 
 /* returns true if recursion should be stopped */
-bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CUGeom& cuGeom, const Mode& bestMode)
+bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode)
 {
     /* early exit when the RD cost of best mode at depth n is less than the sum
      * of average of RD cost of the neighbor CU's(above, aboveleft, aboveright,
@@ -1722,14 +1722,14 @@ bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CUGeom& cu
     uint64_t cuCount = cuStat.count[depth];
 
     uint64_t neighCost = 0, neighCount = 0;
-    const TComDataCU* above = parentCTU.m_cuAbove;
+    const CUData* above = parentCTU.m_cuAbove;
     if (above)
     {
         FrameData::RCStatCU& astat = curEncData.m_cuStat[above->m_cuAddr];
         neighCost += astat.avgCost[depth] * astat.count[depth];
         neighCount += astat.count[depth];
 
-        const TComDataCU* aboveLeft = parentCTU.m_cuAboveLeft;
+        const CUData* aboveLeft = parentCTU.m_cuAboveLeft;
         if (aboveLeft)
         {
             FrameData::RCStatCU& lstat = curEncData.m_cuStat[aboveLeft->m_cuAddr];
@@ -1737,7 +1737,7 @@ bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CUGeom& cu
             neighCount += lstat.count[depth];
         }
 
-        const TComDataCU* aboveRight = parentCTU.m_cuAboveRight;
+        const CUData* aboveRight = parentCTU.m_cuAboveRight;
         if (aboveRight)
         {
             FrameData::RCStatCU& rstat = curEncData.m_cuStat[aboveRight->m_cuAddr];
@@ -1745,7 +1745,7 @@ bool Analysis::recursionDepthCheck(const TComDataCU& parentCTU, const CUGeom& cu
             neighCount += rstat.count[depth];
         }
     }
-    const TComDataCU* left = parentCTU.m_cuLeft;
+    const CUData* left = parentCTU.m_cuLeft;
     if (left)
     {
         FrameData::RCStatCU& nstat = curEncData.m_cuStat[left->m_cuAddr];
