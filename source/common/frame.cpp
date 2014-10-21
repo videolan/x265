@@ -33,6 +33,7 @@ Frame::Frame()
     m_countRefEncoders = 0;
     m_frameEncoderID = 0;
     m_encData = NULL;
+    m_reconPicYuv = NULL;
     m_next = NULL;
     m_prev = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
