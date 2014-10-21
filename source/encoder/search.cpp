@@ -1135,8 +1135,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     uint32_t depth = cuGeom.depth;
     CUData& cu = intraMode.cu;
 
-    cu.setPartSizeSubParts(partSize, 0, depth);
-    cu.setPredModeSubParts(MODE_INTRA, 0, depth);
+    cu.setPartSizeSubParts(partSize);
+    cu.setPredModeSubParts(MODE_INTRA);
 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
@@ -2305,7 +2305,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     // No residual coding : SKIP mode
 
-    cu->setSkipFlagSubParts(true, 0, depth);
+    cu->setSkipFlagSubParts(true);
     cu->setTrIdxSubParts(0, 0, depth);
     cu->clearCbf(0, depth);
 
@@ -2411,7 +2411,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     uint32_t coeffBits;
     if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
     {
-        cu->setSkipFlagSubParts(true, 0, cu->m_depth[0]);
+        cu->setSkipFlagSubParts(true);
 
         /* Merge/Skip */
         m_entropyCoder.resetBits();
@@ -2479,7 +2479,7 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
         {
             mode.reconYuv.copyFromYuv(mode.predYuv);
             if (cu->m_bMergeFlags[0] && cu->m_partSizes[0] == SIZE_2Nx2N)
-                cu->setSkipFlagSubParts(true, 0, cu->m_depth[0]);
+                cu->setSkipFlagSubParts(true);
         }
     }
     else if (cu->m_predModes[0] == MODE_INTRA)

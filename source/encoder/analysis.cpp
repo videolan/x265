@@ -1032,12 +1032,12 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     X265_CHECK(m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
-    tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    tempPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N);
+    tempPred->cu.setPredModeSubParts(MODE_INTER);
     tempPred->cu.m_bMergeFlags[0] = true;
 
-    bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth); // interprets depth relative to CTU level
-    bestPred->cu.setPredModeSubParts(MODE_INTER, 0, depth);
+    bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N);
+    bestPred->cu.setPredModeSubParts(MODE_INTER);
     bestPred->cu.m_bMergeFlags[0] = true;
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
@@ -1116,12 +1116,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     Mode* tempPred = &merge;
     Mode* bestPred = &skip;
 
-    merge.cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    merge.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    merge.cu.setPredModeSubParts(MODE_INTER);
+    merge.cu.setPartSizeSubParts(SIZE_2Nx2N);
     merge.cu.m_bMergeFlags[0] = true;
 
-    skip.cu.setPredModeSubParts(MODE_INTER, 0, depth);
-    skip.cu.setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
+    skip.cu.setPredModeSubParts(MODE_INTER);
+    skip.cu.setPartSizeSubParts(SIZE_2Nx2N);
     skip.cu.m_bMergeFlags[0] = true;
 
     TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
@@ -1139,7 +1139,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             continue;
         }
 
-        tempPred->cu.setSkipFlagSubParts(false, 0, depth); /* must be cleared between encode iterations */
+        tempPred->cu.setSkipFlagSubParts(false); /* must be cleared between encode iterations */
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;  /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
         tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
@@ -1169,7 +1169,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
             if (swapped)
             {
-                tempPred->cu.setSkipFlagSubParts(false, 0, depth);
+                tempPred->cu.setSkipFlagSubParts(false);
                 tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;
                 tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
                 tempPred->cu.m_cuMvField[REF_PIC_LIST_0].setAllMvField(mvFieldNeighbours[mergeCand][0], SIZE_2Nx2N, 0, 0);
@@ -1185,17 +1185,14 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
 
     if (bestPred->rdCost < MAX_INT64)
-    {
         m_modeDepth[depth].bestMode = bestPred;
-        bestPred->cu.setSkipFlagSubParts(!bestPred->cu.getQtRootCbf(0), 0, depth); /* TODO: necessary? */
-    }
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize)
 {
     interMode.initCosts();
-    interMode.cu.setPartSizeSubParts(partSize, 0, cuGeom.depth);
-    interMode.cu.setPredModeSubParts(MODE_INTER, 0, cuGeom.depth);
+    interMode.cu.setPartSizeSubParts(partSize);
+    interMode.cu.setPredModeSubParts(MODE_INTER);
 
     Yuv* fencYuv = &m_modeDepth[cuGeom.depth].fencYuv;
     Yuv* predYuv = &interMode.predYuv;
@@ -1223,9 +1220,9 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly)
 {
     interMode.initCosts();
-    interMode.cu.setSkipFlagSubParts(false, 0, cuGeom.depth);
-    interMode.cu.setPartSizeSubParts(partSize, 0, cuGeom.depth);
-    interMode.cu.setPredModeSubParts(MODE_INTER, 0, cuGeom.depth);
+    interMode.cu.setSkipFlagSubParts(false); /* TODO: necessary? */
+    interMode.cu.setPartSizeSubParts(partSize);
+    interMode.cu.setPredModeSubParts(MODE_INTER);
 
     if (m_param->bDistributeMotionEstimation && !bMergeOnly && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
     {
@@ -1247,8 +1244,8 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     CUData* cu = &intraMode.cu;
     uint32_t depth = cu->m_depth[0];
 
-    cu->setPartSizeSubParts(SIZE_2Nx2N, 0, depth);
-    cu->setPredModeSubParts(MODE_INTRA, 0, depth);
+    cu->setPartSizeSubParts(SIZE_2Nx2N);
+    cu->setPredModeSubParts(MODE_INTRA);
 
     uint32_t initTrDepth = 0;
     uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
@@ -1523,7 +1520,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
             if (ctu.m_bMergeFlags[absPartIdx] && cu->m_partSizes[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
             {
-                cu->setSkipFlagSubParts(true, 0, depth);
+                cu->setSkipFlagSubParts(true);
                 cu->updatePic(depth);
             }
             else

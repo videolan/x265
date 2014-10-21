@@ -121,12 +121,13 @@ public:
     void     copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth) const;
     void     updatePic(uint32_t depth) const;
 
-    void     setDepthSubParts(uint32_t depth);
+    void     setDepthSubParts(uint32_t depth)      { memset(m_depth, depth, m_numPartitions); }
+    void     setPartSizeSubParts(PartSize size)    { memset(m_partSizes, size, m_numPartitions); }
+    void     setSkipFlagSubParts(uint8_t skipFlag) { memset(m_skipFlag, skipFlag, m_numPartitions); }
+    void     setPredModeSubParts(PredMode mode)    { memset(m_predModes, mode, m_numPartitions); }
 
     void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
-
-    void     setPartSizeSubParts(PartSize eMode, uint32_t absPartIdx, uint32_t depth);
 
     uint8_t  isLosslessCoded(uint32_t idx) const { return m_cuTransquantBypass[idx] && m_slice->m_pps->bTransquantBypassEnabled; }
     void     setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth);
@@ -134,10 +135,6 @@ public:
     void     setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void     setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
     void     setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
-
-    void     setSkipFlagSubParts(uint8_t skip, uint32_t absPartIdx, uint32_t depth);
-
-    void     setPredModeSubParts(PredMode eMode, uint32_t absPartIdx, uint32_t depth);
 
     void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
 
@@ -150,7 +147,7 @@ public:
     void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
-    void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t partIdx, uint32_t depth);
+    void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth);
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
     uint32_t getNumPartInter() const { return nbPartsTable[(int)m_partSizes[0]]; }
