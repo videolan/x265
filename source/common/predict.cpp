@@ -140,12 +140,12 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
 }
 
-void Predict::prepMotionCompensation(const TComDataCU* cu, const CU& cuData, int partIdx)
+void Predict::prepMotionCompensation(const TComDataCU* cu, const CUGeom& cuGeom, int partIdx)
 {
     m_predSlice = cu->m_slice;
     cu->getPartIndexAndSize(partIdx, m_partAddr, m_width, m_height);
     m_cuAddr = cu->m_cuAddr;
-    m_zOrderIdxinCU = cuData.encodeIdx;
+    m_zOrderIdxinCU = cuGeom.encodeIdx;
 
     m_refIdx0 = cu->m_cuMvField[0].getRefIdx(m_partAddr);
     m_refIdx1 = cu->m_cuMvField[1].getRefIdx(m_partAddr);
@@ -650,7 +650,7 @@ void Predict::addWeightUni(ShortYuv* srcYuv, const WeightValues wp[3], Yuv* pred
     }
 }
 
-void Predict::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t partDepth, int dirMode)
+void Predict::initAdiPattern(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode)
 {
     IntraNeighbors intraNeighbors;
     initIntraNeighbors(cu, absPartIdx, partDepth, true, &intraNeighbors);
@@ -664,7 +664,7 @@ void Predict::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t ab
     int tuSize = intraNeighbors.tuSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
+    pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
     intptr_t picStride = cu.m_frame->m_origPicYuv->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
@@ -734,13 +734,13 @@ void Predict::initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t ab
     }
 }
 
-void Predict::initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId)
+void Predict::initAdiPatternChroma(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId)
 {
     IntraNeighbors intraNeighbors;
     initIntraNeighbors(cu, absPartIdx, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    const pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
+    const pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
     intptr_t picStride = cu.m_frame->m_origPicYuv->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize);
 

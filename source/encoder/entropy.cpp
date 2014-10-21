@@ -501,30 +501,30 @@ void Entropy::codeShortTermRefPicSet(const RPS& rps)
     }
 }
 
-void Entropy::encodeCTU(const TComDataCU& ctu, const CU& cuData)
+void Entropy::encodeCTU(const TComDataCU& ctu, const CUGeom& cuGeom)
 {
     bool bEncodeDQP = ctu.m_slice->m_pps->bUseDQP;
-    encodeCU(ctu, cuData, 0, 0, bEncodeDQP);
+    encodeCU(ctu, cuGeom, 0, 0, bEncodeDQP);
 }
 
 /* encode a CU block recursively */
-void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
+void Entropy::encodeCU(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
 {
     const Slice* slice = cu.m_slice;
 
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
 
-    int cuSplitFlag = !(cuData.flags & CU::LEAF);
-    int cuUnsplitFlag = !(cuData.flags & CU::SPLIT_MANDATORY);
+    int cuSplitFlag = !(cuGeom.flags & CUGeom::LEAF);
+    int cuUnsplitFlag = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
     if (!cuUnsplitFlag)
     {
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
         {
-            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
-            if (childCuData.flags & CU::PRESENT)
+            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childCuData.flags & CUGeom::PRESENT)
                 encodeCU(cu, childCuData, absPartIdx, depth + 1, bEncodeDQP);
         }
         return;
@@ -540,7 +540,7 @@ void Entropy::encodeCU(const TComDataCU& cu, const CU& cuData, uint32_t absPartI
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
         {
-            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
+            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
             encodeCU(cu, childCuData, absPartIdx, depth + 1, bEncodeDQP);
         }
         return;

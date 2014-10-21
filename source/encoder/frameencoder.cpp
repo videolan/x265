@@ -146,23 +146,23 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
         allocGeoms = 2; // body, right or bottom
 
     m_ctuGeomMap = X265_MALLOC(uint32_t, m_numRows * m_numCols);
-    m_cuGeoms = X265_MALLOC(CU, allocGeoms * CU::MAX_GEOMS);
+    m_cuGeoms = X265_MALLOC(CUGeom, allocGeoms * CUGeom::MAX_GEOMS);
     if (!m_cuGeoms || !m_ctuGeomMap)
         return false;
 
     int countGeoms = 0;
     for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
     {
-        CU cuLocalData[CU::MAX_GEOMS];
+        CUGeom cuLocalData[CUGeom::MAX_GEOMS];
         encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0); 
         encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->maxCUSize, cuLocalData); /* TODO: detach this logic from TComDataCU */
 
         m_ctuGeomMap[ctuAddr] = MAX_INT;
         for (int i = 0; i < countGeoms; i++)
         {
-            if (!memcmp(cuLocalData, m_cuGeoms + i * CU::MAX_GEOMS, sizeof(CU) * CU::MAX_GEOMS))
+            if (!memcmp(cuLocalData, m_cuGeoms + i * CUGeom::MAX_GEOMS, sizeof(CUGeom) * CUGeom::MAX_GEOMS))
             {
-                m_ctuGeomMap[ctuAddr] = i * CU::MAX_GEOMS;
+                m_ctuGeomMap[ctuAddr] = i * CUGeom::MAX_GEOMS;
                 break;
             }
         }
@@ -170,8 +170,8 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
         if (m_ctuGeomMap[ctuAddr] == MAX_INT)
         {
             X265_CHECK(countGeoms < allocGeoms, "geometry match check failure\n");
-            m_ctuGeomMap[ctuAddr] = countGeoms * CU::MAX_GEOMS;
-            memcpy(m_cuGeoms + countGeoms * CU::MAX_GEOMS, cuLocalData, sizeof(CU) * CU::MAX_GEOMS);
+            m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
+            memcpy(m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS, cuLocalData, sizeof(CUGeom) * CUGeom::MAX_GEOMS);
             countGeoms++;
         }
     }

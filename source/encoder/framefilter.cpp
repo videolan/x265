@@ -443,7 +443,7 @@ static void origCUSampleRestoration(const TComDataCU* cu, uint32_t absPartIdx, u
 {
     if (cu->m_depth[absPartIdx] > depth)
     {
-        /* TODO: this could use cuData.numPartition and flags */
+        /* TODO: this could use cuGeom.numPartition and flags */
         uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         uint32_t qNumParts   = curNumParts >> 2;
         uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;

@@ -167,7 +167,7 @@ public:
     Bitstream*               m_outStreams;
     uint32_t*                m_substreamSizes;
 
-    CU*                      m_cuGeoms;
+    CUGeom*                  m_cuGeoms;
     uint32_t*                m_ctuGeomMap;
 
     Bitstream                m_bs;

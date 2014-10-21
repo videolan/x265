@@ -34,7 +34,7 @@
 namespace x265 {
 
 class TComDataCU;
-struct CU;
+struct CUGeom;
 
 class Predict
 {
@@ -115,15 +115,15 @@ public:
 public:
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
-    void prepMotionCompensation(const TComDataCU* cu, const CU& cuData, int partIdx);
+    void prepMotionCompensation(const TComDataCU* cu, const CUGeom& cuGeom, int partIdx);
     void motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
     void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
 
-    void initAdiPattern(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t partDepth, int dirMode);
-    void initAdiPatternChroma(const TComDataCU& cu, const CU& cuData, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId);
+    void initAdiPattern(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode);
+    void initAdiPatternChroma(const TComDataCU& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId);
     pixel* getAdiChromaBuf(uint32_t chromaId, int tuSize)
     {
         return m_predBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (tuSize * 2 + 1));

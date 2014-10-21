@@ -76,7 +76,7 @@ public:
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
-    Search::Mode& compressCTU(TComDataCU& ctu, Frame& frame, const CU& cuData, const Entropy& initialContext);
+    Search::Mode& compressCTU(TComDataCU& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
 
@@ -90,35 +90,35 @@ protected:
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x265_intra_data* sdata, uint32_t &zOrder);
+    void compressIntraCU(const TComDataCU& parentCTU, const CUGeom& cuGeom, x265_intra_data* sdata, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
-    void compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuData);
-    void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuData);
-    void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuData);
+    void compressInterCU_dist(const TComDataCU& parentCTU, const CUGeom& cuGeom);
+    void compressInterCU_rd0_4(const TComDataCU& parentCTU, const CUGeom& cuGeom);
+    void compressInterCU_rd5_6(const TComDataCU& parentCTU, const CUGeom& cuGeom);
 
     /* measure merge and skip */
-    void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CU& cuData);
-    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CU& cuData);
+    void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom);
 
     /* measure inter options */
-    void checkInter_rd0_4(Mode& interMode, const CU& cuData, PartSize partSize);
-    void checkInter_rd5_6(Mode& interMode, const CU& cuData, PartSize partSize, bool bMergeOnly);
+    void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
+    void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly);
 
     /* measure intra options */
-    void checkIntraInInter_rd0_4(Mode& intraMode, const CU& cuData);
-    void encodeIntraInInter(Mode& intraMode, const CU& cuData);
+    void checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom);
+    void encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     /* encode current bestMode losslessly, pick best RD cost */
-    void tryLossless(const CU& cuData);
+    void tryLossless(const CUGeom& cuGeom);
 
-    void checkDQP(TComDataCU& cu, const CU& cuData);
+    void checkDQP(TComDataCU& cu, const CUGeom& cuGeom);
     void addSplitFlagCost(Mode& mode, uint32_t depth);
     void checkBestMode(Mode& mode, uint32_t depth);
-    uint32_t topSkipMinDepth(const TComDataCU& parentCTU, const CU& cuData);
-    bool recursionDepthCheck(const TComDataCU& parentCTU, const CU& cuData, const Mode& bestMode);
+    uint32_t topSkipMinDepth(const TComDataCU& parentCTU, const CUGeom& cuGeom);
+    bool recursionDepthCheck(const TComDataCU& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
 
-    void encodeResidue(const TComDataCU& parentCTU, const CU& cuData);
+    void encodeResidue(const TComDataCU& parentCTU, const CUGeom& cuGeom);
 };
 
 struct ThreadLocalData

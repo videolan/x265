@@ -153,7 +153,7 @@ public:
     void codeShortTermRefPicSet(const RPS& rps);
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
-    void encodeCTU(const TComDataCU& cu, const CU& cuData);
+    void encodeCTU(const TComDataCU& cu, const CUGeom& cuGeom);
     void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
     void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
@@ -197,7 +197,7 @@ private:
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
 
-    void encodeCU(const TComDataCU& cu, const CU &cuData, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
+    void encodeCU(const TComDataCU& cu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
     void finishCU(const TComDataCU& cu, uint32_t absPartIdx, uint32_t depth);
 
     void writeOut();

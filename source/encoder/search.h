@@ -161,18 +161,18 @@ public:
     void     invalidateContexts(int fromDepth);
 
     // full RD search of intra modes. if sharedModes is not NULL, it directly uses them
-    void     checkIntra(Mode& intraMode, const CU& cuData, PartSize partSize, uint8_t* sharedModes);
+    void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes);
 
     // estimation inter prediction (non-skip)
-    bool     predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly, bool bChroma);
-    void     parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma);
+    bool     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
+    void     parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
-    void     encodeResAndCalcRdInterCU(Mode& interMode, const CU& cuData);
+    void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
     void     encodeResAndCalcRdSkipCU(Mode& interMode);
 
-    void     generateCoeffRecon(Mode& mode, const CU& cuData);
-    void     residualTransformQuantInter(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
+    void     generateCoeffRecon(Mode& mode, const CUGeom& cuGeom);
+    void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
 
     uint32_t getIntraModeBits(TComDataCU& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth);
     uint32_t getIntraRemModeBits(TComDataCU & cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
@@ -182,7 +182,7 @@ protected:
     /* motion estimation distribution */
     ThreadLocalData* m_tld;
     TComDataCU*   m_curMECu;
-    const CU*     m_curCUData;
+    const CUGeom* m_curGeom;
     int           m_curPart;
     MotionData    m_bestME[2];
     uint32_t      m_listSelBits[3];
@@ -192,15 +192,15 @@ protected:
     Event         m_meCompletionEvent;
     Lock          m_outputLock;
     bool          m_bJobsQueued;
-    void     singleMotionEstimation(Search& master, const TComDataCU& cu, const CU& cuData, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, const TComDataCU& cu, const CUGeom& cuGeom, int part, int list, int ref);
 
     void     saveResidualQTData(TComDataCU& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
 
     // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
-    uint32_t estIntraPredQT(Mode &intraMode, const CU& cuData, uint32_t depthRange[2], uint8_t* sharedModes);
+    uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t depthRange[2], uint8_t* sharedModes);
 
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
-    uint32_t estIntraPredChromaQT(Mode &intraMode, const CU& cuData);
+    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
     void     xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
     void     xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
@@ -217,20 +217,20 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
-    uint32_t xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, ShortYuv* inResiYuv, uint32_t depth,
+    uint32_t xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, ShortYuv* inResiYuv, uint32_t depth,
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t tuDepthRange[2]);
 
-    // generate prediction, generate residual and recon. if bAllowRQTSplit, find optimal RQT splits
-    void     codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
+    // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
+    void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
 
-    // generate prediction, generate residual and recon. if bAllowRQTSplit, find optimal RQT splits
-    uint32_t codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
+    // generate chroma prediction, generate residual and recon
+    uint32_t codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
 
-    uint32_t calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t chromaId, uint32_t log2TrSizeC,
+    uint32_t calcIntraChromaRecon(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t chromaId, uint32_t log2TrSizeC,
                                   int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf);
 
-    void     residualTransformQuantIntra(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
-    void     residualQTIntraChroma(Mode& mode, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx);
+    void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
+    void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx);
 
     void     xEncodeResidualQT(TComDataCU* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
@@ -258,13 +258,13 @@ protected:
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const TComDataCU& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(TComDataCU* cu, const CU& cuData, int partIdx, MergeData& m);
+    uint32_t mergeEstimation(TComDataCU* cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
     void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
-    void     getBestIntraModeChroma(Mode& intraMode, const CU& cuData);
+    void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 };
 }
 

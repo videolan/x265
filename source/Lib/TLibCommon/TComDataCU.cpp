@@ -133,15 +133,15 @@ void TComDataCU::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 }
 
 // initialize Sub partition
-void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
+void TComDataCU::initSubCU(const TComDataCU& ctu, const CUGeom& cuGeom)
 {
-    m_absIdxInCTU   = cuData.encodeIdx;
-    m_numPartitions = cuData.numPartitions;
+    m_absIdxInCTU   = cuGeom.encodeIdx;
+    m_numPartitions = cuGeom.numPartitions;
     m_frame         = ctu.m_frame;
     m_slice         = ctu.m_slice;
     m_cuAddr        = ctu.m_cuAddr;
-    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
-    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuData.encodeIdx];
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
     m_cuLeft        = ctu.m_cuLeft;
     m_cuAbove       = ctu.m_cuAbove;
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
@@ -149,12 +149,12 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
 
     /* sequential memsets */
     memset(m_qp,           ctu.m_qp[0],       m_numPartitions);
-    memset(m_log2CUSize,   cuData.log2CUSize, m_numPartitions);
+    memset(m_log2CUSize,   cuGeom.log2CUSize, m_numPartitions);
     memset(m_partSizes,    SIZE_NONE,         m_numPartitions);
     memset(m_predModes,    MODE_NONE,         m_numPartitions);
     memset(m_lumaIntraDir, DC_IDX,            m_numPartitions);
     memset(m_cuTransquantBypass, m_frame->m_encData->m_param->bLossless, m_numPartitions);
-    memset(m_depth,        cuData.depth,      m_numPartitions);
+    memset(m_depth,        cuGeom.depth,      m_numPartitions);
 
     /* initialize the remaining CU data in one memset */
     memset(m_skipFlag, 0, (BytesPerPartition - 7) * m_numPartitions);
@@ -168,11 +168,11 @@ void TComDataCU::initSubCU(const TComDataCU& ctu, const CU& cuData)
 
 /* Copy all CU data from one instance to the next, except set lossless flag
  * This will only get used when --cu-lossless is enabled but --lossless is not. */
-void TComDataCU::initLosslessCU(const TComDataCU& cu, const CU& cuData)
+void TComDataCU::initLosslessCU(const TComDataCU& cu, const CUGeom& cuGeom)
 {
     /* Start by making an exact copy */
-    m_absIdxInCTU = cuData.encodeIdx;
-    m_numPartitions = cuData.numPartitions;
+    m_absIdxInCTU = cuGeom.encodeIdx;
+    m_numPartitions = cuGeom.numPartitions;
     m_frame = cu.m_frame;
     m_slice = cu.m_slice;
     m_cuAddr = cu.m_cuAddr;
@@ -199,7 +199,7 @@ void TComDataCU::initLosslessCU(const TComDataCU& cu, const CU& cuData)
 
 
 /* TODO: Remove me. this is only called from encodeResidue() */
-void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
+void TComDataCU::copyFromPic(const TComDataCU& ctu, const CUGeom& cuGeom)
 {
     /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossless,
      * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
@@ -207,10 +207,10 @@ void TComDataCU::copyFromPic(const TComDataCU& ctu, const CU& cuData)
     m_frame  = ctu.m_frame;
     m_slice  = ctu.m_slice;
     m_cuAddr = ctu.m_cuAddr;
-    m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuData.encodeIdx];
-    m_cuPelY = ctu.m_cuPelY + g_zscanToPelY[cuData.encodeIdx];
-    m_absIdxInCTU   = cuData.encodeIdx;
-    m_numPartitions = cuData.numPartitions;
+    m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
+    m_cuPelY = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
+    m_absIdxInCTU   = cuGeom.encodeIdx;
+    m_numPartitions = cuGeom.numPartitions;
 
     memcpy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU, m_numPartitions);
     memcpy(m_log2CUSize, ctu.m_log2CUSize + m_absIdxInCTU, m_numPartitions);
@@ -1960,7 +1960,7 @@ void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result,
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
 
-void TComDataCU::calcCTUGeoms(uint32_t maxCUSize, CU cuDataArray[CU::MAX_GEOMS]) const
+void TComDataCU::calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const
 {
     // Initialize the coding blocks inside the CTB
     int picWidth  = m_frame->m_origPicYuv->m_picWidth;
@@ -1985,9 +1985,9 @@ void TComDataCU::calcCTUGeoms(uint32_t maxCUSize, CU cuDataArray[CU::MAX_GEOMS])
                 /* Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin */
                 uint32_t xOffset = (sbX * blockSize) >> 3;
                 uint32_t yOffset = (sbY * blockSize) >> 3;
-                X265_CHECK(cuIdx < CU::MAX_GEOMS, "CU geom index bug\n");
+                X265_CHECK(cuIdx < CUGeom::MAX_GEOMS, "CU geom index bug\n");
 
-                CU *cu = cuDataArray + cuIdx;
+                CUGeom *cu = cuDataArray + cuIdx;
                 cu->log2CUSize = log2CUSize;
                 cu->childOffset = childIdx - cuIdx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
@@ -1995,9 +1995,9 @@ void TComDataCU::calcCTUGeoms(uint32_t maxCUSize, CU cuDataArray[CU::MAX_GEOMS])
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 
                 cu->flags = 0;
-                CU_SET_FLAG(cu->flags, CU::PRESENT, presentFlag);
-                CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, splitMandatoryFlag);
-                CU_SET_FLAG(cu->flags, CU::LEAF, lastLevelFlag);
+                CU_SET_FLAG(cu->flags, CUGeom::PRESENT, presentFlag);
+                CU_SET_FLAG(cu->flags, CUGeom::SPLIT_MANDATORY | CUGeom::SPLIT, splitMandatoryFlag);
+                CU_SET_FLAG(cu->flags, CUGeom::LEAF, lastLevelFlag);
             }
         }
         rangeCUIdx += sbWidth * sbWidth;

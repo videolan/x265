@@ -57,7 +57,7 @@ struct TUEntropyCodingParameters
 
 struct DataCUMemPool;
 
-struct CU
+struct CUGeom
 {
     enum {
         INTRA           = 1<<0, // CU is intra predicted
@@ -162,11 +162,11 @@ public:
 
     void     initialize(DataCUMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
-    void     initSubCU(const TComDataCU& ctu, const CU& cuData);
-    void     initLosslessCU(const TComDataCU& cu, const CU& cuData);
-    void     calcCTUGeoms(uint32_t maxCUSize, CU cuDataArray[CU::MAX_GEOMS]) const;
+    void     initSubCU(const TComDataCU& ctu, const CUGeom& cuGeom);
+    void     initLosslessCU(const TComDataCU& cu, const CUGeom& cuGeom);
+    void     calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
 
-    void     copyFromPic(const TComDataCU& ctu, const CU& cuData);
+    void     copyFromPic(const TComDataCU& ctu, const CUGeom& cuGeom);
     void     copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
 
     void     copyToPic(uint32_t depth) const;
