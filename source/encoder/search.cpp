@@ -75,26 +75,30 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
     ok &= Predict::allocBuffers(param->internalCsp);
 
-    /* TODO: allocate these per CU depth */
-    ok &= m_predTempYuv.create(MAX_CU_SIZE, param->internalCsp);
-    ok &= m_bidirPredYuv[0].create(MAX_CU_SIZE, m_param->internalCsp);
-    ok &= m_bidirPredYuv[1].create(MAX_CU_SIZE, m_param->internalCsp);
-
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed
      * available for motion reference.  See refLagRows in FrameEncoder::compressCTURows() */
     m_refLagPixels = m_bFrameParallel ? param->searchRange : param->sourceHeight;
 
-    m_qtTempShortYuv = new ShortYuv[m_numLayers];
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(m_csp) + CHROMA_V_SHIFT(m_csp));
-    for (int i = 0; i < m_numLayers; ++i)
+
+    m_qtTempShortYuv = new ShortYuv[m_numLayers];
+    for (int i = 0; i < m_numLayers; i++)
     {
+        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
-        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
-        ok &= m_rqt[i].tmpResiYuv.create(g_maxCUSize >> i, m_param->internalCsp);
-        ok &= m_rqt[i].tmpReconYuv.create(g_maxCUSize >> i, m_param->internalCsp);
+    }
+
+    for (int i = 0; i < m_numLayers; i++)
+    {
+        int cuSize = g_maxCUSize >> i;
+        ok &= m_rqt[i].tmpResiYuv.create(cuSize, m_param->internalCsp);
+        ok &= m_rqt[i].tmpReconYuv.create(cuSize, m_param->internalCsp);
+        ok &= m_rqt[i].tmpPredYuv.create(cuSize, param->internalCsp);
+        ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, m_param->internalCsp);
+        ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, m_param->internalCsp);
     }
 
     const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
@@ -113,21 +117,24 @@ fail:
 
 Search::~Search()
 {
-    for (int i = 0; i < m_numLayers; ++i)
+    for (int i = 0; i < m_numLayers; i++)
     {
         X265_FREE(m_qtTempCoeff[0][i]);
         m_qtTempShortYuv[i].destroy();
+    }
+    delete[] m_qtTempShortYuv;
+
+    for (int i = 0; i < m_numLayers; i++)
+    {
         m_rqt[i].tmpResiYuv.destroy();
         m_rqt[i].tmpReconYuv.destroy();
+        m_rqt[i].tmpPredYuv.destroy();
+        m_rqt[i].bidirPredYuv[0].destroy();
+        m_rqt[i].bidirPredYuv[1].destroy();
     }
 
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
-    m_predTempYuv.destroy();
-    m_bidirPredYuv[0].destroy();
-    m_bidirPredYuv[1].destroy();
-
-    delete[] m_qtTempShortYuv;
 }
 
 void Search::setQP(const Slice& slice, int qp)
@@ -1567,6 +1574,8 @@ uint32_t Search::mergeEstimation(TComDataCU* cu, const CU& cuData, int puIdx, Me
         }
     }
 
+    Yuv& tempYuv = m_rqt[cuData.depth].tmpPredYuv;
+
     uint32_t outCost = MAX_UINT;
     for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
     {
@@ -1576,14 +1585,15 @@ uint32_t Search::mergeEstimation(TComDataCU* cu, const CU& cuData, int puIdx, Me
              m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
 
-        cu->m_cuMvField[REF_PIC_LIST_0].m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu->m_cuMvField[REF_PIC_LIST_0].m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][0].refIdx;
-        cu->m_cuMvField[REF_PIC_LIST_1].m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu->m_cuMvField[REF_PIC_LIST_1].m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
+        /* TODO: merge this logic with merge functions in analysis.cpp */
+        cu->m_cuMvField[0].m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
+        cu->m_cuMvField[0].m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][0].refIdx;
+        cu->m_cuMvField[1].m_mv[m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
+        cu->m_cuMvField[1].m_refIdx[m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
         prepMotionCompensation(cu, cuData, puIdx);
-        motionCompensation(&m_predTempYuv, true, false);
-        uint32_t costCand = m_me.bufSATD(m_predTempYuv.getLumaAddr(m.absPartIdx), m_predTempYuv.m_size);
+        motionCompensation(&tempYuv, true, false);
+        uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(m.absPartIdx), tempYuv.m_size);
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
@@ -1620,6 +1630,8 @@ void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const 
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
     int numMvc = cu.fillMvpCand(part, partAddr, list, ref, amvpCand, mvc);
 
+    Yuv& tmpPredYuv = m_rqt[cuData.depth].tmpPredYuv;
+
     uint32_t bestCost = MAX_INT;
     int mvpIdx = 0;
     int merange = m_param->searchRange;
@@ -1633,8 +1645,8 @@ void Search::singleMotionEstimation(Search& master, const TComDataCU& cu, const 
 
         cu.clipMv(mvCand);
 
-        predInterLumaBlk(m_slice->m_refPicList[list][ref]->m_reconPicYuv, &m_predTempYuv, &mvCand);
-        uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(partAddr), m_predTempYuv.m_size);
+        predInterLumaBlk(m_slice->m_refPicList[list][ref]->m_reconPicYuv, &tmpPredYuv, &mvCand);
+        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(partAddr), tmpPredYuv.m_size);
 
         if (bestCost > cost)
         {
@@ -1759,15 +1771,17 @@ void Search::parallelInterSearch(Mode& interMode, const CU& cuData, bool bChroma
             PicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
             PicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
 
-            prepMotionCompensation(cu, cuData, puIdx);
-            predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &m_bestME[0].mv);
-            predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &m_bestME[1].mv);
+            Yuv* bidirYuv = m_rqt[cuData.depth].bidirPredYuv;
 
-            pixel *pred0 = m_bidirPredYuv[0].getLumaAddr(absPartIdx);
-            pixel *pred1 = m_bidirPredYuv[1].getLumaAddr(absPartIdx);
+            prepMotionCompensation(cu, cuData, puIdx);
+            predInterLumaBlk(refPic0, &bidirYuv[0], &m_bestME[0].mv);
+            predInterLumaBlk(refPic1, &bidirYuv[1], &m_bestME[1].mv);
+
+            pixel *pred0 = bidirYuv[0].getLumaAddr(absPartIdx);
+            pixel *pred1 = bidirYuv[1].getLumaAddr(absPartIdx);
 
             int partEnum = partitionFromSizes(puWidth, puHeight);
-            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, m_bidirPredYuv[0].m_size, pred1, m_bidirPredYuv[1].m_size, 32);
+            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
             int satdCost = m_me.bufSATD(avg, puWidth);
 
             bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
@@ -1991,6 +2005,8 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
                 int mvpIdx = 0;
                 int merange = m_param->searchRange;
 
+                Yuv& tmpPredYuv = m_rqt[cuData.depth].tmpPredYuv;
+
                 for (int i = 0; i < AMVP_NUM_CANDS; i++)
                 {
                     MV mvCand = amvpCand[l][ref][i];
@@ -2001,8 +2017,8 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
 
                     cu->clipMv(mvCand);
 
-                    predInterLumaBlk(slice->m_refPicList[l][ref]->m_reconPicYuv, &m_predTempYuv, &mvCand);
-                    uint32_t cost = m_me.bufSAD(m_predTempYuv.getLumaAddr(absPartIdx), m_predTempYuv.m_size);
+                    predInterLumaBlk(slice->m_refPicList[l][ref]->m_reconPicYuv, &tmpPredYuv, &mvCand);
+                    uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(absPartIdx), tmpPredYuv.m_size);
 
                     if (bestCost > cost)
                     {
@@ -2047,14 +2063,16 @@ bool Search::predInterSearch(Mode& interMode, const CU& cuData, bool bMergeOnly,
             PicYuv *refPic0 = slice->m_refPicList[0][list[0].ref]->m_reconPicYuv;
             PicYuv *refPic1 = slice->m_refPicList[1][list[1].ref]->m_reconPicYuv;
             
-            predInterLumaBlk(refPic0, &m_bidirPredYuv[0], &list[0].mv);
-            predInterLumaBlk(refPic1, &m_bidirPredYuv[1], &list[1].mv);
+            Yuv* bidirYuv = m_rqt[cuData.depth].bidirPredYuv;
 
-            pixel *pred0 = m_bidirPredYuv[0].getLumaAddr(absPartIdx);
-            pixel *pred1 = m_bidirPredYuv[1].getLumaAddr(absPartIdx);
+            predInterLumaBlk(refPic0, &bidirYuv[0], &list[0].mv);
+            predInterLumaBlk(refPic1, &bidirYuv[1], &list[1].mv);
+
+            pixel *pred0 = bidirYuv[0].getLumaAddr(absPartIdx);
+            pixel *pred1 = bidirYuv[1].getLumaAddr(absPartIdx);
 
             int partEnum = partitionFromSizes(puWidth, puHeight);
-            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, m_bidirPredYuv[0].m_size, pred1, m_bidirPredYuv[1].m_size, 32);
+            primitives.pixelavg_pp[partEnum](avg, puWidth, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
             int satdCost = m_me.bufSATD(avg, puWidth);
 
             bidirBits = list[0].bits + list[1].bits + listSelBits[2] - (listSelBits[0] + listSelBits[1]);

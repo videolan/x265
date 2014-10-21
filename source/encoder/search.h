@@ -58,6 +58,10 @@ struct RQTData
     Entropy  rqtTest; /* residual quad-tree test context */
     ShortYuv tmpResiYuv;
     Yuv      tmpReconYuv; /* used for psy-rd or other quick measurements */
+
+    /* per-depth temp buffers for inter prediction */
+    Yuv      tmpPredYuv;
+    Yuv      bidirPredYuv[2];
 };
 
 inline int getTUBits(int idx, int numIdx)
@@ -82,8 +86,6 @@ public:
     Entropy         m_entropyCoder;
     RQTData         m_rqt[NUM_LAYERS];
 
-    Yuv             m_predTempYuv;
-    Yuv             m_bidirPredYuv[2];
     ShortYuv*       m_qtTempShortYuv;
     coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempCbf[3];
