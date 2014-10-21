@@ -1444,6 +1444,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
+        p.scale1D_128to64 = x265_scale1D_128to64_avx2;
 #if X86_64
         p.dct[DCT_8x8] = x265_dct8_avx2;
         p.dct[DCT_16x16] = x265_dct16_avx2;
@@ -1788,6 +1789,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x24] = x265_blockcopy_ss_16x24_avx;
         p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x32] = x265_blockcopy_ss_16x32_avx;
         p.chroma[X265_CSP_I422].copy_ss[CHROMA422_16x64] = x265_blockcopy_ss_16x64_avx;
+        p.scale1D_128to64 = x265_scale1D_128to64_avx2;
 
         p.weight_pp = x265_weight_pp_avx2;
 

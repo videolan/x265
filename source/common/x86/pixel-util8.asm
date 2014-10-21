@@ -42,7 +42,7 @@ ssim_c2:   times 4 dd 235963       ; .03*.03*255*255*64*63
 mask_ff:   times 16 db 0xff
            times 16 db 0
 deinterleave_shuf: db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
-deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 15, 15
+deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
 hmul_16p:  times 16 db 1
            times 8 db 1, -1
 hmulw_16p:  times 8 dw 1
@@ -53,6 +53,7 @@ trans8_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
 SECTION .text
 
 cextern pw_1
+cextern pb_1
 cextern pw_00ff
 cextern pw_2000
 cextern pw_pixel_max
@@ -3488,6 +3489,67 @@ cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
     movu          [r0 + 48],    m4
 %endif
 RET
+
+%if HIGH_BIT_DEPTH == 1
+INIT_YMM avx2
+cglobal scale1D_128to64, 2, 2, 3
+    pxor            m2, m2
+
+    movu            m0, [r1]
+    movu            m1, [r1 + 32]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0], m0
+
+    movu            m0, [r1 + 64]
+    movu            m1, [r1 + 96]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 32], m0
+
+    movu            m0, [r1 + 128]
+    movu            m1, [r1 + 160]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 64], m0
+
+    movu            m0, [r1 + 192]
+    movu            m1, [r1 + 224]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 96], m0
+    RET
+%else ; HIGH_BIT_DEPTH == 0
+INIT_YMM avx2
+cglobal scale1D_128to64, 2, 2, 4
+    pxor            m2, m2
+    mova            m3, [pb_1]
+
+    movu            m0, [r1]
+    pmaddubsw       m0, m0, m3
+    pavgw           m0, m2
+    movu            m1, [r1 + 32]
+    pmaddubsw       m1, m1, m3
+    pavgw           m1, m2
+    packuswb        m0, m1
+    vpermq          m0, m0, 0xD8
+    movu            [r0], m0
+
+    movu            m0, [r1 + 64]
+    pmaddubsw       m0, m0, m3
+    pavgw           m0, m2
+    movu            m1, [r1 + 96]
+    pmaddubsw       m1, m1, m3
+    pavgw           m1, m2
+    packuswb        m0, m1
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 32], m0
+    RET
+%endif
 
 ;-----------------------------------------------------------------
 ; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
