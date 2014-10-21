@@ -51,11 +51,13 @@ struct ThreadLocalData;
  * quad-tree depth recursion */
 struct RQTData
 {
-    Entropy  cur;     /* input context for current CU */
+    Entropy  cur;     /* starting context for current CU */
 
-    Entropy  rqtTemp; /* residual quad-tree temp context */
     Entropy  rqtRoot; /* residual quad-tree start context */
+    Entropy  rqtTemp; /* residual quad-tree temp context */
     Entropy  rqtTest; /* residual quad-tree test context */
+
+    coeff_t* tmpCoeff[3];
     ShortYuv tmpShortYuv;
     ShortYuv tmpResiYuv;
     Yuv      tmpReconYuv;  /* used for psy-rd or other quick measurements */
@@ -87,7 +89,6 @@ public:
     Entropy         m_entropyCoder;
     RQTData         m_rqt[NUM_LAYERS];
 
-    coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempCbf[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
