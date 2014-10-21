@@ -697,7 +697,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
 
-        ctu->loadCTUData(m_param->maxCUSize);
+        ctu->loadCTUData(m_param->maxCUSize, ctu->m_cuLocalData);
         tld.analysis.m_quant.setQPforQuant(*ctu);
 
         // Does all the CU analysis, returns best top level mode decision

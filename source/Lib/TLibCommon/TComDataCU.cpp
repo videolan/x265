@@ -1986,7 +1986,7 @@ void TComDataCU::getTUEntropyCodingParameters(TUEntropyCodingParameters &result,
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
 
-void TComDataCU::loadCTUData(uint32_t maxCUSize)
+void TComDataCU::loadCTUData(uint32_t maxCUSize, CU cuDataArray[104])
 {
     // Initialize the coding blocks inside the CTB
     int picWidth  = m_frame->m_origPicYuv->m_picWidth;
@@ -2012,7 +2012,7 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
                 uint32_t xOffset = (sbX * blockSize) >> 3;
                 uint32_t yOffset = (sbY * blockSize) >> 3;
 
-                CU *cu = m_cuLocalData + cuIdx;
+                CU *cu = cuDataArray + cuIdx;
                 cu->log2CUSize = log2CUSize;
                 cu->childIdx = childIdx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;

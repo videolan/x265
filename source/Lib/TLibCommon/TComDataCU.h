@@ -179,7 +179,7 @@ public:
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const TComDataCU& ctu, const CU& cuData);
     void     initLosslessCU(const TComDataCU& cu, const CU& cuData);
-    void     loadCTUData(uint32_t maxCUSize);
+    void     loadCTUData(uint32_t maxCUSize, CU cuDataArray[104]);
 
     void     copyFromPic(const TComDataCU& ctu, const CU& cuData);
     void     copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
