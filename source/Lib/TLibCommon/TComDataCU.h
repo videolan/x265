@@ -55,20 +55,6 @@ struct TUEntropyCodingParameters
     uint32_t        firstSignificanceMapContext;
 };
 
-/// Non-deblocking filter processing block border tag
-enum NDBFBlockBorderTag
-{
-    SGU_L = 0,
-    SGU_R,
-    SGU_T,
-    SGU_B,
-    SGU_TL,
-    SGU_TR,
-    SGU_BL,
-    SGU_BR,
-    NUM_SGU_BORDER
-};
-
 struct DataCUMemPool;
 
 struct CU
