@@ -1363,6 +1363,57 @@ cglobal weight_pp, 6, 7, 6
     jnz         .loopH
     RET
 
+
+INIT_YMM avx2
+cglobal weight_pp, 6, 7, 6
+
+    shl          r5d, 6            ; m0 = [w0<<6]
+    mov          r6d, r6m
+    shl          r6d, 16
+    or           r6d, r5d          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    movd         xm0, r6d
+    pshufd       xm0, xm0, 0       ; m0 = [w0<<6, round]
+    vinserti128  m0, m0, xm0, 1    ; document says (pshufd + vinserti128) can be replaced with vpbroadcastd m0, xm0, but having build problem, need to investigate
+
+    movd         xm1, r7m
+    vpbroadcastd m2, r8m
+    mova         m5, [pw_1]
+    sub          r2d, r3d
+    shr          r3d, 4
+
+.loopH:
+    mov          r5d, r3d
+
+.loopW:
+    pmovzxbw    m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, xm1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, xm1
+    paddd       m4, m2
+
+    packssdw    m3, m4
+    vextracti128 xm4, m3, 1
+    packuswb    xm3, xm4
+    movu        [r1], xm3
+
+    add         r0, 16
+    add         r1, 16
+
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
+    RET
+
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_sp(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
