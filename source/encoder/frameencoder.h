@@ -162,17 +162,17 @@ public:
     Encoder*                 m_top;
     x265_param*              m_param;
     Frame*                   m_frame;
+    NoiseReduction*          m_nr;
+    ThreadLocalData*         m_tld; /* for --no-wpp */
+    Bitstream*               m_outStreams;
+    uint32_t*                m_substreamSizes;
 
+    Bitstream                m_bs;
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     Entropy                  m_entropyCoder;
     Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
-    Bitstream                m_bs;
-    Bitstream*               m_outStreams;
-    uint32_t*                m_substreamSizes;
-    NoiseReduction*          m_nr;
     NALList                  m_nalList;
-    ThreadLocalData*         m_tld; /* for --no-wpp */
 
     int                      m_filterRowDelay;
     int                      m_filterRowDelayCus;
