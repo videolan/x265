@@ -81,7 +81,7 @@ struct CU
         SPLIT           = 1<<4, // CU is currently split in four child CUs.
     };
     uint32_t log2CUSize;    // Log of the CU size.
-    uint32_t childIdx;      // offset of the first child CU in m_cuLocalData
+    uint32_t childOffset;   // offset of the first child CU from current CU
     uint32_t encodeIdx;     // Encoding index of this CU in terms of 4x4 blocks.
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
     uint32_t depth;         // depth of this CU relative from CTU
@@ -167,11 +167,6 @@ public:
     const TComDataCU* m_cuAboveRight;   ///< pointer of above-right neighbor CTU
     const TComDataCU* m_cuAbove;        ///< pointer of above neighbor CTU
     const TComDataCU* m_cuLeft;         ///< pointer of left neighbor CTU
-
-    // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
-    // required for prediction of current CU.
-    // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
-    CU            m_cuLocalData[104]; 
 
     TComDataCU();
 

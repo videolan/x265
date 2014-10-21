@@ -123,7 +123,7 @@ void Analysis::destroy()
     }
 }
 
-Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy& initialContext)
+Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const CU& cuData, const Entropy& initialContext)
 {
     m_slice = ctu.m_slice;
     m_frame = &frame;
@@ -138,10 +138,10 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
     {
         uint32_t zOrder = 0;
         if (m_param->analysisMode == X265_ANALYSIS_LOAD)
-            compressIntraCU(ctu, ctu.m_cuLocalData[0], m_frame->m_intraData, zOrder);
+            compressIntraCU(ctu, cuData, m_frame->m_intraData, zOrder);
         else
         {
-            compressIntraCU(ctu, ctu.m_cuLocalData[0], NULL, zOrder);
+            compressIntraCU(ctu, cuData, NULL, zOrder);
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
@@ -162,17 +162,17 @@ Search::Mode& Analysis::compressCTU(TComDataCU& ctu, Frame& frame, const Entropy
              * they are available for intra predictions */
             m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPicYuv, ctu.m_cuAddr, 0);
             
-            compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]); // TODO: this really wants to be compressInterCU_rd0_1
+            compressInterCU_rd0_4(ctu, cuData); // TODO: this really wants to be compressInterCU_rd0_1
 
             /* generate residual for entire CTU at once and copy to reconPic */
-            encodeResidue(ctu, ctu.m_cuLocalData[0]);
+            encodeResidue(ctu, cuData);
         }
         else if (m_param->bDistributeModeAnalysis && m_param->rdLevel >= 2)
-            compressInterCU_dist(ctu, ctu.m_cuLocalData[0]);
+            compressInterCU_dist(ctu, cuData);
         else if (m_param->rdLevel <= 4)
-            compressInterCU_rd0_4(ctu, ctu.m_cuLocalData[0]);
+            compressInterCU_rd0_4(ctu, cuData);
         else
-            compressInterCU_rd5_6(ctu, ctu.m_cuLocalData[0]);
+            compressInterCU_rd5_6(ctu, cuData);
     }
 
     return *m_modeDepth[0].bestMode;
@@ -274,7 +274,7 @@ void Analysis::compressIntraCU(const TComDataCU& parentCTU, const CU& cuData, x2
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
+            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
@@ -589,7 +589,7 @@ void Analysis::compressInterCU_dist(const TComDataCU& parentCTU, const CU& cuDat
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
+            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
@@ -820,7 +820,7 @@ void Analysis::compressInterCU_rd0_4(const TComDataCU& parentCTU, const CU& cuDa
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
+            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
@@ -984,7 +984,7 @@ void Analysis::compressInterCU_rd5_6(const TComDataCU& parentCTU, const CU& cuDa
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCuData = parentCTU.m_cuLocalData[cuData.childIdx + subPartIdx];
+            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
             if (childCuData.flags & CU::PRESENT)
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
@@ -1460,9 +1460,9 @@ void Analysis::encodeResidue(const TComDataCU& ctu, const CU& cuData)
     {
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CU& childCUData = ctu.m_cuLocalData[cuData.childIdx + subPartIdx];
-            if (childCUData.flags & CU::PRESENT)
-                encodeResidue(ctu, childCUData);
+            const CU& childCuData = *(&cuData + cuData.childOffset + subPartIdx);
+            if (childCuData.flags & CU::PRESENT)
+                encodeResidue(ctu, childCuData);
         }
         return;
     }

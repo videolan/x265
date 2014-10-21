@@ -488,8 +488,11 @@ void FrameEncoder::encodeSlice()
             }
         }
 
+        CU  cuLocalData[104];
+        ctu->loadCTUData(m_param->maxCUSize, cuLocalData);
+
         // final coding (bitstream generation) for this CU
-        m_entropyCoder.encodeCTU(*ctu);
+        m_entropyCoder.encodeCTU(*ctu, cuLocalData[0]);
 
         if (m_param->bEnableWavefront)
         {
@@ -697,15 +700,18 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
 
-        ctu->loadCTUData(m_param->maxCUSize, ctu->m_cuLocalData);
-        tld.analysis.m_quant.setQPforQuant(*ctu);
+        // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
+        // required for prediction of current CU.
+        // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
+        CU  cuLocalData[104];
+        ctu->loadCTUData(m_param->maxCUSize, cuLocalData);
 
         // Does all the CU analysis, returns best top level mode decision
-        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, rowCoder);
+        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, cuLocalData[0], rowCoder);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
-        rowCoder.encodeCTU(*ctu);
+        rowCoder.encodeCTU(*ctu, cuLocalData[0]);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row

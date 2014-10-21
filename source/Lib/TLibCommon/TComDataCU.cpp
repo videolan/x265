@@ -679,10 +679,11 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx) const
         return m_qp[lastValidPartIdx];
     else
     {
-        TComDataCU* ctu = m_frame->m_encData->getPicCTU(m_cuAddr);
-        if (ctu->m_cuLocalData->encodeIdx > 0)
-            return ctu->getLastCodedQP(ctu->m_cuLocalData->encodeIdx);
-        else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && (m_cuAddr % m_frame->m_origPicYuv->m_numCuInWidth) == 0))
+        // TComDataCU* ctu = m_frame->m_encData->getPicCTU(m_cuAddr);
+        // if (ctu->m_cuLocalData->encodeIdx > 0)
+        //    return ctu->getLastCodedQP(ctu->m_cuLocalData->encodeIdx);
+        //else
+        if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && (m_cuAddr % m_frame->m_origPicYuv->m_numCuInWidth) == 0))
             return m_frame->m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
         else
             return m_slice->m_sliceQp;
@@ -2014,7 +2015,7 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize, CU cuDataArray[104])
 
                 CU *cu = cuDataArray + cuIdx;
                 cu->log2CUSize = log2CUSize;
-                cu->childIdx = childIdx;
+                cu->childOffset = childIdx - cuIdx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->numPartitions = (NUM_CU_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;

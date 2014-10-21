@@ -153,7 +153,7 @@ public:
     void codeShortTermRefPicSet(const RPS& rps);
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
-    void encodeCTU(const TComDataCU& cu);
+    void encodeCTU(const TComDataCU& cu, const CU& cuData);
     void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
     void codeSaoMerge(uint32_t code)   { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
 
