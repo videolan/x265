@@ -1993,36 +1993,36 @@ void TComDataCU::loadCTUData(uint32_t maxCUSize)
     int picHeight = m_frame->m_origPicYuv->m_picHeight;
     for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
     {
-        uint32_t blockSize  = 1 << log2CUSize;
-        uint32_t sbWidth    = 1 << (g_log2Size[maxCUSize] - log2CUSize);
-        int32_t last_level_flag = log2CUSize == MIN_LOG2_CU_SIZE;
-        for (uint32_t sb_y = 0; sb_y < sbWidth; sb_y++)
+        uint32_t blockSize = 1 << log2CUSize;
+        uint32_t sbWidth   = 1 << (g_log2Size[maxCUSize] - log2CUSize);
+        int32_t lastLevelFlag = log2CUSize == MIN_LOG2_CU_SIZE;
+        for (uint32_t sbY = 0; sbY < sbWidth; sbY++)
         {
-            for (uint32_t sb_x = 0; sb_x < sbWidth; sb_x++)
+            for (uint32_t sbX = 0; sbX < sbWidth; sbX++)
             {
-                uint32_t depth_idx = g_depthScanIdx[sb_y][sb_x];
-                uint32_t cuIdx = rangeCUIdx + depth_idx;
-                uint32_t child_idx = rangeCUIdx + sbWidth * sbWidth + (depth_idx << 2);
-                uint32_t px = m_cuPelX + sb_x * blockSize;
-                uint32_t py = m_cuPelY + sb_y * blockSize;
-                int32_t present_flag = px < picWidth && py < picHeight;
-                int32_t split_mandatory_flag = present_flag && !last_level_flag && (px + blockSize > picWidth || py + blockSize > picHeight);
+                uint32_t depthIdx = g_depthScanIdx[sbY][sbX];
+                uint32_t cuIdx = rangeCUIdx + depthIdx;
+                uint32_t childIdx = rangeCUIdx + sbWidth * sbWidth + (depthIdx << 2);
+                uint32_t px = m_cuPelX + sbX * blockSize;
+                uint32_t py = m_cuPelY + sbY * blockSize;
+                int32_t presentFlag = px < picWidth && py < picHeight;
+                int32_t splitMandatoryFlag = presentFlag && !lastLevelFlag && (px + blockSize > picWidth || py + blockSize > picHeight);
                 
                 /* Offset of the luma CU in the X, Y direction in terms of pixels from the CTU origin */
-                uint32_t xOffset = (sb_x * blockSize) >> 3;
-                uint32_t yOffset = (sb_y * blockSize) >> 3;
+                uint32_t xOffset = (sbX * blockSize) >> 3;
+                uint32_t yOffset = (sbY * blockSize) >> 3;
 
                 CU *cu = m_cuLocalData + cuIdx;
                 cu->log2CUSize = log2CUSize;
-                cu->childIdx = child_idx;
+                cu->childIdx = childIdx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->numPartitions = (NUM_CU_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 
                 cu->flags = 0;
-                CU_SET_FLAG(cu->flags, CU::PRESENT, present_flag);
-                CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, split_mandatory_flag);
-                CU_SET_FLAG(cu->flags, CU::LEAF, last_level_flag);
+                CU_SET_FLAG(cu->flags, CU::PRESENT, presentFlag);
+                CU_SET_FLAG(cu->flags, CU::SPLIT_MANDATORY | CU::SPLIT, splitMandatoryFlag);
+                CU_SET_FLAG(cu->flags, CU::LEAF, lastLevelFlag);
             }
         }
         rangeCUIdx += sbWidth * sbWidth;
