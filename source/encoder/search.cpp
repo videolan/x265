@@ -398,8 +398,6 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
             int16_t* reconShort = (useTSkip ? tsReconY : reconQt);
             uint32_t reconStride = (useTSkip ? tuSize : reconQtStride);
 
-            cu.setTransformSkipSubParts(useTSkip, TEXT_LUMA, absPartIdx, fullDepth); /* TODO not necessary here */
-
             primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
 
             uint32_t numSig = m_quant.transformNxN(&cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTSkip);
@@ -424,7 +422,11 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
                 break;
             }
 
+            cu.setTransformSkipSubParts(useTSkip, TEXT_LUMA, absPartIdx, fullDepth);
             cu.setCbfSubParts((!!numSig) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+
+            if (useTSkip)
+                m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
 
             m_entropyCoder.resetBits();
             if (!absPartIdx)
@@ -491,13 +493,10 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
                 singleCbfY   = !!numSig;
                 bestTSkip    = useTSkip;
             }
-            if (!useTSkip && checkTransformSkip)
-                m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
         }
 
         if (bestTSkip)
         {
-            cu.setTransformSkipSubParts(true, TEXT_LUMA, absPartIdx, fullDepth);
             memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
             primitives.square_copy_ss[sizeIdx](reconQt, reconQtStride, tsReconY, tuSize);
         }
