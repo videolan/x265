@@ -679,11 +679,9 @@ char TComDataCU::getLastCodedQP(uint32_t absPartIdx) const
         return m_qp[lastValidPartIdx];
     else
     {
-        // TComDataCU* ctu = m_frame->m_encData->getPicCTU(m_cuAddr);
-        // if (ctu->m_cuLocalData->encodeIdx > 0)
-        //    return ctu->getLastCodedQP(ctu->m_cuLocalData->encodeIdx);
-        //else
-        if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && (m_cuAddr % m_frame->m_origPicYuv->m_numCuInWidth) == 0))
+        if (m_absIdxInCTU)
+            return m_frame->m_encData->getPicCTU(m_cuAddr)->getLastCodedQP(m_absIdxInCTU);
+        else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_frame->m_origPicYuv->m_numCuInWidth)))
             return m_frame->m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
         else
             return m_slice->m_sliceQp;
