@@ -46,7 +46,6 @@ ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 Search::Search() : JobProvider(NULL)
 {
     memset(m_qtTempCoeff, 0, sizeof(m_qtTempCoeff));
-    m_qtTempShortYuv = NULL;
     for (int i = 0; i < 3; i++)
     {
         m_qtTempTransformSkipFlag[i] = NULL;
@@ -82,10 +81,8 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(m_csp) + CHROMA_V_SHIFT(m_csp));
 
-    m_qtTempShortYuv = new ShortYuv[m_numLayers];
     for (int i = 0; i < m_numLayers; i++)
     {
-        ok &= m_qtTempShortYuv[i].create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
         m_qtTempCoeff[0][i] = X265_MALLOC(coeff_t, sizeL + sizeC * 2);
         m_qtTempCoeff[1][i] = m_qtTempCoeff[0][i] + sizeL;
         m_qtTempCoeff[2][i] = m_qtTempCoeff[0][i] + sizeL + sizeC;
@@ -94,6 +91,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     for (int i = 0; i < m_numLayers; i++)
     {
         int cuSize = g_maxCUSize >> i;
+        ok &= m_rqt[i].tmpShortYuv.create(MAX_CU_SIZE, param->internalCsp); // TODO: why not size this per depth?
         ok &= m_rqt[i].tmpResiYuv.create(cuSize, m_param->internalCsp);
         ok &= m_rqt[i].tmpReconYuv.create(cuSize, m_param->internalCsp);
         ok &= m_rqt[i].tmpPredYuv.create(cuSize, param->internalCsp);
@@ -118,14 +116,11 @@ fail:
 Search::~Search()
 {
     for (int i = 0; i < m_numLayers; i++)
-    {
         X265_FREE(m_qtTempCoeff[0][i]);
-        m_qtTempShortYuv[i].destroy();
-    }
-    delete[] m_qtTempShortYuv;
 
     for (int i = 0; i < m_numLayers; i++)
     {
+        m_rqt[i].tmpShortYuv.destroy();
         m_rqt[i].tmpResiYuv.destroy();
         m_rqt[i].tmpReconYuv.destroy();
         m_rqt[i].tmpPredYuv.destroy();
@@ -365,8 +360,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
         uint32_t qtLayer      = log2TrSize - 2;
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffY       = m_qtTempCoeff[0][qtLayer] + coeffOffsetY;
-        int16_t* reconQt      = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
-        X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
+        int16_t* reconQt      = m_rqt[qtLayer].tmpShortYuv.getLumaAddr(absPartIdx);
+        X265_CHECK(m_rqt[qtLayer].tmpShortYuv.m_size == MAX_CU_SIZE, "width is not max CU size\n");
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
         pixel*   recon     = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
@@ -569,8 +564,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth, uin
             // set reconstruction for next intra prediction blocks
             uint32_t qtLayer = log2TrSize - 2;
             uint32_t zorder  = cuData.encodeIdx + absPartIdx;
-            int16_t* reconQt = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
-            X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
+            int16_t* reconQt = m_rqt[qtLayer].tmpShortYuv.getLumaAddr(absPartIdx);
+            X265_CHECK(m_rqt[qtLayer].tmpShortYuv.m_size == MAX_CU_SIZE, "width is not max CU size\n");
             const uint32_t reconQtStride = MAX_CU_SIZE;
 
             pixel*   dst       = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, zorder);
@@ -700,7 +695,7 @@ void Search::xSetIntraResultQT(TComDataCU* cu, uint32_t trDepth, uint32_t absPar
         ::memcpy(coeffDestY, coeffSrcY, sizeof(coeff_t) << (log2TrSize * 2));
 
         // copy reconstruction
-        m_qtTempShortYuv[qtLayer].copyPartToPartLuma(*reconYuv, absPartIdx, log2TrSize);
+        m_rqt[qtLayer].tmpShortYuv.copyPartToPartLuma(*reconYuv, absPartIdx, log2TrSize);
     }
     else
     {
@@ -848,8 +843,8 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CU& cuData, uint32_t trDept
             uint32_t singleCbfC     = 0;
             uint32_t singlePsyEnergyTmp = 0;
 
-            int16_t* reconQt        = m_qtTempShortYuv[qtLayer].getChromaAddr(chromaId, absPartIdxC);
-            uint32_t reconQtStride  = m_qtTempShortYuv[qtLayer].m_csize;
+            int16_t* reconQt        = m_rqt[qtLayer].tmpShortYuv.getChromaAddr(chromaId, absPartIdxC);
+            uint32_t reconQtStride  = m_rqt[qtLayer].tmpShortYuv.m_csize;
             uint32_t coeffOffsetC   = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
             coeff_t* coeffC         = m_qtTempCoeff[chromaId][qtLayer] + coeffOffsetC;
 
@@ -1007,7 +1002,7 @@ void Search::xSetIntraResultChromaQT(TComDataCU* cu, uint32_t trDepth, uint32_t 
         memcpy(coeffDstV, coeffSrcV, sizeof(coeff_t) * numCoeffC);
 
         // copy reconstruction
-        m_qtTempShortYuv[qtLayer].copyPartToPartChroma(*reconYuv, absPartIdx, log2TrSizeC + hChromaShift);
+        m_rqt[qtLayer].tmpShortYuv.copyPartToPartChroma(*reconYuv, absPartIdx, log2TrSizeC + hChromaShift);
     }
     else
     {
@@ -2789,10 +2784,10 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
         if (m_rdCost.m_psyRd)
             psyEnergyY = m_rdCost.psyCost(partSize, resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size, (int16_t*)zeroShort, 0);
 
-        int16_t *curResiY = m_qtTempShortYuv[qtLayer].getLumaAddr(absPartIdx);
-        X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width not full CU\n");
+        int16_t *curResiY = m_rqt[qtLayer].tmpShortYuv.getLumaAddr(absPartIdx);
+        X265_CHECK(m_rqt[qtLayer].tmpShortYuv.m_size == MAX_CU_SIZE, "width not full CU\n");
         const uint32_t strideResiY = MAX_CU_SIZE;
-        const uint32_t strideResiC = m_qtTempShortYuv[qtLayer].m_csize;
+        const uint32_t strideResiC = m_rqt[qtLayer].tmpShortYuv.m_csize;
 
         if (numSigY)
         {
@@ -2871,8 +2866,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
                 uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
 
-                int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
-                int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
+                int16_t *curResiU = m_rqt[qtLayer].tmpShortYuv.getCbAddr(absPartIdxC);
+                int16_t *curResiV = m_rqt[qtLayer].tmpShortYuv.getCrAddr(absPartIdxC);
 
                 distU = m_rdCost.scaleChromaDistCb(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_csize));
 
@@ -3086,8 +3081,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absP
                 uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
                 uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
 
-                int16_t *curResiU = m_qtTempShortYuv[qtLayer].getCbAddr(absPartIdxC);
-                int16_t *curResiV = m_qtTempShortYuv[qtLayer].getCrAddr(absPartIdxC);
+                int16_t *curResiU = m_rqt[qtLayer].tmpShortYuv.getCbAddr(absPartIdxC);
+                int16_t *curResiV = m_rqt[qtLayer].tmpShortYuv.getCrAddr(absPartIdxC);
 
                 ALIGN_VAR_32(coeff_t, tsCoeffU[MAX_TS_SIZE * MAX_TS_SIZE]);
                 ALIGN_VAR_32(int16_t, tsResiU[MAX_TS_SIZE * MAX_TS_SIZE]);
@@ -3540,7 +3535,7 @@ void Search::saveResidualQTData(TComDataCU& cu, ShortYuv& resiYuv, uint32_t absP
         bCodeChroma = ((absPartIdx & (qpdiv - 1)) == 0);
     }
 
-    m_qtTempShortYuv[qtLayer].copyPartToPartLuma(resiYuv, absPartIdx, log2TrSize);
+    m_rqt[qtLayer].tmpShortYuv.copyPartToPartLuma(resiYuv, absPartIdx, log2TrSize);
 
     uint32_t numCoeffY = 1 << (log2TrSize * 2);
     uint32_t coeffOffsetY = absPartIdx << LOG2_UNIT_SIZE * 2;
@@ -3550,7 +3545,7 @@ void Search::saveResidualQTData(TComDataCU& cu, ShortYuv& resiYuv, uint32_t absP
 
     if (bCodeChroma)
     {
-        m_qtTempShortYuv[qtLayer].copyPartToPartChroma(resiYuv, absPartIdx, log2TrSizeC + hChromaShift);
+        m_rqt[qtLayer].tmpShortYuv.copyPartToPartChroma(resiYuv, absPartIdx, log2TrSizeC + hChromaShift);
 
         uint32_t numCoeffC = 1 << (log2TrSizeC * 2 + (m_csp == X265_CSP_I422));
         uint32_t coeffOffsetC = coeffOffsetY >> (hChromaShift + vChromaShift);

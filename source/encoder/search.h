@@ -56,8 +56,9 @@ struct RQTData
     Entropy  rqtTemp; /* residual quad-tree temp context */
     Entropy  rqtRoot; /* residual quad-tree start context */
     Entropy  rqtTest; /* residual quad-tree test context */
+    ShortYuv tmpShortYuv;
     ShortYuv tmpResiYuv;
-    Yuv      tmpReconYuv; /* used for psy-rd or other quick measurements */
+    Yuv      tmpReconYuv;  /* used for psy-rd or other quick measurements */
 
     /* per-depth temp buffers for inter prediction */
     Yuv      tmpPredYuv;
@@ -86,7 +87,6 @@ public:
     Entropy         m_entropyCoder;
     RQTData         m_rqt[NUM_LAYERS];
 
-    ShortYuv*       m_qtTempShortYuv;
     coeff_t*        m_qtTempCoeff[3][NUM_LAYERS];
     uint8_t*        m_qtTempCbf[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
