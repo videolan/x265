@@ -758,13 +758,9 @@ int TComDataCU::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDir
         intraDirPred[1] = aboveIntraDir;
 
         if (leftIntraDir && aboveIntraDir) //both modes are non-planar
-        {
             intraDirPred[2] = PLANAR_IDX;
-        }
         else
-        {
             intraDirPred[2] =  (leftIntraDir + aboveIntraDir) < 2 ? VER_IDX : DC_IDX;
-        }
         return 2;
     }
 }
