@@ -518,11 +518,10 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
 
     if (bCheckSplit)
     {
-        // store full entropy coding status, load original entropy coding status
         if (bCheckFull)
         {
-            m_entropyCoder.store(m_rdContexts[fullDepth].rqtTest);
-            m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
+            m_entropyCoder.store(m_rdContexts[fullDepth].rqtTest);  // save state after full TU encode
+            m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);   // prep state of split encode
         }
 
         // code splitted block
@@ -564,7 +563,7 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
             return outDist;
         }
 
-        // set entropy coding status
+        // recover state of full TU encode
         m_entropyCoder.load(m_rdContexts[fullDepth].rqtTest);
 
         // recover transform index and Cbf values
