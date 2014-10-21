@@ -66,6 +66,10 @@ struct CU
         LEAF            = 1<<3, // CU is a leaf node of the CTU
         SPLIT           = 1<<4, // CU is currently split in four child CUs.
     };
+    
+    // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
+    enum { MAX_GEOMS = 104 };
+
     uint32_t log2CUSize;    // Log of the CU size.
     uint32_t childOffset;   // offset of the first child CU from current CU
     uint32_t encodeIdx;     // Encoding index of this CU in terms of 4x4 blocks.
@@ -160,7 +164,7 @@ public:
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const TComDataCU& ctu, const CU& cuData);
     void     initLosslessCU(const TComDataCU& cu, const CU& cuData);
-    void     loadCTUData(uint32_t maxCUSize, CU cuDataArray[104]);
+    void     calcCTUGeoms(uint32_t maxCUSize, CU cuDataArray[CU::MAX_GEOMS]) const;
 
     void     copyFromPic(const TComDataCU& ctu, const CU& cuData);
     void     copyPartFrom(const TComDataCU& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);

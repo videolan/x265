@@ -39,10 +39,6 @@ void weightAnalyse(Slice& slice, x265_param& param);
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
-    , m_rows(NULL)
-    , m_top(NULL)
-    , m_param(NULL)
-    , m_frame(NULL)
 {
     m_totalTime = 0;
     m_frameEncoderID = 0;
@@ -52,6 +48,12 @@ FrameEncoder::FrameEncoder()
     m_substreamSizes = NULL;
     m_nr = NULL;
     m_tld = NULL;
+    m_rows = NULL;
+    m_top = NULL;
+    m_param = NULL;
+    m_frame = NULL;
+    m_cuGeoms = NULL;
+    m_ctuGeomMap = NULL;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
@@ -65,18 +67,19 @@ void FrameEncoder::destroy()
     m_enable.trigger();
 
     delete[] m_rows;
+    delete[] m_outStreams;
+    X265_FREE(m_cuGeoms);
+    X265_FREE(m_ctuGeomMap);
+    X265_FREE(m_substreamSizes);
+    X265_FREE(m_nr);
+
+    m_frameFilter.destroy();
 
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         delete m_rce.picTimingSEI;
         delete m_rce.hrdTiming;
     }
-
-    delete[] m_outStreams;
-    X265_FREE(m_substreamSizes);
-    m_frameFilter.destroy();
-
-    X265_FREE(m_nr);
 
     // wait for worker thread to exit
     stop();
@@ -130,12 +133,64 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
     return ok;
 }
 
-void FrameEncoder::startCompressFrame(Frame* curFrame)
+/* Generate a complete list of unique geom sets for the current picture dimensions */
+bool FrameEncoder::initializeGeoms(const FrameData& encData)
+{
+    /* Geoms only vary between CTUs in the presence of picture edges */
+    int heightRem = m_param->sourceHeight & (m_param->maxCUSize - 1);
+    int widthRem = m_param->sourceWidth & (m_param->maxCUSize - 1);
+    int allocGeoms = 1; // body
+    if (heightRem && widthRem)
+        allocGeoms = 4; // body, right, bottom, corner
+    else if (heightRem || widthRem)
+        allocGeoms = 2; // body, right or bottom
+
+    m_ctuGeomMap = X265_MALLOC(uint32_t, m_numRows * m_numCols);
+    m_cuGeoms = X265_MALLOC(CU, allocGeoms * CU::MAX_GEOMS);
+    if (!m_cuGeoms || !m_ctuGeomMap)
+        return false;
+
+    int countGeoms = 0;
+    for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
+    {
+        CU cuLocalData[CU::MAX_GEOMS];
+        encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0); 
+        encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->maxCUSize, cuLocalData); /* TODO: detach this logic from TComDataCU */
+
+        m_ctuGeomMap[ctuAddr] = MAX_INT;
+        for (int i = 0; i < countGeoms; i++)
+        {
+            if (!memcmp(cuLocalData, m_cuGeoms + i * CU::MAX_GEOMS, sizeof(CU) * CU::MAX_GEOMS))
+            {
+                m_ctuGeomMap[ctuAddr] = i * CU::MAX_GEOMS;
+                break;
+            }
+        }
+
+        if (m_ctuGeomMap[ctuAddr] == MAX_INT)
+        {
+            X265_CHECK(countGeoms < allocGeoms, "geometry match check failure\n");
+            m_ctuGeomMap[ctuAddr] = countGeoms * CU::MAX_GEOMS;
+            memcpy(m_cuGeoms + countGeoms * CU::MAX_GEOMS, cuLocalData, sizeof(CU) * CU::MAX_GEOMS);
+            countGeoms++;
+        }
+    }
+
+    return true;
+}
+
+bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
     m_frame = curFrame;
     m_frame->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     curFrame->m_encData->m_slice->m_mref = m_mref;
+    if (!m_cuGeoms)
+    {
+        if (!initializeGeoms(*curFrame->m_encData))
+            return false;
+    }
     m_enable.trigger();
+    return true;
 }
 
 void FrameEncoder::threadMain()
@@ -488,11 +543,8 @@ void FrameEncoder::encodeSlice()
             }
         }
 
-        CU  cuLocalData[104];
-        ctu->loadCTUData(m_param->maxCUSize, cuLocalData);
-
         // final coding (bitstream generation) for this CU
-        m_entropyCoder.encodeCTU(*ctu, cuLocalData[0]);
+        m_entropyCoder.encodeCTU(*ctu, m_cuGeoms[m_ctuGeomMap[cuAddr]]);
 
         if (m_param->bEnableWavefront)
         {
@@ -700,18 +752,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
 
-        // CU data. Index is the CU index. Neighbor CUs (top-left, top, top-right, left) are appended to the end,
-        // required for prediction of current CU.
-        // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
-        CU  cuLocalData[104];
-        ctu->loadCTUData(m_param->maxCUSize, cuLocalData);
-
         // Does all the CU analysis, returns best top level mode decision
-        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, cuLocalData[0], rowCoder);
+        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
-        rowCoder.encodeCTU(*ctu, cuLocalData[0]);
+        rowCoder.encodeCTU(*ctu, m_cuGeoms[m_ctuGeomMap[cuAddr]]);
 
         if (m_param->bEnableWavefront && col == 1)
             // Save CABAC state for next row

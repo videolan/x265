@@ -127,7 +127,7 @@ public:
     void destroy();
 
     /* triggers encode of a new frame by the worker thread */
-    void startCompressFrame(Frame* curFrame);
+    bool startCompressFrame(Frame* curFrame);
 
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
@@ -167,6 +167,9 @@ public:
     Bitstream*               m_outStreams;
     uint32_t*                m_substreamSizes;
 
+    CU*                      m_cuGeoms;
+    uint32_t*                m_ctuGeomMap;
+
     Bitstream                m_bs;
     MotionReference          m_mref[2][MAX_NUM_REF + 1];
     Entropy                  m_entropyCoder;
@@ -181,6 +184,8 @@ public:
     int                      m_frameEncoderID;
 
 protected:
+
+    bool initializeGeoms(const FrameData& encData);
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();

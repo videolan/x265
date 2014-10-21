@@ -546,7 +546,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             m_lookahead->getEstimatedPictureCost(frameEnc);
 
         // Allow FrameEncoder::compressFrame() to start in a worker thread
-        curEncoder->startCompressFrame(frameEnc);
+        if (!curEncoder->startCompressFrame(frameEnc))
+            m_aborted = true;
     }
     else if (m_encodedFrameNum)
         m_rateControl->setFinalFrameCount(m_encodedFrameNum);
