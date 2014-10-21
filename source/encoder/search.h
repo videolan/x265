@@ -204,8 +204,6 @@ protected:
 
     uint32_t xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2]);
 
-    uint32_t calcIntraLumaRecon(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t log2TrSize, int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf);
-
     uint32_t xEstimateResidualQT(Mode& mode, const CU& cuData, uint32_t absPartIdx, ShortYuv* inResiYuv, uint32_t depth,
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t tuDepthRange[2]);
 
