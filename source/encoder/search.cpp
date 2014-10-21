@@ -247,52 +247,6 @@ void Search::xEncCoeffQTChroma(const TComDataCU& cu, uint32_t trDepth, uint32_t 
     }
 }
 
-uint32_t Search::xGetIntraBitsLuma(const TComDataCU& cu, const CU& cuData, uint32_t trDepth, uint32_t absPartIdx, uint32_t log2TrSize, const coeff_t* coeff, uint32_t depthRange[2])
-{
-    m_entropyCoder.resetBits();
-    if (!absPartIdx)
-    {
-        if (!cu.m_slice->isIntra())
-        {
-            if (cu.m_slice->m_pps->bTransquantBypassEnabled)
-                m_entropyCoder.codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[0]);
-            m_entropyCoder.codeSkipFlag(cu, 0);
-            m_entropyCoder.codePredMode(cu.m_predModes[0]);
-        }
-
-        m_entropyCoder.codePartSize(cu, 0, cu.m_depth[0]);
-    }
-    if (cu.m_partSizes[0] == SIZE_2Nx2N)
-    {
-        if (!absPartIdx)
-            m_entropyCoder.codeIntraDirLumaAng(cu, 0, false);
-    }
-    else
-    {
-        uint32_t qtNumParts = cuData.numPartitions >> 2;
-        if (!trDepth)
-        {
-            X265_CHECK(absPartIdx == 0, "unexpected absPartIdx %d\n", absPartIdx);
-            for (uint32_t part = 0; part < 4; part++)
-                m_entropyCoder.codeIntraDirLumaAng(cu, part * qtNumParts, false);
-        }
-        else if (!(absPartIdx & (qtNumParts - 1)))
-            m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false);
-    }
-    // Transform subdiv flag
-    if (log2TrSize != *depthRange)
-        m_entropyCoder.codeTransformSubdivFlag(0, 5 - log2TrSize);
-
-    // Cbfs
-    uint32_t trMode = cu.m_trIdx[absPartIdx];
-    m_entropyCoder.codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
-
-    if (cu.getCbf(absPartIdx, TEXT_LUMA, trDepth))
-        m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
-
-    return m_entropyCoder.getNumberOfWrittenBits();
-}
-
 uint32_t Search::calcIntraChromaRecon(Mode& mode, const CU& cuData, uint32_t absPartIdx, uint32_t chromaId, uint32_t log2TrSizeC,
                                       int16_t* reconQt, uint32_t reconQtStride, coeff_t* coeff, uint32_t& cbf)
 {
@@ -364,8 +318,8 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
     bool bCheckSplit = log2TrSize > *depthRange;
     bool bCheckFull  = log2TrSize <= *(depthRange + 1);
 
+    TComDataCU& cu = mode.cu;
     Yuv* predYuv = &mode.predYuv;
-    TComDataCU* cu = &mode.cu;
     const Yuv* fencYuv = mode.fencYuv;
 
     // don't check split if TU size is less or equal to max TU size
@@ -404,13 +358,13 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         int      sizeIdx  = log2TrSize - 2;
 
         // init availability pattern
-        uint32_t lumaPredMode = cu->m_lumaIntraDir[absPartIdx];
-        initAdiPattern(*cu, cuData, absPartIdx, trDepth, lumaPredMode);
+        uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
+        initAdiPattern(cu, cuData, absPartIdx, trDepth, lumaPredMode);
 
         // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
-        cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+        cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
 
         uint32_t qtLayer      = log2TrSize - 2;
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
@@ -419,7 +373,7 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
-        pixel*   recon     = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+        pixel*   recon     = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
         uint32_t picStride = m_frame->m_reconPicYuv->m_stride;
 
         // store original entropy coding status
@@ -431,9 +385,9 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         ALIGN_VAR_32(coeff_t, tsCoeffY[32 * 32]);
         ALIGN_VAR_32(int16_t, tsReconY[32 * 32]);
 
-        int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu->m_cuTransquantBypass[0];
+        int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSize <= MAX_LOG2_TS_SIZE && !cu.m_cuTransquantBypass[0];
         if (m_param->bEnableTSkipFast)
-            checkTransformSkip &= cu->m_partSizes[absPartIdx] == SIZE_NxN;
+            checkTransformSkip &= cu.m_partSizes[absPartIdx] == SIZE_NxN;
 
         for (int useTSkip = 0; useTSkip <= checkTransformSkip; useTSkip++)
         {
@@ -444,16 +398,14 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
             int16_t* reconShort = (useTSkip ? tsReconY : reconQt);
             uint32_t reconStride = (useTSkip ? tuSize : reconQtStride);
 
-            cu->setTransformSkipSubParts(useTSkip, TEXT_LUMA, absPartIdx, fullDepth); /* TODO not necessary here */
+            cu.setTransformSkipSubParts(useTSkip, TEXT_LUMA, absPartIdx, fullDepth); /* TODO not necessary here */
 
             primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
 
-            // transform and quantization
-
-            uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTSkip);
+            uint32_t numSig = m_quant.transformNxN(&cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTSkip);
             if (numSig)
             {
-                m_quant.invtransformNxN(cu->m_cuTransquantBypass[absPartIdx], residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTSkip, numSig);
+                m_quant.invtransformNxN(cu.m_cuTransquantBypass[0], residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTSkip, numSig);
                 primitives.calcrecon[sizeIdx](pred, residual, reconShort, recon, stride, reconStride, picStride);
                 tmpDist = primitives.sse_sp[sizeIdx](reconQt, reconQtStride, fenc, stride);
             }
@@ -472,20 +424,59 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
                 break;
             }
 
-            cu->setCbfSubParts((!!numSig) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-            uint32_t tmpBits = xGetIntraBitsLuma(*cu, cuData, trDepth, absPartIdx, log2TrSize, coeff, depthRange);
-            if (!useTSkip && checkTransformSkip)
-                m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
+            cu.setCbfSubParts((!!numSig) << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+
+            m_entropyCoder.resetBits();
+            if (!absPartIdx)
+            {
+                if (!cu.m_slice->isIntra())
+                {
+                    if (cu.m_slice->m_pps->bTransquantBypassEnabled)
+                        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_cuTransquantBypass[0]);
+                    m_entropyCoder.codeSkipFlag(cu, 0);
+                    m_entropyCoder.codePredMode(cu.m_predModes[0]);
+                }
+
+                m_entropyCoder.codePartSize(cu, 0, cu.m_depth[0]);
+            }
+            if (cu.m_partSizes[0] == SIZE_2Nx2N)
+            {
+                if (!absPartIdx)
+                    m_entropyCoder.codeIntraDirLumaAng(cu, 0, false);
+            }
+            else
+            {
+                uint32_t qtNumParts = cuData.numPartitions >> 2;
+                if (!trDepth)
+                {
+                    for (uint32_t part = 0; part < 4; part++)
+                        m_entropyCoder.codeIntraDirLumaAng(cu, part * qtNumParts, false);
+                }
+                else if (!(absPartIdx & (qtNumParts - 1)))
+                    m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false);
+            }
+            if (log2TrSize != *depthRange)
+                m_entropyCoder.codeTransformSubdivFlag(0, 5 - log2TrSize);
+
+            m_entropyCoder.codeQtCbf(cu, absPartIdx, TEXT_LUMA, cu.m_trIdx[absPartIdx]);
+
+            if (cu.getCbf(absPartIdx, TEXT_LUMA, trDepth))
+                m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdx, log2TrSize, TEXT_LUMA);
+
+            uint32_t tmpBits = m_entropyCoder.getNumberOfWrittenBits();
 
             if (m_param->rdPenalty && log2TrSize == 5 && m_slice->m_sliceType != I_SLICE)
                 tmpBits *= 4;
+
+            if (!useTSkip && checkTransformSkip)
+                m_entropyCoder.store(m_rdContexts[fullDepth].rqtTemp);
 
             if (m_rdCost.m_psyRd)
             {
                 uint32_t zorder = cuData.encodeIdx + absPartIdx;
                 pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
                 tmpEnergy = m_rdCost.psyCost(log2TrSize - 2, fenc, fencYuv->m_size,
-                    m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
+                    m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, zorder), m_frame->m_reconPicYuv->m_stride);
                 tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
             }
             else
@@ -504,23 +495,25 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
                 m_entropyCoder.load(m_rdContexts[fullDepth].rqtRoot);
         }
 
-        cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
-
         if (bestTSkip)
         {
-            ::memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
+            cu.setTransformSkipSubParts(true, TEXT_LUMA, absPartIdx, fullDepth);
+            memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
             primitives.square_copy_ss[sizeIdx](reconQt, reconQtStride, tsReconY, tuSize);
         }
         else
         {
             /* copy from int16 recon buffer to reconPic (bad on two counts) */
-            pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, cuData.encodeIdx + absPartIdx);
+            pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuData.encodeIdx + absPartIdx);
             uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
             primitives.square_copy_sp[sizeIdx](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
-            cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
             if (checkTransformSkip)
+            {
+                cu.setTransformSkipSubParts(false, TEXT_LUMA, absPartIdx, fullDepth);
+                cu.setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
                 m_entropyCoder.load(m_rdContexts[fullDepth].rqtTemp);
+            }
         }
     }
 
@@ -545,7 +538,7 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         for (uint32_t part = 0; part < 4; part++, absPartIdxSub += qPartsDiv)
         {
             splitDistY += codeIntraLumaQT(mode, cuData, trDepth + 1, absPartIdxSub, bAllowRQTSplit, splitCost, splitBits, splitPsyEnergyY, depthRange);
-            splitCbfY |= cu->getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
+            splitCbfY |= cu.getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
 
         if (bCheckFull && log2TrSize != depthRange[0])
@@ -556,7 +549,7 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         }
 
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
-            cu->m_cbf[0][absPartIdx + offs] |= (splitCbfY << trDepth);
+            cu.m_cbf[0][absPartIdx + offs] |= (splitCbfY << trDepth);
 
         if (m_rdCost.m_psyRd)
             splitCost = m_rdCost.calcPsyRdCost(splitDistY, splitBits, splitPsyEnergyY);
@@ -576,9 +569,9 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         m_entropyCoder.load(m_rdContexts[fullDepth].rqtTest);
 
         // recover transform index and Cbf values
-        cu->setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
-        cu->setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
-        cu->setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
+        cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+        cu.setCbfSubParts(singleCbfY << trDepth, TEXT_LUMA, absPartIdx, fullDepth);
+        cu.setTransformSkipSubParts(bestTSkip, TEXT_LUMA, absPartIdx, fullDepth);
 
         // set reconstruction for next intra prediction blocks
         uint32_t qtLayer   = log2TrSize - 2;
@@ -587,7 +580,7 @@ uint32_t Search::codeIntraLumaQT(Mode& mode, const CU& cuData, uint32_t trDepth,
         X265_CHECK(m_qtTempShortYuv[qtLayer].m_size == MAX_CU_SIZE, "width is not max CU size\n");
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
-        pixel*   dst       = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
+        pixel*   dst       = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, zorder);
         uint32_t dststride = m_frame->m_reconPicYuv->m_stride;
         int sizeIdx = log2TrSize - 2;
         primitives.square_copy_sp[sizeIdx](dst, dststride, reconQt, reconQtStride);
