@@ -1685,7 +1685,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
 
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
-        uint32_t absPartIdx;
+        uint32_t absPartIdx; // z-order index of PU within current CTU
         int      puWidth, puHeight;
         cu->getPartIndexAndSize(puIdx, absPartIdx, puWidth, puHeight);
 
@@ -1928,7 +1928,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
-        uint32_t absPartIdx;
+        uint32_t absPartIdx; // z-order index of PU within current CTU
         int      puWidth, puHeight;
         cu->getPartIndexAndSize(puIdx, absPartIdx, puWidth, puHeight);
 
