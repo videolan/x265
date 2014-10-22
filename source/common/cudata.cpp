@@ -1211,9 +1211,19 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         mvFieldNeighbours[i][1].refIdx = NOT_VALID;
     }
 
-    // compute the location of the current PU
+    /* calculate the location of upper-left corner pixel and size of the current PU */
     int xP, yP, nPSW, nPSH;
-    this->getPartPosition(puIdx, xP, yP, nPSW, nPSH);
+
+    int cuSize = 1 << m_log2CUSize[0];
+    int partMode = m_partSizes[0];
+
+    int tmp = partTable[partMode][puIdx][0];
+    nPSW = ((tmp >> 4) * cuSize) >> 2;
+    nPSH = ((tmp & 0xF) * cuSize) >> 2;
+
+    tmp = partTable[partMode][puIdx][1];
+    xP = ((tmp >> 4) * cuSize) >> 2;
+    yP = ((tmp & 0xF) * cuSize) >> 2;
 
     uint32_t count = 0;
 
@@ -1477,22 +1487,6 @@ bool CUData::isDiffMER(int xN, int yN, int xP, int yP) const
     if ((yN >> plevel) != (yP >> plevel))
         return true;
     return false;
-}
-
-/* calculate the location of upper-left corner pixel and size of the current PU */
-void CUData::getPartPosition(uint32_t partIdx, int& xP, int& yP, int& nPSW, int& nPSH) const
-{
-    int cuSize = 1 << m_log2CUSize[0];
-    int part_mode = m_partSizes[0];
-    int part_idx  = partIdx;
-
-    int tmp = partTable[part_mode][part_idx][0];
-    nPSW = ((tmp >> 4) * cuSize) >> 2;
-    nPSH = ((tmp & 0xF) * cuSize) >> 2;
-
-    tmp = partTable[part_mode][part_idx][1];
-    xP = ((tmp >> 4) * cuSize) >> 2;
-    yP = ((tmp & 0xF) * cuSize) >> 2;
 }
 
 /* Constructs a list of candidates for AMVP, and a larger list of motion candidates */

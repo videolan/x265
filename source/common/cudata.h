@@ -165,7 +165,6 @@ public:
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
     void     clipMv(MV& outMV) const;
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
-    void     getPartPosition(uint32_t puIdx, int& xP, int& yP, int& nPSW, int& nPSH) const;
     void     getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
     bool     isIntra(uint32_t absPartIdx) const { return m_predModes[absPartIdx] == MODE_INTRA; }
