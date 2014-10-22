@@ -29,7 +29,6 @@
 #include "quant.h"
 #include "shortyuv.h"
 #include "yuv.h"
-#include "TLibCommon/TComMotionInfo.h"
 
 namespace x265 {
 

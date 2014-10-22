@@ -1,12 +1,10 @@
 # vim: syntax=cmake
 set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComMotionInfo.cpp
     ../Lib/TLibCommon/TComRom.cpp)
 set(LIBCOMMON_HDR
     ../Lib/TLibCommon/CommonDef.h
     ../Lib/TLibCommon/TypeDef.h
     ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComMotionInfo.h
     ../Lib/TLibCommon/TComRom.h)
 
 if(GCC)

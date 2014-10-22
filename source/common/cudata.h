@@ -26,7 +26,7 @@
 
 #include "common.h"
 #include "slice.h"
-#include "TLibCommon/TComMotionInfo.h"
+#include "mv.h"
 #include "TLibCommon/TComRom.h"
 
 namespace x265 {
@@ -100,19 +100,21 @@ public:
     uint8_t*      m_predMode;         // array of prediction modes
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
+    char*         m_refIdx[2];        // array of motion reference indices per list
     uint8_t*      m_depth;            // array of depths
     uint8_t*      m_skipFlag;         // array of skip flags
     uint8_t*      m_mergeFlag;        // array of merge flags
     uint8_t*      m_interDir;         // array of inter directions
     uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]
     uint8_t*      m_trIdx;            // array of transform indices
-    uint8_t*      m_transformSkip[3]; // array of transform skipping flags
-    uint8_t*      m_cbf[3];           // array of coded block flags (CBF)
+    uint8_t*      m_transformSkip[3]; // array of transform skipping flags per plane
+    uint8_t*      m_cbf[3];           // array of coded block flags (CBF) per plane
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
-    enum { BytesPerPartition = 20 };  // combined sizeof() of all per-part data
+    enum { BytesPerPartition = 22 };  // combined sizeof() of all per-part data
 
-    TComCUMvField m_cuMvField[2];     // array of motion vectors
-    coeff_t*      m_trCoeff[3];       // transformed coefficient buffer
+    MV*           m_mv[2];            // array of motion vectors per list
+    MV*           m_mvd[2];           // array of coded motion vector deltas per list
+    coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
 
     const CUData* m_cuAboveLeft;      // pointer to above-left neighbor CTU
     const CUData* m_cuAboveRight;     // pointer to above-right neighbor CTU
@@ -121,7 +123,7 @@ public:
 
     CUData();
 
-    void     initialize(const CUDataMemPool& dataPool, const MVFieldMemPool& mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
+    void     initialize(const CUDataMemPool& dataPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
@@ -158,6 +160,8 @@ public:
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth);
+    void     setAllMv(int list, const MV& mv, PartSize cuMode, int absPartIdx, int puIdx);
+    void     setAllRefIdx(int list, int refIdx, PartSize cuMode, int absPartIdx, int puIdx);
 
     char     getRefQP(uint32_t currAbsIdxInCTU) const;
     void     deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
@@ -200,6 +204,9 @@ public:
 
 protected:
 
+    template<typename T>
+    void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, int puIdx);
+
     char getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
 
@@ -236,13 +243,15 @@ struct CUDataMemPool
 {
     uint8_t* charMemBlock;
     coeff_t* trCoeffMemBlock;
+    MV*      mvMemBlock;
 
-    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; }
+    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; }
 
     bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numInstances)
     {
         CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
+        CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numInstances);
 
         return true;
     fail:
@@ -252,6 +261,7 @@ struct CUDataMemPool
     void destroy()
     {
         X265_FREE(trCoeffMemBlock);
+        X265_FREE(mvMemBlock);
         X265_FREE(charMemBlock);
     }
 };

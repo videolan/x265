@@ -1352,7 +1352,7 @@ void Entropy::codeInterDir(const CUData& cu, uint32_t absPartIdx)
 
 void Entropy::codeRefFrmIdx(const CUData& cu, uint32_t absPartIdx, int list)
 {
-    uint32_t refFrame = cu.m_cuMvField[list].refIdx[absPartIdx];
+    uint32_t refFrame = cu.m_refIdx[list][absPartIdx];
 
     encodeBin(refFrame > 0, m_contextState[OFF_REF_NO_CTX]);
 
@@ -1375,7 +1375,7 @@ void Entropy::codeRefFrmIdx(const CUData& cu, uint32_t absPartIdx, int list)
 
 void Entropy::codeMvd(const CUData& cu, uint32_t absPartIdx, int list)
 {
-    const MV& mvd = cu.m_cuMvField[list].mvd[absPartIdx];
+    const MV& mvd = cu.m_mvd[list][absPartIdx];
     const int hor = mvd.x;
     const int ver = mvd.y;
 

@@ -240,19 +240,19 @@ void Deblock::getBoundaryStrengthSingle(CUData* cu, int32_t dir, uint32_t absPar
             {
                 int32_t refIdx;
                 Frame *refP0, *refP1, *refQ0, *refQ1;
-                refIdx = cuP->m_cuMvField[0].refIdx[partP];
+                refIdx = cuP->m_refIdx[0][partP];
                 refP0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuP->m_cuMvField[1].refIdx[partP];
+                refIdx = cuP->m_refIdx[1][partP];
                 refP1 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[1][refIdx];
-                refIdx = cuQ->m_cuMvField[0].refIdx[partQ];
+                refIdx = cuQ->m_refIdx[0][partQ];
                 refQ0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->m_cuMvField[1].refIdx[partQ];
+                refIdx = cuQ->m_refIdx[1][partQ];
                 refQ1 = (refIdx < 0) ? NULL : slice->m_refPicList[1][refIdx];
 
-                MV mvp0 = cuP->m_cuMvField[0].mv[partP];
-                MV mvp1 = cuP->m_cuMvField[1].mv[partP];
-                MV mvq0 = cuQ->m_cuMvField[0].mv[partQ];
-                MV mvq1 = cuQ->m_cuMvField[1].mv[partQ];
+                MV mvp0 = cuP->m_mv[0][partP];
+                MV mvp1 = cuP->m_mv[1][partP];
+                MV mvq0 = cuQ->m_mv[0][partQ];
+                MV mvq1 = cuQ->m_mv[1][partQ];
 
                 if (!refP0) mvp0 = 0;
                 if (!refP1) mvp1 = 0;
@@ -297,12 +297,12 @@ void Deblock::getBoundaryStrengthSingle(CUData* cu, int32_t dir, uint32_t absPar
             {
                 int32_t refIdx;
                 Frame *refp0, *refq0;
-                refIdx = cuP->m_cuMvField[0].refIdx[partP];
+                refIdx = cuP->m_refIdx[0][partP];
                 refp0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->m_cuMvField[0].refIdx[partQ];
+                refIdx = cuQ->m_refIdx[0][partQ];
                 refq0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                MV mvp0 = cuP->m_cuMvField[0].mv[partP];
-                MV mvq0 = cuQ->m_cuMvField[0].mv[partQ];
+                MV mvp0 = cuP->m_mv[0][partP];
+                MV mvq0 = cuQ->m_mv[0][partQ];
 
                 if (!refp0) mvp0 = 0;
                 if (!refq0) mvq0 = 0;

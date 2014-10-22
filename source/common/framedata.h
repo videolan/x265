@@ -53,7 +53,6 @@ public:
     bool           m_bHasReferences;   /* used during DPB/RPS updates */
 
     CUDataMemPool  m_cuMemPool;
-    MVFieldMemPool m_mvFieldMemPool;
     CUData*        m_picCTU;
 
     uint32_t       m_numPartitions;    /* based on g_maxFullDepth, could be CU static */

@@ -67,7 +67,6 @@ public:
         Mode*          bestMode;
         Yuv            fencYuv;
         CUDataMemPool  cuMemPool;
-        MVFieldMemPool mvFieldMemPool;
     };
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];

@@ -31,8 +31,6 @@
 #include "yuv.h"
 #include "threadpool.h"
 
-#include "TLibCommon/TComMotionInfo.h"
-
 #include "rdcost.h"
 #include "entropy.h"
 #include "motion.h"
