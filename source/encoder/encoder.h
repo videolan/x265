@@ -76,7 +76,7 @@ class Encoder : public x265_encoder
 {
 private:
 
-    int                m_pocLast;          ///< time index (POC)
+    int                m_pocLast;         // time index (POC)
     int                m_encodedFrameNum;
     int                m_outputCount;
 
@@ -93,6 +93,12 @@ private:
 
     int                m_curEncoder;
 
+    /* cached PicYuv offset arrays, shared by all instances of
+     * PicYuv created by this encoder */
+    intptr_t*          m_cuOffsetY;
+    intptr_t*          m_cuOffsetC;
+    intptr_t*          m_buOffsetY;
+    intptr_t*          m_buOffsetC;
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;

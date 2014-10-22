@@ -53,7 +53,7 @@ public:
     uint32_t m_hChromaShift;
     uint32_t m_vChromaShift;
 
-    intptr_t* m_cuOffsetY;
+    intptr_t* m_cuOffsetY;  /* these four buffers are owned by the top-level encoder */
     intptr_t* m_cuOffsetC;
     intptr_t* m_buOffsetY;
     intptr_t* m_buOffsetC;
@@ -66,7 +66,9 @@ public:
     PicYuv();
 
     bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
+    bool  createOffsets();
     void  destroy();
+
     void  copyFromPicture(const x265_picture&, int padx, int pady);
 
     uint32_t getCUHeight(uint32_t rowNum) const;

@@ -63,7 +63,6 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
 
     m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
     int maxHeight = m_numCuInHeight * g_maxCUSize;
-    uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
 
     CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -73,7 +72,18 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
     m_picOrg[1] = m_picBuf[1] + m_chromaMarginY * m_strideC + m_chromaMarginX;
     m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * m_strideC + m_chromaMarginX;
 
-    /* TODO: these four buffers are the same for every PicYuv in the encoder */
+    return true;
+
+fail:
+    return false;
+}
+
+/* the first picture allocated by the encoder will be asked to generate these
+ * offset arrays. Once generated, they will be provided to all future PicYuv
+ * allocated by the same encoder. */
+bool PicYuv::createOffsets()
+{
+    uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
     CHECKED_MALLOC(m_cuOffsetY, intptr_t, m_numCuInWidth * m_numCuInHeight);
     CHECKED_MALLOC(m_cuOffsetC, intptr_t, m_numCuInWidth * m_numCuInHeight);
     for (uint32_t cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
@@ -106,10 +116,6 @@ void PicYuv::destroy()
     X265_FREE(m_picBuf[0]);
     X265_FREE(m_picBuf[1]);
     X265_FREE(m_picBuf[2]);
-    X265_FREE(m_cuOffsetY);
-    X265_FREE(m_cuOffsetC);
-    X265_FREE(m_buOffsetY);
-    X265_FREE(m_buOffsetC);
 }
 
 uint32_t PicYuv::getCUHeight(uint32_t rowNum) const

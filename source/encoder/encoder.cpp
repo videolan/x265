@@ -73,6 +73,10 @@ Encoder::Encoder()
     m_outputCount = 0;
     m_csvfpt = NULL;
     m_param = NULL;
+    m_cuOffsetY = NULL;
+    m_cuOffsetC = NULL;
+    m_buOffsetY = NULL;
+    m_buOffsetC = NULL;
     m_threadPool = 0;
     m_numThreadLocalData = 0;
 }
@@ -272,10 +276,16 @@ void Encoder::destroy()
     if (m_threadPool)
         m_threadPool->release();
 
-    free(m_param->rc.statFileName); // alloc'd by strdup
-    X265_FREE(m_param);
+    X265_FREE(m_cuOffsetY);
+    X265_FREE(m_cuOffsetC);
+    X265_FREE(m_buOffsetY);
+    X265_FREE(m_buOffsetC);
+
     if (m_csvfpt)
         fclose(m_csvfpt);
+    free(m_param->rc.statFileName); // alloc'd by strdup
+
+    X265_FREE(m_param);
 }
 
 void Encoder::init()
@@ -361,7 +371,38 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
-            if (!inFrame->create(m_param))
+            if (inFrame->create(m_param))
+            {
+                /* the first PicYuv created is asked to generate the CU and block unit offset
+                 * arrays which are then shared with all subsequent PicYuv (orig and recon) 
+                 * allocated by this top level encoder */
+                if (m_cuOffsetY)
+                {
+                    inFrame->m_origPicYuv->m_cuOffsetC = m_cuOffsetC;
+                    inFrame->m_origPicYuv->m_cuOffsetY = m_cuOffsetY;
+                    inFrame->m_origPicYuv->m_buOffsetC = m_buOffsetC;
+                    inFrame->m_origPicYuv->m_buOffsetY = m_buOffsetY;
+                }
+                else
+                {
+                    if (!inFrame->m_origPicYuv->createOffsets())
+                    {
+                        m_aborted = true;
+                        x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
+                        inFrame->destroy();
+                        delete inFrame;
+                        return -1;
+                    }
+                    else
+                    {
+                        m_cuOffsetC = inFrame->m_origPicYuv->m_cuOffsetC;
+                        m_cuOffsetY = inFrame->m_origPicYuv->m_cuOffsetY;
+                        m_buOffsetC = inFrame->m_origPicYuv->m_buOffsetC;
+                        m_buOffsetY = inFrame->m_origPicYuv->m_buOffsetY;
+                    }
+                }
+            }
+            else
             {
                 m_aborted = true;
                 x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -526,6 +567,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
             slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_encData->m_numCUsInFrame * NUM_CU_PARTITIONS);
+            frameEnc->m_reconPicYuv->m_cuOffsetC = m_cuOffsetC;
+            frameEnc->m_reconPicYuv->m_cuOffsetY = m_cuOffsetY;
+            frameEnc->m_reconPicYuv->m_buOffsetC = m_buOffsetC;
+            frameEnc->m_reconPicYuv->m_buOffsetY = m_buOffsetY;
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
