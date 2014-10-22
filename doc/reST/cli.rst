@@ -539,13 +539,13 @@ Spatial/intra options
 
 .. option:: --tskip, --no-tskip
 
-	Enable intra transform skipping (encode residual as coefficients)
-	for intra coded blocks. Default disabled
+	Enable evaluation of transform skip (bypass DCT but still use
+	quantization) coding for intra coded blocks. Default disabled
 
 .. option:: --tskip-fast, --no-tskip-fast
 
-	Enable fast intra transform skip decisions. Only applicable if
-	transform skip is enabled. Default disabled
+	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
+	Only applicable if transform skip is enabled. Default disabled
 
 .. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
 
