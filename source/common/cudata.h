@@ -152,11 +152,6 @@ public:
 
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth);
 
-    void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
-    uint32_t getNumPartInter() const { return nbPartsTable[(int)m_partSizes[0]]; }
-
-    void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;
-
     char     getRefQP(uint32_t currAbsIdxInCTU) const;
     void     deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
     void     deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
@@ -167,17 +162,20 @@ public:
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
     void     getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
-    bool     isIntra(uint32_t absPartIdx) const { return m_predModes[absPartIdx] == MODE_INTRA; }
+    uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSizes[0]]; }
+    bool     isIntra(uint32_t absPartIdx) const   { return m_predModes[absPartIdx] == MODE_INTRA; }
     uint8_t  isSkipped(uint32_t absPartIdx) const { return m_skipFlag[absPartIdx]; }
-    bool     isBipredRestriction() const { return m_log2CUSize[0] == 3 && m_partSizes[0] != SIZE_2Nx2N; }
+    bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSizes[0] != SIZE_2Nx2N; }
+
+    void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
+    void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
 
+    uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
     uint32_t getCtxSkipFlag(uint32_t absPartIdx) const;
-
-    uint32_t getSCUAddr() const { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     ScanType getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;
     void     getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
