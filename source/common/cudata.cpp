@@ -929,7 +929,7 @@ void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth
     }
 }
 
-void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)
+void CUData::setPUInterDir(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)
 {
     uint32_t curPartNumQ = m_numPartitions >> 2;
     X265_CHECK(puIdx < 2, "unexpected part unit index\n");
@@ -1012,7 +1012,7 @@ void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puI
 }
 
 template<typename T>
-void CUData::setAll(T* p, const T& val, int absPartIdx, int puIdx)
+void CUData::setAllPU(T* p, const T& val, int absPartIdx, int puIdx)
 {
     int i;
 
@@ -1177,14 +1177,14 @@ void CUData::setAll(T* p, const T& val, int absPartIdx, int puIdx)
     }
 }
 
-void CUData::setAllMv(int list, const MV& mv, int absPartIdx, int puIdx)
+void CUData::setPUMv(int list, const MV& mv, int absPartIdx, int puIdx)
 {
-    setAll(m_mv[list], mv, absPartIdx, puIdx);
+    setAllPU(m_mv[list], mv, absPartIdx, puIdx);
 }
 
-void CUData::setAllRefIdx(int list, int refIdx, int absPartIdx, int puIdx)
+void CUData::setPURefIdx(int list, int refIdx, int absPartIdx, int puIdx)
 {
-    setAll(m_refIdx[list], (char)refIdx, absPartIdx, puIdx);
+    setAllPU(m_refIdx[list], (char)refIdx, absPartIdx, puIdx);
 }
 
 void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const
