@@ -154,8 +154,10 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
     for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
     {
         CUGeom cuLocalData[CUGeom::MAX_GEOMS];
-        encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0); 
-        encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->maxCUSize, cuLocalData); /* TODO: detach this logic from TComDataCU */
+        
+        /* TODO: detach this logic from TComDataCU */
+        encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0);
+        encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->sourceWidth, m_param->sourceHeight, m_param->maxCUSize, cuLocalData);
 
         m_ctuGeomMap[ctuAddr] = MAX_INT;
         for (int i = 0; i < countGeoms; i++)

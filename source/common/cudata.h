@@ -126,16 +126,18 @@ public:
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
+    void     calcCTUGeoms(uint32_t picWidth, uint32_t picHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
+
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
-    void     calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
 
     void     copyPartFrom(const CUData& cu, const CUGeom& childGeom, uint32_t subPartIdx);
     void     setEmptyPart(const CUGeom& childGeom, uint32_t subPartIdx);
     void     copyToPic(uint32_t depth) const;
 
-    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom); /* RD-0 methods called only from encodeResidue */
+    /* RD-0 methods called only from encodeResidue */
+    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom);
     void     updatePic(uint32_t depth) const;
 
     void     setDepthSubParts(uint8_t depth)       { m_partSet(m_depth, depth); }

@@ -2072,11 +2072,9 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
 
-void CUData::calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const
+void CUData::calcCTUGeoms(uint32_t picWidth, uint32_t picHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const
 {
     // Initialize the coding blocks inside the CTB
-    uint32_t picWidth = m_frame->m_origPicYuv->m_picWidth;
-    uint32_t picHeight = m_frame->m_origPicYuv->m_picHeight;
     for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
     {
         uint32_t blockSize = 1 << log2CUSize;
