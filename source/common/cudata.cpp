@@ -671,11 +671,7 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
     return m_cuAboveRight;
 }
 
-/** Get left QpMinCu
-*\param   lPartUnitIdx
-*\param   curAbsIdxInCTU
-*\returns TComDataCU*   point of TComDataCU of left QpMinCu
-*/
+/* Get left QpMinCu */
 const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
     uint32_t numPartInCUSize = m_frame->m_encData->m_numPartInCUSize;
@@ -693,6 +689,7 @@ const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxI
     return m_frame->m_encData->getPicCTU(m_cuAddr);
 }
 
+/* Get above QpMinCu */
 const CUData* CUData::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
     uint32_t numPartInCUSize = m_frame->m_encData->m_numPartInCUSize;
