@@ -916,17 +916,6 @@ void CUData::clearCbf(uint32_t absPartIdx, uint32_t depth)
     memset(m_cbf[2] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
 }
 
-void CUData::setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * curPartNum);
-}
-
-void CUData::setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)
-{
-    memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * coveredPartIdxes);
-}
 
 void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf)
 {
@@ -948,47 +937,6 @@ void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth
                 setQPSubParts(qp, absPartIdx, depth);
         }
     }
-}
-
-void CUData::setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    char cqp = (char)qp;
-    memset(m_qp + absPartIdx, cqp, sizeof(char) * curPartNum);
-}
-
-void CUData::setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_lumaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
-}
-
-void CUData::setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_chromaIntraDir + absPartIdx, dir, sizeof(uint8_t) * curPartNum);
-}
-
-void CUData::setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_trIdx + absPartIdx, trIdx, sizeof(uint8_t) * curPartNum);
-}
-
-void CUData::setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * curPartNum);
-}
-
-void CUData::setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)
-{
-    memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
 }
 
 void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)

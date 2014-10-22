@@ -142,29 +142,28 @@ public:
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
+
+    /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
+    void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)                        { memset(m_qp + absPartIdx, (char)qp, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)             { memset(m_trIdx + absPartIdx, trIdx, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)        { memset(m_lumaIntraDir + absPartIdx, dir, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)       { memset(m_chromaIntraDir + absPartIdx, dir, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth) { memset(m_cbf[ttype] + absPartIdx, cbf, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)             { memset(m_cbf[ttype] + absPartIdx, cbf, coveredPartIdxes); }
+    void     setTransformSkipSubParts(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth)             { memset(m_transformSkip[ttype] + absPartIdx, tskip, NUM_CU_PARTITIONS >> (depth << 1)); }
+    void     setTransformSkipPartRange(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
+
+    void     clearCbf(uint32_t absPartIdx, uint32_t depth);
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
-    void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
-
-    void     setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
-    void     setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
-
-    void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
-
-    uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
-    uint8_t  getQtRootCbf(uint32_t absPartIdx) const { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
-    void     clearCbf(uint32_t absPartIdx, uint32_t depth);
-    void     setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
-    void     setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
-
-    void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
-    void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setAllMv(int list, const MV& mv, PartSize cuMode, int absPartIdx, int puIdx);
     void     setAllRefIdx(int list, int refIdx, PartSize cuMode, int absPartIdx, int puIdx);
 
+    uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
+    uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
     char     getRefQP(uint32_t currAbsIdxInCTU) const;
     void     deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
     void     deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
@@ -177,7 +176,7 @@ public:
 
     uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
     bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
-    uint8_t  isSkipped(uint32_t absPartIdx) const { return m_skipFlag[absPartIdx]; }
+    bool     isSkipped(uint32_t absPartIdx) const { return !!m_skipFlag[absPartIdx]; }
     bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
