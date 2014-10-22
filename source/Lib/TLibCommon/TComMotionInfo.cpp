@@ -42,8 +42,8 @@ using namespace x265;
 
 void TComCUMvField::initialize(const MVFieldMemPool& p, uint32_t parts, int cuInstance, int list)
 {
-    mv     = p.mvMemBlock     + (cuInstance * 2 + list) * parts;
-    mvd    = p.mvdMemBlock    + (cuInstance * 2 + list) * parts;
+    mv     = p.mvMemBlock     + (cuInstance * 4 + list) * parts;
+    mvd    = p.mvMemBlock     + (cuInstance * 4 + 2 + list) * parts;
     refIdx = p.refIdxMemBlock + (cuInstance * 2 + list) * parts;
     numPartitions = parts;
 }

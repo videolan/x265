@@ -43,15 +43,13 @@ namespace x265 {
 struct MVFieldMemPool
 {
     MV*   mvMemBlock;
-    MV*   mvdMemBlock;
     char* refIdxMemBlock;
 
     MVFieldMemPool() { memset(this, 0, sizeof(*this)); }
 
     bool create(uint32_t numPartition, uint32_t numBlocks)
     {
-        CHECKED_MALLOC(mvMemBlock, MV, numPartition * 2 * numBlocks);
-        CHECKED_MALLOC(mvdMemBlock, MV, numPartition * 2 * numBlocks);
+        CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numBlocks);
         CHECKED_MALLOC(refIdxMemBlock, char, numPartition * 2 * numBlocks);
         return true;
     fail:
@@ -61,7 +59,6 @@ struct MVFieldMemPool
     void destroy()
     {
         X265_FREE(mvMemBlock);
-        X265_FREE(mvdMemBlock);
         X265_FREE(refIdxMemBlock);
     }
 };
