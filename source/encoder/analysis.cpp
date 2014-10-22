@@ -764,7 +764,12 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                  * RD level 2 - fully encode the best mode
                  * RD level 1 - generate recon pixels
                  * RD level 0 - generate chroma prediction */
-                if (md.bestMode->cu.m_predMode[0] == MODE_INTER)
+                if (md.bestMode->cu.m_mergeFlag[0])
+                {
+                    /* prediction already generated for this CU, and if rd level
+                     * is not 0, it is already fully encoded */
+                }
+                else if (md.bestMode->cu.m_predMode[0] == MODE_INTER)
                 {
                     for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                     {
@@ -773,17 +778,18 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     }
                     if (m_param->rdLevel == 2)
                         encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
+                    else if (m_param->rdLevel == 1)
+                    {
+                        md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
+                        generateCoeffRecon(*md.bestMode, cuGeom);
+                    }
                 }
-                else if (md.bestMode->cu.m_predMode[0] == MODE_INTRA)
+                else
                 {
                     if (m_param->rdLevel == 2)
                         encodeIntraInInter(*md.bestMode, cuGeom);
-                }
-
-                if (m_param->rdLevel == 1)
-                {
-                    md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
-                    generateCoeffRecon(*md.bestMode, cuGeom);
+                    else if (m_param->rdLevel == 1)
+                        generateCoeffRecon(*md.bestMode, cuGeom);
                 }
             }
         } // !earlyskip
@@ -871,8 +877,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
 
-    if (m_param->rdLevel)
-        checkDQP(md.bestMode->cu, cuGeom);
+    checkDQP(md.bestMode->cu, cuGeom);
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
@@ -1507,7 +1512,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
             dststride = resiYuv.m_csize;
             primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
 
-            src2 = bestMode->predYuv.getCrAddr(absPartIdx);
+            src2 = predYuv.getCrAddr(absPartIdx);
             src1 = origYuv.getCrAddr(absPartIdx);
             dst = resiYuv.m_buf[2];
             primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
@@ -1577,9 +1582,14 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     else
     {
         m_quant.setQPforQuant(*cu);
+
+        uint32_t tuDepthRange[2];
+        bestMode->cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
+        bestMode->cu.setTrIdxSubParts((cuGeom.log2CUSize > tuDepthRange[0]) ? 1 : 0, absPartIdx, depth);
+
         generateCoeffRecon(*bestMode, cuGeom);
         recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
-        cu->updatePic(depth);
+        bestMode->cu.updatePic(depth);
     }
 
     checkDQP(*cu, cuGeom);
