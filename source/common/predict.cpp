@@ -147,11 +147,10 @@ void Predict::prepMotionCompensation(const CUData* cu, const CUGeom& cuGeom, int
     m_cuAddr = cu->m_cuAddr;
     m_zOrderIdxinCU = cuGeom.encodeIdx;
 
-    m_refIdx0 = cu->m_cuMvField[0].getRefIdx(m_partAddr);
-    m_refIdx1 = cu->m_cuMvField[1].getRefIdx(m_partAddr);
-
-    m_clippedMv[0] = cu->m_cuMvField[0].getMv(m_partAddr);
-    m_clippedMv[1] = cu->m_cuMvField[1].getMv(m_partAddr);
+    m_refIdx0      = cu->m_cuMvField[0].refIdx[m_partAddr];
+    m_clippedMv[0] = cu->m_cuMvField[0].mv[m_partAddr];
+    m_refIdx1      = cu->m_cuMvField[1].refIdx[m_partAddr];
+    m_clippedMv[1] = cu->m_cuMvField[1].mv[m_partAddr];
     cu->clipMv(m_clippedMv[0]);
     cu->clipMv(m_clippedMv[1]);
 }

@@ -97,7 +97,6 @@ struct TComCUMvField
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
-    const MV& getMv(int idx) const  { return mv[idx]; }
     const MV& getMvd(int idx) const { return mvd[idx]; }
     int getRefIdx(int idx) const    { return refIdx[idx]; }
 

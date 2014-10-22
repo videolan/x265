@@ -1067,14 +1067,17 @@ void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& o
 
 void CUData::getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField) const
 {
-    if (!cu)  // OUT OF BOUNDARY
+    if (cu)
     {
-        MV mv(0, 0);
-        outMvField.setMvField(mv, NOT_VALID);
-        return;
+        outMvField.mv = cu->m_cuMvField[picList].mv[absPartIdx];
+        outMvField.refIdx = cu->m_cuMvField[picList].refIdx[absPartIdx];
     }
-
-    outMvField.setMvField(cu->m_cuMvField[picList].getMv(absPartIdx), cu->m_cuMvField[picList].getRefIdx(absPartIdx));
+    else
+    {
+        // OUT OF BOUNDARY
+        outMvField.mv.word = 0;
+        outMvField.refIdx = NOT_VALID;
+    }
 }
 
 void CUData::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const
@@ -1211,8 +1214,8 @@ bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData* candCU, uint32_t 
     {
         if (m_interDir[absPartIdx] & (1 << refListIdx))
         {
-            if (m_cuMvField[refListIdx].getMv(absPartIdx) != candCU->m_cuMvField[refListIdx].getMv(candAbsPartIdx) ||
-                m_cuMvField[refListIdx].getRefIdx(absPartIdx) != candCU->m_cuMvField[refListIdx].getRefIdx(candAbsPartIdx))
+            if (m_cuMvField[refListIdx].mv[absPartIdx] != candCU->m_cuMvField[refListIdx].mv[candAbsPartIdx] ||
+                m_cuMvField[refListIdx].refIdx[absPartIdx] != candCU->m_cuMvField[refListIdx].refIdx[candAbsPartIdx])
                 return false;
         }
     }
@@ -1692,10 +1695,10 @@ bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, 
         return false;
 
     int refPOC = m_slice->m_refPOCList[picList][refIdx];
-    int otherPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].getRefIdx(idx)];
-    if (tmpCU->m_cuMvField[picList].getRefIdx(idx) >= 0 && refPOC == otherPOC)
+    int otherPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].refIdx[idx]];
+    if (tmpCU->m_cuMvField[picList].refIdx[idx] >= 0 && refPOC == otherPOC)
     {
-        mvp = tmpCU->m_cuMvField[picList].getMv(idx);
+        mvp = tmpCU->m_cuMvField[picList].mv[idx];
         return true;
     }
 
@@ -1710,11 +1713,11 @@ bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, 
 
     if (tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx)];
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].refIdx[idx]];
         if (neibRefPOC == curRefPOC)
         {
             // Same reference frame but different list
-            mvp = tmpCU->m_cuMvField[refPicList2nd].getMv(idx);
+            mvp = tmpCU->m_cuMvField[refPicList2nd].mv[idx];
             return true;
         }
     }
@@ -1763,8 +1766,8 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
 
     if (tmpCU->m_cuMvField[picList].getRefIdx(idx) >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].getRefIdx(idx)];
-        MV mvp = tmpCU->m_cuMvField[picList].getMv(idx);
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].refIdx[idx]];
+        MV mvp = tmpCU->m_cuMvField[picList].mv[idx];
 
         int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
@@ -1775,10 +1778,10 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
         return true;
     }
 
-    if (tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[refPicList2nd].refIdx[idx] >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx)];
-        MV mvp = tmpCU->m_cuMvField[refPicList2nd].getMv(idx);
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].refIdx[idx]];
+        MV mvp = tmpCU->m_cuMvField[refPicList2nd].mv[idx];
 
         int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
         if (scale == 4096)
@@ -1815,12 +1818,12 @@ bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int&
 
     colRefPicList = m_slice->m_bCheckLDC ? picList : m_slice->m_colFromL0Flag;
 
-    int colRefIdx = colCU->m_cuMvField[colRefPicList].getRefIdx(absPartAddr);
+    int colRefIdx = colCU->m_cuMvField[colRefPicList].refIdx[absPartAddr];
 
     if (colRefIdx < 0)
     {
         colRefPicList = 1 - colRefPicList;
-        colRefIdx = colCU->m_cuMvField[colRefPicList].getRefIdx(absPartAddr);
+        colRefIdx = colCU->m_cuMvField[colRefPicList].refIdx[absPartAddr];
 
         if (colRefIdx < 0)
             return false;
@@ -1828,7 +1831,7 @@ bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int&
 
     // Scale the vector
     colRefPOC = colCU->m_slice->m_refPOCList[colRefPicList][colRefIdx];
-    colmv = colCU->m_cuMvField[colRefPicList].getMv(absPartAddr);
+    colmv = colCU->m_cuMvField[colRefPicList].mv[absPartAddr];
 
     curRefPOC = m_slice->m_refPOCList[picList][outRefIdx];
 
