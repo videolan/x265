@@ -1420,7 +1420,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         if (bExistMV)
         {
             dir |= 1;
-            mvFieldNeighbours[count][0].setMvField(colmv, refIdx);
+            mvFieldNeighbours[count][0].mv = colmv;
+            mvFieldNeighbours[count][0].refIdx = refIdx;
         }
 
         if (isInterB)
@@ -1432,7 +1433,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             if (bExistMV)
             {
                 dir |= 2;
-                mvFieldNeighbours[count][1].setMvField(colmv, refIdx);
+                mvFieldNeighbours[count][1].mv = colmv;
+                mvFieldNeighbours[count][1].refIdx = refIdx;
             }
         }
 
@@ -1469,8 +1471,10 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
                 int refPOCL1 = m_slice->m_refPOCList[1][refIdxL1];
                 if (!(refPOCL0 == refPOCL1 && mvFieldNeighbours[i][0].mv == mvFieldNeighbours[j][1].mv))
                 {
-                    mvFieldNeighbours[count][0].setMvField(mvFieldNeighbours[i][0].mv, refIdxL0);
-                    mvFieldNeighbours[count][1].setMvField(mvFieldNeighbours[j][1].mv, refIdxL1);
+                    mvFieldNeighbours[count][0].mv = mvFieldNeighbours[i][0].mv;
+                    mvFieldNeighbours[count][0].refIdx = refIdxL0;
+                    mvFieldNeighbours[count][1].mv = mvFieldNeighbours[j][1].mv;
+                    mvFieldNeighbours[count][1].refIdx = refIdxL1;
                     interDirNeighbours[count] = 3;
 
                     count++;
@@ -1487,12 +1491,14 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     while (count < maxNumMergeCand)
     {
         interDirNeighbours[count] = 1;
-        mvFieldNeighbours[count][0].setMvField(MV(0, 0), r);
+        mvFieldNeighbours[count][0].mv.word = 0;
+        mvFieldNeighbours[count][0].refIdx = r;
 
         if (isInterB)
         {
             interDirNeighbours[count] = 3;
-            mvFieldNeighbours[count][1].setMvField(MV(0, 0), r);
+            mvFieldNeighbours[count][1].mv.word = 0;
+            mvFieldNeighbours[count][1].refIdx = r;
         }
 
         count++;

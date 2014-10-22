@@ -66,19 +66,11 @@ struct MVFieldMemPool
     }
 };
 
-// struct for motion vector with reference index
 struct TComMvField
 {
     MV  mv;
     int refIdx;
-
     TComMvField() : refIdx(REF_NOT_VALID) {}
-
-    void setMvField(const MV & _mv, int _refIdx)
-    {
-        mv     = _mv;
-        refIdx = _refIdx;
-    }
 };
 
 // class for motion information in one CU
