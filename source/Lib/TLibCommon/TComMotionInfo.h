@@ -98,35 +98,31 @@ struct TComMvField
 };
 
 // class for motion information in one CU
-class TComCUMvField
+struct TComCUMvField
 {
-public:
+    MV*      mv;
+    MV*      mvd;
+    char*    refIdx;
+    uint32_t numPartitions;
 
-    MV*       m_mv;
-    MV*       m_mvd;
-    char*     m_refIdx;
-    uint32_t  m_numPartitions;
-
-    TComCUMvField() : m_mv(NULL), m_mvd(NULL), m_refIdx(NULL), m_numPartitions(0) {}
-
-    template<typename T>
-    void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
-
+    TComCUMvField() : mv(NULL), mvd(NULL), refIdx(NULL), numPartitions(0) {}
     void initialize(MVFieldMemPool *pool, uint32_t numPartition, int index, int idx);
-
     void clearMvField();
+
     void copyFrom(const TComCUMvField * cuMvFieldSrc, int numPartSrc, int partAddrDst);
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
-    const MV& getMv(int idx) const  { return m_mv[idx]; }
-    const MV& getMvd(int idx) const { return m_mvd[idx]; }
-    int getRefIdx(int idx) const    { return m_refIdx[idx]; }
+    const MV& getMv(int idx) const  { return mv[idx]; }
+    const MV& getMvd(int idx) const { return mvd[idx]; }
+    int getRefIdx(int idx) const    { return refIdx[idx]; }
 
-    void    setAllMv(const MV& mv,                    PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void    setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void    setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void    setMvd(int idx, const MV& mvd) { m_mvd[idx] = mvd; }
+    template<typename T>
+    void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
+
+    void setAllMv(const MV& mv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
+    void setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
+    void setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
 };
 }
 

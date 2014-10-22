@@ -53,10 +53,10 @@ using namespace x265;
 
 void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int index, int idx)
 {
-    m_mv     = p->mvMemBlock     + (index * 2 + idx) * numPartition;
-    m_mvd    = p->mvdMemBlock    + (index * 2 + idx) * numPartition;
-    m_refIdx = p->refIdxMemBlock + (index * 2 + idx) * numPartition;
-    m_numPartitions = numPartition;
+    mv     = p->mvMemBlock     + (index * 2 + idx) * numPartition;
+    mvd    = p->mvdMemBlock    + (index * 2 + idx) * numPartition;
+    refIdx = p->refIdxMemBlock + (index * 2 + idx) * numPartition;
+    numPartitions = numPartition;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -65,22 +65,22 @@ void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int ind
 
 void TComCUMvField::clearMvField()
 {
-    X265_CHECK(sizeof(*m_refIdx) == 1, "size check\n");
-    memset(m_refIdx, NOT_VALID, m_numPartitions * sizeof(*m_refIdx));
+    X265_CHECK(sizeof(*refIdx) == 1, "size check\n");
+    memset(refIdx, NOT_VALID, numPartitions * sizeof(*refIdx));
 }
 
 void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, int numPartSrc, int partAddrDst)
 {
     int sizeInMv = sizeof(MV) * numPartSrc;
 
-    memcpy(m_mv     + partAddrDst, cuMvFieldSrc->m_mv,     sizeInMv);
-    memcpy(m_mvd    + partAddrDst, cuMvFieldSrc->m_mvd,    sizeInMv);
-    memcpy(m_refIdx + partAddrDst, cuMvFieldSrc->m_refIdx, sizeof(*m_refIdx) * numPartSrc);
+    memcpy(mv     + partAddrDst, cuMvFieldSrc->mv,     sizeInMv);
+    memcpy(mvd    + partAddrDst, cuMvFieldSrc->mvd,    sizeInMv);
+    memcpy(refIdx + partAddrDst, cuMvFieldSrc->refIdx, sizeof(*refIdx) * numPartSrc);
 }
 
 void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const
 {
-    copyTo(cuMvFieldDst, partAddrDst, 0, m_numPartitions);
+    copyTo(cuMvFieldDst, partAddrDst, 0, numPartitions);
 }
 
 void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const
@@ -88,9 +88,9 @@ void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_
     int sizeInMv = sizeof(MV) * numPart;
     int partOffset = offset + partAddrDst;
 
-    memcpy(cuMvFieldDst->m_mv     + partOffset, m_mv     + offset, sizeInMv);
-    memcpy(cuMvFieldDst->m_mvd    + partOffset, m_mvd    + offset, sizeInMv);
-    memcpy(cuMvFieldDst->m_refIdx + partOffset, m_refIdx + offset, sizeof(*m_refIdx) * numPart);
+    memcpy(cuMvFieldDst->mv     + partOffset, mv     + offset, sizeInMv);
+    memcpy(cuMvFieldDst->mvd    + partOffset, mvd    + offset, sizeInMv);
+    memcpy(cuMvFieldDst->refIdx + partOffset, refIdx + offset, sizeof(*refIdx) * numPart);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
     int i;
 
     p += partAddr;
-    int numElements = m_numPartitions >> (2 * depth);
+    int numElements = numPartitions >> (2 * depth);
 
     switch (cuMode)
     {
@@ -281,14 +281,14 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
     }
 }
 
-void TComCUMvField::setAllMv(const MV& mv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAllMv(const MV& inmv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
-    setAll(m_mv, mv, cuMode, partAddr, depth, partIdx);
+    setAll(mv, inmv, cuMode, partAddr, depth, partIdx);
 }
 
-void TComCUMvField::setAllRefIdx(int refIdx, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAllRefIdx(int inRefIdx, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
 {
-    setAll(m_refIdx, static_cast<char>(refIdx), cuMode, partAddr, depth, partIdx);
+    setAll(refIdx, static_cast<char>(inRefIdx), cuMode, partAddr, depth, partIdx);
 }
 
 void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
