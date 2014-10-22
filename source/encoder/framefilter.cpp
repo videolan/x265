@@ -59,6 +59,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
     m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
     m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
+    m_lastHeight = m_param->sourceHeight % g_maxCUSize ? m_param->sourceHeight % g_maxCUSize : g_maxCUSize;
 
     m_deblock.init();
 
@@ -145,15 +146,9 @@ void FrameFilter::processRow(int row)
     }
 }
 
-uint32_t FrameFilter::getCUHeight(uint32_t rowNum) const /* TODO: cache numCUInHeight and remainder */
+uint32_t FrameFilter::getCUHeight(int rowNum) const
 {
-    uint32_t height;
-
-    if (rowNum == m_frame->m_encData->m_slice->m_sps->numCuInHeight - 1)
-        height = ((m_param->sourceHeight % g_maxCUSize) ? (m_param->sourceHeight % g_maxCUSize) : g_maxCUSize);
-    else
-        height = g_maxCUSize;
-    return height;
+    return rowNum == m_numRows - 1 ? m_lastHeight : g_maxCUSize;
 }
 
 void FrameFilter::processRowPost(int row)
@@ -161,8 +156,7 @@ void FrameFilter::processRowPost(int row)
     PicYuv *reconPic = m_frame->m_reconPicYuv;
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
-    const int lastH = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
-    const int realH = (row != m_numRows - 1) ? g_maxCUSize : lastH;
+    const int realH = getCUHeight(row);
 
     // Border extend Left and Right
     primitives.extendRowBorder(reconPic->getLumaAddr(lineStartCUAddr), reconPic->m_stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
@@ -216,12 +210,7 @@ void FrameFilter::processRowPost(int row)
 
         intptr_t stride = reconPic->m_stride;
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
-        uint32_t height;
-
-        if (row == m_numRows - 1)
-            height = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
-        else
-            height = g_maxCUSize;
+        uint32_t height = getCUHeight(row);
 
         uint64_t ssdY = computeSSD(origPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
         height >>= m_vChromaShift;

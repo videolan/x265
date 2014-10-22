@@ -54,6 +54,7 @@ public:
     SAO           m_sao;
     int           m_numRows;
     int           m_saoRowDelay;
+    int           m_lastHeight;
     
     void*         m_ssimBuf; /* Temp storage for ssim computation */
 
@@ -67,7 +68,7 @@ public:
     void processRow(int row);
     void processRowPost(int row);
     void processSao(int row);
-    uint32_t getCUHeight(uint32_t rowNum) const;
+    uint32_t getCUHeight(int rowNum) const;
 };
 }
 
