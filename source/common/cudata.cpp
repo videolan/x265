@@ -907,16 +907,6 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
     return ctx;
 }
 
-void CUData::clearCbf(uint32_t absPartIdx, uint32_t depth)
-{
-    uint32_t curPartNum = NUM_CU_PARTITIONS >> (depth << 1);
-
-    memset(m_cbf[0] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
-    memset(m_cbf[1] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
-    memset(m_cbf[2] + absPartIdx, 0, sizeof(uint8_t) * curPartNum);
-}
-
-
 void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf)
 {
     uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);

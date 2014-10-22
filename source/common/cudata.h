@@ -153,7 +153,7 @@ public:
     void     setTransformSkipSubParts(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth)             { memset(m_transformSkip[ttype] + absPartIdx, tskip, NUM_CU_PARTITIONS >> (depth << 1)); }
     void     setTransformSkipPartRange(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
 
-    void     clearCbf(uint32_t absPartIdx, uint32_t depth);
+    void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);

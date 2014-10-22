@@ -2310,7 +2310,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     cu->setSkipFlagSubParts(true);
     cu->setTrIdxSubParts(0, 0, depth);
-    cu->clearCbf(0, depth);
+    cu->clearCbf();
 
     reconYuv->copyFromYuv(interMode.predYuv);
 
@@ -2398,7 +2398,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
         if (cbf0Cost < cost)
         {
-            cu->clearCbf(0, depth);
+            cu->clearCbf();
             cu->setTransformSkipSubParts(0);
             const uint32_t qpartnum = NUM_CU_PARTITIONS >> (depth << 1); /* TODO is this necessary with CBF=0? */
             memset(cu->m_trIdx, 0, qpartnum * sizeof(uint8_t));
