@@ -2202,7 +2202,7 @@ void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t las
         blockBit[1] = 3;
         blockBit[2] = 5;
     }
-    else if ((cuMode == SIZE_2NxN || cuMode == SIZE_2NxnU) || cuMode == SIZE_2NxnD)
+    else if (cuMode == SIZE_2NxN || cuMode == SIZE_2NxnU || cuMode == SIZE_2NxnD)
     {
         static const uint32_t listBits[2][3][3] =
         {
@@ -2218,7 +2218,7 @@ void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t las
         else
             ::memcpy(blockBit, listBits[partIdx][lastMode], 3 * sizeof(uint32_t));
     }
-    else if ((cuMode == SIZE_Nx2N || cuMode == SIZE_nLx2N) || cuMode == SIZE_nRx2N)
+    else if (cuMode == SIZE_Nx2N || cuMode == SIZE_nLx2N || cuMode == SIZE_nRx2N)
     {
         static const uint32_t listBits[2][3][3] =
         {
