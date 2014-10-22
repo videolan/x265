@@ -58,6 +58,9 @@ struct CUGeom
     uint32_t flags;         // CU flags.
 };
 
+typedef void(*cucopy_t)(uint8_t* dst, uint8_t* src); // dst and src are aligned to MIN(size, 32)
+typedef void(*cubcast_t)(uint8_t* dst, uint8_t val); // dst is aligned to MIN(size, 32)
+
 // Partition count table, index represents partitioning mode.
 const uint32_t nbPartsTable[8] = { 1, 2, 2, 4, 2, 2, 2, 2 };
 
@@ -68,6 +71,10 @@ public:
 
     const Frame*  m_frame;
     const Slice*  m_slice;
+
+    cucopy_t      m_partCopy;           // pointer to function that copies m_numPartitions elements
+    cubcast_t     m_partSet;            // pointer to function that sets m_numPartitions elements
+    cucopy_t      m_subPartCopy;        // pointer to function that copies m_numPartitions/4 elements, may be NULL
 
     uint32_t      m_cuAddr;             // CTU address in a slice
     uint32_t      m_absIdxInCTU;        // absolute address of CU within a CTU in Z scan order
@@ -114,17 +121,17 @@ public:
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
     void     calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
 
-    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom);
-    void     copyPartFrom(const CUData& cu, const int numPartitions, uint32_t partUnitIdx, uint32_t depth);
-
+    void     copyPartFrom(const CUData& cu, uint32_t numPartitions, uint32_t partUnitIdx, uint32_t depth);
     void     copyToPic(uint32_t depth) const;
-    void     copyToPic(uint32_t depth, uint32_t partIdx, uint32_t partDepth) const;
+
+    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom); /* RD-0 methods called only from encodeResidue */
     void     updatePic(uint32_t depth) const;
 
-    void     setDepthSubParts(uint32_t depth)      { memset(m_depth, depth, m_numPartitions); }
-    void     setPartSizeSubParts(PartSize size)    { memset(m_partSizes, size, m_numPartitions); }
-    void     setSkipFlagSubParts(uint8_t skipFlag) { memset(m_skipFlag, skipFlag, m_numPartitions); }
-    void     setPredModeSubParts(PredMode mode)    { memset(m_predModes, mode, m_numPartitions); }
+    void     setDepthSubParts(uint8_t depth)       { m_partSet(m_depth, depth); }
+    void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSizes, (uint8_t)size); }
+    void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
+    void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predModes, (uint8_t)mode); }
+    void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
     void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
@@ -133,7 +140,6 @@ public:
     void     setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth);
 
     void     setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
-    void     setTransformSkipSubParts(uint32_t useTransformSkipY, uint32_t useTransformSkipU, uint32_t useTransformSkipV, uint32_t absPartIdx, uint32_t depth);
     void     setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
     void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
