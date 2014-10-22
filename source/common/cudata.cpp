@@ -1833,8 +1833,8 @@ bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, 
         return false;
 
     int refPOC = m_slice->m_refPOCList[picList][refIdx];
-    int otherPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_refIdx[picList][idx]];
-    if (tmpCU->m_refIdx[picList][idx] >= 0 && refPOC == otherPOC)
+    int partRefIdx = tmpCU->m_refIdx[picList][idx];
+    if (partRefIdx >= 0 && refPOC == tmpCU->m_slice->m_refPOCList[picList][partRefIdx])
     {
         mvp = tmpCU->m_mv[picList][idx];
         return true;
@@ -1849,9 +1849,10 @@ bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, 
     int curRefPOC = m_slice->m_refPOCList[picList][refIdx];
     int neibRefPOC;
 
-    if (tmpCU->m_refIdx[refPicList2nd][idx] >= 0)
+    partRefIdx = tmpCU->m_refIdx[refPicList2nd][idx];
+    if (partRefIdx >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_refIdx[refPicList2nd][idx]];
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][partRefIdx];
         if (neibRefPOC == curRefPOC)
         {
             // Same reference frame but different list
@@ -1902,9 +1903,10 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
     int neibPOC = curPOC;
     int neibRefPOC;
 
-    if (tmpCU->m_refIdx[picList][idx] >= 0)
+    int partRefIdx = tmpCU->m_refIdx[picList][idx];
+    if (partRefIdx >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_refIdx[picList][idx]];
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][partRefIdx];
         MV mvp = tmpCU->m_mv[picList][idx];
 
         int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
@@ -1916,9 +1918,10 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
         return true;
     }
 
-    if (tmpCU->m_refIdx[refPicList2nd][idx] >= 0)
+    partRefIdx = tmpCU->m_refIdx[refPicList2nd][idx];
+    if (partRefIdx >= 0)
     {
-        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_refIdx[refPicList2nd][idx]];
+        neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][partRefIdx];
         MV mvp = tmpCU->m_mv[refPicList2nd][idx];
 
         int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
