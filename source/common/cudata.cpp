@@ -1012,14 +1012,14 @@ void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puI
 }
 
 template<typename T>
-void CUData::setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, int puIdx)
+void CUData::setAll(T* p, const T& val, int absPartIdx, int puIdx)
 {
     int i;
 
     p += absPartIdx;
     int numElements = m_numPartitions;
 
-    switch (cuMode)
+    switch (m_partSize[absPartIdx])
     {
     case SIZE_2Nx2N:
         for (i = 0; i < numElements; i++)
@@ -1177,14 +1177,14 @@ void CUData::setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, int pu
     }
 }
 
-void CUData::setAllMv(int list, const MV& mv, PartSize cuMode, int absPartIdx, int puIdx)
+void CUData::setAllMv(int list, const MV& mv, int absPartIdx, int puIdx)
 {
-    setAll(m_mv[list], mv, cuMode, absPartIdx, puIdx);
+    setAll(m_mv[list], mv, absPartIdx, puIdx);
 }
 
-void CUData::setAllRefIdx(int list, int refIdx, PartSize cuMode, int absPartIdx, int puIdx)
+void CUData::setAllRefIdx(int list, int refIdx, int absPartIdx, int puIdx)
 {
-    setAll(m_refIdx[list], static_cast<char>(refIdx), cuMode, absPartIdx, puIdx);
+    setAll(m_refIdx[list], (char)refIdx, absPartIdx, puIdx);
 }
 
 void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const

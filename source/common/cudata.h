@@ -159,8 +159,8 @@ public:
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
 
     void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx);
-    void     setAllMv(int list, const MV& mv, PartSize cuMode, int absPartIdx, int puIdx);
-    void     setAllRefIdx(int list, int refIdx, PartSize cuMode, int absPartIdx, int puIdx);
+    void     setAllMv(int list, const MV& mv, int absPartIdx, int puIdx);
+    void     setAllRefIdx(int list, int refIdx, int absPartIdx, int puIdx);
 
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
@@ -206,7 +206,7 @@ public:
 protected:
 
     template<typename T>
-    void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, int puIdx);
+    void setAll(T *p, const T& val, int absPartIdx, int puIdx);
 
     char getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
