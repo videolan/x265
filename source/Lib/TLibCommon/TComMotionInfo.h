@@ -72,7 +72,7 @@ struct TComMvField
     MV  mv;
     int refIdx;
 
-    TComMvField() : refIdx(NOT_VALID) {}
+    TComMvField() : refIdx(REF_NOT_VALID) {}
 
     void setMvField(const MV & _mv, int _refIdx)
     {

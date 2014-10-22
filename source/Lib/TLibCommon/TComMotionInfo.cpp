@@ -51,7 +51,7 @@ void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int ind
 void TComCUMvField::clearMvField()
 {
     X265_CHECK(sizeof(*refIdx) == 1, "size check\n");
-    memset(refIdx, NOT_VALID, numPartitions * sizeof(*refIdx));
+    memset(refIdx, REF_NOT_VALID, numPartitions * sizeof(*refIdx));
 }
 
 void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, int numPartSrc, int partAddrDst)

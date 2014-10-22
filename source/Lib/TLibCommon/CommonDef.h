@@ -87,10 +87,7 @@
 #define MAX_NUM_REF_PICS            16 // max. number of pictures used for reference
 #define MAX_NUM_REF                 16 // max. number of entries in picture reference list
 
-#define REF_PIC_LIST_0              0
-#define REF_PIC_LIST_1              1
-#define REF_PIC_LIST_X              100
-#define NOT_VALID                   -1
+#define REF_NOT_VALID               -1
 
 #define AMVP_NUM_CANDS              2 // number of AMVP candidates
 #define MRG_MAX_NUM_CANDS           5 // max number of final merge candidates

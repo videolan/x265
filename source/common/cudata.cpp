@@ -313,8 +313,8 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
     m_subPartCopy(m_cbf[2] + offset, subCU.m_cbf[2]);
     m_subPartCopy(m_chromaIntraDir + offset, subCU.m_chromaIntraDir);
 
-    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_0], childGeom.numPartitions, offset);
-    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_1], childGeom.numPartitions, offset);
+    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[0], childGeom.numPartitions, offset);
+    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[1], childGeom.numPartitions, offset);
 
     uint32_t tmp = 1 << ((g_maxLog2CUSize - childGeom.depth) * 2);
     uint32_t tmp2 = subPartIdx * tmp;
@@ -396,8 +396,8 @@ void CUData::copyToPic(uint32_t depth) const
     m_partCopy(ctu.m_mvpIdx[0] + m_absIdxInCTU, m_mvpIdx[0]);
     m_partCopy(ctu.m_mvpIdx[1] + m_absIdxInCTU, m_mvpIdx[1]);
 
-    m_cuMvField[0].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
-    m_cuMvField[1].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
+    m_cuMvField[0].copyTo(&ctu.m_cuMvField[0], m_absIdxInCTU);
+    m_cuMvField[1].copyTo(&ctu.m_cuMvField[1], m_absIdxInCTU);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -1076,7 +1076,7 @@ void CUData::getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TCom
     {
         // OUT OF BOUNDARY
         outMvField.mv.word = 0;
-        outMvField.refIdx = NOT_VALID;
+        outMvField.refIdx = REF_NOT_VALID;
     }
 }
 
@@ -1233,8 +1233,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
-        mvFieldNeighbours[i][0].refIdx = NOT_VALID;
-        mvFieldNeighbours[i][1].refIdx = NOT_VALID;
+        mvFieldNeighbours[i][0].refIdx = REF_NOT_VALID;
+        mvFieldNeighbours[i][1].refIdx = REF_NOT_VALID;
     }
 
     /* calculate the location of upper-left corner pixel and size of the current PU */
@@ -1269,9 +1269,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         // get Inter Dir
         interDirNeighbours[count] = cuLeft->m_interDir[leftPartIdx];
         // get Mv from Left
-        cuLeft->getMvField(cuLeft, leftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
+        cuLeft->getMvField(cuLeft, leftPartIdx, 0, mvFieldNeighbours[count][0]);
         if (isInterB)
-            cuLeft->getMvField(cuLeft, leftPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[count][1]);
+            cuLeft->getMvField(cuLeft, leftPartIdx, 1, mvFieldNeighbours[count][1]);
 
         count++;
     
@@ -1293,9 +1293,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         // get Inter Dir
         interDirNeighbours[count] = cuAbove->m_interDir[abovePartIdx];
         // get Mv from Left
-        cuAbove->getMvField(cuAbove, abovePartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
+        cuAbove->getMvField(cuAbove, abovePartIdx, 0, mvFieldNeighbours[count][0]);
         if (isInterB)
-            cuAbove->getMvField(cuAbove, abovePartIdx, REF_PIC_LIST_1, mvFieldNeighbours[count][1]);
+            cuAbove->getMvField(cuAbove, abovePartIdx, 1, mvFieldNeighbours[count][1]);
 
         count++;
    
@@ -1314,9 +1314,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         // get Inter Dir
         interDirNeighbours[count] = cuAboveRight->m_interDir[aboveRightPartIdx];
         // get Mv from Left
-        cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
+        cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 0, mvFieldNeighbours[count][0]);
         if (isInterB)
-            cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[count][1]);
+            cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 1, mvFieldNeighbours[count][1]);
 
         count++;
 
@@ -1335,9 +1335,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         // get Inter Dir
         interDirNeighbours[count] = cuLeftBottom->m_interDir[leftBottomPartIdx];
         // get Mv from Left
-        cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
+        cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 0, mvFieldNeighbours[count][0]);
         if (isInterB)
-            cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[count][1]);
+            cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 1, mvFieldNeighbours[count][1]);
 
         count++;
 
@@ -1359,9 +1359,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
             // get Inter Dir
             interDirNeighbours[count] = cuAboveLeft->m_interDir[aboveLeftPartIdx];
             // get Mv from Left
-            cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, REF_PIC_LIST_0, mvFieldNeighbours[count][0]);
+            cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 0, mvFieldNeighbours[count][0]);
             if (isInterB)
-                cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, REF_PIC_LIST_1, mvFieldNeighbours[count][1]);
+                cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 1, mvFieldNeighbours[count][1]);
 
             count++;
 
@@ -1408,9 +1408,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
         uint32_t curCTUIdx = m_cuAddr;
         int dir = 0;
         deriveCenterIdx(puIdx, partIdxCenter);
-        bool bExistMV = ctuIdx >= 0 && getColMVP(REF_PIC_LIST_0, ctuIdx, absPartAddr, colmv, refIdx);
+        bool bExistMV = ctuIdx >= 0 && getColMVP(0, ctuIdx, absPartAddr, colmv, refIdx);
         if (!bExistMV)
-            bExistMV = getColMVP(REF_PIC_LIST_0, curCTUIdx, partIdxCenter, colmv, refIdx);
+            bExistMV = getColMVP(0, curCTUIdx, partIdxCenter, colmv, refIdx);
         if (bExistMV)
         {
             dir |= 1;
@@ -1419,9 +1419,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
 
         if (isInterB)
         {
-            bExistMV = ctuIdx >= 0 && getColMVP(REF_PIC_LIST_1, ctuIdx, absPartAddr, colmv, refIdx);
+            bExistMV = ctuIdx >= 0 && getColMVP(1, ctuIdx, absPartAddr, colmv, refIdx);
             if (!bExistMV)
-                bExistMV = getColMVP(REF_PIC_LIST_1, curCTUIdx, partIdxCenter, colmv, refIdx);
+                bExistMV = getColMVP(1, curCTUIdx, partIdxCenter, colmv, refIdx);
 
             if (bExistMV)
             {
@@ -1753,11 +1753,11 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
     if (!tmpCU)
         return false;
 
-    int refPicList2nd = REF_PIC_LIST_0;
-    if (picList == REF_PIC_LIST_0)
-        refPicList2nd = REF_PIC_LIST_1;
-    else if (picList == REF_PIC_LIST_1)
-        refPicList2nd = REF_PIC_LIST_0;
+    int refPicList2nd = 0;
+    if (picList == 0)
+        refPicList2nd = 1;
+    else if (picList == 1)
+        refPicList2nd = 0;
 
     int curPOC = m_slice->m_poc;
     int curRefPOC = m_slice->m_refPOCList[picList][refIdx];

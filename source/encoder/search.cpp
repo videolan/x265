@@ -1556,7 +1556,7 @@ uint32_t Search::mergeEstimation(CUData* cu, const CUGeom& cuGeom, int puIdx, Me
             if (m.interDirNeighbours[mergeCand] == 3)
             {
                 m.interDirNeighbours[mergeCand] = 1;
-                m.mvFieldNeighbours[mergeCand][1].refIdx = NOT_VALID;
+                m.mvFieldNeighbours[mergeCand][1].refIdx = REF_NOT_VALID;
             }
         }
     }
@@ -1833,16 +1833,16 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
         }
 
         /* select best option and store into CU */
-        cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-        cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
+        cu->m_cuMvField[0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
+        cu->m_cuMvField[1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
 
         if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
         {
             cu->m_mergeFlag[absPartIdx] = true;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
+            cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
 
             interMode.sa8dBits += merge.bits;
         }
@@ -1852,15 +1852,15 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].mvd[absPartIdx] = bidir[0].mv - bidir[0].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = bidir[0].mvpIdx;
+            cu->m_cuMvField[0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].mvd[absPartIdx] = bidir[0].mv - bidir[0].mvp;
+            cu->m_mvpIdx[0][absPartIdx] = bidir[0].mvpIdx;
 
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].mvd[absPartIdx] = bidir[1].mv - bidir[1].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = bidir[1].mvpIdx;
+            cu->m_cuMvField[1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].mvd[absPartIdx] = bidir[1].mv - bidir[1].mvp;
+            cu->m_mvpIdx[1][absPartIdx] = bidir[1].mvpIdx;
 
             interMode.sa8dBits += bidirBits;
         }
@@ -1870,10 +1870,10 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(m_bestME[0].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].mvd[absPartIdx] = m_bestME[0].mv - m_bestME[0].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = m_bestME[0].mvpIdx;
+            cu->m_cuMvField[0].setAllMv(m_bestME[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(m_bestME[0].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].mvd[absPartIdx] = m_bestME[0].mv - m_bestME[0].mvp;
+            cu->m_mvpIdx[0][absPartIdx] = m_bestME[0].mvpIdx;
 
             interMode.sa8dBits += m_bestME[0].bits;
         }
@@ -1883,10 +1883,10 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(m_bestME[1].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].mvd[absPartIdx] = m_bestME[1].mv - m_bestME[1].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = m_bestME[1].mvpIdx;
+            cu->m_cuMvField[1].setAllMv(m_bestME[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].mvd[absPartIdx] = m_bestME[1].mv - m_bestME[1].mvp;
+            cu->m_mvpIdx[1][absPartIdx] = m_bestME[1].mvpIdx;
 
             interMode.sa8dBits += m_bestME[1].bits;
         }
@@ -1954,10 +1954,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 }
                 // set merge result
                 cu->m_mergeFlag[absPartIdx] = true;
-                cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
+                cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
                 cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-                cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-                cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
                 totalmebits += merge.bits;
 
                 prepMotionCompensation(cu, cuGeom, puIdx);
@@ -2120,16 +2120,16 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
 
         /* select best option and store into CU */
-        cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-        cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
+        cu->m_cuMvField[0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
+        cu->m_cuMvField[1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
 
         if (mrgCost < bidirCost && mrgCost < list[0].cost && mrgCost < list[1].cost)
         {
             cu->m_mergeFlag[absPartIdx] = true;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
+            cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
 
             totalmebits += merge.bits;
         }
@@ -2139,15 +2139,15 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].mvd[absPartIdx] = bidir[0].mv - bidir[0].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = bidir[0].mvpIdx;
+            cu->m_cuMvField[0].setAllMv(bidir[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].mvd[absPartIdx] = bidir[0].mv - bidir[0].mvp;
+            cu->m_mvpIdx[0][absPartIdx] = bidir[0].mvpIdx;
 
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].mvd[absPartIdx] = bidir[1].mv - bidir[1].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = bidir[1].mvpIdx;
+            cu->m_cuMvField[1].setAllMv(bidir[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].mvd[absPartIdx] = bidir[1].mv - bidir[1].mvp;
+            cu->m_mvpIdx[1][absPartIdx] = bidir[1].mvpIdx;
 
             totalmebits += bidirBits;
         }
@@ -2157,10 +2157,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllMv(list[0].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_0].mvd[absPartIdx] = list[0].mv - list[0].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_0][absPartIdx] = list[0].mvpIdx;
+            cu->m_cuMvField[0].setAllMv(list[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(list[0].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].mvd[absPartIdx] = list[0].mv - list[0].mvp;
+            cu->m_mvpIdx[0][absPartIdx] = list[0].mvpIdx;
 
             totalmebits += list[0].bits;
         }
@@ -2170,10 +2170,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             cu->m_mergeFlag[absPartIdx] = false;
             cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllMv(list[1].mv, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[REF_PIC_LIST_1].mvd[absPartIdx] = list[1].mv - list[1].mvp;
-            cu->m_mvpIdx[REF_PIC_LIST_1][absPartIdx] = list[1].mvpIdx;
+            cu->m_cuMvField[1].setAllMv(list[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].mvd[absPartIdx] = list[1].mv - list[1].mvp;
+            cu->m_mvpIdx[1][absPartIdx] = list[1].mvpIdx;
 
             totalmebits += list[1].bits;
         }
