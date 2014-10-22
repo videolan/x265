@@ -156,7 +156,7 @@ public:
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
-    void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
+    bool     setQPSubCUs(int qp, uint32_t absPartIdx, uint32_t depth);
 
     void     setPUInterDir(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setPUMv(int list, const MV& mv, int absPartIdx, int puIdx);

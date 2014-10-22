@@ -1630,20 +1630,16 @@ void Analysis::checkDQP(CUData& cu, const CUGeom& cuGeom)
         if (cu.m_depth[0] > cuGeom.depth) // detect splits
         {
             bool hasResidual = false;
-            for (uint32_t blkIdx = 0; blkIdx < cu.m_numPartitions; blkIdx++)
+            for (uint32_t absPartIdx = 0; absPartIdx < cu.m_numPartitions; absPartIdx++)
             {
-                if (cu.getQtRootCbf(blkIdx))
+                if (cu.getQtRootCbf(absPartIdx))
                 {
                     hasResidual = true;
                     break;
                 }
             }
             if (hasResidual)
-            {
-                bool foundNonZeroCbf = false;
-                cu.setQPSubCUs(cu.getRefQP(0), &cu, 0, cuGeom.depth, foundNonZeroCbf);
-                X265_CHECK(foundNonZeroCbf, "expected to find non-zero CBF\n");
-            }
+                cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
             else
                 cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
         }

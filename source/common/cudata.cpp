@@ -907,26 +907,26 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
     return ctx;
 }
 
-void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf)
+bool CUData::setQPSubCUs(int qp, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);
     uint32_t curPartNumQ = curPartNumb >> 2;
 
-    if (!foundNonZeroCbf)
+    if (m_depth[absPartIdx] > depth)
     {
-        if (cu->m_depth[absPartIdx] > depth)
-        {
-            for (uint32_t partUnitIdx = 0; partUnitIdx < 4; partUnitIdx++)
-                cu->setQPSubCUs(qp, cu, absPartIdx + partUnitIdx * curPartNumQ, depth + 1, foundNonZeroCbf);
-        }
-        else
-        {
-            if (cu->getQtRootCbf(absPartIdx))
-                foundNonZeroCbf = true;
-            else
-                setQPSubParts(qp, absPartIdx, depth);
-        }
+        for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
+            if (setQPSubCUs(qp, absPartIdx + subPartIdx * curPartNumQ, depth + 1))
+                return true;
     }
+    else
+    {
+        if (getQtRootCbf(absPartIdx))
+            return true;
+        else
+            setQPSubParts(qp, absPartIdx, depth);
+    }
+
+    return false;
 }
 
 void CUData::setPUInterDir(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)
