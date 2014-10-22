@@ -186,21 +186,25 @@ void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_
         m_partCopy = copy256;
         m_partSet = bcast256;
         m_subPartCopy = copy64;
+        m_subPartSet = bcast64;
         break;
     case 64:  // 32x32 CU
         m_partCopy = copy64;
         m_partSet = bcast64;
         m_subPartCopy = copy16;
+        m_subPartSet = bcast16;
         break;
     case 16:  // 16x16 CU
         m_partCopy = copy16;
         m_partSet = bcast16;
         m_subPartCopy = copy4;
+        m_subPartSet = bcast4;
         break;
     case 4:   // 8x8 CU
         m_partCopy = copy4;
         m_partSet = bcast4;
         m_subPartCopy = NULL;
+        m_subPartSet = NULL;
         break;
     default:
         X265_CHECK(0, "unexpected CU partition count\n");
@@ -282,12 +286,11 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
 }
 
 /* Copy the results of a sub-part (split) CU to the parent CU */
-void CUData::copyPartFrom(const CUData& subCU, uint32_t numPartitions, uint32_t partUnitIdx, uint32_t depth)
+void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t subPartIdx)
 {
-    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-    X265_CHECK(numPartitions == (int)(m_numPartitions >> 2), "sub-part is an unexpected size\n");
+    X265_CHECK(subPartIdx < 4, "part unit should be less than 4\n");
 
-    uint32_t offset = numPartitions * partUnitIdx;
+    uint32_t offset = childGeom.numPartitions * subPartIdx;
 
     m_subPartCopy((uint8_t*)m_qp + offset, (uint8_t*)subCU.m_qp);
     m_subPartCopy(m_log2CUSize + offset, subCU.m_log2CUSize);
@@ -310,17 +313,26 @@ void CUData::copyPartFrom(const CUData& subCU, uint32_t numPartitions, uint32_t 
     m_subPartCopy(m_cbf[2] + offset, subCU.m_cbf[2]);
     m_subPartCopy(m_chromaIntraDir + offset, subCU.m_chromaIntraDir);
 
-    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
-    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
+    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_0], childGeom.numPartitions, offset);
+    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_1], childGeom.numPartitions, offset);
 
-    uint32_t tmp = 1 << ((g_maxLog2CUSize - depth) * 2);
-    uint32_t tmp2 = partUnitIdx * tmp;
+    uint32_t tmp = 1 << ((g_maxLog2CUSize - childGeom.depth) * 2);
+    uint32_t tmp2 = subPartIdx * tmp;
     memcpy(m_trCoeff[0] + tmp2, subCU.m_trCoeff[0], sizeof(coeff_t) * tmp);
 
     uint32_t tmpC = tmp >> (m_hChromaShift + m_vChromaShift);
     uint32_t tmpC2 = tmp2 >> (m_hChromaShift + m_vChromaShift);
     memcpy(m_trCoeff[1] + tmpC2, subCU.m_trCoeff[1], sizeof(coeff_t) * tmpC);
     memcpy(m_trCoeff[2] + tmpC2, subCU.m_trCoeff[2], sizeof(coeff_t) * tmpC);
+}
+
+/* If a sub-CU part is not present (off the edge of the picture) its depth and
+ * log2size should still be configured */
+void CUData::setEmptyPart(const CUGeom& childGeom, uint32_t subPartIdx)
+{
+    uint32_t offset = childGeom.numPartitions * subPartIdx;
+    m_subPartSet(m_depth + offset, (uint8_t)childGeom.depth);
+    m_subPartSet(m_log2CUSize + offset, (uint8_t)childGeom.log2CUSize);
 }
 
 /* Copy all CU data from one instance to the next, except set lossless flag

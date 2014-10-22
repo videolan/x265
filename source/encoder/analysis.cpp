@@ -282,7 +282,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x2
                 compressIntraCU(parentCTU, childCuData, shared, zOrder);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
@@ -290,7 +290,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x2
             else
             {
                 /* record the depth of this non-present sub-CU */
-                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
+                splitCU->setEmptyPart(childCuData, subPartIdx);
                 zOrder += g_depthInc[g_maxCUDepth - 1][nextDepth];
             }
         }
@@ -597,15 +597,14 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 compressInterCU_dist(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
-                /* record the depth of this non-present sub-CU */
-                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
+                splitCU->setEmptyPart(childCuData, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
 
@@ -828,7 +827,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                 compressInterCU_rd0_4(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
                 if (m_param->rdLevel)
@@ -839,8 +838,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     nextContext = &nd.bestMode->contexts;
             }
             else
-                /* record the depth of this non-present sub-CU */
-                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
+                splitCU->setEmptyPart(childCuData, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
 
@@ -992,14 +990,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 compressInterCU_rd5_6(parentCTU, childCuData);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData.numPartitions, subPartIdx, nextDepth);
+                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
-                /* record the depth of this non-present sub-CU */
-                memset(splitCU->m_depth + childCuData.numPartitions * subPartIdx, nextDepth, childCuData.numPartitions);
+                splitCU->setEmptyPart(childCuData, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
         if (mightNotSplit)

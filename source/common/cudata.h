@@ -75,6 +75,7 @@ public:
     cucopy_t      m_partCopy;         // pointer to function that copies m_numPartitions elements
     cubcast_t     m_partSet;          // pointer to function that sets m_numPartitions elements
     cucopy_t      m_subPartCopy;      // pointer to function that copies m_numPartitions/4 elements, may be NULL
+    cubcast_t     m_subPartSet;       // pointer to function that sets m_numPartitions/4 elements, may be NULL
 
     uint32_t      m_cuAddr;           // address of CTU within the picture in raster order
     uint32_t      m_absIdxInCTU;      // address of CU within its CTU in Z scan order
@@ -120,7 +121,8 @@ public:
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
     void     calcCTUGeoms(uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
 
-    void     copyPartFrom(const CUData& cu, uint32_t numPartitions, uint32_t partUnitIdx, uint32_t depth);
+    void     copyPartFrom(const CUData& cu, const CUGeom& childGeom, uint32_t subPartIdx);
+    void     setEmptyPart(const CUGeom& childGeom, uint32_t subPartIdx);
     void     copyToPic(uint32_t depth) const;
 
     void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom); /* RD-0 methods called only from encodeResidue */
