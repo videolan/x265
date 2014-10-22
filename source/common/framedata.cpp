@@ -52,14 +52,14 @@ bool FrameData::create(x265_param *param, const SPS& sps)
     CHECKED_MALLOC(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
 
-    reinit(param, sps);
+    reinit(sps);
     return true;
 
 fail:
     return false;
 }
 
-void FrameData::reinit(x265_param *param, const SPS& sps)
+void FrameData::reinit(const SPS& sps)
 {
     memset(m_cuStat, 0, sps.numCUsInFrame * sizeof(*m_cuStat));
     memset(m_rowStat, 0, sps.numCuInHeight * sizeof(*m_rowStat));

@@ -92,7 +92,7 @@ public:
     FrameData();
 
     bool create(x265_param *param, const SPS& sps);
-    void reinit(x265_param *param, const SPS& sps);
+    void reinit(const SPS& sps);
     void destroy();
 
     CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
