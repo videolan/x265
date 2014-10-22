@@ -886,11 +886,6 @@ void CUData::setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, 
     memset(m_cbf[ttype] + absPartIdx, cbf, sizeof(uint8_t) * coveredPartIdxes);
 }
 
-void CUData::setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth)
-{
-    memset(m_cuTransquantBypass + absPartIdx, flag, NUM_CU_PARTITIONS >> (depth << 1));
-}
-
 void CUData::setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf)
 {
     uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);

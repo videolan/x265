@@ -136,8 +136,6 @@ public:
     void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
     void     setQPSubCUs(int qp, CUData* cu, uint32_t absPartIdx, uint32_t depth, bool &foundNonZeroCbf);
 
-    void     setCUTransquantBypassSubParts(uint8_t flag, uint32_t absPartIdx, uint32_t depth);
-
     void     setTransformSkipSubParts(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void     setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
 
