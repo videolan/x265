@@ -46,7 +46,7 @@ void Deblock::deblockCTU(CUData* cu, int32_t dir)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
 void Deblock::deblockCU(CUData* cu, uint32_t absPartIdx, uint32_t depth, const int32_t dir, uint8_t blockingStrength[])
 {
-    if (cu->m_partSizes[absPartIdx] == SIZE_NONE)
+    if (cu->m_partSize[absPartIdx] == SIZE_NONE)
         return;
 
     const Frame* frame = cu->m_frame;
@@ -134,7 +134,7 @@ void Deblock::setEdgefilterPU(CUData* cu, uint32_t absPartIdx, int32_t dir, uint
     const uint32_t hWidthInBaseUnits = widthInBaseUnits >> 1;
     const uint32_t qWidthInBaseUnits = widthInBaseUnits >> 2;
 
-    switch (cu->m_partSizes[absPartIdx])
+    switch (cu->m_partSize[absPartIdx])
     {
     case SIZE_2NxN:
         if (EDGE_HOR == dir)
@@ -511,8 +511,8 @@ void Deblock::edgeFilterLuma(CUData* cu, uint32_t absPartIdx, uint32_t depth, in
                 if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 {
                     // check if each of PUs is lossless coded
-                    partPNoFilter = !!cuP->m_cuTransquantBypass[partP];
-                    partQNoFilter = !!cuQ->m_cuTransquantBypass[partQ];
+                    partPNoFilter = !!cuP->m_tqBypass[partP];
+                    partQNoFilter = !!cuQ->m_tqBypass[partQ];
                 }
 
                 int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
@@ -605,8 +605,8 @@ void Deblock::edgeFilterChroma(CUData* cu, uint32_t absPartIdx, uint32_t depth, 
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {
                 // check if each of PUs is lossless coded
-                partPNoFilter = !!cuP->m_cuTransquantBypass[partP];
-                partQNoFilter = !!cuQ->m_cuTransquantBypass[partQ];
+                partPNoFilter = !!cuP->m_tqBypass[partP];
+                partQNoFilter = !!cuQ->m_tqBypass[partQ];
             }
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)

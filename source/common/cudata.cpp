@@ -159,13 +159,13 @@ void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_
 
     m_qp          = (char*)charBuf; charBuf += numPartition;
     m_log2CUSize         = charBuf; charBuf += numPartition;
-    m_partSizes          = charBuf; charBuf += numPartition;
-    m_predModes          = charBuf; charBuf += numPartition;
+    m_partSize          = charBuf; charBuf += numPartition;
+    m_predMode          = charBuf; charBuf += numPartition;
     m_lumaIntraDir       = charBuf; charBuf += numPartition;
-    m_cuTransquantBypass = charBuf; charBuf += numPartition;
+    m_tqBypass = charBuf; charBuf += numPartition;
     m_depth              = charBuf; charBuf += numPartition;
     m_skipFlag           = charBuf; charBuf += numPartition; /* the order up to here is important in initCTU() and initSubCU() */
-    m_bMergeFlags        = charBuf; charBuf += numPartition;
+    m_mergeFlag        = charBuf; charBuf += numPartition;
     m_interDir           = charBuf; charBuf += numPartition;
     m_mvpIdx[0]          = charBuf; charBuf += numPartition;
     m_mvpIdx[1]          = charBuf; charBuf += numPartition;
@@ -227,10 +227,10 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
     m_partSet(m_log2CUSize,   (uint8_t)g_maxLog2CUSize);
-    m_partSet(m_partSizes,    (uint8_t)SIZE_NONE);
-    m_partSet(m_predModes,    (uint8_t)MODE_NONE);
+    m_partSet(m_partSize,    (uint8_t)SIZE_NONE);
+    m_partSet(m_predMode,    (uint8_t)MODE_NONE);
     m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
-    m_partSet(m_cuTransquantBypass, (uint8_t)frame.m_encData->m_param->bLossless);
+    m_partSet(m_tqBypass, (uint8_t)frame.m_encData->m_param->bLossless);
 
     X265_CHECK(!(frame.m_encData->m_param->bLossless && !m_slice->m_pps->bTransquantBypassEnabled), "lossless enabled without TQbypass in PPS\n");
 
@@ -265,10 +265,10 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)ctu.m_qp[0]);
     m_partSet(m_log2CUSize,   (uint8_t)cuGeom.log2CUSize);
-    m_partSet(m_partSizes,    (uint8_t)SIZE_NONE);
-    m_partSet(m_predModes,    (uint8_t)MODE_NONE);
+    m_partSet(m_partSize,    (uint8_t)SIZE_NONE);
+    m_partSet(m_predMode,    (uint8_t)MODE_NONE);
     m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
-    m_partSet(m_cuTransquantBypass, (uint8_t)m_frame->m_encData->m_param->bLossless);
+    m_partSet(m_tqBypass, (uint8_t)m_frame->m_encData->m_param->bLossless);
     m_partSet(m_depth,        (uint8_t)cuGeom.depth);
 
     /* initialize the remaining CU data in one memset */
@@ -291,13 +291,13 @@ void CUData::copyPartFrom(const CUData& subCU, uint32_t numPartitions, uint32_t 
 
     m_subPartCopy((uint8_t*)m_qp + offset, (uint8_t*)subCU.m_qp);
     m_subPartCopy(m_log2CUSize + offset, subCU.m_log2CUSize);
-    m_subPartCopy(m_partSizes + offset, subCU.m_partSizes);
-    m_subPartCopy(m_predModes + offset, subCU.m_predModes);
+    m_subPartCopy(m_partSize + offset, subCU.m_partSize);
+    m_subPartCopy(m_predMode + offset, subCU.m_predMode);
     m_subPartCopy(m_lumaIntraDir + offset, subCU.m_lumaIntraDir);
-    m_subPartCopy(m_cuTransquantBypass + offset, subCU.m_cuTransquantBypass);
+    m_subPartCopy(m_tqBypass + offset, subCU.m_tqBypass);
     m_subPartCopy(m_depth + offset, subCU.m_depth);
     m_subPartCopy(m_skipFlag + offset, subCU.m_skipFlag);
-    m_subPartCopy(m_bMergeFlags + offset, subCU.m_bMergeFlags);
+    m_subPartCopy(m_mergeFlag + offset, subCU.m_mergeFlag);
     m_subPartCopy(m_interDir + offset, subCU.m_interDir);
     m_subPartCopy(m_mvpIdx[0] + offset, subCU.m_mvpIdx[0]);
     m_subPartCopy(m_mvpIdx[1] + offset, subCU.m_mvpIdx[1]);
@@ -345,7 +345,7 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     m_cuMvField[1].copyFrom(&cu.m_cuMvField[1], m_numPartitions, 0);
 
     /* force TQBypass to true */
-    m_partSet(m_cuTransquantBypass, true);
+    m_partSet(m_tqBypass, true);
 
     /* clear residual coding flags */
     m_partSet(m_skipFlag, 0);
@@ -364,20 +364,20 @@ void CUData::copyToPic(uint32_t depth) const
     CUData& ctu = *m_frame->m_encData->getPicCTU(m_cuAddr);
 
     m_partCopy((uint8_t*)ctu.m_qp + m_absIdxInCTU, (uint8_t*)m_qp);
-    m_partCopy(ctu.m_partSizes + m_absIdxInCTU, m_partSizes);
-    m_partCopy(ctu.m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass);
+    m_partCopy(ctu.m_partSize + m_absIdxInCTU, m_partSize);
+    m_partCopy(ctu.m_tqBypass + m_absIdxInCTU, m_tqBypass);
     m_partCopy(ctu.m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0]);
     m_partCopy(ctu.m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1]);
     m_partCopy(ctu.m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2]);
     m_partCopy(ctu.m_depth + m_absIdxInCTU, m_depth);
     m_partCopy(ctu.m_skipFlag + m_absIdxInCTU, m_skipFlag);
-    m_partCopy(ctu.m_predModes + m_absIdxInCTU, m_predModes);
+    m_partCopy(ctu.m_predMode + m_absIdxInCTU, m_predMode);
     m_partCopy(ctu.m_log2CUSize + m_absIdxInCTU, m_log2CUSize);
     m_partCopy(ctu.m_trIdx + m_absIdxInCTU, m_trIdx);
     m_partCopy(ctu.m_cbf[0] + m_absIdxInCTU, m_cbf[0]);
     m_partCopy(ctu.m_cbf[1] + m_absIdxInCTU, m_cbf[1]);
     m_partCopy(ctu.m_cbf[2] + m_absIdxInCTU, m_cbf[2]);
-    m_partCopy(ctu.m_bMergeFlags + m_absIdxInCTU, m_bMergeFlags);
+    m_partCopy(ctu.m_mergeFlag + m_absIdxInCTU, m_mergeFlag);
     m_partCopy(ctu.m_interDir + m_absIdxInCTU, m_interDir);
     m_partCopy(ctu.m_lumaIntraDir + m_absIdxInCTU, m_lumaIntraDir);
     m_partCopy(ctu.m_chromaIntraDir + m_absIdxInCTU, m_chromaIntraDir);
@@ -411,12 +411,12 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom)
     /* copy out all prediction info for this part */
     m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
     m_partCopy(m_log2CUSize,   ctu.m_log2CUSize + m_absIdxInCTU);
-    m_partCopy(m_partSizes,    ctu.m_partSizes + m_absIdxInCTU);
-    m_partCopy(m_predModes,    ctu.m_predModes + m_absIdxInCTU);
+    m_partCopy(m_partSize,    ctu.m_partSize + m_absIdxInCTU);
+    m_partCopy(m_predMode,    ctu.m_predMode + m_absIdxInCTU);
     m_partCopy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU);
-    m_partCopy(m_cuTransquantBypass, ctu.m_cuTransquantBypass + m_absIdxInCTU);
+    m_partCopy(m_tqBypass, ctu.m_tqBypass + m_absIdxInCTU);
     m_partCopy(m_depth,        ctu.m_depth + m_absIdxInCTU);
-    m_partCopy(m_bMergeFlags,  ctu.m_bMergeFlags + m_absIdxInCTU);
+    m_partCopy(m_mergeFlag,  ctu.m_mergeFlag + m_absIdxInCTU);
     m_partCopy(m_interDir,     ctu.m_interDir + m_absIdxInCTU);
     m_partCopy(m_mvpIdx[0],    ctu.m_mvpIdx[0] + m_absIdxInCTU);
     m_partCopy(m_mvpIdx[1],    ctu.m_mvpIdx[1] + m_absIdxInCTU);
@@ -734,7 +734,7 @@ int CUData::getLastValidPartIdx(int absPartIdx) const
 {
     int lastValidPartIdx = absPartIdx - 1;
 
-    while (lastValidPartIdx >= 0 && m_predModes[lastValidPartIdx] == MODE_NONE)
+    while (lastValidPartIdx >= 0 && m_predMode[lastValidPartIdx] == MODE_NONE)
     {
         uint32_t depth = m_depth[lastValidPartIdx];
         lastValidPartIdx -= m_numPartitions >> (depth << 1);
@@ -848,10 +848,10 @@ uint32_t CUData::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const
 void CUData::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
 {
     uint32_t log2CUSize = m_log2CUSize[absPartIdx];
-    PartSize partSize   = (PartSize)m_partSizes[absPartIdx];
-    uint32_t quadtreeTUMaxDepth = m_predModes[absPartIdx] == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
-    uint32_t intraSplitFlag = (m_predModes[absPartIdx] == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
-    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (m_predModes[absPartIdx] == MODE_INTER) && (partSize != SIZE_2Nx2N));
+    PartSize partSize   = (PartSize)m_partSize[absPartIdx];
+    uint32_t quadtreeTUMaxDepth = m_predMode[absPartIdx] == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
+    uint32_t intraSplitFlag = (m_predMode[absPartIdx] == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
+    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (m_predMode[absPartIdx] == MODE_INTER) && (partSize != SIZE_2Nx2N));
 
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
@@ -965,7 +965,7 @@ void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puI
     uint32_t curPartNumQ = (NUM_CU_PARTITIONS >> (2 * depth)) >> 2;
     X265_CHECK(puIdx < 2, "unexpected part unit index\n");
 
-    switch (m_partSizes[absPartIdx])
+    switch (m_partSize[absPartIdx])
     {
     case SIZE_2Nx2N:
         memset(m_interDir + absPartIdx, dir, 4 * curPartNumQ);
@@ -1045,7 +1045,7 @@ void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puI
 void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const
 {
     int cuSize = 1 << m_log2CUSize[0];
-    int partType = m_partSizes[0];
+    int partType = m_partSize[0];
 
     int tmp = partTable[partType][partIdx][0];
     outWidth = ((tmp >> 4) * cuSize) >> 2;
@@ -1070,7 +1070,7 @@ void CUData::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32
     partIdxLT = m_absIdxInCTU;
     partIdxRT = g_rasterToZscan[g_zscanToRaster[partIdxLT] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
 
-    switch (m_partSizes[0])
+    switch (m_partSize[0])
     {
     case SIZE_2Nx2N: break;
     case SIZE_2NxN:
@@ -1111,7 +1111,7 @@ void CUData::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
 {
     outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_frame->m_encData->m_numPartInCUSize];
 
-    switch (m_partSizes[0])
+    switch (m_partSize[0])
     {
     case SIZE_2Nx2N:
         outPartIdxLB += m_numPartitions >> 1;
@@ -1150,7 +1150,7 @@ void CUData::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) cons
                                    ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_frame->m_encData->m_numPartInCUSize +
                                    (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
 
-    switch (m_partSizes[0])
+    switch (m_partSize[0])
     {
     case SIZE_2Nx2N:
         outPartIdxRB += m_numPartitions >> 1;
@@ -1226,7 +1226,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     int xP, yP, nPSW, nPSH;
 
     int cuSize = 1 << m_log2CUSize[0];
-    int partMode = m_partSizes[0];
+    int partMode = m_partSize[0];
 
     int tmp = partTable[partMode][puIdx][0];
     nPSW = ((tmp >> 4) * cuSize) >> 2;
@@ -1239,7 +1239,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TC
     uint32_t count = 0;
 
     uint32_t partIdxLT, partIdxRT, partIdxLB;
-    PartSize curPS = (PartSize)m_partSizes[absPartIdx];
+    PartSize curPS = (PartSize)m_partSize[absPartIdx];
     deriveLeftBottomIdx(puIdx, partIdxLB);
 
     // left
@@ -1792,7 +1792,7 @@ bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int&
     Frame *colPic = m_slice->m_refPicList[m_slice->isInterB() ? 1 - m_slice->m_colFromL0Flag : 0][m_slice->m_colRefIdx];
     CUData *colCU = colPic->m_encData->getPicCTU(cuAddr);
 
-    if (colCU->m_frame == 0 || colCU->m_partSizes[partUnitIdx] == SIZE_NONE)
+    if (colCU->m_frame == 0 || colCU->m_partSize[partUnitIdx] == SIZE_NONE)
         return false;
 
     curPOC = m_slice->m_poc;

@@ -460,7 +460,7 @@ static void origCUSampleRestoration(const CUData* cu, uint32_t absPartIdx, uint3
     }
 
     // restore original YUV samples
-    if (cu->m_cuTransquantBypass[absPartIdx])
+    if (cu->m_tqBypass[absPartIdx])
         restoreOrigLosslessYuv(cu, absPartIdx, depth);
 }
 

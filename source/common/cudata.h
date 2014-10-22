@@ -88,14 +88,14 @@ public:
 
     /* Per-part data */
     char*         m_qp;                 // array of QP values
-    uint8_t*      m_log2CUSize;         // array of cu log2Size
-    uint8_t*      m_partSizes;          // array of partition sizes
-    uint8_t*      m_predModes;          // array of prediction modes
+    uint8_t*      m_log2CUSize;         // array of cu log2Size TODO: seems redundant to depth
+    uint8_t*      m_partSize;           // array of partition sizes
+    uint8_t*      m_predMode;           // array of prediction modes
     uint8_t*      m_lumaIntraDir;       // array of intra directions (luma)
-    uint8_t*      m_cuTransquantBypass; // array of CU lossless flags
+    uint8_t*      m_tqBypass;           // array of CU lossless flags
     uint8_t*      m_depth;              // array of depths
     uint8_t*      m_skipFlag;           // array of skip flags
-    uint8_t*      m_bMergeFlags;        // array of merge flags
+    uint8_t*      m_mergeFlag;          // array of merge flags
     uint8_t*      m_interDir;           // array of inter directions
     uint8_t*      m_mvpIdx[2];          // array of motion vector predictor candidates or merge candidate indices [0]
     uint8_t*      m_trIdx;              // array of transform indices
@@ -128,9 +128,9 @@ public:
     void     updatePic(uint32_t depth) const;
 
     void     setDepthSubParts(uint8_t depth)       { m_partSet(m_depth, depth); }
-    void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSizes, (uint8_t)size); }
+    void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
-    void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predModes, (uint8_t)mode); }
+    void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
     void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth);
@@ -162,10 +162,10 @@ public:
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
     void     getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
-    uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSizes[0]]; }
-    bool     isIntra(uint32_t absPartIdx) const   { return m_predModes[absPartIdx] == MODE_INTRA; }
+    uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
+    bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
     uint8_t  isSkipped(uint32_t absPartIdx) const { return m_skipFlag[absPartIdx]; }
-    bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSizes[0] != SIZE_2Nx2N; }
+    bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
     void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;

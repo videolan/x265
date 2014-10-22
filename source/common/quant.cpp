@@ -313,7 +313,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
 uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
-    if (cu->m_cuTransquantBypass[absPartIdx])
+    if (cu->m_tqBypass[absPartIdx])
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
         return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);
@@ -321,7 +321,7 @@ uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16
 
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
-    bool isIntra = cu->m_predModes[absPartIdx] == MODE_INTRA;
+    bool isIntra = cu->m_predMode[absPartIdx] == MODE_INTRA;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int trSize = 1 << log2TrSize;
 
