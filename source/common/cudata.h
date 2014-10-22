@@ -141,8 +141,8 @@ public:
 
     void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth);
 
-    uint8_t  getCbf(uint32_t idx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][idx] >> trDepth) & 0x1; }
-    uint8_t  getQtRootCbf(uint32_t idx) const { return m_cbf[0][idx] || m_cbf[1][idx] || m_cbf[2][idx]; }
+    uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
+    uint8_t  getQtRootCbf(uint32_t absPartIdx) const { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
     void     clearCbf(uint32_t absPartIdx, uint32_t depth);
     void     setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth);
     void     setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes);
@@ -168,8 +168,8 @@ public:
     void     getPartPosition(uint32_t puIdx, int& xP, int& yP, int& nPSW, int& nPSH) const;
     void     getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
-    bool     isIntra(uint32_t partIdx) const { return m_predModes[partIdx] == MODE_INTRA; }
-    uint8_t  isSkipped(uint32_t idx) const { return m_skipFlag[idx]; }
+    bool     isIntra(uint32_t absPartIdx) const { return m_predModes[absPartIdx] == MODE_INTRA; }
+    uint8_t  isSkipped(uint32_t absPartIdx) const { return m_skipFlag[absPartIdx]; }
     bool     isBipredRestriction() const { return m_log2CUSize[0] == 3 && m_partSizes[0] != SIZE_2Nx2N; }
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
