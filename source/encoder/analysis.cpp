@@ -1049,7 +1049,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
              mvFieldNeighbours[i][1].mv.y < (m_param->searchRange + 1) * 4))
         {
             tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
-            tempPred->cu.setInterDirSubParts(interDirNeighbours[i], 0, 0, depth); // depth is relative to CTU
+            tempPred->cu.setInterDirSubParts(interDirNeighbours[i], 0, 0);
             tempPred->cu.setAllMv(0, mvFieldNeighbours[i][0].mv, SIZE_2Nx2N, 0, 0);
             tempPred->cu.setAllRefIdx(0, mvFieldNeighbours[i][0].refIdx, SIZE_2Nx2N, 0, 0);
             tempPred->cu.setAllMv(1, mvFieldNeighbours[i][1].mv, SIZE_2Nx2N, 0, 0);
@@ -1089,7 +1089,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
         // Encode with residue
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)bestSadCand;
-        tempPred->cu.setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0, depth);
+        tempPred->cu.setInterDirSubParts(interDirNeighbours[bestSadCand], 0, 0);
         tempPred->cu.setAllMv(0, mvFieldNeighbours[bestSadCand][0].mv, SIZE_2Nx2N, 0, 0);
         tempPred->cu.setAllRefIdx(0, mvFieldNeighbours[bestSadCand][0].refIdx, SIZE_2Nx2N, 0, 0);
         tempPred->cu.setAllMv(1, mvFieldNeighbours[bestSadCand][1].mv, SIZE_2Nx2N, 0, 0);
@@ -1140,7 +1140,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
         tempPred->cu.setSkipFlagSubParts(false); /* must be cleared between encode iterations */
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;  /* merge candidate ID is stored in L0 MVP idx */
-        tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+        tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0);
         tempPred->cu.setAllMv(0, mvFieldNeighbours[mergeCand][0].mv, SIZE_2Nx2N, 0, 0);
         tempPred->cu.setAllRefIdx(0, mvFieldNeighbours[mergeCand][0].refIdx, SIZE_2Nx2N, 0, 0);
         tempPred->cu.setAllMv(1, mvFieldNeighbours[mergeCand][1].mv, SIZE_2Nx2N, 0, 0);
@@ -1172,7 +1172,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             {
                 tempPred->cu.setSkipFlagSubParts(false);
                 tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;
-                tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0, depth);
+                tempPred->cu.setInterDirSubParts(interDirNeighbours[mergeCand], 0, 0);
                 tempPred->cu.setAllMv(0, mvFieldNeighbours[mergeCand][0].mv, SIZE_2Nx2N, 0, 0);
                 tempPred->cu.setAllRefIdx(0, mvFieldNeighbours[mergeCand][0].refIdx, SIZE_2Nx2N, 0, 0);
                 tempPred->cu.setAllMv(1, mvFieldNeighbours[mergeCand][1].mv, SIZE_2Nx2N, 0, 0);

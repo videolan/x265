@@ -1836,7 +1836,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
         {
             cu->m_mergeFlag[absPartIdx] = true;
             cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-            cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
+            cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx);
             cu->setAllMv(0, merge.mvField[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, merge.mvField[0].refIdx, partSize, absPartIdx, puIdx);
             cu->setAllMv(1, merge.mvField[1].mv, partSize, absPartIdx, puIdx);
@@ -1849,7 +1849,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             lastMode = 2;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(3, absPartIdx, puIdx);
             cu->setAllMv(0, bidir[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, m_bestME[0].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[0][absPartIdx] = bidir[0].mv - bidir[0].mvp;
@@ -1867,7 +1867,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             lastMode = 0;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(1, absPartIdx, puIdx);
             cu->setAllMv(0, m_bestME[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, m_bestME[0].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[0][absPartIdx] = m_bestME[0].mv - m_bestME[0].mvp;
@@ -1882,7 +1882,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             lastMode = 1;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(2, absPartIdx, puIdx);
             cu->setAllMv(1, m_bestME[1].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(1, m_bestME[1].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[1][absPartIdx] = m_bestME[1].mv - m_bestME[1].mvp;
@@ -1957,7 +1957,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 // set merge result
                 cu->m_mergeFlag[absPartIdx] = true;
                 cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-                cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
+                cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx);
                 cu->setAllMv(0, merge.mvField[0].mv, partSize, absPartIdx, puIdx);
                 cu->setAllRefIdx(0, merge.mvField[0].refIdx, partSize, absPartIdx, puIdx);
                 cu->setAllMv(1, merge.mvField[1].mv, partSize, absPartIdx, puIdx);
@@ -2128,7 +2128,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         {
             cu->m_mergeFlag[absPartIdx] = true;
             cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-            cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
+            cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx);
             cu->setAllMv(0, merge.mvField[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, merge.mvField[0].refIdx, partSize, absPartIdx, puIdx);
             cu->setAllMv(1, merge.mvField[1].mv, partSize, absPartIdx, puIdx);
@@ -2141,7 +2141,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             lastMode = 2;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(3, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(3, absPartIdx, puIdx);
             cu->setAllMv(0, bidir[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, list[0].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[0][absPartIdx] = bidir[0].mv - bidir[0].mvp;
@@ -2159,7 +2159,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             lastMode = 0;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(1, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(1, absPartIdx, puIdx);
             cu->setAllMv(0, list[0].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(0, list[0].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[0][absPartIdx] = list[0].mv - list[0].mvp;
@@ -2174,7 +2174,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             lastMode = 1;
 
             cu->m_mergeFlag[absPartIdx] = false;
-            cu->setInterDirSubParts(2, absPartIdx, puIdx, cu->m_depth[0]);
+            cu->setInterDirSubParts(2, absPartIdx, puIdx);
             cu->setAllMv(1, list[1].mv, partSize, absPartIdx, puIdx);
             cu->setAllRefIdx(1, list[1].ref, partSize, absPartIdx, puIdx);
             cu->m_mvd[1][absPartIdx] = list[1].mv - list[1].mvp;

@@ -991,9 +991,9 @@ void CUData::setTransformSkipPartRange(uint32_t useTransformSkip, TextType ttype
     memset(m_transformSkip[ttype] + absPartIdx, useTransformSkip, sizeof(uint8_t) * coveredPartIdxes);
 }
 
-void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth)
+void CUData::setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)
 {
-    uint32_t curPartNumQ = (NUM_CU_PARTITIONS >> (2 * depth)) >> 2;
+    uint32_t curPartNumQ = m_numPartitions >> 2;
     X265_CHECK(puIdx < 2, "unexpected part unit index\n");
 
     switch (m_partSize[absPartIdx])

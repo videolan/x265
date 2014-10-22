@@ -159,7 +159,7 @@ public:
     void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
     void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth);
 
-    void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx, uint32_t depth);
+    void     setInterDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setAllMv(int list, const MV& mv, PartSize cuMode, int absPartIdx, int puIdx);
     void     setAllRefIdx(int list, int refIdx, PartSize cuMode, int absPartIdx, int puIdx);
 
