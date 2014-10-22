@@ -1671,7 +1671,7 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
 {
     CUData* cu = &interMode.cu;
     const Slice *slice = m_slice;
-    PicYuv *fencPic = slice->m_frame->m_origPicYuv;
+    PicYuv *fencPic = m_frame->m_origPicYuv;
     PartSize partSize = (PartSize)cu->m_partSize[0];
     m_curMECu = cu;
     m_curGeom = &cuGeom;
@@ -1912,7 +1912,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
     const Slice *slice  = m_slice;
-    PicYuv *fencPic     = slice->m_frame->m_origPicYuv;
+    PicYuv* fencPic     = m_frame->m_origPicYuv;
     PartSize partSize   = (PartSize)cu->m_partSize[0];
     int      numPart    = cu->getNumPartInter();
     int      numPredDir = slice->isInterP() ? 1 : 2;

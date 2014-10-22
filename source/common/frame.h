@@ -35,6 +35,8 @@ namespace x265 {
 class Encoder;
 class PicYuv;
 
+#define IS_REFERENCED(frame) (frame->m_lowres.sliceType != X265_TYPE_B) 
+
 class Frame
 {
 public:
@@ -69,7 +71,7 @@ public:
     Frame();
 
     bool create(x265_param *param);
-    bool allocEncodeData(x265_param *param);
+    bool allocEncodeData(x265_param *param, const SPS& sps);
     void destroy();
 };
 }

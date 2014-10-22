@@ -34,7 +34,7 @@
 #include "nal.h"
 
 namespace x265 {
-void weightAnalyse(Slice& slice, x265_param& param);
+void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 
 FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
@@ -234,7 +234,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
     if (bUseWeightP || bUseWeightB)
-        weightAnalyse(*slice, *m_param);
+        weightAnalyse(*slice, *m_frame, *m_param);
     else
         slice->disableWeights();
 
@@ -268,7 +268,7 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
 
-    uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_origPicYuv->m_numCuInHeight : 1;
+    uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
     if (!m_outStreams)
     {
         m_outStreams = new Bitstream[numSubstreams];
@@ -387,7 +387,7 @@ void FrameEncoder::compressFrame()
     m_bs.resetBits();
     m_entropyCoder.load(m_initSliceContext);
     m_entropyCoder.setBitstream(&m_bs);
-    m_entropyCoder.codeSliceHeader(*slice);
+    m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData);
 
     // finish encode of each CTU row, only required when SAO is enabled
     if (m_param->bEnableSAO)
@@ -496,9 +496,9 @@ void FrameEncoder::compressFrame()
 void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_encData->m_slice;
-    const uint32_t widthInLCUs = m_frame->m_origPicYuv->m_numCuInWidth;
+    const uint32_t widthInLCUs = slice->m_sps->numCuInWidth;
     const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
-    const uint32_t numSubstreams = m_param->bEnableWavefront ? m_frame->m_origPicYuv->m_numCuInHeight : 1;
+    const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
     SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
     for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
@@ -1091,11 +1091,11 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
     uint32_t maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
     uint32_t maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
     uint32_t noOfBlocks = g_maxCUSize / 16;
-    uint32_t block_y = (ctuAddr / m_frame->m_origPicYuv->m_numCuInWidth) * noOfBlocks;
-    uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * m_frame->m_origPicYuv->m_numCuInWidth;
+    uint32_t block_y = (ctuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
+    uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
-    bool isReferenced = IS_REFERENCED(curEncData.m_slice);
+    bool isReferenced = IS_REFERENCED(m_frame);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
 
     uint32_t cnt = 0, idx = 0;

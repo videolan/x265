@@ -201,6 +201,8 @@ struct SPS
     int      chromaFormatIdc;        // use param
     uint32_t picWidthInLumaSamples;  // use param
     uint32_t picHeightInLumaSamples; // use param
+    uint32_t numCuInWidth;
+    uint32_t numCuInHeight;
 
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;
@@ -277,7 +279,6 @@ public:
 
     const SPS*  m_sps;
     const PPS*  m_pps;
-    Frame*      m_frame;
     WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
     RPS         m_rps;
@@ -342,8 +343,6 @@ public:
 
     uint32_t realEndAddress(uint32_t endCUAddr) const;
 };
-
-#define IS_REFERENCED(slice) (slice->m_frame->m_lowres.sliceType != X265_TYPE_B) 
 
 }
 

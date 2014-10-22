@@ -1142,7 +1142,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     }
     else // CQP
     {
-        if (m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice))
+        if (m_sliceType == B_SLICE && IS_REFERENCED(curFrame))
             m_qp = (m_qpConstant[B_SLICE] + m_qpConstant[P_SLICE]) / 2;
         else
             m_qp = m_qpConstant[m_sliceType];
@@ -1397,9 +1397,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 q0 = q1;
             }
         }
-        if (prevRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(prevRefSlice))
+        if (prevRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice->m_refPicList[0][0]))
             q0 -= m_pbOffset / 2;
-        if (nextRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(nextRefSlice))
+        if (nextRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice->m_refPicList[1][0]))
             q1 -= m_pbOffset / 2;
         if (i0 && i1)
             q = (q0 + q1) / 2 + m_ipOffset;
@@ -1410,7 +1410,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         else
             q = (q0 * dt1 + q1 * dt0) / (dt0 + dt1);
 
-        if (IS_REFERENCED(m_curSlice))
+        if (IS_REFERENCED(curFrame))
             q += m_pbOffset / 2;
         else
             q += m_pbOffset;
@@ -1860,7 +1860,8 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     int picType = curEncData.m_slice->m_sliceType;
     Frame* refFrame = curEncData.m_slice->m_refPicList[0][0];
 
-    uint32_t maxRows = curFrame->m_origPicYuv->m_numCuInHeight;
+    uint32_t maxRows = curEncData.m_slice->m_sps->numCuInHeight;
+    uint32_t maxCols = curEncData.m_slice->m_sps->numCuInWidth;
 
     for (uint32_t row = 0; row < maxRows; row++)
     {
@@ -1877,7 +1878,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             if (picType != I_SLICE)
             {
                 FrameData& refEncData = *refFrame->m_encData;
-                uint32_t endCuAddr = curFrame->m_origPicYuv->m_numCuInWidth * (row + 1);
+                uint32_t endCuAddr = maxCols * (row + 1);
                 for (uint32_t cuAddr = curEncData.m_rowStat[row].numEncodedCUs + 1; cuAddr < endCuAddr; cuAddr++)
                 {
                     refRowSatdCost += refEncData.m_cuStat[cuAddr].vbvCost;
@@ -1962,9 +1963,10 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     double stepSize = 0.5;
     double bufferLeftPlanned = rce->bufferFill - rce->frameSizePlanned;
 
-    double maxFrameError = X265_MAX(0.05, 1.0 / curFrame->m_origPicYuv->m_numCuInHeight);
+    const SPS& sps = *curEncData.m_slice->m_sps;
+    double maxFrameError = X265_MAX(0.05, 1.0 / sps.numCuInHeight);
 
-    if (row < curFrame->m_origPicYuv->m_numCuInHeight - 1)
+    if (row < sps.numCuInHeight - 1)
     {
         /* B-frames shouldn't use lower QP than their reference frames. */
         if (rce->sliceType == B_SLICE)
@@ -2158,7 +2160,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_isVbv)
         {
-            for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
+            for (uint32_t i = 0; i < curEncData.m_slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
             curEncData.m_avgQpRc /= curEncData.m_numCUsInFrame;
@@ -2170,7 +2172,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
         if (m_param->rc.aqMode)
         {
-            for (uint32_t i = 0; i < curFrame->m_origPicYuv->m_numCuInHeight; i++)
+            for (uint32_t i = 0; i < curEncData.m_slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
             curEncData.m_avgQpAq /= curEncData.m_numCUsInFrame;
@@ -2182,7 +2184,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
             : rce->sliceType == P_SLICE ? 'P'
-            : IS_REFERENCED(slice) ? 'B' : 'b';
+            : IS_REFERENCED(curFrame) ? 'B' : 'b';
         if (fprintf(m_statFileOut,
                     "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                     rce->poc, rce->encodeOrder,
@@ -2195,7 +2197,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
                     stats->percentSkip  * m_ncu) < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
-        if (m_param->rc.cuTree && IS_REFERENCED(slice) && !m_param->rc.bStatRead)
+        if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
         {
             uint8_t sliceType = (uint8_t)rce->sliceType;
             for (int i = 0; i < m_ncu; i++)

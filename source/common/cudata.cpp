@@ -227,8 +227,8 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     m_encData       = frame.m_encData;
     m_slice         = m_encData->m_slice;
     m_cuAddr        = cuAddr;
-    m_cuPelX        = (cuAddr % frame.m_origPicYuv->m_numCuInWidth) << g_maxLog2CUSize;
-    m_cuPelY        = (cuAddr / frame.m_origPicYuv->m_numCuInWidth) << g_maxLog2CUSize;
+    m_cuPelX        = (cuAddr % m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
+    m_cuPelY        = (cuAddr / m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_CU_PARTITIONS;
 
@@ -250,7 +250,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     /* initialize the remaining CU data in one memset */
     memset(m_depth, 0, (BytesPerPartition - 8) * m_numPartitions);
 
-    uint32_t widthInCU = frame.m_origPicYuv->m_numCuInWidth;
+    uint32_t widthInCU = m_slice->m_sps->numCuInWidth;
     m_cuLeft = (m_cuAddr % widthInCU) ? frame.m_encData->getPicCTU(m_cuAddr - 1) : NULL;
     m_cuAbove = (m_cuAddr / widthInCU) ? frame.m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
     m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? frame.m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
@@ -784,7 +784,7 @@ char CUData::getLastCodedQP(uint32_t absPartIdx) const
     {
         if (m_absIdxInCTU)
             return m_encData->getPicCTU(m_cuAddr)->getLastCodedQP(m_absIdxInCTU);
-        else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_encData->m_reconPicYuv->m_numCuInWidth)))
+        else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_slice->m_sps->numCuInWidth)))
             return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
         else
             return (char)m_slice->m_sliceQp;

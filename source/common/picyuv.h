@@ -33,6 +33,7 @@ namespace x265 {
 // private namespace
 
 class ShortYuv;
+struct SPS;
 
 class PicYuv
 {
@@ -45,9 +46,6 @@ public:
     uint32_t m_picHeight;
     intptr_t m_stride;
     intptr_t m_strideC;
-
-    uint32_t m_numCuInWidth;
-    uint32_t m_numCuInHeight;
 
     uint32_t m_picCsp;
     uint32_t m_hChromaShift;
@@ -66,12 +64,11 @@ public:
     PicYuv();
 
     bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
-    bool  createOffsets();
+    bool  createOffsets(const SPS& sps);
     void  destroy();
 
     void  copyFromPicture(const x265_picture&, int padx, int pady);
 
-    uint32_t getCUHeight(uint32_t rowNum) const;
     intptr_t getChromaAddrOffset(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 
     /* get pointer to CTU start address */

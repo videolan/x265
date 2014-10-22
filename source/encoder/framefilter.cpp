@@ -70,12 +70,12 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
 }
 
-void FrameFilter::start(Frame *pic, Entropy& initState, int qp)
+void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 {
-    m_frame = pic;
+    m_frame = frame;
 
     if (m_param->bEnableSAO)
-        m_sao.startSlice(pic, initState, qp);
+        m_sao.startSlice(frame, initState, qp);
 }
 
 void FrameFilter::processRow(int row)
@@ -87,8 +87,8 @@ void FrameFilter::processRow(int row)
         processRowPost(row);
         return;
     }
-
-    const uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
+    FrameData& encData = *m_frame->m_encData;
+    const uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
 
     if (m_param->bEnableLoopFilter)
@@ -96,23 +96,23 @@ void FrameFilter::processRow(int row)
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            CUData* cu = m_frame->m_encData->getPicCTU(cuAddr);
+            CUData* cu = encData.getPicCTU(cuAddr);
 
             m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                CUData* cuPrev = m_frame->m_encData->getPicCTU(cuAddr - 1);
+                CUData* cuPrev = encData.getPicCTU(cuAddr - 1);
                 m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
             }
         }
 
-        CUData* cuPrev = m_frame->m_encData->getPicCTU(lineStartCUAddr + numCols - 1);
+        CUData* cuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
         m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
     }
 
     // SAO
-    SAOParam* saoParam = m_frame->m_encData->m_saoParam;
+    SAOParam* saoParam = encData.m_saoParam;
     if (m_param->bEnableSAO)
     {
         m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
@@ -135,7 +135,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, m_frame->m_encData->m_numCUsInFrame);
+            m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);
@@ -145,10 +145,21 @@ void FrameFilter::processRow(int row)
     }
 }
 
+uint32_t FrameFilter::getCUHeight(uint32_t rowNum) const /* TODO: cache numCUInHeight and remainder */
+{
+    uint32_t height;
+
+    if (rowNum == m_frame->m_encData->m_slice->m_sps->numCuInHeight - 1)
+        height = ((m_param->sourceHeight % g_maxCUSize) ? (m_param->sourceHeight % g_maxCUSize) : g_maxCUSize);
+    else
+        height = g_maxCUSize;
+    return height;
+}
+
 void FrameFilter::processRowPost(int row)
 {
     PicYuv *reconPic = m_frame->m_reconPicYuv;
-    const uint32_t numCols = reconPic->m_numCuInWidth;
+    const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
     const int lastH = ((reconPic->m_picHeight % g_maxCUSize) ? (reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
     const int realH = (row != m_numRows - 1) ? g_maxCUSize : lastH;
@@ -246,7 +257,7 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
-        uint32_t height = reconPic->getCUHeight(row);
+        uint32_t height = getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
 
@@ -266,7 +277,7 @@ void FrameFilter::processRowPost(int row)
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
-        uint32_t height = reconPic->getCUHeight(row);
+        uint32_t height = getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
         if (!row)
@@ -282,7 +293,7 @@ void FrameFilter::processRowPost(int row)
     else if (m_param->decodedPictureHashSEI == 3)
     {
         uint32_t width = reconPic->m_picWidth;
-        uint32_t height = reconPic->getCUHeight(row);
+        uint32_t height = getCUHeight(row);
         intptr_t stride = reconPic->m_stride;
         uint32_t cuHeight = g_maxCUSize;
         if (!row)
@@ -414,13 +425,13 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 }
 
 /* restore original YUV samples to recon after SAO (if lossless) */
-static void restoreOrigLosslessYuv(const CUData* cu, uint32_t absPartIdx, uint32_t depth)
+static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t size = g_maxCUSize >> depth;
     int part = partitionFromSizes(size, size);
 
-    PicYuv* reconPic = cu->m_encData->m_reconPicYuv;
-    PicYuv* fencPic = cu->m_slice->m_frame->m_origPicYuv;
+    PicYuv* reconPic = frame.m_reconPicYuv;
+    PicYuv* fencPic  = frame.m_origPicYuv;
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
@@ -439,7 +450,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, uint32_t absPartIdx, uint32
 }
 
 /* Original YUV restoration for CU in lossless coding */
-static void origCUSampleRestoration(const CUData* cu, uint32_t absPartIdx, uint32_t depth)
+static void origCUSampleRestoration(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
 {
     if (cu->m_depth[absPartIdx] > depth)
     {
@@ -453,7 +464,7 @@ static void origCUSampleRestoration(const CUData* cu, uint32_t absPartIdx, uint3
         for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
         {
             if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-                origCUSampleRestoration(cu, absPartIdx, depth + 1);
+                origCUSampleRestoration(cu, frame, absPartIdx, depth + 1);
         }
 
         return;
@@ -461,7 +472,7 @@ static void origCUSampleRestoration(const CUData* cu, uint32_t absPartIdx, uint3
 
     // restore original YUV samples
     if (cu->m_tqBypass[absPartIdx])
-        restoreOrigLosslessYuv(cu, absPartIdx, depth);
+        restoreOrigLosslessYuv(cu, frame, absPartIdx, depth);
 }
 
 void FrameFilter::processSao(int row)
@@ -479,10 +490,10 @@ void FrameFilter::processSao(int row)
 
     if (m_frame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
-        uint32_t numCols = m_frame->m_origPicYuv->m_numCuInWidth;
+        uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
         uint32_t lineStartCUAddr = row * numCols;
 
         for (uint32_t col = 0; col < numCols; col++)
-            origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), 0, 0);
+            origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), *m_frame, 0, 0);
     }
 }

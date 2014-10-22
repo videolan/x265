@@ -50,7 +50,8 @@ int MotionReference::init(PicYuv* recPic, WeightParam *w)
     {
         if (!m_weightBuffer)
         {
-            size_t padheight = (recPic->m_numCuInHeight * g_maxCUSize) + recPic->m_lumaMarginY * 2;
+            uint32_t numCUinHeight = (recPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+            size_t padheight = (numCUinHeight * g_maxCUSize) + recPic->m_lumaMarginY * 2;
             m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
             if (!m_weightBuffer)
                 return -1;

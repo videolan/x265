@@ -189,7 +189,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
         m_refDepth = 1;
         break;
     case B_SLICE:
-        m_refDepth = 2 + !IS_REFERENCED(slice);
+        m_refDepth = 2 + !IS_REFERENCED(frame);
         break;
     }
 

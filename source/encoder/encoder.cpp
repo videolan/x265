@@ -385,7 +385,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 }
                 else
                 {
-                    if (!inFrame->m_origPicYuv->createOffsets())
+                    if (!inFrame->m_origPicYuv->createOffsets(m_sps))
                     {
                         m_aborted = true;
                         x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -560,9 +560,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
         else
         {
-            frameEnc->allocEncodeData(m_param);
+            frameEnc->allocEncodeData(m_param, m_sps);
             Slice* slice = frameEnc->m_encData->m_slice;
-            slice->m_frame = frameEnc;
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
@@ -1044,7 +1043,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
     {
         char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
         int poc = slice->m_poc;
-        if (!IS_REFERENCED(slice))
+        if (!IS_REFERENCED(curFrame))
             c += 32; // lower case if unreferenced
 
         char buf[1024];
@@ -1213,6 +1212,8 @@ void Encoder::initSPS(SPS *sps)
     sps->chromaFormatIdc = m_param->internalCsp;
     sps->picWidthInLumaSamples = m_param->sourceWidth;
     sps->picHeightInLumaSamples = m_param->sourceHeight;
+    sps->numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
+    sps->numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
 
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;

@@ -185,8 +185,8 @@ uint32_t Slice::realEndAddress(uint32_t endCUAddr) const
     // Calculate end address
     uint32_t internalAddress = (endCUAddr - 1) % NUM_CU_PARTITIONS;
     uint32_t externalAddress = (endCUAddr - 1) / NUM_CU_PARTITIONS;
-    uint32_t xmax = m_sps->picWidthInLumaSamples - (externalAddress % m_frame->m_origPicYuv->m_numCuInWidth) * g_maxCUSize;
-    uint32_t ymax = m_sps->picHeightInLumaSamples - (externalAddress / m_frame->m_origPicYuv->m_numCuInWidth) * g_maxCUSize;
+    uint32_t xmax = m_sps->picWidthInLumaSamples - (externalAddress % m_sps->numCuInWidth) * g_maxCUSize;
+    uint32_t ymax = m_sps->picHeightInLumaSamples - (externalAddress / m_sps->numCuInWidth) * g_maxCUSize;
 
     while (g_zscanToPelX[internalAddress] >= xmax || g_zscanToPelY[internalAddress] >= ymax)
         internalAddress--;

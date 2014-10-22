@@ -89,7 +89,6 @@ void DPB::recycleUnreferenced()
 void DPB::prepareEncode(Frame *newFrame)
 {
     Slice* slice = newFrame->m_encData->m_slice;
-    slice->m_frame = newFrame;
     slice->m_poc = newFrame->m_poc;
 
     int pocCurr = slice->m_poc;
@@ -123,7 +122,7 @@ void DPB::prepareEncode(Frame *newFrame)
 
     /* m_bHasReferences starts out as true for non-B pictures, and is set to false
      * once no more pictures reference it */
-    newFrame->m_encData->m_bHasReferences = IS_REFERENCED(slice);
+    newFrame->m_encData->m_bHasReferences = IS_REFERENCED(newFrame);
 
     m_picList.pushFront(*newFrame);
 

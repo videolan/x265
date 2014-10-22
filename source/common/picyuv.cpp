@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "picyuv.h"
+#include "slice.h"
 #include "primitives.h"
 
 using namespace x265;
@@ -51,18 +52,18 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
     m_vChromaShift = CHROMA_V_SHIFT(picCsp);
     m_picCsp = picCsp;
 
-    m_numCuInWidth = (m_picWidth + g_maxCUSize - 1)  / g_maxCUSize;
-    m_numCuInHeight = (m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+    uint32_t numCuInWidth = (m_picWidth + g_maxCUSize - 1)  / g_maxCUSize;
+    uint32_t numCuInHeight = (m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
 
     m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
     m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
-    m_stride = (m_numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
+    m_stride = (numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
 
-    m_chromaMarginX = m_lumaMarginX;    // keep 16-byte alignment for chroma CTUs
+    m_chromaMarginX = m_lumaMarginX;  // keep 16-byte alignment for chroma CTUs
     m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
 
-    m_strideC = ((m_numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
-    int maxHeight = m_numCuInHeight * g_maxCUSize;
+    m_strideC = ((numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
+    int maxHeight = numCuInHeight * g_maxCUSize;
 
     CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -81,17 +82,17 @@ fail:
 /* the first picture allocated by the encoder will be asked to generate these
  * offset arrays. Once generated, they will be provided to all future PicYuv
  * allocated by the same encoder. */
-bool PicYuv::createOffsets()
+bool PicYuv::createOffsets(const SPS& sps)
 {
     uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
-    CHECKED_MALLOC(m_cuOffsetY, intptr_t, m_numCuInWidth * m_numCuInHeight);
-    CHECKED_MALLOC(m_cuOffsetC, intptr_t, m_numCuInWidth * m_numCuInHeight);
-    for (uint32_t cuRow = 0; cuRow < m_numCuInHeight; cuRow++)
+    CHECKED_MALLOC(m_cuOffsetY, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
+    CHECKED_MALLOC(m_cuOffsetC, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
+    for (uint32_t cuRow = 0; cuRow < sps.numCuInHeight; cuRow++)
     {
-        for (uint32_t cuCol = 0; cuCol < m_numCuInWidth; cuCol++)
+        for (uint32_t cuCol = 0; cuCol < sps.numCuInWidth; cuCol++)
         {
-            m_cuOffsetY[cuRow * m_numCuInWidth + cuCol] = m_stride * cuRow * g_maxCUSize + cuCol * g_maxCUSize;
-            m_cuOffsetC[cuRow * m_numCuInWidth + cuCol] = m_strideC * cuRow * (g_maxCUSize >> m_vChromaShift) + cuCol * (g_maxCUSize >> m_hChromaShift);
+            m_cuOffsetY[cuRow * sps.numCuInWidth + cuCol] = m_stride * cuRow * g_maxCUSize + cuCol * g_maxCUSize;
+            m_cuOffsetC[cuRow * sps.numCuInWidth + cuCol] = m_strideC * cuRow * (g_maxCUSize >> m_vChromaShift) + cuCol * (g_maxCUSize >> m_hChromaShift);
         }
     }
 
@@ -116,17 +117,6 @@ void PicYuv::destroy()
     X265_FREE(m_picBuf[0]);
     X265_FREE(m_picBuf[1]);
     X265_FREE(m_picBuf[2]);
-}
-
-uint32_t PicYuv::getCUHeight(uint32_t rowNum) const
-{
-    uint32_t height;
-
-    if (rowNum == m_numCuInHeight - 1)
-        height = ((m_picHeight % g_maxCUSize) ? (m_picHeight % g_maxCUSize) : g_maxCUSize);
-    else
-        height = g_maxCUSize;
-    return height;
 }
 
 /* Copy pixels from an x265_picture into internal PicYuv instance.

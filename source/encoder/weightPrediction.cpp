@@ -221,11 +221,11 @@ uint32_t weightCost(pixel *         fenc,
 }
 
 namespace x265 {
-void weightAnalyse(Slice& slice, x265_param& param)
+void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    PicYuv *fencPic = slice.m_frame->m_origPicYuv;
-    Lowres& fenc    = slice.m_frame->m_lowres;
+    PicYuv *fencPic = frame.m_origPicYuv;
+    Lowres& fenc    = frame.m_lowres;
 
     Cache cache;
 
