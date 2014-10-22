@@ -144,7 +144,7 @@ CUData::CUData()
     memset(this, 0, sizeof(*this));
 }
 
-void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index)
+void CUData::initialize(const CUDataMemPool& dataPool, const MVFieldMemPool& mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int index)
 {
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
@@ -155,17 +155,17 @@ void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_
     m_cuMvField[1].initialize(mvPool, numPartition, index, 1);
 
     /* Each CU's data is layed out sequentially within the charMemBlock */
-    uint8_t *charBuf = dataPool->charMemBlock + (numPartition * BytesPerPartition) * index;
+    uint8_t *charBuf = dataPool.charMemBlock + (numPartition * BytesPerPartition) * index;
 
     m_qp          = (char*)charBuf; charBuf += numPartition;
     m_log2CUSize         = charBuf; charBuf += numPartition;
-    m_partSize          = charBuf; charBuf += numPartition;
-    m_predMode          = charBuf; charBuf += numPartition;
+    m_partSize           = charBuf; charBuf += numPartition;
+    m_predMode           = charBuf; charBuf += numPartition;
     m_lumaIntraDir       = charBuf; charBuf += numPartition;
-    m_tqBypass = charBuf; charBuf += numPartition;
+    m_tqBypass           = charBuf; charBuf += numPartition;
     m_depth              = charBuf; charBuf += numPartition;
     m_skipFlag           = charBuf; charBuf += numPartition; /* the order up to here is important in initCTU() and initSubCU() */
-    m_mergeFlag        = charBuf; charBuf += numPartition;
+    m_mergeFlag          = charBuf; charBuf += numPartition;
     m_interDir           = charBuf; charBuf += numPartition;
     m_mvpIdx[0]          = charBuf; charBuf += numPartition;
     m_mvpIdx[1]          = charBuf; charBuf += numPartition;
@@ -178,7 +178,7 @@ void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_
     m_cbf[2]             = charBuf; charBuf += numPartition;
     m_chromaIntraDir     = charBuf; charBuf += numPartition;
 
-    X265_CHECK(charBuf == dataPool->charMemBlock + (numPartition * BytesPerPartition) * (index + 1), "CU data layout is broken\n");
+    X265_CHECK(charBuf == dataPool.charMemBlock + (numPartition * BytesPerPartition) * (index + 1), "CU data layout is broken\n");
 
     switch (m_numPartitions)
     {
@@ -213,7 +213,7 @@ void CUData::initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_
 
     uint32_t sizeL = cuSize * cuSize;
     uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
-    m_trCoeff[0] = dataPool->trCoeffMemBlock + index * (sizeL + sizeC * 2);
+    m_trCoeff[0] = dataPool.trCoeffMemBlock + index * (sizeL + sizeC * 2);
     m_trCoeff[1] = m_trCoeff[0] + sizeL;
     m_trCoeff[2] = m_trCoeff[0] + sizeL + sizeC;
 }
@@ -316,8 +316,8 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
     m_subPartCopy(m_cbf[2] + offset, subCU.m_cbf[2]);
     m_subPartCopy(m_chromaIntraDir + offset, subCU.m_chromaIntraDir);
 
-    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[0], childGeom.numPartitions, offset);
-    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[1], childGeom.numPartitions, offset);
+    m_cuMvField[0].copyFrom(subCU.m_cuMvField[0], childGeom.numPartitions, offset);
+    m_cuMvField[1].copyFrom(subCU.m_cuMvField[1], childGeom.numPartitions, offset);
 
     uint32_t tmp = 1 << ((g_maxLog2CUSize - childGeom.depth) * 2);
     uint32_t tmp2 = subPartIdx * tmp;
@@ -356,8 +356,8 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     m_cuAboveRight = cu.m_cuAboveRight;
     memcpy(m_qp, cu.m_qp, BytesPerPartition * m_numPartitions);
 
-    m_cuMvField[0].copyFrom(&cu.m_cuMvField[0], m_numPartitions, 0);
-    m_cuMvField[1].copyFrom(&cu.m_cuMvField[1], m_numPartitions, 0);
+    m_cuMvField[0].copyFrom(cu.m_cuMvField[0], m_numPartitions, 0);
+    m_cuMvField[1].copyFrom(cu.m_cuMvField[1], m_numPartitions, 0);
 
     /* force TQBypass to true */
     m_partSet(m_tqBypass, true);
@@ -399,8 +399,8 @@ void CUData::copyToPic(uint32_t depth) const
     m_partCopy(ctu.m_mvpIdx[0] + m_absIdxInCTU, m_mvpIdx[0]);
     m_partCopy(ctu.m_mvpIdx[1] + m_absIdxInCTU, m_mvpIdx[1]);
 
-    m_cuMvField[0].copyTo(&ctu.m_cuMvField[0], m_absIdxInCTU);
-    m_cuMvField[1].copyTo(&ctu.m_cuMvField[1], m_absIdxInCTU);
+    m_cuMvField[0].copyTo(ctu.m_cuMvField[0], m_absIdxInCTU);
+    m_cuMvField[1].copyTo(ctu.m_cuMvField[1], m_absIdxInCTU);
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -437,8 +437,8 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom)
     m_partCopy(m_mvpIdx[1],    ctu.m_mvpIdx[1] + m_absIdxInCTU);
     m_partCopy(m_chromaIntraDir, ctu.m_chromaIntraDir + m_absIdxInCTU);
 
-    ctu.m_cuMvField[0].copyTo(&m_cuMvField[0], 0, m_absIdxInCTU, m_numPartitions);
-    ctu.m_cuMvField[1].copyTo(&m_cuMvField[1], 0, m_absIdxInCTU, m_numPartitions);
+    ctu.m_cuMvField[0].copyTo(m_cuMvField[0], 0, m_absIdxInCTU, m_numPartitions);
+    ctu.m_cuMvField[1].copyTo(m_cuMvField[1], 0, m_absIdxInCTU, m_numPartitions);
 
     /* clear residual coding flags */
     m_partSet(m_skipFlag, 0);

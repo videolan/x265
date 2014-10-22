@@ -40,36 +40,36 @@
 
 using namespace x265;
 
-void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int index, int idx)
+void TComCUMvField::initialize(const MVFieldMemPool& p, uint32_t parts, int cuInstance, int list)
 {
-    mv     = p->mvMemBlock     + (index * 2 + idx) * numPartition;
-    mvd    = p->mvdMemBlock    + (index * 2 + idx) * numPartition;
-    refIdx = p->refIdxMemBlock + (index * 2 + idx) * numPartition;
-    numPartitions = numPartition;
+    mv     = p.mvMemBlock     + (cuInstance * 2 + list) * parts;
+    mvd    = p.mvdMemBlock    + (cuInstance * 2 + list) * parts;
+    refIdx = p.refIdxMemBlock + (cuInstance * 2 + list) * parts;
+    numPartitions = parts;
 }
 
-void TComCUMvField::copyFrom(TComCUMvField const * cuMvFieldSrc, int numPartSrc, int partAddrDst)
+void TComCUMvField::copyFrom(const TComCUMvField& src, int numPartSrc, int partAddrDst)
 {
     int sizeInMv = sizeof(MV) * numPartSrc;
 
-    memcpy(mv     + partAddrDst, cuMvFieldSrc->mv,     sizeInMv);
-    memcpy(mvd    + partAddrDst, cuMvFieldSrc->mvd,    sizeInMv);
-    memcpy(refIdx + partAddrDst, cuMvFieldSrc->refIdx, sizeof(*refIdx) * numPartSrc);
+    memcpy(mv     + partAddrDst, src.mv,     sizeInMv);
+    memcpy(mvd    + partAddrDst, src.mvd,    sizeInMv);
+    memcpy(refIdx + partAddrDst, src.refIdx, sizeof(*refIdx) * numPartSrc);
 }
 
-void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const
+void TComCUMvField::copyTo(TComCUMvField& dst, int partAddrDst) const
 {
-    copyTo(cuMvFieldDst, partAddrDst, 0, numPartitions);
+    copyTo(dst, partAddrDst, 0, numPartitions);
 }
 
-void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const
+void TComCUMvField::copyTo(TComCUMvField& dst, int partAddrDst, uint32_t offset, uint32_t numPart) const
 {
     int sizeInMv = sizeof(MV) * numPart;
     int partOffset = offset + partAddrDst;
 
-    memcpy(cuMvFieldDst->mv     + partOffset, mv     + offset, sizeInMv);
-    memcpy(cuMvFieldDst->mvd    + partOffset, mvd    + offset, sizeInMv);
-    memcpy(cuMvFieldDst->refIdx + partOffset, refIdx + offset, sizeof(*refIdx) * numPart);
+    memcpy(dst.mv     + partOffset, mv     + offset, sizeInMv);
+    memcpy(dst.mvd    + partOffset, mvd    + offset, sizeInMv);
+    memcpy(dst.refIdx + partOffset, refIdx + offset, sizeof(*refIdx) * numPart);
 }
 
 template<typename T>

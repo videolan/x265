@@ -90,11 +90,11 @@ struct TComCUMvField
     uint32_t numPartitions;
 
     TComCUMvField() : mv(NULL), mvd(NULL), refIdx(NULL), numPartitions(0) {}
-    void initialize(MVFieldMemPool *pool, uint32_t numPartition, int index, int idx);
+    void initialize(const MVFieldMemPool& pool, uint32_t parts, int instance, int list);
 
-    void copyFrom(const TComCUMvField * cuMvFieldSrc, int numPartSrc, int partAddrDst);
-    void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
-    void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
+    void copyFrom(const TComCUMvField& cuMvFieldSrc, int numPartSrc, int partAddrDst);
+    void copyTo(TComCUMvField& cuMvFieldDst, int partAddrDst) const;
+    void copyTo(TComCUMvField& cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);

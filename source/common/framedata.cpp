@@ -52,7 +52,7 @@ bool FrameData::create(x265_param *param)
     m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame);
     m_mvFieldMemPool.create(m_numPartitions, m_numCUsInFrame);
     for (i = 0; i < m_numCUsInFrame; i++)
-        m_picCTU[i].initialize(&m_cuMemPool, &m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
+        m_picCTU[i].initialize(m_cuMemPool, m_mvFieldMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
     CHECKED_MALLOC(m_cuStat, RCStatCU, m_numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, heightInCU);

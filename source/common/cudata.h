@@ -115,7 +115,7 @@ public:
 
     CUData();
 
-    void     initialize(CUDataMemPool *dataPool, MVFieldMemPool *mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
+    void     initialize(const CUDataMemPool& dataPool, const MVFieldMemPool& mvPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);

@@ -95,7 +95,7 @@ bool Analysis::create(ThreadLocalData *tld)
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            md.pred[j].cu.initialize(&md.cuMemPool, &md.mvFieldMemPool, numPartitions, cuSize, csp, j);
+            md.pred[j].cu.initialize(md.cuMemPool, md.mvFieldMemPool, numPartitions, cuSize, csp, j);
             ok &= md.pred[j].predYuv.create(cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, csp);
