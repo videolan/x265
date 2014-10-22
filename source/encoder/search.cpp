@@ -81,6 +81,7 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(m_csp) + CHROMA_V_SHIFT(m_csp));
+    uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
 
     for (int i = 0; i < m_numLayers; i++)
     {
@@ -97,7 +98,6 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
         ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, m_param->internalCsp);
     }
 
-    const uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
     CHECKED_MALLOC(m_qtTempCbf[0], uint8_t, numPartitions * 3);
     m_qtTempCbf[1] = m_qtTempCbf[0] + numPartitions;
     m_qtTempCbf[2] = m_qtTempCbf[0] + numPartitions * 2;
