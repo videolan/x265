@@ -32,7 +32,7 @@
 namespace x265 {
 // private namespace
 
-class Frame;
+class FrameData;
 class Slice;
 struct TUEntropyCodingParameters;
 struct CUDataMemPool;
@@ -75,7 +75,7 @@ class CUData
 {
 public:
 
-    const Frame*  m_frame;
+    FrameData*    m_encData;
     const Slice*  m_slice;
 
     cucopy_t      m_partCopy;         // pointer to function that copies m_numPartitions elements

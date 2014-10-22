@@ -663,8 +663,8 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     int tuSize = intraNeighbors.tuSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-    intptr_t picStride = cu.m_frame->m_origPicYuv->m_stride;
+    pixel* adiOrigin = cu.m_encData->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    intptr_t picStride = cu.m_encData->m_reconPicYuv->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
 
@@ -739,8 +739,8 @@ void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint3
     initIntraNeighbors(cu, absPartIdx, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    const pixel* adiOrigin = const_cast<Frame*>(cu.m_frame)->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-    intptr_t picStride = cu.m_frame->m_origPicYuv->m_strideC;
+    const pixel* adiOrigin = cu.m_encData->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    intptr_t picStride = cu.m_encData->m_reconPicYuv->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize);
 
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);
@@ -771,7 +771,7 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits = tuWidthInUnits << 1;
     int  leftUnits = tuHeightInUnits << 1;
-    int  partIdxStride = cu.m_frame->m_encData->m_numPartInCUSize;
+    int  partIdxStride = cu.m_encData->m_numPartInCUSize;
     partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
@@ -984,7 +984,7 @@ int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t part
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu.m_frame->m_encData->m_numPartInCUSize;
+    const uint32_t idxStep = cu.m_encData->m_numPartInCUSize;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -1032,7 +1032,7 @@ int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_
 
 int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_frame->m_encData->m_numPartInCUSize + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_encData->m_numPartInCUSize + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 

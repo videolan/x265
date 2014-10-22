@@ -419,8 +419,8 @@ static void restoreOrigLosslessYuv(const CUData* cu, uint32_t absPartIdx, uint32
     uint32_t size = g_maxCUSize >> depth;
     int part = partitionFromSizes(size, size);
 
-    PicYuv* reconPic = cu->m_frame->m_reconPicYuv;
-    PicYuv* fencPic = cu->m_frame->m_origPicYuv;
+    PicYuv* reconPic = cu->m_encData->m_reconPicYuv;
+    PicYuv* fencPic = cu->m_slice->m_frame->m_origPicYuv;
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
