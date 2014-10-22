@@ -1408,7 +1408,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[cuGeom.depth].fencYuv;
 
-    X265_CHECK(cu->m_partSizes[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
+    X265_CHECK(cu->m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
     X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
     m_quant.setQPforQuant(intraMode.cu);

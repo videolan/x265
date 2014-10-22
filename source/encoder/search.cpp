@@ -1547,7 +1547,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 /* estimation of best merge coding */
 uint32_t Search::mergeEstimation(CUData* cu, const CUGeom& cuGeom, int puIdx, MergeData& m)
 {
-    X265_CHECK(cu->m_partSizes[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
+    X265_CHECK(cu->m_partSize[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
     m.maxNumMergeCand = cu->getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
 
@@ -3401,7 +3401,7 @@ void Search::xEncodeResidualQT(CUData* cu, uint32_t absPartIdx, const uint32_t d
     if (bSubdivAndCbf && log2TrSize <= depthRange[1] && log2TrSize > depthRange[0])
         m_entropyCoder.codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
 
-    X265_CHECK(cu->m_predModes[absPartIdx] != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
+    X265_CHECK(cu->m_predMode[absPartIdx] != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
 
     bool mCodeAll = true;
     uint32_t trWidthC  = 1 << log2TrSizeC;
