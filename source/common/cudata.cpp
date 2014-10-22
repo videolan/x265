@@ -241,8 +241,11 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     /* initialize the remaining CU data in one memset */
     memset(m_depth, 0, (BytesPerPartition - 6) * m_numPartitions);
 
-    m_cuMvField[0].clearMvField();
-    m_cuMvField[1].clearMvField();
+    if (m_slice->m_sliceType != I_SLICE)
+    {
+        m_partSet((uint8_t*)m_cuMvField[0].refIdx, (uint8_t)REF_NOT_VALID);
+        m_partSet((uint8_t*)m_cuMvField[1].refIdx, (uint8_t)REF_NOT_VALID);
+    }
 
     uint32_t widthInCU = frame.m_origPicYuv->m_numCuInWidth;
     m_cuLeft = (m_cuAddr % widthInCU) ? frame.m_encData->getPicCTU(m_cuAddr - 1) : NULL;
@@ -280,8 +283,8 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
 
     if (m_slice->m_sliceType != I_SLICE)
     {
-        m_cuMvField[0].clearMvField();
-        m_cuMvField[1].clearMvField();
+        m_partSet((uint8_t*)m_cuMvField[0].refIdx, (uint8_t)REF_NOT_VALID);
+        m_partSet((uint8_t*)m_cuMvField[1].refIdx, (uint8_t)REF_NOT_VALID);
     }
 }
 

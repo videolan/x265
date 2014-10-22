@@ -91,7 +91,6 @@ struct TComCUMvField
 
     TComCUMvField() : mv(NULL), mvd(NULL), refIdx(NULL), numPartitions(0) {}
     void initialize(MVFieldMemPool *pool, uint32_t numPartition, int index, int idx);
-    void clearMvField();
 
     void copyFrom(const TComCUMvField * cuMvFieldSrc, int numPartSrc, int partAddrDst);
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
