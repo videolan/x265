@@ -112,9 +112,11 @@ public:
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
     enum { BytesPerPartition = 22 };  // combined sizeof() of all per-part data
 
+    coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
+
     MV*           m_mv[2];            // array of motion vectors per list
     MV*           m_mvd[2];           // array of coded motion vector deltas per list
-    coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
+    enum { TMVP_UNIT_MASK = 0xF0 };  // mask for mapping index to into a compressed (reference) MV field
 
     const CUData* m_cuAboveLeft;      // pointer to above-left neighbor CTU
     const CUData* m_cuAboveRight;     // pointer to above-right neighbor CTU

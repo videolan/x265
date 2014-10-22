@@ -23,7 +23,6 @@
 
 #ifndef X265_FRAME_H
 #define X265_FRAME_H
-#define NUM_CU_PARTITIONS (1U << (g_maxFullDepth << 1))
 
 #include "common.h"
 #include "framedata.h"

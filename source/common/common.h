@@ -217,8 +217,8 @@ namespace x265 {
 
 enum { SAO_NUM_OFFSET = 4 };
 
-#define NUM_CU_DEPTH            4                           // maximun number of CU depths
-#define NUM_FULL_DEPTH          5                           // maximun number of full depths
+#define NUM_CU_DEPTH            4                           // maximum number of CU depths
+#define NUM_FULL_DEPTH          5                           // maximum number of full depths
 #define MIN_LOG2_CU_SIZE        3                           // log2(minCUSize)
 #define MAX_LOG2_CU_SIZE        6                           // log2(maxCUSize)
 #define MIN_CU_SIZE             (1 << MIN_LOG2_CU_SIZE)     // minimum allowable size of CU
@@ -226,9 +226,9 @@ enum { SAO_NUM_OFFSET = 4 };
 
 #define LOG2_UNIT_SIZE          2                           // log2(unitSize)
 #define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
-#define TMVP_UNIT_MASK          0xF0                        // mask for mapping index to CompressMV field
 
 #define MAX_NUM_PARTITIONS      256
+#define NUM_CU_PARTITIONS       (1U << (g_maxFullDepth << 1))
 
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
@@ -240,7 +240,7 @@ enum { SAO_NUM_OFFSET = 4 };
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
 #define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
-#define MAX_NUM_TR_CATEGORIES    8                        /* 32, 16, 8, 4 transform categories each for luma and chroma */
+#define MAX_NUM_TR_CATEGORIES    8                         /* 32, 16, 8, 4 transform categories each for luma and chroma */
 
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
