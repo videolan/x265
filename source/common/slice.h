@@ -201,8 +201,10 @@ struct SPS
     int      chromaFormatIdc;        // use param
     uint32_t picWidthInLumaSamples;  // use param
     uint32_t picHeightInLumaSamples; // use param
+
     uint32_t numCuInWidth;
     uint32_t numCuInHeight;
+    uint32_t numCUsInFrame;
 
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;

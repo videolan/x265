@@ -57,7 +57,6 @@ public:
 
     uint32_t       m_numPartitions;    /* based on g_maxFullDepth, could be CU static */
     uint32_t       m_numPartInCUSize;  /* based on g_maxFullDepth, could be CU static */
-    uint32_t       m_numCUsInFrame;    /* based on param, should perhaps be in Frame */
 
     /* Rate control data used during encode and by references */
     struct RCStatCU
@@ -92,8 +91,8 @@ public:
 
     FrameData();
 
-    bool create(x265_param *param);
-    void reinit(x265_param *param);
+    bool create(x265_param *param, const SPS& sps);
+    void reinit(x265_param *param, const SPS& sps);
     void destroy();
 
     CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }

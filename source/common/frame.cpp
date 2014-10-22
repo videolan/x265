@@ -52,7 +52,7 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
     m_encData = new FrameData;
     m_reconPicYuv = new PicYuv;
     m_encData->m_reconPicYuv = m_reconPicYuv;
-    bool ok = m_encData->create(param) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    bool ok = m_encData->create(param, sps) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the

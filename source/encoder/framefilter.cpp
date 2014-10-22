@@ -136,7 +136,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_numCUsInFrame);
+            m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);

@@ -2160,10 +2160,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_isVbv)
         {
-            for (uint32_t i = 0; i < curEncData.m_slice->m_sps->numCuInHeight; i++)
+            for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
-            curEncData.m_avgQpRc /= curEncData.m_numCUsInFrame;
+            curEncData.m_avgQpRc /= slice->m_sps->numCUsInFrame;
             rce->qpaRc = curEncData.m_avgQpRc;
 
             // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
@@ -2172,10 +2172,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
         if (m_param->rc.aqMode)
         {
-            for (uint32_t i = 0; i < curEncData.m_slice->m_sps->numCuInHeight; i++)
+            for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            curEncData.m_avgQpAq /= curEncData.m_numCUsInFrame;
+            curEncData.m_avgQpAq /= slice->m_sps->numCUsInFrame;
         }
     }
 

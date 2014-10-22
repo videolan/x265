@@ -498,7 +498,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             pic_out->analysisData.interData = outFrame->m_interData;
             pic_out->analysisData.intraData = outFrame->m_intraData;
-            pic_out->analysisData.numCUsInFrame = outFrame->m_encData->m_numCUsInFrame;
+            pic_out->analysisData.numCUsInFrame = slice->m_sps->numCUsInFrame;
             pic_out->analysisData.numPartitions = outFrame->m_encData->m_numPartitions;
         }
 
@@ -556,7 +556,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc->m_encData = m_dpb->m_picSymFreeList;
             m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
             frameEnc->m_reconPicYuv = frameEnc->m_encData->m_reconPicYuv;
-            frameEnc->m_encData->reinit(m_param);
+            frameEnc->m_encData->reinit(m_param, m_sps);
         }
         else
         {
@@ -565,7 +565,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             slice->m_sps = &m_sps;
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-            slice->m_endCUAddr = slice->realEndAddress(frameEnc->m_encData->m_numCUsInFrame * NUM_CU_PARTITIONS);
+            slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_CU_PARTITIONS);
             frameEnc->m_reconPicYuv->m_cuOffsetC = m_cuOffsetC;
             frameEnc->m_reconPicYuv->m_cuOffsetY = m_cuOffsetY;
             frameEnc->m_reconPicYuv->m_buOffsetC = m_buOffsetC;
@@ -1214,6 +1214,7 @@ void Encoder::initSPS(SPS *sps)
     sps->picHeightInLumaSamples = m_param->sourceHeight;
     sps->numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
     sps->numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
 
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;

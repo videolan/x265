@@ -31,7 +31,7 @@ FrameData::FrameData()
     memset(this, 0, sizeof(*this));
 }
 
-bool FrameData::create(x265_param *param)
+bool FrameData::create(x265_param *param, const SPS& sps)
 {
     uint32_t i;
 
@@ -39,36 +39,30 @@ bool FrameData::create(x265_param *param)
     m_numPartInCUSize = 1 << g_maxFullDepth;
     m_param = param;
 
-    uint32_t widthInCU  = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    m_numCUsInFrame = widthInCU * heightInCU;
-
     m_slice  = new Slice;
-    m_picCTU = new CUData[m_numCUsInFrame];
+    m_picCTU = new CUData[sps.numCUsInFrame];
 
     uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
 
-    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, m_numCUsInFrame);
-    for (i = 0; i < m_numCUsInFrame; i++)
+    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, sps.numCUsInFrame);
+    for (i = 0; i < sps.numCUsInFrame; i++)
         m_picCTU[i].initialize(m_cuMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
 
-    CHECKED_MALLOC(m_cuStat, RCStatCU, m_numCUsInFrame);
-    CHECKED_MALLOC(m_rowStat, RCStatRow, heightInCU);
+    CHECKED_MALLOC(m_cuStat, RCStatCU, sps.numCUsInFrame);
+    CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
 
-    reinit(param);
+    reinit(param, sps);
     return true;
 
 fail:
     return false;
 }
 
-void FrameData::reinit(x265_param *param)
+void FrameData::reinit(x265_param *param, const SPS& sps)
 {
-    uint32_t heightInCU = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
-
-    memset(m_cuStat, 0, m_numCUsInFrame * sizeof(*m_cuStat));
-    memset(m_rowStat, 0, heightInCU * sizeof(*m_rowStat));
+    memset(m_cuStat, 0, sps.numCUsInFrame * sizeof(*m_cuStat));
+    memset(m_rowStat, 0, sps.numCuInHeight * sizeof(*m_rowStat));
 }
 
 void FrameData::destroy()
