@@ -281,6 +281,48 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
     }
 }
 
+/* Copy the results of a sub-part (split) CU to the parent CU */
+void CUData::copyPartFrom(const CUData& subCU, uint32_t numPartitions, uint32_t partUnitIdx, uint32_t depth)
+{
+    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
+    X265_CHECK(numPartitions == (int)(m_numPartitions >> 2), "sub-part is an unexpected size\n");
+
+    uint32_t offset = numPartitions * partUnitIdx;
+
+    m_subPartCopy((uint8_t*)m_qp + offset, (uint8_t*)subCU.m_qp);
+    m_subPartCopy(m_log2CUSize + offset, subCU.m_log2CUSize);
+    m_subPartCopy(m_partSizes + offset, subCU.m_partSizes);
+    m_subPartCopy(m_predModes + offset, subCU.m_predModes);
+    m_subPartCopy(m_lumaIntraDir + offset, subCU.m_lumaIntraDir);
+    m_subPartCopy(m_cuTransquantBypass + offset, subCU.m_cuTransquantBypass);
+    m_subPartCopy(m_depth + offset, subCU.m_depth);
+    m_subPartCopy(m_skipFlag + offset, subCU.m_skipFlag);
+    m_subPartCopy(m_bMergeFlags + offset, subCU.m_bMergeFlags);
+    m_subPartCopy(m_interDir + offset, subCU.m_interDir);
+    m_subPartCopy(m_mvpIdx[0] + offset, subCU.m_mvpIdx[0]);
+    m_subPartCopy(m_mvpIdx[1] + offset, subCU.m_mvpIdx[1]);
+    m_subPartCopy(m_trIdx + offset, subCU.m_trIdx);
+    m_subPartCopy(m_transformSkip[0] + offset, subCU.m_transformSkip[0]);
+    m_subPartCopy(m_transformSkip[1] + offset, subCU.m_transformSkip[1]);
+    m_subPartCopy(m_transformSkip[2] + offset, subCU.m_transformSkip[2]);
+    m_subPartCopy(m_cbf[0] + offset, subCU.m_cbf[0]);
+    m_subPartCopy(m_cbf[1] + offset, subCU.m_cbf[1]);
+    m_subPartCopy(m_cbf[2] + offset, subCU.m_cbf[2]);
+    m_subPartCopy(m_chromaIntraDir + offset, subCU.m_chromaIntraDir);
+
+    m_cuMvField[0].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
+    m_cuMvField[1].copyFrom(&subCU.m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
+
+    uint32_t tmp = 1 << ((g_maxLog2CUSize - depth) * 2);
+    uint32_t tmp2 = partUnitIdx * tmp;
+    memcpy(m_trCoeff[0] + tmp2, subCU.m_trCoeff[0], sizeof(coeff_t) * tmp);
+
+    uint32_t tmpC = tmp >> (m_hChromaShift + m_vChromaShift);
+    uint32_t tmpC2 = tmp2 >> (m_hChromaShift + m_vChromaShift);
+    memcpy(m_trCoeff[1] + tmpC2, subCU.m_trCoeff[1], sizeof(coeff_t) * tmpC);
+    memcpy(m_trCoeff[2] + tmpC2, subCU.m_trCoeff[2], sizeof(coeff_t) * tmpC);
+}
+
 /* Copy all CU data from one instance to the next, except set lossless flag
  * This will only get used when --cu-lossless is enabled but --lossless is not. */
 void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
@@ -316,110 +358,79 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     m_partSet(m_cbf[2], 0);
 }
 
+/* Copy completed predicted CU to CTU in picture */
+void CUData::copyToPic(uint32_t depth) const
+{
+    CUData& ctu = *m_frame->m_encData->getPicCTU(m_cuAddr);
 
-/* TODO: Remove me. this is only called from encodeResidue() */
+    m_partCopy((uint8_t*)ctu.m_qp + m_absIdxInCTU, (uint8_t*)m_qp);
+    m_partCopy(ctu.m_partSizes + m_absIdxInCTU, m_partSizes);
+    m_partCopy(ctu.m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass);
+    m_partCopy(ctu.m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0]);
+    m_partCopy(ctu.m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1]);
+    m_partCopy(ctu.m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2]);
+    m_partCopy(ctu.m_depth + m_absIdxInCTU, m_depth);
+    m_partCopy(ctu.m_skipFlag + m_absIdxInCTU, m_skipFlag);
+    m_partCopy(ctu.m_predModes + m_absIdxInCTU, m_predModes);
+    m_partCopy(ctu.m_log2CUSize + m_absIdxInCTU, m_log2CUSize);
+    m_partCopy(ctu.m_trIdx + m_absIdxInCTU, m_trIdx);
+    m_partCopy(ctu.m_cbf[0] + m_absIdxInCTU, m_cbf[0]);
+    m_partCopy(ctu.m_cbf[1] + m_absIdxInCTU, m_cbf[1]);
+    m_partCopy(ctu.m_cbf[2] + m_absIdxInCTU, m_cbf[2]);
+    m_partCopy(ctu.m_bMergeFlags + m_absIdxInCTU, m_bMergeFlags);
+    m_partCopy(ctu.m_interDir + m_absIdxInCTU, m_interDir);
+    m_partCopy(ctu.m_lumaIntraDir + m_absIdxInCTU, m_lumaIntraDir);
+    m_partCopy(ctu.m_chromaIntraDir + m_absIdxInCTU, m_chromaIntraDir);
+    m_partCopy(ctu.m_mvpIdx[0] + m_absIdxInCTU, m_mvpIdx[0]);
+    m_partCopy(ctu.m_mvpIdx[1] + m_absIdxInCTU, m_mvpIdx[1]);
+
+    m_cuMvField[0].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
+    m_cuMvField[1].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
+
+    uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
+    uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
+    memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
+
+    uint32_t tmpC = tmpY >> (m_hChromaShift + m_vChromaShift);
+    uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
+    memcpy(ctu.m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
+    memcpy(ctu.m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
+}
+
+/* The reverse of copyToPic, called only by encodeResidue */
 void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom)
 {
-    /* TODO: there are unsaid requirements here that at RD 0 tskip and cu-lossless,
-     * tu-depth, etc are ignored. It looks to me we should be using copyPartFrom() */
-
-    m_frame  = ctu.m_frame;
-    m_slice  = ctu.m_slice;
-    m_cuAddr = ctu.m_cuAddr;
-    m_cuPelX = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
-    m_cuPelY = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
+    m_frame         = ctu.m_frame;
+    m_slice         = ctu.m_slice;
+    m_cuAddr        = ctu.m_cuAddr;
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
     m_absIdxInCTU   = cuGeom.encodeIdx;
     m_numPartitions = cuGeom.numPartitions;
 
+    /* copy out all prediction info for this part */
     m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
     m_partCopy(m_log2CUSize,   ctu.m_log2CUSize + m_absIdxInCTU);
     m_partCopy(m_partSizes,    ctu.m_partSizes + m_absIdxInCTU);
     m_partCopy(m_predModes,    ctu.m_predModes + m_absIdxInCTU);
     m_partCopy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU);
-    m_partCopy(m_skipFlag,     ctu.m_skipFlag + m_absIdxInCTU);
+    m_partCopy(m_cuTransquantBypass, ctu.m_cuTransquantBypass + m_absIdxInCTU);
     m_partCopy(m_depth,        ctu.m_depth + m_absIdxInCTU);
-}
+    m_partCopy(m_bMergeFlags,  ctu.m_bMergeFlags + m_absIdxInCTU);
+    m_partCopy(m_interDir,     ctu.m_interDir + m_absIdxInCTU);
+    m_partCopy(m_mvpIdx[0],    ctu.m_mvpIdx[0] + m_absIdxInCTU);
+    m_partCopy(m_mvpIdx[1],    ctu.m_mvpIdx[1] + m_absIdxInCTU);
+    m_partCopy(m_chromaIntraDir, ctu.m_chromaIntraDir + m_absIdxInCTU);
 
-// Copy small CU to bigger CU.
-// One of quarter parts overwritten by predicted sub part.
-void CUData::copyPartFrom(const CUData& cu, uint32_t numPartitions, uint32_t partUnitIdx, uint32_t depth)
-{
-    X265_CHECK(partUnitIdx < 4, "part unit should be less than 4\n");
-    X265_CHECK(numPartitions == (int)(m_numPartitions >> 2), "sub-part is an unexpected size\n");
-
-    uint32_t offset = numPartitions * partUnitIdx;
-
-    m_subPartCopy((uint8_t*)m_qp     + offset, (uint8_t*)cu.m_qp);
-    m_subPartCopy(m_partSizes        + offset, cu.m_partSizes);
-    m_subPartCopy(m_depth            + offset, cu.m_depth);
-    m_subPartCopy(m_transformSkip[0] + offset, cu.m_transformSkip[0]);
-    m_subPartCopy(m_transformSkip[1] + offset, cu.m_transformSkip[1]);
-    m_subPartCopy(m_transformSkip[2] + offset, cu.m_transformSkip[2]);
-    m_subPartCopy(m_skipFlag         + offset, cu.m_skipFlag);
-    m_subPartCopy(m_predModes        + offset, cu.m_predModes);
-    m_subPartCopy(m_log2CUSize       + offset, cu.m_log2CUSize);
-    m_subPartCopy(m_trIdx            + offset, cu.m_trIdx);
-    m_subPartCopy(m_cbf[0]           + offset, cu.m_cbf[0]);
-    m_subPartCopy(m_cbf[1]           + offset, cu.m_cbf[1]);
-    m_subPartCopy(m_cbf[2]           + offset, cu.m_cbf[2]);
-    m_subPartCopy(m_bMergeFlags      + offset, cu.m_bMergeFlags);
-    m_subPartCopy(m_lumaIntraDir     + offset, cu.m_lumaIntraDir);
-    m_subPartCopy(m_chromaIntraDir   + offset, cu.m_chromaIntraDir);
-    m_subPartCopy(m_interDir         + offset, cu.m_interDir);
-    m_subPartCopy(m_mvpIdx[0]        + offset, cu.m_mvpIdx[0]);
-    m_subPartCopy(m_mvpIdx[1]        + offset, cu.m_mvpIdx[1]);
-    m_subPartCopy(m_cuTransquantBypass + offset, cu.m_cuTransquantBypass);
-
-    m_cuMvField[0].copyFrom(&cu.m_cuMvField[REF_PIC_LIST_0], numPartitions, offset);
-    m_cuMvField[1].copyFrom(&cu.m_cuMvField[REF_PIC_LIST_1], numPartitions, offset);
-
-    uint32_t tmp  = 1 << ((g_maxLog2CUSize - depth) * 2);
-    uint32_t tmp2 = partUnitIdx * tmp;
-    memcpy(m_trCoeff[0] + tmp2, cu.m_trCoeff[0], sizeof(coeff_t) * tmp);
-
-    uint32_t tmpC  = tmp  >> (m_hChromaShift + m_vChromaShift);
-    uint32_t tmpC2 = tmp2 >> (m_hChromaShift + m_vChromaShift);
-    memcpy(m_trCoeff[1] + tmpC2, cu.m_trCoeff[1], sizeof(coeff_t) * tmpC);
-    memcpy(m_trCoeff[2] + tmpC2, cu.m_trCoeff[2], sizeof(coeff_t) * tmpC);
-}
-
-// Copy current predicted part to CTU in picture.
-void CUData::copyToPic(uint32_t depth) const
-{
-    CUData& ctu = *m_frame->m_encData->getPicCTU(m_cuAddr);
-
-    m_partCopy((uint8_t*)ctu.m_qp       + m_absIdxInCTU, (uint8_t*)m_qp);
-    m_partCopy(ctu.m_partSizes          + m_absIdxInCTU, m_partSizes);
-    m_partCopy(ctu.m_cuTransquantBypass + m_absIdxInCTU, m_cuTransquantBypass);
-    m_partCopy(ctu.m_transformSkip[0]   + m_absIdxInCTU, m_transformSkip[0]);
-    m_partCopy(ctu.m_transformSkip[1]   + m_absIdxInCTU, m_transformSkip[1]);
-    m_partCopy(ctu.m_transformSkip[2]   + m_absIdxInCTU, m_transformSkip[2]);
-    m_partCopy(ctu.m_depth              + m_absIdxInCTU, m_depth);
-    m_partCopy(ctu.m_skipFlag           + m_absIdxInCTU, m_skipFlag);
-    m_partCopy(ctu.m_predModes          + m_absIdxInCTU, m_predModes);
-    m_partCopy(ctu.m_log2CUSize         + m_absIdxInCTU, m_log2CUSize);
-    m_partCopy(ctu.m_trIdx              + m_absIdxInCTU, m_trIdx);
-    m_partCopy(ctu.m_cbf[0]             + m_absIdxInCTU, m_cbf[0]);
-    m_partCopy(ctu.m_cbf[1]             + m_absIdxInCTU, m_cbf[1]);
-    m_partCopy(ctu.m_cbf[2]             + m_absIdxInCTU, m_cbf[2]);
-    m_partCopy(ctu.m_bMergeFlags        + m_absIdxInCTU, m_bMergeFlags);
-    m_partCopy(ctu.m_interDir           + m_absIdxInCTU, m_interDir);
-    m_partCopy(ctu.m_lumaIntraDir       + m_absIdxInCTU, m_lumaIntraDir);
-    m_partCopy(ctu.m_chromaIntraDir     + m_absIdxInCTU, m_chromaIntraDir);
-    m_partCopy(ctu.m_mvpIdx[0]          + m_absIdxInCTU, m_mvpIdx[0]);
-    m_partCopy(ctu.m_mvpIdx[1]          + m_absIdxInCTU, m_mvpIdx[1]);
-
-    m_cuMvField[0].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_0], m_absIdxInCTU);
-    m_cuMvField[1].copyTo(&ctu.m_cuMvField[REF_PIC_LIST_1], m_absIdxInCTU);
-
-    uint32_t tmpY  = 1 << ((g_maxLog2CUSize - depth) * 2);
-    uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
-    memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t) * tmpY);
-
-    uint32_t tmpC  = tmpY  >> (m_hChromaShift + m_vChromaShift);
-    uint32_t tmpC2 = tmpY2 >> (m_hChromaShift + m_vChromaShift);
-    memcpy(ctu.m_trCoeff[1] + tmpC2, m_trCoeff[1], sizeof(coeff_t) * tmpC);
-    memcpy(ctu.m_trCoeff[2] + tmpC2, m_trCoeff[2], sizeof(coeff_t) * tmpC);
+    /* clear residual coding flags */
+    m_partSet(m_skipFlag, 0);
+    m_partSet(m_trIdx, 0);
+    m_partSet(m_transformSkip[0], 0);
+    m_partSet(m_transformSkip[1], 0);
+    m_partSet(m_transformSkip[2], 0);
+    m_partSet(m_cbf[0], 0);
+    m_partSet(m_cbf[1], 0);
+    m_partSet(m_cbf[2], 0);
 }
 
 /* Only called by encodeResidue, these fields can be modified during inter/intra coding */
