@@ -93,7 +93,6 @@ struct TComCUMvField
 
     void setAllMv(const MV& mv, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
     void setAllRefIdx(int refIdx, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
-    void setAllMvField(const TComMvField& mvField, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
 };
 }
 

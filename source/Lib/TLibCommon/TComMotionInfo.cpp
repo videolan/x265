@@ -252,9 +252,3 @@ void TComCUMvField::setAllRefIdx(int inRefIdx, PartSize cuMode, int absPartIdx, 
 {
     setAll(refIdx, static_cast<char>(inRefIdx), cuMode, absPartIdx, depth, puIdx);
 }
-
-void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx)
-{
-    setAllMv(mvField.mv, cuMode, absPartIdx, depth, puIdx);
-    setAllRefIdx(mvField.refIdx, cuMode, absPartIdx, depth, puIdx);
-}

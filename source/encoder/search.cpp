@@ -1838,8 +1838,10 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             cu->m_mergeFlag[absPartIdx] = true;
             cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-            cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllMv(merge.mvField[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(merge.mvField[0].refIdx, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllMv(merge.mvField[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(merge.mvField[1].refIdx, partSize, absPartIdx, 0, puIdx);
 
             interMode.sa8dBits += merge.bits;
         }
@@ -1957,8 +1959,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 cu->m_mergeFlag[absPartIdx] = true;
                 cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
                 cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-                cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-                cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[0].setAllMv(merge.mvField[0].mv, partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[0].setAllRefIdx(merge.mvField[0].refIdx, partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[1].setAllMv(merge.mvField[1].mv, partSize, absPartIdx, 0, puIdx);
+                cu->m_cuMvField[1].setAllRefIdx(merge.mvField[1].refIdx, partSize, absPartIdx, 0, puIdx);
                 totalmebits += merge.bits;
 
                 prepMotionCompensation(cu, cuGeom, puIdx);
@@ -2126,8 +2130,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             cu->m_mergeFlag[absPartIdx] = true;
             cu->m_mvpIdx[0][absPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
             cu->setInterDirSubParts(merge.interDir, absPartIdx, puIdx, cu->m_depth[absPartIdx]);
-            cu->m_cuMvField[0].setAllMvField(merge.mvField[0], partSize, absPartIdx, 0, puIdx);
-            cu->m_cuMvField[1].setAllMvField(merge.mvField[1], partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllMv(merge.mvField[0].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[0].setAllRefIdx(merge.mvField[0].refIdx, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllMv(merge.mvField[1].mv, partSize, absPartIdx, 0, puIdx);
+            cu->m_cuMvField[1].setAllRefIdx(merge.mvField[1].refIdx, partSize, absPartIdx, 0, puIdx);
 
             totalmebits += merge.bits;
         }
