@@ -434,6 +434,9 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom)
     m_partCopy(m_mvpIdx[1],    ctu.m_mvpIdx[1] + m_absIdxInCTU);
     m_partCopy(m_chromaIntraDir, ctu.m_chromaIntraDir + m_absIdxInCTU);
 
+    ctu.m_cuMvField[0].copyTo(&m_cuMvField[0], 0, m_absIdxInCTU, m_numPartitions);
+    ctu.m_cuMvField[1].copyTo(&m_cuMvField[1], 0, m_absIdxInCTU, m_numPartitions);
+
     /* clear residual coding flags */
     m_partSet(m_skipFlag, 0);
     m_partSet(m_trIdx, 0);
