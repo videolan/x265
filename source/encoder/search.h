@@ -239,20 +239,20 @@ protected:
     struct MergeData
     {
         /* merge candidate data, cached between calls to mergeEstimation */
-        TComMvField mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
-        uint8_t     interDirNeighbours[MRG_MAX_NUM_CANDS];
-        uint32_t    maxNumMergeCand;
+        MVField  mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
+        uint8_t  interDirNeighbours[MRG_MAX_NUM_CANDS];
+        uint32_t maxNumMergeCand;
 
         /* data updated for each partition */
-        uint32_t    absPartIdx;
-        int         width;
-        int         height;
+        uint32_t absPartIdx;
+        int      width;
+        int      height;
 
         /* outputs */
-        TComMvField mvField[2];
-        uint32_t    interDir;
-        uint32_t    index;
-        uint32_t    bits;
+        MVField  mvField[2];
+        uint32_t interDir;
+        uint32_t index;
+        uint32_t bits;
     };
 
     /* inter/ME helper functions */

@@ -58,6 +58,12 @@ struct CUGeom
     uint32_t flags;         // CU flags.
 };
 
+struct MVField
+{
+    MV  mv;
+    int refIdx;
+};
+
 typedef void(*cucopy_t)(uint8_t* dst, uint8_t* src); // dst and src are aligned to MIN(size, 32)
 typedef void(*cubcast_t)(uint8_t* dst, uint8_t val); // dst is aligned to MIN(size, 32)
 
@@ -158,7 +164,7 @@ public:
     void     deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
     void     deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
 
-    uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
+    uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
     void     clipMv(MV& outMV) const;
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
     void     getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
@@ -169,7 +175,7 @@ public:
     bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
     void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
-    void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& mvField) const;
+    void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, MVField& mvField) const;
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;

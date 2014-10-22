@@ -63,13 +63,6 @@ struct MVFieldMemPool
     }
 };
 
-struct TComMvField
-{
-    MV  mv;
-    int refIdx;
-    TComMvField() : refIdx(REF_NOT_VALID) {}
-};
-
 // class for motion information in one CU
 struct TComCUMvField
 {

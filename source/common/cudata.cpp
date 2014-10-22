@@ -1071,7 +1071,7 @@ void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& o
     outPartAddr = (partAddrTable[partType][partIdx] * m_numPartitions) >> 4;
 }
 
-void CUData::getMvField(const CUData* cu, uint32_t absPartIdx, int picList, TComMvField& outMvField) const
+void CUData::getMvField(const CUData* cu, uint32_t absPartIdx, int picList, MVField& outMvField) const
 {
     if (cu)
     {
@@ -1230,7 +1230,7 @@ bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData* candCU, uint32_t 
 }
 
 /* Construct list of merging candidates */
-uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, TComMvField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const
+uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const
 {
     uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
     const bool isInterB = m_slice->isInterB();
