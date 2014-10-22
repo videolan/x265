@@ -232,6 +232,8 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
     m_partSet(m_cuTransquantBypass, (uint8_t)frame.m_encData->m_param->bLossless);
 
+    X265_CHECK(!(frame.m_encData->m_param->bLossless && !m_slice->m_pps->bTransquantBypassEnabled), "lossless enabled without TQbypass in PPS\n");
+
     /* initialize the remaining CU data in one memset */
     memset(m_depth, 0, (BytesPerPartition - 6) * m_numPartitions);
 

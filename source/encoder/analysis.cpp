@@ -1085,7 +1085,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     if (m_param->rdLevel)
     {
-        if (bestPred->cu.isLosslessCoded(0))
+        if (bestPred->cu.m_cuTransquantBypass[0])
             bestPred->rdCost = MAX_INT64;
         else
             encodeResAndCalcRdSkipCU(*bestPred);
