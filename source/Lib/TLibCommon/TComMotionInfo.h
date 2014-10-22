@@ -88,11 +88,13 @@ struct TComCUMvField
     void copyTo(TComCUMvField& cuMvFieldDst, int partAddrDst) const;
     void copyTo(TComCUMvField& cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
-    template<typename T>
-    void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
+    void setAllMv(const MV& mv, PartSize cuMode, int absPartIdx, int puIdx);
+    void setAllRefIdx(int refIdx, PartSize cuMode, int absPartIdx, int puIdx);
 
-    void setAllMv(const MV& mv, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
-    void setAllRefIdx(int refIdx, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
+protected:
+
+    template<typename T>
+    void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, int puIdx);
 };
 }
 
