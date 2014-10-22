@@ -72,46 +72,45 @@ public:
     const Frame*  m_frame;
     const Slice*  m_slice;
 
-    cucopy_t      m_partCopy;           // pointer to function that copies m_numPartitions elements
-    cubcast_t     m_partSet;            // pointer to function that sets m_numPartitions elements
-    cucopy_t      m_subPartCopy;        // pointer to function that copies m_numPartitions/4 elements, may be NULL
+    cucopy_t      m_partCopy;         // pointer to function that copies m_numPartitions elements
+    cubcast_t     m_partSet;          // pointer to function that sets m_numPartitions elements
+    cucopy_t      m_subPartCopy;      // pointer to function that copies m_numPartitions/4 elements, may be NULL
 
-    uint32_t      m_cuAddr;             // CTU address in a slice
-    uint32_t      m_absIdxInCTU;        // absolute address of CU within a CTU in Z scan order
-    uint32_t      m_cuPelX;             // CU position within the picture, in a pixel (X)
-    uint32_t      m_cuPelY;             // CU position within the picture, in a pixel (Y)
-    uint32_t      m_numPartitions;      // total number of minimum partitions in a CU (in 4x4 units)
+    uint32_t      m_cuAddr;           // address of CTU within the picture in raster order
+    uint32_t      m_absIdxInCTU;      // address of CU within its CTU in Z scan order
+    uint32_t      m_cuPelX;           // CU position within the picture, in pixels (X)
+    uint32_t      m_cuPelY;           // CU position within the picture, in pixels (Y)
+    uint32_t      m_numPartitions;    // maximum number of 4x4 partitions within this CU
 
     int           m_chromaFormat;
     int           m_hChromaShift;
     int           m_vChromaShift;
 
-    /* Per-part data */
-    char*         m_qp;                 // array of QP values
-    uint8_t*      m_log2CUSize;         // array of cu log2Size TODO: seems redundant to depth
-    uint8_t*      m_partSize;           // array of partition sizes
-    uint8_t*      m_predMode;           // array of prediction modes
-    uint8_t*      m_lumaIntraDir;       // array of intra directions (luma)
-    uint8_t*      m_tqBypass;           // array of CU lossless flags
-    uint8_t*      m_depth;              // array of depths
-    uint8_t*      m_skipFlag;           // array of skip flags
-    uint8_t*      m_mergeFlag;          // array of merge flags
-    uint8_t*      m_interDir;           // array of inter directions
-    uint8_t*      m_mvpIdx[2];          // array of motion vector predictor candidates or merge candidate indices [0]
-    uint8_t*      m_trIdx;              // array of transform indices
-    uint8_t*      m_transformSkip[3];   // array of transform skipping flags
-    uint8_t*      m_cbf[3];             // array of coded block flags (CBF)
-    uint8_t*      m_chromaIntraDir;     // array of intra directions (chroma)
-    enum { BytesPerPartition = 20 };    // combined sizeof() of all per-part data
+    /* Per-part data, stored contiguously */
+    char*         m_qp;               // array of QP values
+    uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
+    uint8_t*      m_partSize;         // array of partition sizes
+    uint8_t*      m_predMode;         // array of prediction modes
+    uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
+    uint8_t*      m_tqBypass;         // array of CU lossless flags
+    uint8_t*      m_depth;            // array of depths
+    uint8_t*      m_skipFlag;         // array of skip flags
+    uint8_t*      m_mergeFlag;        // array of merge flags
+    uint8_t*      m_interDir;         // array of inter directions
+    uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]
+    uint8_t*      m_trIdx;            // array of transform indices
+    uint8_t*      m_transformSkip[3]; // array of transform skipping flags
+    uint8_t*      m_cbf[3];           // array of coded block flags (CBF)
+    uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
+    enum { BytesPerPartition = 20 };  // combined sizeof() of all per-part data
 
-    TComCUMvField m_cuMvField[2];       // array of motion vectors
+    TComCUMvField m_cuMvField[2];     // array of motion vectors
+    coeff_t*      m_trCoeff[3];       // transformed coefficient buffer
 
-    coeff_t*      m_trCoeff[3];         // transformed coefficient buffer
-
-    const CUData* m_cuAboveLeft;        // pointer of above-left neighbor CTU
-    const CUData* m_cuAboveRight;       // pointer of above-right neighbor CTU
-    const CUData* m_cuAbove;            // pointer of above neighbor CTU
-    const CUData* m_cuLeft;             // pointer of left neighbor CTU
+    const CUData* m_cuAboveLeft;      // pointer to above-left neighbor CTU
+    const CUData* m_cuAboveRight;     // pointer to above-right neighbor CTU
+    const CUData* m_cuAbove;          // pointer to above neighbor CTU
+    const CUData* m_cuLeft;           // pointer to left neighbor CTU
 
     CUData();
 
