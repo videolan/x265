@@ -97,9 +97,6 @@ struct TComCUMvField
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst) const;
     void copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_t offset, uint32_t numPart) const;
 
-    const MV& getMvd(int idx) const { return mvd[idx]; }
-    int getRefIdx(int idx) const    { return refIdx[idx]; }
-
     template<typename T>
     void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
 

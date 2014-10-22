@@ -1711,7 +1711,7 @@ bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, 
     int curRefPOC = m_slice->m_refPOCList[picList][refIdx];
     int neibRefPOC;
 
-    if (tmpCU->m_cuMvField[refPicList2nd].getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[refPicList2nd].refIdx[idx] >= 0)
     {
         neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][tmpCU->m_cuMvField[refPicList2nd].refIdx[idx]];
         if (neibRefPOC == curRefPOC)
@@ -1764,7 +1764,7 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
     int neibPOC = curPOC;
     int neibRefPOC;
 
-    if (tmpCU->m_cuMvField[picList].getRefIdx(idx) >= 0)
+    if (tmpCU->m_cuMvField[picList].refIdx[idx] >= 0)
     {
         neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][tmpCU->m_cuMvField[picList].refIdx[idx]];
         MV mvp = tmpCU->m_cuMvField[picList].mv[idx];
