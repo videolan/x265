@@ -31,26 +31,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \file     TComMotionInfo.h
-    \brief    motion information handling classes (header)
-    \todo     TComMvField seems to be better to be inherited from MV
-*/
-
 #ifndef X265_TCOMMOTIONINFO_H
 #define X265_TCOMMOTIONINFO_H
 
 #include "common.h"
 #include "mv.h"
 
-//! \ingroup TLibCommon
-//! \{
-
 namespace x265 {
 // private namespace
-
-// ====================================================================================================================
-// Type definition
-// ====================================================================================================================
 
 struct MVFieldMemPool
 {
@@ -77,10 +65,6 @@ struct MVFieldMemPool
         X265_FREE(refIdxMemBlock);
     }
 };
-
-// ====================================================================================================================
-// Class definition
-// ====================================================================================================================
 
 // struct for motion vector with reference index
 struct TComMvField
@@ -118,14 +102,12 @@ struct TComCUMvField
     int getRefIdx(int idx) const    { return refIdx[idx]; }
 
     template<typename T>
-    void setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx);
+    void setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
 
-    void setAllMv(const MV& mv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void setAllRefIdx(int refIdx,                  PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
-    void setAllMvField(const TComMvField& mvField, PartSize mbMode, int partAddr, uint32_t depth, int partIdx = 0);
+    void setAllMv(const MV& mv, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
+    void setAllRefIdx(int refIdx, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
+    void setAllMvField(const TComMvField& mvField, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx);
 };
 }
-
-//! \}
 
 #endif // ifndef X265_TCOMMOTIONINFO_H

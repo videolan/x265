@@ -40,17 +40,6 @@
 
 using namespace x265;
 
-//! \ingroup TLibCommon
-//! \{
-
-// ====================================================================================================================
-// Public member functions
-// ====================================================================================================================
-
-// --------------------------------------------------------------------------------------------------------------------
-// Create / destroy
-// --------------------------------------------------------------------------------------------------------------------
-
 void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int index, int idx)
 {
     mv     = p->mvMemBlock     + (index * 2 + idx) * numPartition;
@@ -58,10 +47,6 @@ void TComCUMvField::initialize(MVFieldMemPool *p, uint32_t numPartition, int ind
     refIdx = p->refIdxMemBlock + (index * 2 + idx) * numPartition;
     numPartitions = numPartition;
 }
-
-// --------------------------------------------------------------------------------------------------------------------
-// Clear / copy
-// --------------------------------------------------------------------------------------------------------------------
 
 void TComCUMvField::clearMvField()
 {
@@ -93,35 +78,25 @@ void TComCUMvField::copyTo(TComCUMvField* cuMvFieldDst, int partAddrDst, uint32_
     memcpy(cuMvFieldDst->refIdx + partOffset, refIdx + offset, sizeof(*refIdx) * numPart);
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-// Set
-// --------------------------------------------------------------------------------------------------------------------
-
 template<typename T>
-void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx)
 {
     int i;
 
-    p += partAddr;
+    p += absPartIdx;
     int numElements = numPartitions >> (2 * depth);
 
     switch (cuMode)
     {
     case SIZE_2Nx2N:
         for (i = 0; i < numElements; i++)
-        {
             p[i] = val;
-        }
-
         break;
 
     case SIZE_2NxN:
         numElements >>= 1;
         for (i = 0; i < numElements; i++)
-        {
             p[i] = val;
-        }
-
         break;
 
     case SIZE_Nx2N:
@@ -131,21 +106,18 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
             p[i] = val;
             p[i + 2 * numElements] = val;
         }
-
         break;
 
     case SIZE_NxN:
         numElements >>= 2;
         for (i = 0; i < numElements; i++)
-        {
             p[i] = val;
-        }
-
         break;
+
     case SIZE_2NxnU:
     {
         int curPartNumQ = numElements >> 2;
-        if (partIdx == 0)
+        if (!puIdx)
         {
             T *pT  = p;
             T *pT2 = p + curPartNumQ;
@@ -159,34 +131,27 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
         {
             T *pT  = p;
             for (i = 0; i < (curPartNumQ >> 1); i++)
-            {
                 pT[i] = val;
-            }
 
             pT = p + curPartNumQ;
             for (i = 0; i < ((curPartNumQ >> 1) + (curPartNumQ << 1)); i++)
-            {
                 pT[i] = val;
-            }
         }
         break;
     }
+
     case SIZE_2NxnD:
     {
         int curPartNumQ = numElements >> 2;
-        if (partIdx == 0)
+        if (!puIdx)
         {
             T *pT  = p;
             for (i = 0; i < ((curPartNumQ >> 1) + (curPartNumQ << 1)); i++)
-            {
                 pT[i] = val;
-            }
 
             pT = p + (numElements - curPartNumQ);
             for (i = 0; i < (curPartNumQ >> 1); i++)
-            {
                 pT[i] = val;
-            }
         }
         else
         {
@@ -200,10 +165,11 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
         }
         break;
     }
+
     case SIZE_nLx2N:
     {
         int curPartNumQ = numElements >> 2;
-        if (partIdx == 0)
+        if (!puIdx)
         {
             T *pT  = p;
             T *pT2 = p + (curPartNumQ << 1);
@@ -238,10 +204,11 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
         }
         break;
     }
+
     case SIZE_nRx2N:
     {
         int curPartNumQ = numElements >> 2;
-        if (partIdx == 0)
+        if (!puIdx)
         {
             T *pT  = p;
             T *pT2 = p + (curPartNumQ << 1);
@@ -275,26 +242,25 @@ void TComCUMvField::setAll(T *p, T const & val, PartSize cuMode, int partAddr, u
         }
         break;
     }
+
     default:
         X265_CHECK(0, "unknown partition type\n");
         break;
     }
 }
 
-void TComCUMvField::setAllMv(const MV& inmv, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAllMv(const MV& inmv, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx)
 {
-    setAll(mv, inmv, cuMode, partAddr, depth, partIdx);
+    setAll(mv, inmv, cuMode, absPartIdx, depth, puIdx);
 }
 
-void TComCUMvField::setAllRefIdx(int inRefIdx, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAllRefIdx(int inRefIdx, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx)
 {
-    setAll(refIdx, static_cast<char>(inRefIdx), cuMode, partAddr, depth, partIdx);
+    setAll(refIdx, static_cast<char>(inRefIdx), cuMode, absPartIdx, depth, puIdx);
 }
 
-void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int partAddr, uint32_t depth, int partIdx)
+void TComCUMvField::setAllMvField(const TComMvField& mvField, PartSize cuMode, int absPartIdx, uint32_t depth, int puIdx)
 {
-    setAllMv(mvField.mv, cuMode, partAddr, depth, partIdx);
-    setAllRefIdx(mvField.refIdx, cuMode, partAddr, depth, partIdx);
+    setAllMv(mvField.mv, cuMode, absPartIdx, depth, puIdx);
+    setAllRefIdx(mvField.refIdx, cuMode, absPartIdx, depth, puIdx);
 }
-
-//! \}
