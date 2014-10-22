@@ -310,24 +310,20 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
     uint32_t fullDepth  = mode.cu.m_depth[0] + trDepth;
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
-    bool mightNotSplit  = log2TrSize <= *(depthRange + 1);
-    bool mightSplit     = (log2TrSize > *depthRange) && (bAllowSplit || !mightNotSplit);
+    bool mightNotSplit  = log2TrSize <= depthRange[1];
+    bool mightSplit     = (log2TrSize > depthRange[0]) && (bAllowSplit || !mightNotSplit);
+
+    /* If maximum RD penalty, force spits at TU size 32x32 if SPS allows TUs of 16x16 */
+    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && log2TrSize == 5 &&
+        m_slice->m_sps->quadtreeTULog2MaxSize >= 4)
+    {
+        mightNotSplit = false;
+        mightSplit = true;
+    }
 
     CUData& cu = mode.cu;
     Yuv* predYuv = &mode.predYuv;
     const Yuv* fencYuv = mode.fencYuv;
-
-    if (m_param->rdPenalty && m_slice->m_sliceType != I_SLICE)
-    {
-        int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
-
-        // in addition don't check split if TU size is less or equal to 16x16 TU size for non-intra slice
-        mightSplit &= (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
-
-        if (m_param->rdPenalty == 2 && m_param->tuQTMaxIntraDepth > fullDepth)
-            // if maximum RD-penalty don't check TU size 32x32
-            mightNotSplit = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
-    }
 
     Cost fullCost;
     fullCost.rdcost = MAX_INT64;
@@ -590,11 +586,11 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     bool     bCheckFull  = log2TrSize <= depthRange[1];
     bool     bCheckSplit = log2TrSize > depthRange[0];
 
-    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && m_param->tuQTMaxIntraDepth > fullDepth)
+    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && log2TrSize == 5 &&
+        m_slice->m_sps->quadtreeTULog2MaxSize >= 4)
     {
-        int maxTuSize = m_slice->m_sps->quadtreeTULog2MaxSize;
-        // if maximum RD-penalty don't check TU size 32x32
-        bCheckFull = (log2TrSize <= (uint32_t)X265_MIN(maxTuSize, 4));
+        bCheckFull = false;
+        bCheckSplit = true;
     }
 
     if (bCheckFull)
