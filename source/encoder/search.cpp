@@ -1833,9 +1833,6 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
         }
 
         /* select best option and store into CU */
-        cu->m_cuMvField[0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-        cu->m_cuMvField[1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-
         if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
         {
             cu->m_mergeFlag[absPartIdx] = true;
@@ -1875,6 +1872,8 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             cu->m_cuMvField[0].mvd[absPartIdx] = m_bestME[0].mv - m_bestME[0].mvp;
             cu->m_mvpIdx[0][absPartIdx] = m_bestME[0].mvpIdx;
 
+            cu->m_cuMvField[1].setAllRefIdx(REF_NOT_VALID, partSize, absPartIdx, 0, puIdx);
+
             interMode.sa8dBits += m_bestME[0].bits;
         }
         else
@@ -1887,6 +1886,8 @@ void Search::parallelInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bCh
             cu->m_cuMvField[1].setAllRefIdx(m_bestME[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[1].mvd[absPartIdx] = m_bestME[1].mv - m_bestME[1].mvp;
             cu->m_mvpIdx[1][absPartIdx] = m_bestME[1].mvpIdx;
+
+            cu->m_cuMvField[0].setAllRefIdx(REF_NOT_VALID, partSize, absPartIdx, 0, puIdx);
 
             interMode.sa8dBits += m_bestME[1].bits;
         }
@@ -2120,9 +2121,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
 
         /* select best option and store into CU */
-        cu->m_cuMvField[0].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-        cu->m_cuMvField[1].setAllMvField(TComMvField(), partSize, absPartIdx, 0, puIdx);
-
         if (mrgCost < bidirCost && mrgCost < list[0].cost && mrgCost < list[1].cost)
         {
             cu->m_mergeFlag[absPartIdx] = true;
@@ -2162,6 +2160,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             cu->m_cuMvField[0].mvd[absPartIdx] = list[0].mv - list[0].mvp;
             cu->m_mvpIdx[0][absPartIdx] = list[0].mvpIdx;
 
+            cu->m_cuMvField[1].setAllRefIdx(REF_NOT_VALID, partSize, absPartIdx, 0, puIdx);
+
             totalmebits += list[0].bits;
         }
         else
@@ -2174,6 +2174,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             cu->m_cuMvField[1].setAllRefIdx(list[1].ref, partSize, absPartIdx, 0, puIdx);
             cu->m_cuMvField[1].mvd[absPartIdx] = list[1].mv - list[1].mvp;
             cu->m_mvpIdx[1][absPartIdx] = list[1].mvpIdx;
+
+            cu->m_cuMvField[0].setAllRefIdx(REF_NOT_VALID, partSize, absPartIdx, 0, puIdx);
 
             totalmebits += list[1].bits;
         }
