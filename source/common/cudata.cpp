@@ -251,10 +251,10 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     memset(m_depth, 0, (BytesPerPartition - 8) * m_numPartitions);
 
     uint32_t widthInCU = m_slice->m_sps->numCuInWidth;
-    m_cuLeft = (m_cuAddr % widthInCU) ? frame.m_encData->getPicCTU(m_cuAddr - 1) : NULL;
-    m_cuAbove = (m_cuAddr / widthInCU) ? frame.m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
-    m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? frame.m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
-    m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? frame.m_encData->getPicCTU(m_cuAddr - widthInCU + 1) : NULL;
+    m_cuLeft = (m_cuAddr % widthInCU) ? m_encData->getPicCTU(m_cuAddr - 1) : NULL;
+    m_cuAbove = (m_cuAddr / widthInCU) ? m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
+    m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
+    m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? m_encData->getPicCTU(m_cuAddr - widthInCU + 1) : NULL;
 }
 
 // initialize Sub partition
