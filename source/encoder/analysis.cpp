@@ -1197,14 +1197,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     Yuv* predYuv = &interMode.predYuv;
     uint32_t sizeIdx = cuGeom.log2CUSize - 2;
 
-    if (m_param->bDistributeMotionEstimation && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
-    {
-        parallelInterSearch(interMode, cuGeom, false);
-        x265_emms(); // TODO: Remove from here and predInterSearch()
-        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
-        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
-    }
-    else if (predInterSearch(interMode, cuGeom, false, false))
+    if (predInterSearch(interMode, cuGeom, false, false))
     {
         interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
@@ -1223,13 +1216,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPartSizeSubParts(partSize);
     interMode.cu.setPredModeSubParts(MODE_INTER);
 
-    if (m_param->bDistributeMotionEstimation && !bMergeOnly && (m_slice->m_numRefIdx[0] + m_slice->m_numRefIdx[1]) > 2)
-    {
-        parallelInterSearch(interMode, cuGeom, true);
-        encodeResAndCalcRdInterCU(interMode, cuGeom);
-        checkBestMode(interMode, cuGeom.depth);
-    }
-    else if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
+    if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
     {
         encodeResAndCalcRdInterCU(interMode, cuGeom);
         checkBestMode(interMode, cuGeom.depth);
