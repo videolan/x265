@@ -21,9 +21,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
-#include "primitives.h"
 #include "common.h"
+#include "primitives.h"
 
 namespace x265 {
 // x265 private namespace

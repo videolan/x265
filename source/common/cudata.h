@@ -27,7 +27,6 @@
 #include "common.h"
 #include "slice.h"
 #include "mv.h"
-#include "TLibCommon/TComRom.h"
 
 namespace x265 {
 // private namespace
@@ -36,6 +35,36 @@ class FrameData;
 class Slice;
 struct TUEntropyCodingParameters;
 struct CUDataMemPool;
+
+enum PartSize
+{
+    SIZE_2Nx2N, // symmetric motion partition,  2Nx2N
+    SIZE_2NxN,  // symmetric motion partition,  2Nx N
+    SIZE_Nx2N,  // symmetric motion partition,   Nx2N
+    SIZE_NxN,   // symmetric motion partition,   Nx N
+    SIZE_2NxnU, // asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
+    SIZE_2NxnD, // asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
+    SIZE_nLx2N, // asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
+    SIZE_nRx2N, // asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
+    SIZE_NONE = 15
+};
+
+enum PredMode
+{
+    MODE_INTER,
+    MODE_INTRA,
+    MODE_NONE = 15
+};
+
+// motion vector predictor direction used in AMVP
+enum MVP_DIR
+{
+    MD_LEFT = 0,    // MVP of left block
+    MD_ABOVE,       // MVP of above block
+    MD_ABOVE_RIGHT, // MVP of above right block
+    MD_BELOW_LEFT,  // MVP of below left block
+    MD_ABOVE_LEFT   // MVP of above left block
+};
 
 struct CUGeom
 {

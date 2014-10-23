@@ -1,29 +1,4 @@
 # vim: syntax=cmake
-set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComRom.cpp)
-set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/CommonDef.h
-    ../Lib/TLibCommon/TypeDef.h
-    ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComRom.h)
-
-if(GCC)
-    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "-Wno-sign-compare")
-endif(GCC)
-if(MSVC)
-    # ignore these warnings from HM source
-    # /wd4244 type conversion, possible loss of data
-    # /wd4389 signed/unsigned mismatch
-    # /wd4018 '<' signed/unsigned mismatch
-    # /wd4800 forcing value to bool 'true' or 'false' (performance warning)
-    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018 /wd4800")
-    if(INTEL_CXX)
-        add_definitions(/Qwd2557) # signed/unsigned mismatch
-    endif()
-endif(MSVC)
-
 set(SSE3  vec/dct-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp)
 set(SSE41 vec/dct-sse41.cpp)
@@ -111,6 +86,7 @@ add_library(common OBJECT
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
+    constants.cpp constants.h
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h

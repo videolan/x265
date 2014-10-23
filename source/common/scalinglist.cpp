@@ -23,7 +23,6 @@
 
 #include "common.h"
 #include "primitives.h"
-#include "TLibCommon/TComRom.h"
 #include "scalinglist.h"
 
 namespace {

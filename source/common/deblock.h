@@ -25,7 +25,6 @@
 #define X265_DEBLOCK_H
 
 #include "common.h"
-#include "TLibCommon/TComRom.h"
 
 namespace x265 {
 // private namespace

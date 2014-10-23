@@ -2074,6 +2074,8 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
 
+#define CU_SET_FLAG(bitfield, flag, value) (bitfield) = ((bitfield) & (~(flag))) | ((~((value) - 1)) & (flag))
+
 void CUData::calcCTUGeoms(uint32_t picWidth, uint32_t picHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const
 {
     // Initialize the coding blocks inside the CTB

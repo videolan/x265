@@ -23,10 +23,10 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "primitives.h"
 #include "x265.h"
 #include "cpu.h"
-#include "TLibCommon/TComRom.h"
 
 extern "C" {
 #include "pixel.h"

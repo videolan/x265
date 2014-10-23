@@ -32,6 +32,10 @@
 #define CU_DQP_EG_k    0 // exp-golomb order
 #define START_VALUE    8 // start value for dpcm mode
 
+static const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
+static const int g_winUnitX[] = { 1, 2, 2, 1 };
+static const int g_winUnitY[] = { 1, 2, 1, 1 };
+
 namespace x265 {
 
 Entropy::Entropy()

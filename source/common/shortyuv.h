@@ -26,7 +26,7 @@
 #ifndef X265_SHORTYUV_H
 #define X265_SHORTYUV_H
 
-#include "TLibCommon/TComRom.h"
+#include "common.h"
 
 namespace x265 {
 // private namespace

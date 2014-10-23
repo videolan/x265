@@ -26,8 +26,6 @@
 #include "picyuv.h"
 #include "cudata.h"
 
-#include "TLibCommon/TComRom.h"
-
 #include "search.h"
 #include "entropy.h"
 #include "rdcost.h"

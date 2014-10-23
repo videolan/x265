@@ -29,8 +29,6 @@
 #include "lowres.h"
 #include "mv.h"
 
-#include "TLibCommon/TComRom.h"
-
 #include "encoder.h"
 #include "slicetype.h"
 #include "motion.h"

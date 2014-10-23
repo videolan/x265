@@ -26,9 +26,7 @@
 #include "threadpool.h"
 #include "param.h"
 #include "frame.h"
-
 #include "picyuv.h"
-#include "TLibCommon/TComRom.h"
 
 #include "bitcost.h"
 #include "encoder.h"

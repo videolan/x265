@@ -28,8 +28,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#include "common.h"
 #include "primitives.h"
-#include "TLibCommon/TComRom.h"
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1
 

@@ -24,9 +24,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "mbdstharness.h"
-#include "TLibCommon/TComRom.h"
 #include "common.h"
+#include "mbdstharness.h"
 
 using namespace x265;
 

@@ -33,6 +33,13 @@ class Frame;
 class PicList;
 class MotionReference;
 
+enum SliceType
+{
+    B_SLICE,
+    P_SLICE,
+    I_SLICE
+};
+
 struct RPS
 {
     int  numberOfPictures;

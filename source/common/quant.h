@@ -26,7 +26,6 @@
 
 #include "common.h"
 #include "scalinglist.h"
-#include "TLibCommon/TComRom.h"
 #include "TLibCommon/ContextTables.h"
 
 namespace x265 {

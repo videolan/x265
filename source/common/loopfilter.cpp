@@ -22,7 +22,7 @@
 * For more information, contact us at license @ x265.com.
 *****************************************************************************/
 
-#include "TLibCommon/TypeDef.h"
+#include "common.h"
 #include "primitives.h"
 
 #define PIXEL_MIN 0

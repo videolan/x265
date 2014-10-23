@@ -26,7 +26,6 @@
 
 #include "common.h"
 #include "md5.h"
-#include "TLibCommon/TComRom.h"
 #include "x265.h"
 
 namespace x265 {

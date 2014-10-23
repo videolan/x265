@@ -24,7 +24,6 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
 #include "common.h"
 #include "ipfilterharness.h"
 

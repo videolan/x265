@@ -26,7 +26,6 @@
 
 #include "common.h"
 #include "primitives.h"
-#include "TLibCommon/TComRom.h"
 
 namespace x265 {
 // private namespace
