@@ -1198,13 +1198,12 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPartSizeSubParts(partSize);
     interMode.cu.setPredModeSubParts(MODE_INTER);
 
-    Yuv* fencYuv = &m_modeDepth[cuGeom.depth].fencYuv;
-    Yuv* predYuv = &interMode.predYuv;
-    uint32_t sizeIdx = cuGeom.log2CUSize - 2;
-
     if (predInterSearch(interMode, cuGeom, false, false))
     {
-        interMode.distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
+        /* predInterSearch sets interMode.sa8dBits */
+        const Yuv& fencYuv = *interMode.fencYuv;
+        Yuv& predYuv = interMode.predYuv;
+        interMode.distortion = primitives.sa8d[cuGeom.log2CUSize - 2](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
     }
     else
@@ -1222,8 +1221,14 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
     {
+        /* predInterSearch sets interMode.sa8dBits, but this is ignored */
         encodeResAndCalcRdInterCU(interMode, cuGeom);
         checkBestMode(interMode, cuGeom.depth);
+    }
+    else
+    {
+        interMode.distortion = MAX_UINT;
+        interMode.rdCost = MAX_INT64;
     }
 }
 
