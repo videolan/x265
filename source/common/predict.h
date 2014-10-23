@@ -92,14 +92,14 @@ public:
     bool allocBuffers(int csp);
 
     // motion compensation functions
-    void predInterLumaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv);
-    void predInterLumaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv);
+    void predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const;
+    void predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const;
 
-    void predInterChromaBlk(PicYuv *refPic, Yuv *dstYuv, MV *mv);
-    void predInterChromaBlk(PicYuv *refPic, ShortYuv *dstSYuv, MV *mv);
+    void predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const;
+    void predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const;
 
-    void addWeightBi(ShortYuv* srcYuv0, ShortYuv* srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], Yuv* predYuv, bool bLuma, bool bChroma);
-    void addWeightUni(ShortYuv* srcYuv0, const WeightValues wp[3], Yuv* predYuv, bool bLuma, bool bChroma);
+    void addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], bool bLuma, bool bChroma) const;
+    void addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightValues wp[3], bool bLuma, bool bChroma) const;
 
     /* Intra prediction helper functions */
     static void initIntraNeighbors(const CUData& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
@@ -114,8 +114,8 @@ public:
 public:
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
-    void prepMotionCompensation(const CUData* cu, const CUGeom& cuGeom, int partIdx);
-    void motionCompensation(Yuv* predYuv, bool bLuma, bool bChroma);
+    void prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx);
+    void motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma);
 
     /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);

@@ -354,7 +354,7 @@ void Analysis::parallelME(int threadId, int meId)
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
         slave->m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
 
-        slave->prepMotionCompensation(m_curMECu, *m_curGeom, m_curPart);
+        slave->prepMotionCompensation(*m_curMECu, *m_curGeom, m_curPart);
     }
 
     if (meId < m_slice->m_numRefIdx[0])
@@ -513,8 +513,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             /* encode best inter */
             for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
             {
-                prepMotionCompensation(&bestInter->cu, cuGeom, puIdx);
-                motionCompensation(&bestInter->predYuv, false, true);
+                prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
+                motionCompensation(bestInter->predYuv, false, true);
             }
             encodeResAndCalcRdInterCU(*bestInter, cuGeom);
 
@@ -539,8 +539,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 /* finally code the best mode selected from SA8D costs */
                 for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                 {
-                    prepMotionCompensation(&md.bestMode->cu, cuGeom, puIdx);
-                    motionCompensation(&md.bestMode->predYuv, false, true);
+                    prepMotionCompensation(md.bestMode->cu, cuGeom, puIdx);
+                    motionCompensation(md.bestMode->predYuv, false, true);
                 }
                 encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
             }
@@ -723,8 +723,8 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                 /* Calculate RD cost of best inter option */
                 for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                 {
-                    prepMotionCompensation(&bestInter->cu, cuGeom, puIdx);
-                    motionCompensation(&bestInter->predYuv, false, true);
+                    prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
+                    motionCompensation(bestInter->predYuv, false, true);
                 }
 
                 encodeResAndCalcRdInterCU(*bestInter, cuGeom);
@@ -769,8 +769,8 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                 {
                     for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                     {
-                        prepMotionCompensation(&md.bestMode->cu, cuGeom, puIdx);
-                        motionCompensation(&md.bestMode->predYuv, false, true);
+                        prepMotionCompensation(md.bestMode->cu, cuGeom, puIdx);
+                        motionCompensation(md.bestMode->predYuv, false, true);
                     }
                     if (m_param->rdLevel == 2)
                         encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
@@ -1058,8 +1058,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
             tempPred->initCosts();
 
             // do MC only for Luma part
-            prepMotionCompensation(&tempPred->cu, cuGeom, 0);
-            motionCompensation(&tempPred->predYuv, true, false);
+            prepMotionCompensation(tempPred->cu, cuGeom, 0);
+            motionCompensation(tempPred->predYuv, true, false);
 
             tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
             tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
@@ -1078,8 +1078,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         return;
 
     // calculate the motion compensation for chroma for the best mode selected
-    prepMotionCompensation(&bestPred->cu, cuGeom, 0);
-    motionCompensation(&bestPred->predYuv, false, true);
+    prepMotionCompensation(bestPred->cu, cuGeom, 0);
+    motionCompensation(bestPred->predYuv, false, true);
 
     if (m_param->rdLevel)
     {
@@ -1146,8 +1146,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[mergeCand][0].refIdx, 0, 0);
         tempPred->cu.setPUMv(1, mvFieldNeighbours[mergeCand][1].mv, 0, 0);
         tempPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[mergeCand][1].refIdx, 0, 0);
-        prepMotionCompensation(&tempPred->cu, cuGeom, 0);
-        motionCompensation(&tempPred->predYuv, true, true);
+        prepMotionCompensation(tempPred->cu, cuGeom, 0);
+        motionCompensation(tempPred->predYuv, true, true);
 
         uint8_t hasCbf = true;
         bool swapped = false;

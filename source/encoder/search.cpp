@@ -1577,8 +1577,8 @@ uint32_t Search::mergeEstimation(CUData* cu, const CUGeom& cuGeom, int puIdx, Me
         cu->m_mv[1][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
         cu->m_refIdx[1][m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
-        prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(&tempYuv, true, false);
+        prepMotionCompensation(*cu, cuGeom, puIdx);
+        motionCompensation(tempYuv, true, false);
         uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(m.absPartIdx), tempYuv.m_size);
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
@@ -1623,7 +1623,7 @@ void Search::singleMotionEstimation(Search& master, const CUData& cu, const CUGe
         cu.clipMv(mvCand);
 
         Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-        predInterLumaBlk(m_slice->m_refPicList[list][ref]->m_reconPicYuv, &tmpPredYuv, &mvCand);
+        predInterLumaPixel(tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPicYuv, mvCand);
         uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
 
         if (bestCost > cost)
@@ -1678,6 +1678,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     int      totalmebits = 0;
     bool     bDistributed = m_param->bDistributeMotionEstimation && (numRefIdx[0] + numRefIdx[1]) > 2;
     MV       mvzero(0, 0);
+    Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     MergeData merge;
     memset(&merge, 0, sizeof(merge));
@@ -1685,7 +1686,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
         /* sets m_puAbsPartIdx, m_puWidth, m_puHeight */
-        prepMotionCompensation(cu, cuGeom, puIdx);
+        prepMotionCompensation(*cu, cuGeom, puIdx);
 
         pixel* pu = fencPic->getLumaAddr(cu->m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
         m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
@@ -1718,8 +1719,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 cu->setPURefIdx(1, merge.mvField[1].refIdx, m_puAbsPartIdx, puIdx);
                 totalmebits += merge.bits;
 
-                prepMotionCompensation(cu, cuGeom, puIdx);
-                motionCompensation(predYuv, true, bChroma);
+                prepMotionCompensation(*cu, cuGeom, puIdx);
+                motionCompensation(*predYuv, true, bChroma);
                 continue;
             }
         }
@@ -1795,8 +1796,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     int mvpIdx = 0;
                     int merange = m_param->searchRange;
 
-                    Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-
                     for (int i = 0; i < AMVP_NUM_CANDS; i++)
                     {
                         MV mvCand = amvpCand[l][ref][i];
@@ -1806,8 +1805,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                             continue;
 
                         cu->clipMv(mvCand);
-
-                        predInterLumaBlk(slice->m_refPicList[l][ref]->m_reconPicYuv, &tmpPredYuv, &mvCand);
+                        predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPicYuv, mvCand);
                         uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
 
                         if (bestCost > cost)
@@ -1842,29 +1840,25 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             }
         }
 
-        // Bi-directional prediction
+        /* Bi-directional prediction */
         if (slice->isInterB() && !cu->isBipredRestriction() && m_bestME[0].cost != MAX_UINT && m_bestME[1].cost != MAX_UINT)
         {
-            ALIGN_VAR_32(pixel, avg[MAX_CU_SIZE * MAX_CU_SIZE]);
-
             bidir[0] = m_bestME[0];
             bidir[1] = m_bestME[1];
 
-            // Generate reference subpels
-            PicYuv *refPic0 = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
-            PicYuv *refPic1 = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
-            
-            Yuv* bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
-
-            predInterLumaBlk(refPic0, &bidirYuv[0], &m_bestME[0].mv);
-            predInterLumaBlk(refPic1, &bidirYuv[1], &m_bestME[1].mv);
+            /* Generate reference subpels */
+            PicYuv* refPic0  = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
+            PicYuv* refPic1  = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
+            Yuv*    bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
+            predInterLumaPixel(bidirYuv[0], *refPic0, m_bestME[0].mv);
+            predInterLumaPixel(bidirYuv[1], *refPic1, m_bestME[1].mv);
 
             pixel *pred0 = bidirYuv[0].getLumaAddr(m_puAbsPartIdx);
             pixel *pred1 = bidirYuv[1].getLumaAddr(m_puAbsPartIdx);
 
             int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
-            primitives.pixelavg_pp[partEnum](avg, m_puWidth, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
-            int satdCost = m_me.bufSATD(avg, m_puWidth);
+            primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
+            int satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
 
             bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
             bidirCost = satdCost + m_rdCost.getCost(bidirBits);
@@ -1891,8 +1885,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 pixel *ref1 = slice->m_mref[1][m_bestME[1].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
                 intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
-                primitives.pixelavg_pp[partEnum](avg, m_puWidth, ref0, refStride, ref1, refStride, 32);
-                satdCost = m_me.bufSATD(avg, m_puWidth);
+                primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
+                satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
 
                 MV mvp0 = m_bestME[0].mvp;
                 int mvpIdx0 = m_bestME[0].mvpIdx;
@@ -1992,8 +1986,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             totalmebits += m_bestME[1].bits;
         }
 
-        prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(predYuv, true, bChroma);
+        prepMotionCompensation(*cu, cuGeom, puIdx);
+        motionCompensation(*predYuv, true, bChroma);
     }
 
     x265_emms();
