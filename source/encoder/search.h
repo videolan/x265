@@ -85,7 +85,7 @@ public:
     const Slice*    m_slice;
 
     Entropy         m_entropyCoder;
-    RQTData         m_rqt[NUM_LAYERS];
+    RQTData         m_rqt[NUM_FULL_DEPTH];
 
     uint8_t*        m_qtTempCbf[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
