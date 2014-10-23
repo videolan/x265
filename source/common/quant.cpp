@@ -173,11 +173,11 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     return m_resiDctCoeff && m_fencShortBuf;
 }
 
-bool Quant::allocNoiseReduction(x265_param* param)
+bool Quant::allocNoiseReduction(const x265_param& param)
 {
-    m_frameNr = X265_MALLOC(NoiseReduction, param->frameNumThreads);
+    m_frameNr = X265_MALLOC(NoiseReduction, param.frameNumThreads);
     if (m_frameNr)
-        memset(m_frameNr, 0, sizeof(NoiseReduction) * param->frameNumThreads);
+        memset(m_frameNr, 0, sizeof(NoiseReduction) * param.frameNumThreads);
     else
         return false;
     return true;
@@ -322,10 +322,10 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     return numSig;
 }
 
-uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
+uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
-    if (cu->m_tqBypass[absPartIdx])
+    if (cu.m_tqBypass[absPartIdx])
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
         return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);
@@ -333,11 +333,11 @@ uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16
 
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
-    bool isIntra = cu->m_predMode[absPartIdx] == MODE_INTRA;
+    bool isIntra = cu.m_predMode[absPartIdx] == MODE_INTRA;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int trSize = 1 << log2TrSize;
 
-    X265_CHECK((cu->m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
+    X265_CHECK((cu.m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
     {
 #if X265_DEPTH <= 10
@@ -392,15 +392,15 @@ uint32_t Quant::transformNxN(CUData* cu, pixel* fenc, uint32_t fencStride, int16
         int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
         int qbits = QUANT_SHIFT + per + transformShift;
-        int add = (cu->m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
+        int add = (cu.m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
         int numCoeff = 1 << (log2TrSize * 2);
 
         uint32_t numSig = primitives.quant(m_resiDctCoeff, quantCoeff, deltaU, coeff, qbits, add, numCoeff);
 
-        if (numSig >= 2 && cu->m_slice->m_pps->bSignHideEnabled)
+        if (numSig >= 2 && cu.m_slice->m_pps->bSignHideEnabled)
         {
             TUEntropyCodingParameters codeParams;
-            cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, isLuma);
+            cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, isLuma);
             return signBitHidingHDQ(coeff, deltaU, numSig, codeParams);
         }
         else
@@ -475,10 +475,10 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
-    int scalingListType = (cu->isIntra(absPartIdx) ? 0 : 3) + ttype;
+    int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
@@ -544,7 +544,7 @@ uint32_t Quant::rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
     int64_t totalRdCost = 0;
 
     TUEntropyCodingParameters codeParams;
-    cu->getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
+    cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
     const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
 
     /* TODO: update bit estimates if dirty */
@@ -792,14 +792,14 @@ uint32_t Quant::rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
 
     /* calculate RD cost of uncoded block CBF=0, and add cost of CBF=1 to total */
     int64_t bestCost;
-    if (!cu->isIntra(absPartIdx) && bIsLuma && !cu->m_trIdx[absPartIdx])
+    if (!cu.isIntra(absPartIdx) && bIsLuma && !cu.m_trIdx[absPartIdx])
     {
         bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockRootCbpBits[0]);
         totalRdCost += SIGCOST(estBitsSbac.blockRootCbpBits[1]);
     }
     else
     {
-        int ctx = ctxCbf[ttype][cu->m_trIdx[absPartIdx]];
+        int ctx = ctxCbf[ttype][cu.m_trIdx[absPartIdx]];
         bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockCbpBits[ctx][0]);
         totalRdCost += SIGCOST(estBitsSbac.blockCbpBits[ctx][1]);
     }
@@ -886,7 +886,7 @@ uint32_t Quant::rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
         dstCoeff[codeParams.scan[pos]] = 0;
 
     /* rate-distortion based sign-hiding */
-    if (cu->m_slice->m_pps->bSignHideEnabled && numSig >= 2)
+    if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         int lastCG = true;
         for (int subSet = cgLastScanPos; subSet >= 0; subSet--)

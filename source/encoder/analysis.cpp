@@ -1232,19 +1232,19 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
  * be generated later. It records the best mode in the cu */
 void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
 {
-    CUData* cu = &intraMode.cu;
-    uint32_t depth = cu->m_depth[0];
+    CUData& cu = intraMode.cu;
+    uint32_t depth = cu.m_depth[0];
 
-    cu->setPartSizeSubParts(SIZE_2Nx2N);
-    cu->setPredModeSubParts(MODE_INTRA);
+    cu.setPartSizeSubParts(SIZE_2Nx2N);
+    cu.setPredModeSubParts(MODE_INTRA);
 
     uint32_t initTrDepth = 0;
-    uint32_t log2TrSize  = cu->m_log2CUSize[0] - initTrDepth;
+    uint32_t log2TrSize  = cu.m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize      = 1 << log2TrSize;
     const uint32_t absPartIdx  = 0;
 
     // Reference sample smoothing
-    initAdiPattern(*cu, cuGeom, absPartIdx, initTrDepth, ALL_IDX);
+    initAdiPattern(cu, cuGeom, absPartIdx, initTrDepth, ALL_IDX);
 
     pixel* fenc = m_modeDepth[depth].fencYuv.m_buf[0];
     uint32_t stride = m_modeDepth[depth].fencYuv.m_size;
@@ -1298,16 +1298,16 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     int predsize = scaleTuSize * scaleTuSize;
 
     uint32_t preds[3];
-    cu->getIntraDirLumaPredictor(absPartIdx, preds);
+    cu.getIntraDirLumaPredictor(absPartIdx, preds);
 
     uint64_t mpms;
-    uint32_t rbits = getIntraRemModeBits(*cu, absPartIdx, depth, preds, mpms);
+    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
 
     // DC
     primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
     bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     bmode = mode = DC_IDX;
-    bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, absPartIdx, depth) : rbits;
+    bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
     bcost = m_rdCost.calcRdSADCost(bsad, bbits);
 
     pixel *abovePlanar = above;
@@ -1323,7 +1323,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
     sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     mode = PLANAR_IDX;
-    bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(*cu, mode, absPartIdx, depth) : rbits;
+    bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
     cost = m_rdCost.calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
@@ -1341,7 +1341,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     cmp = modeHor ? bufTrans : fenc; \
     srcStride = modeHor ? scaleTuSize : scaleStride; \
     sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
-    bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(*cu, angle, absPartIdx, depth) : rbits; \
+    bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(cu, angle, absPartIdx, depth) : rbits; \
     cost = m_rdCost.calcRdSADCost(sad, bits)
 
     if (m_param->bEnableFastIntra)
@@ -1389,7 +1389,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
         }
     }
 
-    cu->setLumaIntraDirSubParts((uint8_t)bmode, absPartIdx, depth + initTrDepth);
+    cu.setLumaIntraDirSubParts((uint8_t)bmode, absPartIdx, depth + initTrDepth);
     intraMode.initCosts();
     intraMode.totalBits = bbits;
     intraMode.distortion = bsad;
@@ -1398,17 +1398,17 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
 
 void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
-    CUData* cu = &intraMode.cu;
+    CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* fencYuv = &m_modeDepth[cuGeom.depth].fencYuv;
 
-    X265_CHECK(cu->m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
+    X265_CHECK(cu.m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
     X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
-    m_quant.setQPforQuant(intraMode.cu);
+    m_quant.setQPforQuant(cu);
 
     uint32_t tuDepthRange[2];
-    cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
 
     m_entropyCoder.load(m_rqt[cuGeom.depth].cur);
 
@@ -1421,20 +1421,20 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
-        m_entropyCoder.codeCUTransquantBypassFlag(cu->m_tqBypass[0]);
-    m_entropyCoder.codeSkipFlag(*cu, 0);
-    m_entropyCoder.codePredMode(cu->m_predMode[0]);
-    m_entropyCoder.codePartSize(*cu, 0, cuGeom.depth);
-    m_entropyCoder.codePredInfo(*cu, 0);
+        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
+    m_entropyCoder.codeSkipFlag(cu, 0);
+    m_entropyCoder.codePredMode(cu.m_predMode[0]);
+    m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
+    m_entropyCoder.codePredInfo(cu, 0);
     intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
 
     bool bCodeDQP = m_slice->m_pps->bUseDQP;
-    m_entropyCoder.codeCoeff(*cu, 0, cuGeom.depth, bCodeDQP, tuDepthRange);
+    m_entropyCoder.codeCoeff(cu, 0, cuGeom.depth, bCodeDQP, tuDepthRange);
 
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cu->m_log2CUSize[0] - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);

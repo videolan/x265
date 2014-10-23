@@ -80,7 +80,7 @@ public:
     MotionEstimate  m_me;
     Quant           m_quant;
     RDCost          m_rdCost;
-    x265_param*     m_param;
+    const x265_param* m_param;
     Frame*          m_frame;
     const Slice*    m_slice;
 
@@ -151,7 +151,7 @@ public:
     Search();
     ~Search();
 
-    bool     initSearch(x265_param *param, ScalingList& scalingList);
+    bool     initSearch(const x265_param& param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
     void     updateModeCost(Mode& mode) const;
 
@@ -199,8 +199,8 @@ protected:
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
-    void     xSetIntraResultQT(CUData* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
-    void     xSetIntraResultChromaQT(CUData* cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
+    void     xSetIntraResultQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
+    void     xSetIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
 
     void     xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
     void     xEncCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
@@ -229,9 +229,9 @@ protected:
     void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
     void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx);
 
-    void     xEncodeResidualQT(CUData* cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
+    void     xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
-    void     offsetSubTUCBFs(CUData* cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
+    void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
     struct MergeData
     {
@@ -255,7 +255,7 @@ protected:
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(CUData* cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
+    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */

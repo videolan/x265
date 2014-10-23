@@ -172,7 +172,7 @@ void Encoder::create()
     for (int i = 0; i < m_numThreadLocalData; i++)
     {
         m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
-        m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
+        m_threadLocalData[i].analysis.initSearch(*m_param, m_scalingList);
         m_threadLocalData[i].analysis.create(m_threadLocalData);
     }
 

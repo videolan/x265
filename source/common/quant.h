@@ -85,12 +85,12 @@ public:
 
     /* one-time setup */
     bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
-    bool allocNoiseReduction(x265_param* param);
+    bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
     void setQPforQuant(const CUData& ctu);
 
-    uint32_t transformNxN(CUData* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
+    uint32_t transformNxN(CUData& cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
 
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
@@ -107,7 +107,7 @@ protected:
 
     uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
-    uint32_t rdoQuant(CUData* cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
+    uint32_t rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
     inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
 };
 
