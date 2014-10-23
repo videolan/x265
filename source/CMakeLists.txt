@@ -187,7 +187,6 @@ if(WARNINGS_AS_ERRORS)
 endif(WARNINGS_AS_ERRORS)
 
 
-
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
@@ -216,7 +215,7 @@ if (WIN32)
 endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG
-include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
+include_directories(. common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(encoder)
 add_subdirectory(common)
 

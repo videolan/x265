@@ -93,7 +93,6 @@ add_library(common OBJECT
     wavefront.h wavefront.cpp
     md5.cpp md5.h
     bitstream.h bitstream.cpp
-    mv.h
     yuv.cpp yuv.h
     shortyuv.cpp shortyuv.h
     picyuv.cpp picyuv.h
@@ -103,9 +102,9 @@ add_library(common OBJECT
     framedata.cpp framedata.h
     cudata.cpp cudata.h
     slice.cpp slice.h
-    lowres.cpp lowres.h
+    lowres.cpp lowres.h mv.h 
     piclist.cpp piclist.h
     predict.cpp  predict.h
     scalinglist.cpp scalinglist.h
-    quant.cpp quant.h
+    quant.cpp quant.h contexts.h
     deblock.cpp deblock.h)

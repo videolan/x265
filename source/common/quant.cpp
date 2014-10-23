@@ -28,7 +28,7 @@
 #include "entropy.h"
 #include "yuv.h"
 #include "cudata.h"
-#include "TLibCommon/ContextTables.h"
+#include "contexts.h"
 
 using namespace x265;
 

@@ -23,8 +23,10 @@
 
 #include "common.h"
 #include "scalinglist.h"
-#include "picyuv.h"
 #include "quant.h"
+#include "contexts.h"
+#include "picyuv.h"
+
 #include "sao.h"
 #include "entropy.h"
 
@@ -977,7 +979,7 @@ void Entropy::resetEntropy(const Slice& slice)
     initBuffer(&m_contextState[OFF_SAO_MERGE_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_SAO_MERGE_FLAG, NUM_SAO_MERGE_FLAG_CTX);
     initBuffer(&m_contextState[OFF_SAO_TYPE_IDX_CTX], sliceType, qp, (uint8_t*)INIT_SAO_TYPE_IDX, NUM_SAO_TYPE_IDX_CTX);
     initBuffer(&m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_TRANSFORMSKIP_FLAG, 2 * NUM_TRANSFORMSKIP_FLAG_CTX);
-    initBuffer(&m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX);
+    initBuffer(&m_contextState[OFF_TQUANT_BYPASS_FLAG_CTX], sliceType, qp, (uint8_t*)INIT_CU_TRANSQUANT_BYPASS_FLAG, NUM_TQUANT_BYPASS_FLAG_CTX);
     // new structure
 
     start();
@@ -1213,7 +1215,7 @@ void Entropy::codePredMode(int predMode)
 
 void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)
 {
-    encodeBin(symbol, m_contextState[OFF_CU_TRANSQUANT_BYPASS_FLAG_CTX]);
+    encodeBin(symbol, m_contextState[OFF_TQUANT_BYPASS_FLAG_CTX]);
 }
 
 void Entropy::codeSkipFlag(const CUData& cu, uint32_t absPartIdx)

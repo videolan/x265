@@ -27,9 +27,8 @@
 #include "common.h"
 #include "bitstream.h"
 #include "frame.h"
+#include "contexts.h"
 #include "slice.h"
-
-#include "TLibCommon/ContextTables.h"
 
 namespace x265 {
 // private namespace
