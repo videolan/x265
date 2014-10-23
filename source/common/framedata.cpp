@@ -33,8 +33,6 @@ FrameData::FrameData()
 
 bool FrameData::create(x265_param *param, const SPS& sps)
 {
-    uint32_t i;
-
     m_numPartitions   = 1 << (g_maxFullDepth * 2);
     m_numPartInCUSize = 1 << g_maxFullDepth;
     m_param = param;
@@ -42,16 +40,12 @@ bool FrameData::create(x265_param *param, const SPS& sps)
     m_slice  = new Slice;
     m_picCTU = new CUData[sps.numCUsInFrame];
 
-    uint32_t sizeL = 1 << (g_maxLog2CUSize * 2);
-    uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(param->internalCsp) + CHROMA_V_SHIFT(param->internalCsp));
-
-    m_cuMemPool.create(m_numPartitions, sizeL, sizeC, sps.numCUsInFrame);
-    for (i = 0; i < sps.numCUsInFrame; i++)
-        m_picCTU[i].initialize(m_cuMemPool, m_numPartitions, g_maxCUSize, param->internalCsp, i);
+    m_cuMemPool.create(0, param->internalCsp, sps.numCUsInFrame);
+    for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)
+        m_picCTU[ctuAddr].initialize(m_cuMemPool, 0, param->internalCsp, ctuAddr);
 
     CHECKED_MALLOC(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
-
     reinit(sps);
     return true;
 

@@ -77,24 +77,19 @@ bool Analysis::create(ThreadLocalData *tld)
     m_bTryLossless = m_param->bCULossless && !m_param->bLossless && m_param->rdLevel >= 2;
 
     int csp = m_param->internalCsp;
-    int chromaShift = CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp);
-    uint32_t numPartitions = NUM_CU_PARTITIONS;
     uint32_t cuSize = g_maxCUSize;
 
     bool ok = true;
-    for (uint32_t i = 0; i <= g_maxCUDepth; i++, cuSize >>= 1, numPartitions >>= 2)
+    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, cuSize >>= 1)
     {
-        ModeDepth &md = m_modeDepth[i];
+        ModeDepth &md = m_modeDepth[depth];
 
-        uint32_t sizeL = cuSize * cuSize;
-        uint32_t sizeC = sizeL >> chromaShift;
-
-        md.cuMemPool.create(numPartitions, sizeL, sizeC, MAX_PRED_TYPES);
+        md.cuMemPool.create(depth, csp, MAX_PRED_TYPES);
         ok &= md.fencYuv.create(cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            md.pred[j].cu.initialize(md.cuMemPool, numPartitions, cuSize, csp, j);
+            md.pred[j].cu.initialize(md.cuMemPool, depth, csp, j);
             ok &= md.pred[j].predYuv.create(cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
             ok &= md.pred[j].resiYuv.create(cuSize, csp);

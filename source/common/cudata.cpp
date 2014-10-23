@@ -152,12 +152,12 @@ CUData::CUData()
     memset(this, 0, sizeof(*this));
 }
 
-void CUData::initialize(const CUDataMemPool& dataPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance)
+void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance)
 {
+    m_chromaFormat  = csp;
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
-    m_chromaFormat  = csp;
-    m_numPartitions = numPartition;
+    m_numPartitions = MAX_NUM_PARTITIONS >> (depth * 2);
 
     if (!s_partSet[0])
     {
@@ -222,38 +222,39 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t numPartition, ui
     }
 
     /* Each CU's data is layed out sequentially within the charMemBlock */
-    uint8_t *charBuf = dataPool.charMemBlock + (numPartition * BytesPerPartition) * instance;
+    uint8_t *charBuf = dataPool.charMemBlock + (m_numPartitions * BytesPerPartition) * instance;
 
-    m_qp          = (char*)charBuf; charBuf += numPartition;
-    m_log2CUSize         = charBuf; charBuf += numPartition;
-    m_partSize           = charBuf; charBuf += numPartition;
-    m_predMode           = charBuf; charBuf += numPartition;
-    m_lumaIntraDir       = charBuf; charBuf += numPartition;
-    m_tqBypass           = charBuf; charBuf += numPartition;
-    m_refIdx[0]   = (char*)charBuf; charBuf += numPartition;
-    m_refIdx[1]   = (char*)charBuf; charBuf += numPartition;
-    m_depth              = charBuf; charBuf += numPartition;
-    m_skipFlag           = charBuf; charBuf += numPartition; /* the order up to here is important in initCTU() and initSubCU() */
-    m_mergeFlag          = charBuf; charBuf += numPartition;
-    m_interDir           = charBuf; charBuf += numPartition;
-    m_mvpIdx[0]          = charBuf; charBuf += numPartition;
-    m_mvpIdx[1]          = charBuf; charBuf += numPartition;
-    m_trIdx              = charBuf; charBuf += numPartition;
-    m_transformSkip[0]   = charBuf; charBuf += numPartition;
-    m_transformSkip[1]   = charBuf; charBuf += numPartition;
-    m_transformSkip[2]   = charBuf; charBuf += numPartition;
-    m_cbf[0]             = charBuf; charBuf += numPartition;
-    m_cbf[1]             = charBuf; charBuf += numPartition;
-    m_cbf[2]             = charBuf; charBuf += numPartition;
-    m_chromaIntraDir     = charBuf; charBuf += numPartition;
+    m_qp          = (char*)charBuf; charBuf += m_numPartitions;
+    m_log2CUSize         = charBuf; charBuf += m_numPartitions;
+    m_partSize           = charBuf; charBuf += m_numPartitions;
+    m_predMode           = charBuf; charBuf += m_numPartitions;
+    m_lumaIntraDir       = charBuf; charBuf += m_numPartitions;
+    m_tqBypass           = charBuf; charBuf += m_numPartitions;
+    m_refIdx[0]   = (char*)charBuf; charBuf += m_numPartitions;
+    m_refIdx[1]   = (char*)charBuf; charBuf += m_numPartitions;
+    m_depth              = charBuf; charBuf += m_numPartitions;
+    m_skipFlag           = charBuf; charBuf += m_numPartitions; /* the order up to here is important in initCTU() and initSubCU() */
+    m_mergeFlag          = charBuf; charBuf += m_numPartitions;
+    m_interDir           = charBuf; charBuf += m_numPartitions;
+    m_mvpIdx[0]          = charBuf; charBuf += m_numPartitions;
+    m_mvpIdx[1]          = charBuf; charBuf += m_numPartitions;
+    m_trIdx              = charBuf; charBuf += m_numPartitions;
+    m_transformSkip[0]   = charBuf; charBuf += m_numPartitions;
+    m_transformSkip[1]   = charBuf; charBuf += m_numPartitions;
+    m_transformSkip[2]   = charBuf; charBuf += m_numPartitions;
+    m_cbf[0]             = charBuf; charBuf += m_numPartitions;
+    m_cbf[1]             = charBuf; charBuf += m_numPartitions;
+    m_cbf[2]             = charBuf; charBuf += m_numPartitions;
+    m_chromaIntraDir     = charBuf; charBuf += m_numPartitions;
 
-    X265_CHECK(charBuf == dataPool.charMemBlock + (numPartition * BytesPerPartition) * (instance + 1), "CU data layout is broken\n");
+    X265_CHECK(charBuf == dataPool.charMemBlock + (m_numPartitions * BytesPerPartition) * (instance + 1), "CU data layout is broken\n");
 
-    m_mv[0]  = dataPool.mvMemBlock + (instance * 4) * numPartition;
-    m_mv[1]  = m_mv[0] +  numPartition;
-    m_mvd[0] = m_mv[1] +  numPartition;
-    m_mvd[1] = m_mvd[0] + numPartition;
+    m_mv[0]  = dataPool.mvMemBlock + (instance * 4) * m_numPartitions;
+    m_mv[1]  = m_mv[0] +  m_numPartitions;
+    m_mvd[0] = m_mv[1] +  m_numPartitions;
+    m_mvd[1] = m_mvd[0] + m_numPartitions;
 
+    uint32_t cuSize = g_maxCUSize >> depth;
     uint32_t sizeL = cuSize * cuSize;
     uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
     m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (sizeL + sizeC * 2);

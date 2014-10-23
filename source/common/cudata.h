@@ -156,7 +156,7 @@ public:
 
     CUData();
 
-    void     initialize(const CUDataMemPool& dataPool, uint32_t numPartition, uint32_t cuSize, int csp, int instance);
+    void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
     void     calcCTUGeoms(uint32_t picWidth, uint32_t picHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
@@ -281,8 +281,12 @@ struct CUDataMemPool
 
     CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; }
 
-    bool create(uint32_t numPartition, uint32_t sizeL, uint32_t sizeC, uint32_t numInstances)
+    bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
     {
+        uint32_t numPartition = MAX_NUM_PARTITIONS >> (depth * 2);
+        uint32_t cuSize = g_maxCUSize >> depth;
+        uint32_t sizeL = cuSize * cuSize;
+        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
         CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
         CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numInstances);
