@@ -1684,6 +1684,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     uint32_t lastMode = 0;
     int      totalmebits = 0;
     bool     bDistributed = m_param->bDistributeMotionEstimation && (numRefIdx[0] + numRefIdx[1]) > 2;
+    MV       mvzero(0, 0);
 
     MergeData merge;
     memset(&merge, 0, sizeof(merge));
@@ -1878,7 +1879,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
             bidirCost = satdCost + m_rdCost.getCost(bidirBits);
 
-            MV mvzero(0, 0);
             bool bTryZero = m_bestME[0].mv.notZero() || m_bestME[1].mv.notZero();
             if (bTryZero)
             {
@@ -1981,6 +1981,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             cu->m_mvpIdx[0][absPartIdx] = m_bestME[0].mvpIdx;
 
             cu->setPURefIdx(1, REF_NOT_VALID, absPartIdx, puIdx);
+            cu->setPUMv(1, mvzero, absPartIdx, puIdx);
 
             totalmebits += m_bestME[0].bits;
         }
@@ -1996,6 +1997,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             cu->m_mvpIdx[1][absPartIdx] = m_bestME[1].mvpIdx;
 
             cu->setPURefIdx(0, REF_NOT_VALID, absPartIdx, puIdx);
+            cu->setPUMv(0, mvzero, absPartIdx, puIdx);
 
             totalmebits += m_bestME[1].bits;
         }
