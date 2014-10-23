@@ -176,6 +176,7 @@ public:
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
+    void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
     void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
@@ -186,9 +187,6 @@ public:
     void     setCbfPartRange(uint8_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_cbf[ttype] + absPartIdx, cbf, coveredPartIdxes); }
     void     setTransformSkipSubParts(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_transformSkip[ttype] + absPartIdx, tskip); }
     void     setTransformSkipPartRange(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
-
-    void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
-    void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
     bool     setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth);
 
