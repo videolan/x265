@@ -945,7 +945,7 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
     return ctx;
 }
 
-bool CUData::setQPSubCUs(int qp, uint32_t absPartIdx, uint32_t depth)
+bool CUData::setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);
     uint32_t curPartNumQ = curPartNumb >> 2;
@@ -967,7 +967,7 @@ bool CUData::setQPSubCUs(int qp, uint32_t absPartIdx, uint32_t depth)
     return false;
 }
 
-void CUData::setPUInterDir(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx)
+void CUData::setPUInterDir(uint8_t dir, uint32_t absPartIdx, uint32_t puIdx)
 {
     uint32_t curPartNumQ = m_numPartitions >> 2;
     X265_CHECK(puIdx < 2, "unexpected part unit index\n");
@@ -1220,9 +1220,9 @@ void CUData::setPUMv(int list, const MV& mv, int absPartIdx, int puIdx)
     setAllPU(m_mv[list], mv, absPartIdx, puIdx);
 }
 
-void CUData::setPURefIdx(int list, int refIdx, int absPartIdx, int puIdx)
+void CUData::setPURefIdx(int list, char refIdx, int absPartIdx, int puIdx)
 {
-    setAllPU(m_refIdx[list], (char)refIdx, absPartIdx, puIdx);
+    setAllPU(m_refIdx[list], refIdx, absPartIdx, puIdx);
 }
 
 void CUData::getPartIndexAndSize(uint32_t partIdx, uint32_t& outPartAddr, int& outWidth, int& outHeight) const

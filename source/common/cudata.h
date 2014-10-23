@@ -177,7 +177,7 @@ public:
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
-    void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)                       { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)(char)qp); }
+    void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
     void     setTrIdxSubParts(uint8_t trIdx, uint32_t absPartIdx, uint32_t depth)             { s_partSet[depth](m_trIdx + absPartIdx, trIdx); }
     void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
     void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
@@ -189,11 +189,11 @@ public:
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }
 
-    bool     setQPSubCUs(int qp, uint32_t absPartIdx, uint32_t depth);
+    bool     setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth);
 
-    void     setPUInterDir(uint32_t dir, uint32_t absPartIdx, uint32_t puIdx);
+    void     setPUInterDir(uint8_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setPUMv(int list, const MV& mv, int absPartIdx, int puIdx);
-    void     setPURefIdx(int list, int refIdx, int absPartIdx, int puIdx);
+    void     setPURefIdx(int list, char refIdx, int absPartIdx, int puIdx);
 
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
@@ -286,8 +286,8 @@ struct CUDataMemPool
         CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
         CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numInstances);
-
         return true;
+
     fail:
         return false;
     }
