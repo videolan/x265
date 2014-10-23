@@ -35,8 +35,6 @@
 #define START_VALUE    8 // start value for dpcm mode
 
 static const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
-static const int g_winUnitX[] = { 1, 2, 2, 1 };
-static const int g_winUnitY[] = { 1, 2, 1, 1 };
 
 namespace x265 {
 
@@ -90,10 +88,11 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(conf.bEnabled, "conformance_window_flag");
     if (conf.bEnabled)
     {
-        WRITE_UVLC(conf.leftOffset   / g_winUnitX[sps.chromaFormatIdc], "conf_win_left_offset");
-        WRITE_UVLC(conf.rightOffset  / g_winUnitX[sps.chromaFormatIdc], "conf_win_right_offset");
-        WRITE_UVLC(conf.topOffset    / g_winUnitY[sps.chromaFormatIdc], "conf_win_top_offset");
-        WRITE_UVLC(conf.bottomOffset / g_winUnitY[sps.chromaFormatIdc], "conf_win_bottom_offset");
+        int hShift = CHROMA_H_SHIFT(sps.chromaFormatIdc), vShift = CHROMA_V_SHIFT(sps.chromaFormatIdc);
+        WRITE_UVLC(conf.leftOffset   >> hShift, "conf_win_left_offset");
+        WRITE_UVLC(conf.rightOffset  >> hShift, "conf_win_right_offset");
+        WRITE_UVLC(conf.topOffset    >> vShift, "conf_win_top_offset");
+        WRITE_UVLC(conf.bottomOffset >> vShift, "conf_win_bottom_offset");
     }
 
     WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_luma_minus8");
