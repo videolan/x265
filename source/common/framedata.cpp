@@ -33,10 +33,7 @@ FrameData::FrameData()
 
 bool FrameData::create(x265_param *param, const SPS& sps)
 {
-    m_numPartitions   = 1 << (g_maxFullDepth * 2);
-    m_numPartInCUSize = 1 << g_maxFullDepth;
     m_param = param;
-
     m_slice  = new Slice;
     m_picCTU = new CUData[sps.numCUsInFrame];
 

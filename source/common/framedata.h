@@ -56,9 +56,6 @@ public:
     CUDataMemPool  m_cuMemPool;
     CUData*        m_picCTU;
 
-    uint32_t       m_numPartitions;    /* based on g_maxFullDepth, could be CU static */
-    uint32_t       m_numPartInCUSize;  /* based on g_maxFullDepth, could be CU static */
-
     /* Rate control data used during encode and by references */
     struct RCStatCU
     {

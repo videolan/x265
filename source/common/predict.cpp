@@ -771,7 +771,7 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits = tuWidthInUnits << 1;
     int  leftUnits = tuHeightInUnits << 1;
-    int  partIdxStride = cu.m_encData->m_numPartInCUSize;
+    int  partIdxStride = cu.m_slice->m_sps->numPartInCUSize;
     partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
     bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
@@ -984,7 +984,7 @@ int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t part
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
-    const uint32_t idxStep = cu.m_encData->m_numPartInCUSize;
+    const uint32_t idxStep = cu.m_slice->m_sps->numPartInCUSize;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 
@@ -1032,7 +1032,7 @@ int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_
 
 int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_encData->m_numPartInCUSize + 1;
+    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_slice->m_sps->numPartInCUSize + 1;
     bool *validFlagPtr = bValidFlags;
     int numIntra = 0;
 

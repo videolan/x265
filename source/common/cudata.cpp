@@ -531,7 +531,7 @@ void CUData::updatePic(uint32_t depth) const
 const CUData* CUData::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const
 {
     uint32_t absPartIdx      = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (!isZeroCol(absPartIdx, numPartInCUSize))
     {
@@ -553,7 +553,7 @@ const CUData* CUData::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx)
 const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary) const
 {
     uint32_t absPartIdx      = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (!isZeroRow(absPartIdx, numPartInCUSize))
     {
@@ -578,7 +578,7 @@ const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx
 const CUData* CUData::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const
 {
     uint32_t absPartIdx      = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (!isZeroCol(absPartIdx, numPartInCUSize))
     {
@@ -614,7 +614,7 @@ const CUData* CUData::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartU
         return NULL;
 
     uint32_t absPartIdxRT    = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (lessThanCol(absPartIdxRT, numPartInCUSize - 1, numPartInCUSize))
     {
@@ -651,7 +651,7 @@ const CUData* CUData::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUn
         return NULL;
 
     uint32_t absPartIdxLB    = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (lessThanRow(absPartIdxLB, numPartInCUSize - 1, numPartInCUSize))
     {
@@ -659,7 +659,7 @@ const CUData* CUData::getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUn
         {
             if (curPartUnitIdx > g_rasterToZscan[absPartIdxLB + numPartInCUSize - 1])
             {
-                uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1) * m_encData->m_numPartInCUSize;
+                uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1) * m_slice->m_sps->numPartInCUSize;
                 blPartUnitIdx = g_rasterToZscan[absPartIdxLB + numPartInCUSize - 1];
                 if (isEqualRowOrCol(absPartIdxLB, absZorderCUIdxLB, numPartInCUSize))
                     return m_encData->getPicCTU(m_cuAddr);
@@ -684,7 +684,7 @@ const CUData* CUData::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPa
         return NULL;
 
     uint32_t absPartIdxLB    = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (lessThanRow(absPartIdxLB, numPartInCUSize - partUnitOffset, numPartInCUSize))
     {
@@ -692,7 +692,7 @@ const CUData* CUData::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPa
         {
             if (curPartUnitIdx > g_rasterToZscan[absPartIdxLB + partUnitOffset * numPartInCUSize - 1])
             {
-                uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1) * m_encData->m_numPartInCUSize;
+                uint32_t absZorderCUIdxLB = g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1) * m_slice->m_sps->numPartInCUSize;
                 blPartUnitIdx = g_rasterToZscan[absPartIdxLB + partUnitOffset * numPartInCUSize - 1];
                 if (isEqualRowOrCol(absPartIdxLB, absZorderCUIdxLB, numPartInCUSize))
                     return m_encData->getPicCTU(m_cuAddr);
@@ -719,7 +719,7 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
         return NULL;
 
     uint32_t absPartIdxRT    = g_zscanToRaster[curPartUnitIdx];
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
 
     if (lessThanCol(absPartIdxRT, numPartInCUSize - partUnitOffset, numPartInCUSize))
     {
@@ -757,7 +757,7 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
 /* Get left QpMinCu */
 const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
     uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
@@ -775,7 +775,7 @@ const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxI
 /* Get above QpMinCu */
 const CUData* CUData::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+    uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
     uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
@@ -1296,7 +1296,7 @@ void CUData::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32
 
 void CUData::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
 {
-    outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_encData->m_numPartInCUSize];
+    outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_slice->m_sps->numPartInCUSize];
 
     switch (m_partSize[0])
     {
@@ -1334,7 +1334,7 @@ void CUData::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
 void CUData::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) const
 {
     outPartIdxRB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] +
-                                   ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_encData->m_numPartInCUSize +
+                                   ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * m_slice->m_sps->numPartInCUSize +
                                    (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
 
     switch (m_partSize[0])
@@ -1555,7 +1555,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             m_encData->getPicCTU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
-            uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+            uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
             bool bNotLastCol = lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
             bool bNotLastRow = lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
 
@@ -1786,7 +1786,7 @@ int CUData::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int re
             m_encData->getPicCTU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
-            uint32_t numPartInCUSize = m_encData->m_numPartInCUSize;
+            uint32_t numPartInCUSize = m_slice->m_sps->numPartInCUSize;
             bool bNotLastCol = lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
             bool bNotLastRow = lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
 
@@ -2052,7 +2052,7 @@ void CUData::deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const
 
     outPartIdxCenter = m_absIdxInCTU + partAddr; // partition origin.
     outPartIdxCenter = g_rasterToZscan[g_zscanToRaster[outPartIdxCenter]
-                                       + (partHeight >> (LOG2_UNIT_SIZE + 1)) * m_encData->m_numPartInCUSize
+                                       + (partHeight >> (LOG2_UNIT_SIZE + 1)) * m_slice->m_sps->numPartInCUSize
                                        + (partWidth  >> (LOG2_UNIT_SIZE + 1))];
 }
 

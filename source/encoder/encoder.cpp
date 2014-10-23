@@ -487,7 +487,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             pic_out->analysisData.interData = outFrame->m_interData;
             pic_out->analysisData.intraData = outFrame->m_intraData;
             pic_out->analysisData.numCUsInFrame = slice->m_sps->numCUsInFrame;
-            pic_out->analysisData.numPartitions = outFrame->m_encData->m_numPartitions;
+            pic_out->analysisData.numPartitions = slice->m_sps->numPartitions;
         }
 
         if (slice->m_sliceType == P_SLICE)
@@ -1203,6 +1203,8 @@ void Encoder::initSPS(SPS *sps)
     sps->numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
     sps->numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
     sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
+    sps->numPartitions = NUM_CU_PARTITIONS;
+    sps->numPartInCUSize = 1 << g_maxFullDepth;
 
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;

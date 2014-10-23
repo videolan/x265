@@ -212,6 +212,8 @@ struct SPS
     uint32_t numCuInWidth;
     uint32_t numCuInHeight;
     uint32_t numCUsInFrame;
+    uint32_t numPartitions;
+    uint32_t numPartInCUSize;
 
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;
