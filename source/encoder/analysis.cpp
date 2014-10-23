@@ -1466,129 +1466,81 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         return;
     }
 
-    uint32_t depth = cuGeom.depth;
-    uint32_t cuAddr = ctu.m_cuAddr;
     uint32_t absPartIdx = cuGeom.encodeIdx;
+    int sizeIdx = cuGeom.log2CUSize - 2;
 
-    Mode *bestMode = m_modeDepth[depth].bestMode;
-    CUData* cu;
-    if (depth)
-    {
-        cu = &bestMode->cu;
-        cu->copyFromPic(ctu, cuGeom);
-    }
-    else
-        cu = const_cast<CUData*>(&ctu);
-
+    /* at RD 0, the prediction pixels are accumulated into the top depth predYuv */
     Yuv& predYuv = m_modeDepth[0].bestMode->predYuv;
-    ShortYuv& resiYuv = bestMode->resiYuv;
-    Yuv& recoYuv = bestMode->reconYuv;
+    Yuv& fencYuv = m_modeDepth[0].fencYuv;
 
-    if (ctu.m_predMode[absPartIdx] == MODE_INTER)
+    /* reuse the bestMode data structures at the current depth */
+    Mode *bestMode = m_modeDepth[cuGeom.depth].bestMode;
+    Yuv& reconYuv = bestMode->reconYuv;
+    CUData& cu = bestMode->cu;
+
+    cu.copyFromPic(ctu, cuGeom);
+    m_quant.setQPforQuant(cu);
+
+    uint32_t tuDepthRange[2];
+    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+
+    if (cu.m_predMode[0] == MODE_INTRA)
     {
-        if (!ctu.m_skipFlag[absPartIdx])
-        {
-            const int sizeIdx = cuGeom.log2CUSize - 2;
-            Yuv& origYuv = m_modeDepth[0].fencYuv;
+        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_2Nx2N ? 0 : 1;
 
-            // Calculate Residue
-            pixel* src2 = predYuv.getLumaAddr(absPartIdx);
-            pixel* src1 = origYuv.getLumaAddr(absPartIdx);
-            int16_t* dst = resiYuv.m_buf[0];
-            uint32_t src2stride = bestMode->predYuv.m_size;
-            uint32_t src1stride = origYuv.m_size;
-            uint32_t dststride = resiYuv.m_size;
-            primitives.luma_sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
+        residualTransformQuantIntra(*bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
+        getBestIntraModeChroma(*bestMode, cuGeom);
+        residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
 
-            src2 = predYuv.getCbAddr(absPartIdx);
-            src1 = origYuv.getCbAddr(absPartIdx);
-            dst = resiYuv.m_buf[1];
-            src2stride = bestMode->predYuv.m_csize;
-            src1stride = origYuv.m_csize;
-            dststride = resiYuv.m_csize;
-            primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
-
-            src2 = predYuv.getCrAddr(absPartIdx);
-            src1 = origYuv.getCrAddr(absPartIdx);
-            dst = resiYuv.m_buf[2];
-            primitives.chroma[m_param->internalCsp].sub_ps[sizeIdx](dst, dststride, src1, src2, src1stride, src2stride);
-
-            uint32_t tuDepthRange[2];
-            cu->getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
-
-            // Residual encoding
-            m_quant.setQPforQuant(*cu);
-            residualTransformQuantInter(*bestMode, cuGeom, 0, depth, tuDepthRange);
-
-            if (ctu.m_mergeFlag[absPartIdx] && cu->m_partSize[0] == SIZE_2Nx2N && !cu->getQtRootCbf(0))
-            {
-                cu->setSkipFlagSubParts(true);
-                cu->updatePic(depth);
-            }
-            else
-            {
-                cu->updatePic(depth);
-
-                // Generate Recon
-                pixel* pred = predYuv.getLumaAddr(absPartIdx);
-                int16_t* res = resiYuv.m_buf[0];
-                pixel* reco = recoYuv.m_buf[0];
-                dststride = recoYuv.m_size;
-                src1stride = predYuv.m_size;
-                src2stride = resiYuv.m_size;
-                primitives.luma_add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
-
-                pred = predYuv.getCbAddr(absPartIdx);
-                res = resiYuv.m_buf[1];
-                reco = recoYuv.m_buf[1];
-                dststride = recoYuv.m_csize;
-                src1stride = predYuv.m_csize;
-                src2stride = resiYuv.m_csize;
-                primitives.chroma[m_param->internalCsp].add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
-
-                pred = predYuv.getCrAddr(absPartIdx);
-                res = resiYuv.m_buf[2];
-                reco = recoYuv.m_buf[2];
-                primitives.chroma[m_param->internalCsp].add_ps[sizeIdx](reco, dststride, pred, res, src1stride, src2stride);
-                recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
-                checkDQP(*cu, cuGeom);
-                return;
-            }
-        }
-
-        // Generate Recon
-        int part = partitionFromLog2Size(cuGeom.log2CUSize);
-        PicYuv& reconPic = *m_frame->m_reconPicYuv;
-        pixel* src = predYuv.getLumaAddr(absPartIdx);
-        pixel* dst = reconPic.getLumaAddr(cuAddr, absPartIdx);
-        uint32_t srcstride = predYuv.m_size;
-        intptr_t dststride = reconPic.m_stride;
-        primitives.luma_copy_pp[part](dst, dststride, src, srcstride);
-
-        src = predYuv.getCbAddr(absPartIdx);
-        dst = reconPic.getCbAddr(cuAddr, absPartIdx);
-        srcstride = predYuv.m_csize;
-        dststride = reconPic.m_strideC;
-        primitives.chroma[m_param->internalCsp].copy_pp[part](dst, dststride, src, srcstride);
-
-        src = predYuv.getCrAddr(absPartIdx);
-        dst = reconPic.getCrAddr(cuAddr, absPartIdx);
-        primitives.chroma[m_param->internalCsp].copy_pp[part](dst, dststride, src, srcstride);
+        /* copy the reconstructed part to the recon pic for later intra
+         * predictions */
+        reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, absPartIdx);
     }
     else
     {
-        m_quant.setQPforQuant(*cu);
+        X265_CHECK(!ctu.m_skipFlag[absPartIdx], "skip not expected prior to transform\n");
 
-        uint32_t tuDepthRange[2];
-        bestMode->cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
-        bestMode->cu.setTrIdxSubParts((cuGeom.log2CUSize > tuDepthRange[0]) ? 1 : 0, absPartIdx, depth);
+        /* Calculate residual for current CU part into depth sized resiYuv */
 
-        generateCoeffRecon(*bestMode, cuGeom);
-        recoYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, absPartIdx);
-        bestMode->cu.updatePic(depth);
+        ShortYuv& resiYuv = bestMode->resiYuv;
+
+        primitives.luma_sub_ps[sizeIdx](resiYuv.m_buf[0], resiYuv.m_size,
+                                        fencYuv.getLumaAddr(absPartIdx), predYuv.getLumaAddr(absPartIdx),
+                                        fencYuv.m_size, predYuv.m_size);
+
+        primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[1], resiYuv.m_csize,
+                                        fencYuv.getCbAddr(absPartIdx), predYuv.getCbAddr(absPartIdx),
+                                        fencYuv.m_csize, predYuv.m_csize);
+
+        primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[2], resiYuv.m_csize,
+                                        fencYuv.getCrAddr(absPartIdx), predYuv.getCrAddr(absPartIdx),
+                                        fencYuv.m_csize, predYuv.m_csize);
+
+        residualTransformQuantInter(*bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
+
+        if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
+            cu.setSkipFlagSubParts(true);
+        else if (cu.getQtRootCbf(0))
+        {
+            /* residualTransformQuantInter() wrote transformed residual back into
+             * resiYuv. Generate the recon pixels by adding it to the prediction */
+
+            primitives.luma_add_ps[sizeIdx](reconYuv.m_buf[0], reconYuv.m_size,
+                                            predYuv.getLumaAddr(absPartIdx), resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
+
+            primitives.chroma[m_csp].add_ps[sizeIdx](reconYuv.m_buf[1], reconYuv.m_csize,
+                                            predYuv.getCbAddr(absPartIdx), resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+            primitives.chroma[m_csp].add_ps[sizeIdx](reconYuv.m_buf[2], reconYuv.m_csize,
+                                            predYuv.getCrAddr(absPartIdx), resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+
+            /* copy the reconstructed part to the recon pic for later intra
+             * predictions */
+            reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, absPartIdx);
+        }
     }
 
-    checkDQP(*cu, cuGeom);
+    checkDQP(cu, cuGeom);
+    cu.updatePic(cuGeom.depth);
 }
 
 /* check whether current try is the best with identifying the depth of current try */
