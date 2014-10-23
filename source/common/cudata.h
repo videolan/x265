@@ -105,6 +105,7 @@ class CUData
 public:
 
     static cubcast_t s_partSet[NUM_FULL_DEPTH]; // pointer to broadcast set functions per absolute depth
+    static uint32_t  s_numPartInCUSize;
 
     FrameData*    m_encData;
     const Slice*  m_slice;
