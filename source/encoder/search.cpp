@@ -167,7 +167,12 @@ void Search::xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t 
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
     int vChromaShift = CHROMA_V_SHIFT(m_csp);
 
-    if ((log2TrSize > 2) && !(m_csp == X265_CSP_I444))
+    bool mCodeAll = true;
+    const uint32_t numPels = 1 << (log2TrSize * 2 - hChromaShift - vChromaShift);
+    if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
+        mCodeAll = false;
+
+    if (mCodeAll)
     {
         if (!trDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, trDepth - 1))
             m_entropyCoder.codeQtCbf(cu, absPartIdx, absPartIdxStep, (width >> hChromaShift), (height >> vChromaShift), TEXT_CHROMA_U, trDepth, !subdiv);
