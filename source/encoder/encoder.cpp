@@ -174,16 +174,6 @@ void Encoder::create()
         m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
         m_threadLocalData[i].analysis.initSearch(m_param, m_scalingList);
         m_threadLocalData[i].analysis.create(m_threadLocalData);
-        if (m_param->noiseReduction)
-        {
-            m_threadLocalData[i].nr = X265_MALLOC(NoiseReduction, m_param->frameNumThreads);
-            if (m_threadLocalData[i].nr)
-                memset(m_threadLocalData[i].nr, 0, sizeof(NoiseReduction) * m_param->frameNumThreads);
-            else
-                m_param->noiseReduction = 0;
-        }
-        else
-            m_threadLocalData[i].nr = NULL;
     }
 
     if (!m_param->bEnableWavefront)

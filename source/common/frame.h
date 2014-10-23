@@ -45,7 +45,6 @@ public:
      * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
     FrameData*        m_encData;
     PicYuv*           m_reconPicYuv;
-    int               m_frameEncoderID;     // the ID of the FrameEncoder encoding this frame
 
     /* Data associated with x265_picture */
     PicYuv*           m_origPicYuv;

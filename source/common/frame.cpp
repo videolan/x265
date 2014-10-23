@@ -31,7 +31,6 @@ Frame::Frame()
 {
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
-    m_frameEncoderID = 0;
     m_encData = NULL;
     m_reconPicYuv = NULL;
     m_next = NULL;

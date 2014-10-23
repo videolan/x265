@@ -123,13 +123,8 @@ protected:
 struct ThreadLocalData
 {
     Analysis analysis;
-    NoiseReduction* nr; // Array of NR structures, one for each frameEncoder
 
-    void destroy()
-    {
-        analysis.destroy();
-        X265_FREE(nr);
-    }
+    void destroy() { analysis.destroy(); }
 };
 
 }

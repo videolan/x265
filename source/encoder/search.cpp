@@ -70,6 +70,8 @@ bool Search::initSearch(x265_param *param, ScalingList& scalingList)
     m_me.setSubpelRefine(param->subpelRefine);
 
     bool ok = m_quant.init(m_bEnableRDOQ, param->psyRdoq, scalingList, m_entropyCoder);
+    if (m_param->noiseReduction)
+        ok &= m_quant.allocNoiseReduction(m_param);
     ok &= Predict::allocBuffers(param->internalCsp);
 
     /* When frame parallelism is active, only 'refLagPixels' of reference frames will be guaranteed

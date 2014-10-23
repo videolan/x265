@@ -378,11 +378,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         if (jobId)
             slave->m_me.setSourcePlane(m_frame->m_origPicYuv->m_picOrg[0], m_frame->m_origPicYuv->m_stride);
         else
-        {
-            if (m_param->noiseReduction) /* TODO: move to setQPforQuant() */
-                slave->m_quant.m_nr = &m_tld[threadId].nr[m_frame->m_frameEncoderID];
             slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
-        }
     }
 
     ModeDepth& md = m_modeDepth[m_curGeom->depth];

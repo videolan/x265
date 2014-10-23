@@ -51,6 +51,7 @@ public:
     FrameData*     m_freeListNext;
     PicYuv*        m_reconPicYuv;
     bool           m_bHasReferences;   /* used during DPB/RPS updates */
+    int            m_frameEncoderID;   /* the ID of the FrameEncoder encoding this frame */
 
     CUDataMemPool  m_cuMemPool;
     CUData*        m_picCTU;

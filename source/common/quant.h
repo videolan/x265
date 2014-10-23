@@ -78,12 +78,14 @@ protected:
 public:
 
     NoiseReduction*    m_nr;
+    NoiseReduction*    m_frameNr; // Array of NR structures, one for each frameEncoder
 
     Quant();
     ~Quant();
 
     /* one-time setup */
     bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
+    bool allocNoiseReduction(x265_param* param);
 
     /* CU setup */
     void setQPforQuant(const CUData& ctu);

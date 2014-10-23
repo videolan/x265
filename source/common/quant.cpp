@@ -156,6 +156,7 @@ Quant::Quant()
     m_resiDctCoeff = NULL;
     m_fencDctCoeff = NULL;
     m_fencShortBuf = NULL;
+    m_frameNr      = NULL;
     m_nr           = NULL;
 }
 
@@ -172,16 +173,27 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     return m_resiDctCoeff && m_fencShortBuf;
 }
 
+bool Quant::allocNoiseReduction(x265_param* param)
+{
+    m_frameNr = X265_MALLOC(NoiseReduction, param->frameNumThreads);
+    if (m_frameNr)
+        memset(m_frameNr, 0, sizeof(NoiseReduction) * param->frameNumThreads);
+    else
+        return false;
+    return true;
+}
+
 Quant::~Quant()
 {
+    X265_FREE(m_frameNr);
     X265_FREE(m_resiDctCoeff);
     X265_FREE(m_fencShortBuf);
 }
 
 void Quant::setQPforQuant(const CUData& ctu)
 {
+    m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
     int qpy = ctu.m_qp[0];
-
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
     setChromaQP(qpy + ctu.m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, ctu.m_chromaFormat);
     setChromaQP(qpy + ctu.m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, ctu.m_chromaFormat);

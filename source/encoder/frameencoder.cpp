@@ -184,7 +184,7 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
 bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
     m_frame = curFrame;
-    m_frame->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
+    curFrame->m_encData->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     curFrame->m_encData->m_slice->m_mref = m_mref;
     if (!m_cuGeoms)
     {
@@ -457,7 +457,7 @@ void FrameEncoder::compressFrame()
     {
         for (int i = 0; i < m_top->m_numThreadLocalData; i++)
         {
-            NoiseReduction* nr = &m_top->m_threadLocalData[i].nr[m_frameEncoderID];
+            NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
             for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
             {
                 for(int coeff = 0; coeff < MAX_NUM_TR_COEFFS; coeff++)
@@ -475,7 +475,7 @@ void FrameEncoder::compressFrame()
     {
         for (int i = 0; i < m_top->m_numThreadLocalData; i++)
         {
-            NoiseReduction* nr = &m_top->m_threadLocalData[i].nr[m_frameEncoderID];
+            NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
             memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
             memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
             memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
@@ -704,11 +704,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Slice *slice = curEncData.m_slice;
     PicYuv* fencPic = m_frame->m_origPicYuv;
 
-    // setup thread-local data
-    if (m_param->noiseReduction)
-        tld.analysis.m_quant.m_nr = &tld.nr[m_frameEncoderID];
     tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-    tld.analysis.setQP(*slice, slice->m_sliceQp);
 
     int64_t startTime = x265_mdate();
     const uint32_t numCols = m_numCols;
@@ -746,6 +742,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             ctu->setQPSubParts(qp, 0, 0);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
+        else
+            tld.analysis.setQP(*slice, slice->m_sliceQp);
 
         if (m_param->bEnableWavefront && !col && row)
         {
