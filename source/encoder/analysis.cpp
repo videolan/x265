@@ -1402,7 +1402,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
         }
     }
 
-    cu->setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTrDepth);
+    cu->setLumaIntraDirSubParts((uint8_t)bmode, absPartIdx, depth + initTrDepth);
     intraMode.initCosts();
     intraMode.totalBits = bbits;
     intraMode.distortion = bsad;

@@ -104,6 +104,8 @@ class CUData
 {
 public:
 
+    static cubcast_t s_partSet[NUM_FULL_DEPTH]; // pointer to broadcast set functions per absolute depth
+
     FrameData*    m_encData;
     const Slice*  m_slice;
 
@@ -175,14 +177,14 @@ public:
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
-    void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)                        { memset(m_qp + absPartIdx, (char)qp, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setTrIdxSubParts(uint32_t trIdx, uint32_t absPartIdx, uint32_t depth)             { memset(m_trIdx + absPartIdx, trIdx, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setLumaIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)        { memset(m_lumaIntraDir + absPartIdx, dir, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setChromIntraDirSubParts(uint32_t dir, uint32_t absPartIdx, uint32_t depth)       { memset(m_chromaIntraDir + absPartIdx, dir, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setCbfSubParts(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth) { memset(m_cbf[ttype] + absPartIdx, cbf, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setCbfPartRange(uint32_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes)             { memset(m_cbf[ttype] + absPartIdx, cbf, coveredPartIdxes); }
-    void     setTransformSkipSubParts(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth)             { memset(m_transformSkip[ttype] + absPartIdx, tskip, NUM_CU_PARTITIONS >> (depth << 1)); }
-    void     setTransformSkipPartRange(uint32_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
+    void     setQPSubParts(int qp, uint32_t absPartIdx, uint32_t depth)                       { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)(char)qp); }
+    void     setTrIdxSubParts(uint8_t trIdx, uint32_t absPartIdx, uint32_t depth)             { s_partSet[depth](m_trIdx + absPartIdx, trIdx); }
+    void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
+    void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
+    void     setCbfSubParts(uint8_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_cbf[ttype] + absPartIdx, cbf); }
+    void     setCbfPartRange(uint8_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_cbf[ttype] + absPartIdx, cbf, coveredPartIdxes); }
+    void     setTransformSkipSubParts(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_transformSkip[ttype] + absPartIdx, tskip); }
+    void     setTransformSkipPartRange(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
 
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
     void     setTransformSkipSubParts(uint8_t val) { m_partSet(m_transformSkip[0], val); m_partSet(m_transformSkip[1], val); m_partSet(m_transformSkip[2], val); }

@@ -32,6 +32,10 @@ using namespace x265;
 namespace {
 // file private namespace
 
+/* for all bcast* and copy* functions, dst and src are aligned to MIN(size, 32) */
+
+void bcast1(uint8_t* dst, uint8_t val)  { dst[0] = val; }
+
 void copy4(uint8_t* dst, uint8_t* src)  { ((uint32_t*)dst)[0] = ((uint32_t*)src)[0]; }
 void bcast4(uint8_t* dst, uint8_t val)  { ((uint32_t*)dst)[0] = 0x01010101 * val; }
 
@@ -46,6 +50,8 @@ void bcast64(uint8_t* dst, uint8_t val) { uint64_t bval = 0x0101010101010101ULL 
                                           ((uint64_t*)dst)[0] = bval; ((uint64_t*)dst)[1] = bval; ((uint64_t*)dst)[2] = bval; ((uint64_t*)dst)[3] = bval;
                                           ((uint64_t*)dst)[4] = bval; ((uint64_t*)dst)[5] = bval; ((uint64_t*)dst)[6] = bval; ((uint64_t*)dst)[7] = bval; }
 
+/* at 256 bytes, memset/memcpy will probably use SIMD more effectively than our uint64_t hack,
+ * but hand-written assembly would beat it. */
 void copy256(uint8_t* dst, uint8_t* src) { memcpy(dst, src, 256); }
 void bcast256(uint8_t* dst, uint8_t val) { memset(dst, val, 256); }
 
@@ -139,6 +145,8 @@ const uint32_t partAddrTable[8][4] =
 
 }
 
+cubcast_t CUData::s_partSet[NUM_FULL_DEPTH] = { NULL, NULL, NULL, NULL, NULL };
+
 CUData::CUData()
 {
     memset(this, 0, sizeof(*this));
@@ -150,6 +158,37 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t numPartition, ui
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
     m_chromaFormat  = csp;
     m_numPartitions = numPartition;
+
+    if (!s_partSet[0])
+    {
+        switch (g_maxLog2CUSize)
+        {
+        case 6:
+            s_partSet[0] = bcast256;
+            s_partSet[1] = bcast64;
+            s_partSet[2] = bcast16;
+            s_partSet[3] = bcast4;
+            s_partSet[4] = bcast1;
+            break;
+        case 5:
+            s_partSet[0] = bcast64;
+            s_partSet[1] = bcast16;
+            s_partSet[2] = bcast4;
+            s_partSet[3] = bcast1;
+            s_partSet[4] = NULL;
+            break;
+        case 4:
+            s_partSet[0] = bcast16;
+            s_partSet[1] = bcast4;
+            s_partSet[2] = bcast1;
+            s_partSet[3] = NULL;
+            s_partSet[4] = NULL;
+            break;
+        default:
+            X265_CHECK(0, "unexpected CTU size\n");
+            break;
+        }
+    }
 
     switch (m_numPartitions)
     {
