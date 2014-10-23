@@ -344,12 +344,17 @@ void Analysis::parallelME(int threadId, int meId)
         slave = this;
     else
     {
-        PicYuv* fencPic = m_frame->m_origPicYuv;
         slave = &m_tld[threadId].analysis;
-        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
         slave->setQP(*m_slice, m_rdCost.m_qp);
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
+
+        PicYuv* fencPic = m_frame->m_origPicYuv;
+        pixel* pu = fencPic->getLumaAddr(m_curMECu->m_cuAddr, m_curGeom->encodeIdx + m_puAbsPartIdx);
+        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
+        slave->m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
+
+        slave->prepMotionCompensation(m_curMECu, *m_curGeom, m_curPart);
     }
 
     if (meId < m_slice->m_numRefIdx[0])

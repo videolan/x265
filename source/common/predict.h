@@ -75,11 +75,11 @@ public:
     int       m_csp;
 
     /* cached CU information for prediction */
-    int       m_width;
-    int       m_height; 
-    uint32_t  m_partAddr;
-    uint32_t  m_cuAddr;
-    uint32_t  m_zOrderIdxinCU; // sub-part absPartIdx
+    uint32_t  m_ctuAddr;      // raster index of current CTU within its picture
+    uint32_t  m_cuAbsPartIdx; // z-order index of current CU within its CTU
+    uint32_t  m_puAbsPartIdx; // z-order index of current PU with its CU
+    int       m_puWidth;
+    int       m_puHeight;
     int       m_refIdx0;
     int       m_refIdx1;
 
