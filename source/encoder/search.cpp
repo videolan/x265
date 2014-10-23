@@ -260,7 +260,7 @@ uint32_t Search::calcIntraChromaRecon(Mode& mode, const CUGeom& cuGeom, uint32_t
 
     uint32_t zorder           = cuGeom.encodeIdx + absPartIdx;
     pixel*   reconIPred       = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, zorder);
-    uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
+    intptr_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
     bool     useTransformSkipC = !!cu->m_transformSkip[ttype][absPartIdx];
     int      part = partitionFromLog2Size(log2TrSizeC);
     int      sizeIdxC = log2TrSizeC - 2;
@@ -356,7 +356,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
         const uint32_t reconQtStride = MAX_CU_SIZE;
 
         pixel*   recon     = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-        uint32_t picStride = m_frame->m_reconPicYuv->m_stride;
+        intptr_t picStride = m_frame->m_reconPicYuv->m_stride;
 
         // store original entropy coding status
         if (m_bEnableRDOQ)
@@ -485,7 +485,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
         {
             /* copy from int16 recon buffer to reconPic (bad on two counts) */
             pixel*   reconIPred = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-            uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
+            intptr_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
             primitives.square_copy_sp[sizeIdx](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
             if (checkTransformSkip)
@@ -560,7 +560,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
             const uint32_t reconQtStride = MAX_CU_SIZE;
 
             pixel*   dst       = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, zorder);
-            uint32_t dststride = m_frame->m_reconPicYuv->m_stride;
+            intptr_t dststride = m_frame->m_reconPicYuv->m_stride;
             int sizeIdx = log2TrSize - 2;
             primitives.square_copy_sp[sizeIdx](dst, dststride, reconQt, reconQtStride);
         }
@@ -608,7 +608,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
 
         uint32_t zorder           = cuGeom.encodeIdx + absPartIdx;
         pixel*   reconIPred       = m_frame->m_reconPicYuv->getLumaAddr(cu->m_cuAddr, zorder);
-        uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
+        intptr_t reconIPredStride = m_frame->m_reconPicYuv->m_stride;
 
         bool     useTransformSkip = !!cu->m_transformSkip[0][absPartIdx];
 
@@ -912,7 +912,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
                 {
                     /* copy from int16 recon buffer to reconPic (bad on two counts) */
                     pixel*   reconIPred = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu->m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
-                    uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
+                    intptr_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
                     primitives.square_copy_sp[log2TrSizeC - 2](reconIPred, reconIPredStride, reconQt, reconQtStride);
 
                     cu->setCbfPartRange(singleCbfC << trDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
