@@ -163,3 +163,22 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t absP
         primitives.chroma[m_csp].addAvg[part](srcV0, srcV1, dstV, srcYuv0.m_csize, srcYuv1.m_csize, m_csize);
     }
 }
+
+void Yuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size) const
+{
+    const pixel* src = getLumaAddr(absPartIdx);
+    pixel* dst = dstYuv.getLumaAddr(absPartIdx);
+    primitives.square_copy_pp[log2Size - 2](dst, dstYuv.m_size, const_cast<pixel*>(src), m_size);
+}
+
+void Yuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const
+{
+    int part = partitionFromLog2Size(log2SizeL);
+    const pixel* srcU = getCbAddr(absPartIdx);
+    const pixel* srcV = getCrAddr(absPartIdx);
+    pixel* dstU = dstYuv.getCbAddr(absPartIdx);
+    pixel* dstV = dstYuv.getCrAddr(absPartIdx);
+
+    primitives.chroma[m_csp].copy_pp[part](dstU, dstYuv.m_csize, const_cast<pixel*>(srcU), m_csize);
+    primitives.chroma[m_csp].copy_pp[part](dstV, dstYuv.m_csize, const_cast<pixel*>(srcV), m_csize);
+}
