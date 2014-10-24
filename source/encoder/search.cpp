@@ -2442,7 +2442,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     X265_CHECK(cu.m_depth[0] == cu.m_depth[absPartIdx], "depth not matching\n");
     const uint32_t trMode = depth - cu.m_depth[0];
     const uint32_t log2TrSize = g_maxLog2CUSize - depth;
-    const uint32_t subTUDepth = trMode + 1;
     const uint32_t setCbf     = 1 << trMode;
     uint32_t outDist = 0;
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
@@ -2476,13 +2475,11 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     uint32_t singlePsyEnergy = 0;
     uint32_t singleBitsComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
     uint32_t singleDistComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
-    uint32_t singlePsyEnergyComp[MAX_NUM_COMPONENT][2] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
-    uint32_t numSigY = 0;
+    uint32_t singlePsyEnergyComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
     uint32_t bestTransformMode[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
-    uint64_t minCost[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/];
+    uint32_t numSig[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, {0, 0}, {0, 0} };
+    uint64_t minCost[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { MAX_INT64, MAX_INT64 }, {MAX_INT64, MAX_INT64}, {MAX_INT64, MAX_INT64} };
 
-    uint32_t bestCBF[MAX_NUM_COMPONENT];
-    uint32_t bestsubTUCBF[MAX_NUM_COMPONENT][2];
     m_entropyCoder.store(m_rqt[depth].rqtRoot);
 
     uint32_t trSize = 1 << log2TrSize;
@@ -2492,8 +2489,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     // code full block
     if (bCheckFull)
     {
-        uint32_t numSigU[2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { 0, 0 };
-        uint32_t numSigV[2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { 0, 0 };
         uint32_t trSizeC = 1 << log2TrSizeC;
         int partSize  = partitionFromLog2Size(log2TrSize);
         int partSizeC = partitionFromLog2Size(log2TrSizeC);
@@ -2516,13 +2511,13 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 
         pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
         int16_t *resi = resiYuv->getLumaAddr(absPartIdx);
-        numSigY = m_quant.transformNxN(cu, fenc, fencYuv->m_size, resi, resiYuv->m_size, coeffCurY, log2TrSize, TEXT_LUMA, absPartIdx, false);
+        numSig[TEXT_LUMA][0] = m_quant.transformNxN(cu, fenc, fencYuv->m_size, resi, resiYuv->m_size, coeffCurY, log2TrSize, TEXT_LUMA, absPartIdx, false);
 
-        cu.setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
+        cu.setCbfSubParts(numSig[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
         m_entropyCoder.resetBits();
         m_entropyCoder.codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
-        if (numSigY)
+        if (numSig[TEXT_LUMA][0])
             m_entropyCoder.codeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
         singleBitsComp[TEXT_LUMA][0] = m_entropyCoder.getNumberOfWrittenBits();
 
@@ -2545,22 +2540,22 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 
                 fenc = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
                 resi = resiYuv->getCbAddr(absPartIdxC);
-                numSigU[tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv->m_csize, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false);
+                numSig[TEXT_CHROMA_U][tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv->m_csize, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false);
 
                 fenc = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
                 resi = resiYuv->getCrAddr(absPartIdxC);
-                numSigV[tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv->m_csize, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
+                numSig[TEXT_CHROMA_V][tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv->m_csize, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
 
-                cu.setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
-                cu.setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_U][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_V][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
                 m_entropyCoder.codeQtCbf(cu, absPartIdxC, TEXT_CHROMA_U, trMode);
-                if (numSigU[tuIterator.section])
+                if (numSig[TEXT_CHROMA_U][tuIterator.section])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurU + subTUOffset, absPartIdxC, log2TrSizeC, TEXT_CHROMA_U);
                 singleBitsComp[TEXT_CHROMA_U][tuIterator.section] = m_entropyCoder.getNumberOfWrittenBits() - singleBitsPrev;
 
                 m_entropyCoder.codeQtCbf(cu, absPartIdxC, TEXT_CHROMA_V, trMode);
-                if (numSigV[tuIterator.section])
+                if (numSig[TEXT_CHROMA_V][tuIterator.section])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurV + subTUOffset, absPartIdxC, log2TrSizeC, TEXT_CHROMA_V);
 
                 uint32_t newBits = m_entropyCoder.getNumberOfWrittenBits();
@@ -2574,13 +2569,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         const uint32_t numCoeffY = 1 << (log2TrSize * 2);
         const uint32_t numCoeffC = 1 << (log2TrSizeC * 2);
 
-        for (uint32_t subTUIndex = 0; subTUIndex < 2; subTUIndex++)
-        {
-            minCost[TEXT_LUMA][subTUIndex]     = MAX_INT64;
-            minCost[TEXT_CHROMA_U][subTUIndex] = MAX_INT64;
-            minCost[TEXT_CHROMA_V][subTUIndex] = MAX_INT64;
-        }
-
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
         uint32_t distY = primitives.ssd_s[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size);
         uint32_t psyEnergyY = 0;
@@ -2592,9 +2580,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         const uint32_t strideResiY = MAX_CU_SIZE;
         const uint32_t strideResiC = m_rqt[qtLayer].tmpShortYuv.m_csize;
 
-        if (numSigY)
+        if (numSig[TEXT_LUMA][0])
         {
-            m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY); //this is for inter mode only
+            m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSig[TEXT_LUMA][0]); //this is for inter mode only
 
             const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv->getLumaAddr(absPartIdx), resiYuv->m_size, curResiY, strideResiY);
             uint32_t nonZeroPsyEnergyY = 0;
@@ -2623,7 +2611,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                     nullCostY = m_rdCost.calcRdCost(distY, nullBitsY);
                 if (nullCostY < singleCostY)
                 {
-                    numSigY = 0;
+                    numSig[TEXT_LUMA][0] = 0;
 #if CHECKED_BUILD || _DEBUG
                     memset(coeffCurY, 0, sizeof(coeff_t) * numCoeffY);
 #endif
@@ -2652,9 +2640,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 
         singleDistComp[TEXT_LUMA][0] = distY;
         singlePsyEnergyComp[TEXT_LUMA][0] = psyEnergyY;
-        if (!numSigY)
+        if (!numSig[TEXT_LUMA][0])
             primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
-        cu.setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
+        cu.setCbfSubParts(numSig[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
         uint32_t distU = 0;
         uint32_t distV = 0;
@@ -2674,10 +2662,10 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 
                 distU = m_rdCost.scaleChromaDistCb(primitives.ssd_s[log2TrSizeC - 2](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_csize));
 
-                if (numSigU[tuIterator.section])
+                if (numSig[TEXT_CHROMA_U][tuIterator.section])
                 {
                     m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], curResiU, strideResiC, coeffCurU + subTUOffset,
-                                            log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU[tuIterator.section]);
+                                            log2TrSizeC, TEXT_CHROMA_U, false, false, numSig[TEXT_CHROMA_U][tuIterator.section]);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCbAddr(absPartIdxC), resiYuv->m_csize, curResiU, strideResiC);
                     const uint32_t nonZeroDistU = m_rdCost.scaleChromaDistCb(dist);
                     uint32_t nonZeroPsyEnergyU = 0;
@@ -2706,7 +2694,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                             nullCostU = m_rdCost.calcRdCost(distU, nullBitsU);
                         if (nullCostU < singleCostU)
                         {
-                            numSigU[tuIterator.section] = 0;
+                            numSig[TEXT_CHROMA_U][tuIterator.section] = 0;
 #if CHECKED_BUILD || _DEBUG
                             memset(coeffCurU + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
 #endif
@@ -2736,15 +2724,15 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                 singleDistComp[TEXT_CHROMA_U][tuIterator.section] = distU;
                 singlePsyEnergyComp[TEXT_CHROMA_U][tuIterator.section] = psyEnergyU;
 
-                if (!numSigU[tuIterator.section])
+                if (!numSig[TEXT_CHROMA_U][tuIterator.section])
                     primitives.blockfill_s[partSizeC](curResiU, strideResiC, 0);
 
                 distV = m_rdCost.scaleChromaDistCr(primitives.ssd_s[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_csize));
 
-                if (numSigV[tuIterator.section])
+                if (numSig[TEXT_CHROMA_V][tuIterator.section])
                 {
                     m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], curResiV, strideResiC, coeffCurV + subTUOffset,
-                                            log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV[tuIterator.section]);
+                                            log2TrSizeC, TEXT_CHROMA_V, false, false, numSig[TEXT_CHROMA_V][tuIterator.section]/*numSigV[tuIterator.section]*/);
                     uint32_t dist = primitives.sse_ss[partSizeC](resiYuv->getCrAddr(absPartIdxC), resiYuv->m_csize, curResiV, strideResiC);
                     const uint32_t nonZeroDistV = m_rdCost.scaleChromaDistCr(dist);
                     uint32_t nonZeroPsyEnergyV = 0;
@@ -2773,7 +2761,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                             nullCostV = m_rdCost.calcRdCost(distV, nullBitsV);
                         if (nullCostV < singleCostV)
                         {
-                            numSigV[tuIterator.section] = 0;
+                            numSig[TEXT_CHROMA_V][tuIterator.section] = 0;
 #if CHECKED_BUILD || _DEBUG
                             memset(coeffCurV + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
 #endif
@@ -2803,11 +2791,11 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                 singleDistComp[TEXT_CHROMA_V][tuIterator.section] = distV;
                 singlePsyEnergyComp[TEXT_CHROMA_V][tuIterator.section] = psyEnergyV;
 
-                if (!numSigV[tuIterator.section])
+                if (!numSig[TEXT_CHROMA_V][tuIterator.section])
                     primitives.blockfill_s[partSizeC](curResiV, strideResiC, 0);
 
-                cu.setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
-                cu.setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_U][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_V][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
             }
             while (tuIterator.isNextSection());
         }
@@ -2859,13 +2847,13 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
             {
                 singleDistComp[TEXT_LUMA][0] = nonZeroDistY;
                 singlePsyEnergyComp[TEXT_LUMA][0] = nonZeroPsyEnergyY;
-                numSigY = numSigTSkipY;
+                numSig[TEXT_LUMA][0] = numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
                 memcpy(coeffCurY, tsCoeffY, sizeof(coeff_t) * numCoeffY);
                 primitives.square_copy_ss[partSize](curResiY, strideResiY, tsResiY, trSize);
             }
 
-            cu.setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
+            cu.setCbfSubParts(numSig[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
         }
 
         if (bCodeChroma && checkTransformSkipUV)
@@ -2937,7 +2925,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                 {
                     singleDistComp[TEXT_CHROMA_U][tuIterator.section] = nonZeroDistU;
                     singlePsyEnergyComp[TEXT_CHROMA_U][tuIterator.section] = nonZeroPsyEnergyU;
-                    numSigU[tuIterator.section] = numSigTSkipU;
+                    numSig[TEXT_CHROMA_U][tuIterator.section] = numSigTSkipU;
                     bestTransformMode[TEXT_CHROMA_U][tuIterator.section] = 1;
                     memcpy(coeffCurU + subTUOffset, tsCoeffU, sizeof(coeff_t) * numCoeffC);
                     primitives.square_copy_ss[partSizeC](curResiU, strideResiC, tsResiU, trSizeC);
@@ -2968,14 +2956,14 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                 {
                     singleDistComp[TEXT_CHROMA_V][tuIterator.section] = nonZeroDistV;
                     singlePsyEnergyComp[TEXT_CHROMA_V][tuIterator.section] = nonZeroPsyEnergyV;
-                    numSigV[tuIterator.section] = numSigTSkipV;
+                    numSig[TEXT_CHROMA_V][tuIterator.section] = numSigTSkipV;
                     bestTransformMode[TEXT_CHROMA_V][tuIterator.section] = 1;
                     memcpy(coeffCurV + subTUOffset, tsCoeffV, sizeof(coeff_t) * numCoeffC);
                     primitives.square_copy_ss[partSizeC](curResiV, strideResiC, tsResiV, trSizeC);
                 }
 
-                cu.setCbfPartRange(numSigU[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
-                cu.setCbfPartRange(numSigV[tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_U][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
+                cu.setCbfPartRange(numSig[TEXT_CHROMA_V][tuIterator.section] ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
             }
             while (tuIterator.isNextSection());
         }
@@ -3001,16 +2989,16 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         }
 
         m_entropyCoder.codeQtCbf(cu, absPartIdx, TEXT_LUMA, trMode);
-        if (numSigY)
+        if (numSig[TEXT_LUMA][0])
             m_entropyCoder.codeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
 
         if (bCodeChroma)
         {
             if (!splitIntoSubTUs)
             {
-                if (numSigU[0])
+                if (numSig[TEXT_CHROMA_U][0])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
-                if (numSigV[0])
+                if (numSig[TEXT_CHROMA_V][0])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
             }
             else
@@ -3018,13 +3006,13 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
                 uint32_t subTUSize = 1 << (log2TrSizeC * 2);
                 uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
 
-                if (numSigU[0])
+                if (numSig[TEXT_CHROMA_U][0])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurU, absPartIdx, log2TrSizeC, TEXT_CHROMA_U);
-                if (numSigU[1])
+                if (numSig[TEXT_CHROMA_U][1])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurU + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_U);
-                if (numSigV[0])
+                if (numSig[TEXT_CHROMA_V][0])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurV, absPartIdx, log2TrSizeC, TEXT_CHROMA_V);
-                if (numSigV[1])
+                if (numSig[TEXT_CHROMA_V][1])
                     m_entropyCoder.codeCoeffNxN(cu, coeffCurV + subTUSize, absPartIdx + partIdxesPerSubTU, log2TrSizeC, TEXT_CHROMA_V);
             }
         }
@@ -3042,21 +3030,6 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
             singleCost = m_rdCost.calcPsyRdCost(singleDist, singleBits, singlePsyEnergy);
         else
             singleCost = m_rdCost.calcRdCost(singleDist, singleBits);
-
-        bestCBF[TEXT_LUMA] = cu.getCbf(absPartIdx, TEXT_LUMA, trMode);
-        if (bCodeChroma)
-        {
-            for (uint32_t chromId = TEXT_CHROMA_U; chromId <= TEXT_CHROMA_V; chromId++)
-            {
-                bestCBF[chromId] = cu.getCbf(absPartIdx, (TextType)chromId, trMode);
-                if (splitIntoSubTUs)
-                {
-                    uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
-                    for (uint32_t subTU = 0; subTU < 2; subTU++)
-                        bestsubTUCBF[chromId][subTU] = cu.getCbf((absPartIdx + (subTU * partIdxesPerSubTU)), (TextType)chromId, subTUDepth);
-                }
-            }
-        }
     }
 
     // code sub-blocks
@@ -3150,7 +3123,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     mode.psyEnergy = singlePsyEnergy;
 
     cu.setTrIdxSubParts(trMode, absPartIdx, depth);
-    cu.setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
+    cu.setCbfSubParts(numSig[TEXT_LUMA][0] ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
 
     if (bCodeChroma)
     {
@@ -3165,11 +3138,11 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 
                 if (splitIntoSubTUs)
                 {
-                    const uint8_t combinedCBF = (uint8_t)((bestsubTUCBF[chromaId][subTUIndex] << subTUDepth) | (bestCBF[chromaId] << trMode));
-                    cu.setCbfPartRange(combinedCBF, (TextType)chromaId, subTUPartIdx, partIdxesPerSubTU);
+                    uint8_t  combinedSubTUCBF = !!numSig[chromaId][0] | !!numSig[chromaId][1];
+                    cu.setCbfPartRange(((!!numSig[chromaId][subTUIndex] << 1) | combinedSubTUCBF) << trMode, (TextType)chromaId, subTUPartIdx, partIdxesPerSubTU);
                 }
                 else
-                    cu.setCbfPartRange((bestCBF[chromaId] << trMode), (TextType)chromaId, subTUPartIdx, partIdxesPerSubTU);
+                    cu.setCbfPartRange(numSig[chromaId][subTUIndex] ? setCbf : 0, (TextType)chromaId, subTUPartIdx, partIdxesPerSubTU);
             }
         }
     }
