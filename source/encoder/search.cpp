@@ -3067,25 +3067,11 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
             m_entropyCoder.store(m_rqt[depth].rqtTest);
             m_entropyCoder.load(m_rqt[depth].rqtRoot);
         }
+
         uint32_t subdivDist = 0;
         uint32_t subdivBits = 0;
         uint64_t subDivCost = 0;
         uint32_t subDivPsyEnergy = 0;
-        bestCBF[TEXT_LUMA] = cu.getCbf(absPartIdx, TEXT_LUMA, trMode);
-        if (bCodeChroma)
-        {
-            for (uint32_t chromId = TEXT_CHROMA_U; chromId <= TEXT_CHROMA_V; chromId++)
-            {
-                bestCBF[chromId] = cu.getCbf(absPartIdx, (TextType)chromId, trMode);
-                if (splitIntoSubTUs)
-                {
-                    uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
-                    for (uint32_t subTU = 0; subTU < 2; subTU++)
-                        bestsubTUCBF[chromId][subTU] = cu.getCbf((absPartIdx + (subTU * partIdxesPerSubTU)), (TextType)chromId, subTUDepth);
-                }
-            }
-        }
-
         const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
         for (uint32_t i = 0; i < 4; ++i)
         {
