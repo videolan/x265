@@ -170,6 +170,7 @@ public:
     void codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx);
     void codeQtCbf(const CUData& cu, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height, TextType ttype, uint32_t trDepth, bool lowestLevel);
     void codeQtCbf(const CUData& cu, uint32_t absPartIdx, TextType ttype, uint32_t trDepth);
+    void codeQtCbf(uint32_t cbf, TextType ttype, uint32_t trDepth);
     void codeQtCbfZero(TextType ttype, uint32_t trDepth);
     void codeQtRootCbfZero();
     void codeCoeff(const CUData& cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t depthRange[2]);

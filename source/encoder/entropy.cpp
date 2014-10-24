@@ -1472,6 +1472,12 @@ void Entropy::codeQtCbf(const CUData& cu, uint32_t absPartIdx, TextType ttype, u
     encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
+void Entropy::codeQtCbf(uint32_t cbf, TextType ttype, uint32_t trDepth)
+{
+    uint32_t ctx = ctxCbf[ttype][trDepth];
+    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
+}
+
 void Entropy::codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu.m_tqBypass[absPartIdx])
