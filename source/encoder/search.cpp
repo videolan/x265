@@ -881,7 +881,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
                         if (singleCbfCTmp)
                         {
                             m_entropyCoder.resetBits();
-                            m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdx, log2TrSizeC, (TextType)chromaId);
+                            m_entropyCoder.codeCoeffNxN(cu, coeff, absPartIdxC, log2TrSizeC, (TextType)chromaId);
                             bitsTmp = m_entropyCoder.getNumberOfWrittenBits();
                         }
                         else
