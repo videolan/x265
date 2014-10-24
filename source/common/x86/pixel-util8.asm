@@ -1483,6 +1483,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     movd        [r1], m6
     je          .nextH
     add         r1, 4
+    pshufd      m6, m6, 1
 
 .width2:
     pextrw      [r1], m6, 0
