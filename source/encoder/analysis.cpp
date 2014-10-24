@@ -381,6 +381,8 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
 
     ModeDepth& md = m_modeDepth[m_curGeom->depth];
 
+    bool bMergeOnly = m_curGeom->log2CUSize == 6;
+
     switch (jobId)
     {
     case 0:
@@ -390,31 +392,52 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         break;
 
     case 1:
-        slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N, false);
         break;
 
     case 2:
-        slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N, false);
         break;
 
     case 3:
-        slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN, false);
         break;
 
     case 4:
-        slave->checkInter_rd0_4(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU, bMergeOnly);
         break;
 
     case 5:
-        slave->checkInter_rd0_4(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD, bMergeOnly);
         break;
 
     case 6:
-        slave->checkInter_rd0_4(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N, bMergeOnly);
         break;
 
     case 7:
-        slave->checkInter_rd0_4(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N);
+        if (m_param->rdLevel < 5)
+            slave->checkInter_rd0_4(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N);
+        else
+            slave->checkInter_rd5_6(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N, bMergeOnly);
         break;
 
     default:
@@ -480,30 +503,59 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         /* the master worker thread (this one) does merge analysis. By doing
          * merge after all the other jobs are at least started, we usually avoid
          * blocking on another thread. */
-        checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+        if (m_param->rdLevel < 5)
+            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+        else
+            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
         m_modeCompletionEvent.wait();
 
         /* select best inter mode based on sa8d cost */
         Mode *bestInter = &md.pred[PRED_2Nx2N];
-        if (m_param->bEnableRectInter)
-        {
-            if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_Nx2N];
-            if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_Nx2N];
-        }
 
-        if (bTryAmp)
+        if (m_param->rdLevel < 5)
         {
-            if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_2NxnU];
-            if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_2NxnD];
-            if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_nLx2N];
-            if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
-                bestInter = &md.pred[PRED_nRx2N];
+            if (m_param->bEnableRectInter)
+            {
+                if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_Nx2N];
+                if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_Nx2N];
+            }
+
+            if (bTryAmp)
+            {
+                if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_2NxnU];
+                if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_2NxnD];
+                if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_nLx2N];
+                if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_nRx2N];
+            }
+        }
+        else
+        {
+            if (m_param->bEnableRectInter)
+            {
+                if (md.pred[PRED_Nx2N].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_Nx2N];
+                if (md.pred[PRED_Nx2N].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_Nx2N];
+            }
+
+            if (bTryAmp)
+            {
+                if (md.pred[PRED_2NxnU].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_2NxnU];
+                if (md.pred[PRED_2NxnD].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_2NxnD];
+                if (md.pred[PRED_nLx2N].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_nLx2N];
+                if (md.pred[PRED_nRx2N].rdCost < bestInter->rdCost)
+                    bestInter = &md.pred[PRED_nRx2N];
+            }
         }
 
         if (m_param->rdLevel > 2)
