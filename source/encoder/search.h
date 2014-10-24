@@ -51,15 +51,17 @@ struct RQTData
 {
     Entropy  cur;     /* starting context for current CU */
 
-    Entropy  rqtRoot; /* residual quad-tree start context */
-    Entropy  rqtTemp; /* residual quad-tree temp context */
-    Entropy  rqtTest; /* residual quad-tree test context */
-
-    coeff_t* tmpCoeff[3];
-    ShortYuv tmpShortYuv;
-    ShortYuv tmpResiYuv;
-    Yuv      tmpReconYuv;  /* used for psy-rd or other quick measurements */
-
+    /* these are indexed by qtLayer (log2size - 2) so nominally 0=4x4, 1=8x8, 2=16x16, 3=32x32
+     * the coeffRQT and reconQtYuv are allocated to the max CU size at every depth. The parts
+     * which are reconstructed at each depth are valid. At the end, the transform depth table
+     * is walked and the coeff and recon at the final split depths are collected */
+    Entropy  rqtRoot;      /* residual quad-tree start context */
+    Entropy  rqtTemp;      /* residual quad-tree temp context */
+    Entropy  rqtTest;      /* residual quad-tree test context */
+    coeff_t* coeffRQT[3];  /* coeff storage for entire CTU for each RQT layer */
+    ShortYuv reconQtYuv;   /* recon storage for entire CTU for each RQT layer (intra) */
+    ShortYuv resiQtYuv;    /* residual storage for entire CTU for each RQT layer (inter) */
+    
     /* per-depth temp buffers for inter prediction */
     Yuv      tmpPredYuv;
     Yuv      bidirPredYuv[2];
@@ -92,8 +94,8 @@ public:
 
     bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
-    int             m_numLayers;
-    int             m_refLagPixels;
+    uint32_t        m_numLayers;
+    uint32_t        m_refLagPixels;
 
     struct Mode
     {
@@ -214,8 +216,10 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
-    uint32_t xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, ShortYuv* inResiYuv, uint32_t depth,
+    uint32_t xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, ShortYuv& inResiYuv, uint32_t depth,
                                  uint64_t &rdCost, uint32_t &outBits, uint32_t tuDepthRange[2]);
+
+    void     xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
     void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
@@ -228,8 +232,6 @@ protected:
 
     void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
     void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx);
-
-    void     xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
     void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
 
