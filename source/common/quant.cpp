@@ -40,7 +40,7 @@ struct coeffGroupRDStats
 {
     int     nnzBeforePos0;     /* indicates coeff other than pos 0 are coded */
     int64_t codedLevelAndDist; /* distortion and level cost of coded coefficients */
-    int64_t uncodedDist;       /* uncoded distortion cost of coded coefficients */ 
+    int64_t uncodedDist;       /* uncoded distortion cost of coded coefficients */
     int64_t sigCost;           /* cost of signaling significant coeff bitmap */
     int64_t sigCost0;          /* cost of signaling sig coeff bit of coeff 0 */
 };
@@ -169,7 +169,7 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     m_resiDctCoeff = X265_MALLOC(int32_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
-    
+
     return m_resiDctCoeff && m_fencShortBuf;
 }
 
