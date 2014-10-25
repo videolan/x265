@@ -593,24 +593,6 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 }
 
 template<int blockSize>
-void calcRecons(pixel* pred, int16_t* residual, int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
-{
-    for (int y = 0; y < blockSize; y++)
-    {
-        for (int x = 0; x < blockSize; x++)
-        {
-            recqt[x] = (int16_t)Clip(static_cast<int16_t>(pred[x]) + residual[x]);
-            recipred[x] = (pixel)recqt[x];
-        }
-
-        pred += stride;
-        residual += stride;
-        recqt += qtstride;
-        recipred += ipredstride;
-    }
-}
-
-template<int blockSize>
 void transpose(pixel* dst, pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
@@ -1372,11 +1354,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.calcresidual[BLOCK_16x16] = getResidual<16>;
     p.calcresidual[BLOCK_32x32] = getResidual<32>;
     p.calcresidual[BLOCK_64x64] = NULL;
-    p.calcrecon[BLOCK_4x4] = calcRecons<4>;
-    p.calcrecon[BLOCK_8x8] = calcRecons<8>;
-    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
-    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
-    p.calcrecon[BLOCK_64x64] = NULL;
 
     p.transpose[BLOCK_4x4] = transpose<4>;
     p.transpose[BLOCK_8x8] = transpose<8>;

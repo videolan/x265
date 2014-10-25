@@ -270,7 +270,6 @@ struct EncoderPrimitives
     denoiseDct_t    denoiseDct;
 
     calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
-    calcrecon_t     calcrecon[NUM_SQUARE_BLOCKS];
     transpose_t     transpose[NUM_SQUARE_BLOCKS];
 
     var_t           var[NUM_SQUARE_BLOCKS];

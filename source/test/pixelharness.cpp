@@ -217,52 +217,6 @@ bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
     return true;
 }
 
-bool PixelHarness::check_calcrecon(calcrecon_t ref, calcrecon_t opt)
-{
-    ALIGN_VAR_16(int16_t, ref_recq[64 * 64 * 2]);
-    ALIGN_VAR_16(int16_t, opt_recq[64 * 64 * 2]);
-
-    ALIGN_VAR_16(pixel, ref_reco[64 * 64 * 2]);
-    ALIGN_VAR_16(pixel, opt_reco[64 * 64 * 2]);
-
-    ALIGN_VAR_16(pixel, ref_pred[64 * 64 * 2]);
-    ALIGN_VAR_16(pixel, opt_pred[64 * 64 * 2]);
-
-    memset(ref_recq, 0xCD, 64 * 64 * 2 * sizeof(int16_t));
-    memset(opt_recq, 0xCD, 64 * 64 * 2 * sizeof(int16_t));
-    memset(ref_reco, 0xCD, 64 * 64 * 2 * sizeof(pixel));
-    memset(opt_reco, 0xCD, 64 * 64 * 2 * sizeof(pixel));
-    memset(ref_pred, 0xCD, 64 * 64 * 2 * sizeof(pixel));
-    memset(opt_pred, 0xCD, 64 * 64 * 2 * sizeof(pixel));
-
-    int j = 0;
-    for (int i = 0; i < ITERS; i++)
-    {
-        // NOTE: stride must be multiple of 16, because minimum block is 4x4
-        int stride0 = (STRIDE + (rand() % STRIDE)) & ~15;
-        int stride1 = (STRIDE + (rand() % STRIDE)) & ~15;
-        int stride2 = (STRIDE + (rand() % STRIDE)) & ~15;
-        int index1 = rand() % TEST_CASES;
-        int index2 = rand() % TEST_CASES;
-        ref(pixel_test_buff[index1] + j, short_test_buff[index2] + j, ref_recq, ref_pred, stride0, stride1, stride2);
-        checked(opt, pixel_test_buff[index1] + j, short_test_buff[index2] + j, opt_recq, opt_pred, stride0, stride1, stride2);
-
-        if (memcmp(ref_recq, opt_recq, 64 * stride0 * sizeof(int16_t)))
-        {
-            return false;
-        }
-        if (memcmp(ref_pred, opt_pred, 64 * stride2 * sizeof(pixel)))
-        {
-            return false;
-        }
-
-        reportfail();
-        j += INCR;
-    }
-
-    return true;
-}
-
 bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
 {
     int j = 0;
@@ -1301,14 +1255,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
-        if (opt.calcrecon[i])
-        {
-            if (!check_calcrecon(ref.calcrecon[i], opt.calcrecon[i]))
-            {
-                printf("calcRecon width:%d failed!\n", 4 << i);
-                return false;
-            }
-        }
         if (opt.sa8d[i])
         {
             if (!check_pixelcmp(ref.sa8d[i], opt.sa8d[i]))
@@ -1708,12 +1654,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
-        }
-
-        if (opt.calcrecon[i])
-        {
-            HEADER("recon[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.calcrecon[i], ref.calcrecon[i], pbuf1, sbuf1, sbuf1, pbuf1, 64, 64, 64);
         }
 
         if (opt.blockfill_s[i])
