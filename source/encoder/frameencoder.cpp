@@ -791,6 +791,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
+        x265_emms();
 
         if (bIsVbv)
         {
@@ -805,7 +806,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
             if (row == col && row)
             {
-                x265_emms();
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);

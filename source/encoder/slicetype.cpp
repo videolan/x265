@@ -954,9 +954,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
     x265_emms();
     double totalDuration = 0.0;
     for (int j = 0; j <= numframes; j++)
-    {
         totalDuration += (double)m_param->fpsDenom / m_param->fpsNum;
-    }
 
     double averageDuration = totalDuration / (numframes + 1);
 
@@ -967,9 +965,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
         m_est.estimateFrameCost(frames, 0, 0, 0, 0);
 
     while (i > 0 && frames[i]->sliceType == X265_TYPE_B)
-    {
         i--;
-    }
 
     lastnonb = i;
 
@@ -998,9 +994,7 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
     {
         curnonb = i;
         while (frames[curnonb]->sliceType == X265_TYPE_B && curnonb > 0)
-        {
             curnonb--;
-        }
 
         if (curnonb < idx)
             break;
@@ -1320,18 +1314,14 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
             // enableAllRows must be already called
             enqueueRow(0);
             while (!m_bFrameCompleted)
-            {
                 WaveFront::findJob(-1);
-            }
 
             WaveFront::dequeue();
         }
         else
         {
             for (int row = 0; row < m_heightInCU; row++)
-            {
                 processRow(row, -1);
-            }
 
             x265_emms();
         }
@@ -1400,7 +1390,6 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
         }
     }
 
-    x265_emms();
     return cost;
 }
 
@@ -1518,16 +1507,12 @@ void CostEstimate::processRow(int row, int /*threadId*/)
             m_rows[row - 1].m_completed < m_rows[row].m_completed + 2)
         {
             m_rows[row].m_active = false;
-            x265_emms();
             return;
         }
     }
 
     if (row == m_heightInCU - 1)
-    {
         m_bFrameCompleted = true;
-    }
-    x265_emms();
 }
 
 void EstimateRow::init()

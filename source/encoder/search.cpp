@@ -139,6 +139,7 @@ Search::~Search()
 
 void Search::setQP(const Slice& slice, int qp)
 {
+    x265_emms(); /* TODO: if the lambda tables were ints, this would not be necessary */
     m_me.setQP(qp);
     m_rdCost.setQP(slice, qp);
 }
@@ -1452,9 +1453,8 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
             cu.m_cbf[0][offs] |= combCbfY;
     }
 
-    // TODO: remove these two lines
+    // TODO: remove this
     m_entropyCoder.load(m_rqt[depth].cur);
-    x265_emms();
 
     return totalDistortion;
 }
@@ -2091,7 +2091,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         motionCompensation(*predYuv, true, bChroma);
     }
 
-    x265_emms();
     interMode.sa8dBits += totalmebits;
     return true;
 }

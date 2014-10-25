@@ -83,8 +83,6 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
             primitives.luma_copy_pp[LUMA_8x8](mcout + pixoff, stride, tmp, bstride);
         }
     }
-
-    x265_emms();
 }
 
 /* use lowres MVs from lookahead to generate a motion compensated chroma plane.
@@ -158,8 +156,6 @@ void mcChroma(pixel *      mcout,
             }
         }
     }
-
-    x265_emms();
 }
 
 /* Measure sum of 8x8 satd costs between source frame and reference
@@ -215,7 +211,6 @@ uint32_t weightCost(pixel *         fenc,
             for (int x = 8; x < width; x += 8)
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
 
-    x265_emms();
     return cost;
 }
 }
@@ -426,6 +421,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 if (deltaWeight > 127 || deltaWeight <= -128)
                     continue;
 
+                x265_emms();
                 int curScale = scale;
                 int curOffset = (int)(fencMean[plane] - refMean[plane] * curScale / (1 << mindenom) + 0.5f);
                 if (curOffset < -128 || curOffset > 127)
@@ -445,7 +441,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                     WeightParam wsp;
                     SET_WEIGHT(wsp, true, curScale, mindenom, off);
                     uint32_t s = weightCost(orig, fref, weightTemp, stride, cache, width, height, &wsp, !plane) +
-                        sliceHeaderCost(&wsp, lambda, !!plane);
+                                 sliceHeaderCost(&wsp, lambda, !!plane);
                     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, off, bFound, true);
 
                     /* Don't check any more offsets if the previous one had a lower cost than the current one */

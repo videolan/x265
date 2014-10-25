@@ -1123,7 +1123,6 @@ me_hex2:
         }
     }
 
-    x265_emms();
     outQMv = bmv;
     return bcost;
 }

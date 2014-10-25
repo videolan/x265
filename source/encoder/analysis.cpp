@@ -879,8 +879,6 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT] && m_param->rdLevel)
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuGeom.encodeIdx);
-
-    x265_emms(); // TODO: Remove
 }
 
 void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom)
