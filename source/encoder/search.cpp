@@ -167,7 +167,7 @@ void Search::updateModeCost(Mode& m) const
         m.rdCost = m_rdCost.calcRdCost(m.distortion, m.totalBits);
 }
 
-void Search::xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
+void Search::codeSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu.m_depth[0] + trDepth;
     uint32_t trMode     = cu.m_trIdx[absPartIdx];
@@ -199,11 +199,11 @@ void Search::xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t 
 
         uint32_t qtPartNum = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            xEncSubdivCbfQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, absPartIdxStep, width, height);
+            codeSubdivCbfQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, absPartIdxStep, width, height);
     }
 }
 
-void Search::xEncCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype)
+void Search::codeCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype)
 {
     if (!cu.getCbf(absPartIdx, ttype, trDepth))
         return;
@@ -215,7 +215,7 @@ void Search::xEncCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absP
     {
         uint32_t qtPartNum = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            xEncCoeffQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype);
+            codeCoeffQTChroma(cu, trDepth + 1, absPartIdx + part * qtPartNum, ttype);
 
         return;
     }
@@ -970,7 +970,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
     return outDist;
 }
 
-void Search::xSetIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv)
+void Search::extractIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv)
 {
     uint32_t fullDepth = cu.m_depth[0] + trDepth;
     uint32_t trMode    = cu.m_trIdx[absPartIdx];
@@ -1012,7 +1012,7 @@ void Search::xSetIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absP
     {
         uint32_t numQPart = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            xSetIntraResultChromaQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
+            extractIntraResultChromaQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
     }
 }
 
@@ -1486,9 +1486,9 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
                     m_entropyCoder.codeIntraDirChroma(cu, absPartIdxC, modeList);
             }
 
-            xEncSubdivCbfQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep, cuSize, cuSize);
-            xEncCoeffQTChroma(cu, initTrDepth, absPartIdxC, TEXT_CHROMA_U);
-            xEncCoeffQTChroma(cu, initTrDepth, absPartIdxC, TEXT_CHROMA_V);
+            codeSubdivCbfQTChroma(cu, initTrDepth, absPartIdxC, tuIterator.absPartIdxStep, cuSize, cuSize);
+            codeCoeffQTChroma(cu, initTrDepth, absPartIdxC, TEXT_CHROMA_U);
+            codeCoeffQTChroma(cu, initTrDepth, absPartIdxC, TEXT_CHROMA_V);
             uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
             uint64_t cost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(dist, bits, psyEnergy) : m_rdCost.calcRdCost(dist, bits);
 
@@ -1497,7 +1497,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
                 bestCost = cost;
                 bestDist = dist;
                 bestMode = modeList[mode];
-                xSetIntraResultChromaQT(cu, initTrDepth, absPartIdxC, reconYuv);
+                extractIntraResultChromaQT(cu, initTrDepth, absPartIdxC, reconYuv);
                 memcpy(m_qtTempCbf[1], cu.m_cbf[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempCbf[2], cu.m_cbf[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempTransformSkipFlag[1], cu.m_transformSkip[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));

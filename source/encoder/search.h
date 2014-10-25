@@ -202,10 +202,10 @@ protected:
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
     void     xSetIntraResultQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
-    void     xSetIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
+    void     extractIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv);
 
-    void     xEncSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
-    void     xEncCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
+    void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
+    void     codeCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
 
     struct Cost
     {
