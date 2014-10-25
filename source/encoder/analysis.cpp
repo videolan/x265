@@ -92,7 +92,6 @@ bool Analysis::create(ThreadLocalData *tld)
             md.pred[j].cu.initialize(md.cuMemPool, depth, csp, j);
             ok &= md.pred[j].predYuv.create(cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
-            ok &= md.pred[j].resiYuv.create(cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
         }
     }
@@ -111,7 +110,6 @@ void Analysis::destroy()
         {
             m_modeDepth[i].pred[j].predYuv.destroy();
             m_modeDepth[i].pred[j].reconYuv.destroy();
-            m_modeDepth[i].pred[j].resiYuv.destroy();
         }
     }
 }
@@ -776,7 +774,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
                     else if (m_param->rdLevel == 1)
                     {
-                        md.bestMode->resiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
+                        m_rqt[cuGeom.depth].tmpResiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
                         generateCoeffRecon(*md.bestMode, cuGeom);
                     }
                 }
@@ -1491,7 +1489,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
         /* Calculate residual for current CU part into depth sized resiYuv */
 
-        ShortYuv& resiYuv = bestMode->resiYuv;
+        ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
 
         primitives.luma_sub_ps[sizeIdx](resiYuv.m_buf[0], resiYuv.m_size,
                                         fencYuv.getLumaAddr(absPartIdx), predYuv.getLumaAddr(absPartIdx),

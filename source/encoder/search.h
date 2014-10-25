@@ -63,6 +63,7 @@ struct RQTData
     ShortYuv resiQtYuv;    /* residual storage for entire CTU for each RQT layer (inter) */
     
     /* per-depth temp buffers for inter prediction */
+    ShortYuv tmpResiYuv;
     Yuv      tmpPredYuv;
     Yuv      bidirPredYuv[2];
 };
@@ -103,7 +104,6 @@ public:
         const Yuv* fencYuv;
         Yuv        predYuv;
         Yuv        reconYuv;
-        ShortYuv   resiYuv;
         Entropy    contexts;
 
         uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)

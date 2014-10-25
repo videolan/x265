@@ -99,6 +99,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     for (uint32_t i = 0; i <= g_maxCUDepth; i++)
     {
         int cuSize = g_maxCUSize >> i;
+        ok &= m_rqt[i].tmpResiYuv.create(cuSize, param.internalCsp);
         ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp);
         ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp);
         ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, param.internalCsp);
@@ -128,6 +129,7 @@ Search::~Search()
 
     for (uint32_t i = 0; i <= g_maxCUDepth; i++)
     {
+        m_rqt[i].tmpResiYuv.destroy();
         m_rqt[i].tmpPredYuv.destroy();
         m_rqt[i].bidirPredYuv[0].destroy();
         m_rqt[i].bidirPredYuv[1].destroy();
@@ -284,7 +286,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
 
         pixel*   fenc     = const_cast<pixel*>(mode.fencYuv->getLumaAddr(absPartIdx));
         pixel*   pred     = mode.predYuv.getLumaAddr(absPartIdx);
-        int16_t* residual = mode.resiYuv.getLumaAddr(absPartIdx);
+        int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
         uint32_t stride   = mode.fencYuv->m_size;
 
         // init availability pattern
@@ -466,7 +468,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDep
 
     pixel*   fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
     pixel*   pred = predYuv->getLumaAddr(absPartIdx);
-    int16_t* residual = mode.resiYuv.getLumaAddr(absPartIdx);
+    int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
     uint32_t stride = fencYuv->m_size;
     int      sizeIdx = log2TrSize - 2;
 
@@ -633,7 +635,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     {
         pixel*   fenc      = const_cast<pixel*>(mode.fencYuv->getLumaAddr(absPartIdx));
         pixel*   pred      = mode.predYuv.getLumaAddr(absPartIdx);
-        int16_t* residual  = mode.resiYuv.getLumaAddr(absPartIdx);
+        int16_t* residual  = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
         pixel*   picReconY = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
         intptr_t picStride = m_frame->m_reconPicYuv->m_stride;
         uint32_t stride    = mode.fencYuv->m_size;
@@ -814,7 +816,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
 
             pixel*   fenc     = const_cast<Yuv*>(mode.fencYuv)->getChromaAddr(chromaId, absPartIdxC);
             pixel*   pred     = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
-            int16_t* residual = mode.resiYuv.getChromaAddr(chromaId, absPartIdxC);
+            int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t stride   = mode.fencYuv->m_csize;
             uint32_t sizeIdxC = log2TrSizeC - 2;
 
@@ -927,7 +929,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
 
             pixel*   fenc = const_cast<Yuv*>(mode.fencYuv)->getChromaAddr(chromaId, absPartIdxC);
             pixel*   pred = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
-            int16_t* residual = mode.resiYuv.getChromaAddr(chromaId, absPartIdxC);
+            int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t stride = mode.fencYuv->m_csize;
             uint32_t sizeIdxC = log2TrSizeC - 2;
 
@@ -1089,7 +1091,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tr
 {
     CUData& cu = mode.cu;
     Yuv* predYuv = &mode.predYuv;
-    ShortYuv* resiYuv = &mode.resiYuv;
+    ShortYuv* resiYuv = &m_rqt[cuGeom.depth].tmpResiYuv;
     Yuv* reconYuv = &mode.reconYuv;
     const Yuv* fencYuv = mode.fencYuv;
 
@@ -2235,7 +2237,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     CUData& cu = interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;
-    ShortYuv* resiYuv = &interMode.resiYuv;
+    ShortYuv* resiYuv = &m_rqt[cuGeom.depth].tmpResiYuv;
     const Yuv* fencYuv = interMode.fencYuv;
 
     X265_CHECK(!cu.isIntra(0), "intra CU not expected\n");
@@ -2251,7 +2253,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     m_quant.setQPforQuant(interMode.cu);
 
-    interMode.resiYuv.subtract(*fencYuv, *predYuv, log2CUSize);
+    resiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
     cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
@@ -2260,7 +2262,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     uint64_t cost = 0;
     uint32_t bits = 0;
-    xEstimateResidualQT(interMode, cuGeom, 0, interMode.resiYuv, depth, cost, bits, tuDepthRange);
+    xEstimateResidualQT(interMode, cuGeom, 0, *resiYuv, depth, cost, bits, tuDepthRange);
 
     if (!cu.m_tqBypass[0])
     {
@@ -2292,7 +2294,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     }
 
     if (cu.getQtRootCbf(0))
-        saveResidualQTData(cu, interMode.resiYuv, 0, depth);
+        saveResidualQTData(cu, *resiYuv, 0, depth);
 
     /* calculate signal bits for inter/merge/skip coded CU */
     m_entropyCoder.load(m_rqt[depth].cur);
@@ -2363,7 +2365,7 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
     {
         residualTransformQuantInter(mode, cuGeom, 0, cu.m_depth[0], tuDepthRange);
         if (cu.getQtRootCbf(0))
-            mode.reconYuv.addClip(mode.predYuv, mode.resiYuv, cu.m_log2CUSize[0]);
+            mode.reconYuv.addClip(mode.predYuv, m_rqt[cuGeom.depth].tmpResiYuv, cu.m_log2CUSize[0]);
         else
         {
             mode.reconYuv.copyFromYuv(mode.predYuv);
@@ -2383,7 +2385,7 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, const uint32_t depth, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
-    ShortYuv* resiYuv = &mode.resiYuv;
+    ShortYuv* resiYuv = &m_rqt[cuGeom.depth].tmpResiYuv;
     const Yuv* fencYuv = mode.fencYuv;
 
     X265_CHECK(cu.m_depth[0] == cu.m_depth[absPartIdx], "invalid depth\n");
