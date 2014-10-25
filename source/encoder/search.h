@@ -259,7 +259,7 @@ protected:
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
-    void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
+    static void updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
     void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
