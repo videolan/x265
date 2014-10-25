@@ -1431,7 +1431,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
 uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 {
     CUData& cu = intraMode.cu;
-    Yuv* reconYuv = &intraMode.reconYuv;
+    Yuv& reconYuv = intraMode.reconYuv;
 
     uint32_t depth       = cu.m_depth[0];
     uint32_t initTrDepth = (cu.m_partSize[0] != SIZE_2Nx2N) && (cu.m_chromaFormat == X265_CSP_I444 ? 1 : 0);
@@ -1497,7 +1497,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
                 bestCost = cost;
                 bestDist = dist;
                 bestMode = modeList[mode];
-                extractIntraResultChromaQT(cu, initTrDepth, absPartIdxC, reconYuv);
+                extractIntraResultChromaQT(cu, initTrDepth, absPartIdxC, &reconYuv);
                 memcpy(m_qtTempCbf[1], cu.m_cbf[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempCbf[2], cu.m_cbf[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempTransformSkipFlag[1], cu.m_transformSkip[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
@@ -1512,12 +1512,12 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
             pixel *src, *dst;
 
             dst = m_frame->m_reconPicYuv->getCbAddr(cu.m_cuAddr, zorder);
-            src = reconYuv->getCbAddr(absPartIdxC);
-            primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
+            src = reconYuv.getCbAddr(absPartIdxC);
+            primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv.m_csize);
 
             dst = m_frame->m_reconPicYuv->getCrAddr(cu.m_cuAddr, zorder);
-            src = reconYuv->getCrAddr(absPartIdxC);
-            primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv->m_csize);
+            src = reconYuv.getCrAddr(absPartIdxC);
+            primitives.chroma[m_csp].copy_pp[part](dst, dststride, src, reconYuv.m_csize);
         }
 
         memcpy(cu.m_cbf[1] + absPartIdxC, m_qtTempCbf[1], tuIterator.absPartIdxStep * sizeof(uint8_t));
