@@ -220,6 +220,7 @@ protected:
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
     void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
+    void     codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, Cost& costs);
     void     extractIntraResultQT(CUData& cu, Yuv& reconYuv, uint32_t trDepth, uint32_t absPartIdx);
 
     // generate chroma prediction, generate residual and recon
