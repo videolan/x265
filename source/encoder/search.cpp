@@ -1436,12 +1436,12 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
     uint32_t depth       = cu.m_depth[0];
     uint32_t initTrDepth = (cu.m_partSize[0] != SIZE_2Nx2N) && (cu.m_chromaFormat == X265_CSP_I444 ? 1 : 0);
     uint32_t log2TrSize  = cu.m_log2CUSize[0] - initTrDepth;
-    uint32_t absPartIdx  = (NUM_CU_PARTITIONS >> (depth << 1));
+    uint32_t absPartStep = (NUM_CU_PARTITIONS >> (depth << 1));
     uint32_t totalDistortion = 0;
 
     int part = partitionFromLog2Size(log2TrSize);
 
-    TURecurse tuIterator((initTrDepth == 0) ? DONT_SPLIT : QUAD_SPLIT, absPartIdx, 0);
+    TURecurse tuIterator((initTrDepth == 0) ? DONT_SPLIT : QUAD_SPLIT, absPartStep, 0);
 
     do
     {
