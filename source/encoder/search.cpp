@@ -619,6 +619,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDep
     outCost.energy += fullCost.energy;
 }
 
+/* fast luma intra residual generation. Only perform the minimum number of TU splits required by the CU size */
 void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
@@ -628,8 +629,11 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     bool     bCheckFull  = log2TrSize <= depthRange[1];
     bool     bCheckSplit = log2TrSize > depthRange[0];
 
-    if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && log2TrSize == 5 &&
-        m_slice->m_sps->quadtreeTULog2MaxSize >= 4)
+    X265_CHECK(m_slice->m_sliceType != I_SLICE, "residualTransformQuantIntra not intended for I slices\n");
+
+    /* we still respect rdPenalty == 2, we can forbid 32x32 intra TU. rdPenalty = 1 is impossible
+     * since we are not measuring RD cost */
+    if (m_param->rdPenalty == 2 && log2TrSize == 5 && m_slice->m_sps->quadtreeTULog2MaxSize >= 4)
     {
         bCheckFull = false;
         bCheckSplit = true;
@@ -637,17 +641,16 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
 
     if (bCheckFull)
     {
-        // code luma block with given intra prediction mode and store Cbf
-        pixel*   fenc         = const_cast<pixel*>(mode.fencYuv->getLumaAddr(absPartIdx));
-        pixel*   pred         = mode.predYuv.getLumaAddr(absPartIdx);
-        int16_t* residual     = mode.resiYuv.getLumaAddr(absPartIdx);
-        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        coeff_t* coeff        = cu.m_trCoeff[0] + coeffOffsetY;
-        pixel*   picReconY    = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-        intptr_t picStride    = m_frame->m_reconPicYuv->m_stride;
-        uint32_t stride       = mode.fencYuv->m_size;
-        uint32_t sizeIdx      = log2TrSize - 2;
+        pixel*   fenc      = const_cast<pixel*>(mode.fencYuv->getLumaAddr(absPartIdx));
+        pixel*   pred      = mode.predYuv.getLumaAddr(absPartIdx);
+        int16_t* residual  = mode.resiYuv.getLumaAddr(absPartIdx);
+        pixel*   picReconY = m_frame->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+        intptr_t picStride = m_frame->m_reconPicYuv->m_stride;
+        uint32_t stride    = mode.fencYuv->m_size;
+        uint32_t sizeIdx   = log2TrSize - 2;
         uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
+        coeff_t* coeff        = cu.m_trCoeff[TEXT_LUMA] + coeffOffsetY;
 
         initAdiPattern(cu, cuGeom, absPartIdx, trDepth, lumaPredMode);
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
@@ -673,7 +676,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     {
         X265_CHECK(bCheckSplit, "intra luma split state failure\n");
         
-        // code split block
+        /* code split block */
         uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         uint32_t cbf = 0;
         for (uint32_t subPartIdx = 0, absPartIdxSub = absPartIdx; subPartIdx < 4; subPartIdx++, absPartIdxSub += qPartsDiv)
@@ -682,7 +685,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
             cbf |= cu.getCbf(absPartIdxSub, TEXT_LUMA, trDepth + 1);
         }
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
-            cu.m_cbf[0][absPartIdx + offs] |= (cbf << trDepth);
+            cu.m_cbf[TEXT_LUMA][absPartIdx + offs] |= (cbf << trDepth);
     }
 }
 
