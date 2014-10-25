@@ -1418,7 +1418,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     Cost icosts;
     codeIntraLumaQT(intraMode, cuGeom, 0, 0, false, icosts, tuDepthRange);
-    xSetIntraResultQT(cu, 0, 0, reconYuv);
+    extractIntraResultQT(cu, *reconYuv, 0, 0);
 
     intraMode.distortion  = icosts.distortion;
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);

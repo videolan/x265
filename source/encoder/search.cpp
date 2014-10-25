@@ -622,7 +622,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     }
 }
 
-void Search::xSetIntraResultQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv)
+void Search::extractIntraResultQT(CUData& cu, Yuv& reconYuv, uint32_t trDepth, uint32_t absPartIdx)
 {
     uint32_t fullDepth = cu.m_depth[0] + trDepth;
     uint32_t trMode    = cu.m_trIdx[absPartIdx];
@@ -639,13 +639,13 @@ void Search::xSetIntraResultQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx
         memcpy(coeffDestY, coeffSrcY, sizeof(coeff_t) << (log2TrSize * 2));
 
         // copy reconstruction
-        m_rqt[qtLayer].reconQtYuv.copyPartToPartLuma(*reconYuv, absPartIdx, log2TrSize);
+        m_rqt[qtLayer].reconQtYuv.copyPartToPartLuma(reconYuv, absPartIdx, log2TrSize);
     }
     else
     {
         uint32_t numQPart = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            xSetIntraResultQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
+            extractIntraResultQT(cu, reconYuv, trDepth + 1, absPartIdx + part * numQPart);
     }
 }
 
@@ -987,7 +987,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
     return outDist;
 }
 
-void Search::extractIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx, Yuv* reconYuv)
+void Search::extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t trDepth, uint32_t absPartIdx)
 {
     uint32_t fullDepth = cu.m_depth[0] + trDepth;
     uint32_t trMode    = cu.m_trIdx[absPartIdx];
@@ -1022,13 +1022,13 @@ void Search::extractIntraResultChromaQT(CUData& cu, uint32_t trDepth, uint32_t a
         memcpy(coeffDstV, coeffSrcV, sizeof(coeff_t) * numCoeffC);
 
         // copy reconstruction
-        m_rqt[qtLayer].reconQtYuv.copyPartToPartChroma(*reconYuv, absPartIdx, log2TrSizeC + hChromaShift);
+        m_rqt[qtLayer].reconQtYuv.copyPartToPartChroma(reconYuv, absPartIdx, log2TrSizeC + hChromaShift);
     }
     else
     {
         uint32_t numQPart = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         for (uint32_t part = 0; part < 4; part++)
-            extractIntraResultChromaQT(cu, trDepth + 1, absPartIdx + part * numQPart, reconYuv);
+            extractIntraResultChromaQT(cu, reconYuv, trDepth + 1, absPartIdx + part * numQPart);
     }
 }
 
@@ -1352,7 +1352,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
         codeIntraLumaQT(intraMode, cuGeom, initTrDepth, absPartIdx, true, icosts, depthRange);
         totalDistortion += icosts.distortion;
 
-        xSetIntraResultQT(cu, initTrDepth, absPartIdx, reconYuv);
+        extractIntraResultQT(cu, *reconYuv, initTrDepth, absPartIdx);
 
         // set reconstruction for next intra prediction blocks
         if (pu != numPU - 1)
@@ -1513,7 +1513,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
                 bestCost = cost;
                 bestDist = dist;
                 bestMode = modeList[mode];
-                extractIntraResultChromaQT(cu, initTrDepth, absPartIdxC, &reconYuv);
+                extractIntraResultChromaQT(cu, reconYuv, initTrDepth, absPartIdxC);
                 memcpy(m_qtTempCbf[1], cu.m_cbf[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempCbf[2], cu.m_cbf[2] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
                 memcpy(m_qtTempTransformSkipFlag[1], cu.m_transformSkip[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
