@@ -286,7 +286,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
 
     if (mightNotSplit)
     {
-        m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
+        if (mightSplit)
+            m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
 
         pixel*   fenc     = const_cast<pixel*>(mode.fencYuv->getLumaAddr(absPartIdx));
         pixel*   pred     = mode.predYuv.getLumaAddr(absPartIdx);
