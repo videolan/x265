@@ -605,8 +605,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
 
     if (bCheckSplit && !bCheckFull)
     {
-        // code splitted block
-
+        // code split block
         uint32_t qPartsDiv     = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
         uint32_t absPartIdxSub = absPartIdx;
         uint32_t splitCbfY     = 0;
