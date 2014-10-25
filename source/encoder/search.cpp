@@ -160,14 +160,6 @@ void Search::invalidateContexts(int fromDepth)
 void Search::invalidateContexts(int) {}
 #endif
 
-void Search::updateModeCost(Mode& m) const
-{
-    if (m_rdCost.m_psyRd)
-        m.rdCost = m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy);
-    else
-        m.rdCost = m_rdCost.calcRdCost(m.distortion, m.totalBits);
-}
-
 void Search::codeSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, uint32_t absPartIdxStep, uint32_t width, uint32_t height)
 {
     uint32_t fullDepth  = cu.m_depth[0] + trDepth;

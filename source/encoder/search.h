@@ -155,7 +155,6 @@ public:
 
     bool     initSearch(const x265_param& param, ScalingList& scalingList);
     void     setQP(const Slice& slice, int qp);
-    void     updateModeCost(Mode& mode) const;
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
@@ -262,6 +261,8 @@ protected:
     enum { MAX_RD_INTRA_MODES = 16 };
     void     updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
+
+    void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
 };
 }
 
