@@ -649,6 +649,7 @@ void Search::xSetIntraResultQT(CUData& cu, uint32_t trDepth, uint32_t absPartIdx
     }
 }
 
+/* 4:2:2 post-TU split processing */
 void Search::offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx)
 {
     uint32_t depth = cu.m_depth[0];
