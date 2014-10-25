@@ -1332,6 +1332,16 @@ void Encoder::configure(x265_param *p)
     if (p->rdLevel < 2)
         p->psyRd = 0.0;
 
+    if (p->rdLevel < 3)
+    {
+        /* these two options require RDO based CU/TU decisions. RD levels 0,1,2 will not bother */
+        if (p->bCULossless)
+            x265_log(p, X265_LOG_WARNING, "--cu-lossless disabled, requires --rdlevel 3 or higher\n");
+        if (p->bEnableTransformSkip)
+            x265_log(p, X265_LOG_WARNING, "--tskip disabled, requires --rdlevel 3 or higher\n");
+        p->bCULossless = p->bEnableTransformSkip = 0;
+    }
+
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
     if (p->internalCsp == X265_CSP_I444 && p->psyRd)
     {
