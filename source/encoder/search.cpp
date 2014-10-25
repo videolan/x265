@@ -629,17 +629,13 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     uint32_t fullDepth   = cu.m_depth[0] + trDepth;
     uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
     bool     bCheckFull  = log2TrSize <= depthRange[1];
-    bool     bCheckSplit = log2TrSize > depthRange[0];
 
     X265_CHECK(m_slice->m_sliceType != I_SLICE, "residualTransformQuantIntra not intended for I slices\n");
 
     /* we still respect rdPenalty == 2, we can forbid 32x32 intra TU. rdPenalty = 1 is impossible
      * since we are not measuring RD cost */
     if (m_param->rdPenalty == 2 && log2TrSize == 5 && m_slice->m_sps->quadtreeTULog2MaxSize >= 4)
-    {
         bCheckFull = false;
-        bCheckSplit = true;
-    }
 
     if (bCheckFull)
     {
@@ -676,7 +672,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
     }
     else
     {
-        X265_CHECK(bCheckSplit, "intra luma split state failure\n");
+        X265_CHECK(log2TrSize > depthRange[0] || m_param->rdPenalty == 2, "intra luma split state failure\n");
         
         /* code split block */
         uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
