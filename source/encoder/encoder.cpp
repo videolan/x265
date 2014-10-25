@@ -1341,6 +1341,12 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tskip disabled, requires --rdlevel 3 or higher\n");
         p->bCULossless = p->bEnableTransformSkip = 0;
     }
+    if (p->rdLevel < 2)
+    {
+        if (p->bDistributeModeAnalysis)
+            x265_log(p, X265_LOG_WARNING, "--pmode disabled, requires --rdlevel 2 or higher\n");
+        p->bDistributeModeAnalysis = 0;
+    }
 
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
     if (p->internalCsp == X265_CSP_I444 && p->psyRd)
