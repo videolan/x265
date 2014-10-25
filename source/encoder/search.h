@@ -59,7 +59,7 @@ struct RQTData
     Entropy  rqtTemp;      /* residual quad-tree temp context */
     Entropy  rqtTest;      /* residual quad-tree test context */
     coeff_t* coeffRQT[3];  /* coeff storage for entire CTU for each RQT layer */
-    ShortYuv reconQtYuv;   /* recon storage for entire CTU for each RQT layer (intra) */
+    Yuv      reconQtYuv;   /* recon storage for entire CTU for each RQT layer (intra) */
     ShortYuv resiQtYuv;    /* residual storage for entire CTU for each RQT layer (inter) */
     
     /* per-depth temp buffers for inter prediction */
