@@ -540,7 +540,10 @@ Spatial/intra options
 .. option:: --tskip, --no-tskip
 
 	Enable evaluation of transform skip (bypass DCT but still use
-	quantization) coding for intra coded blocks. Default disabled
+	quantization) coding for 4x4 TU coded blocks.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions. Default disabled
 
 .. option:: --tskip-fast, --no-tskip-fast
 
@@ -660,6 +663,9 @@ Mode decision / Analysis
 	optimization. If the global option :option:`--lossless` has been
 	specified, all CUs will be encoded as lossless unconditionally
 	regardless of whether this option was enabled. Default disabled.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions.
 
 .. option:: --signhide, --no-signhide
 
