@@ -76,6 +76,8 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 
 #if _DEBUG && defined(_MSC_VER)
 #define DEBUG_BREAK() __debugbreak()
+#elif __APPLE_CC__
+#define DEBUG_BREAK() __builtin_trap();
 #else
 #define DEBUG_BREAK()
 #endif
