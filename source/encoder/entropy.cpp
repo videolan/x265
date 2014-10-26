@@ -648,7 +648,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
     else if (cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_depth[absPartIdx] &&
              (cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
     {
-        if (log2TrSize > *depthRange)
+        if (log2TrSize > depthRange[0])
         {
             X265_CHECK(subdiv, "subdivision state failure\n");
         }
@@ -657,7 +657,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
             X265_CHECK(!subdiv, "subdivision state failure\n");
         }
     }
-    else if (log2TrSize > *(depthRange + 1))
+    else if (log2TrSize > depthRange[1])
     {
         X265_CHECK(subdiv, "subdivision state failure\n");
     }
@@ -665,13 +665,13 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
-    else if (log2TrSize == *depthRange)
+    else if (log2TrSize == depthRange[0])
     {
         X265_CHECK(!subdiv, "subdivision state failure\n");
     }
     else
     {
-        X265_CHECK(log2TrSize > *depthRange, "transform size failure\n");
+        X265_CHECK(log2TrSize > depthRange[0], "transform size failure\n");
         codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
     }
 
