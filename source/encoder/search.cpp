@@ -802,12 +802,12 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
     uint32_t tuSize = 1 << log2TrSizeC;
     uint32_t outDist = 0;
 
+    uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
     for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
     {
         TextType ttype = (TextType)chromaId;
-        uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
 
         TURecurse tuIterator(splitType, curPartNum, absPartIdx);
         do
@@ -915,12 +915,12 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
     ALIGN_VAR_32(coeff_t, tskipCoeffC[MAX_TS_SIZE * MAX_TS_SIZE]);
     ALIGN_VAR_32(pixel,   tskipReconC[MAX_TS_SIZE * MAX_TS_SIZE]);
 
+    uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
     for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
     {
         TextType ttype = (TextType)chromaId;
-        uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
 
         TURecurse tuIterator(splitType, curPartNum, absPartIdx);
         do
@@ -1090,11 +1090,6 @@ void Search::extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t trDe
 void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx)
 {
     CUData& cu = mode.cu;
-    Yuv* predYuv = &mode.predYuv;
-    ShortYuv* resiYuv = &m_rqt[cuGeom.depth].tmpResiYuv;
-    Yuv* reconYuv = &mode.reconYuv;
-    const Yuv* fencYuv = mode.fencYuv;
-
     uint32_t fullDepth = cu.m_depth[0] + trDepth;
     uint32_t trMode    = cu.m_trIdx[absPartIdx];
     int hChromaShift = CHROMA_H_SHIFT(m_csp);
@@ -1116,37 +1111,33 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tr
                 return;
         }
 
+        ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
         uint32_t tuSize = 1 << log2TrSizeC;
-        uint32_t stride = fencYuv->m_csize;
-        const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
+        uint32_t stride = mode.fencYuv->m_csize;
         const int sizeIdxC = log2TrSizeC - 2;
+
+        uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
+        const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_depth[0] + trDepthC) << 1);
-            TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, curPartNum, absPartIdx);
+            TextType ttype = (TextType)chromaId;
 
+            TURecurse tuIterator(splitType, curPartNum, absPartIdx);
             do
             {
                 uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
 
-                TextType ttype          = (TextType)chromaId;
-                pixel*   fenc           = const_cast<pixel*>(fencYuv->getChromaAddr(chromaId, absPartIdxC));
-                pixel*   pred           = predYuv->getChromaAddr(chromaId, absPartIdxC);
-                int16_t* residual       = resiYuv->getChromaAddr(chromaId, absPartIdxC);
-                pixel*   recon          = reconYuv->getChromaAddr(chromaId, absPartIdxC);
-                uint32_t coeffOffsetC   = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
-                coeff_t* coeff          = cu.m_trCoeff[ttype] + coeffOffsetC;
-                uint32_t zorder         = cuGeom.encodeIdx + absPartIdxC;
-                pixel*   reconIPred     = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, zorder);
-                uint32_t reconIPredStride = m_frame->m_reconPicYuv->m_strideC;
-
-                const bool useTransformSkipC = !!cu.m_transformSkip[ttype][absPartIdxC];
-                cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
+                pixel*   fenc         = const_cast<pixel*>(mode.fencYuv->getChromaAddr(chromaId, absPartIdxC));
+                pixel*   pred         = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
+                int16_t* residual     = resiYuv.getChromaAddr(chromaId, absPartIdxC);
+                pixel*   recon        = mode.reconYuv.getChromaAddr(chromaId, absPartIdxC);
+                uint32_t coeffOffsetC = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
+                coeff_t* coeff        = cu.m_trCoeff[ttype] + coeffOffsetC;
+                pixel*   picReconC    = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+                uint32_t picStride    = m_frame->m_reconPicYuv->m_strideC;
 
                 uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
-
-                // update chroma mode
                 if (chromaPredMode == DM_CHROMA_IDX)
                     chromaPredMode = cu.m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
                 chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
@@ -1155,52 +1146,40 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tr
 
                 predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
 
-                X265_CHECK(!((intptr_t)fenc & (tuSize - 1)), "fenc alignment failure\n");
-                X265_CHECK(!((intptr_t)pred & (tuSize - 1)), "pred alignment failure\n");
-                X265_CHECK(!((intptr_t)residual & (tuSize - 1)), "residual alignment failure\n");
+                X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
+
                 primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
-
-                uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTransformSkipC);
-
-                cu.setCbfPartRange((!!numSig) << trDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
-
+                uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, false);
                 if (numSig)
                 {
-                    // inverse transform
-                    m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], residual, stride, coeff, log2TrSizeC, ttype, true, useTransformSkipC, numSig);
-
-                    // reconstruction
-                    primitives.chroma[X265_CSP_I444].add_ps[sizeIdxC](recon, stride, pred, residual, stride, stride);
-                    primitives.square_copy_pp[sizeIdxC](reconIPred, reconIPredStride, recon, stride);
+                    m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], residual, stride, coeff, log2TrSizeC, ttype, true, false, numSig);
+                    primitives.luma_add_ps[sizeIdxC](recon, stride, pred, residual, stride, stride);
+                    primitives.square_copy_pp[sizeIdxC](picReconC, picStride, recon, stride);
+                    cu.setCbfPartRange(1 << trDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
                 }
                 else
                 {
-#if CHECKED_BUILD || _DEBUG
-                    memset(coeff, 0, sizeof(coeff_t) * tuSize * tuSize);
-#endif
-                    primitives.square_copy_pp[sizeIdxC](recon,      stride,           pred, stride);
-                    primitives.square_copy_pp[sizeIdxC](reconIPred, reconIPredStride, pred, stride);
+                    primitives.square_copy_pp[sizeIdxC](recon, stride, pred, stride);
+                    primitives.square_copy_pp[sizeIdxC](picReconC, picStride, pred, stride);
+                    cu.setCbfPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
                 }
             }
             while (tuIterator.isNextSection());
 
-            if (splitIntoSubTUs)
+            if (splitType == VERTICAL_SPLIT)
                 offsetSubTUCBFs(cu, (TextType)chromaId, trDepth, absPartIdx);
         }
     }
     else
     {
-        uint32_t splitCbfU   = 0;
-        uint32_t splitCbfV   = 0;
-        uint32_t qPartsDiv   = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
-        uint32_t absPartIdxC = absPartIdx;
-        for (uint32_t part = 0; part < 4; part++, absPartIdxC += qPartsDiv)
+        uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
+        uint32_t splitCbfU = 0, splitCbfV = 0;
+        for (uint32_t subPartIdx = 0, absPartIdxC = absPartIdx; subPartIdx < 4; subPartIdx++, absPartIdxC += qPartsDiv)
         {
             residualQTIntraChroma(mode, cuGeom, trDepth + 1, absPartIdxC);
             splitCbfU |= cu.getCbf(absPartIdxC, TEXT_CHROMA_U, trDepth + 1);
             splitCbfV |= cu.getCbf(absPartIdxC, TEXT_CHROMA_V, trDepth + 1);
         }
-
         for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
         {
             cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << trDepth);
