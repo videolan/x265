@@ -303,7 +303,6 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
 {
     m_absIdxInCTU   = cuGeom.encodeIdx;
-    m_numPartitions = cuGeom.numPartitions;
     m_encData       = ctu.m_encData;
     m_slice         = ctu.m_slice;
     m_cuAddr        = ctu.m_cuAddr;
@@ -313,6 +312,7 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
     m_cuAbove       = ctu.m_cuAbove;
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
     m_cuAboveRight  = ctu.m_cuAboveRight;
+    X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)ctu.m_qp[0]);
