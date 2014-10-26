@@ -1609,17 +1609,16 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
     return totalDistortion;
 }
 
-/* estimation of best merge coding */
+/* estimation of best merge coding of an inter PU (not a merge CU) */
 uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, MergeData& m)
 {
     X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
     m.maxNumMergeCand = cu.getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
 
-    /* convert bidir merge candidates into unidir
-     * TODO: why did the HM do this?, why use MV pairs below? */
     if (cu.isBipredRestriction())
     {
+        /* in 8x8 CUs do not allow bidir merge candidates if not 2Nx2N */
         for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
         {
             if (m.interDirNeighbours[mergeCand] == 3)
