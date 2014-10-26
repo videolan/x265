@@ -282,7 +282,7 @@ struct CUDataMemPool
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
     {
-        uint32_t numPartition = MAX_NUM_PARTITIONS >> (depth * 2);
+        uint32_t numPartition = NUM_CU_PARTITIONS >> (depth * 2);
         uint32_t cuSize = g_maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));

@@ -158,7 +158,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     m_chromaFormat  = csp;
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
-    m_numPartitions = MAX_NUM_PARTITIONS >> (depth * 2);
+    m_numPartitions = NUM_CU_PARTITIONS >> (depth * 2);
 
     if (!s_partSet[0])
     {
