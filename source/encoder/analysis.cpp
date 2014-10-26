@@ -375,74 +375,106 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         slave->setQP(*m_slice, m_rdCost.m_qp);
         if (jobId)
             slave->m_me.setSourcePlane(m_frame->m_origPicYuv->m_picOrg[0], m_frame->m_origPicYuv->m_stride);
-        else
-            slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
     }
 
     ModeDepth& md = m_modeDepth[m_curGeom->depth];
 
-    bool bMergeOnly = m_curGeom->log2CUSize == 6;
-
-    switch (jobId)
+    if (m_param->rdLevel <= 4)
     {
-    case 0:
-        slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], *m_curGeom);
-        if (m_param->rdLevel > 2)
-            slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curGeom);
-        break;
+        switch (jobId)
+        {
+        case 0:
+            slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], *m_curGeom);
+            if (m_param->rdLevel > 2)
+            {
+                if (slave != this)
+                    slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
+                slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curGeom);
+            }
+            break;
 
-    case 1:
-        if (m_param->rdLevel < 5)
+        case 1:
             slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N, false);
-        break;
+            break;
 
-    case 2:
-        if (m_param->rdLevel < 5)
+        case 2:
             slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N, false);
-        break;
+            break;
 
-    case 3:
-        if (m_param->rdLevel < 5)
+        case 3:
             slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN, false);
-        break;
+            break;
 
-    case 4:
-        if (m_param->rdLevel < 5)
+        case 4:
             slave->checkInter_rd0_4(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU, bMergeOnly);
-        break;
+            break;
 
-    case 5:
-        if (m_param->rdLevel < 5)
+        case 5:
             slave->checkInter_rd0_4(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD, bMergeOnly);
-        break;
+            break;
 
-    case 6:
-        if (m_param->rdLevel < 5)
+        case 6:
             slave->checkInter_rd0_4(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N, bMergeOnly);
-        break;
+            break;
 
-    case 7:
-        if (m_param->rdLevel < 5)
+        case 7:
             slave->checkInter_rd0_4(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N);
-        else
-            slave->checkInter_rd5_6(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N, bMergeOnly);
-        break;
+            break;
 
-    default:
-        X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
-        break;
+        default:
+            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+            break;
+        }
+    }
+    else
+    {
+        bool bMergeOnly = m_curGeom->log2CUSize == 6;
+        if (slave != this)
+        {
+            slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
+            slave->m_quant.setQPforQuant(md.pred[PRED_2Nx2N].cu);
+        }
+        
+        switch (jobId)
+        {
+        case 0:
+            slave->checkIntra(md.pred[PRED_INTRA], *m_curGeom, SIZE_2Nx2N, NULL);
+            if (m_curGeom->depth == g_maxCUDepth && m_curGeom->log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                slave->checkIntra(md.pred[PRED_INTRA_NxN], *m_curGeom, SIZE_NxN, NULL);
+            break;
+
+        case 1:
+            slave->checkInter_rd5_6(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N, false);
+            break;
+
+        case 2:
+            slave->checkInter_rd5_6(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N, false);
+            break;
+
+        case 3:
+            slave->checkInter_rd5_6(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN, false);
+            break;
+
+        case 4:
+            slave->checkInter_rd5_6(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU, bMergeOnly);
+            break;
+
+        case 5:
+            slave->checkInter_rd5_6(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD, bMergeOnly);
+            break;
+
+        case 6:
+            slave->checkInter_rd5_6(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N, bMergeOnly);
+            break;
+
+        case 7:
+            slave->checkInter_rd5_6(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N, bMergeOnly);
+            break;
+
+        default:
+            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+            break;
+        }
     }
 }
 
@@ -481,7 +513,11 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
         }
         if (bTryIntra)
+        {
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
+            if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
+        }
 
         m_totalNumJobs = 2 + m_param->bEnableRectInter * 2 + bTryAmp * 4;
         m_numAcquiredJobs = !bTryIntra;
@@ -502,19 +538,19 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
         /* the master worker thread (this one) does merge analysis. By doing
          * merge after all the other jobs are at least started, we usually avoid
-         * blocking on another thread. */
-        if (m_param->rdLevel < 5)
+         * blocking on another thread */
+        if (m_param->rdLevel <= 4)
             checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
         else
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
         m_modeCompletionEvent.wait();
 
-        /* select best inter mode based on sa8d cost */
-        Mode *bestInter = &md.pred[PRED_2Nx2N];
-
         if (m_param->rdLevel < 5)
         {
+            /* select best inter mode based on sa8d cost */
+            Mode *bestInter = &md.pred[PRED_2Nx2N];
+
             if (m_param->bEnableRectInter)
             {
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
@@ -534,65 +570,68 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_nRx2N];
             }
+
+            if (m_param->rdLevel > 2)
+            {
+                /* encode best inter */
+                for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                {
+                    prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
+                    motionCompensation(bestInter->predYuv, false, true);
+                }
+                encodeResAndCalcRdInterCU(*bestInter, cuGeom);
+
+                /* RD selection between merge, inter and intra */
+                checkBestMode(*bestInter, depth);
+
+                if (bTryIntra)
+                    checkBestMode(md.pred[PRED_INTRA], depth);
+            }
+            else /* m_param->rdLevel == 2 */
+            {
+                if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
+                    md.bestMode = bestInter;
+
+                if (bTryIntra && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
+                {
+                    md.bestMode = &md.pred[PRED_INTRA];
+                    encodeIntraInInter(*md.bestMode, cuGeom);
+                }
+                else if (!md.bestMode->cu.m_mergeFlag[0])
+                {
+                    /* finally code the best mode selected from SA8D costs */
+                    for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                    {
+                        prepMotionCompensation(md.bestMode->cu, cuGeom, puIdx);
+                        motionCompensation(md.bestMode->predYuv, false, true);
+                    }
+                    encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
+                }
+            }
         }
         else
         {
+            checkBestMode(md.pred[PRED_2Nx2N], depth);
+
             if (m_param->bEnableRectInter)
             {
-                if (md.pred[PRED_Nx2N].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_Nx2N];
-                if (md.pred[PRED_Nx2N].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_Nx2N];
+                checkBestMode(md.pred[PRED_Nx2N], depth);
+                checkBestMode(md.pred[PRED_Nx2N], depth);
             }
 
             if (bTryAmp)
             {
-                if (md.pred[PRED_2NxnU].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_2NxnU];
-                if (md.pred[PRED_2NxnD].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_2NxnD];
-                if (md.pred[PRED_nLx2N].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_nLx2N];
-                if (md.pred[PRED_nRx2N].rdCost < bestInter->rdCost)
-                    bestInter = &md.pred[PRED_nRx2N];
+                checkBestMode(md.pred[PRED_2NxnU], depth);
+                checkBestMode(md.pred[PRED_2NxnD], depth);
+                checkBestMode(md.pred[PRED_nLx2N], depth);
+                checkBestMode(md.pred[PRED_nRx2N], depth);
             }
-        }
-
-        if (m_param->rdLevel > 2)
-        {
-            /* encode best inter */
-            for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
-            {
-                prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
-                motionCompensation(bestInter->predYuv, false, true);
-            }
-            encodeResAndCalcRdInterCU(*bestInter, cuGeom);
-
-            /* RD selection between merge, inter and intra */
-            checkBestMode(*bestInter, depth);
 
             if (bTryIntra)
+            {
                 checkBestMode(md.pred[PRED_INTRA], depth);
-        }
-        else /* m_param->rdLevel == 2 */
-        {
-            if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
-                md.bestMode = bestInter;
-
-            if (bTryIntra && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
-            {
-                md.bestMode = &md.pred[PRED_INTRA];
-                encodeIntraInInter(*md.bestMode, cuGeom);
-            }
-            else if (md.bestMode->cu.m_predMode[0] == MODE_INTER)
-            {
-                /* finally code the best mode selected from SA8D costs */
-                for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
-                {
-                    prepMotionCompensation(md.bestMode->cu, cuGeom, puIdx);
-                    motionCompensation(md.bestMode->predYuv, false, true);
-                }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
+                if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                    checkBestMode(md.pred[PRED_INTRA_NxN], depth);
             }
         }
 
@@ -949,14 +988,21 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         if (!earlySkip)
         {
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, false);
+            checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
             if (m_param->bEnableRectInter)
             {
                 // Nx2N rect
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                {
                     checkInter_rd5_6(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N, false);
+                    checkBestMode(md.pred[PRED_Nx2N], cuGeom.depth);
+                }
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                {
                     checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, false);
+                    checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
+                }
             }
 
             // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
@@ -978,16 +1024,28 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 if (bHor)
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                    {
                         checkInter_rd5_6(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU, bMergeOnly);
+                        checkBestMode(md.pred[PRED_2NxnU], cuGeom.depth);
+                    }
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                    {
                         checkInter_rd5_6(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD, bMergeOnly);
+                        checkBestMode(md.pred[PRED_2NxnD], cuGeom.depth);
+                    }
                 }
                 if (bVer)
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                    {
                         checkInter_rd5_6(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N, bMergeOnly);
+                        checkBestMode(md.pred[PRED_nLx2N], cuGeom.depth);
+                    }
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
+                    {
                         checkInter_rd5_6(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N, bMergeOnly);
+                        checkBestMode(md.pred[PRED_nRx2N], cuGeom.depth);
+                    }
                 }
             }
 
@@ -1269,7 +1327,6 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     {
         /* predInterSearch sets interMode.sa8dBits, but this is ignored */
         encodeResAndCalcRdInterCU(interMode, cuGeom);
-        checkBestMode(interMode, cuGeom.depth);
     }
     else
     {
