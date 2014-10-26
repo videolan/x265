@@ -296,8 +296,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
         // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
+        X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in codeIntraLumaQT\n");
         cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
-        cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth); /* TODO: probably redundant */
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffY       = m_rqt[qtLayer].coeffRQT[0] + coeffOffsetY;
@@ -647,8 +647,8 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         initAdiPattern(cu, cuGeom, absPartIdx, trDepth, lumaPredMode);
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
+        X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in residualTransformQuantIntra\n");
         cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
-        cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth); /* TODO: likely redundant */
 
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, false);
@@ -841,7 +841,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
             // get prediction signal
             predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
 
-            cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep); /* TODO: probably redundant */
+            X265_CHECK(!cu.m_transformSkip[ttype][0], "unexpected tskip flag in codeIntraChromaQt\n");
 
             primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
