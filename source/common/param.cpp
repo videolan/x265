@@ -1091,34 +1091,30 @@ void x265_print_params(x265_param *param)
 {
     if (param->logLevel < X265_LOG_INFO)
         return;
+
 #if HIGH_BIT_DEPTH
     x265_log(param, X265_LOG_INFO, "Internal bit depth                  : %d\n", param->internalBitDepth);
 #endif
     if (param->interlaceMode)
-    {
         x265_log(param, X265_LOG_INFO, "Interlaced field inputs             : %s\n", x265_interlace_names[param->interlaceMode]);
-    }
+
     x265_log(param, X265_LOG_INFO, "CTU size / RQT depth inter / intra  : %d / %d / %d\n",
              param->maxCUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
+
     if (param->keyframeMax != INT_MAX || param->scenecutThreshold)
-    {
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : %d / %d / %d\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold);
-    }
     else
-    {
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : disabled\n");
-    }
+
     if (param->cbQpOffset || param->crQpOffset)
-    {
-        x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset              : %d / %d\n", param->cbQpOffset, param->crQpOffset);
-    }
+        x265_log(param, X265_LOG_INFO, "Cb/Cr QP Offset                     : %d / %d\n", param->cbQpOffset, param->crQpOffset);
+
     if (param->rdPenalty)
-    {
-        x265_log(param, X265_LOG_INFO, "RDpenalty                    : %d\n", param->rdPenalty);
-    }
+        x265_log(param, X265_LOG_INFO, "Intra 32x32 TU penalty type         : %d\n", param->rdPenalty);
+
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
@@ -1142,10 +1138,8 @@ void x265_print_params(x265_param *param)
     }
 
     if (param->rc.vbvBufferSize)
-    {
         x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
                  param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
-    }
 
     x265_log(param, X265_LOG_INFO, "tools: ");
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
