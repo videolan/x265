@@ -373,6 +373,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
         slave->setQP(*m_slice, m_rdCost.m_qp);
+        slave->invalidateContexts(0);
         if (jobId)
             slave->m_me.setSourcePlane(m_frame->m_origPicYuv->m_picOrg[0], m_frame->m_origPicYuv->m_stride);
     }
