@@ -172,7 +172,6 @@ public:
     void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom);
     void     updatePic(uint32_t depth) const;
 
-    void     setDepthSubParts(uint8_t depth)       { m_partSet(m_cuDepth, depth); }
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
