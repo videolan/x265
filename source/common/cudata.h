@@ -255,8 +255,7 @@ protected:
 
     bool getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const;
 
-    // compute scaling factor from POC difference
-    int  getDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
+    void scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
     void deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const;
 };

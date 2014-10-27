@@ -1943,12 +1943,7 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
         neibRefPOC = tmpCU->m_slice->m_refPOCList[picList][partRefIdx];
         MV mvp = tmpCU->m_mv[picList][idx];
 
-        int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
-        if (scale == 4096)
-            outMV = mvp;
-        else
-            outMV = scaleMv(mvp, scale);
-
+        scaleMvByPOCDist(outMV, mvp, curPOC, curRefPOC, neibPOC, neibRefPOC);
         return true;
     }
 
@@ -1958,12 +1953,7 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
         neibRefPOC = tmpCU->m_slice->m_refPOCList[refPicList2nd][partRefIdx];
         MV mvp = tmpCU->m_mv[refPicList2nd][idx];
 
-        int scale = getDistScaleFactor(curPOC, curRefPOC, neibPOC, neibRefPOC);
-        if (scale == 4096)
-            outMV = mvp;
-        else
-            outMV = scaleMv(mvp, scale);
-
+        scaleMvByPOCDist(outMV, mvp, curPOC, curRefPOC, neibPOC, neibRefPOC);
         return true;
     }
 
@@ -1975,7 +1965,7 @@ bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int&
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
 
     int colRefPicList;
-    int colPOC, colRefPOC, curPOC, curRefPOC, scale;
+    int colPOC, colRefPOC, curPOC, curRefPOC;
     MV colmv;
 
     // use coldir.
@@ -2007,32 +1997,26 @@ bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int&
     // Scale the vector
     colRefPOC = colCU->m_slice->m_refPOCList[colRefPicList][colRefIdx];
     colmv = colCU->m_mv[colRefPicList][absPartAddr];
-
     curRefPOC = m_slice->m_refPOCList[picList][outRefIdx];
 
-    scale = getDistScaleFactor(curPOC, curRefPOC, colPOC, colRefPOC);
-    if (scale == 4096)
-        outMV = colmv;
-    else
-        outMV = scaleMv(colmv, scale);
-
+    scaleMvByPOCDist(outMV, colmv, curPOC, curRefPOC, colPOC, colRefPOC);
     return true;
 }
 
-int CUData::getDistScaleFactor(int curPOC, int curRefPOC, int colPOC, int colRefPOC) const
+void CUData::scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const
 {
     int diffPocD = colPOC - colRefPOC;
     int diffPocB = curPOC - curRefPOC;
 
     if (diffPocD == diffPocB)
-        return 4096;
+        outMV = inMV;
     else
     {
         int tdb   = Clip3(-128, 127, diffPocB);
         int tdd   = Clip3(-128, 127, diffPocD);
         int x     = (0x4000 + abs(tdd / 2)) / tdd;
         int scale = Clip3(-4096, 4095, (tdb * x + 32) >> 6);
-        return scale;
+        outMV = scaleMv(inMV, scale);
     }
 }
 
