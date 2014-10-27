@@ -756,7 +756,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                  * RD level 2 - fully encode the best mode
                  * RD level 1 - generate recon pixels
                  * RD level 0 - generate chroma prediction */
-                if (md.bestMode->cu.m_mergeFlag[0])
+                if (md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)
                 {
                     /* prediction already generated for this CU, and if rd level
                      * is not 0, it is already fully encoded */
