@@ -384,13 +384,11 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         switch (jobId)
         {
         case 0:
+            if (slave != this)
+                slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
             slave->checkIntraInInter_rd0_4(md.pred[PRED_INTRA], *m_curGeom);
             if (m_param->rdLevel > 2)
-            {
-                if (slave != this)
-                    slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
                 slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curGeom);
-            }
             break;
 
         case 1:
