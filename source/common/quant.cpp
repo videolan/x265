@@ -792,14 +792,14 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
 
     /* calculate RD cost of uncoded block CBF=0, and add cost of CBF=1 to total */
     int64_t bestCost;
-    if (!cu.isIntra(absPartIdx) && bIsLuma && !cu.m_trIdx[absPartIdx])
+    if (!cu.isIntra(absPartIdx) && bIsLuma && !cu.m_tuDepth[absPartIdx])
     {
         bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockRootCbpBits[0]);
         totalRdCost += SIGCOST(estBitsSbac.blockRootCbpBits[1]);
     }
     else
     {
-        int ctx = ctxCbf[ttype][cu.m_trIdx[absPartIdx]];
+        int ctx = ctxCbf[ttype][cu.m_tuDepth[absPartIdx]];
         bestCost = totalUncodedCost + SIGCOST(estBitsSbac.blockCbpBits[ctx][0]);
         totalRdCost += SIGCOST(estBitsSbac.blockCbpBits[ctx][1]);
     }

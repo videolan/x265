@@ -137,7 +137,7 @@ Search::Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuG
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
                 CUData *bestCU = &m_modeDepth[0].bestMode->cu;
-                memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_depth, sizeof(uint8_t) * numPartition);
+                memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
                 m_frame->m_intraData->cuAddr[ctu.m_cuAddr] = ctu.m_cuAddr;
@@ -1339,7 +1339,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
 {
     CUData& cu = intraMode.cu;
-    uint32_t depth = cu.m_depth[0];
+    uint32_t depth = cu.m_cuDepth[0];
 
     cu.setPartSizeSubParts(SIZE_2Nx2N);
     cu.setPredModeSubParts(MODE_INTRA);
@@ -1548,7 +1548,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
 void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 {
-    if (cuGeom.depth < ctu.m_depth[cuGeom.encodeIdx] && cuGeom.depth < g_maxCUDepth)
+    if (cuGeom.depth < ctu.m_cuDepth[cuGeom.encodeIdx] && cuGeom.depth < g_maxCUDepth)
     {
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -1678,7 +1678,7 @@ void Analysis::checkDQP(CUData& cu, const CUGeom& cuGeom)
 {
     if (m_slice->m_pps->bUseDQP && cuGeom.depth <= m_slice->m_pps->maxCuDQPDepth)
     {
-        if (cu.m_depth[0] > cuGeom.depth) // detect splits
+        if (cu.m_cuDepth[0] > cuGeom.depth) // detect splits
         {
             bool hasResidual = false;
             for (uint32_t absPartIdx = 0; absPartIdx < cu.m_numPartitions; absPartIdx++)
@@ -1716,11 +1716,11 @@ uint32_t Analysis::topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom
         numRefs++;
         const CUData& cu = *m_slice->m_refPicList[0][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
         previousQP = cu.m_qp[0];
-        if (!cu.m_depth[cuGeom.encodeIdx])
+        if (!cu.m_cuDepth[cuGeom.encodeIdx])
             return 0;
         for (uint32_t i = 0; i < cuGeom.numPartitions && minDepth0; i += 4)
         {
-            uint32_t d = cu.m_depth[cuGeom.encodeIdx + i];
+            uint32_t d = cu.m_cuDepth[cuGeom.encodeIdx + i];
             minDepth0 = X265_MIN(d, minDepth0);
             sum += d;
         }
@@ -1729,11 +1729,11 @@ uint32_t Analysis::topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom
     {
         numRefs++;
         const CUData& cu = *m_slice->m_refPicList[1][0]->m_encData->getPicCTU(parentCTU.m_cuAddr);
-        if (!cu.m_depth[cuGeom.encodeIdx])
+        if (!cu.m_cuDepth[cuGeom.encodeIdx])
             return 0;
         for (uint32_t i = 0; i < cuGeom.numPartitions; i += 4)
         {
-            uint32_t d = cu.m_depth[cuGeom.encodeIdx + i];
+            uint32_t d = cu.m_cuDepth[cuGeom.encodeIdx + i];
             minDepth1 = X265_MIN(d, minDepth1);
             sum += d;
         }

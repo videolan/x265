@@ -441,7 +441,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
 /* Original YUV restoration for CU in lossless coding */
 static void origCUSampleRestoration(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
 {
-    if (cu->m_depth[absPartIdx] > depth)
+    if (cu->m_cuDepth[absPartIdx] > depth)
     {
         /* TODO: this could use cuGeom.numPartition and flags */
         uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);

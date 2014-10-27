@@ -961,7 +961,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
         uint32_t depth = 0;
         for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
         {
-            depth = ctu.m_depth[absPartIdx];
+            depth = ctu.m_cuDepth[absPartIdx];
 
             log->totalCu++;
             log->cntIntra[depth]++;
@@ -991,7 +991,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
         uint32_t depth = 0;
         for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
         {
-            depth = ctu.m_depth[absPartIdx];
+            depth = ctu.m_cuDepth[absPartIdx];
 
             log->totalCu++;
             log->cntTotalCu[depth]++;

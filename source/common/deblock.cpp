@@ -53,7 +53,7 @@ void Deblock::deblockCU(CUData* cu, uint32_t absPartIdx, uint32_t depth, const i
 
     const SPS& sps = *cu->m_slice->m_sps;
 
-    if (cu->m_depth[absPartIdx] > depth)
+    if (cu->m_cuDepth[absPartIdx] > depth)
     {
         uint32_t qNumParts   = curNumParts >> 2;
         uint32_t xmax = sps.picWidthInLumaSamples  - cu->m_cuPelX;
@@ -116,7 +116,7 @@ void Deblock::setEdgefilterMultiple(CUData* cu, uint32_t scanIdx, int32_t dir, i
 
 void Deblock::setEdgefilterTU(CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[])
 {
-    if ((uint32_t)cu->m_trIdx[absPartIdx] + cu->m_depth[absPartIdx] > depth)
+    if ((uint32_t)cu->m_tuDepth[absPartIdx] + cu->m_cuDepth[absPartIdx] > depth)
     {
         const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;
@@ -126,7 +126,7 @@ void Deblock::setEdgefilterTU(CUData* cu, uint32_t absPartIdx, uint32_t depth, i
         return;
     }
 
-    uint32_t widthInBaseUnits  = 1 << (cu->m_log2CUSize[absPartIdx] - cu->m_trIdx[absPartIdx] - LOG2_UNIT_SIZE);
+    uint32_t widthInBaseUnits  = 1 << (cu->m_log2CUSize[absPartIdx] - cu->m_tuDepth[absPartIdx] - LOG2_UNIT_SIZE);
     setEdgefilterMultiple(cu, absPartIdx, dir, 0, 2, blockingStrength, widthInBaseUnits);
 }
 
@@ -229,8 +229,8 @@ void Deblock::getBoundaryStrengthSingle(CUData* cu, int32_t dir, uint32_t absPar
         uint32_t nsPartP = partP;
 
         if (blockingStrength[absPartIdx] > 1 &&
-            (cuQ->getCbf(nsPartQ, TEXT_LUMA, cuQ->m_trIdx[nsPartQ]) ||
-             cuP->getCbf(nsPartP, TEXT_LUMA, cuP->m_trIdx[nsPartP])))
+            (cuQ->getCbf(nsPartQ, TEXT_LUMA, cuQ->m_tuDepth[nsPartQ]) ||
+             cuP->getCbf(nsPartP, TEXT_LUMA, cuP->m_tuDepth[nsPartP])))
             bs = 1;
         else
         {

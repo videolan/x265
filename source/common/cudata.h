@@ -133,12 +133,12 @@ public:
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
     char*         m_refIdx[2];        // array of motion reference indices per list
-    uint8_t*      m_depth;            // array of depths
+    uint8_t*      m_cuDepth;          // array of depths
     uint8_t*      m_skipFlag;         // array of skip flags
     uint8_t*      m_mergeFlag;        // array of merge flags
     uint8_t*      m_interDir;         // array of inter directions
     uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]
-    uint8_t*      m_trIdx;            // array of transform indices
+    uint8_t*      m_tuDepth;          // array of transform indices
     uint8_t*      m_transformSkip[3]; // array of transform skipping flags per plane
     uint8_t*      m_cbf[3];           // array of coded block flags (CBF) per plane
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
@@ -172,7 +172,7 @@ public:
     void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom);
     void     updatePic(uint32_t depth) const;
 
-    void     setDepthSubParts(uint8_t depth)       { m_partSet(m_depth, depth); }
+    void     setDepthSubParts(uint8_t depth)       { m_partSet(m_cuDepth, depth); }
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
@@ -180,7 +180,7 @@ public:
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
     void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
-    void     setTrIdxSubParts(uint8_t trIdx, uint32_t absPartIdx, uint32_t depth)             { s_partSet[depth](m_trIdx + absPartIdx, trIdx); }
+    void     setTrIdxSubParts(uint8_t trIdx, uint32_t absPartIdx, uint32_t depth)             { s_partSet[depth](m_tuDepth + absPartIdx, trIdx); }
     void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
     void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
     void     setCbfSubParts(uint8_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_cbf[ttype] + absPartIdx, cbf); }
