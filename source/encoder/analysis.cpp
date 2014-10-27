@@ -1153,12 +1153,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
              mvFieldNeighbours[i][1].mv.y < (m_param->searchRange + 1) * 4))
         {
             tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
-            tempPred->cu.setPUInterDir(interDirNeighbours[i], 0, 0);
-            tempPred->cu.setPUMv(0, mvFieldNeighbours[i][0].mv, 0, 0);
-            tempPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[i][0].refIdx, 0, 0);
-            tempPred->cu.setPUMv(1, mvFieldNeighbours[i][1].mv, 0, 0);
-            tempPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[i][1].refIdx, 0, 0);
-            tempPred->initCosts();
+            tempPred->cu.m_interDir[0] = interDirNeighbours[i];
+            tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
+            tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
+            tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
+            tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
 
             // do MC only for Luma part
             prepMotionCompensation(tempPred->cu, cuGeom, 0);
@@ -1180,7 +1179,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     if (bestSadCand < 0)
         return;
 
-    // calculate the motion compensation for chroma for the best mode selected
+    /* calculate the motion compensation for chroma for the best mode selected */
     prepMotionCompensation(bestPred->cu, cuGeom, 0);
     motionCompensation(bestPred->predYuv, false, true);
 
@@ -1191,7 +1190,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         else
             encodeResAndCalcRdSkipCU(*bestPred);
 
-        // Encode with residue
+        /* Encode with residual */
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)bestSadCand;
         tempPred->cu.setPUInterDir(interDirNeighbours[bestSadCand], 0, 0);
         tempPred->cu.setPUMv(0, mvFieldNeighbours[bestSadCand][0].mv, 0, 0);
@@ -1207,6 +1206,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
     else
         md.bestMode = bestPred;
+
+    /* broadcast sets of MV field data */
+    bestPred->cu.setPUInterDir(interDirNeighbours[bestSadCand], 0, 0);
+    bestPred->cu.setPUMv(0, mvFieldNeighbours[bestSadCand][0].mv, 0, 0);
+    bestPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[bestSadCand][0].refIdx, 0, 0);
+    bestPred->cu.setPUMv(1, mvFieldNeighbours[bestSadCand][1].mv, 0, 0);
+    bestPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[bestSadCand][1].refIdx, 0, 0);
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -1233,22 +1239,23 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     bool foundCbf0Merge = false;
     bestPred->rdCost = MAX_INT64;
-    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; mergeCand++)
+    for (uint32_t i = 0; i < maxNumMergeCand; i++)
     {
         if (m_bFrameParallel &&
-            (mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-             mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
+            (mvFieldNeighbours[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+             mvFieldNeighbours[i][1].mv.y >= (m_param->searchRange + 1) * 4))
         {
             continue;
         }
 
-        tempPred->cu.setSkipFlagSubParts(false); /* must be cleared between encode iterations */
-        tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;  /* merge candidate ID is stored in L0 MVP idx */
-        tempPred->cu.setPUInterDir(interDirNeighbours[mergeCand], 0, 0);
-        tempPred->cu.setPUMv(0, mvFieldNeighbours[mergeCand][0].mv, 0, 0);
-        tempPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[mergeCand][0].refIdx, 0, 0);
-        tempPred->cu.setPUMv(1, mvFieldNeighbours[mergeCand][1].mv, 0, 0);
-        tempPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[mergeCand][1].refIdx, 0, 0);
+        tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
+        tempPred->cu.m_interDir[0] = interDirNeighbours[i];
+        tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
+        tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
+        tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
+        tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
+        tempPred->cu.setSkipFlagSubParts(false);     /* must be cleared between encode iterations */
+
         prepMotionCompensation(tempPred->cu, cuGeom, 0);
         motionCompensation(tempPred->predYuv, true, true);
 
@@ -1274,13 +1281,13 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
             if (swapped)
             {
+                tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;
+                tempPred->cu.m_interDir[0] = interDirNeighbours[i];
+                tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
+                tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
+                tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
+                tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
                 tempPred->cu.setSkipFlagSubParts(false);
-                tempPred->cu.m_mvpIdx[0][0] = (uint8_t)mergeCand;
-                tempPred->cu.setPUInterDir(interDirNeighbours[mergeCand], 0, 0);
-                tempPred->cu.setPUMv(0, mvFieldNeighbours[mergeCand][0].mv, 0, 0);
-                tempPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[mergeCand][0].refIdx, 0, 0);
-                tempPred->cu.setPUMv(1, mvFieldNeighbours[mergeCand][1].mv, 0, 0);
-                tempPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[mergeCand][1].refIdx, 0, 0);
                 tempPred->predYuv.copyFromYuv(bestPred->predYuv);
             }
             
@@ -1292,7 +1299,17 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
 
     if (bestPred->rdCost < MAX_INT64)
+    {
         m_modeDepth[depth].bestMode = bestPred;
+
+        /* broadcast sets of MV field data */
+        uint32_t bestCand = bestPred->cu.m_mvpIdx[0][0];
+        bestPred->cu.setPUInterDir(interDirNeighbours[bestCand], 0, 0);
+        bestPred->cu.setPUMv(0, mvFieldNeighbours[bestCand][0].mv, 0, 0);
+        bestPred->cu.setPURefIdx(0, (char)mvFieldNeighbours[bestCand][0].refIdx, 0, 0);
+        bestPred->cu.setPUMv(1, mvFieldNeighbours[bestCand][1].mv, 0, 0);
+        bestPred->cu.setPURefIdx(1, (char)mvFieldNeighbours[bestCand][1].refIdx, 0, 0);
+    }
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize)

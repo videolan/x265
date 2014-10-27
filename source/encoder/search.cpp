@@ -1621,7 +1621,6 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
              m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
 
-        /* TODO: merge this logic with merge functions in analysis.cpp */
         cu.m_mv[0][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
         cu.m_refIdx[0][m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][0].refIdx;
         cu.m_mv[1][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
