@@ -1148,30 +1148,30 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     int sizeIdx = cuGeom.log2CUSize - 2;
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
-        if (!m_bFrameParallel ||
-            (mvFieldNeighbours[i][0].mv.y < (m_param->searchRange + 1) * 4 &&
-             mvFieldNeighbours[i][1].mv.y < (m_param->searchRange + 1) * 4))
+        if (m_bFrameParallel &&
+            (mvFieldNeighbours[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+            mvFieldNeighbours[i][1].mv.y >= (m_param->searchRange + 1) * 4))
+            continue;
+
+        tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
+        tempPred->cu.m_interDir[0] = interDirNeighbours[i];
+        tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
+        tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
+        tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
+        tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
+
+        // do MC only for Luma part
+        prepMotionCompensation(tempPred->cu, cuGeom, 0);
+        motionCompensation(tempPred->predYuv, true, false);
+
+        tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
+        tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
+        tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
+
+        if (tempPred->sa8dCost < bestPred->sa8dCost)
         {
-            tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
-            tempPred->cu.m_interDir[0] = interDirNeighbours[i];
-            tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
-            tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
-            tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
-            tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
-
-            // do MC only for Luma part
-            prepMotionCompensation(tempPred->cu, cuGeom, 0);
-            motionCompensation(tempPred->predYuv, true, false);
-
-            tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
-            tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
-            tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
-
-            if (tempPred->sa8dCost < bestPred->sa8dCost)
-            {
-                bestSadCand = i;
-                std::swap(tempPred, bestPred);
-            }
+            bestSadCand = i;
+            std::swap(tempPred, bestPred);
         }
     }
 
@@ -1244,9 +1244,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         if (m_bFrameParallel &&
             (mvFieldNeighbours[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
              mvFieldNeighbours[i][1].mv.y >= (m_param->searchRange + 1) * 4))
-        {
             continue;
-        }
 
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.m_interDir[0] = interDirNeighbours[i];
