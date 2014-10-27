@@ -439,7 +439,13 @@ Quad-Tree analysis
 	as the coding unit quad-tree, but the encoder may decide to further
 	split the transform unit tree if it improves compression efficiency.
 	This setting limits the number of extra recursion depth which can be
-	attempted for intra coded units. Default: 1
+	attempted for intra coded units. Default: 1, which means the
+	residual quad-tree is always at the same depth as the coded unit
+	quad-tree
+	
+	Note that when the CU intra prediction is NxN (only possible with
+	8x8 CUs), a TU split is implied, and thus the residual quad-tree
+	begins at 4x4 and cannot split any futhrer.
 
 .. option:: --tu-inter-depth <1..4>
 
@@ -447,7 +453,11 @@ Quad-Tree analysis
 	as the coding unit quad-tree, but the encoder may decide to further
 	split the transform unit tree if it improves compression efficiency.
 	This setting limits the number of extra recursion depth which can be
-	attempted for inter coded units. Default: 1
+	attempted for inter coded units. Default: 1. which means the
+	residual quad-tree is always at the same depth as the coded unit
+	quad-tree unless the CU was coded with rectangular or AMP
+	partitions, in which case a TU split is implied and thus the
+	residual quad-tree begins one layer below the CU quad-tree.
 
 Temporal / motion search options
 ================================
@@ -527,11 +537,24 @@ Spatial/intra options
 	or B slices.
 
 	When set to 2, transform units of size 32x32 are not even attempted,
-	unless otherwise required by the maximum recursion depth.
+	unless otherwise required by the maximum recursion depth.  For this
+	option to be effective with 32x32 intra CUs,
+	:option:`--tu-intra-depth` must be at least 2.  For it to be
+	effective with 64x64 intra CUs, :option:`--tu-intra-depth` must be
+	at least 3.
+
+	Note that in HEVC an intra transform unit (a block of the residual
+	quad-tree) is also a prediction unit, meaning that the intra
+	prediction signal is generated for each TU block, the residual
+	subtracted and then coded. The coding unit simply provides the
+	prediction modes that will be used when predicting all of the
+	transform units within the CU. This means that when you prevent
+	32x32 intra transform units, you are preventing 32x32 intra
+	predictions.
 
 	Default 0, disabled.
 
-	**Values:** 0:disabled 1:RD-penalty 2:maximum
+	**Values:** 0:disabled 1:4x cost penalty 2:force splits
 
 .. option:: --b-intra, --no-b-intra
 
