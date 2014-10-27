@@ -740,7 +740,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
             codeCoeffNxN(cu, cu.m_trCoeff[0] + offsetLuma, absPartIdx, log2TrSize, TEXT_LUMA);
 
         int chFmt = cu.m_chromaFormat;
-        if ((log2TrSize == 2) && chFmt != X265_CSP_I444)
+        if (log2TrSize == 2 && chFmt != X265_CSP_I444)
         {
             uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
             if ((absPartIdx & (partNum - 1)) == (partNum - 1))
