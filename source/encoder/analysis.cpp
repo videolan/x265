@@ -1238,6 +1238,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     uint32_t maxNumMergeCand = merge.cu.getInterMergeCandidates(0, 0, mvFieldNeighbours, interDirNeighbours);
 
     bool foundCbf0Merge = false;
+    bool triedPZero = false, triedBZero = false;
     bestPred->rdCost = MAX_INT64;
     for (uint32_t i = 0; i < maxNumMergeCand; i++)
     {
@@ -1245,6 +1246,22 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             (mvFieldNeighbours[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
              mvFieldNeighbours[i][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
+
+        /* the merge candidate list is packed with MV(0,0) ref 0 when it is not full */
+        if (interDirNeighbours[i] == 1 && !mvFieldNeighbours[i][0].mv.word && !mvFieldNeighbours[i][0].refIdx)
+        {
+            if (triedPZero)
+                continue;
+            triedPZero = true;
+        }
+        else if (interDirNeighbours[i] == 3 &&
+                 !mvFieldNeighbours[i][0].mv.word && !mvFieldNeighbours[i][0].refIdx &&
+                 !mvFieldNeighbours[i][1].mv.word && !mvFieldNeighbours[i][1].refIdx)
+        {
+            if (triedBZero)
+                continue;
+            triedBZero = true;
+        }
 
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.m_interDir[0] = interDirNeighbours[i];
