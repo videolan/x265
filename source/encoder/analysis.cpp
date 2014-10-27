@@ -661,11 +661,9 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         /* Compute Merge Cost */
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-        bool earlyskip;
+        bool earlyskip = false;
         if (m_param->rdLevel)
-            earlyskip = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0);
-        else
-            earlyskip = m_param->bEnableEarlySkip && md.bestMode && false; /* TODO: sa8d threshold per depth */
+            earlyskip = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
 
         if (!earlyskip)
         {
