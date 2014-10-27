@@ -150,11 +150,12 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
     if (!m_cuGeoms || !m_ctuGeomMap)
         return false;
 
+    CUGeom cuLocalData[CUGeom::MAX_GEOMS];
+    memset(cuLocalData, 0, sizeof(cuLocalData)); // temporal fix for memcmp
+
     int countGeoms = 0;
     for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
     {
-        CUGeom cuLocalData[CUGeom::MAX_GEOMS];
-        
         /* TODO: detach this logic from TComDataCU */
         encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0);
         encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->sourceWidth, m_param->sourceHeight, m_param->maxCUSize, cuLocalData);

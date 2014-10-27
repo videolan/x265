@@ -76,8 +76,8 @@ struct CUGeom
         SPLIT           = 1<<4, // CU is currently split in four child CUs.
     };
     
-    // (1 + 4 + 16 + 64) + (1 + 8 + 1 + 8 + 1) = 104.
-    enum { MAX_GEOMS = 104 };
+    // (1 + 4 + 16 + 64) = 85.
+    enum { MAX_GEOMS = 85 };
 
     uint32_t log2CUSize;    // Log of the CU size.
     uint32_t childOffset;   // offset of the first child CU from current CU
