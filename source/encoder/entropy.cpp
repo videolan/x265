@@ -626,7 +626,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
     if (!trIdx)
         state.bakAbsPartIdxCU = absPartIdx;
 
-    if ((log2TrSize == 2) && cu.m_chromaFormat != X265_CSP_I444)
+    if (log2TrSize == 2 && cu.m_chromaFormat != X265_CSP_I444)
     {
         uint32_t partNum = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
         if (!(absPartIdx & (partNum - 1)))
@@ -641,33 +641,24 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
         }
     }
 
+    /* in each of these conditions, the subdiv flag is implied and not signaled,
+     * so we have checks to make sure the implied value matches our intentions */
     if (cu.m_predMode[absPartIdx] == MODE_INTRA && cu.m_partSize[absPartIdx] == SIZE_NxN && depth == cu.m_depth[absPartIdx])
     {
-        X265_CHECK(subdiv, "subdivision state failure\n");
+        X265_CHECK(subdiv, "intra NxN requires TU depth below CU depth\n");
     }
     else if (cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_depth[absPartIdx] &&
-             (cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1))
+             cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1)
     {
-        if (log2TrSize > depthRange[0])
-        {
-            X265_CHECK(subdiv, "subdivision state failure\n");
-        }
-        else
-        {
-            X265_CHECK(!subdiv, "subdivision state failure\n");
-        }
+        X265_CHECK(subdiv, "inter TU must be smaller than CU when not 2Nx2N part size: log2TrSize %d, depthRange[0] %d\n", log2TrSize, depthRange[0]);
     }
     else if (log2TrSize > depthRange[1])
     {
-        X265_CHECK(subdiv, "subdivision state failure\n");
+        X265_CHECK(subdiv, "TU is larger than the max allowed, it should have been split\n");
     }
-    else if (log2TrSize == cu.m_slice->m_sps->quadtreeTULog2MinSize)
+    else if (log2TrSize == cu.m_slice->m_sps->quadtreeTULog2MinSize || log2TrSize == depthRange[0])
     {
-        X265_CHECK(!subdiv, "subdivision state failure\n");
-    }
-    else if (log2TrSize == depthRange[0])
-    {
-        X265_CHECK(!subdiv, "subdivision state failure\n");
+        X265_CHECK(!subdiv, "min sized TU cannot be subdivided\n");
     }
     else
     {
