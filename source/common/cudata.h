@@ -196,10 +196,6 @@ public:
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
     char     getRefQP(uint32_t currAbsIdxInCTU) const;
-    void     deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
-    void     deriveLeftBottomIdx(uint32_t partIdx, uint32_t& partIdxLB) const;
-    void     deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
-
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
     void     clipMv(MV& outMV) const;
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
@@ -210,11 +206,12 @@ public:
     bool     isSkipped(uint32_t absPartIdx) const { return !!m_skipFlag[absPartIdx]; }
     bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
-    void     getPartIndexAndSize(uint32_t partIdx, uint32_t& partAddr, int& width, int& height) const;
+    void     getPartIndexAndSize(uint32_t puIdx, uint32_t& absPartIdx, int& puWidth, int& puHeight) const;
     void     getMvField(const CUData* cu, uint32_t absPartIdx, int picList, MVField& mvField) const;
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
+    void     deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
 
     uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
@@ -242,22 +239,23 @@ protected:
     char getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
 
-    bool hasEqualMotion(uint32_t absPartIdx, const CUData* candCU, uint32_t candAbsPartIdx) const;
+    bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;
 
     bool isDiffMER(int xN, int yN, int xP, int yP) const;
 
     // add possible motion vector predictor candidates
-    bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
+    bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
+    bool addMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
 
-    bool addMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const;
-
-    void deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) const;
-
-    bool getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const;
+    bool getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int absPartIdx) const;
 
     void scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
-    void deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const;
+    void     deriveLeftRightTopIdx(uint32_t puIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
+
+    uint32_t deriveCenterIdx(uint32_t puIdx) const;
+    uint32_t deriveRightBottomIdx(uint32_t puIdx) const;
+    uint32_t deriveLeftBottomIdx(uint32_t puIdx) const;
 };
 
 // TU settings for entropy encoding

@@ -1288,8 +1288,9 @@ void CUData::deriveLeftRightTopIdx(uint32_t partIdx, uint32_t& partIdxLT, uint32
     }
 }
 
-void CUData::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
+uint32_t CUData::deriveLeftBottomIdx(uint32_t puIdx) const
 {
+    uint32_t outPartIdxLB;
     outPartIdxLB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] + ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * s_numPartInCUSize];
 
     switch (m_partSize[0])
@@ -1298,35 +1299,37 @@ void CUData::deriveLeftBottomIdx(uint32_t partIdx, uint32_t& outPartIdxLB) const
         outPartIdxLB += m_numPartitions >> 1;
         break;
     case SIZE_2NxN:
-        outPartIdxLB += (partIdx == 0) ? 0 : m_numPartitions >> 1;
+        outPartIdxLB += puIdx ? m_numPartitions >> 1 : 0;
         break;
     case SIZE_Nx2N:
-        outPartIdxLB += (partIdx == 0) ? m_numPartitions >> 1 : (m_numPartitions >> 2) * 3;
+        outPartIdxLB += puIdx ? (m_numPartitions >> 2) * 3 : m_numPartitions >> 1;
         break;
     case SIZE_NxN:
-        outPartIdxLB += (m_numPartitions >> 2) * partIdx;
+        outPartIdxLB += (m_numPartitions >> 2) * puIdx;
         break;
     case SIZE_2NxnU:
-        outPartIdxLB += (partIdx == 0) ? -((int)m_numPartitions >> 3) : m_numPartitions >> 1;
+        outPartIdxLB += puIdx ? m_numPartitions >> 1 : -((int)m_numPartitions >> 3);
         break;
     case SIZE_2NxnD:
-        outPartIdxLB += (partIdx == 0) ? (m_numPartitions >> 2) + (m_numPartitions >> 3) : m_numPartitions >> 1;
+        outPartIdxLB += puIdx ? m_numPartitions >> 1 : (m_numPartitions >> 2) + (m_numPartitions >> 3);
         break;
     case SIZE_nLx2N:
-        outPartIdxLB += (partIdx == 0) ? m_numPartitions >> 1 : (m_numPartitions >> 1) + (m_numPartitions >> 4);
+        outPartIdxLB += puIdx ? (m_numPartitions >> 1) + (m_numPartitions >> 4) : m_numPartitions >> 1;
         break;
     case SIZE_nRx2N:
-        outPartIdxLB += (partIdx == 0) ? m_numPartitions >> 1 : (m_numPartitions >> 1) + (m_numPartitions >> 2) + (m_numPartitions >> 4);
+        outPartIdxLB += puIdx ? (m_numPartitions >> 1) + (m_numPartitions >> 2) + (m_numPartitions >> 4) : m_numPartitions >> 1;
         break;
     default:
         X265_CHECK(0, "unexpected part index\n");
         break;
     }
+    return outPartIdxLB;
 }
 
 /* Derives the partition index of neighboring bottom right block */
-void CUData::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) const
+uint32_t CUData::deriveRightBottomIdx(uint32_t puIdx) const
 {
+    uint32_t outPartIdxRB;
     outPartIdxRB = g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU] +
                                    ((1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - 1)) - 1) * s_numPartInCUSize +
                                    (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1];
@@ -1337,30 +1340,31 @@ void CUData::deriveRightBottomIdx(uint32_t partIdx, uint32_t& outPartIdxRB) cons
         outPartIdxRB += m_numPartitions >> 1;
         break;
     case SIZE_2NxN:
-        outPartIdxRB += (partIdx == 0) ? 0 : m_numPartitions >> 1;
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : 0;
         break;
     case SIZE_Nx2N:
-        outPartIdxRB += (partIdx == 0) ? m_numPartitions >> 2 : (m_numPartitions >> 1);
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : m_numPartitions >> 2;
         break;
     case SIZE_NxN:
-        outPartIdxRB += (m_numPartitions >> 2) * (partIdx - 1);
+        outPartIdxRB += (m_numPartitions >> 2) * (puIdx - 1);
         break;
     case SIZE_2NxnU:
-        outPartIdxRB += (partIdx == 0) ? -((int)m_numPartitions >> 3) : m_numPartitions >> 1;
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : -((int)m_numPartitions >> 3);
         break;
     case SIZE_2NxnD:
-        outPartIdxRB += (partIdx == 0) ? (m_numPartitions >> 2) + (m_numPartitions >> 3) : m_numPartitions >> 1;
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : (m_numPartitions >> 2) + (m_numPartitions >> 3);
         break;
     case SIZE_nLx2N:
-        outPartIdxRB += (partIdx == 0) ? (m_numPartitions >> 3) + (m_numPartitions >> 4) : m_numPartitions >> 1;
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : (m_numPartitions >> 3) + (m_numPartitions >> 4);
         break;
     case SIZE_nRx2N:
-        outPartIdxRB += (partIdx == 0) ? (m_numPartitions >> 2) + (m_numPartitions >> 3) + (m_numPartitions >> 4) : m_numPartitions >> 1;
+        outPartIdxRB += puIdx ? m_numPartitions >> 1 : (m_numPartitions >> 2) + (m_numPartitions >> 3) + (m_numPartitions >> 4);
         break;
     default:
         X265_CHECK(0, "unexpected part index\n");
         break;
     }
+    return outPartIdxRB;
 }
 
 void CUData::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outPartIdxRT, uint32_t partOffset, uint32_t partDepth) const
@@ -1371,17 +1375,17 @@ void CUData::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outPartI
     outPartIdxRT = g_rasterToZscan[g_zscanToRaster[outPartIdxLT] + numPartInWidth - 1];
 }
 
-bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData* candCU, uint32_t candAbsPartIdx) const
+bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const
 {
-    if (m_interDir[absPartIdx] != candCU->m_interDir[candAbsPartIdx])
+    if (m_interDir[absPartIdx] != candCU.m_interDir[candAbsPartIdx])
         return false;
 
     for (uint32_t refListIdx = 0; refListIdx < 2; refListIdx++)
     {
         if (m_interDir[absPartIdx] & (1 << refListIdx))
         {
-            if (m_mv[refListIdx][absPartIdx] != candCU->m_mv[refListIdx][candAbsPartIdx] ||
-                m_refIdx[refListIdx][absPartIdx] != candCU->m_refIdx[refListIdx][candAbsPartIdx])
+            if (m_mv[refListIdx][absPartIdx] != candCU.m_mv[refListIdx][candAbsPartIdx] ||
+                m_refIdx[refListIdx][absPartIdx] != candCU.m_refIdx[refListIdx][candAbsPartIdx])
                 return false;
         }
     }
@@ -1419,10 +1423,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
 
     uint32_t count = 0;
 
-    uint32_t partIdxLT, partIdxRT, partIdxLB;
+    uint32_t partIdxLT, partIdxRT, partIdxLB = deriveLeftBottomIdx(puIdx);
     PartSize curPS = (PartSize)m_partSize[absPartIdx];
-    deriveLeftBottomIdx(puIdx, partIdxLB);
-
+    
     // left
     uint32_t leftPartIdx = 0;
     const CUData* cuLeft = getPULeft(leftPartIdx, partIdxLB);
@@ -1454,7 +1457,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         cuAbove->isDiffMER(xP + nPSW - 1, yP - 1, xP, yP) &&
         !(puIdx == 1 && (curPS == SIZE_2NxN || curPS == SIZE_2NxnU || curPS == SIZE_2NxnD)) &&
         !cuAbove->isIntra(abovePartIdx);
-    if (isAvailableB1 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAbove, abovePartIdx)))
+    if (isAvailableB1 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, *cuAbove, abovePartIdx)))
     {
         // get Inter Dir
         interDirNeighbours[count] = cuAbove->m_interDir[abovePartIdx];
@@ -1475,7 +1478,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     bool isAvailableB0 = cuAboveRight &&
         cuAboveRight->isDiffMER(xP + nPSW, yP - 1, xP, yP) &&
         !cuAboveRight->isIntra(aboveRightPartIdx);
-    if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveRight, aboveRightPartIdx)))
+    if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, *cuAboveRight, aboveRightPartIdx)))
     {
         // get Inter Dir
         interDirNeighbours[count] = cuAboveRight->m_interDir[aboveRightPartIdx];
@@ -1496,7 +1499,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     bool isAvailableA0 = cuLeftBottom &&
         cuLeftBottom->isDiffMER(xP - 1, yP + nPSH, xP, yP) &&
         !cuLeftBottom->isIntra(leftBottomPartIdx);
-    if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuLeftBottom, leftBottomPartIdx)))
+    if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, *cuLeftBottom, leftBottomPartIdx)))
     {
         // get Inter Dir
         interDirNeighbours[count] = cuLeftBottom->m_interDir[leftBottomPartIdx];
@@ -1519,8 +1522,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         bool isAvailableB2 = cuAboveLeft &&
             cuAboveLeft->isDiffMER(xP - 1, yP - 1, xP, yP) &&
             !cuAboveLeft->isIntra(aboveLeftPartIdx);
-        if (isAvailableB2 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, cuAboveLeft, aboveLeftPartIdx))
-            && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, cuAboveLeft, aboveLeftPartIdx)))
+        if (isAvailableB2 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, *cuAboveLeft, aboveLeftPartIdx))
+            && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, *cuAboveLeft, aboveLeftPartIdx)))
         {
             // get Inter Dir
             interDirNeighbours[count] = cuAboveLeft->m_interDir[aboveLeftPartIdx];
@@ -1537,11 +1540,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     }
     if (m_slice->m_sps->bTemporalMVPEnabled)
     {
+        uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
         MV colmv;
-        uint32_t partIdxRB;
-
-        deriveRightBottomIdx(puIdx, partIdxRB);
-
         int ctuIdx = -1;
 
         // image boundary check
@@ -1570,13 +1570,12 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         }
 
         int refIdx = 0;
-        uint32_t partIdxCenter;
+        uint32_t partIdxCenter = deriveCenterIdx(puIdx);
         uint32_t curCTUIdx = m_cuAddr;
         int dir = 0;
-        deriveCenterIdx(puIdx, partIdxCenter);
-        bool bExistMV = ctuIdx >= 0 && getColMVP(0, ctuIdx, absPartAddr, colmv, refIdx);
+        bool bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 0, ctuIdx, absPartAddr);
         if (!bExistMV)
-            bExistMV = getColMVP(0, curCTUIdx, partIdxCenter, colmv, refIdx);
+            bExistMV = getColMVP(colmv, refIdx, 0, curCTUIdx, partIdxCenter);
         if (bExistMV)
         {
             dir |= 1;
@@ -1586,9 +1585,9 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
 
         if (isInterB)
         {
-            bExistMV = ctuIdx >= 0 && getColMVP(1, ctuIdx, absPartAddr, colmv, refIdx);
+            bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 1, ctuIdx, absPartAddr);
             if (!bExistMV)
-                bExistMV = getColMVP(1, curCTUIdx, partIdxCenter, colmv, refIdx);
+                bExistMV = getColMVP(colmv, refIdx, 1, curCTUIdx, partIdxCenter);
 
             if (bExistMV)
             {
@@ -1688,15 +1687,14 @@ bool CUData::isDiffMER(int xN, int yN, int xP, int yP) const
 }
 
 /* Constructs a list of candidates for AMVP, and a larger list of motion candidates */
-int CUData::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int refIdx, MV* amvpCand, MV* mvc) const
+int CUData::fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const
 {
     int num = 0;
 
     // spatial MV
-    uint32_t partIdxLT, partIdxRT, partIdxLB;
+    uint32_t partIdxLT, partIdxRT, partIdxLB = deriveLeftBottomIdx(puIdx);
 
-    deriveLeftRightTopIdx(partIdx, partIdxLT, partIdxRT);
-    deriveLeftBottomIdx(partIdx, partIdxLB);
+    deriveLeftRightTopIdx(puIdx, partIdxLT, partIdxRT);
 
     MV mv[MD_ABOVE_LEFT + 1];
     MV mvOrder[MD_ABOVE_LEFT + 1];
@@ -1766,11 +1764,9 @@ int CUData::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int re
 
     if (m_slice->m_sps->bTemporalMVPEnabled)
     {
-        uint32_t absPartAddr = m_absIdxInCTU + partAddr;
+        uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
+        uint32_t partIdxRB = deriveRightBottomIdx(puIdx);
         MV colmv;
-        uint32_t partIdxRB;
-
-        deriveRightBottomIdx(partIdx, partIdxRB);
 
         // co-located RightBottom temporal predictor (H)
         int ctuIdx = -1;
@@ -1799,17 +1795,16 @@ int CUData::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int re
             else // is the right bottom corner of CTU
                 absPartAddr = 0;
         }
-        if (ctuIdx >= 0 && getColMVP(picList, ctuIdx, absPartAddr, colmv, refIdx))
+        if (ctuIdx >= 0 && getColMVP(colmv, refIdx, picList, ctuIdx, absPartAddr))
         {
             amvpCand[num++] = colmv;
             mvc[numMvc++] = colmv;
         }
         else
         {
-            uint32_t partIdxCenter;
+            uint32_t partIdxCenter =  deriveCenterIdx(puIdx);
             uint32_t curCTUIdx = m_cuAddr;
-            deriveCenterIdx(partIdx, partIdxCenter);
-            if (getColMVP(picList, curCTUIdx, partIdxCenter, colmv, refIdx))
+            if (getColMVP(colmv, refIdx, picList, curCTUIdx, partIdxCenter))
             {
                 amvpCand[num++] = colmv;
                 mvc[numMvc++] = colmv;
@@ -1960,7 +1955,7 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
     return false;
 }
 
-bool CUData::getColMVP(int picList, int cuAddr, int partUnitIdx, MV& outMV, int& outRefIdx) const
+bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int partUnitIdx) const
 {
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
 
@@ -2020,18 +2015,16 @@ void CUData::scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefP
     }
 }
 
-void CUData::deriveCenterIdx(uint32_t partIdx, uint32_t& outPartIdxCenter) const
+uint32_t CUData::deriveCenterIdx(uint32_t puIdx) const
 {
-    uint32_t partAddr;
-    int partWidth;
-    int partHeight;
+    uint32_t absPartIdx;
+    int puWidth, puHeight;
 
-    getPartIndexAndSize(partIdx, partAddr, partWidth, partHeight);
+    getPartIndexAndSize(puIdx, absPartIdx, puWidth, puHeight);
 
-    outPartIdxCenter = m_absIdxInCTU + partAddr; // partition origin.
-    outPartIdxCenter = g_rasterToZscan[g_zscanToRaster[outPartIdxCenter]
-                                       + (partHeight >> (LOG2_UNIT_SIZE + 1)) * s_numPartInCUSize
-                                       + (partWidth  >> (LOG2_UNIT_SIZE + 1))];
+    return g_rasterToZscan[g_zscanToRaster[m_absIdxInCTU + absPartIdx]
+                           + (puHeight >> (LOG2_UNIT_SIZE + 1)) * s_numPartInCUSize
+                           + (puWidth  >> (LOG2_UNIT_SIZE + 1))];
 }
 
 ScanType CUData::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const
