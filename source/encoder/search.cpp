@@ -715,7 +715,7 @@ void Search::offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint3
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
     uint32_t trDepthC = trDepth;
-    if (log2TrSize == 2 && cu.m_chromaFormat != X265_CSP_I444)
+    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
     {
         X265_CHECK(trDepthC > 0, "trDepthC invalid\n");
         trDepthC--;
@@ -1472,7 +1472,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
     Yuv& reconYuv = intraMode.reconYuv;
 
     uint32_t depth       = cu.m_cuDepth[0];
-    uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN && cu.m_chromaFormat == X265_CSP_I444;
+    uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN && m_csp == X265_CSP_I444;
     uint32_t log2TrSize  = cu.m_log2CUSize[0] - initTrDepth;
     uint32_t absPartStep = (NUM_CU_PARTITIONS >> (depth << 1));
     uint32_t totalDistortion = 0;
@@ -1512,7 +1512,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 
             m_entropyCoder.resetBits();
             // chroma prediction mode
-            if (cu.m_partSize[0] == SIZE_2Nx2N || cu.m_chromaFormat != X265_CSP_I444)
+            if (cu.m_partSize[0] == SIZE_2Nx2N || m_csp != X265_CSP_I444)
             {
                 if (!absPartIdxC)
                     m_entropyCoder.codeIntraDirChroma(cu, absPartIdxC, modeList);
