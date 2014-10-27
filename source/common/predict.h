@@ -73,6 +73,8 @@ public:
     /* Slice information */
     const Slice* m_predSlice;
     int       m_csp;
+    int       m_hChromaShift;
+    int       m_vChromaShift;
 
     /* cached CU information for prediction */
     uint32_t  m_ctuAddr;      // raster index of current CTU within its picture
