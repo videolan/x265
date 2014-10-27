@@ -295,7 +295,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
         // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
-        X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in codeIntraLumaQT\n");
+        cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
         cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
@@ -750,8 +750,28 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
     CUData& cu = mode.cu;
     uint32_t fullDepth = cu.m_cuDepth[0] + trDepth;
     uint32_t tuDepthL  = cu.m_tuDepth[absPartIdx];
-    int hChromaShift = CHROMA_H_SHIFT(m_csp);
-    int vChromaShift = CHROMA_V_SHIFT(m_csp);
+    int      hChromaShift = CHROMA_H_SHIFT(m_csp);
+    int      vChromaShift = CHROMA_V_SHIFT(m_csp);
+
+    if (tuDepthL > trDepth)
+    {
+        uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
+        uint32_t outDist = 0, splitCbfU = 0, splitCbfV = 0;
+        for (uint32_t subPartIdx = 0, absPartIdxSub = absPartIdx; subPartIdx < 4; subPartIdx++, absPartIdxSub += qPartsDiv)
+        {
+            outDist += codeIntraChromaQt(mode, cuGeom, trDepth + 1, absPartIdxSub, psyEnergy);
+            splitCbfU |= cu.getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
+            splitCbfV |= cu.getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
+        }
+        for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
+        {
+            cu.m_cbf[TEXT_CHROMA_U][absPartIdx + offs] |= (splitCbfU << trDepth);
+            cu.m_cbf[TEXT_CHROMA_V][absPartIdx + offs] |= (splitCbfV << trDepth);
+        }
+
+        return outDist;
+    }
+
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
     uint32_t log2TrSizeC = log2TrSize - hChromaShift;
 
@@ -767,35 +787,10 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
             return 0;
     }
 
-    if (tuDepthL > trDepth)
-    {
-        int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && (log2TrSizeC - 1) <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
-        if (checkTransformSkip && m_param->bEnableTSkipFast)
-            checkTransformSkip &= cu.m_transformSkip[TEXT_LUMA][absPartIdx];
-
-        uint32_t qPartsDiv = NUM_CU_PARTITIONS >> ((fullDepth + 1) << 1);
-        uint32_t outDist = 0, splitCbfU = 0, splitCbfV = 0;
-        for (uint32_t subPartIdx = 0, absPartIdxSub = absPartIdx; subPartIdx < 4; subPartIdx++, absPartIdxSub += qPartsDiv)
-        {
-            uint32_t splitPsyEnergy = 0;
-
-            if (checkTransformSkip)
-                outDist += codeIntraChromaTSkip(mode, cuGeom, trDepth + 1, absPartIdxSub, splitPsyEnergy);
-            else
-                outDist += codeIntraChromaQt(mode, cuGeom, trDepth + 1, absPartIdxSub, splitPsyEnergy);
-
-            psyEnergy += splitPsyEnergy;
-            splitCbfU |= cu.getCbf(absPartIdxSub, TEXT_CHROMA_U, trDepth + 1);
-            splitCbfV |= cu.getCbf(absPartIdxSub, TEXT_CHROMA_V, trDepth + 1);
-        }
-        for (uint32_t offs = 0; offs < 4 * qPartsDiv; offs++)
-        {
-            cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << trDepth);
-            cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << trDepth);
-        }
-
-        return outDist;
-    }
+    bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
+    checkTransformSkip &= !m_param->bEnableTSkipFast || (log2TrSize <= MAX_LOG2_TS_SIZE && cu.m_transformSkip[TEXT_LUMA][absPartIdx]);
+    if (checkTransformSkip)
+        return codeIntraChromaTSkip(mode, cuGeom, trDepth, trDepthC, absPartIdx, psyEnergy);
 
     uint32_t qtLayer = log2TrSize - 2;
     uint32_t tuSize = 1 << log2TrSizeC;
@@ -840,7 +835,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
             // get prediction signal
             predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
 
-            X265_CHECK(!cu.m_transformSkip[ttype][0], "unexpected tskip flag in codeIntraChromaQt\n");
+            cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
             primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
@@ -876,32 +871,17 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
 }
 
 /* returns distortion */
-uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy)
+uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t trDepthC, uint32_t absPartIdx, uint32_t& psyEnergy)
 {
     CUData& cu = mode.cu;
     uint32_t fullDepth = cu.m_cuDepth[0] + trDepth;
+    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
     int      hChromaShift = CHROMA_H_SHIFT(m_csp);
     int      vChromaShift = CHROMA_V_SHIFT(m_csp);
-    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-    uint32_t log2TrSizeC = log2TrSize - hChromaShift;
-    uint32_t outDist = 0;
-
-    uint32_t trDepthC = trDepth;
-    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
-    {
-        X265_CHECK(trDepth > 0, "invalid trDepth\n");
-        trDepthC--;
-        log2TrSizeC++;
-        uint32_t qpdiv = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + trDepthC) << 1);
-        bool bFirstQ = ((absPartIdx & (qpdiv - 1)) == 0);
-        if (!bFirstQ)
-            return outDist;
-    }
-
-    uint32_t tuSize = 1 << log2TrSizeC;
+    uint32_t log2TrSizeC = 2;
+    uint32_t tuSize = 4;
     uint32_t qtLayer = log2TrSize - 2;
-
-    X265_CHECK(cu.m_tuDepth[absPartIdx] == trDepth && 2 == log2TrSizeC && MAX_TS_SIZE == tuSize, "transform skip only possible at 4x4\n");
+    uint32_t outDist = 0;
 
     /* At the TU layers above this one, no RDO is performed, only distortion is being measured,
      * so the entropy coder is not very accurate. The best we can do is return it in the same
