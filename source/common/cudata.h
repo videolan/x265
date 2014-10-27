@@ -180,7 +180,7 @@ public:
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
     void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
-    void     setTrIdxSubParts(uint8_t trIdx, uint32_t absPartIdx, uint32_t depth)             { s_partSet[depth](m_tuDepth + absPartIdx, trIdx); }
+    void     setTUDepthSubParts(uint8_t tuDepth, uint32_t absPartIdx, uint32_t depth)         { s_partSet[depth](m_tuDepth + absPartIdx, tuDepth); }
     void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
     void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
     void     setCbfSubParts(uint8_t cbf, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_cbf[ttype] + absPartIdx, cbf); }

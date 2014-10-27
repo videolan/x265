@@ -296,7 +296,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
         X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in codeIntraLumaQT\n");
-        cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+        cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffY       = m_rqt[qtLayer].coeffRQT[0] + coeffOffsetY;
@@ -431,7 +431,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
             m_entropyCoder.load(m_rqt[fullDepth].rqtTest);
 
             // recover transform index and Cbf values
-            cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+            cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
             cu.setCbfSubParts(bCBF, TEXT_LUMA, absPartIdx, fullDepth);
             cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, fullDepth);
         }
@@ -478,7 +478,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDep
     // get prediction signal
     predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
-    cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+    cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
 
     uint32_t qtLayer = log2TrSize - 2;
     uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
@@ -647,7 +647,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
         X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in residualTransformQuantIntra\n");
-        cu.setTrIdxSubParts(trDepth, absPartIdx, fullDepth);
+        cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
 
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, false);
@@ -2178,7 +2178,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     cu.setSkipFlagSubParts(true);
     cu.clearCbf();
-    cu.setTrIdxSubParts(0, 0, depth);
+    cu.setTUDepthSubParts(0, 0, depth);
 
     reconYuv->copyFromYuv(interMode.predYuv);
 
@@ -2266,7 +2266,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
         if (cbf0Cost < cost)
         {
             cu.clearCbf();
-            cu.setTrIdxSubParts(0, 0, depth);
+            cu.setTUDepthSubParts(0, 0, depth);
         }
     }
 
@@ -2406,7 +2406,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
 
         uint32_t sizeIdx  = log2TrSize  - 2;
         uint32_t sizeIdxC = log2TrSizeC - 2;
-        cu.setTrIdxSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
+        cu.setTUDepthSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
 
         cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
 
@@ -2560,7 +2560,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         coeff_t* coeffCurU = m_rqt[qtLayer].coeffRQT[1] + coeffOffsetC;
         coeff_t* coeffCurV = m_rqt[qtLayer].coeffRQT[2] + coeffOffsetC;
 
-        cu.setTrIdxSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
+        cu.setTUDepthSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
         bool checkTransformSkip   = m_slice->m_pps->bTransformSkipEnabled && !cu.m_tqBypass[0];
         bool checkTransformSkipY  = checkTransformSkip && log2TrSize  <= MAX_LOG2_TS_SIZE;
         bool checkTransformSkipUV = checkTransformSkip && log2TrSizeC <= MAX_LOG2_TS_SIZE;
@@ -3178,7 +3178,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     outDist += singleDist;
     mode.psyEnergy = singlePsyEnergy;
 
-    cu.setTrIdxSubParts(trMode, absPartIdx, depth);
+    cu.setTUDepthSubParts(trMode, absPartIdx, depth);
     cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << trMode, TEXT_LUMA, absPartIdx, depth);
 
     if (bCodeChroma)
