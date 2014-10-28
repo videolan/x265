@@ -1278,8 +1278,13 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
             uint32_t preds[3];
             cu.getIntraDirLumaPredictor(absPartIdx, preds);
 
+            /* there are three cost tiers for intra modes:
+             *  pred[0]          - mode probable, least cost
+             *  pred[1], pred[2] - less probable, slightly more cost
+             *  non-mpm modes    - all cost the same (rbits) */
             uint64_t mpms;
             uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
+            m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
             pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
             uint64_t modeCosts[35];
@@ -1287,7 +1292,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
 
             // DC
             primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? getIntraModeBits(cu, DC_IDX, absPartIdx, depth) : rbits;
+            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, DC_IDX) : rbits;
             uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
 
@@ -1300,7 +1305,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
                 leftPlanar = leftFiltered;
             }
             primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? getIntraModeBits(cu, PLANAR_IDX, absPartIdx, depth) : rbits;
+            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, PLANAR_IDX) : rbits;
             sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
             COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
@@ -1314,7 +1319,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
                 bool modeHor = (mode < 18);
                 pixel *cmp = (modeHor ? buf_trans : fenc);
                 intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-                bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
+                bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
                 sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
                 modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
                 COPY1_IF_LT(bcost, modeCosts[mode]);
@@ -3207,17 +3212,6 @@ void Search::saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartI
     }
 }
 
-uint32_t Search::getIntraModeBits(CUData& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth)
-{
-    cu.m_lumaIntraDir[absPartIdx] = (uint8_t)mode;
-
-    // Reload only contexts required for coding intra mode information
-    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
-    m_entropyCoder.resetBits();
-    m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false); /* TODO: Pass mode here so this func can take const cu ref */
-    return m_entropyCoder.getNumberOfWrittenBits();
-}
-
 /* returns the number of bits required to signal a non-most-probable mode.
  * on return mpms contains bitmap of most probable modes */
 uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
@@ -3230,7 +3224,13 @@ uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t d
     while (mpms & ((uint64_t)1 << mode))
         --mode;
 
-    return getIntraModeBits(cu, mode, absPartIdx, depth);
+    cu.m_lumaIntraDir[absPartIdx] = (uint8_t)mode;
+
+    // Reload only contexts required for coding intra mode information
+    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+    m_entropyCoder.resetBits();
+    m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false);
+    return m_entropyCoder.getNumberOfWrittenBits();
 }
 
 /* swap the current mode/cost with the mode with the highest cost in the

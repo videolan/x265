@@ -1438,17 +1438,22 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
     int predsize = scaleTuSize * scaleTuSize;
 
+    /* there are three cost tiers for intra modes:
+     *  pred[0]          - mode probable, least cost
+     *  pred[1], pred[2] - less probable, slightly more cost
+     *  non-mpm modes    - all cost the same (rbits) */
     uint32_t preds[3];
     cu.getIntraDirLumaPredictor(absPartIdx, preds);
 
     uint64_t mpms;
     uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
+    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
     // DC
     primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
     bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     bmode = mode = DC_IDX;
-    bbits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
+    bbits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
     bcost = m_rdCost.calcRdSADCost(bsad, bbits);
 
     pixel *abovePlanar = above;
@@ -1464,7 +1469,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
     sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     mode = PLANAR_IDX;
-    bits = (mpms & ((uint64_t)1 << mode)) ? getIntraModeBits(cu, mode, absPartIdx, depth) : rbits;
+    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
     cost = m_rdCost.calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
@@ -1482,7 +1487,7 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     cmp = modeHor ? bufTrans : fenc; \
     srcStride = modeHor ? scaleTuSize : scaleStride; \
     sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
-    bits = (mpms & ((uint64_t)1 << angle)) ? getIntraModeBits(cu, angle, absPartIdx, depth) : rbits; \
+    bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
     cost = m_rdCost.calcRdSADCost(sad, bits)
 
     if (m_param->bEnableFastIntra)

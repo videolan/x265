@@ -172,7 +172,6 @@ public:
     void     generateCoeffRecon(Mode& mode, const CUGeom& cuGeom);
     void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
 
-    uint32_t getIntraModeBits(CUData& cu, uint32_t mode, uint32_t absPartIdx, uint32_t depth);
     uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms);
 
 protected:
