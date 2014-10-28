@@ -24,11 +24,13 @@
 #include "common.h"
 #include "frame.h"
 #include "picyuv.h"
+#include "framedata.h"
 
 using namespace x265;
 
 Frame::Frame()
 {
+    m_bChromaExtended = false;
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     m_encData = NULL;
@@ -62,6 +64,14 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         memset(m_reconPicYuv->m_picOrg[2], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
     }
     return ok;
+}
+
+/* prepare to re-use a FrameData instance to encode a new picture */
+void Frame::reinit(const SPS& sps)
+{
+    m_bChromaExtended = false;
+    m_reconPicYuv = m_encData->m_reconPicYuv;
+    m_encData->reinit(sps);
 }
 
 void Frame::destroy()

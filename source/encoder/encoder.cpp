@@ -543,8 +543,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             frameEnc->m_encData = m_dpb->m_picSymFreeList;
             m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
-            frameEnc->m_reconPicYuv = frameEnc->m_encData->m_reconPicYuv;
-            frameEnc->m_encData->reinit(m_sps);
+            frameEnc->reinit(m_sps);
         }
         else
         {
