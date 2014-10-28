@@ -492,7 +492,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
     if (mightNotSplit && depth >= minDepth)
     {
-        int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && cuGeom.log2CUSize < 6;
+        int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && (cuGeom.log2CUSize < 6 || m_param->rdLevel > 4);
         int bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
 
         /* Initialize all prediction CUs based on parentCTU */
