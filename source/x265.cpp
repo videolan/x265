@@ -68,6 +68,10 @@ static const struct option long_options[] =
     { "preset",         required_argument, NULL, 'p' },
     { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
+    { "no-pmode",             no_argument, NULL, 0 },
+    { "pmode",                no_argument, NULL, 0 },
+    { "no-pme",               no_argument, NULL, 0 },
+    { "pme",                  no_argument, NULL, 0 },
     { "log-level",      required_argument, NULL, 0 },
     { "profile",        required_argument, NULL, 0 },
     { "level-idc",      required_argument, NULL, 0 },
@@ -100,6 +104,8 @@ static const struct option long_options[] =
     { "subme",          required_argument, NULL, 'm' },
     { "merange",        required_argument, NULL, 0 },
     { "max-merge",      required_argument, NULL, 0 },
+    { "no-temporal-mvp",      no_argument, NULL, 0 },
+    { "temporal-mvp",         no_argument, NULL, 0 },
     { "rdpenalty",      required_argument, NULL, 0 },
     { "no-rect",              no_argument, NULL, 0 },
     { "rect",                 no_argument, NULL, 0 },
@@ -163,8 +169,8 @@ static const struct option long_options[] =
     { "lft",                  no_argument, NULL, 0 },
     { "no-sao",               no_argument, NULL, 0 },
     { "sao",                  no_argument, NULL, 0 },
-    { "sao-lcu-bounds", required_argument, NULL, 0 },
-    { "sao-lcu-opt",    required_argument, NULL, 0 },
+    { "no-sao-non-deblock",   no_argument, NULL, 0 },
+    { "sao-non-deblock",      no_argument, NULL, 0 },
     { "no-ssim",              no_argument, NULL, 0 },
     { "ssim",                 no_argument, NULL, 0 },
     { "no-psnr",              no_argument, NULL, 0 },
@@ -202,6 +208,8 @@ static const struct option long_options[] =
     { "pass",           required_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
     { "no-slow-firstpass",    no_argument, NULL, 0 },
+    { "analysis-mode",  required_argument, NULL, 0 },
+    { "analysis-file",  required_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -224,11 +232,14 @@ struct CLIOptions
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
+    size_t   analysisRecordSize; // number of bytes read from or dumped into file
+    int      analysisHeaderSize;
 
     int64_t startTime;
     int64_t prevUpdateTime;
     float   frameRate;
     FILE*   qpfile;
+    FILE*   analysisFile;
 
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
@@ -245,6 +256,9 @@ struct CLIOptions
         prevUpdateTime = 0;
         bDither = false;
         qpfile = NULL;
+        analysisFile = NULL;
+        analysisRecordSize = 0;
+        analysisHeaderSize = 0;
     }
 
     void destroy();
@@ -254,6 +268,9 @@ struct CLIOptions
     void showHelp(x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
     bool parseQPFile(x265_picture &pic_org);
+    void readAnalysisFile(x265_picture* pic, x265_param*);
+    void writeAnalysisFile(x265_picture* pic, x265_param*);
+    bool validateFanout(x265_param*);
 };
 
 void CLIOptions::destroy()
@@ -267,6 +284,9 @@ void CLIOptions::destroy()
     if (qpfile)
         fclose(qpfile);
     qpfile = NULL;
+    if (analysisFile)
+        fclose(analysisFile);
+    analysisFile = NULL;
 }
 
 void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
@@ -354,6 +374,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
+    H0("   --[no-]pmode                  Parallel mode analysis. Default %s\n", OPT(param->bDistributeModeAnalysis));
+    H0("   --[no-]pme                    Parallel motion estimation. Default %s\n", OPT(param->bDistributeMotionEstimation));
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("\nPresets:\n");
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
@@ -385,6 +407,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-m/--subme <integer>             Amount of subpel refinement to perform (0:least .. 7:most). Default %d \n", param->subpelRefine);
     H0("   --merange <integer>           Motion search range. Default %d\n", param->searchRange);
     H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
+    H0("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
     H0("\nSpatial / intra options:\n");
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
@@ -432,6 +455,8 @@ void CLIOptions::showHelp(x265_param *param)
        "                                   - 2 : Last pass, does not overwrite stats file\n"
        "                                   - 3 : Nth pass, overwrites stats file\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
+    H0("   --analysis-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisMode);
+    H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
     H0("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H0("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
@@ -440,8 +465,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
-    H0("   --sao-lcu-bounds <integer>    0: right/bottom boundary areas skipped  1: non-deblocked pixels are used. Default %d\n", param->saoLcuBoundary);
-    H0("   --sao-lcu-opt <integer>       0: SAO picture-based optimization, 1: SAO LCU-based optimization. Default %d\n", param->saoLcuBasedOptimization);
+    H0("   --[no-]sao-non-deblock        Use non-deblocked pixels, else right/bottom boundary areas skipped. Default %s\n", OPT(param->bSaoNonDeblocked));
     H0("\nVUI options:\n");
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
@@ -486,6 +510,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *preset = NULL;
     const char *tune = NULL;
     const char *profile = NULL;
+    const char *analysisfn = "x265_analysis.dat";
 
     if (argc <= 1)
     {
@@ -578,6 +603,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("profile") profile = optarg; /* handled last */
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
+            OPT("analysis-file") analysisfn = optarg;
             OPT("qpfile")
             {
                 this->qpfile = fopen(optarg, "rb");
@@ -725,7 +751,161 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
+
+    if (param->analysisMode)
+    {
+        const char *mode = param->analysisMode == X265_ANALYSIS_SAVE ? "wb" : "rb";
+        this->analysisFile = fopen(analysisfn, mode);
+        if (!this->analysisFile)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "failed to open analysis file %s\n", analysisfn);
+            return true;
+        }
+    }
+
     return false;
+}
+
+bool CLIOptions::validateFanout(x265_param *param)
+{
+#define CMP_OPT_FANOUT(opt, param_val)\
+    {\
+        bErr = 0;\
+        p = strstr(paramBuf, opt "=");\
+        char* q = strstr(paramBuf, "no-"opt);\
+        if (p && sscanf(p, opt "=%d" , &i) && param_val != i)\
+            bErr = 1;\
+        else if (!param_val && !q)\
+            bErr = 1;\
+        else if (param_val && (q || !strstr(paramBuf, opt)))\
+            bErr = 1;\
+        if (bErr)\
+        {\
+            x265_log(param, X265_LOG_ERROR, "different " opt " setting than given in analysis file (%d vs %d)\n", param_val, i);\
+            X265_FREE(paramBuf);\
+            return false;\
+        }\
+    }
+
+    char *p = NULL, *paramBuf;
+    int i, j;
+    uint32_t k , l;
+    bool bErr = false;
+
+    paramBuf = X265_MALLOC(char, MAXPARAMSIZE);
+    if (!paramBuf)
+        return false;
+
+    fread(paramBuf, 1, MAXPARAMSIZE, this->analysisFile);
+
+    /* check whether fanout options are compatible */
+    if (strncmp(paramBuf, "#options:", 9))
+    {
+        x265_log(param, X265_LOG_ERROR, "options list in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+
+    char* buf = strchr(paramBuf, '\n');
+    if (!buf)
+    {
+        x265_log(param, X265_LOG_ERROR, "Malformed analysis file\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    *buf = '\0';
+    fseek(this->analysisFile, (int)strlen(paramBuf) + 1, SEEK_SET);
+
+    if (sscanf(paramBuf, "#options: %dx%d", &i, &j) != 2)
+    {
+        x265_log(param, X265_LOG_ERROR, "Resolution specified in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    if ((p = strstr(paramBuf, " fps=")) == 0 || sscanf(p, " fps=%u/%u", &k, &l) != 2)
+    {
+        x265_log(param, X265_LOG_ERROR, "fps specified in analysis file is not valid\n");
+        X265_FREE(paramBuf);
+        return false;
+    }
+    if (k != param->fpsNum || l != param->fpsDenom)
+    {
+        x265_log(param, X265_LOG_ERROR, "fps mismatch than given in analysis file (%u/%u vs %u/%u)\n",
+            param->fpsNum, param->fpsDenom, k, l);
+        X265_FREE(paramBuf);
+        return false;
+    }
+
+    CMP_OPT_FANOUT("bitdepth", param->internalBitDepth);
+    CMP_OPT_FANOUT("weightp", param->bEnableWeightedPred);
+    CMP_OPT_FANOUT("bframes", param->bframes);
+    CMP_OPT_FANOUT("b-pyramid", param->bBPyramid);
+    CMP_OPT_FANOUT("b-adapt", param->bFrameAdaptive);
+    CMP_OPT_FANOUT("open-gop", param->bOpenGOP);
+    CMP_OPT_FANOUT("keyint", param->keyframeMax);
+    CMP_OPT_FANOUT("min-keyint", param->keyframeMin);
+    CMP_OPT_FANOUT("scenecut", param->scenecutThreshold);
+    CMP_OPT_FANOUT("ctu", (int)param->maxCUSize);
+    CMP_OPT_FANOUT("ref", param->maxNumReferences);
+    CMP_OPT_FANOUT("rc-lookahead", param->lookaheadDepth);
+
+#undef CMP_OPT_FANOUT
+
+    X265_FREE(paramBuf);
+    return true;
+}
+
+void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
+{
+    int poc, width, height;
+    uint32_t numPart, numCU;
+    fread(&width, sizeof(int), 1, this->analysisFile);
+    fread(&height, sizeof(int), 1, this->analysisFile);
+    fread(&poc, sizeof(int), 1, this->analysisFile);
+    fread(&pic->sliceType, sizeof(int), 1, this->analysisFile);
+    fread(&numCU, sizeof(int), 1, this->analysisFile);
+    fread(&numPart, sizeof(int), 1, this->analysisFile);
+
+    if (poc != pic->poc || width != p->sourceWidth || height != p->sourceHeight)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "Error in reading intra-inter data.\n");
+        x265_free_analysis_data(pic);
+        return;
+    }
+
+    fread(pic->analysisData.intraData->depth,
+        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fread(pic->analysisData.intraData->modes,
+        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fread(pic->analysisData.intraData->partSizes,
+        sizeof(char), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fread(pic->analysisData.intraData->poc,
+        sizeof(int), pic->analysisData.numCUsInFrame, this->analysisFile);
+    fread(pic->analysisData.intraData->cuAddr,
+        sizeof(uint32_t), pic->analysisData.numCUsInFrame, this->analysisFile);
+    fread(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * 85, this->analysisFile);
+}
+
+void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
+{
+    uint64_t seekTo = pic->poc * this->analysisRecordSize + this->analysisHeaderSize;
+    fseeko(this->analysisFile, seekTo, SEEK_SET);
+    fwrite(&p->sourceWidth, sizeof(int), 1, this->analysisFile);
+    fwrite(&p->sourceHeight, sizeof(int), 1, this->analysisFile);
+    fwrite(&pic->poc, sizeof(int), 1, this->analysisFile);
+    fwrite(&pic->sliceType, sizeof(int), 1, this->analysisFile);
+    fwrite(&pic->analysisData.numCUsInFrame, sizeof(int), 1, this->analysisFile);
+    fwrite(&pic->analysisData.numPartitions, sizeof(int), 1, this->analysisFile);
+
+    fwrite(pic->analysisData.intraData->depth,
+        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fwrite(pic->analysisData.intraData->modes,
+        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fwrite(pic->analysisData.intraData->partSizes,
+        sizeof(char), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
+    fwrite(pic->analysisData.intraData->poc, sizeof(int), pic->analysisData.numCUsInFrame, this->analysisFile);
+    fwrite(pic->analysisData.intraData->cuAddr, sizeof(uint32_t), pic->analysisData.numCUsInFrame, this->analysisFile);
+    fwrite(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * 85, this->analysisFile);
 }
 
 bool CLIOptions::parseQPFile(x265_picture &pic_org)
@@ -820,6 +1000,38 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
+    if (param->analysisMode && !pic_recon)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "Must specify recon with analysis-mode option.\n");
+        goto fail;
+    }
+    if (param->analysisMode)
+    {
+        if (param->analysisMode == X265_ANALYSIS_SAVE)
+        {
+            char *p = x265_param2string(param);
+            if (!p)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "analysis: buffer allocation failure, aborting");
+                goto fail;
+            }
+            uint32_t numCU = pic_in->analysisData.numCUsInFrame;
+            uint32_t numPart = pic_in->analysisData.numPartitions;
+
+            cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * 85 +
+                    sizeof(uint8_t) * 2 * numPart * numCU + sizeof(char) * numPart * numCU + sizeof(int) * numCU + sizeof(uint32_t) * numCU);
+
+            fprintf(cliopt.analysisFile, "#options: %s\n", p);
+            cliopt.analysisHeaderSize = ftell(cliopt.analysisFile);
+            X265_FREE(p);
+        }
+        else
+        {
+            if (!cliopt.validateFanout(param))
+                goto fail;
+        }
+    }
+
     if (cliopt.bDither)
     {
         errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
@@ -850,10 +1062,20 @@ int main(int argc, char **argv)
         else
             pic_in = NULL;
 
-        if (pic_in && pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
+        if (pic_in)
         {
-            ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
-            pic_in->bitDepth = X265_DEPTH;
+            if (pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
+            {
+                ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
+                pic_in->bitDepth = X265_DEPTH;
+            }
+            if (param->analysisMode)
+            {
+                x265_alloc_analysis_data(pic_in);
+
+                if (param->analysisMode == X265_ANALYSIS_LOAD)
+                    cliopt.readAnalysisFile(pic_in, param);
+            }
         }
 
         int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
@@ -866,6 +1088,10 @@ int main(int argc, char **argv)
         if (numEncoded && pic_recon)
         {
             cliopt.recon->writePicture(pic_out);
+            if (param->analysisMode == X265_ANALYSIS_SAVE)
+                cliopt.writeAnalysisFile(pic_recon, param);
+            if (param->analysisMode)
+                x265_free_analysis_data(pic_recon);
         }
 
         if (nal)
@@ -883,6 +1109,10 @@ int main(int argc, char **argv)
         if (numEncoded && pic_recon)
         {
             cliopt.recon->writePicture(pic_out);
+            if (param->analysisMode == X265_ANALYSIS_SAVE)
+                cliopt.writeAnalysisFile(pic_recon, param);
+            if (param->analysisMode)
+                x265_free_analysis_data(pic_recon);
         }
 
         if (nal)

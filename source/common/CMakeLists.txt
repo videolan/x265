@@ -1,48 +1,5 @@
 # vim: syntax=cmake
-set(LIBCOMMON_SRC
-    ../Lib/TLibCommon/TComDataCU.cpp
-    ../Lib/TLibCommon/TComMotionInfo.cpp
-    ../Lib/TLibCommon/TComPattern.cpp
-    ../Lib/TLibCommon/TComPicSym.cpp
-    ../Lib/TLibCommon/TComPicYuv.cpp
-    ../Lib/TLibCommon/TComPicYuvMD5.cpp
-    ../Lib/TLibCommon/TComRom.cpp
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.cpp
-    ../Lib/TLibCommon/TComWeightPrediction.cpp
-    ../Lib/TLibCommon/TComYuv.cpp)
-set(LIBCOMMON_HDR
-    ../Lib/TLibCommon/CommonDef.h
-    ../Lib/TLibCommon/TypeDef.h
-    ../Lib/TLibCommon/ContextTables.h
-    ../Lib/TLibCommon/TComDataCU.h
-    ../Lib/TLibCommon/TComMotionInfo.h
-    ../Lib/TLibCommon/TComPattern.h
-    ../Lib/TLibCommon/TComPicSym.h
-    ../Lib/TLibCommon/TComPicYuv.h
-    ../Lib/TLibCommon/TComRom.h
-    ../Lib/TLibCommon/TComSampleAdaptiveOffset.h
-    ../Lib/TLibCommon/TComWeightPrediction.h
-    ../Lib/TLibCommon/TComYuv.h)
-
-source_group(TLibCommon FILES ${LIBCOMMON_SRC} ${LIBCOMMON_HDR})
-if(GCC)
-    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "-Wno-sign-compare")
-endif(GCC)
-if(MSVC)
-    # ignore these warnings from HM source
-    # /wd4244 type conversion, possible loss of data
-    # /wd4389 signed/unsigned mismatch
-    # /wd4018 '<' signed/unsigned mismatch
-    # /wd4800 forcing value to bool 'true' or 'false' (performance warning)
-    set_source_files_properties(${LIBCOMMON_SRC} PROPERTIES COMPILE_FLAGS 
-        "/wd4244 /wd4389 /wd4018 /wd4800")
-    if(INTEL_CXX)
-        add_definitions(/Qwd2557) # signed/unsigned mismatch
-    endif()
-endif(MSVC)
-
-set(SSE3  vec/dct-sse3.cpp  vec/blockcopy-sse3.cpp)
+set(SSE3  vec/dct-sse3.cpp)
 set(SSSE3 vec/dct-ssse3.cpp)
 set(SSE41 vec/dct-sse41.cpp)
 
@@ -129,20 +86,25 @@ add_library(common OBJECT
     ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
+    constants.cpp constants.h
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
     threadpool.cpp threadpool.h
     wavefront.h wavefront.cpp
     md5.cpp md5.h
     bitstream.h bitstream.cpp
-    mv.h
+    yuv.cpp yuv.h
     shortyuv.cpp shortyuv.h
+    picyuv.cpp picyuv.h
     common.cpp common.h
     param.cpp param.h
     frame.cpp frame.h
+    framedata.cpp framedata.h
+    cudata.cpp cudata.h
     slice.cpp slice.h
-    lowres.cpp lowres.h
+    lowres.cpp lowres.h mv.h 
     piclist.cpp piclist.h
+    predict.cpp  predict.h
     scalinglist.cpp scalinglist.h
-    quant.cpp quant.h
+    quant.cpp quant.h contexts.h
     deblock.cpp deblock.h)

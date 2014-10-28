@@ -33,6 +33,13 @@ class Frame;
 class PicList;
 class MotionReference;
 
+enum SliceType
+{
+    B_SLICE,
+    P_SLICE,
+    I_SLICE
+};
+
 struct RPS
 {
     int  numberOfPictures;
@@ -63,6 +70,8 @@ namespace Profile {
         MAIN = 1,
         MAIN10 = 2,
         MAINSTILLPICTURE = 3,
+        MAINREXT = 4,
+        HIGHTHROUGHPUTREXT = 5
     };
 }
 
@@ -94,14 +103,20 @@ namespace Level {
 
 struct ProfileTierLevel
 {
-    bool    tierFlag;
-    int     profileIdc;
-    bool    profileCompatibilityFlag[32];
-    int     levelIdc;
-    bool    progressiveSourceFlag;
-    bool    interlacedSourceFlag;
-    bool    nonPackedConstraintFlag;
-    bool    frameOnlyConstraintFlag;
+    bool     tierFlag;
+    bool     progressiveSourceFlag;
+    bool     interlacedSourceFlag;
+    bool     nonPackedConstraintFlag;
+    bool     frameOnlyConstraintFlag;
+    bool     profileCompatibilityFlag[32];
+    bool     intraConstraintFlag;
+    bool     lowerBitRateConstraintFlag;
+    int      profileIdc;
+    int      levelIdc;
+    uint32_t minCrForLevel;
+    uint32_t maxLumaSrForLevel;
+    uint32_t bitDepthConstraint;
+    int      chromaFormatConstraint;
 };
 
 struct HRDInfo
@@ -194,6 +209,12 @@ struct SPS
     uint32_t picWidthInLumaSamples;  // use param
     uint32_t picHeightInLumaSamples; // use param
 
+    uint32_t numCuInWidth;
+    uint32_t numCuInHeight;
+    uint32_t numCUsInFrame;
+    uint32_t numPartitions;
+    uint32_t numPartInCUSize;
+
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;
 
@@ -211,6 +232,7 @@ struct SPS
     int      numReorderPics;
 
     bool     bUseStrongIntraSmoothing; // use param
+    bool     bTemporalMVPEnabled;
 
     Window   conformanceWindow;
     VUI      vuiParameters;
@@ -219,7 +241,6 @@ struct SPS
 struct PPS
 {
     uint32_t maxCuDQPDepth;
-    uint32_t minCuDQPSize;
 
     int      chromaCbQpOffset;       // use param
     int      chromaCrQpOffset;       // use param
@@ -243,21 +264,17 @@ struct PPS
 struct WeightParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
-    // or Implicit weighted prediction parameters (8 bits depth values).
     bool     bPresentFlag;
     uint32_t log2WeightDenom;
     int      inputWeight;
     int      inputOffset;
 
-    // Weighted prediction scaling values built from above parameters (bitdepth scaled):
-    int      w, o, offset, shift, round;
-
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
-    void setFromWeightAndOffset(int weight, int _offset, int denom, bool bNormalize)
+    void setFromWeightAndOffset(int w, int o, int denom, bool bNormalize)
     {
-        inputOffset = _offset;
+        inputOffset = o;
         log2WeightDenom = denom;
-        inputWeight = weight;
+        inputWeight = w;
         while (bNormalize && log2WeightDenom > 0 && (inputWeight > 127))
         {
             log2WeightDenom--;
@@ -274,7 +291,6 @@ public:
 
     const SPS*  m_sps;
     const PPS*  m_pps;
-    Frame*      m_pic;
     WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
     RPS         m_rps;
@@ -336,9 +352,9 @@ public:
     bool isInterB() const { return m_sliceType == B_SLICE; }
 
     bool isInterP() const { return m_sliceType == P_SLICE; }
-};
 
-#define IS_REFERENCED(slice) (slice->m_pic->m_lowres.sliceType != X265_TYPE_B) 
+    uint32_t realEndAddress(uint32_t endCUAddr) const;
+};
 
 }
 

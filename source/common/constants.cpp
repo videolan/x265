@@ -1,50 +1,50 @@
-/* The copyright in this software is being made available under the BSD
- * License, included below. This software may be subject to other third party
- * and contributor rights, including patent rights, and no such rights are
- * granted under this license.
- *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
- *    be used to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
+/*****************************************************************************
+* Copyright (C) 2014 x265 project
+*
+* Authors: Steve Borho <steve@borho.org>
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02111, USA.
+*
+* This program is also available under a commercial proprietary license.
+* For more information, contact us at license @ x265.com.
+*****************************************************************************/
 
-/** \file     TComRom.cpp
-    \brief    global variables & functions
-*/
-
-#include "TComRom.h"
-#include "threading.h"
 #include "common.h"
+#include "constants.h"
+#include "threading.h"
 
 namespace x265 {
-//! \ingroup TLibCommon
-//! \{
+
+static int initialized /* = 0 */;
+
+// initialize ROM variables
+void initROM()
+{
+    if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
+        return;
+}
+
+void destroyROM()
+{
+    if (ATOMIC_CAS32(&initialized, 1, 0) == 0)
+        return;
+}
+
 
 // lambda = pow(2, (double)q / 6 - 2);
-double x265_lambda_tab[MAX_MAX_QP + 1] =
+double x265_lambda_tab[QP_MAX_MAX + 1] =
 {
     0.2500, 0.2806, 0.3150, 0.3536, 0.3969,
     0.4454, 0.5000, 0.5612, 0.6300, 0.7071,
@@ -63,7 +63,7 @@ double x265_lambda_tab[MAX_MAX_QP + 1] =
 };
 
 // lambda2 = pow(lambda, 2) * scale (0.85);
-double x265_lambda2_tab[MAX_MAX_QP + 1] =
+double x265_lambda2_tab[QP_MAX_MAX + 1] =
 {
     0.0531, 0.0669, 0.0843, 0.1063, 0.1339,
     0.1687, 0.2125, 0.2677, 0.3373, 0.4250,
@@ -92,42 +92,58 @@ const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1] =
     65535
 };
 
-static int initialized /* = 0 */;
-
-// initialize ROM variables
-void initROM()
-{
-    if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
-        return;
-}
-
-void destroyROM()
-{
-    if (ATOMIC_CAS32(&initialized, 1, 0) == 0)
-        return;
-}
-
-// ====================================================================================================================
-// Data structure related table & variable
-// ====================================================================================================================
-
 uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
-uint32_t g_maxCUSize   = MAX_CU_SIZE;
-uint32_t g_maxCUDepth  = MAX_FULL_DEPTH;
-uint32_t g_addCUDepth  = 1;
-uint32_t g_log2UnitSize = 2;
-uint32_t g_zscanToRaster[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToZscan[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToPelX[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
-uint32_t g_rasterToPelY[MAX_NUM_SPU_W * MAX_NUM_SPU_W] = { 0, };
+uint32_t g_maxCUSize     = MAX_CU_SIZE;
+uint32_t g_maxFullDepth  = NUM_FULL_DEPTH - 1;
+uint32_t g_maxCUDepth    = NUM_CU_DEPTH - 1;
+uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS] = { 0, };
+uint32_t g_rasterToZscan[MAX_NUM_PARTITIONS] = { 0, };
 
-const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
-
-void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& curIdx)
+const uint8_t g_zscanToPelX[MAX_NUM_PARTITIONS] =
 {
-    int stride = 1 << (maxDepth - 1);
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12,
+    16, 20, 16, 20, 24, 28, 24, 28, 16, 20, 16, 20, 24, 28, 24, 28,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60,
+    32, 36, 32, 36, 40, 44, 40, 44, 32, 36, 32, 36, 40, 44, 40, 44,
+    48, 52, 48, 52, 56, 60, 56, 60, 48, 52, 48, 52, 56, 60, 56, 60
+};
 
-    if (depth == maxDepth)
+const uint8_t g_zscanToPelY[MAX_NUM_PARTITIONS] =
+{
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    16, 16, 20, 20, 16, 16, 20, 20, 24, 24, 28, 28, 24, 24, 28, 28,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    32, 32, 36, 36, 32, 32, 36, 36, 40, 40, 44, 44, 40, 40, 44, 44,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60,
+    48, 48, 52, 52, 48, 48, 52, 52, 56, 56, 60, 60, 56, 56, 60, 60
+};
+
+void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx)
+{
+    uint32_t stride = 1 << maxFullDepth;
+
+    if (depth > maxFullDepth)
     {
         curIdx[0] = startVal;
         curIdx++;
@@ -135,54 +151,19 @@ void initZscanToRaster(int maxDepth, int depth, uint32_t startVal, uint32_t*& cu
     else
     {
         int step = stride >> depth;
-        initZscanToRaster(maxDepth, depth + 1, startVal,                        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step,                 curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride,        curIdx);
-        initZscanToRaster(maxDepth, depth + 1, startVal + step * stride + step, curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal,                        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step,                 curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride,        curIdx);
+        initZscanToRaster(maxFullDepth, depth + 1, startVal + step * stride + step, curIdx);
     }
 }
 
-void initRasterToZscan(uint32_t maxCUSize, uint32_t maxDepth)
+void initRasterToZscan(uint32_t maxFullDepth)
 {
-    uint32_t  unitSize = maxCUSize  >> (maxDepth - 1);
+    uint32_t numPartitions = 1 << (maxFullDepth * 2);
 
-    uint32_t  numPartInCUSize  = (uint32_t)maxCUSize / unitSize;
-
-    for (uint32_t i = 0; i < numPartInCUSize * numPartInCUSize; i++)
-    {
+    for (uint32_t i = 0; i < numPartitions; i++)
         g_rasterToZscan[g_zscanToRaster[i]] = i;
-    }
-}
-
-void initRasterToPelXY(uint32_t maxCUSize, uint32_t maxDepth)
-{
-    uint32_t i;
-
-    uint32_t* tempX = &g_rasterToPelX[0];
-    uint32_t* tempY = &g_rasterToPelY[0];
-
-    uint32_t  unitSize  = maxCUSize >> (maxDepth - 1);
-
-    uint32_t  numPartInCUSize = maxCUSize / unitSize;
-
-    tempX[0] = 0;
-    tempX++;
-    for (i = 1; i < numPartInCUSize; i++)
-    {
-        tempX[0] = tempX[-1] + unitSize;
-        tempX++;
-    }
-
-    for (i = 1; i < numPartInCUSize; i++)
-    {
-        memcpy(tempX, tempX - numPartInCUSize, sizeof(uint32_t) * numPartInCUSize);
-        tempX += numPartInCUSize;
-    }
-
-    for (i = 1; i < numPartInCUSize * numPartInCUSize; i++)
-    {
-        tempY[i] = (i / numPartInCUSize) * unitSize;
-    }
 }
 
 const int16_t g_lumaFilter[4][NTAPS_LUMA] =
@@ -281,13 +262,13 @@ const int16_t g_t32[32][32] =
     {  4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4 }
 };
 
-const uint8_t g_chromaScale[chromaQPMappingTableSize] =
+const uint8_t g_chromaScale[ChromaQPMappingTableSize] =
 {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
     51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51
 };
 
-const uint8_t g_chroma422IntraAngleMappingTable[36] =
+const uint8_t g_chroma422IntraAngleMappingTable[AngleMapping422TableSize] =
 { 0, 1, 2, 2, 2, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 23, 24, 24, 25, 25, 26, 27, 27, 28, 28, 29, 29, 30, 31, DM_CHROMA_IDX };
 
 const uint8_t g_log2Size[MAX_CU_SIZE + 1] =
@@ -298,10 +279,6 @@ const uint8_t g_log2Size[MAX_CU_SIZE + 1] =
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
     6
 };
-
-// ====================================================================================================================
-// Scanning order & context model mapping
-// ====================================================================================================================
 
 const uint16_t g_scan2x2[][2*2] =
 {
@@ -413,9 +390,6 @@ const uint8_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
 // Rice parameters for absolute transform levels
 const uint8_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
 
-const int g_winUnitX[] = { 1, 2, 2, 1 };
-const int g_winUnitY[] = { 1, 2, 1, 1 };
-
 const uint8_t g_lpsTable[64][4] =
 {
     { 128, 176, 208, 240 },
@@ -492,8 +466,8 @@ const uint8_t x265_exp2_lut[64] =
     175,  179,  184,  189,  194,  198,  203,  208,  214,  219,  224,  229,  234,  240,  245,  250
 };
 
-/* g_intraFilterFlags[dir] & trSize */
-const uint8_t g_intraFilterFlags[35] =
+/* bFilter = g_intraFilterFlags[dir] & trSize */
+const uint8_t g_intraFilterFlags[NUM_INTRA_MODE] =
 {
     0x38, 0x00,
     0x38, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x00, 0x20, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -501,5 +475,29 @@ const uint8_t g_intraFilterFlags[35] =
     0x38, 
 };
 
+/* Contains how much to increment shared depth buffer for different ctu sizes to get next best depth
+ * here, depth 0 = 64x64, depth 1 = 32x32, depth 2 = 16x16 and depth 3 = 8x8
+ * if ctu = 64, depth buffer size is 256 combination of depth values 0, 1, 2, 3
+ * if ctu = 32, depth buffer size is 64 combination of depth values 1, 2, 3
+ * if ctu = 16, depth buffer size is 16 combination of depth values 2, 3 */
+const uint32_t g_depthInc[3][4] =
+{
+    { 16,  4,  0, 0},
+    { 64, 16,  4, 1},
+    {256, 64, 16, 4}
+};
+
+/* g_depthScanIdx [y][x] */
+const uint32_t g_depthScanIdx[8][8] =
+{
+    {   0,   1,   4,   5,  16,  17,  20,  21,  },
+    {   2,   3,   6,   7,  18,  19,  22,  23,  },
+    {   8,   9,  12,  13,  24,  25,  28,  29,  },
+    {  10,  11,  14,  15,  26,  27,  30,  31,  },
+    {  32,  33,  36,  37,  48,  49,  52,  53,  },
+    {  34,  35,  38,  39,  50,  51,  54,  55,  },
+    {  40,  41,  44,  45,  56,  57,  60,  61,  },
+    {  42,  43,  46,  47,  58,  59,  62,  63,  }
+};
+
 }
-//! \}

@@ -25,104 +25,54 @@
 #define X265_FRAME_H
 
 #include "common.h"
-#include "TLibCommon/TComPicSym.h"
-#include "TLibCommon/TComPicYuv.h"
 #include "lowres.h"
 #include "threading.h"
-#include "md5.h"
-#include "sei.h"
 
 namespace x265 {
 // private namespace
 
-class Encoder;
+class FrameData;
+class PicYuv;
+struct SPS;
+
+#define IS_REFERENCED(frame) (frame->m_lowres.sliceType != X265_TYPE_B) 
 
 class Frame
 {
 public:
 
-    TComPicYuv*       m_origPicYuv;
+    /* These two items will be NULL until the Frame begins to be encoded, at which point
+     * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
+    FrameData*        m_encData;
+    PicYuv*           m_reconPicYuv;
 
-    Window            m_conformanceWindow;
-    Window            m_defaultDisplayWindow;
-
-    TComPicSym*       m_picSym;
-    TComPicYuv*       m_reconPicYuv;
-    int               m_POC;
-
-    //** Frame Parallelism - notification between FrameEncoders of available motion reference rows **
-    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
-    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
-    void*             m_userData;           // user provided pointer passed in with this picture
-
+    /* Data associated with x265_picture */
+    PicYuv*           m_origPicYuv;
+    int               m_poc;
     int64_t           m_pts;                // user provided presentation time stamp
     int64_t           m_reorderedPts;
     int64_t           m_dts;
+    int32_t           m_forceqp;            // Force to use the qp specified in qp file
+    x265_intra_data*  m_intraData;
+    x265_inter_data*  m_interData;
+    void*             m_userData;           // user provided pointer passed in with this picture
 
     Lowres            m_lowres;
+    bool              m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
+
+    /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
+    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
 
     Frame*            m_next;               // PicList doubly linked list pointers
     Frame*            m_prev;
 
-    bool              m_bChromaPlanesExtended; // orig chroma planes motion extended for weightp analysis
-
-    /* TODO: much of this data can be moved to RCE */
-    double*           m_rowDiagQp;
-    double*           m_rowDiagQScale;
-    uint32_t*         m_rowDiagSatd;
-    uint32_t*         m_rowDiagIntraSatd;
-    uint32_t*         m_rowEncodedBits;
-    uint32_t*         m_numEncodedCusPerRow;
-    uint32_t*         m_rowSatdForVbv;
-    uint32_t*         m_cuCostsForVbv;
-    uint32_t*         m_intraCuCostsForVbv;
-    double*           m_qpaAq;
-    double*           m_qpaRc;
-    double            m_avgQpRc;    // avg QP as decided by ratecontrol
-    double            m_avgQpAq;    // avg QP as decided by AQ in addition to ratecontrol
-    double            m_rateFactor; // calculated based on the Frame QP
-    int32_t           m_forceqp;    // Force to use the qp specified in qp file
-
     Frame();
-    virtual ~Frame();
 
-    bool        create(x265_param *param, Window& display, Window& conformance);
-    bool        allocPicSym(x265_param *param);
-    void        reinit(x265_param *param);
-    void        destroy();
-
-    int         getPOC()                   { return m_POC; }
-
-    Window&     getConformanceWindow()     { return m_conformanceWindow; }
-
-    Window&     getDefDisplayWindow()      { return m_defaultDisplayWindow; }
-
-    TComPicYuv* getPicYuvOrg()             { return m_origPicYuv; }
-
-    TComPicYuv* getPicYuvRec()             { return m_reconPicYuv; }
-
-    int         getStride()                { return m_origPicYuv->getStride(); }
-
-    int         getCStride()               { return m_origPicYuv->getCStride(); }
-
-    /* Reflector methods for data stored in m_picSym */
-    TComPicSym* getPicSym()                { return m_picSym; }
-
-    TComDataCU* getCU(uint32_t cuAddr)     { return m_picSym->getCU(cuAddr); }
-
-    uint32_t    getNumCUsInFrame() const   { return m_picSym->getNumberOfCUsInFrame(); }
-
-    uint32_t    getNumPartInCUSize() const { return m_picSym->getNumPartInCUSize(); }
-
-    uint32_t    getNumPartInCU() const     { return m_picSym->getNumPartition(); }
-
-    uint32_t    getFrameWidthInCU() const  { return m_picSym->getFrameWidthInCU(); }
-
-    uint32_t    getFrameHeightInCU() const { return m_picSym->getFrameHeightInCU(); }
-
-    uint32_t    getUnitSize() const        { return m_picSym->getUnitSize(); }
-
-    uint32_t    getLog2UnitSize() const    { return m_picSym->getLog2UnitSize(); }
+    bool create(x265_param *param);
+    bool allocEncodeData(x265_param *param, const SPS& sps);
+    void reinit(const SPS& sps);
+    void destroy();
 };
 }
 

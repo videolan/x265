@@ -56,17 +56,13 @@ bool Thread::start()
 void Thread::stop()
 {
     if (this->thread)
-    {
         WaitForSingleObject(this->thread, INFINITE);
-    }
 }
 
 Thread::~Thread()
 {
     if (this->thread)
-    {
         CloseHandle(this->thread);
-    }
 }
 
 #else /* POSIX / pthreads */
@@ -96,9 +92,7 @@ bool Thread::start()
 void Thread::stop()
 {
     if (this->thread)
-    {
         pthread_join(this->thread, NULL);
-    }
 }
 
 Thread::~Thread() {}

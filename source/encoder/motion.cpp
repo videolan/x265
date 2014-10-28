@@ -21,9 +21,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
-#include "primitives.h"
 #include "common.h"
+#include "primitives.h"
 #include "lowres.h"
 #include "motion.h"
 #include "x265.h"
@@ -1097,7 +1096,10 @@ me_hex2:
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }
 
-            bmv += square1[bdir] * 2;
+            if (bdir)
+                bmv += square1[bdir] * 2;
+            else
+                break;
         }
 
         /* if HPEL search used SAD, remeasure with SATD before QPEL */
@@ -1114,7 +1116,10 @@ me_hex2:
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }
 
-            bmv += square1[bdir];
+            if (bdir)
+                bmv += square1[bdir];
+            else
+                break;
         }
     }
 

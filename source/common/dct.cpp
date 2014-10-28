@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "TLibCommon/TComRom.h"
 #include "primitives.h"
 
 using namespace x265;
@@ -718,7 +717,7 @@ void idct32_c(int32_t *src, int16_t *dst, intptr_t stride)
     }
 }
 
-void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
+void dequant_normal_c(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 {
 #if HIGH_BIT_DEPTH
     X265_CHECK(scale < 32768 || ((scale & 3) == 0 && shift > 2), "dequant invalid scale %d\n", scale);
@@ -729,27 +728,24 @@ void dequant_normal_c(const int32_t* quantCoef, int32_t* coef, int num, int scal
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
     X265_CHECK((num % 8) == 0, "dequant num %d not multiple of 8\n", num);
     X265_CHECK(shift <= 10, "shift too large %d\n", shift);
+    X265_CHECK(((intptr_t)coef & 31) == 0, "dequant coef buffer not aligned\n");
 
     int add, coeffQ;
-
-    int clipQCoef;
 
     add = 1 << (shift - 1);
 
     for (int n = 0; n < num; n++)
     {
-        clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-        coeffQ = (clipQCoef * scale + add) >> shift;
+        coeffQ = (quantCoef[n] * scale + add) >> shift;
         coef[n] = Clip3(-32768, 32767, coeffQ);
     }
 }
 
-void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
+void dequant_scaling_c(const int16_t* quantCoef, const int32_t *deQuantCoef, int32_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
 
     int add, coeffQ;
-    int clipQCoef;
 
     shift += 4;
 
@@ -759,8 +755,7 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
 
         for (int n = 0; n < num; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-            coeffQ = ((clipQCoef * deQuantCoef[n]) + add) >> (shift - per);
+            coeffQ = ((quantCoef[n] * deQuantCoef[n]) + add) >> (shift - per);
             coef[n] = Clip3(-32768, 32767, coeffQ);
         }
     }
@@ -768,15 +763,16 @@ void dequant_scaling_c(const int32_t* quantCoef, const int32_t *deQuantCoef, int
     {
         for (int n = 0; n < num; n++)
         {
-            clipQCoef = Clip3(-32768, 32767, quantCoef[n]);
-            coeffQ   = Clip3(-32768, 32767, clipQCoef * deQuantCoef[n]);
+            coeffQ   = Clip3(-32768, 32767, quantCoef[n] * deQuantCoef[n]);
             coef[n] = Clip3(-32768, 32767, coeffQ << (per - shift));
         }
     }
 }
 
-uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* qCoef, int qBits, int add, int numCoeff)
+uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
+    X265_CHECK(qBits >= 8, "qBits less than 8\n");
+    X265_CHECK((numCoeff % 16) == 0, "numCoeff must be multiple of 16\n");
     int qBits8 = qBits - 8;
     uint32_t numSig = 0;
 
@@ -791,14 +787,18 @@ uint32_t quant_c(int32_t* coef, int32_t* quantCoeff, int32_t* deltaU, int32_t* q
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = Clip3(-32768, 32767, level);
+        qCoef[blockpos] = (int16_t)Clip3(-32768, 32767, level);
     }
 
     return numSig;
 }
 
-uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits, int add, int numCoeff)
+uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
+    X265_CHECK((numCoeff % 16) == 0, "number of quant coeff is not multiple of 4x4\n");
+    X265_CHECK((uint32_t)add < ((uint32_t)1 << qBits), "2 ^ qBits less than add\n");
+    X265_CHECK(((intptr_t)quantCoeff & 31) == 0, "quantCoeff buffer not aligned\n");
+
     uint32_t numSig = 0;
 
     for (int blockpos = 0; blockpos < numCoeff; blockpos++)
@@ -811,13 +811,13 @@ uint32_t nquant_c(int32_t* coef, int32_t* quantCoeff, int32_t* qCoef, int qBits,
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = Clip3(-32768, 32767, level);
+        qCoef[blockpos] = (int16_t)Clip3(-32768, 32767, level);
     }
 
     return numSig;
 }
 
-int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
+int  count_nonzero_c(const int16_t *quantCoeff, int numCoeff)
 {
     X265_CHECK(((intptr_t)quantCoeff & 15) == 0, "quant buffer not aligned\n");
     X265_CHECK(numCoeff > 0 && (numCoeff & 15) == 0, "numCoeff invalid %d\n", numCoeff);
@@ -833,14 +833,14 @@ int  count_nonzero_c(const int32_t *quantCoeff, int numCoeff)
 }
 
 template<int trSize>
-uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
+uint32_t copy_count(int16_t* coeff, int16_t* residual, intptr_t stride)
 {
     uint32_t numSig = 0;
     for (int k = 0; k < trSize; k++)
     {
         for (int j = 0; j < trSize; j++)
         {
-            coeff[k * trSize + j] = ((int16_t)residual[k * stride + j]);
+            coeff[k * trSize + j] = residual[k * stride + j];
             numSig += (residual[k * stride + j] != 0);
         }
     }
@@ -848,7 +848,7 @@ uint32_t conv16to32_count(coeff_t* coeff, int16_t* residual, intptr_t stride)
     return numSig;
 }
 
-void denoiseDct_c(coeff_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
+void denoiseDct_c(int32_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff)
 {
     for (int i = 0; i < numCoeff; i++)
     {
@@ -885,9 +885,9 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.count_nonzero = count_nonzero_c;
     p.denoiseDct = denoiseDct_c;
 
-    p.cvt16to32_cnt[BLOCK_4x4] = conv16to32_count<4>;
-    p.cvt16to32_cnt[BLOCK_8x8] = conv16to32_count<8>;
-    p.cvt16to32_cnt[BLOCK_16x16] = conv16to32_count<16>;
-    p.cvt16to32_cnt[BLOCK_32x32] = conv16to32_count<32>;
+    p.copy_cnt[BLOCK_4x4] = copy_count<4>;
+    p.copy_cnt[BLOCK_8x8] = copy_count<8>;
+    p.copy_cnt[BLOCK_16x16] = copy_count<16>;
+    p.copy_cnt[BLOCK_32x32] = copy_count<32>;
 }
 }

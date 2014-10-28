@@ -6,9 +6,11 @@ if(NOT CMAKE_BUILD_TYPE)
         FORCE)
 endif()
 message(STATUS "cmake version ${CMAKE_VERSION}")
-if(NOT CMAKE_VERSION VERSION_LESS "2.8.12.20131121")
+if(POLICY CMP0025)
     cmake_policy(SET CMP0025 OLD) # report Apple's Clang as just Clang
-    cmake_policy(SET CMP0042 OLD) # do not require MACOSX_RPATH
+endif()
+if(POLICY CMP0042)
+    cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
 endif()
 
 project (x265)
@@ -19,7 +21,7 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 31)
+set(X265_BUILD 35)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -57,7 +59,7 @@ if(UNIX)
     SET(PLATFORM_LIBS pthread)
     find_library(LIBRT rt)
     if(LIBRT)
-        SET(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
+        set(PLATFORM_LIBS ${PLATFORM_LIBS} rt)
     endif()
 endif(UNIX)
 
@@ -129,6 +131,10 @@ if(GCC)
         add_definitions(-march=armv6 -mfloat-abi=hard -mfpu=vfp)
     endif()
     check_cxx_compiler_flag(-Wno-narrowing CC_HAS_NO_NARROWING) 
+    check_cxx_compiler_flag(-Wno-array-bounds CC_HAS_NO_ARRAY_BOUNDS) 
+    if (CC_HAS_NO_ARRAY_BOUNDS)
+        add_definitions(-Wno-array-bounds) # these are unhelpful
+    endif()
     check_cxx_compiler_flag(-ffast-math CC_HAS_FAST_MATH) 
     if (CC_HAS_FAST_MATH)
         add_definitions(-ffast-math)
@@ -185,7 +191,6 @@ if(WARNINGS_AS_ERRORS)
 endif(WARNINGS_AS_ERRORS)
 
 
-
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
 if(ENABLE_PPA)
     add_definitions(-DENABLE_PPA)
@@ -214,7 +219,7 @@ if (WIN32)
 endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG
-include_directories(. Lib common encoder "${PROJECT_BINARY_DIR}")
+include_directories(. common encoder "${PROJECT_BINARY_DIR}")
 add_subdirectory(encoder)
 add_subdirectory(common)
 
@@ -279,7 +284,9 @@ if(ENABLE_SHARED)
     endif()
     if(UNIX)
         set_target_properties(x265-shared PROPERTIES VERSION ${X265_BUILD})
-        if(NOT APPLE)
+        if(APPLE)
+            set_target_properties(x265-shared PROPERTIES MACOSX_RPATH 1)
+        else()
             set_target_properties(x265-shared PROPERTIES LINK_FLAGS "-Wl,-Bsymbolic,-znoexecstack")
         endif()
     endif()

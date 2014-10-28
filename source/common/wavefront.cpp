@@ -33,21 +33,16 @@ bool WaveFront::init(int numRows)
 {
     m_numRows = numRows;
 
-    if (m_pool)
-    {
-        m_numWords = (numRows + 63) >> 6;
-        m_internalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
-        if (m_internalDependencyBitmap)
-            memset((void*)m_internalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
+    m_numWords = (numRows + 63) >> 6;
+    m_internalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+    if (m_internalDependencyBitmap)
+        memset((void*)m_internalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        m_externalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
-        if (m_externalDependencyBitmap)
-            memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
+    m_externalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+    if (m_externalDependencyBitmap)
+        memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
 
-        return m_internalDependencyBitmap && m_externalDependencyBitmap;
-    }
-
-    return false;
+    return m_internalDependencyBitmap && m_externalDependencyBitmap;
 }
 
 WaveFront::~WaveFront()
@@ -68,7 +63,7 @@ void WaveFront::enqueueRow(int row)
 
     X265_CHECK(row < m_numRows, "invalid row\n");
     ATOMIC_OR(&m_internalDependencyBitmap[row >> 6], bit);
-    m_pool->pokeIdleThread();
+    if (m_pool) m_pool->pokeIdleThread();
 }
 
 void WaveFront::enableRow(int row)

@@ -44,12 +44,21 @@ void x265_transpose16_sse2(pixel *dest, pixel *src, intptr_t stride);
 void x265_transpose32_sse2(pixel *dest, pixel *src, intptr_t stride);
 void x265_transpose64_sse2(pixel *dest, pixel *src, intptr_t stride);
 
-uint32_t x265_quant_sse4(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
-uint32_t x265_nquant_sse4(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
-void x265_dequant_normal_sse4(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift);
-int x265_count_nonzero_ssse3(const int32_t *quantCoeff, int numCoeff);
+void x265_transpose8_avx2(pixel *dest, pixel *src, intptr_t stride);
+void x265_transpose16_avx2(pixel *dest, pixel *src, intptr_t stride);
+void x265_transpose32_avx2(pixel *dest, pixel *src, intptr_t stride);
+void x265_transpose64_avx2(pixel *dest, pixel *src, intptr_t stride);
 
-void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+uint32_t x265_quant_sse4(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+uint32_t x265_quant_avx2(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+uint32_t x265_nquant_sse4(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
+uint32_t x265_nquant_avx2(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
+void x265_dequant_normal_sse4(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
+void x265_dequant_normal_avx2(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift);
+int x265_count_nonzero_ssse3(const int16_t *quantCoeff, int numCoeff);
+
+void x265_weight_pp_sse4(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
+void x265_weight_pp_avx2(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 void x265_weight_sp_sse4(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 
 void x265_pixel_ssim_4x4x2_core_mmx2(const uint8_t * pix1, intptr_t stride1,
@@ -62,6 +71,7 @@ float x265_pixel_ssim_end4_sse2(int sum0[5][4], int sum1[5][4], int width);
 float x265_pixel_ssim_end4_avx(int sum0[5][4], int sum1[5][4], int width);
 
 void x265_scale1D_128to64_ssse3(pixel *, pixel *, intptr_t);
+void x265_scale1D_128to64_avx2(pixel *, pixel *, intptr_t);
 void x265_scale2D_64to32_ssse3(pixel *, pixel *, intptr_t);
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \

@@ -26,13 +26,12 @@
 
 #include "common.h"
 #include "scalinglist.h"
-#include "TLibCommon/TComRom.h"
-#include "TLibCommon/ContextTables.h"
+#include "contexts.h"
 
 namespace x265 {
 // private namespace
 
-class TComDataCU;
+class CUData;
 class Entropy;
 struct TUEntropyCodingParameters;
 
@@ -61,37 +60,37 @@ struct QpParam
 
 class Quant
 {
-public:
-
-    NoiseReduction*    m_nr;
-    Entropy*           m_entropyCoder;
-
 protected:
 
     const ScalingList* m_scalingList;
+    Entropy*           m_entropyCoder;
 
     QpParam            m_qpParam[3];
 
     bool               m_useRDOQ;
     int64_t            m_psyRdoqScale;
-    coeff_t*           m_resiDctCoeff;
-    coeff_t*           m_fencDctCoeff;
+    int32_t*           m_resiDctCoeff;
+    int32_t*           m_fencDctCoeff;
     int16_t*           m_fencShortBuf;
 
     enum { IEP_RATE = 32768 }; /* FIX15 cost of an equal probable bit */
 
 public:
 
+    NoiseReduction*    m_nr;
+    NoiseReduction*    m_frameNr; // Array of NR structures, one for each frameEncoder
+
     Quant();
     ~Quant();
 
     /* one-time setup */
-    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList);
+    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
+    bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
-    void setQPforQuant(TComDataCU* cu);
+    void setQPforQuant(const CUData& ctu);
 
-    uint32_t transformNxN(TComDataCU* cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
+    uint32_t transformNxN(CUData& cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
 
     void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
@@ -106,9 +105,9 @@ protected:
 
     void setChromaQP(int qpin, TextType ttype, int chFmt);
 
-    uint32_t signBitHidingHDQ(coeff_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
-    uint32_t rdoQuant(TComDataCU* cu, coeff_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
+    uint32_t rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
     inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
 };
 

@@ -435,10 +435,14 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,6
     jg .loop
 %endif
 %if %1 == 4
-    phaddd    m0, m0
+  %if notcpuflag(ssse3)
+    pshufd   m1, m0, 1
+    paddd    m0, m1
+  %else
+    phaddd   m0, m0
+  %endif
 %else
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD    m0, m1
 %endif
     movd     eax, m0
     RET
@@ -495,8 +499,7 @@ cglobal pixel_ssd_ss_12x16, 4,7,6
     lea       r2, [r2 + 2*r3]
     dec      r4d
     jnz .loop
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD     m0, m1
     movd     eax, m0
     RET
 %endmacro
@@ -553,8 +556,7 @@ cglobal pixel_ssd_ss_32x%1, 4,7,6
     lea       r2, [r2 + 2*r3]
     dec      r4d
     jnz .loop
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD     m0, m1
     movd     eax, m0
     RET
 %endmacro
@@ -609,8 +611,7 @@ cglobal pixel_ssd_ss_24x32, 4,7,6
     lea       r2, [r2 + 2*r3]
     dec      r4d
     jnz .loop
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD     m0, m1
     movd     eax, m0
     RET
 %endmacro
@@ -687,8 +688,7 @@ cglobal pixel_ssd_ss_48x64, 4,7,6
     lea       r2, [r2 + 2*r3]
     dec      r4d
     jnz .loop
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD     m0, m1
     movd     eax, m0
     RET
 %endmacro
@@ -785,8 +785,7 @@ cglobal pixel_ssd_ss_64x%1, 4,7,6
     lea     r2, [r2 + 2*r3]
     dec     r4d
     jnz .loop
-    phaddd    m0, m0
-    phaddd    m0, m0
+    HADDD     m0, m1
     movd     eax, m0
     RET
 %endmacro

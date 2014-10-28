@@ -24,7 +24,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "TLibCommon/TComRom.h"
+#include "common.h"
 #include "primitives.h"
 #include "x265.h"
 
@@ -91,6 +91,25 @@ namespace {
 
 template<int lx, int ly>
 int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+{
+    int sum = 0;
+
+    for (int y = 0; y < ly; y++)
+    {
+        for (int x = 0; x < lx; x++)
+        {
+            sum += abs(pix1[x] - pix2[x]);
+        }
+
+        pix1 += stride_pix1;
+        pix2 += stride_pix2;
+    }
+
+    return sum;
+}
+
+template<int lx, int ly>
+int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
 {
     int sum = 0;
 
@@ -226,6 +245,34 @@ int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
     return (int)(sum >> 1);
 }
 
+int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
+{
+    ssum2_t tmp[4][2];
+    ssum2_t a0, a1, a2, a3, b0, b1;
+    ssum2_t sum = 0;
+
+    for (int i = 0; i < 4; i++, pix1 += stride_pix1, pix2 += stride_pix2)
+    {
+        a0 = pix1[0] - pix2[0];
+        a1 = pix1[1] - pix2[1];
+        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
+        a2 = pix1[2] - pix2[2];
+        a3 = pix1[3] - pix2[3];
+        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
+        tmp[i][0] = b0 + b1;
+        tmp[i][1] = b0 - b1;
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
+        a0 = abs2(a0) + abs2(a1) + abs2(a2) + abs2(a3);
+        sum += ((sum_t)a0) + (a0 >> BITS_PER_SUM);
+    }
+
+    return (int)(sum >> 1);
+}
+
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
 int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 {
@@ -329,6 +376,48 @@ int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
+inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+{
+    ssum2_t tmp[8][4];
+    ssum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
+    ssum2_t sum = 0;
+
+    for (int i = 0; i < 8; i++, pix1 += i_pix1, pix2 += i_pix2)
+    {
+        a0 = pix1[0] - pix2[0];
+        a1 = pix1[1] - pix2[1];
+        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
+        a2 = pix1[2] - pix2[2];
+        a3 = pix1[3] - pix2[3];
+        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
+        a4 = pix1[4] - pix2[4];
+        a5 = pix1[5] - pix2[5];
+        b2 = (a4 + a5) + ((a4 - a5) << BITS_PER_SUM);
+        a6 = pix1[6] - pix2[6];
+        a7 = pix1[7] - pix2[7];
+        b3 = (a6 + a7) + ((a6 - a7) << BITS_PER_SUM);
+        HADAMARD4(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3], b0, b1, b2, b3);
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
+        HADAMARD4(a4, a5, a6, a7, tmp[4][i], tmp[5][i], tmp[6][i], tmp[7][i]);
+        b0  = abs2(a0 + a4) + abs2(a0 - a4);
+        b0 += abs2(a1 + a5) + abs2(a1 - a5);
+        b0 += abs2(a2 + a6) + abs2(a2 - a6);
+        b0 += abs2(a3 + a7) + abs2(a3 - a7);
+        sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
+    }
+
+    return (int)sum;
+}
+
+int sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+{
+    return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
+}
+
 int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 {
     int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
@@ -390,35 +479,6 @@ int pixel_ssd_s_c(short *a, intptr_t dstride)
     return sum;
 }
 
-void blockcopy_p_p(int bx, int by, pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = b[x];
-        }
-
-        a += stridea;
-        b += strideb;
-    }
-}
-
-void blockcopy_p_s(int bx, int by, pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            X265_CHECK((b[x] >= 0) && (b[x] <= ((1 << X265_DEPTH) - 1)), "blockcopy error\n");
-            a[x] = (pixel)b[x];
-        }
-
-        a += stridea;
-        b += strideb;
-    }
-}
-
 template<int size>
 void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
 {
@@ -470,6 +530,22 @@ void convert32to16_shr(int16_t *dst, int32_t *src, intptr_t stride, int shift, i
     }
 }
 
+void copy_shr(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size)
+{
+    int round = 1 << (shift - 1);
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[j] = (int16_t)((src[j] + round) >> shift);
+        }
+
+        src += size;
+        dst += stride;
+    }
+}
+
 template<int size>
 void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
 {
@@ -478,6 +554,21 @@ void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
         for (int j = 0; j < size; j++)
         {
             dst[j] = ((int16_t)src[j] << shift);
+        }
+
+        src += size;
+        dst += stride;
+    }
+}
+
+template<int size>
+void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            dst[j] = (src[j] << shift);
         }
 
         src += size;
@@ -498,24 +589,6 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
         fenc += stride;
         residual += stride;
         pred += stride;
-    }
-}
-
-template<int blockSize>
-void calcRecons(pixel* pred, int16_t* residual, int16_t* recqt, pixel* recipred, int stride, int qtstride, int ipredstride)
-{
-    for (int y = 0; y < blockSize; y++)
-    {
-        for (int x = 0; x < blockSize; x++)
-        {
-            recqt[x] = (int16_t)Clip(static_cast<int16_t>(pred[x]) + residual[x]);
-            recipred[x] = (pixel)recqt[x];
-        }
-
-        pred += stride;
-        residual += stride;
-        recqt += qtstride;
-        recipred += ipredstride;
     }
 }
 
@@ -549,11 +622,13 @@ void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStrid
     }
 }
 
-void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_pp_c(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
     X265_CHECK(!(width & 15), "weightp alignment error\n");
+    X265_CHECK(!((w0 << 6) > 32767), "w0 using more than 16 bits, asm output will mismatch\n");
+    X265_CHECK(!(round > 32767), "round using more than 16 bits, asm output will mismatch\n");
 
     for (y = 0; y <= height - 1; y++)
     {
@@ -565,23 +640,8 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride,
             x++;
         }
 
-        src += srcStride;
-        dst += dstStride;
-    }
-}
-
-void pixeladd_ss_c(int bx, int by, int16_t *a, intptr_t dstride, int16_t *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
-{
-    for (int y = 0; y < by; y++)
-    {
-        for (int x = 0; x < bx; x++)
-        {
-            a[x] = (int16_t)Clip(b0[x] + b1[x]);
-        }
-
-        b0 += sstride0;
-        b1 += sstride1;
-        a += dstride;
+        src += stride;
+        dst += stride;
     }
 }
 
@@ -757,9 +817,42 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 #endif
 
 template<int size>
-int psyCost(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+int psyCost_pp(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
 {
     static pixel zeroBuf[8] /* = { 0 } */;
+
+    if (size)
+    {
+        int dim = 1 << (size + 2);
+        uint32_t totEnergy = 0;
+        for (int i = 0; i < dim; i += 8)
+        {
+            for (int j = 0; j < dim; j+= 8)
+            {
+                /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
+                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
+                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 0) - 
+                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
+
+                totEnergy += abs(sourceEnergy - reconEnergy);
+            }
+        }
+        return totEnergy;
+    }
+    else
+    {
+        /* 4x4 is too small for sa8d */
+        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 0) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 0) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
+        return abs(sourceEnergy - reconEnergy);
+    }
+}
+
+template<int size>
+int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride)
+{
+    static int16_t zeroBuf[8] /* = { 0 } */;
 
     if (size)
     {
@@ -969,7 +1062,7 @@ namespace x265 {
 /* Extend the edges of a picture so that it may safely be used for motion
  * compensation. This function assumes the picture is stored in a buffer with
  * sufficient padding for the X and Y margins */
-void extendPicBorder(pixel* pic, int stride, int width, int height, int marginX, int marginY)
+void extendPicBorder(pixel* pic, intptr_t stride, int width, int height, int marginX, int marginY)
 {
     /* extend left and right margins */
     primitives.extendRowBorder(pic, stride, width, height, marginX);
@@ -977,16 +1070,12 @@ void extendPicBorder(pixel* pic, int stride, int width, int height, int marginX,
     /* copy top row to create above margin */
     pixel *top = pic - marginX;
     for (int y = 0; y < marginY; y++)
-    {
         memcpy(top - (y + 1) * stride, top, stride * sizeof(pixel));
-    }
 
     /* copy bottom row to create below margin */
     pixel *bot = pic - marginX + (height - 1) * stride;
     for (int y = 0; y < marginY; y++)
-    {
         memcpy(bot + (y + 1) * stride, bot, stride * sizeof(pixel));
-    }
 }
 
 /* Initialize entries for pixel functions defined in this file */
@@ -1193,9 +1282,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, pixelcmp_sp_t, int16_t, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, pixelcmp_ss_t, int16_t, int16_t)
 
-    p.blockcpy_pp = blockcopy_p_p;
-    p.blockcpy_ps = blockcopy_p_s;
-
     p.blockfill_s[BLOCK_4x4]   = blockfil_s_c<4>;
     p.blockfill_s[BLOCK_8x8]   = blockfil_s_c<8>;
     p.blockfill_s[BLOCK_16x16] = blockfil_s_c<16>;
@@ -1213,17 +1299,29 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cvt32to16_shl[BLOCK_16x16] = convert32to16_shl<16>;
     p.cvt32to16_shl[BLOCK_32x32] = convert32to16_shl<32>;
 
+    p.copy_shr = copy_shr;
+    p.copy_shl[BLOCK_4x4] = copy_shl<4>;
+    p.copy_shl[BLOCK_8x8] = copy_shl<8>;
+    p.copy_shl[BLOCK_16x16] = copy_shl<16>;
+    p.copy_shl[BLOCK_32x32] = copy_shl<32>;
+
     p.sa8d[BLOCK_4x4]   = satd_4x4;
     p.sa8d[BLOCK_8x8]   = sa8d_8x8;
     p.sa8d[BLOCK_16x16] = sa8d_16x16;
     p.sa8d[BLOCK_32x32] = sa8d16<32, 32>;
     p.sa8d[BLOCK_64x64] = sa8d16<64, 64>;
 
-    p.psy_cost[BLOCK_4x4] = psyCost<BLOCK_4x4>;
-    p.psy_cost[BLOCK_8x8] = psyCost<BLOCK_8x8>;
-    p.psy_cost[BLOCK_16x16] = psyCost<BLOCK_16x16>;
-    p.psy_cost[BLOCK_32x32] = psyCost<BLOCK_32x32>;
-    p.psy_cost[BLOCK_64x64] = psyCost<BLOCK_64x64>;
+    p.psy_cost_pp[BLOCK_4x4] = psyCost_pp<BLOCK_4x4>;
+    p.psy_cost_pp[BLOCK_8x8] = psyCost_pp<BLOCK_8x8>;
+    p.psy_cost_pp[BLOCK_16x16] = psyCost_pp<BLOCK_16x16>;
+    p.psy_cost_pp[BLOCK_32x32] = psyCost_pp<BLOCK_32x32>;
+    p.psy_cost_pp[BLOCK_64x64] = psyCost_pp<BLOCK_64x64>;
+
+    p.psy_cost_ss[BLOCK_4x4] = psyCost_ss<BLOCK_4x4>;
+    p.psy_cost_ss[BLOCK_8x8] = psyCost_ss<BLOCK_8x8>;
+    p.psy_cost_ss[BLOCK_16x16] = psyCost_ss<BLOCK_16x16>;
+    p.psy_cost_ss[BLOCK_32x32] = psyCost_ss<BLOCK_32x32>;
+    p.psy_cost_ss[BLOCK_64x64] = psyCost_ss<BLOCK_64x64>;
 
     p.sa8d_inter[LUMA_4x4]   = satd_4x4;
     p.sa8d_inter[LUMA_8x8]   = sa8d_8x8;
@@ -1256,11 +1354,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.calcresidual[BLOCK_16x16] = getResidual<16>;
     p.calcresidual[BLOCK_32x32] = getResidual<32>;
     p.calcresidual[BLOCK_64x64] = NULL;
-    p.calcrecon[BLOCK_4x4] = calcRecons<4>;
-    p.calcrecon[BLOCK_8x8] = calcRecons<8>;
-    p.calcrecon[BLOCK_16x16] = calcRecons<16>;
-    p.calcrecon[BLOCK_32x32] = calcRecons<32>;
-    p.calcrecon[BLOCK_64x64] = NULL;
 
     p.transpose[BLOCK_4x4] = transpose<4>;
     p.transpose[BLOCK_8x8] = transpose<8>;
@@ -1275,8 +1368,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;
-
-    p.pixeladd_ss = pixeladd_ss_c;
 
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;

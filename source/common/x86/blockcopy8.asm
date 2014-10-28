@@ -29,6 +29,10 @@ SECTION_RODATA 32
 
 tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
 
+cextern pb_4
+cextern pb_1
+cextern pb_16
+cextern pb_64
 cextern pw_4
 cextern pb_8
 cextern pb_32
@@ -600,6 +604,188 @@ BLOCKCOPY_PP_W32_H4 32, 32
 BLOCKCOPY_PP_W32_H4 32, 64
 
 BLOCKCOPY_PP_W32_H4 32, 48
+
+INIT_YMM avx
+cglobal blockcopy_pp_32x8, 4, 6, 6
+    lea    r4, [3 * r1]
+    lea    r5, [3 * r3]
+
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+    RET
+
+INIT_YMM avx
+cglobal blockcopy_pp_32x16, 4, 6, 6
+    lea    r4,  [3 * r1]
+    lea    r5,  [3 * r3]
+
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m2, [r2]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + 2 * r3]
+    movu    m5, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m2
+    movu    [r0 + r1], m3
+    movu    [r0 + 2 * r1], m4
+    movu    [r0 + r4], m5
+
+    lea     r2, [r2 + 4 * r3]
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_32x24(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx
+cglobal blockcopy_pp_32x24, 4, 7, 6
+lea    r4,  [3 * r1]
+lea    r5,  [3 * r3]
+mov    r6d, 24/8
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    dec     r6d
+    jnz     .loop
+    RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PP_W32_H16_avx 2
+INIT_YMM avx
+cglobal blockcopy_pp_%1x%2, 4, 7, 6
+    lea    r4,  [3 * r1]
+    lea    r5,  [3 * r3]
+    mov    r6d, %2/16
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m4, [r2]
+    movu    m5, [r2 + r3]
+  
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m4
+    movu    [r0 + r1], m5
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + r5]
+    lea     r2, [r2 + 4 * r3]
+    movu    m2, [r2]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + 2 * r3]
+    movu    m5, [r2 + r5]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + r4], m1
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m2
+    movu    [r0 + r1], m3
+    movu    [r0 + 2 * r1], m4
+    movu    [r0 + r4], m5
+
+    lea     r2, [r2 + 4 * r3]
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+
+    lea     r0, [r0 + 4 * r1]
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r4], m3
+
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    dec     r6d
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_PP_W32_H16_avx 32, 32
+BLOCKCOPY_PP_W32_H16_avx 32, 48
+BLOCKCOPY_PP_W32_H16_avx 32, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel *dest, intptr_t deststride, pixel *src, intptr_t srcstride)
@@ -1640,6 +1826,34 @@ RET
 
 BLOCKFILL_S_W16_H8 16, 16
 
+INIT_YMM avx2
+cglobal blockfill_s_16x16, 3, 4, 1
+add          r1, r1
+lea          r3, [3 * r1]
+movd         xm0, r2d
+vpbroadcastw m0, xm0
+
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + r1], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + r3], m0
+RET
+
 ;-----------------------------------------------------------------------------
 ; void blockfill_s_%1x%2(int16_t *dest, intptr_t destride, int16_t val)
 ;-----------------------------------------------------------------------------
@@ -1688,7 +1902,85 @@ RET
 
 BLOCKFILL_S_W32_H4 32, 32
 
+INIT_YMM avx2
+cglobal blockfill_s_32x32, 3, 4, 1
+add          r1, r1
+lea          r3, [3 * r1]
+movd         xm0, r2d
+vpbroadcastw m0, xm0
 
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+lea        r0, [r0 + 4 * r1]
+movu       [r0], m0
+movu       [r0 + 32], m0
+movu       [r0 + r1], m0
+movu       [r0 + r1 + 32], m0
+movu       [r0 + 2 * r1], m0
+movu       [r0 + 2 * r1 + 32], m0
+movu       [r0 + r3], m0
+movu       [r0 + r3 + 32], m0
+RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_2x4(int16_t *dest, intptr_t destStride, pixel *src, intptr_t srcStride);
@@ -2902,6 +3194,43 @@ BLOCKCOPY_SS_W16_H4 16, 12
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
 ;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SS_W16_H4_avx 2
+INIT_YMM avx
+cglobal blockcopy_ss_%1x%2, 4, 7, 4
+    mov     r4d, %2/4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r3]
+    lea     r6, [3 * r1]
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + 2 * r3]
+    movu    m3, [r2 + r5]
+
+    movu    [r0], m0
+    movu    [r0 + r1], m1
+    movu    [r0 + 2 * r1], m2
+    movu    [r0 + r6], m3
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    dec     r4d
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SS_W16_H4_avx 16, 4
+BLOCKCOPY_SS_W16_H4_avx 16, 12
+BLOCKCOPY_SS_W16_H4_avx 16, 8
+BLOCKCOPY_SS_W16_H4_avx 16, 16
+BLOCKCOPY_SS_W16_H4_avx 16, 24
+BLOCKCOPY_SS_W16_H4_avx 16, 32
+BLOCKCOPY_SS_W16_H4_avx 16, 64
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_SS_W16_H8 2
 INIT_XMM sse2
 cglobal blockcopy_ss_%1x%2, 4, 5, 4
@@ -3276,6 +3605,69 @@ BLOCKCOPY_SS_W64_H4 64, 32
 BLOCKCOPY_SS_W64_H4 64, 48
 BLOCKCOPY_SS_W64_H4 64, 64
 
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_%1x%2(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SS_W64_H4_avx 2
+INIT_YMM avx
+cglobal blockcopy_ss_%1x%2, 4, 7, 4, dest, deststride, src, srcstride
+    mov     r4d, %2/4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r1]
+    lea     r6, [3 * r3]
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + 32]
+    movu    m2, [r2 + 64]
+    movu    m3, [r2 + 96]
+
+    movu    [r0], m0
+    movu    [r0 + 32], m1
+    movu    [r0 + 64], m2
+    movu    [r0 + 96], m3
+
+    movu    m0, [r2 + r3]
+    movu    m1, [r2 + r3 + 32]
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r2 + r3 + 96]
+
+    movu    [r0 + r1], m0
+    movu    [r0 + r1 + 32], m1
+    movu    [r0 + r1 + 64], m2
+    movu    [r0 + r1 + 96], m3
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + 32]
+    movu    m2, [r2 + 2 * r3 + 64]
+    movu    m3, [r2 + 2 * r3 + 96]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + 2 * r1 + 32], m1
+    movu    [r0 + 2 * r1 + 64], m2
+    movu    [r0 + 2 * r1 + 96], m3
+
+    movu    m0, [r2 + r6]
+    movu    m1, [r2 + r6 + 32]
+    movu    m2, [r2 + r6 + 64]
+    movu    m3, [r2 + r6 + 96]
+    lea     r2, [r2 + 4 * r3]
+
+    movu    [r0 + r5], m0
+    movu    [r0 + r5 + 32], m1
+    movu    [r0 + r5 + 64], m2
+    movu    [r0 + r5 + 96], m3
+    lea     r0, [r0 + 4 * r1]
+
+    dec     r4d
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SS_W64_H4_avx 64, 16
+BLOCKCOPY_SS_W64_H4_avx 64, 32
+BLOCKCOPY_SS_W64_H4_avx 64, 48
+BLOCKCOPY_SS_W64_H4_avx 64, 64
 
 ;-----------------------------------------------------------------------------
 ; void cvt32to16_shr(short *dst, int *src, intptr_t stride, int shift, int size)
@@ -3946,444 +4338,588 @@ cglobal cvt32to16_shl_32, 3,4,5
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_4, 3,3,5
+cglobal copy_cnt_4, 3,3,3
     add         r2d, r2d
-    pxor        m4, m4
+    pxor        m2, m2
 
     ; row 0 & 1
     movh        m0, [r1]
     movhps      m0, [r1 + r2]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 0 * mmsize], m1
-    movu        [r0 + 1 * mmsize], m0
+    mova        [r0], m0
 
     ; row 2 & 3
-    movh        m0, [r1 + r2 * 2]
+    movh        m1, [r1 + r2 * 2]
     lea         r2, [r2 * 3]
-    movhps      m0, [r1 + r2]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m0
+    movhps      m1, [r1 + r2]
+    mova        [r0 + 16], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m2
 
     ; get count
     ; CHECK_ME: Intel documents said POPCNT is SSE4.2 instruction, but just implement after Nehalem
-%if 1
-    pmovmskb    eax, m2
+%if 0
+    pmovmskb    eax, m0
     not         ax
     popcnt      ax, ax
 %else
-    movhlps     m3, m2
-    paddw       m2, m3
-
-    mova        m3, [pw_4]
-    paddw       m3, m2
-    psadbw      m3, m4
-
-    movd        eax, m3
+    mova        m1, [pb_1]
+    paddb       m0, m1
+    psadbw      m0, m2
+    pshufd      m1, m0, 2
+    paddw       m0, m1
+    movd        eax, m0
 %endif
     RET
 
 
-INIT_YMM avx2
-cglobal cvt16to32_cnt_4, 3,3,5
+;--------------------------------------------------------------------------------------
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal copy_cnt_8, 3,3,6
     add         r2d, r2d
     pxor        m4, m4
+    pxor        m5, m5
 
-    ; row 0 & 1
-    movq        xm0, [r1]
-    movhps      xm0, [r1 + r2]
-    pmovsxwd    m1, xm0
-    movu        [r0 + 0 * mmsize], m1
+   ; row 0 & 1
+    movu         m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
     ; row 2 & 3
-    movq        xm1, [r1 + r2 * 2]
-    lea         r2, [r2 * 3]
-    movhps      xm1, [r1 + r2]
-    pmovsxwd    m2, xm1
-    movu        [r0 + 1 * mmsize], m2
-
-    packsswb    xm0, xm1
-    pcmpeqb     xm0, xm4
-
-    ; get count
-    pmovmskb    eax, xm0
-    not         ax
-    popcnt      ax, ax
-    RET
-
-
-;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
-;--------------------------------------------------------------------------------------
-INIT_XMM sse4
-cglobal cvt16to32_cnt_8, 3,5,6
-    add         r2d, r2d
-    pxor        m4, m4
-    mov         r3d, 8/4
-    lea         r4, [r2 * 3]
-    pxor        m5, m5
-
-.loop
-    ; row 0
+    lea         r1, [r1 + 2 * r2]
     movu        m0, [r1]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 0 * mmsize], m1
-    movu        [r0 + 1 * mmsize], m0
+    movu        m1, [r1 + r2]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
 
-    ; row 1
-    movu        m0, [r1 + r2]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    paddb       m5, m2
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m0
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    ; row 2
-    movu        m0, [r1 + r2 * 2]
-    mova        m2, m0
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 4 * mmsize], m1
-    movu        [r0 + 5 * mmsize], m0
+    ; row 4 & 5
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
 
-    ; row 3
-    movu        m0, [r1 + r4]
-    packsswb    m2, m0
-    pcmpeqb     m2, m4
-    paddb       m5, m2
-    pmovsxwd    m1, m0
-    punpckhwd   m0, m0
-    psrad       m0, 16
-    movu        [r0 + 6 * mmsize], m1
-    movu        [r0 + 7 * mmsize], m0
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    add         r0, 8 * mmsize
-    lea         r1, [r1 + r2 * 4]
-    dec         r3d
-    jnz        .loop
+    ; row 6 & 7
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1]
+    movu        m1, [r1 + r2]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
     ; get count
-    movhlps     m3, m5
-    paddb       m3, m5
-
-    paddb       m3, [pb_8]
-    psadbw      m3, m4
-
-    movd        eax, m3
-    RET
+    mova        m0, [pb_4]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
 
 
 INIT_YMM avx2
-%if ARCH_X86_64 == 1
-cglobal cvt16to32_cnt_8, 3,4,6
-  %define tmpd eax
-%else
-cglobal cvt16to32_cnt_8, 3,5,6
-  %define tmpd r4d
-%endif
+cglobal copy_cnt_8, 3,4,5
     add         r2d, r2d
-    pxor        m4, m4
     lea         r3, [r2 * 3]
 
-    ; row 0
+    ; row 0 - 1
     movu        xm0, [r1]
-    mova        xm2, xm0
-    pmovsxwd    m1, xm0
-    movu        [r0 + 0 * mmsize], m1
+    vinserti128 m0, m0, [r1 + r2], 1
+    movu        [r0], m0
 
-    ; row 1
-    movu        xm0, [r1 + r2]
-    vinserti128 m2, m2, xm0, 1
-    pmovsxwd    m1, xm0
-    movu        [r0 + 1 * mmsize], m1
+    ; row 2 - 3
+    movu        xm1, [r1 + r2 * 2]
+    vinserti128 m1, m1, [r1 + r3], 1
+    movu        [r0 + 32], m1
+    lea         r1,  [r1 + r2 * 4]
 
-    ; row 2
-    movu        xm0, [r1 + r2 * 2]
-    mova        xm5, xm0
-    pmovsxwd    m1, xm0
-    movu        [r0 + 2 * mmsize], m1
+    ; row 4 - 5
+    movu        xm2, [r1]
+    vinserti128 m2, m2, [r1 + r2], 1
+    movu        [r0 + 64], m2
 
-    ; row 3
-    movu        xm0, [r1 + r3]
-    vinserti128 m5, m5, xm0, 1
-    packsswb    m2, m5
-    pcmpeqb     m2, m4
-    pmovmskb    tmpd, m2
-    not         tmpd
-    popcnt      tmpd, tmpd
-    pmovsxwd    m1, xm0
-    movu        [r0 + 3 * mmsize], m1
-
-    add         r0, 4 * mmsize
-    lea         r1, [r1 + r2 * 4]
-
-    ; row 4
-    movu        xm0, [r1]
-    mova        xm2, xm0
-    pmovsxwd    m1, xm0
-    movu        [r0 + 0 * mmsize], m1
-
-    ; row 5
-    movu        xm0, [r1 + r2]
-    vinserti128 m2, m2, xm0, 1
-    pmovsxwd    m1, xm0
-    movu        [r0 + 1 * mmsize], m1
-
-    ; row 6
-    movu        xm0, [r1 + r2 * 2]
-    mova        xm5, xm0
-    pmovsxwd    m1, xm0
-    movu        [r0 + 2 * mmsize], m1
-
-    ; row 7
-    movu        xm0, [r1 + r3]
-    pmovsxwd    m1, xm0
-    movu        [r0 + 3 * mmsize], m1
-    vinserti128 m5, m5, xm0, 1
+    ; row 6 - 7
+    movu        xm3, [r1 + r2 * 2]
+    vinserti128 m3, m3, [r1 + r3], 1
+    movu        [r0 + 96], m3
 
     ; get count
-    packsswb    m2, m5
-    pcmpeqb     m2, m4
-    pmovmskb    r0d, m2
-    not         r0d
-    popcnt      r0d, r0d
-
-%if ARCH_X86_64 == 1
-    add         tmpd, r0d
-%else
-    add         r0d, tmpd
-%endif
+    xorpd        m4, m4
+    vpacksswb    m0, m1
+    vpacksswb    m2, m3
+    pminub       m0, [pb_1]
+    pminub       m2, [pb_1]
+    paddb        m0, m2
+    vextracti128 xm1, m0, 1
+    paddb        xm0, xm1
+    psadbw       xm0, xm4
+    movhlps      xm1, xm0
+    paddd        xm0, xm1
+    movd         eax, xm0
     RET
 
 
 ;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+; uint32_t copy_cnt(int16_t *dst, int16_t *src, intptr_t stride);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_16, 3,4,7
-    add         r2d, r2d
-    mov         r3d, 16/2
-    pxor        m5, m5
-    pxor        m6, m6
+cglobal copy_cnt_16, 3,4,6
+     add         r2d, r2d
+     mov         r3d, 4
+     pxor        m4, m4
+     pxor        m5, m5
 
 .loop
     ; row 0
     movu        m0, [r1]
-    movu        m1, [r1 + mmsize]
-    packsswb    m4, m0, m1
-    pcmpeqb     m4, m6
-    paddb       m5, m4
-    pmovsxwd    m2, m0
-    pmovsxwd    m0, [r1 + 8]
-    pmovsxwd    m3, m1
-    pmovsxwd    m1, [r1 + mmsize + 8]
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m0
-    movu        [r0 + 2 * mmsize], m3
-    movu        [r0 + 3 * mmsize], m1
+    movu        m1, [r1 + 16]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
 
-    ; row 1
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+     ; row 1
     movu        m0, [r1 + r2]
-    movu        m1, [r1 + r2 + mmsize]
-    packsswb    m4, m0, m1
-    pcmpeqb     m4, m6
-    paddb       m5, m4
-    pmovsxwd    m2, m0
-    pmovsxwd    m0, [r1 + r2 + 8]
-    pmovsxwd    m3, m1
-    pmovsxwd    m1, [r1 + r2 + mmsize + 8]
-    movu        [r0 + 4 * mmsize], m2
-    movu        [r0 + 5 * mmsize], m0
-    movu        [r0 + 6 * mmsize], m3
-    movu        [r0 + 7 * mmsize], m1
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
 
-    add         r0, 8 * mmsize
-    lea         r1, [r1 + r2 * 2]
-    dec         r3d
-    jnz        .loop
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
 
-    ; get count
-    movhlps     m0, m5
-    paddb       m0, m5
-    paddb       m0, [pb_32]
-    psadbw      m0, m6
-    movd        eax, m0
-    RET
+    ; row 2
+    movu        m0, [r1 + 2 * r2]
+    movu        m1, [r1 + 2 * r2 + 16]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    ; row 3
+    lea         r1, [r1 + 2 * r2]
+    movu        m0, [r1 + r2]
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
+     dec         r3d
+     jnz        .loop
+
+    mova        m0, [pb_16]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
 
 
 INIT_YMM avx2
-cglobal cvt16to32_cnt_16, 3,5,5
+cglobal copy_cnt_16, 3, 5, 5
     add         r2d, r2d
-    lea         r4, [r2 * 3]
-    mov         r3d, 16/4
-    ; NOTE: xorpd is faster than pxor
+    lea         r3,  [r2 * 3]
+    mov         r4d, 16/4
+
+    mova        m3, [pb_1]
     xorpd       m4, m4
-    xorpd       m3, m3
+
+.loop:
+    ; row 0 - 1
+    movu        m0, [r1]
+    movu        [r0], m0
+    movu        m1, [r1 + r2]
+    movu        [r0 + 32], m1
+
+    packsswb    m0, m1
+    pminub      m0, m3
+
+    ; row 2 - 3
+    movu        m1, [r1 + r2 * 2]
+    movu        [r0 + 64], m1
+    movu        m2, [r1 + r3]
+    movu        [r0 + 96], m2
+
+    packsswb    m1, m2
+    pminub      m1, m3
+    paddb       m0, m1
+    paddb       m4, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 4 * r2]
+    dec         r4d
+    jnz         .loop
+
+    ; get count
+    xorpd        m0,  m0
+    vextracti128 xm1, m4, 1
+    paddb        xm4, xm1
+    psadbw       xm4, xm0
+    movhlps      xm1, xm4
+    paddd        xm4, xm1
+    movd         eax, xm4
+    RET
+
+;--------------------------------------------------------------------------------------
+; uint32_t copy_cnt(int32_t *dst, int16_t *src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal copy_cnt_32, 3,4,6
+    add         r2d, r2d
+    mov         r3d, 16
+    pxor        m4, m4
+    pxor        m5, m5
 
 .loop
     ; row 0
     movu        m0, [r1]
-    movu        xm1, [r1 + mmsize/2]
-    pmovsxwd    m2, xm0
-    pmovsxwd    m1, xm1
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m1
+    movu        m1, [r1 + 16]
+    movu        [r0], m0
+    movu        [r0 + 16], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    movu        m0, [r1 + 32]
+    movu        m1, [r1 + 48]
+    movu        [r0 + 32], m0
+    movu        [r0 + 48], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    ; row 1
+    movu        m0, [r1 + r2]
+    movu        m1, [r1 + r2 + 16]
+    movu        [r0 + 64], m0
+    movu        [r0 + 80], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    movu        m0, [r1 + r2 + 32]
+    movu        m1, [r1 + r2 + 48]
+    movu        [r0 + 96], m0
+    movu        [r0 + 112], m1
+
+    packsswb    m0, m1
+    pcmpeqb     m0, m4
+    paddb       m5, m0
+
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
+     dec         r3d
+     jnz        .loop
+
+     ; get count
+    mova        m0, [pb_64]
+    paddb       m5, m0
+    psadbw      m5, m4
+    pshufd      m0, m5, 2
+    paddw       m5, m0
+    movd        eax, m5
+     RET
+
+
+INIT_YMM avx2
+cglobal copy_cnt_32, 3, 5, 5
+    add         r2d, r2d
+    mov         r3d, 32/2
+
+    mova        m3, [pb_1]
+    xorpd       m4, m4
+
+.loop:
+    ; row 0
+    movu        m0, [r1]
+    movu        [r0], m0
+    movu        m1, [r1 + 32]
+    movu        [r0 + 32], m1
+
+    packsswb    m0, m1
+    pminub      m0, m3
 
     ; row 1
     movu        m1, [r1 + r2]
-    movu        xm2, [r1 + r2 + mmsize/2]
-    packsswb    m0, m1
-    pcmpeqb     m0, m3
+    movu        [r0 + 64], m1
+    movu        m2, [r1 + r2 + 32]
+    movu        [r0 + 96], m2
+
+    packsswb    m1, m2
+    pminub      m1, m3
+    paddb       m0, m1
     paddb       m4, m0
-    pmovsxwd    m1, xm1
-    pmovsxwd    m2, xm2
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m2
 
-    ; move output pointer here to avoid 128 bytes offset limit
-    add         r0, 4 * mmsize
-
-    ; row 2
-    movu        m0, [r1 + r2 * 2]
-    movu        xm1, [r1 + r2 * 2 + mmsize/2]
-    pmovsxwd    m2, xm0
-    pmovsxwd    m1, xm1
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m1
-
-    ; row 3
-    movu        m1, [r1 + r4]
-    movu        xm2, [r1 + r4 + mmsize/2]
-    packsswb    m0, m1
-    pcmpeqb     m0, m3
-    paddb       m4, m0
-    pmovsxwd    m1, xm1
-    pmovsxwd    m2, xm2
-    movu        [r0 + 2 * mmsize], m1
-    movu        [r0 + 3 * mmsize], m2
-
-    add         r0, 4 * mmsize
-    lea         r1, [r1 + r2 * 4]
+    add         r0, 128
+    lea         r1, [r1 + 2 * r2]
     dec         r3d
-    jnz        .loop
+    jnz         .loop
 
     ; get count
-    vextracti128 xm0, m4, 1
-    paddb        xm0, xm4
-    movhlps     xm1, xm0
-    paddb       xm0, xm1
-    paddb       xm0, [pb_32]
-    psadbw      xm0, xm3
-    movd        eax, xm0
+    xorpd        m0,  m0
+    vextracti128 xm1, m4, 1
+    paddb        xm4, xm1
+    psadbw       xm4, xm0
+    movhlps      xm1, xm4
+    paddd        xm4, xm1
+    movd         eax, xm4
     RET
 
+;-----------------------------------------------------------------------------
+; void copy_shr(short *dst, short *src, intptr_t stride, int shift, int size)
+;-----------------------------------------------------------------------------
 
-;--------------------------------------------------------------------------------------
-; uint32_t cvt16to32_cnt(int32_t *dst, int16_t *src, intptr_t stride);
-;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_cnt_32, 3,4,8
+cglobal copy_shr, 4, 7, 4, dst, src, stride
+%define rnd     m2
+%define shift   m1
+
+    ; make shift
+    mov         r5d, r3m
+    movd        shift, r5d
+
+    ; make round
+    dec         r5
+    xor         r6, r6
+    bts         r6, r5
+
+    movd        rnd, r6d
+    pshufd      rnd, rnd, 0
+
+    ; register alloc
+    ; r0 - dst
+    ; r1 - src
+    ; r2 - stride * 2 (short*)
+    ; r3 - lx
+    ; r4 - size
+    ; r5 - ly
+    ; r6 - diff
     add         r2d, r2d
-    mov         r3d, 32/1
-    pxor        m6, m6
-    pxor        m7, m7
 
-.loop
+    mov         r4d, r4m
+    mov         r5, r4 ; size
+    mov         r6, r2 ; stride
+    sub         r6, r4
+    add         r6, r6
+
+    shr         r5, 1
+.loop_row:
+
+    mov         r3, r4
+    shr         r3, 2
+.loop_col:
     ; row 0
-    movu        m0, [r1 + 0 * mmsize]
-    movu        m1, [r1 + 1 * mmsize]
-    movu        m2, [r1 + 2 * mmsize]
-    movu        m3, [r1 + 3 * mmsize]
-    packsswb    m4, m0, m1
-    packsswb    m5, m2, m3
-    pcmpeqb     m4, m7
-    pcmpeqb     m5, m7
-    paddb       m6, m4
-    paddb       m6, m5
+    movh        m3, [r1]
+    pmovsxwd    m0, m3
+    paddd       m0, rnd
+    psrad       m0, shift
+    packssdw    m0, m0
+    movh        [r0], m0
 
-    pmovsxwd    m4, m0
-    pmovsxwd    m5, [r1 + 0 * mmsize + mmsize/2]
-    movu        [r0 + 0 * mmsize], m4
-    movu        [r0 + 1 * mmsize], m5
-    pmovsxwd    m4, m1
-    pmovsxwd    m5, [r1 + 1 * mmsize + mmsize/2]
-    movu        [r0 + 2 * mmsize], m4
-    movu        [r0 + 3 * mmsize], m5
-    pmovsxwd    m4, m2
-    pmovsxwd    m5, [r1 + 2 * mmsize + mmsize/2]
-    movu        [r0 + 4 * mmsize], m4
-    movu        [r0 + 5 * mmsize], m5
-    pmovsxwd    m4, m3
-    pmovsxwd    m5, [r1 + 3 * mmsize + mmsize/2]
-    movu        [r0 + 6 * mmsize], m4
-    movu        [r0 + 7 * mmsize], m5
+    ; row 1
+    movh        m3, [r1 + r4 * 2]
+    pmovsxwd    m0, m3
+    paddd       m0, rnd
+    psrad       m0, shift
+    packssdw    m0, m0
+    movh        [r0 + r2], m0
 
-    add         r0, 8 * mmsize
-    add         r1, r2
-    dec         r3d
-    jnz        .loop
+    ; move col pointer
+    add         r1, 8
+    add         r0, 8
 
-    ; get count
-    movhlps     m0, m6
-    paddb       m0, m6
-    paddb       m0, [pb_128]
-    psadbw      m0, m7
-    movd        eax, m0
+    dec         r3
+    jg          .loop_col
+
+    ; update pointer
+    lea         r1, [r1 + r4 * 2]
+    add         r0, r6
+
+    ; end of loop_row
+    dec         r5
+    jg         .loop_row
+
     RET
 
-
-INIT_YMM avx2
-cglobal cvt16to32_cnt_32, 3,4,5
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_4, 3,3,3
     add         r2d, r2d
-    mov         r3d, 32/1
-    xorpd       m3, m3
-    xorpd       m4, m4
+    movd        m0, r3m
 
-.loop
-    ; row 0
-    movu        m0, [r1 + 0 * mmsize]
-    movu        m1, [r1 + 1 * mmsize]
-    packsswb    m2, m0, m1
-    pcmpeqb     m2, m4
-    paddb       m3, m2
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    movh        [r0], m1
+    movhps      [r0 + r2], m1
+    movh        [r0 + r2 * 2], m2
+    lea         r2, [r2 * 3]
+    movhps      [r0 + r2], m2
+    RET
 
-    pmovsxwd    m2, xm0
-    pmovsxwd    m0, [r1 + 0 * mmsize + mmsize/2]
-    movu        [r0 + 0 * mmsize], m2
-    movu        [r0 + 1 * mmsize], m0
-    pmovsxwd    m0, xm1
-    pmovsxwd    m1, [r1 + 1 * mmsize + mmsize/2]
-    movu        [r0 + 2 * mmsize], m0
-    movu        [r0 + 3 * mmsize], m1
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_8, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
 
-    add         r0, 4 * mmsize
-    add         r1, r2
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + r2], m2
+    movu        [r0 + 2 * r2], m3
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2 * 2], m1
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m2
+    movu        [r0 + 2 * r2], m3
+    lea         r0, [r0 + 2 * r2]
+    movu        [r0 + r2], m4
+    RET
+
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_16, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 256/64
+
+.loop:
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + 16], m2
+    movu        [r0 + r2], m3
+    movu        [r0 + r2 + 16], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2 * 2], m1
+    movu        [r0 + r2 * 2 + 16], m2
+    lea         r0, [r0 + r2 * 2]
+    movu        [r0 + r2], m3
+    movu        [r0 + r2 + 16], m4
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 2]
     dec         r3d
     jnz        .loop
+    RET
 
-    ; get count
-    vextracti128 xm0, m3, 1
-    paddb       xm0, xm3
-    movhlps     xm3, xm0
-    paddb       xm0, xm3
-    paddb       xm0, [pb_128]
-    psadbw      xm0, xm4
-    movd        eax, xm0
+;--------------------------------------------------------------------------------------
+; void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal copy_shl_32, 3,4,5
+    add         r2d, r2d
+    movd        m0, r3m
+    mov         r3d, 1024/64
+
+.loop:
+    ; Row 0-3
+    movu        m1, [r1 + 0 * mmsize]
+    movu        m2, [r1 + 1 * mmsize]
+    movu        m3, [r1 + 2 * mmsize]
+    movu        m4, [r1 + 3 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0], m1
+    movu        [r0 + 16], m2
+    movu        [r0 + 32], m3
+    movu        [r0 + 48], m4
+
+    ; Row 4-7
+    movu        m1, [r1 + 4 * mmsize]
+    movu        m2, [r1 + 5 * mmsize]
+    movu        m3, [r1 + 6 * mmsize]
+    movu        m4, [r1 + 7 * mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    psllw       m3, m0
+    psllw       m4, m0
+    movu        [r0 + r2], m1
+    movu        [r0 + r2 + 16], m2
+    movu        [r0 + r2 + 32], m3
+    movu        [r0 + r2 + 48], m4
+
+    add         r1, 8 * mmsize
+    lea         r0, [r0 + r2 * 2]
+    dec         r3d
+    jnz        .loop
     RET

@@ -31,28 +31,24 @@ class IntraPredHarness : public TestHarness
 {
 protected:
 
-    pixel *pixel_buff;
-    pixel *pixel_out_c;
-    pixel *pixel_out_vec;
-    pixel *pixel_out_33_c;
-    pixel *pixel_out_33_vec;
+    enum { INPUT_SIZE = 4 * 65 * 65 * 100 };
+    enum { OUTPUT_SIZE = 64 * FENC_STRIDE };
+    enum { OUTPUT_SIZE_33 = 33 * OUTPUT_SIZE };
 
-    pixel *IP_vec_output_p, *IP_C_output_p;
-
-    static const int ip_t_size = 4 * 65 * 65 * 100;
-    static const int out_size = 64 * FENC_STRIDE;
-    static const int out_size_33 = 33 * 64 * FENC_STRIDE;
+    ALIGN_VAR_16(pixel, pixel_buff[INPUT_SIZE]);
+    pixel pixel_out_c[OUTPUT_SIZE];
+    pixel pixel_out_vec[OUTPUT_SIZE];
+    pixel pixel_out_33_c[OUTPUT_SIZE_33];
+    pixel pixel_out_33_vec[OUTPUT_SIZE_33];
 
     bool check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width);
     bool check_planar_primitive(intra_pred_t ref, intra_pred_t opt, int width);
-    bool check_angular_primitive(const intra_pred_t ref[][NUM_INTRA_MODE], const intra_pred_t opt[][NUM_INTRA_MODE]);
+    bool check_angular_primitive(const intra_pred_t ref[][NUM_TR_SIZE], const intra_pred_t opt[][NUM_TR_SIZE]);
     bool check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[]);
 
 public:
 
     IntraPredHarness();
-
-    virtual ~IntraPredHarness();
 
     const char *getName() const { return "intrapred"; }
 

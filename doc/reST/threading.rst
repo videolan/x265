@@ -13,7 +13,7 @@ the first encoder created within each process.
 
 :option:`--threads` specifies the number of threads the encoder will
 try to allocate for its thread pool.  If the thread pool was already
-allocated this parameter is ignored.  By default x265 allocated one
+allocated this parameter is ignored.  By default x265 allocates one
 thread per (hyperthreaded) CPU core in your system.
 
 Work distribution is job based.  Idle worker threads ask their parent
@@ -29,7 +29,7 @@ providers are recommended to call this method when they make new jobs
 available.
 
 Worker jobs are not allowed to block except when abosultely necessary
-for data locking.  If a job becomes blocked, the worker thread is
+for data locking. If a job becomes blocked, the worker thread is
 expected to drop that job and go back to the pool and find more work.
 
 .. note::
@@ -82,6 +82,21 @@ threading is not disabled, the encoder will change the default frame
 thread count to be higher than if WPP was enabled.  The exact formulas
 are described in the next section.
 
+Parallel Mode Analysis
+======================
+
+When :option:`--pmode` is enabled, each CU (at all depths from 64x64 to
+8x8) will distribute the analysis work to the thread pool. Each analysis
+job will measure the cost of one prediction for the CU: merge, skip,
+intra, inter (2Nx2N, Nx2N, 2NxN, and AMP)
+
+Parallel Motion Estimation
+==========================
+
+When :option:`--pme` is enabled all of the analysis functions which
+perform motion searches to reference frames will distribute those motion
+searches as jobs for worker threads (if more than two motion searches
+are required).
 
 Frame Threading
 ===============
@@ -120,11 +135,7 @@ parallelism is in use.
 
 :option:`--merange` can have a negative impact on frame parallelism. If
 the range is too large, more rows of CTU lag must be added to ensure
-those pixels are available in the reference frames.  Similarly
-:option:`--sao-lcu-opt` 0 will cause SAO to be performed over the
-entire picture at once (rather than being CTU based), which prevents any
-motion reference pixels from being available until the entire frame has
-been encoded, which prevents any real frame parallelism at all.
+those pixels are available in the reference frames.
 
 .. note::
 
@@ -206,3 +217,22 @@ The function slicetypeDecide() itself may also be performed by a worker
 thread if your system has enough CPU cores to make this a beneficial
 trade-off, else it runs within the context of the thread which calls the
 x265_encoder_encode().
+
+SAO
+===
+
+The Sample Adaptive Offset loopfilter has a large effect on encode
+performance because of the peculiar way it must be analyzed and coded.
+
+SAO flags and data are encoded at the CTU level before the CTU itself is
+coded, but SAO analysis (deciding whether to enable SAO and with what
+parameters) cannot be performed until that CTU is completely analyzed
+(reconstructed pixels are available) as well as the CTUs to the right
+and below.  So in effect the encoder must perform SAO analysis in a
+wavefront at least a full row behind the CTU compression wavefront.
+
+This extra latency forces the encoder to save the encode data of every
+CTU until the entire frame has been analyzed, at which point a function
+can code the final slice bitstream with the decided SAO flags and data
+interleaved between each CTU.  This second pass over the CTUs can be
+expensive, particularly at large resolutions and high bitrates.

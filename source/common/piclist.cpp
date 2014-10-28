@@ -27,38 +27,38 @@
 
 using namespace x265;
 
-void PicList::pushFront(Frame& pic)
+void PicList::pushFront(Frame& curFrame)
 {
-    X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
-    pic.m_next = m_start;
-    pic.m_prev = NULL;
+    X265_CHECK(!curFrame.m_next && !curFrame.m_prev, "piclist: picture already in list\n"); // ensure frame is not in a list
+    curFrame.m_next = m_start;
+    curFrame.m_prev = NULL;
 
     if (m_count)
     {
-        m_start->m_prev = &pic;
-        m_start = &pic;
+        m_start->m_prev = &curFrame;
+        m_start = &curFrame;
     }
     else
     {
-        m_start = m_end = &pic;
+        m_start = m_end = &curFrame;
     }
     m_count++;
 }
 
-void PicList::pushBack(Frame& pic)
+void PicList::pushBack(Frame& curFrame)
 {
-    X265_CHECK(!pic.m_next && !pic.m_prev, "piclist: picture already in list\n"); // ensure pic is not in a list
-    pic.m_next = NULL;
-    pic.m_prev = m_end;
+    X265_CHECK(!curFrame.m_next && !curFrame.m_prev, "piclist: picture already in list\n"); // ensure frame is not in a list
+    curFrame.m_next = NULL;
+    curFrame.m_prev = m_end;
 
     if (m_count)
     {
-        m_end->m_next = &pic;
-        m_end = &pic;
+        m_end->m_next = &curFrame;
+        m_end = &curFrame;
     }
     else
     {
-        m_start = m_end = &pic;
+        m_start = m_end = &curFrame;
     }
     m_count++;
 }
@@ -88,10 +88,10 @@ Frame *PicList::popFront()
 
 Frame* PicList::getPOC(int poc)
 {
-    Frame *pic = m_start;
-    while (pic && pic->getPOC() != poc)
-        pic = pic->m_next;
-    return pic;
+    Frame *curFrame = m_start;
+    while (curFrame && curFrame->m_poc != poc)
+        curFrame = curFrame->m_next;
+    return curFrame;
 }
 
 Frame *PicList::popBack()
@@ -117,35 +117,35 @@ Frame *PicList::popBack()
         return NULL;
 }
 
-void PicList::remove(Frame& pic)
+void PicList::remove(Frame& curFrame)
 {
 #if _DEBUG
     Frame *tmp = m_start;
-    while (tmp && tmp != &pic)
+    while (tmp && tmp != &curFrame)
     {
         tmp = tmp->m_next;
     }
 
-    X265_CHECK(tmp == &pic, "piclist: pic being removed was not in list\n"); // verify pic is in this list
+    X265_CHECK(tmp == &curFrame, "piclist: pic being removed was not in list\n"); // verify pic is in this list
 #endif
 
     m_count--;
     if (m_count)
     {
-        if (m_start == &pic)
-            m_start = pic.m_next;
-        if (m_end == &pic)
-            m_end = pic.m_prev;
+        if (m_start == &curFrame)
+            m_start = curFrame.m_next;
+        if (m_end == &curFrame)
+            m_end = curFrame.m_prev;
 
-        if (pic.m_next)
-            pic.m_next->m_prev = pic.m_prev;
-        if (pic.m_prev)
-            pic.m_prev->m_next = pic.m_next;
+        if (curFrame.m_next)
+            curFrame.m_next->m_prev = curFrame.m_prev;
+        if (curFrame.m_prev)
+            curFrame.m_prev->m_next = curFrame.m_next;
     }
     else
     {
         m_start = m_end = NULL;
     }
 
-    pic.m_next = pic.m_prev = NULL;
+    curFrame.m_next = curFrame.m_prev = NULL;
 }

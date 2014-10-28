@@ -31,19 +31,40 @@ class PixelHarness : public TestHarness
 {
 protected:
 
-    pixel *pbuf1, *pbuf2, *pbuf3, *pbuf4, **pixel_test_buff;
-    int *ibuf1, **int_test_buff;
-    int8_t *psbuf1;
-    int16_t *sbuf1, *sbuf2, *sbuf3, **short_test_buff, **short_test_buff1, **short_test_buff2;
-    uint16_t **ushort_test_buff;
-    uint8_t **uchar_test_buff;
+    enum { INCR = 32 };
+    enum { STRIDE = 64 };
+    enum { ITERS = 100 };
+    enum { MAX_HEIGHT = 64 };
+    enum { PAD_ROWS = 64 };
+    enum { BUFFSIZE = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS };
+    enum { TEST_CASES = 3 };
+    enum { SMAX = 1 << 12 };
+    enum { SMIN = -1 << 12 };
+
+    ALIGN_VAR_32(pixel, pbuf1[BUFFSIZE]);
+    pixel    pbuf2[BUFFSIZE];
+    pixel    pbuf3[BUFFSIZE];
+    pixel    pbuf4[BUFFSIZE];
+    int      ibuf1[BUFFSIZE];
+    int8_t   psbuf1[BUFFSIZE];
+
+    int16_t  sbuf1[BUFFSIZE];
+    int16_t  sbuf2[BUFFSIZE];
+    int16_t  sbuf3[BUFFSIZE];
+
+    pixel    pixel_test_buff[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff1[TEST_CASES][BUFFSIZE];
+    int16_t  short_test_buff2[TEST_CASES][BUFFSIZE];
+    int      int_test_buff[TEST_CASES][BUFFSIZE];
+    uint16_t ushort_test_buff[TEST_CASES][BUFFSIZE];
+    uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
+
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
     bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);
-    bool check_blockcopy_pp(blockcpy_pp_t ref, blockcpy_pp_t opt);
-    bool check_blockcopy_ps(blockcpy_ps_t ref, blockcpy_ps_t opt);
     bool check_copy_pp(copy_pp_t ref, copy_pp_t opt);
     bool check_copy_sp(copy_sp_t ref, copy_sp_t opt);
     bool check_copy_ps(copy_ps_t ref, copy_ps_t opt);
@@ -51,12 +72,10 @@ protected:
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
-    bool check_pixeladd_ss(pixeladd_ss_t ref, pixeladd_ss_t opt);
     bool check_scale_pp(scale_t ref, scale_t opt);
     bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
-    bool check_calcrecon(calcrecon_t ref, calcrecon_t opt);
     bool check_transpose(transpose_t ref, transpose_t opt);
     bool check_weightp(weightp_pp_t ref, weightp_pp_t opt);
     bool check_weightp(weightp_sp_t ref, weightp_sp_t opt);
@@ -65,7 +84,9 @@ protected:
     bool check_cvt16to32_shl_t(cvt16to32_shl_t ref, cvt16to32_shl_t opt);
     bool check_cvt16to32_shr_t(cvt16to32_shr_t ref, cvt16to32_shr_t opt);
     bool check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t opt);
-    bool check_cvt16to32_cnt_t(cvt16to32_cnt_t ref, cvt16to32_cnt_t opt);
+    bool check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt);
+    bool check_copy_shr_t(copy_shr_t ref, copy_shr_t opt);
+    bool check_copy_shl_t(copy_shl_t ref, copy_shl_t opt);
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);
@@ -77,8 +98,6 @@ protected:
 public:
 
     PixelHarness();
-
-    virtual ~PixelHarness();
 
     const char *getName() const { return "pixel"; }
 

@@ -59,8 +59,52 @@ Standalone Executable Options
 
 .. option:: --threads <integer>
 
-	Number of threads for thread pool. Default 0 (detected CPU core
-	count)
+	Number of threads to allocate for the worker thread pool  This pool
+	is used for WPP and for distributed analysis and motion search:
+	:option:`--wpp` :option:`--pmode` and :option:`--pme` respectively.
+
+	If :option:`--threads`=1 is specified, then no thread pool is
+	created. When no thread pool is created, all the thread pool
+	features are implicitly disabled. If all the pool features are
+	disabled by the user, then the pool is implicitly disabled.
+
+	Default 0, one thread is allocated per detected hardware thread
+	(logical CPU cores)
+
+.. option:: --pmode, --no-pmode
+
+	Parallel mode decision, or distributed mode analysis. When enabled
+	the encoder will distribute the analysis work of each CU (merge,
+	inter, intra) across multiple worker threads. Only recommended if
+	x265 is not already saturating the CPU cores. Currently only
+	supported in RD levels 3 and 4, and is most effective when --rect is
+	enabled. This feature is implicitly disabled when no thread pool is
+	present.
+
+	--pmode will increase utilization on many core systems without
+	reducing compression efficiency. In fact, since the modes are all
+	measured in parallel it makes certain early-outs impractical and
+	thus you usually get slightly better compression when it is enabled
+	(at the expense of not skipping improbable modes).
+
+	Default disabled
+
+.. option:: --pme, --no-pme
+
+	Parallel motion estimation. When enabled the encoder will distribute
+	motion estimation across multiple worker threads when more than two
+	references require motion searches for a given CU. Only recommended
+	if x265 is not already saturating CPU cores. :option:`--pmode` is
+	much more effective than this option, since the amount of work it
+	distributes is substantially higher. With --pme it is not unusual
+	for the overhead of distributing the work outweighs the parallelism
+	benefits. This feature is implicitly disabled when no thread pool is
+	present.
+
+	--pme will increase utilization on many core systems without any
+	substantial effect om compression efficiency.
+	
+	Default disabled
 
 .. option:: --preset, -p <integer|string>
 
@@ -93,6 +137,9 @@ Standalone Executable Options
 	frames are always available for motion compensation, but it has
 	severe performance implications. Default is an autodetected count
 	based on the number of CPU cores and whether WPP is enabled or not.
+
+	Over-allocation of frame threads will not improve performance, it
+	will generally just increase memory use.
 
 .. option:: --log-level <integer|string>
 
@@ -327,7 +374,7 @@ Profile, Level, Tier
 	their param structure. Any changes made to the param structure after
 	this call might make the encode non-compliant.
 
-	**Values:** main, main10, mainstillpicture
+	**Values:** main, main10, mainstillpicture, main422-8, main422-10, main444-8, main444-10
 
 	**CLI ONLY**
 
@@ -392,7 +439,13 @@ Quad-Tree analysis
 	as the coding unit quad-tree, but the encoder may decide to further
 	split the transform unit tree if it improves compression efficiency.
 	This setting limits the number of extra recursion depth which can be
-	attempted for intra coded units. Default: 1
+	attempted for intra coded units. Default: 1, which means the
+	residual quad-tree is always at the same depth as the coded unit
+	quad-tree
+	
+	Note that when the CU intra prediction is NxN (only possible with
+	8x8 CUs), a TU split is implied, and thus the residual quad-tree
+	begins at 4x4 and cannot split any futhrer.
 
 .. option:: --tu-inter-depth <1..4>
 
@@ -400,7 +453,11 @@ Quad-Tree analysis
 	as the coding unit quad-tree, but the encoder may decide to further
 	split the transform unit tree if it improves compression efficiency.
 	This setting limits the number of extra recursion depth which can be
-	attempted for inter coded units. Default: 1
+	attempted for inter coded units. Default: 1. which means the
+	residual quad-tree is always at the same depth as the coded unit
+	quad-tree unless the CU was coded with rectangular or AMP
+	partitions, in which case a TU split is implied and thus the
+	residual quad-tree begins one layer below the CU quad-tree.
 
 Temporal / motion search options
 ================================
@@ -470,30 +527,57 @@ Temporal / motion search options
 	The max candidate number is encoded in the SPS and determines the
 	bit cost of signaling merge CUs. Default 2
 
+.. option:: --temporal-mvp, --no-temporal-mvp
+
+	Enable temporal motion vector predictors in P and B slices.
+	This enables the use of the motion vector from the collocated block
+	in the previous frame to be used as a predictor. Default is enabled
+
 Spatial/intra options
 =====================
 
 .. option:: --rdpenalty <0..2>
 
-	Penalty for 32x32 intra TU in non-I slices. Default 0
+	When set to 1, transform units of size 32x32 are given a 4x bit cost
+	penalty compared to smaller transform units, in intra coded CUs in P
+	or B slices.
 
-	**Values:** 0:disabled 1:RD-penalty 2:maximum
+	When set to 2, transform units of size 32x32 are not even attempted,
+	unless otherwise required by the maximum recursion depth.  For this
+	option to be effective with 32x32 intra CUs,
+	:option:`--tu-intra-depth` must be at least 2.  For it to be
+	effective with 64x64 intra CUs, :option:`--tu-intra-depth` must be
+	at least 3.
+
+	Note that in HEVC an intra transform unit (a block of the residual
+	quad-tree) is also a prediction unit, meaning that the intra
+	prediction signal is generated for each TU block, the residual
+	subtracted and then coded. The coding unit simply provides the
+	prediction modes that will be used when predicting all of the
+	transform units within the CU. This means that when you prevent
+	32x32 intra transform units, you are preventing 32x32 intra
+	predictions.
+
+	Default 0, disabled.
+
+	**Values:** 0:disabled 1:4x cost penalty 2:force splits
 
 .. option:: --b-intra, --no-b-intra
 
-	Enables the use of intra modes in very slow presets (:option:`--rd`
-	5 or 6). Presets slow to ultrafast do not try intra in B frames
-	regardless of this setting. Default enabled.
+	Enables the evaluation of intra modes in B slices. Default disabled.
 
 .. option:: --tskip, --no-tskip
 
-	Enable intra transform skipping (encode residual as coefficients)
-	for intra coded blocks. Default disabled
+	Enable evaluation of transform skip (bypass DCT but still use
+	quantization) coding for 4x4 TU coded blocks.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions. Default disabled
 
 .. option:: --tskip-fast, --no-tskip-fast
 
-	Enable fast intra transform skip decisions. Only applicable if
-	transform skip is enabled. Default disabled
+	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
+	Only applicable if transform skip is enabled. Default disabled
 
 .. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
 
@@ -519,10 +603,21 @@ Mode decision / Analysis
 .. option:: --amp, --no-amp
 
 	Enable analysis of asymmetric motion partitions (75/25 splits, four
-	directions). This setting has no effect if rectangular partitions
-	are disabled. Even though there are four possible AMP partitions,
-	only the most likely candidate is tested, based on the results of
-	the rectangular mode tests. Default disabled
+	directions). At RD levels 0 through 4, AMP partitions are only
+	considered at CU sizes 32x32 and below. At RD levels 5 and 6, it
+	will only consider AMP partitions as merge candidates (no motion
+	search) at 64x64, and as merge or inter candidates below 64x64.
+
+	The AMP partitions which are searched are derived from the current
+	best inter partition. If Nx2N (vertical rectangular) is the best
+	current prediction, then left and right asymmetrical splits will be
+	evaluated. If 2NxN (horizontal rectangular) is the best current
+	prediction, then top and bottom asymmetrical splits will be
+	evaluated, If 2Nx2N is the best prediction, and the block is not a
+	merge/skip, then all four AMP partitions are evaluated.
+
+	This setting has no effect if rectangular partitions are disabled.
+	Default disabled
 
 .. option:: --early-skip, --no-early-skip
 
@@ -534,7 +629,8 @@ Mode decision / Analysis
 	Short circuit analysis if a prediction is found that does not set
 	the coded block flag (aka: no residual was encoded).  It prevents
 	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits. Default disabled
+	residual but require less signaling bits. Only applicable for RD
+	levels 5 and 6. Default disabled
 
 .. option:: --fast-intra, --no-fast-intra
 
@@ -591,11 +687,14 @@ Mode decision / Analysis
 
 .. option:: --cu-lossless, --no-cu-lossless
 
-	For each CU, evaluate lossless encode (transform and quant bypass)
-	as a potential rate distortion optimization. If the global option
-	:option:`--lossless` has been specified, all CUs will be encoded
-	this way unconditionally regardless of whether this option was
-	enabled. Default disabled.
+	For each CU, evaluate lossless (transform and quant bypass) encode
+	of the best non-lossless mode option as a potential rate distortion
+	optimization. If the global option :option:`--lossless` has been
+	specified, all CUs will be encoded as lossless unconditionally
+	regardless of whether this option was enabled. Default disabled.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions.
 
 .. option:: --signhide, --no-signhide
 
@@ -918,6 +1017,24 @@ Quality, rate control and rate distortion options
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
 
+.. option:: --analysis-mode <string|int>
+
+	Specify whether analysis information of each frame is output by encoder
+	or input for reuse. By reading the analysis data writen by an
+	earlier encode of the same sequence, substantial redundant work may
+	be avoided.
+
+	The following data may be stored and reused:
+	I frames   - split decisions and luma intra directions of all CUs.
+	P/B frames - motion vectors are dumped at each depth for all CUs.
+
+	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
+
+.. option:: --analysis-file <filename>
+
+	Specify a filename for analysis data (see :option:`--analysis-mode`)
+	If no filename is specified, x265_analysis.dat is used.
+
 Loop filters
 ============
 
@@ -929,20 +1046,12 @@ Loop filters
 
 	Toggle Sample Adaptive Offset loop filter, default enabled
 
-.. option:: --sao-lcu-bounds <0|1>
+.. option:: --sao-non-deblock, --no-sao-non-deblock
 
-	How to handle depencency with deblocking filter
-
-	0. right/bottom boundary areas skipped **(default)**
-	1. non-deblocked pixels are used
-
-.. option:: --sao-lcu-opt <0|1>
-
-	Frame level or block level optimization
-
-	0. SAO picture-based optimization (prevents frame parallelism,
-	   effectively causes :option:`--frame-threads` 1)
-	1. SAO LCU-based optimization **(default)**
+	Specify how to handle depencency between SAO and deblocking filter.
+	When enabled, non-deblocked pixels are used for SAO analysis. When
+	disabled, SAO analysis skips the right/bottom boundary areas.
+	Default disabled
 
 VUI (Video Usability Information) options
 =========================================

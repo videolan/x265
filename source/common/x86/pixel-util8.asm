@@ -42,18 +42,24 @@ ssim_c2:   times 4 dd 235963       ; .03*.03*255*255*64*63
 mask_ff:   times 16 db 0xff
            times 16 db 0
 deinterleave_shuf: db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
-deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 15, 15
+deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
 hmul_16p:  times 16 db 1
            times 8 db 1, -1
 hmulw_16p:  times 8 dw 1
             times 4 dw 1, -1
 
+trans8_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
+
 SECTION .text
 
 cextern pw_1
+cextern pb_1
 cextern pw_00ff
 cextern pw_2000
 cextern pw_pixel_max
+cextern pd_1
+cextern pd_32767
+cextern pd_n32768
 
 ;-----------------------------------------------------------------------------
 ; void calcrecon(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred)
@@ -855,11 +861,10 @@ cglobal getResidual32, 4,5,7
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal quant, 5,6,8
-
     ; fill qbits
     movd        m4, r4d         ; m4 = qbits
 
@@ -871,125 +876,253 @@ cglobal quant, 5,6,8
     movd        m5, r5m
     pshufd      m5, m5, 0       ; m5 = add
 
+    lea         r5, [pd_1]
+
     mov         r4d, r6m
     shr         r4d, 3
     pxor        m7, m7          ; m7 = numZero
 .loop:
     ; 4 coeff
     movu        m0, [r0]        ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1]        ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1]        ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
 
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+
+    movu        [r2], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3], m3
+
     ; 4 coeff
     movu        m0, [r0 + 16]   ; m0 = level
-    pxor        m1, m1
-    pcmpgtd     m1, m0          ; m1 = sign
-    movu        m2, [r1 + 16]   ; m2 = qcoeff
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m2, m0, m5
+    pabsd       m1, m0
+    pmulld      m1, [r1 + 16]   ; m0 = tmpLevel1
+    paddd       m2, m1, m5
     psrad       m2, m4          ; m2 = level1
-    pslld       m3, m2, m4
-    psubd       m0, m3
-    psrad       m0, m6          ; m0 = deltaU1
-    movu        [r2 + 16], m0
-    pxor        m0, m0
-    pcmpeqd     m0, m2          ; m0 = mask4
-    psubd       m7, m0
-
-    pxor        m2, m1
-    psubd       m2, m1
-    packssdw    m2, m2
-    pmovsxwd    m2, m2
-    movu        [r3 + 16], m2
+    pslld       m3, m2, 8
+    psrad       m1, m6
+    psubd       m1, m3          ; m1 = deltaU1
+    movu        [r2 + 16], m1
+    psignd      m3, m2, m0
+    pminud      m2, [r5]
+    paddd       m7, m2
+    packssdw    m3, m3
+    movh        [r3 + 8], m3
 
     add         r0, 32
     add         r1, 32
     add         r2, 32
-    add         r3, 32
+    add         r3, 16
 
     dec         r4d
     jnz        .loop
 
-    phaddd      m7, m7
-    phaddd      m7, m7
-    mov         eax, r6m
-    movd        r4d, m7
-    sub         eax, r4d        ; numSig
-
+    pxor        m0, m0
+    psadbw      m7, m0
+    movhlps     m0, m7
+    paddd       m7, m0
+    movd        eax, m7
     RET
 
 
+IACA_START
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,5,10
+    ; fill qbits
+    movd            xm4, r4d            ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d            ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m             ; m5 = add
+
+    vpbroadcastw    m9, [pw_1]          ; m9 = word [1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7              ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]            ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]            ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4             ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3              ; m1 = deltaU1
+    movu            [r2], m1
+    psignd          m2, m0
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]   ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]   ; m0 = tmpLevel1
+    paddd           m3, m1, m5
+    psrad           m3, xm4             ; m2 = level1
+
+    pslld           m8, m3, 8
+    psrad           m1, xm6
+    psubd           m1, m8              ; m1 = deltaU1
+    movu            [r2 + mmsize], m1
+    psignd          m3, m0
+
+    packssdw        m2, m3
+    vpermq          m2, m2, q3120
+    movu            [r3], m2
+
+    ; count non-zero coeff
+    ; TODO: popcnt is faster, but some CPU can't support
+    pminuw          m2, m9
+    paddw           m7, m2
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    ; sum count
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+
+%else ; ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal quant, 5,6,8
+    ; fill qbits
+    movd            xm4, r4d        ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d        ; m6 = qbits8
+
+    ; fill offset
+    vpbroadcastd    m5, r5m         ; m5 = ad
+
+    lea             r5, [pd_1]
+
+    mov             r4d, r6m
+    shr             r4d, 4
+    pxor            m7, m7          ; m7 = numZero
+.loop:
+    ; 8 coeff
+    movu            m0, [r0]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3], xm3
+
+    ; 8 coeff
+    movu            m0, [r0 + mmsize]        ; m0 = level
+    pabsd           m1, m0
+    pmulld          m1, [r1 + mmsize]        ; m0 = tmpLevel1
+    paddd           m2, m1, m5
+    psrad           m2, xm4         ; m2 = level1
+
+    pslld           m3, m2, 8
+    psrad           m1, xm6
+    psubd           m1, m3          ; m1 = deltaU1
+
+    movu            [r2 + mmsize], m1
+    psignd          m3, m2, m0
+    pminud          m2, [r5]
+    paddd           m7, m2
+    packssdw        m3, m3
+    vpermq          m3, m3, q0020
+    movu            [r3 + mmsize/2], xm3
+
+    add             r0, mmsize*2
+    add             r1, mmsize*2
+    add             r2, mmsize*2
+    add             r3, mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    xorpd           m0, m0
+    psadbw          m7, m0
+    vextracti128    xm1, m7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+%endif ; ARCH_X86_64 == 1
+IACA_END
+
+
 ;-----------------------------------------------------------------------------
-; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int32_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal nquant, 4,5,8
+cglobal nquant, 3,5,8
     movd        m6, r4m
     mov         r4d, r5m
     pxor        m7, m7          ; m7 = numZero
-    movd        m5, r3d         ; m5 = qbits
+    movd        m5, r3m         ; m5 = qbits
     pshufd      m6, m6, 0       ; m6 = add
     mov         r3d, r4d        ; r3 = numCoeff
     shr         r4d, 3
+
 .loop:
     movu        m0, [r0]        ; m0 = level
     movu        m1, [r0 + 16]   ; m1 = level
-    movu        m2, [r1]        ; m2 = qcoeff
-    movu        m3, [r1 + 16]   ; m3 = qcoeff
+
+    pabsd       m2, m0
+    pmulld      m2, [r1]        ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m6
+    psrad       m2, m5          ; m0 = level1
+    psignd      m2, m0
+
+    pabsd       m3, m1
+    pmulld      m3, [r1 + 16]   ; m1 = tmpLevel1 * qcoeff
+    paddd       m3, m6
+    psrad       m3, m5          ; m1 = level1
+    psignd      m3, m1
+
+    packssdw    m2, m3
+
+    movu        [r2], m2
     add         r0, 32
     add         r1, 32
+    add         r2, 16
 
     pxor        m4, m4
-    pcmpgtd     m4, m0          ; m4 = sign
-    pabsd       m0, m0
-    pmulld      m0, m2          ; m0 = tmpLevel1
-    paddd       m0, m6
-    psrad       m0, m5          ; m0 = level1
-    pxor        m0, m4
-    psubd       m0, m4
+    pcmpeqw     m2, m4
+    psubw       m7, m2
 
-    pxor        m4, m4
-    pcmpgtd     m4, m1          ; m4 = sign
-    pabsd       m1, m1
-    pmulld      m1, m3          ; m1 = tmpLevel1
-    paddd       m1, m6
-    psrad       m1, m5          ; m1 = level1
-    pxor        m1, m4
-    psubd       m1, m4
-
-    packssdw    m0, m0
-    packssdw    m1, m1
-    pmovsxwd    m0, m0
-    pmovsxwd    m1, m1
-
-    movu        [r2], m0
-    movu        [r2 + 16], m1
-    add         r2, 32
     dec         r4d
-
-    packssdw    m0, m1
-    pxor        m4, m4
-    pcmpeqw     m0, m4
-    psubw       m7, m0
-
     jnz         .loop
 
     packuswb    m7, m7
@@ -997,38 +1130,81 @@ cglobal nquant, 4,5,8
     mov         eax, r3d
     movd        r4d, m7
     sub         eax, r4d        ; numSig
+    RET
 
+
+INIT_YMM avx2
+cglobal nquant, 3,5,7
+    vpbroadcastd m4, r4m
+    vpbroadcastd m6, [pw_1]
+    mov         r4d, r5m
+    pxor        m5, m5              ; m7 = numZero
+    movd        xm3, r3m            ; m5 = qbits
+    mov         r3d, r4d            ; r3 = numCoeff
+    shr         r4d, 4
+
+.loop:
+    movu        m0, [r0]            ; m0 = level
+    pabsd       m1, m0
+    pmulld      m1, [r1]            ; m0 = tmpLevel1 * qcoeff
+    paddd       m1, m4
+    psrad       m1, xm3             ; m0 = level1
+    psignd      m1, m0
+
+    movu        m0, [r0 + mmsize]   ; m0 = level
+    pabsd       m2, m0
+    pmulld      m2, [r1 + mmsize]   ; m0 = tmpLevel1 * qcoeff
+    paddd       m2, m4
+    psrad       m2, xm3             ; m0 = level1
+    psignd      m2, m0
+
+    packssdw    m1, m2
+    vpermq      m2, m1, q3120
+
+    movu        [r2], m2
+    add         r0, mmsize * 2
+    add         r1, mmsize * 2
+    add         r2, mmsize
+
+    pminuw      m1, m6
+    paddw       m5, m1
+
+    dec         r4d
+    jnz         .loop
+
+    pxor        m0, m0
+    psadbw      m5, m0
+    vextracti128 xm0, m5, 1
+    paddd       xm5, xm0
+    pshufd      xm0, xm5, 2
+    paddd       xm5, xm0
+    movd        eax, xm5
     RET
 
 
 ;-----------------------------------------------------------------------------
-; void dequant_normal(const int32_t* quantCoef, int32_t* coef, int num, int scale, int shift)
+; void dequant_normal(const int16_t* quantCoef, int32_t* coef, int num, int scale, int shift)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal dequant_normal, 5,5,5
-    movd        m1, r3              ; m1 = word [scale]
     mova        m2, [pw_1]
 %if HIGH_BIT_DEPTH
     cmp         r3d, 32767
     jle         .skip
-    psrld       m1, 2
+    shr         r3d, 2
     sub         r4d, 2
 .skip:
 %endif
     movd        m0, r4d             ; m0 = shift
-    xor         r3d, r3d
-    dec         r4d
+    add         r4d, 15
     bts         r3d, r4d
-    movd        m3, r3d
-    punpcklwd   m1, m3
+    movd        m1, r3d
     pshufd      m1, m1, 0           ; m1 = dword [add scale]
     ; m0 = shift
     ; m1 = scale
     ; m2 = word [1]
 .loop:
     movu        m3, [r0]
-    movu        m4, [r0 + 16]
-    packssdw    m3, m4              ; m3 = clipQCoef
     punpckhwd   m4, m3, m2
     punpcklwd   m3, m2
     pmaddwd     m3, m1              ; m3 = dword (clipQCoef * scale + add)
@@ -1039,10 +1215,10 @@ cglobal dequant_normal, 5,5,5
     pmovsxwd    m3, m3
     packssdw    m4, m4
     pmovsxwd    m4, m4
-    movu        [r1], m3
-    movu        [r1 + 16], m4
+    mova        [r1], m3
+    mova        [r1 + 16], m4
 
-    add         r0, 32
+    add         r0, 16
     add         r1, 32
 
     sub         r2d, 8
@@ -1050,11 +1226,57 @@ cglobal dequant_normal, 5,5,5
     RET
 
 
+INIT_YMM avx2
+cglobal dequant_normal, 5,5,7
+    vpbroadcastd    m2, [pw_1]          ; m2 = word [1]
+    vpbroadcastd    m5, [pd_32767]      ; m5 = dword [32767]
+    vpbroadcastd    m6, [pd_n32768]     ; m6 = dword [-32768]
+%if HIGH_BIT_DEPTH
+    cmp             r3d, 32767
+    jle            .skip
+    shr             r3d, 2
+    sub             r4d, 2
+.skip:
+%endif
+    movd            xm0, r4d            ; m0 = shift
+    add             r4d, -1+16
+    bts             r3d, r4d
+    vpbroadcastd    m1, r3d             ; m1 = dword [add scale]
+
+    ; m0 = shift
+    ; m1 = scale
+    ; m2 = word [1]
+    shr             r2d, 4
+.loop:
+    movu            m3, [r0]
+    punpckhwd       m4, m3, m2
+    punpcklwd       m3, m2
+    pmaddwd         m3, m1              ; m3 = dword (clipQCoef * scale + add)
+    pmaddwd         m4, m1
+    psrad           m3, xm0
+    psrad           m4, xm0
+    pminsd          m3, m5
+    pmaxsd          m3, m6
+    pminsd          m4, m5
+    pmaxsd          m4, m6
+    mova            [r1 + 0 * mmsize/2], xm3
+    mova            [r1 + 1 * mmsize/2], xm4
+    vextracti128    [r1 + 2 * mmsize/2], m3, 1
+    vextracti128    [r1 + 3 * mmsize/2], m4, 1
+
+    add             r0, mmsize
+    add             r1, mmsize * 2
+
+    dec             r2d
+    jnz            .loop
+    RET
+
+
 ;-----------------------------------------------------------------------------
-; int count_nonzero(const int32_t *quantCoeff, int numCoeff);
+; int count_nonzero(const int16_t *quantCoeff, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal count_nonzero, 2,2,5
+cglobal count_nonzero, 2,2,3
     pxor        m0, m0
     shr         r1d, 4
     movd        m1, r1d
@@ -1062,13 +1284,8 @@ cglobal count_nonzero, 2,2,5
 
 .loop:
     mova        m2, [r0 +  0]
-    mova        m3, [r0 + 16]
-    packssdw    m2, m3
-    mova        m3, [r0 + 32]
-    mova        m4, [r0 + 48]
-    add         r0, 64
-    packssdw    m3, m4
-    packsswb    m2, m3
+    packsswb    m2, [r0 + 16]
+    add         r0, 32
     pcmpeqb     m2, m0
     paddb       m1, m2
     dec         r1d
@@ -1082,36 +1299,29 @@ cglobal count_nonzero, 2,2,5
 
 
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
-;void weight_pp(pixel *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+;void weight_pp(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal weight_pp, 6, 7, 6
 
+    shl         r5d, 6      ; m0 = [w0<<6]
     mov         r6d, r6m
-    shl         r6d, 6
-    movd        m0, r6d         ; m0 = [w0<<6]
-
-    movd        m1, r7m         ; m1 = [round]
-    punpcklwd   m0, m1          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
-    pshufd      m0, m0, 0       ; m0 = [w0<<6 round]
-
-    movd        m1, r8m
-
-    movd        m2, r9m
+    shl         r6d, 16
+    or          r6d, r5d    ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    movd        m0, r6d
+    pshufd      m0, m0, 0   ; m0 = [w0<<6, round]
+    movd        m1, r7m
+    movd        m2, r8m
     pshufd      m2, m2, 0
-
     mova        m5, [pw_1]
-
-    sub         r2d, r4d
-    sub         r3d, r4d
+    sub         r2d, r3d
+    shr         r3d, 4
 
 .loopH:
-    mov         r6d, r4d
-    shr         r6d, 4
-.loopW:
-    movh        m4, [r0]
-    pmovzxbw    m4, m4
+    mov         r5d, r3d
 
+.loopW:
+    pmovzxbw    m4, [r0]
     punpcklwd   m3, m4, m5
     pmaddwd     m3, m0
     psrad       m3, m1
@@ -1124,12 +1334,9 @@ cglobal weight_pp, 6, 7, 6
 
     packssdw    m3, m4
     packuswb    m3, m3
-
     movh        [r1], m3
 
-    movh        m4, [r0 + 8]
-    pmovzxbw    m4, m4
-
+    pmovzxbw    m4, [r0 + 8]
     punpcklwd   m3, m4, m5
     pmaddwd     m3, m0
     psrad       m3, m1
@@ -1142,21 +1349,70 @@ cglobal weight_pp, 6, 7, 6
 
     packssdw    m3, m4
     packuswb    m3, m3
-
     movh        [r1 + 8], m3
 
     add         r0, 16
     add         r1, 16
 
-    dec         r6d
+    dec         r5d
     jnz         .loopW
 
     lea         r0, [r0 + r2]
-    lea         r1, [r1 + r3]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
+    RET
+
+
+INIT_YMM avx2
+cglobal weight_pp, 6, 7, 6
+
+    shl          r5d, 6            ; m0 = [w0<<6]
+    mov          r6d, r6m
+    shl          r6d, 16
+    or           r6d, r5d          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    movd         xm0, r6d
+    pshufd       xm0, xm0, 0       ; m0 = [w0<<6, round]
+    vinserti128  m0, m0, xm0, 1    ; document says (pshufd + vinserti128) can be replaced with vpbroadcastd m0, xm0, but having build problem, need to investigate
+
+    movd         xm1, r7m
+    vpbroadcastd m2, r8m
+    mova         m5, [pw_1]
+    sub          r2d, r3d
+    shr          r3d, 4
+
+.loopH:
+    mov          r5d, r3d
+
+.loopW:
+    pmovzxbw    m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, xm1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, xm1
+    paddd       m4, m2
+
+    packssdw    m3, m4
+    vextracti128 xm4, m3, 1
+    packuswb    xm3, xm4
+    movu        [r1], xm3
+
+    add         r0, 16
+    add         r1, 16
 
     dec         r5d
-    jnz         .loopH
+    jnz         .loopW
 
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
     RET
 
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1248,7 +1504,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 ;-----------------------------------------------------------------
 INIT_XMM sse2
 cglobal transpose4, 3, 3, 4, dest, src, stride
-%if HIGH_BIT_DEPTH
+%if HIGH_BIT_DEPTH == 1
     add          r2,    r2
     movh         m0,    [r1]
     movh         m1,    [r1 + r2]
@@ -1261,7 +1517,7 @@ cglobal transpose4, 3, 3, 4, dest, src, stride
     punpckldq    m0,    m2
     movu         [r0],       m0
     movu         [r0 + 16],  m1
-%else
+%else ;HIGH_BIT_DEPTH == 0
     movd         m0,    [r1]
     movd         m1,    [r1 + r2]
     movd         m2,    [r1 + 2 * r2]
@@ -1278,8 +1534,47 @@ cglobal transpose4, 3, 3, 4, dest, src, stride
 ;-----------------------------------------------------------------
 ; void transpose_8x8(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH == 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose8, 3, 5, 5
+    add          r2, r2
+    lea          r3, [3 * r2]
+    lea          r4, [r1 + 4 * r2]
+    movu         xm0, [r1]
+    vinserti128  m0, m0, [r4], 1
+    movu         xm1, [r1 + r2]
+    vinserti128  m1, m1, [r4 + r2], 1
+    movu         xm2, [r1 + 2 * r2]
+    vinserti128  m2, m2, [r4 + 2 * r2], 1
+    movu         xm3, [r1 + r3]
+    vinserti128  m3, m3, [r4 + r3], 1
+
+    punpcklwd    m4, m0, m1          ;[1 - 4][row1row2;row5row6]
+    punpckhwd    m0, m1              ;[5 - 8][row1row2;row5row6]
+
+    punpcklwd    m1, m2, m3          ;[1 - 4][row3row4;row7row8]
+    punpckhwd    m2, m3              ;[5 - 8][row3row4;row7row8]
+
+    punpckldq    m3, m4, m1          ;[1 - 2][row1row2row3row4;row5row6row7row8]
+    punpckhdq    m4, m1              ;[3 - 4][row1row2row3row4;row5row6row7row8]
+
+    punpckldq    m1, m0, m2          ;[5 - 6][row1row2row3row4;row5row6row7row8]
+    punpckhdq    m0, m2              ;[7 - 8][row1row2row3row4;row5row6row7row8]
+
+    vpermq       m3, m3, 0xD8        ;[1 ; 2][row1row2row3row4row5row6row7row8]
+    vpermq       m4, m4, 0xD8        ;[3 ; 4][row1row2row3row4row5row6row7row8]
+    vpermq       m1, m1, 0xD8        ;[5 ; 6][row1row2row3row4row5row6row7row8]
+    vpermq       m0, m0, 0xD8        ;[7 ; 8][row1row2row3row4row5row6row7row8]
+
+    movu         [r0 + 0 * 32], m3
+    movu         [r0 + 1 * 32], m4
+    movu         [r0 + 2 * 32], m1
+    movu         [r0 + 3 * 32], m0
+    RET
+%endif
+
 INIT_XMM sse2
-%if HIGH_BIT_DEPTH
 %macro TRANSPOSE_4x4 1
     movh         m0,    [r1]
     movh         m1,    [r1 + r2]
@@ -1316,7 +1611,42 @@ cglobal transpose8, 3, 6, 4, dest, src, stride
     mov    r3,    r0
     mov    r5,    16
     call   transpose8_internal
-%else
+    RET
+%else ;HIGH_BIT_DEPTH == 0
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose8, 3, 4, 4
+    lea          r3, [r2 * 3]
+    movq         xm0, [r1]
+    movhps       xm0, [r1 + 2 * r2]
+    movq         xm1, [r1 + r2]
+    movhps       xm1, [r1 + r3]
+    lea          r1, [r1 + 4 * r2]
+    movq         xm2, [r1]
+    movhps       xm2, [r1 + 2 * r2]
+    movq         xm3, [r1 + r2]
+    movhps       xm3, [r1 + r3]
+
+    vinserti128  m0, m0, xm2, 1             ;[row1 row3 row5 row7]
+    vinserti128  m1, m1, xm3, 1             ;[row2 row4 row6 row8]
+
+    punpcklbw    m2, m0, m1                 ;[1 - 8; 1 - 8][row1row2; row5row6]
+    punpckhbw    m0, m1                     ;[1 - 8; 1 - 8][row3row4; row7row8]
+
+    punpcklwd    m1, m2, m0                 ;[1 - 4; 1 - 4][row1row2row3row4; row5row6row7row8]
+    punpckhwd    m2, m0                     ;[5 - 8; 5 - 8][row1row2row3row4; row5row6row7row8]
+
+    mova         m0, [trans8_shuf]
+
+    vpermd       m1, m0, m1                 ;[1 - 2; 3 - 4][row1row2row3row4row5row6row7row8]
+    vpermd       m2, m0, m2                 ;[4 - 5; 6 - 7][row1row2row3row4row5row6row7row8]
+
+    movu         [r0], m1
+    movu         [r0 + 32], m2
+    RET
+%endif
+
+INIT_XMM sse2
 cglobal transpose8, 3, 5, 8, dest, src, stride
     lea          r3,    [2 * r2]
     lea          r4,    [3 * r2]
@@ -1348,8 +1678,8 @@ cglobal transpose8, 3, 5, 8, dest, src, stride
     movu         [r0 + 16],    m2
     movu         [r0 + 32],    m1
     movu         [r0 + 48],    m3
-%endif
     RET
+%endif
 
 %macro TRANSPOSE_8x8 1
 
@@ -1397,8 +1727,85 @@ cglobal transpose8, 3, 5, 8, dest, src, stride
 ;-----------------------------------------------------------------
 ; void transpose_16x16(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH == 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose16x8_internal
+    movu         m0, [r1]
+    movu         m1, [r1 + r2]
+    movu         m2, [r1 + 2 * r2]
+    movu         m3, [r1 + r3]
+    lea          r1, [r1 + 4 * r2]
+
+    movu         m4, [r1]
+    movu         m5, [r1 + r2]
+    movu         m6, [r1 + 2 * r2]
+    movu         m7, [r1 + r3]
+
+    punpcklwd    m8, m0, m1                 ;[1 - 4; 9 - 12][1 2]
+    punpckhwd    m0, m1                     ;[5 - 8; 13 -16][1 2]
+
+    punpcklwd    m1, m2, m3                 ;[1 - 4; 9 - 12][3 4]
+    punpckhwd    m2, m3                     ;[5 - 8; 13 -16][3 4]
+
+    punpcklwd    m3, m4, m5                 ;[1 - 4; 9 - 12][5 6]
+    punpckhwd    m4, m5                     ;[5 - 8; 13 -16][5 6]
+
+    punpcklwd    m5, m6, m7                 ;[1 - 4; 9 - 12][7 8]
+    punpckhwd    m6, m7                     ;[5 - 8; 13 -16][7 8]
+
+    punpckldq    m7, m8, m1                 ;[1 - 2; 9 -  10][1 2 3 4]
+    punpckhdq    m8, m1                     ;[3 - 4; 11 - 12][1 2 3 4]
+
+    punpckldq    m1, m3, m5                 ;[1 - 2; 9 -  10][5 6 7 8]
+    punpckhdq    m3, m5                     ;[3 - 4; 11 - 12][5 6 7 8]
+
+    punpckldq    m5, m0, m2                 ;[5 - 6; 13 - 14][1 2 3 4]
+    punpckhdq    m0, m2                     ;[7 - 8; 15 - 16][1 2 3 4]
+
+    punpckldq    m2, m4, m6                 ;[5 - 6; 13 - 14][5 6 7 8]
+    punpckhdq    m4, m6                     ;[7 - 8; 15 - 16][5 6 7 8]
+
+    punpcklqdq   m6, m7, m1                 ;[1 ; 9 ][1 2 3 4 5 6 7 8]
+    punpckhqdq   m7, m1                     ;[2 ; 10][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m1, m8, m3                 ;[3 ; 11][1 2 3 4 5 6 7 8]
+    punpckhqdq   m8, m3                     ;[4 ; 12][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m3, m5, m2                 ;[5 ; 13][1 2 3 4 5 6 7 8]
+    punpckhqdq   m5, m2                     ;[6 ; 14][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m2, m0, m4                 ;[7 ; 15][1 2 3 4 5 6 7 8]
+    punpckhqdq   m0, m4                     ;[8 ; 16][1 2 3 4 5 6 7 8]
+
+    movu         [r0 + 0 * 32], xm6
+    vextracti128 [r0 + 8 * 32], m6, 1
+    movu         [r0 + 1  * 32], xm7
+    vextracti128 [r0 + 9  * 32], m7, 1
+    movu         [r0 + 2  * 32], xm1
+    vextracti128 [r0 + 10 * 32], m1, 1
+    movu         [r0 + 3  * 32], xm8
+    vextracti128 [r0 + 11 * 32], m8, 1
+    movu         [r0 + 4  * 32], xm3
+    vextracti128 [r0 + 12 * 32], m3, 1
+    movu         [r0 + 5  * 32], xm5
+    vextracti128 [r0 + 13 * 32], m5, 1
+    movu         [r0 + 6  * 32], xm2
+    vextracti128 [r0 + 14 * 32], m2, 1
+    movu         [r0 + 7  * 32], xm0
+    vextracti128 [r0 + 15 * 32], m0, 1
+    ret
+
+cglobal transpose16, 3, 4, 9
+    add          r2, r2
+    lea          r3, [r2 * 3]
+    call         transpose16x8_internal
+    lea          r1, [r1 + 4 * r2]
+    add          r0, 16
+    call         transpose16x8_internal
+    RET
+%endif
 INIT_XMM sse2
-%if HIGH_BIT_DEPTH
 cglobal transpose16, 3, 7, 4, dest, src, stride
     add    r2,    r2
     mov    r3,    r0
@@ -1418,8 +1825,90 @@ cglobal transpose16, 3, 7, 4, dest, src, stride
     lea    r0,    [r6 + 8 * r5 + 16]
     mov    r3,    r0
     call   transpose8_internal
+    RET
+%else ;HIGH_BIT_DEPTH == 0
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose16, 3, 5, 9
+    lea          r3, [r2 * 3]
+    lea          r4, [r1 + 8 * r2]
 
-%else
+    movu         xm0, [r1]
+    movu         xm1, [r1 + r2]
+    movu         xm2, [r1 + 2 * r2]
+    movu         xm3, [r1 + r3]
+    vinserti128  m0,  m0, [r4], 1
+    vinserti128  m1,  m1, [r4 + r2], 1
+    vinserti128  m2,  m2, [r4 + 2 * r2], 1
+    vinserti128  m3,  m3, [r4 + r3], 1
+    lea          r1,  [r1 + 4 * r2]
+    lea          r4,  [r4 + 4 * r2]
+
+    movu         xm4, [r1]
+    movu         xm5, [r1 + r2]
+    movu         xm6, [r1 + 2 * r2]
+    movu         xm7, [r1 + r3]
+    vinserti128  m4,  m4, [r4], 1
+    vinserti128  m5,  m5, [r4 + r2], 1
+    vinserti128  m6,  m6, [r4 + 2 * r2], 1
+    vinserti128  m7,  m7, [r4 + r3], 1
+
+    punpcklbw    m8, m0, m1                 ;[1 - 8 ; 1 - 8 ][1 2  9 10]
+    punpckhbw    m0, m1                     ;[9 - 16; 9 - 16][1 2  9 10]
+
+    punpcklbw    m1, m2, m3                 ;[1 - 8 ; 1 - 8 ][3 4 11 12]
+    punpckhbw    m2, m3                     ;[9 - 16; 9 - 16][3 4 11 12]
+
+    punpcklbw    m3, m4, m5                 ;[1 - 8 ; 1 - 8 ][5 6 13 14]
+    punpckhbw    m4, m5                     ;[9 - 16; 9 - 16][5 6 13 14]
+
+    punpcklbw    m5, m6, m7                 ;[1 - 8 ; 1 - 8 ][7 8 15 16]
+    punpckhbw    m6, m7                     ;[9 - 16; 9 - 16][7 8 15 16]
+
+    punpcklwd    m7, m8, m1                 ;[1 - 4 ; 1 - 4][1 2 3 4 9 10 11 12]
+    punpckhwd    m8, m1                     ;[5 - 8 ; 5 - 8][1 2 3 4 9 10 11 12]
+
+    punpcklwd    m1, m3, m5                 ;[1 - 4 ; 1 - 4][5 6 7 8 13 14 15 16]
+    punpckhwd    m3, m5                     ;[5 - 8 ; 5 - 8][5 6 7 8 13 14 15 16]
+
+    punpcklwd    m5, m0, m2                 ;[9 - 12; 9 -  12][1 2 3 4 9 10 11 12]
+    punpckhwd    m0, m2                     ;[13- 16; 13 - 16][1 2 3 4 9 10 11 12]
+
+    punpcklwd    m2, m4, m6                 ;[9 - 12; 9 -  12][5 6 7 8 13 14 15 16]
+    punpckhwd    m4, m6                     ;[13- 16; 13 - 16][5 6 7 8 13 14 15 16]
+
+    punpckldq    m6, m7, m1                 ;[1 - 2 ; 1 - 2][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhdq    m7, m1                     ;[3 - 4 ; 3 - 4][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpckldq    m1, m8, m3                 ;[5 - 6 ; 5 - 6][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhdq    m8, m3                     ;[7 - 8 ; 7 - 8][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpckldq    m3, m5, m2                 ;[9 - 10; 9 -  10][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhdq    m5, m2                     ;[11- 12; 11 - 12][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpckldq    m2, m0, m4                 ;[13- 14; 13 - 14][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhdq    m0, m4                     ;[15- 16; 15 - 16][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    vpermq       m6, m6, 0xD8
+    vpermq       m7, m7, 0xD8
+    vpermq       m1, m1, 0xD8
+    vpermq       m8, m8, 0xD8
+    vpermq       m3, m3, 0xD8
+    vpermq       m5, m5, 0xD8
+    vpermq       m2, m2, 0xD8
+    vpermq       m0, m0, 0xD8
+
+    movu         [r0 + 0 *  16], m6
+    movu         [r0 + 2 *  16], m7
+    movu         [r0 + 4 *  16], m1
+    movu         [r0 + 6 *  16], m8
+    movu         [r0 + 8 *  16], m3
+    movu         [r0 + 10 * 16], m5
+    movu         [r0 + 12 * 16], m2
+    movu         [r0 + 14 * 16], m0
+    RET
+%endif
+INIT_XMM sse2
 cglobal transpose16, 3, 5, 8, dest, src, stride
     mov    r3,    r0
     mov    r4,    r1
@@ -1433,8 +1922,8 @@ cglobal transpose16, 3, 5, 8, dest, src, stride
     lea    r1,    [r1 + 2 * r2]
     lea    r0,    [r3 + 8 * 16 + 8]
     TRANSPOSE_8x8 16
-%endif
     RET
+%endif
 
 cglobal transpose16_internal
     TRANSPOSE_8x8 r6
@@ -1456,8 +1945,169 @@ cglobal transpose16_internal
 ;-----------------------------------------------------------------
 ; void transpose_32x32(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH == 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose8x32_internal
+    movu         m0, [r1]
+    movu         m1, [r1 + 32]
+    movu         m2, [r1 + r2]
+    movu         m3, [r1 + r2 + 32]
+    movu         m4, [r1 + 2 * r2]
+    movu         m5, [r1 + 2 * r2 + 32]
+    movu         m6, [r1 + r3]
+    movu         m7, [r1 + r3 + 32]
+    lea          r1, [r1 + 4 * r2]
+
+    punpcklwd    m8, m0, m2               ;[1 - 4;  9 - 12][1 2]
+    punpckhwd    m0, m2                   ;[5 - 8; 13 - 16][1 2]
+
+    punpcklwd    m2, m4, m6               ;[1 - 4;  9 - 12][3 4]
+    punpckhwd    m4, m6                   ;[5 - 8; 13 - 16][3 4]
+
+    punpcklwd    m6, m1, m3               ;[17 - 20; 25 - 28][1 2]
+    punpckhwd    m1, m3                   ;[21 - 24; 29 - 32][1 2]
+
+    punpcklwd    m3, m5, m7               ;[17 - 20; 25 - 28][3 4]
+    punpckhwd    m5, m7                   ;[21 - 24; 29 - 32][3 4]
+
+    punpckldq    m7, m8, m2               ;[1 - 2;  9 - 10][1 2 3 4]
+    punpckhdq    m8, m2                   ;[3 - 4; 11 - 12][1 2 3 4]
+
+    punpckldq    m2, m0, m4               ;[5 - 6; 13 - 14][1 2 3 4]
+    punpckhdq    m0, m4                   ;[7 - 8; 15 - 16][1 2 3 4]
+
+    punpckldq    m4, m6, m3               ;[17 - 18; 25 - 26][1 2 3 4]
+    punpckhdq    m6, m3                   ;[19 - 20; 27 - 28][1 2 3 4]
+
+    punpckldq    m3, m1, m5               ;[21 - 22; 29 - 30][1 2 3 4]
+    punpckhdq    m1, m5                   ;[23 - 24; 31 - 32][1 2 3 4]
+
+    movq         [r0 + 0  * 64], xm7
+    movhps       [r0 + 1  * 64], xm7
+    vextracti128 xm5, m7, 1
+    movq         [r0 + 8 * 64], xm5
+    movhps       [r0 + 9 * 64], xm5
+
+    movu         m7,  [r1]
+    movu         m9,  [r1 + 32]
+    movu         m10, [r1 + r2]
+    movu         m11, [r1 + r2 + 32]
+    movu         m12, [r1 + 2 * r2]
+    movu         m13, [r1 + 2 * r2 + 32]
+    movu         m14, [r1 + r3]
+    movu         m15, [r1 + r3 + 32]
+
+    punpcklwd    m5, m7, m10              ;[1 - 4;  9 - 12][5 6]
+    punpckhwd    m7, m10                  ;[5 - 8; 13 - 16][5 6]
+
+    punpcklwd    m10, m12, m14            ;[1 - 4;  9 - 12][7 8]
+    punpckhwd    m12, m14                 ;[5 - 8; 13 - 16][7 8]
+
+    punpcklwd    m14, m9, m11             ;[17 - 20; 25 - 28][5 6]
+    punpckhwd    m9, m11                  ;[21 - 24; 29 - 32][5 6]
+
+    punpcklwd    m11, m13, m15            ;[17 - 20; 25 - 28][7 8]
+    punpckhwd    m13, m15                 ;[21 - 24; 29 - 32][7 8]
+
+    punpckldq    m15, m5, m10             ;[1 - 2;  9 - 10][5 6 7 8]
+    punpckhdq    m5, m10                  ;[3 - 4; 11 - 12][5 6 7 8]
+
+    punpckldq    m10, m7, m12             ;[5 - 6; 13 - 14][5 6 7 8]
+    punpckhdq    m7, m12                  ;[7 - 8; 15 - 16][5 6 7 8]
+
+    punpckldq    m12, m14, m11            ;[17 - 18; 25 - 26][5 6 7 8]
+    punpckhdq    m14, m11                 ;[19 - 20; 27 - 28][5 6 7 8]
+
+    punpckldq    m11, m9, m13             ;[21 - 22; 29 - 30][5 6 7 8]
+    punpckhdq    m9, m13                  ;[23 - 24; 31 - 32][5 6 7 8]
+
+    movq         [r0 + 0 * 64 + 8], xm15
+    movhps       [r0 + 1 * 64 + 8], xm15
+    vextracti128 xm13, m15, 1
+    movq         [r0 + 8 * 64 + 8], xm13
+    movhps       [r0 + 9 * 64 + 8], xm13
+
+    punpcklqdq   m13, m8, m5              ;[3 ; 11][1 2 3 4 5 6 7 8]
+    punpckhqdq   m8, m5                   ;[4 ; 12][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m5, m2, m10              ;[5 ; 13][1 2 3 4 5 6 7 8]
+    punpckhqdq   m2, m10                  ;[6 ; 14][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m10, m0, m7              ;[7 ; 15][1 2 3 4 5 6 7 8]
+    punpckhqdq   m0, m7                   ;[8 ; 16][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m7, m4, m12              ;[17 ; 25][1 2 3 4 5 6 7 8]
+    punpckhqdq   m4, m12                  ;[18 ; 26][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m12, m6, m14             ;[19 ; 27][1 2 3 4 5 6 7 8]
+    punpckhqdq   m6, m14                  ;[20 ; 28][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m14, m3, m11             ;[21 ; 29][1 2 3 4 5 6 7 8]
+    punpckhqdq   m3, m11                  ;[22 ; 30][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m11, m1, m9              ;[23 ; 31][1 2 3 4 5 6 7 8]
+    punpckhqdq   m1, m9                   ;[24 ; 32][1 2 3 4 5 6 7 8]
+
+    movu         [r0 + 2  * 64], xm13
+    vextracti128 [r0 + 10 * 64], m13, 1
+
+    movu         [r0 + 3  * 64], xm8
+    vextracti128 [r0 + 11 * 64], m8, 1
+
+    movu         [r0 + 4  * 64], xm5
+    vextracti128 [r0 + 12 * 64], m5, 1
+
+    movu         [r0 + 5  * 64], xm2
+    vextracti128 [r0 + 13 * 64], m2, 1
+
+    movu         [r0 + 6  * 64], xm10
+    vextracti128 [r0 + 14 * 64], m10, 1
+
+    movu         [r0 + 7  * 64], xm0
+    vextracti128 [r0 + 15 * 64], m0, 1
+
+    movu         [r0 + 16 * 64], xm7
+    vextracti128 [r0 + 24 * 64], m7, 1
+
+    movu         [r0 + 17 * 64], xm4
+    vextracti128 [r0 + 25 * 64], m4, 1
+
+    movu         [r0 + 18 * 64], xm12
+    vextracti128 [r0 + 26 * 64], m12, 1
+
+    movu         [r0 + 19 * 64], xm6
+    vextracti128 [r0 + 27 * 64], m6, 1
+
+    movu         [r0 + 20 * 64], xm14
+    vextracti128 [r0 + 28 * 64], m14, 1
+
+    movu         [r0 + 21 * 64], xm3
+    vextracti128 [r0 + 29 * 64], m3, 1
+
+    movu         [r0 + 22 * 64], xm11
+    vextracti128 [r0 + 30 * 64], m11, 1
+
+    movu         [r0 + 23 * 64], xm1
+    vextracti128 [r0 + 31 * 64], m1, 1
+    ret
+
+cglobal transpose32, 3, 4, 16
+    add          r2, r2
+    lea          r3, [r2 * 3]
+    call         transpose8x32_internal
+    add          r0, 16
+    lea          r1, [r1 + 4 * r2]
+    call         transpose8x32_internal
+    add          r0, 16
+    lea          r1, [r1 + 4 * r2]
+    call         transpose8x32_internal
+    add          r0, 16
+    lea          r1, [r1 + 4 * r2]
+    call         transpose8x32_internal
+    RET
+%endif
 INIT_XMM sse2
-%if HIGH_BIT_DEPTH
 cglobal transpose32, 3, 7, 4, dest, src, stride
     add    r2,    r2
     mov    r3,    r0
@@ -1525,7 +2175,9 @@ cglobal transpose32, 3, 7, 4, dest, src, stride
     lea    r0,    [r6 + 24 * 64 + 48]
     mov    r3,    r0
     call   transpose8_internal
-%else
+    RET
+%else ;HIGH_BIT_DEPTH == 0
+INIT_XMM sse2
 cglobal transpose32, 3, 7, 8, dest, src, stride
     mov    r3,    r0
     mov    r4,    r1
@@ -1544,14 +2196,412 @@ cglobal transpose32, 3, 7, 8, dest, src, stride
     lea    r0,    [r3 + 16 * 32 + 16]
     mov    r5,    r0
     call   transpose16_internal
-%endif
     RET
+
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose32, 3, 5, 16
+    lea          r3, [r2 * 3]
+    mov          r4d, 2
+
+.loop:
+    movu         m0, [r1]
+    movu         m1, [r1 + r2]
+    movu         m2, [r1 + 2 * r2]
+    movu         m3, [r1 + r3]
+    lea          r1, [r1 + 4 * r2]
+
+    movu         m4, [r1]
+    movu         m5, [r1 + r2]
+    movu         m6, [r1 + 2 * r2]
+    movu         m7, [r1 + r3]
+
+    punpcklbw    m8, m0, m1                 ;[1 - 8 ; 17 - 24][1 2]
+    punpckhbw    m0, m1                     ;[9 - 16; 25 - 32][1 2]
+
+    punpcklbw    m1, m2, m3                 ;[1 - 8 ; 17 - 24][3 4]
+    punpckhbw    m2, m3                     ;[9 - 16; 25 - 32][3 4]
+
+    punpcklbw    m3, m4, m5                 ;[1 - 8 ; 17 - 24][5 6]
+    punpckhbw    m4, m5                     ;[9 - 16; 25 - 32][5 6]
+
+    punpcklbw    m5, m6, m7                 ;[1 - 8 ; 17 - 24][7 8]
+    punpckhbw    m6, m7                     ;[9 - 16; 25 - 32][7 8]
+
+    punpcklwd    m7, m8, m1                 ;[1 - 4 ; 17 - 20][1 2 3 4]
+    punpckhwd    m8, m1                     ;[5 - 8 ; 20 - 24][1 2 3 4]
+
+    punpcklwd    m1, m3, m5                 ;[1 - 4 ; 17 - 20][5 6 7 8]
+    punpckhwd    m3, m5                     ;[5 - 8 ; 20 - 24][5 6 7 8]
+
+    punpcklwd    m5, m0, m2                 ;[9 - 12; 25 - 28][1 2 3 4]
+    punpckhwd    m0, m2                     ;[13- 15; 29 - 32][1 2 3 4]
+
+    punpcklwd    m2, m4, m6                 ;[9 - 12; 25 - 28][5 6 7 8]
+    punpckhwd    m4, m6                     ;[13- 15; 29 - 32][5 6 7 8]
+
+    punpckldq    m6, m7, m1                 ;[1 - 2 ; 17 - 18][1 2 3 4 5 6 7 8]
+    punpckhdq    m7, m1                     ;[3 - 4 ; 19 - 20][1 2 3 4 5 6 7 8]
+
+    punpckldq    m1, m8, m3                 ;[5 - 6 ; 21 - 22][1 2 3 4 5 6 7 8]
+    punpckhdq    m8, m3                     ;[7 - 8 ; 23 - 24][1 2 3 4 5 6 7 8]
+
+    punpckldq    m3, m5, m2                 ;[9 - 10; 25 - 26][1 2 3 4 5 6 7 8]
+    punpckhdq    m5, m2                     ;[11- 12; 27 - 28][1 2 3 4 5 6 7 8]
+
+    punpckldq    m2, m0, m4                 ;[13- 14; 29 - 30][1 2 3 4 5 6 7 8]
+    punpckhdq    m0, m4                     ;[15- 16; 31 - 32][1 2 3 4 5 6 7 8]
+
+    movq         [r0 + 0  * 32], xm6
+    movhps       [r0 + 1  * 32], xm6
+    vextracti128 xm4, m6, 1
+    movq         [r0 + 16 * 32], xm4
+    movhps       [r0 + 17 * 32], xm4
+
+    lea          r1,  [r1 + 4 * r2]
+    movu         m9,  [r1]
+    movu         m10, [r1 + r2]
+    movu         m11, [r1 + 2 * r2]
+    movu         m12, [r1 + r3]
+    lea          r1,  [r1 + 4 * r2]
+
+    movu         m13, [r1]
+    movu         m14, [r1 + r2]
+    movu         m15, [r1 + 2 * r2]
+    movu         m6,  [r1 + r3]
+
+    punpcklbw    m4, m9, m10                ;[1 - 8 ; 17 - 24][9 10]
+    punpckhbw    m9, m10                    ;[9 - 16; 25 - 32][9 10]
+
+    punpcklbw    m10, m11, m12              ;[1 - 8 ; 17 - 24][11 12]
+    punpckhbw    m11, m12                   ;[9 - 16; 25 - 32][11 12]
+
+    punpcklbw    m12, m13, m14              ;[1 - 8 ; 17 - 24][13 14]
+    punpckhbw    m13, m14                   ;[9 - 16; 25 - 32][13 14]
+
+    punpcklbw    m14, m15, m6               ;[1 - 8 ; 17 - 24][15 16]
+    punpckhbw    m15, m6                    ;[9 - 16; 25 - 32][15 16]
+
+    punpcklwd    m6, m4, m10                ;[1 - 4 ; 17 - 20][9 10 11 12]
+    punpckhwd    m4, m10                    ;[5 - 8 ; 20 - 24][9 10 11 12]
+
+    punpcklwd    m10, m12, m14              ;[1 - 4 ; 17 - 20][13 14 15 16]
+    punpckhwd    m12, m14                   ;[5 - 8 ; 20 - 24][13 14 15 16]
+
+    punpcklwd    m14, m9, m11               ;[9 - 12; 25 - 28][9 10 11 12]
+    punpckhwd    m9, m11                    ;[13- 16; 29 - 32][9 10 11 12]
+
+    punpcklwd    m11, m13, m15              ;[9 - 12; 25 - 28][13 14 15 16]
+    punpckhwd    m13, m15                   ;[13- 16; 29 - 32][13 14 15 16]
+
+    punpckldq    m15, m6, m10               ;[1 - 2 ; 17 - 18][9 10 11 12 13 14 15 16]
+    punpckhdq    m6, m10                    ;[3 - 4 ; 19 - 20][9 10 11 12 13 14 15 16]
+
+    punpckldq    m10, m4, m12               ;[5 - 6 ; 21 - 22][9 10 11 12 13 14 15 16]
+    punpckhdq    m4, m12                    ;[7 - 8 ; 23 - 24][9 10 11 12 13 14 15 16]
+
+    punpckldq    m12, m14, m11              ;[9 - 10; 25 - 26][9 10 11 12 13 14 15 16]
+    punpckhdq    m14, m11                   ;[11- 12; 27 - 28][9 10 11 12 13 14 15 16]
+
+    punpckldq    m11, m9, m13               ;[13- 14; 29 - 30][9 10 11 12 13 14 15 16]
+    punpckhdq    m9, m13                    ;[15- 16; 31 - 32][9 10 11 12 13 14 15 16]
+
+
+    punpcklqdq   m13, m7, m6                ;[3 ; 19][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m7, m6                     ;[4 ; 20][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m6, m1, m10                ;[5 ; 21][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m1, m10                    ;[6 ; 22][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m10, m8, m4                ;[7 ; 23][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m8, m4                     ;[8 ; 24][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m4, m3, m12                ;[9 ; 25][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m3, m12                    ;[10; 26][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m12, m5, m14               ;[11; 27][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m5, m14                    ;[12; 28][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m14, m2, m11               ;[13; 29][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m2, m11                    ;[14; 30][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m11, m0, m9                ;[15; 31][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m0, m9                     ;[16; 32][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    movq         [r0 + 0  * 32 + 8], xm15
+    movhps       [r0 + 1  * 32 + 8], xm15
+    vextracti128 xm9, m15, 1
+    movq         [r0 + 16 * 32 + 8], xm9
+    movhps       [r0 + 17 * 32 + 8], xm9
+
+    movu         [r0 + 2  * 32], xm13
+    vextracti128 [r0 + 18 * 32], m13, 1
+
+    movu         [r0 + 3  * 32], xm7
+    vextracti128 [r0 + 19 * 32], m7, 1
+
+    movu         [r0 + 4  * 32], xm6
+    vextracti128 [r0 + 20 * 32], m6, 1
+
+    movu         [r0 + 5  * 32], xm1
+    vextracti128 [r0 + 21 * 32], m1, 1
+
+    movu         [r0 + 6  * 32], xm10
+    vextracti128 [r0 + 22 * 32], m10, 1
+
+    movu         [r0 + 7  * 32], xm8
+    vextracti128 [r0 + 23 * 32], m8, 1
+
+    movu         [r0 + 8  * 32], xm4
+    vextracti128 [r0 + 24 * 32], m4, 1
+
+    movu         [r0 + 9  * 32], xm3
+    vextracti128 [r0 + 25 * 32], m3, 1
+
+    movu         [r0 + 10 * 32], xm12
+    vextracti128 [r0 + 26 * 32], m12, 1
+
+    movu         [r0 + 11 * 32], xm5
+    vextracti128 [r0 + 27 * 32], m5, 1
+
+    movu         [r0 + 12 * 32], xm14
+    vextracti128 [r0 + 28 * 32], m14, 1
+
+    movu         [r0 + 13 * 32], xm2
+    vextracti128 [r0 + 29 * 32], m2, 1
+
+    movu         [r0 + 14 * 32], xm11
+    vextracti128 [r0 + 30 * 32], m11, 1
+
+    movu         [r0 + 15 * 32], xm0
+    vextracti128 [r0 + 31 * 32], m0, 1
+
+    add          r0, 16
+    lea          r1,  [r1 + 4 * r2]
+    dec          r4d
+    jnz          .loop
+    RET
+%endif
+%endif
 
 ;-----------------------------------------------------------------
 ; void transpose_64x64(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH == 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal transpose8x32_64_internal
+    movu         m0, [r1]
+    movu         m1, [r1 + 32]
+    movu         m2, [r1 + r2]
+    movu         m3, [r1 + r2 + 32]
+    movu         m4, [r1 + 2 * r2]
+    movu         m5, [r1 + 2 * r2 + 32]
+    movu         m6, [r1 + r3]
+    movu         m7, [r1 + r3 + 32]
+    lea          r1, [r1 + 4 * r2]
+
+    punpcklwd    m8, m0, m2               ;[1 - 4;  9 - 12][1 2]
+    punpckhwd    m0, m2                   ;[5 - 8; 13 - 16][1 2]
+
+    punpcklwd    m2, m4, m6               ;[1 - 4;  9 - 12][3 4]
+    punpckhwd    m4, m6                   ;[5 - 8; 13 - 16][3 4]
+
+    punpcklwd    m6, m1, m3               ;[17 - 20; 25 - 28][1 2]
+    punpckhwd    m1, m3                   ;[21 - 24; 29 - 32][1 2]
+
+    punpcklwd    m3, m5, m7               ;[17 - 20; 25 - 28][3 4]
+    punpckhwd    m5, m7                   ;[21 - 24; 29 - 32][3 4]
+
+    punpckldq    m7, m8, m2               ;[1 - 2;  9 - 10][1 2 3 4]
+    punpckhdq    m8, m2                   ;[3 - 4; 11 - 12][1 2 3 4]
+
+    punpckldq    m2, m0, m4               ;[5 - 6; 13 - 14][1 2 3 4]
+    punpckhdq    m0, m4                   ;[7 - 8; 15 - 16][1 2 3 4]
+
+    punpckldq    m4, m6, m3               ;[17 - 18; 25 - 26][1 2 3 4]
+    punpckhdq    m6, m3                   ;[19 - 20; 27 - 28][1 2 3 4]
+
+    punpckldq    m3, m1, m5               ;[21 - 22; 29 - 30][1 2 3 4]
+    punpckhdq    m1, m5                   ;[23 - 24; 31 - 32][1 2 3 4]
+
+    movq         [r0 + 0  * 128], xm7
+    movhps       [r0 + 1  * 128], xm7
+    vextracti128 xm5, m7, 1
+    movq         [r0 + 8 * 128], xm5
+    movhps       [r0 + 9 * 128], xm5
+
+    movu         m7,  [r1]
+    movu         m9,  [r1 + 32]
+    movu         m10, [r1 + r2]
+    movu         m11, [r1 + r2 + 32]
+    movu         m12, [r1 + 2 * r2]
+    movu         m13, [r1 + 2 * r2 + 32]
+    movu         m14, [r1 + r3]
+    movu         m15, [r1 + r3 + 32]
+
+    punpcklwd    m5, m7, m10              ;[1 - 4;  9 - 12][5 6]
+    punpckhwd    m7, m10                  ;[5 - 8; 13 - 16][5 6]
+
+    punpcklwd    m10, m12, m14            ;[1 - 4;  9 - 12][7 8]
+    punpckhwd    m12, m14                 ;[5 - 8; 13 - 16][7 8]
+
+    punpcklwd    m14, m9, m11             ;[17 - 20; 25 - 28][5 6]
+    punpckhwd    m9, m11                  ;[21 - 24; 29 - 32][5 6]
+
+    punpcklwd    m11, m13, m15            ;[17 - 20; 25 - 28][7 8]
+    punpckhwd    m13, m15                 ;[21 - 24; 29 - 32][7 8]
+
+    punpckldq    m15, m5, m10             ;[1 - 2;  9 - 10][5 6 7 8]
+    punpckhdq    m5, m10                  ;[3 - 4; 11 - 12][5 6 7 8]
+
+    punpckldq    m10, m7, m12             ;[5 - 6; 13 - 14][5 6 7 8]
+    punpckhdq    m7, m12                  ;[7 - 8; 15 - 16][5 6 7 8]
+
+    punpckldq    m12, m14, m11            ;[17 - 18; 25 - 26][5 6 7 8]
+    punpckhdq    m14, m11                 ;[19 - 20; 27 - 28][5 6 7 8]
+
+    punpckldq    m11, m9, m13             ;[21 - 22; 29 - 30][5 6 7 8]
+    punpckhdq    m9, m13                  ;[23 - 24; 31 - 32][5 6 7 8]
+
+    movq         [r0 + 0 * 128 + 8], xm15
+    movhps       [r0 + 1 * 128 + 8], xm15
+    vextracti128 xm13, m15, 1
+    movq         [r0 + 8 * 128 + 8], xm13
+    movhps       [r0 + 9 * 128 + 8], xm13
+
+    punpcklqdq   m13, m8, m5              ;[3 ; 11][1 2 3 4 5 6 7 8]
+    punpckhqdq   m8, m5                   ;[4 ; 12][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m5, m2, m10              ;[5 ; 13][1 2 3 4 5 6 7 8]
+    punpckhqdq   m2, m10                  ;[6 ; 14][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m10, m0, m7              ;[7 ; 15][1 2 3 4 5 6 7 8]
+    punpckhqdq   m0, m7                   ;[8 ; 16][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m7, m4, m12              ;[17 ; 25][1 2 3 4 5 6 7 8]
+    punpckhqdq   m4, m12                  ;[18 ; 26][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m12, m6, m14             ;[19 ; 27][1 2 3 4 5 6 7 8]
+    punpckhqdq   m6, m14                  ;[20 ; 28][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m14, m3, m11             ;[21 ; 29][1 2 3 4 5 6 7 8]
+    punpckhqdq   m3, m11                  ;[22 ; 30][1 2 3 4 5 6 7 8]
+
+    punpcklqdq   m11, m1, m9              ;[23 ; 31][1 2 3 4 5 6 7 8]
+    punpckhqdq   m1, m9                   ;[24 ; 32][1 2 3 4 5 6 7 8]
+
+    movu         [r0 + 2  * 128], xm13
+    vextracti128 [r0 + 10 * 128], m13, 1
+
+    movu         [r0 + 3  * 128], xm8
+    vextracti128 [r0 + 11 * 128], m8, 1
+
+    movu         [r0 + 4  * 128], xm5
+    vextracti128 [r0 + 12 * 128], m5, 1
+
+    movu         [r0 + 5  * 128], xm2
+    vextracti128 [r0 + 13 * 128], m2, 1
+
+    movu         [r0 + 6  * 128], xm10
+    vextracti128 [r0 + 14 * 128], m10, 1
+
+    movu         [r0 + 7  * 128], xm0
+    vextracti128 [r0 + 15 * 128], m0, 1
+
+    movu         [r0 + 16 * 128], xm7
+    vextracti128 [r0 + 24 * 128], m7, 1
+
+    movu         [r0 + 17 * 128], xm4
+    vextracti128 [r0 + 25 * 128], m4, 1
+
+    movu         [r0 + 18 * 128], xm12
+    vextracti128 [r0 + 26 * 128], m12, 1
+
+    movu         [r0 + 19 * 128], xm6
+    vextracti128 [r0 + 27 * 128], m6, 1
+
+    movu         [r0 + 20 * 128], xm14
+    vextracti128 [r0 + 28 * 128], m14, 1
+
+    movu         [r0 + 21 * 128], xm3
+    vextracti128 [r0 + 29 * 128], m3, 1
+
+    movu         [r0 + 22 * 128], xm11
+    vextracti128 [r0 + 30 * 128], m11, 1
+
+    movu         [r0 + 23 * 128], xm1
+    vextracti128 [r0 + 31 * 128], m1, 1
+    ret
+
+cglobal transpose64, 3, 6, 16
+    add          r2, r2
+    lea          r3, [3 * r2]
+    lea          r4, [r1 + 64]
+    lea          r5, [r0 + 16]
+
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r5, [r0 + 16]
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    mov          r0, r5
+    lea          r4, [r1 + 4 * r2]
+    lea          r1, [r4 - 64]
+    call         transpose8x32_64_internal
+    mov          r1, r4
+    lea          r0, [r0 + 32 * 128]
+    call         transpose8x32_64_internal
+    RET
+%endif
 INIT_XMM sse2
-%if HIGH_BIT_DEPTH
 cglobal transpose64, 3, 7, 4, dest, src, stride
     add    r2,    r2
     mov    r3,    r0
@@ -1818,7 +2868,225 @@ cglobal transpose64, 3, 7, 4, dest, src, stride
     lea    r0,    [r6 + 56 * 128 + 112]
     mov    r3,    r0
     call   transpose8_internal
-%else
+    RET
+%else ;HIGH_BIT_DEPTH == 0
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+
+cglobal transpose16x32_avx2
+    movu         m0, [r1]
+    movu         m1, [r1 + r2]
+    movu         m2, [r1 + 2 * r2]
+    movu         m3, [r1 + r3]
+    lea          r1, [r1 + 4 * r2]
+
+    movu         m4, [r1]
+    movu         m5, [r1 + r2]
+    movu         m6, [r1 + 2 * r2]
+    movu         m7, [r1 + r3]
+
+    punpcklbw    m8, m0, m1                 ;[1 - 8 ; 17 - 24][1 2]
+    punpckhbw    m0, m1                     ;[9 - 16; 25 - 32][1 2]
+
+    punpcklbw    m1, m2, m3                 ;[1 - 8 ; 17 - 24][3 4]
+    punpckhbw    m2, m3                     ;[9 - 16; 25 - 32][3 4]
+
+    punpcklbw    m3, m4, m5                 ;[1 - 8 ; 17 - 24][5 6]
+    punpckhbw    m4, m5                     ;[9 - 16; 25 - 32][5 6]
+
+    punpcklbw    m5, m6, m7                 ;[1 - 8 ; 17 - 24][7 8]
+    punpckhbw    m6, m7                     ;[9 - 16; 25 - 32][7 8]
+
+    punpcklwd    m7, m8, m1                 ;[1 - 4 ; 17 - 20][1 2 3 4]
+    punpckhwd    m8, m1                     ;[5 - 8 ; 20 - 24][1 2 3 4]
+
+    punpcklwd    m1, m3, m5                 ;[1 - 4 ; 17 - 20][5 6 7 8]
+    punpckhwd    m3, m5                     ;[5 - 8 ; 20 - 24][5 6 7 8]
+
+    punpcklwd    m5, m0, m2                 ;[9 - 12; 25 - 28][1 2 3 4]
+    punpckhwd    m0, m2                     ;[12- 15; 29 - 32][1 2 3 4]
+
+    punpcklwd    m2, m4, m6                 ;[9 - 12; 25 - 28][5 6 7 8]
+    punpckhwd    m4, m6                     ;[12- 15; 29 - 32][5 6 7 8]
+
+    punpckldq    m6, m7, m1                 ;[1 - 2 ; 17 - 18][1 2 3 4 5 6 7 8]
+    punpckhdq    m7, m1                     ;[3 - 4 ; 19 - 20][1 2 3 4 5 6 7 8]
+
+    punpckldq    m1, m8, m3                 ;[5 - 6 ; 21 - 22][1 2 3 4 5 6 7 8]
+    punpckhdq    m8, m3                     ;[7 - 8 ; 23 - 24][1 2 3 4 5 6 7 8]
+
+    punpckldq    m3, m5, m2                 ;[9 - 10; 25 - 26][1 2 3 4 5 6 7 8]
+    punpckhdq    m5, m2                     ;[11- 12; 27 - 28][1 2 3 4 5 6 7 8]
+
+    punpckldq    m2, m0, m4                 ;[13- 14; 29 - 30][1 2 3 4 5 6 7 8]
+    punpckhdq    m0, m4                     ;[15- 16; 31 - 32][1 2 3 4 5 6 7 8]
+
+    movq         [r0 + 0  * 64], xm6
+    movhps       [r0 + 1  * 64], xm6
+    vextracti128 xm4, m6, 1
+    movq         [r0 + 16 * 64], xm4
+    movhps       [r0 + 17 * 64], xm4
+
+    lea          r1,  [r1 + 4 * r2]
+    movu         m9,  [r1]
+    movu         m10, [r1 + r2]
+    movu         m11, [r1 + 2 * r2]
+    movu         m12, [r1 + r3]
+    lea          r1,  [r1 + 4 * r2]
+
+    movu         m13, [r1]
+    movu         m14, [r1 + r2]
+    movu         m15, [r1 + 2 * r2]
+    movu         m6,  [r1 + r3]
+
+    punpcklbw    m4, m9, m10                ;[1 - 8 ; 17 - 24][9 10]
+    punpckhbw    m9, m10                    ;[9 - 16; 25 - 32][9 10]
+
+    punpcklbw    m10, m11, m12              ;[1 - 8 ; 17 - 24][11 12]
+    punpckhbw    m11, m12                   ;[9 - 16; 25 - 32][11 12]
+
+    punpcklbw    m12, m13, m14              ;[1 - 8 ; 17 - 24][13 14]
+    punpckhbw    m13, m14                   ;[9 - 16; 25 - 32][13 14]
+
+    punpcklbw    m14, m15, m6               ;[1 - 8 ; 17 - 24][15 16]
+    punpckhbw    m15, m6                    ;[9 - 16; 25 - 32][15 16]
+
+    punpcklwd    m6, m4, m10                ;[1 - 4 ; 17 - 20][9 10 11 12]
+    punpckhwd    m4, m10                    ;[5 - 8 ; 20 - 24][9 10 11 12]
+
+    punpcklwd    m10, m12, m14              ;[1 - 4 ; 17 - 20][13 14 15 16]
+    punpckhwd    m12, m14                   ;[5 - 8 ; 20 - 24][13 14 15 16]
+
+    punpcklwd    m14, m9, m11               ;[9 - 12; 25 - 28][9 10 11 12]
+    punpckhwd    m9, m11                    ;[13- 16; 29 - 32][9 10 11 12]
+
+    punpcklwd    m11, m13, m15              ;[9 - 12; 25 - 28][13 14 15 16]
+    punpckhwd    m13, m15                   ;[13- 16; 29 - 32][13 14 15 16]
+
+    punpckldq    m15, m6, m10               ;[1 - 2 ; 17 - 18][9 10 11 12 13 14 15 16]
+    punpckhdq    m6, m10                    ;[3 - 4 ; 19 - 20][9 10 11 12 13 14 15 16]
+
+    punpckldq    m10, m4, m12               ;[5 - 6 ; 21 - 22][9 10 11 12 13 14 15 16]
+    punpckhdq    m4, m12                    ;[7 - 8 ; 23 - 24][9 10 11 12 13 14 15 16]
+
+    punpckldq    m12, m14, m11              ;[9 - 10; 25 - 26][9 10 11 12 13 14 15 16]
+    punpckhdq    m14, m11                   ;[11- 12; 27 - 28][9 10 11 12 13 14 15 16]
+
+    punpckldq    m11, m9, m13               ;[13- 14; 29 - 30][9 10 11 12 13 14 15 16]
+    punpckhdq    m9, m13                    ;[15- 16; 31 - 32][9 10 11 12 13 14 15 16]
+
+
+    punpcklqdq   m13, m7, m6                ;[3 ; 19][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m7, m6                     ;[4 ; 20][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m6, m1, m10                ;[5 ; 21][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m1, m10                    ;[6 ; 22][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m10, m8, m4                ;[7 ; 23][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m8, m4                     ;[8 ; 24][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m4, m3, m12                ;[9 ; 25][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m3, m12                    ;[10; 26][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m12, m5, m14               ;[11; 27][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m5, m14                    ;[12; 28][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m14, m2, m11               ;[13; 29][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m2, m11                    ;[14; 30][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    punpcklqdq   m11, m0, m9                ;[15; 31][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+    punpckhqdq   m0, m9                     ;[16; 32][1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+
+    movq         [r0 + 0  * 64 + 8], xm15
+    movhps       [r0 + 1  * 64 + 8], xm15
+    vextracti128 xm9, m15, 1
+    movq         [r0 + 16 * 64 + 8], xm9
+    movhps       [r0 + 17 * 64 + 8], xm9
+
+    movu         [r0 + 2  * 64], xm13
+    vextracti128 [r0 + 18 * 64], m13, 1
+
+    movu         [r0 + 3  * 64], xm7
+    vextracti128 [r0 + 19 * 64], m7, 1
+
+    movu         [r0 + 4  * 64], xm6
+    vextracti128 [r0 + 20 * 64], m6, 1
+
+    movu         [r0 + 5  * 64], xm1
+    vextracti128 [r0 + 21 * 64], m1, 1
+
+    movu         [r0 + 6  * 64], xm10
+    vextracti128 [r0 + 22 * 64], m10, 1
+
+    movu         [r0 + 7  * 64], xm8
+    vextracti128 [r0 + 23 * 64], m8, 1
+
+    movu         [r0 + 8  * 64], xm4
+    vextracti128 [r0 + 24 * 64], m4, 1
+
+    movu         [r0 + 9  * 64], xm3
+    vextracti128 [r0 + 25 * 64], m3, 1
+
+    movu         [r0 + 10 * 64], xm12
+    vextracti128 [r0 + 26 * 64], m12, 1
+
+    movu         [r0 + 11 * 64], xm5
+    vextracti128 [r0 + 27 * 64], m5, 1
+
+    movu         [r0 + 12 * 64], xm14
+    vextracti128 [r0 + 28 * 64], m14, 1
+
+    movu         [r0 + 13 * 64], xm2
+    vextracti128 [r0 + 29 * 64], m2, 1
+
+    movu         [r0 + 14 * 64], xm11
+    vextracti128 [r0 + 30 * 64], m11, 1
+
+    movu         [r0 + 15 * 64], xm0
+    vextracti128 [r0 + 31 * 64], m0, 1
+    ret
+
+cglobal transpose64, 3, 6, 16
+
+    lea          r3, [r2 * 3]
+    lea          r4, [r0 + 16]
+
+    lea          r5, [r1 + 32]
+    call         transpose16x32_avx2
+    lea          r0, [r0 + 32 * 64]
+    mov          r1, r5
+    call         transpose16x32_avx2
+
+    mov          r0, r4
+    lea          r5, [r1 + 4 * r2]
+
+    lea          r1, [r5 - 32]
+    call         transpose16x32_avx2
+    lea          r0, [r0 + 32 * 64]
+    mov          r1, r5
+    call         transpose16x32_avx2
+
+    lea          r0, [r4 + 16]
+    lea          r5, [r1 + 4 * r2]
+
+    lea          r1, [r5 - 32]
+    call         transpose16x32_avx2
+    lea          r0, [r0 + 32 * 64]
+    mov          r1, r5
+    call         transpose16x32_avx2
+
+    lea          r5, [r1 + 4 * r2]
+    lea          r0, [r4 + 32]
+
+    lea          r1, [r5 - 32]
+    call         transpose16x32_avx2
+    lea          r0, [r0 + 32 * 64]
+    mov          r1, r5
+    call         transpose16x32_avx2
+    RET
+%endif
+
+INIT_XMM sse2
 cglobal transpose64, 3, 7, 8, dest, src, stride
     mov    r3,    r0
     mov    r4,    r1
@@ -1888,8 +3156,9 @@ cglobal transpose64, 3, 7, 8, dest, src, stride
     lea    r0,    [r3 + 48 * 64 + 48]
     mov    r5,    r0
     call   transpose16_internal
-%endif
     RET
+%endif
+
 
 ;=============================================================================
 ; SSIM
@@ -1967,13 +3236,13 @@ cglobal pixel_ssim_4x4x2_core, 4,4,8
 ;-----------------------------------------------------------------------------
 ; float pixel_ssim_end( int sum0[5][4], int sum1[5][4], int width )
 ;-----------------------------------------------------------------------------
-cglobal pixel_ssim_end4, 2,3,7
+cglobal pixel_ssim_end4, 2,3
     mov       r2d, r2m
-    movdqa    m0, [r0+ 0]
-    movdqa    m1, [r0+16]
-    movdqa    m2, [r0+32]
-    movdqa    m3, [r0+48]
-    movdqa    m4, [r0+64]
+    mova      m0, [r0+ 0]
+    mova      m1, [r0+16]
+    mova      m2, [r0+32]
+    mova      m3, [r0+48]
+    mova      m4, [r0+64]
     paddd     m0, [r1+ 0]
     paddd     m1, [r1+16]
     paddd     m2, [r1+32]
@@ -1983,8 +3252,6 @@ cglobal pixel_ssim_end4, 2,3,7
     paddd     m1, m2
     paddd     m2, m3
     paddd     m3, m4
-    movdqa    m5, [ssim_c1]
-    movdqa    m6, [ssim_c2]
     TRANSPOSE4x4D  0, 1, 2, 3, 4
 
 ;   s1=m0, s2=m1, ss=m2, s12=m3
@@ -1993,20 +3260,21 @@ cglobal pixel_ssim_end4, 2,3,7
     cvtdq2ps  m1, m1
     cvtdq2ps  m2, m2
     cvtdq2ps  m3, m3
+    mulps     m4, m0, m1  ; s1*s2
+    mulps     m0, m0      ; s1*s1
+    mulps     m1, m1      ; s2*s2
     mulps     m2, [pf_64] ; ss*64
     mulps     m3, [pf_128] ; s12*128
-    movdqa    m4, m1
-    mulps     m4, m0      ; s1*s2
-    mulps     m1, m1      ; s2*s2
-    mulps     m0, m0      ; s1*s1
     addps     m4, m4      ; s1*s2*2
     addps     m0, m1      ; s1*s1 + s2*s2
     subps     m2, m0      ; vars
     subps     m3, m4      ; covar*2
-    addps     m4, m5      ; s1*s2*2 + ssim_c1
-    addps     m0, m5      ; s1*s1 + s2*s2 + ssim_c1
-    addps     m2, m6      ; vars + ssim_c2
-    addps     m3, m6      ; covar*2 + ssim_c2
+    movaps    m1, [ssim_c1]
+    addps     m4, m1      ; s1*s2*2 + ssim_c1
+    addps     m0, m1      ; s1*s1 + s2*s2 + ssim_c1
+    movaps    m1, [ssim_c2]
+    addps     m2, m1      ; vars + ssim_c2
+    addps     m3, m1      ; covar*2 + ssim_c2
 %else
     pmaddwd   m4, m1, m0  ; s1*s2
     pslld     m1, 16
@@ -2017,10 +3285,12 @@ cglobal pixel_ssim_end4, 2,3,7
     pslld     m2, 6
     psubd     m3, m4  ; covar*2
     psubd     m2, m0  ; vars
-    paddd     m0, m5
-    paddd     m4, m5
-    paddd     m3, m6
-    paddd     m2, m6
+    mova      m1, [ssim_c1]
+    paddd     m0, m1
+    paddd     m4, m1
+    mova      m1, [ssim_c2]
+    paddd     m3, m1
+    paddd     m2, m1
     cvtdq2ps  m0, m0  ; (float)(s1*s1 + s2*s2 + ssim_c1)
     cvtdq2ps  m4, m4  ; (float)(s1*s2*2 + ssim_c1)
     cvtdq2ps  m3, m3  ; (float)(covar*2 + ssim_c2)
@@ -2033,20 +3303,31 @@ cglobal pixel_ssim_end4, 2,3,7
     cmp       r2d, 4
     je .skip ; faster only if this is the common case; remove branch if we use ssim on a macroblock level
     neg       r2
+
 %ifdef PIC
     lea       r3, [mask_ff + 16]
-    movdqu    m1, [r3 + r2*4]
+    %xdefine %%mask r3
 %else
-    movdqu    m1, [mask_ff + r2*4 + 16]
+    %xdefine %%mask mask_ff + 16
 %endif
-    pand      m4, m1
+%if cpuflag(avx)
+    andps     m4, [%%mask + r2*4]
+%else
+    movups    m0, [%%mask + r2*4]
+    andps     m4, m0
+%endif
+
 .skip:
     movhlps   m0, m4
     addps     m0, m4
-    pshuflw   m4, m0, q0032
+%if cpuflag(ssse3)
+    movshdup  m4, m0
+%else
+     pshuflw   m4, m0, q0032
+%endif
     addss     m0, m4
 %if ARCH_X86_64 == 0
-    movd     r0m, m0
+    movss    r0m, m0
     fld     dword r0m
 %endif
     RET
@@ -2209,6 +3490,67 @@ cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
     movu          [r0 + 48],    m4
 %endif
 RET
+
+%if HIGH_BIT_DEPTH == 1
+INIT_YMM avx2
+cglobal scale1D_128to64, 2, 2, 3
+    pxor            m2, m2
+
+    movu            m0, [r1]
+    movu            m1, [r1 + 32]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0], m0
+
+    movu            m0, [r1 + 64]
+    movu            m1, [r1 + 96]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 32], m0
+
+    movu            m0, [r1 + 128]
+    movu            m1, [r1 + 160]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 64], m0
+
+    movu            m0, [r1 + 192]
+    movu            m1, [r1 + 224]
+    phaddw          m0, m1
+    pavgw           m0, m2
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 96], m0
+    RET
+%else ; HIGH_BIT_DEPTH == 0
+INIT_YMM avx2
+cglobal scale1D_128to64, 2, 2, 4
+    pxor            m2, m2
+    mova            m3, [pb_1]
+
+    movu            m0, [r1]
+    pmaddubsw       m0, m0, m3
+    pavgw           m0, m2
+    movu            m1, [r1 + 32]
+    pmaddubsw       m1, m1, m3
+    pavgw           m1, m2
+    packuswb        m0, m1
+    vpermq          m0, m0, 0xD8
+    movu            [r0], m0
+
+    movu            m0, [r1 + 64]
+    pmaddubsw       m0, m0, m3
+    pavgw           m0, m2
+    movu            m1, [r1 + 96]
+    pmaddubsw       m1, m1, m3
+    pavgw           m1, m2
+    packuswb        m0, m1
+    vpermq          m0, m0, 0xD8
+    movu            [r0 + 32], m0
+    RET
+%endif
 
 ;-----------------------------------------------------------------
 ; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)

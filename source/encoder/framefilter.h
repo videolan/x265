@@ -28,54 +28,47 @@
 #include "common.h"
 #include "frame.h"
 #include "deblock.h"
-#include "TLibEncoder/TEncSampleAdaptiveOffset.h"
+#include "sao.h"
 
 namespace x265 {
 // private x265 namespace
 
 class Encoder;
+class Entropy;
+class FrameEncoder;
+struct ThreadLocalData;
 
 // Manages the processing of a single frame loopfilter
 class FrameFilter
 {
 public:
 
+    x265_param*   m_param;
+    Frame*        m_frame;
+    FrameEncoder* m_frameEncoder;
+    int           m_hChromaShift;
+    int           m_vChromaShift;
+    int           m_pad[2];
+
+    Deblock       m_deblock;
+    SAO           m_sao;
+    int           m_numRows;
+    int           m_saoRowDelay;
+    int           m_lastHeight;
+    
+    void*         m_ssimBuf; /* Temp storage for ssim computation */
+
     FrameFilter();
 
-    virtual ~FrameFilter() {}
-
-    void init(Encoder *top, FrameEncoder *frame, int numRows, Entropy* row0Coder);
-
+    void init(Encoder *top, FrameEncoder *frame, int numRows);
     void destroy();
 
-    void start(Frame *pic);
+    void start(Frame *pic, Entropy& initState, int qp);
 
-    void processRow(int row, ThreadLocalData& tld);
+    void processRow(int row);
     void processRowPost(int row);
     void processSao(int row);
-
-protected:
-
-    x265_param*                 m_param;
-    Frame*                      m_pic;
-    FrameEncoder*               m_frame;
-    int                         m_hChromaShift;
-    int                         m_vChromaShift;
-    int                         m_pad[2];
-
-public:
-
-    Deblock                     m_deblock;
-    TEncSampleAdaptiveOffset    m_sao;
-    int                         m_numRows;
-    int                         m_saoRowDelay;
-
-    // SAO
-    Entropy                     m_entropyCoder;
-    Entropy*                    m_row0EntropyCoder;  // to mimic HM behavior
-    
-    /* Temp storage for ssim computation that doesn't need repeated malloc */
-    void*                       m_ssimBuf;
+    uint32_t getCUHeight(int rowNum) const;
 };
 }
 

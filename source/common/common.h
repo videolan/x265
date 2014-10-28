@@ -39,7 +39,6 @@
 #include <memory.h>
 #include <assert.h>
 
-#include "TLibCommon/CommonDef.h"
 #include "x265.h"
 
 #define FENC_STRIDE 64
@@ -63,6 +62,7 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
+#define fseeko _fseeki64
 
 #endif // if defined(__GNUC__)
 
@@ -74,11 +74,20 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define X265_LL "%lld"
 #endif
 
+#if _DEBUG && defined(_MSC_VER)
+#define DEBUG_BREAK() __debugbreak()
+#elif __APPLE_CC__
+#define DEBUG_BREAK() __builtin_trap();
+#else
+#define DEBUG_BREAK()
+#endif
+
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
 #if CHECKED_BUILD || _DEBUG
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
+    DEBUG_BREAK(); \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
     if (fp) { fprintf(fp, "%s:%d\n", __FILE__, __LINE__); fprintf(fp, __VA_ARGS__); fclose(fp); } \
 }
@@ -94,14 +103,32 @@ typedef uint16_t pixel;
 typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
+typedef int64_t  ssum2_t;
 #define X265_DEPTH 10          // compile time configurable bit depth
 #else
 typedef uint8_t  pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
+typedef int32_t  ssum2_t;      //Signed sum
 #define X265_DEPTH 8           // compile time configurable bit depth
 #endif // if HIGH_BIT_DEPTH
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+#define MAX_UINT        0xFFFFFFFFU // max. value of unsigned 32-bit integer
+#define MAX_INT         2147483647  // max. value of signed 32-bit integer
+#define MAX_INT64       0x7FFFFFFFFFFFFFFFLL  // max. value of signed 64-bit integer
+#define MAX_DOUBLE      1.7e+308    // max. value of double-type value
+
+#define QP_MIN          0
+#define QP_MAX_SPEC     51 /* max allowed signaled QP in HEVC */
+#define QP_MAX_MAX      69 /* max allowed QP to be output by rate control */
+
+#define MIN_QPSCALE     0.21249999999999999
+#define MAX_MAX_QPSCALE 615.46574234477100
 
 #define BITS_FOR_POC 8
 
@@ -117,7 +144,13 @@ inline T Clip3(T minVal, T maxVal, T a)
     return std::min<T>(std::max<T>(minVal, a), maxVal);
 }
 
-typedef int32_t  coeff_t;      // transform coefficient
+template<typename T>
+inline T x265_min(T a, T b) { return a < b ? a : b; }
+
+template<typename T>
+inline T x265_max(T a, T b) { return a > b ? a : b; }
+
+typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -170,6 +203,17 @@ typedef int32_t  coeff_t;      // transform coefficient
             goto fail; \
         } \
     }
+#define CHECKED_MALLOC_ZERO(var, type, count) \
+    { \
+        var = (type*)x265_malloc(sizeof(type) * (count)); \
+        if (var) \
+            memset((void*)var, 0, sizeof(type) * (count)); \
+        else \
+        { \
+            x265_log(NULL, X265_LOG_ERROR, "malloc of size %d failed\n", sizeof(type) * (count)); \
+            goto fail; \
+        } \
+    }
 
 #if defined(_MSC_VER)
 #define X265_LOG2F(x) (logf((float)(x)) * 1.44269504088896405f)
@@ -179,31 +223,181 @@ typedef int32_t  coeff_t;      // transform coefficient
 #define X265_LOG2(x)  log2(x)
 #endif
 
+#define NUM_CU_DEPTH            4                           // maximum number of CU depths
+#define NUM_FULL_DEPTH          5                           // maximum number of full depths
+#define MIN_LOG2_CU_SIZE        3                           // log2(minCUSize)
+#define MAX_LOG2_CU_SIZE        6                           // log2(maxCUSize)
+#define MIN_CU_SIZE             (1 << MIN_LOG2_CU_SIZE)     // minimum allowable size of CU
+#define MAX_CU_SIZE             (1 << MAX_LOG2_CU_SIZE)     // maximum allowable size of CU
+
+#define LOG2_UNIT_SIZE          2                           // log2(unitSize)
+#define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
+
+#define MAX_NUM_PARTITIONS      256
+#define NUM_CU_PARTITIONS       (1U << (g_maxFullDepth << 1))
+
+#define MIN_PU_SIZE             4
+#define MIN_TU_SIZE             4
+#define MAX_NUM_SPU_W           (MAX_CU_SIZE / MIN_PU_SIZE) // maximum number of SPU in horizontal line
+
+#define MAX_LOG2_TR_SIZE 5
+#define MAX_LOG2_TS_SIZE 2 // TODO: RExt
+#define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
+#define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
+
+#define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
+#define MAX_NUM_TR_CATEGORIES    8                         /* 32, 16, 8, 4 transform categories each for luma and chroma */
+
+#define COEF_REMAIN_BIN_REDUCTION   3 // indicates the level at which the VLC
+                                      // transitions from Golomb-Rice to TU+EG(k)
+
+#define SBH_THRESHOLD               4 // fixed sign bit hiding controlling threshold
+
+#define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk:  16 in HM5
+#define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5
+
+#define SAO_ENCODING_RATE           0.75
+#define SAO_ENCODING_RATE_CHROMA    0.5
+
+#define MLS_GRP_NUM                 64 // Max number of coefficient groups, max(16, 64)
+#define MLS_CG_SIZE                 4  // Coefficient group size of 4x4
+#define MLS_CG_LOG2_SIZE            2
+
+#define QUANT_IQUANT_SHIFT          20 // Q(QP%6) * IQ(QP%6) = 2^20
+#define QUANT_SHIFT                 14 // Q(4) = 2^14
+#define SCALE_BITS                  15 // Inherited from TMuC, presumably for fractional bit estimates in RDOQ
+#define MAX_TR_DYNAMIC_RANGE        15 // Maximum transform dynamic range (excluding sign bit)
+
+#define SHIFT_INV_1ST               7  // Shift after first inverse transform stage
+#define SHIFT_INV_2ND               12 // Shift after second inverse transform stage
+
+#define AMVP_DECIMATION_FACTOR      4
+
+#define SCAN_SET_SIZE               16
+#define LOG2_SCAN_SET_SIZE          4
+
+#define ALL_IDX                     -1
+#define PLANAR_IDX                  0
+#define VER_IDX                     26 // index for intra VERTICAL   mode
+#define HOR_IDX                     10 // index for intra HORIZONTAL mode
+#define DC_IDX                      1  // index for intra DC mode
+#define NUM_CHROMA_MODE             5  // total number of chroma modes
+#define DM_CHROMA_IDX               36 // chroma mode index for derived from luma intra mode
+
+#define MDCS_ANGLE_LIMIT            4 // distance from true angle that horiz or vertical scan is allowed
+#define MDCS_LOG2_MAX_SIZE          3 // TUs with log2 of size greater than this can only use diagonal scan
+
+#define MAX_NUM_REF_PICS            16 // max. number of pictures used for reference
+#define MAX_NUM_REF                 16 // max. number of entries in picture reference list
+
+#define REF_NOT_VALID               -1
+
+#define AMVP_NUM_CANDS              2 // number of AMVP candidates
+#define MRG_MAX_NUM_CANDS           5 // max number of final merge candidates
+
+#define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
+#define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
+
 namespace x265 {
+
+enum { SAO_NUM_OFFSET = 4 };
 
 // NOTE: MUST be alignment to 16 or 32 bytes for asm code
 struct NoiseReduction
 {
     /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t offsetDenoise[8][1024];
-    uint32_t residualSum[8][1024];
-    uint32_t count[8];
+    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t count[MAX_NUM_TR_CATEGORIES];
 };
 
+enum SaoMergeMode
+{
+    SAO_MERGE_NONE,
+    SAO_MERGE_LEFT,
+    SAO_MERGE_UP
+};
+
+struct SaoCtuParam
+{
+    SaoMergeMode mergeMode;
+    int  typeIdx;
+    uint32_t bandPos;    // BO band position
+    int  offset[SAO_NUM_OFFSET];
+
+    void reset()
+    {
+        mergeMode = SAO_MERGE_NONE;
+        typeIdx = -1;
+        bandPos = 0;
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+        offset[3] = 0;
+    }
+};
+
+struct SAOParam
+{
+    SaoCtuParam* ctuParam[3];
+    bool         bSaoFlag[2];
+    int          numCuInWidth;
+
+    SAOParam()
+    {
+        for (int i = 0; i < 3; i++)
+            ctuParam[i] = NULL;
+    }
+
+    ~SAOParam()
+    {
+        delete[] ctuParam[0];
+        delete[] ctuParam[1];
+        delete[] ctuParam[2];
+    }
+};
+
+enum TextType
+{
+    TEXT_LUMA     = 0,  // luma
+    TEXT_CHROMA_U = 1,  // chroma U
+    TEXT_CHROMA_V = 2,  // chroma V
+    MAX_NUM_COMPONENT = 3
+};
+
+// coefficient scanning type used in ACS
+enum ScanType
+{
+    SCAN_DIAG = 0,     // up-right diagonal scan
+    SCAN_HOR = 1,      // horizontal first scan
+    SCAN_VER = 2,      // vertical first scan
+    NUM_SCAN_TYPE = 3
+};
+
+enum SignificanceMapContextType
+{
+    CONTEXT_TYPE_4x4 = 0,
+    CONTEXT_TYPE_8x8 = 1,
+    CONTEXT_TYPE_NxN = 2,
+    CONTEXT_NUMBER_OF_TYPES = 3
+};
 }
 
-/* defined in common.cpp */
-int64_t x265_mdate(void);
-void x265_log(const x265_param *param, int level, const char *fmt, ...);
-int x265_exp2fix8(double x);
-void *x265_malloc(size_t size);
-void x265_free(void *ptr);
+/* outside x265 namespace, but prefixed. defined in common.cpp */
+int64_t  x265_mdate(void);
+void     x265_log(const x265_param *param, int level, const char *fmt, ...);
+int      x265_exp2fix8(double x);
 
-double x265_ssim2dB(double ssim);
-double x265_qScale2qp(double qScale);
-double x265_qp2qScale(double qp);
+double   x265_ssim2dB(double ssim);
+double   x265_qScale2qp(double qScale);
+double   x265_qp2qScale(double qp);
 uint32_t x265_picturePlaneSize(int csp, int width, int height, int plane);
-char* x265_slurp_file(const char *filename);
+
+void*    x265_malloc(size_t size);
+void     x265_free(void *ptr);
+char*    x265_slurp_file(const char *filename);
+
+#include "constants.h"
 
 #endif // ifndef X265_COMMON_H

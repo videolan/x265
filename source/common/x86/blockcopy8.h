@@ -38,14 +38,19 @@ void x265_cvt16to32_shr_4_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, 
 void x265_cvt16to32_shr_8_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, int32_t);
 void x265_cvt16to32_shr_16_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, int32_t);
 void x265_cvt16to32_shr_32_sse4(int32_t * dst, int16_t * src, intptr_t, int32_t, int32_t);
-uint32_t x265_cvt16to32_cnt_4_sse4(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_8_sse4(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_16_sse4(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_32_sse4(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_4_avx2(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_8_avx2(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_16_avx2(int32_t * dst, int16_t * src, intptr_t);
-uint32_t x265_cvt16to32_cnt_32_avx2(int32_t * dst, int16_t * src, intptr_t);
+void x265_copy_shr_sse4(int16_t * dst, int16_t *src, intptr_t, int, int);
+void x265_copy_shl_4_sse2(int16_t * dst, int16_t *src, intptr_t, int);
+void x265_copy_shl_8_sse2(int16_t * dst, int16_t *src, intptr_t, int);
+void x265_copy_shl_16_sse2(int16_t * dst, int16_t *src, intptr_t, int);
+void x265_copy_shl_32_sse2(int16_t * dst, int16_t *src, intptr_t, int);
+uint32_t x265_copy_cnt_4_sse4(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_8_sse4(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_16_sse4(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_32_sse4(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_4_avx2(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_8_avx2(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_16_avx2(int16_t * dst, int16_t * src, intptr_t);
+uint32_t x265_copy_cnt_32_avx2(int16_t * dst, int16_t * src, intptr_t);
 
 #define SETUP_BLOCKCOPY_FUNC(W, H, cpu) \
     void x265_blockcopy_pp_ ## W ## x ## H ## cpu(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb); \
@@ -177,6 +182,27 @@ void x265_blockfill_s_4x4_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_16x16_sse2(int16_t *dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_32x32_sse2(int16_t *dst, intptr_t dstride, int16_t val);
+void x265_blockcopy_ss_16x4_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x8_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x12_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x16_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x24_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x32_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_16x64_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_64x16_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_64x32_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_64x48_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+void x265_blockcopy_ss_64x64_avx(int16_t *dest, intptr_t deststride, int16_t *src, intptr_t srcstride);
+
+void x265_blockcopy_pp_32x8_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x16_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x24_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x32_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x48_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+void x265_blockcopy_pp_32x64_avx(pixel * a, intptr_t stridea, pixel * b, intptr_t strideb);
+
+void x265_blockfill_s_16x16_avx2(int16_t *dst, intptr_t dstride, int16_t val);
+void x265_blockfill_s_32x32_avx2(int16_t *dst, intptr_t dstride, int16_t val);
 
 #undef BLOCKCOPY_COMMON
 #undef BLOCKCOPY_SS_PP

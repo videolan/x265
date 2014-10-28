@@ -23,7 +23,8 @@
 
 #include "common.h"
 #include "deblock.h"
-#include "frame.h"
+#include "framedata.h"
+#include "picyuv.h"
 #include "slice.h"
 #include "mv.h"
 
@@ -32,155 +33,137 @@ using namespace x265;
 #define DEBLOCK_SMALLEST_BLOCK  8
 #define DEFAULT_INTRA_TC_OFFSET 2
 
-void Deblock::deblockCTU(TComDataCU* cu, int32_t dir, bool edgeFilter[], uint8_t blockingStrength[])
+void Deblock::deblockCTU(CUData* cu, int32_t dir)
 {
-    memset(blockingStrength, 0, sizeof(uint8_t) * m_numPartitions);
-    memset(edgeFilter, 0, sizeof(bool) * m_numPartitions);
+    uint8_t blockingStrength[MAX_NUM_PARTITIONS];
 
-    deblockCU(cu, 0, 0, dir, edgeFilter, blockingStrength);
+    memset(blockingStrength, 0, sizeof(uint8_t) * m_numPartitions);
+
+    deblockCU(cu, 0, 0, dir, blockingStrength);
 }
 
 /* Deblocking filter process in CU-based (the same function as conventional's)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
-void Deblock::deblockCU(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, const int32_t dir, bool edgeFilter[], uint8_t blockingStrength[])
+void Deblock::deblockCU(CUData* cu, uint32_t absPartIdx, uint32_t depth, const int32_t dir, uint8_t blockingStrength[])
 {
-    if (!cu->m_pic || cu->getPartitionSize(absZOrderIdx) == SIZE_NONE)
+    if (cu->m_partSize[absPartIdx] == SIZE_NONE)
         return;
 
-    Frame* pic = cu->m_pic;
-    uint32_t curNumParts = pic->getNumPartInCU() >> (depth << 1);
-    uint32_t qNumParts   = curNumParts >> 2;
+    uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
 
-    if (cu->getDepth(absZOrderIdx) > depth)
+    const SPS& sps = *cu->m_slice->m_sps;
+
+    if (cu->m_cuDepth[absPartIdx] > depth)
     {
-        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
-        {
-            uint32_t lpelx = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-            uint32_t tpely = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
-            if ((lpelx < cu->m_slice->m_sps->picWidthInLumaSamples) && (tpely < cu->m_slice->m_sps->picHeightInLumaSamples))
-                deblockCU(cu, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
-        }
+        uint32_t qNumParts   = curNumParts >> 2;
+        uint32_t xmax = sps.picWidthInLumaSamples  - cu->m_cuPelX;
+        uint32_t ymax = sps.picHeightInLumaSamples - cu->m_cuPelY;
+        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absPartIdx += qNumParts)
+            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
+                deblockCU(cu, absPartIdx, depth + 1, dir, blockingStrength);
         return;
     }
 
+    const uint32_t widthInBaseUnits = sps.numPartInCUSize >> depth;
     Param params;
-    setLoopfilterParam(cu, absZOrderIdx, &params);
-    setEdgefilterTU(cu, absZOrderIdx, absZOrderIdx, depth, dir, edgeFilter, blockingStrength);
-    setEdgefilterPU(cu, absZOrderIdx, dir, &params, edgeFilter, blockingStrength);
+    setLoopfilterParam(cu, absPartIdx, &params);
+    setEdgefilterPU(cu, absPartIdx, dir, blockingStrength, widthInBaseUnits);
+    setEdgefilterTU(cu, absPartIdx, depth, dir, blockingStrength);
+    setEdgefilterMultiple(cu, absPartIdx, dir, 0, (dir == EDGE_VER ? params.leftEdge : params.topEdge), blockingStrength, widthInBaseUnits);
 
-    for (uint32_t partIdx = absZOrderIdx; partIdx < absZOrderIdx + curNumParts; partIdx++)
+    for (uint32_t partIdx = absPartIdx; partIdx < absPartIdx + curNumParts; partIdx++)
     {
-        uint32_t bsCheck;
+        uint32_t bsCheck = !(partIdx & (1 << dir));
 
-        if (g_log2UnitSize == 2)
-            bsCheck = (dir == EDGE_VER && !(partIdx & 1)) || (dir == EDGE_HOR && !(partIdx & 2));
-        else
-            bsCheck = 1;
-
-        if (edgeFilter[partIdx] && bsCheck)
+        if (bsCheck && blockingStrength[partIdx])
             getBoundaryStrengthSingle(cu, dir, partIdx, blockingStrength);
     }
 
-    uint32_t log2UnitSize = g_log2UnitSize;
-    uint32_t partIdxIncr = (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) ? (DEBLOCK_SMALLEST_BLOCK >> log2UnitSize) : 1;
-    uint32_t sizeInPU = pic->getNumPartInCUSize() >> (depth);
-    uint32_t shiftFactor = (dir == EDGE_VER) ? cu->getHorzChromaShift() : cu->getVertChromaShift();
-    const bool alwaysDoChroma = (cu->getChromaFormat() == X265_CSP_I444 || (1 << log2UnitSize) > DEBLOCK_SMALLEST_BLOCK);
-
+    const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
+    uint32_t sizeInPU = sps.numPartInCUSize >> depth;
+    uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
+    uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
+    uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absPartIdx] : g_zscanToPelY[absPartIdx]) >> LOG2_UNIT_SIZE;
+        
     for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
     {
-        edgeFilterLuma(cu, absZOrderIdx, depth, dir, e, blockingStrength);
-        if (alwaysDoChroma || !(e % ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> log2UnitSize)))
-            edgeFilterChroma(cu, absZOrderIdx, depth, dir, e, blockingStrength);
+        edgeFilterLuma(cu, absPartIdx, depth, dir, e, blockingStrength);
+        if (!((e0 + e) & chromaMask))
+            edgeFilterChroma(cu, absPartIdx, depth, dir, e, blockingStrength);
     }
 }
 
-static inline uint32_t calcBsIdx(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
+static inline uint32_t calcBsIdx(CUData* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t lcuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
+    uint32_t ctuWidthInBaseUnits = cu->m_slice->m_sps->numPartInCUSize;
 
     if (dir)
-        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + edgeIdx * lcuWidthInBaseUnits + baseUnitIdx];
+        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + edgeIdx * ctuWidthInBaseUnits + baseUnitIdx];
     else
-        return g_rasterToZscan[g_zscanToRaster[absZOrderIdx] + baseUnitIdx * lcuWidthInBaseUnits + edgeIdx];
+        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + baseUnitIdx * ctuWidthInBaseUnits + edgeIdx];
 }
 
-void Deblock::setEdgefilterMultiple(TComDataCU* cu, uint32_t scanIdx, uint32_t depth, int32_t dir, int32_t edgeIdx, bool value, bool edgeFilter[], uint8_t blockingStrength[], uint32_t widthInBaseUnits)
+void Deblock::setEdgefilterMultiple(CUData* cu, uint32_t scanIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockingStrength[], uint32_t widthInBaseUnits)
 {
-    if (!widthInBaseUnits)
-        widthInBaseUnits = cu->m_pic->getNumPartInCUSize() >> depth;
-
     const uint32_t numElem = widthInBaseUnits;
     X265_CHECK(numElem > 0, "numElem edge filter check\n");
     for (uint32_t i = 0; i < numElem; i++)
     {
         const uint32_t bsidx = calcBsIdx(cu, scanIdx, dir, edgeIdx, i);
-        edgeFilter[bsidx] = value;
-        if (!edgeIdx)
-            blockingStrength[bsidx] = value;
+        blockingStrength[bsidx] = value;
     }
 }
 
-void Deblock::setEdgefilterTU(TComDataCU* cu, uint32_t absTUPartIdx, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, bool edgeFilter[], uint8_t blockingStrength[])
+void Deblock::setEdgefilterTU(CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, uint8_t blockingStrength[])
 {
-    if (cu->getTransformIdx(absZOrderIdx) + cu->getDepth(absZOrderIdx) > (uint8_t)depth)
+    if ((uint32_t)cu->m_tuDepth[absPartIdx] + cu->m_cuDepth[absPartIdx] > depth)
     {
-        const uint32_t curNumParts = cu->m_pic->getNumPartInCU() >> (depth << 1);
+        const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
         const uint32_t qNumParts   = curNumParts >> 2;
 
-        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absZOrderIdx += qNumParts)
-        {
-            uint32_t nsAddr = absZOrderIdx;
-            setEdgefilterTU(cu, nsAddr, absZOrderIdx, depth + 1, dir, edgeFilter, blockingStrength);
-        }
+        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absPartIdx += qNumParts)
+            setEdgefilterTU(cu, absPartIdx, depth + 1, dir, blockingStrength);
         return;
     }
 
-    uint32_t widthInBaseUnits  = 1 << (cu->getLog2CUSize(absZOrderIdx) - cu->getTransformIdx(absZOrderIdx) - g_log2UnitSize);
-    setEdgefilterMultiple(cu, absTUPartIdx, depth, dir, 0, true, edgeFilter, blockingStrength, widthInBaseUnits);
+    uint32_t widthInBaseUnits  = 1 << (cu->m_log2CUSize[absPartIdx] - cu->m_tuDepth[absPartIdx] - LOG2_UNIT_SIZE);
+    setEdgefilterMultiple(cu, absPartIdx, dir, 0, 2, blockingStrength, widthInBaseUnits);
 }
 
-void Deblock::setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir, Param *params, bool edgeFilter[], uint8_t blockingStrength[])
+void Deblock::setEdgefilterPU(CUData* cu, uint32_t absPartIdx, int32_t dir, uint8_t blockingStrength[], uint32_t widthInBaseUnits)
 {
-    const uint32_t depth = cu->getDepth(absZOrderIdx);
-    const uint32_t widthInBaseUnits  = cu->m_pic->getNumPartInCUSize() >> depth;
-    const uint32_t hWidthInBaseUnits  = widthInBaseUnits  >> 1;
-    const uint32_t qWidthInBaseUnits  = widthInBaseUnits  >> 2;
+    const uint32_t hWidthInBaseUnits = widthInBaseUnits >> 1;
+    const uint32_t qWidthInBaseUnits = widthInBaseUnits >> 2;
 
-    setEdgefilterMultiple(cu, absZOrderIdx, depth, dir, 0, (dir == EDGE_VER ? params->leftEdge : params->topEdge), edgeFilter, blockingStrength);
-
-    int32_t mode = cu->getPartitionSize(absZOrderIdx);
-    switch (mode)
+    switch (cu->m_partSize[absPartIdx])
     {
     case SIZE_2NxN:
+        if (EDGE_HOR == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, hWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_Nx2N:
-        {
-            const int32_t realDir = (mode == SIZE_2NxN ? EDGE_HOR : EDGE_VER);
-            if (realDir == dir)
-                setEdgefilterMultiple(cu, absZOrderIdx, depth, dir, hWidthInBaseUnits, true, edgeFilter, blockingStrength);
-            break;
-        }
+        if (EDGE_VER == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, hWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_NxN:
-        {
-            setEdgefilterMultiple(cu, absZOrderIdx, depth, dir, hWidthInBaseUnits, true, edgeFilter, blockingStrength);
-            break;
-        }
+        setEdgefilterMultiple(cu, absPartIdx, dir, hWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_2NxnU:
+        if (EDGE_HOR == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, qWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_nLx2N:
-        {
-            const int32_t realDir = (mode == SIZE_2NxnU ? EDGE_HOR : EDGE_VER);
-            if (realDir == dir)
-                setEdgefilterMultiple(cu, absZOrderIdx, depth, dir, qWidthInBaseUnits, true, edgeFilter, blockingStrength);
-            break;
-        }
+        if (EDGE_VER == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, qWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_2NxnD:
+        if (EDGE_HOR == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, widthInBaseUnits - qWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
     case SIZE_nRx2N:
-        {
-            const int32_t realDir = (mode == SIZE_2NxnD ? EDGE_HOR : EDGE_VER);
-            if (realDir == dir)
-                setEdgefilterMultiple(cu, absZOrderIdx, depth, dir, widthInBaseUnits - qWidthInBaseUnits, true, edgeFilter, blockingStrength);
-            break;
-        }
+        if (EDGE_VER == dir)
+            setEdgefilterMultiple(cu, absPartIdx, dir, widthInBaseUnits - qWidthInBaseUnits, 1, blockingStrength, widthInBaseUnits);
+        break;
 
     case SIZE_2Nx2N:
     default:
@@ -188,45 +171,45 @@ void Deblock::setEdgefilterPU(TComDataCU* cu, uint32_t absZOrderIdx, int32_t dir
     }
 }
 
-void Deblock::setLoopfilterParam(TComDataCU* cu, uint32_t absZOrderIdx, Param *params)
+void Deblock::setLoopfilterParam(CUData* cu, uint32_t absPartIdx, Param *params)
 {
-    uint32_t x = cu->getCUPelX() + g_rasterToPelX[g_zscanToRaster[absZOrderIdx]];
-    uint32_t y = cu->getCUPelY() + g_rasterToPelY[g_zscanToRaster[absZOrderIdx]];
+    uint32_t x = cu->m_cuPelX + g_zscanToPelX[absPartIdx];
+    uint32_t y = cu->m_cuPelY + g_zscanToPelY[absPartIdx];
 
-    TComDataCU* tempCU;
+    const CUData* tempCU;
     uint32_t    tempPartIdx;
 
     if (!x)
-        params->leftEdge = false;
+        params->leftEdge = 0;
     else
     {
-        tempCU = cu->getPULeft(tempPartIdx, absZOrderIdx);
+        tempCU = cu->getPULeft(tempPartIdx, absPartIdx);
         if (tempCU)
-            params->leftEdge = true;
+            params->leftEdge = 2;
         else
-            params->leftEdge = false;
+            params->leftEdge = 0;
     }
 
     if (!y)
-        params->topEdge = false;
+        params->topEdge = 0;
     else
     {
-        tempCU = cu->getPUAbove(tempPartIdx, absZOrderIdx);
+        tempCU = cu->getPUAbove(tempPartIdx, absPartIdx);
         if (tempCU)
-            params->topEdge = true;
+            params->topEdge = 2;
         else
-            params->topEdge = false;
+            params->topEdge = 0;
     }
 }
 
-void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t absPartIdx, uint8_t blockingStrength[])
+void Deblock::getBoundaryStrengthSingle(CUData* cu, int32_t dir, uint32_t absPartIdx, uint8_t blockingStrength[])
 {
-    Slice* const slice = cu->m_slice;
+    const Slice* const slice = cu->m_slice;
     const uint32_t partQ = absPartIdx;
-    TComDataCU* const cuQ = cu;
+    CUData* const cuQ = cu;
 
     uint32_t partP;
-    TComDataCU* cuP;
+    const CUData* cuP;
     uint8_t bs = 0;
 
     // Calculate block index
@@ -245,8 +228,9 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
         uint32_t nsPartQ = partQ;
         uint32_t nsPartP = partP;
 
-        if (blockingStrength[absPartIdx] && (cuQ->getCbf(nsPartQ, TEXT_LUMA, cuQ->getTransformIdx(nsPartQ)) ||
-            cuP->getCbf(nsPartP, TEXT_LUMA, cuP->getTransformIdx(nsPartP))))
+        if (blockingStrength[absPartIdx] > 1 &&
+            (cuQ->getCbf(nsPartQ, TEXT_LUMA, cuQ->m_tuDepth[nsPartQ]) ||
+             cuP->getCbf(nsPartP, TEXT_LUMA, cuP->m_tuDepth[nsPartP])))
             bs = 1;
         else
         {
@@ -257,19 +241,19 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
             {
                 int32_t refIdx;
                 Frame *refP0, *refP1, *refQ0, *refQ1;
-                refIdx = cuP->getCUMvField(0)->getRefIdx(partP);
+                refIdx = cuP->m_refIdx[0][partP];
                 refP0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuP->getCUMvField(1)->getRefIdx(partP);
+                refIdx = cuP->m_refIdx[1][partP];
                 refP1 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[1][refIdx];
-                refIdx = cuQ->getCUMvField(0)->getRefIdx(partQ);
+                refIdx = cuQ->m_refIdx[0][partQ];
                 refQ0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->getCUMvField(1)->getRefIdx(partQ);
+                refIdx = cuQ->m_refIdx[1][partQ];
                 refQ1 = (refIdx < 0) ? NULL : slice->m_refPicList[1][refIdx];
 
-                MV mvp0 = cuP->getCUMvField(0)->getMv(partP);
-                MV mvp1 = cuP->getCUMvField(1)->getMv(partP);
-                MV mvq0 = cuQ->getCUMvField(0)->getMv(partQ);
-                MV mvq1 = cuQ->getCUMvField(1)->getMv(partQ);
+                MV mvp0 = cuP->m_mv[0][partP];
+                MV mvp1 = cuP->m_mv[1][partP];
+                MV mvq0 = cuQ->m_mv[0][partQ];
+                MV mvq1 = cuQ->m_mv[1][partQ];
 
                 if (!refP0) mvp0 = 0;
                 if (!refP1) mvp1 = 0;
@@ -314,12 +298,12 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
             {
                 int32_t refIdx;
                 Frame *refp0, *refq0;
-                refIdx = cuP->getCUMvField(0)->getRefIdx(partP);
+                refIdx = cuP->m_refIdx[0][partP];
                 refp0 = (refIdx < 0) ? NULL : cuP->m_slice->m_refPicList[0][refIdx];
-                refIdx = cuQ->getCUMvField(0)->getRefIdx(partQ);
+                refIdx = cuQ->m_refIdx[0][partQ];
                 refq0 = (refIdx < 0) ? NULL : slice->m_refPicList[0][refIdx];
-                MV mvp0 = cuP->getCUMvField(0)->getMv(partP);
-                MV mvq0 = cuQ->getCUMvField(0)->getMv(partQ);
+                MV mvp0 = cuP->m_mv[0][partP];
+                MV mvq0 = cuQ->m_mv[0][partQ];
 
                 if (!refp0) mvp0 = 0;
                 if (!refq0) mvq0 = 0;
@@ -334,17 +318,17 @@ void Deblock::getBoundaryStrengthSingle(TComDataCU* cu, int32_t dir, uint32_t ab
     blockingStrength[absPartIdx] = bs;
 }
 
-static inline int32_t calcDP(pixel* src, int32_t offset)
+static inline int32_t calcDP(pixel* src, intptr_t offset)
 {
     return abs(static_cast<int32_t>(src[-offset * 3]) - 2 * src[-offset * 2] + src[-offset]);
 }
 
-static inline int32_t calcDQ(pixel* src, int32_t offset)
+static inline int32_t calcDQ(pixel* src, intptr_t offset)
 {
     return abs(static_cast<int32_t>(src[0]) - 2 * src[offset] + src[offset * 2]);
 }
 
-static inline bool useStrongFiltering(int32_t offset, int32_t d, int32_t beta, int32_t tc, pixel* src)
+static inline bool useStrongFiltering(intptr_t offset, int32_t beta, int32_t tc, pixel* src)
 {
     int16_t m4     = (int16_t)src[0];
     int16_t m3     = (int16_t)src[-offset];
@@ -352,78 +336,86 @@ static inline bool useStrongFiltering(int32_t offset, int32_t d, int32_t beta, i
     int16_t m0     = (int16_t)src[-offset * 4];
     int32_t strong = abs(m0 - m3) + abs(m7 - m4);
 
-    return (strong < (beta >> 3)) && (d < (beta >> 2)) && (abs(m3 - m4) < ((tc * 5 + 1) >> 1));
+    return (strong < (beta >> 3)) && (abs(m3 - m4) < ((tc * 5 + 1) >> 1));
 }
 
 /* Deblocking for the luminance component with strong or weak filter
  * \param src            pointer to picture data
  * \param offset         offset value for picture data
  * \param tc             tc value
- * \param sw             decision strong/weak filter
  * \param partPNoFilter  indicator to disable filtering on partP
  * \param partQNoFilter  indicator to disable filtering on partQ
- * \param thrCut         threshold value for weak filter decision
  * \param filterSecondP  decision weak filter/no filter for partP
  * \param filterSecondQ  decision weak filter/no filter for partQ */
-static inline void pelFilterLuma(pixel* src, int32_t offset, int32_t tc, bool sw, bool partPNoFilter, bool partQNoFilter,
-                                 int32_t thrCut, bool filterSecondP, bool filterSecondQ)
+static inline void pelFilterLumaStrong(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
 {
-    int32_t delta;
-
-    int16_t m4  = (int16_t)src[0];
-    int16_t m3  = (int16_t)src[-offset];
-    int16_t m5  = (int16_t)src[offset];
-    int16_t m2  = (int16_t)src[-offset * 2];
-    int16_t m6  = (int16_t)src[offset * 2];
-    int16_t m1  = (int16_t)src[-offset * 3];
-    int16_t m7  = (int16_t)src[offset * 3];
-    int16_t m0  = (int16_t)src[-offset * 4];
-
-    if (sw)
+    for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
     {
-        src[-offset]     = (pixel)Clip3(m3 - 2 * tc, m3 + 2 * tc, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3));
-        src[0]           = (pixel)Clip3(m4 - 2 * tc, m4 + 2 * tc, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3));
-        src[-offset * 2] = (pixel)Clip3(m2 - 2 * tc, m2 + 2 * tc, ((m1 + m2 + m3 + m4 + 2) >> 2));
-        src[offset]      = (pixel)Clip3(m5 - 2 * tc, m5 + 2 * tc, ((m3 + m4 + m5 + m6 + 2) >> 2));
-        src[-offset * 3] = (pixel)Clip3(m1 - 2 * tc, m1 + 2 * tc, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3));
-        src[offset * 2]  = (pixel)Clip3(m6 - 2 * tc, m6 + 2 * tc, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3));
+        int16_t m4  = (int16_t)src[0];
+        int16_t m3  = (int16_t)src[-offset];
+        int16_t m5  = (int16_t)src[offset];
+        int16_t m2  = (int16_t)src[-offset * 2];
+        int32_t tc2 = 2 * tc;
+        if (!partPNoFilter)
+        {
+            int16_t m1  = (int16_t)src[-offset * 3];
+            int16_t m0  = (int16_t)src[-offset * 4];
+            src[-offset * 3] = (pixel)(Clip3(-tc2, tc2, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3) - m1) + m1);
+            src[-offset * 2] = (pixel)(Clip3(-tc2, tc2, ((m1 + m2 + m3 + m4 + 2) >> 2) - m2) + m2);
+            src[-offset]     = (pixel)(Clip3(-tc2, tc2, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3) - m3) + m3);
+        }
+        if (!partQNoFilter)
+        {
+            int16_t m6  = (int16_t)src[offset * 2];
+            int16_t m7  = (int16_t)src[offset * 3];
+            src[0]           = (pixel)(Clip3(-tc2, tc2, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3) - m4) + m4);
+            src[offset]      = (pixel)(Clip3(-tc2, tc2, ((m3 + m4 + m5 + m6 + 2) >> 2) - m5) + m5);
+            src[offset * 2]  = (pixel)(Clip3(-tc2, tc2, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3) - m6) + m6);
+        }
     }
-    else
+}
+
+/* Weak filter */
+static inline void pelFilterLuma(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter,
+                                 bool filterSecondP, bool filterSecondQ)
+{
+    int32_t thrCut = tc * 10;
+
+    for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
     {
-        /* Weak filter */
-        delta = (9 * (m4 - m3) - 3 * (m5 - m2) + 8) >> 4;
+        int16_t m4  = (int16_t)src[0];
+        int16_t m3  = (int16_t)src[-offset];
+        int16_t m5  = (int16_t)src[offset];
+        int16_t m2  = (int16_t)src[-offset * 2];
+
+        int32_t delta = (9 * (m4 - m3) - 3 * (m5 - m2) + 8) >> 4;
 
         if (abs(delta) < thrCut)
         {
             delta = Clip3(-tc, tc, delta);
-            src[-offset] = Clip(m3 + delta);
-            src[0] = Clip(m4 - delta);
 
             int32_t tc2 = tc >> 1;
-            if (filterSecondP)
+            if (!partPNoFilter)
             {
-                int32_t delta1 = Clip3(-tc2, tc2, ((((m1 + m3 + 1) >> 1) - m2 + delta) >> 1));
-                src[-offset * 2] = Clip(m2 + delta1);
+                src[-offset] = Clip(m3 + delta);
+                if (filterSecondP)
+                {
+                    int16_t m1  = (int16_t)src[-offset * 3];
+                    int32_t delta1 = Clip3(-tc2, tc2, ((((m1 + m3 + 1) >> 1) - m2 + delta) >> 1));
+                    src[-offset * 2] = Clip(m2 + delta1);
+                }
             }
-            if (filterSecondQ)
+            if (!partQNoFilter)
             {
-                int32_t delta2 = Clip3(-tc2, tc2, ((((m6 + m4 + 1) >> 1) - m5 - delta) >> 1));
-                src[offset] = Clip(m5 + delta2);
+                src[0] = Clip(m4 - delta);
+                if (filterSecondQ)
+                {
+                    int16_t m6  = (int16_t)src[offset * 2];
+                    int32_t delta2 = Clip3(-tc2, tc2, ((((m6 + m4 + 1) >> 1) - m5 - delta) >> 1));
+                    src[offset] = Clip(m5 + delta2);
+                }
             }
         }
-    }
-
-    if (partPNoFilter)
-    {
-        src[-offset] = (pixel)m3;
-        src[-offset * 2] = (pixel)m2;
-        src[-offset * 3] = (pixel)m1;
-    }
-    if (partQNoFilter)
-    {
-        src[0] = (pixel)m4;
-        src[offset] = (pixel)m5;
-        src[offset * 2] = (pixel)m6;
     }
 }
 
@@ -433,45 +425,39 @@ static inline void pelFilterLuma(pixel* src, int32_t offset, int32_t tc, bool sw
  * \param tc             tc value
  * \param partPNoFilter  indicator to disable filtering on partP
  * \param partQNoFilter  indicator to disable filtering on partQ */
-static inline void pelFilterChroma(pixel* src, int32_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
+static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, bool partPNoFilter, bool partQNoFilter)
 {
-    int32_t delta;
+    for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
+    {
+        int16_t m4  = (int16_t)src[0];
+        int16_t m3  = (int16_t)src[-offset];
+        int16_t m5  = (int16_t)src[offset];
+        int16_t m2  = (int16_t)src[-offset * 2];
 
-    int16_t m4  = (int16_t)src[0];
-    int16_t m3  = (int16_t)src[-offset];
-    int16_t m5  = (int16_t)src[offset];
-    int16_t m2  = (int16_t)src[-offset * 2];
-
-    delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
-    src[-offset] = Clip(m3 + delta);
-    src[0] = Clip(m4 - delta);
-
-    if (partPNoFilter)
-        src[-offset] = (pixel)m3;
-    if (partQNoFilter)
-        src[0] = (pixel)m4;
+        int32_t delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
+        if (!partPNoFilter)
+            src[-offset] = Clip(m3 + delta);
+        if (!partQNoFilter)
+            src[0] = Clip(m4 - delta);
+    }
 }
 
-void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, uint8_t blockingStrength[])
+void Deblock::edgeFilterLuma(CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
-    pixel* src = reconYuv->getLumaAddr(cu->getAddr(), absZOrderIdx);
-    pixel* tmpsrc = src;
+    PicYuv* reconYuv = cu->m_encData->m_reconPicYuv;
+    pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
-    int32_t stride = reconYuv->getStride();
-    uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
+    intptr_t stride = reconYuv->m_stride;
+    uint32_t numParts = cu->m_slice->m_sps->numPartInCUSize >> depth;
 
-    uint32_t log2UnitSize = g_log2UnitSize;
-    uint32_t blocksInPart = (log2UnitSize - 2) > 0 ? 1 << (log2UnitSize - 2) : 1;
-    uint32_t bsAbsIdx = 0, bs = 0;
-    int32_t offset, srcStep;
+    intptr_t offset, srcStep;
 
     bool  partPNoFilter = false;
     bool  partQNoFilter = false;
     uint32_t  partP = 0;
     uint32_t  partQ = 0;
-    TComDataCU* cuP = cu;
-    TComDataCU* cuQ = cu;
+    const CUData* cuP = cu;
+    const CUData* cuQ = cu;
     int32_t betaOffset = cuQ->m_slice->m_pps->deblockingFilterBetaOffsetDiv2 << 1;
     int32_t tcOffset = cuQ->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
@@ -479,23 +465,23 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
     {
         offset = 1;
         srcStep = stride;
-        tmpsrc += (edge << log2UnitSize);
+        src += (edge << LOG2_UNIT_SIZE);
     }
     else // (dir == EDGE_HOR)
     {
         offset = stride;
         srcStep = 1;
-        tmpsrc += (edge << log2UnitSize) * stride;
+        src += (edge << LOG2_UNIT_SIZE) * stride;
     }
 
     for (uint32_t idx = 0; idx < numParts; idx++)
     {
-        uint32_t partOffset = idx << log2UnitSize;
-        bsAbsIdx = calcBsIdx(cu, absZOrderIdx, dir, edge, idx);
-        bs = blockingStrength[bsAbsIdx];
+        uint32_t unitOffset = idx << LOG2_UNIT_SIZE;
+        uint32_t bsAbsIdx = calcBsIdx(cu, absPartIdx, dir, edge, idx);
+        uint32_t bs = blockingStrength[bsAbsIdx];
         if (bs)
         {
-            int32_t qpQ = cu->getQP(bsAbsIdx);
+            int32_t qpQ = cu->m_qp[bsAbsIdx];
             partQ = bsAbsIdx;
 
             // Derive neighboring PU index
@@ -504,119 +490,109 @@ void Deblock::edgeFilterLuma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t dep
             else // (dir == EDGE_HOR)
                 cuP = cuQ->getPUAbove(partP, partQ);
 
-            int32_t qpP = cuP->getQP(partP);
+            int32_t qpP = cuP->m_qp[partP];
             int32_t qp = (qpP + qpQ + 1) >> 1;
-            int32_t bitdepthScale = 1 << (X265_DEPTH - 8);
 
-            int32_t indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
-            int32_t indexB = Clip3(0, MAX_QP, qp + betaOffset);
+            int32_t indexB = Clip3(0, QP_MAX_SPEC, qp + betaOffset);
 
-            int32_t tc = s_tcTable[indexTC] * bitdepthScale;
-            int32_t beta = s_betaTable[indexB] * bitdepthScale;
-            int32_t sideThreshold = (beta + (beta >> 1)) >> 3;
-            int32_t thrCut = tc * 10;
+            const int32_t bitdepthShift = X265_DEPTH - 8;
+            int32_t beta = s_betaTable[indexB] << bitdepthShift;
 
-            for (uint32_t blkIdx = 0; blkIdx < blocksInPart; blkIdx++)
+            int32_t dp0 = calcDP(src + srcStep * (unitOffset + 0), offset);
+            int32_t dq0 = calcDQ(src + srcStep * (unitOffset + 0), offset);
+            int32_t dp3 = calcDP(src + srcStep * (unitOffset + 3), offset);
+            int32_t dq3 = calcDQ(src + srcStep * (unitOffset + 3), offset);
+            int32_t d0 = dp0 + dq0;
+            int32_t d3 = dp3 + dq3;
+
+            int32_t d =  d0 + d3;
+
+            if (d < beta)
             {
-                int32_t dp0 = calcDP(tmpsrc + srcStep * (partOffset + blkIdx * 4 + 0), offset);
-                int32_t dq0 = calcDQ(tmpsrc + srcStep * (partOffset + blkIdx * 4 + 0), offset);
-                int32_t dp3 = calcDP(tmpsrc + srcStep * (partOffset + blkIdx * 4 + 3), offset);
-                int32_t dq3 = calcDQ(tmpsrc + srcStep * (partOffset + blkIdx * 4 + 3), offset);
-                int32_t d0 = dp0 + dq0;
-                int32_t d3 = dp3 + dq3;
-
-                int32_t dp = dp0 + dp3;
-                int32_t dq = dq0 + dq3;
-                int32_t d =  d0 + d3;
-
                 if (cu->m_slice->m_pps->bTransquantBypassEnabled)
                 {
                     // check if each of PUs is lossless coded
-                    partPNoFilter = cuP->isLosslessCoded(partP);
-                    partQNoFilter = cuQ->isLosslessCoded(partQ);
+                    partPNoFilter = !!cuP->m_tqBypass[partP];
+                    partQNoFilter = !!cuQ->m_tqBypass[partQ];
                 }
 
-                if (d < beta)
+                int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
+                int32_t tc = s_tcTable[indexTC] << bitdepthShift;
+
+                bool sw = (2 * d0 < (beta >> 2) &&
+                           2 * d3 < (beta >> 2) &&
+                           useStrongFiltering(offset, beta, tc, src + srcStep * (unitOffset + 0)) &&
+                           useStrongFiltering(offset, beta, tc, src + srcStep * (unitOffset + 3)));
+
+                if (sw)
+                    pelFilterLumaStrong(src + srcStep * unitOffset, srcStep, offset, tc, partPNoFilter, partQNoFilter);
+                else
                 {
+                    int32_t sideThreshold = (beta + (beta >> 1)) >> 3;
+                    int32_t dp = dp0 + dp3;
+                    int32_t dq = dq0 + dq3;
                     bool filterP = (dp < sideThreshold);
                     bool filterQ = (dq < sideThreshold);
 
-                    bool sw = useStrongFiltering(offset, 2 * d0, beta, tc, tmpsrc + srcStep * (partOffset + blkIdx * 4 + 0))
-                           && useStrongFiltering(offset, 2 * d3, beta, tc, tmpsrc + srcStep * (partOffset + blkIdx * 4 + 3));
-
-                    for (int32_t i = 0; i < DEBLOCK_SMALLEST_BLOCK / 2; i++)
-                        pelFilterLuma(tmpsrc + srcStep * (partOffset + blkIdx * 4 + i), offset, tc, sw, partPNoFilter, partQNoFilter, thrCut, filterP, filterQ);
+                    pelFilterLuma(src + srcStep * unitOffset, srcStep, offset, tc, partPNoFilter, partQNoFilter, filterP, filterQ);
                 }
             }
         }
     }
 }
 
-void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t depth, int32_t dir, int32_t edge, uint8_t blockingStrength[])
+void Deblock::edgeFilterChroma(CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    int32_t chFmt = cu->getChromaFormat();
-    TComPicYuv* reconYuv = cu->m_pic->getPicYuvRec();
-    int32_t stride = reconYuv->getCStride();
-    pixel* srcCb = reconYuv->getCbAddr(cu->getAddr(), absZOrderIdx);
-    pixel* srcCr = reconYuv->getCrAddr(cu->getAddr(), absZOrderIdx);
-    uint32_t log2UnitSizeH = g_log2UnitSize - cu->getHorzChromaShift();
-    uint32_t log2UnitSizeV = g_log2UnitSize - cu->getVertChromaShift();
-    uint32_t sizeChromaH = 1 << log2UnitSizeH;
-    uint32_t sizeChromaV = 1 << log2UnitSizeV;
-    int32_t offset, srcStep;
-
-    const uint32_t lcuWidthInBaseUnits = cu->m_pic->getNumPartInCUSize();
+    int32_t chFmt = cu->m_chromaFormat, chromaShift;
+    intptr_t offset, srcStep;
 
     bool partPNoFilter = false;
     bool partQNoFilter = false;
     uint32_t partP;
     uint32_t partQ;
-    TComDataCU* cuP;
-    TComDataCU* cuQ = cu;
+    const CUData* cuP;
+    const CUData* cuQ = cu;
     int32_t tcOffset = cu->m_slice->m_pps->deblockingFilterTcOffsetDiv2 << 1;
 
-    // Vertical Position
-    uint32_t edgeNumInLCUVert = g_zscanToRaster[absZOrderIdx] % lcuWidthInBaseUnits + edge;
-    uint32_t edgeNumInLCUHor = g_zscanToRaster[absZOrderIdx] / lcuWidthInBaseUnits + edge;
+    X265_CHECK(((dir == EDGE_VER)
+                ? ((g_zscanToPelX[absPartIdx] + edge * UNIT_SIZE) >> cu->m_hChromaShift)
+                : ((g_zscanToPelY[absPartIdx] + edge * UNIT_SIZE) >> cu->m_vChromaShift)) % DEBLOCK_SMALLEST_BLOCK == 0,
+               "invalid edge\n");
 
-    if ((sizeChromaH < DEBLOCK_SMALLEST_BLOCK) && (sizeChromaV < DEBLOCK_SMALLEST_BLOCK) &&
-        (((edgeNumInLCUVert % (DEBLOCK_SMALLEST_BLOCK >> log2UnitSizeH)) && !dir) ||
-         ((edgeNumInLCUHor % (DEBLOCK_SMALLEST_BLOCK >> log2UnitSizeV)) && dir)))
-        return;
-
-    uint32_t numParts = cu->m_pic->getNumPartInCUSize() >> depth;
-    uint32_t bsAbsIdx;
-    uint8_t bs;
-
-    pixel* tmpSrcCb = srcCb;
-    pixel* tmpSrcCr = srcCr;
-    uint32_t loopLength;
+    PicYuv* reconPic = cu->m_encData->m_reconPicYuv;
+    intptr_t stride = reconPic->m_strideC;
+    intptr_t srcOffset = reconPic->getChromaAddrOffset(cu->m_cuAddr, absPartIdx);
 
     if (dir == EDGE_VER)
     {
+        chromaShift = cu->m_vChromaShift;
+        srcOffset += (edge << (LOG2_UNIT_SIZE - cu->m_hChromaShift));
         offset     = 1;
         srcStep    = stride;
-        tmpSrcCb  += (edge << log2UnitSizeH);
-        tmpSrcCr  += (edge << log2UnitSizeH);
-        loopLength = sizeChromaV;
     }
     else // (dir == EDGE_HOR)
     {
+        chromaShift = cu->m_hChromaShift;
+        srcOffset += edge * stride << (LOG2_UNIT_SIZE - cu->m_vChromaShift);
         offset     = stride;
         srcStep    = 1;
-        tmpSrcCb  += edge * stride << log2UnitSizeV;
-        tmpSrcCr  += edge * stride << log2UnitSizeV;
-        loopLength = sizeChromaH;
     }
 
-    for (uint32_t idx = 0; idx < numParts; idx++)
+    pixel* srcChroma[2];
+    srcChroma[0] = reconPic->m_picOrg[1] + srcOffset;
+    srcChroma[1] = reconPic->m_picOrg[2] + srcOffset;
+
+    uint32_t numUnits = cu->m_slice->m_sps->numPartInCUSize >> (depth + chromaShift);
+
+    for (uint32_t idx = 0; idx < numUnits; idx++)
     {
-        bsAbsIdx = calcBsIdx(cu, absZOrderIdx, dir, edge, idx);
-        bs = blockingStrength[bsAbsIdx];
+        uint32_t unitOffset = idx << LOG2_UNIT_SIZE;
+        uint32_t bsAbsIdx = calcBsIdx(cu, absPartIdx, dir, edge, idx << chromaShift);
+        uint32_t bs = blockingStrength[bsAbsIdx];
 
         if (bs > 1)
         {
-            int32_t qpQ = cu->getQP(bsAbsIdx);
+            int32_t qpQ = cu->m_qp[bsAbsIdx];
             partQ = bsAbsIdx;
 
             // Derive neighboring PU index
@@ -625,19 +601,18 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
             else // (dir == EDGE_HOR)
                 cuP = cuQ->getPUAbove(partP, partQ);
 
-            int32_t qpP = cuP->getQP(partP);
+            int32_t qpP = cuP->m_qp[partP];
 
             if (cu->m_slice->m_pps->bTransquantBypassEnabled)
             {
                 // check if each of PUs is lossless coded
-                partPNoFilter = cuP->isLosslessCoded(partP);
-                partQNoFilter = cuQ->isLosslessCoded(partQ);
+                partPNoFilter = !!cuP->m_tqBypass[partP];
+                partQNoFilter = !!cuQ->m_tqBypass[partQ];
             }
 
             for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
             {
                 int32_t chromaQPOffset  = !chromaIdx ? cu->m_slice->m_pps->chromaCbQpOffset : cu->m_slice->m_pps->chromaCrQpOffset;
-                pixel* tmpSrcChroma = !chromaIdx ? tmpSrcCb : tmpSrcCr;
                 int32_t qp = ((qpP + qpQ + 1) >> 1) + chromaQPOffset;
                 if (qp >= 30)
                 {
@@ -647,12 +622,12 @@ void Deblock::edgeFilterChroma(TComDataCU* cu, uint32_t absZOrderIdx, uint32_t d
                         qp = X265_MIN(qp, 51);
                 }
 
-                int32_t bitdepthScale = 1 << (X265_DEPTH - 8);
-                int32_t indexTC = Clip3(0, MAX_QP + DEFAULT_INTRA_TC_OFFSET, qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset);
-                int32_t tc = s_tcTable[indexTC] * bitdepthScale;
+                int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET + tcOffset));
+                const int32_t bitdepthShift = X265_DEPTH - 8;
+                int32_t tc = s_tcTable[indexTC] << bitdepthShift;
+                pixel* srcC = srcChroma[chromaIdx];
 
-                for (uint32_t step = 0; step < loopLength; step++)
-                    pelFilterChroma(tmpSrcChroma + srcStep * (step + idx * loopLength), offset, tc, partPNoFilter, partQNoFilter);
+                pelFilterChroma(srcC + srcStep * unitOffset, srcStep, offset, tc, partPNoFilter, partQNoFilter);
             }
         }
     }

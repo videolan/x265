@@ -27,6 +27,10 @@
 #include "common.h"
 #include "primitives.h"
 
+#if _MSC_VER
+#pragma warning(disable: 4324) // structure was padded due to __declspec(align())
+#endif
+
 #if HIGH_BIT_DEPTH
 #define BIT_DEPTH 10
 #else
@@ -36,6 +40,7 @@
 #define PIXEL_MIN 0
 #define SHORT_MAX  32767
 #define SHORT_MIN -32767
+#define UNSIGNED_SHORT_MAX 65535
 
 using namespace x265;
 
@@ -66,7 +71,10 @@ protected:
 
 #ifdef _MSC_VER
 #include <intrin.h>
+#elif HAVE_RDTSC
+#include <intrin.h>
 #elif defined(__GNUC__)
+/* fallback for older GCC/MinGW */
 static inline uint32_t __rdtsc(void)
 {
     uint32_t a = 0;

@@ -25,6 +25,7 @@
 
 #include "common.h"
 #include "frame.h"
+#include "picyuv.h"
 #include "lowres.h"
 #include "mv.h"
 #include "slicetype.h"
@@ -56,7 +57,7 @@ int sliceHeaderCost(WeightParam *w, int lambda, int bChroma)
  * The borders of mcout are not extended */
 void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
 {
-    int stride = ref.lumaStride;
+    intptr_t stride = ref.lumaStride;
     const int cuSize = 8;
     MV mvmin, mvmax;
 
@@ -64,7 +65,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
 
     for (int y = 0; y < ref.lines; y += cuSize)
     {
-        int pixoff = y * stride;
+        intptr_t pixoff = y * stride;
         mvmin.y = (int16_t)((-y - 8) << 2);
         mvmax.y = (int16_t)((ref.lines - y - 1 + 8) << 2);
 
@@ -82,15 +83,13 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
             primitives.luma_copy_pp[LUMA_8x8](mcout + pixoff, stride, tmp, bstride);
         }
     }
-
-    x265_emms();
 }
 
 /* use lowres MVs from lookahead to generate a motion compensated chroma plane.
  * if a block had cheaper lowres cost as intra, we treat it as MV 0 */
 void mcChroma(pixel *      mcout,
               pixel *      src,
-              int          stride,
+              intptr_t     stride,
               const MV *   mvs,
               const Cache& cache,
               int          height,
@@ -109,7 +108,7 @@ void mcChroma(pixel *      mcout,
          * count per row because of rounding issues, so be very careful with indexing
          * into the lowres structures */
         int cu = y * cache.lowresWidthInCU;
-        int pixoff = y * stride;
+        intptr_t pixoff = y * stride;
         mvmin.y = (int16_t)((-y - 8) << 2);
         mvmax.y = (int16_t)((height - y - 1 + 8) << 2);
 
@@ -127,7 +126,7 @@ void mcChroma(pixel *      mcout,
                 mvmax.x = (int16_t)((width - x - 1 + 8) << 2);
                 mv = mv.clipped(mvmin, mvmax);
 
-                int fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
+                intptr_t fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
                 pixel *temp = src + pixoff + fpeloffset;
 
                 int xFrac = mv.x & 0x7;
@@ -157,8 +156,6 @@ void mcChroma(pixel *      mcout,
             }
         }
     }
-
-    x265_emms();
 }
 
 /* Measure sum of 8x8 satd costs between source frame and reference
@@ -168,11 +165,11 @@ void mcChroma(pixel *      mcout,
 uint32_t weightCost(pixel *         fenc,
                     pixel *         ref,
                     pixel *         weightTemp,
-                    int             stride,
+                    intptr_t        stride,
                     const Cache &   cache,
                     int             width,
                     int             height,
-                    WeightParam *w,
+                    WeightParam *   w,
                     bool            bLuma)
 {
     if (w)
@@ -185,7 +182,7 @@ uint32_t weightCost(pixel *         fenc,
         int correction = IF_INTERNAL_PREC - X265_DEPTH; /* intermediate interpolation depth */
         int pwidth = ((width + 15) >> 4) << 4;
 
-        primitives.weight_pp(ref, weightTemp, stride, stride, pwidth, height,
+        primitives.weight_pp(ref, weightTemp, stride, pwidth, height,
                              weight, round << correction, denom + correction, offset);
         ref = weightTemp;
     }
@@ -214,17 +211,16 @@ uint32_t weightCost(pixel *         fenc,
             for (int x = 8; x < width; x += 8)
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
 
-    x265_emms();
     return cost;
 }
 }
 
 namespace x265 {
-void weightAnalyse(Slice& slice, x265_param& param)
+void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    TComPicYuv *fencYuv = slice.m_pic->getPicYuvOrg();
-    Lowres& fenc        = slice.m_pic->m_lowres;
+    PicYuv *fencPic = frame.m_origPicYuv;
+    Lowres& fenc    = frame.m_lowres;
 
     Cache cache;
 
@@ -233,18 +229,18 @@ void weightAnalyse(Slice& slice, x265_param& param)
     cache.numPredDir = slice.isInterP() ? 1 : 2;
     cache.lowresWidthInCU = fenc.width >> 3;
     cache.lowresHeightInCU = fenc.lines >> 3;
-    cache.csp = fencYuv->m_picCsp;
+    cache.csp = fencPic->m_picCsp;
     cache.hshift = CHROMA_H_SHIFT(cache.csp);
     cache.vshift = CHROMA_V_SHIFT(cache.csp);
 
     /* Use single allocation for motion compensated ref and weight buffers */
-    pixel *mcbuf = X265_MALLOC(pixel, 2 * fencYuv->getStride() * fencYuv->getHeight());
+    pixel *mcbuf = X265_MALLOC(pixel, 2 * fencPic->m_stride * fencPic->m_picHeight);
     if (!mcbuf)
     {
         slice.disableWeights();
         return;
     }
-    pixel *weightTemp = mcbuf + fencYuv->getStride() * fencYuv->getHeight();
+    pixel *weightTemp = mcbuf + fencPic->m_stride * fencPic->m_picHeight;
 
     int lambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     int curPoc = slice.m_poc;
@@ -253,17 +249,17 @@ void weightAnalyse(Slice& slice, x265_param& param)
     int chromaDenom, lumaDenom, denom;
     chromaDenom = lumaDenom = 7;
     int numpixels[3];
-    int w16 = ((fencYuv->getWidth()  + 15) >> 4) << 4;
-    int h16 = ((fencYuv->getHeight() + 15) >> 4) << 4;
+    int w16 = ((fencPic->m_picWidth  + 15) >> 4) << 4;
+    int h16 = ((fencPic->m_picHeight + 15) >> 4) << 4;
     numpixels[0] = w16 * h16;
     numpixels[1] = numpixels[2] = numpixels[0] >> (cache.hshift + cache.vshift);
 
     for (int list = 0; list < cache.numPredDir; list++)
     {
         WeightParam *weights = wp[list][0];
-        Frame *refPic = slice.m_refPicList[list][0];
-        Lowres& refLowres = refPic->m_lowres;
-        int diffPoc = abs(curPoc - refPic->getPOC());
+        Frame *refFrame = slice.m_refPicList[list][0];
+        Lowres& refLowres = refFrame->m_lowres;
+        int diffPoc = abs(curPoc - refFrame->m_poc);
 
         /* prepare estimates */
         float guessScale[3], fencMean[3], refMean[3];
@@ -330,17 +326,14 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refPic->m_bChromaPlanesExtended)
+                    if (!refFrame->m_bChromaExtended)
                     {
-                        refPic->m_bChromaPlanesExtended = true;
-                        TComPicYuv *refyuv = refPic->getPicYuvOrg();
-                        int stride = refyuv->getCStride();
-                        int width = refyuv->getWidth() >> cache.hshift;
-                        int height = refyuv->getHeight() >> cache.vshift;
-                        int marginX = refyuv->getChromaMarginX();
-                        int marginY = refyuv->getChromaMarginY();
-                        extendPicBorder(refyuv->getCbAddr(), stride, width, height, marginX, marginY);
-                        extendPicBorder(refyuv->getCrAddr(), stride, width, height, marginX, marginY);
+                        refFrame->m_bChromaExtended = true;
+                        PicYuv *refPic = refFrame->m_origPicYuv;
+                        int width = refPic->m_picWidth >> cache.hshift;
+                        int height = refPic->m_picHeight >> cache.vshift;
+                        extendPicBorder(refPic->m_picOrg[1], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
+                        extendPicBorder(refPic->m_picOrg[2], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
                     }
                 }
                 else
@@ -350,7 +343,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
             /* prepare inputs to weight analysis */
             pixel *orig;
             pixel *fref;
-            int    stride;
+            intptr_t stride;
             int    width, height;
             switch (plane)
             {
@@ -368,9 +361,9 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 break;
 
             case 1:
-                orig = fencYuv->getCbAddr();
-                stride = fencYuv->getCStride();
-                fref = refPic->getPicYuvOrg()->getCbAddr();
+                orig = fencPic->m_picOrg[1];
+                stride = fencPic->m_strideC;
+                fref = refFrame->m_origPicYuv->m_picOrg[1];
 
                 /* Clamp the chroma dimensions to the nearest multiple of
                  * 8x8 blocks (or 16x16 for 4:4:4) since mcChroma uses lowres
@@ -378,8 +371,8 @@ void weightAnalyse(Slice& slice, x265_param& param)
                  * potentially ignores some edge pixels, but simplifies the
                  * logic and prevents reading uninitialized pixels. Lowres
                  * planes are border extended and require no clamping. */
-                width =  ((fencYuv->getWidth()  >> 4) << 4) >> cache.hshift;
-                height = ((fencYuv->getHeight() >> 4) << 4) >> cache.vshift;
+                width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;
+                height = ((fencPic->m_picHeight >> 4) << 4) >> cache.vshift;
                 if (mvs)
                 {
                     mcChroma(mcbuf, fref, stride, mvs, cache, height, width);
@@ -388,11 +381,11 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 break;
 
             case 2:
-                fref = refPic->getPicYuvOrg()->getCrAddr();
-                orig = fencYuv->getCrAddr();
-                stride = fencYuv->getCStride();
-                width =  ((fencYuv->getWidth()  >> 4) << 4) >> cache.hshift;
-                height = ((fencYuv->getHeight() >> 4) << 4) >> cache.vshift;
+                fref = refFrame->m_origPicYuv->m_picOrg[2];
+                orig = fencPic->m_picOrg[2];
+                stride = fencPic->m_strideC;
+                width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;
+                height = ((fencPic->m_picHeight >> 4) << 4) >> cache.vshift;
                 if (mvs)
                 {
                     mcChroma(mcbuf, fref, stride, mvs, cache, height, width);
@@ -428,6 +421,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
                 if (deltaWeight > 127 || deltaWeight <= -128)
                     continue;
 
+                x265_emms();
                 int curScale = scale;
                 int curOffset = (int)(fencMean[plane] - refMean[plane] * curScale / (1 << mindenom) + 0.5f);
                 if (curOffset < -128 || curOffset > 127)
@@ -447,7 +441,7 @@ void weightAnalyse(Slice& slice, x265_param& param)
                     WeightParam wsp;
                     SET_WEIGHT(wsp, true, curScale, mindenom, off);
                     uint32_t s = weightCost(orig, fref, weightTemp, stride, cache, width, height, &wsp, !plane) +
-                        sliceHeaderCost(&wsp, lambda, !!plane);
+                                 sliceHeaderCost(&wsp, lambda, !!plane);
                     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, off, bFound, true);
 
                     /* Don't check any more offsets if the previous one had a lower cost than the current one */

@@ -29,6 +29,8 @@
 
 SECTION_RODATA 32
 
+const pb_1,        times 32 db 1
+
 const hsub_mul,    times 16 db 1, -1
 const pw_1,        times 16 dw 1
 const pw_16,       times 16 dw 16
@@ -48,9 +50,11 @@ const pb_unpackwq1, db 0,1,0,1,0,1,0,1,2,3,2,3,2,3,2,3
 const pb_unpackwq2, db 4,5,4,5,4,5,4,5,6,7,6,7,6,7,6,7
 const pw_swap,      times 2 db 6,7,4,5,2,3,0,1
 
+const pb_4,        times 16 db 4
+const pb_16,       times 16 db 16
+const pb_64,       times 16 db 64
 const pb_01,       times  8 db 0,1
 const pb_0,        times 16 db 0
-const pb_1,        times 32 db 1
 const pb_a1,       times 16 db 0xa1
 const pb_3,        times 16 db 3
 const pb_8,        times 16 db 8
@@ -73,7 +77,7 @@ const pw_ppppmmmm, dw 1,1,1,1,-1,-1,-1,-1
 const pw_ppmmppmm, dw 1,1,-1,-1,1,1,-1,-1
 const pw_pmpmpmpm, dw 1,-1,1,-1,1,-1,1,-1
 const pw_pmmpzzzz, dw 1,-1,-1,1,0,0,0,0
-const pd_1,        times 4 dd 1
+const pd_1,        times 8 dd 1
 const pd_2,        times 4 dd 2
 const pd_4,        times 4 dd 4
 const pd_8,        times 4 dd 8
@@ -86,6 +90,7 @@ const pd_512,      times 4 dd 512
 const pd_1024,     times 4 dd 1024
 const pd_2048,     times 4 dd 2048
 const pd_ffff,     times 4 dd 0xffff
+const pd_32767,    times 4 dd 32767
 const pd_n32768,   times 4 dd 0xffff8000
 const pw_ff00,     times 8 dw 0xff00
 

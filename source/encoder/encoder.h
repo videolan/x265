@@ -76,7 +76,7 @@ class Encoder : public x265_encoder
 {
 private:
 
-    int                m_pocLast;          ///< time index (POC)
+    int                m_pocLast;         // time index (POC)
     int                m_encodedFrameNum;
     int                m_outputCount;
 
@@ -93,6 +93,12 @@ private:
 
     int                m_curEncoder;
 
+    /* cached PicYuv offset arrays, shared by all instances of
+     * PicYuv created by this encoder */
+    intptr_t*          m_cuOffsetY;
+    intptr_t*          m_cuOffsetC;
+    intptr_t*          m_buOffsetY;
+    intptr_t*          m_buOffsetC;
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
@@ -116,11 +122,8 @@ public:
     PPS                m_pps;
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
+    int                m_numThreadLocalData;
 
-    uint32_t           m_quadtreeTULog2MaxSize;
-    uint32_t           m_quadtreeTULog2MinSize;
-
-    int                m_maxCuDQPDepth;
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 
@@ -130,12 +133,11 @@ public:
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
-    bool               m_bEnableRDOQ;
     bool               m_aborted;          // fatal error detected
 
     Encoder();
 
-    virtual ~Encoder();
+    ~Encoder() {}
 
     void create();
     void destroy();

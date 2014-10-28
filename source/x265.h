@@ -88,6 +88,38 @@ typedef struct x265_nal
     uint8_t* payload;
 } x265_nal;
 
+/* Stores inter (motion estimation) analysis data for a single frame */
+typedef struct x265_inter_data
+{
+    uint32_t zOrder;
+    int      ref[2];
+    int      costZero[2];
+    int16_t  mvx[2];
+    int16_t  mvy[2];
+    uint32_t depth;
+    int      poc;
+    uint32_t cuAddr;
+} x265_inter_data;
+
+/* Stores intra (motion estimation) analysis data for a single frame */
+typedef struct x265_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*     partSizes;
+    int*      poc;
+    uint32_t* cuAddr;
+} x265_intra_data;
+
+/* Stores all analysis data for a single frame */
+typedef struct x265_analysis_data
+{
+    x265_inter_data* interData;
+    x265_intra_data* intraData;
+    uint32_t         numCUsInFrame;
+    uint32_t         numPartitions;
+} x265_analysis_data;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -133,6 +165,19 @@ typedef struct x265_picture
 
     /* force quantizer for != X265_QP_AUTO */
     int     forceqp;
+
+    /* If param.analysisMode is X265_ANALYSIS_OFF this field is ignored on input
+     * and output. Else the user must call x265_alloc_analysis_data() to
+     * allocate analysis buffers for every picture passed to the encoder.
+     *
+     * On input when param.analysisMode is X265_ANALYSIS_LOAD and analysisData
+     * member pointers are valid, the encoder will use the data stored here to
+     * reduce encoder work.
+     *
+     * On output when param.analysisMode is X265_ANALYSIS_SAVE and analysisData
+     * member pointers are valid, the encoder will write output analysis into
+     * this data structure */
+    x265_analysis_data analysisData;
 
     /* new data members to this structure must be added to the end so that
      * users of x265_picture_alloc/free() can be assured of future safety */
@@ -241,6 +286,11 @@ typedef enum
 
 #define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
 
+/* Analysis options */
+#define X265_ANALYSIS_OFF  0
+#define X265_ANALYSIS_SAVE 1
+#define X265_ANALYSIS_LOAD 2
+
 typedef struct
 {
     int planes;
@@ -297,6 +347,7 @@ static const char * const x265_colmatrix_names[] = { "GBR", "bt709", "undef", ""
 static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
 static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
+static const char * const x265_analysis_names[] = { "off", "save", "load", 0 };
 
 /* x265 input parameters
  *
@@ -335,6 +386,14 @@ typedef struct x265_param
      * number of frame threads you use for each encoder, but frame parallelism
      * is generally limited by the the number of CU rows */
     int       frameNumThreads;
+
+    /* Use multiple threads to measure CU mode costs. Recommended for many core
+     * CPUs */
+    int       bDistributeModeAnalysis;
+
+    /* Use multiple threads to perform motion estimation to (ME to one reference
+     * per thread). Recommended for many core CPUs */
+    int       bDistributeMotionEstimation;
 
     /* The level of logging detail emitted by the encoder. X265_LOG_NONE to
      * X265_LOG_FULL, default is X265_LOG_INFO */
@@ -424,7 +483,8 @@ typedef struct x265_param
 
     /* Enables the emission of a user data SEI with the stream headers which
      * describes the encoder version, build info, and parameters. This is
-     * very helpful for debugging, but may interfere with regression tests. */
+     * very helpful for debugging, but may interfere with regression tests. 
+     * Default enabled */
     int       bEmitInfoSEI;
 
     /*== Coding Unit (CU) definitions ==*/
@@ -568,6 +628,9 @@ typedef struct x265_param
      * the performance but the less compression efficiency. Default is 3 */
     uint32_t  maxNumMergeCand;
 
+    /* Disable availability of temporal motion vector for AMVP */
+    int       bEnableTemporalMvp;
+
     /* Enable weighted prediction in P slices.  This enables weighting analysis
      * in the lookahead, which influences slice decisions, and enables weighting
      * analysis in the main encoder which allows P reference samples to have a
@@ -636,6 +699,12 @@ typedef struct x265_param
      * effect in presets which use RDOQ (rd-levels 4 and 5). Default 0.0 */
     double    psyRdoq;
 
+    /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
+     * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
+     * buffer and use this analysis information to reduce the amount of work
+     * the encoder must perform. Default X265_ANALYSIS_OFF */
+    int       analysisMode;
+
     /*== Coding tools ==*/
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of
@@ -669,18 +738,12 @@ typedef struct x265_param
     int       bEnableSAO;
 
     /* Note: when deblocking and SAO are both enabled, the loop filter CU lag is
-     * only one row, as they operate in series o the same row. */
+     * only one row, as they operate in series on the same row. */
 
     /* Select the method in which SAO deals with deblocking boundary pixels.  If
-     * 0 the right and bottom boundary areas are skipped. If 1, non-deblocked
-     * pixels are used entirely. Default is 0 */
-    int       saoLcuBoundary;
-
-    /* Select the scope of the SAO optimization. If 0 SAO is performed over the
-     * entire output picture at once, this can severly restrict frame
-     * parallelism so it is not recommended for many-core machines.  If 1 SAO is
-     * performed on LCUs in series. Default is 1 */
-    int       saoLcuBasedOptimization;
+     * disabled the right and bottom boundary areas are skipped. If enabled,
+     * non-deblocked pixels are used entirely. Default is disabled */
+    int       bSaoNonDeblocked;
 
     /* Generally a small signed integer which offsets the QP used to quantize
      * the Cb chroma residual (delta from luma QP specified by rate-control).
@@ -984,6 +1047,15 @@ x265_picture *x265_picture_alloc();
  *  Use x265_picture_free() to release storage for an x265_picture instance
  *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
+
+/* x265_alloc_analysis_data:
+ *  Allocate memory to hold analysis data, returns 0 on success else negative */
+int x265_alloc_analysis_data(x265_picture*);
+
+/* x265_free_analysis_data:
+ *  Use x265_free_analysis_data to release storage of members allocated by
+ *  x265_alloc_analysis_data */
+void x265_free_analysis_data(x265_picture*);
 
 /***
  * Initialize an x265_picture structure to default values. It sets the pixel

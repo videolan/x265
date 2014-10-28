@@ -25,6 +25,7 @@
 #define X265_RDCOST_H
 
 #include "common.h"
+#include "slice.h"
 
 namespace x265 {
 // private namespace
@@ -39,10 +40,28 @@ public:
     uint64_t  m_cbDistortionWeight;
     uint64_t  m_crDistortionWeight;
     uint32_t  m_psyRd;
+    int       m_qp;
 
     void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
     void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
     void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
+
+    void setQP(const Slice& slice, int qp)
+    {
+        m_qp = qp;
+
+        setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
+
+        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCbQpOffset);
+        int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
+        uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+        setCbDistortionWeight(lambdaOffset);
+
+        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCrQpOffset);
+        chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
+        lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+        setCrDistortionWeight(lambdaOffset);
+    }
 
     void setLambda(double lambda2, double lambda)
     {
@@ -50,7 +69,7 @@ public:
         m_lambda = (uint64_t)floor(256.0 * lambda);
     }
 
-    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits)
+    inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
                    "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambda2);
@@ -58,39 +77,45 @@ public:
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride) const
     {
-        return primitives.psy_cost[size](source, sstride, recon, rstride);
+        return primitives.psy_cost_pp[size](source, sstride, recon, rstride);
+    }
+
+    /* return the difference in energy between the source block and the recon block */
+    inline int psyCost(int size, int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride) const
+    {
+        return primitives.psy_cost_ss[size](source, sstride, recon, rstride);
     }
 
     /* return the RD cost of this prediction, including the effect of psy-rd */
-    inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost)
+    inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost) const
     {
         return distortion + ((m_lambda * m_psyRd * psycost) >> 16) + ((bits * m_lambda2) >> 8);
     }
 
-    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits)
+    inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
                    "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
         return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDistCb(uint32_t dist)
+    inline uint32_t scaleChromaDistCb(uint32_t dist) const
     {
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_cbDistortionWeight,
                    "scaleChromaDistCb wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_cbDistortionWeight);
         return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDistCr(uint32_t dist)
+    inline uint32_t scaleChromaDistCr(uint32_t dist) const
     {
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_crDistortionWeight,
                    "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
         return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
     }
 
-    inline uint32_t getCost(uint32_t bits)
+    inline uint32_t getCost(uint32_t bits) const
     {
         return (uint32_t)((bits * m_lambda + 128) >> 8);
     }
