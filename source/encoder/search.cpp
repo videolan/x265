@@ -2202,9 +2202,8 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     m_entropyCoder.load(m_rqt[depth].cur);
 
-    uint64_t cost = 0;
-    uint32_t bits = 0;
-    xEstimateResidualQT(interMode, cuGeom, 0, *resiYuv, depth, cost, bits, tuDepthRange);
+    Cost costs;
+    xEstimateResidualQT(interMode, cuGeom, 0, depth, *resiYuv, costs, tuDepthRange);
 
     if (!cu.m_tqBypass[0])
     {
@@ -2228,7 +2227,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
         else
             cbf0Cost = m_rdCost.calcRdCost(cbf0Dist, cbf0Bits);
 
-        if (cbf0Cost < cost)
+        if (cbf0Cost < costs.rdcost)
         {
             cu.clearCbf();
             cu.setTUDepthSubParts(0, 0, depth);
@@ -2241,7 +2240,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     /* calculate signal bits for inter/merge/skip coded CU */
     m_entropyCoder.load(m_rqt[depth].cur);
 
-    uint32_t coeffBits;
+    uint32_t coeffBits, bits;
     if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
     {
         cu.setSkipFlagSubParts(true);
@@ -2335,6 +2334,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     const uint32_t log2TrSize = g_maxLog2CUSize - depth;
     const uint32_t setCbf     = 1 << tuDepth;
 
+    /* TODO: this is replicating the logic used to build depthRange */
     bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
@@ -2457,17 +2457,16 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     }
 }
 
-uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, ShortYuv& resiYuv, uint32_t depth, uint64_t& rdCost,
-                                     uint32_t& outBits, uint32_t depthRange[2])
+void Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv,
+                                 Cost& outCosts, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
-    const Yuv* fencYuv = mode.fencYuv;
-
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "depth not matching\n");
-    const uint32_t tuDepth = depth - cu.m_cuDepth[0];
-    const uint32_t log2TrSize = g_maxLog2CUSize - depth;
-    uint32_t outDist = 0;
 
+    uint32_t tuDepth = depth - cu.m_cuDepth[0];
+    uint32_t log2TrSize = g_maxLog2CUSize - depth;
+
+    /* TODO: this is replicating the logic used to build depthRange */
     bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N));
     bool bCheckFull;
     if (bSplitFlag && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
@@ -2490,10 +2489,9 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     }
 
     // code full block
-    uint64_t singleCost = MAX_INT64;
-    uint32_t singleBits = 0;
-    uint32_t singleDist = 0;
-    uint32_t singlePsyEnergy = 0;
+    Cost fullCost;
+    fullCost.rdcost = MAX_INT64;
+
     uint8_t  cbfFlag[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, {0, 0}, {0, 0} };
     uint32_t numSig[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, {0, 0}, {0, 0} };
     uint32_t singleBitsComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
@@ -2507,6 +2505,7 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
     uint32_t trSize = 1 << log2TrSize;
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
     uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] +  trModeC) << 1);
+    const Yuv* fencYuv = mode.fencYuv;
 
     // code full block
     if (bCheckFull)
@@ -3034,19 +3033,19 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
             }
         }
 
-        singleDist += singleDistComp[TEXT_LUMA][0];
-        singlePsyEnergy += singlePsyEnergyComp[TEXT_LUMA][0];// need to check we need to add chroma also
+        fullCost.distortion += singleDistComp[TEXT_LUMA][0];
+        fullCost.energy += singlePsyEnergyComp[TEXT_LUMA][0];// need to check we need to add chroma also
         for (uint32_t subTUIndex = 0; subTUIndex < 2; subTUIndex++)
         {
-            singleDist += singleDistComp[TEXT_CHROMA_U][subTUIndex];
-            singleDist += singleDistComp[TEXT_CHROMA_V][subTUIndex];
+            fullCost.distortion += singleDistComp[TEXT_CHROMA_U][subTUIndex];
+            fullCost.distortion += singleDistComp[TEXT_CHROMA_V][subTUIndex];
         }
 
-        singleBits = m_entropyCoder.getNumberOfWrittenBits();
+        fullCost.bits = m_entropyCoder.getNumberOfWrittenBits();
         if (m_rdCost.m_psyRd)
-            singleCost = m_rdCost.calcPsyRdCost(singleDist, singleBits, singlePsyEnergy);
+            fullCost.rdcost = m_rdCost.calcPsyRdCost(fullCost.distortion, fullCost.bits, fullCost.energy);
         else
-            singleCost = m_rdCost.calcRdCost(singleDist, singleBits);
+            fullCost.rdcost = m_rdCost.calcRdCost(fullCost.distortion, fullCost.bits);
     }
 
     // code sub-blocks
@@ -3058,28 +3057,16 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
             m_entropyCoder.load(m_rqt[depth].rqtRoot);
         }
 
-        uint32_t subdivDist = 0;
-        uint32_t subdivBits = 0;
-        uint64_t subDivCost = 0;
-        uint32_t subDivPsyEnergy = 0;
+        Cost splitCost;
         const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
+        uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
         for (uint32_t i = 0; i < 4; ++i)
         {
-            mode.psyEnergy = 0;
-            subdivDist += xEstimateResidualQT(mode, cuGeom, absPartIdx + i * qPartNumSubdiv, resiYuv, depth + 1, subDivCost, subdivBits, depthRange);
-            subDivPsyEnergy += mode.psyEnergy;
-        }
-
-        uint32_t ycbf = 0;
-        uint32_t ucbf = 0;
-        uint32_t vcbf = 0;
-        for (uint32_t i = 0; i < 4; ++i)
-        {
+            xEstimateResidualQT(mode, cuGeom, absPartIdx + i * qPartNumSubdiv, depth + 1, resiYuv, splitCost, depthRange);
             ycbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_LUMA,     tuDepth + 1);
             ucbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_CHROMA_U, tuDepth + 1);
             vcbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_CHROMA_V, tuDepth + 1);
         }
-
         for (uint32_t i = 0; i < 4 * qPartNumSubdiv; ++i)
         {
             cu.m_cbf[0][absPartIdx + i] |= ycbf << tuDepth;
@@ -3095,33 +3082,33 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_U, depthRange);
         xEncodeResidualQT(cu, absPartIdx, depth, false, TEXT_CHROMA_V, depthRange);
 
-        subdivBits = m_entropyCoder.getNumberOfWrittenBits();
+        splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
 
         if (m_rdCost.m_psyRd)
-            subDivCost = m_rdCost.calcPsyRdCost(subdivDist, subdivBits, subDivPsyEnergy);
+            splitCost.rdcost = m_rdCost.calcPsyRdCost(splitCost.distortion, splitCost.bits, splitCost.energy);
         else
-            subDivCost = m_rdCost.calcRdCost(subdivDist, subdivBits);
+            splitCost.rdcost = m_rdCost.calcRdCost(splitCost.distortion, splitCost.bits);
 
         if (ycbf || ucbf || vcbf || !bCheckFull)
         {
-            if (subDivCost < singleCost)
+            if (splitCost.rdcost < fullCost.rdcost)
             {
-                rdCost += subDivCost;
-                outBits += subdivBits;
-                outDist += subdivDist;
-                mode.psyEnergy = subDivPsyEnergy;
-                return outDist;
+                outCosts.distortion += splitCost.distortion;
+                outCosts.rdcost     += splitCost.rdcost;
+                outCosts.bits       += splitCost.bits;
+                outCosts.energy     += splitCost.energy;
+                return;
             }
             else
-                mode.psyEnergy = singlePsyEnergy;
+                outCosts.energy     += splitCost.energy;
         }
 
         cu.setTransformSkipSubParts(bestTransformMode[TEXT_LUMA][0], TEXT_LUMA, absPartIdx, depth);
         if (bCodeChroma)
         {
-            const uint32_t numberOfSections  = splitIntoSubTUs ? 2 : 1;
+            const uint32_t numberOfSections = splitIntoSubTUs ? 2 : 1;
 
-            uint32_t partIdxesPerSubTU  = absPartIdxStep >> (splitIntoSubTUs ? 1 : 0);
+            uint32_t partIdxesPerSubTU = absPartIdxStep >> (splitIntoSubTUs ? 1 : 0);
             for (uint32_t subTUIndex = 0; subTUIndex < numberOfSections; subTUIndex++)
             {
                 const uint32_t  subTUPartIdx = absPartIdx + (subTUIndex * partIdxesPerSubTU);
@@ -3134,18 +3121,13 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         m_entropyCoder.load(m_rqt[depth].rqtTest);
     }
 
-    rdCost += singleCost;
-    outBits += singleBits;
-    outDist += singleDist;
-    mode.psyEnergy = singlePsyEnergy;
-
     cu.setTUDepthSubParts(tuDepth, absPartIdx, depth);
     cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << tuDepth, TEXT_LUMA, absPartIdx, depth);
 
     if (bCodeChroma)
     {
-        const uint32_t numberOfSections  = splitIntoSubTUs ? 2 : 1;
-        uint32_t partIdxesPerSubTU  = absPartIdxStep >> (splitIntoSubTUs ? 1 : 0);
+        uint32_t numberOfSections = splitIntoSubTUs ? 2 : 1;
+        uint32_t partIdxesPerSubTU = absPartIdxStep >> (splitIntoSubTUs ? 1 : 0);
 
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
@@ -3164,7 +3146,10 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
         }
     }
 
-    return outDist;
+    outCosts.distortion += fullCost.distortion;
+    outCosts.rdcost     += fullCost.rdcost;
+    outCosts.bits       += fullCost.bits;
+    outCosts.energy     += fullCost.energy;
 }
 
 void Search::xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2])

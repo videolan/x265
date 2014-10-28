@@ -212,8 +212,7 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
-    uint32_t xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, ShortYuv& inResiYuv, uint32_t depth,
-                                 uint64_t &rdCost, uint32_t &outBits, uint32_t tuDepthRange[2]);
+    void     xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& inResiYuv, Cost& costs, uint32_t tuDepthRange[2]);
 
     void     xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
 
