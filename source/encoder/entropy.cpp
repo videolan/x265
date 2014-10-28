@@ -575,7 +575,10 @@ void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartI
     codePredInfo(cu, absPartIdx);
 
     uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, absPartIdx);
+    if (cu.isIntra(absPartIdx))
+        cu.getIntraTUQtDepthRange(tuDepthRange, absPartIdx);
+    else
+        cu.getInterTUQtDepthRange(tuDepthRange, absPartIdx);
 
     // Encode Coefficients, allow codeCoeff() to modify bEncodeDQP
     codeCoeff(cu, absPartIdx, depth, bEncodeDQP, tuDepthRange);

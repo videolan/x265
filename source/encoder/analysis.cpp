@@ -1549,7 +1549,7 @@ void Analysis::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     m_quant.setQPforQuant(cu);
 
     uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+    cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
     m_entropyCoder.load(m_rqt[cuGeom.depth].cur);
 
@@ -1609,12 +1609,12 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     cu.copyFromPic(ctu, cuGeom);
     m_quant.setQPforQuant(cu);
 
-    uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
-
     if (cu.m_predMode[0] == MODE_INTRA)
     {
         uint32_t initTrDepth = cu.m_partSize[0] == SIZE_2Nx2N ? 0 : 1;
+
+        uint32_t tuDepthRange[2];
+        cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
         residualTransformQuantIntra(*bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
         getBestIntraModeChroma(*bestMode, cuGeom);
@@ -1643,6 +1643,9 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[2], resiYuv.m_csize,
                                         fencYuv.getCrAddr(absPartIdx), predYuv.getCrAddr(absPartIdx),
                                         fencYuv.m_csize, predYuv.m_csize);
+
+        uint32_t tuDepthRange[2];
+        cu.getInterTUQtDepthRange(tuDepthRange, 0);
 
         residualTransformQuantInter(*bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
 

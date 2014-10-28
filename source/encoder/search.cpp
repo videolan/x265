@@ -1167,7 +1167,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     cu.setPredModeSubParts(MODE_INTRA);
 
     uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+    cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
     intraMode.initCosts();
     intraMode.distortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
@@ -2198,7 +2198,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     resiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
+    cu.getInterTUQtDepthRange(tuDepthRange, 0);
 
     m_entropyCoder.load(m_rqt[depth].cur);
 
@@ -2299,11 +2299,11 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
 
     m_quant.setQPforQuant(mode.cu);
 
-    uint32_t tuDepthRange[2];
-    cu.getQuadtreeTULog2MinSizeInCU(tuDepthRange, 0);
-
     if (cu.m_predMode[0] == MODE_INTER)
     {
+        uint32_t tuDepthRange[2];
+        cu.getInterTUQtDepthRange(tuDepthRange, 0);
+
         residualTransformQuantInter(mode, cuGeom, 0, cu.m_cuDepth[0], tuDepthRange);
         if (cu.getQtRootCbf(0))
             mode.reconYuv.addClip(mode.predYuv, m_rqt[cuGeom.depth].tmpResiYuv, cu.m_log2CUSize[0]);
@@ -2316,7 +2316,10 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
     }
     else if (cu.m_predMode[0] == MODE_INTRA)
     {
-        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_2Nx2N ? 0 : 1;
+        uint32_t tuDepthRange[2];
+        cu.getIntraTUQtDepthRange(tuDepthRange, 0);
+
+        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN;
         residualTransformQuantIntra(mode, cuGeom, initTrDepth, 0, tuDepthRange);
         getBestIntraModeChroma(mode, cuGeom);
         residualQTIntraChroma(mode, cuGeom, 0, 0);

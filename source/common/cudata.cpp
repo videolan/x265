@@ -909,18 +909,27 @@ uint32_t CUData::getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const
     return ctx;
 }
 
-void CUData::getQuadtreeTULog2MinSizeInCU(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
+void CUData::getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
 {
     uint32_t log2CUSize = m_log2CUSize[absPartIdx];
-    PartSize partSize   = (PartSize)m_partSize[absPartIdx];
-    uint32_t quadtreeTUMaxDepth = m_predMode[absPartIdx] == MODE_INTRA ? m_slice->m_sps->quadtreeTUMaxDepthIntra : m_slice->m_sps->quadtreeTUMaxDepthInter;
-    uint32_t intraSplitFlag = (m_predMode[absPartIdx] == MODE_INTRA && partSize == SIZE_NxN) ? 1 : 0;
-    uint32_t interSplitFlag = ((quadtreeTUMaxDepth == 1) && (m_predMode[absPartIdx] == MODE_INTER) && (partSize != SIZE_2Nx2N));
+    uint32_t splitFlag = m_partSize[absPartIdx] == SIZE_NxN;
 
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
 
-    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (quadtreeTUMaxDepth - 1 + interSplitFlag + intraSplitFlag), tuDepthRange[1]));
+    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (m_slice->m_sps->quadtreeTUMaxDepthIntra - 1 + splitFlag), tuDepthRange[1]));
+}
+
+void CUData::getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
+{
+    uint32_t log2CUSize = m_log2CUSize[absPartIdx];
+    uint32_t quadtreeTUMaxDepth = m_slice->m_sps->quadtreeTUMaxDepthInter;
+    uint32_t splitFlag = quadtreeTUMaxDepth == 1 && m_partSize[absPartIdx] != SIZE_2Nx2N;
+
+    tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
+    tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
+
+    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (quadtreeTUMaxDepth - 1 + splitFlag), tuDepthRange[1]));
 }
 
 uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
