@@ -67,7 +67,6 @@ Encoder::Encoder()
     m_numLumaWPBiFrames = 0;
     m_numChromaWPBiFrames = 0;
     m_lookahead = NULL;
-    m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
     m_exportedPic = NULL;
@@ -82,6 +81,8 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_numThreadLocalData = 0;
     m_analysisFile = NULL;
+    for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
+        m_frameEncoder[i] = NULL;
 }
 
 void Encoder::create()
@@ -152,9 +153,11 @@ void Encoder::create()
              p->bEnableWavefront ? rows : 0, p->frameNumThreads, poolThreadCount,
              p->bDistributeMotionEstimation ? " / pme" : "", p->bDistributeModeAnalysis ? " / pmode" : "");
 
-    m_frameEncoder = new FrameEncoder[m_param->frameNumThreads];
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        m_frameEncoder[i].setThreadPool(m_threadPool);
+    {
+        m_frameEncoder[i] = new FrameEncoder;
+        m_frameEncoder[i]->setThreadPool(m_threadPool);
+    }
 
     if (!m_scalingList.init())
     {
@@ -184,7 +187,7 @@ void Encoder::create()
 
     if (!m_param->bEnableWavefront)
         for (int i = 0; i < m_param->frameNumThreads; i++)
-            m_frameEncoder[i].m_tld = &m_threadLocalData[poolThreadCount + i];
+            m_frameEncoder[i]->m_tld = &m_threadLocalData[poolThreadCount + i];
 
     m_lookahead = new Lookahead(m_param, m_threadPool);
     m_dpb = new DPB(m_param);
@@ -230,17 +233,14 @@ void Encoder::create()
         }
     }
 
-    if (m_frameEncoder)
+    int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+    for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
-        int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
-        for (int i = 0; i < m_param->frameNumThreads; i++)
+        if (!m_frameEncoder[i]->init(this, numRows, numCols, i))
         {
-            if (!m_frameEncoder[i].init(this, numRows, numCols, i))
-            {
-                x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
-                m_aborted = true;
-            }
+            x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
+            m_aborted = true;
         }
     }
 
@@ -283,16 +283,11 @@ void Encoder::destroy()
     if (m_rateControl)
         m_rateControl->terminate(); // unblock all blocked RC calls
 
-    if (m_frameEncoder)
+    for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        for (int i = 0; i < m_param->frameNumThreads; i++)
-        {
-            // Ensure frame encoder is idle before destroying it
-            m_frameEncoder[i].getEncodedPicture(m_nalList);
-            m_frameEncoder[i].destroy();
-        }
-
-        delete [] m_frameEncoder;
+        // Ensure frame encoder is idle before destroying it
+        m_frameEncoder[i]->getEncodedPicture(m_nalList);
+        m_frameEncoder[i]->destroy();
     }
 
     for (int i = 0; i < m_numThreadLocalData; i++)
@@ -340,7 +335,7 @@ void Encoder::updateVbvPlan(RateControl* rc)
 {
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        FrameEncoder *encoder = &m_frameEncoder[i];
+        FrameEncoder *encoder = m_frameEncoder[i];
         if (encoder->m_rce.isActive && encoder->m_rce.poc != rc->m_curSlice->m_poc)
         {
             int64_t bits = (int64_t) X265_MAX(encoder->m_rce.frameSizeEstimated, encoder->m_rce.frameSizePlanned);
@@ -497,7 +492,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     else
         m_lookahead->flush();
 
-    FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
+    FrameEncoder *curEncoder = m_frameEncoder[m_curEncoder];
     m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
     int ret = 0;
 
@@ -816,7 +811,7 @@ void Encoder::printSummary()
     /* Summarize stats from all frame encoders */
     CUStats cuStats;
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        cuStats.accumulate(m_frameEncoder[i].m_cuStats);
+        cuStats.accumulate(m_frameEncoder[i]->m_cuStats);
     
     if (!cuStats.totalCTUTime)
         return;
@@ -938,7 +933,7 @@ void Encoder::printSummary()
         {
             for (int i = 0; i < m_param->frameNumThreads; i++)
             {
-                StatisticLog& enclog = m_frameEncoder[i].m_sliceTypeLog[sliceType];
+                StatisticLog& enclog = m_frameEncoder[i]->m_sliceTypeLog[sliceType];
                 if (!depth)
                     finalLog.totalCu += enclog.totalCu;
                 finalLog.cntIntra[depth] += enclog.cntIntra[depth];
