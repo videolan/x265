@@ -120,7 +120,7 @@ public:
     uint32_t getNumberOfWrittenBits()
     {
         X265_CHECK(!m_bitIf, "bit counting mode expected\n");
-        return uint32_t(m_fracBits >> 15);
+        return (uint32_t)(m_fracBits >> 15);
     }
 
 #if CHECKED_BUILD || _DEBUG
@@ -177,6 +177,7 @@ public:
     void codeCoeff(const CUData& cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t depthRange[2]);
     void codeCoeffNxN(const CUData& cu, const coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
+    uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const;
     void codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(const CUData& cu, uint32_t absPartIdx, uint32_t *chromaDirMode);
 
