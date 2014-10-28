@@ -615,7 +615,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             if (m_param->bEnableRectInter)
             {
                 checkBestMode(md.pred[PRED_Nx2N], depth);
-                checkBestMode(md.pred[PRED_Nx2N], depth);
+                checkBestMode(md.pred[PRED_2NxN], depth);
             }
 
             if (bTryAmp)
