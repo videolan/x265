@@ -33,6 +33,7 @@
 namespace x265 {
 
 class CUData;
+class Slice;
 struct CUGeom;
 
 class Predict

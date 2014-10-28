@@ -26,6 +26,7 @@
 #include "common.h"
 #include "param.h"
 #include "frame.h"
+#include "framedata.h"
 #include "picyuv.h"
 
 #include "encoder.h"

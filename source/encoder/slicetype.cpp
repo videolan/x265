@@ -24,6 +24,7 @@
 
 #include "common.h"
 #include "frame.h"
+#include "framedata.h"
 #include "picyuv.h"
 #include "primitives.h"
 #include "lowres.h"

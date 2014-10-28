@@ -25,15 +25,15 @@
 #define X265_FRAME_H
 
 #include "common.h"
-#include "framedata.h"
 #include "lowres.h"
 #include "threading.h"
 
 namespace x265 {
 // private namespace
 
-class Encoder;
+class FrameData;
 class PicYuv;
+struct SPS;
 
 #define IS_REFERENCED(frame) (frame->m_lowres.sliceType != X265_TYPE_B) 
 

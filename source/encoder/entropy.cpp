@@ -22,6 +22,7 @@
 *****************************************************************************/
 
 #include "common.h"
+#include "framedata.h"
 #include "scalinglist.h"
 #include "quant.h"
 #include "contexts.h"

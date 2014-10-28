@@ -24,6 +24,8 @@
 #ifndef X265_SLICETYPE_H
 #define X265_SLICETYPE_H
 
+#include "common.h"
+#include "slice.h"
 #include "motion.h"
 #include "piclist.h"
 #include "wavefront.h"
@@ -33,6 +35,7 @@ namespace x265 {
 
 struct Lowres;
 class Frame;
+class Encoder;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
@@ -103,7 +106,7 @@ public:
     Lowres         **m_curframes;
 
     ReferencePlanes  m_weightedRef;
-    WeightParam   m_w;
+    WeightParam      m_w;
 
     int              m_paddedLines;     // number of lines in padded frame
     int              m_widthInCU;       // width of lowres frame in downscale CUs

@@ -22,6 +22,8 @@
 *****************************************************************************/
 
 #include "common.h"
+#include "slice.h"
+#include "framedata.h"
 #include "picyuv.h"
 #include "predict.h"
 #include "primitives.h"

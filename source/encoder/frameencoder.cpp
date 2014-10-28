@@ -23,9 +23,13 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "PPA/ppa.h"
+#include "common.h"
+#include "frame.h"
+#include "framedata.h"
 #include "wavefront.h"
 #include "param.h"
+
+#include "PPA/ppa.h"
 
 #include "encoder.h"
 #include "frameencoder.h"

@@ -23,9 +23,11 @@
 *****************************************************************************/
 
 #include "common.h"
+#include "frame.h"
+#include "framedata.h"
+#include "picyuv.h"
 #include "primitives.h"
 #include "threading.h"
-#include "picyuv.h"
 
 #include "analysis.h"
 #include "rdcost.h"

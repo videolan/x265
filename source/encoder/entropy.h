@@ -36,6 +36,7 @@ namespace x265 {
 struct SaoCtuParam;
 struct EstBitsSbac;
 class CUData;
+struct CUGeom;
 class ScalingList;
 
 enum SplitType

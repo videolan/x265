@@ -24,7 +24,7 @@
 #include "common.h"
 #include "primitives.h"
 #include "quant.h"
-#include "frame.h"
+#include "framedata.h"
 #include "entropy.h"
 #include "yuv.h"
 #include "cudata.h"

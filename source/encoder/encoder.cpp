@@ -26,6 +26,7 @@
 #include "threadpool.h"
 #include "param.h"
 #include "frame.h"
+#include "framedata.h"
 #include "picyuv.h"
 
 #include "bitcost.h"
