@@ -3170,6 +3170,8 @@ uint32_t Search::xEstimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t 
 void Search::xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2])
 {
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "depth not matching\n");
+    X265_CHECK(cu.m_predMode[absPartIdx] != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
+
     const uint32_t curTuDepth  = depth - cu.m_cuDepth[0];
     const uint32_t tuDepth     = cu.m_tuDepth[absPartIdx];
     const bool     bSubdiv     = curTuDepth != tuDepth;
@@ -3181,8 +3183,6 @@ void Search::xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t d
 
     if (bSubdivAndCbf && log2TrSize <= depthRange[1] && log2TrSize > depthRange[0])
         m_entropyCoder.codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
-
-    X265_CHECK(cu.m_predMode[absPartIdx] != MODE_INTRA, "xEncodeResidualQT() with intra block\n");
 
     bool mCodeAll = true;
     uint32_t trWidthC  = 1 << log2TrSizeC;
@@ -3212,12 +3212,12 @@ void Search::xEncodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t d
 
     if (!bSubdiv)
     {
-        //Luma
+        // Luma
         const uint32_t qtLayer = log2TrSize - 2;
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
         coeff_t* coeffCurY = m_rqt[qtLayer].coeffRQT[0] + coeffOffsetY;
 
-        //Chroma
+        // Chroma
         bool bCodeChroma = true;
         uint32_t trModeC = tuDepth;
         if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
