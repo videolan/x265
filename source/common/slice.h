@@ -232,6 +232,7 @@ struct SPS
     int      numReorderPics;
 
     bool     bUseStrongIntraSmoothing; // use param
+    bool     bTemporalMVPEnabled;
 
     Window   conformanceWindow;
     VUI      vuiParameters;

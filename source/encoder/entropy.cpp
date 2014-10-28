@@ -124,7 +124,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_UVLC(0, "num_short_term_ref_pic_sets");
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
-    WRITE_FLAG(1, "sps_temporal_mvp_enable_flag");
+    WRITE_FLAG(sps.bTemporalMVPEnabled, "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
@@ -402,7 +402,8 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
         codeShortTermRefPicSet(slice.m_rps);
 
-        WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
+        if (slice.m_sps->bTemporalMVPEnabled)
+            WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
     const SAOParam *saoParam = encData.m_saoParam;
     if (slice.m_sps->bUseSAO)
@@ -437,7 +438,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
     if (slice.isInterB())
         WRITE_FLAG(0, "mvd_l1_zero_flag");
 
-    // TMVP always enabled
+    if (slice.m_sps->bTemporalMVPEnabled)
     {
         if (slice.m_sliceType == B_SLICE)
             WRITE_FLAG(slice.m_colFromL0Flag, "collocated_from_l0_flag");

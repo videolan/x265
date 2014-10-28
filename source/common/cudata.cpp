@@ -1534,7 +1534,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 return maxNumMergeCand;
         }
     }
-    // TMVP always enabled
+    if (m_slice->m_sps->bTemporalMVPEnabled)
     {
         MV colmv;
         uint32_t partIdxRB;
@@ -1763,7 +1763,7 @@ int CUData::fillMvpCand(uint32_t partIdx, uint32_t partAddr, int picList, int re
             return numMvc;
     }
 
-    // TMVP always enabled
+    if (m_slice->m_sps->bTemporalMVPEnabled)
     {
         uint32_t absPartAddr = m_absIdxInCTU + partAddr;
         MV colmv;

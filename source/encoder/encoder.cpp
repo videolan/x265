@@ -1223,6 +1223,7 @@ void Encoder::initSPS(SPS *sps)
     sps->numReorderPics = m_vps.numReorderPics;
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
+    sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
 
     VUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;

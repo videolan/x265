@@ -628,6 +628,9 @@ typedef struct x265_param
      * the performance but the less compression efficiency. Default is 3 */
     uint32_t  maxNumMergeCand;
 
+    /* Disable availability of temporal motion vector for AMVP */
+    int       bEnableTemporalMvp;
+
     /* Enable weighted prediction in P slices.  This enables weighting analysis
      * in the lookahead, which influences slice decisions, and enables weighting
      * analysis in the main encoder which allows P reference samples to have a

@@ -161,6 +161,7 @@ void x265_param_default(x265_param *param)
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 0;
     param->maxNumReferences = 3;
+    param->bEnableTemporalMvp = 1;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -1161,6 +1162,7 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bIntraInBFrames, "b-intra");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
+    TOOLOPT(param->bEnableTemporalMvp, "tmvp");
     if (param->bEnableTransformSkip)
         fprintf(stderr, "tskip%s ", param->bEnableTSkipFast ? "-fast" : "");
     TOOLOPT(param->bCULossless, "cu-lossless");
