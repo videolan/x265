@@ -1442,10 +1442,8 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
      *  pred[0]          - mode probable, least cost
      *  pred[1], pred[2] - less probable, slightly more cost
      *  non-mpm modes    - all cost the same (rbits) */
-    uint32_t preds[3];
-    cu.getIntraDirLumaPredictor(absPartIdx, preds);
-
     uint64_t mpms;
+    uint32_t preds[3];
     uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
     m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
