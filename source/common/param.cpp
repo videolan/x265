@@ -882,7 +882,7 @@ int x265_check_params(x265_param *param)
         return check_failed;
 
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t tuQTMaxLog2Size = maxLog2CUSize - 1;
+    uint32_t tuQTMaxLog2Size = X265_MIN(maxLog2CUSize, 5);
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
     /* These checks might be temporary */

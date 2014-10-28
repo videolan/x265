@@ -87,7 +87,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
      * the coeffRQT and reconQtYuv are allocated to the max CU size at every depth. The parts
      * which are reconstructed at each depth are valid. At the end, the transform depth table
      * is walked and the coeff and recon at the correct depths are collected */
-    for (uint32_t i = 0; i < m_numLayers; i++)
+    for (uint32_t i = 0; i <= m_numLayers; i++)
     {
         CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL + sizeC * 2);
         m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[0] + sizeL;
@@ -121,7 +121,7 @@ fail:
 
 Search::~Search()
 {
-    for (uint32_t i = 0; i < m_numLayers; i++)
+    for (uint32_t i = 0; i <= m_numLayers; i++)
     {
         X265_FREE(m_rqt[i].coeffRQT[0]);
         m_rqt[i].reconQtYuv.destroy();

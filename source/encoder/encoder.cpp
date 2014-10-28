@@ -1209,7 +1209,7 @@ void Encoder::initSPS(SPS *sps)
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;
 
-    sps->quadtreeTULog2MaxSize = g_log2Size[m_param->maxCUSize] - 1;
+    sps->quadtreeTULog2MaxSize = X265_MIN(g_maxLog2CUSize, 5);
     sps->quadtreeTULog2MinSize = 2;
     sps->quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
     sps->quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
