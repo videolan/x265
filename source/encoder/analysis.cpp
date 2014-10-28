@@ -538,15 +538,13 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         /* the master worker thread (this one) does merge analysis. By doing
          * merge after all the other jobs are at least started, we usually avoid
          * blocking on another thread */
+
         if (m_param->rdLevel <= 4)
-            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-        else
-            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-
-        m_modeCompletionEvent.wait();
-
-        if (m_param->rdLevel < 5)
         {
+            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+
+            m_modeCompletionEvent.wait();
+
             /* select best inter mode based on sa8d cost */
             Mode *bestInter = &md.pred[PRED_2Nx2N];
 
@@ -610,6 +608,9 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         }
         else
         {
+            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+            m_modeCompletionEvent.wait();
+
             checkBestMode(md.pred[PRED_2Nx2N], depth);
 
             if (m_param->bEnableRectInter)
