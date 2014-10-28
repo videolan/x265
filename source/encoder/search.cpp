@@ -1282,7 +1282,6 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
             uint64_t mpms;
             uint32_t preds[3];
             uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
-            m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
             pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
             uint64_t modeCosts[35];
@@ -3220,17 +3219,8 @@ uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t d
     for (int i = 0; i < 3; ++i)
         mpms |= ((uint64_t)1 << preds[i]);
 
-    uint32_t mode = 34;
-    while (mpms & ((uint64_t)1 << mode))
-        --mode;
-
-    cu.m_lumaIntraDir[absPartIdx] = (uint8_t)mode;
-
-    // Reload only contexts required for coding intra mode information
     m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
-    m_entropyCoder.resetBits();
-    m_entropyCoder.codeIntraDirLumaAng(cu, absPartIdx, false);
-    return m_entropyCoder.getNumberOfWrittenBits();
+    return m_entropyCoder.bitsIntraModeNonMPM();
 }
 
 /* swap the current mode/cost with the mode with the highest cost in the
