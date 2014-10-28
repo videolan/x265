@@ -30,7 +30,6 @@
 #include "lowres.h"
 #include "mv.h"
 
-#include "encoder.h"
 #include "slicetype.h"
 #include "motion.h"
 #include "ratecontrol.h"
@@ -56,13 +55,12 @@ static inline void median_mv(MV &dst, MV a, MV b, MV c)
     dst.y = median(a.y, b.y, c.y);
 }
 
-Lookahead::Lookahead(x265_param *param, ThreadPool* pool, Encoder* enc)
+Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     : JobProvider(pool)
     , m_est(pool)
 {
     m_bReady = 0;
     m_param = param;
-    m_top = enc;
     m_lastKeyframe = -m_param->keyframeMax;
     m_lastNonB = NULL;
     m_bFilling = true;
@@ -300,7 +298,6 @@ void Lookahead::slicetypeDecide()
 
     memset(frames, 0, sizeof(frames));
     memset(list, 0, sizeof(list));
-    int numFrames = 0;
     {
         Frame *curFrame = m_inputQueue.first();
         int j;
@@ -310,7 +307,6 @@ void Lookahead::slicetypeDecide()
             list[j] = curFrame;
             curFrame = curFrame->m_next;
         }
-        numFrames = j;
 
         curFrame = m_inputQueue.first();
         frames[0] = m_lastNonB;
@@ -329,13 +325,7 @@ void Lookahead::slicetypeDecide()
     if (!m_est.m_rows && list[0])
         m_est.init(m_param, list[0]);
 
-    if (m_param->rc.bStatRead)
-    {
-        /* Use the frame types from the first pass */
-        for (int i = 0; i < numFrames; i++)
-            list[i]->m_lowres.sliceType = m_top->m_rateControl->rateControlSliceType(list[i]->m_poc);
-    }
-    else if (m_lastNonB &&
+    if (m_lastNonB && !m_param->rc.bStatRead &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||
          m_param->rc.cuTree || m_param->scenecutThreshold ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))

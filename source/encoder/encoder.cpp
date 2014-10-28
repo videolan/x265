@@ -181,7 +181,7 @@ void Encoder::create()
         for (int i = 0; i < m_param->frameNumThreads; i++)
             m_frameEncoder[i].m_tld = &m_threadLocalData[poolThreadCount + i];
 
-    m_lookahead = new Lookahead(m_param, m_threadPool, this);
+    m_lookahead = new Lookahead(m_param, m_threadPool);
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(m_param);
 
@@ -434,7 +434,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 m_rateControl->calcAdaptiveQuantFrame(inFrame);
         }
 
-        m_lookahead->addPicture(inFrame, pic_in->sliceType);
+        /* Use the frame types from the first pass, if available */
+        int sliceType = (m_param->rc.bStatRead) ? m_rateControl->rateControlSliceType(inFrame->m_poc) : pic_in->sliceType;
+        m_lookahead->addPicture(inFrame, sliceType);
         m_numDelayedPic++;
     }
     else

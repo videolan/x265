@@ -35,7 +35,6 @@ namespace x265 {
 
 struct Lowres;
 class Frame;
-class Encoder;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
@@ -129,7 +128,7 @@ class Lookahead : public JobProvider
 {
 public:
 
-    Lookahead(x265_param *param, ThreadPool *pool, Encoder* enc);
+    Lookahead(x265_param *param, ThreadPool *pool);
     ~Lookahead();
     void init();
     void destroy();
@@ -162,7 +161,6 @@ protected:
     volatile int  m_bReady;
     volatile bool m_bFilling;
     volatile bool m_bFlushed;
-    Encoder      *m_top;
     bool findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */
