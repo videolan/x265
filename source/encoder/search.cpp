@@ -2326,34 +2326,25 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
     }
 }
 
-void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, const uint32_t depth, uint32_t depthRange[2])
+void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
-    ShortYuv* resiYuv = &m_rqt[cuGeom.depth].tmpResiYuv;
-    const Yuv* fencYuv = mode.fencYuv;
-
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "invalid depth\n");
-    const uint32_t tuDepth = depth - cu.m_cuDepth[0];
-    const uint32_t log2TrSize = g_maxLog2CUSize - depth;
-    const uint32_t setCbf     = 1 << tuDepth;
 
-    /* TODO: this is replicating the logic used to build depthRange */
-    bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N));
-    bool bCheckFull;
-    if (bSplitFlag && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
+    uint32_t log2TrSize = g_maxLog2CUSize - depth;
+    uint32_t tuDepth = depth - cu.m_cuDepth[0];
+
+    bool bCheckFull = log2TrSize <= depthRange[1];
+    if (cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
         bCheckFull = false;
-    else
-        bCheckFull = log2TrSize <= depthRange[1];
-    const bool bCheckSplit = log2TrSize > depthRange[0];
-    X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
 
-    // code full block
     if (bCheckFull)
     {
+        // code full block
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
         bool bCodeChroma = true;
         uint32_t trModeC = tuDepth;
-        if ((log2TrSize == 2) && !(m_csp == X265_CSP_I444))
+        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
         {
             log2TrSizeC++;
             trModeC--;
@@ -2361,67 +2352,83 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
             bCodeChroma = ((absPartIdx & (qpdiv - 1)) == 0);
         }
 
-        const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
         uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] +  trModeC) << 1);
+        uint32_t setCbf = 1 << tuDepth;
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
-        coeff_t *coeffCurY = cu.m_trCoeff[0]  + coeffOffsetY;
-        coeff_t *coeffCurU = cu.m_trCoeff[1] + coeffOffsetC;
-        coeff_t *coeffCurV = cu.m_trCoeff[2] + coeffOffsetC;
+        coeff_t *coeffCurY = cu.m_trCoeff[0] + coeffOffsetY;
 
         uint32_t sizeIdx  = log2TrSize  - 2;
-        uint32_t sizeIdxC = log2TrSizeC - 2;
-        cu.setTUDepthSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
 
+        cu.setTUDepthSubParts(depth - cu.m_cuDepth[0], absPartIdx, depth);
         cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
 
-        int16_t *curResiY = resiYuv->getLumaAddr(absPartIdx);
-        const uint32_t strideResiY = resiYuv->m_size;
-        const uint32_t strideResiC = resiYuv->m_csize;
+        ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
+        const Yuv* fencYuv = mode.fencYuv;
+
+        int16_t *curResiY = resiYuv.getLumaAddr(absPartIdx);
+        uint32_t strideResiY = resiYuv.m_size;
 
         pixel *fenc = const_cast<pixel*>(fencYuv->getLumaAddr(absPartIdx));
         uint32_t numSigY = m_quant.transformNxN(cu, fenc, fencYuv->m_size, curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, absPartIdx, false);
 
-        cu.setCbfSubParts(numSigY ? setCbf : 0, TEXT_LUMA, absPartIdx, depth);
-
         if (numSigY)
+        {
             m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSigY);
+            cu.setCbfSubParts(setCbf, TEXT_LUMA, absPartIdx, depth);
+        }
         else
+        {
             primitives.blockfill_s[sizeIdx](curResiY, strideResiY, 0);
+            cu.setCbfSubParts(0, TEXT_LUMA, absPartIdx, depth);
+        }
 
         if (bCodeChroma)
         {
-            TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
+            uint32_t sizeIdxC = log2TrSizeC - 2;
+            uint32_t strideResiC = resiYuv.m_csize;
 
+            uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
+            coeff_t *coeffCurU = cu.m_trCoeff[1] + coeffOffsetC;
+            coeff_t *coeffCurV = cu.m_trCoeff[2] + coeffOffsetC;
+            bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
+
+            TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
             do
             {
                 uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
                 uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
 
-                int16_t *curResiU = resiYuv->getCbAddr(absPartIdxC);
-                int16_t *curResiV = resiYuv->getCrAddr(absPartIdxC);
-
                 cu.setTransformSkipPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 cu.setTransformSkipPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
 
-                pixel *fencCb = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
-                pixel *fencCr = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
+                int16_t* curResiU = resiYuv.getCbAddr(absPartIdxC);
+                pixel*   fencCb = const_cast<pixel*>(fencYuv->getCbAddr(absPartIdxC));
                 uint32_t numSigU = m_quant.transformNxN(cu, fencCb, fencYuv->m_csize, curResiU, strideResiC, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, absPartIdxC, false);
-                uint32_t numSigV = m_quant.transformNxN(cu, fencCr, fencYuv->m_csize, curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
-
-                cu.setCbfPartRange(numSigU ? setCbf : 0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
-                cu.setCbfPartRange(numSigV ? setCbf : 0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
-
                 if (numSigU)
+                {
                     m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], curResiU, strideResiC, coeffCurU + subTUOffset, log2TrSizeC, TEXT_CHROMA_U, false, false, numSigU);
+                    cu.setCbfPartRange(setCbf, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
+                }
                 else
+                {
                     primitives.blockfill_s[sizeIdxC](curResiU, strideResiC, 0);
+                    cu.setCbfPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
+                }
 
+                int16_t* curResiV = resiYuv.getCrAddr(absPartIdxC);
+                pixel*   fencCr = const_cast<pixel*>(fencYuv->getCrAddr(absPartIdxC));
+                uint32_t numSigV = m_quant.transformNxN(cu, fencCr, fencYuv->m_csize, curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, absPartIdxC, false);
                 if (numSigV)
+                {
                     m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], curResiV, strideResiC, coeffCurV + subTUOffset, log2TrSizeC, TEXT_CHROMA_V, false, false, numSigV);
+                    cu.setCbfPartRange(setCbf, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
+                }
                 else
+                {
                     primitives.blockfill_s[sizeIdxC](curResiV, strideResiC, 0);
+                    cu.setCbfPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
+                }
             }
             while (tuIterator.isNextSection());
 
@@ -2431,31 +2438,25 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
             }
         }
-        return;
     }
-
-    // code sub-blocks
-    if (bCheckSplit && !bCheckFull)
+    else
     {
-        const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
-        for (uint32_t i = 0; i < 4; ++i)
-            residualTransformQuantInter(mode, cuGeom, absPartIdx + i * qPartNumSubdiv, depth + 1, depthRange);
+        X265_CHECK(log2TrSize > depthRange[0], "residualTransformQuantInter recursion check failure\n");
 
-        uint32_t ycbf = 0;
-        uint32_t ucbf = 0;
-        uint32_t vcbf = 0;
-        for (uint32_t i = 0; i < 4; ++i)
+        const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
+        uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
+        for (uint32_t i = 0; i < 4; i++)
         {
-            ycbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_LUMA,     tuDepth + 1);
+            residualTransformQuantInter(mode, cuGeom, absPartIdx + i * qPartNumSubdiv, depth + 1, depthRange);
+            ycbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_LUMA, tuDepth + 1);
             ucbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_CHROMA_U, tuDepth + 1);
             vcbf |= cu.getCbf(absPartIdx + i * qPartNumSubdiv, TEXT_CHROMA_V, tuDepth + 1);
         }
-
-        for (uint32_t i = 0; i < 4 * qPartNumSubdiv; ++i)
+        for (uint32_t i = 0; i < 4 * qPartNumSubdiv; i++)
         {
-            cu.m_cbf[0][absPartIdx + i] |= ycbf << tuDepth;
-            cu.m_cbf[1][absPartIdx + i] |= ucbf << tuDepth;
-            cu.m_cbf[2][absPartIdx + i] |= vcbf << tuDepth;
+            cu.m_cbf[TEXT_LUMA][absPartIdx + i] |= ycbf << tuDepth;
+            cu.m_cbf[TEXT_CHROMA_U][absPartIdx + i] |= ucbf << tuDepth;
+            cu.m_cbf[TEXT_CHROMA_V][absPartIdx + i] |= vcbf << tuDepth;
         }
     }
 }
