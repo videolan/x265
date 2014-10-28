@@ -218,9 +218,9 @@ void Search::codeCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absP
     uint32_t trDepthC = trDepth;
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
     
-    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+    if (log2TrSizeC == 1)
     {
-        X265_CHECK(trDepth > 0, "transform size too small\n");
+        X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && trDepth, "transform size too small\n");
         trDepthC--;
         log2TrSizeC++;
         uint32_t qpdiv = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + trDepthC) << 1);
@@ -712,9 +712,9 @@ void Search::offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint3
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
 
     uint32_t trDepthC = trDepth;
-    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+    if (log2TrSize == 2)
     {
-        X265_CHECK(trDepthC > 0, "trDepthC invalid\n");
+        X265_CHECK(m_csp != X265_CSP_I444 && trDepthC, "trDepthC invalid\n");
         trDepthC--;
     }
 
@@ -771,9 +771,9 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
 
     uint32_t trDepthC = trDepth;
-    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+    if (log2TrSizeC == 1)
     {
-        X265_CHECK(trDepth > 0, "invalid trDepth\n");
+        X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && trDepth, "invalid trDepth\n");
         trDepthC--;
         log2TrSizeC++;
         uint32_t qpdiv = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + trDepthC) << 1);
@@ -1070,9 +1070,9 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tr
         uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
         uint32_t trDepthC = trDepth;
-        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+        if (log2TrSizeC == 1)
         {
-            X265_CHECK(trDepth > 0, "invalid trDepth\n");
+            X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && trDepth > 0, "invalid trDepth\n");
             trDepthC--;
             log2TrSizeC++;
             uint32_t qpdiv = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + trDepthC) << 1);
@@ -2344,8 +2344,9 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
         bool bCodeChroma = true;
         uint32_t trModeC = tuDepth;
-        if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+        if (log2TrSizeC == 1)
         {
+            X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444, "tuQuad check failed\n");
             log2TrSizeC++;
             trModeC--;
             uint32_t qpdiv = NUM_CU_PARTITIONS >> ((depth - 1) << 1);
@@ -3173,8 +3174,9 @@ void Search::saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartI
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
     bool bCodeChroma = true;
     uint32_t trModeC = tuDepth;
-    if (log2TrSize == 2 && m_csp != X265_CSP_I444)
+    if (log2TrSizeC == 1)
     {
+        X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444, "tuQuad check failed\n");
         log2TrSizeC++;
         trModeC--;
         uint32_t qpdiv = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + trModeC) << 1);
