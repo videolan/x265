@@ -2457,26 +2457,21 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     }
 }
 
-void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv,
-                                 Cost& outCosts, uint32_t depthRange[2])
+void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& outCosts, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
+    uint32_t log2TrSize = g_maxLog2CUSize - depth;
+
+    bool bCheckSplit = log2TrSize > depthRange[0];
+    bool bCheckFull = log2TrSize <= depthRange[1];
+
+    if (cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && bCheckSplit)
+        bCheckFull = false;
+
+    X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "depth not matching\n");
 
     uint32_t tuDepth = depth - cu.m_cuDepth[0];
-    uint32_t log2TrSize = g_maxLog2CUSize - depth;
-
-    /* TODO: this is replicating the logic used to build depthRange */
-    bool bSplitFlag = ((m_slice->m_sps->quadtreeTUMaxDepthInter == 1) && cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N));
-    bool bCheckFull;
-    if (bSplitFlag && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
-        bCheckFull = false;
-    else
-        bCheckFull = log2TrSize <= depthRange[1];
-    const bool bCheckSplit = log2TrSize > depthRange[0];
-
-    X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
-
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
     bool bCodeChroma = true;
     uint32_t trModeC = tuDepth;
