@@ -406,9 +406,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
         inFrame->m_poc = ++m_pocLast;
         inFrame->m_origPicYuv->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
-        inFrame->m_userData = pic_in->userData;
-        inFrame->m_pts = pic_in->pts;
-        inFrame->m_forceqp = pic_in->forceqp;
+        inFrame->m_intraData = pic_in->analysisData.intraData;
+        inFrame->m_interData = pic_in->analysisData.interData;
+        inFrame->m_userData  = pic_in->userData;
+        inFrame->m_pts       = pic_in->pts;
+        inFrame->m_forceqp   = pic_in->forceqp;
 
         if (m_pocLast == 0)
             m_firstPts = inFrame->m_pts;
@@ -431,8 +433,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             else
                 m_rateControl->calcAdaptiveQuantFrame(inFrame);
         }
-        inFrame->m_intraData = pic_in->analysisData.intraData;
-        inFrame->m_interData = pic_in->analysisData.interData;
+
         m_lookahead->addPicture(inFrame, pic_in->sliceType);
         m_numDelayedPic++;
     }
