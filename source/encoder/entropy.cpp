@@ -1131,11 +1131,8 @@ void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
 void Entropy::loadIntraDirModeLuma(const Entropy& src)
 {
     X265_CHECK(src.m_valid, "invalid copy source context\n");
-
-    copyState(src);
-
-    ::memcpy(&m_contextState[OFF_ADI_CTX], &src.m_contextState[OFF_ADI_CTX], sizeof(uint8_t) * NUM_ADI_CTX);
-    markValid();
+    m_fracBits = src.m_fracBits;
+    m_contextState[OFF_ADI_CTX] = src.m_contextState[OFF_ADI_CTX];
 }
 
 void Entropy::copyFrom(const Entropy& src)
