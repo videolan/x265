@@ -1275,13 +1275,15 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
                 leftFiltered = leftScale;
             }
 
+            m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+
             /* there are three cost tiers for intra modes:
              *  pred[0]          - mode probable, least cost
              *  pred[1], pred[2] - less probable, slightly more cost
              *  non-mpm modes    - all cost the same (rbits) */
             uint64_t mpms;
             uint32_t preds[3];
-            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
+            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, preds, mpms);
 
             pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
             uint64_t modeCosts[35];
@@ -3211,7 +3213,7 @@ void Search::saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartI
 
 /* returns the number of bits required to signal a non-most-probable mode.
  * on return mpms contains bitmap of most probable modes */
-uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t depth, uint32_t preds[3], uint64_t& mpms)
+uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const
 {
     cu.getIntraDirLumaPredictor(absPartIdx, preds);
 
@@ -3219,7 +3221,6 @@ uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t d
     for (int i = 0; i < 3; ++i)
         mpms |= ((uint64_t)1 << preds[i]);
 
-    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
     return m_entropyCoder.bitsIntraModeNonMPM();
 }
 

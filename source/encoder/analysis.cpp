@@ -1438,13 +1438,15 @@ void Analysis::checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom)
     pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
     int predsize = scaleTuSize * scaleTuSize;
 
+    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+
     /* there are three cost tiers for intra modes:
      *  pred[0]          - mode probable, least cost
      *  pred[1], pred[2] - less probable, slightly more cost
      *  non-mpm modes    - all cost the same (rbits) */
     uint64_t mpms;
     uint32_t preds[3];
-    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, depth, preds, mpms);
+    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, preds, mpms);
 
     // DC
     primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
