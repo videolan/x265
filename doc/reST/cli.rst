@@ -527,6 +527,12 @@ Temporal / motion search options
 	The max candidate number is encoded in the SPS and determines the
 	bit cost of signaling merge CUs. Default 2
 
+.. option:: --temporal-mvp, --no-temporal-mvp
+
+	Enable temporal motion vector predictors in P and B slices.
+	This enables the use of the motion vector from the collocated block
+	in the previous frame to be used as a predictor. Default is enabled
+
 Spatial/intra options
 =====================
 

@@ -568,6 +568,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("rect") p->bEnableRectInter = atobool(value);
     OPT("amp") p->bEnableAMP = atobool(value);
     OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
+    OPT("temporal-mvp") p->bEnableTemporalMvp = atobool(value);
     OPT("early-skip") p->bEnableEarlySkip = atobool(value);
     OPT("fast-cbf") p->bEnableCbfFastMode = atobool(value);
     OPT("rdpenalty") p->rdPenalty = atoi(value);
@@ -1196,6 +1197,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableRectInter, "rect");
     BOOL(p->bEnableAMP, "amp");
     s += sprintf(s, " max-merge=%d", p->maxNumMergeCand);
+    BOOL(p->bEnableTemporalMvp, "temporal-mvp");
     BOOL(p->bEnableEarlySkip, "early-skip");
     BOOL(p->bEnableCbfFastMode, "fast-cbf");
     s += sprintf(s, " rdpenalty=%d", p->rdPenalty);
