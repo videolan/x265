@@ -65,6 +65,16 @@ struct RQTData
     Yuv      bidirPredYuv[2];
 };
 
+struct MotionData
+{
+    MV       mv;
+    MV       mvp;
+    int      mvpIdx;
+    int      ref;
+    uint32_t cost;
+    int      bits;
+};
+
 struct Mode
 {
     CUData     cu;
@@ -72,6 +82,7 @@ struct Mode
     Yuv        predYuv;
     Yuv        reconYuv;
     Entropy    contexts;
+    MotionData bestME[2];
 
     uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
@@ -169,24 +180,13 @@ public:
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
-    struct MotionData
-    {
-        MV       mv;
-        MV       mvp;
-        int      mvpIdx;
-        int      ref;
-        uint32_t cost;
-        int      bits;
-    };
-
 protected:
 
     /* motion estimation distribution */
     ThreadLocalData* m_tld;
-    CUData*       m_curMECu;
+    Mode*         m_curInterMode;
     const CUGeom* m_curGeom;
     int           m_curPart;
-    MotionData    m_bestME[2];
     uint32_t      m_listSelBits[3];
     int           m_totalNumME;
     volatile int  m_numAcquiredME;
@@ -194,7 +194,7 @@ protected:
     Event         m_meCompletionEvent;
     Lock          m_outputLock;
     bool          m_bJobsQueued;
-    void     singleMotionEstimation(Search& master, const CUData& cu, const CUGeom& cuGeom, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
 
     void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
 

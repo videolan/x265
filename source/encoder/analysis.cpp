@@ -350,17 +350,17 @@ void Analysis::parallelME(int threadId, int meId)
         slave->m_frame = m_frame;
 
         PicYuv* fencPic = m_frame->m_origPicYuv;
-        pixel* pu = fencPic->getLumaAddr(m_curMECu->m_cuAddr, m_curGeom->encodeIdx + m_puAbsPartIdx);
+        pixel* pu = fencPic->getLumaAddr(m_curInterMode->cu.m_cuAddr, m_curGeom->encodeIdx + m_puAbsPartIdx);
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
         slave->m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
 
-        slave->prepMotionCompensation(*m_curMECu, *m_curGeom, m_curPart);
+        slave->prepMotionCompensation(m_curInterMode->cu, *m_curGeom, m_curPart);
     }
 
     if (meId < m_slice->m_numRefIdx[0])
-        slave->singleMotionEstimation(*this, *m_curMECu, *m_curGeom, m_curPart, 0, meId);
+        slave->singleMotionEstimation(*this, *m_curInterMode, *m_curGeom, m_curPart, 0, meId);
     else
-        slave->singleMotionEstimation(*this, *m_curMECu, *m_curGeom, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
+        slave->singleMotionEstimation(*this, *m_curInterMode, *m_curGeom, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
 }
 
 void Analysis::parallelModeAnalysis(int threadId, int jobId)

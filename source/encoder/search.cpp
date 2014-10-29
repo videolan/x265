@@ -1861,14 +1861,14 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
 /* this function assumes the caller has configured its MotionEstimation engine with the
  * correct source plane and source PU, and has called prepMotionCompensation() to set
  * m_puAbsPartIdx, m_puWidth, and m_puHeight */
-void Search::singleMotionEstimation(Search& master, const CUData& cu, const CUGeom& cuGeom, int part, int list, int ref)
+void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref)
 {
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
 
     MV amvpCand[AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-    int numMvc = cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, amvpCand, mvc);
+    int numMvc = interMode.cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, amvpCand, mvc);
 
     uint32_t bestCost = MAX_INT;
     int mvpIdx = 0;
@@ -1881,7 +1881,7 @@ void Search::singleMotionEstimation(Search& master, const CUData& cu, const CUGe
         if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
             continue;
 
-        cu.clipMv(mvCand);
+        interMode.cu.clipMv(mvCand);
 
         Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
         predInterLumaPixel(tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPicYuv, mvCand);
@@ -1895,7 +1895,7 @@ void Search::singleMotionEstimation(Search& master, const CUData& cu, const CUGe
     }
 
     MV mvmin, mvmax, outmv, mvp = amvpCand[mvpIdx];
-    setSearchRange(cu, mvp, merange, mvmin, mvmax);
+    setSearchRange(interMode.cu, mvp, merange, mvmin, mvmax);
 
     int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
@@ -1908,15 +1908,15 @@ void Search::singleMotionEstimation(Search& master, const CUData& cu, const CUGe
 
     /* tie goes to the smallest ref ID, just like --no-pme */
     ScopedLock _lock(master.m_outputLock);
-    if (cost < master.m_bestME[list].cost ||
-       (cost == master.m_bestME[list].cost && ref < master.m_bestME[list].ref))
+    if (cost < interMode.bestME[list].cost ||
+       (cost == interMode.bestME[list].cost && ref < interMode.bestME[list].ref))
     {
-        master.m_bestME[list].mv = outmv;
-        master.m_bestME[list].mvp = mvp;
-        master.m_bestME[list].mvpIdx = mvpIdx;
-        master.m_bestME[list].ref = ref;
-        master.m_bestME[list].cost = cost;
-        master.m_bestME[list].bits = bits;
+        interMode.bestME[list].mv = outmv;
+        interMode.bestME[list].mvp = mvp;
+        interMode.bestME[list].mvpIdx = mvpIdx;
+        interMode.bestME[list].ref = ref;
+        interMode.bestME[list].cost = cost;
+        interMode.bestME[list].bits = bits;
     }
 }
 
@@ -1990,14 +1990,14 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         uint32_t bidirCost = MAX_UINT;
         int bidirBits = 0;
 
-        m_bestME[0].cost = MAX_UINT;
-        m_bestME[1].cost = MAX_UINT;
+        interMode.bestME[0].cost = MAX_UINT;
+        interMode.bestME[1].cost = MAX_UINT;
 
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
 
         if (bDistributed)
         {
-            m_curMECu = &cu;
+            m_curInterMode = &interMode;
             m_curGeom = &cuGeom;
 
             /* this worker might already be enqueued for pmode, so other threads
@@ -2022,9 +2022,9 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 {
                     id -= 1;
                     if (id < numRefIdx[0])
-                        singleMotionEstimation(*this, cu, cuGeom, puIdx, 0, id);
+                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, id);
                     else
-                        singleMotionEstimation(*this, cu, cuGeom, puIdx, 1, id - numRefIdx[0]);
+                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 1, id - numRefIdx[0]);
 
                     if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
                         m_meCompletionEvent.trigger();
@@ -2034,7 +2034,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 JobProvider::dequeue();
 
             /* we saved L0-0 for ourselves */
-            singleMotionEstimation(*this, cu, cuGeom, puIdx, 0, 0);
+            singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, 0);
             if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
                 m_meCompletionEvent.trigger();
 
@@ -2088,31 +2088,31 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
                     checkBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
 
-                    if (cost < m_bestME[l].cost)
+                    if (cost < interMode.bestME[l].cost)
                     {
-                        m_bestME[l].mv = outmv;
-                        m_bestME[l].mvp = mvp;
-                        m_bestME[l].mvpIdx = mvpIdx;
-                        m_bestME[l].ref = ref;
-                        m_bestME[l].cost = cost;
-                        m_bestME[l].bits = bits;
+                        interMode.bestME[l].mv = outmv;
+                        interMode.bestME[l].mvp = mvp;
+                        interMode.bestME[l].mvpIdx = mvpIdx;
+                        interMode.bestME[l].ref = ref;
+                        interMode.bestME[l].cost = cost;
+                        interMode.bestME[l].bits = bits;
                     }
                 }
             }
         }
 
         /* Bi-directional prediction */
-        if (slice->isInterB() && !cu.isBipredRestriction() && m_bestME[0].cost != MAX_UINT && m_bestME[1].cost != MAX_UINT)
+        if (slice->isInterB() && !cu.isBipredRestriction() && interMode.bestME[0].cost != MAX_UINT && interMode.bestME[1].cost != MAX_UINT)
         {
-            bidir[0] = m_bestME[0];
-            bidir[1] = m_bestME[1];
+            bidir[0] = interMode.bestME[0];
+            bidir[1] = interMode.bestME[1];
 
             /* Generate reference subpels */
-            PicYuv* refPic0  = slice->m_refPicList[0][m_bestME[0].ref]->m_reconPicYuv;
-            PicYuv* refPic1  = slice->m_refPicList[1][m_bestME[1].ref]->m_reconPicYuv;
+            PicYuv* refPic0  = slice->m_refPicList[0][interMode.bestME[0].ref]->m_reconPicYuv;
+            PicYuv* refPic1  = slice->m_refPicList[1][interMode.bestME[1].ref]->m_reconPicYuv;
             Yuv*    bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
-            predInterLumaPixel(bidirYuv[0], *refPic0, m_bestME[0].mv);
-            predInterLumaPixel(bidirYuv[1], *refPic1, m_bestME[1].mv);
+            predInterLumaPixel(bidirYuv[0], *refPic0, interMode.bestME[0].mv);
+            predInterLumaPixel(bidirYuv[1], *refPic1, interMode.bestME[1].mv);
 
             pixel *pred0 = bidirYuv[0].getLumaAddr(m_puAbsPartIdx);
             pixel *pred1 = bidirYuv[1].getLumaAddr(m_puAbsPartIdx);
@@ -2121,10 +2121,10 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
             int satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
 
-            bidirBits = m_bestME[0].bits + m_bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
+            bidirBits = interMode.bestME[0].bits + interMode.bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
             bidirCost = satdCost + m_rdCost.getCost(bidirBits);
 
-            bool bTryZero = m_bestME[0].mv.notZero() || m_bestME[1].mv.notZero();
+            bool bTryZero = interMode.bestME[0].mv.notZero() || interMode.bestME[1].mv.notZero();
             if (bTryZero)
             {
                 /* Do not try zero MV if unidir motion predictors are beyond
@@ -2136,38 +2136,38 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 mvmin <<= 2;
                 mvmax <<= 2;
 
-                bTryZero &= m_bestME[0].mvp.checkRange(mvmin, mvmax);
-                bTryZero &= m_bestME[1].mvp.checkRange(mvmin, mvmax);
+                bTryZero &= interMode.bestME[0].mvp.checkRange(mvmin, mvmax);
+                bTryZero &= interMode.bestME[1].mvp.checkRange(mvmin, mvmax);
             }
             if (bTryZero)
             {
                 // coincident blocks of the two reference pictures
-                pixel *ref0 = slice->m_mref[0][m_bestME[0].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
-                pixel *ref1 = slice->m_mref[1][m_bestME[1].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
+                pixel *ref0 = slice->m_mref[0][interMode.bestME[0].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
+                pixel *ref1 = slice->m_mref[1][interMode.bestME[1].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
                 intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
                 primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
                 satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
 
-                MV mvp0 = m_bestME[0].mvp;
-                int mvpIdx0 = m_bestME[0].mvpIdx;
-                uint32_t bits0 = m_bestME[0].bits - m_me.bitcost(m_bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
+                MV mvp0 = interMode.bestME[0].mvp;
+                int mvpIdx0 = interMode.bestME[0].mvpIdx;
+                uint32_t bits0 = interMode.bestME[0].bits - m_me.bitcost(interMode.bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
 
-                MV mvp1 = m_bestME[1].mvp;
-                int mvpIdx1 = m_bestME[1].mvpIdx;
-                uint32_t bits1 = m_bestME[1].bits - m_me.bitcost(m_bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
+                MV mvp1 = interMode.bestME[1].mvp;
+                int mvpIdx1 = interMode.bestME[1].mvpIdx;
+                uint32_t bits1 = interMode.bestME[1].bits - m_me.bitcost(interMode.bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
 
                 uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
                 if (bDistributed)
                 {
-                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 0, m_bestME[0].ref, amvpCand[0][m_bestME[0].ref], mvc);
-                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 1, m_bestME[1].ref, amvpCand[1][m_bestME[1].ref], mvc);
+                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 0, interMode.bestME[0].ref, amvpCand[0][interMode.bestME[0].ref], mvc);
+                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 1, interMode.bestME[1].ref, amvpCand[1][interMode.bestME[1].ref], mvc);
                 }
 
                 /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
-                checkBestMVP(amvpCand[0][m_bestME[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
-                checkBestMVP(amvpCand[1][m_bestME[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
+                checkBestMVP(amvpCand[0][interMode.bestME[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
+                checkBestMVP(amvpCand[1][interMode.bestME[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
 
                 if (cost < bidirCost)
                 {
@@ -2184,7 +2184,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
 
         /* select best option and store into CU */
-        if (mrgCost < bidirCost && mrgCost < m_bestME[0].cost && mrgCost < m_bestME[1].cost)
+        if (mrgCost < bidirCost && mrgCost < interMode.bestME[0].cost && mrgCost < interMode.bestME[1].cost)
         {
             cu.m_mergeFlag[m_puAbsPartIdx] = true;
             cu.m_mvpIdx[0][m_puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
@@ -2196,39 +2196,39 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             totalmebits += merge.bits;
         }
-        else if (bidirCost < m_bestME[0].cost && bidirCost < m_bestME[1].cost)
+        else if (bidirCost < interMode.bestME[0].cost && bidirCost < interMode.bestME[1].cost)
         {
             lastMode = 2;
 
             cu.m_mergeFlag[m_puAbsPartIdx] = false;
             cu.setPUInterDir(3, m_puAbsPartIdx, puIdx);
             cu.setPUMv(0, bidir[0].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(0, m_bestME[0].ref, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, interMode.bestME[0].ref, m_puAbsPartIdx, puIdx);
             cu.m_mvd[0][m_puAbsPartIdx] = bidir[0].mv - bidir[0].mvp;
             cu.m_mvpIdx[0][m_puAbsPartIdx] = bidir[0].mvpIdx;
 
             cu.setPUMv(1, bidir[1].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(1, m_bestME[1].ref, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, interMode.bestME[1].ref, m_puAbsPartIdx, puIdx);
             cu.m_mvd[1][m_puAbsPartIdx] = bidir[1].mv - bidir[1].mvp;
             cu.m_mvpIdx[1][m_puAbsPartIdx] = bidir[1].mvpIdx;
 
             totalmebits += bidirBits;
         }
-        else if (m_bestME[0].cost <= m_bestME[1].cost)
+        else if (interMode.bestME[0].cost <= interMode.bestME[1].cost)
         {
             lastMode = 0;
 
             cu.m_mergeFlag[m_puAbsPartIdx] = false;
             cu.setPUInterDir(1, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(0, m_bestME[0].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(0, m_bestME[0].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[0][m_puAbsPartIdx] = m_bestME[0].mv - m_bestME[0].mvp;
-            cu.m_mvpIdx[0][m_puAbsPartIdx] = m_bestME[0].mvpIdx;
+            cu.setPUMv(0, interMode.bestME[0].mv, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, interMode.bestME[0].ref, m_puAbsPartIdx, puIdx);
+            cu.m_mvd[0][m_puAbsPartIdx] = interMode.bestME[0].mv - interMode.bestME[0].mvp;
+            cu.m_mvpIdx[0][m_puAbsPartIdx] = interMode.bestME[0].mvpIdx;
 
             cu.setPURefIdx(1, REF_NOT_VALID, m_puAbsPartIdx, puIdx);
             cu.setPUMv(1, mvzero, m_puAbsPartIdx, puIdx);
 
-            totalmebits += m_bestME[0].bits;
+            totalmebits += interMode.bestME[0].bits;
         }
         else
         {
@@ -2236,15 +2236,15 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             cu.m_mergeFlag[m_puAbsPartIdx] = false;
             cu.setPUInterDir(2, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(1, m_bestME[1].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(1, m_bestME[1].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[1][m_puAbsPartIdx] = m_bestME[1].mv - m_bestME[1].mvp;
-            cu.m_mvpIdx[1][m_puAbsPartIdx] = m_bestME[1].mvpIdx;
+            cu.setPUMv(1, interMode.bestME[1].mv, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, interMode.bestME[1].ref, m_puAbsPartIdx, puIdx);
+            cu.m_mvd[1][m_puAbsPartIdx] = interMode.bestME[1].mv - interMode.bestME[1].mvp;
+            cu.m_mvpIdx[1][m_puAbsPartIdx] = interMode.bestME[1].mvpIdx;
 
             cu.setPURefIdx(0, REF_NOT_VALID, m_puAbsPartIdx, puIdx);
             cu.setPUMv(0, mvzero, m_puAbsPartIdx, puIdx);
 
-            totalmebits += m_bestME[1].bits;
+            totalmebits += interMode.bestME[1].bits;
         }
 
         prepMotionCompensation(cu, cuGeom, puIdx);
