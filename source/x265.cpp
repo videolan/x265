@@ -165,8 +165,10 @@ static const struct option long_options[] =
     { "no-lossless",          no_argument, NULL, 0 },
     { "no-signhide",          no_argument, NULL, 0 },
     { "signhide",             no_argument, NULL, 0 },
-    { "no-lft",               no_argument, NULL, 0 },
-    { "lft",                  no_argument, NULL, 0 },
+    { "no-lft",               no_argument, NULL, 0 }, /* DEPRECATED */
+    { "lft",                  no_argument, NULL, 0 }, /* DEPRECATED */
+    { "no-deblock",           no_argument, NULL, 0 },
+    { "deblock",        required_argument, NULL, 0 },
     { "no-sao",               no_argument, NULL, 0 },
     { "sao",                  no_argument, NULL, 0 },
     { "no-sao-non-deblock",   no_argument, NULL, 0 },
@@ -463,7 +465,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("                                 Blank lines and lines starting with hash(#) are ignored\n");
     H0("                                 Comma is considered to be white-space\n");
     H0("\nLoop filters (deblock and SAO):\n");
-    H0("   --[no-]lft                    Enable Deblocking Loop Filter. Default %s\n", OPT(param->bEnableLoopFilter));
+    H0("   --[no-]deblock                Enable Deblocking Loop Filter, optionally specify tC:Beta offsets Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
     H0("   --[no-]sao-non-deblock        Use non-deblocked pixels, else right/bottom boundary areas skipped. Default %s\n", OPT(param->bSaoNonDeblocked));
     H0("\nVUI options:\n");

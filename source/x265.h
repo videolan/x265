@@ -727,8 +727,16 @@ typedef struct x265_param
     /* Enable the deblocking loop filter, which improves visual quality by
      * reducing blocking effects at block edges, particularly at lower bitrates
      * or higher QP. When enabled it adds another CU row of reference lag,
-     * reducing frame parallelism effectiveness.  Default is enabled */
+     * reducing frame parallelism effectiveness. Default is enabled */
     int       bEnableLoopFilter;
+
+    /* deblocking filter tC offset [-6, 6] -6 light filter, 6 strong.
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterTCOffset;
+
+    /* deblocking filter Beta offset [-6, 6] -6 light filter, 6 strong
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterBetaOffset;
 
     /* Enable the Sample Adaptive Offset loop filter, which reduces distortion
      * effects by adjusting reconstructed sample values based on histogram
