@@ -865,8 +865,23 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
                     else if (m_param->rdLevel == 1)
                     {
-                        m_rqt[cuGeom.depth].tmpResiYuv.subtract(md.fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
-                        generateCoeffRecon(*md.bestMode, cuGeom);
+                        /* generate recon pixels with no rate distortion considerations */
+                        CUData& cu = md.bestMode->cu;
+                        m_quant.setQPforQuant(cu);
+
+                        uint32_t tuDepthRange[2];
+                        cu.getInterTUQtDepthRange(tuDepthRange, 0);
+
+                        m_rqt[cuGeom.depth].tmpResiYuv.subtract(*md.bestMode->fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
+                        residualTransformQuantInter(*md.bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
+                        if (cu.getQtRootCbf(0))
+                            md.bestMode->reconYuv.addClip(md.bestMode->predYuv, m_rqt[cuGeom.depth].tmpResiYuv, cu.m_log2CUSize[0]);
+                        else
+                        {
+                            md.bestMode->reconYuv.copyFromYuv(md.bestMode->predYuv);
+                            if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N)
+                                cu.setSkipFlagSubParts(true);
+                        }
                     }
                 }
                 else
@@ -874,7 +889,19 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     if (m_param->rdLevel == 2)
                         encodeIntraInInter(*md.bestMode, cuGeom);
                     else if (m_param->rdLevel == 1)
-                        generateCoeffRecon(*md.bestMode, cuGeom);
+                    {
+                        /* generate recon pixels with no rate distortion considerations */
+                        CUData& cu = md.bestMode->cu;
+                        m_quant.setQPforQuant(cu);
+
+                        uint32_t tuDepthRange[2];
+                        cu.getIntraTUQtDepthRange(tuDepthRange, 0);
+
+                        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN;
+                        residualTransformQuantIntra(*md.bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
+                        getBestIntraModeChroma(*md.bestMode, cuGeom);
+                        residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
+                    }
                 }
             }
         } // !earlyskip

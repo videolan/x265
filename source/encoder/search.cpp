@@ -2297,39 +2297,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     updateModeCost(interMode);
 }
 
-void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
-{
-    CUData& cu = mode.cu;
-
-    m_quant.setQPforQuant(mode.cu);
-
-    if (cu.m_predMode[0] == MODE_INTER)
-    {
-        uint32_t tuDepthRange[2];
-        cu.getInterTUQtDepthRange(tuDepthRange, 0);
-
-        residualTransformQuantInter(mode, cuGeom, 0, cu.m_cuDepth[0], tuDepthRange);
-        if (cu.getQtRootCbf(0))
-            mode.reconYuv.addClip(mode.predYuv, m_rqt[cuGeom.depth].tmpResiYuv, cu.m_log2CUSize[0]);
-        else
-        {
-            mode.reconYuv.copyFromYuv(mode.predYuv);
-            if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N)
-                cu.setSkipFlagSubParts(true);
-        }
-    }
-    else if (cu.m_predMode[0] == MODE_INTRA)
-    {
-        uint32_t tuDepthRange[2];
-        cu.getIntraTUQtDepthRange(tuDepthRange, 0);
-
-        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN;
-        residualTransformQuantIntra(mode, cuGeom, initTrDepth, 0, tuDepthRange);
-        getBestIntraModeChroma(mode, cuGeom);
-        residualQTIntraChroma(mode, cuGeom, 0, 0);
-    }
-}
-
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
