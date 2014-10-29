@@ -117,6 +117,7 @@ public:
 public:
 
     /* prepMotionCompensation needs to be called to prepare MC with CU-relevant data */
+    void initMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx);
     void prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx);
     void motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma);
 

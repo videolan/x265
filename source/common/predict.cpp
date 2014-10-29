@@ -144,12 +144,17 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
 }
 
-void Predict::prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
+void Predict::initMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
 {
     m_predSlice = cu.m_slice;
     cu.getPartIndexAndSize(partIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
     m_ctuAddr = cu.m_cuAddr;
     m_cuAbsPartIdx = cuGeom.encodeIdx;
+}
+
+void Predict::prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
+{
+    initMotionCompensation(cu, cuGeom, partIdx);
 
     m_refIdx0      = cu.m_refIdx[0][m_puAbsPartIdx];
     m_clippedMv[0] = cu.m_mv[0][m_puAbsPartIdx];

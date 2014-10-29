@@ -643,7 +643,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         initAdiPattern(cu, cuGeom, absPartIdx, trDepth, lumaPredMode);
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
-        X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][0], "unexpected tskip flag in residualTransformQuantIntra\n");
+        X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][absPartIdx], "unexpected tskip flag in residualTransformQuantIntra\n");
         cu.setTUDepthSubParts(trDepth, absPartIdx, fullDepth);
 
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
@@ -1101,7 +1101,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tr
                 pixel*   fenc         = const_cast<pixel*>(mode.fencYuv->getChromaAddr(chromaId, absPartIdxC));
                 pixel*   pred         = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
                 int16_t* residual     = resiYuv.getChromaAddr(chromaId, absPartIdxC);
-                pixel*   recon        = mode.reconYuv.getChromaAddr(chromaId, absPartIdxC);
+                pixel*   recon        = mode.reconYuv.getChromaAddr(chromaId, absPartIdxC); // TODO: needed?
                 uint32_t coeffOffsetC = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
                 coeff_t* coeff        = cu.m_trCoeff[ttype] + coeffOffsetC;
                 pixel*   picReconC    = m_frame->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
@@ -1728,7 +1728,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
         /* sets m_puAbsPartIdx, m_puWidth, m_puHeight */
-        prepMotionCompensation(cu, cuGeom, puIdx);
+        initMotionCompensation(cu, cuGeom, puIdx);
 
         pixel* pu = fencPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
         m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
@@ -2327,6 +2327,7 @@ void Search::generateCoeffRecon(Mode& mode, const CUGeom& cuGeom)
         residualTransformQuantIntra(mode, cuGeom, initTrDepth, 0, tuDepthRange);
         getBestIntraModeChroma(mode, cuGeom);
         residualQTIntraChroma(mode, cuGeom, 0, 0);
+        mode.reconYuv.copyFromPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, cuGeom.encodeIdx); // TODO: 
     }
 }
 
