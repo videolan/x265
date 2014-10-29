@@ -623,7 +623,22 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("psy-rdoq") p->psyRdoq = atof(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
-    OPT("lft") p->bEnableLoopFilter = atobool(value);
+    OPT("lft") p->bEnableLoopFilter = atobool(value); /* DEPRECATED */
+    OPT("deblock")
+    {
+        if (2 == sscanf(value, "%d:%d", &p->deblockingFilterTCOffset, &p->deblockingFilterBetaOffset) ||
+            2 == sscanf(value, "%d,%d", &p->deblockingFilterTCOffset, &p->deblockingFilterBetaOffset))
+        {
+            p->bEnableLoopFilter = true;
+        }
+        else if (sscanf(value, "%d", &p->deblockingFilterTCOffset))
+        {
+            p->bEnableLoopFilter = 1;
+            p->deblockingFilterBetaOffset = p->deblockingFilterTCOffset;
+        }
+        else
+            p->bEnableLoopFilter = atobool(value);
+    }
     OPT("sao") p->bEnableSAO = atobool(value);
     OPT("sao-non-deblock") p->bSaoNonDeblocked = atobool(value);
     OPT("ssim") p->bEnableSsim = atobool(value);
@@ -960,6 +975,10 @@ int x265_check_params(x265_param *param)
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
+    CHECK(param->deblockingFilterTCOffset < -6 || param->deblockingFilterTCOffset > 6,
+          "deblocking filter tC offset must be in the range of -6 to +6");
+    CHECK(param->deblockingFilterBetaOffset < -6 || param->deblockingFilterBetaOffset > 6,
+          "deblocking filter Beta offset must be in the range of -6 to +6");
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
     CHECK(param->psyRdoq < 0 || 10.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 10.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
@@ -1156,7 +1175,13 @@ void x265_print_params(x265_param *param)
     TOOLOPT(param->bEnableCbfFastMode, "cfm");
     if (param->noiseReduction)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
-    TOOLOPT(param->bEnableLoopFilter, "lft");
+    if (param->bEnableLoopFilter)
+    {
+        if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)
+            fprintf(stderr, "deblock(tC=%d:B=%d) ", param->deblockingFilterTCOffset, param->deblockingFilterBetaOffset);
+        else
+            TOOLOPT(param->bEnableLoopFilter, "deblock");
+    }
     if (param->bEnableSAO)
         fprintf(stderr, "sao%s ", param->bSaoNonDeblocked ? "-non-deblock" : "");
     TOOLOPT(param->bEnableSignHiding, "signhide");
