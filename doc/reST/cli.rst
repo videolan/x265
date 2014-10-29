@@ -577,7 +577,9 @@ Spatial/intra options
 .. option:: --tskip-fast, --no-tskip-fast
 
 	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
-	Only applicable if transform skip is enabled. Default disabled
+	Only applicable if transform skip is enabled. For chroma, only
+	evaluate if luma used tskip. Inter block tskip analysis is
+	unmodified. Default disabled
 
 .. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
 
@@ -629,8 +631,8 @@ Mode decision / Analysis
 	Short circuit analysis if a prediction is found that does not set
 	the coded block flag (aka: no residual was encoded).  It prevents
 	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits. Only applicable for RD
-	levels 5 and 6. Default disabled
+	residual but require less signaling bits or have less distortion.
+	Only applicable for RD levels 5 and 6. Default disabled
 
 .. option:: --fast-intra, --no-fast-intra
 
@@ -670,15 +672,15 @@ Mode decision / Analysis
 	+=======+===============================================================+
 	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
 	+-------+---------------------------------------------------------------+
-	| 1     | recon generated (better intra), RDO merge residual            |
+	| 1     | recon generated (better intra), RDO merge/skip selection      |
 	+-------+---------------------------------------------------------------+
-	| 2     | RDO splits and merge residual choice                          |
+	| 2     | RDO splits and merge/skip selection                           |
 	+-------+---------------------------------------------------------------+
 	| 3     | RDO mode and split decisions                                  |
 	+-------+---------------------------------------------------------------+
 	| 4     | Adds RDO Quant                                                |
 	+-------+---------------------------------------------------------------+
-	| 5     | Adds RDO prediction decisions, enables intra modes in B slices|
+	| 5     | Adds RDO prediction decisions                                 |
 	+-------+---------------------------------------------------------------+
 	| 6     | Currently same as 5                                           |
 	+-------+---------------------------------------------------------------+

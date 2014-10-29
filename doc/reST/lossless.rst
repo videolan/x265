@@ -155,8 +155,8 @@ Transform Skip
 
 A somewhat related feature, :option:`--tskip` tells the encoder to
 evaluate transform-skip (bypass DCT but with quantization still enabled)
-when coding small intra blocks. This feature is intended to improve the
-coding efficiency of screen content (aka: text on a screen) and is not
-really intended for lossless coding.  This feature should only be
-enabled if the content has a lot of very sharp edges in it, and is
-mostly unrelated to lossless coding.
+when coding small 4x4 transform blocks. This feature is intended to
+improve the coding efficiency of screen content (aka: text on a screen)
+and is not really intended for lossless coding.  This feature should
+only be enabled if the content has a lot of very sharp edges in it, and
+is mostly unrelated to lossless coding.
