@@ -162,6 +162,11 @@ public:
     // full RD search of intra modes. if sharedModes is not NULL, it directly uses them
     void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes);
 
+    // select best intra mode using only sa8d costs, cannot measure NxN intra
+    void     checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
+    // encode luma mode selected by checkIntraInInter, then pick and encode a chroma mode
+    void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
+
     // estimation inter prediction (non-skip)
     bool     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
 

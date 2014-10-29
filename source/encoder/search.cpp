@@ -1198,6 +1198,222 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     updateModeCost(intraMode);
 }
 
+/* Note that this function does not save the best intra prediction, it must
+ * be generated later. It records the best mode in the cu */
+void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
+{
+    CUData& cu = intraMode.cu;
+    uint32_t depth = cu.m_cuDepth[0];
+
+    cu.setPartSizeSubParts(SIZE_2Nx2N);
+    cu.setPredModeSubParts(MODE_INTRA);
+
+    uint32_t initTrDepth = 0;
+    uint32_t log2TrSize = cu.m_log2CUSize[0] - initTrDepth;
+    uint32_t tuSize = 1 << log2TrSize;
+    const uint32_t absPartIdx = 0;
+
+    // Reference sample smoothing
+    initAdiPattern(cu, cuGeom, absPartIdx, initTrDepth, ALL_IDX);
+
+    pixel* fenc = intraMode.fencYuv->m_buf[0];
+    uint32_t stride = intraMode.fencYuv->m_size;
+
+    pixel *above = m_refAbove + tuSize - 1;
+    pixel *aboveFiltered = m_refAboveFlt + tuSize - 1;
+    pixel *left = m_refLeft + tuSize - 1;
+    pixel *leftFiltered = m_refLeftFlt + tuSize - 1;
+    int sad, bsad;
+    uint32_t bits, bbits, mode, bmode;
+    uint64_t cost, bcost;
+
+    // 33 Angle modes once
+    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+    ALIGN_VAR_32(pixel, bufTrans[32 * 32]);
+    ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
+    int scaleTuSize = tuSize;
+    int scaleStride = stride;
+    int costShift = 0;
+    int sizeIdx = log2TrSize - 2;
+
+    if (tuSize > 32)
+    {
+        // origin is 64x64, we scale to 32x32 and setup required parameters
+        primitives.scale2D_64to32(bufScale, fenc, stride);
+        fenc = bufScale;
+
+        // reserve space in case primitives need to store data in above
+        // or left buffers
+        pixel _above[4 * 32 + 1];
+        pixel _left[4 * 32 + 1];
+        pixel *aboveScale = _above + 2 * 32;
+        pixel *leftScale = _left + 2 * 32;
+        aboveScale[0] = leftScale[0] = above[0];
+        primitives.scale1D_128to64(aboveScale + 1, above + 1, 0);
+        primitives.scale1D_128to64(leftScale + 1, left + 1, 0);
+
+        scaleTuSize = 32;
+        scaleStride = 32;
+        costShift = 2;
+        sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
+
+        // Filtered and Unfiltered refAbove and refLeft pointing to above and left.
+        above = aboveScale;
+        left = leftScale;
+        aboveFiltered = aboveScale;
+        leftFiltered = leftScale;
+    }
+
+    pixelcmp_t sa8d = primitives.sa8d[sizeIdx];
+    int predsize = scaleTuSize * scaleTuSize;
+
+    m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+
+    /* there are three cost tiers for intra modes:
+    *  pred[0]          - mode probable, least cost
+    *  pred[1], pred[2] - less probable, slightly more cost
+    *  non-mpm modes    - all cost the same (rbits) */
+    uint64_t mpms;
+    uint32_t preds[3];
+    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, preds, mpms);
+
+    // DC
+    primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
+    bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+    bmode = mode = DC_IDX;
+    bbits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+    bcost = m_rdCost.calcRdSADCost(bsad, bbits);
+
+    pixel *abovePlanar = above;
+    pixel *leftPlanar = left;
+
+    if (tuSize & (8 | 16 | 32))
+    {
+        abovePlanar = aboveFiltered;
+        leftPlanar = leftFiltered;
+    }
+
+    // PLANAR
+    primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
+    sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+    mode = PLANAR_IDX;
+    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+    cost = m_rdCost.calcRdSADCost(sad, bits);
+    COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
+
+    // Transpose NxN
+    primitives.transpose[sizeIdx](bufTrans, fenc, scaleStride);
+
+    primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
+
+    bool modeHor;
+    pixel *cmp;
+    intptr_t srcStride;
+
+#define TRY_ANGLE(angle) \
+    modeHor = angle < 18; \
+    cmp = modeHor ? bufTrans : fenc; \
+    srcStride = modeHor ? scaleTuSize : scaleStride; \
+    sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
+    bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
+    cost = m_rdCost.calcRdSADCost(sad, bits)
+
+    if (m_param->bEnableFastIntra)
+    {
+        int asad = 0;
+        uint32_t lowmode, highmode, amode = 5, abits = 0;
+        uint64_t acost = MAX_INT64;
+
+        /* pick the best angle, sampling at distance of 5 */
+        for (mode = 5; mode < 35; mode += 5)
+        {
+            TRY_ANGLE(mode);
+            COPY4_IF_LT(acost, cost, amode, mode, asad, sad, abits, bits);
+        }
+
+        /* refine best angle at distance 2, then distance 1 */
+        for (uint32_t dist = 2; dist >= 1; dist--)
+        {
+            lowmode = amode - dist;
+            highmode = amode + dist;
+
+            X265_CHECK(lowmode >= 2 && lowmode <= 34, "low intra mode out of range\n");
+            TRY_ANGLE(lowmode);
+            COPY4_IF_LT(acost, cost, amode, lowmode, asad, sad, abits, bits);
+
+            X265_CHECK(highmode >= 2 && highmode <= 34, "high intra mode out of range\n");
+            TRY_ANGLE(highmode);
+            COPY4_IF_LT(acost, cost, amode, highmode, asad, sad, abits, bits);
+        }
+
+        if (amode == 33)
+        {
+            TRY_ANGLE(34);
+            COPY4_IF_LT(acost, cost, amode, 34, asad, sad, abits, bits);
+        }
+
+        COPY4_IF_LT(bcost, acost, bmode, amode, bsad, asad, bbits, abits);
+    }
+    else // calculate and search all intra prediction angles for lowest cost
+    {
+        for (mode = 2; mode < 35; mode++)
+        {
+            TRY_ANGLE(mode);
+            COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
+        }
+    }
+
+    cu.setLumaIntraDirSubParts((uint8_t)bmode, absPartIdx, depth + initTrDepth);
+    intraMode.initCosts();
+    intraMode.totalBits = bbits;
+    intraMode.distortion = bsad;
+    intraMode.sa8dCost = bcost;
+}
+
+void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
+{
+    CUData& cu = intraMode.cu;
+    Yuv* reconYuv = &intraMode.reconYuv;
+    const Yuv* fencYuv = intraMode.fencYuv;
+
+    X265_CHECK(cu.m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
+    X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
+
+    m_quant.setQPforQuant(cu);
+
+    uint32_t tuDepthRange[2];
+    cu.getIntraTUQtDepthRange(tuDepthRange, 0);
+
+    m_entropyCoder.load(m_rqt[cuGeom.depth].cur);
+
+    Cost icosts;
+    codeIntraLumaQT(intraMode, cuGeom, 0, 0, false, icosts, tuDepthRange);
+    extractIntraResultQT(cu, *reconYuv, 0, 0);
+
+    intraMode.distortion = icosts.distortion;
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
+
+    m_entropyCoder.resetBits();
+    if (m_slice->m_pps->bTransquantBypassEnabled)
+        m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
+    m_entropyCoder.codeSkipFlag(cu, 0);
+    m_entropyCoder.codePredMode(cu.m_predMode[0]);
+    m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
+    m_entropyCoder.codePredInfo(cu, 0);
+    intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
+
+    bool bCodeDQP = m_slice->m_pps->bUseDQP;
+    m_entropyCoder.codeCoeff(cu, 0, cuGeom.depth, bCodeDQP, tuDepthRange);
+
+    intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
+    if (m_rdCost.m_psyRd)
+        intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+
+    m_entropyCoder.store(intraMode.contexts);
+    updateModeCost(intraMode);
+}
+
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t depthRange[2], uint8_t* sharedModes)
 {
     CUData& cu = intraMode.cu;
