@@ -1038,9 +1038,23 @@ Quality, rate control and rate distortion options
 Loop filters
 ============
 
-.. option:: --lft, --no-lft
+.. option:: --deblock=<int>:<int>, --no-deblock
 
-	Toggle deblocking loop filter, default enabled
+	Toggle deblocking loop filter, optionally specify deblocking
+	strength offsets.
+
+	<int>:<int> - parsed as tC offset and Beta offset
+	<int>,<int> - parsed as tC offset and Beta offset
+	<int>       - both tC and Beta offsets assigned the same value
+
+	If unspecified, the offsets default to 0. The offsets must be in a
+	range of -6 (lowest strength) to 6 (highest strength).
+
+    To disable the deblocking filter entirely, use --no-deblock or
+	--deblock=false. Default enabled, with both offsets defaulting to 0
+
+	If deblocking is disabled, or the offsets are non-zero, these
+	changes from the default configuration are signaled in the PPS.
 
 .. option:: --sao, --no-sao
 
