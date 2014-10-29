@@ -554,8 +554,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             {
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_Nx2N];
-                if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                    bestInter = &md.pred[PRED_Nx2N];
+                if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_2NxN];
             }
 
             if (bTryAmp)
@@ -1655,7 +1655,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
          * predictions */
         reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, absPartIdx);
     }
-    else
+    else if (cu.m_predMode[0] == MODE_INTER)
     {
         X265_CHECK(!ctu.m_skipFlag[absPartIdx], "skip not expected prior to transform\n");
 
@@ -1700,6 +1700,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
             reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, absPartIdx);
         }
     }
+    /* else if (cu.m_predMode[0] == MODE_NONE) {} */
 
     checkDQP(cu, cuGeom);
     cu.updatePic(cuGeom.depth);

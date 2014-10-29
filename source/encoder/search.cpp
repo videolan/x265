@@ -782,6 +782,9 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tr
             return 0;
     }
 
+    if (m_bEnableRDOQ)
+        m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
+
     bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
     checkTransformSkip &= !m_param->bEnableTSkipFast || (log2TrSize <= MAX_LOG2_TS_SIZE && cu.m_transformSkip[TEXT_LUMA][absPartIdx]);
     if (checkTransformSkip)
@@ -880,9 +883,6 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
      * so the entropy coder is not very accurate. The best we can do is return it in the same
      * condition as it arrived, and to do all bit estimates from the same state. */
     m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
-
-    if (m_bEnableRDOQ)
-        m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
 
     ALIGN_VAR_32(coeff_t, tskipCoeffC[MAX_TS_SIZE * MAX_TS_SIZE]);
     ALIGN_VAR_32(pixel,   tskipReconC[MAX_TS_SIZE * MAX_TS_SIZE]);
