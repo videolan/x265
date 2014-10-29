@@ -554,8 +554,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             {
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_Nx2N];
-                if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
-                    bestInter = &md.pred[PRED_Nx2N];
+                if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
+                    bestInter = &md.pred[PRED_2NxN];
             }
 
             if (bTryAmp)
