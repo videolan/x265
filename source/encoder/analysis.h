@@ -107,13 +107,31 @@ protected:
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);
 
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+    /* add the RD cost of coding a split flag (0 or 1) to the given mode */
     void addSplitFlagCost(Mode& mode, uint32_t depth);
-    void checkBestMode(Mode& mode, uint32_t depth);
+
+    /* update CBF flags and QP values to be internally consistent */
+    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+
+    /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
 
+    /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
+
+    /* check whether current mode is the new best */
+    inline void checkBestMode(Mode& mode, uint32_t depth)
+    {
+        ModeDepth& md = m_modeDepth[depth];
+        if (md.bestMode)
+        {
+            if (mode.rdCost < md.bestMode->rdCost)
+                md.bestMode = &mode;
+        }
+        else
+            md.bestMode = &mode;
+    }
 };
 
 struct ThreadLocalData

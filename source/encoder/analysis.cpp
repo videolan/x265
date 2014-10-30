@@ -1537,19 +1537,6 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     cu.updatePic(cuGeom.depth);
 }
 
-/* check whether current try is the best with identifying the depth of current try */
-void Analysis::checkBestMode(Mode& mode, uint32_t depth)
-{
-    ModeDepth& md = m_modeDepth[depth];
-    if (md.bestMode)
-    {
-        if (mode.rdCost < md.bestMode->rdCost)
-            md.bestMode = &mode;
-    }
-    else
-        md.bestMode = &mode;
-}
-
 void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
 {
     if (m_param->rdLevel >= 3)
