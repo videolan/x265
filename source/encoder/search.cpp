@@ -37,6 +37,8 @@ using namespace x265;
 #pragma warning(disable: 4244) // '=' : conversion from 'int' to 'uint8_t', possible loss of data)
 #endif
 
+#define MVP_IDX_BITS 1
+
 ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
 ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 

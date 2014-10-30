@@ -75,7 +75,7 @@ public:
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
-    Search::Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
+    Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
 

@@ -35,9 +35,6 @@
 #include "entropy.h"
 #include "motion.h"
 
-#define MVP_IDX_BITS 1
-#define NUM_LAYERS 4
-
 namespace x265 {
 // private namespace
 
@@ -66,6 +63,48 @@ struct RQTData
     ShortYuv tmpResiYuv;
     Yuv      tmpPredYuv;
     Yuv      bidirPredYuv[2];
+};
+
+struct Mode
+{
+    CUData     cu;
+    const Yuv* fencYuv;
+    Yuv        predYuv;
+    Yuv        reconYuv;
+    Entropy    contexts;
+
+    uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
+    uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
+    uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
+    uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
+    uint32_t   distortion; // sum of partition SSE distortion
+    uint32_t   totalBits;  // sum of partition bits (mv + coeff)
+    uint32_t   mvBits;     // Mv bits + Ref + block type (or intra mode)
+    uint32_t   coeffBits;  // Texture bits (DCT Coeffs)
+
+    void initCosts()
+    {
+        rdCost = 0;
+        sa8dCost = 0;
+        sa8dBits = 0;
+        psyEnergy = 0;
+        distortion = 0;
+        totalBits = 0;
+        mvBits = 0;
+        coeffBits = 0;
+    }
+
+    void addSubCosts(const Mode& subMode)
+    {
+        rdCost += subMode.rdCost;
+        sa8dCost += subMode.sa8dCost;
+        sa8dBits += subMode.sa8dBits;
+        psyEnergy += subMode.psyEnergy;
+        distortion += subMode.distortion;
+        totalBits += subMode.totalBits;
+        mvBits += subMode.mvBits;
+        coeffBits += subMode.coeffBits;
+    }
 };
 
 inline int getTUBits(int idx, int numIdx)
@@ -97,58 +136,6 @@ public:
     bool            m_bEnableRDOQ;
     uint32_t        m_numLayers;
     uint32_t        m_refLagPixels;
-
-    struct Mode
-    {
-        CUData     cu;
-        const Yuv* fencYuv;
-        Yuv        predYuv;
-        Yuv        reconYuv;
-        Entropy    contexts;
-
-        uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
-        uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
-        uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
-        uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
-        uint32_t   distortion; // sum of partition SSE distortion
-        uint32_t   totalBits;  // sum of partition bits (mv + coeff)
-        uint32_t   mvBits;     // Mv bits + Ref + block type (or intra mode)
-        uint32_t   coeffBits;  // Texture bits (DCT Coeffs)
-
-        void initCosts()
-        {
-            rdCost = 0;
-            sa8dCost = 0;
-            sa8dBits = 0;
-            psyEnergy = 0;
-            distortion = 0;
-            totalBits = 0;
-            mvBits = 0;
-            coeffBits = 0;
-        }
-
-        void addSubCosts(const Mode& subMode)
-        {
-            rdCost += subMode.rdCost;
-            sa8dCost += subMode.sa8dCost;
-            sa8dBits += subMode.sa8dBits;
-            psyEnergy += subMode.psyEnergy;
-            distortion += subMode.distortion;
-            totalBits += subMode.totalBits;
-            mvBits += subMode.mvBits;
-            coeffBits += subMode.coeffBits;
-        }
-    };
-
-    struct MotionData
-    {
-        MV  mv;
-        MV  mvp;
-        int mvpIdx;
-        int ref;
-        uint32_t cost;
-        int bits;
-    };
 
     Search();
     ~Search();
@@ -182,8 +169,15 @@ public:
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
-    // get most probable luma modes for CU part, and bit cost of all non mpm modes
-    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const;
+    struct MotionData
+    {
+        MV       mv;
+        MV       mvp;
+        int      mvpIdx;
+        int      ref;
+        uint32_t cost;
+        int      bits;
+    };
 
 protected:
 
@@ -268,6 +262,9 @@ protected:
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
     static void updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
+
+    // get most probable luma modes for CU part, and bit cost of all non mpm modes
+    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const;
 
     void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
 };

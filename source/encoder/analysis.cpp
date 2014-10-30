@@ -116,7 +116,7 @@ void Analysis::destroy()
     }
 }
 
-Search::Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext)
+Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext)
 {
     m_slice = ctu.m_slice;
     m_frame = &frame;
