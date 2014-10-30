@@ -1799,6 +1799,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.transpose[BLOCK_64x64] = x265_transpose64_avx2;
 #endif
         p.luma_hpp[LUMA_4x4] = x265_interp_8tap_horiz_pp_4x4_avx2;
+        p.luma_vpp[LUMA_4x4] = x265_interp_8tap_vert_pp_4x4_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
 }
