@@ -123,13 +123,13 @@ tab_LumaCoeffVer: times 8 db 0, 0
                   times 8 db 58, -10
                   times 8 db 4, -1
 
-tab_c_128:      times 16 db 0x80
 tab_c_64_n64:   times 8 db 64, -64
 
 
 SECTION .text
 
 cextern idct4_shuf1
+cextern pb_128
 cextern pw_1
 cextern pw_512
 cextern pw_2000
@@ -3190,7 +3190,7 @@ cglobal luma_p2s, 3, 7, 6
     mov         r4d, r4m
 
     ; load constant
-    mova        m4, [tab_c_128]
+    mova        m4, [pb_128]
     mova        m5, [tab_c_64_n64]
 
 .loopH:
@@ -3959,7 +3959,7 @@ cglobal chroma_p2s, 3, 7, 4
     mov         r4d, r4m
 
     ; load constant
-    mova        m2, [tab_c_128]
+    mova        m2, [pb_128]
     mova        m3, [tab_c_64_n64]
 
 .loopH:
