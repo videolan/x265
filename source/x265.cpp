@@ -391,7 +391,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("\nAnalysis:\n");
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --psy-rd <0..2.0>             Strength of psycho-visual rate distortion optimization, 0 to disable. Default %f\n", param->psyRd);
-    H0("   --psy-rdoq <0..10.0>          Strength of psycho-visual optimization in quantization, 0 to disable. Default %f\n", param->psyRdoq);
+    H0("   --psy-rdoq <0..50.0>          Strength of psycho-visual optimization in quantization, 0 to disable. Default %f\n", param->psyRdoq);
     H0("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
     H0("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));

@@ -773,9 +773,10 @@ psycho-visual settings.
 	visual quality at the cost of lower quality metric scores.  It only
 	has effect on slower presets which use RDO Quantization
 	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Default
-	disabled. Experimental
+	disabled. High values can be beneficial in preserving high-frequency
+	detail like film grain. Experimental
 
-	**Range of values:** 0 .. 10.0
+	**Range of values:** 0 .. 50.0
 
 
 Slice decision options

@@ -686,7 +686,8 @@ typedef struct x265_param
 
     /* Psycho-visual rate-distortion strength. Only has an effect in presets
      * which use RDO. It makes mode decision favor options which preserve the
-     * energy of the source, at the cost of lost compression. Default 0.0 */
+     * energy of the source, at the cost of lost compression. The value must
+     * be between 0 and 2.0, 1.0 is typical. Default 0.0 */
     double    psyRd;
 
     /* Quantization scaling lists. HEVC supports 6 quantization scaling lists to
@@ -702,7 +703,8 @@ typedef struct x265_param
     const char *scalingLists;
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
-     * effect in presets which use RDOQ (rd-levels 4 and 5). Default 0.0 */
+     * effect in presets which use RDOQ (rd-levels 4 and 5).  The value must be
+     * between 0 and 50, 1.0 is typical. Default 0.0 */
     double    psyRdoq;
 
     /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
