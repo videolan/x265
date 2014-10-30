@@ -1001,23 +1001,17 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
         if (mightNotSplit)
             addSplitFlagCost(*splitPred, cuGeom.depth);
-        else if (m_param->rdLevel <= 1)
-            splitPred->sa8dCost = m_rdCost.calcRdSADCost(splitPred->distortion, splitPred->sa8dBits);
-        else
+        else if (m_param->rdLevel > 1)
             updateModeCost(*splitPred);
+        else
+            splitPred->sa8dCost = m_rdCost.calcRdSADCost(splitPred->distortion, splitPred->sa8dBits);
 
         if (!md.bestMode)
             md.bestMode = splitPred;
-        else if (m_param->rdLevel >= 1)
-        {
-            if (splitPred->rdCost < md.bestMode->rdCost)
-                md.bestMode = splitPred;
-        }
-        else
-        {
-            if (splitPred->sa8dCost < md.bestMode->sa8dCost)
-                md.bestMode = splitPred;
-        }
+        else if (m_param->rdLevel > 1)
+            checkBestMode(*splitPred, cuGeom.depth);
+        else if (splitPred->sa8dCost < md.bestMode->sa8dCost)
+            md.bestMode = splitPred;
     }
 
     if (!depth || md.bestMode->cu.m_predMode[0] != MODE_INTRA)
