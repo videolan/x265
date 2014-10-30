@@ -32,6 +32,12 @@ library was compiled (it will contain a value of 8 or 10). Further,
 x265 which was compiled, and **x265_build_info_str** is a pointer to a
 string identifying the compiler and build options.
 
+.. Note::
+
+	**x265_version_str** is only updated when **cmake** runs. If you are
+	making binaries for others to use, it is recommended to run
+	**cmake** prior to **make** in your build scripts.
+
 x265 will accept input pixels of any depth between 8 and 16 bits
 regardless of the depth of its internal pixels (8 or 10).  It will shift
 and mask input pixels as required to reach the internal depth. If
