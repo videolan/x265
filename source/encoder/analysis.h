@@ -75,7 +75,7 @@ public:
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
-    Search::Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
+    Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
 
@@ -103,10 +103,6 @@ protected:
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
     void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly);
-
-    /* measure intra options */
-    void checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom);
-    void encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);
