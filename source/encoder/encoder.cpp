@@ -1326,31 +1326,41 @@ void Encoder::configure(x265_param *p)
     }
     p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
 
-    if (!p->bEnableRectInter)
-        p->bEnableAMP = false;
-
     if (p->bBPyramid && !p->bframes)
         p->bBPyramid = 0;
 
-    // psy-rd is not supported in RD levels below 2
-    if (p->rdLevel < 2)
-        p->psyRd = 0.0;
-
+    /* Disable features which are not supported by the current RD level */
+    if (p->rdLevel < 4)
+    {
+        if (p->psyRdoq > 0)             /* impossible */
+            x265_log(p, X265_LOG_WARNING, "--psy-rdoq disabled, requires --rdlevel 4 or higher\n");
+        p->psyRdoq = 0;
+    }
     if (p->rdLevel < 3)
     {
-        /* these two options require RDO based CU/TU decisions. RD levels 0,1,2 will not bother */
-        if (p->bCULossless)
+        if (p->bCULossless)             /* impossible */
             x265_log(p, X265_LOG_WARNING, "--cu-lossless disabled, requires --rdlevel 3 or higher\n");
-        if (p->bEnableTransformSkip)
+        if (p->bEnableTransformSkip)    /* impossible */
             x265_log(p, X265_LOG_WARNING, "--tskip disabled, requires --rdlevel 3 or higher\n");
         p->bCULossless = p->bEnableTransformSkip = 0;
     }
     if (p->rdLevel < 2)
     {
-        if (p->bDistributeModeAnalysis)
+        if (p->bDistributeModeAnalysis) /* not useful */
             x265_log(p, X265_LOG_WARNING, "--pmode disabled, requires --rdlevel 2 or higher\n");
         p->bDistributeModeAnalysis = 0;
+
+        if (p->psyRd > 0)               /* impossible */
+            x265_log(p, X265_LOG_WARNING, "--psy-rd disabled, requires --rdlevel 2 or higher\n");
+        p->psyRd = 0;
+
+        if (p->bEnableRectInter)        /* broken, not very useful */
+            x265_log(p, X265_LOG_WARNING, "--rect disabled, requires --rdlevel 2 or higher\n");
+        p->bEnableRectInter = 0;
     }
+
+    if (!p->bEnableRectInter)          /* not useful */
+        p->bEnableAMP = false;
 
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
     if (p->internalCsp == X265_CSP_I444 && p->psyRd)
@@ -1358,10 +1368,6 @@ void Encoder::configure(x265_param *p)
         p->cbQpOffset += 6;
         p->crQpOffset += 6;
     }
-
-    /* disable psy-rdoq if RDOQ is not enabled (do not show in logs as in-use) */
-    if (p->rdLevel < 4)
-        p->psyRdoq = 0;
 
     if (p->bLossless)
     {
