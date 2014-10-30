@@ -1455,34 +1455,31 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
-    //========= set default display window ==================================
+    /* initialize the conformance window */
     m_conformanceWindow.bEnabled = false;
     m_conformanceWindow.rightOffset = 0;
     m_conformanceWindow.topOffset = 0;
     m_conformanceWindow.bottomOffset = 0;
     m_conformanceWindow.leftOffset = 0;
 
-    //======== set pad size if width is not multiple of the minimum CU size =========
-    const uint32_t minCUSize = MIN_CU_SIZE;
-    if (p->sourceWidth & (minCUSize - 1))
+    /* set pad size if width is not multiple of the minimum CU size */
+    if (p->sourceWidth & (MIN_CU_SIZE - 1))
     {
-        uint32_t rem = p->sourceWidth & (minCUSize - 1);
-        uint32_t padsize = minCUSize - rem;
+        uint32_t rem = p->sourceWidth & (MIN_CU_SIZE - 1);
+        uint32_t padsize = MIN_CU_SIZE - rem;
         p->sourceWidth += padsize;
 
-        /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.rightOffset = padsize;
     }
 
-    //======== set pad size if height is not multiple of the minimum CU size =========
-    if (p->sourceHeight & (minCUSize - 1))
+    /* set pad size if height is not multiple of the minimum CU size */
+    if (p->sourceHeight & (MIN_CU_SIZE - 1))
     {
-        uint32_t rem = p->sourceHeight & (minCUSize - 1);
-        uint32_t padsize = minCUSize - rem;
+        uint32_t rem = p->sourceHeight & (MIN_CU_SIZE - 1);
+        uint32_t padsize = MIN_CU_SIZE - rem;
         p->sourceHeight += padsize;
 
-        /* set the confirmation window offsets  */
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.bottomOffset = padsize;
     }
