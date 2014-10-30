@@ -388,11 +388,17 @@ typedef struct x265_param
     int       frameNumThreads;
 
     /* Use multiple threads to measure CU mode costs. Recommended for many core
-     * CPUs */
+     * CPUs. On RD levels less than 5, it may not offload enough work to warrant
+     * the overhead. It is useful with the slow preset since it has the
+     * rectangular predictions enabled. At RD level 5 and 6 (preset slower and
+     * below), this feature should be an unambiguous win if you have CPU
+     * cores available for work. Default disabled */
     int       bDistributeModeAnalysis;
 
     /* Use multiple threads to perform motion estimation to (ME to one reference
-     * per thread). Recommended for many core CPUs */
+     * per thread). Recommended for many core CPUs. The more references the more
+     * motion searches there will be to distribute. This option is often not a
+     * win, particularly in video sequences with low motion. Default disabled */
     int       bDistributeMotionEstimation;
 
     /* The level of logging detail emitted by the encoder. X265_LOG_NONE to

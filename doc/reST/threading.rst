@@ -86,9 +86,12 @@ Parallel Mode Analysis
 ======================
 
 When :option:`--pmode` is enabled, each CU (at all depths from 64x64 to
-8x8) will distribute the analysis work to the thread pool. Each analysis
+8x8) will distribute its analysis work to the thread pool. Each analysis
 job will measure the cost of one prediction for the CU: merge, skip,
-intra, inter (2Nx2N, Nx2N, 2NxN, and AMP)
+intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At slower presets, the amount
+of increased parallelism is often enough to be able to reduce frame
+parallelism while achieving the same overall CPU utilization. Reducing
+frame threads is often beneficial to ABR and VBV rate control.
 
 Parallel Motion Estimation
 ==========================

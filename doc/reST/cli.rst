@@ -76,16 +76,18 @@ Standalone Executable Options
 	Parallel mode decision, or distributed mode analysis. When enabled
 	the encoder will distribute the analysis work of each CU (merge,
 	inter, intra) across multiple worker threads. Only recommended if
-	x265 is not already saturating the CPU cores. Currently only
-	supported in RD levels 3 and 4, and is most effective when --rect is
-	enabled. This feature is implicitly disabled when no thread pool is
-	present.
+	x265 is not already saturating the CPU cores. In RD levels 3 and 4
+	it will be most effective if --rect was enabled. At RD levels 5 and
+	6 there is generally always enough work to distribute to warrant the
+	overhead, assuming your CPUs are not already saturated.
+	
+	--pmode will increase utilization without reducing compression
+	efficiency. In fact, since the modes are all measured in parallel it
+	makes certain early-outs impractical and thus you usually get
+	slightly better compression when it is enabled (at the expense of
+	not skipping improbable modes).
 
-	--pmode will increase utilization on many core systems without
-	reducing compression efficiency. In fact, since the modes are all
-	measured in parallel it makes certain early-outs impractical and
-	thus you usually get slightly better compression when it is enabled
-	(at the expense of not skipping improbable modes).
+	This feature is implicitly disabled when no thread pool is present.
 
 	Default disabled
 
@@ -97,12 +99,13 @@ Standalone Executable Options
 	if x265 is not already saturating CPU cores. :option:`--pmode` is
 	much more effective than this option, since the amount of work it
 	distributes is substantially higher. With --pme it is not unusual
-	for the overhead of distributing the work outweighs the parallelism
-	benefits. This feature is implicitly disabled when no thread pool is
-	present.
+	for the overhead of distributing the work to outweigh the
+	parallelism benefits.
+	
+	This feature is implicitly disabled when no thread pool is present.
 
-	--pme will increase utilization on many core systems without any
-	substantial effect om compression efficiency.
+	--pme will increase utilization on many core systems with no effect
+	on the output bitstream.
 	
 	Default disabled
 
