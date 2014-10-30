@@ -1701,6 +1701,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         const int intraPenalty = 5 * m_lookAheadLambda;
         icost += intraPenalty + lowresPenalty; /* estimate intra signal cost */
         fenc->intraCost[cuXY] = icost;
+        fenc->intraMode[cuXY] = lowmode;
         int icostAq = icost;
         if (bFrameScoreCU)
         {

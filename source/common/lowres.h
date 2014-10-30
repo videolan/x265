@@ -116,6 +116,7 @@ struct Lowres : public ReferencePlanes
     int32_t*  rowSatds[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int       intraMbs[X265_BFRAME_MAX + 2];
     int32_t*  intraCost;
+    uint8_t*  intraMode;
     int64_t   satdCost;
     uint16_t* lowresCostForRc;
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
