@@ -488,7 +488,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
-    uint32_t minDepth = mightNotSplit ? topSkipMinDepth(parentCTU, cuGeom) : 4;
+    uint32_t minDepth = m_param->rdLevel <= 4 ? topSkipMinDepth(parentCTU, cuGeom) : 0;
 
     X265_CHECK(m_param->rdLevel >= 2, "compressInterCU_dist does not support RD 0 or 1\n");
 
@@ -656,7 +656,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
     if (md.bestMode)
     {
         bNoSplit = !!md.bestMode->cu.isSkipped(0);
-        if (mightSplit && depth && depth >= minDepth && !bNoSplit)
+        if (mightSplit && depth && depth >= minDepth && !bNoSplit && m_param->rdLevel <= 4)
             bNoSplit = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
     }
 
@@ -728,7 +728,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
-    uint32_t minDepth = mightNotSplit ? topSkipMinDepth(parentCTU, cuGeom) : 4;
+    uint32_t minDepth = topSkipMinDepth(parentCTU, cuGeom);
 
     if (mightNotSplit && depth >= minDepth)
     {
