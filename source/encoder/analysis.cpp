@@ -155,7 +155,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
              * they are available for intra predictions */
             m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPicYuv, ctu.m_cuAddr, 0);
             
-            compressInterCU_rd0_4(ctu, cuGeom); // TODO: this really wants to be compressInterCU_rd0_1
+            compressInterCU_rd0_4(ctu, cuGeom);
 
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
