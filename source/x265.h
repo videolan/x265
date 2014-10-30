@@ -664,7 +664,7 @@ typedef struct x265_param
 
     /* Enable the use of `coded block flags` (flags set to true when a residual
      * has been coded for a given block) to avoid intra analysis in likely skip
-     * blocks. Default is disabled */
+     * blocks. Only applicable in RD levels 5 and 6. Default is disabled */
     int       bEnableCbfFastMode;
 
     /* Enable early skip decisions to avoid intra and inter analysis in likely
@@ -735,8 +735,16 @@ typedef struct x265_param
     /* Enable the deblocking loop filter, which improves visual quality by
      * reducing blocking effects at block edges, particularly at lower bitrates
      * or higher QP. When enabled it adds another CU row of reference lag,
-     * reducing frame parallelism effectiveness.  Default is enabled */
+     * reducing frame parallelism effectiveness. Default is enabled */
     int       bEnableLoopFilter;
+
+    /* deblocking filter tC offset [-6, 6] -6 light filter, 6 strong.
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterTCOffset;
+
+    /* deblocking filter Beta offset [-6, 6] -6 light filter, 6 strong
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterBetaOffset;
 
     /* Enable the Sample Adaptive Offset loop filter, which reduces distortion
      * effects by adjusting reconstructed sample values based on histogram
