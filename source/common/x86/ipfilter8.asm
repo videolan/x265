@@ -42,7 +42,6 @@ tab_Vm:    db 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
 
 tab_Cm:    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
 
-tab_c_512:      times 8 dw 512
 tab_c_526336:   times 4 dd 8192*64+2048
 
 tab_ChromaCoeff: db  0, 64,  0,  0
@@ -171,7 +170,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 %rep 2
@@ -203,7 +202,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 %rep 4
@@ -235,7 +234,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 mov         r5d,        16/2
@@ -285,7 +284,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 FILTER_H4_w4_2   t0, t1, t2
@@ -313,7 +312,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 %rep 2
@@ -345,7 +344,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 %rep 4
@@ -377,7 +376,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 %rep 8
@@ -409,7 +408,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 
 mov         r5d,        32/2
@@ -606,7 +605,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 mov           r5d,       %2
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 mova        Tm1,         [tab_Tm + 16]
 
@@ -662,7 +661,7 @@ movd        coef2,       [tab_ChromaCoeff + r4 * 4]
 mov         r5d,          %2
 
 pshufd      coef2,       coef2,      0
-mova        t2,          [tab_c_512]
+mova        t2,          [pw_512]
 mova        Tm0,         [tab_Tm]
 mova        Tm1,         [tab_Tm + 16]
 
@@ -749,7 +748,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,8
     punpcklqdq  m3, m3
 
 %ifidn %3, pp 
-    mova      m2, [tab_c_512]
+    mova      m2, [pw_512]
 %else
     mova      m2, [pw_2000]
 %endif
@@ -1040,7 +1039,7 @@ cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
     mov         r4,         rsp
 
 .loopH:
-    FILTER_H8_W8 m0, m1, m2, m3, coef, [tab_c_512], [r0 - 3]
+    FILTER_H8_W8 m0, m1, m2, m3, coef, [pw_512], [r0 - 3]
     psubw       m1,         [pw_2000]
     mova        [r4],       m1
 
@@ -1108,7 +1107,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 lea         r4,        [r1 * 3]
 lea         r5,        [r0 + 4 * r1]
 pshufb      m0,        [tab_Cm]
-mova        m1,        [tab_c_512]
+mova        m1,        [pw_512]
 
 movd        m2,        [r0]
 movd        m3,        [r0 + r1]
@@ -1181,7 +1180,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 
 pshufb      m0,        [tab_Cm]
 
-mova        m1,        [tab_c_512]
+mova        m1,        [pw_512]
 
 mov         r4d,       %2
 lea         r5,        [3 * r1]
@@ -1289,7 +1288,7 @@ pmaddubsw   m3,        m0
 
 phaddw      m2,        m3
 
-pmulhrsw    m2,        [tab_c_512]
+pmulhrsw    m2,        [pw_512]
 packuswb    m2,        m2
 movd        [r2],      m2
 pextrd      [r2 + r3], m2,  1
@@ -1313,7 +1312,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 %endif
 
 pshufb      m0,        [tab_Cm]
-mova        m1,        [tab_c_512]
+mova        m1,        [pw_512]
 lea         r5,        [r0 + 4 * r1]
 lea         r4,        [r1 * 3]
 
@@ -1388,7 +1387,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 
 pshufb      m0,        [tab_Cm]
 
-mova        m1,        [tab_c_512]
+mova        m1,        [pw_512]
 
 mov         r4d,       %2
 
@@ -1590,7 +1589,7 @@ pmaddubsw   m4,        m5
 
 paddw       m0,        m4
 
-mova        m4,        [tab_c_512]
+mova        m4,        [pw_512]
 
 pmulhrsw    m0,        m4
 packuswb    m0,        m0
@@ -2495,7 +2494,7 @@ movd        m5,        [tab_ChromaCoeff + r4 * 4]
 
 pshufb      m6,        m5,       [tab_Vm]
 pshufb      m5,        [tab_Vm + 16]
-mova        m4,        [tab_c_512]
+mova        m4,        [pw_512]
 lea         r5,        [r1 * 3]
 
 mov         r4d,       %2
@@ -2593,7 +2592,7 @@ movd        m5,        [tab_ChromaCoeff + r4 * 4]
 
 pshufb      m6,        m5,       [tab_Vm]
 pshufb      m5,        [tab_Vm + 16]
-mova        m4,        [tab_c_512]
+mova        m4,        [pw_512]
 
 mov         r4d,       %2
 lea         r5,        [3 * r1]
@@ -2716,7 +2715,7 @@ punpckhbw   m6,        m5,        m7
 pmaddubsw   m6,        m0
 paddw       m2,        m6
 
-mova        m6,        [tab_c_512]
+mova        m6,        [pw_512]
 
 pmulhrsw    m4,        m6
 pmulhrsw    m2,        m6
@@ -2806,7 +2805,7 @@ punpcklbw   m7,        m5,        m6
 pmaddubsw   m7,        m0
 paddw       m4,        m7
 
-mova        m7,        [tab_c_512]
+mova        m7,        [pw_512]
 
 pmulhrsw    m4,        m7
 pmulhrsw    m2,        m7
@@ -2899,7 +2898,7 @@ punpckhbw   m6,        m5,        m7
 pmaddubsw   m6,        m0
 paddw       m2,        m6
 
-mova        m6,        [tab_c_512]
+mova        m6,        [pw_512]
 
 pmulhrsw    m4,        m6
 pmulhrsw    m2,        m6
@@ -2998,7 +2997,7 @@ movd        m0,        [tab_ChromaCoeff + r4 * 4]
 pshufb      m1,        m0,       [tab_Vm]
 pshufb      m0,        [tab_Vm + 16]
 
-mova        m7,        [tab_c_512]
+mova        m7,        [pw_512]
 
 mov         r4d,       %2
 
@@ -3126,7 +3125,7 @@ punpcklbw   m7,        m5,        m6
 pmaddubsw   m7,        m0
 paddw       m4,        m7
 
-mova        m7,        [tab_c_512]
+mova        m7,        [pw_512]
 
 pmulhrsw    m4,        m7
 pmulhrsw    m2,        m7
@@ -3379,7 +3378,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 6
 %endif
 
 %ifidn %3,pp
-    mova      m3, [tab_c_512]
+    mova      m3, [pw_512]
 %else
     mova      m3, [pw_2000]
 %endif
@@ -3473,7 +3472,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 %endif
 
  %ifidn %3,pp
-    mova      m3, [tab_c_512]
+    mova      m3, [pw_512]
 %else
     mova      m3, [pw_2000]
 %endif
@@ -3581,7 +3580,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 %endif
 
  %ifidn %3,pp
-    mova      m3, [tab_c_512]
+    mova      m3, [pw_512]
 %else
     mova      m3, [pw_2000]
 %endif
@@ -3695,7 +3694,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8 ,0-gprsize
 %endif
 
 %ifidn %3,pp
-    mova      m3, [tab_c_512]
+    mova      m3, [pw_512]
 %else
     mova      m3, [pw_2000]
 %endif
