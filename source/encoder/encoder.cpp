@@ -1178,7 +1178,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
     }
 
-    if (m_param->bEmitHRDSEI)
+    if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
     {
         /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
