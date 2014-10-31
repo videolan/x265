@@ -1171,8 +1171,8 @@ void x265_print_params(x265_param *param)
         fprintf(stderr, "psy-rd=%.2lf ", param->psyRd);
     if (param->psyRdoq > 0.)
         fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
-    TOOLOPT(param->bEnableEarlySkip, "esd");
-    TOOLOPT(param->bEnableCbfFastMode, "cfm");
+    TOOLOPT(param->bEnableEarlySkip, "early-skip");
+    TOOLOPT(param->bEnableCbfFastMode, "fast-cbf");
     if (param->noiseReduction)
         fprintf(stderr, "nr=%d ", param->noiseReduction);
     if (param->bEnableLoopFilter)
