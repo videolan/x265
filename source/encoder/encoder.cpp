@@ -1327,6 +1327,12 @@ void Encoder::configure(x265_param *p)
         p->bBPyramid = 0;
 
     /* Disable features which are not supported by the current RD level */
+    if (p->rdLevel < 5)
+    {
+        if (p->bEnableCbfFastMode)      /* impossible */
+            x265_log(p, X265_LOG_WARNING, "--fast-cbf disabled, requires --rdlevel 5 or higher\n");
+        p->bEnableCbfFastMode = 0;
+    }
     if (p->rdLevel < 4)
     {
         if (p->psyRdoq > 0)             /* impossible */
