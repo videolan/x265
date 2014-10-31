@@ -69,6 +69,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     lowresPlane[3] = buffer[3] + padoffset;
 
     CHECKED_MALLOC(intraCost, int32_t, cuCount);
+    CHECKED_MALLOC(intraMode, uint8_t, cuCount);
 
     for (int i = 0; i < bframes + 2; i++)
     {
@@ -99,6 +100,7 @@ void Lowres::destroy()
         X265_FREE(buffer[i]);
 
     X265_FREE(intraCost);
+    X265_FREE(intraMode);
 
     for (int i = 0; i < bframes + 2; i++)
     {
