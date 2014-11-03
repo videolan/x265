@@ -24,13 +24,6 @@
 #ifndef X265_PIXEL_UTIL_H
 #define X265_PIXEL_UTIL_H
 
-void x265_calcRecons4_sse2(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-void x265_calcRecons8_sse2(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-void x265_calcRecons16_sse2(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-void x265_calcRecons32_sse2(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-void x265_calcRecons16_sse4(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-void x265_calcRecons32_sse4(pixel* pred, int16_t* residual, int16_t* reconqt, pixel *reconipred, int stride, int strideqt, int strideipred);
-
 void x265_getResidual4_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 void x265_getResidual8_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
 void x265_getResidual16_sse2(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
