@@ -3473,7 +3473,7 @@ cglobal interp_8tap_vert_pp_4x4, 4,6,8
     vpbroadcastd    m0, [r5 + r4 * 8 + 0]
     vpbroadcastd    m2, [r5 + r4 * 8 + 4]
 %else
-    vpbroadcastq    m0, [tab_LumaCoeff + r4 * 8 + 0]
+    vpbroadcastd    m0, [tab_LumaCoeff + r4 * 8 + 0]
     vpbroadcastd    m2, [tab_LumaCoeff + r4 * 8 + 4]
 %endif
 
