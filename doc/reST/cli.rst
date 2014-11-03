@@ -63,7 +63,7 @@ Standalone Executable Options
 	is used for WPP and for distributed analysis and motion search:
 	:option:`--wpp` :option:`--pmode` and :option:`--pme` respectively.
 
-	If :option:`--threads`=1 is specified, then no thread pool is
+	If :option:`--threads` 1 is specified, then no thread pool is
 	created. When no thread pool is created, all the thread pool
 	features are implicitly disabled. If all the pool features are
 	disabled by the user, then the pool is implicitly disabled.
@@ -904,8 +904,8 @@ Quality, rate control and rate distortion options
 	between 0 and 1, or in kbits. In other words these two option pairs
 	are equivalent::
 
-	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 900
-	:option:`--vbv-bufsize` 1000 :option:`--vbv-init` 0.9
+	--vbv-bufsize 1000 --vbv-init 900
+	--vbv-bufsize 1000 --vbv-init 0.9
 
 	Default 0.9
 
@@ -1220,7 +1220,7 @@ Bitstream options
 .. option:: --aud, --no-aud
 
 	Emit an access unit delimiter NAL at the start of each slice access
-	unit. If option:`--repeat-headers` is not enabled (indicating the
+	unit. If :option:`--repeat-headers` is not enabled (indicating the
 	user will be writing headers manually at the start of the stream)
 	the very first AUD will be skipped since it cannot be placed at the
 	start of the access unit, where it belongs. Default disabled
