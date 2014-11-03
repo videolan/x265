@@ -178,7 +178,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     if (!md.bestMode->distortion)
         /* already lossless */
         return;
-    else if (md.bestMode->cu.m_predMode[0] == MODE_INTRA)
+    else if (md.bestMode->cu.isIntra(0))
     {
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSize[0];
@@ -695,7 +695,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
     bool bNoSplit = false;
     if (md.bestMode)
     {
-        bNoSplit = !!md.bestMode->cu.isSkipped(0);
+        bNoSplit = md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit && m_param->rdLevel <= 4)
             bNoSplit = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
     }
@@ -741,7 +741,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         checkBestMode(*splitPred, depth);
     }
 
-    if (!depth || md.bestMode->cu.m_predMode[0] != MODE_INTRA)
+    if (!depth || md.bestMode->cu.isInter(0))
     {
         /* early-out statistics */
         FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
@@ -894,7 +894,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     /* prediction already generated for this CU, and if rd level
                      * is not 0, it is already fully encoded */
                 }
-                else if (md.bestMode->cu.m_predMode[0] == MODE_INTER)
+                else if (md.bestMode->cu.isInter(0))
                 {
                     for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
                     {
@@ -920,7 +920,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         {
                             md.bestMode->reconYuv.copyFromYuv(md.bestMode->predYuv);
                             if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N)
-                                cu.setSkipFlagSubParts(true);
+                                cu.setPredModeSubParts(MODE_SKIP);
                         }
                     }
                 }
@@ -957,7 +957,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     bool bNoSplit = false;
     if (md.bestMode)
     {
-        bNoSplit = !!md.bestMode->cu.isSkipped(0);
+        bNoSplit = md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !bNoSplit)
             bNoSplit = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
     }
@@ -1014,7 +1014,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             md.bestMode = splitPred;
     }
 
-    if (!depth || md.bestMode->cu.m_predMode[0] != MODE_INTRA)
+    if (!depth || md.bestMode->cu.isInter(0))
     {
         /* early-out statistics */
         FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
@@ -1334,7 +1334,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
         tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
         tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
-        tempPred->cu.setSkipFlagSubParts(false);     /* must be cleared between encode iterations */
+        tempPred->cu.setPredModeSubParts(MODE_INTER); /* must be cleared between encode iterations */
 
         prepMotionCompensation(tempPred->cu, cuGeom, 0);
         motionCompensation(tempPred->predYuv, true, true);
@@ -1367,7 +1367,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
                 tempPred->cu.m_refIdx[0][0] = (char)mvFieldNeighbours[i][0].refIdx;
                 tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
                 tempPred->cu.m_refIdx[1][0] = (char)mvFieldNeighbours[i][1].refIdx;
-                tempPred->cu.setSkipFlagSubParts(false);
+                tempPred->cu.setPredModeSubParts(MODE_INTER);
                 tempPred->predYuv.copyFromYuv(bestPred->predYuv);
             }
             
@@ -1457,7 +1457,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     cu.copyFromPic(ctu, cuGeom);
     m_quant.setQPforQuant(cu);
 
-    if (cu.m_predMode[0] == MODE_INTRA)
+    if (cu.isIntra(0))
     {
         uint32_t tuDepthRange[2];
         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
@@ -1467,9 +1467,9 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         getBestIntraModeChroma(*bestMode, cuGeom);
         residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
     }
-    else if (cu.m_predMode[0] == MODE_INTER)
+    else if (cu.isInter(0))
     {
-        X265_CHECK(!ctu.m_skipFlag[absPartIdx], "skip not expected prior to transform\n");
+        X265_CHECK(!ctu.isSkipped(absPartIdx), "skip not expected prior to transform\n");
 
         /* Calculate residual for current CU part into depth sized resiYuv */
 
@@ -1499,7 +1499,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         residualTransformQuantInter(*bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
 
         if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
-            cu.setSkipFlagSubParts(true);
+            cu.setPredModeSubParts(MODE_SKIP);
 
         PicYuv& reconPicYuv = *m_frame->m_reconPicYuv;
         if (cu.getQtRootCbf(0)) // TODO: split to each component

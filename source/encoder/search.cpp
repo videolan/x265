@@ -2366,7 +2366,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     // No residual coding : SKIP mode
 
-    cu.setSkipFlagSubParts(true);
+    cu.setPredModeSubParts(MODE_SKIP);
     cu.clearCbf();
     cu.setTUDepthSubParts(0, 0, depth);
 
@@ -2466,7 +2466,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     uint32_t coeffBits, bits;
     if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
     {
-        cu.setSkipFlagSubParts(true);
+        cu.setPredModeSubParts(MODE_SKIP);
 
         /* Merge/Skip */
         m_entropyCoder.resetBits();
@@ -3233,7 +3233,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 void Search::encodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2])
 {
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "depth not matching\n");
-    X265_CHECK(cu.m_predMode[absPartIdx] != MODE_INTRA, "encodeResidualQT() with intra block\n");
+    X265_CHECK(cu.isInter(absPartIdx), "encodeResidualQT() with intra block\n");
 
     const uint32_t curTuDepth  = depth - cu.m_cuDepth[0];
     const uint32_t tuDepth     = cu.m_tuDepth[absPartIdx];

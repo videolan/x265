@@ -557,17 +557,16 @@ void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartI
         codeCUTransquantBypassFlag(cu.m_tqBypass[absPartIdx]);
 
     if (!slice->isIntra())
-        codeSkipFlag(cu, absPartIdx);
-
-    if (cu.isSkipped(absPartIdx))
     {
-        codeMergeIndex(cu, absPartIdx);
-        finishCU(cu, absPartIdx, depth);
-        return;
-    }
-
-    if (!slice->isIntra())
+        codeSkipFlag(cu, absPartIdx);
+        if (cu.isSkipped(absPartIdx))
+        {
+            codeMergeIndex(cu, absPartIdx);
+            finishCU(cu, absPartIdx, depth);
+            return;
+        }
         codePredMode(cu.m_predMode[absPartIdx]);
+    }
 
     codePartSize(cu, absPartIdx, depth);
 
@@ -648,11 +647,11 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
 
     /* in each of these conditions, the subdiv flag is implied and not signaled,
      * so we have checks to make sure the implied value matches our intentions */
-    if (cu.m_predMode[absPartIdx] == MODE_INTRA && cu.m_partSize[absPartIdx] == SIZE_NxN && depth == cu.m_cuDepth[absPartIdx])
+    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] == SIZE_NxN && depth == cu.m_cuDepth[absPartIdx])
     {
         X265_CHECK(subdiv, "intra NxN requires TU depth below CU depth\n");
     }
-    else if (cu.m_predMode[absPartIdx] == MODE_INTER && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_cuDepth[absPartIdx] &&
+    else if (cu.isInter(absPartIdx) && (cu.m_partSize[absPartIdx] != SIZE_2Nx2N) && depth == cu.m_cuDepth[absPartIdx] &&
              cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1)
     {
         X265_CHECK(subdiv, "inter TU must be smaller than CU when not 2Nx2N part size: log2TrSize %d, depthRange[0] %d\n", log2TrSize, depthRange[0]);
@@ -722,7 +721,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
     }
     else
     {
-        if (cu.m_predMode[absPartIdx] != MODE_INTRA && depth == cu.m_cuDepth[absPartIdx] && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
+        if (cu.isInter(absPartIdx) && depth == cu.m_cuDepth[absPartIdx] && !cu.getCbf(absPartIdx, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdx, TEXT_CHROMA_V, 0))
         {
             X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
         }
@@ -1202,7 +1201,7 @@ void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth
 
 void Entropy::codePredMode(int predMode)
 {
-    encodeBin(predMode == MODE_INTER ? 0 : 1, m_contextState[OFF_PRED_MODE_CTX]);
+    encodeBin(predMode == MODE_INTRA ? 1 : 0, m_contextState[OFF_PRED_MODE_CTX]);
 }
 
 void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)

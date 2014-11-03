@@ -333,7 +333,6 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
 
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
-    bool isIntra = cu.m_predMode[absPartIdx] == MODE_INTRA;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
     int trSize = 1 << log2TrSize;
 
@@ -355,6 +354,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
     }
     else
     {
+        bool isIntra = cu.isIntra(absPartIdx);
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && isLuma && isIntra;
         int index = DCT_4x4 + sizeIdx - useDST;

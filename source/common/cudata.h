@@ -51,9 +51,10 @@ enum PartSize
 
 enum PredMode
 {
-    MODE_INTER,
-    MODE_INTRA,
-    MODE_NONE = 15
+    MODE_NONE  = 0,
+    MODE_INTER = (1 << 0),
+    MODE_INTRA = (1 << 1),
+    MODE_SKIP  = (1 << 2) | MODE_INTER
 };
 
 // motion vector predictor direction used in AMVP
@@ -129,12 +130,11 @@ public:
     char*         m_qp;               // array of QP values
     uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
     uint8_t*      m_partSize;         // array of partition sizes
-    uint8_t*      m_predMode;         // array of prediction modes
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
     char*         m_refIdx[2];        // array of motion reference indices per list
     uint8_t*      m_cuDepth;          // array of depths
-    uint8_t*      m_skipFlag;         // array of skip flags
+    uint8_t*      m_predMode;         // array of prediction modes
     uint8_t*      m_mergeFlag;        // array of merge flags
     uint8_t*      m_interDir;         // array of inter directions
     uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]
@@ -142,7 +142,7 @@ public:
     uint8_t*      m_transformSkip[3]; // array of transform skipping flags per plane
     uint8_t*      m_cbf[3];           // array of coded block flags (CBF) per plane
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
-    enum { BytesPerPartition = 22 };  // combined sizeof() of all per-part data
+    enum { BytesPerPartition = 21 };  // combined sizeof() of all per-part data
 
     coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
 
@@ -173,7 +173,6 @@ public:
     void     updatePic(uint32_t depth) const;
 
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
-    void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
 
@@ -204,7 +203,8 @@ public:
 
     uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
     bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
-    bool     isSkipped(uint32_t absPartIdx) const { return !!m_skipFlag[absPartIdx]; }
+    bool     isInter(uint32_t absPartIdx) const   { return !!(m_predMode[absPartIdx] & MODE_INTER); }
+    bool     isSkipped(uint32_t absPartIdx) const { return m_predMode[absPartIdx] == MODE_SKIP; }
     bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
     void     getPartIndexAndSize(uint32_t puIdx, uint32_t& absPartIdx, int& puWidth, int& puHeight) const;
