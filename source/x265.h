@@ -1000,7 +1000,7 @@ void x265_setup_primitives(x265_param *param, int cpu);
  *  special in any way, but using this method together with x265_param_free()
  *  and x265_param_parse() to set values by name allows the application to treat
  *  x265_param as an opaque data struct for version safety */
-x265_param *x265_param_alloc();
+x265_param *x265_param_alloc(void);
 
 /* x265_param_free:
  *  Use x265_param_free() to release storage for an x265_param instance
@@ -1058,7 +1058,7 @@ int x265_param_default_preset(x265_param *, const char *preset, const char *tune
  *  special in any way, but using this method together with x265_picture_free()
  *  and x265_picture_init() allows some version safety. New picture fields will
  *  always be added to the end of x265_picture */
-x265_picture *x265_picture_alloc();
+x265_picture *x265_picture_alloc(void);
 
 /* x265_picture_free:
  *  Use x265_picture_free() to release storage for an x265_picture instance
