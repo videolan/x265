@@ -1995,7 +1995,69 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
 
-        if (bDistributed)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD && interMode.bestME[0].ref >= 0)
+        {
+            for (int l = 0; l < numPredDir; l++)
+            {
+                int ref = interMode.bestME[l].ref;
+                uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
+                bits += getTUBits(ref, numRefIdx[l]);
+
+                cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, amvpCand[l][ref], mvc);
+
+                // Pick the best possible MVP from AMVP candidates based on least residual
+                uint32_t bestCost = MAX_INT;
+                int mvpIdx = 0;
+                int merange = m_param->searchRange;
+
+                for (int i = 0; i < AMVP_NUM_CANDS; i++)
+                {
+                    MV mvCand = amvpCand[l][ref][i];
+
+                    // NOTE: skip mvCand if Y is > merange and -FN>1
+                    if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
+                        continue;
+
+                    cu.clipMv(mvCand);
+                    predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPicYuv, mvCand);
+                    uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+
+                    if (bestCost > cost)
+                    {
+                        bestCost = cost;
+                        mvpIdx  = i;
+                    }
+                }
+
+                MV mvmin, mvmax, outmv, mvp = amvpCand[l][ref][mvpIdx];
+                m_me.setMVP(mvp);
+                MV bmv(interMode.bestME[l].mv.x, interMode.bestME[l].mv.y);
+
+                int satdCost;
+                if (interMode.bestME[l].costZero)
+                    satdCost = m_me.mvcost(bmv);
+                else
+                    satdCost = interMode.bestME[l].cost;
+
+                /* Get total cost of partition, but only include MV bit cost once */
+                bits += m_me.bitcost(bmv);
+                uint32_t cost = (satdCost - m_me.mvcost(bmv)) + m_rdCost.getCost(bits);
+
+                /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
+                checkBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+
+                if (cost < interMode.bestME[l].cost)
+                {
+                    interMode.bestME[l].mv = outmv;
+                    interMode.bestME[l].mvp = mvp;
+                    interMode.bestME[l].mvpIdx = mvpIdx;
+                    interMode.bestME[l].ref = ref;
+                    interMode.bestME[l].cost = cost;
+                    interMode.bestME[l].bits = bits;
+                }
+            }
+        }
+        else if (bDistributed)
         {
             m_curInterMode = &interMode;
             m_curGeom = &cuGeom;

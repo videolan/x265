@@ -885,7 +885,7 @@ void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
         sizeof(int), pic->analysisData.numCUsInFrame, this->analysisFile);
     fread(pic->analysisData.intraData->cuAddr,
         sizeof(uint32_t), pic->analysisData.numCUsInFrame, this->analysisFile);
-    fread(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * 85, this->analysisFile);
+    fread(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * (X265_MAX_PRED_MODE_PER_CU), this->analysisFile);
 }
 
 void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
@@ -907,7 +907,7 @@ void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
         sizeof(char), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
     fwrite(pic->analysisData.intraData->poc, sizeof(int), pic->analysisData.numCUsInFrame, this->analysisFile);
     fwrite(pic->analysisData.intraData->cuAddr, sizeof(uint32_t), pic->analysisData.numCUsInFrame, this->analysisFile);
-    fwrite(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * 85, this->analysisFile);
+    fwrite(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * X265_MAX_PRED_MODE_PER_CU, this->analysisFile);
 }
 
 bool CLIOptions::parseQPFile(x265_picture &pic_org)
@@ -1020,7 +1020,7 @@ int main(int argc, char **argv)
             uint32_t numCU = pic_in->analysisData.numCUsInFrame;
             uint32_t numPart = pic_in->analysisData.numPartitions;
 
-            cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * 85 +
+            cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * X265_MAX_PRED_MODE_PER_CU +
                     sizeof(uint8_t) * 2 * numPart * numCU + sizeof(char) * numPart * numCU + sizeof(int) * numCU + sizeof(uint32_t) * numCU);
 
             fprintf(cliopt.analysisFile, "#options: %s\n", p);

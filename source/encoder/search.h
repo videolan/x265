@@ -73,6 +73,7 @@ struct MotionData
     int      ref;
     uint32_t cost;
     int      bits;
+    bool     costZero;
 };
 
 struct Mode

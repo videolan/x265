@@ -290,6 +290,7 @@ typedef enum
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
+#define X265_MAX_PRED_MODE_PER_CU (85 * 8)
 
 typedef struct
 {

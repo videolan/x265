@@ -149,6 +149,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     else
     {
+        if (m_param->analysisMode)
+            m_interAnalysisData = m_frame->m_interData + (ctu.m_cuAddr * (CUGeom::MAX_GEOMS * NUM_SIZES));
+
         if (!m_param->rdLevel)
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
@@ -1397,7 +1400,18 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.initCosts();
     interMode.cu.setPartSizeSubParts(partSize);
     interMode.cu.setPredModeSubParts(MODE_INTER);
+    int numPredDir = m_slice->isInterP() ? 1 : 2;
 
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interAnalysisData)
+    {
+        for (int32_t i = 0; i < numPredDir; i++)
+        {
+            interMode.bestME[i].costZero = !!m_interAnalysisData->costZero[i];
+            interMode.bestME[i].mv.x = m_interAnalysisData->mvx[i];
+            interMode.bestME[i].mv.y = m_interAnalysisData->mvy[i];
+            interMode.bestME[i].ref = m_interAnalysisData->ref[i];
+        }
+    }
     if (predInterSearch(interMode, cuGeom, false, false))
     {
         /* predInterSearch sets interMode.sa8dBits */
@@ -1405,6 +1419,20 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         Yuv& predYuv = interMode.predYuv;
         interMode.distortion = primitives.sa8d[cuGeom.log2CUSize - 2](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
+
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interAnalysisData)
+        {
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                m_interAnalysisData->costZero[i] = interMode.bestME[i].costZero;
+                m_interAnalysisData->mvx[i] = interMode.bestME[i].mv.x;
+                m_interAnalysisData->mvy[i] = interMode.bestME[i].mv.y;
+                m_interAnalysisData->ref[i] = interMode.bestME[i].ref;
+            }
+            m_interAnalysisData->zOrder = cuGeom.encodeIdx;
+            m_interAnalysisData->depth  = cuGeom.depth;
+        }
+        m_interAnalysisData++;
     }
     else
     {
@@ -1418,11 +1446,35 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.initCosts();
     interMode.cu.setPartSizeSubParts(partSize);
     interMode.cu.setPredModeSubParts(MODE_INTER);
+    int numPredDir = m_slice->isInterP() ? 1 : 2;
 
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interAnalysisData)
+    {
+        for (int32_t i = 0; i < numPredDir; i++)
+        {
+            interMode.bestME[i].costZero = !!m_interAnalysisData->costZero[i];
+            interMode.bestME[i].mv.x = m_interAnalysisData->mvx[i];
+            interMode.bestME[i].mv.y = m_interAnalysisData->mvy[i];
+            interMode.bestME[i].ref = m_interAnalysisData->ref[i];
+        }
+    }
     if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
     {
         /* predInterSearch sets interMode.sa8dBits, but this is ignored */
         encodeResAndCalcRdInterCU(interMode, cuGeom);
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interAnalysisData)
+        {
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                m_interAnalysisData->costZero[i] = interMode.bestME[i].costZero;
+                m_interAnalysisData->mvx[i] = interMode.bestME[i].mv.x;
+                m_interAnalysisData->mvy[i] = interMode.bestME[i].mv.y;
+                m_interAnalysisData->ref[i] = interMode.bestME[i].ref;
+            }
+            m_interAnalysisData->zOrder = cuGeom.encodeIdx;
+            m_interAnalysisData->depth  = cuGeom.depth;
+        }
+        m_interAnalysisData++;
     }
     else
     {

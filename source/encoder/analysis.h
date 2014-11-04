@@ -84,6 +84,7 @@ protected:
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
     Event         m_modeCompletionEvent;
+    x265_inter_data* m_interAnalysisData;
     bool findJob(int threadId);
     void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);

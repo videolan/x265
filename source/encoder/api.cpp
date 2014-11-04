@@ -216,7 +216,7 @@ void x265_picture_free(x265_picture *p)
 
 int x265_alloc_analysis_data(x265_picture* pic)
 {
-    CHECKED_MALLOC(pic->analysisData.interData, x265_inter_data, pic->analysisData.numCUsInFrame * 85);
+    CHECKED_MALLOC(pic->analysisData.interData, x265_inter_data, pic->analysisData.numCUsInFrame * X265_MAX_PRED_MODE_PER_CU);
     CHECKED_MALLOC(pic->analysisData.intraData, x265_intra_data, 1);
     pic->analysisData.intraData->cuAddr     = NULL;
     pic->analysisData.intraData->depth      = NULL;
