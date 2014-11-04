@@ -367,14 +367,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                  * allocated by this top level encoder */
                 if (m_cuOffsetY)
                 {
-                    inFrame->m_origPicYuv->m_cuOffsetC = m_cuOffsetC;
-                    inFrame->m_origPicYuv->m_cuOffsetY = m_cuOffsetY;
-                    inFrame->m_origPicYuv->m_buOffsetC = m_buOffsetC;
-                    inFrame->m_origPicYuv->m_buOffsetY = m_buOffsetY;
+                    inFrame->m_fencPic->m_cuOffsetC = m_cuOffsetC;
+                    inFrame->m_fencPic->m_cuOffsetY = m_cuOffsetY;
+                    inFrame->m_fencPic->m_buOffsetC = m_buOffsetC;
+                    inFrame->m_fencPic->m_buOffsetY = m_buOffsetY;
                 }
                 else
                 {
-                    if (!inFrame->m_origPicYuv->createOffsets(m_sps))
+                    if (!inFrame->m_fencPic->createOffsets(m_sps))
                     {
                         m_aborted = true;
                         x265_log(m_param, X265_LOG_ERROR, "memory allocation failure, aborting encode\n");
@@ -384,10 +384,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     }
                     else
                     {
-                        m_cuOffsetC = inFrame->m_origPicYuv->m_cuOffsetC;
-                        m_cuOffsetY = inFrame->m_origPicYuv->m_cuOffsetY;
-                        m_buOffsetC = inFrame->m_origPicYuv->m_buOffsetC;
-                        m_buOffsetY = inFrame->m_origPicYuv->m_buOffsetY;
+                        m_cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
+                        m_cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
+                        m_buOffsetC = inFrame->m_fencPic->m_buOffsetC;
+                        m_buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                     }
                 }
             }
@@ -405,7 +405,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
         inFrame->m_poc = ++m_pocLast;
-        inFrame->m_origPicYuv->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+        inFrame->m_fencPic->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         inFrame->m_intraData = pic_in->analysisData.intraData;
         inFrame->m_interData = pic_in->analysisData.interData;
         inFrame->m_userData  = pic_in->userData;
@@ -456,7 +456,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         Slice *slice = outFrame->m_encData->m_slice;
         if (pic_out)
         {
-            PicYuv *recpic = outFrame->m_reconPicYuv;
+            PicYuv *recpic = outFrame->m_reconPic;
             pic_out->poc = slice->m_poc;
             pic_out->bitDepth = X265_DEPTH;
             pic_out->userData = outFrame->m_userData;
@@ -557,10 +557,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             slice->m_pps = &m_pps;
             slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
             slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_CU_PARTITIONS);
-            frameEnc->m_reconPicYuv->m_cuOffsetC = m_cuOffsetC;
-            frameEnc->m_reconPicYuv->m_cuOffsetY = m_cuOffsetY;
-            frameEnc->m_reconPicYuv->m_buOffsetC = m_buOffsetC;
-            frameEnc->m_reconPicYuv->m_buOffsetY = m_buOffsetY;
+            frameEnc->m_reconPic->m_cuOffsetC = m_cuOffsetC;
+            frameEnc->m_reconPic->m_cuOffsetY = m_cuOffsetY;
+            frameEnc->m_reconPic->m_buOffsetC = m_buOffsetC;
+            frameEnc->m_reconPic->m_buOffsetY = m_buOffsetY;
         }
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
@@ -965,7 +965,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
 
 void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits)
 {
-    PicYuv* reconPic = curFrame->m_reconPicYuv;
+    PicYuv* reconPic = curFrame->m_reconPic;
 
     //===== calculate PSNR =====
     int width  = reconPic->m_picWidth - m_sps.conformanceWindow.rightOffset;

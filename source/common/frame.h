@@ -44,10 +44,10 @@ public:
     /* These two items will be NULL until the Frame begins to be encoded, at which point
      * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
     FrameData*        m_encData;
-    PicYuv*           m_reconPicYuv;
+    PicYuv*           m_reconPic;
 
     /* Data associated with x265_picture */
-    PicYuv*           m_origPicYuv;
+    PicYuv*           m_fencPic;
     int               m_poc;
     int64_t           m_pts;                // user provided presentation time stamp
     int64_t           m_reorderedPts;

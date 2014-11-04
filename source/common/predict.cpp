@@ -187,18 +187,18 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
             ShortYuv& shortYuv = m_predShortYuv[0];
 
             if (bLuma)
-                predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
             if (bChroma)
-                predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
 
             addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
         }
         else
         {
             if (bLuma)
-                predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
             if (bChroma)
-                predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
         }
     }
     else
@@ -253,13 +253,13 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
 
             if (bLuma)
             {
-                predInterLumaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
-                predInterLumaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                predInterLumaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterLumaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
             }
             if (bChroma)
             {
-                predInterChromaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
-                predInterChromaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                predInterChromaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterChromaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
             }
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
@@ -277,18 +277,18 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
                 ShortYuv& shortYuv = m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
 
                 addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
                 if (bChroma)
-                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPicYuv, m_clippedMv[0]);
+                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
             }
         }
         else
@@ -302,18 +302,18 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
                 ShortYuv& shortYuv = m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
 
                 addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
                 if (bChroma)
-                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPicYuv, m_clippedMv[1]);
+                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
             }
         }
     }
@@ -668,8 +668,8 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     int tuSize = intraNeighbors.tuSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu.m_encData->m_reconPicYuv->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-    intptr_t picStride = cu.m_encData->m_reconPicYuv->m_stride;
+    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    intptr_t picStride = cu.m_encData->m_reconPic->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, adiBuf, intraNeighbors);
 
@@ -744,8 +744,8 @@ void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint3
     initIntraNeighbors(cu, absPartIdx, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
-    const pixel* adiOrigin = cu.m_encData->m_reconPicYuv->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-    intptr_t picStride = cu.m_encData->m_reconPicYuv->m_strideC;
+    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    intptr_t picStride = cu.m_encData->m_reconPic->m_strideC;
     pixel* adiRef = getAdiChromaBuf(chromaId, tuSize);
 
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);

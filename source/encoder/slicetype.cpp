@@ -111,7 +111,7 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame *curFrame, int sliceType)
 {
-    PicYuv *orig = curFrame->m_origPicYuv;
+    PicYuv *orig = curFrame->m_fencPic;
 
     curFrame->m_lowres.init(orig, curFrame->m_poc, sliceType);
 
@@ -1238,7 +1238,7 @@ void CostEstimate::init(x265_param *_param, Frame *curFrame)
 
     if (m_param->bEnableWeightedPred)
     {
-        PicYuv *orig = curFrame->m_origPicYuv;
+        PicYuv *orig = curFrame->m_fencPic;
         m_paddedLines = curFrame->m_lowres.lines + 2 * orig->m_lumaMarginY;
         intptr_t padoffset = curFrame->m_lowres.lumaStride * orig->m_lumaMarginY + orig->m_lumaMarginX;
 

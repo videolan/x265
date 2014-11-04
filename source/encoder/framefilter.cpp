@@ -156,7 +156,7 @@ uint32_t FrameFilter::getCUHeight(int rowNum) const
 
 void FrameFilter::processRowPost(int row)
 {
-    PicYuv *reconPic = m_frame->m_reconPicYuv;
+    PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
     const int realH = getCUHeight(row);
@@ -209,19 +209,19 @@ void FrameFilter::processRowPost(int row)
     uint32_t cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)
     {
-        PicYuv* origPic = m_frame->m_origPicYuv;
+        PicYuv* fencPic = m_frame->m_fencPic;
 
         intptr_t stride = reconPic->m_stride;
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
         uint32_t height = getCUHeight(row);
 
-        uint64_t ssdY = computeSSD(origPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
+        uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
         height >>= m_vChromaShift;
         width  >>= m_hChromaShift;
         stride = reconPic->m_strideC;
 
-        uint64_t ssdU = computeSSD(origPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
-        uint64_t ssdV = computeSSD(origPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
+        uint64_t ssdU = computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
+        uint64_t ssdV = computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
 
         m_frameEncoder->m_SSDY += ssdY;
         m_frameEncoder->m_SSDU += ssdU;
@@ -229,10 +229,10 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = m_frame->m_reconPicYuv->m_picOrg[0];
-        pixel *org = m_frame->m_origPicYuv->m_picOrg[0];
-        intptr_t stride1 = m_frame->m_origPicYuv->m_stride;
-        intptr_t stride2 = m_frame->m_reconPicYuv->m_stride;
+        pixel *rec = m_frame->m_reconPic->m_picOrg[0];
+        pixel *fenc = m_frame->m_fencPic->m_picOrg[0];
+        intptr_t stride1 = m_frame->m_fencPic->m_stride;
+        intptr_t stride2 = m_frame->m_reconPic->m_stride;
         uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
         uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
@@ -243,7 +243,7 @@ void FrameFilter::processRowPost(int row)
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
+        m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, fenc + 2 + minPixY * stride2, stride2,
                                                 m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
         m_frameEncoder->m_ssimCnt += ssim_cnt;
     }
@@ -422,8 +422,8 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     uint32_t size = g_maxCUSize >> depth;
     int part = partitionFromSizes(size, size);
 
-    PicYuv* reconPic = frame.m_reconPicYuv;
-    PicYuv* fencPic  = frame.m_origPicYuv;
+    PicYuv* reconPic = frame.m_reconPic;
+    PicYuv* fencPic  = frame.m_fencPic;
 
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);

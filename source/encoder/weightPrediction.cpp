@@ -219,7 +219,7 @@ namespace x265 {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];
-    PicYuv *fencPic = frame.m_origPicYuv;
+    PicYuv *fencPic = frame.m_fencPic;
     Lowres& fenc    = frame.m_lowres;
 
     Cache cache;
@@ -329,7 +329,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                     if (!refFrame->m_bChromaExtended)
                     {
                         refFrame->m_bChromaExtended = true;
-                        PicYuv *refPic = refFrame->m_origPicYuv;
+                        PicYuv *refPic = refFrame->m_fencPic;
                         int width = refPic->m_picWidth >> cache.hshift;
                         int height = refPic->m_picHeight >> cache.vshift;
                         extendPicBorder(refPic->m_picOrg[1], refPic->m_strideC, width, height, refPic->m_chromaMarginX, refPic->m_chromaMarginY);
@@ -363,7 +363,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
             case 1:
                 orig = fencPic->m_picOrg[1];
                 stride = fencPic->m_strideC;
-                fref = refFrame->m_origPicYuv->m_picOrg[1];
+                fref = refFrame->m_fencPic->m_picOrg[1];
 
                 /* Clamp the chroma dimensions to the nearest multiple of
                  * 8x8 blocks (or 16x16 for 4:4:4) since mcChroma uses lowres
@@ -381,7 +381,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 break;
 
             case 2:
-                fref = refFrame->m_origPicYuv->m_picOrg[2];
+                fref = refFrame->m_fencPic->m_picOrg[2];
                 orig = fencPic->m_picOrg[2];
                 stride = fencPic->m_strideC;
                 width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;

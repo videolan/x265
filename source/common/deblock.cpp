@@ -444,7 +444,7 @@ static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset
 
 void Deblock::edgeFilterLuma(CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockingStrength[])
 {
-    PicYuv* reconYuv = cu->m_encData->m_reconPicYuv;
+    PicYuv* reconYuv = cu->m_encData->m_reconPic;
     pixel* src = reconYuv->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
     intptr_t stride = reconYuv->m_stride;
@@ -559,7 +559,7 @@ void Deblock::edgeFilterChroma(CUData* cu, uint32_t absPartIdx, uint32_t depth, 
                 : ((g_zscanToPelY[absPartIdx] + edge * UNIT_SIZE) >> cu->m_vChromaShift)) % DEBLOCK_SMALLEST_BLOCK == 0,
                "invalid edge\n");
 
-    PicYuv* reconPic = cu->m_encData->m_reconPicYuv;
+    PicYuv* reconPic = cu->m_encData->m_reconPic;
     intptr_t stride = reconPic->m_strideC;
     intptr_t srcOffset = reconPic->getChromaAddrOffset(cu->m_cuAddr, absPartIdx);
 

@@ -225,8 +225,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
     int x, y;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
-    pixel* rec = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
-    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    pixel* rec = m_frame->m_reconPic->getPlaneAddr(plane, addr);
+    intptr_t stride = plane ? m_frame->m_reconPic->m_strideC : m_frame->m_reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -436,7 +436,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 /* Process SAO all units */
 void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 {
-    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = plane ? m_frame->m_reconPic->m_strideC : m_frame->m_reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     int ctuWidth  = g_maxCUSize;
     int ctuHeight = g_maxCUSize;
@@ -449,12 +449,12 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 
     if (!idxY)
     {
-        pixel* rec = m_frame->m_reconPicYuv->m_picOrg[plane];
+        pixel* rec = m_frame->m_reconPic->m_picOrg[plane];
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidth);
     }
 
     int addr = idxY * m_numCuInWidth;
-    pixel* rec = plane ? m_frame->m_reconPicYuv->getChromaAddr(plane, addr) : m_frame->m_reconPicYuv->getLumaAddr(addr);
+    pixel* rec = plane ? m_frame->m_reconPic->getChromaAddr(plane, addr) : m_frame->m_reconPic->getLumaAddr(addr);
 
     for (int i = 0; i < ctuHeight + 1; i++)
     {
@@ -506,7 +506,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         }
         else if (idxX != (m_numCuInWidth - 1))
         {
-            rec = plane ? m_frame->m_reconPicYuv->getChromaAddr(plane, addr) : m_frame->m_reconPicYuv->getLumaAddr(addr);
+            rec = plane ? m_frame->m_reconPic->getChromaAddr(plane, addr) : m_frame->m_reconPic->getLumaAddr(addr);
 
             for (int i = 0; i < ctuHeight + 1; i++)
             {
@@ -544,11 +544,11 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
     CUData* cu = m_frame->m_encData->getPicCTU(addr);
-    const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
-    const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
+    const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
+    const pixel* rec0  = m_frame->m_reconPic->getPlaneAddr(plane, addr);
     const pixel* fenc;
     const pixel* rec;
-    intptr_t stride = plane ? m_frame->m_reconPicYuv->m_strideC : m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = plane ? m_frame->m_reconPic->m_strideC : m_frame->m_reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -792,7 +792,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     CUData* cu = frame->m_encData->getPicCTU(addr);
     const pixel* fenc;
     const pixel* rec;
-    intptr_t stride = m_frame->m_reconPicYuv->m_stride;
+    intptr_t stride = m_frame->m_reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     int ctuWidth  = g_maxCUSize;
@@ -826,7 +826,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     {
         if (plane == 1)
         {
-            stride = frame->m_reconPicYuv->m_strideC;
+            stride = frame->m_reconPic->m_strideC;
             picWidth  >>= m_hChromaShift;
             picHeight >>= m_vChromaShift;
             ctuWidth  >>= m_hChromaShift;
@@ -845,8 +845,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
         stats = m_offsetOrgPreDblk[addr][plane][SAO_BO];
         count = m_countPreDblk[addr][plane][SAO_BO];
 
-        const pixel* fenc0 = m_frame->m_origPicYuv->getPlaneAddr(plane, addr);
-        const pixel* rec0  = m_frame->m_reconPicYuv->getPlaneAddr(plane, addr);
+        const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
+        const pixel* rec0  = m_frame->m_reconPic->getPlaneAddr(plane, addr);
         fenc = fenc0;
         rec  = rec0;
 

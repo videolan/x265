@@ -173,8 +173,8 @@ static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcSt
 /* Find the total AC energy of each block in all planes */
 uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t block_y)
 {
-    intptr_t stride = curFrame->m_origPicYuv->m_stride;
-    intptr_t cStride = curFrame->m_origPicYuv->m_strideC;
+    intptr_t stride = curFrame->m_fencPic->m_stride;
+    intptr_t cStride = curFrame->m_fencPic->m_strideC;
     intptr_t blockOffsetLuma = block_x + (block_y * stride);
     int colorFormat = m_param->internalCsp;
     int hShift = CHROMA_H_SHIFT(colorFormat);
@@ -183,9 +183,9 @@ uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t blo
 
     uint32_t var;
 
-    var  = acEnergyPlane(curFrame, curFrame->m_origPicYuv->m_picOrg[0] + blockOffsetLuma, stride, 0, colorFormat);
-    var += acEnergyPlane(curFrame, curFrame->m_origPicYuv->m_picOrg[1] + blockOffsetChroma, cStride, 1, colorFormat);
-    var += acEnergyPlane(curFrame, curFrame->m_origPicYuv->m_picOrg[2] + blockOffsetChroma, cStride, 2, colorFormat);
+    var  = acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[0] + blockOffsetLuma, stride, 0, colorFormat);
+    var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[1] + blockOffsetChroma, cStride, 1, colorFormat);
+    var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[2] + blockOffsetChroma, cStride, 2, colorFormat);
     x265_emms();
     return var;
 }
@@ -193,8 +193,8 @@ uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t blo
 void RateControl::calcAdaptiveQuantFrame(Frame *curFrame)
 {
     /* Actual adaptive quantization */
-    int maxCol = curFrame->m_origPicYuv->m_picWidth;
-    int maxRow = curFrame->m_origPicYuv->m_picHeight;
+    int maxCol = curFrame->m_fencPic->m_picWidth;
+    int maxRow = curFrame->m_fencPic->m_picHeight;
 
     for (int y = 0; y < 3; y++)
     {

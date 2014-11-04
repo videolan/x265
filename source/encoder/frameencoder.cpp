@@ -252,7 +252,7 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPicYuv, w);
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w);
         }
     }
 
@@ -707,7 +707,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
     FrameData& curEncData = *m_frame->m_encData;
     Slice *slice = curEncData.m_slice;
-    PicYuv* fencPic = m_frame->m_origPicYuv;
+    PicYuv* fencPic = m_frame->m_fencPic;
 
     tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
 
@@ -1091,8 +1091,8 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    uint32_t maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
-    uint32_t maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
+    uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+    uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
     uint32_t noOfBlocks = g_maxCUSize / 16;
     uint32_t block_y = (ctuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
     uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;

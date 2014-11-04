@@ -124,7 +124,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     invalidateContexts(0);
     m_quant.setQPforQuant(ctu);
     m_rqt[0].cur.load(initialContext);
-    m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_origPicYuv, ctu.m_cuAddr, 0);
+    m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
 
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_slice->m_sliceType == I_SLICE)
@@ -156,7 +156,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
              * they are available for intra predictions */
-            m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPicYuv, ctu.m_cuAddr, 0);
+            m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPic, ctu.m_cuAddr, 0);
             
             compressInterCU_rd0_4(ctu, cuGeom);
 
@@ -303,7 +303,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x2
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuGeom.encodeIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.encodeIdx);
 }
 
 bool Analysis::findJob(int threadId)
@@ -352,7 +352,7 @@ void Analysis::parallelME(int threadId, int meId)
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
 
-        PicYuv* fencPic = m_frame->m_origPicYuv;
+        PicYuv* fencPic = m_frame->m_fencPic;
         pixel* pu = fencPic->getLumaAddr(m_curInterMode->cu.m_cuAddr, m_curGeom->encodeIdx + m_puAbsPartIdx);
         slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
         slave->m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
@@ -380,7 +380,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         slave->setQP(*m_slice, m_rdCost.m_qp);
         slave->invalidateContexts(0);
         if (jobId)
-            slave->m_me.setSourcePlane(m_frame->m_origPicYuv->m_picOrg[0], m_frame->m_origPicYuv->m_stride);
+            slave->m_me.setSourcePlane(m_frame->m_fencPic->m_picOrg[0], m_frame->m_fencPic->m_stride);
     }
 
     ModeDepth& md = m_modeDepth[m_curGeom->depth];
@@ -759,7 +759,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuGeom.encodeIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.encodeIdx);
 }
 
 void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom)
@@ -944,7 +944,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         residualTransformQuantIntra(*md.bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
                         getBestIntraModeChroma(*md.bestMode, cuGeom);
                         residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
-                        md.bestMode->reconYuv.copyFromPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, cuGeom.encodeIdx); // TODO:
+                        md.bestMode->reconYuv.copyFromPicYuv(*m_frame->m_reconPic, cu.m_cuAddr, cuGeom.encodeIdx); // TODO:
                     }
                 }
             }
@@ -1032,7 +1032,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT] && m_param->rdLevel)
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cuAddr, cuGeom.encodeIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.encodeIdx);
 }
 
 void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom)
@@ -1182,7 +1182,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
-        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, parentCTU.m_cuAddr, cuGeom.encodeIdx);
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.encodeIdx);
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -1553,7 +1553,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
             cu.setPredModeSubParts(MODE_SKIP);
 
-        PicYuv& reconPicYuv = *m_frame->m_reconPicYuv;
+        PicYuv& reconPicYuv = *m_frame->m_reconPic;
         if (cu.getQtRootCbf(0)) // TODO: split to each component
         {
             /* residualTransformQuantInter() wrote transformed residual back into
@@ -1568,7 +1568,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
             /* copy the reconstructed part to the recon pic for later intra
              * predictions */
-            reconYuv.copyToPicYuv(*m_frame->m_reconPicYuv, cu.m_cuAddr, absPartIdx);
+            reconYuv.copyToPicYuv(*m_frame->m_reconPic, cu.m_cuAddr, absPartIdx);
         }
         else
         {
