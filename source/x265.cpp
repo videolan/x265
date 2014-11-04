@@ -774,12 +774,9 @@ bool CLIOptions::validateFanout(x265_param *param)
     {\
         bErr = 0;\
         p = strstr(paramBuf, opt "=");\
-        char* q = strstr(paramBuf, "no-"opt);\
         if (p && sscanf(p, opt "=%d" , &i) && param_val != i)\
             bErr = 1;\
-        else if (!param_val && !q)\
-            bErr = 1;\
-        else if (param_val && (q || !strstr(paramBuf, opt)))\
+        else if (param_val && strstr(paramBuf, "no-"opt))\
             bErr = 1;\
         if (bErr)\
         {\
