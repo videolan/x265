@@ -112,7 +112,6 @@ void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
     sad = primitives.sad[partEnum];
     satd = primitives.satd[partEnum];
-    sa8d = primitives.sa8d_inter[partEnum];
     sad_x3 = primitives.sad_x3[partEnum];
     sad_x4 = primitives.sad_x4[partEnum];
 
