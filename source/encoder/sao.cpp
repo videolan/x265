@@ -177,7 +177,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
 {
     Slice* slice = frame->m_encData->m_slice;
 
-    int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaCbQpOffset);
+    int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaQpOffset[0]);
     m_lumaLambda = x265_lambda2_tab[qp];
     m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
     m_frame = frame;

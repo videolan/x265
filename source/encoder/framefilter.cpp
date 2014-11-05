@@ -100,19 +100,19 @@ void FrameFilter::processRow(int row)
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            CUData* cu = encData.getPicCTU(cuAddr);
+            const CUData* ctu = encData.getPicCTU(cuAddr);
 
-            m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
+            m_deblock.deblockCTU(ctu, Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                CUData* cuPrev = encData.getPicCTU(cuAddr - 1);
-                m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
+                const CUData* ctuPrev = encData.getPicCTU(cuAddr - 1);
+                m_deblock.deblockCTU(ctuPrev, Deblock::EDGE_HOR);
             }
         }
 
-        CUData* cuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
-        m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
+        const CUData* ctuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
+        m_deblock.deblockCTU(ctuPrev, Deblock::EDGE_HOR);
     }
 
     // SAO

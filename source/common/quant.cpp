@@ -195,8 +195,8 @@ void Quant::setQPforQuant(const CUData& ctu)
     m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
     int qpy = ctu.m_qp[0];
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, ctu.m_chromaFormat);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, ctu.m_chromaFormat);
+    setChromaQP(qpy + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
+    setChromaQP(qpy + ctu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, ctu.m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)

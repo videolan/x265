@@ -242,8 +242,7 @@ struct PPS
 {
     uint32_t maxCuDQPDepth;
 
-    int      chromaCbQpOffset;       // use param
-    int      chromaCrQpOffset;       // use param
+    int      chromaQpOffset[2];      // use param
 
     bool     bUseWeightPred;         // use param
     bool     bUseWeightedBiPred;     // use param
@@ -333,6 +332,8 @@ public:
     void disableWeights();
 
     void setRefPicList(PicList& picList);
+
+    const Frame* getRefPic(int list, int refIdx) const { return refIdx >= 0 ? m_refPicList[list][refIdx] : NULL; }
 
     bool getRapPicFlag() const
     {

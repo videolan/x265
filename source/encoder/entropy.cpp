@@ -154,8 +154,8 @@ void Entropy::codePPS(const PPS& pps)
     if (pps.bUseDQP)
         WRITE_UVLC(pps.maxCuDQPDepth,      "diff_cu_qp_delta_depth");
 
-    WRITE_SVLC(pps.chromaCbQpOffset,       "pps_cb_qp_offset");
-    WRITE_SVLC(pps.chromaCrQpOffset,       "pps_cr_qp_offset");
+    WRITE_SVLC(pps.chromaQpOffset[0],      "pps_cb_qp_offset");
+    WRITE_SVLC(pps.chromaQpOffset[1],      "pps_cr_qp_offset");
     WRITE_FLAG(0,                          "pps_slice_chroma_qp_offsets_present_flag");
 
     WRITE_FLAG(pps.bUseWeightPred,            "weighted_pred_flag");

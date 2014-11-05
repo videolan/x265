@@ -52,12 +52,12 @@ public:
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
 
-        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCbQpOffset);
+        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[0]);
         int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
         uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         setCbDistortionWeight(lambdaOffset);
 
-        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCrQpOffset);
+        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[1]);
         chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
         lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         setCrDistortionWeight(lambdaOffset);
