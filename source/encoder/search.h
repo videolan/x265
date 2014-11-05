@@ -218,6 +218,7 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
+    uint64_t deriveNullCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, uint32_t depthRange[2]);
 
     // estimate bit cost of residual QT

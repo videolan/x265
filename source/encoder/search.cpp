@@ -2719,6 +2719,17 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     }
 }
 
+uint64_t Search::deriveNullCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId)
+{
+    m_entropyCoder.resetBits();
+    m_entropyCoder.codeQtCbfZero(compId, tuDepth);
+    const uint32_t nullBits = m_entropyCoder.getNumberOfWrittenBits();
+    if (m_rdCost.m_psyRd)
+        return m_rdCost.calcPsyRdCost(dist, nullBits, psyEnergy);
+    else
+        return m_rdCost.calcRdCost(dist, nullBits);
+}
+
 void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& outCosts, uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
@@ -2833,9 +2844,6 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             }
         }
 
-        const uint32_t numCoeffY = 1 << (log2TrSize * 2);
-        const uint32_t numCoeffC = 1 << (log2TrSizeC * 2);
-
         X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
         uint32_t distY = primitives.ssd_s[partSize](resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size);
         uint32_t psyEnergyY = 0;
@@ -2866,19 +2874,15 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0], nonZeroPsyEnergyY);
                 else
                     singleCostY = m_rdCost.calcRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0]);
-                m_entropyCoder.resetBits();
-                m_entropyCoder.codeQtCbfZero(TEXT_LUMA, tuDepth);
-                const uint32_t nullBitsY = m_entropyCoder.getNumberOfWrittenBits();
-                uint64_t nullCostY = 0;
-                if (m_rdCost.m_psyRd)
-                    nullCostY = m_rdCost.calcPsyRdCost(distY, nullBitsY, psyEnergyY);
-                else
-                    nullCostY = m_rdCost.calcRdCost(distY, nullBitsY);
+
+                uint64_t nullCostY = deriveNullCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
                 if (nullCostY < singleCostY)
                 {
                     cbfFlag[TEXT_LUMA][0] = 0;
 #if CHECKED_BUILD || _DEBUG
+                    uint32_t numCoeffY = 1 << (log2TrSize << 1);
                     memset(coeffCurY, 0, sizeof(coeff_t) * numCoeffY);
+                    primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
 #endif
                     if (checkTransformSkipY)
                         minCost[TEXT_LUMA][0] = nullCostY;
@@ -2892,21 +2896,16 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 }
             }
         }
-        else if (checkTransformSkipY)
+        else
         {
-            m_entropyCoder.resetBits();
-            m_entropyCoder.codeQtCbfZero(TEXT_LUMA, tuDepth);
-            const uint32_t nullBitsY = m_entropyCoder.getNumberOfWrittenBits();
-            if (m_rdCost.m_psyRd)
-                minCost[TEXT_LUMA][0] = m_rdCost.calcPsyRdCost(distY, nullBitsY, psyEnergyY);
-            else
-                minCost[TEXT_LUMA][0] = m_rdCost.calcRdCost(distY, nullBitsY);
+            if (checkTransformSkipY)
+                minCost[TEXT_LUMA][0] = deriveNullCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
+            primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
         }
 
         singleDistComp[TEXT_LUMA][0] = distY;
         singlePsyEnergyComp[TEXT_LUMA][0] = psyEnergyY;
-        if (!cbfFlag[TEXT_LUMA][0])
-            primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
+
         cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << tuDepth, TEXT_LUMA, absPartIdx, depth);
 
         if (bCodeChroma)
@@ -2950,19 +2949,16 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                                 singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                             else
                                 singleCostC = m_rdCost.calcRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section]);
-                            m_entropyCoder.resetBits();
-                            m_entropyCoder.codeQtCbfZero((TextType)chromaId, tuDepth);
-                            const uint32_t nullBitsC = m_entropyCoder.getNumberOfWrittenBits();
-                            uint64_t nullCostC = 0;
-                            if (m_rdCost.m_psyRd)
-                                nullCostC = m_rdCost.calcPsyRdCost(distC, nullBitsC, psyEnergyC);
-                            else
-                                nullCostC = m_rdCost.calcRdCost(distC, nullBitsC);
+
+                            uint64_t nullCostC = deriveNullCost(distC, psyEnergyC, tuDepth, (TextType)chromaId);
+
                             if (nullCostC < singleCostC)
                             {
                                 cbfFlag[chromaId][tuIterator.section] = 0;
 #if CHECKED_BUILD || _DEBUG
+                                uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
                                 memset(coeffCurC + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
+                                primitives.blockfill_s[partSizeC](curResiC, strideResiC, 0);
 #endif
                                 if (checkTransformSkipC)
                                     minCost[chromaId][tuIterator.section] = nullCostC;
@@ -2976,22 +2972,15 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                             }
                         }
                     }
-                    else if (checkTransformSkipC)
+                    else
                     {
-                        m_entropyCoder.resetBits();
-                        m_entropyCoder.codeQtCbfZero((TextType)chromaId, tuDepthC);
-                        const uint32_t nullBitsC = m_entropyCoder.getNumberOfWrittenBits();
-                        if (m_rdCost.m_psyRd)
-                            minCost[chromaId][tuIterator.section] = m_rdCost.calcPsyRdCost(distC, nullBitsC, psyEnergyC);
-                        else
-                            minCost[chromaId][tuIterator.section] = m_rdCost.calcRdCost(distC, nullBitsC);
+                        if (checkTransformSkipC)
+                            minCost[chromaId][tuIterator.section] = deriveNullCost(distC, psyEnergyC, tuDepthC, (TextType)chromaId);
+                        primitives.blockfill_s[partSizeC](curResiC, strideResiC, 0);
                     }
 
                     singleDistComp[chromaId][tuIterator.section] = distC;
                     singlePsyEnergyComp[chromaId][tuIterator.section] = psyEnergyC;
-
-                    if (!cbfFlag[chromaId][tuIterator.section])
-                        primitives.blockfill_s[partSizeC](curResiC, strideResiC, 0);
 
                     cu.setCbfPartRange(cbfFlag[chromaId][tuIterator.section] << tuDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
                 }
@@ -3047,6 +3036,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 singlePsyEnergyComp[TEXT_LUMA][0] = nonZeroPsyEnergyY;
                 cbfFlag[TEXT_LUMA][0] = !!numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
+                uint32_t numCoeffY = 1 << (log2TrSize << 1);
                 memcpy(coeffCurY, tsCoeffY, sizeof(coeff_t) * numCoeffY);
                 primitives.square_copy_ss[partSize](curResiY, strideResiY, tsResiY, trSize);
             }
@@ -3117,6 +3107,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         singlePsyEnergyComp[chromaId][tuIterator.section] = nonZeroPsyEnergyC;
                         cbfFlag[chromaId][tuIterator.section] = !!numSigTSkipC;
                         bestTransformMode[chromaId][tuIterator.section] = 1;
+                        uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
                         memcpy(coeffCurC + subTUOffset, tsCoeffC, sizeof(coeff_t) * numCoeffC);
                         primitives.square_copy_ss[partSizeC](curResiC, strideResiC, tsResiC, trSizeC);
                     }
