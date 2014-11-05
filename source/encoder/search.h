@@ -206,6 +206,7 @@ protected:
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
     void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
+    void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, uint32_t depthRange[2]);
     void     codeCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
 
     struct Cost
@@ -220,7 +221,7 @@ protected:
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, uint32_t depthRange[2]);
 
     // estimate bit cost of residual QT
-    void     encodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, bool bSubdivAndCbf, TextType ttype, uint32_t depthRange[2]);
+    void     encodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, TextType ttype, uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
     void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
