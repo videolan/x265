@@ -418,7 +418,7 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
         const int32_t bitdepthShift = X265_DEPTH - 8;
         int32_t beta = s_betaTable[indexB] << bitdepthShift;
 
-        uint32_t unitOffset = idx * srcStep << LOG2_UNIT_SIZE;
+        intptr_t unitOffset = idx * srcStep << LOG2_UNIT_SIZE;
         int32_t dp0 = calcDP(src + unitOffset              , offset);
         int32_t dq0 = calcDQ(src + unitOffset              , offset);
         int32_t dp3 = calcDP(src + unitOffset + srcStep * 3, offset);
@@ -525,7 +525,7 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
             maskQ = (cuQ->m_tqBypass[partQ] ? 0 : -1);
         }
 
-        uint32_t unitOffset = idx * srcStep << LOG2_UNIT_SIZE;
+        intptr_t unitOffset = idx * srcStep << LOG2_UNIT_SIZE;
         for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
         {
             int32_t chromaQPOffset  = pps->chromaQpOffset[chromaIdx];
