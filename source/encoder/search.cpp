@@ -2719,11 +2719,10 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     }
 }
 
-uint64_t Search::deriveNullCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId)
+uint64_t Search::estimateNullCbfCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId)
 {
-    m_entropyCoder.resetBits();
-    m_entropyCoder.codeQtCbfZero(compId, tuDepth);
-    const uint32_t nullBits = m_entropyCoder.getNumberOfWrittenBits();
+    uint32_t nullBits = m_entropyCoder.estimateCbfBits(0, compId, tuDepth);
+
     if (m_rdCost.m_psyRd)
         return m_rdCost.calcPsyRdCost(dist, nullBits, psyEnergy);
     else
@@ -2737,6 +2736,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
     bool bCheckSplit = log2TrSize > depthRange[0];
     bool bCheckFull = log2TrSize <= depthRange[1];
+    bool bSplitPresentFlag = bCheckSplit && bCheckFull;
 
     if (cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && bCheckSplit)
         bCheckFull = false;
@@ -2762,9 +2762,9 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
     uint8_t  cbfFlag[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, {0, 0}, {0, 0} };
     uint32_t numSig[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, {0, 0}, {0, 0} };
-    uint32_t singleBitsComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
-    uint32_t singleDistComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
-    uint32_t singlePsyEnergyComp[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
+    uint32_t singleBits[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
+    uint32_t singleDist[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
+    uint32_t singlePsyEnergy[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
     uint32_t bestTransformMode[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
     uint64_t minCost[MAX_NUM_COMPONENT][2 /*0 = top (or whole TU for non-4:2:2) sub-TU, 1 = bottom sub-TU*/] = { { MAX_INT64, MAX_INT64 }, {MAX_INT64, MAX_INT64}, {MAX_INT64, MAX_INT64} };
 
@@ -2801,18 +2801,99 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         cbfFlag[TEXT_LUMA][0] = !!numSig[TEXT_LUMA][0];
 
         m_entropyCoder.resetBits();
-        m_entropyCoder.codeQtCbf(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
+
+        if (bSplitPresentFlag && log2TrSize > depthRange[0])
+            m_entropyCoder.codeTransformSubdivFlag(0, 5 - log2TrSize);
+        fullCost.bits = m_entropyCoder.getNumberOfWrittenBits();
+
+        // Coding luma cbf flag has been removed from here. The context for cbf flag is different for each depth.
+        // So it is valid if we encode coefficients and then cbfs at least for analysis.
+//        m_entropyCoder.codeQtCbf(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
         if (cbfFlag[TEXT_LUMA][0])
             m_entropyCoder.codeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
-        singleBitsComp[TEXT_LUMA][0] = m_entropyCoder.getNumberOfWrittenBits();
 
-        uint32_t singleBitsPrev = singleBitsComp[TEXT_LUMA][0];
+        uint32_t singleBitsPrev = m_entropyCoder.getNumberOfWrittenBits();
+        singleBits[TEXT_LUMA][0] = singleBitsPrev - fullCost.bits;
+
+        X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
+        uint32_t distY = primitives.ssd_s[partSize](resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size);
+        uint32_t psyEnergyY = 0;
+        if (m_rdCost.m_psyRd)
+            psyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, (int16_t*)zeroShort, 0);
+
+        int16_t *curResiY    = m_rqt[qtLayer].resiQtYuv.getLumaAddr(absPartIdx);
+        uint32_t strideResiY = m_rqt[qtLayer].resiQtYuv.m_size;
+
+        if (cbfFlag[TEXT_LUMA][0])
+        {
+            m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSig[TEXT_LUMA][0]); //this is for inter mode only
+
+            // non-zero cost calculation for luma - This is an approximation
+            // finally we have to encode correct cbf after comparing with null cost
+            const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
+            uint32_t nzCbfBitsY = m_entropyCoder.estimateCbfBits(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
+            uint32_t nonZeroPsyEnergyY = 0; uint64_t singleCostY = 0;
+            if (m_rdCost.m_psyRd)
+            {
+                nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
+                singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, nzCbfBitsY + singleBits[TEXT_LUMA][0], nonZeroPsyEnergyY);
+            }
+            else
+                singleCostY = m_rdCost.calcRdCost(nonZeroDistY, nzCbfBitsY + singleBits[TEXT_LUMA][0]);
+
+            if (cu.m_tqBypass[0])
+            {
+                singleDist[TEXT_LUMA][0] = nonZeroDistY;
+                singlePsyEnergy[TEXT_LUMA][0] = nonZeroPsyEnergyY;
+            }
+            else
+            {
+                // zero-cost calculation for luma. This is an approximation
+                // Initial cost calculation was also an approximation. First resetting the bit counter and then encoding zero cbf.
+                // Now encoding the zero cbf without writing into bitstream, keeping m_fracBits unchanged. The same is valid for chroma.
+                uint64_t nullCostY = estimateNullCbfCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
+
+                if (nullCostY < singleCostY)
+                {
+                    cbfFlag[TEXT_LUMA][0] = 0;
+                    singleBits[TEXT_LUMA][0] = 0;
+#if CHECKED_BUILD || _DEBUG
+                    uint32_t numCoeffY = 1 << (log2TrSize << 1);
+                    memset(coeffCurY, 0, sizeof(coeff_t) * numCoeffY);
+                    primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
+#endif
+                    if (checkTransformSkipY)
+                        minCost[TEXT_LUMA][0] = nullCostY;
+                    singleDist[TEXT_LUMA][0] = distY;
+                    singlePsyEnergy[TEXT_LUMA][0] = psyEnergyY;
+                }
+                else
+                {
+                    if (checkTransformSkipY)
+                        minCost[TEXT_LUMA][0] = singleCostY;
+                    singleDist[TEXT_LUMA][0] = nonZeroDistY;
+                    singlePsyEnergy[TEXT_LUMA][0] = nonZeroPsyEnergyY;
+                }
+            }
+        }
+        else
+        {
+            if (checkTransformSkipY)
+                minCost[TEXT_LUMA][0] = estimateNullCbfCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
+            primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
+            singleDist[TEXT_LUMA][0] = distY;
+            singlePsyEnergy[TEXT_LUMA][0] = psyEnergyY;
+        }
+
+        cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << tuDepth, TEXT_LUMA, absPartIdx, depth);
 
         if (bCodeChroma)
         {
             uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
+            uint32_t strideResiC  = m_rqt[qtLayer].resiQtYuv.m_csize;
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
             {
+                uint32_t distC = 0, psyEnergyC = 0;
                 coeff_t* coeffCurC = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
                 TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
 
@@ -2831,130 +2912,50 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     numSig[chromaId][tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv.m_csize, coeffCurC + subTUOffset, log2TrSizeC, (TextType)chromaId, absPartIdxC, false);
                     cbfFlag[chromaId][tuIterator.section] = !!numSig[chromaId][tuIterator.section];
 
-                    m_entropyCoder.codeQtCbf(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
+                    //Coding cbf flags has been removed from here
+//                    m_entropyCoder.codeQtCbf(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
                     if (cbfFlag[chromaId][tuIterator.section])
                         m_entropyCoder.codeCoeffNxN(cu, coeffCurC + subTUOffset, absPartIdxC, log2TrSizeC, (TextType)chromaId);
-
                     uint32_t newBits = m_entropyCoder.getNumberOfWrittenBits();
-                    singleBitsComp[chromaId][tuIterator.section] = newBits - singleBitsPrev;
-
+                    singleBits[chromaId][tuIterator.section] = newBits - singleBitsPrev;
                     singleBitsPrev = newBits;
-                }
-                while (tuIterator.isNextSection());
-            }
-        }
-
-        X265_CHECK(log2TrSize <= 5, "log2TrSize is too large\n");
-        uint32_t distY = primitives.ssd_s[partSize](resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size);
-        uint32_t psyEnergyY = 0;
-        if (m_rdCost.m_psyRd)
-            psyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, (int16_t*)zeroShort, 0);
-
-        int16_t *curResiY    = m_rqt[qtLayer].resiQtYuv.getLumaAddr(absPartIdx);
-        uint32_t strideResiY = m_rqt[qtLayer].resiQtYuv.m_size;
-
-        if (cbfFlag[TEXT_LUMA][0])
-        {
-            m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], curResiY, strideResiY, coeffCurY, log2TrSize, TEXT_LUMA, false, false, numSig[TEXT_LUMA][0]); //this is for inter mode only
-
-            const uint32_t nonZeroDistY = primitives.sse_ss[partSize](resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
-            uint32_t nonZeroPsyEnergyY = 0;
-            if (m_rdCost.m_psyRd)
-                nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
-
-            if (cu.m_tqBypass[0])
-            {
-                distY = nonZeroDistY;
-                psyEnergyY = nonZeroPsyEnergyY;
-            }
-            else
-            {
-                uint64_t singleCostY = 0;
-                if (m_rdCost.m_psyRd)
-                    singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0], nonZeroPsyEnergyY);
-                else
-                    singleCostY = m_rdCost.calcRdCost(nonZeroDistY, singleBitsComp[TEXT_LUMA][0]);
-
-                uint64_t nullCostY = deriveNullCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
-                if (nullCostY < singleCostY)
-                {
-                    cbfFlag[TEXT_LUMA][0] = 0;
-#if CHECKED_BUILD || _DEBUG
-                    uint32_t numCoeffY = 1 << (log2TrSize << 1);
-                    memset(coeffCurY, 0, sizeof(coeff_t) * numCoeffY);
-                    primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
-#endif
-                    if (checkTransformSkipY)
-                        minCost[TEXT_LUMA][0] = nullCostY;
-                }
-                else
-                {
-                    distY = nonZeroDistY;
-                    psyEnergyY = nonZeroPsyEnergyY;
-                    if (checkTransformSkipY)
-                        minCost[TEXT_LUMA][0] = singleCostY;
-                }
-            }
-        }
-        else
-        {
-            if (checkTransformSkipY)
-                minCost[TEXT_LUMA][0] = deriveNullCost(distY, psyEnergyY, tuDepth, TEXT_LUMA);
-            primitives.blockfill_s[partSize](curResiY, strideResiY, 0);
-        }
-
-        singleDistComp[TEXT_LUMA][0] = distY;
-        singlePsyEnergyComp[TEXT_LUMA][0] = psyEnergyY;
-
-        cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << tuDepth, TEXT_LUMA, absPartIdx, depth);
-
-        if (bCodeChroma)
-        {
-            uint32_t strideResiC = m_rqt[qtLayer].resiQtYuv.m_csize;
-            uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
-            for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
-            {
-                uint32_t distC = 0, psyEnergyC = 0;
-                coeff_t* coeffCurC = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
-                TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
-
-                do
-                {
-                    uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
-                    uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
 
                     int16_t *curResiC = m_rqt[qtLayer].resiQtYuv.getChromaAddr(chromaId, absPartIdxC);
-
                     distC = m_rdCost.scaleChromaDistCb(primitives.ssd_s[log2TrSizeC - 2](resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize));
 
                     if (cbfFlag[chromaId][tuIterator.section])
                     {
                         m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], curResiC, strideResiC, coeffCurC + subTUOffset,
                                                 log2TrSizeC, (TextType)chromaId, false, false, numSig[chromaId][tuIterator.section]);
+
+                        // non-zero cost calculation for luma, same as luma - This is an approximation
+                        // finally we have to encode correct cbf after comparing with null cost
                         uint32_t dist = primitives.sse_ss[partSizeC](resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
-                        const uint32_t nonZeroDistC = m_rdCost.scaleChromaDistCb(dist);
-                        uint32_t nonZeroPsyEnergyC = 0;
+                        uint32_t nzCbfBitsC = m_entropyCoder.estimateCbfBits(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
+                        uint32_t nonZeroDistC = m_rdCost.scaleChromaDistCb(dist);
+                        uint32_t nonZeroPsyEnergyC = 0; uint64_t singleCostC = 0;
                         if (m_rdCost.m_psyRd)
+                        {
                             nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
+                            singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, nzCbfBitsC + singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
+                        }
+                        else
+                            singleCostC = m_rdCost.calcRdCost(nonZeroDistC, nzCbfBitsC + singleBits[chromaId][tuIterator.section]);
 
                         if (cu.m_tqBypass[0])
                         {
-                            distC = nonZeroDistC;
-                            psyEnergyC = nonZeroPsyEnergyC;
+                            singleDist[chromaId][tuIterator.section] = nonZeroDistC;
+                            singlePsyEnergy[chromaId][tuIterator.section] = nonZeroPsyEnergyC;
                         }
                         else
                         {
-                            uint64_t singleCostC = 0;
-                            if (m_rdCost.m_psyRd)
-                                singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section], nonZeroPsyEnergyC);
-                            else
-                                singleCostC = m_rdCost.calcRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section]);
-
-                            uint64_t nullCostC = deriveNullCost(distC, psyEnergyC, tuDepth, (TextType)chromaId);
+                            //zero-cost calculation for chroma. This is an approximation
+                            uint64_t nullCostC = estimateNullCbfCost(distC, psyEnergyC, tuDepth, (TextType)chromaId);
 
                             if (nullCostC < singleCostC)
                             {
                                 cbfFlag[chromaId][tuIterator.section] = 0;
+                                singleBits[chromaId][tuIterator.section] = 0;
 #if CHECKED_BUILD || _DEBUG
                                 uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
                                 memset(coeffCurC + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
@@ -2962,25 +2963,26 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 #endif
                                 if (checkTransformSkipC)
                                     minCost[chromaId][tuIterator.section] = nullCostC;
+                                singleDist[chromaId][tuIterator.section] = distC;
+                                singlePsyEnergy[chromaId][tuIterator.section] = psyEnergyC;
                             }
                             else
                             {
-                                distC = nonZeroDistC;
-                                psyEnergyC = nonZeroPsyEnergyC;
                                 if (checkTransformSkipC)
                                     minCost[chromaId][tuIterator.section] = singleCostC;
+                                singleDist[chromaId][tuIterator.section] = nonZeroDistC;
+                                singlePsyEnergy[chromaId][tuIterator.section] = nonZeroPsyEnergyC;
                             }
                         }
                     }
                     else
                     {
                         if (checkTransformSkipC)
-                            minCost[chromaId][tuIterator.section] = deriveNullCost(distC, psyEnergyC, tuDepthC, (TextType)chromaId);
+                            minCost[chromaId][tuIterator.section] = estimateNullCbfCost(distC, psyEnergyC, tuDepthC, (TextType)chromaId);
                         primitives.blockfill_s[partSizeC](curResiC, strideResiC, 0);
+                        singleDist[chromaId][tuIterator.section] = distC;
+                        singlePsyEnergy[chromaId][tuIterator.section] = psyEnergyC;
                     }
-
-                    singleDistComp[chromaId][tuIterator.section] = distC;
-                    singlePsyEnergyComp[chromaId][tuIterator.section] = psyEnergyC;
 
                     cu.setCbfPartRange(cbfFlag[chromaId][tuIterator.section] << tuDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
                 }
@@ -3032,8 +3034,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
             else
             {
-                singleDistComp[TEXT_LUMA][0] = nonZeroDistY;
-                singlePsyEnergyComp[TEXT_LUMA][0] = nonZeroPsyEnergyY;
+                singleDist[TEXT_LUMA][0] = nonZeroDistY;
+                singlePsyEnergy[TEXT_LUMA][0] = nonZeroPsyEnergyY;
                 cbfFlag[TEXT_LUMA][0] = !!numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
                 uint32_t numCoeffY = 1 << (log2TrSize << 1);
@@ -3078,13 +3080,13 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     uint32_t numSigTSkipC = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv.m_csize, tsCoeffC, log2TrSizeC, (TextType)chromaId, absPartIdxC, true);
 
                     m_entropyCoder.resetBits();
-                    singleBitsComp[chromaId][tuIterator.section] = 0;
+                    singleBits[chromaId][tuIterator.section] = 0;
 
                     if (numSigTSkipC)
                     {
                         m_entropyCoder.codeQtCbf(!!numSigTSkipC, (TextType)chromaId, tuDepth);
                         m_entropyCoder.codeCoeffNxN(cu, tsCoeffC, absPartIdxC, log2TrSizeC, (TextType)chromaId);
-                        singleBitsComp[chromaId][tuIterator.section] = m_entropyCoder.getNumberOfWrittenBits();
+                        singleBits[chromaId][tuIterator.section] = m_entropyCoder.getNumberOfWrittenBits();
 
                         m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], tsResiC, trSizeC, tsCoeffC,
                                                 log2TrSizeC, (TextType)chromaId, false, true, numSigTSkipC);
@@ -3093,18 +3095,18 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         if (m_rdCost.m_psyRd)
                         {
                             nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, tsResiC, trSizeC);
-                            singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section], nonZeroPsyEnergyC);
+                            singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                         }
                         else
-                            singleCostC = m_rdCost.calcRdCost(nonZeroDistC, singleBitsComp[chromaId][tuIterator.section]);
+                            singleCostC = m_rdCost.calcRdCost(nonZeroDistC, singleBits[chromaId][tuIterator.section]);
                     }
 
                     if (!numSigTSkipC || minCost[chromaId][tuIterator.section] < singleCostC)
                         cu.setTransformSkipPartRange(0, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
                     else
                     {
-                        singleDistComp[chromaId][tuIterator.section] = nonZeroDistC;
-                        singlePsyEnergyComp[chromaId][tuIterator.section] = nonZeroPsyEnergyC;
+                        singleDist[chromaId][tuIterator.section] = nonZeroDistC;
+                        singlePsyEnergy[chromaId][tuIterator.section] = nonZeroPsyEnergyC;
                         cbfFlag[chromaId][tuIterator.section] = !!numSigTSkipC;
                         bestTransformMode[chromaId][tuIterator.section] = 1;
                         uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
@@ -3118,13 +3120,14 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             }
         }
 
+        // Here we were encoding cbfs and coefficients, after calculating distortion above.
+        // Now I am encoding only cbfs, since I have encoded coefficients above. I have just collected
+        // bits required for coefficients and added with number of cbf bits. As I tested the order does not
+        // make any difference. But bit confused whether I should load the original context as below.
         m_entropyCoder.load(m_rqt[depth].rqtRoot);
-
         m_entropyCoder.resetBits();
 
-        if (log2TrSize > depthRange[0])
-            m_entropyCoder.codeTransformSubdivFlag(0, 5 - log2TrSize);
-
+        //Encode cbf flags
         if (bCodeChroma)
         {
             for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
@@ -3141,43 +3144,31 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         }
 
         m_entropyCoder.codeQtCbf(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
-        if (cbfFlag[TEXT_LUMA][0])
-            m_entropyCoder.codeCoeffNxN(cu, coeffCurY, absPartIdx, log2TrSize, TEXT_LUMA);
 
-        if (bCodeChroma)
-        {
-            uint32_t subTUSize = 1 << (log2TrSizeC * 2);
-            uint32_t partIdxesPerSubTU = absPartIdxStep >> 1;
-            uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
+        uint32_t cbfBits = m_entropyCoder.getNumberOfWrittenBits();
 
-            for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
-            {
-                coeff_t* coeffCurC = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
-                if (!splitIntoSubTUs)
-                {
-                    if (cbfFlag[chromaId][0])
-                        m_entropyCoder.codeCoeffNxN(cu, coeffCurC, absPartIdx, log2TrSizeC, (TextType)chromaId);
-                }
-                else
-                {
-                    for (uint32_t subTU = 0; subTU < 2; subTU++)
-                    {
-                        if (cbfFlag[chromaId][subTU])
-                            m_entropyCoder.codeCoeffNxN(cu, coeffCurC + subTU * subTUSize, absPartIdx + subTU * partIdxesPerSubTU, log2TrSizeC, (TextType)chromaId);
-                    }
-                }
-            }
-        }
-
-        fullCost.distortion += singleDistComp[TEXT_LUMA][0];
-        fullCost.energy += singlePsyEnergyComp[TEXT_LUMA][0];// need to check we need to add chroma also
+        uint32_t coeffBits = 0;
+        coeffBits = singleBits[TEXT_LUMA][0];
         for (uint32_t subTUIndex = 0; subTUIndex < 2; subTUIndex++)
         {
-            fullCost.distortion += singleDistComp[TEXT_CHROMA_U][subTUIndex];
-            fullCost.distortion += singleDistComp[TEXT_CHROMA_V][subTUIndex];
+            coeffBits += singleBits[TEXT_CHROMA_U][subTUIndex];
+            coeffBits += singleBits[TEXT_CHROMA_V][subTUIndex];
         }
 
-        fullCost.bits = m_entropyCoder.getNumberOfWrittenBits();
+        // In split mode, we need only coeffBits. The reason is encoding chroma cbfs is different from luma.
+        // In case of chroma, if any one of the splitted block's cbf is 1, then we need to encode cbf 1, and then for
+        // four splitted block's individual cbf value. This is not known before analysis of four splitted blocks.
+        // For that reason, I am collecting individual coefficient bits only.
+        fullCost.bits = bSplitPresentFlag ? cbfBits + coeffBits : coeffBits;
+
+        fullCost.distortion += singleDist[TEXT_LUMA][0];
+        fullCost.energy += singlePsyEnergy[TEXT_LUMA][0];// need to check we need to add chroma also
+        for (uint32_t subTUIndex = 0; subTUIndex < 2; subTUIndex++)
+        {
+            fullCost.distortion += singleDist[TEXT_CHROMA_U][subTUIndex];
+            fullCost.distortion += singleDist[TEXT_CHROMA_V][subTUIndex];
+        }
+
         if (m_rdCost.m_psyRd)
             fullCost.rdcost = m_rdCost.calcPsyRdCost(fullCost.distortion, fullCost.bits, fullCost.energy);
         else
@@ -3194,6 +3185,14 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         }
 
         Cost splitCost;
+        if (bSplitPresentFlag && (log2TrSize <= depthRange[1] && log2TrSize > depthRange[0]))
+        {
+            // Subdiv flag can be encoded at the start of anlysis of splitted blocks.
+            m_entropyCoder.resetBits();
+            m_entropyCoder.codeTransformSubdivFlag(1, 5 - log2TrSize);
+            splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
+        }
+
         const uint32_t qPartNumSubdiv = NUM_CU_PARTITIONS >> ((depth + 1) << 1);
         uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
         for (uint32_t i = 0; i < 4; ++i)
@@ -3210,15 +3209,16 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             cu.m_cbf[2][absPartIdx + i] |= vcbf << tuDepth;
         }
 
+        // Here we were encoding cbfs and coefficients for splitted blocks. Since I have collected coefficient bits
+        // for each individual blocks, only encoding cbf values. As I mentioned encoding chroma cbfs is different then luma.
+        // But have one doubt that if coefficients are encoded in context at depth 2 (for example) and cbfs are encoded in context
+        // at depth 0 (for example).
         m_entropyCoder.load(m_rqt[depth].rqtRoot);
         m_entropyCoder.resetBits();
 
         codeInterSubdivCbfQT(cu, absPartIdx, depth, depthRange);
-        encodeResidualQT(cu, absPartIdx, depth, TEXT_LUMA, depthRange);
-        encodeResidualQT(cu, absPartIdx, depth, TEXT_CHROMA_U, depthRange);
-        encodeResidualQT(cu, absPartIdx, depth, TEXT_CHROMA_V, depthRange);
-
-        splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
+        uint32_t splitCbfBits = m_entropyCoder.getNumberOfWrittenBits();
+        splitCost.bits += splitCbfBits;
 
         if (m_rdCost.m_psyRd)
             splitCost.rdcost = m_rdCost.calcPsyRdCost(splitCost.distortion, splitCost.bits, splitCost.energy);
@@ -3297,9 +3297,6 @@ void Search::codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_
     const uint32_t tuDepth     = cu.m_tuDepth[absPartIdx];
     const bool     bSubdiv     = curTuDepth != tuDepth;
     const uint32_t log2TrSize  = g_maxLog2CUSize - depth;
-
-    if (log2TrSize <= depthRange[1] && log2TrSize > depthRange[0])
-        m_entropyCoder.codeTransformSubdivFlag(bSubdiv, 5 - log2TrSize);
 
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
