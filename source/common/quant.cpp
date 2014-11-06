@@ -355,6 +355,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
     else
     {
         bool isIntra = cu.isIntra(absPartIdx);
+        bool isBslice = cu.m_slice->isInterB();
         const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && isLuma && isIntra;
         int index = DCT_4x4 + sizeIdx - useDST;
@@ -370,10 +371,10 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr && !isIntra)
+        if (m_nr && !isBslice)
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
-            int cat = sizeIdx + 4 * !isLuma;
+            int cat = sizeIdx + 4 * !isLuma + 8 * !isIntra;
             int numCoeff = 1 << (log2TrSize * 2);
             primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
             m_nr->count[cat]++;
