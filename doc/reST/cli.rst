@@ -880,9 +880,7 @@ Quality, rate control and rate distortion options
 .. option:: --crf-min <0..51.0>
 
 	Specify an lower limit to the rate factor which may be assigned to
-	any given frame (ensuring a min QP).  This is dangerous when CRF is
-	used in combination with VBV as it may result in buffer underruns.
-	Default disabled
+	any given frame (ensuring a min compression factor).
 
 .. option:: --vbv-bufsize <integer>
 
@@ -923,18 +921,6 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** an integer from 0 to 51
 
-.. option:: --ipratio <float>
-
-	QP ratio factor between I and P slices. This ratio is used in all of
-	the rate control modes. Some :option:`--tune` options may change the
-	default value. It is not typically manually specified. Default 1.4
-
-.. option:: --pbratio <float>
-
-	QP ratio factor between P and B slices. This ratio is used in all of
-	the rate control modes. Some :option:`--tune` options may change the
-	default value. It is not typically manually specified. Default 1.3
-
 .. option:: --lossless, --no-lossless
 
 	Enables true lossless coding by bypassing scaling, transform,
@@ -973,22 +959,6 @@ Quality, rate control and rate distortion options
 	blocks which are quickly changed and are not referenced are given
 	less bits. This tends to improve detail in the backgrounds of video
 	with less detail in areas of high motion. Default enabled
-
-.. option:: --cbqpoffs <integer>
-
-	Offset of Cb chroma QP from the luma QP selected by rate control.
-	This is a general way to spend more or less bits on the chroma
-	channel.  Default 0
-
-	**Range of values:** -12 to 12
-
-.. option:: --crqpoffs <integer>
-
-	Offset of Cr chroma QP from the luma QP selected by rate control.
-	This is a general way to spend more or less bits on the chroma
-	channel.  Default 0
-
-	**Range of values:**  -12 to 12
 
 .. option:: --pass <integer>
 
@@ -1040,6 +1010,60 @@ Quality, rate control and rate distortion options
 
 	Specify a filename for analysis data (see :option:`--analysis-mode`)
 	If no filename is specified, x265_analysis.dat is used.
+
+.. option:: --cbqpoffs <integer>
+
+	Offset of Cb chroma QP from the luma QP selected by rate control.
+	This is a general way to spend more or less bits on the chroma
+	channel.  Default 0
+
+	**Range of values:** -12 to 12
+
+.. option:: --crqpoffs <integer>
+
+	Offset of Cr chroma QP from the luma QP selected by rate control.
+	This is a general way to spend more or less bits on the chroma
+	channel.  Default 0
+
+	**Range of values:**  -12 to 12
+
+.. option:: --ipratio <float>
+
+	QP ratio factor between I and P slices. This ratio is used in all of
+	the rate control modes. Some :option:`--tune` options may change the
+	default value. It is not typically manually specified. Default 1.4
+
+.. option:: --pbratio <float>
+
+	QP ratio factor between P and B slices. This ratio is used in all of
+	the rate control modes. Some :option:`--tune` options may change the
+	default value. It is not typically manually specified. Default 1.3
+
+.. option:: --qcomp <float>
+
+	qComp sets the quantizer curve compression factor. It weights the
+	frame quantizer based on the complexity of residual (measured by
+	lookahead).  Default value is 0.6. Increasing it to 1 will
+	effectively generate CQP
+
+.. option:: --qstep <integer>
+
+	The maximum single adjustment in QP allowed to rate control. Default
+	4
+
+.. option:: --ratetol <float>
+
+	The degree of rate fluctuation that x265 tolerates. Rate tolerance
+	is used along with overflow (difference between actual and target
+	bitrate), to adjust qp. Default is 1.0
+
+.. option:: --qblur <float>
+
+	Temporally blur quants. Default 0.5
+
+.. option:: --cplxblur <float>
+
+	temporally blur complexity. default 20
 
 Loop filters
 ============
