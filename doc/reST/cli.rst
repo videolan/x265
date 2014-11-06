@@ -131,7 +131,7 @@ Standalone Executable Options
 	Tune the settings for a particular type of source or situation. The changes will
 	be applied after :option:`--preset` but before all other parameters. Default none
 
-	**Values:** psnr, ssim, zero-latency, fast-decode.
+	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
 
 .. option:: --frame-threads, -F <integer>
 

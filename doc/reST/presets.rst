@@ -97,7 +97,40 @@ after the preset.
 +--------------+-----------------------------------------------------+
 | ssim         | enables adaptive quant auto-mode, disables psy-rd   |
 +--------------+-----------------------------------------------------+
+| grain        | improves retention of film grain. more below        |
++--------------+-----------------------------------------------------+
 | fastdecode   | no loop filters, no weighted pred, no intra in B    |
 +--------------+-----------------------------------------------------+
 | zerolatency  | no lookahead, no B frames, no cutree                |
 +--------------+-----------------------------------------------------+
+
+
+Film Grain Retention
+--------------------
+
+:option:`--tune` grain tries to improve the retention of film grain in
+the reconstructed output. To help rate distortion optimizations to
+select modes which preserve high frequency noise:
+
+    * :option:`--psy-rd` 0.5
+    * :option:`--psy-rdoq` 30
+    * :option:`--b-intra`
+
+It lowers the strength of adaptive quantization, so residual energy can
+be more evenly distributed across the (noisy) picture:
+
+    * :option:`--aq-mode` 1
+    * :option:`--aq-strength` 0.3
+
+And it similarly tunes rate control to prevent the slice QP from
+swinging too wildly from frame to frame:
+
+    * :option:`--ipratio` 1.1
+    * :option:`--pbratio` 1.1
+    * :option:`--qcomp` 0.8
+
+And lastly it reduces the strength of deblocking to prevent grain being
+blurred on block boundaries:
+
+    * :option:`--deblock` -2
+
