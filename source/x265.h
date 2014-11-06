@@ -811,7 +811,7 @@ typedef struct x265_param
         int       bitrate;
 
         /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used
-         * alongwith overflow (difference between actual and target bitrate), to adjust
+         * along with overflow (difference between actual and target bitrate), to adjust
          * qp. Default is 1.0 */
         double    rateTolerance;
 
@@ -833,12 +833,12 @@ typedef struct x265_param
         double    rfConstant;
 
         /* Enable adaptive quantization. This mode distributes available bits between all
-         * macroblocks of a frame, assigning more bits to low complexity areas. Turning
+         * CTUs of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
          * generally improves. Default: X265_AQ_AUTO_VARIANCE */
         int       aqMode;
 
-        /* Sets the strength of AQ bias towards low detail macroblocks. Valid only if
+        /* Sets the strength of AQ bias towards low detail CTUs. Valid only if
          * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
 
