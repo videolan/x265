@@ -650,6 +650,11 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("hrd") p->bEmitHRDSEI = atobool(value);
     OPT2("ipratio", "ip-factor") p->rc.ipFactor = atof(value);
     OPT2("pbratio", "pb-factor") p->rc.pbFactor = atof(value);
+    OPT("qcomp") p->rc.qCompress = atof(value);
+    OPT("qpstep") p->rc.qpStep = atoi(value);
+    OPT("ratetol") p->rc.rateTolerance = atof(value);
+    OPT("cplxblur") p->rc.complexityBlur = atof(value);
+    OPT("qblur") p->rc.qblur = atof(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("vbv-maxrate") p->rc.vbvMaxBitrate = atoi(value);
@@ -1050,6 +1055,8 @@ int x265_check_params(x265_param *param)
           "Valid initial VBV buffer occupancy must be a fraction 0 - 1, or size in kbits");
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
+    CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
+          "qCompress must be between 0.5 and 1.0");
     if (param->noiseReduction)
         CHECK(100 > param->noiseReduction || param->noiseReduction > 1000, "Valid noise reduction range 100 - 1000");
     CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead,
