@@ -1144,11 +1144,6 @@ void Entropy::copyFrom(const Entropy& src)
     markValid();
 }
 
-void Entropy::codeMVPIdx(uint32_t symbol)
-{
-    encodeBin(symbol, m_contextState[OFF_MVP_IDX_CTX]);
-}
-
 void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
 {
     PartSize partSize = (PartSize)cu.m_partSize[absPartIdx];
@@ -1199,32 +1194,6 @@ void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth
     }
 }
 
-void Entropy::codePredMode(int predMode)
-{
-    encodeBin(predMode == MODE_INTRA ? 1 : 0, m_contextState[OFF_PRED_MODE_CTX]);
-}
-
-void Entropy::codeCUTransquantBypassFlag(uint32_t symbol)
-{
-    encodeBin(symbol, m_contextState[OFF_TQUANT_BYPASS_FLAG_CTX]);
-}
-
-void Entropy::codeSkipFlag(const CUData& cu, uint32_t absPartIdx)
-{
-    // get context function is here
-    uint32_t symbol = cu.isSkipped(absPartIdx) ? 1 : 0;
-    uint32_t ctxSkip = cu.getCtxSkipFlag(absPartIdx);
-
-    encodeBin(symbol, m_contextState[OFF_SKIP_FLAG_CTX + ctxSkip]);
-}
-
-void Entropy::codeMergeFlag(const CUData& cu, uint32_t absPartIdx)
-{
-    const uint32_t symbol = cu.m_mergeFlag[absPartIdx] ? 1 : 0;
-
-    encodeBin(symbol, m_contextState[OFF_MERGE_FLAG_EXT_CTX]);
-}
-
 void Entropy::codeMergeIndex(const CUData& cu, uint32_t absPartIdx)
 {
     uint32_t numCand = cu.m_slice->m_maxNumMergeCand;
@@ -1243,22 +1212,6 @@ void Entropy::codeMergeIndex(const CUData& cu, uint32_t absPartIdx)
             encodeBinsEP(mask, unaryIdx - (unaryIdx == numCand - 1));
         }
     }
-}
-
-void Entropy::codeSplitFlag(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
-{
-    X265_CHECK(depth < g_maxCUDepth, "invalid depth\n");
-
-    uint32_t ctx           = cu.getCtxSplitFlag(absPartIdx, depth);
-    uint32_t currSplitFlag = (cu.m_cuDepth[absPartIdx] > depth) ? 1 : 0;
-
-    X265_CHECK(ctx < 3, "ctx out of range\n");
-    encodeBin(currSplitFlag, m_contextState[OFF_SPLIT_FLAG_CTX + ctx]);
-}
-
-void Entropy::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
-{
-    encodeBin(symbol, m_contextState[OFF_TRANS_SUBDIV_FLAG_CTX + ctx]);
 }
 
 void Entropy::codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple)
@@ -1464,12 +1417,6 @@ void Entropy::codeQtCbf(const CUData& cu, uint32_t absPartIdx, TextType ttype, u
     encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
-void Entropy::codeQtCbf(uint32_t cbf, TextType ttype, uint32_t trDepth)
-{
-    uint32_t ctx = ctxCbf[ttype][trDepth];
-    encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
-}
-
 void Entropy::codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
 {
     if (cu.m_tqBypass[absPartIdx])
@@ -1479,26 +1426,6 @@ void Entropy::codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint
 
     uint32_t useTransformSkip = cu.m_transformSkip[ttype][absPartIdx];
     encodeBin(useTransformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
-}
-
-void Entropy::codeQtRootCbf(uint32_t cbf)
-{
-    encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]);
-}
-
-void Entropy::codeQtCbfZero(TextType ttype, uint32_t trDepth)
-{
-    // this function is only used to estimate the bits when cbf is 0
-    // and will never be called when writing the bitsream.
-    uint32_t ctx = ctxCbf[ttype][trDepth];
-    encodeBin(0, m_contextState[OFF_QT_CBF_CTX + ctx]);
-}
-
-void Entropy::codeQtRootCbfZero()
-{
-    // this function is only used to estimate the bits when cbf is 0
-    // and will never be called when writing the bistream.
-    encodeBin(0, m_contextState[OFF_QT_ROOT_CBF_CTX]);
 }
 
 /** Encode (X,Y) position of the last significant coefficient
