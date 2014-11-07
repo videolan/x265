@@ -592,9 +592,9 @@ void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartI
 void Entropy::finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
 {
     const Slice* slice = cu.m_slice;
-    X265_CHECK(cu.m_slice->m_endCUAddr == cu.m_slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
     uint32_t realEndAddress = slice->m_endCUAddr;
     uint32_t cuAddr = cu.getSCUAddr() + absPartIdx;
+    X265_CHECK(realEndAddress == cu.m_slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
 
     uint32_t granularityMask = g_maxCUSize - 1;
     uint32_t cuSize = 1 << cu.m_log2CUSize[absPartIdx];
