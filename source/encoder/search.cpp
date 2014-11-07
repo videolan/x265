@@ -2243,6 +2243,11 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     bidirBits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
                 }
             }
+
+            /* Ugly hack - since BIDIR is not yet an RD decision, add a penalty
+             * if psy-rd is enabled */
+            if (m_rdCost.m_psyRd)
+                bidirCost += (m_rdCost.m_psyRd * bidirCost) >> 8;
         }
 
         /* select best option and store into CU */
