@@ -106,7 +106,7 @@ after the preset.
 
 
 Film Grain Retention
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 :option:`--tune` grain tries to improve the retention of film grain in
 the reconstructed output. To help rate distortion optimizations to
