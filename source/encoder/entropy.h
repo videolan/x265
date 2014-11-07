@@ -207,7 +207,7 @@ private:
     void encodeBinTrm(uint32_t binValue);
 
     /* return the bits of encoding the context bin without updating */
-    inline uint32_t bitsCodeBin(uint32_t binValue, uint8_t ctxModel) const
+    inline uint32_t bitsCodeBin(uint32_t binValue, uint32_t ctxModel) const
     {
         uint64_t fracBits = (m_fracBits & 32767) + sbacGetEntropyBits(ctxModel, binValue);
         return (uint32_t)(fracBits >> 15);
