@@ -1501,11 +1501,11 @@ void Entropy::codeQtRootCbf(uint32_t cbf)
     encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]);
 }
 
-uint32_t Entropy::estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth)
+uint32_t Entropy::estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth) const
 {
     // This is an approximation. Encode the context bin to estimate the bits
     uint32_t ctx = ctxCbf[ttype][trDepth];
-    return encodeBinContext(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
+    return bitsCodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
 void Entropy::codeQtCbfZero(TextType ttype, uint32_t trDepth)
@@ -2033,8 +2033,8 @@ void Entropy::encodeBin(uint32_t binValue, uint8_t &ctxModel)
         writeOut();
 }
 
-/** Return the bits of encoding the context bin specified without encoding it.*/
-uint32_t Entropy::encodeBinContext(uint32_t binValue, uint8_t &ctxModel)
+/** Return the bits of encoding the context bin specified without encoding it */
+uint32_t Entropy::bitsCodeBin(uint32_t binValue, uint8_t ctxModel) const
 {
     uint64_t fracBits = m_fracBits;
     fracBits &= 32767;

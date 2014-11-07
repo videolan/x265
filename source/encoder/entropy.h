@@ -176,10 +176,7 @@ public:
     void codeQtRootCbfZero();
     void codeCoeff(const CUData& cu, uint32_t absPartIdx, uint32_t depth, bool& bCodeDQP, uint32_t depthRange[2]);
     void codeCoeffNxN(const CUData& cu, const coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
-    uint32_t estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth);
 
-    uint32_t bitsIntraModeNonMPM() const;
-    uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const;
     void codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(const CUData& cu, uint32_t absPartIdx, uint32_t *chromaDirMode);
 
@@ -189,6 +186,10 @@ public:
     void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, bool bIsLuma) const;
     void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma) const;
     void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLuma) const;
+
+    uint32_t bitsIntraModeNonMPM() const;
+    uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const;
+    uint32_t estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth) const;
 
 private:
 
@@ -200,7 +201,7 @@ private:
     void encodeBinEP(uint32_t binValue);
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
-    uint32_t encodeBinContext(uint32_t binValue, uint8_t &ctxModel);
+    uint32_t bitsCodeBin(uint32_t binValue, uint8_t ctxModel) const;
 
     void encodeCU(const CUData& cu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
     void finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth);
