@@ -180,16 +180,16 @@ public:
     void codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple);
     void codeIntraDirChroma(const CUData& cu, uint32_t absPartIdx, uint32_t *chromaDirMode);
 
-    // RDO functions
+    /* RDO functions */
     void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma) const;
     void estCBFBit(EstBitsSbac& estBitsSbac) const;
     void estSignificantCoeffGroupMapBit(EstBitsSbac& estBitsSbac, bool bIsLuma) const;
     void estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma) const;
     void estSignificantCoefficientsBit(EstBitsSbac& estBitsSbac, bool bIsLuma) const;
 
-    uint32_t bitsIntraModeNonMPM() const;
-    uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const;
-    uint32_t estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth) const;
+    inline uint32_t bitsIntraModeNonMPM() const { return bitsCodeBin(0, m_contextState[OFF_ADI_CTX]) + 5; }
+    inline uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const { return bitsCodeBin(1, m_contextState[OFF_ADI_CTX]) + (dir == preds[0] ? 1 : 2); }
+    inline uint32_t estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth) const { return bitsCodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctxCbf[ttype][trDepth]]); }
 
 private:
 
@@ -201,7 +201,13 @@ private:
     void encodeBinEP(uint32_t binValue);
     void encodeBinsEP(uint32_t binValues, int numBins);
     void encodeBinTrm(uint32_t binValue);
-    uint32_t bitsCodeBin(uint32_t binValue, uint8_t ctxModel) const;
+
+    /* return the bits of encoding the context bin without updating */
+    inline uint32_t bitsCodeBin(uint32_t binValue, uint8_t ctxModel) const
+    {
+        uint64_t fracBits = (m_fracBits & 32767) + sbacGetEntropyBits(ctxModel, binValue);
+        return (uint32_t)(fracBits >> 15);
+    }
 
     void encodeCU(const CUData& cu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
     void finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth);
