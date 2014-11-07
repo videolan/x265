@@ -397,7 +397,9 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
         // Ideally this process should not be repeated for each slice in a picture
         if (slice.isIRAP())
             for (int picIdx = 0; picIdx < slice.m_rps.numberOfPictures; picIdx++)
+            {
                 X265_CHECK(!slice.m_rps.bUsed[picIdx], "pic unused failure\n");
+            }
 #endif
 
         WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
