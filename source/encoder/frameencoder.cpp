@@ -481,7 +481,7 @@ void FrameEncoder::compressFrame()
         for (int i = 0; i < m_top->m_numThreadLocalData; i++)
         {
             NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
-            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint16_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
             memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
             memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
         }
