@@ -222,7 +222,7 @@ public:
     void     getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
     const CUData* getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
-    const CUData* getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary = false) const;
+    const CUData* getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx) const;

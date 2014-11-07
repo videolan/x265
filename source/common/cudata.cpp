@@ -546,7 +546,7 @@ const CUData* CUData::getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx)
     return m_cuLeft;
 }
 
-const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary) const
+const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx) const
 {
     uint32_t absPartIdx = g_zscanToRaster[curPartUnitIdx];
 
@@ -557,14 +557,9 @@ const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx
         if (isEqualRow(absPartIdx, absZorderCUIdx, s_numPartInCUSize))
             return m_encData->getPicCTU(m_cuAddr);
         else
-        {
             aPartUnitIdx -= m_absIdxInCTU;
-            return this;
-        }
+        return this;
     }
-
-    if (planarAtCTUBoundary)
-        return NULL;
 
     aPartUnitIdx = g_rasterToZscan[absPartIdx + NUM_CU_PARTITIONS - s_numPartInCUSize];
     return m_cuAbove;
@@ -853,7 +848,7 @@ int CUData::getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred
     leftIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->m_lumaIntraDir[tempPartIdx] : DC_IDX;
 
     // Get intra direction of above PU
-    tempCU = getPUAbove(tempPartIdx, m_absIdxInCTU + absPartIdx, true);
+    tempCU = g_zscanToPelY[m_absIdxInCTU + absPartIdx] > 0 ? getPUAbove(tempPartIdx, m_absIdxInCTU + absPartIdx) : NULL;
 
     aboveIntraDir = (tempCU && tempCU->isIntra(tempPartIdx)) ? tempCU->m_lumaIntraDir[tempPartIdx] : DC_IDX;
 
