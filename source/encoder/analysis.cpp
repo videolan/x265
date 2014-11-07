@@ -1739,7 +1739,7 @@ bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom
     }
 
     // give 60% weight to all CU's and 40% weight to neighbour CU's
-    if (neighCost + cuCount)
+    if (neighCount + cuCount)
     {
         uint64_t avgCost = ((3 * cuCost) + (2 * neighCost)) / ((3 * cuCount) + (2 * neighCount));
         uint64_t curCost = m_param->rdLevel > 1 ? bestMode.rdCost : bestMode.sa8dCost;
