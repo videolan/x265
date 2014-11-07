@@ -1263,17 +1263,13 @@ void Entropy::codeTransformSubdivFlag(uint32_t symbol, uint32_t ctx)
 
 uint32_t Entropy::bitsIntraModeNonMPM() const
 {
-    uint32_t mstate = m_contextState[OFF_ADI_CTX];
-    uint32_t bits = ((uint32_t)(m_fracBits & 32767) + sbacGetEntropyBits(mstate, 0)) >> 15;
-    return bits + 5; /* fixed cost for encodeBinsEP() */
+    return bitsCodeBin(0, m_contextState[OFF_ADI_CTX]) + 5; /* fixed cost for encodeBinsEP() */
 }
 
 uint32_t Entropy::bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const
 {
     X265_CHECK(dir == preds[0] || dir == preds[1] || dir == preds[2], "dir must be a most probable mode\n");
-    uint32_t mstate = m_contextState[OFF_ADI_CTX];
-    uint32_t bits = ((uint32_t)(m_fracBits & 32767) + sbacGetEntropyBits(mstate, 1)) >> 15;
-    return bits + (dir == preds[0] ? 1 : 2);
+    return bitsCodeBin(1, m_contextState[OFF_ADI_CTX]) + (dir == preds[0] ? 1 : 2);
 }
 
 void Entropy::codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool isMultiple)
