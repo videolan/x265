@@ -1501,9 +1501,9 @@ void Entropy::codeQtRootCbf(uint32_t cbf)
     encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]);
 }
 
-uint32_t Entropy::estimateCbfBits(uint32_t cbf,TextType ttype, uint32_t trDepth)
+uint32_t Entropy::estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t trDepth)
 {
-    //This is an approximation. Encode the context bin to estimate the bits
+    // This is an approximation. Encode the context bin to estimate the bits
     uint32_t ctx = ctxCbf[ttype][trDepth];
     return encodeBinContext(cbf, m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
