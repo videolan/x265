@@ -3358,13 +3358,6 @@ void Search::encodeResidualQT(CUData& cu, uint32_t absPartIdx, const uint32_t de
 
         const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
         uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
-        uint32_t trWidthC  = 1 << log2TrSizeC;
-        uint32_t trHeightC = splitIntoSubTUs ? (trWidthC << 1) : trWidthC;
-
-        bool mCodeAll = true;
-        const uint32_t numPels = trWidthC * trHeightC;
-        if (numPels < (MIN_TU_SIZE * MIN_TU_SIZE))
-            mCodeAll = false;
 
         // Luma
         const uint32_t qtLayer = log2TrSize - 2;
