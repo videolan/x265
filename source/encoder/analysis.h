@@ -49,6 +49,7 @@ public:
         PRED_SKIP,
         PRED_INTRA,
         PRED_2Nx2N,
+        PRED_BIDIR,
         PRED_Nx2N,
         PRED_2NxN,
         PRED_SPLIT,
@@ -104,6 +105,8 @@ protected:
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
     void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly);
+
+    void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);
