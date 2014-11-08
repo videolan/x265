@@ -1041,14 +1041,14 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
     if (mightNotSplit)
     {
-        for (int i = 0; i < MAX_PRED_TYPES; i++)
-            md.pred[i].cu.initSubCU(parentCTU, cuGeom);
-
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
         checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
         bool earlySkip = m_param->bEnableEarlySkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
 
         if (!earlySkip)
         {
+            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, false);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
@@ -1057,11 +1057,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 // Nx2N rect
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                 {
+                    md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N, false);
                     checkBestMode(md.pred[PRED_Nx2N], cuGeom.depth);
                 }
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                 {
+                    md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, false);
                     checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
                 }
@@ -1087,11 +1089,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                     {
+                        md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
                         checkInter_rd5_6(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU, bMergeOnly);
                         checkBestMode(md.pred[PRED_2NxnU], cuGeom.depth);
                     }
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                     {
+                        md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
                         checkInter_rd5_6(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD, bMergeOnly);
                         checkBestMode(md.pred[PRED_2NxnD], cuGeom.depth);
                     }
@@ -1100,11 +1104,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 {
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                     {
+                        md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
                         checkInter_rd5_6(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N, bMergeOnly);
                         checkBestMode(md.pred[PRED_nLx2N], cuGeom.depth);
                     }
                     if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                     {
+                        md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
                         checkInter_rd5_6(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N, bMergeOnly);
                         checkBestMode(md.pred[PRED_nRx2N], cuGeom.depth);
                     }
@@ -1114,11 +1120,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
             if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) &&
                 (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0)))
             {
+                md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
                 checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL);
                 checkBestMode(md.pred[PRED_INTRA], depth);
 
                 if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
                 {
+                    md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
                     checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL);
                     checkBestMode(md.pred[PRED_INTRA_NxN], depth);
                 }
