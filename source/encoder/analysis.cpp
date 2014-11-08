@@ -777,24 +777,9 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     {
         bool bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
 
-        /* Initialize all prediction CUs based on parentCTU */
-        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
+        /* Compute Merge Cost */
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
-        if (m_param->bEnableRectInter)
-        {
-            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
-        }
-        if (m_slice->m_sps->maxAMPDepth > depth && cuGeom.log2CUSize < 6)
-        {
-            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
-        }
-
-        /* Compute Merge Cost */
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
         bool earlyskip = false;
@@ -803,14 +788,18 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
         if (!earlyskip)
         {
+            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
             checkInter_rd0_4(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N);
             Mode *bestInter = &md.pred[PRED_2Nx2N];
 
             if (m_param->bEnableRectInter)
             {
+                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N);
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_Nx2N];
+
+                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN);
                 if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxN];
@@ -832,18 +821,24 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
                 if (bHor)
                 {
+                    md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU);
                     if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_2NxnU];
+
+                    md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD);
                     if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_2NxnD];
                 }
                 if (bVer)
                 {
+                    md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N);
                     if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_nLx2N];
+
+                    md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N);
                     if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_nRx2N];
