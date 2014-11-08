@@ -83,7 +83,9 @@ struct Mode
     Yuv        predYuv;
     Yuv        reconYuv;
     Entropy    contexts;
+
     MotionData bestME[2];
+    MV         amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
 
     uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)

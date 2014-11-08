@@ -1866,16 +1866,15 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
 
-    MV amvpCand[AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-    int numMvc = interMode.cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, amvpCand, mvc);
+    int numMvc = interMode.cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, interMode.amvpCand[list][ref], mvc);
 
     uint32_t bestCost = MAX_INT;
     int mvpIdx = 0;
     int merange = m_param->searchRange;
     for (int i = 0; i < AMVP_NUM_CANDS; i++)
     {
-        MV mvCand = amvpCand[i];
+        MV mvCand = interMode.amvpCand[list][ref][i];
 
         // NOTE: skip mvCand if Y is > merange and -FN>1
         if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
@@ -1894,7 +1893,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
         }
     }
 
-    MV mvmin, mvmax, outmv, mvp = amvpCand[mvpIdx];
+    MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[list][ref][mvpIdx];
     setSearchRange(interMode.cu, mvp, merange, mvmin, mvmax);
 
     int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
@@ -1904,7 +1903,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-    checkBestMVP(amvpCand, outmv, mvp, mvpIdx, bits, cost);
+    checkBestMVP(interMode.amvpCand[list][ref], outmv, mvp, mvpIdx, bits, cost);
 
     /* tie goes to the smallest ref ID, just like --no-pme */
     ScopedLock _lock(master.m_outputLock);
@@ -1927,7 +1926,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     CUData& cu = interMode.cu;
     Yuv* predYuv = &interMode.predYuv;
 
-    MV amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
     const Slice *slice = m_slice;
@@ -1995,6 +1993,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
 
+        /* Uni-directional prediction */
         if (m_param->analysisMode == X265_ANALYSIS_LOAD && interMode.bestME[0].ref >= 0)
         {
             for (int l = 0; l < numPredDir; l++)
@@ -2003,7 +2002,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[l]);
 
-                cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, amvpCand[l][ref], mvc);
+                cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
                 uint32_t bestCost = MAX_INT;
@@ -2012,7 +2011,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
                 for (int i = 0; i < AMVP_NUM_CANDS; i++)
                 {
-                    MV mvCand = amvpCand[l][ref][i];
+                    MV mvCand = interMode.amvpCand[l][ref][i];
 
                     // NOTE: skip mvCand if Y is > merange and -FN>1
                     if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
@@ -2029,7 +2028,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     }
                 }
 
-                MV mvmin, mvmax, outmv, mvp = amvpCand[l][ref][mvpIdx];
+                MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[l][ref][mvpIdx];
                 m_me.setMVP(mvp);
                 MV bmv(interMode.bestME[l].mv.x, interMode.bestME[l].mv.y);
 
@@ -2044,7 +2043,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 uint32_t cost = (satdCost - m_me.mvcost(bmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                checkBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                checkBestMVP(interMode.amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
 
                 if (cost < interMode.bestME[l].cost)
                 {
@@ -2104,7 +2103,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
         else
         {
-            // Uni-directional prediction
             for (int l = 0; l < numPredDir; l++)
             {
                 for (int ref = 0; ref < numRefIdx[l]; ref++)
@@ -2112,7 +2110,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
                     bits += getTUBits(ref, numRefIdx[l]);
 
-                    int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, amvpCand[l][ref], mvc);
+                    int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
 
                     // Pick the best possible MVP from AMVP candidates based on least residual
                     uint32_t bestCost = MAX_INT;
@@ -2121,7 +2119,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
                     for (int i = 0; i < AMVP_NUM_CANDS; i++)
                     {
-                        MV mvCand = amvpCand[l][ref][i];
+                        MV mvCand = interMode.amvpCand[l][ref][i];
 
                         // NOTE: skip mvCand if Y is > merange and -FN>1
                         if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
@@ -2138,7 +2136,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                         }
                     }
 
-                    MV mvmin, mvmax, outmv, mvp = amvpCand[l][ref][mvpIdx];
+                    MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[l][ref][mvpIdx];
 
                     setSearchRange(cu, mvp, merange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
@@ -2148,7 +2146,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                    checkBestMVP(amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                    checkBestMVP(interMode.amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
 
                     if (cost < interMode.bestME[l].cost)
                     {
@@ -2221,15 +2219,9 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
                 uint32_t cost = satdCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
-                if (bDistributed)
-                {
-                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 0, interMode.bestME[0].ref, amvpCand[0][interMode.bestME[0].ref], mvc);
-                    cu.fillMvpCand(puIdx, m_puAbsPartIdx, 1, interMode.bestME[1].ref, amvpCand[1][interMode.bestME[1].ref], mvc);
-                }
-
                 /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
-                checkBestMVP(amvpCand[0][interMode.bestME[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
-                checkBestMVP(amvpCand[1][interMode.bestME[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
+                checkBestMVP(interMode.amvpCand[0][interMode.bestME[0].ref], mvzero, mvp0, mvpIdx0, bits0, cost);
+                checkBestMVP(interMode.amvpCand[1][interMode.bestME[1].ref], mvzero, mvp1, mvpIdx1, bits1, cost);
 
                 if (cost < bidirCost)
                 {
