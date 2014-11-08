@@ -39,6 +39,7 @@ MotionReference::MotionReference()
 int MotionReference::init(PicYuv* recPic, WeightParam *w)
 {
     m_reconPic = recPic;
+    m_numWeightedRows = 0;
     lumaStride = recPic->m_stride;
     intptr_t startpad = recPic->m_lumaMarginY * lumaStride + recPic->m_lumaMarginX;
 
@@ -62,7 +63,6 @@ int MotionReference::init(PicYuv* recPic, WeightParam *w)
         offset = w->inputOffset * (1 << (X265_DEPTH - 8));
         shift  = w->log2WeightDenom;
         round  = shift ? 1 << (shift - 1) : 0;
-        m_numWeightedRows = 0;
 
         /* use our buffer which will have weighted pixels written to it */
         fpelPlane = m_weightBuffer + startpad;
@@ -93,8 +93,7 @@ void MotionReference::applyWeight(int rows, int numRows)
     // Computing weighted CU rows
     int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
     int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
-    primitives.weight_pp(src, dst, lumaStride, padwidth, height,
-                         weight, round << correction, shift + correction, offset);
+    primitives.weight_pp(src, dst, lumaStride, padwidth, height, weight, round << correction, shift + correction, offset);
 
     // Extending Left & Right
     primitives.extendRowBorder(dst, lumaStride, width, height, marginX);
@@ -114,5 +113,6 @@ void MotionReference::applyWeight(int rows, int numRows)
         for (int y = 0; y < marginY; y++)
             memcpy(pixY + (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
     }
+
     m_numWeightedRows = rows;
 }

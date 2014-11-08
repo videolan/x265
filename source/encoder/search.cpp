@@ -2201,9 +2201,9 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             }
             if (bTryZero)
             {
-                // coincident blocks of the two reference pictures
-                pixel *ref0 = slice->m_mref[0][interMode.bestME[0].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
-                pixel *ref1 = slice->m_mref[1][interMode.bestME[1].ref].fpelPlane + (pu - fencPic->m_picOrg[0]);
+                /* coincident blocks of the two reference pictures */
+                pixel *ref0 = m_slice->m_mref[0][interMode.bestME[0].ref].getLumaAddr(cu.m_cuAddr, m_puAbsPartIdx);
+                pixel *ref1 = m_slice->m_mref[1][interMode.bestME[1].ref].getLumaAddr(cu.m_cuAddr, m_puAbsPartIdx);
                 intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
                 primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
