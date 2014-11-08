@@ -37,7 +37,7 @@ class MotionEstimate : public BitCost
 protected:
 
     /* Aligned copy of original pixels, extra room for manual alignment */
-    pixel *fencplane;
+    pixel*   fencplane;
     intptr_t fencLumaStride;
 
     pixelcmp_t sad;
@@ -45,30 +45,25 @@ protected:
     pixelcmp_x3_t sad_x3;
     pixelcmp_x4_t sad_x4;
 
-    intptr_t blockOffset;
-    int partEnum;
-    int searchMethod;
-    int subpelRefine;
-
-    /* subpel generation buffers */
-    int blockwidth;
-    int blockheight;
-
     MotionEstimate& operator =(const MotionEstimate&);
 
 public:
 
+    intptr_t blockOffset;
+    int searchMethod;
+    int subpelRefine;
+
+    int blockwidth;
+    int blockheight;
+    int partEnum;
+
     static const int COST_MAX = 1 << 28;
 
-    pixel *fenc;
+    pixel*   fenc;
 
     MotionEstimate();
 
     ~MotionEstimate();
-
-    void setSearchMethod(int i) { searchMethod = i; }
-
-    void setSubpelRefine(int i) { subpelRefine = i; }
 
     /* Methods called at slice setup */
 
