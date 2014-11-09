@@ -794,12 +794,12 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
             if (m_param->bEnableRectInter)
             {
-                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
+                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N);
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_Nx2N];
 
-                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
+                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN);
                 if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxN];
