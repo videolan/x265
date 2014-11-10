@@ -971,13 +971,13 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
             log->cntIntra[depth]++;
             log->qTreeIntraCnt[depth]++;
 
-            if (ctu.m_partSize[absPartIdx] == SIZE_NONE)
+            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
             {
                 log->totalCu--;
                 log->cntIntra[depth]--;
                 log->qTreeIntraCnt[depth]--;
             }
-            else if (ctu.m_partSize[absPartIdx] == SIZE_NxN)
+            else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
             {
                 /* TODO: log intra modes at absPartIdx +0 to +3 */
                 X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
@@ -1000,7 +1000,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
             log->totalCu++;
             log->cntTotalCu[depth]++;
 
-            if (ctu.m_partSize[absPartIdx] == SIZE_NONE)
+            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
             {
                 log->totalCu--;
                 log->cntTotalCu[depth]--;
@@ -1026,7 +1026,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
                 log->cntIntra[depth]++;
                 log->qTreeIntraCnt[depth]++;
 
-                if (ctu.m_partSize[absPartIdx] == SIZE_NxN)
+                if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
                 {
                     X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
                     log->cntIntraNxN++;

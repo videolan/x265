@@ -46,8 +46,7 @@ enum PartSize
     SIZE_2NxnD, // asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
     SIZE_nLx2N, // asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
     SIZE_nRx2N, // asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
-    NUM_SIZES,
-    SIZE_NONE = 15
+    NUM_SIZES
 };
 
 enum PredMode
@@ -130,12 +129,12 @@ public:
     /* Per-part data, stored contiguously */
     char*         m_qp;               // array of QP values
     uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
-    uint8_t*      m_partSize;         // array of partition sizes
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
     char*         m_refIdx[2];        // array of motion reference indices per list
     uint8_t*      m_cuDepth;          // array of depths
     uint8_t*      m_predMode;         // array of prediction modes
+    uint8_t*      m_partSize;         // array of partition sizes
     uint8_t*      m_mergeFlag;        // array of merge flags
     uint8_t*      m_interDir;         // array of inter directions
     uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]

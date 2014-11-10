@@ -935,7 +935,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         uint32_t tuDepthRange[2];
                         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
-                        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN;
+                        uint32_t initTrDepth = cu.m_partSize[0] != SIZE_2Nx2N;
                         residualTransformQuantIntra(*md.bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
                         getBestIntraModeChroma(*md.bestMode, cuGeom);
                         residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
@@ -1517,7 +1517,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         uint32_t tuDepthRange[2];
         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
-        uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN;
+        uint32_t initTrDepth = cu.m_partSize[0] != SIZE_2Nx2N;
         residualTransformQuantIntra(*bestMode, cuGeom, initTrDepth, 0, tuDepthRange);
         getBestIntraModeChroma(*bestMode, cuGeom);
         residualQTIntraChroma(*bestMode, cuGeom, 0, 0);

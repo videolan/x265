@@ -649,7 +649,7 @@ void Entropy::encodeTransform(const CUData& cu, CoeffCodeState& state, uint32_t 
 
     /* in each of these conditions, the subdiv flag is implied and not signaled,
      * so we have checks to make sure the implied value matches our intentions */
-    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] == SIZE_NxN && depth == cu.m_cuDepth[absPartIdx])
+    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx])
     {
         X265_CHECK(subdiv, "intra NxN requires TU depth below CU depth\n");
     }
@@ -809,7 +809,7 @@ void Entropy::codePredInfo(const CUData& cu, uint32_t absPartIdx)
 
             codeIntraDirChroma(cu, absPartIdx, chromaDirMode);
 
-            if ((cu.m_chromaFormat == X265_CSP_I444) && (cu.m_partSize[absPartIdx] == SIZE_NxN))
+            if (cu.m_chromaFormat == X265_CSP_I444 && cu.m_partSize[absPartIdx] != SIZE_2Nx2N)
             {
                 uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.m_cuDepth[absPartIdx] << 1)) >> 2;
                 for (uint32_t i = 1; i <= 3; i++)
@@ -1221,8 +1221,7 @@ void Entropy::codeIntraDirLumaAng(const CUData& cu, uint32_t absPartIdx, bool is
     uint32_t dir[4], j;
     uint32_t preds[4][3];
     int predIdx[4];
-    PartSize mode = (PartSize)cu.m_partSize[absPartIdx];
-    uint32_t partNum = isMultiple ? (mode == SIZE_NxN ? 4 : 1) : 1;
+    uint32_t partNum = isMultiple && cu.m_partSize[absPartIdx] != SIZE_2Nx2N ? 4 : 1;
     uint32_t partOffset = (NUM_CU_PARTITIONS >> (cu.m_cuDepth[absPartIdx] << 1)) >> 2;
 
     for (j = 0; j < partNum; j++)

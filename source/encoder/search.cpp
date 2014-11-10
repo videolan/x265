@@ -387,7 +387,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth,
 
         int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && (log2TrSize - 1) <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
         if (m_param->bEnableTSkipFast)
-            checkTransformSkip &= cu.m_partSize[absPartIdx] == SIZE_NxN;
+            checkTransformSkip &= cu.m_partSize[0] != SIZE_2Nx2N;
 
         Cost splitCost;
         uint32_t cbf = 0;
@@ -1210,7 +1210,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     cu.setPartSizeSubParts(SIZE_2Nx2N);
     cu.setPredModeSubParts(MODE_INTRA);
 
-    uint32_t initTrDepth = 0;
+    const uint32_t initTrDepth = 0;
     uint32_t log2TrSize = cu.m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize = 1 << log2TrSize;
     const uint32_t absPartIdx = 0;
@@ -1425,7 +1425,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
     const Yuv* fencYuv = intraMode.fencYuv;
 
     uint32_t depth        = cu.m_cuDepth[0];
-    uint32_t initTrDepth  = cu.m_partSize[0] == SIZE_2Nx2N ? 0 : 1;
+    uint32_t initTrDepth  = cu.m_partSize[0] != SIZE_2Nx2N;
     uint32_t numPU        = 1 << (2 * initTrDepth);
     uint32_t log2TrSize   = cu.m_log2CUSize[0] - initTrDepth;
     uint32_t tuSize       = 1 << log2TrSize;
@@ -1434,7 +1434,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t 
     uint32_t absPartIdx   = 0;
     uint32_t totalDistortion = 0;
 
-    int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && !cu.m_tqBypass[0] && cu.m_partSize[absPartIdx] == SIZE_NxN;
+    int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && !cu.m_tqBypass[0] && cu.m_partSize[0] != SIZE_2Nx2N;
 
     // loop over partitions
     for (uint32_t pu = 0; pu < numPU; pu++, absPartIdx += qNumParts)
@@ -1684,7 +1684,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
     Yuv& reconYuv = intraMode.reconYuv;
 
     uint32_t depth       = cu.m_cuDepth[0];
-    uint32_t initTrDepth = cu.m_partSize[0] == SIZE_NxN && m_csp == X265_CSP_I444;
+    uint32_t initTrDepth = cu.m_partSize[0] != SIZE_2Nx2N && m_csp == X265_CSP_I444;
     uint32_t log2TrSize  = cu.m_log2CUSize[0] - initTrDepth;
     uint32_t absPartStep = (NUM_CU_PARTITIONS >> (depth << 1));
     uint32_t totalDistortion = 0;
@@ -1953,7 +1953,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         uint32_t mrgCost = MAX_UINT;
 
         /* find best cost merge candidate */
-        if (cu.m_partSize[m_puAbsPartIdx] != SIZE_2Nx2N)
+        if (cu.m_partSize[0] != SIZE_2Nx2N)
         {
             merge.absPartIdx = m_puAbsPartIdx;
             merge.width      = m_puWidth;
@@ -2584,7 +2584,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
     uint32_t tuDepth = depth - cu.m_cuDepth[0];
 
     bool bCheckFull = log2TrSize <= depthRange[1];
-    if (cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
+    if (cu.m_partSize[0] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
         bCheckFull = false;
 
     if (bCheckFull)
@@ -2730,7 +2730,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
     bool bCheckFull = log2TrSize <= depthRange[1];
     bool bSplitPresentFlag = bCheckSplit && bCheckFull;
 
-    if (cu.m_partSize[absPartIdx] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && bCheckSplit)
+    if (cu.m_partSize[0] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && bCheckSplit)
         bCheckFull = false;
 
     X265_CHECK(bCheckFull || bCheckSplit, "check-full or check-split must be set\n");
