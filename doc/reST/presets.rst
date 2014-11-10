@@ -114,7 +114,11 @@ select modes which preserve high frequency noise:
 
     * :option:`--psy-rd` 0.5
     * :option:`--psy-rdoq` 30
-    * :option:`--b-intra`
+
+.. Note::
+
+    --psy-rdoq is only effective when RDOQuant is enabled, which is at
+    RD levels 4, 5, and 6 (presets slow and below).
 
 It lowers the strength of adaptive quantization, so residual energy can
 be more evenly distributed across the (noisy) picture:

@@ -412,7 +412,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->deblockingFilterTCOffset = -2;
             param->psyRdoq = 30;
             param->psyRd = 0.5;
-            param->bIntraInBFrames = true;
             param->rc.ipFactor = 1.1;
             param->rc.pbFactor = 1.1;
             param->rc.aqMode = X265_AQ_VARIANCE;
