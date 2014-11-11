@@ -1407,12 +1407,17 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interAnalysisData)
     {
-        for (int32_t i = 0; i < numPredDir; i++)
+        for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
         {
-            interMode.bestME[i].costZero = !!m_interAnalysisData->costZero[i];
-            interMode.bestME[i].mv.x = m_interAnalysisData->mvx[i];
-            interMode.bestME[i].mv.y = m_interAnalysisData->mvy[i];
-            interMode.bestME[i].ref = m_interAnalysisData->ref[i];
+            MotionData* bestME = interMode.bestME[part];
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                bestME[i].costZero = !!m_interAnalysisData->costZero[i];
+                bestME[i].mv.x = m_interAnalysisData->mvx[i];
+                bestME[i].mv.y = m_interAnalysisData->mvy[i];
+                bestME[i].ref = m_interAnalysisData->ref[i];
+            }
+            m_interAnalysisData++;
         }
     }
     if (predInterSearch(interMode, cuGeom, false, false))
@@ -1425,17 +1430,21 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interAnalysisData)
         {
-            for (int32_t i = 0; i < numPredDir; i++)
+            for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
             {
-                m_interAnalysisData->costZero[i] = interMode.bestME[i].costZero;
-                m_interAnalysisData->mvx[i] = interMode.bestME[i].mv.x;
-                m_interAnalysisData->mvy[i] = interMode.bestME[i].mv.y;
-                m_interAnalysisData->ref[i] = interMode.bestME[i].ref;
+                MotionData* bestME = interMode.bestME[part];
+                for (int32_t i = 0; i < numPredDir; i++)
+                {
+                    m_interAnalysisData->costZero[i] = bestME[i].costZero;
+                    m_interAnalysisData->mvx[i] = bestME[i].mv.x;
+                    m_interAnalysisData->mvy[i] = bestME[i].mv.y;
+                    m_interAnalysisData->ref[i] = bestME[i].ref;
+                }
+                m_interAnalysisData->zOrder = cuGeom.encodeIdx;
+                m_interAnalysisData->depth  = cuGeom.depth;
+                m_interAnalysisData++;
             }
-            m_interAnalysisData->zOrder = cuGeom.encodeIdx;
-            m_interAnalysisData->depth  = cuGeom.depth;
         }
-        m_interAnalysisData++;
     }
     else
     {
@@ -1453,12 +1462,17 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interAnalysisData)
     {
-        for (int32_t i = 0; i < numPredDir; i++)
+        for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
         {
-            interMode.bestME[i].costZero = !!m_interAnalysisData->costZero[i];
-            interMode.bestME[i].mv.x = m_interAnalysisData->mvx[i];
-            interMode.bestME[i].mv.y = m_interAnalysisData->mvy[i];
-            interMode.bestME[i].ref = m_interAnalysisData->ref[i];
+            MotionData* bestME = interMode.bestME[part];
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                bestME[i].costZero = !!m_interAnalysisData->costZero[i];
+                bestME[i].mv.x = m_interAnalysisData->mvx[i];
+                bestME[i].mv.y = m_interAnalysisData->mvy[i];
+                bestME[i].ref = m_interAnalysisData->ref[i];
+            }
+            m_interAnalysisData++;
         }
     }
     if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
@@ -1467,17 +1481,21 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
         encodeResAndCalcRdInterCU(interMode, cuGeom);
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interAnalysisData)
         {
-            for (int32_t i = 0; i < numPredDir; i++)
+            for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
             {
-                m_interAnalysisData->costZero[i] = interMode.bestME[i].costZero;
-                m_interAnalysisData->mvx[i] = interMode.bestME[i].mv.x;
-                m_interAnalysisData->mvy[i] = interMode.bestME[i].mv.y;
-                m_interAnalysisData->ref[i] = interMode.bestME[i].ref;
+                MotionData* bestME = interMode.bestME[part];
+                for (int32_t i = 0; i < numPredDir; i++)
+                {
+                    m_interAnalysisData->costZero[i] = bestME[i].costZero;
+                    m_interAnalysisData->mvx[i] = bestME[i].mv.x;
+                    m_interAnalysisData->mvy[i] = bestME[i].mv.y;
+                    m_interAnalysisData->ref[i] = bestME[i].ref;
+                }
+                m_interAnalysisData->zOrder = cuGeom.encodeIdx;
+                m_interAnalysisData->depth  = cuGeom.depth;
+                m_interAnalysisData++;
             }
-            m_interAnalysisData->zOrder = cuGeom.encodeIdx;
-            m_interAnalysisData->depth  = cuGeom.depth;
         }
-        m_interAnalysisData++;
     }
     else
     {

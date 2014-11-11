@@ -76,6 +76,8 @@ struct MotionData
     bool     costZero;
 };
 
+enum { MAX_INTER_PARTS = 2 };
+
 struct Mode
 {
     CUData     cu;
@@ -84,7 +86,7 @@ struct Mode
     Yuv        reconYuv;
     Entropy    contexts;
 
-    MotionData bestME[2];
+    MotionData bestME[MAX_INTER_PARTS][2];
     MV         amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
 
     uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
