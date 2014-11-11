@@ -217,9 +217,6 @@ int x265_alloc_analysis_data(x265_picture* pic)
 {
     CHECKED_MALLOC(pic->analysisData.interData, x265_inter_data, pic->analysisData.numCUsInFrame * X265_MAX_PRED_MODE_PER_CU);
     CHECKED_MALLOC(pic->analysisData.intraData, x265_intra_data, 1);
-    pic->analysisData.intraData->depth      = NULL;
-    pic->analysisData.intraData->modes      = NULL;
-    pic->analysisData.intraData->partSizes  = NULL;
     CHECKED_MALLOC(pic->analysisData.intraData->depth, uint8_t, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
     CHECKED_MALLOC(pic->analysisData.intraData->modes, uint8_t, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
     CHECKED_MALLOC(pic->analysisData.intraData->partSizes, char, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
