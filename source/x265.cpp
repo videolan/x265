@@ -985,7 +985,8 @@ int main(int argc, char **argv)
 
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
-    x265_picture *pic_recon = cliopt.recon ? &pic_out : NULL;
+    /* Allocate recon picture if analysisMode is enabled */
+    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;
@@ -1006,11 +1007,6 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
-    if (param->analysisMode && !pic_recon)
-    {
-        x265_log(NULL, X265_LOG_ERROR, "Must specify recon with analysis-mode option.\n");
-        goto fail;
-    }
     if (param->analysisMode)
     {
         if (param->analysisMode == X265_ANALYSIS_SAVE)
@@ -1093,7 +1089,8 @@ int main(int argc, char **argv)
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon)
         {
-            cliopt.recon->writePicture(pic_out);
+            if (cliopt.recon)
+                cliopt.recon->writePicture(pic_out);
             if (param->analysisMode == X265_ANALYSIS_SAVE)
                 cliopt.writeAnalysisFile(pic_recon, param);
             if (param->analysisMode)
@@ -1114,7 +1111,8 @@ int main(int argc, char **argv)
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon)
         {
-            cliopt.recon->writePicture(pic_out);
+            if (cliopt.recon)
+                cliopt.recon->writePicture(pic_out);
             if (param->analysisMode == X265_ANALYSIS_SAVE)
                 cliopt.writeAnalysisFile(pic_recon, param);
             if (param->analysisMode)
