@@ -138,11 +138,12 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
 }
 
 /* Generate a complete list of unique geom sets for the current picture dimensions */
-bool FrameEncoder::initializeGeoms(const FrameData& encData)
+bool FrameEncoder::initializeGeoms()
 {
     /* Geoms only vary between CTUs in the presence of picture edges */
-    int heightRem = m_param->sourceHeight & (m_param->maxCUSize - 1);
-    int widthRem = m_param->sourceWidth & (m_param->maxCUSize - 1);
+    int maxCUSize = m_param->maxCUSize;
+    int heightRem = m_param->sourceHeight & (maxCUSize - 1);
+    int widthRem = m_param->sourceWidth & (maxCUSize - 1);
     int allocGeoms = 1; // body
     if (heightRem && widthRem)
         allocGeoms = 4; // body, right, bottom, corner
@@ -154,33 +155,45 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
     if (!m_cuGeoms || !m_ctuGeomMap)
         return false;
 
-    CUGeom cuLocalData[CUGeom::MAX_GEOMS];
-    memset(cuLocalData, 0, sizeof(cuLocalData)); // temporal fix for memcmp
+    // body
+    CUData::calcCTUGeoms(maxCUSize, maxCUSize, maxCUSize, m_cuGeoms);
+    memset(m_ctuGeomMap, 0, sizeof(uint32_t) * m_numRows * m_numCols);
+    if (allocGeoms == 1)
+        return true;
 
-    int countGeoms = 0;
-    for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
+    int countGeoms = 1;
+    if (widthRem)
     {
-        /* TODO: detach this logic from TComDataCU */
-        encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0);
-        encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->sourceWidth, m_param->sourceHeight, m_param->maxCUSize, cuLocalData);
-
-        m_ctuGeomMap[ctuAddr] = MAX_INT;
-        for (int i = 0; i < countGeoms; i++)
+        // right
+        CUData::calcCTUGeoms(widthRem, maxCUSize, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        for (int i = 0; i < m_numRows; i++)
         {
-            if (!memcmp(cuLocalData, m_cuGeoms + i * CUGeom::MAX_GEOMS, sizeof(CUGeom) * CUGeom::MAX_GEOMS))
-            {
-                m_ctuGeomMap[ctuAddr] = i * CUGeom::MAX_GEOMS;
-                break;
-            }
-        }
-
-        if (m_ctuGeomMap[ctuAddr] == MAX_INT)
-        {
-            X265_CHECK(countGeoms < allocGeoms, "geometry match check failure\n");
+            uint32_t ctuAddr = m_numCols * (i + 1) - 1;
             m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
-            memcpy(m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS, cuLocalData, sizeof(CUGeom) * CUGeom::MAX_GEOMS);
+        }
+        countGeoms++;
+    }
+    if (heightRem)
+    {
+        // bottom
+        CUData::calcCTUGeoms(maxCUSize, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        for (uint32_t i = 0; i < m_numCols; i++)
+        {
+            uint32_t ctuAddr = m_numCols * (m_numRows - 1) + i;
+            m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
+        }
+        countGeoms++;
+
+        if (widthRem)
+        {
+            // corner
+            CUData::calcCTUGeoms(widthRem, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+
+            uint32_t ctuAddr = m_numCols * m_numRows - 1;
+            m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
             countGeoms++;
         }
+        X265_CHECK(countGeoms == allocGeoms, "geometry match check failure\n");
     }
 
     return true;
@@ -193,7 +206,7 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
     curFrame->m_encData->m_slice->m_mref = m_mref;
     if (!m_cuGeoms)
     {
-        if (!initializeGeoms(*curFrame->m_encData))
+        if (!initializeGeoms())
             return false;
     }
     m_enable.trigger();

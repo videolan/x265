@@ -185,7 +185,7 @@ public:
 
 protected:
 
-    bool initializeGeoms(const FrameData& encData);
+    bool initializeGeoms();
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
