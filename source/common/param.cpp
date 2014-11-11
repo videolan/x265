@@ -413,7 +413,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->deblockingFilterTCOffset = -2;
             param->psyRdoq = 30;
             param->psyRd = 0.5;
-            param->bIntraInBFrames = true;
             param->rc.ipFactor = 1.1;
             param->rc.pbFactor = 1.1;
             param->rc.aqMode = X265_AQ_VARIANCE;
@@ -1072,7 +1071,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
           "qCompress must be between 0.5 and 1.0");
     if (param->noiseReduction)
-        CHECK(100 > param->noiseReduction || param->noiseReduction > 1000, "Valid noise reduction range 100 - 1000");
+        CHECK(100 > param->noiseReduction || param->noiseReduction > 2000, "Valid noise reduction range 100 - 1000");
     CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead,
           "Constant rate-factor is incompatible with 2pass");
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,

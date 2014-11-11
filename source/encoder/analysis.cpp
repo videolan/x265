@@ -397,6 +397,8 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
 
         case 1:
             slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N);
+            if (m_slice->m_sliceType == B_SLICE)
+                slave->checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], *m_curGeom);
             break;
 
         case 2:
@@ -447,6 +449,13 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
 
         case 1:
             slave->checkInter_rd5_6(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N, false);
+            md.pred[PRED_BIDIR].rdCost = MAX_INT64;
+            if (m_slice->m_sliceType == B_SLICE)
+            {
+                slave->checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], *m_curGeom);
+                if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
+                    encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], *m_curGeom);
+            }
             break;
 
         case 2:
@@ -502,6 +511,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
         /* Initialize all prediction CUs based on parentCTU */
         md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
+        md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
         if (m_param->bEnableRectInter)
@@ -593,16 +603,22 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
             if (m_param->rdLevel > 2)
             {
-                /* encode best inter */
+                /* RD selection between merge, inter, bidir and intra */
                 for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                 {
                     prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
                     motionCompensation(bestInter->predYuv, false, true);
                 }
                 encodeResAndCalcRdInterCU(*bestInter, cuGeom);
-
-                /* RD selection between merge, inter and intra */
                 checkBestMode(*bestInter, depth);
+
+                /* If BIDIR is available and within 17/16 of best inter option, choose by RDO */
+                if (m_slice->m_sliceType == B_SLICE && md.pred[PRED_BIDIR].sa8dCost != MAX_INT64 &&
+                    md.pred[PRED_BIDIR].sa8dCost * 16 <= bestInter->sa8dCost * 17)
+                {
+                    encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], cuGeom);
+                    checkBestMode(md.pred[PRED_BIDIR], depth);
+                }
 
 #if MATCH_NON_PMODE
                 if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) || md.bestMode->sa8dCost == MAX_INT64)
@@ -615,6 +631,9 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             {
                 if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = bestInter;
+
+                if (m_slice->m_sliceType == B_SLICE && md.pred[PRED_BIDIR].sa8dCost < md.bestMode->sa8dCost)
+                    md.bestMode = &md.pred[PRED_BIDIR];
 
                 if (bTryIntra && md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                 {
@@ -639,6 +658,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             m_modeCompletionEvent.wait();
 
             checkBestMode(md.pred[PRED_2Nx2N], depth);
+            checkBestMode(md.pred[PRED_BIDIR], depth);
 
             if (m_param->bEnableRectInter)
             {
@@ -788,8 +808,14 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         {
             md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
             checkInter_rd0_4(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N);
-            Mode *bestInter = &md.pred[PRED_2Nx2N];
 
+            if (m_slice->m_sliceType == B_SLICE)
+            {
+                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
+                checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], cuGeom);
+            }
+
+            Mode *bestInter = &md.pred[PRED_2Nx2N];
             if (m_param->bEnableRectInter)
             {
                 md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
@@ -851,11 +877,16 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
                     motionCompensation(bestInter->predYuv, false, true);
                 }
-
                 encodeResAndCalcRdInterCU(*bestInter, cuGeom);
+                checkBestMode(*bestInter, depth);
 
-                if (!md.bestMode || bestInter->rdCost < md.bestMode->rdCost)
-                    md.bestMode = bestInter;
+                /* If BIDIR is available and within 17/16 of best inter option, choose by RDO */
+                if (m_slice->m_sliceType == B_SLICE && md.pred[PRED_BIDIR].sa8dCost != MAX_INT64 &&
+                    md.pred[PRED_BIDIR].sa8dCost * 16 <= bestInter->sa8dCost * 17)
+                {
+                    encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], cuGeom);
+                    checkBestMode(md.pred[PRED_BIDIR], depth);
+                }
 
                 if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
                     md.bestMode->sa8dCost == MAX_INT64)
@@ -863,15 +894,18 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
                     checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
                     encodeIntraInInter(md.pred[PRED_INTRA], cuGeom);
-                    if (md.pred[PRED_INTRA].rdCost < md.bestMode->rdCost)
-                        md.bestMode = &md.pred[PRED_INTRA];
+                    checkBestMode(md.pred[PRED_INTRA], depth);
                 }
             }
             else
             {
-                /* SA8D choice between merge/skip, inter, and intra */
+                /* SA8D choice between merge/skip, inter, bidir, and intra */
                 if (!md.bestMode || bestInter->sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = bestInter;
+
+                if (m_slice->m_sliceType == B_SLICE &&
+                    md.pred[PRED_BIDIR].sa8dCost < md.bestMode->sa8dCost)
+                    md.bestMode = &md.pred[PRED_BIDIR];
 
                 if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
                 {
@@ -1050,9 +1084,19 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, false);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
+            if (m_slice->m_sliceType == B_SLICE)
+            {
+                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
+                checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], cuGeom);
+                if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
+                {
+                    encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], cuGeom);
+                    checkBestMode(md.pred[PRED_BIDIR], cuGeom.depth);
+                }
+            }
+
             if (m_param->bEnableRectInter)
             {
-                // Nx2N rect
                 if (!m_param->bEnableCbfFastMode || md.bestMode->cu.getQtRootCbf(0))
                 {
                     md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
@@ -1499,6 +1543,111 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     {
         interMode.distortion = MAX_UINT;
         interMode.rdCost = MAX_INT64;
+    }
+}
+
+void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom)
+{
+    CUData& cu = bidir2Nx2N.cu;
+
+    if (cu.isBipredRestriction() || inter2Nx2N.bestME[0][0].cost == MAX_UINT || inter2Nx2N.bestME[0][1].cost == MAX_UINT)
+    {
+        bidir2Nx2N.sa8dCost = MAX_INT64;
+        bidir2Nx2N.rdCost = MAX_INT64;
+        return;
+    }
+
+    const Yuv& fencYuv = *bidir2Nx2N.fencYuv;
+    MV   mvzero(0, 0);
+    int  partEnum = cuGeom.log2CUSize - 2;
+
+    bidir2Nx2N.bestME[0][0] = inter2Nx2N.bestME[0][0];
+    bidir2Nx2N.bestME[0][1] = inter2Nx2N.bestME[0][1];
+    MotionData* bestME = bidir2Nx2N.bestME[0];
+    int ref0    = bestME[0].ref;
+    MV  mvp0    = bestME[0].mvp;
+    int mvpIdx0 = bestME[0].mvpIdx;
+    int ref1    = bestME[1].ref;
+    MV  mvp1    = bestME[1].mvp;
+    int mvpIdx1 = bestME[1].mvpIdx;
+
+    bidir2Nx2N.initCosts();
+    cu.setPartSizeSubParts(SIZE_2Nx2N);
+    cu.setPredModeSubParts(MODE_INTER);
+    cu.setPUInterDir(3, 0, 0);
+    cu.setPURefIdx(0, (char)ref0, 0, 0);
+    cu.setPURefIdx(1, (char)ref1, 0, 0);
+    cu.m_mvpIdx[0][0] = (uint8_t)mvpIdx0;
+    cu.m_mvpIdx[1][0] = (uint8_t)mvpIdx1;
+    cu.m_mergeFlag[0] = 0;
+
+    /* Estimate cost of BIDIR using best 2Nx2N L0 and L1 motion vectors */
+    cu.setPUMv(0, bestME[0].mv, 0, 0);
+    cu.m_mvd[0][0] = bestME[0].mv - mvp0;
+
+    cu.setPUMv(1, bestME[1].mv, 0, 0);
+    cu.m_mvd[1][0] = bestME[1].mv - mvp1;
+
+    prepMotionCompensation(cu, cuGeom, 0);
+    motionCompensation(bidir2Nx2N.predYuv, true, true);
+
+    int sa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
+    bidir2Nx2N.sa8dBits = bestME[0].bits + bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
+    bidir2Nx2N.sa8dCost = sa8d + m_rdCost.getCost(bidir2Nx2N.sa8dBits);
+
+    bool bTryZero = bestME[0].mv.notZero() || bestME[1].mv.notZero();
+    if (bTryZero)
+    {
+        /* Do not try zero MV if unidir motion predictors are beyond
+         * valid search area */
+        MV mvmin, mvmax;
+        int merange = X265_MAX(m_param->sourceWidth, m_param->sourceHeight);
+        setSearchRange(cu, mvzero, merange, mvmin, mvmax);
+        mvmax.y += 2; // there is some pad for subpel refine
+        mvmin <<= 2;
+        mvmax <<= 2;
+
+        bTryZero &= bestME[0].mvp.checkRange(mvmin, mvmax);
+        bTryZero &= bestME[1].mvp.checkRange(mvmin, mvmax);
+    }
+    if (bTryZero)
+    {
+        /* Estimate cost of BIDIR using coincident blocks */
+        Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
+        pixel *fref0 = m_slice->m_mref[0][ref0].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
+        pixel *fref1 = m_slice->m_mref[1][ref1].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
+        intptr_t refStride = m_slice->m_mref[0][0].lumaStride;
+
+        primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
+        int sa8dCost = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+
+        uint32_t bits0 = bestME[0].bits - m_me.bitcost(bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
+        uint32_t bits1 = bestME[1].bits - m_me.bitcost(bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
+        uint32_t zcost = sa8dCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
+
+        /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
+        checkBestMVP(inter2Nx2N.amvpCand[0][ref0], mvzero, mvp0, mvpIdx0, bits0, zcost);
+        checkBestMVP(inter2Nx2N.amvpCand[1][ref1], mvzero, mvp1, mvpIdx1, bits1, zcost);
+
+        uint32_t zbits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
+        zcost = sa8dCost + m_rdCost.getCost(zbits);
+
+        if (zcost < bidir2Nx2N.sa8dCost)
+        {
+            bidir2Nx2N.sa8dBits = zbits;
+            bidir2Nx2N.sa8dCost = zcost;
+
+            cu.setPUMv(0, mvzero, 0, 0);
+            cu.m_mvd[0][0] = mvzero - mvp0;
+            cu.m_mvpIdx[0][0] = (uint8_t)mvpIdx0;
+
+            cu.setPUMv(1, mvzero, 0, 0);
+            cu.m_mvd[1][0] = mvzero - mvp1;
+            cu.m_mvpIdx[1][0] = (uint8_t)mvpIdx1;
+
+            prepMotionCompensation(cu, cuGeom, 0);
+            motionCompensation(bidir2Nx2N.predYuv, true, true);
+        }
     }
 }
 

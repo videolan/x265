@@ -39,16 +39,21 @@ public:
     uint64_t  m_lambda;
     uint64_t  m_cbDistortionWeight;
     uint64_t  m_crDistortionWeight;
+    uint32_t  m_psyRdBase;
     uint32_t  m_psyRd;
     int       m_qp;
 
-    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
+    void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(256.0 * scale * 0.33); }
     void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
     void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
 
     void setQP(const Slice& slice, int qp)
     {
         m_qp = qp;
+
+        /* Scale PSY RD factor by a slice type factor */
+        static const uint32_t psyScaleFix8[3] = { 300, 256, 128 }; /* B, P, I */
+        m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
 

@@ -1987,10 +1987,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             }
         }
 
-        MotionData bidir[2];
-        uint32_t bidirCost = MAX_UINT;
-        int bidirBits = 0;
-
         bestME[0].cost = MAX_UINT;
         bestME[1].cost = MAX_UINT;
 
@@ -2165,7 +2161,13 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
 
         /* Bi-directional prediction */
-        if (slice->isInterB() && !cu.isBipredRestriction() && bestME[0].cost != MAX_UINT && bestME[1].cost != MAX_UINT)
+        MotionData bidir[2];
+        uint32_t bidirCost = MAX_UINT;
+        int bidirBits = 0;
+
+        if (slice->isInterB() && !cu.isBipredRestriction() &&  /* biprediction is possible for this PU */
+            cu.m_partSize[m_puAbsPartIdx] != SIZE_2Nx2N &&     /* 2Nx2N biprediction is handled elsewhere */
+            bestME[0].cost != MAX_UINT && bestME[1].cost != MAX_UINT)
         {
             bidir[0] = bestME[0];
             bidir[1] = bestME[1];
@@ -2238,11 +2240,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     bidirBits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
                 }
             }
-
-            /* Ugly hack - since BIDIR is not yet an RD decision, add a penalty
-             * if psy-rd is enabled */
-            if (m_rdCost.m_psyRd)
-                bidirCost += (m_rdCost.m_psyRd * bidirCost) >> 8;
         }
 
         /* select best option and store into CU */

@@ -245,9 +245,6 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
-#define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
-#define MAX_NUM_TR_CATEGORIES    8                         /* 32, 16, 8, 4 transform categories each for luma and chroma */
-
 #define COEF_REMAIN_BIN_REDUCTION   3 // indicates the level at which the VLC
                                       // transitions from Golomb-Rice to TU+EG(k)
 
@@ -301,16 +298,6 @@ typedef int16_t  coeff_t;      // transform coefficient
 namespace x265 {
 
 enum { SAO_NUM_OFFSET = 4 };
-
-// NOTE: MUST be alignment to 16 or 32 bytes for asm code
-struct NoiseReduction
-{
-    /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
-     * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t count[MAX_NUM_TR_CATEGORIES];
-};
 
 enum SaoMergeMode
 {

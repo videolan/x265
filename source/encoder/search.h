@@ -76,8 +76,6 @@ struct MotionData
     bool     costZero;
 };
 
-enum { MAX_INTER_PARTS = 2 };
-
 struct Mode
 {
     CUData     cu;
@@ -85,6 +83,8 @@ struct Mode
     Yuv        predYuv;
     Yuv        reconYuv;
     Entropy    contexts;
+
+    enum { MAX_INTER_PARTS = 2 };
 
     MotionData bestME[MAX_INTER_PARTS][2];
     MV         amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
