@@ -97,8 +97,6 @@ typedef struct x265_inter_data
     int16_t  mvx[2];
     int16_t  mvy[2];
     uint32_t depth;
-    int      poc;
-    uint32_t cuAddr;
 } x265_inter_data;
 
 /* Stores intra (motion estimation) analysis data for a single frame */
@@ -107,8 +105,6 @@ typedef struct x265_intra_data
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
-    int*      poc;
-    uint32_t* cuAddr;
 } x265_intra_data;
 
 /* Stores all analysis data for a single frame */
