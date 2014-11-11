@@ -878,9 +878,16 @@ void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
     fread(&numCU, sizeof(int), 1, this->analysisFile);
     fread(&numPart, sizeof(int), 1, this->analysisFile);
 
-    if (poc != pic->poc || width != p->sourceWidth || height != p->sourceHeight)
+    if (width != p->sourceWidth || height != p->sourceHeight)
     {
-        x265_log(NULL, X265_LOG_WARNING, "Error in reading intra-inter data.\n");
+        x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: width/height mismatch\n");
+        x265_free_analysis_data(pic);
+        return;
+    }
+
+    if (poc != pic->poc)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: POC mismatch\n");
         x265_free_analysis_data(pic);
         return;
     }
