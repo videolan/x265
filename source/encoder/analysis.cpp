@@ -454,7 +454,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
             {
                 slave->checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], *m_curGeom);
                 if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
-                    encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], *m_curGeom);
+                    slave->encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], *m_curGeom);
             }
             break;
 
