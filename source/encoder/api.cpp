@@ -198,13 +198,12 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->forceqp = X265_QP_AUTO;
     if (param->analysisMode)
     {
-        uint32_t numPartitions   = 1 << (g_maxFullDepth * 2);
         uint32_t widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
         uint32_t heightInCU      = (param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
         uint32_t numCUsInFrame   = widthInCU * heightInCU;
         pic->analysisData.numCUsInFrame = numCUsInFrame;
-        pic->analysisData.numPartitions = numPartitions;
+        pic->analysisData.numPartitions = NUM_CU_PARTITIONS;
     }
 }
 
