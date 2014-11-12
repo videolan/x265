@@ -221,7 +221,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
             PartSize size = (PartSize)sharedPartSizes[zOrder];
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuGeom);
-            checkIntra(mode, cuGeom, size, sharedModes);
+            checkIntra(mode, cuGeom, size, &sharedModes[zOrder]);
             checkBestMode(mode, depth);
 
             if (m_bTryLossless)
