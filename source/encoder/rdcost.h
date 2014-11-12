@@ -52,7 +52,7 @@ public:
         m_qp = qp;
 
         /* Scale PSY RD factor by a slice type factor */
-        static const uint32_t psyScaleFix8[3] = { 300, 256, 128 }; /* B, P, I */
+        static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
         m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
