@@ -54,11 +54,14 @@ ELSEIF (CMAKE_SIZEOF_VOID_P EQUAL 8)
   LIST (APPEND _VLD_POSSIBLE_LIB_SUFFIXES lib/Win64)
 ENDIF (CMAKE_SIZEOF_VOID_P EQUAL 4)
 
+SET (PFILES "ProgramFiles")
+SET (PFILES_X86 "ProgramFiles(x86)") # hack to avoid escaping issues in cmake 3.1
+
 FIND_PATH (VLD_ROOT_DIR
   NAMES include/vld.h
   PATHS ENV VLDROOT
-        "$ENV{PROGRAMFILES}/Visual Leak Detector"
-        "$ENV{PROGRAMFILES(X86)}/Visual Leak Detector"
+        "$ENV{PFILES}/Visual Leak Detector"
+        "$ENV{PFILES_X86}/Visual Leak Detector"
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Visual Leak Detector;InstallLocation]"
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Visual Leak Detector;InstallLocation]"
   DOC "VLD root directory")
