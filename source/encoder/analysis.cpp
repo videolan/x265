@@ -762,7 +762,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         checkBestMode(*splitPred, depth);
     }
 
-    if (!depth || md.bestMode->cu.isInter(0))
+    if (mightNotSplit)
     {
         /* early-out statistics */
         FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
@@ -1044,7 +1044,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             md.bestMode = splitPred;
     }
 
-    if (!depth || md.bestMode->cu.isInter(0))
+    if (mightNotSplit)
     {
         /* early-out statistics */
         FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
