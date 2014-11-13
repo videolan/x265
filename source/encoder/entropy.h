@@ -213,8 +213,8 @@ private:
         return (uint32_t)(fracBits >> 15);
     }
 
-    void encodeCU(const CUData& cu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
-    void finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth);
+    void encodeCU(const CUData& ctu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
+    void finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth);
 
     void writeOut();
 

@@ -543,7 +543,7 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
     int x, y;
-    CUData* cu = m_frame->m_encData->getPicCTU(addr);
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
     const pixel* rec0  = m_frame->m_reconPic->getPlaneAddr(plane, addr);
     const pixel* fenc;
@@ -789,7 +789,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     int addr = idxX + m_numCuInWidth * idxY;
 
     int x, y;
-    CUData* cu = frame->m_encData->getPicCTU(addr);
+    const CUData* cu = frame->m_encData->getPicCTU(addr);
     const pixel* fenc;
     const pixel* rec;
     intptr_t stride = m_frame->m_reconPic->m_stride;

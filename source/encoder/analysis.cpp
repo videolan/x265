@@ -138,7 +138,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
 
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_intraData)
             {
-                CUData *bestCU = &m_modeDepth[0].bestMode->cu;
+                const CUData* bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&m_frame->m_intraData->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
                 memcpy(&m_frame->m_intraData->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
@@ -268,23 +268,23 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x2
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
             {
-                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressIntraCU(parentCTU, childCuData, shared, zOrder);
+                compressIntraCU(parentCTU, childGeom, shared, zOrder);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
+                splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
-                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
+                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childGeom.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
             {
                 /* record the depth of this non-present sub-CU */
-                splitCU->setEmptyPart(childCuData, subPartIdx);
+                splitCU->setEmptyPart(childGeom, subPartIdx);
                 zOrder += g_depthInc[g_maxCUDepth - 1][nextDepth];
             }
         }
@@ -735,22 +735,22 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
             {
-                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_dist(parentCTU, childCuData);
+                compressInterCU_dist(parentCTU, childGeom);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
+                splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
-                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
+                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childGeom.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
-                splitCU->setEmptyPart(childCuData, subPartIdx);
+                splitCU->setEmptyPart(childGeom, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
 
@@ -1006,26 +1006,26 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
             {
-                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_rd0_4(parentCTU, childCuData);
+                compressInterCU_rd0_4(parentCTU, childGeom);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
+                splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
                 if (m_param->rdLevel)
-                    nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
+                    nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childGeom.numPartitions * subPartIdx);
                 else
-                    nd.bestMode->predYuv.copyToPartYuv(splitPred->predYuv, childCuData.numPartitions * subPartIdx);
+                    nd.bestMode->predYuv.copyToPartYuv(splitPred->predYuv, childGeom.numPartitions * subPartIdx);
                 if (m_param->rdLevel > 1)
                     nextContext = &nd.bestMode->contexts;
             }
             else
-                splitCU->setEmptyPart(childCuData, subPartIdx);
+                splitCU->setEmptyPart(childGeom, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
 
@@ -1197,21 +1197,21 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
             {
-                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childCuData.encodeIdx);
+                m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_rd5_6(parentCTU, childCuData);
+                compressInterCU_rd5_6(parentCTU, childGeom);
 
                 // Save best CU and pred data for this sub CU
-                splitCU->copyPartFrom(nd.bestMode->cu, childCuData, subPartIdx);
+                splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
-                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childCuData.numPartitions * subPartIdx);
+                nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childGeom.numPartitions * subPartIdx);
                 nextContext = &nd.bestMode->contexts;
             }
             else
-                splitCU->setEmptyPart(childCuData, subPartIdx);
+                splitCU->setEmptyPart(childGeom, subPartIdx);
         }
         nextContext->store(splitPred->contexts);
         if (mightNotSplit)
@@ -1657,9 +1657,9 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     {
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
-                encodeResidue(ctu, childCuData);
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
+                encodeResidue(ctu, childGeom);
         }
         return;
     }

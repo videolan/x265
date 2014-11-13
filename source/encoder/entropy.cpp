@@ -517,9 +517,9 @@ void Entropy::encodeCTU(const CUData& ctu, const CUGeom& cuGeom)
 }
 
 /* encode a CU block recursively */
-void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
+void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP)
 {
-    const Slice* slice = cu.m_slice;
+    const Slice* slice = ctu.m_slice;
 
     if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
         bEncodeDQP = true;
@@ -532,74 +532,74 @@ void Entropy::encodeCU(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartI
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            if (childCuData.flags & CUGeom::PRESENT)
-                encodeCU(cu, childCuData, absPartIdx, depth + 1, bEncodeDQP);
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
+                encodeCU(ctu, childGeom, absPartIdx, depth + 1, bEncodeDQP);
         }
         return;
     }
 
     // We need to split, so don't try these modes.
     if (cuSplitFlag) 
-        codeSplitFlag(cu, absPartIdx, depth);
+        codeSplitFlag(ctu, absPartIdx, depth);
 
-    if (depth < cu.m_cuDepth[absPartIdx] && depth < g_maxCUDepth)
+    if (depth < ctu.m_cuDepth[absPartIdx] && depth < g_maxCUDepth)
     {
         uint32_t qNumParts = (NUM_CU_PARTITIONS >> (depth << 1)) >> 2;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
         {
-            const CUGeom& childCuData = *(&cuGeom + cuGeom.childOffset + subPartIdx);
-            encodeCU(cu, childCuData, absPartIdx, depth + 1, bEncodeDQP);
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            encodeCU(ctu, childGeom, absPartIdx, depth + 1, bEncodeDQP);
         }
         return;
     }
 
     if (slice->m_pps->bTransquantBypassEnabled)
-        codeCUTransquantBypassFlag(cu.m_tqBypass[absPartIdx]);
+        codeCUTransquantBypassFlag(ctu.m_tqBypass[absPartIdx]);
 
     if (!slice->isIntra())
     {
-        codeSkipFlag(cu, absPartIdx);
-        if (cu.isSkipped(absPartIdx))
+        codeSkipFlag(ctu, absPartIdx);
+        if (ctu.isSkipped(absPartIdx))
         {
-            codeMergeIndex(cu, absPartIdx);
-            finishCU(cu, absPartIdx, depth);
+            codeMergeIndex(ctu, absPartIdx);
+            finishCU(ctu, absPartIdx, depth);
             return;
         }
-        codePredMode(cu.m_predMode[absPartIdx]);
+        codePredMode(ctu.m_predMode[absPartIdx]);
     }
 
-    codePartSize(cu, absPartIdx, depth);
+    codePartSize(ctu, absPartIdx, depth);
 
     // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
-    codePredInfo(cu, absPartIdx);
+    codePredInfo(ctu, absPartIdx);
 
     uint32_t tuDepthRange[2];
-    if (cu.isIntra(absPartIdx))
-        cu.getIntraTUQtDepthRange(tuDepthRange, absPartIdx);
+    if (ctu.isIntra(absPartIdx))
+        ctu.getIntraTUQtDepthRange(tuDepthRange, absPartIdx);
     else
-        cu.getInterTUQtDepthRange(tuDepthRange, absPartIdx);
+        ctu.getInterTUQtDepthRange(tuDepthRange, absPartIdx);
 
     // Encode Coefficients, allow codeCoeff() to modify bEncodeDQP
-    codeCoeff(cu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
+    codeCoeff(ctu, absPartIdx, depth, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
-    finishCU(cu, absPartIdx, depth);
+    finishCU(ctu, absPartIdx, depth);
 }
 
 /* finish encoding a cu and handle end-of-slice conditions */
-void Entropy::finishCU(const CUData& cu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
 {
-    const Slice* slice = cu.m_slice;
+    const Slice* slice = ctu.m_slice;
     uint32_t realEndAddress = slice->m_endCUAddr;
-    uint32_t cuAddr = cu.getSCUAddr() + absPartIdx;
-    X265_CHECK(realEndAddress == cu.m_slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
+    uint32_t cuAddr = ctu.getSCUAddr() + absPartIdx;
+    X265_CHECK(realEndAddress == slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
 
     uint32_t granularityMask = g_maxCUSize - 1;
-    uint32_t cuSize = 1 << cu.m_log2CUSize[absPartIdx];
-    uint32_t rpelx = cu.m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
-    uint32_t bpely = cu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
+    uint32_t cuSize = 1 << ctu.m_log2CUSize[absPartIdx];
+    uint32_t rpelx = ctu.m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
+    uint32_t bpely = ctu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
     bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
                                 ((bpely & granularityMask) == 0 || (bpely == slice->m_sps->picHeightInLumaSamples)));
 

@@ -1953,8 +1953,8 @@ bool CUData::addMVPCandOrder(MV& outMV, int picList, int refIdx, uint32_t partUn
 
 bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int partUnitIdx) const
 {
-    Frame *colPic = m_slice->m_refPicList[m_slice->isInterB() ? 1 - m_slice->m_colFromL0Flag : 0][m_slice->m_colRefIdx];
-    CUData *colCU = colPic->m_encData->getPicCTU(cuAddr);
+    const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+    const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
     if (colCU->m_predMode[partUnitIdx] == MODE_NONE)
         return false;
