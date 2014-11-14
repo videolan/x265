@@ -1670,7 +1670,6 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
     /* reuse the bestMode data structures at the current depth */
     Mode *bestMode = m_modeDepth[cuGeom.depth].bestMode;
-    Yuv& reconYuv = bestMode->reconYuv;
     CUData& cu = bestMode->cu;
 
     cu.copyFromPic(ctu, cuGeom);
@@ -1686,7 +1685,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         getBestIntraModeChroma(*bestMode, cuGeom);
         residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
     }
-    else if (cu.isInter(0))
+    else // if (cu.isInter(0))
     {
         X265_CHECK(!ctu.isSkipped(absPartIdx), "skip not expected prior to transform\n");
 
@@ -1720,37 +1719,31 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
             cu.setPredModeSubParts(MODE_SKIP);
 
-        PicYuv& reconPicYuv = *m_frame->m_reconPic;
-        if (cu.getQtRootCbf(0)) // TODO: split to each component
-        {
-            /* residualTransformQuantInter() wrote transformed residual back into
-             * resiYuv. Generate the recon pixels by adding it to the prediction */
+        /* residualTransformQuantInter() wrote transformed residual back into
+         * resiYuv. Generate the recon pixels by adding it to the prediction */
 
-            primitives.luma_add_ps[sizeIdx](reconYuv.m_buf[0], reconYuv.m_size,
+        PicYuv& reconPic = *m_frame->m_reconPic;
+        if (cu.m_cbf[0][0])
+            primitives.luma_add_ps[sizeIdx](reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                             predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
-            primitives.chroma[m_csp].add_ps[sizeIdx](reconYuv.m_buf[1], reconYuv.m_csize,
-                                            predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
-            primitives.chroma[m_csp].add_ps[sizeIdx](reconYuv.m_buf[2], reconYuv.m_csize,
-                                            predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
-
-            /* copy the reconstructed part to the recon pic for later intra
-             * predictions */
-            reconYuv.copyToPicYuv(*m_frame->m_reconPic, cu.m_cuAddr, absPartIdx);
-        }
         else
-        {
-            /* copy the prediction pixels to the recon pic for later intra
-             * predictions */
-
-            primitives.luma_copy_pp[sizeIdx](reconPicYuv.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPicYuv.m_stride,
+            primitives.luma_copy_pp[sizeIdx](reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                              predY, predYuv.m_size);
-            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPicYuv.getCbAddr(cu.m_cuAddr, absPartIdx), reconPicYuv.m_strideC,
+
+        if (cu.m_cbf[1][0])
+            primitives.chroma[m_csp].add_ps[sizeIdx](reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                                                     predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+        else
+            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                       predU, predYuv.m_csize);
-            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPicYuv.getCrAddr(cu.m_cuAddr, absPartIdx), reconPicYuv.m_strideC,
+
+        if (cu.m_cbf[2][0])
+            primitives.chroma[m_csp].add_ps[sizeIdx](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                                                     predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+        else
+            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                       predV, predYuv.m_csize);
-        }
     }
-    /* else if (cu.m_predMode[0] == MODE_NONE) {} */
 
     checkDQP(cu, cuGeom);
     cu.updatePic(cuGeom.depth);
