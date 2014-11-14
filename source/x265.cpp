@@ -523,7 +523,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     const char *preset = NULL;
     const char *tune = NULL;
     const char *profile = NULL;
-    const char *analysisfn = "x265_analysis.dat";
 
     if (argc <= 1)
     {
@@ -616,7 +615,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("profile") profile = optarg; /* handled last */
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
-            OPT("analysis-file") analysisfn = optarg;
             OPT("qpfile")
             {
                 this->qpfile = fopen(optarg, "rb");
