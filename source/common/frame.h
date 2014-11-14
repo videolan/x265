@@ -27,7 +27,6 @@
 #include "common.h"
 #include "lowres.h"
 #include "threading.h"
-#include "encoder.h"
 
 namespace x265 {
 // private namespace

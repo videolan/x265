@@ -64,22 +64,6 @@ struct EncStats
 
     void addSsim(double ssim);
 };
-/* Stores inter (motion estimation) analysis data for a single frame */
-typedef struct analysis_inter_data
-{
-    int      ref;
-    int      costZero;
-    int16_t  mvx;
-    int16_t  mvy;
-} analysis_inter_data;
-
-/* Stores intra analysis data for a single frame. This struct needs better packing*/
-typedef struct analysis_intra_data
-{
-    uint8_t*  depth;
-    uint8_t*  modes;
-    char*    partSizes;
-} analysis_intra_data;
 
 class FrameEncoder;
 class DPB;
