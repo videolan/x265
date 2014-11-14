@@ -1581,7 +1581,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
 {
 
-#define FREAD(val, size, readSize, fileOffset)\
+#define X265_FREAD(val, size, readSize, fileOffset)\
     if (fread(val, size, readSize, fileOffset) != readSize)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data\n");\
@@ -1594,8 +1594,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     fseeko(m_analysisFile, consumedBytes, SEEK_SET);
 
     int poc; uint32_t frameRecordSize;
-    FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
-    FREAD(&poc, sizeof(int), 1, m_analysisFile);
+    X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
+    X265_FREAD(&poc, sizeof(int), 1, m_analysisFile);
 
     off_t currentOffset = consumedBytes;
     /* Seeking to the right frame Record */
@@ -1603,8 +1603,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     {
         currentOffset += frameRecordSize;
         fseeko(m_analysisFile, currentOffset, SEEK_SET);
-        FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
-        FREAD(&poc, sizeof(int), 1, m_analysisFile);
+        X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
+        X265_FREAD(&poc, sizeof(int), 1, m_analysisFile);
     }
 
     if (poc != curPoc || feof(m_analysisFile))
@@ -1617,24 +1617,25 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     /* Now arrived at the right frame, read the record */
     analysis->poc = poc;
     analysis->frameRecordSize = frameRecordSize;
-    FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
-    FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
-    FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
+    X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
+    X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
+    X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
 
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
-        FREAD(((analysis_intra_data *)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        FREAD(((analysis_intra_data *)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_intra_data *)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_intra_data *)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
-        FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
+        X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
     }
     else
     {
-        FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
+        X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
     }
+#undef X265_FREAD
 
     currentOffset = ftell(m_analysisFile);
     if (consumedBytes + (off_t)frameRecordSize == currentOffset)
@@ -1644,7 +1645,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
 void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
 {
 
-#define FWRITE(val, size, writeSize, fileOffset)\
+#define X265_FWRITE(val, size, writeSize, fileOffset)\
     if (fwrite(val, size, writeSize, fileOffset) < writeSize)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "Error writing analysis data\n");\
@@ -1663,24 +1664,25 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
     else
         analysis->frameRecordSize += sizeof(analysis_inter_data) * analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2;
 
-    FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
-    FWRITE(&analysis->poc, sizeof(int), 1, m_analysisFile);
-    FWRITE(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
-    FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
-    FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
+    X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
+    X265_FWRITE(&analysis->poc, sizeof(int), 1, m_analysisFile);
+    X265_FWRITE(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
+    X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
+    X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
 
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
-        FWRITE(((analysis_intra_data*)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        FWRITE(((analysis_intra_data*)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        FWRITE(((analysis_intra_data*)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_intra_data*)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_intra_data*)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_intra_data*)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
-        FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
+        X265_FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
     }
     else
     {
-        FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
+        X265_FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
     }
+#undef X265_FWRITE
 }
