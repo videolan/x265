@@ -177,6 +177,7 @@ void x265_param_default(x265_param *param)
     param->psyRd = 0.0;
     param->psyRdoq = 0.0;
     param->analysisMode = 0;
+    param->analysisFileName = NULL;
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
     param->bCULossless = 0;
@@ -696,6 +697,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cutree")    p->rc.cuTree = atobool(value);
     OPT("slow-firstpass") p->rc.bEnableSlowFirstPass = atobool(value);
     OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
+    OPT("analysis-file") p->analysisFileName = strdup(value);
     OPT("sar")
     {
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);

@@ -27,6 +27,7 @@
 #include "common.h"
 #include "lowres.h"
 #include "threading.h"
+#include "encoder.h"
 
 namespace x265 {
 // private namespace
@@ -43,30 +44,29 @@ public:
 
     /* These two items will be NULL until the Frame begins to be encoded, at which point
      * it will be assigned a FrameData instance, which comes with a reconstructed image PicYuv */
-    FrameData*        m_encData;
-    PicYuv*           m_reconPic;
+    FrameData*             m_encData;
+    PicYuv*                m_reconPic;
 
     /* Data associated with x265_picture */
-    PicYuv*           m_fencPic;
-    int               m_poc;
-    int64_t           m_pts;                // user provided presentation time stamp
-    int64_t           m_reorderedPts;
-    int64_t           m_dts;
-    int32_t           m_forceqp;            // Force to use the qp specified in qp file
-    x265_intra_data*  m_intraData;
-    x265_inter_data*  m_interData;
-    void*             m_userData;           // user provided pointer passed in with this picture
+    PicYuv*                m_fencPic;
+    int                    m_poc;
+    int64_t                m_pts;                // user provided presentation time stamp
+    int64_t                m_reorderedPts;
+    int64_t                m_dts;
+    int32_t                m_forceqp;            // Force to use the qp specified in qp file
+    void*                  m_userData;           // user provided pointer passed in with this picture
 
-    Lowres            m_lowres;
-    bool              m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
+    Lowres                 m_lowres;
+    bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
-    ThreadSafeInteger m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
-    volatile uint32_t m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
+    ThreadSafeInteger      m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    volatile uint32_t      m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount
 
-    Frame*            m_next;               // PicList doubly linked list pointers
-    Frame*            m_prev;
+    Frame*                 m_next;               // PicList doubly linked list pointers
+    Frame*                 m_prev;
 
+    x265_analysis_data     m_analysisData;
     Frame();
 
     bool create(x265_param *param);

@@ -64,6 +64,22 @@ struct EncStats
 
     void addSsim(double ssim);
 };
+/* Stores inter (motion estimation) analysis data for a single frame */
+typedef struct analysis_inter_data
+{
+    int      ref;
+    int      costZero;
+    int16_t  mvx;
+    int16_t  mvy;
+} analysis_inter_data;
+
+/* Stores intra analysis data for a single frame. This struct needs better packing*/
+typedef struct analysis_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*    partSizes;
+} analysis_intra_data;
 
 class FrameEncoder;
 class DPB;
@@ -113,6 +129,7 @@ private:
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
     int                m_numLumaWPBiFrames;  // number of B frames with weighted luma reference
     int                m_numChromaWPBiFrames; // number of B frames with weighted chroma reference
+    FILE*              m_analysisFile;
 
 public:
 
@@ -162,6 +179,14 @@ public:
     void configure(x265_param *param);
 
     void updateVbvPlan(RateControl* rc);
+
+    void allocAnalysis(x265_analysis_data* analysis);
+
+    void freeAnalysis(x265_analysis_data* analysis);
+
+    void readAnalysisFile(x265_analysis_data* analysis, int poc);
+
+    void writeAnalysisFile(x265_analysis_data* pic);
 
 protected:
 

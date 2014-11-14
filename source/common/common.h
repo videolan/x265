@@ -294,6 +294,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
 #define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
+#define X265_MAX_PRED_MODE_PER_CTU 85 * 2 * 8
 
 namespace x265 {
 

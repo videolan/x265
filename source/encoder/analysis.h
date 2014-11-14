@@ -73,6 +73,9 @@ public:
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
 
+    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    analysis_intra_data* m_intraDataCTU;
+    analysis_inter_data* m_interDataCTU;
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
@@ -85,13 +88,12 @@ protected:
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
     Event         m_modeCompletionEvent;
-    x265_inter_data* m_interAnalysisData;
     bool findJob(int threadId);
     void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x265_intra_data* sdata, uint32_t &zOrder);
+    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, analysis_intra_data* sdata, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
     void compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom);

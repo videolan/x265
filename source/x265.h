@@ -87,35 +87,17 @@ typedef struct x265_nal
     uint32_t sizeBytes;   /* size in bytes */
     uint8_t* payload;
 } x265_nal;
-
-/* Stores inter (motion estimation) analysis data for a single frame */
-typedef struct x265_inter_data
-{
-    uint32_t zOrder;
-    int      ref[2];
-    int      costZero[2];
-    int16_t  mvx[2];
-    int16_t  mvy[2];
-    uint32_t depth;
-} x265_inter_data;
-
-/* Stores intra (motion estimation) analysis data for a single frame */
-typedef struct x265_intra_data
-{
-    uint8_t*  depth;
-    uint8_t*  modes;
-    char*     partSizes;
-} x265_intra_data;
-
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
-    x265_inter_data* interData;
-    x265_intra_data* intraData;
+    uint32_t         frameRecordSize;
+    int32_t          poc;
+    int32_t          sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    void*            interData;
+    void*            intraData;
 } x265_analysis_data;
-
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -286,8 +268,6 @@ typedef enum
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
-#define X265_MAX_PRED_MODE_PER_CU (85 * 8 * 2) /* max-recursive-percu * max-predmode * numberofpart */
-
 typedef struct
 {
     int planes;
@@ -709,9 +689,10 @@ typedef struct x265_param
      * buffer and use this analysis information to reduce the amount of work
      * the encoder must perform. Default X265_ANALYSIS_OFF */
     int       analysisMode;
+    /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
+    char*     analysisFileName;
 
     /*== Coding tools ==*/
-
     /* Enable the implicit signaling of the sign bit of the last coefficient of
      * each transform unit. This saves one bit per TU at the expense of figuring
      * out which coefficient can be toggled with the least distortion.
@@ -1060,16 +1041,6 @@ x265_picture *x265_picture_alloc(void);
  *  Use x265_picture_free() to release storage for an x265_picture instance
  *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
-
-/* x265_alloc_analysis_data:
- *  Allocate memory to hold analysis data, returns 0 on success else negative */
-int x265_alloc_analysis_data(x265_picture*);
-
-/* x265_free_analysis_data:
- *  Use x265_free_analysis_data to release storage of members allocated by
- *  x265_alloc_analysis_data */
-void x265_free_analysis_data(x265_picture*);
-
 /***
  * Initialize an x265_picture structure to default values. It sets the pixel
  * depth and color space to the encoder's internal values and sets the slice

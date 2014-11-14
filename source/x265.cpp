@@ -275,8 +275,6 @@ struct CLIOptions
     void showHelp(x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
     bool parseQPFile(x265_picture &pic_org);
-    void readAnalysisFile(x265_picture* pic, x265_param*);
-    void writeAnalysisFile(x265_picture* pic, x265_param*);
     bool validateFanout(x265_param*);
 };
 
@@ -766,18 +764,6 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
         return true;
     }
-
-    if (param->analysisMode)
-    {
-        const char *mode = param->analysisMode == X265_ANALYSIS_SAVE ? "wb" : "rb";
-        this->analysisFile = fopen(analysisfn, mode);
-        if (!this->analysisFile)
-        {
-            x265_log(NULL, X265_LOG_ERROR, "failed to open analysis file %s\n", analysisfn);
-            return true;
-        }
-    }
-
     return false;
 }
 
@@ -817,6 +803,7 @@ bool CLIOptions::validateFanout(x265_param *param)
         X265_FREE(paramBuf);
         return false;
     }
+    /* TODO: validate width and height in validateParamFanout */
 
     char* buf = strchr(paramBuf, '\n');
     if (!buf)
@@ -866,61 +853,6 @@ bool CLIOptions::validateFanout(x265_param *param)
     X265_FREE(paramBuf);
     return true;
 }
-
-void CLIOptions::readAnalysisFile(x265_picture* pic, x265_param* p)
-{
-    int poc, width, height;
-    uint32_t numPart, numCU;
-    fread(&width, sizeof(int), 1, this->analysisFile);
-    fread(&height, sizeof(int), 1, this->analysisFile);
-    fread(&poc, sizeof(int), 1, this->analysisFile);
-    fread(&pic->sliceType, sizeof(int), 1, this->analysisFile);
-    fread(&numCU, sizeof(int), 1, this->analysisFile);
-    fread(&numPart, sizeof(int), 1, this->analysisFile);
-
-    if (width != p->sourceWidth || height != p->sourceHeight)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: width/height mismatch\n");
-        x265_free_analysis_data(pic);
-        return;
-    }
-
-    if (poc != pic->poc)
-    {
-        x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: POC mismatch\n");
-        x265_free_analysis_data(pic);
-        return;
-    }
-
-    fread(pic->analysisData.intraData->depth,
-        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fread(pic->analysisData.intraData->modes,
-        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fread(pic->analysisData.intraData->partSizes,
-        sizeof(char), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fread(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * (X265_MAX_PRED_MODE_PER_CU), this->analysisFile);
-}
-
-void CLIOptions::writeAnalysisFile(x265_picture* pic, x265_param *p)
-{
-    uint64_t seekTo = pic->poc * this->analysisRecordSize + this->analysisHeaderSize;
-    fseeko(this->analysisFile, seekTo, SEEK_SET);
-    fwrite(&p->sourceWidth, sizeof(int), 1, this->analysisFile);
-    fwrite(&p->sourceHeight, sizeof(int), 1, this->analysisFile);
-    fwrite(&pic->poc, sizeof(int), 1, this->analysisFile);
-    fwrite(&pic->sliceType, sizeof(int), 1, this->analysisFile);
-    fwrite(&pic->analysisData.numCUsInFrame, sizeof(int), 1, this->analysisFile);
-    fwrite(&pic->analysisData.numPartitions, sizeof(int), 1, this->analysisFile);
-
-    fwrite(pic->analysisData.intraData->depth,
-        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fwrite(pic->analysisData.intraData->modes,
-        sizeof(uint8_t), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fwrite(pic->analysisData.intraData->partSizes,
-        sizeof(char), pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame, this->analysisFile);
-    fwrite(pic->analysisData.interData, sizeof(x265_inter_data), pic->analysisData.numCUsInFrame * X265_MAX_PRED_MODE_PER_CU, this->analysisFile);
-}
-
 bool CLIOptions::parseQPFile(x265_picture &pic_org)
 {
     int32_t num = -1, qp, ret;
@@ -1016,28 +948,10 @@ int main(int argc, char **argv)
 
     if (param->analysisMode)
     {
-        if (param->analysisMode == X265_ANALYSIS_SAVE)
+        if (param->bDistributeModeAnalysis || param->bDistributeMotionEstimation)
         {
-            char *p = x265_param2string(param);
-            if (!p)
-            {
-                x265_log(NULL, X265_LOG_ERROR, "analysis: buffer allocation failure, aborting");
-                goto fail;
-            }
-            uint32_t numCU = pic_in->analysisData.numCUsInFrame;
-            uint32_t numPart = pic_in->analysisData.numPartitions;
-
-            cliopt.analysisRecordSize = ((sizeof(int) * 4 + sizeof(uint32_t) * 2) + sizeof(x265_inter_data) * numCU * X265_MAX_PRED_MODE_PER_CU +
-                    sizeof(uint8_t) * 2 * numPart * numCU + sizeof(char) * numPart * numCU);
-
-            fprintf(cliopt.analysisFile, "#options: %s\n", p);
-            cliopt.analysisHeaderSize = ftell(cliopt.analysisFile);
-            X265_FREE(p);
-        }
-        else
-        {
-            if (!cliopt.validateFanout(param))
-                goto fail;
+            x265_log(NULL, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
+            goto fail;
         }
     }
 
@@ -1078,13 +992,6 @@ int main(int argc, char **argv)
                 ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
                 pic_in->bitDepth = X265_DEPTH;
             }
-            if (param->analysisMode)
-            {
-                x265_alloc_analysis_data(pic_in);
-
-                if (param->analysisMode == X265_ANALYSIS_LOAD)
-                    cliopt.readAnalysisFile(pic_in, param);
-            }
         }
 
         int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
@@ -1094,16 +1001,9 @@ int main(int argc, char **argv)
             break;
         }
         outFrameCount += numEncoded;
-        if (numEncoded && pic_recon)
-        {
-            if (cliopt.recon)
-                cliopt.recon->writePicture(pic_out);
-            if (param->analysisMode == X265_ANALYSIS_SAVE)
-                cliopt.writeAnalysisFile(pic_recon, param);
-            if (param->analysisMode)
-                x265_free_analysis_data(pic_recon);
-        }
 
+        if (numEncoded && pic_recon && cliopt.recon)
+            cliopt.recon->writePicture(pic_out);
         if (nal)
             cliopt.writeNALs(p_nal, nal);
 
@@ -1116,16 +1016,8 @@ int main(int argc, char **argv)
     {
         uint32_t numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
         outFrameCount += numEncoded;
-        if (numEncoded && pic_recon)
-        {
-            if (cliopt.recon)
-                cliopt.recon->writePicture(pic_out);
-            if (param->analysisMode == X265_ANALYSIS_SAVE)
-                cliopt.writeAnalysisFile(pic_recon, param);
-            if (param->analysisMode)
-                x265_free_analysis_data(pic_recon);
-        }
-
+        if (numEncoded && pic_recon && cliopt.recon)
+            cliopt.recon->writePicture(pic_out);
         if (nal)
             cliopt.writeNALs(p_nal, nal);
 

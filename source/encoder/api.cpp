@@ -212,28 +212,3 @@ void x265_picture_free(x265_picture *p)
 {
     return x265_free(p);
 }
-
-int x265_alloc_analysis_data(x265_picture* pic)
-{
-    CHECKED_MALLOC(pic->analysisData.interData, x265_inter_data, pic->analysisData.numCUsInFrame * X265_MAX_PRED_MODE_PER_CU);
-    CHECKED_MALLOC(pic->analysisData.intraData, x265_intra_data, 1);
-    CHECKED_MALLOC(pic->analysisData.intraData->depth, uint8_t, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
-    CHECKED_MALLOC(pic->analysisData.intraData->modes, uint8_t, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
-    CHECKED_MALLOC(pic->analysisData.intraData->partSizes, char, pic->analysisData.numPartitions * pic->analysisData.numCUsInFrame);
-    return 0;
-
-fail:
-    x265_free_analysis_data(pic);
-    return -1;
-}
-
-void x265_free_analysis_data(x265_picture* pic)
-{
-    X265_FREE(pic->analysisData.interData);
-    pic->analysisData.interData = NULL;
-    X265_FREE(pic->analysisData.intraData->depth);
-    X265_FREE(pic->analysisData.intraData->modes);
-    X265_FREE(pic->analysisData.intraData->partSizes);
-    X265_FREE(pic->analysisData.intraData);
-    pic->analysisData.intraData = NULL;
-}
