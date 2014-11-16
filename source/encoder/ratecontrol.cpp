@@ -405,6 +405,8 @@ RateControl::RateControl(x265_param *p)
     }
 
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
+    if (m_isCbr)
+        m_param->rc.pbFactor = 1.0;
     m_leadingBframes = m_param->bframes;
     m_bframeBits = 0;
     m_leadingNoBSatd = 0;
@@ -494,12 +496,12 @@ bool RateControl::init(const SPS *sps)
     /* Frame Predictors and Row predictors used in vbv */
     for (int i = 0; i < 5; i++)
     {
-        m_pred[i].coeff = 2.0;
+        m_pred[i].coeff = 1.5;
         m_pred[i].count = 1.0;
         m_pred[i].decay = 0.5;
         m_pred[i].offset = 0.0;
     }
-    m_predBfromP = m_pred[0];
+    m_pred[0].coeff = 1.0;
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
         /* If the user hasn't defined the stat filename, use the default value */
@@ -1420,12 +1422,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
 
         if (!m_2pass && m_isVbv)
         {
-            if (m_leadingBframes > 5)
-            {
-                qScale = clipQscale(curFrame, rce, qScale);
-                m_lastQScaleFor[m_sliceType] = qScale;
-            }
-            rce->frameSizePlanned = predictSize(&m_predBfromP, qScale, (double)m_leadingNoBSatd);
+            qScale = clipQscale(curFrame, rce, qScale);
+            m_lastQScaleFor[m_sliceType] = qScale;
+            rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
         }
         else if (m_2pass && m_isVbv)
         {
@@ -1725,10 +1724,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             {
                 double frameQ[3];
                 double curBits;
-                if (m_sliceType == B_SLICE)
-                    curBits = predictSize(&m_predBfromP, q, (double)m_currentSatd);
-                else
-                    curBits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+                curBits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
                 double bufferFillCur = m_bufferFill - curBits;
                 double targetFill;
                 double totalDuration = 0;
@@ -1809,25 +1805,6 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
         double pbits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
         if (pbits > rce->frameSizeMaximum)
             q *= pbits / rce->frameSizeMaximum;
-
-        // Check B-frame complexity, and use up any bits that would
-        // overflow before the next P-frame.
-        if (m_leadingBframes <= 5 && m_sliceType == P_SLICE && !m_singleFrameVbv)
-        {
-            int nb = m_leadingBframes;
-            double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
-            double bbits = predictSize(&m_predBfromP, q * m_param->rc.pbFactor, (double)m_currentSatd);
-            double space;
-            if (bbits > m_bufferRate)
-                nb = 0;
-            double pbbits = nb * bbits;
-
-            space = m_bufferFill + (1 + nb) * m_bufferRate - m_bufferSize;
-            if (pbbits < space)
-                q *= X265_MAX(pbbits / space, bits / (0.5 * m_bufferSize));
-
-            q = X265_MAX(q0 / 2, q);
-        }
 
         if (!m_isCbr || (m_isAbr && m_currentSatd >= rce->movingAvgSum && q <= q0 / 2))
             q = X265_MAX(q0, q);
@@ -2085,7 +2062,7 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
 {
     if (var < 10)
         return;
-    const double range = 1.5;
+    const double range = 2;
     double old_coeff = p->coeff / p->count;
     double new_coeff = bits * q / var;
     double new_coeff_clipped = Clip3(old_coeff / range, old_coeff * range, new_coeff);
@@ -2257,16 +2234,6 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
     if (m_isVbv)
     {
-        if (rce->sliceType == B_SLICE)
-        {
-            m_bframeBits += actualBits;
-            if (rce->bLastMiniGopBFrame)
-            {
-                if (rce->bframes != 0)
-                    updatePredictor(&m_predBfromP, x265_qp2qScale(rce->qpaRc), (double)rce->leadingNoBSatd, (double)m_bframeBits / rce->bframes);
-                m_bframeBits = 0;
-            }
-        }
         updateVbv(actualBits, rce);
 
         if (m_param->bEmitHRDSEI)
