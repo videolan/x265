@@ -74,8 +74,8 @@ public:
     bool      m_bTryLossless;
 
     /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
-    analysis_intra_data* m_intraDataCTU;
-    analysis_inter_data* m_interDataCTU;
+    analysis_intra_data* m_reuseIntraDataCTU;
+    analysis_inter_data* m_reuseInterDataCTU;
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();

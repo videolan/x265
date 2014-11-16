@@ -71,6 +71,8 @@ using namespace x265;
 Analysis::Analysis()
 {
     m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
+    m_reuseIntraDataCTU = NULL;
+    m_reuseInterDataCTU = NULL;
 }
 
 bool Analysis::create(ThreadLocalData *tld)
@@ -129,26 +131,21 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_param->analysisMode)
     {
-        m_intraDataCTU = (analysis_intra_data *)m_frame->m_analysisData.intraData;
+        m_reuseIntraDataCTU = (analysis_intra_data *)m_frame->m_analysisData.intraData;
         int numPredDir = m_slice->isInterP() ? 1 : 2;
-        m_interDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData + ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir;
+        m_reuseInterDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData + ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir;
     }
 
     if (m_slice->m_sliceType == I_SLICE)
     {
         uint32_t zOrder = 0;
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
-            compressIntraCU(ctu, cuGeom, m_intraDataCTU, zOrder);
-        else
+        compressIntraCU(ctu, cuGeom, m_reuseIntraDataCTU, zOrder);
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
         {
-            compressIntraCU(ctu, cuGeom, NULL, zOrder);
-            if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
-            {
-                CUData *bestCU = &m_modeDepth[0].bestMode->cu;
-                memcpy(&m_intraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
-                memcpy(&m_intraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
-                memcpy(&m_intraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
-            }
+            CUData *bestCU = &m_modeDepth[0].bestMode->cu;
+            memcpy(&m_reuseIntraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
+            memcpy(&m_reuseIntraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
+            memcpy(&m_reuseIntraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
         }
     }
     else
@@ -199,7 +196,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     }
 }
 
-void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, analysis_intra_data* intraData, uint32_t& zOrder)
+void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, analysis_intra_data* reuseIntraData, uint32_t& zOrder)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -208,20 +205,20 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
-    if (intraData)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
-        uint8_t* sharedDepth  = &intraData->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* sharedModes  = &intraData->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        char* sharedPartSizes = &intraData->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* reuseDepth  = &reuseIntraData->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* reuseModes  = &reuseIntraData->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        char* reusePartSizes = &reuseIntraData->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
 
-        if (mightNotSplit && depth == sharedDepth[zOrder] && zOrder == cuGeom.encodeIdx)
+        if (mightNotSplit && depth == reuseDepth[zOrder] && zOrder == cuGeom.encodeIdx)
         {
             m_quant.setQPforQuant(parentCTU);
 
-            PartSize size = (PartSize)sharedPartSizes[zOrder];
+            PartSize size = (PartSize)reusePartSizes[zOrder];
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuGeom);
-            checkIntra(mode, cuGeom, size, &sharedModes[zOrder]);
+            checkIntra(mode, cuGeom, size, &reuseModes[zOrder]);
             checkBestMode(mode, depth);
 
             if (m_bTryLossless)
@@ -231,7 +228,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
                 addSplitFlagCost(*md.bestMode, cuGeom.depth);
 
             // increment zOrder offset to point to next best depth in sharedDepth buffer
-            zOrder += g_depthInc[g_maxCUDepth - 1][sharedDepth[zOrder]];
+            zOrder += g_depthInc[g_maxCUDepth - 1][reuseDepth[zOrder]];
             mightSplit = false;
         }
     }
@@ -276,7 +273,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressIntraCU(parentCTU, childGeom, intraData, zOrder);
+                compressIntraCU(parentCTU, childGeom, reuseIntraData, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -1450,18 +1447,18 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
         for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
         {
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].mv.x = m_interDataCTU->mvx;
-                bestME[i].mv.y = m_interDataCTU->mvy;
-                bestME[i].ref = m_interDataCTU->ref;
-                bestME[i].costZero = !!m_interDataCTU->costZero;
-                m_interDataCTU++;
+                bestME[i].mv.x = m_reuseInterDataCTU->mvx;
+                bestME[i].mv.y = m_reuseInterDataCTU->mvy;
+                bestME[i].ref = m_reuseInterDataCTU->ref;
+                bestME[i].costZero = !!m_reuseInterDataCTU->costZero;
+                m_reuseInterDataCTU++;
             }
         }
     }
@@ -1473,18 +1470,18 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         interMode.distortion = primitives.sa8d[cuGeom.log2CUSize - 2](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
 
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interDataCTU)
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
         {
             for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
             {
                 MotionData* bestME = interMode.bestME[part];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_interDataCTU->mvx = bestME[i].mv.x;
-                    m_interDataCTU->mvy = bestME[i].mv.y;
-                    m_interDataCTU->ref = bestME[i].ref;
-                    m_interDataCTU->costZero = bestME[i].costZero;
-                    m_interDataCTU++;
+                    m_reuseInterDataCTU->mvx = bestME[i].mv.x;
+                    m_reuseInterDataCTU->mvy = bestME[i].mv.y;
+                    m_reuseInterDataCTU->ref = bestME[i].ref;
+                    m_reuseInterDataCTU->costZero = bestME[i].costZero;
+                    m_reuseInterDataCTU++;
                 }
             }
         }
@@ -1503,18 +1500,18 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_interDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
         for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
         {
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].mv.x = m_interDataCTU->mvx;
-                bestME[i].mv.y = m_interDataCTU->mvy;
-                bestME[i].ref = m_interDataCTU->ref;
-                bestME[i].costZero = !!m_interDataCTU->costZero;
-                m_interDataCTU++;
+                bestME[i].mv.x = m_reuseInterDataCTU->mvx;
+                bestME[i].mv.y = m_reuseInterDataCTU->mvy;
+                bestME[i].ref = m_reuseInterDataCTU->ref;
+                bestME[i].costZero = !!m_reuseInterDataCTU->costZero;
+                m_reuseInterDataCTU++;
             }
         }
     }
@@ -1522,18 +1519,18 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     {
         /* predInterSearch sets interMode.sa8dBits, but this is ignored */
         encodeResAndCalcRdInterCU(interMode, cuGeom);
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_interDataCTU)
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
         {
             for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
             {
                 MotionData* bestME = interMode.bestME[part];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_interDataCTU->mvx = bestME[i].mv.x;
-                    m_interDataCTU->mvy = bestME[i].mv.y;
-                    m_interDataCTU->ref = bestME[i].ref;
-                    m_interDataCTU->costZero = bestME[i].costZero;
-                    m_interDataCTU++;
+                    m_reuseInterDataCTU->mvx = bestME[i].mv.x;
+                    m_reuseInterDataCTU->mvy = bestME[i].mv.y;
+                    m_reuseInterDataCTU->ref = bestME[i].ref;
+                    m_reuseInterDataCTU->costZero = bestME[i].costZero;
+                    m_reuseInterDataCTU++;
                 }
             }
         }
