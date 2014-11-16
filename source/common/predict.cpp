@@ -83,7 +83,8 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
 {
     int tuSize = 1 << log2TrSize;
 
-    pixel *refLft, *refAbv;
+    pixel* refLft;
+    pixel* refAbv;
 
     if (!(g_intraFilterFlags[dirMode] & tuSize))
     {
@@ -321,13 +322,13 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
 
 void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const
 {
-    pixel *dst = dstYuv.getLumaAddr(m_puAbsPartIdx);
+    pixel* dst = dstYuv.getLumaAddr(m_puAbsPartIdx);
     intptr_t dstStride = dstYuv.m_size;
 
     intptr_t srcStride = refPic.m_stride;
     intptr_t srcOffset = (mv.x >> 2) + (mv.y >> 2) * srcStride;
     int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
-    pixel* src = const_cast<PicYuv&>(refPic).getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
+    const pixel* src = refPic.getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
 
     int xFrac = mv.x & 0x3;
     int yFrac = mv.y & 0x3;
@@ -350,12 +351,12 @@ void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv
 
 void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
 {
-    int16_t *dst = dstSYuv.getLumaAddr(m_puAbsPartIdx);
+    int16_t* dst = dstSYuv.getLumaAddr(m_puAbsPartIdx);
     int dstStride = dstSYuv.m_size;
 
     intptr_t srcStride = refPic.m_stride;
     intptr_t srcOffset = (mv.x >> 2) + (mv.y >> 2) * srcStride;
-    pixel *src = const_cast<PicYuv&>(refPic).getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
+    const pixel* src = refPic.getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
 
     int xFrac = mv.x & 0x3;
     int yFrac = mv.y & 0x3;
@@ -391,8 +392,8 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
 
     intptr_t refOffset = (mv.x >> shiftHor) + (mv.y >> shiftVer) * refStride;
 
-    pixel* refCb = const_cast<PicYuv&>(refPic).getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
-    pixel* refCr = const_cast<PicYuv&>(refPic).getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCb = refPic.getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCr = refPic.getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
 
     pixel* dstCb = dstYuv.getCbAddr(m_puAbsPartIdx);
     pixel* dstCr = dstYuv.getCrAddr(m_puAbsPartIdx);
@@ -441,8 +442,8 @@ void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, cons
 
     intptr_t refOffset = (mv.x >> shiftHor) + (mv.y >> shiftVer) * refStride;
 
-    pixel* refCb = const_cast<PicYuv&>(refPic).getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
-    pixel* refCr = const_cast<PicYuv&>(refPic).getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCb = refPic.getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCr = refPic.getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
 
     int16_t* dstCb = dstSYuv.getCbAddr(m_puAbsPartIdx);
     int16_t* dstCr = dstSYuv.getCrAddr(m_puAbsPartIdx);
@@ -492,20 +493,12 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
     int w0, w1, offset, shiftNum, shift, round;
     uint32_t src0Stride, src1Stride, dststride;
 
-    pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
-    pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
-    pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
-
-    const int16_t* srcY0 = srcYuv0.getLumaAddr(m_puAbsPartIdx);
-    const int16_t* srcU0 = srcYuv0.getCbAddr(m_puAbsPartIdx);
-    const int16_t* srcV0 = srcYuv0.getCrAddr(m_puAbsPartIdx);
-
-    const int16_t* srcY1 = srcYuv1.getLumaAddr(m_puAbsPartIdx);
-    const int16_t* srcU1 = srcYuv1.getCbAddr(m_puAbsPartIdx);
-    const int16_t* srcV1 = srcYuv1.getCrAddr(m_puAbsPartIdx);
-
     if (bLuma)
     {
+        pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
+        const int16_t* srcY0 = srcYuv0.getLumaAddr(m_puAbsPartIdx);
+        const int16_t* srcY1 = srcYuv1.getLumaAddr(m_puAbsPartIdx);
+
         // Luma
         w0      = wp0[0].w;
         offset  = wp0[0].o + wp1[0].o;
@@ -542,6 +535,13 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
 
     if (bChroma)
     {
+        pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
+        pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
+        const int16_t* srcU0 = srcYuv0.getCbAddr(m_puAbsPartIdx);
+        const int16_t* srcV0 = srcYuv0.getCrAddr(m_puAbsPartIdx);
+        const int16_t* srcU1 = srcYuv1.getCbAddr(m_puAbsPartIdx);
+        const int16_t* srcV1 = srcYuv1.getCrAddr(m_puAbsPartIdx);
+
         // Chroma U
         w0      = wp0[1].w;
         offset  = wp0[1].o + wp1[1].o;
@@ -602,19 +602,14 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
 /* weighted averaging for uni-pred */
 void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightValues wp[3], bool bLuma, bool bChroma) const
 {
-    pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
-    pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
-    pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
-
-    const int16_t* srcY0 = srcYuv.getLumaAddr(m_puAbsPartIdx);
-    const int16_t* srcU0 = srcYuv.getCbAddr(m_puAbsPartIdx);
-    const int16_t* srcV0 = srcYuv.getCrAddr(m_puAbsPartIdx);
-
     int w0, offset, shiftNum, shift, round;
     uint32_t srcStride, dstStride;
 
     if (bLuma)
     {
+        pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
+        const int16_t* srcY0 = srcYuv.getLumaAddr(m_puAbsPartIdx);
+
         // Luma
         w0      = wp[0].w;
         offset  = wp[0].offset;
@@ -624,11 +619,16 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
         srcStride = srcYuv.m_size;
         dstStride = predYuv.m_size;
 
-        primitives.weight_sp(const_cast<int16_t*>(srcY0), dstY, srcStride, dstStride, m_puWidth, m_puHeight, w0, round, shift, offset);
+        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_puWidth, m_puHeight, w0, round, shift, offset);
     }
 
     if (bChroma)
     {
+        pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
+        pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
+        const int16_t* srcU0 = srcYuv.getCbAddr(m_puAbsPartIdx);
+        const int16_t* srcV0 = srcYuv.getCrAddr(m_puAbsPartIdx);
+
         // Chroma U
         w0      = wp[1].w;
         offset  = wp[1].offset;
@@ -642,7 +642,7 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
         uint32_t cwidth = m_puWidth >> srcYuv.m_hChromaShift;
         uint32_t cheight = m_puHeight >> srcYuv.m_vChromaShift;
 
-        primitives.weight_sp(const_cast<int16_t*>(srcU0), dstU, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
+        primitives.weight_sp(srcU0, dstU, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
 
         // Chroma V
         w0     = wp[2].w;
@@ -650,7 +650,7 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
         shift  = wp[2].shift + shiftNum;
         round  = shift ? (1 << (shift - 1)) : 0;
 
-        primitives.weight_sp(const_cast<int16_t*>(srcV0), dstV, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
+        primitives.weight_sp(srcV0, dstV, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
     }
 }
 
@@ -765,7 +765,7 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     }
 
     int   numIntraNeighbor = 0;
-    bool *bNeighborFlags = intraNeighbors->bNeighborFlags;
+    bool* bNeighborFlags = intraNeighbors->bNeighborFlags;
 
     uint32_t partIdxLT, partIdxRT, partIdxLB;
 
@@ -829,15 +829,15 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
     }
     else // reference samples are partially available
     {
-        const bool *bNeighborFlags = intraNeighbors.bNeighborFlags;
-        const bool *pNeighborFlags;
+        const bool* bNeighborFlags = intraNeighbors.bNeighborFlags;
+        const bool* pNeighborFlags;
         int aboveUnits = intraNeighbors.aboveUnits;
         int leftUnits = intraNeighbors.leftUnits;
         int unitWidth = intraNeighbors.unitWidth;
         int unitHeight = intraNeighbors.unitHeight;
         int totalSamples = (leftUnits * unitHeight) + ((aboveUnits + 1) * unitWidth);
         pixel adiLineBuffer[5 * MAX_CU_SIZE];
-        pixel *adi;
+        pixel* adi;
 
         // Initialize
         for (int i = 0; i < totalSamples; i++)
@@ -893,7 +893,7 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
             while (next < totalUnits && !bNeighborFlags[next])
                 next++;
 
-            pixel *pAdiLineNext = adiLineBuffer + ((next < leftUnits) ? (next * unitHeight) : (pAdiLineTopRowOffset + (next * unitWidth)));
+            pixel* pAdiLineNext = adiLineBuffer + ((next < leftUnits) ? (next * unitHeight) : (pAdiLineTopRowOffset + (next * unitWidth)));
             const pixel refSample = *pAdiLineNext;
             // Pad unavailable samples with new value
             int nextOrTop = X265_MIN(next, leftUnits);
@@ -959,12 +959,12 @@ bool Predict::isAboveLeftAvailable(const CUData& cu, uint32_t partIdxLT)
         return cuAboveLeft && cuAboveLeft->isIntra(partAboveLeft);
 }
 
-int Predict::isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
+int Predict::isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxRT] + 1;
     const uint32_t idxStep = 1;
-    bool *validFlagPtr = bValidFlags;
+    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
@@ -985,12 +985,12 @@ int Predict::isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t par
     return numIntra;
 }
 
-int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
+int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
     const uint32_t idxStep = cu.m_slice->m_sps->numPartInCUSize;
-    bool *validFlagPtr = bValidFlags;
+    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
@@ -1011,10 +1011,10 @@ int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t part
     return numIntra;
 }
 
-int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool *bValidFlags)
+int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags)
 {
     const uint32_t numUnitsInPU = g_zscanToRaster[partIdxRT] - g_zscanToRaster[partIdxLT] + 1;
-    bool *validFlagPtr = bValidFlags;
+    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)
@@ -1035,10 +1035,10 @@ int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_
     return numIntra;
 }
 
-int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool *bValidFlags)
+int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags)
 {
     const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_slice->m_sps->numPartInCUSize + 1;
-    bool *validFlagPtr = bValidFlags;
+    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
     for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)

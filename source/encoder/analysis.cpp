@@ -725,7 +725,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
     if (mightNotSplit)
     {
         /* early-out statistics */
-        FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+        FrameData& curEncData = *m_frame->m_encData;
         FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
         uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
         cuStat.count[depth] += 1;
@@ -1007,7 +1007,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     if (mightNotSplit)
     {
         /* early-out statistics */
-        FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+        FrameData& curEncData = *m_frame->m_encData;
         FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
         uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
         cuStat.count[depth] += 1;
@@ -1806,7 +1806,7 @@ bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom
      * each quantity */
 
     uint32_t depth = cuGeom.depth;
-    FrameData& curEncData = const_cast<FrameData&>(*m_frame->m_encData);
+    FrameData& curEncData = *m_frame->m_encData;
     FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
     uint64_t cuCost = cuStat.avgCost[depth] * cuStat.count[depth];
     uint64_t cuCount = cuStat.count[depth];

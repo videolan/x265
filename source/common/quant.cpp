@@ -50,7 +50,7 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
@@ -106,7 +106,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 }
 
 /* Calculates the cost for specific absolute transform level */
-inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
 
@@ -216,7 +216,7 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
 {
     const uint32_t log2TrSizeCG = codeParams.log2TrSizeCG;
-    const uint16_t *scan = codeParams.scan;
+    const uint16_t* scan = codeParams.scan;
     bool lastCG = true;
 
     for (int cg = (1 << (log2TrSizeCG * 2)) - 1; cg >= 0; cg--)
@@ -322,7 +322,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     return numSig;
 }
 
-uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
+uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t stride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
     if (cu.m_tqBypass[absPartIdx])
@@ -389,7 +389,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
         int scalingListType = ttype + (isLuma ? 3 : 0);
         int rem = m_qpParam[ttype].rem;
         int per = m_qpParam[ttype].per;
-        int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
+        const int32_t* quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
         int qbits = QUANT_SHIFT + per + transformShift;
         int add = (cu.m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
@@ -408,7 +408,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
     }
 }
 
-void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
+void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, const coeff_t* coeff,
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
     if (transQuantBypass)
@@ -427,7 +427,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     if (m_scalingList->m_bEnabled)
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
-        int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+        const int32_t* dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
         primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
@@ -475,7 +475,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
@@ -486,7 +486,7 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
     int per = m_qpParam[ttype].per;
     int qbits = QUANT_SHIFT + per + transformShift; /* Right shift of non-RDOQ quantizer level = (coeff*Q + offset)>>q_bits */
     int add = (1 << (qbits - 1));
-    int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
+    const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << (log2TrSize * 2);
 
@@ -503,7 +503,7 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
      * at several stages. We skip the clipping for simplicity when measuring RD cost */
-    int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+    const int32_t* unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
     int scaleBits = SCALE_BITS - 2 * transformShift;
@@ -616,8 +616,8 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
                 // coefficient level estimation
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
-                const int *greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
-                const int *levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
+                const int* greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
+                const int* levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
 
                 uint16_t level = 0;
                 uint32_t sigCoefBits = 0;

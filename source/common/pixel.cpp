@@ -90,7 +90,7 @@ namespace {
 // place functions in anonymous namespace (file static)
 
 template<int lx, int ly>
-int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int sad(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     int sum = 0;
 
@@ -109,7 +109,7 @@ int sad(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 }
 
 template<int lx, int ly>
-int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
+int sad(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t stride_pix2)
 {
     int sum = 0;
 
@@ -128,7 +128,7 @@ int sad(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2
 }
 
 template<int lx, int ly>
-void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstride, int32_t *res)
+void sad_x3(const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, intptr_t frefstride, int32_t* res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -150,7 +150,7 @@ void sad_x3(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, intptr_t frefstr
 }
 
 template<int lx, int ly>
-void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, intptr_t frefstride, int32_t *res)
+void sad_x4(const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res)
 {
     res[0] = 0;
     res[1] = 0;
@@ -175,7 +175,7 @@ void sad_x4(pixel *pix1, pixel *pix2, pixel *pix3, pixel *pix4, pixel *pix5, int
 }
 
 template<int lx, int ly, class T1, class T2>
-int sse(T1 *pix1, intptr_t stride_pix1, T2 *pix2, intptr_t stride_pix2)
+int sse(T1* pix1, intptr_t stride_pix1, T2* pix2, intptr_t stride_pix2)
 {
     int sum = 0;
     int iTemp;
@@ -217,7 +217,7 @@ inline sum2_t abs2(sum2_t a)
     return (a + s) ^ s;
 }
 
-int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][2];
     sum2_t a0, a1, a2, a3, b0, b1;
@@ -245,7 +245,7 @@ int satd_4x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
     return (int)(sum >> 1);
 }
 
-int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride_pix2)
+int satd_4x4(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t stride_pix2)
 {
     ssum2_t tmp[4][2];
     ssum2_t a0, a1, a2, a3, b0, b1;
@@ -274,7 +274,7 @@ int satd_4x4(int16_t *pix1, intptr_t stride_pix1, int16_t *pix2, intptr_t stride
 }
 
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
-int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd_8x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][4];
     sum2_t a0, a1, a2, a3;
@@ -300,7 +300,7 @@ int satd_8x4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix
 
 template<int w, int h>
 // calculate satd in blocks of 4x4
-int satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     int satd = 0;
 
@@ -318,7 +318,7 @@ int satd4(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
 
 template<int w, int h>
 // calculate satd in blocks of 8x4
-int satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
+int satd8(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     int satd = 0;
 
@@ -334,7 +334,7 @@ int satd8(pixel *pix1, intptr_t stride_pix1, pixel *pix2, intptr_t stride_pix2)
     return satd;
 }
 
-inline int _sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+inline int _sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     sum2_t tmp[8][4];
     sum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
@@ -371,12 +371,12 @@ inline int _sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
     return (int)sum;
 }
 
-int sa8d_8x8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1, const int16_t* pix2, intptr_t i_pix2)
 {
     ssum2_t tmp[8][4];
     ssum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
@@ -413,12 +413,12 @@ inline int _sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_p
     return (int)sum;
 }
 
-int sa8d_8x8(int16_t *pix1, intptr_t i_pix1, int16_t *pix2, intptr_t i_pix2)
+int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1, const int16_t* pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
         + _sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
@@ -432,7 +432,7 @@ int sa8d_16x16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 
 template<int w, int h>
 // Calculate sa8d in blocks of 8x8
-int sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     int cost = 0;
 
@@ -449,7 +449,7 @@ int sa8d8(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 
 template<int w, int h>
 // Calculate sa8d in blocks of 16x16
-int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
+int sa8d16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     int cost = 0;
 
@@ -465,7 +465,7 @@ int sa8d16(pixel *pix1, intptr_t i_pix1, pixel *pix2, intptr_t i_pix2)
 }
 
 template<int size>
-int pixel_ssd_s_c(short *a, intptr_t dstride)
+int pixel_ssd_s_c(const int16_t* a, intptr_t dstride)
 {
     int sum = 0;
     for (int y = 0; y < size; y++)
@@ -480,7 +480,7 @@ int pixel_ssd_s_c(short *a, intptr_t dstride)
 }
 
 template<int size>
-void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
+void blockfil_s_c(int16_t* dst, intptr_t dstride, int16_t val)
 {
     for (int y = 0; y < size; y++)
     {
@@ -491,7 +491,7 @@ void blockfil_s_c(int16_t *dst, intptr_t dstride, int16_t val)
     }
 }
 
-void copy16to16_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size)
+void copy16to16_shl(int16_t *dst, const int16_t *src, intptr_t stride, int shift, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -503,7 +503,7 @@ void copy16to16_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift, int 
 }
 
 template<int size>
-void convert16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, int offset)
+void convert16to32_shr(int32_t* dst, const int16_t* src, intptr_t stride, int shift, int offset)
 {
     for (int i = 0; i < size; i++)
     {
@@ -514,7 +514,7 @@ void convert16to32_shr(int32_t *dst, int16_t *src, intptr_t stride, int shift, i
     }
 }
 
-void copy_shr(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size)
+void copy_shr(int16_t* dst, const int16_t* src, intptr_t stride, int shift, int size)
 {
     int round = 1 << (shift - 1);
 
@@ -531,7 +531,7 @@ void copy_shr(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size)
 }
 
 template<int size>
-void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
+void convert32to16_shl(int16_t* dst, const int32_t* src, intptr_t stride, int shift)
 {
     for (int i = 0; i < size; i++)
     {
@@ -546,7 +546,7 @@ void convert32to16_shl(int16_t *dst, int32_t *src, intptr_t stride, int shift)
 }
 
 template<int size>
-void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
+void copy_shl(int16_t* dst, const int16_t* src, intptr_t stride, int shift)
 {
     for (int i = 0; i < size; i++)
     {
@@ -561,7 +561,7 @@ void copy_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift)
 }
 
 template<int blockSize>
-void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
+void getResidual(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride)
 {
     for (int y = 0; y < blockSize; y++)
     {
@@ -577,7 +577,7 @@ void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
 }
 
 template<int blockSize>
-void transpose(pixel* dst, pixel* src, intptr_t stride)
+void transpose(pixel* dst, const pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
     {
@@ -588,7 +588,7 @@ void transpose(pixel* dst, pixel* src, intptr_t stride)
     }
 }
 
-void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -606,7 +606,7 @@ void weight_sp_c(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStrid
     }
 }
 
-void weight_pp_c(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
+void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -630,7 +630,7 @@ void weight_pp_c(pixel *src, pixel *dst, intptr_t stride, int width, int height,
 }
 
 template<int lx, int ly>
-void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, intptr_t sstride0, pixel* src1, intptr_t sstride1, int)
+void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
 {
     for (int y = 0; y < ly; y++)
     {
@@ -645,7 +645,7 @@ void pixelavg_pp(pixel* dst, intptr_t dstride, pixel* src0, intptr_t sstride0, p
     }
 }
 
-void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
+void scale1D_128to64(pixel* dst, const pixel* src, intptr_t /*stride*/)
 {
     int x;
 
@@ -659,9 +659,9 @@ void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
     }
 }
 
-void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
+void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
 {
-    int x, y;
+    uint32_t x, y;
 
     for (y = 0; y < 64; y += 2)
     {
@@ -678,13 +678,13 @@ void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
     }
 }
 
-void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, pixel *dstc,
+void frame_init_lowres_core(const pixel* src0, pixel* dst0, pixel* dsth, pixel* dstv, pixel* dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height)
 {
     for (int y = 0; y < height; y++)
     {
-        pixel *src1 = src0 + src_stride;
-        pixel *src2 = src1 + src_stride;
+        const pixel* src1 = src0 + src_stride;
+        const pixel* src2 = src1 + src_stride;
         for (int x = 0; x < width; x++)
         {
             // slower than naive bilinear, but matches asm
@@ -704,7 +704,7 @@ void frame_init_lowres_core(pixel *src0, pixel *dst0, pixel *dsth, pixel *dstv, 
 }
 
 /* structural similarity metric */
-void ssim_4x4x2_core(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, int sums[2][4])
+void ssim_4x4x2_core(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4])
 {
     for (int z = 0; z < 2; z++)
     {
@@ -778,7 +778,7 @@ float ssim_end_4(int sum0[5][4], int sum1[5][4], int width)
 }
 
 template<int size>
-uint64_t pixel_var(pixel *pix, intptr_t i_stride)
+uint64_t pixel_var(const pixel* pix, intptr_t i_stride)
 {
     uint32_t sum = 0, sqr = 0;
 
@@ -801,7 +801,7 @@ uint64_t pixel_var(pixel *pix, intptr_t i_stride)
 #endif
 
 template<int size>
-int psyCost_pp(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
+int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)
 {
     static pixel zeroBuf[8] /* = { 0 } */;
 
@@ -834,7 +834,7 @@ int psyCost_pp(pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride)
 }
 
 template<int size>
-int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride)
+int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride)
 {
     static int16_t zeroBuf[8] /* = { 0 } */;
 
@@ -866,8 +866,8 @@ int psyCost_ss(int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstri
     }
 }
 
-void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride,
-                                    pixel *src,  intptr_t srcStride, int w, int h)
+void plane_copy_deinterleave_chroma(pixel* dstu, intptr_t dstuStride, pixel* dstv, intptr_t dstvStride,
+                                    const pixel* src,  intptr_t srcStride, int w, int h)
 {
     for (int y = 0; y < h; y++, dstu += dstuStride, dstv += dstvStride, src += srcStride)
     {
@@ -880,7 +880,7 @@ void plane_copy_deinterleave_chroma(pixel *dstu, intptr_t dstuStride, pixel *dst
 }
 
 template<int bx, int by>
-void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
+void blockcopy_pp_c(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -895,7 +895,7 @@ void blockcopy_pp_c(pixel *a, intptr_t stridea, pixel *b, intptr_t strideb)
 }
 
 template<int bx, int by>
-void blockcopy_ss_c(int16_t *a, intptr_t stridea, int16_t *b, intptr_t strideb)
+void blockcopy_ss_c(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -910,7 +910,7 @@ void blockcopy_ss_c(int16_t *a, intptr_t stridea, int16_t *b, intptr_t strideb)
 }
 
 template<int bx, int by>
-void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
+void blockcopy_sp_c(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -926,7 +926,7 @@ void blockcopy_sp_c(pixel *a, intptr_t stridea, int16_t *b, intptr_t strideb)
 }
 
 template<int bx, int by>
-void blockcopy_ps_c(int16_t *a, intptr_t stridea, pixel *b, intptr_t strideb)
+void blockcopy_ps_c(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb)
 {
     for (int y = 0; y < by; y++)
     {
@@ -941,7 +941,7 @@ void blockcopy_ps_c(int16_t *a, intptr_t stridea, pixel *b, intptr_t strideb)
 }
 
 template<int bx, int by>
-void pixel_sub_ps_c(int16_t *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t sstride0, intptr_t sstride1)
+void pixel_sub_ps_c(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1)
 {
     for (int y = 0; y < by; y++)
     {
@@ -957,7 +957,7 @@ void pixel_sub_ps_c(int16_t *a, intptr_t dstride, pixel *b0, pixel *b1, intptr_t
 }
 
 template<int bx, int by>
-void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1)
+void pixel_add_ps_c(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1)
 {
     for (int y = 0; y < by; y++)
     {
@@ -973,7 +973,7 @@ void pixel_add_ps_c(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t
 }
 
 template<int bx, int by>
-void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+void addAvg(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 {
     int shiftNum, offset;
 
@@ -994,7 +994,7 @@ void addAvg(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intpt
     }
 }
 
-void planecopy_cp_c(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
+void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
 {
     for (int r = 0; r < height; r++)
     {
@@ -1008,7 +1008,7 @@ void planecopy_cp_c(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
     }
 }
 
-void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 {
     for (int r = 0; r < height; r++)
     {
@@ -1024,8 +1024,8 @@ void planecopy_sp_c(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 
 /* Estimate the total amount of influence on future quality that could be had if we
  * were to improve the reference samples used to inter predict any given CU. */
-void estimateCUPropagateCost(int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts,
-                             int32_t *invQscales, double *fpsFactor, int len)
+void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts,
+                             const int32_t* invQscales, const double* fpsFactor, int len)
 {
     double fps = *fpsFactor / 256;
 
@@ -1052,12 +1052,12 @@ void extendPicBorder(pixel* pic, intptr_t stride, int width, int height, int mar
     primitives.extendRowBorder(pic, stride, width, height, marginX);
 
     /* copy top row to create above margin */
-    pixel *top = pic - marginX;
+    pixel* top = pic - marginX;
     for (int y = 0; y < marginY; y++)
         memcpy(top - (y + 1) * stride, top, stride * sizeof(pixel));
 
     /* copy bottom row to create below margin */
-    pixel *bot = pic - marginX + (height - 1) * stride;
+    pixel* bot = pic - marginX + (height - 1) * stride;
     for (int y = 0; y < marginY; y++)
         memcpy(bot + (y + 1) * stride, bot, stride * sizeof(pixel));
 }

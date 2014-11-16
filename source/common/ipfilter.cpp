@@ -35,7 +35,7 @@ using namespace x265;
 
 namespace {
 template<int dstStride>
-void filterConvertPelToShort_c(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
+void filterConvertPelToShort_c(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height)
 {
     int shift = IF_INTERNAL_PREC - X265_DEPTH;
     int row, col;
@@ -74,9 +74,9 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
 }
 
 template<int N, int width, int height>
-void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+void interp_horiz_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 {
-    int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+    const int16_t* coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_FILTER_PREC;
     int offset =  (1 << (headRoom - 1));
     uint16_t maxVal = (1 << X265_DEPTH) - 1;
@@ -115,9 +115,9 @@ void interp_horiz_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstS
 }
 
 template<int N, int width, int height>
-void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 {
-    int16_t const * coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+    const int16_t* coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
@@ -160,9 +160,9 @@ void interp_horiz_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t ds
 }
 
 template<int N, int width, int height>
-void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+void interp_vert_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 {
-    int16_t const * c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+    const int16_t* c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int shift = IF_FILTER_PREC;
     int offset = 1 << (shift - 1);
     uint16_t maxVal = (1 << X265_DEPTH) - 1;
@@ -201,9 +201,9 @@ void interp_vert_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstSt
 }
 
 template<int N, int width, int height>
-void interp_vert_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 {
-    int16_t const * c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
+    const int16_t* c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
@@ -239,13 +239,13 @@ void interp_vert_ps_c(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dst
 }
 
 template<int N, int width, int height>
-void interp_vert_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+void interp_vert_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
     uint16_t maxVal = (1 << X265_DEPTH) - 1;
-    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+    const int16_t* coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
 
     src -= (N / 2 - 1) * srcStride;
 
@@ -282,9 +282,9 @@ void interp_vert_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dst
 }
 
 template<int N, int width, int height>
-void interp_vert_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+void interp_vert_ss_c(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx)
 {
-    const int16_t *const c = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+    const int16_t* c = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
     int shift = IF_FILTER_PREC;
     int row, col;
 
@@ -317,13 +317,13 @@ void interp_vert_ss_c(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t d
 }
 
 template<int N>
-void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int coeffIdx)
+void filterVertical_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int coeffIdx)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
     uint16_t maxVal = (1 << X265_DEPTH) - 1;
-    const int16_t *coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
+    const int16_t* coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
 
     src -= (N / 2 - 1) * srcStride;
 
@@ -360,7 +360,7 @@ void filterVertical_sp_c(int16_t *src, intptr_t srcStride, pixel *dst, intptr_t 
 }
 
 template<int N, int width, int height>
-void interp_hv_pp_c(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
+void interp_hv_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
 {
     short immedVals[(64 + 8) * (64 + 8)];
 

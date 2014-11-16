@@ -132,73 +132,74 @@ inline int partitionFromLog2Size(int log2Size)
     return log2Size - 2;
 }
 
-typedef int  (*pixelcmp_t)(pixel *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride); // fenc is aligned
-typedef int  (*pixelcmp_ss_t)(int16_t *fenc, intptr_t fencstride, int16_t *fref, intptr_t frefstride);
-typedef int  (*pixelcmp_sp_t)(int16_t *fenc, intptr_t fencstride, pixel *fref, intptr_t frefstride);
-typedef int  (*pixel_ssd_s_t)(int16_t *fenc, intptr_t fencstride);
-typedef void (*pixelcmp_x4_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, pixel *fref3, intptr_t frefstride, int32_t *res);
-typedef void (*pixelcmp_x3_t)(pixel *fenc, pixel *fref0, pixel *fref1, pixel *fref2, intptr_t frefstride, int32_t *res);
-typedef void (*blockcpy_sp_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_sc_t)(int bx, int by, int16_t *dst, intptr_t dstride, uint8_t *src, intptr_t sstride); // dst is aligned
-typedef void (*pixelsub_ps_t)(int bx, int by, int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
-typedef void (*pixelavg_pp_t)(pixel *dst, intptr_t dstride, pixel *src0, intptr_t sstride0, pixel *src1, intptr_t sstride1, int weight);
-typedef void (*blockfill_s_t)(int16_t *dst, intptr_t dstride, int16_t val);
+typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
+typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
+typedef int  (*pixelcmp_sp_t)(const int16_t* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride);
+typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
+typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
+typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
+typedef void (*blockcpy_sp_t)(int bx, int by, int16_t* dst, intptr_t dstride, const pixel* src, intptr_t sstride); // dst is aligned
+typedef void (*blockcpy_sc_t)(int bx, int by, int16_t* dst, intptr_t dstride, const uint8_t* src, intptr_t sstride); // dst is aligned
+typedef void (*pixelsub_ps_t)(int bx, int by, int16_t* dst, intptr_t dstride, const pixel* src0, const pixel* src1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
+typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter);
-typedef void (*intra_allangs_t)(pixel *dst, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma);
+typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel* refLeft, pixel* refAbove, int dirMode, int bFilter);
+typedef void (*intra_allangs_t)(pixel* dst, pixel* above0, pixel* left0, pixel* above1, pixel* left1, int bLuma);
 
-typedef void (*cpy16to16_shl_t)(int16_t *dst, int16_t *src, intptr_t, int, int);
-typedef void (*cvt16to32_shr_t)(int32_t *dst, int16_t *src, intptr_t, int, int);
-typedef void (*cvt32to16_shl_t)(int16_t *dst, int32_t *src, intptr_t, int);
-typedef uint32_t (*copy_cnt_t)(int16_t* coeff, int16_t* residual, intptr_t stride);
-typedef void (*copy_shr_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size);
-typedef void (*copy_shl_t)(int16_t *dst, int16_t *src, intptr_t stride, int shift);
+typedef void (*cpy16to16_shl_t)(int16_t* dst, const int16_t* src, intptr_t, int, int);
+typedef void (*cvt16to32_shl_t)(int32_t* dst, const int16_t* src, intptr_t, int, int);
+typedef void (*cvt16to32_shr_t)(int32_t* dst, const int16_t* src, intptr_t, int, int);
+typedef void (*cvt32to16_shl_t)(int16_t* dst, const int32_t* src, intptr_t, int);
+typedef uint32_t (*copy_cnt_t)(int16_t* coeff, const int16_t* residual, intptr_t stride);
+typedef void (*copy_shr_t)(int16_t* dst, const int16_t* src, intptr_t stride, int shift, int size);
+typedef void (*copy_shl_t)(int16_t* dst, const int16_t* src, intptr_t stride, int shift);
 
-typedef void (*dct_t)(int16_t *src, int16_t *dst, intptr_t stride);
-typedef void (*idct_t)(int16_t *src, int16_t *dst, intptr_t stride);
-typedef void (*denoiseDct_t)(int16_t* dctCoef, uint32_t* resSum, uint16_t* offset, int numCoeff);
+typedef void (*dct_t)(const int16_t* src, int16_t* dst, intptr_t stride);
+typedef void (*idct_t)(const int16_t* src, int16_t* dst, intptr_t stride);
+typedef void (*denoiseDct_t)(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, int numCoeff);
 
-typedef void (*calcresidual_t)(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride);
-typedef void (*transpose_t)(pixel* dst, pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(int16_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
-typedef uint32_t (*nquant_t)(int16_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
-typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t *dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
+typedef void (*calcresidual_t)(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+typedef void (*transpose_t)(pixel* dst, const pixel* src, intptr_t stride);
+typedef uint32_t (*quant_t)(const int16_t *coef, const int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*nquant_t)(const int16_t *coef, const int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
+typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t*vdequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
-typedef int  (*count_nonzero_t)(const int16_t *quantCoeff, int numCoeff);
+typedef int  (*count_nonzero_t)(const int16_t* quantCoeff, int numCoeff);
 
-typedef void (*weightp_pp_t)(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
-typedef void (*weightp_sp_t)(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
-typedef void (*scale_t)(pixel *dst, pixel *src, intptr_t stride);
-typedef void (*downscale_t)(pixel *src0, pixel *dstf, pixel *dsth, pixel *dstv, pixel *dstc,
+typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
+typedef void (*scale_t)(pixel* dst, const pixel* src, intptr_t stride);
+typedef void (*downscale_t)(const pixel* src0, pixel* dstf, pixel* dsth, pixel* dstv, pixel* dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
-typedef void (*ssim_4x4x2_core_t)(const pixel *pix1, intptr_t stride1, const pixel *pix2, intptr_t stride2, int sums[2][4]);
+typedef void (*ssim_4x4x2_core_t)(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4]);
 typedef float (*ssim_end4_t)(int sum0[5][4], int sum1[5][4], int width);
-typedef uint64_t (*var_t)(pixel *pix, intptr_t stride);
-typedef void (*plane_copy_deinterleave_t)(pixel *dstu, intptr_t dstuStride, pixel *dstv, intptr_t dstvStride, pixel *src, intptr_t srcStride, int w, int h);
+typedef uint64_t (*var_t)(const pixel* pix, intptr_t stride);
+typedef void (*plane_copy_deinterleave_t)(pixel* dstu, intptr_t dstuStride, pixel* dstv, intptr_t dstvStride, const pixel* src, intptr_t srcStride, int w, int h);
 
-typedef void (*filter_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
-typedef void (*filter_hps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt);
-typedef void (*filter_ps_t) (pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
-typedef void (*filter_sp_t) (int16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
-typedef void (*filter_ss_t) (int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx);
-typedef void (*filter_hv_pp_t) (pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY);
-typedef void (*filter_p2s_t)(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height);
+typedef void (*filter_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_hps_t) (const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt);
+typedef void (*filter_ps_t) (const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_sp_t) (const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
+typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
 
-typedef void (*copy_pp_t)(pixel *dst, intptr_t dstride, pixel *src, intptr_t sstride); // dst is aligned
-typedef void (*copy_sp_t)(pixel *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
-typedef void (*copy_ps_t)(int16_t *dst, intptr_t dstStride, pixel *src, intptr_t srcStride);
-typedef void (*copy_ss_t)(int16_t *dst, intptr_t dstStride, int16_t *src, intptr_t srcStride);
+typedef void (*copy_pp_t)(pixel* dst, intptr_t dstride, const pixel* src, intptr_t sstride); // dst is aligned
+typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+typedef void (*copy_ps_t)(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+typedef void (*copy_ss_t)(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 
-typedef void (*pixel_sub_ps_t)(int16_t *dst, intptr_t dstride, pixel *src0, pixel *src1, intptr_t sstride0, intptr_t sstride1);
-typedef void (*pixel_add_ps_t)(pixel *a, intptr_t dstride, pixel *b0, int16_t *b1, intptr_t sstride0, intptr_t sstride1);
-typedef void (*addAvg_t)(int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
+typedef void (*pixel_sub_ps_t)(int16_t* dst, intptr_t dstride, const pixel* src0, const pixel* src1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
-typedef void (*saoCuOrgE0_t)(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft);
-typedef void (*planecopy_cp_t) (uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift);
-typedef void (*planecopy_sp_t) (uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t*  offsetEo, int width, int8_t signLeft);
+typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
+typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
-typedef void (*cutree_propagate_cost) (int *dst, uint16_t *propagateIn, int32_t *intraCosts, uint16_t *interCosts, int32_t *invQscales, double *fpsFactor, int len);
+typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
 /* Define a structure containing function pointers to optimized encoder
  * primitives.  Each pointer can reference either an assembly routine,

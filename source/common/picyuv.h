@@ -76,12 +76,21 @@ public:
     pixel*  getCrAddr(uint32_t ctuAddr)                        { return m_picOrg[2] + m_cuOffsetC[ctuAddr]; }
     pixel*  getChromaAddr(uint32_t chromaId, uint32_t ctuAddr) { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr]; }
     pixel*  getPlaneAddr(uint32_t plane, uint32_t ctuAddr)     { return m_picOrg[plane] + (plane ? m_cuOffsetC[ctuAddr] : m_cuOffsetY[ctuAddr]); }
+    const pixel* getLumaAddr(uint32_t ctuAddr) const           { return m_picOrg[0] + m_cuOffsetY[ctuAddr]; }
+    const pixel* getCbAddr(uint32_t ctuAddr) const             { return m_picOrg[1] + m_cuOffsetC[ctuAddr]; }
+    const pixel* getCrAddr(uint32_t ctuAddr) const             { return m_picOrg[2] + m_cuOffsetC[ctuAddr]; }
+    const pixel* getChromaAddr(uint32_t chromaId, uint32_t ctuAddr) const { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr]; }
+    const pixel* getPlaneAddr(uint32_t plane, uint32_t ctuAddr) const     { return m_picOrg[plane] + (plane ? m_cuOffsetC[ctuAddr] : m_cuOffsetY[ctuAddr]); }
 
     /* get pointer to CU start address */
     pixel*  getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return m_picOrg[0] + m_cuOffsetY[ctuAddr] + m_buOffsetY[absPartIdx]; }
     pixel*  getCbAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return m_picOrg[1] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
     pixel*  getCrAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return m_picOrg[2] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
     pixel*  getChromaAddr(uint32_t chromaId, uint32_t ctuAddr, uint32_t absPartIdx) { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
+    const pixel* getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_picOrg[0] + m_cuOffsetY[ctuAddr] + m_buOffsetY[absPartIdx]; }
+    const pixel* getCbAddr(uint32_t ctuAddr, uint32_t absPartIdx) const   { return m_picOrg[1] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
+    const pixel* getCrAddr(uint32_t ctuAddr, uint32_t absPartIdx) const   { return m_picOrg[2] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
+    const pixel* getChromaAddr(uint32_t chromaId, uint32_t ctuAddr, uint32_t absPartIdx) const { return m_picOrg[chromaId] + m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 };
 
 void updateChecksum(const pixel* plane, uint32_t& checksumVal, uint32_t height, uint32_t width, intptr_t stride, int row, uint32_t cuHeight);

@@ -84,7 +84,7 @@ void ShortYuv::copyPartToPartLuma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_
     const int16_t* src = getLumaAddr(absPartIdx);
     int16_t* dst = dstYuv.getLumaAddr(absPartIdx);
 
-    primitives.square_copy_ss[log2Size - 2](dst, dstYuv.m_size, const_cast<int16_t*>(src), m_size);
+    primitives.square_copy_ss[log2Size - 2](dst, dstYuv.m_size, src, m_size);
 }
 
 void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size) const
@@ -92,7 +92,7 @@ void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log
     const int16_t* src = getLumaAddr(absPartIdx);
     pixel* dst = dstYuv.getLumaAddr(absPartIdx);
 
-    primitives.square_copy_sp[log2Size - 2](dst, dstYuv.m_size, const_cast<int16_t*>(src), m_size);
+    primitives.square_copy_sp[log2Size - 2](dst, dstYuv.m_size, src, m_size);
 }
 
 void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const
@@ -103,8 +103,8 @@ void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t absPartIdx, uint3
     int16_t* dstU = dstYuv.getCbAddr(absPartIdx);
     int16_t* dstV = dstYuv.getCrAddr(absPartIdx);
 
-    primitives.chroma[m_csp].copy_ss[part](dstU, dstYuv.m_csize, const_cast<int16_t*>(srcU), m_csize);
-    primitives.chroma[m_csp].copy_ss[part](dstV, dstYuv.m_csize, const_cast<int16_t*>(srcV), m_csize);
+    primitives.chroma[m_csp].copy_ss[part](dstU, dstYuv.m_csize, srcU, m_csize);
+    primitives.chroma[m_csp].copy_ss[part](dstV, dstYuv.m_csize, srcV, m_csize);
 }
 
 void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const
@@ -115,6 +115,6 @@ void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t l
     pixel* dstU = dstYuv.getCbAddr(absPartIdx);
     pixel* dstV = dstYuv.getCrAddr(absPartIdx);
 
-    primitives.chroma[m_csp].copy_sp[part](dstU, dstYuv.m_csize, const_cast<int16_t*>(srcU), m_csize);
-    primitives.chroma[m_csp].copy_sp[part](dstV, dstYuv.m_csize, const_cast<int16_t*>(srcV), m_csize);
+    primitives.chroma[m_csp].copy_sp[part](dstU, dstYuv.m_csize, srcU, m_csize);
+    primitives.chroma[m_csp].copy_sp[part](dstV, dstYuv.m_csize, srcV, m_csize);
 }

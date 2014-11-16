@@ -82,13 +82,13 @@ public:
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride) const
+    inline int psyCost(int size, const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride) const
     {
         return primitives.psy_cost_pp[size](source, sstride, recon, rstride);
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride) const
+    inline int psyCost(int size, const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride) const
     {
         return primitives.psy_cost_ss[size](source, sstride, recon, rstride);
     }
