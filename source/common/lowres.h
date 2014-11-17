@@ -56,11 +56,10 @@ struct ReferencePlanes
         {
             int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
             pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
-
-            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
-            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-
-            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * lumaStride;
+            int qmvx = qmv.x + (qmv.x & 1);
+            int qmvy = qmv.y + (qmv.y & 1);
+            int hpelB = (qmvy & 2) | ((qmvx & 2) >> 1);
+            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * lumaStride;
             primitives.pixelavg_pp[LUMA_8x8](buf, outstride, frefA, lumaStride, frefB, lumaStride, 32);
             return buf;
         }
@@ -79,9 +78,10 @@ struct ReferencePlanes
             ALIGN_VAR_16(pixel, subpelbuf[8 * 8]);
             int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
             pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
-            MV qmvB = qmv + MV((qmv.x & 1) * 2, (qmv.y & 1) * 2);
-            int hpelB = (qmvB.y & 2) | ((qmvB.x & 2) >> 1);
-            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvB.x >> 2) + (qmvB.y >> 2) * lumaStride;
+            int qmvx = qmv.x + (qmv.x & 1);
+            int qmvy = qmv.y + (qmv.y & 1);
+            int hpelB = (qmvy & 2) | ((qmvx & 2) >> 1);
+            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * lumaStride;
             primitives.pixelavg_pp[LUMA_8x8](subpelbuf, 8, frefA, lumaStride, frefB, lumaStride, 32);
             return comp(fenc, FENC_STRIDE, subpelbuf, 8);
         }

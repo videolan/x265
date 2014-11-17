@@ -1592,12 +1592,13 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         }
         if (bBidir)
         {
-            pixel subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE], subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
+            ALIGN_VAR_32(pixel, subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
+            ALIGN_VAR_32(pixel, subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
             intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
             pixel *src0 = wfref0->lowresMC(pelOffset, *fenc_mvs[0], subpelbuf0, stride0);
             pixel *src1 = fref1->lowresMC(pelOffset, *fenc_mvs[1], subpelbuf1, stride1);
 
-            pixel ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
+            ALIGN_VAR_32(pixel, ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
             primitives.pixelavg_pp[LUMA_8x8](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
             int bicost = primitives.satd[LUMA_8x8](fenc->lowresPlane[0] + pelOffset, fenc->lumaStride, ref, X265_LOWRES_CU_SIZE);
             COPY2_IF_LT(bcost, bicost, listused, 3);
@@ -1652,9 +1653,9 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
 
         // generate 35 intra predictions into m_predictions
         pixelcmp_t satd = primitives.satd[partitionFromLog2Size(X265_LOWRES_CU_BITS)];
-        int icost = m_me.COST_MAX, cost;
+        int icost = m_me.COST_MAX;
         primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
-        cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
+        int cost = satd(m_me.fenc, FENC_STRIDE, m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
         pixel *above = (cuSize >= 8) ? above1 : above0;

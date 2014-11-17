@@ -1237,7 +1237,7 @@ void CUData::getMvField(const CUData* cu, uint32_t absPartIdx, int picList, MVFi
     else
     {
         // OUT OF BOUNDARY
-        outMvField.mv.word = 0;
+        outMvField.mv = 0;
         outMvField.refIdx = REF_NOT_VALID;
     }
 }
@@ -1399,6 +1399,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
 
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
+        mvFieldNeighbours[i][0].mv = 0;
+        mvFieldNeighbours[i][1].mv = 0;
         mvFieldNeighbours[i][0].refIdx = REF_NOT_VALID;
         mvFieldNeighbours[i][1].refIdx = REF_NOT_VALID;
     }
@@ -1646,7 +1648,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     while (count < maxNumMergeCand)
     {
         interDirNeighbours[count] = 1;
-        mvFieldNeighbours[count][0].mv.word = 0;
+        mvFieldNeighbours[count][0].mv = 0;
         mvFieldNeighbours[count][0].refIdx = r;
 
         if (isInterB)

@@ -54,7 +54,6 @@ public:
     int subpelRefine;
 
     int blockwidth;
-    int blockheight;
     int partEnum;
 
     static const int COST_MAX = 1 << 28;

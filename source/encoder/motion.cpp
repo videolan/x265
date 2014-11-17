@@ -43,7 +43,7 @@ struct SubpelWorkload
     bool hpel_satd;
 };
 
-SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
+static const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
 {
     { 1, 4, 0, 4, false }, // 4 SAD HPEL only
     { 1, 4, 1, 4, false }, // 4 SAD HPEL + 4 SATD QPEL
@@ -116,7 +116,6 @@ void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
     sad_x4 = primitives.sad_x4[partEnum];
 
     blockwidth = width;
-    blockheight = height;
     blockOffset = offset;
 
     /* copy PU block into cache */
@@ -291,7 +290,7 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel *fref = ref->fpelPlane + blockOffset;
-    size_t stride = ref->lumaStride;
+    intptr_t stride = ref->lumaStride;
 
     MV omv = bmv;
     int saved = bcost;
@@ -531,8 +530,8 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    MV &             outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    size_t stride = ref->lumaStride;
     pixel *fref = ref->fpelPlane + blockOffset;
+    intptr_t stride = ref->lumaStride;
 
     setMVP(qmvp);
 
@@ -560,9 +559,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     MV bmv = pmv.roundToFPel();
     int bcost = bprecost;
     if (pmv.isSubpel())
-    {
         bcost = sad(fenc, FENC_STRIDE, fref + bmv.x + bmv.y * stride, stride) + mvcost(bmv << 2);
-    }
 
     // measure SAD cost at MV(0) if MVP is not zero
     if (pmv.notZero())
@@ -576,21 +573,35 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     }
 
     // measure SAD cost at each QPEL motion vector candidate
-    for (int i = 0; i < numCandidates; i++)
+    if (ref->isLowres)
     {
-        MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m.notZero() && m != pmv && m != bestpre) // check already measured
+        for (int i = 0; i < numCandidates; i++)
         {
-            int cost;
-            if (ref->isLowres)
-                cost = ref->lowresQPelCost(fenc, blockOffset, m, sad) + mvcost(m);
-            else
-                cost = subpelCompare(ref, m, sad) + mvcost(m);
-
-            if (cost < bprecost)
+            MV m = mvc[i].clipped(qmvmin, qmvmax);
+            if (m.notZero() && m != pmv && m != bestpre) // check already measured
             {
-                bprecost = cost;
-                bestpre = m;
+                int cost = ref->lowresQPelCost(fenc, blockOffset, m, sad) + mvcost(m);
+                if (cost < bprecost)
+                {
+                    bprecost = cost;
+                    bestpre = m;
+                }
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < numCandidates; i++)
+        {
+            MV m = mvc[i].clipped(qmvmin, qmvmax);
+            if (m.notZero() && m != pmv && m != bestpre) // check already measured
+            {
+                int cost = subpelCompare(ref, m, sad) + mvcost(m);
+                if (cost < bprecost)
+                {
+                    bprecost = cost;
+                    bestpre = m;
+                }
             }
         }
     }
@@ -1042,7 +1053,7 @@ me_hex2:
     else
         bmv = bmv.toQPel(); // promote search bmv to qpel
 
-    SubpelWorkload& wl = workload[this->subpelRefine];
+    const SubpelWorkload& wl = workload[this->subpelRefine];
 
     if (!bcost)
     {
@@ -1052,11 +1063,11 @@ me_hex2:
     }
     else if (ref->isLowres)
     {
-        int bdir = 0, cost;
+        int bdir = 0;
         for (int i = 1; i <= wl.hpel_dirs; i++)
         {
             MV qmv = bmv + square1[i] * 2;
-            cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
+            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
@@ -1067,7 +1078,7 @@ me_hex2:
         for (int i = 1; i <= wl.qpel_dirs; i++)
         {
             MV qmv = bmv + square1[i];
-            cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
+            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
@@ -1087,11 +1098,11 @@ me_hex2:
 
         for (int iter = 0; iter < wl.hpel_iters; iter++)
         {
-            int bdir = 0, cost;
+            int bdir = 0;
             for (int i = 1; i <= wl.hpel_dirs; i++)
             {
                 MV qmv = bmv + square1[i] * 2;
-                cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
+                int cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }
 
@@ -1107,11 +1118,11 @@ me_hex2:
 
         for (int iter = 0; iter < wl.qpel_iters; iter++)
         {
-            int bdir = 0, cost;
+            int bdir = 0;
             for (int i = 1; i <= wl.qpel_dirs; i++)
             {
                 MV qmv = bmv + square1[i];
-                cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
+                int cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }
 
@@ -1129,14 +1140,13 @@ me_hex2:
 
 int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
 {
+    intptr_t stride = ref->lumaStride;
+    pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * stride;
     int xFrac = qmv.x & 0x3;
     int yFrac = qmv.y & 0x3;
 
     if ((yFrac | xFrac) == 0)
-    {
-        pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
-        return cmp(fenc, FENC_STRIDE, fref, ref->lumaStride);
-    }
+        return cmp(fenc, FENC_STRIDE, fref, stride);
     else
     {
         /* We are taking a short-cut here if the reference is weighted. To be
@@ -1145,22 +1155,17 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
          * are simply interpolating the weighted full-pel pixels. Not 100%
          * accurate but good enough for fast qpel ME */
         ALIGN_VAR_32(pixel, subpelbuf[64 * 64]);
-        pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * ref->lumaStride;
         if (yFrac == 0)
-        {
-            primitives.luma_hpp[partEnum](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, xFrac);
-        }
+            primitives.luma_hpp[partEnum](fref, stride, subpelbuf, FENC_STRIDE, xFrac);
         else if (xFrac == 0)
-        {
-            primitives.luma_vpp[partEnum](fref, ref->lumaStride, subpelbuf, FENC_STRIDE, yFrac);
-        }
+            primitives.luma_vpp[partEnum](fref, stride, subpelbuf, FENC_STRIDE, yFrac);
         else
         {
             ALIGN_VAR_32(int16_t, immed[64 * (64 + 8)]);
 
             int filterSize = NTAPS_LUMA;
             int halfFilterSize = filterSize >> 1;
-            primitives.luma_hps[partEnum](fref, ref->lumaStride, immed, blockwidth, xFrac, 1);
+            primitives.luma_hps[partEnum](fref, stride, immed, blockwidth, xFrac, 1);
             primitives.luma_vsp[partEnum](immed + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, yFrac);
         }
         return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
