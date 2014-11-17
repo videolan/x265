@@ -350,9 +350,6 @@ struct SAOParam
 struct analysis_inter_data
 {
     int      ref;
-    int      costZero;
-    int16_t  mvx;
-    int16_t  mvy;
 };
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */

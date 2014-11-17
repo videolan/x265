@@ -1454,10 +1454,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].mv.x = m_reuseInterDataCTU->mvx;
-                bestME[i].mv.y = m_reuseInterDataCTU->mvy;
                 bestME[i].ref = m_reuseInterDataCTU->ref;
-                bestME[i].costZero = !!m_reuseInterDataCTU->costZero;
                 m_reuseInterDataCTU++;
             }
         }
@@ -1477,10 +1474,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[part];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_reuseInterDataCTU->mvx = bestME[i].mv.x;
-                    m_reuseInterDataCTU->mvy = bestME[i].mv.y;
                     m_reuseInterDataCTU->ref = bestME[i].ref;
-                    m_reuseInterDataCTU->costZero = bestME[i].costZero;
                     m_reuseInterDataCTU++;
                 }
             }
@@ -1507,10 +1501,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].mv.x = m_reuseInterDataCTU->mvx;
-                bestME[i].mv.y = m_reuseInterDataCTU->mvy;
                 bestME[i].ref = m_reuseInterDataCTU->ref;
-                bestME[i].costZero = !!m_reuseInterDataCTU->costZero;
                 m_reuseInterDataCTU++;
             }
         }
@@ -1526,10 +1517,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[part];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_reuseInterDataCTU->mvx = bestME[i].mv.x;
-                    m_reuseInterDataCTU->mvy = bestME[i].mv.y;
                     m_reuseInterDataCTU->ref = bestME[i].ref;
-                    m_reuseInterDataCTU->costZero = bestME[i].costZero;
                     m_reuseInterDataCTU++;
                 }
             }

@@ -2001,7 +2001,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[l]);
 
-                cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
+                int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
                 uint32_t bestCost = MAX_INT;
@@ -2028,18 +2028,14 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 }
 
                 MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[l][ref][mvpIdx];
-                m_me.setMVP(mvp);
-                MV bmv(bestME[l].mv.x, bestME[l].mv.y);
 
                 int satdCost;
-                if (bestME[l].costZero)
-                    satdCost = m_me.mvcost(bmv);
-                else
-                    satdCost = bestME[l].cost;
+                setSearchRange(cu, mvp, merange, mvmin, mvmax);
+                satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
-                bits += m_me.bitcost(bmv);
-                uint32_t cost = (satdCost - m_me.mvcost(bmv)) + m_rdCost.getCost(bits);
+                bits += m_me.bitcost(outmv);
+                uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
                 checkBestMVP(interMode.amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
@@ -2049,7 +2045,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     bestME[l].mv = outmv;
                     bestME[l].mvp = mvp;
                     bestME[l].mvpIdx = mvpIdx;
-                    bestME[l].ref = ref;
                     bestME[l].cost = cost;
                     bestME[l].bits = bits;
                 }
