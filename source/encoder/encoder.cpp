@@ -452,6 +452,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             else
                 m_rateControl->calcAdaptiveQuantFrame(inFrame);
         }
+
+        /* Use the frame types from the first pass, if available */
+        int sliceType = (m_param->rc.bStatRead) ? m_rateControl->rateControlSliceType(inFrame->m_poc) : pic_in->sliceType;
+
         /* In analysisSave mode, x265_analysis_data is allocated in pic_in and inFrame points to this */
         /* Load analysis data before lookahead->addPicture, since sliceType has been decided */
         if (m_param->analysisMode == X265_ANALYSIS_LOAD)
@@ -465,10 +469,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_analysisData.numPartitions = inputPic->analysisData.numPartitions;
             inFrame->m_analysisData.interData = inputPic->analysisData.interData;
             inFrame->m_analysisData.intraData = inputPic->analysisData.intraData;
+            sliceType = inputPic->analysisData.sliceType;
         }
 
-        /* Use the frame types from the first pass, if available */
-        int sliceType = (m_param->rc.bStatRead) ? m_rateControl->rateControlSliceType(inFrame->m_poc) : pic_in->sliceType;
         m_lookahead->addPicture(inFrame, sliceType);
         m_numDelayedPic++;
     }
