@@ -80,6 +80,7 @@ Encoder::Encoder()
     m_buOffsetC = NULL;
     m_threadPool = 0;
     m_numThreadLocalData = 0;
+    m_analysisFile = NULL;
 }
 
 void Encoder::create()
