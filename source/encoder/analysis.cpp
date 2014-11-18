@@ -489,8 +489,6 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
     }
 }
 
-#define MATCH_NON_PMODE 0
-
 void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
@@ -573,31 +571,13 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
             if (bTryAmp)
             {
-#if MATCH_NON_PMODE
-                bool bHor = false, bVer = false;
-                if (bestInter->cu.m_partSize[0] == SIZE_2NxN)
-                    bHor = true;
-                else if (bestInter->cu.m_partSize[0] == SIZE_Nx2N)
-                    bVer = true;
-                else if (bestInter->cu.m_partSize[0] == SIZE_2Nx2N &&
-                         md.bestMode && md.bestMode->cu.getQtRootCbf(0))
-                {
-                    bHor = true;
-                    bVer = true;
-                }
-#define HOR && bHor
-#define VER && bVer
-#else
-#define HOR
-#define VER
-#endif
-                if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost HOR)
+                if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxnU];
-                if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost HOR)
+                if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxnD];
-                if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost VER)
+                if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_nLx2N];
-                if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost VER)
+                if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_nRx2N];
             }
 
@@ -620,11 +600,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                     checkBestMode(md.pred[PRED_BIDIR], depth);
                 }
 
-#if MATCH_NON_PMODE
-                if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) || md.bestMode->sa8dCost == MAX_INT64)
-#else
                 if (bTryIntra)
-#endif
                     checkBestMode(md.pred[PRED_INTRA], depth);
             }
             else /* m_param->rdLevel == 2 */
@@ -668,26 +644,10 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
             if (bTryAmp)
             {
-#if MATCH_NON_PMODE
-                bool bHor = false, bVer = false;
-                if (md.bestMode->cu.m_partSize[0] == SIZE_2NxN)
-                    bHor = true;
-                else if (md.bestMode->cu.m_partSize[0] == SIZE_Nx2N)
-                    bVer = true;
-                else if (md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N && !md.bestMode->cu.m_mergeFlag[0] && !md.bestMode->cu.isSkipped(0))
-                {
-                    bHor = true;
-                    bVer = true;
-                }
-#undef HOR
-#undef VER
-#define VER if (bVer)
-#define HOR if (bHor)
-#endif
-                VER checkBestMode(md.pred[PRED_2NxnU], depth);
-                VER checkBestMode(md.pred[PRED_2NxnD], depth);
-                HOR checkBestMode(md.pred[PRED_nLx2N], depth);
-                HOR checkBestMode(md.pred[PRED_nRx2N], depth);
+                checkBestMode(md.pred[PRED_2NxnU], depth);
+                checkBestMode(md.pred[PRED_2NxnD], depth);
+                checkBestMode(md.pred[PRED_nLx2N], depth);
+                checkBestMode(md.pred[PRED_nRx2N], depth);
             }
 
             if (bTryIntra)
