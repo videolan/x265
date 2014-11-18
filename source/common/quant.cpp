@@ -166,7 +166,7 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     m_useRDOQ = useRDOQ;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;
-    m_resiDctCoeff = X265_MALLOC(int32_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
+    m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
 
@@ -340,7 +340,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
     if (useTransformSkip)
     {
 #if X265_DEPTH <= 10
-        primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+        primitives.cpy16to16_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
 #else
         if (transformShift >= 0)
             primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
@@ -441,10 +441,10 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         int trSize = 1 << log2TrSize;
 
 #if X265_DEPTH <= 10
-        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+        primitives.copy_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
 #else
         if (transformShift > 0)
-            primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+            primitives.copy_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
         else
             primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -transformShift);
 #endif

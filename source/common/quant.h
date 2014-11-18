@@ -83,8 +83,8 @@ protected:
 
     bool               m_useRDOQ;
     int64_t            m_psyRdoqScale;
-    int32_t*           m_resiDctCoeff;
-    int32_t*           m_fencDctCoeff;
+    int16_t*           m_resiDctCoeff;
+    int16_t*           m_fencDctCoeff;
     int16_t*           m_fencShortBuf;
 
     enum { IEP_RATE = 32768 }; /* FIX15 cost of an equal probable bit */

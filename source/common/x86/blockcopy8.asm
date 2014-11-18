@@ -3669,85 +3669,11 @@ BLOCKCOPY_SS_W64_H4_avx 64, 32
 BLOCKCOPY_SS_W64_H4_avx 64, 48
 BLOCKCOPY_SS_W64_H4_avx 64, 64
 
-;-----------------------------------------------------------------------------
-; void cvt32to16_shr(short *dst, int *src, intptr_t stride, int shift, int size)
-;-----------------------------------------------------------------------------
-INIT_XMM sse2
-cglobal cvt32to16_shr, 4, 7, 3, dst, src, stride
-%define rnd     m2
-%define shift   m1
-
-    ; make shift
-    mov         r5d, r3m
-    movd        shift, r5d
-
-    ; make round
-    dec         r5
-    xor         r6, r6
-    bts         r6, r5
-    
-    movd        rnd, r6d
-    pshufd      rnd, rnd, 0
-
-    ; register alloc
-    ; r0 - dst
-    ; r1 - src
-    ; r2 - stride * 2 (short*)
-    ; r3 - lx
-    ; r4 - size
-    ; r5 - ly
-    ; r6 - diff
-    add         r2d, r2d
-
-    mov         r4d, r4m
-    mov         r5, r4
-    mov         r6, r2
-    sub         r6, r4
-    add         r6, r6
-
-    shr         r5, 1
-.loop_row:
-
-    mov         r3, r4
-    shr         r3, 2
-.loop_col:
-    ; row 0
-    movu        m0, [r1]
-    paddd       m0, rnd
-    psrad       m0, shift
-    packssdw    m0, m0
-    movh        [r0], m0
-
-    ; row 1
-    movu        m0, [r1 + r4 * 4]
-    paddd       m0, rnd
-    psrad       m0, shift
-    packssdw    m0, m0
-    movh        [r0 + r2], m0
-
-    ; move col pointer
-    add         r1, 16
-    add         r0, 8
-
-    dec         r3
-    jg          .loop_col
-
-    ; update pointer
-    lea         r1, [r1 + r4 * 4]
-    add         r0, r6
-
-    ; end of loop_row
-    dec         r5
-    jg         .loop_row
-    
-    RET
-
-
 ;--------------------------------------------------------------------------------------
-; void cvt16to32_shl(int32_t *dst, int16_t *src, intptr_t stride, int shift, int size);
+; void copy16to16_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size);
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
+cglobal copy16to16_shl, 5, 7, 2, dst, src, stride, shift, size
 %define shift       m1
 
     ; make shift
@@ -3764,16 +3690,16 @@ cglobal cvt16to32_shl, 5, 7, 2, dst, src, stride, shift, size
     sub             r2d,      r4d
     add             r2d,      r2d
     mov             r5d,      r4d
-    shr             r4d,      2
+    shr             r4d,      3
 .loop_row:
     mov             r6d,      r4d
 
 .loop_col:
-    pmovsxwd        m0,       [r1]
-    pslld           m0,       shift
+    movu            m0,       [r1]
+    psllw           m0,       shift
     movu            [r0],     m0
 
-    add             r1,       8
+    add             r1,       16
     add             r0,       16
 
     dec             r6d

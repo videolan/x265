@@ -52,7 +52,7 @@ ALIGN_VAR_32(static const int16_t, tab_idct_8x8[12][8]) =
     {  83,  36,  83,  36, 83,  36, 83,  36 },
     {  36, -83,  36, -83, 36, -83, 36, -83 }
 };
-void idct8(int32_t *src, int16_t *dst, intptr_t stride)
+void idct8(int16_t *src, int16_t *dst, intptr_t stride)
 {
     __m128i m128iS0, m128iS1, m128iS2, m128iS3, m128iS4, m128iS5, m128iS6, m128iS7, m128iAdd, m128Tmp0, m128Tmp1, m128Tmp2, m128Tmp3, E0h, E1h, E2h, E3h, E0l, E1l, E2l, E3l, O0h, O1h, O2h, O3h, O0l, O1l, O2l, O3l, EE0l, EE1l, E00l, E01l, EE0h, EE1h, E00h, E01h;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
@@ -305,7 +305,7 @@ void idct8(int32_t *src, int16_t *dst, intptr_t stride)
     _mm_storeh_pi((__m64*)&dst[7 * stride +  4], _mm_castsi128_ps(T11));
 }
 
-void idct16(int32_t *src, int16_t *dst, intptr_t stride)
+void idct16(int16_t *src, int16_t *dst, intptr_t stride)
 {
     const __m128i c16_p87_p90   = _mm_set1_epi32(0x0057005A); //row0 87high - 90low address
     const __m128i c16_p70_p80   = _mm_set1_epi32(0x00460050);
@@ -367,71 +367,22 @@ void idct16(int32_t *src, int16_t *dst, intptr_t stride)
     for (int i = 0; i < 2; i++)
     {
         const int offset = (i << 3);
-        __m128i T00, T01;
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset + 4]);
-        in00[i]  = _mm_packs_epi32(T00, T01);                       // [07 06 05 04 03 02 01 00]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset + 4]);
-        in01[i]  = _mm_packs_epi32(T00, T01);                           // [17 16 15 14 13 12 11 10]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset + 4]);
-        in02[i]  = _mm_packs_epi32(T00, T01);                       // [27 26 25 24 23 22 21 20]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset + 4]);
-        in03[i]  = _mm_packs_epi32(T00, T01);                       // [37 36 35 34 33 32 31 30]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset + 4]);
-        in04[i]  = _mm_packs_epi32(T00, T01);                       // [47 46 45 44 43 42 41 40]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset + 4]);
-        in05[i]  = _mm_packs_epi32(T00, T01);                       // [57 56 55 54 53 52 51 50]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset + 4]);
-        in06[i]  = _mm_packs_epi32(T00, T01);                       // [67 66 65 64 63 62 61 60]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset + 4]);
-        in07[i]  = _mm_packs_epi32(T00, T01);                       // [77 76 75 74 73 72 71 70]
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset + 4]);
-        in08[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset + 4]);
-        in09[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset + 4]);
-        in10[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset + 4]);
-        in11[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset + 4]);
-        in12[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset + 4]);
-        in13[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset + 4]);
-        in14[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset + 4]);
-        in15[i]  = _mm_packs_epi32(T00, T01);
+        in00[i]  = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset]); // [07 06 05 04 03 02 01 00]
+        in01[i]  = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset]); // [17 16 15 14 13 12 11 10]
+        in02[i]  = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset]); // [27 26 25 24 23 22 21 20]
+        in03[i]  = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset]); // [37 36 35 34 33 32 31 30]
+        in04[i]  = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset]); // [47 46 45 44 43 42 41 40]
+        in05[i]  = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset]); // [57 56 55 54 53 52 51 50]
+        in06[i]  = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset]); // [67 66 65 64 63 62 61 60]
+        in07[i]  = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset]); // [77 76 75 74 73 72 71 70]
+        in08[i]  = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset]);
+        in09[i]  = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset]);
+        in10[i]  = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset]);
+        in11[i]  = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset]);
+        in12[i]  = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset]);
+        in13[i]  = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset]);
+        in14[i]  = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset]);
+        in15[i]  = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset]);
     }
 
     for (int pass = 0; pass < 2; pass++)
@@ -716,7 +667,7 @@ void idct16(int32_t *src, int16_t *dst, intptr_t stride)
     _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
 }
 
-void idct32(int32_t *src, int16_t *dst, intptr_t stride)
+void idct32(int16_t *src, int16_t *dst, intptr_t stride)
 {
     //Odd
     const __m128i c16_p90_p90   = _mm_set1_epi32(0x005A005A); //column 0
@@ -909,135 +860,38 @@ void idct32(int32_t *src, int16_t *dst, intptr_t stride)
     for (int i = 0; i < 4; i++)
     {
         const int offset = (i << 3);
-        __m128i T00, T01;
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[0 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[0 * 32 + offset + 4]);
-        in00[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[1 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[1 * 32 + offset + 4]);
-        in01[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[2 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[2 * 32 + offset + 4]);
-        in02[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[3 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[3 * 32 + offset + 4]);
-        in03[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[4 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[4 * 32 + offset + 4]);
-        in04[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[5 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[5 * 32 + offset + 4]);
-        in05[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[6 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[6 * 32 + offset + 4]);
-        in06[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[7 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[7 * 32 + offset + 4]);
-        in07[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[8 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[8 * 32 + offset + 4]);
-        in08[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[9 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[9 * 32 + offset + 4]);
-        in09[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[10 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[10 * 32 + offset + 4]);
-        in10[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[11 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[11 * 32 + offset + 4]);
-        in11[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[12 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[12 * 32 + offset + 4]);
-        in12[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[13 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[13 * 32 + offset + 4]);
-        in13[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[14 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[14 * 32 + offset + 4]);
-        in14[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[15 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[15 * 32 + offset + 4]);
-        in15[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[16 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[16 * 32 + offset + 4]);
-        in16[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[17 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[17 * 32 + offset + 4]);
-        in17[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[18 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[18 * 32 + offset + 4]);
-        in18[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[19 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[19 * 32 + offset + 4]);
-        in19[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[20 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[20 * 32 + offset + 4]);
-        in20[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[21 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[21 * 32 + offset + 4]);
-        in21[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[22 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[22 * 32 + offset + 4]);
-        in22[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[23 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[23 * 32 + offset + 4]);
-        in23[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[24 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[24 * 32 + offset + 4]);
-        in24[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[25 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[25 * 32 + offset + 4]);
-        in25[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[26 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[26 * 32 + offset + 4]);
-        in26[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[27 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[27 * 32 + offset + 4]);
-        in27[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[28 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[28 * 32 + offset + 4]);
-        in28[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[29 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[29 * 32 + offset + 4]);
-        in29[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[30 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[30 * 32 + offset + 4]);
-        in30[i]  = _mm_packs_epi32(T00, T01);
-
-        T00 = _mm_loadu_si128((const __m128i*)&src[31 * 32 + offset]);
-        T01 = _mm_loadu_si128((const __m128i*)&src[31 * 32 + offset + 4]);
-        in31[i]  = _mm_packs_epi32(T00, T01);
+        in00[i]  = _mm_loadu_si128((const __m128i*)&src[0  * 32 + offset]);
+        in01[i]  = _mm_loadu_si128((const __m128i*)&src[1  * 32 + offset]);
+        in02[i]  = _mm_loadu_si128((const __m128i*)&src[2  * 32 + offset]);
+        in03[i]  = _mm_loadu_si128((const __m128i*)&src[3  * 32 + offset]);
+        in04[i]  = _mm_loadu_si128((const __m128i*)&src[4  * 32 + offset]);
+        in05[i]  = _mm_loadu_si128((const __m128i*)&src[5  * 32 + offset]);
+        in06[i]  = _mm_loadu_si128((const __m128i*)&src[6  * 32 + offset]);
+        in07[i]  = _mm_loadu_si128((const __m128i*)&src[7  * 32 + offset]);
+        in08[i]  = _mm_loadu_si128((const __m128i*)&src[8  * 32 + offset]);
+        in09[i]  = _mm_loadu_si128((const __m128i*)&src[9  * 32 + offset]);
+        in10[i]  = _mm_loadu_si128((const __m128i*)&src[10 * 32 + offset]);
+        in11[i]  = _mm_loadu_si128((const __m128i*)&src[11 * 32 + offset]);
+        in12[i]  = _mm_loadu_si128((const __m128i*)&src[12 * 32 + offset]);
+        in13[i]  = _mm_loadu_si128((const __m128i*)&src[13 * 32 + offset]);
+        in14[i]  = _mm_loadu_si128((const __m128i*)&src[14 * 32 + offset]);
+        in15[i]  = _mm_loadu_si128((const __m128i*)&src[15 * 32 + offset]);
+        in16[i]  = _mm_loadu_si128((const __m128i*)&src[16 * 32 + offset]);
+        in17[i]  = _mm_loadu_si128((const __m128i*)&src[17 * 32 + offset]);
+        in18[i]  = _mm_loadu_si128((const __m128i*)&src[18 * 32 + offset]);
+        in19[i]  = _mm_loadu_si128((const __m128i*)&src[19 * 32 + offset]);
+        in20[i]  = _mm_loadu_si128((const __m128i*)&src[20 * 32 + offset]);
+        in21[i]  = _mm_loadu_si128((const __m128i*)&src[21 * 32 + offset]);
+        in22[i]  = _mm_loadu_si128((const __m128i*)&src[22 * 32 + offset]);
+        in23[i]  = _mm_loadu_si128((const __m128i*)&src[23 * 32 + offset]);
+        in24[i]  = _mm_loadu_si128((const __m128i*)&src[24 * 32 + offset]);
+        in25[i]  = _mm_loadu_si128((const __m128i*)&src[25 * 32 + offset]);
+        in26[i]  = _mm_loadu_si128((const __m128i*)&src[26 * 32 + offset]);
+        in27[i]  = _mm_loadu_si128((const __m128i*)&src[27 * 32 + offset]);
+        in28[i]  = _mm_loadu_si128((const __m128i*)&src[28 * 32 + offset]);
+        in29[i]  = _mm_loadu_si128((const __m128i*)&src[29 * 32 + offset]);
+        in30[i]  = _mm_loadu_si128((const __m128i*)&src[30 * 32 + offset]);
+        in31[i]  = _mm_loadu_si128((const __m128i*)&src[31 * 32 + offset]);
     }
 
     for (int pass = 0; pass < 2; pass++)
@@ -1564,7 +1418,7 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
      * still somewhat rare on end-user PCs we still compile and link these SSE3
      * intrinsic SIMD functions */
 #if !HIGH_BIT_DEPTH
-    p.idct[IDCT_8x8] = idct8;
+//    p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = idct16;
     p.idct[IDCT_32x32] = idct32;
 #endif

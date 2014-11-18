@@ -420,7 +420,7 @@ cglobal getResidual32, 4,5,7
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t quant(int32_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t quant(int16_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal quant, 5,6,8
@@ -442,7 +442,7 @@ cglobal quant, 5,6,8
     pxor        m7, m7          ; m7 = numZero
 .loop:
     ; 4 coeff
-    movu        m0, [r0]        ; m0 = level
+    pmovsxwd    m0, [r0]        ; m0 = level
     pabsd       m1, m0
     pmulld      m1, [r1]        ; m0 = tmpLevel1
     paddd       m2, m1, m5
@@ -460,7 +460,7 @@ cglobal quant, 5,6,8
     movh        [r3], m3
 
     ; 4 coeff
-    movu        m0, [r0 + 16]   ; m0 = level
+    pmovsxwd    m0, [r0 + 8]    ; m0 = level
     pabsd       m1, m0
     pmulld      m1, [r1 + 16]   ; m0 = tmpLevel1
     paddd       m2, m1, m5
@@ -475,7 +475,7 @@ cglobal quant, 5,6,8
     packssdw    m3, m3
     movh        [r3 + 8], m3
 
-    add         r0, 32
+    add         r0, 16
     add         r1, 32
     add         r2, 32
     add         r3, 16
@@ -512,7 +512,7 @@ cglobal quant, 5,5,10
     pxor            m7, m7              ; m7 = numZero
 .loop:
     ; 8 coeff
-    movu            m0, [r0]            ; m0 = level
+    pmovsxwd        m0, [r0]            ; m0 = level
     pabsd           m1, m0
     pmulld          m1, [r1]            ; m0 = tmpLevel1
     paddd           m2, m1, m5
@@ -525,7 +525,7 @@ cglobal quant, 5,5,10
     psignd          m2, m0
 
     ; 8 coeff
-    movu            m0, [r0 + mmsize]   ; m0 = level
+    pmovsxwd        m0, [r0 + mmsize/2] ; m0 = level
     pabsd           m1, m0
     pmulld          m1, [r1 + mmsize]   ; m0 = tmpLevel1
     paddd           m3, m1, m5
@@ -546,7 +546,7 @@ cglobal quant, 5,5,10
     pminuw          m2, m9
     paddw           m7, m2
 
-    add             r0, mmsize*2
+    add             r0, mmsize
     add             r1, mmsize*2
     add             r2, mmsize*2
     add             r3, mmsize
@@ -584,7 +584,7 @@ cglobal quant, 5,6,8
     pxor            m7, m7          ; m7 = numZero
 .loop:
     ; 8 coeff
-    movu            m0, [r0]        ; m0 = level
+    pmovsxwd        m0, [r0]        ; m0 = level
     pabsd           m1, m0
     pmulld          m1, [r1]        ; m0 = tmpLevel1
     paddd           m2, m1, m5
@@ -603,7 +603,7 @@ cglobal quant, 5,6,8
     movu            [r3], xm3
 
     ; 8 coeff
-    movu            m0, [r0 + mmsize]        ; m0 = level
+    pmovsxwd        m0, [r0 + mmsize/2]        ; m0 = level
     pabsd           m1, m0
     pmulld          m1, [r1 + mmsize]        ; m0 = tmpLevel1
     paddd           m2, m1, m5
@@ -621,7 +621,7 @@ cglobal quant, 5,6,8
     vpermq          m3, m3, q0020
     movu            [r3 + mmsize/2], xm3
 
-    add             r0, mmsize*2
+    add             r0, mmsize
     add             r1, mmsize*2
     add             r2, mmsize*2
     add             r3, mmsize
@@ -642,7 +642,7 @@ IACA_END
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t nquant(int32_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
+; uint32_t nquant(int16_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal nquant, 3,5,8
@@ -655,8 +655,8 @@ cglobal nquant, 3,5,8
     shr         r4d, 3
 
 .loop:
-    movu        m0, [r0]        ; m0 = level
-    movu        m1, [r0 + 16]   ; m1 = level
+    pmovsxwd    m0, [r0]        ; m0 = level
+    pmovsxwd    m1, [r0 + 8]    ; m1 = level
 
     pabsd       m2, m0
     pmulld      m2, [r1]        ; m0 = tmpLevel1 * qcoeff
@@ -673,7 +673,7 @@ cglobal nquant, 3,5,8
     packssdw    m2, m3
 
     movu        [r2], m2
-    add         r0, 32
+    add         r0, 16
     add         r1, 32
     add         r2, 16
 
@@ -703,14 +703,14 @@ cglobal nquant, 3,5,7
     shr         r4d, 4
 
 .loop:
-    movu        m0, [r0]            ; m0 = level
+    pmovsxwd    m0, [r0]            ; m0 = level
     pabsd       m1, m0
     pmulld      m1, [r1]            ; m0 = tmpLevel1 * qcoeff
     paddd       m1, m4
     psrad       m1, xm3             ; m0 = level1
     psignd      m1, m0
 
-    movu        m0, [r0 + mmsize]   ; m0 = level
+    pmovsxwd    m0, [r0 + mmsize/2] ; m0 = level
     pabsd       m2, m0
     pmulld      m2, [r1 + mmsize]   ; m0 = tmpLevel1 * qcoeff
     paddd       m2, m4
@@ -721,7 +721,7 @@ cglobal nquant, 3,5,7
     vpermq      m2, m1, q3120
 
     movu        [r2], m2
-    add         r0, mmsize * 2
+    add         r0, mmsize
     add         r1, mmsize * 2
     add         r2, mmsize
 
@@ -770,15 +770,11 @@ cglobal dequant_normal, 5,5,5
     pmaddwd     m4, m1
     psrad       m3, m0
     psrad       m4, m0
-    packssdw    m3, m3              ; OPT_ME: store must be 32 bits
-    pmovsxwd    m3, m3
-    packssdw    m4, m4
-    pmovsxwd    m4, m4
+    packssdw    m3, m4
     mova        [r1], m3
-    mova        [r1 + 16], m4
 
     add         r0, 16
-    add         r1, 32
+    add         r1, 16
 
     sub         r2d, 8
     jnz        .loop
@@ -818,13 +814,12 @@ cglobal dequant_normal, 5,5,7
     pmaxsd          m3, m6
     pminsd          m4, m5
     pmaxsd          m4, m6
+    packssdw        m3, m4
     mova            [r1 + 0 * mmsize/2], xm3
-    mova            [r1 + 1 * mmsize/2], xm4
-    vextracti128    [r1 + 2 * mmsize/2], m3, 1
-    vextracti128    [r1 + 3 * mmsize/2], m4, 1
+    vextracti128    [r1 + 1 * mmsize/2], m3, 1
 
     add             r0, mmsize
-    add             r1, mmsize * 2
+    add             r1, mmsize
 
     dec             r2d
     jnz            .loop
