@@ -204,11 +204,13 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
     m_frame = curFrame;
     curFrame->m_encData->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     curFrame->m_encData->m_slice->m_mref = m_mref;
+
     if (!m_cuGeoms)
     {
         if (!initializeGeoms())
             return false;
     }
+
     m_enable.trigger();
     return true;
 }
