@@ -481,13 +481,13 @@ typedef struct x265_param
 
     /* The additional depth the residual quadtree is allowed to recurse beyond
      * the coding quadtree, for inter coded blocks. This must be between 1 and
-     * 3. The higher the value the more efficiently the residual can be
+     * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxInterDepth;
 
     /* The additional depth the residual quadtree is allowed to recurse beyond
      * the coding quadtree, for intra coded blocks. This must be between 1 and
-     * 3. The higher the value the more efficiently the residual can be
+     * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
 
