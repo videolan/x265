@@ -546,9 +546,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             }
         }
     }
-    OPT("csv") p->csvfn = value;
-    OPT("scaling-list") p->scalingLists = value;
-    OPT("lambda-file") p->rc.lambdaFileName = value;
     OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
     OPT("pmode") p->bDistributeModeAnalysis = atobool(value);
@@ -697,7 +694,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cutree")    p->rc.cuTree = atobool(value);
     OPT("slow-firstpass") p->rc.bEnableSlowFirstPass = atobool(value);
     OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
-    OPT("analysis-file") p->analysisFileName = strdup(value);
     OPT("sar")
     {
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);
@@ -772,6 +768,10 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         p->rc.bStatRead = pass & 2;
     }
     OPT("stats") p->rc.statFileName = strdup(value);
+    OPT("csv") p->csvfn = strdup(value);
+    OPT("scaling-list") p->scalingLists = strdup(value);
+    OPT("lambda-file") p->rc.lambdaFileName = strdup(value);
+    OPT("analysis-file") p->analysisFileName = strdup(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
