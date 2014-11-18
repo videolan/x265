@@ -457,9 +457,8 @@ void dst4_c(int16_t *src, int16_t *dst, intptr_t stride)
     fastForwardDst(coef, dst, shift_2nd);
 }
 
-void dct4_c(int16_t *src, int16_t *dst, intptr_t stride)
+void dct4_c(int16_t *src, int16_t *dst, intptr_t /* stride */)
 {
-    stride; // To eliminate warnings and match the interface with asm code.
     const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
 
@@ -469,9 +468,8 @@ void dct4_c(int16_t *src, int16_t *dst, intptr_t stride)
     partialButterfly4(coef, dst, shift_2nd, 4);
 }
 
-void dct8_c(int16_t *src, int16_t *dst, intptr_t stride)
+void dct8_c(int16_t *src, int16_t *dst, intptr_t /* stride */)
 {
-    stride; // To eliminate warnings and match the interface with asm code.
     const int shift_1st = 2 + X265_DEPTH - 8;
     const int shift_2nd = 9;
 
@@ -481,9 +479,8 @@ void dct8_c(int16_t *src, int16_t *dst, intptr_t stride)
     partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
-void dct16_c(int16_t *src, int16_t *dst, intptr_t stride)
+void dct16_c(int16_t *src, int16_t *dst, intptr_t /* stride */)
 {
-    stride; // To eliminate warnings and match the interface with asm code.
     const int shift_1st = 3 + X265_DEPTH - 8;
     const int shift_2nd = 10;
 
@@ -493,9 +490,8 @@ void dct16_c(int16_t *src, int16_t *dst, intptr_t stride)
     partialButterfly16(coef, dst, shift_2nd, 16);
 }
 
-void dct32_c(int16_t *src, int16_t *dst, intptr_t stride)
+void dct32_c(int16_t *src, int16_t *dst, intptr_t /* stride */)
 {
-    stride; // To eliminate warnings and match the interface with asm code.
     const int shift_1st = 4 + X265_DEPTH - 8;
     const int shift_2nd = 11;
 
