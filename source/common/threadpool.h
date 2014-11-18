@@ -1,6 +1,4 @@
 /*****************************************************************************
- * x265: singleton thread pool and interface classes
- *****************************************************************************
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
