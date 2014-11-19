@@ -77,7 +77,7 @@ void WaveFront::enableAllRows()
 bool WaveFront::dequeueRow(int row)
 {
     uint32_t bit = 1 << (row & 31);
-    return ATOMIC_AND(&m_internalDependencyBitmap[row >> 5], ~bit) & bit;
+    return !!(ATOMIC_AND(&m_internalDependencyBitmap[row >> 5], ~bit) & bit);
 }
 
 bool WaveFront::findJob(int threadId)
