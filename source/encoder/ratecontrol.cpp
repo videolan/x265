@@ -1885,13 +1885,15 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
                 }
                 totalSatdBits += int32_t(pred_s);
             }
-            else
+            else if (picType == P_SLICE)
             {
                 /* Our QP is lower than the reference! */
                 double pred_intra = predictSize(rce->rowPred[1], qScale, intraCost);
                 /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
                 totalSatdBits += int32_t(pred_intra + pred_s);
             }
+            else
+              totalSatdBits += int32_t(pred_s);
         }
     }
 
@@ -1946,14 +1948,6 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
 
     if (row < sps.numCuInHeight - 1)
     {
-        /* B-frames shouldn't use lower QP than their reference frames. */
-        if (rce->sliceType == B_SLICE)
-        {
-            Frame* refSlice1 = curEncData.m_slice->m_refPicList[0][0];
-            Frame* refSlice2 = curEncData.m_slice->m_refPicList[1][0];
-            qpMin = X265_MAX(qpMin, X265_MAX(refSlice1->m_encData->m_rowStat[row].diagQp, refSlice2->m_encData->m_rowStat[row].diagQp));
-            qpVbv = X265_MAX(qpVbv, qpMin);
-        }
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
         double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_param->rc.rateTolerance;
         int32_t encodedBitsSoFar = 0;
