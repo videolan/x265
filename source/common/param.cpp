@@ -1102,7 +1102,7 @@ int x265_set_globals(x265_param *param)
 {
     static int once /* = 0 */;
 
-    if (ATOMIC_CAS32(&once, 0, 1) == 1)
+    if (ATOMIC_INC(&once) > 1)
     {
         if (param->maxCUSize != g_maxCUSize)
         {

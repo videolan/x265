@@ -47,11 +47,10 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define CLZ32(id, x)                        id = (unsigned long)__builtin_clz(x) ^ 31
-#define CTZ64(id, x)                        id = (unsigned long)__builtin_ctzll(x)
-#define ATOMIC_OR(ptr, mask)                __sync_or_and_fetch(ptr, mask)
-#define ATOMIC_CAS(ptr, oldval, newval)     __sync_val_compare_and_swap(ptr, oldval, newval)
-#define ATOMIC_CAS32(ptr, oldval, newval)   __sync_val_compare_and_swap(ptr, oldval, newval)
+#define CLZ(id, x)                          id = (unsigned long)__builtin_clz(x) ^ 31
+#define CTZ(id, x)                          id = (unsigned long)__builtin_ctz(x)
+#define ATOMIC_OR(ptr, mask)                __sync_fetch_and_or(ptr, mask)
+#define ATOMIC_AND(ptr, mask)               __sync_fetch_and_and(ptr, mask)
 #define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
 #define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
 #define GIVE_UP_TIME()                      usleep(0)
@@ -97,16 +96,12 @@ inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
 
 #endif // if !_WIN64
 
-#ifndef ATOMIC_OR
-#define ATOMIC_OR(ptr, mask)                InterlockedOr64((volatile LONG64*)ptr, mask)
-#endif
-
-#define CLZ32(id, x)                        _BitScanReverse(&id, x)
-#define CTZ64(id, x)                        _BitScanForward64(&id, x)
-#define ATOMIC_CAS(ptr, oldval, newval)     (uint64_t)_InterlockedCompareExchange64((volatile LONG64*)ptr, newval, oldval)
-#define ATOMIC_CAS32(ptr, oldval, newval)   (uint64_t)_InterlockedCompareExchange((volatile LONG*)ptr, newval, oldval)
+#define CLZ(id, x)                          _BitScanReverse(&id, x)
+#define CTZ(id, x)                          _BitScanForward(&id, x)
 #define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
+#define ATOMIC_OR(ptr, mask)                InterlockedOr((volatile LONG*)ptr, (LONG)mask)
+#define ATOMIC_AND(ptr, mask)               InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
 #define GIVE_UP_TIME()                      Sleep(0)
 
 #endif // ifdef __GNUC__

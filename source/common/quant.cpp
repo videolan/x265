@@ -81,7 +81,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 
             // NOTE: mapping to x86 hardware instruction BSR
             unsigned long size;
-            CLZ32(size, absLevel);
+            CLZ(size, absLevel);
             int egs = size * 2 + 1;
 
             rate += egs << 15;
@@ -135,7 +135,7 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *g
             if (symbol)
             {
                 unsigned long idx;
-                CLZ32(idx, symbol + 1);
+                CLZ(idx, symbol + 1);
                 length = idx;
             }
 

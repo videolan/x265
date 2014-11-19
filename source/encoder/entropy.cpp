@@ -1117,7 +1117,7 @@ void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
         if (codeNumber != 0)
         {
             unsigned long idx;
-            CLZ32(idx, codeNumber + 1);
+            CLZ(idx, codeNumber + 1);
             length = idx;
             codeNumber -= (1 << idx) - 1;
         }
@@ -1918,9 +1918,9 @@ void Entropy::encodeBin(uint32_t binValue, uint8_t &ctxModel)
     if ((binValue ^ mstate) & 1)
     {
         // NOTE: lps is non-zero and the maximum of idx is 8 because lps less than 256
-        //numBits   = g_renormTable[lps >> 3];
+        //numBits = g_renormTable[lps >> 3];
         unsigned long idx;
-        CLZ32(idx, lps);
+        CLZ(idx, lps);
         X265_CHECK(state != 63 || idx == 1, "state failure\n");
 
         numBits = 8 - idx;

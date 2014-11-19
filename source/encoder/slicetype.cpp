@@ -192,7 +192,7 @@ Frame* Lookahead::getDecidedPicture()
 /* Called by pool worker threads */
 bool Lookahead::findJob(int)
 {
-    if (m_bReady && ATOMIC_CAS32(&m_bReady, 1, 0) == 1)
+    if (m_bReady > 0 && ATOMIC_DEC(&m_bReady) == 0)
     {
         m_inputQueueLock.acquire();
         slicetypeDecide();

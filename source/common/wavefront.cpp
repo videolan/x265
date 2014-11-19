@@ -33,14 +33,14 @@ bool WaveFront::init(int numRows)
 {
     m_numRows = numRows;
 
-    m_numWords = (numRows + 63) >> 6;
-    m_internalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+    m_numWords = (numRows + 31) >> 5;
+    m_internalDependencyBitmap = X265_MALLOC(uint32_t, m_numWords);
     if (m_internalDependencyBitmap)
-        memset((void*)m_internalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
+        memset((void*)m_internalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
 
-    m_externalDependencyBitmap = X265_MALLOC(uint64_t, m_numWords);
+    m_externalDependencyBitmap = X265_MALLOC(uint32_t, m_numWords);
     if (m_externalDependencyBitmap)
-        memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
+        memset((void*)m_externalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
 
     return m_internalDependencyBitmap && m_externalDependencyBitmap;
 }
@@ -53,58 +53,31 @@ WaveFront::~WaveFront()
 
 void WaveFront::clearEnabledRowMask()
 {
-    memset((void*)m_externalDependencyBitmap, 0, sizeof(uint64_t) * m_numWords);
+    memset((void*)m_externalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
 }
 
 void WaveFront::enqueueRow(int row)
 {
-    // thread safe
-    uint64_t bit = 1LL << (row & 63);
-
-    X265_CHECK(row < m_numRows, "invalid row\n");
-    ATOMIC_OR(&m_internalDependencyBitmap[row >> 6], bit);
+    uint32_t bit = 1 << (row & 31);
+    ATOMIC_OR(&m_internalDependencyBitmap[row >> 5], bit);
     if (m_pool) m_pool->pokeIdleThread();
 }
 
 void WaveFront::enableRow(int row)
 {
-    // thread safe
-    uint64_t bit = 1LL << (row & 63);
-
-    X265_CHECK(row < m_numRows, "invalid row\n");
-    ATOMIC_OR(&m_externalDependencyBitmap[row >> 6], bit);
+    uint32_t bit = 1 << (row & 31);
+    ATOMIC_OR(&m_externalDependencyBitmap[row >> 5], bit);
 }
 
 void WaveFront::enableAllRows()
 {
-    memset((void*)m_externalDependencyBitmap, ~0, sizeof(uint64_t) * m_numWords);
-}
-
-bool WaveFront::checkHigherPriorityRow(int curRow)
-{
-    int fullwords = curRow >> 6;
-    uint64_t mask = (1LL << (curRow & 63)) - 1;
-
-    // Check full bitmap words before curRow
-    for (int i = 0; i < fullwords; i++)
-    {
-        if (m_internalDependencyBitmap[i] & m_externalDependencyBitmap[i])
-            return true;
-    }
-
-    // check the partially masked bitmap word of curRow
-    if (m_internalDependencyBitmap[fullwords] & m_externalDependencyBitmap[fullwords] & mask)
-        return true;
-    return false;
+    memset((void*)m_externalDependencyBitmap, ~0, sizeof(uint32_t) * m_numWords);
 }
 
 bool WaveFront::dequeueRow(int row)
 {
-    uint64_t oldval, newval;
-
-    oldval = m_internalDependencyBitmap[row >> 6];
-    newval = oldval & ~(1LL << (row & 63));
-    return ATOMIC_CAS(&m_internalDependencyBitmap[row >> 6], oldval, newval) == oldval;
+    uint32_t bit = 1 << (row & 31);
+    return ATOMIC_AND(&m_internalDependencyBitmap[row >> 5], ~bit) & bit;
 }
 
 bool WaveFront::findJob(int threadId)
@@ -114,22 +87,21 @@ bool WaveFront::findJob(int threadId)
     // thread safe
     for (int w = 0; w < m_numWords; w++)
     {
-        uint64_t oldval = m_internalDependencyBitmap[w];
-        while (oldval & m_externalDependencyBitmap[w])
+        uint32_t oldval = m_internalDependencyBitmap[w] & m_externalDependencyBitmap[w];
+        while (oldval)
         {
-            uint64_t mask = oldval & m_externalDependencyBitmap[w];
+            CTZ(id, oldval);
 
-            CTZ64(id, mask);
-
-            uint64_t newval = oldval & ~(1LL << id);
-            if (ATOMIC_CAS(&m_internalDependencyBitmap[w], oldval, newval) == oldval)
+            uint32_t bit = 1 << id;
+            if (ATOMIC_AND(&m_internalDependencyBitmap[w], ~bit) & bit)
             {
-                // we cleared the bit, process row
-                processRow(w * 64 + id, threadId);
+                /* we cleared the bit, we get to process the row */
+                processRow(w * 32 + id, threadId);
                 return true;
             }
+
             // some other thread cleared the bit, try another bit
-            oldval = m_internalDependencyBitmap[w];
+            oldval = m_internalDependencyBitmap[w] & m_externalDependencyBitmap[w];
         }
     }
 

@@ -56,30 +56,6 @@ void cond_destroy(ConditionVariable *cond);
 #define WakeAllConditionVariable    x265::cond_broadcast
 #define XP_CONDITION_VAR_FREE       x265::cond_destroy
 
-#if defined(_MSC_VER)
-
-/* Windows XP did not define atomic OR 64, but gcc has a good version, so
- * only use this workaround when targeting XP with MSVC */
-FORCEINLINE LONGLONG interlocked_OR64(__inout LONGLONG volatile *Destination,
-                                      __in    LONGLONG           Value)
-{
-    LONGLONG Old;
-
-    do
-    {
-        Old = *Destination;
-    }
-    while (_InterlockedCompareExchange64(Destination, Old | Value, Old) != Old);
-
-    return Old;
-}
-
-#define ATOMIC_OR(ptr, mask) x265::interlocked_OR64((volatile LONG64*)ptr, mask)
-
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#pragma intrinsic(_InterlockedCompareExchange64)
-#endif
-#endif // defined(_MSC_VER)
 } // namespace x265
 
 #else // if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
