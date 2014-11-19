@@ -56,6 +56,10 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
 #endif
 
+#if defined(__MINGW32__)
+#define fseeko fseeko64
+#endif
+
 #elif defined(_MSC_VER)
 
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
