@@ -27,22 +27,6 @@
 
 namespace x265 {
 
-static int initialized /* = 0 */;
-
-// initialize ROM variables
-void initROM()
-{
-    if (ATOMIC_CAS32(&initialized, 0, 1) == 1)
-        return;
-}
-
-void destroyROM()
-{
-    if (ATOMIC_CAS32(&initialized, 1, 0) == 0)
-        return;
-}
-
-
 // lambda = pow(2, (double)q / 6 - 2);
 double x265_lambda_tab[QP_MAX_MAX + 1] =
 {

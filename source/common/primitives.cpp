@@ -132,8 +132,6 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 #endif
 
         Setup_Alias_Primitives(primitives);
-
-        initROM();
     }
 
     if (param->logLevel >= X265_LOG_INFO)

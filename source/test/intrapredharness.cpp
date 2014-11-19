@@ -31,8 +31,6 @@ IntraPredHarness::IntraPredHarness()
 {
     for (int i = 0; i < INPUT_SIZE; i++)
         pixel_buff[i] = rand() % PIXEL_MAX;
-
-    initROM();
 }
 
 bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width)
