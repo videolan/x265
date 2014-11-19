@@ -59,49 +59,12 @@
 
 #include <intrin.h>
 
-#if !_WIN64
-inline int _BitScanReverse64(DWORD *id, uint64_t x64) // fake 64bit CLZ
-{
-    uint32_t high32 = (uint32_t)(x64 >> 32);
-    uint32_t low32 = (uint32_t)x64;
-
-    if (high32)
-    {
-        _BitScanReverse(id, high32);
-        *id += 32;
-        return 1;
-    }
-    else if (low32)
-        return _BitScanReverse(id, low32);
-    else
-        return *id = 0;
-}
-
-inline int _BitScanForward64(DWORD *id, uint64_t x64) // fake 64bit CLZ
-{
-    uint32_t high32 = (uint32_t)(x64 >> 32);
-    uint32_t low32 = (uint32_t)x64;
-
-    if (high32)
-    {
-        _BitScanForward(id, high32);
-        *id += 32;
-        return 1;
-    }
-    else if (low32)
-        return _BitScanForward(id, low32);
-    else
-        return *id = 0;
-}
-
-#endif // if !_WIN64
-
 #define CLZ(id, x)                          _BitScanReverse(&id, x)
 #define CTZ(id, x)                          _BitScanForward(&id, x)
 #define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
-#define ATOMIC_OR(ptr, mask)                InterlockedOr((volatile LONG*)ptr, (LONG)mask)
-#define ATOMIC_AND(ptr, mask)               InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
+#define ATOMIC_OR(ptr, mask)                _InterlockedOr((volatile LONG*)ptr, (LONG)mask)
+#define ATOMIC_AND(ptr, mask)               _InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
 #define GIVE_UP_TIME()                      Sleep(0)
 
 #endif // ifdef __GNUC__
