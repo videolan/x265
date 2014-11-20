@@ -1801,6 +1801,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #endif
         p.luma_hpp[LUMA_4x4] = x265_interp_8tap_horiz_pp_4x4_avx2;
         p.luma_vpp[LUMA_4x4] = x265_interp_8tap_vert_pp_4x4_avx2;
+        p.luma_vpp[LUMA_8x4] = x265_interp_8tap_vert_pp_8x4_avx2;
         p.luma_vpp[LUMA_8x8] = x265_interp_8tap_vert_pp_8x8_avx2;
     }
 #endif // if HIGH_BIT_DEPTH
