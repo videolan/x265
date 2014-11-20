@@ -175,7 +175,7 @@ void sad_x4(const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel
 }
 
 template<int lx, int ly, class T1, class T2>
-int sse(T1* pix1, intptr_t stride_pix1, T2* pix2, intptr_t stride_pix2)
+int sse(const T1* pix1, intptr_t stride_pix1, const T2* pix2, intptr_t stride_pix2)
 {
     int sum = 0;
     int iTemp;
