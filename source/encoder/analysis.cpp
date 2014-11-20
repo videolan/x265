@@ -1611,14 +1611,17 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     uint32_t absPartIdx = cuGeom.encodeIdx;
     int sizeIdx = cuGeom.log2CUSize - 2;
 
-    Yuv& fencYuv = m_modeDepth[0].fencYuv;
-
     /* reuse the bestMode data structures at the current depth */
     Mode *bestMode = m_modeDepth[cuGeom.depth].bestMode;
     CUData& cu = bestMode->cu;
 
     cu.copyFromPic(ctu, cuGeom);
     m_quant.setQPforQuant(cu);
+
+    Yuv& fencYuv = m_modeDepth[cuGeom.depth].fencYuv;
+    if (cuGeom.depth)
+        m_modeDepth[0].fencYuv.copyPartToYuv(fencYuv, absPartIdx);
+    X265_CHECK(bestMode->fencYuv == &fencYuv, "invalid fencYuv\n");
 
     if (cu.isIntra(0))
     {
@@ -1645,16 +1648,16 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         pixel* predV = predYuv.getCrAddr(absPartIdx);
 
         primitives.luma_sub_ps[sizeIdx](resiYuv.m_buf[0], resiYuv.m_size,
-                                        fencYuv.getLumaAddr(absPartIdx), predY,
+                                        fencYuv.m_buf[0], predY,
                                         fencYuv.m_size, predYuv.m_size);
 
         primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[1], resiYuv.m_csize,
-                                        fencYuv.getCbAddr(absPartIdx), predU,
-                                        fencYuv.m_csize, predYuv.m_csize);
+                                                 fencYuv.m_buf[1], predU,
+                                                 fencYuv.m_csize, predYuv.m_csize);
 
         primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[2], resiYuv.m_csize,
-                                        fencYuv.getCrAddr(absPartIdx), predV,
-                                        fencYuv.m_csize, predYuv.m_csize);
+                                                 fencYuv.m_buf[2], predV,
+                                                 fencYuv.m_csize, predYuv.m_csize);
 
         uint32_t tuDepthRange[2];
         cu.getInterTUQtDepthRange(tuDepthRange, 0);
