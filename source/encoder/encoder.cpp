@@ -494,9 +494,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         /* Free up pic_in->analysisData since it has already been used */
         if (m_param->analysisMode == X265_ANALYSIS_LOAD)
-        {
             freeAnalysis(&outFrame->m_analysisData);
-        }
 
         if (pic_out)
         {
@@ -528,7 +526,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             pic_out->stride[1] = (int)(recpic->m_strideC * sizeof(pixel));
             pic_out->planes[2] = recpic->m_picOrg[2];
             pic_out->stride[2] = (int)(recpic->m_strideC * sizeof(pixel));
-            /* Dump analysis data from pic_out to file in save mode and free*/
+
+            /* Dump analysis data from pic_out to file in save mode and free */
             if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             {
                 pic_out->analysisData.poc = pic_out->poc;
@@ -1561,7 +1560,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
 {
     analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
     analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-    CHECKED_MALLOC(intraData, analysis_intra_data, 1);
+    CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
     CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
@@ -1569,6 +1568,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
     analysis->intraData = intraData;
     analysis->interData = interData;
     return;
+
 fail:
     freeAnalysis(analysis);
     m_aborted = true;
@@ -1603,6 +1603,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     X265_FREAD(&poc, sizeof(int), 1, m_analysisFile);
 
     uint64_t currentOffset = totalConsumedBytes;
+
     /* Seeking to the right frame Record */
     while (poc != curPoc && !feof(m_analysisFile))
     {
