@@ -124,10 +124,10 @@ tab_LumaCoeffVer: times 8 db 0, 0
 
 tab_c_64_n64:   times 8 db 64, -64
 
+const interp4_shuf, times 2 db 0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15
 
 SECTION .text
 
-cextern idct4_shuf1
 cextern pb_128
 cextern pw_1
 cextern pw_512
@@ -844,7 +844,7 @@ cglobal interp_8tap_horiz_pp_4x4, 4,6,6
     pmulhrsw        m3, [pw_512]
     vextracti128    xm4, m3, 1
     packuswb        xm3, xm4                        ; BYTE [R3D R3C R2D R2C R1D R1C R0D R0C R3B R3A R2B R2A R1B R1A R0B R0A]
-    pshufb          xm3, [idct4_shuf1]              ; [row3 row1 row2 row0]
+    pshufb          xm3, [interp4_shuf]             ; [row3 row1 row2 row0]
 
     lea             r0, [r3 * 3]
     movd            [r2], xm3
