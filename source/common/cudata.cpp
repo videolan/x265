@@ -227,12 +227,12 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     /* Each CU's data is layed out sequentially within the charMemBlock */
     uint8_t *charBuf = dataPool.charMemBlock + (m_numPartitions * BytesPerPartition) * instance;
 
-    m_qp          = (char*)charBuf; charBuf += m_numPartitions;
+    m_qp        = (int8_t*)charBuf; charBuf += m_numPartitions;
     m_log2CUSize         = charBuf; charBuf += m_numPartitions;
     m_lumaIntraDir       = charBuf; charBuf += m_numPartitions;
     m_tqBypass           = charBuf; charBuf += m_numPartitions;
-    m_refIdx[0]   = (char*)charBuf; charBuf += m_numPartitions;
-    m_refIdx[1]   = (char*)charBuf; charBuf += m_numPartitions;
+    m_refIdx[0] = (int8_t*)charBuf; charBuf += m_numPartitions;
+    m_refIdx[1] = (int8_t*)charBuf; charBuf += m_numPartitions;
     m_cuDepth            = charBuf; charBuf += m_numPartitions;
     m_predMode           = charBuf; charBuf += m_numPartitions; /* the order up to here is important in initCTU() and initSubCU() */
     m_partSize           = charBuf; charBuf += m_numPartitions;
@@ -772,7 +772,7 @@ const CUData* CUData::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdx
 }
 
 /* Get reference QP from left QpMinCu or latest coded QP */
-char CUData::getRefQP(uint32_t curAbsIdxInCTU) const
+int8_t CUData::getRefQP(uint32_t curAbsIdxInCTU) const
 {
     uint32_t lPartIdx = 0, aPartIdx = 0;
     const CUData* cULeft = getQpMinCuLeft(lPartIdx, m_absIdxInCTU + curAbsIdxInCTU);
@@ -794,7 +794,7 @@ int CUData::getLastValidPartIdx(int absPartIdx) const
     return lastValidPartIdx;
 }
 
-char CUData::getLastCodedQP(uint32_t absPartIdx) const
+int8_t CUData::getLastCodedQP(uint32_t absPartIdx) const
 {
     uint32_t quPartIdxMask = 0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
     int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
@@ -808,7 +808,7 @@ char CUData::getLastCodedQP(uint32_t absPartIdx) const
         else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_slice->m_sps->numCuInWidth)))
             return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
         else
-            return (char)m_slice->m_sliceQp;
+            return (int8_t)m_slice->m_sliceQp;
     }
 }
 
@@ -936,7 +936,7 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
     return ctx;
 }
 
-bool CUData::setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth)
+bool CUData::setQPSubCUs(int8_t qp, uint32_t absPartIdx, uint32_t depth)
 {
     uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);
     uint32_t curPartNumQ = curPartNumb >> 2;
@@ -1211,7 +1211,7 @@ void CUData::setPUMv(int list, const MV& mv, int absPartIdx, int puIdx)
     setAllPU(m_mv[list], mv, absPartIdx, puIdx);
 }
 
-void CUData::setPURefIdx(int list, char refIdx, int absPartIdx, int puIdx)
+void CUData::setPURefIdx(int list, int8_t refIdx, int absPartIdx, int puIdx)
 {
     setAllPU(m_refIdx[list], refIdx, absPartIdx, puIdx);
 }

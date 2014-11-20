@@ -127,11 +127,11 @@ public:
     int           m_vChromaShift;
 
     /* Per-part data, stored contiguously */
-    char*         m_qp;               // array of QP values
+    int8_t*       m_qp;               // array of QP values
     uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
-    char*         m_refIdx[2];        // array of motion reference indices per list
+    int8_t*       m_refIdx[2];        // array of motion reference indices per list
     uint8_t*      m_cuDepth;          // array of depths
     uint8_t*      m_predMode;         // array of prediction modes
     uint8_t*      m_partSize;         // array of partition sizes
@@ -177,7 +177,7 @@ public:
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
-    void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
+    void     setQPSubParts(int8_t qp, uint32_t absPartIdx, uint32_t depth)                    { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
     void     setTUDepthSubParts(uint8_t tuDepth, uint32_t absPartIdx, uint32_t depth)         { s_partSet[depth](m_tuDepth + absPartIdx, tuDepth); }
     void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
     void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
@@ -186,15 +186,15 @@ public:
     void     setTransformSkipSubParts(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_transformSkip[ttype] + absPartIdx, tskip); }
     void     setTransformSkipPartRange(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
 
-    bool     setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth);
+    bool     setQPSubCUs(int8_t qp, uint32_t absPartIdx, uint32_t depth);
 
     void     setPUInterDir(uint8_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setPUMv(int list, const MV& mv, int absPartIdx, int puIdx);
-    void     setPURefIdx(int list, char refIdx, int absPartIdx, int puIdx);
+    void     setPURefIdx(int list, int8_t refIdx, int absPartIdx, int puIdx);
 
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
-    char     getRefQP(uint32_t currAbsIdxInCTU) const;
+    int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
     void     clipMv(MV& outMV) const;
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
@@ -237,7 +237,7 @@ protected:
     template<typename T>
     void setAllPU(T *p, const T& val, int absPartIdx, int puIdx);
 
-    char getLastCodedQP(uint32_t absPartIdx) const;
+    int8_t getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
 
     bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;

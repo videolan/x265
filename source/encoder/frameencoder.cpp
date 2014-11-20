@@ -759,7 +759,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
             tld.analysis.setQP(*slice, qp);
             qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
-            ctu->setQPSubParts((char)qp, 0, 0);
+            ctu->setQPSubParts((int8_t)qp, 0, 0);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
         else

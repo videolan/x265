@@ -1835,9 +1835,9 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
             continue;
 
         cu.m_mv[0][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu.m_refIdx[0][m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][0].refIdx;
+        cu.m_refIdx[0][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][0].refIdx;
         cu.m_mv[1][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu.m_refIdx[1][m.absPartIdx] = (char)m.mvFieldNeighbours[mergeCand][1].refIdx;
+        cu.m_refIdx[1][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
         prepMotionCompensation(cu, cuGeom, puIdx);
         motionCompensation(tempYuv, true, false);
