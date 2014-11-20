@@ -59,23 +59,15 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
 
     m128iAdd = _mm_set1_epi32(64);
 
-    T00 = _mm_load_si128((__m128i*)&src[8 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[8 + 4]);
-    m128iS1 = _mm_packs_epi32(T00, T01);
-    T00 = _mm_load_si128((__m128i*)&src[24 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[24 + 4]);
-    m128iS3 = _mm_packs_epi32(T00, T01);
+    m128iS1 = _mm_load_si128((__m128i*)&src[8 + 0]);
+    m128iS3 = _mm_load_si128((__m128i*)&src[24 + 0]);
     m128Tmp0 = _mm_unpacklo_epi16(m128iS1, m128iS3);
     E1l = _mm_madd_epi16(m128Tmp0, _mm_load_si128((__m128i*)(tab_idct_8x8[0])));
     m128Tmp1 = _mm_unpackhi_epi16(m128iS1, m128iS3);
     E1h = _mm_madd_epi16(m128Tmp1, _mm_load_si128((__m128i*)(tab_idct_8x8[0])));
 
-    T00 = _mm_load_si128((__m128i*)&src[40 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[40 + 4]);
-    m128iS5 = _mm_packs_epi32(T00, T01);
-    T00 = _mm_load_si128((__m128i*)&src[56 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[56 + 4]);
-    m128iS7 = _mm_packs_epi32(T00, T01);
+    m128iS5 = _mm_load_si128((__m128i*)&src[40 + 0]);
+    m128iS7 = _mm_load_si128((__m128i*)&src[56 + 0]);
     m128Tmp2 = _mm_unpacklo_epi16(m128iS5, m128iS7);
     E2l = _mm_madd_epi16(m128Tmp2, _mm_load_si128((__m128i*)(tab_idct_8x8[1])));
     m128Tmp3 = _mm_unpackhi_epi16(m128iS5, m128iS7);
@@ -107,12 +99,8 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
 
     /*    -------     */
 
-    T00 = _mm_load_si128((__m128i*)&src[0 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[0 + 4]);
-    m128iS0 = _mm_packs_epi32(T00, T01);
-    T00 = _mm_load_si128((__m128i*)&src[32 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[32 + 4]);
-    m128iS4 = _mm_packs_epi32(T00, T01);
+    m128iS0 = _mm_load_si128((__m128i*)&src[0 + 0]);
+    m128iS4 = _mm_load_si128((__m128i*)&src[32 + 0]);
     m128Tmp0 = _mm_unpacklo_epi16(m128iS0, m128iS4);
     EE0l = _mm_madd_epi16(m128Tmp0, _mm_load_si128((__m128i*)(tab_idct_8x8[8])));
     m128Tmp1 = _mm_unpackhi_epi16(m128iS0, m128iS4);
@@ -123,12 +111,8 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
 
     /*    -------     */
 
-    T00 = _mm_load_si128((__m128i*)&src[16 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[16 + 4]);
-    m128iS2 = _mm_packs_epi32(T00, T01);
-    T00 = _mm_load_si128((__m128i*)&src[48 + 0]);
-    T01 = _mm_load_si128((__m128i*)&src[48 + 4]);
-    m128iS6 = _mm_packs_epi32(T00, T01);
+    m128iS2 = _mm_load_si128((__m128i*)&src[16 + 0]);
+    m128iS6 = _mm_load_si128((__m128i*)&src[48 + 0]);
     m128Tmp0 = _mm_unpacklo_epi16(m128iS2, m128iS6);
     E00l = _mm_madd_epi16(m128Tmp0, _mm_load_si128((__m128i*)(tab_idct_8x8[10])));
     m128Tmp1 = _mm_unpackhi_epi16(m128iS2, m128iS6);
@@ -1418,7 +1402,7 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
      * still somewhat rare on end-user PCs we still compile and link these SSE3
      * intrinsic SIMD functions */
 #if !HIGH_BIT_DEPTH
-//    p.idct[IDCT_8x8] = idct8;
+    p.idct[IDCT_8x8] = idct8;
     p.idct[IDCT_16x16] = idct16;
     p.idct[IDCT_32x32] = idct32;
 #endif
