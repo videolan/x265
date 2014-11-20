@@ -1594,14 +1594,15 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         return;\
     }\
 
-    static off_t consumedBytes = 0;
-    fseeko(m_analysisFile, consumedBytes, SEEK_SET);
+    static uint64_t consumedBytes = 0;
+    static uint64_t totalConsumedBytes = 0;
+    fseeko(m_analysisFile, totalConsumedBytes, SEEK_SET);
 
     int poc; uint32_t frameRecordSize;
     X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
     X265_FREAD(&poc, sizeof(int), 1, m_analysisFile);
 
-    off_t currentOffset = consumedBytes;
+    uint64_t currentOffset = totalConsumedBytes;
     /* Seeking to the right frame Record */
     while (poc != curPoc && !feof(m_analysisFile))
     {
@@ -1630,20 +1631,20 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        consumedBytes += frameRecordSize;
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
         X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
+        consumedBytes += frameRecordSize;
+        totalConsumedBytes = consumedBytes;
     }
     else
     {
         X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
+        consumedBytes += frameRecordSize;
     }
 #undef X265_FREAD
-
-    currentOffset = ftell(m_analysisFile);
-    if (consumedBytes + (off_t)frameRecordSize == currentOffset)
-        consumedBytes += frameRecordSize;
 }
 
 void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
