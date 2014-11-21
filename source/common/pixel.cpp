@@ -493,11 +493,12 @@ void blockfil_s_c(int16_t* dst, intptr_t dstride, int16_t val)
 
 void copy16to16_shl(int16_t *dst, const int16_t *src, intptr_t stride, int shift, int size)
 {
+    X265_CHECK(!(size & 3), "invalid size\n");
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
-            dst[i * size + j] = (src[i * stride + j]) << shift;
+            dst[i * size + j] = src[i * stride + j] << shift;
         }
     }
 }

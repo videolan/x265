@@ -3672,37 +3672,35 @@ BLOCKCOPY_SS_W64_H4_avx 64, 64
 ;--------------------------------------------------------------------------------------
 ; void copy16to16_shl(int16_t *dst, int16_t *src, intptr_t stride, int shift, int size);
 ;--------------------------------------------------------------------------------------
-INIT_XMM sse4
-cglobal copy16to16_shl, 5, 7, 2, dst, src, stride, shift, size
+INIT_XMM sse2
+cglobal copy16to16_shl, 5, 6, 2, dst, src, stride, shift, size
 %define shift       m1
 
     ; make shift
-    mov             r5d,      r3m
-    movd            shift,    r5d
+    movd            shift,    r3d
 
     ; register alloc
     ; r0 - dst
     ; r1 - src
     ; r2 - stride
-    ; r3 - shift
     ; r4 - size
 
     sub             r2d,      r4d
     add             r2d,      r2d
     mov             r5d,      r4d
-    shr             r4d,      3
+    shr             r4d,      2
 .loop_row:
-    mov             r6d,      r4d
+    mov             r3d,      r4d
 
 .loop_col:
-    movu            m0,       [r1]
+    movh            m0,       [r1]
     psllw           m0,       shift
-    movu            [r0],     m0
+    movh            [r0],     m0
 
-    add             r1,       16
-    add             r0,       16
+    add             r1,       8
+    add             r0,       8
 
-    dec             r6d
+    dec             r3d
     jnz             .loop_col
 
     add             r1,       r2

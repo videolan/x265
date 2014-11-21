@@ -1548,6 +1548,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
         SA8D_INTER_FROM_BLOCK(sse2);
 
+        p.cpy16to16_shl = x265_copy16to16_shl_sse2;
         p.cvt32to16_shl[BLOCK_4x4] = x265_cvt32to16_shl_4_sse2;
         p.cvt32to16_shl[BLOCK_8x8] = x265_cvt32to16_shl_8_sse2;
         p.cvt32to16_shl[BLOCK_16x16] = x265_cvt32to16_shl_16_sse2;
@@ -1614,7 +1615,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_ADDAVG(_sse4);
         CHROMA_ADDAVG(_sse4);
         CHROMA_ADDAVG_422(_sse4);
-        p.cpy16to16_shl = x265_copy16to16_shl_sse4;
         p.cvt16to32_shr[BLOCK_4x4] = x265_cvt16to32_shr_4_sse4;
         p.cvt16to32_shr[BLOCK_8x8] = x265_cvt16to32_shr_8_sse4;
         p.cvt16to32_shr[BLOCK_16x16] = x265_cvt16to32_shr_16_sse4;

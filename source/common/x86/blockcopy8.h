@@ -32,7 +32,7 @@ void x265_cvt32to16_shl_4_avx2(int16_t* dst, const int* src, intptr_t, int);
 void x265_cvt32to16_shl_8_avx2(int16_t* dst, const int* src, intptr_t, int);
 void x265_cvt32to16_shl_16_avx2(int16_t* dst, const int* src, intptr_t, int);
 void x265_cvt32to16_shl_32_avx2(int16_t* dst, const int* src, intptr_t, int);
-void x265_copy16to16_shl_sse4(int16_t* dst, const int16_t* src, intptr_t, int32_t, int32_t);
+void x265_copy16to16_shl_sse2(int16_t* dst, const int16_t* src, intptr_t, int32_t, int32_t);
 void x265_cvt16to32_shr_4_sse4(int32_t* dst, const int16_t* src, intptr_t, int32_t, int32_t);
 void x265_cvt16to32_shr_8_sse4(int32_t* dst, const int16_t* src, intptr_t, int32_t, int32_t);
 void x265_cvt16to32_shr_16_sse4(int32_t* dst, const int16_t* src, intptr_t, int32_t, int32_t);
