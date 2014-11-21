@@ -567,18 +567,7 @@ void idct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
     ALIGN_VAR_32(int16_t, coef[8 * 8]);
     ALIGN_VAR_32(int16_t, block[8 * 8]);
 
-#define N (8)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            block[i * N + j] = (int16_t)src[i * N + j];
-        }
-    }
-
-#undef N
-
-    partialButterflyInverse8(block, coef, shift_1st, 8);
+    partialButterflyInverse8(src, coef, shift_1st, 8);
     partialButterflyInverse8(coef, block, shift_2nd, 8);
     for (int i = 0; i < 8; i++)
     {
