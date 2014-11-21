@@ -307,32 +307,39 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
 bool Analysis::findJob(int threadId)
 {
     /* try to acquire a CU mode to analyze */
+    m_pmodeLock.acquire();
     if (m_totalNumJobs > m_numAcquiredJobs)
     {
-        /* ATOMIC_INC returns the incremented value */
-        int id = ATOMIC_INC(&m_numAcquiredJobs);
-        if (m_totalNumJobs >= id)
-        {
-            parallelModeAnalysis(threadId, id - 1);
+        int id = m_numAcquiredJobs++;
+        m_pmodeLock.release();
 
-            if (ATOMIC_INC(&m_numCompletedJobs) == m_totalNumJobs)
-                m_modeCompletionEvent.trigger();
-            return true;
-        }
+        parallelModeAnalysis(threadId, id);
+
+        m_pmodeLock.acquire();
+        if (++m_numCompletedJobs == m_totalNumJobs)
+            m_modeCompletionEvent.trigger();
+        m_pmodeLock.release();
+        return true;
     }
+    else
+        m_pmodeLock.release();
 
+    m_meLock.acquire();
     if (m_totalNumME > m_numAcquiredME)
     {
-        int id = ATOMIC_INC(&m_numAcquiredME);
-        if (m_totalNumME >= id)
-        {
-            parallelME(threadId, id - 1);
+        int id = m_numAcquiredME++;
+        m_meLock.release();
 
-            if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
-                m_meCompletionEvent.trigger();
-            return true;
-        }
+        parallelME(threadId, id);
+
+        m_meLock.acquire();
+        if (++m_numCompletedME == m_totalNumME)
+            m_meCompletionEvent.trigger();
+        m_meLock.release();
+        return true;
     }
+    else
+        m_meLock.release();
 
     return false;
 }
@@ -531,12 +538,14 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
         }
 
+        m_pmodeLock.acquire();
         m_totalNumJobs = 2 + m_param->bEnableRectInter * 2 + bTryAmp * 4;
         m_numAcquiredJobs = !bTryIntra;
         m_numCompletedJobs = m_numAcquiredJobs;
         m_curGeom = &cuGeom;
         m_bJobsQueued = true;
         JobProvider::enqueue();
+        m_pmodeLock.release();
 
         for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
             m_pool->pokeIdleThread();

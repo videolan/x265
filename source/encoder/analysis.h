@@ -87,6 +87,7 @@ protected:
     int           m_totalNumJobs;
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
+    Lock          m_pmodeLock;
     Event         m_modeCompletionEvent;
     bool findJob(int threadId);
     void parallelModeAnalysis(int threadId, int jobId);

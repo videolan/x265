@@ -197,7 +197,7 @@ protected:
     volatile int  m_numAcquiredME;
     volatile int  m_numCompletedME;
     Event         m_meCompletionEvent;
-    Lock          m_outputLock;
+    Lock          m_meLock;
     bool          m_bJobsQueued;
     void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
 

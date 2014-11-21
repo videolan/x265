@@ -1908,7 +1908,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     checkBestMVP(interMode.amvpCand[list][ref], outmv, mvp, mvpIdx, bits, cost);
 
     /* tie goes to the smallest ref ID, just like --no-pme */
-    ScopedLock _lock(master.m_outputLock);
+    ScopedLock _lock(master.m_meLock);
     if (cost < bestME[list].cost ||
        (cost == bestME[list].cost && ref < bestME[list].ref))
     {
@@ -2053,17 +2053,15 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
         else if (bDistributed)
         {
+            m_meLock.acquire();
             m_curInterMode = &interMode;
             m_curGeom = &cuGeom;
-
-            /* this worker might already be enqueued for pmode, so other threads
-             * might be looking at the ME job counts at any time, do these sets
-             * in a safe order */
             m_curPart = puIdx;
             m_totalNumME = 0;
             m_numAcquiredME = 1;
             m_numCompletedME = 0;
             m_totalNumME = numRefIdx[0] + numRefIdx[1];
+            m_meLock.release();
 
             if (!m_bJobsQueued)
                 JobProvider::enqueue();
@@ -2071,28 +2069,38 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             for (int i = 1; i < m_totalNumME; i++)
                 m_pool->pokeIdleThread();
 
-            while (m_totalNumME > m_numAcquiredME)
+            do
             {
-                int id = ATOMIC_INC(&m_numAcquiredME);
-                if (m_totalNumME >= id)
+                m_meLock.acquire();
+                if (m_totalNumME > m_numAcquiredME)
                 {
-                    id -= 1;
+                    int id = m_numAcquiredME++;
+                    m_meLock.release();
+
                     if (id < numRefIdx[0])
                         singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, id);
                     else
                         singleMotionEstimation(*this, interMode, cuGeom, puIdx, 1, id - numRefIdx[0]);
 
-                    if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
-                        m_meCompletionEvent.trigger();
+                    m_meLock.acquire();
+                    m_numCompletedME++;
+                    m_meLock.release();
                 }
+                else
+                    m_meLock.release();
             }
+            while (m_totalNumME > m_numAcquiredME);
+
             if (!m_bJobsQueued)
                 JobProvider::dequeue();
 
             /* we saved L0-0 for ourselves */
             singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, 0);
-            if (ATOMIC_INC(&m_numCompletedME) == m_totalNumME)
+
+            m_meLock.acquire();
+            if (++m_numCompletedME == m_totalNumME)
                 m_meCompletionEvent.trigger();
+            m_meLock.release();
 
             m_meCompletionEvent.wait();
         }
