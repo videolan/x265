@@ -4646,6 +4646,113 @@ cglobal interp_8tap_vert_pp_16x8, 4, 7, 15
     RET
 %endif
 
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_pp_16x4, 4, 7, 13
+    mov             r4d, r4m
+    shl             r4d, 7
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+    lea             r6, [r3 * 3]
+    mova            m12, [pw_512]
+
+    movu            xm0, [r0]                       ; m0 = row 0
+    movu            xm1, [r0 + r1]                  ; m1 = row 1
+    punpckhbw       xm2, xm0, xm1
+    punpcklbw       xm0, xm1
+    vinserti128     m0, m0, xm2, 1
+    pmaddubsw       m0, [r5]
+    movu            xm2, [r0 + r1 * 2]              ; m2 = row 2
+    punpckhbw       xm3, xm1, xm2
+    punpcklbw       xm1, xm2
+    vinserti128     m1, m1, xm3, 1
+    pmaddubsw       m1, [r5]
+    movu            xm3, [r0 + r4]                  ; m3 = row 3
+    punpckhbw       xm4, xm2, xm3
+    punpcklbw       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddubsw       m4, m2, [r5 + 1 * mmsize]
+    paddw           m0, m4
+    pmaddubsw       m2, [r5]
+    lea             r0, [r0 + r1 * 4]
+    movu            xm4, [r0]                       ; m4 = row 4
+    punpckhbw       xm5, xm3, xm4
+    punpcklbw       xm3, xm4
+    vinserti128     m3, m3, xm5, 1
+    pmaddubsw       m5, m3, [r5 + 1 * mmsize]
+    paddw           m1, m5
+    pmaddubsw       m3, [r5]
+    movu            xm5, [r0 + r1]                  ; m5 = row 5
+    punpckhbw       xm6, xm4, xm5
+    punpcklbw       xm4, xm5
+    vinserti128     m4, m4, xm6, 1
+    pmaddubsw       m6, m4, [r5 + 2 * mmsize]
+    paddw           m0, m6
+    pmaddubsw       m6, m4, [r5 + 1 * mmsize]
+    paddw           m2, m6
+    movu            xm6, [r0 + r1 * 2]              ; m6 = row 6
+    punpckhbw       xm7, xm5, xm6
+    punpcklbw       xm5, xm6
+    vinserti128     m5, m5, xm7, 1
+    pmaddubsw       m7, m5, [r5 + 2 * mmsize]
+    paddw           m1, m7
+    pmaddubsw       m7, m5, [r5 + 1 * mmsize]
+    paddw           m3, m7
+    movu            xm7, [r0 + r4]                  ; m7 = row 7
+    punpckhbw       xm8, xm6, xm7
+    punpcklbw       xm6, xm7
+    vinserti128     m6, m6, xm8, 1
+    pmaddubsw       m8, m6, [r5 + 3 * mmsize]
+    paddw           m0, m8
+    pmaddubsw       m8, m6, [r5 + 2 * mmsize]
+    paddw           m2, m8
+    lea             r0, [r0 + r1 * 4]
+    movu            xm8, [r0]                       ; m8 = row 8
+    punpckhbw       xm9, xm7, xm8
+    punpcklbw       xm7, xm8
+    vinserti128     m7, m7, xm9, 1
+    pmaddubsw       m9, m7, [r5 + 3 * mmsize]
+    paddw           m1, m9
+    pmaddubsw       m9, m7, [r5 + 2 * mmsize]
+    paddw           m3, m9
+    movu            xm9, [r0 + r1]                  ; m9 = row 9
+    punpckhbw       xm10, xm8, xm9
+    punpcklbw       xm8, xm9
+    vinserti128     m8, m8, xm10, 1
+    pmaddubsw       m10, m8, [r5 + 3 * mmsize]
+    paddw           m2, m10
+    movu            xm10, [r0 + r1 * 2]             ; m10 = row 10
+    punpckhbw       xm11, xm9, xm10
+    punpcklbw       xm9, xm10
+    vinserti128     m9, m9, xm11, 1
+    pmaddubsw       m11, m9, [r5 + 3 * mmsize]
+    paddw           m3, m11
+
+    pmulhrsw        m0, m12                         ; m0 = word: row 0
+    pmulhrsw        m1, m12                         ; m1 = word: row 1
+    pmulhrsw        m2, m12                         ; m2 = word: row 2
+    pmulhrsw        m3, m12                         ; m3 = word: row 3
+    packuswb        m0, m1
+    packuswb        m2, m3
+    vpermq          m0, m0, 11011000b
+    vpermq          m2, m2, 11011000b
+    vextracti128    xm1, m0, 1
+    vextracti128    xm3, m2, 1
+    movu            [r2], xm0
+    movu            [r2 + r3], xm1
+    movu            [r2 + r3 * 2], xm2
+    movu            [r2 + r6], xm3
+    RET
+%endif
+
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
