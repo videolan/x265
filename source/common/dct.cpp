@@ -583,18 +583,7 @@ void idct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
     ALIGN_VAR_32(int16_t, coef[16 * 16]);
     ALIGN_VAR_32(int16_t, block[16 * 16]);
 
-#define N (16)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            block[i * N + j] = (int16_t)src[i * N + j];
-        }
-    }
-
-#undef N
-
-    partialButterflyInverse16(block, coef, shift_1st, 16);
+    partialButterflyInverse16(src, coef, shift_1st, 16);
     partialButterflyInverse16(coef, block, shift_2nd, 16);
     for (int i = 0; i < 16; i++)
     {
