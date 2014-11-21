@@ -599,18 +599,7 @@ void idct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
     ALIGN_VAR_32(int16_t, coef[32 * 32]);
     ALIGN_VAR_32(int16_t, block[32 * 32]);
 
-#define N (32)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            block[i * N + j] = (int16_t)src[i * N + j];
-        }
-    }
-
-#undef N
-
-    partialButterflyInverse32(block, coef, shift_1st, 32);
+    partialButterflyInverse32(src, coef, shift_1st, 32);
     partialButterflyInverse32(coef, block, shift_2nd, 32);
 
     for (int i = 0; i < 32; i++)
