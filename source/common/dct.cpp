@@ -522,18 +522,7 @@ void dct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
     }
 
     partialButterfly32(block, coef, shift_1st, 32);
-    partialButterfly32(coef, block, shift_2nd, 32);
-
-#define N (32)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
-
-#undef N
+    partialButterfly32(coef, dst, shift_2nd, 32);
 }
 
 void idst4_c(const int16_t *src, int16_t *dst, intptr_t stride)
