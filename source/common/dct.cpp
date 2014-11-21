@@ -471,17 +471,7 @@ void dct4_c(const int16_t *src, int16_t *dst, intptr_t stride)
     }
 
     partialButterfly4(block, coef, shift_1st, 4);
-    partialButterfly4(coef, block, shift_2nd, 4);
-#define N (4)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
-
-#undef N
+    partialButterfly4(coef, dst, shift_2nd, 4);
 }
 
 void dct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
