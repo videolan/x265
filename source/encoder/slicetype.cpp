@@ -417,7 +417,6 @@ void Lookahead::slicetypeDecide()
         list[bframes / 2]->m_lowres.sliceType = X265_TYPE_BREF;
         brefs++;
     }
-
     /* calculate the frame costs ahead of time for estimateFrameCost while we still have lowres */
     if (m_param->rc.rateControlMode != X265_RC_CQP)
     {
@@ -524,14 +523,12 @@ void Lookahead::slicetypeDecide()
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
-    bool isNextNonB = false;
-
     while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
         curNonB++;
-
     int nextNonB = keyframe ? prevNonB : curNonB;
-    int nextB = keyframe ? prevNonB + 1 : curNonB + 1;
-
+    int nextB = prevNonB + 1;
+    int nextBRef = 0;
+    int miniGopEnd = keyframe ? prevNonB : curNonB;
     while (curNonB < numFrames + !keyframe)
     {
         /* P/I cost: This shouldn't include the cost of nextNonB */
@@ -540,38 +537,53 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
             int p0 = IS_X265_TYPE_I(frames[curNonB]->sliceType) ? curNonB : prevNonB;
             frames[nextNonB]->plannedSatd[idx] = vbvFrameCost(frames, p0, curNonB, curNonB);
             frames[nextNonB]->plannedType[idx] = frames[curNonB]->sliceType;
+            /* Save the nextNonB Cost in each B frame of the current miniGop */
+            if (curNonB > miniGopEnd)
+            {
+                for (int j = nextB; j < miniGopEnd; j++)
+                {
+                    frames[j]->plannedSatd[frames[j]->indB] = frames[nextNonB]->plannedSatd[idx];
+                    frames[j]->plannedType[frames[j]->indB++] = frames[nextNonB]->plannedType[idx];
+                
+                }
+            }
             idx++;
         }
         /* Handle the B-frames: coded order */
+        if (m_param->bBPyramid && curNonB - prevNonB > 1)
+            nextBRef = (prevNonB + curNonB + 1) / 2;
+
         for (int i = prevNonB + 1; i < curNonB; i++, idx++)
         {
-            frames[nextNonB]->plannedSatd[idx] = vbvFrameCost(frames, prevNonB, curNonB, i);
-            frames[nextNonB]->plannedType[idx] = X265_TYPE_B;
-        }
-
-        for (int i = nextB; i <= curNonB; i++)
-        {
-            for (int j = frames[i]->indB + i + 1; j <= curNonB; j++, frames[i]->indB++)
+            int64_t satdCost = 0; int type = X265_TYPE_B;
+            if (nextBRef)
             {
-                if (j == curNonB)
+                if (i == nextBRef)
                 {
-                    if (isNextNonB)
-                    {
-                        int p0 = IS_X265_TYPE_I(frames[curNonB]->sliceType) ? curNonB : prevNonB;
-                        frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, p0, curNonB, curNonB);
-                        frames[i]->plannedType[frames[i]->indB] = frames[curNonB]->sliceType;
-                    }
+                    satdCost = vbvFrameCost(frames, prevNonB, curNonB, nextBRef);
+                    type = X265_TYPE_BREF;
                 }
+                else if (i < nextBRef)
+                    satdCost = vbvFrameCost(frames, prevNonB, nextBRef, i);
                 else
-                {
-                    frames[i]->plannedSatd[frames[i]->indB] = vbvFrameCost(frames, prevNonB, curNonB, j);
-                    frames[i]->plannedType[frames[i]->indB] = X265_TYPE_B;
-                }
+                    satdCost = vbvFrameCost(frames, nextBRef, curNonB, i);
             }
-            if (i == curNonB && !isNextNonB)
-                isNextNonB = true;
-        }
+            else
+                satdCost = vbvFrameCost(frames, prevNonB, nextNonB, i);
+            frames[nextNonB]->plannedSatd[idx] = satdCost;
+            frames[nextNonB]->plannedType[idx] = type;
+            /* Save the nextB Cost in each B frame of the current miniGop */
 
+            for (int j = nextB; j < miniGopEnd; j++)
+            {
+                if (nextBRef && i == nextBRef)
+                    break;
+                if (j >= i && j !=nextBRef)
+                    continue;
+                frames[j]->plannedSatd[frames[j]->indB] = satdCost;
+                frames[j]->plannedType[frames[j]->indB++] = X265_TYPE_B;
+            }
+        }
         prevNonB = curNonB;
         curNonB++;
         while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
