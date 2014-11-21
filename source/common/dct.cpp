@@ -488,18 +488,7 @@ void dct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
     }
 
     partialButterfly8(block, coef, shift_1st, 8);
-    partialButterfly8(coef, block, shift_2nd, 8);
-
-#define N (8)
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            dst[i * N + j] = block[i * N + j];
-        }
-    }
-
-#undef N
+    partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
 void dct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
