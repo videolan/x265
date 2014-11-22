@@ -658,12 +658,12 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
-                processRow(i * 2 + 0, -1);
+                processRowEncoder(i, *m_tld);
             }
 
             // Filter
             if (i >= m_filterRowDelay)
-                processRow((i - m_filterRowDelay) * 2 + 1, -1);
+                m_frameFilter.processRow(i - m_filterRowDelay);
         }
     }
     m_frameTime = (double)m_totalTime / 1000000;
@@ -681,7 +681,7 @@ void FrameEncoder::processRow(int row, int threadId)
         processRowEncoder(realRow, tld);
     else
     {
-        processRowFilter(realRow);
+        m_frameFilter.processRow(realRow);
 
         // NOTE: Active next row
         if (realRow != m_numRows - 1)
@@ -956,19 +956,22 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }
 
-    // trigger row-wise loop filters
-    if (row >= m_filterRowDelay)
+    if (m_param->bEnableWavefront)
     {
-        enableRowFilter(row - m_filterRowDelay);
+        /* trigger row-wise loop filters */
+        if (row >= m_filterRowDelay)
+        {
+            enableRowFilter(row - m_filterRowDelay);
 
-        // NOTE: Active Filter to first row (row 0)
-        if (row == m_filterRowDelay)
-            enqueueRowFilter(0);
-    }
-    if (row == m_numRows - 1)
-    {
-        for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
-            enableRowFilter(i);
+            /* NOTE: Activate filter if first row (row 0) */
+            if (row == m_filterRowDelay)
+                enqueueRowFilter(0);
+        }
+        if (row == m_numRows - 1)
+        {
+            for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+                enableRowFilter(i);
+        }
     }
 
     m_totalTime += x265_mdate() - startTime;

@@ -204,7 +204,6 @@ protected:
     /* Called by WaveFront::findJob() */
     void processRow(int row, int threadId);
     void processRowEncoder(int row, ThreadLocalData& tld);
-    void processRowFilter(int row) { m_frameFilter.processRow(row); }
 
     void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
     void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
