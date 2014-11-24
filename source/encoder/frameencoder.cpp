@@ -854,9 +854,13 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                                 if (dequeueRow(r * 2))
                                     stopRow.active = false;
                                 else
+                                {
+                                    /* we must release the row lock to allow the thread to exit */
+                                    stopRow.lock.release();
                                     GIVE_UP_TIME();
+                                    stopRow.lock.acquire();
+                                }
                             }
-
                             stopRow.lock.release();
 
                             bool bRowBusy = true;
