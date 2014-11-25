@@ -1804,6 +1804,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_vpp[LUMA_16x16] = x265_interp_8tap_vert_pp_16x16_avx2;
         p.luma_vpp[LUMA_16x32] = x265_interp_8tap_vert_pp_16x32_avx2;
         p.luma_vpp[LUMA_16x64] = x265_interp_8tap_vert_pp_16x64_avx2;
+        p.luma_vpp[LUMA_32x8] = x265_interp_8tap_vert_pp_32x8_avx2;
         p.luma_vpp[LUMA_32x16] = x265_interp_8tap_vert_pp_32x16_avx2;
         p.luma_vpp[LUMA_32x24] = x265_interp_8tap_vert_pp_32x24_avx2;
         p.luma_vpp[LUMA_32x32] = x265_interp_8tap_vert_pp_32x32_avx2;
