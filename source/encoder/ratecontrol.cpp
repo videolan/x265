@@ -1566,7 +1566,6 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 q = tuneAbrQScaleFromFeedback(initialQScale);
                 overflow = q / initialQScale;
             }
-
             if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
                 && m_lastNonBPictType != I_SLICE && !m_isAbrReset)
             {
@@ -1748,7 +1747,8 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 curBits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
                 double bufferFillCur = m_bufferFill - curBits;
                 double targetFill;
-                double totalDuration = 0;
+                double totalDuration = m_frameDuration;
+                bool isIFramePresent = m_sliceType == I_SLICE ? true : false;
                 frameQ[P_SLICE] = m_sliceType == I_SLICE ? q * m_param->rc.ipFactor : (m_sliceType == B_SLICE ? q / m_param->rc.pbFactor : q);
                 frameQ[B_SLICE] = frameQ[P_SLICE] * m_param->rc.pbFactor;
                 frameQ[I_SLICE] = frameQ[P_SLICE] / m_param->rc.ipFactor;
@@ -1764,20 +1764,23 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                         bufferFillCur += wantedFrameSize;
                     int64_t satd = curFrame->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
+                    if (type == I_SLICE) 
+                        isIFramePresent = true;
                     curBits = predictSize(&m_pred[type], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
 
-                /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
-                targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * 0.5);
+                /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
+                double tol = isIFramePresent ? 1 / totalDuration : totalDuration < 0.5 ? 2 : 1;
+                targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5 , m_bufferSize * (1 - 0.8 * totalDuration * tol));
                 if (bufferFillCur < targetFill)
                 {
                     q *= 1.01;
                     loopTerminate |= 1;
                     continue;
                 }
-                /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
-                targetFill = Clip3(m_bufferSize * 0.8, m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                /* Try to get the buffer atleast 50% filled, but don't set an impossible goal. */
+                targetFill = Clip3(m_bufferSize - (m_bufferSize * totalDuration * 0.5), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
                 if (m_isCbr && bufferFillCur > targetFill)
                 {
                     q /= 1.01;
@@ -1970,7 +1973,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     if (row < sps.numCuInHeight - 1)
     {
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
-        double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_param->rc.rateTolerance;
+        double rcTol = (bufferLeftPlanned * 0.2) / m_param->frameNumThreads * m_param->rc.rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
 
@@ -1988,7 +1991,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
 
         while (qpVbv < qpMax
                && ((accFrameBits > rce->frameSizePlanned + rcTol) ||
-                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.5) ||
+                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.2) ||
                    (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv)))
         {
             qpVbv += stepSize;
