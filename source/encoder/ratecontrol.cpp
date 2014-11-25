@@ -40,8 +40,7 @@
 using namespace x265;
 
 /* Amortize the partial cost of I frames over the next N frames */
-const double RateControl::s_amortizeFraction = 0.85;
-const int RateControl::s_amortizeFrames = 75;
+
 const int RateControl::s_slidingWindowFrames = 20;
 const char *RateControl::s_defaultStatFileName = "x265_2pass.log";
 
@@ -323,6 +322,12 @@ RateControl::RateControl(x265_param *p)
     m_bTerminated = false;
     m_finalFrameCount = 0;
     m_numEntries = 0;
+    m_amortizeFraction = 0.85;
+    m_amortizeFrames = 75;
+    if (m_param->totalFrames <= 2 * m_fps)
+    {
+        m_amortizeFraction = m_amortizeFrames = 0;
+    }
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -1614,8 +1619,8 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
             if (m_partialResidualFrames)
                 rce->rowTotalBits += m_partialResidualCost * m_partialResidualFrames;
 
-            m_partialResidualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
-            m_partialResidualCost = (int)((rce->rowTotalBits * s_amortizeFraction) /m_partialResidualFrames);
+            m_partialResidualFrames = X265_MIN(m_amortizeFrames, m_param->keyframeMax);
+            m_partialResidualCost = (int)((rce->rowTotalBits * m_amortizeFraction) /m_partialResidualFrames);
             rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
         }
         else if (m_partialResidualFrames)
@@ -2191,8 +2196,8 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
                 /* previous I still had a residual; roll it into the new loan */
                 if (m_residualFrames)
                     bits += m_residualCost * m_residualFrames;
-                m_residualFrames = X265_MIN(s_amortizeFrames, m_param->keyframeMax);
-                m_residualCost = (int)((bits * s_amortizeFraction) / m_residualFrames);
+                m_residualFrames = X265_MIN(m_amortizeFrames, m_param->keyframeMax);
+                m_residualCost = (int)((bits * m_amortizeFraction) / m_residualFrames);
                 bits -= m_residualCost * m_residualFrames;
             }
             else if (m_residualFrames)

@@ -236,8 +236,6 @@ public:
 
 protected:
 
-    static const double s_amortizeFraction;
-    static const int    s_amortizeFrames;
     static const int    s_slidingWindowFrames;
     static const char  *s_defaultStatFileName;
 
@@ -245,6 +243,8 @@ protected:
     int m_partialResidualFrames;
     int m_residualCost;
     int m_partialResidualCost;
+    int m_amortizeFrames;
+    double m_amortizeFraction;
 
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
