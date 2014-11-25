@@ -233,6 +233,7 @@ public:
     void initHRD(SPS* sps);
     int rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
+    double tuneAbrQScaleFromFeedback(double qScale);
 
 protected:
 

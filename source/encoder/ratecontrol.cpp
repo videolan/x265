@@ -1350,6 +1350,25 @@ fail:
     return false;
 }
 
+double RateControl::tuneAbrQScaleFromFeedback(double qScale)
+{
+    double abrBuffer = 2 * m_param->rc.rateTolerance * m_bitrate;
+    if (m_currentSatd)
+    {
+        /* use framesDone instead of POC as poc count is not serial with bframes enabled */
+        double overflow = 1.0;
+        double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
+        double wantedBits = timeDone * m_bitrate;
+        if (wantedBits > 0 && m_totalBits > 0 && !m_partialResidualFrames)
+        {
+            abrBuffer *= X265_MAX(1, sqrt(timeDone));
+            overflow = Clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
+            qScale *= overflow;
+        }
+    }
+    return qScale;
+}
+
 double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
 {
     double q;
@@ -1422,9 +1441,20 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q += m_pbOffset / 2;
         else
             q += m_pbOffset;
-        rce->qpNoVbv = q;
-        double qScale = x265_qp2qScale(q);
 
+        double qScale = x265_qp2qScale(q);
+        if (m_isCbr)
+        {
+            qScale = tuneAbrQScaleFromFeedback(qScale);
+            if (!m_isAbrReset)
+            {
+                double lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
+                double lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
+                qScale = Clip3(lmin, lmax, qScale);
+            }
+            q = x265_qScale2qp(qScale);
+        }
+        rce->qpNoVbv = q;
         if (!m_2pass && m_isVbv)
         {
             qScale = clipQscale(curFrame, rce, qScale);
@@ -1512,7 +1542,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
              * tradeoff between quality and bitrate precision. But at large
              * tolerances, the bit distribution approaches that of 2pass. */
 
-            double wantedBits, overflow = 1;
+            double overflow = 1;
 
             m_shortTermCplxSum *= 0.5;
             m_shortTermCplxCount *= 0.5;
@@ -1532,23 +1562,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 if (!m_param->rc.bStatRead)
                     checkAndResetABR(rce, false);
-                q = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
-
-                /* ABR code can potentially be counterproductive in CBR, so just
-                 * don't bother.  Don't run it if the frame complexity is zero
-                 * either. */
-                if (!m_isCbr && m_currentSatd)
-                {
-                    /* use framesDone instead of POC as poc count is not serial with bframes enabled */
-                    double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
-                    wantedBits = timeDone * m_bitrate;
-                    if (wantedBits > 0 && m_totalBits > 0 && !m_partialResidualFrames)
-                    {
-                        abrBuffer *= X265_MAX(1, sqrt(timeDone));
-                        overflow = Clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
-                        q *= overflow;
-                    }
-                }
+                double initialQScale = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
+                q = tuneAbrQScaleFromFeedback(initialQScale);
+                overflow = q / initialQScale;
             }
 
             if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
