@@ -30,8 +30,8 @@ Generally, when an option expects a string value from a list of strings
 the user may specify the integer ordinal of the value they desire. ie:
 :option:`--log-level` 3 is equivalent to :option:`--log-level` debug.
 
-Standalone Executable Options
-=============================
+Executable Options
+==================
 
 .. option:: --help, -h
 
@@ -45,6 +45,59 @@ Standalone Executable Options
 
 	**CLI ONLY**
 
+Logging/Statistic Options
+=========================
+
+.. option:: --log-level <integer|string>
+
+	Logging level. Debug level enables per-frame QP, metric, and bitrate
+	logging. If a CSV file is being generated, debug level makes the log
+	be per-frame rather than per-encode. Full level enables hash and
+	weight logging. -1 disables all logging, except certain fatal
+	errors, and can be specified by the string "none".
+
+	0. error
+	1. warning
+	2. info **(default)**
+	3. debug
+	4. full
+
+.. option:: --no-progress
+
+	Disable periodic progress reports from the CLI
+
+	**CLI ONLY**
+
+.. option:: --csv <filename>
+
+	Writes encoding results to a comma separated value log file. Creates
+	the file if it doesnt already exist, else adds one line per run.  if
+	:option:`--log-level` is debug or above, it writes one line per
+	frame. Default none
+
+.. option:: --cu-stats, --no-cu-stats
+
+	Records statistics on how each CU was coded (split depths and other
+	mode decisions) and reports those statistics at the end of the
+	encode. Default disabled
+
+.. option:: --ssim, --no-ssim
+
+	Calculate and report Structural Similarity values. It is
+	recommended to use :option:`--tune` ssim if you are measuring ssim,
+	else the results should not be used for comparison purposes.
+	Default disabled
+
+.. option:: --psnr, --no-psnr
+
+	Calculate and report Peak Signal to Noise Ratio.  It is recommended
+	to use :option:`--tune` psnr if you are measuring PSNR, else the
+	results should not be used for comparison purposes.  Default
+	disabled
+
+Performance Options
+===================
+
 .. option:: --asm <integer:false:string>, --no-asm
 
 	x265 will use all detected CPU SIMD architectures by default. You can
@@ -56,6 +109,17 @@ Standalone Executable Options
 	handled implicitly.
 
 	One may also directly supply the CPU capability bitmap as an integer.
+
+.. option:: --frame-threads, -F <integer>
+
+	Number of concurrently encoded frames. Using a single frame thread
+	gives a slight improvement in compression, since the entire reference
+	frames are always available for motion compensation, but it has
+	severe performance implications. Default is an autodetected count
+	based on the number of CPU cores and whether WPP is enabled or not.
+
+	Over-allocation of frame threads will not improve performance, it
+	will generally just increase memory use.
 
 .. option:: --threads <integer>
 
@@ -71,13 +135,24 @@ Standalone Executable Options
 	Default 0, one thread is allocated per detected hardware thread
 	(logical CPU cores)
 
+.. option:: --wpp, --no-wpp
+
+	Enable Wavefront Parallel Processing. The encoder may begin encoding
+	a row as soon as the row above it is at least two CTUs ahead in the
+	encode process. This gives a 3-5x gain in parallelism for about 1%
+	overhead in compression efficiency.
+
+	This feature is implicitly disabled when no thread pool is present.
+
+	Default: Enabled
+
 .. option:: --pmode, --no-pmode
 
 	Parallel mode decision, or distributed mode analysis. When enabled
 	the encoder will distribute the analysis work of each CU (merge,
 	inter, intra) across multiple worker threads. Only recommended if
 	x265 is not already saturating the CPU cores. In RD levels 3 and 4
-	it will be most effective if --rect was enabled. At RD levels 5 and
+	it will be most effective if --rect is enabled. At RD levels 5 and
 	6 there is generally always enough work to distribute to warrant the
 	overhead, assuming your CPUs are not already saturated.
 	
@@ -85,7 +160,8 @@ Standalone Executable Options
 	efficiency. In fact, since the modes are all measured in parallel it
 	makes certain early-outs impractical and thus you usually get
 	slightly better compression when it is enabled (at the expense of
-	not skipping improbable modes).
+	not skipping improbable modes). This bypassing of early-outs can
+	cause pmode to slow down encodes, especially at faster presets.
 
 	This feature is implicitly disabled when no thread pool is present.
 
@@ -114,7 +190,7 @@ Standalone Executable Options
 	Sets parameters to preselected values, trading off compression efficiency against 
 	encoding speed. These parameters are applied before all other input parameters are 
 	applied, and so you can override any parameters that these values control.  See
-	:ref:`presets <preset-tune-ref>` for more detail.
+	:ref:`presets <presets>` for more detail.
 
 	0. ultrafast
 	1. superfast
@@ -130,85 +206,18 @@ Standalone Executable Options
 .. option:: --tune, -t <string>
 
 	Tune the settings for a particular type of source or situation. The changes will
-	be applied after :option:`--preset` but before all other parameters. Default none
-	See :ref:`presets <preset-tune-ref>` for more detail.
+	be applied after :option:`--preset` but before all other parameters. Default none.
+	See :ref:`tunings <tunings>` for more detail.
 
 	**Values:** psnr, ssim, grain, zero-latency, fast-decode, cbr.
 
-.. option:: --frame-threads, -F <integer>
-
-	Number of concurrently encoded frames. Using a single frame thread
-	gives a slight improvement in compression, since the entire reference
-	frames are always available for motion compensation, but it has
-	severe performance implications. Default is an autodetected count
-	based on the number of CPU cores and whether WPP is enabled or not.
-
-	Over-allocation of frame threads will not improve performance, it
-	will generally just increase memory use.
-
-.. option:: --log-level <integer|string>
-
-	Logging level. Debug level enables per-frame QP, metric, and bitrate
-	logging. If a CSV file is being generated, debug level makes the log
-	be per-frame rather than per-encode. Full level enables hash and
-	weight logging. -1 disables all logging, except certain fatal
-	errors, and can be specified by the string "none".
-
-	0. error
-	1. warning
-	2. info **(default)**
-	3. debug
-	4. full
-
-.. option:: --csv <filename>
-
-	Writes encoding results to a comma separated value log file. Creates
-	the file if it doesnt already exist, else adds one line per run.  if
-	:option:`--log-level` is debug or above, it writes one line per
-	frame. Default none
-
-.. option:: --cu-stats, --no-cu-stats
-
-	Records statistics on how each CU was coded (split depths and other
-	mode decisions) and reports those statistics at the end of the
-	encode. Default disabled
-
-.. option:: --output, -o <filename>
-
-	Bitstream output file name. If there are two extra CLI options, the
-	first is implicitly the input filename and the second is the output
-	filename, making the :option:`--output` option optional.
-
-	The output file will always contain a raw HEVC bitstream, the CLI
-	does not support any container file formats.
-
-	**CLI ONLY**
-
-.. option:: --no-progress
-
-	Disable CLI periodic progress reports
-
-	**CLI ONLY**
-
-Quality reporting metrics
+Input/Output File Options
 =========================
 
-.. option:: --ssim, --no-ssim
-
-	Calculate and report Structural Similarity values. It is
-	recommended to use :option:`--tune` ssim if you are measuring ssim,
-	else the results should not be used for comparison purposes.
-	Default disabled
-
-.. option:: --psnr, --no-psnr
-
-	Calculate and report Peak Signal to Noise Ratio.  It is recommended
-	to use :option:`--tune` psnr if you are measuring PSNR, else the
-	results should not be used for comparison purposes.  Default
-	disabled
-
-Input Options
-=============
+These options all describe the input video sequence or, in the case of
+:option:`--dither`, operations that are performed on the sequence prior
+to encode. All options dealing with files (names, formats, offsets or
+frame counts) are only applicable to the CLI application.
 
 .. option:: --input <filename>
 
@@ -244,21 +253,6 @@ Input Options
 
 	**CLI ONLY**
 
-.. option:: --nr <integer>
-
-	Noise reduction - an adaptive deadzone applied after DCT
-	(subtracting from DCT coefficients), before quantization, on inter
-	blocks. It does no pixel-level filtering, doesn't cross DCT block
-	boundaries, has no overlap, doesn't affect intra blocks. The higher
-	the strength value parameter, the more aggressively it will reduce
-	noise.
-
-	Enabling noise reduction will make outputs diverge between different
-	numbers of frame threads. Outputs will be deterministic but the
-	outputs of -F2 will no longer match the outputs of -F3, etc.
-
-	**Values:** any value in range of 100 to 2000. Default disabled.
-
 .. option:: --input-res <wxh>
 
 	YUV only: Source picture size [w x h]
@@ -287,8 +281,6 @@ Input Options
 
 .. option:: --interlaceMode <false|tff|bff>, --no-interlaceMode
 
-	**EXPERIMENTAL** Specify interlace type of source pictures. 
-	
 	0. progressive pictures **(default)**
 	1. top field first 
 	2. bottom field first
@@ -307,61 +299,20 @@ Input Options
 
 .. option:: --frames, -f <integer>
 
-	Number of frames to be encoded. Default 0 (all)
+	Number of frames of input sequence to be encoded. Default 0 (all)
 
 	**CLI ONLY**
 
-.. option:: --qpfile <filename>
+.. option:: --output, -o <filename>
 
-	Specify a text file which contains frametypes and QPs for some or
-	all frames. The format of each line is:
+	Bitstream output file name. If there are two extra CLI options, the
+	first is implicitly the input filename and the second is the output
+	filename, making the :option:`--output` option optional.
 
-	framenumber frametype QP
+	The output file will always contain a raw HEVC bitstream, the CLI
+	does not support any container file formats.
 
-	Frametype can be one of [I,i,P,B,b]. **B** is a referenced B frame,
-	**b** is an unreferenced B frame.  **I** is a keyframe (random
-	access point) while **i** is a I frame that is not a keyframe
-	(references are not broken).
-
-	Specifying QP (integer) is optional, and if specified they are
-	clamped within the encoder to qpmin/qpmax.
-
-.. option:: --scaling-list <filename>
-
-	Quantization scaling lists. HEVC supports 6 quantization scaling
-	lists to be defined; one each for Y, Cb, Cr for intra prediction and
-	one each for inter prediction.
-
-	x265 does not use scaling lists by default, but this can also be
-	made explicit by :option:`--scaling-list` *off*.
-
-	HEVC specifies a default set of scaling lists which may be enabled
-	without requiring them to be signaled in the SPS. Those scaling
-	lists can be enabled via :option:`--scaling-list` *default*.
-    
-	All other strings indicate a filename containing custom scaling
-	lists in the HM format. The encode will abort if the file is not
-	parsed correctly. Custom lists must be signaled in the SPS
-
-.. option:: --lambda-file <filename>
-
-	Specify a text file containing values for x265_lambda_tab and
-	x265_lambda2_tab. Each table requires MAX_MAX_QP+1 (70) float
-	values.
-	
-	The text file syntax is simple. Comma is considered to be
-	white-space. All white-space is ignored. Lines must be less than 2k
-	bytes in length. Content following hash (#) characters are ignored.
-	The values read from the file are logged at :option:`--log-level`
-	debug.
-
-	Note that the lambda tables are process-global and so the new values
-	affect all encoders running in the same process. 
-	
-	Lambda values affect encoder mode decisions, the lower the lambda
-	the more bits it will try to spend on signaling information (motion
-	vectors and splits) and less on residual. This feature is intended
-	for experimentation.
+	**CLI ONLY**
 
 Profile, Level, Tier
 ====================
@@ -419,15 +370,41 @@ Profile, Level, Tier
 	parameters to meet those requirements but it will never raise
 	them.
 
-Quad-Tree analysis
-==================
+Mode decision / Analysis
+========================
 
-.. option:: --wpp, --no-wpp
+.. option:: --rd <0..6>
 
-	Enable Wavefront Parallel Processing. The encoder may begin encoding
-	a row as soon as the row above it is at least two CTUs ahead in the
-	encode process. This gives a 3-5x gain in parallelism for about 1%
-	overhead in compression efficiency. Default: Enabled
+	Level of RDO in mode decision. The higher the value, the more
+	exhaustive the analysis and the more rate distortion optimization is
+	used. The lower the value the faster the encode, the higher the
+	value the smaller the bitstream (in general). Default 3
+
+	Note that this table aims for accuracy, but is not necessarily our
+	final target behavior for each mode.
+
+	+-------+---------------------------------------------------------------+
+	| Level | Description                                                   |
+	+=======+===============================================================+
+	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
+	+-------+---------------------------------------------------------------+
+	| 1     | recon generated (better intra), RDO merge/skip selection      |
+	+-------+---------------------------------------------------------------+
+	| 2     | RDO splits and merge/skip selection                           |
+	+-------+---------------------------------------------------------------+
+	| 3     | RDO mode and split decisions                                  |
+	+-------+---------------------------------------------------------------+
+	| 4     | Adds RDO Quant                                                |
+	+-------+---------------------------------------------------------------+
+	| 5     | Adds RDO prediction decisions                                 |
+	+-------+---------------------------------------------------------------+
+	| 6     | Currently same as 5                                           |
+	+-------+---------------------------------------------------------------+
+
+	**Range of values:** 0: least .. 6: full RDO analysis
+
+Options which affect the coding unit quad-tree, sometimes referred to as
+the prediction quad-tree.
 
 .. option:: --ctu, -s <64|32|16>
 
@@ -437,6 +414,108 @@ Quad-Tree analysis
 	parallelism with fewer rows of CUs that can be encoded in parallel,
 	and less frame parallelism as well. Because of this the faster
 	presets use a CU size of 32. Default: 64
+
+.. option:: --rect, --no-rect
+
+	Enable analysis of rectangular motion partitions Nx2N and 2NxN
+	(50/50 splits, two directions). Default disabled
+
+.. option:: --amp, --no-amp
+
+	Enable analysis of asymmetric motion partitions (75/25 splits, four
+	directions). At RD levels 0 through 4, AMP partitions are only
+	considered at CU sizes 32x32 and below. At RD levels 5 and 6, it
+	will only consider AMP partitions as merge candidates (no motion
+	search) at 64x64, and as merge or inter candidates below 64x64.
+
+	The AMP partitions which are searched are derived from the current
+	best inter partition. If Nx2N (vertical rectangular) is the best
+	current prediction, then left and right asymmetrical splits will be
+	evaluated. If 2NxN (horizontal rectangular) is the best current
+	prediction, then top and bottom asymmetrical splits will be
+	evaluated, If 2Nx2N is the best prediction, and the block is not a
+	merge/skip, then all four AMP partitions are evaluated.
+
+	This setting has no effect if rectangular partitions are disabled.
+	Default disabled
+
+.. option:: --early-skip, --no-early-skip
+
+	Measure full CU size (2Nx2N) merge candidates first; if no residual
+	is found the analysis is short circuited. Default disabled
+
+.. option:: --fast-cbf, --no-fast-cbf
+
+	Short circuit analysis if a prediction is found that does not set
+	the coded block flag (aka: no residual was encoded).  It prevents
+	the encoder from perhaps finding other predictions that also have no
+	residual but require less signaling bits or have less distortion.
+	Only applicable for RD levels 5 and 6. Default disabled
+
+.. option:: --fast-intra, --no-fast-intra
+
+	Perform an initial scan of every fifth intra angular mode, then
+	check modes +/- 2 distance from the best mode, then +/- 1 distance
+	from the best mode, effectively performing a gradient descent. When
+	enabled 10 modes in total are checked. When disabled all 33 angular
+	modes are checked.  Only applicable for :option:`--rd` levels 4 and
+	below (medium preset and faster).
+
+.. option:: --b-intra, --no-b-intra
+
+	Enables the evaluation of intra modes in B slices. Default disabled.
+
+.. option:: --cu-lossless, --no-cu-lossless
+
+	For each CU, evaluate lossless (transform and quant bypass) encode
+	of the best non-lossless mode option as a potential rate distortion
+	optimization. If the global option :option:`--lossless` has been
+	specified, all CUs will be encoded as lossless unconditionally
+	regardless of whether this option was enabled. Default disabled.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions.
+
+.. option:: --tskip, --no-tskip
+
+	Enable evaluation of transform skip (bypass DCT but still use
+	quantization) coding for 4x4 TU coded blocks.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions. Default disabled
+
+.. option:: --tskip-fast, --no-tskip-fast
+
+	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
+	Only applicable if transform skip is enabled. For chroma, only
+	evaluate if luma used tskip. Inter block tskip analysis is
+	unmodified. Default disabled
+
+Analysis re-use options, to improve performance when encoding the same
+sequence multiple times (presumably at varying bitrates). The encoder
+will not reuse analysis if the resolution and slice type parameters do
+not match.
+
+.. option:: --analysis-mode <string|int>
+
+	Specify whether analysis information of each frame is output by encoder
+	or input for reuse. By reading the analysis data writen by an
+	earlier encode of the same sequence, substantial redundant work may
+	be avoided.
+
+	The following data may be stored and reused:
+	I frames   - split decisions and luma intra directions of all CUs.
+	P/B frames - motion vectors are dumped at each depth for all CUs.
+
+	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
+
+.. option:: --analysis-file <filename>
+
+	Specify a filename for analysis data (see :option:`--analysis-mode`)
+	If no filename is specified, x265_analysis.dat is used.
+
+Options which affect the transform unit quad-tree, sometimes referred to
+as the residual quad-tree (RQT).
 
 .. option:: --tu-intra-depth <1..4>
 
@@ -538,8 +617,35 @@ Temporal / motion search options
 	This enables the use of the motion vector from the collocated block
 	in the previous frame to be used as a predictor. Default is enabled
 
+.. option:: --weightp, -w, --no-weightp
+
+	Enable weighted prediction in P slices. This enables weighting
+	analysis in the lookahead, which influences slice decisions, and
+	enables weighting analysis in the main encoder which allows P
+	reference samples to have a weight function applied to them prior to
+	using them for motion compensation.  In video which has lighting
+	changes, it can give a large improvement in compression efficiency.
+	Default is enabled
+
+.. option:: --weightb, --no-weightb
+
+	Enable weighted prediction in B slices. Default disabled
+
 Spatial/intra options
 =====================
+
+.. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
+
+	Enable strong intra smoothing for 32x32 intra blocks. Default enabled
+
+.. option:: --constrained-intra, --no-constrained-intra
+
+	Constrained intra prediction. When generating intra predictions for
+	blocks in inter slices, only intra-coded reference pixels are used.
+	Inter-coded reference pixels are replaced with intra-coded neighbor
+	pixels or default values. The general idea is to block the
+	propagation of reference errors that may have resulted from lossy
+	signals. Default disabled
 
 .. option:: --rdpenalty <0..2>
 
@@ -567,149 +673,6 @@ Spatial/intra options
 
 	**Values:** 0:disabled 1:4x cost penalty 2:force splits
 
-.. option:: --b-intra, --no-b-intra
-
-	Enables the evaluation of intra modes in B slices. Default disabled.
-
-.. option:: --tskip, --no-tskip
-
-	Enable evaluation of transform skip (bypass DCT but still use
-	quantization) coding for 4x4 TU coded blocks.
-
-	Only effective at RD levels 3 and above, which perform RDO mode
-	decisions. Default disabled
-
-.. option:: --tskip-fast, --no-tskip-fast
-
-	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
-	Only applicable if transform skip is enabled. For chroma, only
-	evaluate if luma used tskip. Inter block tskip analysis is
-	unmodified. Default disabled
-
-.. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
-
-	Enable strong intra smoothing for 32x32 intra blocks. Default enabled
-
-.. option:: --constrained-intra, --no-constrained-intra
-
-	Constrained intra prediction. When generating intra predictions for
-	blocks in inter slices, only intra-coded reference pixels are used.
-	Inter-coded reference pixels are replaced with intra-coded neighbor
-	pixels or default values. The general idea is to block the
-	propagation of reference errors that may have resulted from lossy
-	signals. Default disabled
-
-Mode decision / Analysis
-========================
-
-.. option:: --rect, --no-rect
-
-	Enable analysis of rectangular motion partitions Nx2N and 2NxN
-	(50/50 splits, two directions). Default disabled
-
-.. option:: --amp, --no-amp
-
-	Enable analysis of asymmetric motion partitions (75/25 splits, four
-	directions). At RD levels 0 through 4, AMP partitions are only
-	considered at CU sizes 32x32 and below. At RD levels 5 and 6, it
-	will only consider AMP partitions as merge candidates (no motion
-	search) at 64x64, and as merge or inter candidates below 64x64.
-
-	The AMP partitions which are searched are derived from the current
-	best inter partition. If Nx2N (vertical rectangular) is the best
-	current prediction, then left and right asymmetrical splits will be
-	evaluated. If 2NxN (horizontal rectangular) is the best current
-	prediction, then top and bottom asymmetrical splits will be
-	evaluated, If 2Nx2N is the best prediction, and the block is not a
-	merge/skip, then all four AMP partitions are evaluated.
-
-	This setting has no effect if rectangular partitions are disabled.
-	Default disabled
-
-.. option:: --early-skip, --no-early-skip
-
-	Measure full CU size (2Nx2N) merge candidates first; if no residual
-	is found the analysis is short circuited. Default disabled
-
-.. option:: --fast-cbf, --no-fast-cbf
-
-	Short circuit analysis if a prediction is found that does not set
-	the coded block flag (aka: no residual was encoded).  It prevents
-	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits or have less distortion.
-	Only applicable for RD levels 5 and 6. Default disabled
-
-.. option:: --fast-intra, --no-fast-intra
-
-	Perform an initial scan of every fifth intra angular mode, then
-	check modes +/- 2 distance from the best mode, then +/- 1 distance
-	from the best mode, effectively performing a gradient descent. When
-	enabled 10 modes in total are checked. When disabled all 33 angular
-	modes are checked.  Only applicable for :option:`--rd` levels 3 and
-	below (medium preset and faster).
-
-.. option:: --weightp, -w, --no-weightp
-
-	Enable weighted prediction in P slices. This enables weighting
-	analysis in the lookahead, which influences slice decisions, and
-	enables weighting analysis in the main encoder which allows P
-	reference samples to have a weight function applied to them prior to
-	using them for motion compensation.  In video which has lighting
-	changes, it can give a large improvement in compression efficiency.
-	Default is enabled
-
-.. option:: --weightb, --no-weightb
-
-	Enable weighted prediction in B slices. Default disabled
-
-.. option:: --rd <0..6>
-
-	Level of RDO in mode decision. The higher the value, the more
-	exhaustive the analysis and the more rate distortion optimization is
-	used. The lower the value the faster the encode, the higher the
-	value the smaller the bitstream (in general). Default 3
-
-	Note that this table aims for accuracy, but is not necessarily our
-	final target behavior for each mode.
-
-	+-------+---------------------------------------------------------------+
-	| Level | Description                                                   |
-	+=======+===============================================================+
-	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
-	+-------+---------------------------------------------------------------+
-	| 1     | recon generated (better intra), RDO merge/skip selection      |
-	+-------+---------------------------------------------------------------+
-	| 2     | RDO splits and merge/skip selection                           |
-	+-------+---------------------------------------------------------------+
-	| 3     | RDO mode and split decisions                                  |
-	+-------+---------------------------------------------------------------+
-	| 4     | Adds RDO Quant                                                |
-	+-------+---------------------------------------------------------------+
-	| 5     | Adds RDO prediction decisions                                 |
-	+-------+---------------------------------------------------------------+
-	| 6     | Currently same as 5                                           |
-	+-------+---------------------------------------------------------------+
-
-	**Range of values:** 0: least .. 6: full RDO analysis
-
-.. option:: --cu-lossless, --no-cu-lossless
-
-	For each CU, evaluate lossless (transform and quant bypass) encode
-	of the best non-lossless mode option as a potential rate distortion
-	optimization. If the global option :option:`--lossless` has been
-	specified, all CUs will be encoded as lossless unconditionally
-	regardless of whether this option was enabled. Default disabled.
-
-	Only effective at RD levels 3 and above, which perform RDO mode
-	decisions.
-
-.. option:: --signhide, --no-signhide
-
-	Hide sign bit of one coeff per TU (rdo). The last sign is implied.
-	This requires analyzing all the coefficients to determine if a sign
-	must be toggled, and then to determine which one can be toggled with
-	the least amount of distortion. Default enabled
- 
 Psycho-visual options
 =====================
 
@@ -962,6 +925,20 @@ Quality, rate control and rate distortion options
 	less bits. This tends to improve detail in the backgrounds of video
 	with less detail in areas of high motion. Default enabled
 
+.. option:: --nr <integer>
+
+	Noise reduction - an adaptive deadzone applied after DCT
+	(subtracting from DCT coefficients), before quantization.  It does
+	no pixel-level filtering, doesn't cross DCT block boundaries, has no
+	overlap, The higher the strength value parameter, the more
+	aggressively it will reduce noise.
+
+	Enabling noise reduction will make outputs diverge between different
+	numbers of frame threads. Outputs will be deterministic but the
+	outputs of -F2 will no longer match the outputs of -F3, etc.
+
+	**Values:** any value in range of 100 to 2000. Default disabled.
+
 .. option:: --pass <integer>
 
 	Enable multipass rate control mode. Input is encoded multiple times,
@@ -994,24 +971,6 @@ Quality, rate control and rate distortion options
 	* :option:`--me` = DIA
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
-
-.. option:: --analysis-mode <string|int>
-
-	Specify whether analysis information of each frame is output by encoder
-	or input for reuse. By reading the analysis data writen by an
-	earlier encode of the same sequence, substantial redundant work may
-	be avoided.
-
-	The following data may be stored and reused:
-	I frames   - split decisions and luma intra directions of all CUs.
-	P/B frames - motion vectors are dumped at each depth for all CUs.
-
-	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
-
-.. option:: --analysis-file <filename>
-
-	Specify a filename for analysis data (see :option:`--analysis-mode`)
-	If no filename is specified, x265_analysis.dat is used.
 
 .. option:: --cbqpoffs <integer>
 
@@ -1066,6 +1025,72 @@ Quality, rate control and rate distortion options
 .. option:: --cplxblur <float>
 
 	temporally blur complexity. default 20
+
+Quantization Options
+====================
+
+Note that rate-distortion optimized quantization (RDOQ) is enabled
+implicitly at :option:`--rd` 4, 5, and 6 and disabled implicitly at all
+other levels.
+ 
+.. option:: --signhide, --no-signhide
+
+	Hide sign bit of one coeff per TU (rdo). The last sign is implied.
+	This requires analyzing all the coefficients to determine if a sign
+	must be toggled, and then to determine which one can be toggled with
+	the least amount of distortion. Default enabled
+
+.. option:: --qpfile <filename>
+
+	Specify a text file which contains frametypes and QPs for some or
+	all frames. The format of each line is:
+
+	framenumber frametype QP
+
+	Frametype can be one of [I,i,P,B,b]. **B** is a referenced B frame,
+	**b** is an unreferenced B frame.  **I** is a keyframe (random
+	access point) while **i** is a I frame that is not a keyframe
+	(references are not broken).
+
+	Specifying QP (integer) is optional, and if specified they are
+	clamped within the encoder to qpmin/qpmax.
+
+.. option:: --scaling-list <filename>
+
+	Quantization scaling lists. HEVC supports 6 quantization scaling
+	lists to be defined; one each for Y, Cb, Cr for intra prediction and
+	one each for inter prediction.
+
+	x265 does not use scaling lists by default, but this can also be
+	made explicit by :option:`--scaling-list` *off*.
+
+	HEVC specifies a default set of scaling lists which may be enabled
+	without requiring them to be signaled in the SPS. Those scaling
+	lists can be enabled via :option:`--scaling-list` *default*.
+    
+	All other strings indicate a filename containing custom scaling
+	lists in the HM format. The encode will abort if the file is not
+	parsed correctly. Custom lists must be signaled in the SPS
+
+.. option:: --lambda-file <filename>
+
+	Specify a text file containing values for x265_lambda_tab and
+	x265_lambda2_tab. Each table requires MAX_MAX_QP+1 (70) float
+	values.
+	
+	The text file syntax is simple. Comma is considered to be
+	white-space. All white-space is ignored. Lines must be less than 2k
+	bytes in length. Content following hash (#) characters are ignored.
+	The values read from the file are logged at :option:`--log-level`
+	debug.
+
+	Note that the lambda tables are process-global and so the new values
+	affect all encoders running in the same process. 
+	
+	Lambda values affect encoder mode decisions, the lower the lambda
+	the more bits it will try to spend on signaling information (motion
+	vectors and splits) and less on residual. This feature is intended
+	for experimentation.
 
 Loop filters
 ============

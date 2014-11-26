@@ -1,10 +1,10 @@
 Preset Options
 --------------
 
+.. _presets:
+
 Presets
 =======
-
-.. _preset-tune-ref:
 
 x265 has a number of predefined :option:`--preset` options that make
 trade-offs between encode speed (encoded frames per second) and
@@ -74,6 +74,8 @@ The presets adjust encoder parameters to affect these trade-offs.
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 
 Placebo mode enables transform-skip prediction evaluation.
+
+.. _tunings:
 
 Tuning
 ======
