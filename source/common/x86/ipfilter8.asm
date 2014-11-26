@@ -5805,6 +5805,47 @@ cglobal interp_8tap_vert_pp_32x8, 4, 10, 15
     RET
 %endif
 
+%macro FILTER_VER_LUMA_AVX2_64xN 2
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_pp_%1x%2, 4, 12, 15
+    mov             r4d, r4m
+    shl             r4d, 7
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+    lea             r6, [r3 * 3]
+    lea             r11, [r1 * 4]
+    mova            m14, [pw_512]
+    mov             r9d, %2 / 16
+.loopH:
+    mov             r10d, %1 / 16
+.loopW:
+    PROCESS_LUMA_AVX2_W16_16R
+    add             r2, 16
+    add             r0, 16
+    dec             r10d
+    jnz             .loopW
+    sub             r7, r11
+    lea             r0, [r7 - 48]
+    lea             r2, [r8 + r3 * 4 - 48]
+    dec             r9d
+    jnz             .loopH
+    RET
+%endif
+%endmacro
+
+FILTER_VER_LUMA_AVX2_64xN 64, 32
+FILTER_VER_LUMA_AVX2_64xN 64, 48
+FILTER_VER_LUMA_AVX2_64xN 64, 64
+
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
