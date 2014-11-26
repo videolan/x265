@@ -944,6 +944,88 @@ cglobal interp_8tap_horiz_pp_8x4, 4, 6, 7
     movhps          [r2 + r4], xm5
     RET
 
+%macro IPFILTER_LUMA_AVX2_8xN 2
+INIT_YMM avx2
+cglobal interp_8tap_horiz_pp_%1x%2, 4, 7, 7
+    mov             r4d, r4m
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_LumaCoeff + r4 * 8]
+%endif
+
+    mova            m1, [tab_Lm]
+    mova            m2, [tab_Lm + 32]
+
+    ; register map
+    ; m0     - interpolate coeff
+    ; m1, m2 - shuffle order table
+
+    sub             r0, 3
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
+    mov             r4d, %2 / 4
+.loop:
+    ; Row 0
+    vbroadcasti128  m3, [r0]                        ; [x E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m4, m3, m2
+    pshufb          m3, m1
+    pmaddubsw       m3, m0
+    pmaddubsw       m4, m0
+    phaddw          m3, m4
+    ; Row 1
+    vbroadcasti128  m4, [r0 + r1]                   ; [x E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m5, m4, m2
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddubsw       m5, m0
+    phaddw          m4, m5
+
+    phaddw          m3, m4                          ; WORD [R1H R1G R1D R1C R0H R0G R0D R0C R1F R1E R1B R1A R0F R0E R0B R0A]
+    pmulhrsw        m3, [pw_512]
+
+    ; Row 2
+    vbroadcasti128  m4, [r0 + r1 * 2]               ; [x E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m5, m4, m2
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddubsw       m5, m0
+    phaddw          m4, m5
+    ; Row 3
+    vbroadcasti128  m5, [r0 + r5]                   ; [x E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m6, m5, m2
+    pshufb          m5, m1
+    pmaddubsw       m5, m0
+    pmaddubsw       m6, m0
+    phaddw          m5, m6
+
+    phaddw          m4, m5                          ; WORD [R3H R3G R3D R3C R2H R2G R2D R2C R3F R3E R3B R3A R2F R2E R2B R2A]
+    pmulhrsw        m4, [pw_512]
+
+    packuswb        m3, m4
+    vextracti128    xm4, m3, 1
+    punpcklwd       xm5, xm3, xm4
+
+    movq            [r2], xm5
+    movhps          [r2 + r3], xm5
+
+    punpckhwd       xm5, xm3, xm4
+    movq            [r2 + r3 * 2], xm5
+    movhps          [r2 + r6], xm5
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    dec             r4d
+    jnz             .loop
+    RET
+%endmacro
+
+IPFILTER_LUMA_AVX2_8xN 8, 8
+IPFILTER_LUMA_AVX2_8xN 8, 16
+IPFILTER_LUMA_AVX2_8xN 8, 32
+
 %macro IPFILTER_LUMA_AVX2 2
 INIT_YMM avx2
 cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
