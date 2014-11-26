@@ -1159,7 +1159,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     rce->leadingNoBSatd = m_leadingNoBSatd;
     if (curFrame->m_forceqp)
     {
-        m_qp = int32_t(curFrame->m_forceqp + 0.5) - 1;
+        m_qp = (int32_t)(curFrame->m_forceqp + 0.5) - 1;
         m_qp = Clip3(QP_MIN, QP_MAX_MAX, m_qp);
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = m_qp;
     }
@@ -1876,24 +1876,24 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
                     && refQScale > 0
                     && refRowSatdCost > 0)
                 {
-                    if (abs(int32_t(refRowSatdCost - satdCostForPendingCus)) < (int32_t)satdCostForPendingCus / 2)
+                    if (abs((int32_t)(refRowSatdCost - satdCostForPendingCus)) < (int32_t)satdCostForPendingCus / 2)
                     {
                         double predTotal = refRowBits * satdCostForPendingCus / refRowSatdCost * refQScale / qScale;
-                        totalSatdBits += int32_t((pred_s + predTotal) * 0.5);
+                        totalSatdBits += (int32_t)((pred_s + predTotal) * 0.5);
                         continue;
                     }
                 }
-                totalSatdBits += int32_t(pred_s);
+                totalSatdBits += (int32_t)pred_s;
             }
             else if (picType == P_SLICE)
             {
                 /* Our QP is lower than the reference! */
                 double pred_intra = predictSize(rce->rowPred[1], qScale, intraCost);
                 /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
-                totalSatdBits += int32_t(pred_intra + pred_s);
+                totalSatdBits += (int32_t)(pred_intra + pred_s);
             }
             else
-              totalSatdBits += int32_t(pred_s);
+                totalSatdBits += (int32_t)pred_s;
         }
     }
 
