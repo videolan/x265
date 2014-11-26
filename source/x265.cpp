@@ -389,7 +389,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
     H0("                                 ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
     H0("-t/--tune <string>               Tune the settings for a particular type of source or situation:\n");
-    H0("                                 psnr, ssim, grain, zerolatency, or fastdecode\n");
+    H0("                                 psnr, ssim, grain, zerolatency, fastdecode or cbr\n");
     H0("\nQuad-Tree size and depth:\n");
     H0("-s/--ctu <64|32|16>              Maximum CU size (WxH). Default %d\n", param->maxCUSize);
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);

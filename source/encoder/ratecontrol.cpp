@@ -410,8 +410,6 @@ RateControl::RateControl(x265_param *p)
     }
 
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
-    if (m_isCbr)
-        m_param->rc.pbFactor = 1.0;
     m_leadingBframes = m_param->bframes;
     m_bframeBits = 0;
     m_leadingNoBSatd = 0;

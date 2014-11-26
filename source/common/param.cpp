@@ -420,6 +420,11 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rc.aqStrength = 0.3;
             param->rc.qCompress = 0.8;
         }
+        else if (!strcmp(tune, "cbr"))
+        {
+            param->rc.pbFactor = 1.0;
+            param->rc.rateTolerance = 0.5;
+        }
         else
             return -1;
     }
