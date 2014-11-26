@@ -113,7 +113,8 @@ Standalone Executable Options
 
 	Sets parameters to preselected values, trading off compression efficiency against 
 	encoding speed. These parameters are applied before all other input parameters are 
-	applied, and so you can override any parameters that these values control.
+	applied, and so you can override any parameters that these values control.  See
+	:ref:`presets <preset-tune-ref>` for more detail.
 
 	0. ultrafast
 	1. superfast
@@ -130,8 +131,9 @@ Standalone Executable Options
 
 	Tune the settings for a particular type of source or situation. The changes will
 	be applied after :option:`--preset` but before all other parameters. Default none
+	See :ref:`presets <preset-tune-ref>` for more detail.
 
-	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
+	**Values:** psnr, ssim, grain, zero-latency, fast-decode, cbr.
 
 .. option:: --frame-threads, -F <integer>
 
