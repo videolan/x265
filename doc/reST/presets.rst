@@ -111,8 +111,8 @@ Film Grain Retention
 ~~~~~~~~~~~~~~~~~~~~
 
 :option:`--tune` grain tries to improve the retention of film grain in
-the reconstructed output. To help rate distortion optimizations to
-select modes which preserve high frequency noise:
+the reconstructed output. It helps rate distortion optimizations select
+modes which preserve high frequency noise:
 
     * :option:`--psy-rd` 0.5
     * :option:`--psy-rdoq` 30
