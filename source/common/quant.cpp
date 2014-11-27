@@ -322,49 +322,46 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     return numSig;
 }
 
-uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t stride,
+uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
+    const uint32_t sizeIdx = log2TrSize - 2;
     if (cu.m_tqBypass[absPartIdx])
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
-        return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);
+        return primitives.copy_cnt[sizeIdx](coeff, residual, resiStride);
     }
 
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-    int trSize = 1 << log2TrSize;
 
     X265_CHECK((cu.m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
     {
 #if X265_DEPTH <= 10
-        primitives.cpy16to16_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+        X265_CHECK(transformShift >= 0, "invalid transformShift\n");
+        primitives.cpy2Dto1D_shl[sizeIdx](m_resiDctCoeff, residual, resiStride, transformShift);
 #else
         if (transformShift >= 0)
-            primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+            primitives.cpy2Dto1D_shl[sizeIdx](m_resiDctCoeff, residual, resiStride, transformShift);
         else
-        {
-            int shift = -transformShift;
-            int offset = (1 << (shift - 1));
-            primitives.cvt16to32_shr[log2TrSize - 2](m_resiDctCoeff, residual, stride, shift, offset);
-        }
+            primitives.cpy2Dto1D_shr[sizeIdx](m_resiDctCoeff, residual, resiStride, -transformShift);
 #endif
     }
     else
     {
         bool isIntra = cu.isIntra(absPartIdx);
-        const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && isLuma && isIntra;
         int index = DCT_4x4 + sizeIdx - useDST;
 
-        primitives.dct[index](residual, m_resiDctCoeff, stride);
+        primitives.dct[index](residual, m_resiDctCoeff, resiStride);
 
         /* NOTE: if RDOQ is disabled globally, psy-rdoq is also disabled, so
          * there is no risk of performing this DCT unnecessarily */
         if (usePsy)
         {
+            int trSize = 1 << log2TrSize;
             /* perform DCT on source pixels for psy-rdoq */
             primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
@@ -408,12 +405,13 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     }
 }
 
-void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, const coeff_t* coeff,
+void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
+    const uint32_t sizeIdx = log2TrSize - 2;
     if (transQuantBypass)
     {
-        primitives.copy_shl[log2TrSize - 2](residual, coeff, stride, 0);
+        primitives.cpy1Dto2D_shl[sizeIdx](residual, coeff, resiStride, 0);
         return;
     }
 
@@ -427,7 +425,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     if (m_scalingList->m_bEnabled)
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
-        const int32_t* dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+        const int32_t* dequantCoef = m_scalingList->m_dequantCoef[sizeIdx][scalingListType][rem];
         primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
@@ -438,20 +436,18 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
     if (useTransformSkip)
     {
-        int trSize = 1 << log2TrSize;
-
 #if X265_DEPTH <= 10
-        primitives.copy_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+        X265_CHECK(transformShift > 0, "invalid transformShift\n");
+        primitives.cpy1Dto2D_shr[sizeIdx](residual, m_resiDctCoeff, resiStride, transformShift);
 #else
         if (transformShift > 0)
-            primitives.copy_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+            primitives.cpy1Dto2D_shr[sizeIdx](residual, m_resiDctCoeff, resiStride, transformShift);
         else
-            primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -transformShift);
+            primitives.cpy1Dto2D_shl[sizeIdx](residual, m_resiDctCoeff, resiStride, -transformShift);
 #endif
     }
     else
     {
-        const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
         X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << (log2TrSize * 2)), "numSig differ\n");
@@ -459,17 +455,17 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
         {
-            const int shift_1st = 7;
+            const int shift_1st = 7 - 6;
             const int add_1st = 1 << (shift_1st - 1);
-            const int shift_2nd = 12 - (X265_DEPTH - 8);
+            const int shift_2nd = 12 - (X265_DEPTH - 8) - 3;
             const int add_2nd = 1 << (shift_2nd - 1);
 
-            int dc_val = (((m_resiDctCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
-            primitives.blockfill_s[sizeIdx](residual, stride, (int16_t)dc_val);
+            int dc_val = (((m_resiDctCoeff[0] * (64 >> 6) + add_1st) >> shift_1st) * (64 >> 3) + add_2nd) >> shift_2nd;
+            primitives.blockfill_s[sizeIdx](residual, resiStride, (int16_t)dc_val);
             return;
         }
 
-        primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
+        primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, resiStride);
     }
 }
 

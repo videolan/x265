@@ -80,12 +80,11 @@ protected:
     bool check_weightp(weightp_pp_t ref, weightp_pp_t opt);
     bool check_weightp(weightp_sp_t ref, weightp_sp_t opt);
     bool check_downscale_t(downscale_t ref, downscale_t opt);
-    bool check_copy16to16_shl_t(cpy16to16_shl_t ref, cpy16to16_shl_t opt);
-    bool check_cvt16to32_shr_t(cvt16to32_shr_t ref, cvt16to32_shr_t opt);
-    bool check_cvt32to16_shl_t(cvt32to16_shl_t ref, cvt32to16_shl_t opt);
+    bool check_cpy2Dto1D_shl_t(cpy2Dto1D_shl_t ref, cpy2Dto1D_shl_t opt);
+    bool check_cpy2Dto1D_shr_t(cpy2Dto1D_shr_t ref, cpy2Dto1D_shr_t opt);
+    bool check_cpy1Dto2D_shl_t(cpy1Dto2D_shl_t ref, cpy1Dto2D_shl_t opt);
+    bool check_cpy1Dto2D_shr_t(cpy1Dto2D_shr_t ref, cpy1Dto2D_shr_t opt);
     bool check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt);
-    bool check_copy_shr_t(copy_shr_t ref, copy_shr_t opt);
-    bool check_copy_shl_t(copy_shl_t ref, copy_shl_t opt);
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);

@@ -138,32 +138,27 @@ typedef int  (*pixelcmp_sp_t)(const int16_t* fenc, intptr_t fencstride, const pi
 typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
-typedef void (*blockcpy_sp_t)(int bx, int by, int16_t* dst, intptr_t dstride, const pixel* src, intptr_t sstride); // dst is aligned
-typedef void (*blockcpy_sc_t)(int bx, int by, int16_t* dst, intptr_t dstride, const uint8_t* src, intptr_t sstride); // dst is aligned
-typedef void (*pixelsub_ps_t)(int bx, int by, int16_t* dst, intptr_t dstride, const pixel* src0, const pixel* src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel* refLeft, pixel* refAbove, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel* dst, pixel* above0, pixel* left0, pixel* above1, pixel* left1, int bLuma);
 
-typedef void (*cpy16to16_shl_t)(int16_t* dst, const int16_t* src, intptr_t, int, int);
-typedef void (*cvt16to32_shl_t)(int32_t* dst, const int16_t* src, intptr_t, int, int);
-typedef void (*cvt16to32_shr_t)(int32_t* dst, const int16_t* src, intptr_t, int, int);
-typedef void (*cvt32to16_shl_t)(int16_t* dst, const int32_t* src, intptr_t, int);
-typedef uint32_t (*copy_cnt_t)(int16_t* coeff, const int16_t* residual, intptr_t stride);
-typedef void (*copy_shr_t)(int16_t* dst, const int16_t* src, intptr_t stride, int shift, int size);
-typedef void (*copy_shl_t)(int16_t* dst, const int16_t* src, intptr_t stride, int shift);
+typedef void (*cpy2Dto1D_shl_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+typedef void (*cpy2Dto1D_shr_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+typedef void (*cpy1Dto2D_shl_t)(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
+typedef void (*cpy1Dto2D_shr_t)(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
+typedef uint32_t (*copy_cnt_t)(int16_t* coeff, const int16_t* residual, intptr_t resiStride);
 
-typedef void (*dct_t)(const int16_t* src, int16_t* dst, intptr_t stride);
-typedef void (*idct_t)(const int16_t* src, int16_t* dst, intptr_t stride);
+typedef void (*dct_t)(const int16_t* src, int16_t* dst, intptr_t srcStride);
+typedef void (*idct_t)(const int16_t* src, int16_t* dst, intptr_t dstStride);
 typedef void (*denoiseDct_t)(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, int numCoeff);
 
 typedef void (*calcresidual_t)(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 typedef void (*transpose_t)(pixel* dst, const pixel* src, intptr_t stride);
-typedef uint32_t (*quant_t)(const int16_t *coef, const int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
-typedef uint32_t (*nquant_t)(const int16_t *coef, const int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
-typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t*vdequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
+typedef uint32_t (*quant_t)(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff);
+typedef uint32_t (*nquant_t)(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff);
+typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
 typedef int  (*count_nonzero_t)(const int16_t* quantCoeff, int numCoeff);
 
@@ -186,7 +181,7 @@ typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* ds
 typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
 typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
 
-typedef void (*copy_pp_t)(pixel* dst, intptr_t dstride, const pixel* src, intptr_t sstride); // dst is aligned
+typedef void (*copy_pp_t)(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); // dst is aligned
 typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 typedef void (*copy_ps_t)(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 typedef void (*copy_ss_t)(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
@@ -195,7 +190,7 @@ typedef void (*pixel_sub_ps_t)(int16_t* dst, intptr_t dstride, const pixel* src0
 typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
-typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t*  offsetEo, int width, int8_t signLeft);
+typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t signLeft);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
@@ -220,12 +215,11 @@ struct EncoderPrimitives
     pixelcmp_ss_t   psy_cost_ss[NUM_SQUARE_BLOCKS];
 
     blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
-    cpy16to16_shl_t cpy16to16_shl;
-    cvt16to32_shr_t cvt16to32_shr[NUM_SQUARE_BLOCKS - 1];
-    cvt32to16_shl_t cvt32to16_shl[NUM_SQUARE_BLOCKS - 1];
+    cpy2Dto1D_shl_t cpy2Dto1D_shl[NUM_SQUARE_BLOCKS - 1];
+    cpy2Dto1D_shr_t cpy2Dto1D_shr[NUM_SQUARE_BLOCKS - 1];
+    cpy1Dto2D_shl_t cpy1Dto2D_shl[NUM_SQUARE_BLOCKS - 1];
+    cpy1Dto2D_shr_t cpy1Dto2D_shr[NUM_SQUARE_BLOCKS - 1];
     copy_cnt_t      copy_cnt[NUM_SQUARE_BLOCKS - 1];
-    copy_shr_t      copy_shr;
-    copy_shl_t      copy_shl[NUM_SQUARE_BLOCKS - 1];
 
     copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
     copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
