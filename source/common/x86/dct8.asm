@@ -318,7 +318,7 @@ cextern pd_2048
 cextern pw_ppppmmmm
 
 ;------------------------------------------------------
-;void dct4(int16_t *src, int16_t *dst, intptr_t stride)
+;void dct4(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;------------------------------------------------------
 INIT_XMM sse2
 cglobal dct4, 3, 4, 8
@@ -475,7 +475,7 @@ cglobal dct4, 3, 4, 8, src, dst, srcStride
     RET
 
 ;-------------------------------------------------------
-;void idct4(int16_t *src, int16_t *dst, intptr_t stride)
+;void idct4(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 INIT_XMM sse2
 cglobal idct4, 3, 4, 7
@@ -565,7 +565,7 @@ cglobal idct4, 3, 4, 7
     RET
 
 ;------------------------------------------------------
-;void dst4(int16_t *src, int16_t *dst, intptr_t stride)
+;void dst4(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;------------------------------------------------------
 INIT_XMM ssse3
 %if ARCH_X86_64
@@ -657,7 +657,7 @@ cglobal dst4, 3, 4, 8
     RET
 
 ;-------------------------------------------------------
-;void idst4(int16_t *src, int16_t *dst, intptr_t stride)
+;void idst4(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 INIT_XMM sse2
 cglobal idst4, 3, 4, 7
@@ -750,7 +750,7 @@ cglobal idst4, 3, 4, 7
 
 
 ;-------------------------------------------------------
-; void dct8(int16_t *src, int16_t *dst, intptr_t stride)
+; void dct8(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;-------------------------------------------------------
 INIT_XMM sse4
 cglobal dct8, 3,6,7,0-16*mmsize
@@ -974,7 +974,7 @@ cglobal dct8, 3,6,7,0-16*mmsize
     RET
 
 ;-------------------------------------------------------
-; void idct8(int16_t *src, int16_t *dst, intptr_t stride)
+; void idct8(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 INIT_XMM ssse3
 
@@ -1164,7 +1164,7 @@ cglobal idct8, 3,7,8 ;,0-16*mmsize
 
 
 ;-----------------------------------------------------------------------------
-; void denoise_dct(int16_t *dct, uint32_t *sum, uint16_t *offset, int size)
+; void denoise_dct(int16_t* dct, uint32_t* sum, uint16_t* offset, int size)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal denoise_dct, 4, 4, 6
@@ -2106,7 +2106,7 @@ cglobal idct8, 3, 7, 13, 0-8*16
 %endmacro
 
 ;-------------------------------------------------------
-; void idct16(int16_t *src, int16_t *dst, intptr_t stride)
+; void idct16(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 INIT_YMM avx2
 cglobal idct16, 3, 7, 16, 0-16*mmsize
@@ -2385,7 +2385,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
 %endmacro
 
 ;-------------------------------------------------------
-; void idct32(int16_t *src, int16_t *dst, intptr_t stride)
+; void idct32(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 
 ; TODO: Reduce PHADDD instruction by PADDD
@@ -2684,7 +2684,7 @@ cglobal idct32, 3, 6, 16, 0-32*64
     RET
 
 ;-------------------------------------------------------
-; void idct4(int16_t *src, int16_t *dst, intptr_t stride)
+; void idct4(const int16_t* src, int16_t* dst, intptr_t dstStride)
 ;-------------------------------------------------------
 INIT_YMM avx2
 cglobal idct4, 3, 4, 6

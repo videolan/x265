@@ -440,7 +440,7 @@ void partialButterfly4(const int16_t* src, int16_t* dst, int shift, int line)
     }
 }
 
-void dst4_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void dst4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
@@ -450,14 +450,14 @@ void dst4_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&block[i * 4], &src[i * stride], 4 * sizeof(int16_t));
+        memcpy(&block[i * 4], &src[i * srcStride], 4 * sizeof(int16_t));
     }
 
     fastForwardDst(block, coef, shift_1st);
     fastForwardDst(coef, dst, shift_2nd);
 }
 
-void dct4_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void dct4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
@@ -467,14 +467,14 @@ void dct4_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&block[i * 4], &src[i * stride], 4 * sizeof(int16_t));
+        memcpy(&block[i * 4], &src[i * srcStride], 4 * sizeof(int16_t));
     }
 
     partialButterfly4(block, coef, shift_1st, 4);
     partialButterfly4(coef, dst, shift_2nd, 4);
 }
 
-void dct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void dct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 2 + X265_DEPTH - 8;
     const int shift_2nd = 9;
@@ -484,14 +484,14 @@ void dct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&block[i * 8], &src[i * stride], 8 * sizeof(int16_t));
+        memcpy(&block[i * 8], &src[i * srcStride], 8 * sizeof(int16_t));
     }
 
     partialButterfly8(block, coef, shift_1st, 8);
     partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
-void dct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void dct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 3 + X265_DEPTH - 8;
     const int shift_2nd = 10;
@@ -501,14 +501,14 @@ void dct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&block[i * 16], &src[i * stride], 16 * sizeof(int16_t));
+        memcpy(&block[i * 16], &src[i * srcStride], 16 * sizeof(int16_t));
     }
 
     partialButterfly16(block, coef, shift_1st, 16);
     partialButterfly16(coef, dst, shift_2nd, 16);
 }
 
-void dct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void dct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 4 + X265_DEPTH - 8;
     const int shift_2nd = 11;
@@ -518,14 +518,14 @@ void dct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&block[i * 32], &src[i * stride], 32 * sizeof(int16_t));
+        memcpy(&block[i * 32], &src[i * srcStride], 32 * sizeof(int16_t));
     }
 
     partialButterfly32(block, coef, shift_1st, 32);
     partialButterfly32(coef, dst, shift_2nd, 32);
 }
 
-void idst4_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void idst4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -538,11 +538,11 @@ void idst4_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&dst[i * stride], &block[i * 4], 4 * sizeof(int16_t));
+        memcpy(&dst[i * dstStride], &block[i * 4], 4 * sizeof(int16_t));
     }
 }
 
-void idct4_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void idct4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -555,11 +555,11 @@ void idct4_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 4; i++)
     {
-        memcpy(&dst[i * stride], &block[i * 4], 4 * sizeof(int16_t));
+        memcpy(&dst[i * dstStride], &block[i * 4], 4 * sizeof(int16_t));
     }
 }
 
-void idct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void idct8_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -569,13 +569,14 @@ void idct8_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     partialButterflyInverse8(src, coef, shift_1st, 8);
     partialButterflyInverse8(coef, block, shift_2nd, 8);
+
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&dst[i * stride], &block[i * 8], 8 * sizeof(int16_t));
+        memcpy(&dst[i * dstStride], &block[i * 8], 8 * sizeof(int16_t));
     }
 }
 
-void idct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void idct16_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -585,13 +586,14 @@ void idct16_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     partialButterflyInverse16(src, coef, shift_1st, 16);
     partialButterflyInverse16(coef, block, shift_2nd, 16);
+
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&dst[i * stride], &block[i * 16], 16 * sizeof(int16_t));
+        memcpy(&dst[i * dstStride], &block[i * 16], 16 * sizeof(int16_t));
     }
 }
 
-void idct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
+void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -604,7 +606,7 @@ void idct32_c(const int16_t *src, int16_t *dst, intptr_t stride)
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&dst[i * stride], &block[i * 32], 32 * sizeof(int16_t));
+        memcpy(&dst[i * dstStride], &block[i * 32], 32 * sizeof(int16_t));
     }
 }
 
@@ -632,7 +634,7 @@ void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scal
     }
 }
 
-void dequant_scaling_c(const int16_t* quantCoef, const int32_t *deQuantCoef, int16_t* coef, int num, int per, int shift)
+void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
 
@@ -724,15 +726,15 @@ int  count_nonzero_c(const int16_t* quantCoeff, int numCoeff)
 }
 
 template<int trSize>
-uint32_t copy_count(int16_t* coeff, const int16_t* residual, intptr_t stride)
+uint32_t copy_count(int16_t* coeff, const int16_t* residual, intptr_t resiStride)
 {
     uint32_t numSig = 0;
     for (int k = 0; k < trSize; k++)
     {
         for (int j = 0; j < trSize; j++)
         {
-            coeff[k * trSize + j] = residual[k * stride + j];
-            numSig += (residual[k * stride + j] != 0);
+            coeff[k * trSize + j] = residual[k * resiStride + j];
+            numSig += (residual[k * resiStride + j] != 0);
         }
     }
 

@@ -104,10 +104,10 @@ public:
     /* CU setup */
     void setQPforQuant(const CUData& ctu);
 
-    uint32_t transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencstride, const int16_t* residual, uint32_t stride, coeff_t* coeff,
+    uint32_t transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
 
-    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, const coeff_t* coeff,
+    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     /* static methods shared with entropy.cpp */
