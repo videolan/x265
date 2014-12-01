@@ -276,7 +276,7 @@ void Encoder::destroy()
     if (m_analysisFile)
         fclose(m_analysisFile);
     free(m_param->analysisFileName);
-
+    free(m_param->csvfn);
     if (m_csvfpt)
         fclose(m_csvfpt);
     free(m_param->rc.statFileName); // alloc'd by strdup

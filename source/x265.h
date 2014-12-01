@@ -396,7 +396,7 @@ typedef struct x265_param
      * per-slice statistics to this log file in encode order. Otherwise the
      * encoder will emit per-stream statistics into the log file when
      * x265_encoder_log is called (presumably at the end of the encode) */
-    const char *csvfn;
+    char *csvfn;
 
     /* Enable the generation of SEI messages for each encoded frame containing
      * the hashes of the three reconstructed picture planes. Most decoders will
