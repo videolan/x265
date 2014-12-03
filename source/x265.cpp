@@ -401,7 +401,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
     H1("   --[no-]fast-cbf               Enable early outs based on whether residual is coded. Default %s\n", OPT(param->bEnableCbfFastMode));
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
-    H1("   --nr <integer>                An integer value in range of 100 to 1000, which denotes strength of noise reduction. Default disabled\n");
+    H1("   --nr <integer>                An integer value in range of 0 to 2000, which denotes strength of noise reduction. Default 0\n");
     H0("\nCoding tools:\n");
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));

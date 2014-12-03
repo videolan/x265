@@ -937,7 +937,7 @@ Quality, rate control and rate distortion options
 	numbers of frame threads. Outputs will be deterministic but the
 	outputs of -F2 will no longer match the outputs of -F3, etc.
 
-	**Values:** any value in range of 100 to 2000. Default disabled.
+	**Values:** any value in range of 0 to 2000. Default 0 (disabled).
 
 .. option:: --pass <integer>
 

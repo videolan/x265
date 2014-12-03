@@ -1079,7 +1079,7 @@ int x265_check_params(x265_param *param)
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
           "qCompress must be between 0.5 and 1.0");
     if (param->noiseReduction)
-        CHECK(100 > param->noiseReduction || param->noiseReduction > 2000, "Valid noise reduction range 100 - 1000");
+        CHECK(0 > param->noiseReduction || param->noiseReduction > 2000, "Valid noise reduction range 0 - 2000");
     CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead,
           "Constant rate-factor is incompatible with 2pass");
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,

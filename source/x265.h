@@ -755,8 +755,8 @@ typedef struct x265_param
      * regardless of this setting. */
     int       bIntraInBFrames;
 
-    /* An integer value in range of 100 to 1000, which denotes strength of noise
-     * reduction */
+    /* An integer value in range of 0 to 1000, which denotes strength of noise
+     * reduction. 0 means disabled */
     int       noiseReduction;
 
     /* The lossless flag enables true lossless coding, by bypassing scaling,
