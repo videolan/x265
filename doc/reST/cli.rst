@@ -1237,7 +1237,7 @@ VUI fields must be manually specified.
 	9. bt2020nc
 	10. bt2020c
 
-.. option:: --chromalocs <0..5>
+.. option:: --chromaloc <0..5>
 
 	Specify chroma sample location for 4:2:0 inputs. Consult the HEVC
 	specification for a description of these values. Default undefined
