@@ -1580,6 +1580,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
     X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
     X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
     X265_FREE(analysis->interData);
+    X265_FREE(analysis->intraData);
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
@@ -1632,6 +1633,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        analysis->sliceType = X265_TYPE_I;
         consumedBytes += frameRecordSize;
     }
     else if (analysis->sliceType == X265_TYPE_P)
