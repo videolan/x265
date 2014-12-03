@@ -15,3 +15,12 @@ copyright = u'2014 MulticoreWare Inc'
 
 # -- Options for HTML output ---------------------------------------------------
 html_theme = "default"
+
+# One entry per manual page. List of tuples
+# (source start file, name, description, authors, manual section).
+man_pages = [
+    ('index', 'libx265', 'Full x265 Documentation',
+    ['MulticoreWare Inc'], 3),
+    ('x265', 'x265', 'x265 CLI Documentation',
+    ['MulticoreWare Inc'], 1)
+]
