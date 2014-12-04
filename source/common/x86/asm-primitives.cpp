@@ -1434,7 +1434,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_XOP)
     {
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
+        p.frameInitLowres = x265_frame_init_lowres_core_xop;
         SA8D_INTER_FROM_BLOCK(xop);
         INIT7(satd, _xop);
         HEVC_SATD(xop);
@@ -1513,7 +1513,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(sad_x4, _mmx2);
         p.satd[LUMA_4x4] = x265_pixel_satd_4x4_mmx2;
         p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_mmx2;
+        p.frameInitLowres = x265_frame_init_lowres_core_mmx2;
 
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
@@ -1561,7 +1561,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.ssd_s[BLOCK_16x16] = x265_pixel_ssd_s_16_sse2;
         p.ssd_s[BLOCK_32x32] = x265_pixel_ssd_s_32_sse2;
 
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_sse2;
+        p.frameInitLowres = x265_frame_init_lowres_core_sse2;
         SA8D_INTER_FROM_BLOCK(sse2);
 
         p.cpy2Dto1D_shl[BLOCK_4x4] = x265_cpy2Dto1D_shl_4_sse2;
@@ -1599,7 +1599,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_ssse3;
+        p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
         SA8D_INTER_FROM_BLOCK(ssse3);
         p.sse_pp[LUMA_4x4] = x265_pixel_ssd_4x4_ssse3;
         ASSGN_SSE(ssse3);
@@ -1624,9 +1624,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
         p.luma_p2s = x265_luma_p2s_ssse3;
-        p.chroma_p2s[X265_CSP_I420] = x265_chroma_p2s_ssse3;
-        p.chroma_p2s[X265_CSP_I422] = x265_chroma_p2s_ssse3;
-        p.chroma_p2s[X265_CSP_I444] = x265_luma_p2s_ssse3; // for i444 , chroma_p2s can be replaced by luma_p2s
+        p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_ssse3;
+        p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_ssse3;
+        p.chroma[X265_CSP_I444].p2s = x265_luma_p2s_ssse3; // for i444, chroma_p2s can use luma_p2s
 
         p.dct[DST_4x4] = x265_dst4_ssse3;
         p.idct[IDCT_8x8] = x265_idct8_ssse3;
@@ -1712,7 +1712,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_AVX)
     {
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_avx;
+        p.frameInitLowres = x265_frame_init_lowres_core_avx;
         HEVC_SATD(avx);
         SA8D_INTER_FROM_BLOCK(avx);
         ASSGN_SSE(avx);
@@ -1753,7 +1753,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_XOP)
     {
-        p.frame_init_lowres_core = x265_frame_init_lowres_core_xop;
+        p.frameInitLowres = x265_frame_init_lowres_core_xop;
         SA8D_INTER_FROM_BLOCK(xop);
         INIT7(satd, _xop);
         INIT5_NAME(sse_pp, ssd, _xop);

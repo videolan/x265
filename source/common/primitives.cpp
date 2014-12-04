@@ -84,15 +84,6 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
-    {
-        int partL = partitionFromLog2Size(i + 2);
-        p.square_copy_pp[i] = p.luma_copy_pp[partL];
-        p.square_copy_ps[i] = p.luma_copy_ps[partL];
-        p.square_copy_sp[i] = p.luma_copy_sp[partL];
-        p.square_copy_ss[i] = p.luma_copy_ss[partL];
-    }
-
     primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
     primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
     primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];

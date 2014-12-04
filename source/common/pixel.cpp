@@ -1343,7 +1343,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     p.scale1D_128to64 = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
-    p.frame_init_lowres_core = frame_init_lowres_core;
+    p.frameInitLowres = frame_init_lowres_core;
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 

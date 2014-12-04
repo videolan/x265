@@ -201,81 +201,74 @@ typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, co
  * a vectorized primitive, or a C function. */
 struct EncoderPrimitives
 {
-    pixelcmp_t      sad[NUM_LUMA_PARTITIONS];        // Sum of Differences for each size
-    pixelcmp_x3_t   sad_x3[NUM_LUMA_PARTITIONS];     // Sum of Differences 3x for each size
-    pixelcmp_x4_t   sad_x4[NUM_LUMA_PARTITIONS];     // Sum of Differences 4x for each size
-    pixelcmp_t      sse_pp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss_t   sse_ss[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
-    pixelcmp_sp_t   sse_sp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
-    pixel_ssd_s_t   ssd_s[NUM_SQUARE_BLOCKS - 1];    // Sum of Square Error (short) fenc alignment not assumed
-    pixelcmp_t      satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
-    pixelcmp_t      sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
-    pixelcmp_t      sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
-    pixelcmp_t      psy_cost_pp[NUM_SQUARE_BLOCKS];     // difference in AC energy between two blocks
-    pixelcmp_ss_t   psy_cost_ss[NUM_SQUARE_BLOCKS];
+    pixelcmp_t            sad[NUM_LUMA_PARTITIONS];        // Sum of Differences for each size
+    pixelcmp_x3_t         sad_x3[NUM_LUMA_PARTITIONS];     // Sum of Differences 3x for each size
+    pixelcmp_x4_t         sad_x4[NUM_LUMA_PARTITIONS];     // Sum of Differences 4x for each size
+    pixelcmp_t            sse_pp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+    pixelcmp_ss_t         sse_ss[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, short) fenc alignment not assumed
+    pixelcmp_sp_t         sse_sp[NUM_LUMA_PARTITIONS];     // Sum of Square Error (short, pixel) fenc alignment not assumed
+    pixel_ssd_s_t         ssd_s[NUM_SQUARE_BLOCKS - 1];    // Sum of Square Error (short) fenc alignment not assumed
+    pixelcmp_t            satd[NUM_LUMA_PARTITIONS];       // Sum of Transformed differences (HADAMARD)
+    pixelcmp_t            sa8d_inter[NUM_LUMA_PARTITIONS]; // sa8d primitives for motion search partitions
+    pixelcmp_t            sa8d[NUM_SQUARE_BLOCKS];         // sa8d primitives for square intra blocks
+    pixelcmp_t            psy_cost_pp[NUM_SQUARE_BLOCKS];  // difference in AC energy between two blocks
+    pixelcmp_ss_t         psy_cost_ss[NUM_SQUARE_BLOCKS];
 
-    blockfill_s_t   blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
-    cpy2Dto1D_shl_t cpy2Dto1D_shl[NUM_SQUARE_BLOCKS - 1];
-    cpy2Dto1D_shr_t cpy2Dto1D_shr[NUM_SQUARE_BLOCKS - 1];
-    cpy1Dto2D_shl_t cpy1Dto2D_shl[NUM_SQUARE_BLOCKS - 1];
-    cpy1Dto2D_shr_t cpy1Dto2D_shr[NUM_SQUARE_BLOCKS - 1];
-    copy_cnt_t      copy_cnt[NUM_SQUARE_BLOCKS - 1];
+    dct_t                 dct[NUM_DCTS];
+    idct_t                idct[NUM_IDCTS];
+    quant_t               quant;
+    nquant_t              nquant;
+    dequant_scaling_t     dequant_scaling;
+    dequant_normal_t      dequant_normal;
+    count_nonzero_t       count_nonzero;
+    denoiseDct_t          denoiseDct;
+    calcresidual_t        calcresidual[NUM_SQUARE_BLOCKS];
+    blockfill_s_t         blockfill_s[NUM_SQUARE_BLOCKS];  // block fill with value
+    cpy2Dto1D_shl_t       cpy2Dto1D_shl[NUM_SQUARE_BLOCKS - 1];
+    cpy2Dto1D_shr_t       cpy2Dto1D_shr[NUM_SQUARE_BLOCKS - 1];
+    cpy1Dto2D_shl_t       cpy1Dto2D_shl[NUM_SQUARE_BLOCKS - 1];
+    cpy1Dto2D_shr_t       cpy1Dto2D_shr[NUM_SQUARE_BLOCKS - 1];
+    copy_cnt_t            copy_cnt[NUM_SQUARE_BLOCKS - 1];
 
-    copy_pp_t       luma_copy_pp[NUM_LUMA_PARTITIONS];
-    copy_sp_t       luma_copy_sp[NUM_LUMA_PARTITIONS];
-    copy_ps_t       luma_copy_ps[NUM_LUMA_PARTITIONS];
-    copy_ss_t       luma_copy_ss[NUM_LUMA_PARTITIONS];
-    pixel_sub_ps_t  luma_sub_ps[NUM_SQUARE_BLOCKS];
-    pixel_add_ps_t  luma_add_ps[NUM_SQUARE_BLOCKS];
-    copy_pp_t       square_copy_pp[NUM_SQUARE_BLOCKS];
-    copy_sp_t       square_copy_sp[NUM_SQUARE_BLOCKS];
-    copy_ps_t       square_copy_ps[NUM_SQUARE_BLOCKS];
-    copy_ss_t       square_copy_ss[NUM_SQUARE_BLOCKS];
+    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
+    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];
+    transpose_t           transpose[NUM_SQUARE_BLOCKS];
+    scale_t               scale1D_128to64;
+    scale_t               scale2D_64to32;
 
-    filter_pp_t     luma_hpp[NUM_LUMA_PARTITIONS];
-    filter_hps_t    luma_hps[NUM_LUMA_PARTITIONS];
-    filter_pp_t     luma_vpp[NUM_LUMA_PARTITIONS];
-    filter_ps_t     luma_vps[NUM_LUMA_PARTITIONS];
-    filter_sp_t     luma_vsp[NUM_LUMA_PARTITIONS];
-    filter_ss_t     luma_vss[NUM_LUMA_PARTITIONS];
-    filter_hv_pp_t  luma_hvpp[NUM_LUMA_PARTITIONS];
-    filter_p2s_t    luma_p2s;
-    filter_p2s_t    chroma_p2s[X265_CSP_COUNT];
+    var_t                 var[NUM_SQUARE_BLOCKS];
+    ssim_4x4x2_core_t     ssim_4x4x2_core;
+    ssim_end4_t           ssim_end_4;
 
-    weightp_sp_t    weight_sp;
-    weightp_pp_t    weight_pp;
-    pixelavg_pp_t   pixelavg_pp[NUM_LUMA_PARTITIONS];
-    addAvg_t        luma_addAvg[NUM_LUMA_PARTITIONS];
+    saoCuOrgE0_t          saoCuOrgE0;
 
-    intra_pred_t    intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
-    intra_allangs_t intra_pred_allangs[NUM_TR_SIZE];
-    scale_t         scale1D_128to64;
-    scale_t         scale2D_64to32;
+    downscale_t           frameInitLowres;
+    cutree_propagate_cost propagateCost;
 
-    dct_t           dct[NUM_DCTS];
-    idct_t          idct[NUM_IDCTS];
-    quant_t         quant;
-    nquant_t        nquant;
-    dequant_scaling_t dequant_scaling;
-    dequant_normal_t dequant_normal;
-    count_nonzero_t count_nonzero;
-    denoiseDct_t    denoiseDct;
+    extendCURowBorder_t   extendRowBorder;
+    planecopy_cp_t        planecopy_cp;
+    planecopy_sp_t        planecopy_sp;
 
-    calcresidual_t  calcresidual[NUM_SQUARE_BLOCKS];
-    transpose_t     transpose[NUM_SQUARE_BLOCKS];
+    weightp_sp_t          weight_sp;
+    weightp_pp_t          weight_pp;
+    pixelavg_pp_t         pixelavg_pp[NUM_LUMA_PARTITIONS];
+    addAvg_t              luma_addAvg[NUM_LUMA_PARTITIONS];
 
-    var_t           var[NUM_SQUARE_BLOCKS];
-    ssim_4x4x2_core_t ssim_4x4x2_core;
-    ssim_end4_t     ssim_end_4;
+    filter_pp_t           luma_hpp[NUM_LUMA_PARTITIONS];
+    filter_hps_t          luma_hps[NUM_LUMA_PARTITIONS];
+    filter_pp_t           luma_vpp[NUM_LUMA_PARTITIONS];
+    filter_ps_t           luma_vps[NUM_LUMA_PARTITIONS];
+    filter_sp_t           luma_vsp[NUM_LUMA_PARTITIONS];
+    filter_ss_t           luma_vss[NUM_LUMA_PARTITIONS];
+    filter_hv_pp_t        luma_hvpp[NUM_LUMA_PARTITIONS];
+    filter_p2s_t          luma_p2s;
 
-    downscale_t     frame_init_lowres_core;
-    extendCURowBorder_t extendRowBorder;
-    // sao primitives
-    saoCuOrgE0_t      saoCuOrgE0;
-    planecopy_cp_t    planecopy_cp;
-    planecopy_sp_t    planecopy_sp;
-
-    cutree_propagate_cost    propagateCost;
+    copy_pp_t             luma_copy_pp[NUM_LUMA_PARTITIONS];
+    copy_sp_t             luma_copy_sp[NUM_LUMA_PARTITIONS];
+    copy_ps_t             luma_copy_ps[NUM_LUMA_PARTITIONS];
+    copy_ss_t             luma_copy_ss[NUM_LUMA_PARTITIONS];
+    pixel_sub_ps_t        luma_sub_ps[NUM_SQUARE_BLOCKS];
+    pixel_add_ps_t        luma_add_ps[NUM_SQUARE_BLOCKS];
 
     struct
     {
@@ -292,7 +285,8 @@ struct EncoderPrimitives
         copy_ss_t       copy_ss[NUM_LUMA_PARTITIONS];
         pixel_sub_ps_t  sub_ps[NUM_SQUARE_BLOCKS];
         pixel_add_ps_t  add_ps[NUM_SQUARE_BLOCKS];
-    } chroma[4]; // X265_CSP_COUNT - do not want to include x265.h here
+        filter_p2s_t    p2s;
+    } chroma[X265_CSP_COUNT];
 };
 
 void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int marginX, int marginY);

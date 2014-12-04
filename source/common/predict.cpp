@@ -460,8 +460,8 @@ void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, cons
 
     if (!(yFrac | xFrac))
     {
-        primitives.chroma_p2s[m_csp](refCb, refStride, dstCb, cxWidth, cxHeight);
-        primitives.chroma_p2s[m_csp](refCr, refStride, dstCr, cxWidth, cxHeight);
+        primitives.chroma[m_csp].p2s(refCb, refStride, dstCb, cxWidth, cxHeight);
+        primitives.chroma[m_csp].p2s(refCr, refStride, dstCr, cxWidth, cxHeight);
     }
     else if (!yFrac)
     {

@@ -586,9 +586,9 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
-        if (opt.chroma_p2s[csp])
+        if (opt.chroma[csp].p2s)
         {
-            if (!check_IPFilter_primitive(ref.chroma_p2s[csp], opt.chroma_p2s[csp], 1, csp))
+            if (!check_IPFilter_primitive(ref.chroma[csp].p2s, opt.chroma[csp].p2s, 1, csp))
             {
                 printf("chroma_p2s[%s]", x265_source_csp_names[csp]);
                 return false;
@@ -725,10 +725,10 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
         printf("= Color Space %s =\n", x265_source_csp_names[csp]);
-        if (opt.chroma_p2s[csp])
+        if (opt.chroma[csp].p2s)
         {
             printf("chroma_p2s\t");
-            REPORT_SPEEDUP(opt.chroma_p2s[csp], ref.chroma_p2s[csp],
+            REPORT_SPEEDUP(opt.chroma[csp].p2s, ref.chroma[csp].p2s,
                            pixel_buff, srcStride, IPF_vec_output_s, width, height);
         }
         for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)

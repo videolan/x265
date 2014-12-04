@@ -509,9 +509,9 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
     CHROMA_444(16, 64);
     p.luma_p2s = filterConvertPelToShort_c<MAX_CU_SIZE>;
 
-    p.chroma_p2s[X265_CSP_I444] = filterConvertPelToShort_c<MAX_CU_SIZE>;
-    p.chroma_p2s[X265_CSP_I420] = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
-    p.chroma_p2s[X265_CSP_I422] = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
+    p.chroma[X265_CSP_I444].p2s = filterConvertPelToShort_c<MAX_CU_SIZE>;
+    p.chroma[X265_CSP_I420].p2s = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
+    p.chroma[X265_CSP_I422].p2s = filterConvertPelToShort_c<MAX_CU_SIZE / 2>;
 
     p.extendRowBorder = extendCURowColBorder;
 }

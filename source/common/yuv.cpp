@@ -159,7 +159,7 @@ void Yuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size
 {
     const pixel* src = getLumaAddr(absPartIdx);
     pixel* dst = dstYuv.getLumaAddr(absPartIdx);
-    primitives.square_copy_pp[log2Size - 2](dst, dstYuv.m_size, src, m_size);
+    primitives.luma_copy_pp[log2Size - 2](dst, dstYuv.m_size, src, m_size);
 }
 
 void Yuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const

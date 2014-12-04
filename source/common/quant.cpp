@@ -363,7 +363,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
         {
             int trSize = 1 << log2TrSize;
             /* perform DCT on source pixels for psy-rdoq */
-            primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
+            primitives.luma_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
             primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 

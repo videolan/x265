@@ -157,7 +157,7 @@ void Lowres::init(PicYuv *origPic, int poc, int type)
         intraMbs[i] = 0;
 
     /* downscale and generate 4 hpel planes for lookahead */
-    primitives.frame_init_lowres_core(origPic->m_picOrg[0],
+    primitives.frameInitLowres(origPic->m_picOrg[0],
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
                                       origPic->m_stride, lumaStride, width, lines);
 

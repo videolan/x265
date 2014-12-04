@@ -1310,9 +1310,9 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.frame_init_lowres_core)
+    if (opt.frameInitLowres)
     {
-        if (!check_downscale_t(ref.frame_init_lowres_core, opt.frame_init_lowres_core))
+        if (!check_downscale_t(ref.frameInitLowres, opt.frameInitLowres))
         {
             printf("downscale failed!\n");
             return false;
@@ -1645,10 +1645,10 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.weight_sp, ref.weight_sp, (int16_t*)sbuf1, pbuf1, 64, 64, 32, 32, 128, 1 << 9, 10, 100);
     }
 
-    if (opt.frame_init_lowres_core)
+    if (opt.frameInitLowres)
     {
         HEADER0("downscale");
-        REPORT_SPEEDUP(opt.frame_init_lowres_core, ref.frame_init_lowres_core, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
+        REPORT_SPEEDUP(opt.frameInitLowres, ref.frameInitLowres, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
     }
 
     if (opt.scale1D_128to64)
