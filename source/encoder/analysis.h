@@ -72,6 +72,7 @@ public:
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
+    bool      m_bChromaSa8d;;
 
     /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
     analysis_intra_data* m_reuseIntraDataCTU;

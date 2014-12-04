@@ -79,6 +79,7 @@ bool Analysis::create(ThreadLocalData *tld)
 {
     m_tld = tld;
     m_bTryLossless = m_param->bCULossless && !m_param->bLossless && m_param->rdLevel >= 2;
+    m_bChromaSa8d = m_param->rdLevel >= 3;
 
     int csp = m_param->internalCsp;
     uint32_t cuSize = g_maxCUSize;
@@ -593,10 +594,13 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             if (m_param->rdLevel > 2)
             {
                 /* RD selection between merge, inter, bidir and intra */
-                for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                if (!m_bChromaSa8d)
                 {
-                    prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
-                    motionCompensation(bestInter->predYuv, false, true);
+                    for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                    {
+                        prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
+                        motionCompensation(bestInter->predYuv, false, true);
+                    }
                 }
                 encodeResAndCalcRdInterCU(*bestInter, cuGeom);
                 checkBestMode(*bestInter, depth);
@@ -841,10 +845,13 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
-                for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                if (!m_bChromaSa8d)
                 {
-                    prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
-                    motionCompensation(bestInter->predYuv, false, true);
+                    for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                    {
+                        prepMotionCompensation(bestInter->cu, cuGeom, puIdx);
+                        motionCompensation(bestInter->predYuv, false, true);
+                    }
                 }
                 encodeResAndCalcRdInterCU(*bestInter, cuGeom);
                 checkBestMode(*bestInter, depth);
@@ -1227,7 +1234,12 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     bestPred->sa8dCost = MAX_INT64;
     int bestSadCand = -1;
-    int sizeIdx = cuGeom.log2CUSize - 2;
+    int cpart, sizeIdx = cuGeom.log2CUSize - 2;
+    if (m_bChromaSa8d)
+    {
+        int cuSize = 1 << cuGeom.log2CUSize;
+        cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+    }
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
         if (m_bFrameParallel &&
@@ -1242,16 +1254,13 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->cu.m_mv[1][0] = mvFieldNeighbours[i][1].mv;
         tempPred->cu.m_refIdx[1][0] = (int8_t)mvFieldNeighbours[i][1].refIdx;
 
-        // do MC only for Luma part
         prepMotionCompensation(tempPred->cu, cuGeom, 0);
-        motionCompensation(tempPred->predYuv, true, true);
+        motionCompensation(tempPred->predYuv, true, m_bChromaSa8d);
 
         tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
         tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
-        if (m_param->rdLevel >= 3)
+        if (m_bChromaSa8d)
         {
-            int cuSize = 1 << cuGeom.log2CUSize;
-            int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
             tempPred->distortion += primitives.sa8d[cpart](fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
             tempPred->distortion += primitives.sa8d[cpart](fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
         }
@@ -1269,8 +1278,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         return;
 
     /* calculate the motion compensation for chroma for the best mode selected */
-    prepMotionCompensation(bestPred->cu, cuGeom, 0);
-    motionCompensation(bestPred->predYuv, false, true);
+    if (!m_bChromaSa8d)
+    {
+        prepMotionCompensation(bestPred->cu, cuGeom, 0);
+        motionCompensation(bestPred->predYuv, false, true);
+    }
 
     if (m_param->rdLevel)
     {
@@ -1435,14 +1447,14 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-    if (predInterSearch(interMode, cuGeom, false, true))
+    if (predInterSearch(interMode, cuGeom, false, m_bChromaSa8d))
     {
         /* predInterSearch sets interMode.sa8dBits */
         const Yuv& fencYuv = *interMode.fencYuv;
         Yuv& predYuv = interMode.predYuv;
         int part = partitionFromLog2Size(cuGeom.log2CUSize);
         interMode.distortion = primitives.sa8d[part](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
-        if (m_param->rdLevel >= 3)
+        if (m_bChromaSa8d)
         {
             uint32_t cuSize = 1 << cuGeom.log2CUSize;
             int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
@@ -1453,9 +1465,9 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
         {
-            for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
+            for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
             {
-                MotionData* bestME = interMode.bestME[part];
+                MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
                     m_reuseInterDataCTU->ref = bestME[i].ref;
@@ -1480,9 +1492,9 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
-        for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
+        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
         {
-            MotionData* bestME = interMode.bestME[part];
+            MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
                 bestME[i].ref = m_reuseInterDataCTU->ref;
@@ -1494,11 +1506,12 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     {
         /* predInterSearch sets interMode.sa8dBits, but this is ignored */
         encodeResAndCalcRdInterCU(interMode, cuGeom);
+
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
         {
-            for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
+            for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
             {
-                MotionData* bestME = interMode.bestME[part];
+                MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
                     m_reuseInterDataCTU->ref = bestME[i].ref;
@@ -1527,9 +1540,13 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
     const Yuv& fencYuv = *bidir2Nx2N.fencYuv;
     MV   mvzero(0, 0);
-    int  partEnum = cuGeom.log2CUSize - 2;
-    int cuSize = 1 << cuGeom.log2CUSize;
-    int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+    int  cpart, partEnum = cuGeom.log2CUSize - 2;
+
+    if (m_bChromaSa8d)
+    {
+        int cuSize = 1 << cuGeom.log2CUSize;
+        cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+    }
 
     bidir2Nx2N.bestME[0][0] = inter2Nx2N.bestME[0][0];
     bidir2Nx2N.bestME[0][1] = inter2Nx2N.bestME[0][1];
@@ -1559,10 +1576,10 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     cu.m_mvd[1][0] = bestME[1].mv - mvp1;
 
     prepMotionCompensation(cu, cuGeom, 0);
-    motionCompensation(bidir2Nx2N.predYuv, true, true);
+    motionCompensation(bidir2Nx2N.predYuv, true, m_bChromaSa8d);
 
     int sa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
-    if (m_param->rdLevel >= 3)
+    if (m_bChromaSa8d)
     {
         /* Add in chroma distortion */
         sa8d += primitives.sa8d[cpart](fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
@@ -1596,7 +1613,7 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
         primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
         int zsa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
-        if (m_param->rdLevel >= 3)
+        if (m_bChromaSa8d)
         {
             /* Add in chroma distortion */
             zsa8d += primitives.sa8d[cpart](fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
