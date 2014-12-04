@@ -123,9 +123,9 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     if (!primitives.sad[0])
     {
         Setup_C_Primitives(primitives);
-        Setup_Instrinsic_Primitives(primitives, cpuid);
 
 #if ENABLE_ASSEMBLY
+        Setup_Instrinsic_Primitives(primitives, cpuid);
         Setup_Assembly_Primitives(primitives, cpuid);
 #else
         x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
@@ -167,74 +167,14 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     }
 }
 
-#if !defined(ENABLE_ASSEMBLY)
-#if defined(_MSC_VER)
-#include <intrin.h>
-#endif
-
-extern "C" {
-// the intrinsic primitives will not use MMX instructions, so if assembly
-// is disabled there should be no reason to use EMMS.
-void x265_cpu_emms(void) {}
-
-#if defined(X265_ARCH_X86)
-
-#if defined(_MSC_VER)
-# pragma warning(disable: 4100)
-#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
-# define __cpuidex(regsArray, level, index) \
-    __asm__ __volatile__ ("cpuid" \
-                          : "=a" ((regsArray)[0]), "=b" ((regsArray)[1]), "=c" ((regsArray)[2]), "=d" ((regsArray)[3]) \
-                          : "0" (level), "2" (index));
+#if ENABLE_ASSEMBLY
+/* these functions are implemented in assembly. When assembly is not being
+ * compiled, they are unnecessary and can be NOPs */
 #else
-# error "compiler not supported"
+extern "C" {
+int x265_cpu_cpuid_test(void) { return 0; }
+void x265_cpu_emms(void) {}
+void x265_cpu_cpuid(uint32_t, uint32_t *, uint32_t *, uint32_t *, uint32_t *) {}
+void x265_cpu_xgetbv(uint32_t, uint32_t *, uint32_t *) {}
+}
 #endif
-
-int x265_cpu_cpuid_test(void)
-{
-    return 0;
-}
-
-void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
-{
-    int output[4];
-
-    __cpuidex(output, op, 0);
-    *eax = output[0];
-    *ebx = output[1];
-    *ecx = output[2];
-    *edx = output[3];
-}
-
-void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
-{
-    uint64_t out = 0;
-
-#if X265_ARCH_X86
-
-#if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
-
-    // MSVC 2010 SP1 or later, or similar Intel release
-    out = _xgetbv(op);
-
-#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
-
-    uint32_t a, d;
-    __asm("xgetbv" : "=a" (a), "=d" (d) : "c" (op) :);
-    *eax = a;
-    *edx = d;
-    return;
-
-#elif defined(_WIN64)      // On x64 with older compilers, this is impossible
-
-#endif // if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
-
-#endif // if x86
-
-    *eax = (uint32_t)out;
-    *edx = (uint32_t)(out >> 32);
-}
-
-#endif // X265_ARCH_X86
-}
-#endif // if !ENABLE_ASSEMBLY
