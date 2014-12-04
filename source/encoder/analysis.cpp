@@ -1244,10 +1244,17 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
         // do MC only for Luma part
         prepMotionCompensation(tempPred->cu, cuGeom, 0);
-        motionCompensation(tempPred->predYuv, true, false);
+        motionCompensation(tempPred->predYuv, true, true);
 
         tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
         tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
+        if (m_param->rdLevel >= 3)
+        {
+            int cuSize = 1 << cuGeom.log2CUSize;
+            int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+            tempPred->distortion += primitives.sa8d[cpart](fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
+            tempPred->distortion += primitives.sa8d[cpart](fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
+        }
         tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
 
         if (tempPred->sa8dCost < bestPred->sa8dCost)
@@ -1428,12 +1435,20 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-    if (predInterSearch(interMode, cuGeom, false, false))
+    if (predInterSearch(interMode, cuGeom, false, true))
     {
         /* predInterSearch sets interMode.sa8dBits */
         const Yuv& fencYuv = *interMode.fencYuv;
         Yuv& predYuv = interMode.predYuv;
-        interMode.distortion = primitives.sa8d[cuGeom.log2CUSize - 2](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
+        int part = partitionFromLog2Size(cuGeom.log2CUSize);
+        interMode.distortion = primitives.sa8d[part](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
+        if (m_param->rdLevel >= 3)
+        {
+            uint32_t cuSize = 1 << cuGeom.log2CUSize;
+            int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
+            interMode.distortion += primitives.sa8d[cpart](fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
+            interMode.distortion += primitives.sa8d[cpart](fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
+        }
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
 
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
@@ -1513,6 +1528,8 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     const Yuv& fencYuv = *bidir2Nx2N.fencYuv;
     MV   mvzero(0, 0);
     int  partEnum = cuGeom.log2CUSize - 2;
+    int cuSize = 1 << cuGeom.log2CUSize;
+    int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
 
     bidir2Nx2N.bestME[0][0] = inter2Nx2N.bestME[0][0];
     bidir2Nx2N.bestME[0][1] = inter2Nx2N.bestME[0][1];
@@ -1545,6 +1562,12 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     motionCompensation(bidir2Nx2N.predYuv, true, true);
 
     int sa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
+    if (m_param->rdLevel >= 3)
+    {
+        /* Add in chroma distortion */
+        sa8d += primitives.sa8d[cpart](fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
+        sa8d += primitives.sa8d[cpart](fencYuv.m_buf[2], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[2], bidir2Nx2N.predYuv.m_csize);
+    }
     bidir2Nx2N.sa8dBits = bestME[0].bits + bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
     bidir2Nx2N.sa8dCost = sa8d + m_rdCost.getCost(bidir2Nx2N.sa8dBits);
 
@@ -1572,18 +1595,23 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
         intptr_t refStride = m_slice->m_mref[0][0].lumaStride;
 
         primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
-        int sa8dCost = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
-
+        int zsa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+        if (m_param->rdLevel >= 3)
+        {
+            /* Add in chroma distortion */
+            zsa8d += primitives.sa8d[cpart](fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
+            zsa8d += primitives.sa8d[cpart](fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
+        }
         uint32_t bits0 = bestME[0].bits - m_me.bitcost(bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
         uint32_t bits1 = bestME[1].bits - m_me.bitcost(bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
-        uint32_t zcost = sa8dCost + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
+        uint32_t zcost = zsa8d + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
         /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
         checkBestMVP(inter2Nx2N.amvpCand[0][ref0], mvzero, mvp0, mvpIdx0, bits0, zcost);
         checkBestMVP(inter2Nx2N.amvpCand[1][ref1], mvzero, mvp1, mvpIdx1, bits1, zcost);
 
         uint32_t zbits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
-        zcost = sa8dCost + m_rdCost.getCost(zbits);
+        zcost = zsa8d + m_rdCost.getCost(zbits);
 
         if (zcost < bidir2Nx2N.sa8dCost)
         {
