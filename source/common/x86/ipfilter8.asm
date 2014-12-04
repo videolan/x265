@@ -32,6 +32,13 @@ tab_Tm:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
            db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
 
 ALIGN 32
+const interp4_vpp_shuf, times 2 db 0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 11, 15
+
+ALIGN 32
+const interp4_vpp_shuf1, dd 0, 1, 1, 2, 2, 3, 3, 4
+                         dd 2, 3, 3, 4, 4, 5, 5, 6
+
+ALIGN 32
 tab_Lm:    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
            db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
            db 4, 5, 6, 7, 8,  9,  10, 11, 5, 6, 7, 8,  9,  10, 11, 12
@@ -142,6 +149,31 @@ tab_LumaCoeffVer_32: times 16 db 0, 0
                      times 16 db -5, 17
                      times 16 db 58, -10
                      times 16 db 4, -1
+
+ALIGN 32
+tab_ChromaCoeffVer_32: times 16 db 0, 64
+                       times 16 db 0, 0
+
+                       times 16 db -2, 58
+                       times 16 db 10, -2
+
+                       times 16 db -4, 54
+                       times 16 db 16, -2
+
+                       times 16 db -6, 46
+                       times 16 db 28, -4
+
+                       times 16 db -4, 36
+                       times 16 db 36, -4
+
+                       times 16 db -4, 28
+                       times 16 db 46, -6
+
+                       times 16 db -2, 16
+                       times 16 db 54, -4
+
+                       times 16 db -2, 10
+                       times 16 db 58, -2
 
 tab_c_64_n64:   times 8 db 64, -64
 
@@ -1900,6 +1932,51 @@ pextrd      [r2],      m2, 2
 pextrd      [r2 + r3], m2, 3
 
 RET
+
+INIT_YMM avx2
+cglobal interp_4tap_vert_pp_4x4, 4, 6, 3
+    mov             r4d, r4m
+    shl             r4d, 6
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+
+    movd            xm1, [r0]
+    pinsrd          xm1, [r0 + r1], 1
+    pinsrd          xm1, [r0 + r1 * 2], 2
+    pinsrd          xm1, [r0 + r4], 3                       ; m1 = row[3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm2, [r0]
+    pinsrd          xm2, [r0 + r1], 1
+    pinsrd          xm2, [r0 + r1 * 2], 2                   ; m2 = row[x 6 5 4]
+    vinserti128     m1, m1, xm2, 1                          ; m1 = row[x 6 5 4 3 2 1 0]
+    mova            m2, [interp4_vpp_shuf1]
+    vpermd          m0, m2, m1                              ; m0 = row[4 3 3 2 2 1 1 0]
+    mova            m2, [interp4_vpp_shuf1 + mmsize]
+    vpermd          m1, m2, m1                              ; m1 = row[6 5 5 4 4 3 3 2]
+
+    mova            m2, [interp4_vpp_shuf]
+    pshufb          m0, m0, m2
+    pshufb          m1, m1, m2
+    pmaddubsw       m0, [r5]
+    pmaddubsw       m1, [r5 + mmsize]
+    paddw           m0, m1                                  ; m0 = WORD ROW[3 2 1 0]
+    pmulhrsw        m0, [pw_512]
+    vextracti128    xm1, m0, 1
+    packuswb        xm0, xm1
+    lea             r5, [r3 * 3]
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 1
+    pextrd          [r2 + r3 * 2], xm0, 2
+    pextrd          [r2 + r5], xm0, 3
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
