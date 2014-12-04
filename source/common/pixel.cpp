@@ -867,19 +867,6 @@ int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, in
     }
 }
 
-void plane_copy_deinterleave_chroma(pixel* dstu, intptr_t dstuStride, pixel* dstv, intptr_t dstvStride,
-                                    const pixel* src,  intptr_t srcStride, int w, int h)
-{
-    for (int y = 0; y < h; y++, dstu += dstuStride, dstv += dstvStride, src += srcStride)
-    {
-        for (int x = 0; x < w; x++)
-        {
-            dstu[x] = src[2 * x];
-            dstv[x] = src[2 * x + 1];
-        }
-    }
-}
-
 template<int bx, int by>
 void blockcopy_pp_c(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb)
 {
@@ -1364,7 +1351,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.var[BLOCK_16x16] = pixel_var<16>;
     p.var[BLOCK_32x32] = pixel_var<32>;
     p.var[BLOCK_64x64] = pixel_var<64>;
-    p.plane_copy_deinterleave_c = plane_copy_deinterleave_chroma;
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.propagateCost = estimateCUPropagateCost;

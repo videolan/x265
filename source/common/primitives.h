@@ -269,7 +269,6 @@ struct EncoderPrimitives
     ssim_end4_t     ssim_end_4;
 
     downscale_t     frame_init_lowres_core;
-    plane_copy_deinterleave_t plane_copy_deinterleave_c;
     extendCURowBorder_t extendRowBorder;
     // sao primitives
     saoCuOrgE0_t      saoCuOrgE0;
