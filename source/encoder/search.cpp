@@ -1870,28 +1870,32 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
     int numMvc = interMode.cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, interMode.amvpCand[list][ref], mvc);
 
-    uint32_t bestCost = MAX_INT;
     int mvpIdx = 0;
     int merange = m_param->searchRange;
     MotionData* bestME = interMode.bestME[part];
-    for (int i = 0; i < AMVP_NUM_CANDS; i++)
+
+    if (interMode.amvpCand[list][ref][0] != interMode.amvpCand[list][ref][1])
     {
-        MV mvCand = interMode.amvpCand[list][ref][i];
-
-        // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-            continue;
-
-        interMode.cu.clipMv(mvCand);
-
-        Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-        predInterLumaPixel(tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
-
-        if (bestCost > cost)
+        uint32_t bestCost = MAX_INT;
+        for (int i = 0; i < AMVP_NUM_CANDS; i++)
         {
-            bestCost = cost;
-            mvpIdx = i;
+            MV mvCand = interMode.amvpCand[list][ref][i];
+
+            // NOTE: skip mvCand if Y is > merange and -FN>1
+            if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
+                continue;
+
+            interMode.cu.clipMv(mvCand);
+
+            Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
+            predInterLumaPixel(tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+
+            if (bestCost > cost)
+            {
+                bestCost = cost;
+                mvpIdx = i;
+            }
         }
     }
 
@@ -2005,26 +2009,29 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
-                uint32_t bestCost = MAX_INT;
                 int mvpIdx = 0;
                 int merange = m_param->searchRange;
 
-                for (int i = 0; i < AMVP_NUM_CANDS; i++)
+                if (interMode.amvpCand[l][ref][0] != interMode.amvpCand[l][ref][1])
                 {
-                    MV mvCand = interMode.amvpCand[l][ref][i];
-
-                    // NOTE: skip mvCand if Y is > merange and -FN>1
-                    if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-                        continue;
-
-                    cu.clipMv(mvCand);
-                    predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
-                    uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
-
-                    if (bestCost > cost)
+                    uint32_t bestCost = MAX_INT;
+                    for (int i = 0; i < AMVP_NUM_CANDS; i++)
                     {
-                        bestCost = cost;
-                        mvpIdx  = i;
+                        MV mvCand = interMode.amvpCand[l][ref][i];
+
+                        // NOTE: skip mvCand if Y is > merange and -FN>1
+                        if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
+                            continue;
+
+                        cu.clipMv(mvCand);
+                        predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
+                        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+
+                        if (bestCost > cost)
+                        {
+                            bestCost = cost;
+                            mvpIdx = i;
+                        }
                     }
                 }
 
@@ -2116,26 +2123,29 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
 
                     // Pick the best possible MVP from AMVP candidates based on least residual
-                    uint32_t bestCost = MAX_INT;
                     int mvpIdx = 0;
                     int merange = m_param->searchRange;
 
-                    for (int i = 0; i < AMVP_NUM_CANDS; i++)
+                    if (interMode.amvpCand[l][ref][0] != interMode.amvpCand[l][ref][1])
                     {
-                        MV mvCand = interMode.amvpCand[l][ref][i];
-
-                        // NOTE: skip mvCand if Y is > merange and -FN>1
-                        if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-                            continue;
-
-                        cu.clipMv(mvCand);
-                        predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
-                        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
-
-                        if (bestCost > cost)
+                        uint32_t bestCost = MAX_INT;
+                        for (int i = 0; i < AMVP_NUM_CANDS; i++)
                         {
-                            bestCost = cost;
-                            mvpIdx  = i;
+                            MV mvCand = interMode.amvpCand[l][ref][i];
+
+                            // NOTE: skip mvCand if Y is > merange and -FN>1
+                            if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
+                                continue;
+
+                            cu.clipMv(mvCand);
+                            predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
+                            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+
+                            if (bestCost > cost)
+                            {
+                                bestCost = cost;
+                                mvpIdx = i;
+                            }
                         }
                     }
 
