@@ -925,7 +925,7 @@ Quality, rate control and rate distortion options
 	less bits. This tends to improve detail in the backgrounds of video
 	with less detail in areas of high motion. Default enabled
 
-.. option:: --nr <integer>
+.. option:: --nr-intra <integer>, --nr-inter <integer>
 
 	Noise reduction - an adaptive deadzone applied after DCT
 	(subtracting from DCT coefficients), before quantization.  It does

@@ -755,9 +755,13 @@ typedef struct x265_param
      * regardless of this setting. */
     int       bIntraInBFrames;
 
-    /* An integer value in range of 0 to 1000, which denotes strength of noise
-     * reduction. 0 means disabled */
-    int       noiseReduction;
+    /* An integer value in range of 0 to 2000, which denotes strength of noise
+     * reduction in intra CUs. 0 means disabled */
+    int       noiseReductionIntra;
+
+    /* An integer value in range of 0 to 2000, which denotes strength of noise
+     * reduction in inter CUs. 0 means disabled */
+    int       noiseReductionInter;
 
     /* The lossless flag enables true lossless coding, by bypassing scaling,
      * transform, quantization and in-loop filter processes. This is used for

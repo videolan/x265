@@ -126,12 +126,12 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
         ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
     }
 
-    if (m_param->noiseReduction)
+    if (m_param->noiseReductionIntra || m_param->noiseReductionInter)
         m_nr = X265_MALLOC(NoiseReduction, 1);
     if (m_nr)
         memset(m_nr, 0, sizeof(NoiseReduction));
     else
-        m_param->noiseReduction = 0;
+        m_param->noiseReductionIntra = m_param->noiseReductionInter = 0;
 
     start();
     return ok;
@@ -1083,7 +1083,8 @@ void FrameEncoder::noiseReductionUpdate()
             m_nr->count[cat] >>= 1;
         }
 
-        uint64_t scaledCount = (uint64_t)m_param->noiseReduction * m_nr->count[cat];
+        int nrStrength = cat < 8 ? m_param->noiseReductionIntra : m_param->noiseReductionInter;
+        uint64_t scaledCount = (uint64_t)nrStrength * m_nr->count[cat];
 
         for (int i = 0; i < coefCount; i++)
         {

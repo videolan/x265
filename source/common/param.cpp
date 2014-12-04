@@ -766,7 +766,8 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
                          &p->vui.defDispWinRightOffset,
                          &p->vui.defDispWinBottomOffset) != 4;
     }
-    OPT("nr") p->noiseReduction = atoi(value);
+    OPT("nr-intra") p->noiseReductionIntra = atoi(value);
+    OPT("nr-inter") p->noiseReductionInter = atoi(value);
     OPT("pass")
     {
         int pass = Clip3(0, 3, atoi(value));
@@ -1078,8 +1079,10 @@ int x265_check_params(x265_param *param)
           "Target bitrate can not be less than zero");
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
           "qCompress must be between 0.5 and 1.0");
-    if (param->noiseReduction)
-        CHECK(0 > param->noiseReduction || param->noiseReduction > 2000, "Valid noise reduction range 0 - 2000");
+    if (param->noiseReductionIntra)
+        CHECK(0 > param->noiseReductionIntra || param->noiseReductionIntra > 2000, "Valid noise reduction range 0 - 2000");
+    if (param->noiseReductionInter)
+        CHECK(0 > param->noiseReductionInter || param->noiseReductionInter > 2000, "Valid noise reduction range 0 - 2000");
     CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead,
           "Constant rate-factor is incompatible with 2pass");
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
@@ -1201,8 +1204,10 @@ void x265_print_params(x265_param *param)
         fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
     TOOLOPT(param->bEnableCbfFastMode, "fast-cbf");
-    if (param->noiseReduction)
-        fprintf(stderr, "nr=%d ", param->noiseReduction);
+    if (param->noiseReductionIntra)
+        fprintf(stderr, "nr-intra=%d ", param->noiseReductionIntra);
+    if (param->noiseReductionInter)
+        fprintf(stderr, "nr-inter=%d ", param->noiseReductionInter);
     if (param->bEnableLoopFilter)
     {
         if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)

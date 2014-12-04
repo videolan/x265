@@ -210,7 +210,8 @@ static const struct option long_options[] =
     { "lambda-file",    required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },
-    { "nr",             required_argument, NULL, 0 },
+    { "nr-intra",       required_argument, NULL, 0 },
+    { "nr-inter",       required_argument, NULL, 0 },
     { "stats",          required_argument, NULL, 0 },
     { "pass",           required_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
@@ -401,7 +402,8 @@ void CLIOptions::showHelp(x265_param *param)
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
     H1("   --[no-]fast-cbf               Enable early outs based on whether residual is coded. Default %s\n", OPT(param->bEnableCbfFastMode));
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
-    H1("   --nr <integer>                An integer value in range of 0 to 2000, which denotes strength of noise reduction. Default 0\n");
+    H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
+    H1("   --nr-inter <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in inter CUs. Default 0\n");
     H0("\nCoding tools:\n");
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));
