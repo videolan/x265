@@ -176,8 +176,11 @@ void SAO::allocSaoParam(SAOParam* saoParam) const
 void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
 {
     Slice* slice = frame->m_encData->m_slice;
-
-    int qpCb = Clip3(0, QP_MAX_MAX, qp + slice->m_pps->chromaQpOffset[0]);
+    int qpCb = qp;
+    if (m_param->internalCsp == X265_CSP_I420)
+        qpCb = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0]]);
+    else
+        qpCb = X265_MIN(qp + slice->m_pps->chromaQpOffset[0], QP_MAX_SPEC);
     m_lumaLambda = x265_lambda2_tab[qp];
     m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
     m_frame = frame;

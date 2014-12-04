@@ -50,19 +50,24 @@ public:
     void setQP(const Slice& slice, int qp)
     {
         m_qp = qp;
-
+        int qpCb, qpCr;
         /* Scale PSY RD factor by a slice type factor */
         static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
         m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
-
-        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[0]);
+        if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
+            qpCb = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+        else
+            qpCb = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
         uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         setCbDistortionWeight(lambdaOffset);
 
-        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[1]);
+        if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
+            qpCr = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+        else
+            qpCr = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
         lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         setCrDistortionWeight(lambdaOffset);
