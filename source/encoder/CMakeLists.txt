@@ -3,6 +3,9 @@
 if(GCC)
    add_definitions(-Wno-uninitialized)
 endif()
+if(MSVC)
+   add_definitions(/wd4701) # potentially uninitialized local variable 'foo' used
+endif()
 
 add_library(encoder OBJECT ../x265.h
     analysis.cpp analysis.h
