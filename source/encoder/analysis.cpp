@@ -594,7 +594,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             if (m_param->rdLevel > 2)
             {
                 /* RD selection between merge, inter, bidir and intra */
-                if (!m_bChromaSa8d)
+                if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
                     for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                     {
@@ -845,7 +845,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
-                if (!m_bChromaSa8d)
+                if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
                     for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
                     {
@@ -1278,7 +1278,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         return;
 
     /* calculate the motion compensation for chroma for the best mode selected */
-    if (!m_bChromaSa8d)
+    if (!m_bChromaSa8d) /* Chroma MC was done above */
     {
         prepMotionCompensation(bestPred->cu, cuGeom, 0);
         motionCompensation(bestPred->predYuv, false, true);
