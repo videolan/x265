@@ -178,9 +178,9 @@ public:
     void     encodeResAndCalcRdSkipCU(Mode& interMode);
 
     // encode residual without rd-cost
-    void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, uint32_t depthRange[2]);
-    void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t depthRange[2]);
-    void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx);
+    void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, const uint32_t depthRange[2]);
+    void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, const uint32_t depthRange[2]);
+    void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx);
 
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
@@ -204,14 +204,14 @@ protected:
     void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
 
     // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
-    uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, uint32_t depthRange[2], uint8_t* sharedModes);
+    uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes);
 
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
-    void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx,  uint32_t absPartIdxStep, uint32_t width, uint32_t height);
-    void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, uint32_t depthRange[2]);
-    void     codeCoeffQTChroma(const CUData& cu, uint32_t trDepth, uint32_t absPartIdx, TextType ttype);
+    void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx);
+    void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, const uint32_t depthRange[2]);
+    void     codeCoeffQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx, TextType ttype);
 
     struct Cost
     {
@@ -223,23 +223,23 @@ protected:
     };
 
     uint64_t estimateNullCbfCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
-    void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, uint32_t depthRange[2]);
+    void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2]);
 
     // estimate bit cost of residual QT
-    void     encodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, TextType ttype, uint32_t depthRange[2]);
+    void     encodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, TextType ttype, const uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
-    void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, uint32_t depthRange[2]);
-    void     codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, Cost& costs);
-    void     extractIntraResultQT(CUData& cu, Yuv& reconYuv, uint32_t trDepth, uint32_t absPartIdx);
+    void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, const uint32_t depthRange[2]);
+    void     codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, Cost& costs);
+    void     extractIntraResultQT(CUData& cu, Yuv& reconYuv, uint32_t tuDepth, uint32_t absPartIdx);
 
     // generate chroma prediction, generate residual and recon
-    uint32_t codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
-    uint32_t codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t trDepth, uint32_t trDepthC, uint32_t absPartIdx, uint32_t& psyEnergy);
-    void     extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t absPartIdx, uint32_t trDepth, bool tuQuad);
+    uint32_t codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
+    uint32_t codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t tuDepthC, uint32_t absPartIdx, uint32_t& psyEnergy);
+    void     extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t absPartIdx, uint32_t tuDepth);
 
     // reshuffle CBF flags after coding a pair of 4:2:2 chroma blocks
-    void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t trDepth, uint32_t absPartIdx);
+    void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t tuDepth, uint32_t absPartIdx);
 
     struct MergeData
     {
