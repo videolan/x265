@@ -43,21 +43,31 @@ bool Yuv::create(uint32_t size, int csp)
     m_hChromaShift = CHROMA_H_SHIFT(csp);
     m_vChromaShift = CHROMA_V_SHIFT(csp);
 
-    // set width and height
     m_size  = size;
-    m_csize = size >> m_hChromaShift;
     m_part = partitionFromSizes(size, size);
 
-    size_t sizeL = size * size;
-    size_t sizeC = sizeL >> (m_vChromaShift + m_hChromaShift);
+    if (csp == X265_CSP_I400)
+    {
+        CHECKED_MALLOC(m_buf[0], pixel, size * size + 8);
+        m_buf[1] = m_buf[2] = 0;
+        m_csize = MAX_INT;
+        return true;
+    }
+    else
+    {
+        m_csize = size >> m_hChromaShift;
 
-    X265_CHECK((sizeC & 15) == 0, "invalid size");
+        size_t sizeL = size * size;
+        size_t sizeC = sizeL >> (m_vChromaShift + m_hChromaShift);
 
-    // memory allocation (padded for SIMD reads)
-    CHECKED_MALLOC(m_buf[0], pixel, sizeL + sizeC * 2 + 8);
-    m_buf[1] = m_buf[0] + sizeL;
-    m_buf[2] = m_buf[0] + sizeL + sizeC;
-    return true;
+        X265_CHECK((sizeC & 15) == 0, "invalid size");
+
+        // memory allocation (padded for SIMD reads)
+        CHECKED_MALLOC(m_buf[0], pixel, sizeL + sizeC * 2 + 8);
+        m_buf[1] = m_buf[0] + sizeL;
+        m_buf[2] = m_buf[0] + sizeL + sizeC;
+        return true;
+    }
 
 fail:
     return false;
