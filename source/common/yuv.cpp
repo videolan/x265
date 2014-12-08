@@ -102,7 +102,7 @@ void Yuv::copyFromPicYuv(const PicYuv& srcPic, uint32_t cuAddr, uint32_t absPart
 
 void Yuv::copyFromYuv(const Yuv& srcYuv)
 {
-    X265_CHECK(m_size <= srcYuv.m_size, "invalid size\n");
+    X265_CHECK(m_size >= srcYuv.m_size, "invalid size\n");
 
     primitives.luma_copy_pp[m_part](m_buf[0], m_size, srcYuv.m_buf[0], srcYuv.m_size);
     primitives.chroma[m_csp].copy_pp[m_part](m_buf[1], m_csize, srcYuv.m_buf[1], srcYuv.m_csize);
