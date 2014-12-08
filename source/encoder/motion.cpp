@@ -108,16 +108,16 @@ MotionEstimate::~MotionEstimate()
     fencPUYuv.destroy();
 }
 
-void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
+void MotionEstimate::setSourcePU(intptr_t offset, int pwidth, int pheight)
 {
-    partEnum = partitionFromSizes(width, height);
+    partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
     sad = primitives.sad[partEnum];
     satd = primitives.satd[partEnum];
     sad_x3 = primitives.sad_x3[partEnum];
     sad_x4 = primitives.sad_x4[partEnum];
 
-    blockwidth = width;
+    blockwidth = pwidth;
     blockOffset = offset;
 
     /* copy PU block into cache */
