@@ -34,6 +34,7 @@
 using namespace x265;
 
 namespace {
+
 struct SubpelWorkload
 {
     int hpel_iters;
@@ -43,7 +44,7 @@ struct SubpelWorkload
     bool hpel_satd;
 };
 
-static const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
+const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
 {
     { 1, 4, 0, 4, false }, // 4 SAD HPEL only
     { 1, 4, 1, 4, false }, // 4 SAD HPEL + 4 SATD QPEL
@@ -54,15 +55,14 @@ static const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
     { 2, 8, 1, 8, true },  // 2x8 SATD HPEL + 8 SATD QPEL
     { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
 };
-}
 
-static int size_scale[NUM_LUMA_PARTITIONS];
-#define SAD_THRESH(v) (bcost < (((v >> 4) * size_scale[partEnum])))
+int sizeScale[NUM_LUMA_PARTITIONS];
+#define SAD_THRESH(v) (bcost < (((v >> 4) * sizeScale[partEnum])))
 
-static void init_scales(void)
+void initScales(void)
 {
 #define SETUP_SCALE(W, H) \
-    size_scale[LUMA_ ## W ## x ## H] = (H * H) >> 4;
+    sizeScale[LUMA_ ## W ## x ## H] = (H * H) >> 4;
     SETUP_SCALE(4, 4);
     SETUP_SCALE(8, 8);
     SETUP_SCALE(8, 4);
@@ -91,19 +91,21 @@ static void init_scales(void)
 #undef SETUP_SCALE
 }
 
-MotionEstimate::MotionEstimate()
-    : searchMethod(3)
-    , subpelRefine(5)
-{
-    if (size_scale[0] == 0)
-        init_scales();
+}
 
-    fenc = X265_MALLOC(pixel, MAX_CU_SIZE * MAX_CU_SIZE);
+void MotionEstimate::init(int method, int refine, int csp)
+{
+    if (!sizeScale[0])
+        initScales();
+
+    searchMethod = method;
+    subpelRefine = refine;
+    fencPUYuv.create(FENC_STRIDE, csp);
 }
 
 MotionEstimate::~MotionEstimate()
 {
-    X265_FREE(fenc);
+    fencPUYuv.destroy();
 }
 
 void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
@@ -119,7 +121,7 @@ void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
     blockOffset = offset;
 
     /* copy PU block into cache */
-    primitives.luma_copy_pp[partEnum](fenc, FENC_STRIDE, fencplane + offset, fencLumaStride);
+    primitives.luma_copy_pp[partEnum](fencPUYuv.m_buf[0], FENC_STRIDE, fencplane + offset, fencLumaStride);
 }
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
@@ -289,7 +291,8 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
                                        int              merange)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->fpelPlane + blockOffset;
+    pixel* fenc = fencPUYuv.m_buf[0];
+    pixel* fref = ref->fpelPlane + blockOffset;
     intptr_t stride = ref->lumaStride;
 
     MV omv = bmv;
@@ -530,7 +533,8 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    MV &             outQMv)
 {
     ALIGN_VAR_16(int, costs[16]);
-    pixel *fref = ref->fpelPlane + blockOffset;
+    pixel* fenc = fencPUYuv.m_buf[0];
+    pixel* fref = ref->fpelPlane + blockOffset;
     intptr_t stride = ref->lumaStride;
 
     setMVP(qmvp);
@@ -1146,7 +1150,7 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
     int yFrac = qmv.y & 0x3;
 
     if ((yFrac | xFrac) == 0)
-        return cmp(fenc, FENC_STRIDE, fref, stride);
+        return cmp(fencPUYuv.m_buf[0], FENC_STRIDE, fref, stride);
     else
     {
         /* We are taking a short-cut here if the reference is weighted. To be
@@ -1168,6 +1172,6 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             primitives.luma_hps[partEnum](fref, stride, immed, blockwidth, xFrac, 1);
             primitives.luma_vsp[partEnum](immed + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, FENC_STRIDE, yFrac);
         }
-        return cmp(fenc, FENC_STRIDE, subpelbuf, FENC_STRIDE);
+        return cmp(fencPUYuv.m_buf[0], FENC_STRIDE, subpelbuf, FENC_STRIDE);
     }
 }

@@ -68,8 +68,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_numLayers = g_log2Size[param.maxCUSize] - 2;
 
     m_rdCost.setPsyRdScale(param.psyRd);
-    m_me.searchMethod = param.searchMethod;
-    m_me.subpelRefine = param.subpelRefine;
+    m_me.init(param.searchMethod, param.subpelRefine, param.internalCsp);
 
     bool ok = m_quant.init(m_bEnableRDOQ, param.psyRdoq, scalingList, m_entropyCoder);
     if (m_param->noiseReductionIntra || m_param->noiseReductionInter)

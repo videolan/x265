@@ -73,8 +73,7 @@ public:
     EstimateRow()
     {
         m_me.setQP(X265_LOOKAHEAD_QP);
-        m_me.searchMethod = X265_HEX_SEARCH;
-        m_me.subpelRefine = 1;
+        m_me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
         m_predictions = X265_MALLOC(pixel, 35 * 8 * 8);
         m_merange = 16;
         m_lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];

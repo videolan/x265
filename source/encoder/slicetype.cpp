@@ -1678,7 +1678,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
 
         // calculate satd costs, keep least cost
         ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-        primitives.transpose[sizeIdx](buf_trans, m_me.fenc, FENC_STRIDE);
+        primitives.transpose[sizeIdx](buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
 
         int acost = m_me.COST_MAX;
         uint32_t mode, lowmode = 4;
