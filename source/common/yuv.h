@@ -63,6 +63,9 @@ public:
     // Copy from same size YUV buffer
     void   copyFromYuv(const Yuv& srcYuv);
 
+    // Copy portion of srcYuv into ME prediction buffer
+    void   copyPUFromYuv(const Yuv& srcYuv, uint32_t absPartIdx, int partEnum, bool bChroma);
+
     // Copy Small YUV buffer to the part of other Big YUV buffer
     void   copyToPartYuv(Yuv& dstYuv, uint32_t absPartIdx) const;
 

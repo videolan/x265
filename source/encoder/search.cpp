@@ -1912,7 +1912,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         initMotionCompensation(cu, cuGeom, puIdx);
 
         pixel* pu = fencPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-        m_me.setSourcePU(pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
+        m_me.setSourcePU(*interMode.fencYuv, m_puAbsPartIdx, pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
 
         uint32_t mrgCost = MAX_UINT;
 

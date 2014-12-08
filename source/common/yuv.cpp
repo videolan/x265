@@ -109,6 +109,23 @@ void Yuv::copyFromYuv(const Yuv& srcYuv)
     primitives.chroma[m_csp].copy_pp[m_part](m_buf[2], m_csize, srcYuv.m_buf[2], srcYuv.m_csize);
 }
 
+/* This version is intended for use by ME, which required FENC_STRIDE for luma fenc pixels */
+void Yuv::copyPUFromYuv(const Yuv& srcYuv, uint32_t absPartIdx, int partEnum, bool bChroma)
+{
+    X265_CHECK(m_size == FENC_STRIDE && m_size >= srcYuv.m_size, "PU buffer size mismatch\n");
+
+    const pixel* srcY = srcYuv.m_buf[0] + getAddrOffset(absPartIdx, srcYuv.m_size);
+    primitives.luma_copy_pp[partEnum](m_buf[0], m_size, srcY, srcYuv.m_size);
+
+    if (bChroma)
+    {
+        const pixel* srcU = srcYuv.m_buf[1] + srcYuv.getChromaAddrOffset(absPartIdx);
+        const pixel* srcV = srcYuv.m_buf[2] + srcYuv.getChromaAddrOffset(absPartIdx);
+        primitives.chroma[m_csp].copy_pp[partEnum](m_buf[1], m_csize, srcU, srcYuv.m_csize);
+        primitives.chroma[m_csp].copy_pp[partEnum](m_buf[2], m_csize, srcV, srcYuv.m_csize);
+    }
+}
+
 void Yuv::copyToPartYuv(Yuv& dstYuv, uint32_t absPartIdx) const
 {
     pixel* dstY = dstYuv.getLumaAddr(absPartIdx);

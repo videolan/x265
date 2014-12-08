@@ -75,6 +75,7 @@ public:
     }
 
     void setSourcePU(intptr_t offset, int pwidth, int pheight);
+    void setSourcePU(const Yuv& srcFencYuv, int partOffset, intptr_t offset, int pwidth, int pheight);
 
     /* buf*() and motionEstimate() methods all use cached fenc pixels and thus
      * require setSourcePU() to be called prior. */

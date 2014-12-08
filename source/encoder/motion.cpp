@@ -124,6 +124,21 @@ void MotionEstimate::setSourcePU(intptr_t offset, int width, int height)
     primitives.luma_copy_pp[partEnum](fencPUYuv.m_buf[0], FENC_STRIDE, fencplane + offset, fencLumaStride);
 }
 
+void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int partOffset, intptr_t offset, int pwidth, int pheight)
+{
+    partEnum = partitionFromSizes(pwidth, pheight);
+    X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
+    sad = primitives.sad[partEnum];
+    satd = primitives.satd[partEnum];
+    sad_x3 = primitives.sad_x3[partEnum];
+    sad_x4 = primitives.sad_x4[partEnum];
+
+    blockwidth = pwidth;
+    blockOffset = offset;
+
+    fencPUYuv.copyPUFromYuv(srcFencYuv, partOffset, partEnum, false);
+}
+
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
 static const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 static const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
