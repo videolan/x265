@@ -1395,12 +1395,12 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
     int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && !cu.m_tqBypass[0] && cu.m_partSize[0] != SIZE_2Nx2N;
 
     // loop over partitions
-    for (uint32_t pu = 0; pu < numPU; pu++, absPartIdx += qNumParts)
+    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++, absPartIdx += qNumParts)
     {
         uint32_t bmode = 0;
 
         if (sharedModes)
-            bmode = sharedModes[pu];
+            bmode = sharedModes[puIdx];
         else
         {
             // Reference sample smoothing
@@ -1548,7 +1548,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
         extractIntraResultQT(cu, *reconYuv, initTuDepth, absPartIdx);
 
         // set reconstruction for next intra prediction blocks
-        if (pu != numPU - 1)
+        if (puIdx != numPU - 1)
         {
             /* This has important implications for parallelism and RDO.  It is writing intermediate results into the
              * output recon picture, so it cannot proceed in parallel with anything else when doing INTRA_NXN. Also
