@@ -1085,14 +1085,14 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.satd[LUMA_64x16] = satd8<64, 16>;
     p.satd[LUMA_16x64] = satd8<16, 64>;
 
-    p.chroma[X265_CSP_I420].satd[CHROMA_2x2]   = sad<2, 2>;
+    p.chroma[X265_CSP_I420].satd[CHROMA_2x2]   = NULL;
     p.chroma[X265_CSP_I420].satd[CHROMA_4x4]   = satd_4x4;
     p.chroma[X265_CSP_I420].satd[CHROMA_8x8]   = satd8<8, 8>;
     p.chroma[X265_CSP_I420].satd[CHROMA_16x16] = satd8<16, 16>;
     p.chroma[X265_CSP_I420].satd[CHROMA_32x32] = satd8<32, 32>;
 
-    p.chroma[X265_CSP_I420].satd[CHROMA_4x2]   = sad<4, 2>;
-    p.chroma[X265_CSP_I420].satd[CHROMA_2x4]   = sad<2, 4>;
+    p.chroma[X265_CSP_I420].satd[CHROMA_4x2]   = NULL;
+    p.chroma[X265_CSP_I420].satd[CHROMA_2x4]   = NULL;
     p.chroma[X265_CSP_I420].satd[CHROMA_8x4]   = satd_8x4;
     p.chroma[X265_CSP_I420].satd[CHROMA_4x8]   = satd4<4, 8>;
     p.chroma[X265_CSP_I420].satd[CHROMA_16x8]  = satd8<16, 8>;
@@ -1100,10 +1100,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].satd[CHROMA_32x16] = satd8<32, 16>;
     p.chroma[X265_CSP_I420].satd[CHROMA_16x32] = satd8<16, 32>;
 
-    p.chroma[X265_CSP_I420].satd[CHROMA_8x6]   = sad<8, 6>;
-    p.chroma[X265_CSP_I420].satd[CHROMA_6x8]   = sad<6, 8>;
-    p.chroma[X265_CSP_I420].satd[CHROMA_8x2]   = sad<8, 2>;
-    p.chroma[X265_CSP_I420].satd[CHROMA_2x8]   = sad<2, 8>;
+    p.chroma[X265_CSP_I420].satd[CHROMA_8x6]   = NULL;
+    p.chroma[X265_CSP_I420].satd[CHROMA_6x8]   = NULL;
+    p.chroma[X265_CSP_I420].satd[CHROMA_8x2]   = NULL;
+    p.chroma[X265_CSP_I420].satd[CHROMA_2x8]   = NULL;
     p.chroma[X265_CSP_I420].satd[CHROMA_16x12] = satd4<16, 12>;
     p.chroma[X265_CSP_I420].satd[CHROMA_12x16] = satd4<12, 16>;
     p.chroma[X265_CSP_I420].satd[CHROMA_16x4]  = satd4<16, 4>;
@@ -1113,14 +1113,14 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].satd[CHROMA_32x8]  = satd8<32, 8>;
     p.chroma[X265_CSP_I420].satd[CHROMA_8x32]  = satd8<8, 32>;
 
-    p.chroma[X265_CSP_I422].satd[CHROMA422_2x4]   = sad<2, 4>;
+    p.chroma[X265_CSP_I422].satd[CHROMA422_2x4]   = NULL;
     p.chroma[X265_CSP_I422].satd[CHROMA422_4x8]   = satd4<4, 8>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_8x16]  = satd8<8, 16>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_16x32] = satd8<16, 32>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_32x64] = satd8<32, 64>;
 
     p.chroma[X265_CSP_I422].satd[CHROMA422_4x4]   = satd_4x4;
-    p.chroma[X265_CSP_I422].satd[CHROMA422_2x8]   = sad<2, 8>;
+    p.chroma[X265_CSP_I422].satd[CHROMA422_2x8]   = NULL;
     p.chroma[X265_CSP_I422].satd[CHROMA422_8x8]   = satd8<8, 8>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_4x16]  = satd4<4, 16>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_16x16] = satd8<16, 16>;
@@ -1129,9 +1129,9 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].satd[CHROMA422_16x64] = satd8<16, 64>;
 
     p.chroma[X265_CSP_I422].satd[CHROMA422_8x12]  = satd4<8, 12>;
-    p.chroma[X265_CSP_I422].satd[CHROMA422_6x16]  = sad<6, 16>;
+    p.chroma[X265_CSP_I422].satd[CHROMA422_6x16]  = NULL;
     p.chroma[X265_CSP_I422].satd[CHROMA422_8x4]   = satd4<8, 4>;
-    p.chroma[X265_CSP_I422].satd[CHROMA422_2x16]  = sad<2, 16>;
+    p.chroma[X265_CSP_I422].satd[CHROMA422_2x16]  = NULL;
     p.chroma[X265_CSP_I422].satd[CHROMA422_16x24] = satd8<16, 24>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_12x32] = satd4<12, 32>;
     p.chroma[X265_CSP_I422].satd[CHROMA422_16x8]  = satd8<16, 8>;
