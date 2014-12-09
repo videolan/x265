@@ -61,9 +61,12 @@ using namespace x265;
  *
  *   RDO selection between merge and skip
  *   sa8d selection of best inter mode
+ *   sa8d decisions include chroma residual cost
  *   RDO selection between (merge/skip) / best inter mode / intra / split
  *
  * rd-level 4 enables RDOQuant
+ *   chroma residual cost included in satd decisions, including subpel refine
+ *    (as a result of --subme 3 being used by preset slow)
  *
  * rd-level 5,6 does RDO for each inter mode
  */
@@ -358,11 +361,7 @@ void Analysis::parallelME(int threadId, int meId)
         slave->m_slice = m_slice;
         slave->m_frame = m_frame;
 
-        PicYuv* fencPic = m_frame->m_fencPic;
-        pixel* pu = fencPic->getLumaAddr(m_curInterMode->cu.m_cuAddr, m_curGeom->encodeIdx + m_puAbsPartIdx);
-        slave->m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-        slave->m_me.setSourcePU(*m_curInterMode->fencYuv, m_puAbsPartIdx, pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
-
+        slave->m_me.setSourcePU(*m_curInterMode->fencYuv, m_curInterMode->cu.m_cuAddr, m_curGeom->encodeIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
         slave->prepMotionCompensation(m_curInterMode->cu, *m_curGeom, m_curPart);
     }
 
@@ -385,8 +384,6 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         slave->m_frame = m_frame;
         slave->setQP(*m_slice, m_rdCost.m_qp);
         slave->invalidateContexts(0);
-        if (jobId)
-            slave->m_me.setSourcePlane(m_frame->m_fencPic->m_picOrg[0], m_frame->m_fencPic->m_stride);
     }
 
     ModeDepth& md = m_modeDepth[m_curGeom->depth];

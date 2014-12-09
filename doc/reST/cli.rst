@@ -392,7 +392,7 @@ Mode decision / Analysis
 	+-------+---------------------------------------------------------------+
 	| 2     | RDO splits and merge/skip selection                           |
 	+-------+---------------------------------------------------------------+
-	| 3     | RDO mode and split decisions                                  |
+	| 3     | RDO mode and split decisions, chroma residual used for sa8d   |
 	+-------+---------------------------------------------------------------+
 	| 4     | Adds RDO Quant                                                |
 	+-------+---------------------------------------------------------------+
@@ -588,6 +588,13 @@ Temporal / motion search options
 	+----+------------+-----------+------------+-----------+-----------+
 	|  7 | 2          | 8         | 2          | 8         | true      |
 	+----+------------+-----------+------------+-----------+-----------+
+
+	At --subme values larger than 2, chroma residual cost is included
+	in all subpel refinement steps and chroma residual is included in
+	all motion estimation decisions (selecting the best reference
+	picture in each list, and chosing between merge, uni-directional
+	motion and bi-directional motion). The 'slow' preset is the first
+	preset to enable the use of chroma residual.
 
 .. option:: --merange <integer>
 

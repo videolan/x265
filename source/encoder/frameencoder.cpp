@@ -722,9 +722,6 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
     FrameData& curEncData = *m_frame->m_encData;
     Slice *slice = curEncData.m_slice;
-    PicYuv* fencPic = m_frame->m_fencPic;
-
-    tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
 
     int64_t startTime = x265_mdate();
     const uint32_t numCols = m_numCols;

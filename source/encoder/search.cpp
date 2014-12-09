@@ -1796,8 +1796,12 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
         cu.m_refIdx[1][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
         prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(tempYuv, true, false);
+        motionCompensation(tempYuv, true, m_me.bChromaSATD);
+
         uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(m.absPartIdx), tempYuv.m_size);
+        if (m_me.bChromaSATD)
+            costCand += m_me.bufChromaSATD(tempYuv, m.absPartIdx);
+
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
@@ -1883,7 +1887,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
 
 /* search of the best candidate for inter prediction
  * returns true if predYuv was filled with a motion compensated prediction */
-bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma)
+bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
 {
     CUData& cu = interMode.cu;
     Yuv* predYuv = &interMode.predYuv;
@@ -1891,7 +1895,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
 
     const Slice *slice = m_slice;
-    PicYuv* fencPic = m_frame->m_fencPic;
     int numPart     = cu.getNumPartInter();
     int numPredDir  = slice->isInterP() ? 1 : 2;
     const int* numRefIdx = slice->m_numRefIdx;
@@ -1911,12 +1914,11 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         /* sets m_puAbsPartIdx, m_puWidth, m_puHeight */
         initMotionCompensation(cu, cuGeom, puIdx);
 
-        pixel* pu = fencPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-        m_me.setSourcePU(*interMode.fencYuv, m_puAbsPartIdx, pu - fencPic->m_picOrg[0], m_puWidth, m_puHeight);
+        m_me.setSourcePU(*interMode.fencYuv, cu.m_cuAddr, cuGeom.encodeIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
 
         uint32_t mrgCost = MAX_UINT;
 
-        /* find best cost merge candidate */
+        /* find best cost merge candidate. note: 2Nx2N merge and bidir are handled as separate modes */
         if (cu.m_partSize[0] != SIZE_2Nx2N)
         {
             merge.absPartIdx = m_puAbsPartIdx;
@@ -1924,7 +1926,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             merge.height     = m_puHeight;
             mrgCost = mergeEstimation(cu, cuGeom, puIdx, merge);
 
-            if (bMergeOnly && cu.m_log2CUSize[0] > 3)
+            if (bMergeOnly)
             {
                 if (mrgCost == MAX_UINT)
                 {
@@ -1943,7 +1945,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 totalmebits += merge.bits;
 
                 prepMotionCompensation(cu, cuGeom, puIdx);
-                motionCompensation(*predYuv, true, bChroma);
+                motionCompensation(*predYuv, true, bChromaSA8D);
                 continue;
             }
         }
@@ -2142,19 +2144,35 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             bidir[0] = bestME[0];
             bidir[1] = bestME[1];
 
-            /* Generate reference subpels */
-            PicYuv* refPic0  = slice->m_refPicList[0][bestME[0].ref]->m_reconPic;
-            PicYuv* refPic1  = slice->m_refPicList[1][bestME[1].ref]->m_reconPic;
-            Yuv*    bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
-            predInterLumaPixel(bidirYuv[0], *refPic0, bestME[0].mv);
-            predInterLumaPixel(bidirYuv[1], *refPic1, bestME[1].mv);
+            int satdCost;
 
-            pixel* pred0 = bidirYuv[0].getLumaAddr(m_puAbsPartIdx);
-            pixel* pred1 = bidirYuv[1].getLumaAddr(m_puAbsPartIdx);
+            if (m_me.bChromaSATD)
+            {
+                cu.m_mv[0][m_puAbsPartIdx] = bidir[0].mv;
+                cu.m_refIdx[0][m_puAbsPartIdx] = (int8_t)bidir[0].ref;
+                cu.m_mv[1][m_puAbsPartIdx] = bidir[1].mv;
+                cu.m_refIdx[1][m_puAbsPartIdx] = (int8_t)bidir[1].ref;
 
-            int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
-            primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, pred0, bidirYuv[0].m_size, pred1, bidirYuv[1].m_size, 32);
-            int satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+                prepMotionCompensation(cu, cuGeom, puIdx);
+                motionCompensation(tmpPredYuv, true, true);
+
+                satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size) +
+                           m_me.bufChromaSATD(tmpPredYuv, m_puAbsPartIdx);
+            }
+            else
+            {
+                PicYuv* refPic0 = slice->m_refPicList[0][bestME[0].ref]->m_reconPic;
+                PicYuv* refPic1 = slice->m_refPicList[1][bestME[1].ref]->m_reconPic;
+                Yuv* bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
+
+                /* Generate reference subpels */
+                predInterLumaPixel(bidirYuv[0], *refPic0, bestME[0].mv);
+                predInterLumaPixel(bidirYuv[1], *refPic1, bestME[1].mv);
+
+                primitives.pixelavg_pp[m_me.partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, bidirYuv[0].getLumaAddr(m_puAbsPartIdx), bidirYuv[0].m_size,
+                                                                                              bidirYuv[1].getLumaAddr(m_puAbsPartIdx), bidirYuv[1].m_size, 32);
+                satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+            }
 
             bidirBits = bestME[0].bits + bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
             bidirCost = satdCost + m_rdCost.getCost(bidirBits);
@@ -2177,12 +2195,28 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             if (bTryZero)
             {
                 /* coincident blocks of the two reference pictures */
-                const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-                const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-                intptr_t refStride = slice->m_mref[0][0].lumaStride;
+                if (m_me.bChromaSATD)
+                {
+                    cu.m_mv[0][m_puAbsPartIdx] = mvzero;
+                    cu.m_refIdx[0][m_puAbsPartIdx] = (int8_t)bidir[0].ref;
+                    cu.m_mv[1][m_puAbsPartIdx] = mvzero;
+                    cu.m_refIdx[1][m_puAbsPartIdx] = (int8_t)bidir[1].ref;
 
-                primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
-                satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+                    prepMotionCompensation(cu, cuGeom, puIdx);
+                    motionCompensation(tmpPredYuv, true, true);
+
+                    satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size) +
+                               m_me.bufChromaSATD(tmpPredYuv, m_puAbsPartIdx);
+                }
+                else
+                {
+                    const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
+                    const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
+                    intptr_t refStride = slice->m_mref[0][0].lumaStride;
+
+                    primitives.pixelavg_pp[m_me.partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
+                    satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+                }
 
                 MV mvp0 = bestME[0].mvp;
                 int mvpIdx0 = bestME[0].mvpIdx;
@@ -2277,7 +2311,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         }
 
         prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(*predYuv, true, bChroma);
+        motionCompensation(*predYuv, true, bChromaSA8D);
     }
 
     interMode.sa8dBits += totalmebits;

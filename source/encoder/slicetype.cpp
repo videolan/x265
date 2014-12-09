@@ -1302,7 +1302,6 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
         for (int i = 0; i < m_heightInCU; i++)
         {
             m_rows[i].init();
-            m_rows[i].m_me.setSourcePlane(fenc->lowresPlane[0], fenc->lumaStride);
             if (!fenc->bIntraCalculated)
                 fenc->rowSatds[0][0][i] = 0;
             fenc->rowSatds[b - p0][p1 - b][i] = 0;
@@ -1543,7 +1542,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     const bool bFrameScoreCU = (cux > 0 && cux < m_widthInCU - 1 &&
                                 cuy > 0 && cuy < m_heightInCU - 1) || m_widthInCU <= 2 || m_heightInCU <= 2;
 
-    m_me.setSourcePU(pelOffset, cuSize, cuSize);
+    m_me.setSourcePU(fenc->lowresPlane[0], fenc->lumaStride, pelOffset, cuSize, cuSize);
 
     /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
     int lowresPenalty = 4;
