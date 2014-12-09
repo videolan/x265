@@ -272,6 +272,7 @@ struct EncoderPrimitives
 
     struct
     {
+        pixelcmp_t      satd[NUM_LUMA_PARTITIONS];
         filter_pp_t     filter_vpp[NUM_LUMA_PARTITIONS];
         filter_ps_t     filter_vps[NUM_LUMA_PARTITIONS];
         filter_sp_t     filter_vsp[NUM_LUMA_PARTITIONS];
