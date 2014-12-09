@@ -39,6 +39,7 @@ struct ReferencePlanes
 
     pixel*   fpelPlane;
     pixel*   lowresPlane[4];
+    PicYuv*  reconPic;
 
     bool     isWeighted;
     bool     isLowres;

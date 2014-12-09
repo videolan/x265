@@ -43,12 +43,11 @@ public:
     int  init(PicYuv*, WeightParam* w = NULL);
     void applyWeight(int rows, int numRows);
 
-    PicYuv* m_reconPic;
     pixel*  m_weightBuffer;
     int     m_numWeightedRows;
 
-    pixel*  getLumaAddr(uint32_t ctuAddr)                      { return fpelPlane + m_reconPic->m_cuOffsetY[ctuAddr]; }
-    pixel*  getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return fpelPlane + m_reconPic->m_cuOffsetY[ctuAddr] + m_reconPic->m_buOffsetY[absPartIdx]; }
+    pixel*  getLumaAddr(uint32_t ctuAddr)                      { return fpelPlane + reconPic->m_cuOffsetY[ctuAddr]; }
+    pixel*  getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return fpelPlane + reconPic->m_cuOffsetY[ctuAddr] + reconPic->m_buOffsetY[absPartIdx]; }
 
 protected:
 
