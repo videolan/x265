@@ -87,6 +87,7 @@ typedef struct x265_nal
     uint32_t sizeBytes;   /* size in bytes */
     uint8_t* payload;
 } x265_nal;
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -98,6 +99,7 @@ typedef struct x265_analysis_data
     void*            interData;
     void*            intraData;
 } x265_analysis_data;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
