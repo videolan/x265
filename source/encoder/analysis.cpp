@@ -1604,18 +1604,31 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     {
         /* Estimate cost of BIDIR using coincident blocks */
         Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-        pixel *fref0 = m_slice->m_mref[0][ref0].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
-        pixel *fref1 = m_slice->m_mref[1][ref1].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
-        intptr_t refStride = m_slice->m_mref[0][0].lumaStride;
 
-        primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
-        int zsa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+        int zsa8d;
+
         if (m_bChromaSa8d)
         {
-            /* Add in chroma distortion */
+            cu.m_mv[0][0] = mvzero;
+            cu.m_mv[1][0] = mvzero;
+
+            prepMotionCompensation(cu, cuGeom, 0);
+            motionCompensation(tmpPredYuv, true, true);
+
+            zsa8d  = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
             zsa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
             zsa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
         }
+        else
+        {
+            pixel *fref0 = m_slice->m_mref[0][ref0].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
+            pixel *fref1 = m_slice->m_mref[1][ref1].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
+            intptr_t refStride = m_slice->m_mref[0][0].lumaStride;
+
+            primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
+            zsa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+        }
+
         uint32_t bits0 = bestME[0].bits - m_me.bitcost(bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
         uint32_t bits1 = bestME[1].bits - m_me.bitcost(bestME[1].mv, mvp1) + m_me.bitcost(mvzero, mvp1);
         uint32_t zcost = zsa8d + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
@@ -1642,6 +1655,12 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
             prepMotionCompensation(cu, cuGeom, 0);
             motionCompensation(bidir2Nx2N.predYuv, true, true);
+        }
+        else if (m_bChromaSa8d)
+        {
+            /* recover overwritten motion vectors */
+            cu.m_mv[0][0] = bestME[0].mv;
+            cu.m_mv[1][0] = bestME[1].mv;
         }
     }
 }
