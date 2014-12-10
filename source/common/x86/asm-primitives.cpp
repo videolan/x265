@@ -1891,6 +1891,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
 #if X86_64
         p.chroma[X265_CSP_I420].filter_vpp[CHROMA_16x16] = x265_interp_4tap_vert_pp_16x16_avx2;
+        p.chroma[X265_CSP_I420].filter_vpp[CHROMA_32x32] = x265_interp_4tap_vert_pp_32x32_avx2;
 #endif
     }
 #endif // if HIGH_BIT_DEPTH

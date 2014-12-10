@@ -4043,6 +4043,96 @@ FILTER_V4_W32 32, 32
 FILTER_V4_W32 32, 48
 FILTER_V4_W32 32, 64
 
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_vert_pp_32x32, 4, 7, 13
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    mova            m10, [r5]
+    mova            m11, [r5 + mmsize]
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+    lea             r5, [r3 * 3]
+    mova            m12, [pw_512]
+    mov             r6d, 8
+.loopW:
+    movu            m0, [r0]                        ; m0 = row 0
+    movu            m1, [r0 + r1]                   ; m1 = row 1
+    punpcklbw       m2, m0, m1
+    punpckhbw       m3, m0, m1
+    pmaddubsw       m2, m10
+    pmaddubsw       m3, m10
+    movu            m0, [r0 + r1 * 2]               ; m0 = row 2
+    punpcklbw       m4, m1, m0
+    punpckhbw       m5, m1, m0
+    pmaddubsw       m4, m10
+    pmaddubsw       m5, m10
+    movu            m1, [r0 + r4]                   ; m1 = row 3
+    punpcklbw       m6, m0, m1
+    punpckhbw       m7, m0, m1
+    pmaddubsw       m8, m6, m11
+    pmaddubsw       m9, m7, m11
+    pmaddubsw       m6, m10
+    pmaddubsw       m7, m10
+    paddw           m2, m8
+    paddw           m3, m9
+    pmulhrsw        m2, m12
+    pmulhrsw        m3, m12
+    packuswb        m2, m3
+    movu            [r2], m2
+
+    lea             r0, [r0 + r1 * 4]
+    movu            m0, [r0]                        ; m0 = row 4
+    punpcklbw       m2, m1, m0
+    punpckhbw       m3, m1, m0
+    pmaddubsw       m8, m2, m11
+    pmaddubsw       m9, m3, m11
+    pmaddubsw       m2, m10
+    pmaddubsw       m3, m10
+    paddw           m4, m8
+    paddw           m5, m9
+    pmulhrsw        m4, m12
+    pmulhrsw        m5, m12
+    packuswb        m4, m5
+    movu            [r2 + r3], m4
+
+    movu            m1, [r0 + r1]                   ; m1 = row 5
+    punpcklbw       m4, m0, m1
+    punpckhbw       m5, m0, m1
+    pmaddubsw       m4, m11
+    pmaddubsw       m5, m11
+    paddw           m6, m4
+    paddw           m7, m5
+    pmulhrsw        m6, m12
+    pmulhrsw        m7, m12
+    packuswb        m6, m7
+    movu            [r2 + r3 * 2], m6
+
+    movu            m0, [r0 + r1 * 2]               ; m0 = row 6
+    punpcklbw       m6, m1, m0
+    punpckhbw       m7, m1, m0
+    pmaddubsw       m6, m11
+    pmaddubsw       m7, m11
+    paddw           m2, m6
+    paddw           m3, m7
+    pmulhrsw        m2, m12
+    pmulhrsw        m3, m12
+    packuswb        m2, m3
+    movu            [r2 + r5], m2
+
+    lea             r2, [r2 + r3 * 4]
+    dec             r6d
+    jnz             .loopW
+    RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
