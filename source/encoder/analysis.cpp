@@ -1653,8 +1653,14 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
             cu.m_mvd[1][0] = mvzero - mvp1;
             cu.m_mvpIdx[1][0] = (uint8_t)mvpIdx1;
 
-            prepMotionCompensation(cu, cuGeom, 0);
-            motionCompensation(bidir2Nx2N.predYuv, true, true);
+            if (m_bChromaSa8d)
+                /* real MC was already performed */
+                bidir2Nx2N.predYuv.copyFromYuv(tmpPredYuv);
+            else
+            {
+                prepMotionCompensation(cu, cuGeom, 0);
+                motionCompensation(bidir2Nx2N.predYuv, true, true);
+            }
         }
         else if (m_bChromaSa8d)
         {
