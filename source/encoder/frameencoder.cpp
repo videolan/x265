@@ -267,7 +267,7 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w);
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w, *m_param);
         }
     }
 

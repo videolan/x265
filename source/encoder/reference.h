@@ -40,14 +40,12 @@ public:
 
     MotionReference();
     ~MotionReference();
-    int  init(PicYuv*, WeightParam* w = NULL);
+    int  init(PicYuv*, WeightParam* wp, const x265_param& p);
     void applyWeight(int rows, int numRows);
 
-    pixel*  m_weightBuffer;
-    int     m_numWeightedRows;
-
-    pixel*  getLumaAddr(uint32_t ctuAddr)                      { return fpelPlane + reconPic->m_cuOffsetY[ctuAddr]; }
-    pixel*  getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return fpelPlane + reconPic->m_cuOffsetY[ctuAddr] + reconPic->m_buOffsetY[absPartIdx]; }
+    pixel*  weightBuffer[3];
+    int     numInterpPlanes;
+    int     numWeightedRows;
 
 protected:
 

@@ -166,5 +166,5 @@ void Lowres::init(PicYuv *origPic, int poc, int type)
     extendPicBorder(lowresPlane[1], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
     extendPicBorder(lowresPlane[2], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
     extendPicBorder(lowresPlane[3], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
-    fpelPlane = lowresPlane[0];
+    fpelPlane[0] = lowresPlane[0];
 }

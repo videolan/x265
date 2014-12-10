@@ -1261,7 +1261,7 @@ void CostEstimate::init(x265_param *_param, Frame *curFrame)
             m_weightedRef.lowresPlane[i] = m_wbuffer[i] + padoffset;
         }
 
-        m_weightedRef.fpelPlane = m_weightedRef.lowresPlane[0];
+        m_weightedRef.fpelPlane[0] = m_weightedRef.lowresPlane[0];
         m_weightedRef.lumaStride = curFrame->m_lowres.lumaStride;
         m_weightedRef.isLowres = true;
         m_weightedRef.isWeighted = false;
@@ -1362,7 +1362,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
 {
     Lowres *fenc = frames[b];
     Lowres *ref  = frames[p0];
-    pixel *src = ref->fpelPlane;
+    pixel *src = ref->fpelPlane[0];
     intptr_t stride = fenc->lumaStride;
 
     if (wp)
@@ -1376,7 +1376,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
 
         primitives.weight_pp(ref->buffer[0], m_wbuffer[0], stride, widthHeight, m_paddedLines,
                              scale, round << correction, denom + correction, offset);
-        src = m_weightedRef.fpelPlane;
+        src = m_weightedRef.fpelPlane[0];
     }
 
     uint32_t cost = 0;
@@ -1387,7 +1387,7 @@ uint32_t CostEstimate::weightCostLuma(Lowres **frames, int b, int p0, WeightPara
     {
         for (int x = 0; x < fenc->width; x += 8, mb++, pixoff += 8)
         {
-            int satd = primitives.satd[LUMA_8x8](src + pixoff, stride, fenc->fpelPlane + pixoff, stride);
+            int satd = primitives.satd[LUMA_8x8](src + pixoff, stride, fenc->fpelPlane[0] + pixoff, stride);
             cost += X265_MIN(satd, fenc->intraCost[mb]);
         }
     }

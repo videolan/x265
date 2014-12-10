@@ -26,28 +26,36 @@
 
 #include "primitives.h"
 #include "common.h"
+#include "picyuv.h"
 #include "mv.h"
 
 namespace x265 {
 // private namespace
 
-class PicYuv;
-
 struct ReferencePlanes
 {
     ReferencePlanes() { memset(this, 0, sizeof(ReferencePlanes)); }
 
-    pixel*   fpelPlane;
+    pixel*   fpelPlane[3];
     pixel*   lowresPlane[4];
     PicYuv*  reconPic;
 
     bool     isWeighted;
     bool     isLowres;
+
     intptr_t lumaStride;
-    int      weight;
-    int      offset;
-    int      shift;
-    int      round;
+    intptr_t chromaStride;
+
+    struct {
+        int      weight;
+        int      offset;
+        int      shift;
+        int      round;
+    } w[3];
+
+    pixel* getLumaAddr(uint32_t ctuAddr, uint32_t absPartIdx) { return fpelPlane[0] + reconPic->m_cuOffsetY[ctuAddr] + reconPic->m_buOffsetY[absPartIdx]; }
+    pixel* getCbAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return fpelPlane[1] + reconPic->m_cuOffsetC[ctuAddr] + reconPic->m_buOffsetC[absPartIdx]; }
+    pixel* getCrAddr(uint32_t ctuAddr, uint32_t absPartIdx)   { return fpelPlane[2] + reconPic->m_cuOffsetC[ctuAddr] + reconPic->m_buOffsetC[absPartIdx]; }
 
     /* lowres motion compensation, you must provide a buffer and stride for QPEL averaged pixels
      * in case QPEL is required.  Else it returns a pointer to the HPEL pixels */

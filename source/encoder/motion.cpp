@@ -330,7 +330,7 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel* fenc = fencPUYuv.m_buf[0];
-    pixel* fref = ref->fpelPlane + blockOffset;
+    pixel* fref = ref->fpelPlane[0] + blockOffset;
     intptr_t stride = ref->lumaStride;
 
     MV omv = bmv;
@@ -575,7 +575,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         blockOffset = ref->reconPic->getLumaAddr(ctuAddr, absPartIdx) - ref->reconPic->getLumaAddr(0);
     intptr_t stride = ref->lumaStride;
     pixel* fenc = fencPUYuv.m_buf[0];
-    pixel* fref = ref->fpelPlane + blockOffset;
+    pixel* fref = ref->fpelPlane[0] + blockOffset;
 
     setMVP(qmvp);
 
@@ -1185,7 +1185,7 @@ me_hex2:
 int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_t cmp)
 {
     intptr_t refStride = ref->lumaStride;
-    pixel *fref = ref->fpelPlane + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * refStride;
+    pixel *fref = ref->fpelPlane[0] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * refStride;
     int xFrac = qmv.x & 0x3;
     int yFrac = qmv.y & 0x3;
     int cost;
@@ -1230,8 +1230,8 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         intptr_t refStrideC = ref->reconPic->m_strideC;
         intptr_t refOffset = (qmv.x >> shiftHor) + (qmv.y >> shiftVer) * refStrideC;
 
-        const pixel* refCb = ref->reconPic->getCbAddr(ctuAddr, absPartIdx) + refOffset;
-        const pixel* refCr = ref->reconPic->getCrAddr(ctuAddr, absPartIdx) + refOffset;
+        const pixel* refCb = ref->getCbAddr(ctuAddr, absPartIdx) + refOffset;
+        const pixel* refCr = ref->getCrAddr(ctuAddr, absPartIdx) + refOffset;
 
         xFrac = qmv.x & ((1 << shiftHor) - 1);
         yFrac = qmv.y & ((1 << shiftVer) - 1);
