@@ -725,8 +725,16 @@ quality and begin introducing artifacts and increase bitrate, which may
 force rate control to increase global QP. Finding the optimal
 psycho-visual parameters for a given video requires experimentation. Our
 recommended defaults (1.0 for both) are generally on the low end of the
-spectrum. And generally the lower the bitrate, the lower the optimal
-psycho-visual settings.
+spectrum.
+
+The lower the bitrate, the lower the optimal psycho-visual settings. If
+the bitrate is too low for the psycho-visual settings, you will begin to
+see temporal artifacts (motion judder). This is caused when the encoder
+is forced to code skip blocks (no residual) in areas of difficult motion
+because it is the best option psycho-visually (they have great amounts
+of energy and no residual cost). One can lower psy-rd settings when
+judder is happening, and allow the encoder to use some blur in these
+areas of high motion.
 
 .. option:: --psy-rd <float>
 
