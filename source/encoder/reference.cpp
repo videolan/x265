@@ -78,22 +78,25 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
                 cuHeight >>= reconPic->m_vChromaShift;
             }
 
-            if (!weightBuffer[c])
+            if (wp[c].bPresentFlag)
             {
-                size_t padheight = (numCUinHeight * cuHeight) + marginY * 2;
-                weightBuffer[c] = X265_MALLOC(pixel, stride * padheight);
                 if (!weightBuffer[c])
-                    return -1;
+                {
+                    size_t padheight = (numCUinHeight * cuHeight) + marginY * 2;
+                    weightBuffer[c] = X265_MALLOC(pixel, stride * padheight);
+                    if (!weightBuffer[c])
+                        return -1;
+                }
+
+                /* use our buffer which will have weighted pixels written to it */
+                fpelPlane[c] = weightBuffer[c] + marginY * stride + marginX;
+                X265_CHECK(recPic->m_picOrg[c] - recPic->m_picBuf[c] == marginY * stride + marginX, "PicYuv pad calculation mismatch\n");
+
+                w[c].weight = wp[c].inputWeight;
+                w[c].offset = wp[c].inputOffset * (1 << (X265_DEPTH - 8));
+                w[c].shift = wp[c].log2WeightDenom;
+                w[c].round = w[c].shift ? 1 << (w[c].shift - 1) : 0;
             }
-
-            /* use our buffer which will have weighted pixels written to it */
-            fpelPlane[c] = weightBuffer[c] + marginY * stride + marginX;
-            X265_CHECK(recPic->m_picOrg[c] - recPic->m_picBuf[c] == marginY * stride + marginX, "PicYuv pad calculation mismatch\n");
-
-            w[c].weight = wp[c].inputWeight;
-            w[c].offset = wp[c].inputOffset * (1 << (X265_DEPTH - 8));
-            w[c].shift = wp[c].log2WeightDenom;
-            w[c].round = w[c].shift ? 1 << (w[c].shift - 1) : 0;
         }
 
         isWeighted = true;
@@ -132,6 +135,10 @@ void MotionReference::applyWeight(int finishedRows, int maxNumRows)
             height   >>= reconPic->m_vChromaShift;
             cuHeight >>= reconPic->m_vChromaShift;
         }
+
+        /* Do not generate weighted predictions if using original picture */
+        if (fpelPlane[c] == reconPic->m_picOrg[c])
+            continue;
 
         const pixel* src = reconPic->m_picOrg[c] + numWeightedRows * cuHeight * stride;
         pixel* dst = fpelPlane[c] + numWeightedRows * cuHeight * stride;
