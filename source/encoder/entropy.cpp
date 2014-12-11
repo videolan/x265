@@ -587,6 +587,54 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
     finishCU(ctu, absPartIdx, depth);
 }
 
+/* Return bit count of signaling inter mode */
+uint32_t Entropy::bitsInterMode(const CUData& cu, uint32_t absPartIdx, uint32_t depth) const
+{
+    uint32_t bits;
+    bits = bitsCodeBin(0, m_contextState[OFF_SKIP_FLAG_CTX + cu.getCtxSkipFlag(absPartIdx)]); /* not skip */
+    bits += bitsCodeBin(0, m_contextState[OFF_PRED_MODE_CTX]); /* inter */
+    PartSize partSize = (PartSize)cu.m_partSize[absPartIdx];
+    switch (partSize)
+    {
+    case SIZE_2Nx2N:
+        bits += bitsCodeBin(1, m_contextState[OFF_PART_SIZE_CTX]);
+        break;
+
+    case SIZE_2NxN:
+    case SIZE_2NxnU:
+    case SIZE_2NxnD:
+        bits += bitsCodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
+        bits += bitsCodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 1]);
+        if (cu.m_slice->m_sps->maxAMPDepth > depth)
+        {
+            bits += bitsCodeBin((partSize == SIZE_2NxN) ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX + 3]);
+            if (partSize != SIZE_2NxN)
+                bits++; // encodeBinEP((partSize == SIZE_2NxnU ? 0 : 1));
+        }
+        break;
+
+    case SIZE_Nx2N:
+    case SIZE_nLx2N:
+    case SIZE_nRx2N:
+        bits += bitsCodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
+        bits += bitsCodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
+        if (depth == g_maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
+            bits += bitsCodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
+        if (cu.m_slice->m_sps->maxAMPDepth > depth)
+        {
+            bits += bitsCodeBin((partSize == SIZE_Nx2N) ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX + 3]);
+            if (partSize != SIZE_Nx2N)
+                bits++; // encodeBinEP((partSize == SIZE_nLx2N ? 0 : 1));
+        }
+        break;
+    default:
+        X265_CHECK(0, "invalid CU partition\n");
+        break;
+    }
+
+    return bits;
+}
+
 /* finish encoding a cu and handle end-of-slice conditions */
 void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
 {

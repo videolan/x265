@@ -192,6 +192,12 @@ public:
     inline uint32_t bitsIntraModeNonMPM() const { return bitsCodeBin(0, m_contextState[OFF_ADI_CTX]) + 5; }
     inline uint32_t bitsIntraModeMPM(const uint32_t preds[3], uint32_t dir) const { return bitsCodeBin(1, m_contextState[OFF_ADI_CTX]) + (dir == preds[0] ? 1 : 2); }
     inline uint32_t estimateCbfBits(uint32_t cbf, TextType ttype, uint32_t tuDepth) const { return bitsCodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + ctxCbf[ttype][tuDepth]]); }
+    uint32_t bitsInterMode(const CUData& cu, uint32_t absPartIdx, uint32_t depth) const;
+    uint32_t bitsIntraMode(const CUData& cu, uint32_t absPartIdx) const
+    {
+        return bitsCodeBin(0, m_contextState[OFF_SKIP_FLAG_CTX + cu.getCtxSkipFlag(absPartIdx)]) + /* not skip */
+               bitsCodeBin(1, m_contextState[OFF_PRED_MODE_CTX]); /* intra */
+    }
 
     /* these functions are only used to estimate the bits when cbf is 0 and will never be called when writing the bistream. */
     inline void codeQtRootCbfZero() { encodeBin(0, m_contextState[OFF_QT_ROOT_CBF_CTX]); }
