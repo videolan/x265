@@ -1874,6 +1874,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.luma_hpp[LUMA_48x64] = x265_interp_8tap_horiz_pp_48x64_avx2;
 
         p.chroma[X265_CSP_I420].filter_hpp[CHROMA_8x8] = x265_interp_4tap_horiz_pp_8x8_avx2;
+        p.chroma[X265_CSP_I420].filter_hpp[CHROMA_4x4] = x265_interp_4tap_horiz_pp_4x4_avx2;
 
         p.luma_vpp[LUMA_4x4] = x265_interp_8tap_vert_pp_4x4_avx2;
 
