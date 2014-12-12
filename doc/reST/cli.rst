@@ -920,8 +920,8 @@ Quality, rate control and rate distortion options
 	and not enough in flat areas.
 
 	0. disabled
-	1. AQ enabled
-	2. AQ enabled with auto-variance **(default)**
+	1. AQ enabled **(default)**
+	2. AQ enabled with auto-variance
 
 .. option:: --aq-strength <float>
 
