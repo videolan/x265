@@ -4607,6 +4607,67 @@ cglobal interp_8tap_vert_pp_4x4, 4,6,8
     pextrd          [r2 + r4], xm1, 3
     RET
 
+INIT_YMM avx2
+cglobal interp_8tap_vert_ps_4x4, 4, 6, 5
+    mov             r4d, r4m
+    shl             r4d, 7
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+
+    add             r3d, r3d
+
+    movd            xm1, [r0]
+    pinsrd          xm1, [r0 + r1], 1
+    pinsrd          xm1, [r0 + r1 * 2], 2
+    pinsrd          xm1, [r0 + r4], 3                       ; m1 = row[3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm2, [r0]
+    pinsrd          xm2, [r0 + r1], 1
+    pinsrd          xm2, [r0 + r1 * 2], 2
+    pinsrd          xm2, [r0 + r4], 3                       ; m2 = row[7 6 5 4]
+    vinserti128     m1, m1, xm2, 1                          ; m1 = row[7 6 5 4 3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm3, [r0]
+    pinsrd          xm3, [r0 + r1], 1
+    pinsrd          xm3, [r0 + r1 * 2], 2                   ; m3 = row[x 10 9 8]
+    vinserti128     m2, m2, xm3, 1                          ; m2 = row[x 10 9 8 7 6 5 4]
+    mova            m3, [interp4_vpp_shuf1]
+    vpermd          m0, m3, m1                              ; m0 = row[4 3 3 2 2 1 1 0]
+    vpermd          m4, m3, m2                              ; m4 = row[8 7 7 6 6 5 5 4]
+    mova            m3, [interp4_vpp_shuf1 + mmsize]
+    vpermd          m1, m3, m1                              ; m1 = row[6 5 5 4 4 3 3 2]
+    vpermd          m2, m3, m2                              ; m2 = row[10 9 9 8 8 7 7 6]
+
+    mova            m3, [interp4_vpp_shuf]
+    pshufb          m0, m0, m3
+    pshufb          m1, m1, m3
+    pshufb          m4, m4, m3
+    pshufb          m2, m2, m3
+    pmaddubsw       m0, [r5]
+    pmaddubsw       m1, [r5 + mmsize]
+    pmaddubsw       m4, [r5 + 2 * mmsize]
+    pmaddubsw       m2, [r5 + 3 * mmsize]
+    paddw           m0, m1
+    paddw           m0, m4
+    paddw           m0, m2                                  ; m0 = WORD ROW[3 2 1 0]
+
+    vbroadcasti128  m3, [pw_2000]
+    psubw           m0, m3
+    vextracti128    xm2, m0, 1
+    lea             r5, [r3 * 3]
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+    movq            [r2 + r3 * 2], xm2
+    movhps          [r2 + r5], xm2
+    RET
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)

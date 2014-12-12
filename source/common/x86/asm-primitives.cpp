@@ -1890,6 +1890,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         // color space i422
         p.chroma[X265_CSP_I422].filter_vpp[CHROMA422_4x4] = x265_interp_4tap_vert_pp_4x4_avx2;
 
+        p.luma_vps[LUMA_4x4] = x265_interp_8tap_vert_ps_4x4_avx2;
+
 #if X86_64
         p.chroma[X265_CSP_I420].filter_vpp[CHROMA_16x16] = x265_interp_4tap_vert_pp_16x16_avx2;
         p.chroma[X265_CSP_I420].filter_vpp[CHROMA_32x32] = x265_interp_4tap_vert_pp_32x32_avx2;
