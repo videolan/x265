@@ -97,9 +97,7 @@ int sad(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t str
     for (int y = 0; y < ly; y++)
     {
         for (int x = 0; x < lx; x++)
-        {
             sum += abs(pix1[x] - pix2[x]);
-        }
 
         pix1 += stride_pix1;
         pix2 += stride_pix2;
@@ -116,9 +114,7 @@ int sad(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t
     for (int y = 0; y < ly; y++)
     {
         for (int x = 0; x < lx; x++)
-        {
             sum += abs(pix1[x] - pix2[x]);
-        }
 
         pix1 += stride_pix1;
         pix2 += stride_pix2;
@@ -178,14 +174,14 @@ template<int lx, int ly, class T1, class T2>
 int sse(const T1* pix1, intptr_t stride_pix1, const T2* pix2, intptr_t stride_pix2)
 {
     int sum = 0;
-    int iTemp;
+    int tmp;
 
     for (int y = 0; y < ly; y++)
     {
         for (int x = 0; x < lx; x++)
         {
-            iTemp = pix1[x] - pix2[x];
-            sum += (iTemp * iTemp);
+            tmp = pix1[x] - pix2[x];
+            sum += (tmp * tmp);
         }
 
         pix1 += stride_pix1;
@@ -305,13 +301,9 @@ int satd4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t s
     int satd = 0;
 
     for (int row = 0; row < h; row += 4)
-    {
         for (int col = 0; col < w; col += 4)
-        {
             satd += satd_4x4(pix1 + row * stride_pix1 + col, stride_pix1,
                              pix2 + row * stride_pix2 + col, stride_pix2);
-        }
-    }
 
     return satd;
 }
@@ -323,13 +315,9 @@ int satd8(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t s
     int satd = 0;
 
     for (int row = 0; row < h; row += 4)
-    {
         for (int col = 0; col < w; col += 8)
-        {
             satd += satd_8x4(pix1 + row * stride_pix1 + col, stride_pix1,
                              pix2 + row * stride_pix2 + col, stride_pix2);
-        }
-    }
 
     return satd;
 }
@@ -437,12 +425,8 @@ int sa8d8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2
     int cost = 0;
 
     for (int y = 0; y < h; y += 8)
-    {
         for (int x = 0; x < w; x += 8)
-        {
             cost += sa8d_8x8(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
-        }
-    }
 
     return cost;
 }
@@ -454,12 +438,8 @@ int sa8d16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix
     int cost = 0;
 
     for (int y = 0; y < h; y += 16)
-    {
         for (int x = 0; x < w; x += 16)
-        {
             cost += sa8d_16x16(pix1 + i_pix1 * y + x, i_pix1, pix2 + i_pix2 * y + x, i_pix2);
-        }
-    }
 
     return cost;
 }
@@ -471,9 +451,8 @@ int pixel_ssd_s_c(const int16_t* a, intptr_t dstride)
     for (int y = 0; y < size; y++)
     {
         for (int x = 0; x < size; x++)
-        {
             sum += a[x] * a[x];
-        }
+
         a += dstride;
     }
     return sum;
@@ -483,12 +462,8 @@ template<int size>
 void blockfil_s_c(int16_t* dst, intptr_t dstride, int16_t val)
 {
     for (int y = 0; y < size; y++)
-    {
         for (int x = 0; x < size; x++)
-        {
             dst[y * dstride + x] = val;
-        }
-    }
 }
 
 template<int size>
@@ -567,9 +542,7 @@ void getResidual(const pixel* fenc, const pixel* pred, int16_t* residual, intptr
     for (int y = 0; y < blockSize; y++)
     {
         for (int x = 0; x < blockSize; x++)
-        {
             residual[x] = static_cast<int16_t>(fenc[x]) - static_cast<int16_t>(pred[x]);
-        }
 
         fenc += stride;
         residual += stride;
@@ -581,12 +554,8 @@ template<int blockSize>
 void transpose(pixel* dst, const pixel* src, intptr_t stride)
 {
     for (int k = 0; k < blockSize; k++)
-    {
         for (int l = 0; l < blockSize; l++)
-        {
             dst[k * blockSize + l] = src[l * stride + k];
-        }
-    }
 }
 
 void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
@@ -636,9 +605,7 @@ void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstri
     for (int y = 0; y < ly; y++)
     {
         for (int x = 0; x < lx; x++)
-        {
             dst[x] = (src0[x] + src1[x] + 1) >> 1;
-        }
 
         src0 += sstride0;
         src1 += sstride1;
@@ -873,9 +840,7 @@ void blockcopy_pp_c(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -888,9 +853,7 @@ void blockcopy_ss_c(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t str
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -919,9 +882,7 @@ void blockcopy_ps_c(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strid
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = (int16_t)b[x];
-        }
 
         a += stridea;
         b += strideb;
@@ -934,9 +895,7 @@ void pixel_sub_ps_c(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* 
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = (int16_t)(b0[x] - b1[x]);
-        }
 
         b0 += sstride0;
         b1 += sstride1;
@@ -950,9 +909,7 @@ void pixel_add_ps_c(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* 
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-        {
             a[x] = Clip(b0[x] + b1[x]);
-        }
 
         b0 += sstride0;
         b1 += sstride1;
@@ -987,9 +944,7 @@ void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t
     for (int r = 0; r < height; r++)
     {
         for (int c = 0; c < width; c++)
-        {
             dst[c] = ((pixel)src[c]) << shift;
-        }
 
         dst += dstStride;
         src += srcStride;
@@ -1001,9 +956,7 @@ void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_
     for (int r = 0; r < height; r++)
     {
         for (int c = 0; c < width; c++)
-        {
             dst[c] = (pixel)((src[c] >> shift) & mask);
-        }
 
         dst += dstStride;
         src += srcStride;
