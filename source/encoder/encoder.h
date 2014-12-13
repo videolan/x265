@@ -134,12 +134,10 @@ public:
     bool               m_aborted;          // fatal error detected
 
     Encoder();
-
     ~Encoder() {}
 
     void create();
     void destroy();
-    void init();
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
 

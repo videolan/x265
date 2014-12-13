@@ -197,13 +197,13 @@ void Encoder::create()
         m_csvfpt = fopen(m_param->csvfn, "r");
         if (m_csvfpt)
         {
-            // file already exists, re-open for append
+            /* file already exists, re-open for append */
             fclose(m_csvfpt);
             m_csvfpt = fopen(m_param->csvfn, "ab");
         }
         else
         {
-            // new CSV file, write header
+            /* new CSV file, write header */
             m_csvfpt = fopen(m_param->csvfn, "wb");
             if (m_csvfpt)
             {
@@ -221,7 +221,44 @@ void Encoder::create()
         }
     }
 
+    if (m_frameEncoder)
+    {
+        int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+        int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+        for (int i = 0; i < m_param->frameNumThreads; i++)
+        {
+            if (!m_frameEncoder[i].init(this, numRows, numCols, i))
+            {
+                x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
+                m_aborted = true;
+            }
+        }
+    }
+
+    if (m_param->bEmitHRDSEI)
+        m_rateControl->initHRD(&m_sps);
+    if (!m_rateControl->init(&m_sps))
+        m_aborted = true;
+
+    m_lookahead->init();
+
+    if (m_param->analysisMode)
+    {
+        const char* name = m_param->analysisFileName;
+        if (!name)
+            name = defaultAnalysisFileName;
+        const char* mode = m_param->analysisMode == X265_ANALYSIS_LOAD ? "rb" : "wb";
+        m_analysisFile = fopen(name, mode);
+        if (!m_analysisFile)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Analysis load/save: failed to open file %s\n", name);
+            m_aborted = true;
+        }
+    }
+
     m_aborted |= parseLambdaFile(m_param);
+
+    m_encodeStartTime = x265_mdate();
 }
 
 void Encoder::destroy()
@@ -282,43 +319,6 @@ void Encoder::destroy()
     free(m_param->rc.statFileName); // alloc'd by strdup
 
     X265_FREE(m_param);
-}
-
-void Encoder::init()
-{
-    if (m_frameEncoder)
-    {
-        int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
-        int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
-        for (int i = 0; i < m_param->frameNumThreads; i++)
-        {
-            if (!m_frameEncoder[i].init(this, numRows, numCols, i))
-            {
-                x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
-                m_aborted = true;
-            }
-        }
-    }
-    if (m_param->bEmitHRDSEI)
-        m_rateControl->initHRD(&m_sps);
-    if (!m_rateControl->init(&m_sps))
-        m_aborted = true;
-    m_lookahead->init();
-
-    if (m_param->analysisMode)
-    {
-        const char* name = m_param->analysisFileName;
-        if (!name)
-            name = defaultAnalysisFileName;
-        const char* mode = m_param->analysisMode == X265_ANALYSIS_LOAD ? "rb" : "wb";
-        m_analysisFile = fopen(name, mode);
-        if (!m_analysisFile)
-        {
-            x265_log(NULL, X265_LOG_ERROR, "Analysis load/save: failed to open file %s\n", name);
-            m_aborted = true;
-        }
-    }
-    m_encodeStartTime = x265_mdate();
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)

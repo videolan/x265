@@ -73,7 +73,11 @@ x265_encoder *x265_encoder_open(x265_param *p)
     determineLevel(*param, encoder->m_vps);
 
     encoder->create();
-    encoder->init();
+    if (encoder->m_aborted)
+    {
+        delete encoder;
+        return NULL;
+    }
 
     x265_print_params(param);
 
