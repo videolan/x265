@@ -3,7 +3,7 @@ set(CMAKE_ASM${ASM_DIALECT}_SOURCE_FILE_EXTENSIONS asm)
 
 if(X64)
     list(APPEND ASM_FLAGS -DARCH_X86_64=1)
-    if (ENABLE_PIC)
+    if(ENABLE_PIC)
         list(APPEND ASM_FLAGS -DPIC)
     endif()
     if(APPLE)
