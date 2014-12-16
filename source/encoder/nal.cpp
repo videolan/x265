@@ -193,12 +193,10 @@ uint32_t NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t stream
         {
             for (uint32_t i = 0; i < inSize; i++)
             {
-                if (bytes > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
+                if (bytes >= 2 && !out[bytes - 2] && !out[bytes - 1] && inBytes[i] <= 0x03)
                 {
                     /* inject 0x03 to prevent emulating a start code */
-                    out[bytes] = out[bytes - 1];
-                    out[bytes - 1] = 0x03;
-                    bytes++;
+                    out[bytes++] = 3;
                 }
 
                 out[bytes++] = inBytes[i];
