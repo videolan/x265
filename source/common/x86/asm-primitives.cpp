@@ -1418,6 +1418,12 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred[1][BLOCK_8x8] = x265_intra_pred_dc8_sse4;
         p.intra_pred[1][BLOCK_16x16] = x265_intra_pred_dc16_sse4;
         p.intra_pred[1][BLOCK_32x32] = x265_intra_pred_dc32_sse4;
+
+        p.intra_pred_new[1][BLOCK_4x4] = x265_intra_pred_dc4_new_sse4;
+        p.intra_pred_new[1][BLOCK_8x8] = x265_intra_pred_dc8_new_sse4;
+        p.intra_pred_new[1][BLOCK_16x16] = x265_intra_pred_dc16_new_sse4;
+        p.intra_pred_new[1][BLOCK_32x32] = x265_intra_pred_dc32_new_sse4;
+
         p.planecopy_cp = x265_upShift_8_sse4;
 
         INTRA_ANG_SSE4_COMMON(sse4);
