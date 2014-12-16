@@ -71,6 +71,38 @@ bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, in
     return true;
 }
 
+bool IntraPredHarness::check_dc_primitive(intra_pred_new_t ref, intra_pred_new_t opt, int width)
+{
+    int j = Predict::ADI_BUF_STRIDE;
+    intptr_t stride = FENC_STRIDE;
+
+#if _DEBUG
+    memset(pixel_out_vec, 0xCD, OUTPUT_SIZE);
+    memset(pixel_out_c, 0xCD, OUTPUT_SIZE);
+#endif
+
+    for (int i = 0; i <= 100; i++)
+    {
+        int rand_filter = rand() & 1;
+        if (width > 16)
+            rand_filter = 0;
+
+        ref(pixel_out_c, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, 0, rand_filter);
+        opt(pixel_out_vec, stride, pixel_buff + j - Predict::ADI_BUF_STRIDE, 0, rand_filter);
+
+        for (int k = 0; k < width; k++)
+        {
+            if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
+                return false;
+        }
+
+        reportfail();
+        j += FENC_STRIDE;
+    }
+
+    return true;
+}
+
 bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt, int width)
 {
     int j = Predict::ADI_BUF_STRIDE;
@@ -222,6 +254,15 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
                 return false;
             }
         }
+        if (opt.intra_pred_new[1][i])
+        {
+            const int size = (1 << (i + 2));
+            if (!check_dc_primitive(ref.intra_pred_new[1][i], opt.intra_pred_new[1][i], size))
+            {
+                printf("intra_dc %dx%d failed\n", size, size);
+                return false;
+            }
+        }
     }
 
     // NOTE: always call since this function have check pointer in loop
@@ -278,6 +319,18 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             printf("intra_allangs%dx%d", size, size);
             REPORT_SPEEDUP(opt.intra_pred_allangs[i], ref.intra_pred_allangs[i],
                            pixel_out_33_vec, refAbove, refLeft, refAbove, refLeft, bFilter);
+        }
+        if (opt.intra_pred_new[1][i])
+        {
+            printf("intra_dc_new_%dx%d[f=0]", size, size);
+            REPORT_SPEEDUP(opt.intra_pred_new[1][i], ref.intra_pred_new[1][i],
+                           pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
+            if (size <= 16)
+            {
+                printf("intra_dc_new_%dx%d[f=1]", size, size);
+                REPORT_SPEEDUP(opt.intra_pred_new[1][i], ref.intra_pred_new[1][i],
+                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 1);
+            }
         }
     }
 

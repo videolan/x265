@@ -136,6 +136,67 @@ cglobal intra_pred_dc4, 4,6,3
 .end:
     RET
 
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc4_new, 5,5,3
+    inc         r2
+    pxor        m0, m0
+    movd        m1, [r2]
+    movd        m2, [r2 + 8]
+    punpckldq   m1, m2
+    psadbw      m1, m0              ; m1 = sum
+
+    test        r4d, r4d
+
+    mov         r4d, 4096
+    movd        m2, r4d
+    pmulhrsw    m1, m2              ; m1 = (sum + 4) / 8
+    movd        r4d, m1             ; r4d = dc_val
+    pshufb      m1, m0              ; m1 = byte [dc_val ...]
+
+    ; store DC 4x4
+    lea         r3, [r1 * 3]
+    movd        [r0], m1
+    movd        [r0 + r1], m1
+    movd        [r0 + r1 * 2], m1
+    movd        [r0 + r3], m1
+
+    ; do DC filter
+    jz         .end
+    lea         r3d, [r4d * 2 + 2]  ; r3d = DC * 2 + 2
+    add         r4d, r3d            ; r4d = DC * 3 + 2
+    movd        m1, r4d
+    pshuflw     m1, m1, 0           ; m1 = pixDCx3
+
+    ; filter top
+    pmovzxbw    m2, [r2]
+    paddw       m2, m1
+    psraw       m2, 2
+    packuswb    m2, m2
+    movd        [r0], m2            ; overwrite top-left pixel, we will update it later
+
+    ; filter top-left
+    movzx       r4d, byte [r2 + 8]
+    add         r3d, r4d
+    movzx       r4d, byte [r2]
+    add         r4d, r3d
+    shr         r4d, 2
+    mov         [r0], r4b
+
+    ; filter left
+    add         r0, r1
+    pmovzxbw    m2, [r2 + 9]
+    paddw       m2, m1
+    psraw       m2, 2
+    packuswb    m2, m2
+    pextrb      [r0], m2, 0
+    pextrb      [r0 + r1], m2, 1
+    pextrb      [r0 + r1 * 2], m2, 2
+
+.end:
+    RET
 
 ;-------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
@@ -201,6 +262,85 @@ cglobal intra_pred_dc8, 4, 7, 3
     ; filter left
     add             r6,            r1
     pmovzxbw        m2,            [r2 + 1]
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    pextrb          [r6],          m2, 0
+    pextrb          [r6 + r1],     m2, 1
+    pextrb          [r6 + 2 * r1], m2, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 3
+    pextrb          [r6 + r1 * 2], m2, 4
+    pextrb          [r6 + r1 * 4], m2, 6
+    lea             r1,            [r1 * 3]
+    pextrb          [r6 + r1],     m2, 5
+
+.end:
+    RET
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc8_new, 5, 7, 3
+    lea             r3, [r2 + 17]
+    inc             r2
+    pxor            m0,            m0
+    movh            m1,            [r2]
+    movh            m2,            [r3]
+    punpcklqdq      m1,            m2
+    psadbw          m1,            m0
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    movd            r5d,           m1
+    add             r5d,           8
+    shr             r5d,           4     ; sum = sum / 16
+    movd            m1,            r5d
+    pshufb          m1,            m0    ; m1 = byte [dc_val ...]
+
+    test            r4d,           r4d
+
+    ; store DC 8x8
+    mov             r6,            r0
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+
+    ; Do DC Filter
+    jz              .end
+    lea             r4d,           [r5d * 2 + 2]  ; r4d = DC * 2 + 2
+    add             r5d,           r4d            ; r5d = DC * 3 + 2
+    movd            m1,            r5d
+    pshuflw         m1,            m1, 0          ; m1 = pixDCx3
+    pshufd          m1,            m1, 0
+
+    ; filter top
+    pmovzxbw        m2,            [r2]
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    movh            [r6],          m2
+
+    ; filter top-left
+    movzx           r5d, byte      [r3]
+    add             r4d,           r5d
+    movzx           r5d, byte      [r2]
+    add             r5d,           r4d
+    shr             r5d,           2
+    mov             [r6],          r5b
+
+    ; filter left
+    add             r6,            r1
+    pmovzxbw        m2,            [r3 + 1]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
@@ -332,6 +472,120 @@ cglobal intra_pred_dc16, 5, 7, 4
 .end:
     RET
 
+;--------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;--------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc16_new, 5, 7, 4
+    lea             r3, [r2 + 33]
+    inc             r2
+    pxor            m0,            m0
+    movu            m1,            [r2]
+    movu            m2,            [r3]
+    psadbw          m1,            m0
+    psadbw          m2,            m0
+    paddw           m1,            m2
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    movd            r5d,           m1
+    add             r5d,           16
+    shr             r5d,           5     ; sum = sum / 32
+    movd            m1,            r5d
+    pshufb          m1,            m0    ; m1 = byte [dc_val ...]
+
+    test            r4d,           r4d
+
+    ; store DC 16x16
+    mov             r6,            r0
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+
+    ; Do DC Filter
+    jz              .end
+    lea             r4d,           [r5d * 2 + 2]  ; r4d = DC * 2 + 2
+    add             r5d,           r4d            ; r5d = DC * 3 + 2
+    movd            m1,            r5d
+    pshuflw         m1,            m1, 0          ; m1 = pixDCx3
+    pshufd          m1,            m1, 0
+
+    ; filter top
+    pmovzxbw        m2,            [r2]
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    movh            [r6],          m2
+    pmovzxbw        m3,            [r2 + 8]
+    paddw           m3,            m1
+    psraw           m3,            2
+    packuswb        m3,            m3
+    movh            [r6 + 8],      m3
+
+    ; filter top-left
+    movzx           r5d, byte      [r3]
+    add             r4d,           r5d
+    movzx           r5d, byte      [r2]
+    add             r5d,           r4d
+    shr             r5d,           2
+    mov             [r6],          r5b
+
+    ; filter left
+    add             r6,            r1
+    pmovzxbw        m2,            [r3 + 1]
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    pextrb          [r6],          m2, 0
+    pextrb          [r6 + r1],     m2, 1
+    pextrb          [r6 + r1 * 2], m2, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 3
+    pextrb          [r6 + r1 * 2], m2, 4
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 5
+    pextrb          [r6 + r1 * 2], m2, 6
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m2, 7
+
+    pmovzxbw        m3,            [r3 + 9]
+    paddw           m3,            m1
+    psraw           m3,            2
+    packuswb        m3,            m3
+    pextrb          [r6 + r1 * 2], m3, 0
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 1
+    pextrb          [r6 + r1 * 2], m3, 2
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 3
+    pextrb          [r6 + r1 * 2], m3, 4
+    lea             r6,            [r6 + r1 * 2]
+    pextrb          [r6 + r1],     m3, 5
+    pextrb          [r6 + r1 * 2], m3, 6
+
+.end:
+    RET
+
 ;-------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------
@@ -339,6 +593,80 @@ INIT_XMM sse4
 cglobal intra_pred_dc32, 4, 5, 5
     inc             r2
     inc             r3
+    pxor            m0,            m0
+    movu            m1,            [r2]
+    movu            m2,            [r2 + 16]
+    movu            m3,            [r3]
+    movu            m4,            [r3 + 16]
+    psadbw          m1,            m0
+    psadbw          m2,            m0
+    psadbw          m3,            m0
+    psadbw          m4,            m0
+    paddw           m1,            m2
+    paddw           m3,            m4
+    paddw           m1,            m3
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    movd            r4d,           m1
+    add             r4d,           32
+    shr             r4d,           6     ; sum = sum / 64
+    movd            m1,            r4d
+    pshufb          m1,            m0    ; m1 = byte [dc_val ...]
+
+%rep 2
+    ; store DC 16x16
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + 16],     m1
+    movu            [r0 + r1 + 16],m1
+    lea             r0,            [r0 + 2 * r1]
+%endrep
+
+    RET
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_dc32_new, 3, 5, 5
+    lea             r3, [r2 + 65]
+    inc             r2
     pxor            m0,            m0
     movu            m1,            [r2]
     movu            m2,            [r2 + 16]
