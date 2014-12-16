@@ -179,6 +179,10 @@ tab_c_64_n64:   times 8 db 64, -64
 
 const interp4_shuf, times 2 db 0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15
 
+ALIGN 32
+interp4_horiz_shuf1:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
+                        db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
+
 SECTION .text
 
 cextern pb_128
@@ -1449,6 +1453,62 @@ cglobal interp_4tap_horiz_pp_4x4, 4,6,6
     pextrd            [r2+r3],      xm3,     2
     pextrd            [r2+r3*2],    xm3,     1
     pextrd            [r2+r0],      xm3,     3
+    RET
+
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_32x32, 4,6,7
+    mov             r4d, r4m
+
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mova              m1,           [interp4_horiz_shuf1]
+    vpbroadcastd      m2,           [pw_1]
+    mova              m6,           [pw_512]
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+
+    dec               r0
+    mov               r4d,          32
+
+.loop:
+    ; Row 0
+    vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m3,           m1
+    pmaddubsw         m3,           m0
+    pmaddwd           m3,           m2
+    vbroadcasti128    m4,           [r0 + 4]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+    packssdw          m3,           m4
+    pmulhrsw          m3,           m6
+
+    vbroadcasti128    m4,           [r0 + 16]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+    vbroadcasti128    m5,           [r0 + 20]
+    pshufb            m5,           m1
+    pmaddubsw         m5,           m0
+    pmaddwd           m5,           m2
+    packssdw          m4,           m5
+    pmulhrsw          m4,           m6
+
+    packuswb          m3,           m4
+    vpermq            m3,           m3,      11011000b
+
+    movu              [r2],         m3
+    lea               r2,           [r2 + r3]
+    lea               r0,           [r0 + r1]
+    dec               r4d
+    jnz               .loop
     RET
 
 ;--------------------------------------------------------------------------------------------------------------
