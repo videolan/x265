@@ -848,14 +848,15 @@ typedef struct x265_param
         /* In CRF mode, minimum CRF as caused by VBV */
         double    rfConstantMin;
 
-        /* Two pass (INCOMPLETE) */
+        /* Multi-pass encoding */
         /* Enable writing the stats in a multipass encode to the stat output file */
         int       bStatWrite;
 
         /* Enable loading data from the stat input file in a multi pass encode */
         int       bStatRead;
 
-        /* Filename of the 2pass output/input stats file */
+        /* Filename of the 2pass output/input stats file, if unspecified the
+         * encoder will default to using x265_2pass.log */
         char*     statFileName;
 
         /* temporally blur quants */

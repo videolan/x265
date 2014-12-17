@@ -956,7 +956,7 @@ Quality, rate control and rate distortion options
 
 .. option:: --pass <integer>
 
-	Enable multipass rate control mode. Input is encoded multiple times,
+	Enable multi-pass rate control mode. Input is encoded multiple times,
 	storing the encoded information of each pass in a stats file from which
 	the consecutive pass tunes the qp of each frame to improve the quality
 	of the output. Default disabled
@@ -967,12 +967,17 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** 1 to 3
 
+.. option:: --stats <filename>
+
+	Specify file name of of the multi-pass stats file. If unspecified
+	the encoder will use x265_2pass.log
+
 .. option:: --slow-firstpass, --no-slow-firstpass
 
-	Enable a slow and more detailed first pass encode in Multipass rate
+	Enable a slow and more detailed first pass encode in multi-pass rate
 	control mode.  Speed of the first pass encode is slightly lesser and
 	quality midly improved when compared to the default settings in a
-	multipass encode. Default disabled (turbo mode enabled)
+	multi-pass encode. Default disabled (turbo mode enabled)
 
 	When **turbo** first pass is not disabled, these options are
 	set on the first pass to improve performance:
