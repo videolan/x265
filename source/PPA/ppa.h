@@ -21,17 +21,8 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef _PPA_H_
-#define _PPA_H_
-
-#if !defined(ENABLE_PPA)
-
-#define PPA_INIT()
-#define PPAStartCpuEventFunc(e)
-#define PPAStopCpuEventFunc(e)
-#define PPAScopeEvent(e)
-
-#else
+#ifndef PPA_H
+#define PPA_H
 
 /* declare enum list of users CPU events */
 #define PPA_REGISTER_CPU_EVENT(x) x,
@@ -40,32 +31,13 @@ enum PPACpuEventEnum
 #include "ppaCPUEvents.h"
     PPACpuGroupNums
 };
-
 #undef PPA_REGISTER_CPU_EVENT
-
-#define PPA_INIT()               initializePPA()
-#define PPAStartCpuEventFunc(e)  if (ppabase) ppabase->triggerStartEvent(ppabase->getEventId(e))
-#define PPAStopCpuEventFunc(e)   if (ppabase) ppabase->triggerEndEvent(ppabase->getEventId(e))
-#define PPAScopeEvent(e)         _PPAScope __scope_(e)
 
 #include "ppaApi.h"
 
 void initializePPA();
-extern ppa::Base *ppabase;
 
-class _PPAScope
-{
-protected:
+#define PPA_INIT()               initializePPA()
+#define PPAScopeEvent(e)         ppa::ProfileScope ppaScope_(e)
 
-    ppa::EventID m_id;
-
-public:
-
-    _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } else m_id = 0; }
-
-    ~_PPAScope()     { if (ppabase) ppabase->triggerEndEvent(m_id); }
-};
-
-#endif // if !defined(ENABLE_PPA)
-
-#endif /* _PPA_H_ */
+#endif /* PPA_H */

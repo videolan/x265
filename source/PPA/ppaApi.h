@@ -54,6 +54,17 @@ protected:
 
     virtual void init(const char **pNames, int eventCount) = 0;
 };
+
+extern ppa::Base *ppabase;
+
+struct ProfileScope
+{
+    ppa::EventID id;
+
+    ProfileScope(int e) { if (ppabase) { id = ppabase->getEventId(e); ppabase->triggerStartEvent(id); } else id = 0; }
+    ~ProfileScope()     { if (ppabase) ppabase->triggerEndEvent(id); }
+};
+
 }
 
 #endif //_PPA_API_H_

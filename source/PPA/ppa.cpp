@@ -41,8 +41,10 @@ typedef ppa::Base *(FUNC_PPALibInit)(const char **, int);
 typedef void (FUNC_PPALibRelease)(ppa::Base* &);
 }
 
+using namespace ppa;
+
 static FUNC_PPALibRelease *_pfuncPpaRelease;
-ppa::Base *ppabase;
+ppa::Base *ppa::ppabase;
 
 static void _ppaReleaseAtExit()
 {
