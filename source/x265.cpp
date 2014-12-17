@@ -37,7 +37,6 @@
 /* Visual Leak Detector */
 #include <vld.h>
 #endif
-#include "PPA/ppa.h"
 
 #include <signal.h>
 #include <errno.h>
@@ -297,7 +296,7 @@ void CLIOptions::destroy()
 
 void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
 {
-    PPAScopeEvent(bitstream_write);
+    ProfileScopeEvent(bitstream_write);
     for (uint32_t i = 0; i < nalcount; i++)
     {
         bitstreamFile.write((const char*)nal->payload, nal->sizeBytes);
@@ -808,7 +807,7 @@ int main(int argc, char **argv)
     // This uses Microsoft's proprietary WCHAR type, but this only builds on Windows to start with
     VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER | VLD_OPT_REPORT_TO_FILE, L"x265_leaks.txt");
 #endif
-    PPA_INIT();
+    PROFILE_INIT();
 
     x265_param *param = x265_param_alloc();
     CLIOptions cliopt;

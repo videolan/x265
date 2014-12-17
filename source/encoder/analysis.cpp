@@ -33,8 +33,6 @@
 #include "rdcost.h"
 #include "encoder.h"
 
-#include "PPA/ppa.h"
-
 using namespace x265;
 
 /* An explanation of rate distortion levels (--rd-level)

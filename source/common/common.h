@@ -41,6 +41,15 @@
 
 #include "x265.h"
 
+#if ENABLE_PPA
+#include "PPA/ppa.h"
+#define ProfileScopeEvent(x) PPAScopeEvent(x)
+#define PROFILE_INIT()       PPA_INIT()
+#else
+#define ProfileScopeEvent(x)
+#define PROFILE_INIT()
+#endif
+
 #define FENC_STRIDE 64
 #define NUM_INTRA_MODE 35
 

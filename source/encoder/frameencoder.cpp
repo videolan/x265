@@ -29,8 +29,6 @@
 #include "wavefront.h"
 #include "param.h"
 
-#include "PPA/ppa.h"
-
 #include "encoder.h"
 #include "frameencoder.h"
 #include "common.h"
@@ -232,7 +230,7 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::compressFrame()
 {
-    PPAScopeEvent(FrameEncoder_compressFrame);
+    ProfileScopeEvent(FrameEncoder_compressFrame);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_encData->m_slice;
 
@@ -584,7 +582,7 @@ void FrameEncoder::encodeSlice()
 
 void FrameEncoder::compressCTURows()
 {
-    PPAScopeEvent(FrameEncoder_compressRows);
+    ProfileScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_encData->m_slice;
 
     m_bAllRowsStop = false;
@@ -694,7 +692,7 @@ void FrameEncoder::processRow(int row, int threadId)
 // Called by worker threads
 void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
-    PPAScopeEvent(Thread_ProcessRow);
+    ProfileScopeEvent(Thread_ProcessRow);
 
     CTURow& curRow = m_rows[row];
 

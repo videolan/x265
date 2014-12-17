@@ -29,7 +29,6 @@
 #include "framefilter.h"
 #include "frameencoder.h"
 #include "wavefront.h"
-#include "PPA/ppa.h"
 
 using namespace x265;
 
@@ -84,7 +83,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 
 void FrameFilter::processRow(int row)
 {
-    PPAScopeEvent(Thread_filterCU);
+    ProfileScopeEvent(Thread_filterCU);
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
