@@ -83,7 +83,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 
 void FrameFilter::processRow(int row)
 {
-    ProfileScopeEvent(Thread_filterCU);
+    ProfileScopeEvent(filterCTURow);
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {

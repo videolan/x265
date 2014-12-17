@@ -296,7 +296,7 @@ void CLIOptions::destroy()
 
 void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
 {
-    ProfileScopeEvent(bitstream_write);
+    ProfileScopeEvent(bitstreamWrite);
     for (uint32_t i = 0; i < nalcount; i++)
     {
         bitstreamFile.write((const char*)nal->payload, nal->sizeBytes);

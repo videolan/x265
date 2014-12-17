@@ -230,7 +230,7 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::compressFrame()
 {
-    ProfileScopeEvent(FrameEncoder_compressFrame);
+    ProfileScopeEvent(frameThread);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_encData->m_slice;
 
@@ -582,7 +582,6 @@ void FrameEncoder::encodeSlice()
 
 void FrameEncoder::compressCTURows()
 {
-    ProfileScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_encData->m_slice;
 
     m_bAllRowsStop = false;
@@ -692,7 +691,7 @@ void FrameEncoder::processRow(int row, int threadId)
 // Called by worker threads
 void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
-    ProfileScopeEvent(Thread_ProcessRow);
+    ProfileScopeEvent(encodeCTURow);
 
     CTURow& curRow = m_rows[row];
 

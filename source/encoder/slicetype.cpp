@@ -290,6 +290,8 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
 /* called by API thread or worker thread with inputQueueLock acquired */
 void Lookahead::slicetypeDecide()
 {
+    ProfileScopeEvent(slicetypeDecideEV);
+
     ScopedLock lock(m_decideLock);
 
     Lowres *frames[X265_LOOKAHEAD_MAX];
@@ -1480,6 +1482,8 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
 
 void CostEstimate::processRow(int row, int /*threadId*/)
 {
+    ProfileScopeEvent(costEstimateRow);
+
     int realrow = m_heightInCU - 1 - row;
     Lowres **frames = m_curframes;
     ReferencePlanes *wfref0 = m_weightedRef.isWeighted ? &m_weightedRef : frames[m_curp0];
