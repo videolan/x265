@@ -117,9 +117,9 @@ cglobal intra_pred_dc4_new, 5,5,3
     movzx       r4d, byte [r2 + 8]
     add         r3d, r4d
     movzx       r4d, byte [r2]
-    add         r4d, r3d
-    shr         r4d, 2
-    mov         [r0], r4b
+    add         r3d, r4d
+    shr         r3d, 2
+    mov         [r0], r3b
 
     ; filter left
     add         r0, r1
@@ -189,14 +189,14 @@ cglobal intra_pred_dc8_new, 5, 7, 3
     ; filter top-left
     movzx           r5d, byte      [r3]
     add             r4d,           r5d
-    movzx           r5d, byte      [r2]
-    add             r5d,           r4d
-    shr             r5d,           2
-    mov             [r6],          r5b
+    movzx           r3d, byte      [r2]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r6],          r3b
 
     ; filter left
     add             r6,            r1
-    pmovzxbw        m2,            [r3 + 1]
+    pmovzxbw        m2,            [r2 + 17]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
@@ -286,14 +286,14 @@ cglobal intra_pred_dc16_new, 5, 7, 4
     ; filter top-left
     movzx           r5d, byte      [r3]
     add             r4d,           r5d
-    movzx           r5d, byte      [r2]
-    add             r5d,           r4d
-    shr             r5d,           2
-    mov             [r6],          r5b
+    movzx           r3d, byte      [r2]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r6],          r3b
 
     ; filter left
     add             r6,            r1
-    pmovzxbw        m2,            [r3 + 1]
+    pmovzxbw        m2,            [r2 + 33]
     paddw           m2,            m1
     psraw           m2,            2
     packuswb        m2,            m2
@@ -309,7 +309,7 @@ cglobal intra_pred_dc16_new, 5, 7, 4
     lea             r6,            [r6 + r1 * 2]
     pextrb          [r6 + r1],     m2, 7
 
-    pmovzxbw        m3,            [r3 + 9]
+    pmovzxbw        m3,            [r2 + 41]
     paddw           m3,            m1
     psraw           m3,            2
     packuswb        m3,            m3
