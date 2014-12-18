@@ -1387,6 +1387,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.dct[DCT_4x4] = x265_dct4_sse2;
         p.idct[IDCT_4x4] = x265_idct4_sse2;
+#if X86_64
+        p.idct[IDCT_8x8] = x265_idct8_sse2;
+#endif
         p.idct[IDST_4x4] = x265_idst4_sse2;
 
         LUMA_SS_FILTERS(_sse2);
@@ -1593,6 +1596,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.dct[DCT_4x4] = x265_dct4_sse2;
         p.idct[IDCT_4x4] = x265_idct4_sse2;
+#if X86_64
+        p.idct[IDCT_8x8] = x265_idct8_sse2;
+#endif
         p.idct[IDST_4x4] = x265_idst4_sse2;
 
         p.planecopy_sp = x265_downShift_16_sse2;
