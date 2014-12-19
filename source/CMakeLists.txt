@@ -343,7 +343,7 @@ if(X265_LATEST_TAG)
     # Produce a pkg-config file
     configure_file("x265.pc.in" "x265.pc" @ONLY)
     install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/x265.pc"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/pkgconfig")
+            DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
 endif()
 
 if(NOT WIN32)
