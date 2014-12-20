@@ -1759,7 +1759,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 for (int j = 0; bufferFillCur >= 0; j++)
                 {
                     int type = curFrame->m_lowres.plannedType[j];
-                    if (type == X265_TYPE_AUTO)
+                    if (type == X265_TYPE_AUTO || totalDuration >= 1.0)
                         break;
                     totalDuration += m_frameDuration;
                     double wantedFrameSize = m_vbvMaxRate * m_frameDuration;
@@ -1773,17 +1773,21 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     bufferFillCur -= curBits;
                 }
 
-                /* Try to get the buffer no more than 80% filled, but don't set an impossible goal. */
-                double tol = isIFramePresent ? 1 / totalDuration : totalDuration < 0.5 ? 2 : 1;
-                targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5 , m_bufferSize * (1 - 0.8 * totalDuration * tol));
+                /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
+                double finalDur = 1;
+                if (m_param->rc.bStrictCbr)
+                {
+                    finalDur = x265_clip3(0.4, 1.0, totalDuration);
+                }
+                targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5 , m_bufferSize * (1 - 0.5 * finalDur));
                 if (bufferFillCur < targetFill)
                 {
                     q *= 1.01;
                     loopTerminate |= 1;
                     continue;
                 }
-                /* Try to get the buffer atleast 50% filled, but don't set an impossible goal. */
-                targetFill = x265_clip3(m_bufferSize - (m_bufferSize * totalDuration * 0.5), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
+                targetFill = x265_clip3(m_bufferSize * (1 - 0.2 * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
                 if (m_isCbr && bufferFillCur > targetFill)
                 {
                     q /= 1.01;
@@ -1976,7 +1980,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     if (row < sps.numCuInHeight - 1)
     {
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
-        double rcTol = (bufferLeftPlanned * 0.2) / m_param->frameNumThreads * m_param->rc.rateTolerance;
+        double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_param->rc.rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
 
@@ -1994,7 +1998,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
 
         while (qpVbv < qpMax
                && ((accFrameBits > rce->frameSizePlanned + rcTol) ||
-                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.2) ||
+                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.5) ||
                    (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv)))
         {
             qpVbv += stepSize;
