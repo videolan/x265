@@ -1591,17 +1591,19 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
     uint32_t log2TrSizeC = cu.m_log2CUSize[0] - m_hChromaShift;
     uint32_t tuSize = 1 << log2TrSizeC;
     int32_t scaleTuSize = tuSize;
+    uint32_t tuDepth = 0;
     int32_t costShift = 0;
 
     if (tuSize > 32)
     {
         scaleTuSize = 32;
+        tuDepth = 1;
         costShift = 2;
         log2TrSizeC = 5;
     }
 
-    Predict::initAdiPatternChroma(cu, cuGeom, 0, 0, 1);
-    Predict::initAdiPatternChroma(cu, cuGeom, 0, 0, 2);
+    Predict::initAdiPatternChroma(cu, cuGeom, 0, tuDepth, 1);
+    Predict::initAdiPatternChroma(cu, cuGeom, 0, tuDepth, 2);
     cu.getAllowedChromaDir(0, modeList);
 
     // check chroma modes
