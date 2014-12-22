@@ -328,6 +328,16 @@ static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11",
 static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 static const char * const x265_analysis_names[] = { "off", "save", "load", 0 };
 
+/* Zones: override ratecontrol for specific sections of the video.
+ * If zones overlap, whichever comes later in the list takes precedence. */
+typedef struct x265_zone
+{
+    int startFrame, endFrame;   /* range of frame numbers */
+    int bForceQp;               /* whether to use qp vs bitrate factor */
+    int qp;
+    float bitrateFactor;
+} x265_zone;
+    
 /* x265 input parameters
  *
  * For version safety you may use x265_param_alloc/free() to manage the
@@ -862,6 +872,10 @@ typedef struct x265_param
 
         /* Enable slow and a more detailed first pass encode in multi pass rate control */
         int       bEnableSlowFirstPass;
+        
+        /* ratecontrol overrides */
+        int        zoneCount;
+        x265_zone* zones;
 
         /* specify a text file which contains MAX_MAX_QP + 1 floating point
          * values to be copied into x265_lambda_tab and a second set of

@@ -249,6 +249,7 @@ protected:
     int m_amortizeFrames;
     double m_amortizeFraction;
 
+    x265_zone* getZone();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();

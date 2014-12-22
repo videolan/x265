@@ -169,6 +169,18 @@ static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcSt
         return acEnergyVar(curFrame, primitives.cu[BLOCK_16x16].var(src, srcStride), 8, bChroma);
 }
 
+/* Returns the zone for the current frame */
+x265_zone* RateControl::getZone()
+{
+    for (int i = m_param->rc.zoneCount - 1; i >= 0; i--)
+    {
+        x265_zone *z = &m_param->rc.zones[i];
+        if (m_framesDone + 1 >= z->startFrame && m_framesDone < z->endFrame)
+            return z;
+    }
+    return NULL;
+}
+
 /* Find the total AC energy of each block in all planes */
 uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t block_y)
 {
@@ -1164,6 +1176,15 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         else
             m_qp = m_qpConstant[m_sliceType];
         curEncData.m_avgQpAq = curEncData.m_avgQpRc = m_qp;
+        
+        x265_zone* zone = getZone();
+        if (zone)
+        {
+            if (zone->bForceQp)
+                m_qp += zone->qp - m_qpConstant[P_SLICE];
+            else
+                m_qp -= 6.0 * X265_LOG2(zone->bitrateFactor);
+        }
     }
     if (m_sliceType != B_SLICE)
     {
@@ -1253,6 +1274,14 @@ double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
         m_accumPNorm = mask * (1 + m_accumPNorm);
     }
 
+    x265_zone* zone = getZone();
+    if (zone)
+    {
+        if (zone->bForceQp)
+            q = x265_qp2qScale(zone->qp);
+        else
+            q /= zone->bitrateFactor;
+    }
     return q;
 }
 
@@ -2119,6 +2148,15 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
         m_lastRceq = q;
         q /= rateFactor;
     }
+    
+    x265_zone* zone = getZone();
+    if (zone)
+    {
+        if (zone->bForceQp)
+            q = x265_qp2qScale(zone->qp);
+        else
+            q /= zone->bitrateFactor;
+    }
     return q;
 }
 
@@ -2410,5 +2448,7 @@ void RateControl::destroy()
     X265_FREE(m_rce2Pass);
     for (int i = 0; i < 2; i++)
         X265_FREE(m_cuTreeStats.qpBuffer[i]);
+    
+    X265_FREE(m_param->rc.zones);
 }
 

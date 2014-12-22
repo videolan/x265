@@ -204,6 +204,8 @@ void x265_param_default(x265_param *param)
     param->rc.statFileName = NULL;
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
+    param->rc.zoneCount = 0;
+    param->rc.zones = NULL;
     param->rc.bEnableSlowFirstPass = 0;
     param->rc.bStrictCbr = 0;
 
@@ -687,6 +689,31 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->rc.qp = atoi(value);
         p->rc.rateControlMode = X265_RC_CQP;
+    }
+    OPT("zones")
+    {
+        p->rc.zoneCount = 1;
+        const char* c;
+
+        for (c = value; *c; c++)
+            p->rc.zoneCount += (*c == '/');
+
+        p->rc.zones = X265_MALLOC(x265_zone, p->rc.zoneCount);
+        c = value;
+        for (int i = 0; i < p->rc.zoneCount; i++ )
+        {
+            int len;
+            if (3 == sscanf(c, "%d,%d,q=%d%n", &p->rc.zones[i].startFrame, &p->rc.zones[i].endFrame, &p->rc.zones[i].qp, &len))
+                p->rc.zones[i].bForceQp = 1;
+            else if (3 == sscanf(c, "%d,%d,b=%f%n", &p->rc.zones[i].startFrame, &p->rc.zones[i].endFrame, &p->rc.zones[i].bitrateFactor, &len))
+                p->rc.zones[i].bForceQp = 0;
+            else
+            {
+                bError = true;
+                break;
+            }
+            c += len + 1;
+        }
     }
     OPT("input-res") bError |= sscanf(value, "%dx%d", &p->sourceWidth, &p->sourceHeight) != 2;
     OPT("input-csp") p->internalCsp = parseName(value, x265_source_csp_names, bError);

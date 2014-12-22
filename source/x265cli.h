@@ -179,6 +179,7 @@ static const struct option long_options[] =
     { "no-aud",               no_argument, NULL, 0 },
     { "info",                 no_argument, NULL, 0 },
     { "no-info",              no_argument, NULL, 0 },
+    { "zones",          required_argument, NULL, 0 },
     { "qpfile",         required_argument, NULL, 0 },
     { "lambda-file",    required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
@@ -302,6 +303,12 @@ static void showHelp(x265_param *param)
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
     H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
+    H1("   --zones <zone0>/<zone1>/...   Tweak the bitrate of regions of the video\n");
+    H1("                                 Each zone is of the form\n");
+    H1("                                   <start frame>,<end frame>,<option>\n");
+    H1("                                   where <option> is either\n");
+    H1("                                       q=<integer> (force QP)\n");
+    H1("                                   or  b=<float> (bitrate multiplier)\n");
     H1("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
     H1("                                 Format of each line: framenumber frametype QP\n");
     H1("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
