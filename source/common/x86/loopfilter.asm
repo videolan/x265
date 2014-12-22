@@ -29,9 +29,12 @@
 
 SECTION_RODATA 32
 
-pw_2:    times 16 db  2
 
 SECTION .text
+cextern pb_1
+cextern pb_128
+cextern pb_2
+
 
 ;============================================================================================================
 ; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft)
@@ -39,47 +42,44 @@ SECTION .text
 INIT_XMM sse4
 cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
 
-    neg         r3                 ; r3 = -iSignLeft
-    movd        m0,    r3d
-    pslldq      m0,    15          ; m0 = [iSignLeft x .. x]
-    pcmpeqb     m4,    m4          ; m4 = [pb -1]
-    pxor        m5,    m5          ; m5 = 0
-    movh        m6,    [r1]        ; m6 = m_offsetEo
+    neg         r3                          ; r3 = -signLeft
+    movzx       r3d, r3b
+    movd        m0, r3d
+    mova        m4, [pb_128]                ; m4 = [80]
+    pxor        m5, m5                      ; m5 = 0
+    movu        m6, [r1]                    ; m6 = offsetEo
 
 .loop:
-    movu        m7,    [r0]        ; m1 = pRec[x]
-    mova        m1,    m7
-    movu        m2,    [r0+1]      ; m2 = pRec[x+1]
+    movu        m7, [r0]                    ; m1 = rec[x]
+    movu        m2, [r0 + 1]                ; m2 = rec[x+1]
 
-    psubusb     m3,    m2, m7
-    psubusb     m1,    m2
-    pcmpeqb     m3,    m5
-    pcmpeqb     m1,    m5
-    pcmpeqb     m2,    m7
+    pxor        m1, m7, m4
+    pxor        m3, m2, m4
+    pcmpgtb     m2, m1, m3
+    pcmpgtb     m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3
 
-    pabsb       m3,    m3          ; m1 = (pRec[x] - pRec[x+1]) > 0) ?  1 : 0
-    por         m1,    m3          ; m1 = iSignRight
-    pandn       m2,    m1
+    pslldq      m3, m2, 1
+    por         m3, m0
 
-    palignr     m3,    m2, m0, 15  ; m3 = -iSignLeft
-    psignb      m3,    m4          ; m3 = iSignLeft
-    mova        m0,    m4
-    pslldq      m0,    15
-    pand        m0,    m2          ; [pb 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]
-    paddb       m2,    m3
-    paddb       m2,    [pw_2]      ; m1 = uiEdgeType
-    pshufb      m3,    m6, m2
-    pmovzxbw    m2,    m7          ; rec
-    punpckhbw   m7,    m5
-    pmovsxbw    m1,    m3          ; iOffsetEo
-    punpckhbw   m3,    m3
-    psraw       m3,    8
-    paddw       m2,    m1
-    paddw       m7,    m3
-    packuswb    m2,    m7
-    movu        [r0],  m2
+    psignb      m3, m4                      ; m3 = signLeft
+    pxor        m0, m0
+    palignr     m0, m2, 15
+    paddb       m2, m3
+    paddb       m2, [pb_2]                  ; m1 = uiEdgeType
+    pshufb      m3, m6, m2
+    pmovzxbw    m2, m7                      ; rec
+    punpckhbw   m7, m5
+    pmovsxbw    m1, m3                      ; offsetEo
+    punpckhbw   m3, m3
+    psraw       m3, 8
+    paddw       m2, m1
+    paddw       m7, m3
+    packuswb    m2, m7
+    movu        [r0], m2
 
-    add         r0q,   16
-    sub         r2d,   16
+    add         r0q, 16
+    sub         r2d, 16
     jnz        .loop
     RET
