@@ -36,7 +36,7 @@ inline int32_t roundIBDI(int32_t num, int32_t den)
 }
 
 /* get the sign of input variable (TODO: this is a dup, make common) */
-inline int signOf(int x)
+inline int8_t signOf(int x)
 {
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
@@ -257,8 +257,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     pixel* tmpL;
     pixel* tmpU;
 
-    int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
-    int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
+    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     {
         const pixel* recR = &rec[ctuWidth - 1];
@@ -335,7 +335,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         {
             for (x = 0; x < ctuWidth; x++)
             {
-                int signDown = signOf(rec[x] - rec[x + stride]);
+                int8_t signDown = signOf(rec[x] - rec[x + stride]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x] = -signDown;
 
@@ -366,7 +366,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             upBufft[startX] = signOf(rec[stride + startX] - tmpL[y]);
             for (x = startX; x < endX; x++)
             {
-                int signDown = signOf(rec[x] - rec[x + stride + 1]);
+                int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBufft[x + 1] = -signDown;
                 rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
@@ -396,7 +396,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         for (y = startY; y < endY; y++)
         {
             x = startX;
-            int signDown = signOf(rec[x] - tmpL[y + 1]);
+            int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
             int edgeType = signDown + upBuff1[x] + 2;
             upBuff1[x - 1] = -signDown;
             rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
