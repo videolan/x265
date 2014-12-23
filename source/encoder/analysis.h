@@ -95,7 +95,7 @@ protected:
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, analysis_intra_data* sdata, uint32_t &zOrder);
+    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
     void compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom);

@@ -141,7 +141,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_slice->m_sliceType == I_SLICE)
     {
         uint32_t zOrder = 0;
-        compressIntraCU(ctu, cuGeom, m_reuseIntraDataCTU, zOrder);
+        compressIntraCU(ctu, cuGeom, zOrder);
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
         {
             CUData *bestCU = &m_modeDepth[0].bestMode->cu;
@@ -198,7 +198,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     }
 }
 
-void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, analysis_intra_data* reuseIntraData, uint32_t& zOrder)
+void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t& zOrder)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -209,9 +209,9 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
-        uint8_t* reuseDepth  = &reuseIntraData->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* reuseModes  = &reuseIntraData->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        char* reusePartSizes = &reuseIntraData->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* reuseDepth  = &m_reuseIntraDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* reuseModes  = &m_reuseIntraDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        char* reusePartSizes = &m_reuseIntraDataCTU->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
 
         if (mightNotSplit && depth == reuseDepth[zOrder] && zOrder == cuGeom.encodeIdx)
         {
@@ -275,7 +275,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, an
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.encodeIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressIntraCU(parentCTU, childGeom, reuseIntraData, zOrder);
+                compressIntraCU(parentCTU, childGeom, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
