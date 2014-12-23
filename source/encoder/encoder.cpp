@@ -462,7 +462,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_param->analysisMode == X265_ANALYSIS_LOAD)
         {
             x265_picture* inputPic = const_cast<x265_picture*>(pic_in);
-            allocAnalysis(&inputPic->analysisData);
+            /* readAnalysisFile reads analysis data for the frame and allocates memory based on slicetype */
             readAnalysisFile(&inputPic->analysisData, inFrame->m_poc);
             inFrame->m_analysisData.poc = inFrame->m_poc;
             inFrame->m_analysisData.sliceType = inputPic->analysisData.sliceType;
@@ -624,7 +624,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             x265_analysis_data* analysis = &frameEnc->m_analysisData;
             analysis->poc = frameEnc->m_poc;
-            analysis->sliceType = frameEnc->m_encData->m_slice->m_poc;
+            analysis->sliceType = frameEnc->m_lowres.sliceType;
             uint32_t widthInCU       = (m_param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
             uint32_t heightInCU      = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
 
@@ -1558,15 +1558,21 @@ void Encoder::configure(x265_param *p)
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
 {
-    analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
-    analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-    CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
-    CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC(interData, analysis_inter_data, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
-    analysis->intraData = intraData;
-    analysis->interData = interData;
+    if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
+    {
+        analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
+        CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
+        CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
+        analysis->intraData = intraData;
+    }
+    else
+    {
+        analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
+        CHECKED_MALLOC(interData, analysis_inter_data, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
+        analysis->interData = interData;
+    }
     return;
 
 fail:
@@ -1576,11 +1582,15 @@ fail:
 
 void Encoder::freeAnalysis(x265_analysis_data* analysis)
 {
-    X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
-    X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
-    X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
-    X265_FREE(analysis->interData);
-    X265_FREE(analysis->intraData);
+    if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
+    {
+        X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
+        X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
+        X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
+        X265_FREE(analysis->intraData);
+    }
+    else
+        X265_FREE(analysis->interData);
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
@@ -1627,6 +1637,9 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
+
+    /* Memory is allocated for inter and intra analysis data based on the slicetype */
+    allocAnalysis(analysis);
 
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
