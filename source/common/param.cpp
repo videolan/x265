@@ -206,6 +206,7 @@ void x265_param_default(x265_param *param)
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.bEnableSlowFirstPass = 0;
+    param->rc.bStrictCbr = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -420,11 +421,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->rc.aqMode = X265_AQ_VARIANCE;
             param->rc.aqStrength = 0.3;
             param->rc.qCompress = 0.8;
-        }
-        else if (!strcmp(tune, "cbr"))
-        {
-            param->rc.pbFactor = 1.0;
-            param->rc.rateTolerance = 0.5;
         }
         else
             return -1;
@@ -699,6 +695,12 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("me")        p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("cutree")    p->rc.cuTree = atobool(value);
     OPT("slow-firstpass") p->rc.bEnableSlowFirstPass = atobool(value);
+    OPT("strict-cbr")
+    {
+        p->rc.bStrictCbr = atobool(value);
+        p->rc.pbFactor = 1.0;
+        p->rc.rateTolerance = 0.5;
+    }
     OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
     OPT("sar")
     {
@@ -1087,6 +1089,8 @@ int x265_check_params(x265_param *param)
           "Constant rate-factor is incompatible with 2pass");
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
           "Constant QP is incompatible with 2pass");
+    CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),
+          "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     return check_failed;
 }
 

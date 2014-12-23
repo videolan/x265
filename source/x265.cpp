@@ -217,6 +217,7 @@ static const struct option long_options[] =
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "analysis-mode",  required_argument, NULL, 0 },
     { "analysis-file",  required_argument, NULL, 0 },
+    { "strict-cbr",           no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -389,7 +390,7 @@ void CLIOptions::showHelp(x265_param *param)
     H0("-p/--preset <string>             Trade off performance for compression efficiency. Default medium\n");
     H0("                                 ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, or placebo\n");
     H0("-t/--tune <string>               Tune the settings for a particular type of source or situation:\n");
-    H0("                                 psnr, ssim, grain, zerolatency, fastdecode or cbr\n");
+    H0("                                 psnr, ssim, grain, zerolatency, fastdecode\n");
     H0("\nQuad-Tree size and depth:\n");
     H0("-s/--ctu <64|32|16>              Maximum CU size (WxH). Default %d\n", param->maxCUSize);
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
@@ -457,6 +458,7 @@ void CLIOptions::showHelp(x265_param *param)
        "                                   - 3 : Nth pass, overwrites stats file\n");
     H0("   --stats                       Filename for stats file in multipass pass rate control. Default x265_2pass.log\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
+    H0("   --[no-]strict-cbr             Enable stricter conditions and tolerance for bitrate deviations in CBR mode. Default %s\n", OPT(param->rc.bStrictCbr));
     H0("   --analysis-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisMode);
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);

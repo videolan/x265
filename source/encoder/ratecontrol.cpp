@@ -324,10 +324,6 @@ RateControl::RateControl(x265_param *p)
     m_numEntries = 0;
     m_amortizeFraction = 0.85;
     m_amortizeFrames = 75;
-    if (m_param->totalFrames <= 2 * m_fps)
-    {
-        m_amortizeFraction = m_amortizeFrames = 0;
-    }
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -408,8 +404,17 @@ RateControl::RateControl(x265_param *p)
         x265_log(m_param, X265_LOG_WARNING, "NAL HRD parameters require VBV parameters, ignored\n");
         m_param->bEmitHRDSEI = 0;
     }
-
+    if (m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr)
+    {
+        m_amortizeFraction = 0;
+        m_amortizeFrames = 0;
+    }
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
+    if (m_param->rc.bStrictCbr && m_isCbr)
+    {
+        x265_log(m_param, X265_LOG_WARNING, "strict CBR set without CBR mode, ignored\n");
+        m_param->rc.bStrictCbr = 0;
+    }
     m_leadingBframes = m_param->bframes;
     m_bframeBits = 0;
     m_leadingNoBSatd = 0;

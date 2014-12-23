@@ -209,7 +209,7 @@ Performance Options
 	be applied after :option:`--preset` but before all other parameters. Default none.
 	See :ref:`tunings <tunings>` for more detail.
 
-	**Values:** psnr, ssim, grain, zero-latency, fast-decode, cbr.
+	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
 
 Input/Output File Options
 =========================
@@ -992,6 +992,12 @@ Quality, rate control and rate distortion options
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
 
+.. option:: --strict-cbr, --no-strict-cbr
+	
+	Enables stricter conditions to control bitrate deviance from the 
+	target bitrate in CBR mode. Bitrate adherence is prioritised
+	over quality. Rate tolerance is reduced to 50%. Default disabled.
+	
 .. option:: --cbqpoffs <integer>
 
 	Offset of Cb chroma QP from the luma QP selected by rate control.
