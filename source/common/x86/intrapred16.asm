@@ -56,10 +56,35 @@ const pw_swap16,    db 14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1
 const pw_ang16_13,   db 14, 15, 8, 9, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 const pw_ang16_16,   db 0, 0, 0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 2, 3, 0, 1
 
+;; (blkSize - 1 - x)
+pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
+pw_planar4_1:         dw 3,  3,  3,  3,  3,  3,  3,  3
+pw_planar8_0:         dw 7,  6,  5,  4,  3,  2,  1,  0
+pw_planar8_1:         dw 7,  7,  7,  7,  7,  7,  7,  7
+pw_planar16_0:        dw 15, 14, 13, 12, 11, 10,  9, 8
+pw_planar16_1:        dw 15, 15, 15, 15, 15, 15, 15, 15
+pd_planar32_1:        dd 31, 31, 31, 31
+
+const planar32_table
+%assign x 31
+%rep 8
+    dd x, x-1, x-2, x-3
+%assign x x-4
+%endrep
+
+const planar32_table1
+%assign x 1
+%rep 8
+    dd x, x+1, x+2, x+3
+%assign x x+4
+%endrep
+
 SECTION .text
 
 cextern pw_1
+cextern pw_4
 cextern pw_8
+cextern pw_16
 cextern pw_1023
 cextern pd_16
 cextern pd_32
@@ -488,6 +513,58 @@ cglobal intra_pred_planar4, 4,7,5
 %undef COMP_PRED_PLANAR_2ROW
     RET
 
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar4_new, 3,3,5
+    add             r1, r1
+    movu            m1, [r2 + 2]
+    movu            m2, [r2 + 18]
+    pshufhw         m3, m1, 0               ; topRight
+    pshufd          m3, m3, 0xAA
+    pshufhw         m4, m2, 0               ; bottomLeft
+    pshufd          m4, m4, 0xAA
+
+    pmullw          m3, [multi_2Row]        ; (x + 1) * topRight
+    pmullw          m0, m1, [pw_planar4_1]  ; (blkSize - 1 - y) * above[x]
+
+    paddw           m3, [pw_4]
+    paddw           m3, m4
+    paddw           m3, m0
+    psubw           m4, m1
+    mova            m0, [pw_planar4_0]
+
+    pshuflw         m1, m2, 0
+    pmullw          m1, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0], m1
+
+    pshuflw         m1, m2, 01010101b
+    pmullw          m1, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0 + r1], m1
+    lea             r0, [r0 + 2 * r1]
+
+    pshuflw         m1, m2, 10101010b
+    pmullw          m1, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0], m1
+
+    pshuflw         m1, m2, 11111111b
+    pmullw          m1, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0 + r1], m1
+    RET
+
 ;-----------------------------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-----------------------------------------------------------------------------------------------------------
@@ -551,6 +628,56 @@ cglobal intra_pred_planar8, 4,4,7
 %undef PRED_PLANAR_ROW8
     RET
 
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar8_new, 3,3,5
+    add             r1, r1
+    movu            m1, [r2 + 2]
+    movu            m2, [r2 + 34]
+
+    movd            m3, [r2 + 18]           ; topRight   = above[8];
+    movd            m4, [r2 + 50]           ; bottomLeft = left[8];
+
+    pshuflw         m3, m3, 0
+    pshuflw         m4, m4, 0
+    pshufd          m3, m3, 0               ; v_topRight
+    pshufd          m4, m4, 0               ; v_bottomLeft
+
+    pmullw          m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m0, m1, [pw_planar8_1]  ; (blkSize - 1 - y) * above[x]
+    paddw           m3, [pw_8]
+    paddw           m3, m4
+    paddw           m3, m0
+    psubw           m4, m1
+    mova            m0, [pw_planar8_0]
+
+%macro INTRA_PRED_PLANAR8 1
+%if (%1 < 4)
+    pshuflw         m1, m2, 0x55 * %1
+    pshufd          m1, m1, 0
+%else
+    pshufhw         m1, m2, 0x55 * (%1 - 4)
+    pshufd          m1, m1, 0xAA
+%endif
+    pmullw          m1, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 4
+    movu            [r0], m1
+    lea             r0, [r0 + r1]
+%endmacro
+
+    INTRA_PRED_PLANAR8 0
+    INTRA_PRED_PLANAR8 1
+    INTRA_PRED_PLANAR8 2
+    INTRA_PRED_PLANAR8 3
+    INTRA_PRED_PLANAR8 4
+    INTRA_PRED_PLANAR8 5
+    INTRA_PRED_PLANAR8 6
+    INTRA_PRED_PLANAR8 7
+    RET
 
 ;-----------------------------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
@@ -732,6 +859,312 @@ cglobal intra_pred_planar16, 4,6,7
 %undef PRED_PLANAR_ROW16
     RET
 %endif
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_pred_planar16_new, 3,3,8
+    add             r1, r1
+    movu            m2, [r2 + 2]
+    movu            m7, [r2 + 18]
+
+    movd            m3, [r2 + 34]               ; topRight   = above[16]
+    movd            m6, [r2 + 98]               ; bottomLeft = left[16]
+
+    pshuflw         m3, m3, 0
+    pshuflw         m6, m6, 0
+    pshufd          m3, m3, 0                   ; v_topRight
+    pshufd          m6, m6, 0                   ; v_bottomLeft
+
+    pmullw          m4, m3, [multiH]            ; (x + 1) * topRight
+    pmullw          m3, [multiL]                ; (x + 1) * topRight
+    pmullw          m1, m2, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
+    pmullw          m5, m7, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
+    paddw           m4, [pw_16]
+    paddw           m3, [pw_16]
+    paddw           m4, m6
+    paddw           m3, m6
+    paddw           m4, m5
+    paddw           m3, m1
+    psubw           m1, m6, m7
+    psubw           m6, m2
+
+    movu            m2, [r2 + 66]
+    movu            m7, [r2 + 82]
+
+%macro INTRA_PRED_PLANAR16 1
+%if (%1 < 4)
+    pshuflw         m5, m2, 0x55 * %1
+    pshufd          m5, m5, 0
+%else
+%if (%1 < 8)
+    pshufhw         m5, m2, 0x55 * (%1 - 4)
+    pshufd          m5, m5, 0xAA
+%else
+%if (%1 < 12)
+    pshuflw         m5, m7, 0x55 * (%1 - 8)
+    pshufd          m5, m5, 0
+%else
+    pshufhw         m5, m7, 0x55 * (%1 - 12)
+    pshufd          m5, m5, 0xAA
+%endif
+%endif
+%endif
+    pmullw          m0, m5, [pw_planar8_0]
+    pmullw          m5, [pw_planar16_0]
+    paddw           m0, m4
+    paddw           m5, m3
+    paddw           m3, m6
+    paddw           m4, m1
+    psraw           m5, 5
+    psraw           m0, 5
+    movu            [r0], m5
+    movu            [r0 + 16], m0
+    lea             r0, [r0 + r1]
+%endmacro
+
+    INTRA_PRED_PLANAR16 0
+    INTRA_PRED_PLANAR16 1
+    INTRA_PRED_PLANAR16 2
+    INTRA_PRED_PLANAR16 3
+    INTRA_PRED_PLANAR16 4
+    INTRA_PRED_PLANAR16 5
+    INTRA_PRED_PLANAR16 6
+    INTRA_PRED_PLANAR16 7
+    INTRA_PRED_PLANAR16 8
+    INTRA_PRED_PLANAR16 9
+    INTRA_PRED_PLANAR16 10
+    INTRA_PRED_PLANAR16 11
+    INTRA_PRED_PLANAR16 12
+    INTRA_PRED_PLANAR16 13
+    INTRA_PRED_PLANAR16 14
+    INTRA_PRED_PLANAR16 15
+    RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse4
+%if ARCH_X86_64 == 1
+cglobal intra_pred_planar32_new, 3,7,16
+  ; NOTE: align stack to 64 bytes, so all of local data in same cache line
+  mov               r6, rsp
+  sub               rsp, 4*mmsize
+  and               rsp, ~63
+  %define           m16 [rsp + 0 * mmsize]
+  %define           m17 [rsp + 1 * mmsize]
+  %define           m18 [rsp + 2 * mmsize]
+  %define           m19 [rsp + 3 * mmsize]
+%else
+cglobal intra_pred_planar32_new, 3,7,8
+  ; NOTE: align stack to 64 bytes, so all of local data in same cache line
+  mov               r6, rsp
+  sub               rsp, 12*mmsize
+  and               rsp, ~63
+  %define           m8  [rsp + 0  * mmsize]
+  %define           m9  [rsp + 1  * mmsize]
+  %define           m10 [rsp + 2  * mmsize]
+  %define           m11 [rsp + 3  * mmsize]
+  %define           m12 [rsp + 4  * mmsize]
+  %define           m13 [rsp + 5  * mmsize]
+  %define           m14 [rsp + 6  * mmsize]
+  %define           m15 [rsp + 7  * mmsize]
+  %define           m16 [rsp + 8  * mmsize]
+  %define           m17 [rsp + 9  * mmsize]
+  %define           m18 [rsp + 10 * mmsize]
+  %define           m19 [rsp + 11 * mmsize]
+%endif
+    add             r1, r1
+    lea             r5, [planar32_table1]
+
+    movzx           r3d, word [r2 + 66]         ; topRight   = above[32]
+    movd            m7, r3d
+    pshufd          m7, m7, 0                   ; v_topRight
+
+    pmulld          m0, m7, [r5 + 0  ]          ; (x + 1) * topRight
+    pmulld          m1, m7, [r5 + 16 ]
+    pmulld          m2, m7, [r5 + 32 ]
+    pmulld          m3, m7, [r5 + 48 ]
+    pmulld          m4, m7, [r5 + 64 ]
+    pmulld          m5, m7, [r5 + 80 ]
+    pmulld          m6, m7, [r5 + 96 ]
+    pmulld          m7, m7, [r5 + 112]
+
+    mova            m12, m4
+    mova            m13, m5
+    mova            m14, m6
+    mova            m15, m7
+
+    movzx           r3d, word [r2 + 194]        ; bottomLeft = left[32]
+    movd            m6, r3d
+    pshufd          m6, m6, 0                   ; v_bottomLeft
+
+    paddd           m0, m6
+    paddd           m1, m6
+    paddd           m2, m6
+    paddd           m3, m6
+    paddd           m0, [pd_32]
+    paddd           m1, [pd_32]
+    paddd           m2, [pd_32]
+    paddd           m3, [pd_32]
+
+    mova            m4, m12
+    mova            m5, m13
+    paddd           m4, m6
+    paddd           m5, m6
+    paddd           m4, [pd_32]
+    paddd           m5, [pd_32]
+    mova            m12, m4
+    mova            m13, m5
+
+    mova            m4, m14
+    mova            m5, m15
+    paddd           m4, m6
+    paddd           m5, m6
+    paddd           m4, [pd_32]
+    paddd           m5, [pd_32]
+    mova            m14, m4
+    mova            m15, m5
+
+    ; above[0-3] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 2]
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m0, m5
+    psubd           m5, m6, m4
+    mova            m8, m5
+
+    ; above[4-7] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 10]
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m1, m5
+    psubd           m5, m6, m4
+    mova            m9, m5
+
+    ; above[8-11] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 18]
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m2, m5
+    psubd           m5, m6, m4
+    mova            m10, m5
+
+    ; above[12-15] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 26]
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m3, m5
+    psubd           m5, m6, m4
+    mova            m11, m5
+
+    ; above[16-19] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 34]
+    mova            m7, m12
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m7, m5
+    mova            m12, m7
+    psubd           m5, m6, m4
+    mova            m16, m5
+
+    ; above[20-23] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 42]
+    mova            m7, m13
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m7, m5
+    mova            m13, m7
+    psubd           m5, m6, m4
+    mova            m17, m5
+
+    ; above[24-27] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 50]
+    mova            m7, m14
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m7, m5
+    mova            m14, m7
+    psubd           m5, m6, m4
+    mova            m18, m5
+
+    ; above[28-31] * (blkSize - 1 - y)
+    pmovzxwd        m4, [r2 + 58]
+    mova            m7, m15
+    pmulld          m5, m4, [pd_planar32_1]
+    paddd           m7, m5
+    mova            m15, m7
+    psubd           m5, m6, m4
+    mova            m19, m5
+
+    add             r2, 130                      ; (2 * blkSize + 1)
+    lea             r5, [planar32_table]
+
+%macro INTRA_PRED_PLANAR32 0
+    movzx           r3d, word [r2]
+    movd            m4, r3d
+    pshufd          m4, m4, 0
+
+    pmulld          m5, m4, [r5]
+    pmulld          m6, m4, [r5 + 16]
+    paddd           m5, m0
+    paddd           m6, m1
+    paddd           m0, m8
+    paddd           m1, m9
+    psrad           m5, 6
+    psrad           m6, 6
+    packusdw        m5, m6
+    movu            [r0], m5
+
+    pmulld          m5, m4, [r5 + 32]
+    pmulld          m6, m4, [r5 + 48]
+    paddd           m5, m2
+    paddd           m6, m3
+    paddd           m2, m10
+    paddd           m3, m11
+    psrad           m5, 6
+    psrad           m6, 6
+    packusdw        m5, m6
+    movu            [r0 + 16], m5
+
+    pmulld          m5, m4, [r5 + 64]
+    pmulld          m6, m4, [r5 + 80]
+    paddd           m5, m12
+    paddd           m6, m13
+    psrad           m5, 6
+    psrad           m6, 6
+    packusdw        m5, m6
+    movu            [r0 + 32], m5
+    mova            m5, m12
+    mova            m6, m13
+    paddd           m5, m16
+    paddd           m6, m17
+    mova            m12, m5
+    mova            m13, m6
+
+    pmulld          m5, m4, [r5 + 96]
+    pmulld          m4, [r5 + 112]
+    paddd           m5, m14
+    paddd           m4, m15
+    psrad           m5, 6
+    psrad           m4, 6
+    packusdw        m5, m4
+    movu            [r0 + 48], m5
+    mova            m4, m14
+    mova            m5, m15
+    paddd           m4, m18
+    paddd           m5, m19
+    mova            m14, m4
+    mova            m15, m5
+
+    lea             r0, [r0 + r1]
+    add             r2, 2
+%endmacro
+
+    mov             r4, 8
+.loop:
+    INTRA_PRED_PLANAR32
+    INTRA_PRED_PLANAR32
+    INTRA_PRED_PLANAR32
+    INTRA_PRED_PLANAR32
+    dec             r4
+    jnz             .loop
+    mov             rsp, r6
+    RET
 
 ;-----------------------------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
