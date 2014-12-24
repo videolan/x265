@@ -1576,7 +1576,8 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
     else
     {
         analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-        CHECKED_MALLOC(interData, analysis_inter_data, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
+        CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
+        CHECKED_MALLOC(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
         analysis->interData = interData;
     }
     return;
@@ -1596,7 +1597,10 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
         X265_FREE(analysis->intraData);
     }
     else
+    {
+        X265_FREE(((analysis_inter_data*)analysis->interData)->ref);
         X265_FREE(analysis->interData);
+    }
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
@@ -1657,13 +1661,13 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
-        X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
+        X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
         consumedBytes += frameRecordSize;
         totalConsumedBytes = consumedBytes;
     }
     else
     {
-        X265_FREAD(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
+        X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
         consumedBytes += frameRecordSize;
     }
 #undef X265_FREAD
@@ -1705,11 +1709,11 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
-        X265_FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
     }
     else
     {
-        X265_FWRITE(analysis->interData, sizeof(analysis_inter_data), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
     }
 #undef X265_FWRITE
 }

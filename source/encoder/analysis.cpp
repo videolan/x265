@@ -133,9 +133,14 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_param->analysisMode)
     {
-        m_reuseIntraDataCTU = (analysis_intra_data *)m_frame->m_analysisData.intraData;
-        int numPredDir = m_slice->isInterP() ? 1 : 2;
-        m_reuseInterDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData + ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir;
+        if (m_slice->m_sliceType == I_SLICE)
+            m_reuseIntraDataCTU = (analysis_intra_data *)m_frame->m_analysisData.intraData;
+        else
+        {
+            int numPredDir = m_slice->isInterP() ? 1 : 2;
+            m_reuseInterDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData;
+            reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+        }
     }
 
     if (m_slice->m_sliceType == I_SLICE)
@@ -1438,8 +1443,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = m_reuseInterDataCTU->ref;
-                m_reuseInterDataCTU++;
+                bestME[i].ref = *reuseRef;
+                reuseRef++;
             }
         }
     }
@@ -1466,8 +1471,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_reuseInterDataCTU->ref = bestME[i].ref;
-                    m_reuseInterDataCTU++;
+                    *reuseRef = bestME[i].ref;
+                    reuseRef++;
                 }
             }
         }
@@ -1493,8 +1498,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = m_reuseInterDataCTU->ref;
-                m_reuseInterDataCTU++;
+                bestME[i].ref = *reuseRef;
+                reuseRef++;
             }
         }
     }
@@ -1510,8 +1515,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    m_reuseInterDataCTU->ref = bestME[i].ref;
-                    m_reuseInterDataCTU++;
+                    *reuseRef = bestME[i].ref;
+                    reuseRef++;
                 }
             }
         }
