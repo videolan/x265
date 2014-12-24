@@ -41,9 +41,7 @@ protected:
     pixel pixel_out_33_c[OUTPUT_SIZE_33];
     pixel pixel_out_33_vec[OUTPUT_SIZE_33];
 
-    bool check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width);
     bool check_dc_primitive(intra_pred_new_t ref, intra_pred_new_t opt, int width);
-    bool check_planar_primitive(intra_pred_t ref, intra_pred_t opt, int width);
     bool check_planar_primitive(intra_pred_new_t ref, intra_pred_new_t opt, int width);
     bool check_angular_primitive(const intra_pred_t ref[][NUM_TR_SIZE], const intra_pred_t opt[][NUM_TR_SIZE]);
     bool check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[]);
