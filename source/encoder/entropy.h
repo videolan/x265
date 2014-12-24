@@ -179,6 +179,7 @@ public:
     inline void codeQtCbfLuma(uint32_t cbf, uint32_t tuDepth)             { encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + !tuDepth]); }
     inline void codeQtCbfChroma(uint32_t cbf, uint32_t tuDepth)           { encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + 2 + tuDepth]); }
     inline void codeQtRootCbf(uint32_t cbf)                               { encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]); }
+    inline void codeTransformSkipFlags(uint32_t transformSkip, TextType ttype) { encodeBin(transformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]); }
 
     void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
 
@@ -244,7 +245,6 @@ private:
 
     void codeDeltaQP(const CUData& cu, uint32_t absPartIdx);
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx);
-    void codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype);
 
     void encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, uint32_t log2TrSize,
                          bool& bCodeDQP, const uint32_t depthRange[2]);

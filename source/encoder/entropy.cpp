@@ -1407,17 +1407,6 @@ void Entropy::codeQtCbfChroma(const CUData& cu, uint32_t absPartIdx, TextType tt
         encodeBin(cu.getCbf(absPartIdx, ttype, lowestTUDepth), m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
-void Entropy::codeTransformSkipFlags(const CUData& cu, uint32_t absPartIdx, uint32_t trSize, TextType ttype)
-{
-    if (cu.m_tqBypass[absPartIdx])
-        return;
-    if (trSize != 4)
-        return;
-
-    uint32_t useTransformSkip = cu.m_transformSkip[ttype][absPartIdx];
-    encodeBin(useTransformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]);
-}
-
 /** Encode (X,Y) position of the last significant coefficient
  * \param posx X component of last coefficient
  * \param posy Y component of last coefficient
@@ -1473,17 +1462,18 @@ void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2T
 void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
+    uint32_t tqBypass = cu.m_tqBypass[absPartIdx];
 
     // compute number of significant coefficients
     uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
 
     X265_CHECK(numSig > 0, "cbf check fail\n");
 
-    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !cu.m_tqBypass[absPartIdx];
+    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !tqBypass;
 
-    if (cu.m_slice->m_pps->bTransformSkipEnabled)
-        codeTransformSkipFlags(cu, absPartIdx, trSize, ttype);
-    
+    if (cu.m_slice->m_pps->bTransformSkipEnabled && !tqBypass && (trSize == 4))
+        codeTransformSkipFlags(cu.m_transformSkip[ttype][absPartIdx], ttype);
+
     bool bIsLuma = ttype == TEXT_LUMA;
 
     // select scans
