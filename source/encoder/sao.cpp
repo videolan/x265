@@ -582,8 +582,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int skipB = plane ? 2 : 4;
     int skipR = plane ? 3 : 5;
 
-    int32_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
-    int32_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
+    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     // SAO_BO:
     {
@@ -680,7 +680,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             {
                 for (x = 0; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride]);
+                    int8_t signDown = signOf(rec[x] - rec[x + stride]);
                     int edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x] = -signDown;
 
@@ -725,7 +725,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 upBufft[startX] = signOf(rec[startX + stride] - rec[startX - 1]);
                 for (x = startX; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride + 1]);
+                    int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
                     int edgeType = signDown + upBuff1[x] + 2;
                     upBufft[x + 1] = -signDown;
                     stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
@@ -771,7 +771,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             {
                 for (x = startX; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride - 1]);
+                    int8_t signDown = signOf(rec[x] - rec[x + stride - 1]);
                     int edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x - 1] = -signDown;
                     stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
