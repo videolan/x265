@@ -914,7 +914,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         cu.getInterTUQtDepthRange(tuDepthRange, 0);
 
                         m_rqt[cuGeom.depth].tmpResiYuv.subtract(*md.bestMode->fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
-                        residualTransformQuantInter(*md.bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
+                        residualTransformQuantInter(*md.bestMode, cuGeom, 0, 0, tuDepthRange);
                         if (cu.getQtRootCbf(0))
                             md.bestMode->reconYuv.addClip(md.bestMode->predYuv, m_rqt[cuGeom.depth].tmpResiYuv, cu.m_log2CUSize[0]);
                         else
@@ -938,8 +938,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                         uint32_t tuDepthRange[2];
                         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
-                        uint32_t initTuDepth = cu.m_partSize[0] != SIZE_2Nx2N;
-                        residualTransformQuantIntra(*md.bestMode, cuGeom, initTuDepth, 0, tuDepthRange);
+                        residualTransformQuantIntra(*md.bestMode, cuGeom, 0, 0, tuDepthRange);
                         getBestIntraModeChroma(*md.bestMode, cuGeom);
                         residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
                         md.bestMode->reconYuv.copyFromPicYuv(*m_frame->m_reconPic, cu.m_cuAddr, cuGeom.encodeIdx); // TODO:
@@ -1702,8 +1701,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         uint32_t tuDepthRange[2];
         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
-        uint32_t initTuDepth = cu.m_partSize[0] != SIZE_2Nx2N;
-        residualTransformQuantIntra(*bestMode, cuGeom, initTuDepth, 0, tuDepthRange);
+        residualTransformQuantIntra(*bestMode, cuGeom, 0, 0, tuDepthRange);
         getBestIntraModeChroma(*bestMode, cuGeom);
         residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
     }
@@ -1736,7 +1734,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         uint32_t tuDepthRange[2];
         cu.getInterTUQtDepthRange(tuDepthRange, 0);
 
-        residualTransformQuantInter(*bestMode, cuGeom, 0, cuGeom.depth, tuDepthRange);
+        residualTransformQuantInter(*bestMode, cuGeom, 0, 0, tuDepthRange);
 
         if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
             cu.setPredModeSubParts(MODE_SKIP);

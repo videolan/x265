@@ -57,7 +57,6 @@ public:
         int      unitWidth;
         int      unitHeight;
         int      tuSize;
-        uint32_t log2TrSize;
         bool     bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
     };
 
@@ -105,14 +104,19 @@ public:
     void addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightValues wp[3], bool bLuma, bool bChroma) const;
 
     /* Intra prediction helper functions */
-    static void initIntraNeighbors(const CUData& cu, uint32_t zOrderIdxInPart, uint32_t partDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
+    static void initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
     static void fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors);
 
+    template<bool cip>
     static bool isAboveLeftAvailable(const CUData& cu, uint32_t partIdxLT);
+    template<bool cip>
     static int  isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
+    template<bool cip>
     static int  isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
-    static int  isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags);
-    static int  isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags);
+    template<bool cip>
+    static int  isAboveRightAvailable(const CUData& cu, uint32_t partIdxRT, bool* bValidFlags, uint32_t numUnits);
+    template<bool cip>
+    static int  isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLB, bool* bValidFlags, uint32_t numUnits);
 
 public:
 
@@ -125,8 +129,8 @@ public:
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
     void predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
 
-    void initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode);
-    void initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId);
+    void initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, int dirMode);
+    void initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId);
     pixel* getAdiChromaBuf(uint32_t chromaId, int tuSize)
     {
         return m_predBuf + (chromaId == 1 ? 0 : 2 * ADI_BUF_STRIDE * (tuSize * 2 + 1));

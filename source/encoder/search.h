@@ -178,9 +178,9 @@ public:
     void     encodeResAndCalcRdSkipCU(Mode& interMode);
 
     // encode residual without rd-cost
-    void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, const uint32_t depthRange[2]);
-    void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, const uint32_t depthRange[2]);
-    void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx);
+    void     residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2]);
+    void     residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2]);
+    void     residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth);
 
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);

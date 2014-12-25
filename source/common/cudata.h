@@ -212,7 +212,6 @@ public:
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
-    void     deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
 
     uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;

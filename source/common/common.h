@@ -163,6 +163,9 @@ inline T x265_min(T a, T b) { return a < b ? a : b; }
 template<typename T>
 inline T x265_max(T a, T b) { return a > b ? a : b; }
 
+template<typename T>
+inline T x265_clip3(T minVal, T maxVal, T a) { return x265_min(x265_max(minVal, a), maxVal); }
+
 typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))

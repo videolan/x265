@@ -608,7 +608,7 @@ const CUData* CUData::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartU
         {
             if (curPartUnitIdx > g_rasterToZscan[absPartIdxRT - s_numPartInCUSize + 1])
             {
-                uint32_t absZorderCUIdx  = g_zscanToRaster[m_absIdxInCTU] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1;
+                uint32_t absZorderCUIdx = g_zscanToRaster[m_absIdxInCTU] + (1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE)) - 1;
                 arPartUnitIdx = g_rasterToZscan[absPartIdxRT - s_numPartInCUSize + 1];
                 if (isEqualRowOrCol(absPartIdxRT, absZorderCUIdx, s_numPartInCUSize))
                     return m_encData->getPicCTU(m_cuAddr);
@@ -689,8 +689,6 @@ const CUData* CUData::getPUBelowLeftAdi(uint32_t& blPartUnitIdx,  uint32_t curPa
             return NULL;
         }
         blPartUnitIdx = g_rasterToZscan[absPartIdxLB + (1 + partUnitOffset) * s_numPartInCUSize - 1];
-        if (!m_cuLeft || !m_cuLeft->m_slice)
-            return NULL;
         return m_cuLeft;
     }
 
@@ -723,8 +721,6 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
             return NULL;
         }
         arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_CU_PARTITIONS - s_numPartInCUSize + partUnitOffset];
-        if (!m_cuAbove || !m_cuAbove->m_slice)
-            return NULL;
         return m_cuAbove;
     }
 
@@ -732,8 +728,6 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
         return NULL;
 
     arPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - s_numPartInCUSize + partUnitOffset - 1];
-    if ((m_cuAboveRight == NULL || m_cuAboveRight->m_slice == NULL || (m_cuAboveRight->m_cuAddr) > m_cuAddr))
-        return NULL;
     return m_cuAboveRight;
 }
 
@@ -904,7 +898,7 @@ void CUData::getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartId
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
 
-    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (m_slice->m_sps->quadtreeTUMaxDepthIntra - 1 + splitFlag), tuDepthRange[1]));
+    tuDepthRange[0] = x265_clip3(tuDepthRange[0], tuDepthRange[1], log2CUSize - (m_slice->m_sps->quadtreeTUMaxDepthIntra - 1 + splitFlag));
 }
 
 void CUData::getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const
@@ -916,7 +910,7 @@ void CUData::getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartId
     tuDepthRange[0] = m_slice->m_sps->quadtreeTULog2MinSize;
     tuDepthRange[1] = m_slice->m_sps->quadtreeTULog2MaxSize;
 
-    tuDepthRange[0] = X265_MAX(tuDepthRange[0], X265_MIN(log2CUSize - (quadtreeTUMaxDepth - 1 + splitFlag), tuDepthRange[1]));
+    tuDepthRange[0] = x265_clip3(tuDepthRange[0], tuDepthRange[1], log2CUSize - (quadtreeTUMaxDepth - 1 + splitFlag));
 }
 
 uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
@@ -1361,14 +1355,6 @@ uint32_t CUData::deriveRightBottomIdx(uint32_t puIdx) const
         break;
     }
     return outPartIdxRB;
-}
-
-void CUData::deriveLeftRightTopIdxAdi(uint32_t& outPartIdxLT, uint32_t& outPartIdxRT, uint32_t partOffset, uint32_t partDepth) const
-{
-    uint32_t numPartInWidth = 1 << (m_log2CUSize[0] - LOG2_UNIT_SIZE - partDepth);
-
-    outPartIdxLT = m_absIdxInCTU + partOffset;
-    outPartIdxRT = g_rasterToZscan[g_zscanToRaster[outPartIdxLT] + numPartInWidth - 1];
 }
 
 bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const

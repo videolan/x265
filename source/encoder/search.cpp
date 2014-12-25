@@ -239,7 +239,8 @@ void Search::codeCoeffQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absP
 
 void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& outCost, const uint32_t depthRange[2])
 {
-    uint32_t fullDepth  = mode.cu.m_cuDepth[0] + tuDepth;
+    CUData& cu = mode.cu;
+    uint32_t fullDepth  = cu.m_cuDepth[0] + tuDepth;
     uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
     uint32_t qtLayer    = log2TrSize - 2;
     uint32_t sizeIdx    = log2TrSize - 2;
@@ -252,8 +253,6 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
         mightNotSplit = false;
         mightSplit = true;
     }
-
-    CUData& cu = mode.cu;
 
     Cost fullCost;
     uint32_t bCBF = 0;
@@ -273,7 +272,9 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
 
         // init availability pattern
         uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
-        initAdiPattern(cu, cuGeom, absPartIdx, tuDepth, lumaPredMode);
+        IntraNeighbors intraNeighbors;
+        initIntraNeighbors(cu, absPartIdx, tuDepth, true, &intraNeighbors);
+        initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, lumaPredMode);
 
         // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
@@ -365,7 +366,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
             m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);   // prep state of split encode
         }
 
-        // code split block
+        /* code split block */
         uint32_t qNumParts = 1 << (log2TrSize - 1 - LOG2_UNIT_SIZE) * 2;
 
         int checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && (log2TrSize - 1) <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
@@ -451,11 +452,13 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     pixel*   pred = predYuv->getLumaAddr(absPartIdx);
     int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
     uint32_t stride = fencYuv->m_size;
-    int      sizeIdx = log2TrSize - 2;
+    uint32_t sizeIdx = log2TrSize - 2;
 
     // init availability pattern
     uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
-    initAdiPattern(cu, cuGeom, absPartIdx, tuDepth, lumaPredMode);
+    IntraNeighbors intraNeighbors;
+    initIntraNeighbors(cu, absPartIdx, tuDepth, true, &intraNeighbors);
+    initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, lumaPredMode);
 
     // get prediction signal
     predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
@@ -597,13 +600,12 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
 }
 
 /* fast luma intra residual generation. Only perform the minimum number of TU splits required by the CU size */
-void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, const uint32_t depthRange[2])
+void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])
 {
     CUData& cu = mode.cu;
-
-    uint32_t fullDepth   = cu.m_cuDepth[0] + tuDepth;
-    uint32_t log2TrSize  = g_maxLog2CUSize - fullDepth;
-    bool     bCheckFull  = log2TrSize <= depthRange[1];
+    uint32_t fullDepth  = cu.m_cuDepth[0] + tuDepth;
+    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
+    bool     bCheckFull = log2TrSize <= depthRange[1];
 
     X265_CHECK(m_slice->m_sliceType != I_SLICE, "residualTransformQuantIntra not intended for I slices\n");
 
@@ -614,28 +616,36 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
 
     if (bCheckFull)
     {
-        const pixel* fenc  = mode.fencYuv->getLumaAddr(absPartIdx);
-        pixel*   pred      = mode.predYuv.getLumaAddr(absPartIdx);
-        int16_t* residual  = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
-        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
-        intptr_t picStride = m_frame->m_reconPic->m_stride;
-        uint32_t stride    = mode.fencYuv->m_size;
-        uint32_t sizeIdx   = log2TrSize - 2;
-        uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
-        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        coeff_t* coeff        = cu.m_trCoeff[TEXT_LUMA] + coeffOffsetY;
+        const pixel* fenc = mode.fencYuv->getLumaAddr(absPartIdx);
+        pixel*   pred     = mode.predYuv.getLumaAddr(absPartIdx);
+        int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getLumaAddr(absPartIdx);
+        uint32_t stride   = mode.fencYuv->m_size;
 
-        initAdiPattern(cu, cuGeom, absPartIdx, tuDepth, lumaPredMode);
+        // init availability pattern
+        uint32_t lumaPredMode = cu.m_lumaIntraDir[absPartIdx];
+        IntraNeighbors intraNeighbors;
+        initIntraNeighbors(cu, absPartIdx, tuDepth, true, &intraNeighbors);
+        initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, lumaPredMode);
+
+        // get prediction signal
         predIntraLumaAng(lumaPredMode, pred, stride, log2TrSize);
 
         X265_CHECK(!cu.m_transformSkip[TEXT_LUMA][absPartIdx], "unexpected tskip flag in residualTransformQuantIntra\n");
         cu.setTUDepthSubParts(tuDepth, absPartIdx, fullDepth);
 
+        uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
+        coeff_t* coeffY       = cu.m_trCoeff[0] + coeffOffsetY;
+
+        uint32_t sizeIdx   = log2TrSize - 2;
         primitives.calcresidual[sizeIdx](fenc, pred, residual, stride);
-        uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, false);
+
+        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+        intptr_t picStride = m_frame->m_reconPic->m_stride;
+
+        uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffY, log2TrSize, TEXT_LUMA, absPartIdx, false);
         if (numSig)
         {
-            m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], residual, stride, coeff, log2TrSize, TEXT_LUMA, true, false, numSig);
+            m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffY, log2TrSize, TEXT_LUMA, true, false, numSig);
             primitives.luma_add_ps[sizeIdx](picReconY, picStride, pred, residual, stride, stride);
             cu.setCbfSubParts(1 << tuDepth, TEXT_LUMA, absPartIdx, fullDepth);
         }
@@ -654,11 +664,11 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t cbf = 0;
         for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
         {
-            residualTransformQuantIntra(mode, cuGeom, tuDepth + 1, qPartIdx, depthRange);
+            residualTransformQuantIntra(mode, cuGeom, qPartIdx, tuDepth + 1, depthRange);
             cbf |= cu.getCbf(qPartIdx, TEXT_LUMA, tuDepth + 1);
         }
         for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu.m_cbf[TEXT_LUMA][absPartIdx + offs] |= (cbf << tuDepth);
+            cu.m_cbf[0][absPartIdx + offs] |= (cbf << tuDepth);
     }
 }
 
@@ -739,15 +749,14 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
         }
         for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
         {
-            cu.m_cbf[TEXT_CHROMA_U][absPartIdx + offs] |= (splitCbfU << tuDepth);
-            cu.m_cbf[TEXT_CHROMA_V][absPartIdx + offs] |= (splitCbfV << tuDepth);
+            cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << tuDepth);
+            cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << tuDepth);
         }
 
         return outDist;
     }
 
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
-
     uint32_t tuDepthC = tuDepth;
     if (log2TrSizeC < 2)
     {
@@ -766,45 +775,47 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
     if (checkTransformSkip)
         return codeIntraChromaTSkip(mode, cuGeom, tuDepth, tuDepthC, absPartIdx, psyEnergy);
 
+    ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
     uint32_t qtLayer = log2TrSize - 2;
     uint32_t tuSize = 1 << log2TrSizeC;
+    uint32_t stride = mode.fencYuv->m_csize;
+    const uint32_t sizeIdxC = log2TrSizeC - 2;
     uint32_t outDist = 0;
 
     uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + tuDepthC) << 1);
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
-    for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
+    TURecurse tuIterator(splitType, curPartNum, absPartIdx);
+    do
     {
-        TextType ttype = (TextType)chromaId;
+        uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
 
-        TURecurse tuIterator(splitType, curPartNum, absPartIdx);
-        do
+        IntraNeighbors intraNeighbors;
+        initIntraNeighbors(cu, absPartIdxC, tuDepthC, false, &intraNeighbors);
+
+        for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
+            TextType ttype = (TextType)chromaId;
 
             const pixel* fenc = mode.fencYuv->getChromaAddr(chromaId, absPartIdxC);
             pixel*   pred     = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
-            int16_t* residual = m_rqt[cuGeom.depth].tmpResiYuv.getChromaAddr(chromaId, absPartIdxC);
-            uint32_t stride   = mode.fencYuv->m_csize;
-            uint32_t sizeIdxC = log2TrSizeC - 2;
-
+            int16_t* residual = resiYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
             coeff_t* coeffC        = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
             pixel*   reconQt       = m_rqt[qtLayer].reconQtYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t reconQtStride = m_rqt[qtLayer].reconQtYuv.m_csize;
-
             pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
-
-            // init availability pattern
-            initAdiPatternChroma(cu, cuGeom, absPartIdxC, tuDepthC, chromaId);
-            pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
             if (chromaPredMode == DM_CHROMA_IDX)
                 chromaPredMode = cu.m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
             if (m_csp == X265_CSP_I422)
                 chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
+
+            // init availability pattern
+            initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
+            pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
             // get prediction signal
             predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
@@ -833,10 +844,13 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
 
             primitives.luma_copy_pp[sizeIdxC](picReconC, picStride, reconQt, reconQtStride);
         }
-        while (tuIterator.isNextSection());
+    }
+    while (tuIterator.isNextSection());
 
-        if (splitType == VERTICAL_SPLIT)
-            offsetSubTUCBFs(cu, ttype, tuDepth, absPartIdx);
+    if (splitType == VERTICAL_SPLIT)
+    {
+        offsetSubTUCBFs(cu, TEXT_CHROMA_U, tuDepth, absPartIdx);
+        offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
     }
 
     return outDist;
@@ -864,14 +878,17 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
     uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + tuDepthC) << 1);
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
-    for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
+    TURecurse tuIterator(splitType, curPartNum, absPartIdx);
+    do
     {
-        TextType ttype = (TextType)chromaId;
+        uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
 
-        TURecurse tuIterator(splitType, curPartNum, absPartIdx);
-        do
+        IntraNeighbors intraNeighbors;
+        initIntraNeighbors(cu, absPartIdxC, tuDepthC, false, &intraNeighbors);
+
+        for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
-            uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
+            TextType ttype = (TextType)chromaId;
 
             const pixel* fenc = mode.fencYuv->getChromaAddr(chromaId, absPartIdxC);
             pixel*   pred = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
@@ -885,7 +902,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
             uint32_t reconQtStride = m_rqt[qtLayer].reconQtYuv.m_csize;
 
             // init availability pattern
-            initAdiPatternChroma(cu, cuGeom, absPartIdxC, tuDepthC, chromaId);
+            initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
             pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
@@ -978,10 +995,13 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
             outDist += bDist;
             psyEnergy += bEnergy;
         }
-        while (tuIterator.isNextSection());
+    }
+    while (tuIterator.isNextSection());
 
-        if (splitType == VERTICAL_SPLIT)
-            offsetSubTUCBFs(cu, ttype, tuDepth, absPartIdx);
+    if (splitType == VERTICAL_SPLIT)
+    {
+        offsetSubTUCBFs(cu, TEXT_CHROMA_U, tuDepth, absPartIdx);
+        offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
     }
 
     m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);
@@ -1020,91 +1040,18 @@ void Search::extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t absP
     }
 }
 
-void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx)
+void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth)
 {
     CUData& cu = mode.cu;
-    uint32_t fullDepth = cu.m_cuDepth[0] + tuDepth;
-    uint32_t log2TrSize = g_maxLog2CUSize - fullDepth;
-    
-    if (tuDepth == cu.m_tuDepth[absPartIdx])
-    {
-        uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
-        uint32_t tuDepthC = tuDepth;
-        if (log2TrSizeC < 2)
-        {
-            X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && tuDepth, "invalid tuDepth\n");
-            if (absPartIdx & 3)
-                return;
-            log2TrSizeC = 2;
-            tuDepthC--;
-        }
+    uint32_t log2TrSize = cu.m_log2CUSize[absPartIdx] - tuDepth;
 
-        ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
-        uint32_t tuSize = 1 << log2TrSizeC;
-        uint32_t stride = mode.fencYuv->m_csize;
-        const int sizeIdxC = log2TrSizeC - 2;
-
-        uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + tuDepthC) << 1);
-        const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
-
-        for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
-        {
-            TextType ttype = (TextType)chromaId;
-
-            TURecurse tuIterator(splitType, curPartNum, absPartIdx);
-            do
-            {
-                uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
-
-                const pixel*   fenc   = mode.fencYuv->getChromaAddr(chromaId, absPartIdxC);
-                pixel*   pred         = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
-                int16_t* residual     = resiYuv.getChromaAddr(chromaId, absPartIdxC);
-                pixel*   recon        = mode.reconYuv.getChromaAddr(chromaId, absPartIdxC); // TODO: needed?
-                uint32_t coeffOffsetC = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
-                coeff_t* coeff        = cu.m_trCoeff[ttype] + coeffOffsetC;
-                pixel*   picReconC    = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
-                uint32_t picStride    = m_frame->m_reconPic->m_strideC;
-
-                uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
-                if (chromaPredMode == DM_CHROMA_IDX)
-                    chromaPredMode = cu.m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
-                chromaPredMode = (m_csp == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[chromaPredMode] : chromaPredMode;
-                initAdiPatternChroma(cu, cuGeom, absPartIdxC, tuDepthC, chromaId);
-                pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
-
-                predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
-
-                X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
-
-                primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
-                uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, false);
-                if (numSig)
-                {
-                    m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], residual, stride, coeff, log2TrSizeC, ttype, true, false, numSig);
-                    primitives.luma_add_ps[sizeIdxC](recon, stride, pred, residual, stride, stride);
-                    primitives.luma_copy_pp[sizeIdxC](picReconC, picStride, recon, stride);
-                    cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
-                }
-                else
-                {
-                    primitives.luma_copy_pp[sizeIdxC](recon, stride, pred, stride);
-                    primitives.luma_copy_pp[sizeIdxC](picReconC, picStride, pred, stride);
-                    cu.setCbfPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
-                }
-            }
-            while (tuIterator.isNextSection());
-
-            if (splitType == VERTICAL_SPLIT)
-                offsetSubTUCBFs(cu, (TextType)chromaId, tuDepth, absPartIdx);
-        }
-    }
-    else
+    if (tuDepth < cu.m_tuDepth[absPartIdx])
     {
         uint32_t qNumParts = 1 << (log2TrSize - 1 - LOG2_UNIT_SIZE) * 2;
         uint32_t splitCbfU = 0, splitCbfV = 0;
         for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
         {
-            residualQTIntraChroma(mode, cuGeom, tuDepth + 1, qPartIdx);
+            residualQTIntraChroma(mode, cuGeom, qPartIdx, tuDepth + 1);
             splitCbfU |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
             splitCbfV |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
         }
@@ -1113,12 +1060,91 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << tuDepth);
             cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << tuDepth);
         }
+
+        return;
+    }
+
+    uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
+    uint32_t tuDepthC = tuDepth;
+    if (log2TrSizeC < 2)
+    {
+        X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && tuDepth, "invalid tuDepth\n");
+        if (absPartIdx & 3)
+            return;
+        log2TrSizeC = 2;
+        tuDepthC--;
+    }
+
+    ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
+    uint32_t tuSize = 1 << log2TrSizeC;
+    uint32_t stride = mode.fencYuv->m_csize;
+    const uint32_t sizeIdxC = log2TrSizeC - 2;
+
+    uint32_t curPartNum = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + tuDepthC) << 1);
+    const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
+
+    TURecurse tuIterator(splitType, curPartNum, absPartIdx);
+    do
+    {
+        uint32_t absPartIdxC = tuIterator.absPartIdxTURelCU;
+
+        IntraNeighbors intraNeighbors;
+        initIntraNeighbors(cu, absPartIdxC, tuDepthC, false, &intraNeighbors);
+
+        for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
+        {
+            TextType ttype = (TextType)chromaId;
+
+            const pixel* fenc = mode.fencYuv->getChromaAddr(chromaId, absPartIdxC);
+            pixel*   pred     = mode.predYuv.getChromaAddr(chromaId, absPartIdxC);
+            int16_t* residual = resiYuv.getChromaAddr(chromaId, absPartIdxC);
+            uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
+            coeff_t* coeffC        = cu.m_trCoeff[ttype] + coeffOffsetC;
+            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            intptr_t picStride = m_frame->m_reconPic->m_strideC;
+
+            uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
+            if (chromaPredMode == DM_CHROMA_IDX)
+                chromaPredMode = cu.m_lumaIntraDir[(m_csp == X265_CSP_I444) ? absPartIdxC : 0];
+            if (m_csp == X265_CSP_I422)
+                chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
+
+            // init availability pattern
+            initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
+            pixel* chromaPred = getAdiChromaBuf(chromaId, tuSize);
+
+            // get prediction signal
+            predIntraChromaAng(chromaPred, chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+
+            X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
+
+            primitives.calcresidual[sizeIdxC](fenc, pred, residual, stride);
+            uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
+            if (numSig)
+            {
+                m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffC, log2TrSizeC, ttype, true, false, numSig);
+                primitives.luma_add_ps[sizeIdxC](picReconC, picStride, pred, residual, stride, stride);
+                cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
+            }
+            else
+            {
+                // no coded residual, recon = pred
+                primitives.luma_copy_pp[sizeIdxC](picReconC, picStride, pred, stride);
+                cu.setCbfPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
+            }
+        }
+    }
+    while (tuIterator.isNextSection());
+
+    if (splitType == VERTICAL_SPLIT)
+    {
+        offsetSubTUCBFs(cu, TEXT_CHROMA_U, tuDepth, absPartIdx);
+        offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
     }
 }
 
 void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes)
 {
-    uint32_t depth = cuGeom.depth;
     CUData& cu = intraMode.cu;
 
     cu.setPartSizeSubParts(partSize);
@@ -1141,7 +1167,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
         m_entropyCoder.codePredMode(cu.m_predMode[0]);
     }
 
-    m_entropyCoder.codePartSize(cu, 0, depth);
+    m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
     m_entropyCoder.codePredInfo(cu, 0);
     intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
 
@@ -1151,7 +1177,10 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
-        intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, intraMode.fencYuv->m_buf[0], intraMode.fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
+    {
+        const Yuv* fencYuv = intraMode.fencYuv;
+        intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
+    }
 
     updateModeCost(intraMode);
 }
@@ -1172,7 +1201,9 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     const uint32_t absPartIdx = 0;
 
     // Reference sample smoothing
-    initAdiPattern(cu, cuGeom, absPartIdx, initTuDepth, ALL_IDX);
+    IntraNeighbors intraNeighbors;
+    initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
+    initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
 
     const pixel* fenc = intraMode.fencYuv->m_buf[0];
     uint32_t stride = intraMode.fencYuv->m_size;
@@ -1333,7 +1364,6 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
-    const Yuv* fencYuv = intraMode.fencYuv;
 
     X265_CHECK(cu.m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
     X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
@@ -1367,7 +1397,10 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
     intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
     if (m_rdCost.m_psyRd)
+    {
+        const Yuv* fencYuv = intraMode.fencYuv;
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+    }
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
@@ -1402,7 +1435,9 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
         else
         {
             // Reference sample smoothing
-            initAdiPattern(cu, cuGeom, absPartIdx, initTuDepth, ALL_IDX);
+            IntraNeighbors intraNeighbors;
+            initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
+            initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
 
             // determine set of modes to be tested (using prediction signal only)
             const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
@@ -1600,8 +1635,10 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
         log2TrSizeC = 5;
     }
 
-    Predict::initAdiPatternChroma(cu, cuGeom, 0, tuDepth, 1);
-    Predict::initAdiPatternChroma(cu, cuGeom, 0, tuDepth, 2);
+    IntraNeighbors intraNeighbors;
+    initIntraNeighbors(cu, 0, tuDepth, false, &intraNeighbors);
+    Predict::initAdiPatternChroma(cu, cuGeom, 0, intraNeighbors, 1); // U
+    Predict::initAdiPatternChroma(cu, cuGeom, 0, intraNeighbors, 2); // V
     cu.getAllowedChromaDir(0, modeList);
 
     // check chroma modes
@@ -2579,16 +2616,16 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     updateModeCost(interMode);
 }
 
-void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, const uint32_t depthRange[2])
+void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])
 {
+    uint32_t depth = cuGeom.depth + tuDepth;
     CUData& cu = mode.cu;
     X265_CHECK(cu.m_cuDepth[0] == cu.m_cuDepth[absPartIdx], "invalid depth\n");
 
     uint32_t log2TrSize = g_maxLog2CUSize - depth;
-    uint32_t tuDepth = depth - cu.m_cuDepth[0];
 
     bool bCheckFull = log2TrSize <= depthRange[1];
-    if (cu.m_partSize[0] != SIZE_2Nx2N && depth == cu.m_cuDepth[absPartIdx] && log2TrSize > depthRange[0])
+    if (cu.m_partSize[0] != SIZE_2Nx2N && !tuDepth && log2TrSize > depthRange[0])
         bCheckFull = false;
 
     if (bCheckFull)
@@ -2609,7 +2646,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t setCbf = 1 << tuDepth;
 
         uint32_t coeffOffsetY = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        coeff_t *coeffCurY = cu.m_trCoeff[0] + coeffOffsetY;
+        coeff_t* coeffCurY = cu.m_trCoeff[0] + coeffOffsetY;
 
         uint32_t sizeIdx  = log2TrSize  - 2;
 
@@ -2642,8 +2679,8 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
             uint32_t strideResiC = resiYuv.m_csize;
 
             uint32_t coeffOffsetC = coeffOffsetY >> (m_hChromaShift + m_vChromaShift);
-            coeff_t *coeffCurU = cu.m_trCoeff[1] + coeffOffsetC;
-            coeff_t *coeffCurV = cu.m_trCoeff[2] + coeffOffsetC;
+            coeff_t* coeffCurU = cu.m_trCoeff[1] + coeffOffsetC;
+            coeff_t* coeffCurV = cu.m_trCoeff[2] + coeffOffsetC;
             bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
 
             TURecurse tuIterator(splitIntoSubTUs ? VERTICAL_SPLIT : DONT_SPLIT, absPartIdxStep, absPartIdx);
@@ -2700,16 +2737,16 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
         for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
         {
-            residualTransformQuantInter(mode, cuGeom, qPartIdx, depth + 1, depthRange);
-            ycbf |= cu.getCbf(qPartIdx, TEXT_LUMA, tuDepth + 1);
+            residualTransformQuantInter(mode, cuGeom, qPartIdx, tuDepth + 1, depthRange);
+            ycbf |= cu.getCbf(qPartIdx, TEXT_LUMA,     tuDepth + 1);
             ucbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
             vcbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
         }
-        for (uint32_t i = 0; i < 4 * qNumParts; i++)
+        for (uint32_t i = 0; i < 4 * qNumParts; ++i)
         {
-            cu.m_cbf[TEXT_LUMA][absPartIdx + i] |= ycbf << tuDepth;
-            cu.m_cbf[TEXT_CHROMA_U][absPartIdx + i] |= ucbf << tuDepth;
-            cu.m_cbf[TEXT_CHROMA_V][absPartIdx + i] |= vcbf << tuDepth;
+            cu.m_cbf[0][absPartIdx + i] |= ycbf << tuDepth;
+            cu.m_cbf[1][absPartIdx + i] |= ucbf << tuDepth;
+            cu.m_cbf[2][absPartIdx + i] |= vcbf << tuDepth;
         }
     }
 }
@@ -2767,7 +2804,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
     uint32_t trSize = 1 << log2TrSize;
     const bool splitIntoSubTUs = (m_csp == X265_CSP_I422);
-    uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] +  tuDepthC) << 1);
+    uint32_t absPartIdxStep = NUM_CU_PARTITIONS >> ((cu.m_cuDepth[0] + tuDepthC) << 1);
     const Yuv* fencYuv = mode.fencYuv;
 
     // code full block
@@ -3125,16 +3162,19 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         //Encode cbf flags
         if (bCodeChroma)
         {
-            for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
+            if (!splitIntoSubTUs)
             {
-                if (!splitIntoSubTUs)
-                    m_entropyCoder.codeQtCbfChroma(cbfFlag[chromaId][0], tuDepth);
-                else
-                {
-                    offsetSubTUCBFs(cu, (TextType)chromaId, tuDepth, absPartIdx);
-                    m_entropyCoder.codeQtCbfChroma(cbfFlag[chromaId][0], tuDepth);
-                    m_entropyCoder.codeQtCbfChroma(cbfFlag[chromaId][1], tuDepth);
-                }
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_U][0], tuDepth);
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_V][0], tuDepth);
+            }
+            else
+            {
+                offsetSubTUCBFs(cu, TEXT_CHROMA_U, tuDepth, absPartIdx);
+                offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_U][0], tuDepth);
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_U][1], tuDepth);
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_V][0], tuDepth);
+                m_entropyCoder.codeQtCbfChroma(cbfFlag[TEXT_CHROMA_V][1], tuDepth);
             }
         }
 

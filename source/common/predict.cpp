@@ -654,11 +654,8 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
     }
 }
 
-void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, int dirMode)
+void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
 {
-    IntraNeighbors intraNeighbors;
-    initIntraNeighbors(cu, absPartIdx, partDepth, true, &intraNeighbors);
-
     pixel* adiBuf      = m_predBuf;
     pixel* refAbove    = m_refAbove;
     pixel* refLeft     = m_refLeft;
@@ -700,12 +697,12 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
             int refTL = refAbove[0];
             int refTR = refAbove[trSize2];
             bStrongSmoothing = (abs(refBL + refTL - 2 * refLeft[trSize]) < threshold &&
-                abs(refTL + refTR - 2 * refAbove[trSize]) < threshold);
+                                abs(refTL + refTR - 2 * refAbove[trSize]) < threshold);
 
             if (bStrongSmoothing)
             {
                 // bilinear interpolation
-                const int shift = 5 + 1; // intraNeighbors.log2TrSize + 1;
+                const int shift = 5 + 1; // log2TrSize + 1;
                 int init = (refTL << shift) + tuSize;
                 int delta;
 
@@ -738,10 +735,8 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     }
 }
 
-void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t partDepth, uint32_t chromaId)
+void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
 {
-    IntraNeighbors intraNeighbors;
-    initIntraNeighbors(cu, absPartIdx, partDepth, false, &intraNeighbors);
     uint32_t tuSize = intraNeighbors.tuSize;
 
     const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
@@ -751,9 +746,9 @@ void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint3
     fillReferenceSamples(adiOrigin, picStride, adiRef, intraNeighbors);
 }
 
-void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t partDepth, bool isLuma, IntraNeighbors *intraNeighbors)
+void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, bool isLuma, IntraNeighbors *intraNeighbors)
 {
-    uint32_t log2TrSize = cu.m_log2CUSize[0] - partDepth;
+    uint32_t log2TrSize = cu.m_log2CUSize[0] - tuDepth;
     int log2UnitWidth = LOG2_UNIT_SIZE;
     int log2UnitHeight = LOG2_UNIT_SIZE;
 
@@ -764,12 +759,12 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
         log2UnitHeight -= cu.m_vChromaShift;
     }
 
-    int   numIntraNeighbor = 0;
+    int numIntraNeighbor;
     bool* bNeighborFlags = intraNeighbors->bNeighborFlags;
 
-    uint32_t partIdxLT, partIdxRT, partIdxLB;
-
-    cu.deriveLeftRightTopIdxAdi(partIdxLT, partIdxRT, absPartIdx, partDepth);
+    uint32_t numPartInWidth = 1 << (cu.m_log2CUSize[0] - LOG2_UNIT_SIZE - tuDepth);
+    uint32_t partIdxLT = cu.m_absIdxInCTU + absPartIdx;
+    uint32_t partIdxRT = g_rasterToZscan[g_zscanToRaster[partIdxLT] + numPartInWidth - 1];
 
     uint32_t tuSize = 1 << log2TrSize;
     int  tuWidthInUnits = tuSize >> log2UnitWidth;
@@ -777,14 +772,26 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     int  aboveUnits = tuWidthInUnits << 1;
     int  leftUnits = tuHeightInUnits << 1;
     int  partIdxStride = cu.m_slice->m_sps->numPartInCUSize;
-    partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
+    uint32_t partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
 
-    bNeighborFlags[leftUnits] = isAboveLeftAvailable(cu, partIdxLT);
-    numIntraNeighbor += (int)(bNeighborFlags[leftUnits]);
-    numIntraNeighbor += isAboveAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1));
-    numIntraNeighbor += isAboveRightAvailable(cu, partIdxLT, partIdxRT, (bNeighborFlags + leftUnits + 1 + tuWidthInUnits));
-    numIntraNeighbor += isLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1));
-    numIntraNeighbor += isBelowLeftAvailable(cu, partIdxLT, partIdxLB, (bNeighborFlags + leftUnits - 1 - tuHeightInUnits));
+    if (cu.m_slice->isIntra() || !cu.m_slice->m_pps->bConstrainedIntraPred)
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailable<false>(cu, partIdxLT);
+        numIntraNeighbor  = (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailable<false>(cu, partIdxLT, partIdxRT, bNeighborFlags + leftUnits + 1);
+        numIntraNeighbor += isAboveRightAvailable<false>(cu, partIdxRT, bNeighborFlags + leftUnits + 1 + tuWidthInUnits, tuWidthInUnits);
+        numIntraNeighbor += isLeftAvailable<false>(cu, partIdxLT, partIdxLB, bNeighborFlags + leftUnits - 1);
+        numIntraNeighbor += isBelowLeftAvailable<false>(cu, partIdxLB, bNeighborFlags + tuHeightInUnits - 1, tuHeightInUnits);
+    }
+    else
+    {
+        bNeighborFlags[leftUnits] = isAboveLeftAvailable<true>(cu, partIdxLT);
+        numIntraNeighbor  = (int)(bNeighborFlags[leftUnits]);
+        numIntraNeighbor += isAboveAvailable<true>(cu, partIdxLT, partIdxRT, bNeighborFlags + leftUnits + 1);
+        numIntraNeighbor += isAboveRightAvailable<true>(cu, partIdxRT, bNeighborFlags + leftUnits + 1 + tuWidthInUnits, tuWidthInUnits);
+        numIntraNeighbor += isLeftAvailable<true>(cu, partIdxLT, partIdxLB, bNeighborFlags + leftUnits - 1);
+        numIntraNeighbor += isBelowLeftAvailable<true>(cu, partIdxLB, bNeighborFlags + tuHeightInUnits - 1, tuHeightInUnits);
+    }
 
     intraNeighbors->numIntraNeighbor = numIntraNeighbor;
     intraNeighbors->totalUnits = aboveUnits + leftUnits + 1;
@@ -793,7 +800,6 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     intraNeighbors->unitWidth = 1 << log2UnitWidth;
     intraNeighbors->unitHeight = 1 << log2UnitHeight;
     intraNeighbors->tuSize = tuSize;
-    intraNeighbors->log2TrSize = log2TrSize;
 }
 
 void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, pixel* adiRef, const IntraNeighbors& intraNeighbors)
@@ -948,112 +954,100 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
     }
 }
 
+template<bool cip>
 bool Predict::isAboveLeftAvailable(const CUData& cu, uint32_t partIdxLT)
 {
     uint32_t partAboveLeft;
     const CUData* cuAboveLeft = cu.getPUAboveLeft(partAboveLeft, partIdxLT);
 
-    if (!cu.m_slice->m_pps->bConstrainedIntraPred)
-        return cuAboveLeft ? true : false;
-    else
-        return cuAboveLeft && cuAboveLeft->isIntra(partAboveLeft);
+    return cuAboveLeft && (!cip || cuAboveLeft->isIntra(partAboveLeft));
 }
 
+template<bool cip>
 int Predict::isAboveAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
-    const uint32_t rasterPartEnd = g_zscanToRaster[partIdxRT] + 1;
+    const uint32_t rasterPartEnd = g_zscanToRaster[partIdxRT];
     const uint32_t idxStep = 1;
-    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
-    for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
+    for (uint32_t rasterPart = rasterPartBegin; rasterPart <= rasterPartEnd; rasterPart += idxStep, bValidFlags++)
     {
         uint32_t partAbove;
         const CUData* cuAbove = cu.getPUAbove(partAbove, g_rasterToZscan[rasterPart]);
-        if (cuAbove && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuAbove->isIntra(partAbove)))
+        if (cuAbove && (!cip || cuAbove->isIntra(partAbove)))
         {
             numIntra++;
-            *validFlagPtr = true;
+            *bValidFlags = true;
         }
         else
-            *validFlagPtr = false;
-
-        validFlagPtr++;
+            *bValidFlags = false;
     }
 
     return numIntra;
 }
 
+template<bool cip>
 int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags)
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
-    const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB] + 1;
+    const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB];
     const uint32_t idxStep = cu.m_slice->m_sps->numPartInCUSize;
-    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
-    for (uint32_t rasterPart = rasterPartBegin; rasterPart < rasterPartEnd; rasterPart += idxStep)
+    for (uint32_t rasterPart = rasterPartBegin; rasterPart <= rasterPartEnd; rasterPart += idxStep, bValidFlags--) // opposite direction
     {
         uint32_t partLeft;
         const CUData* cuLeft = cu.getPULeft(partLeft, g_rasterToZscan[rasterPart]);
-        if (cuLeft && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuLeft->isIntra(partLeft)))
+        if (cuLeft && (!cip || cuLeft->isIntra(partLeft)))
         {
             numIntra++;
-            *validFlagPtr = true;
+            *bValidFlags = true;
         }
         else
-            *validFlagPtr = false;
-
-        validFlagPtr--; // opposite direction
+            *bValidFlags = false;
     }
 
     return numIntra;
 }
 
-int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxRT, bool* bValidFlags)
+template<bool cip>
+int Predict::isAboveRightAvailable(const CUData& cu, uint32_t partIdxRT, bool* bValidFlags, uint32_t numUnits)
 {
-    const uint32_t numUnitsInPU = g_zscanToRaster[partIdxRT] - g_zscanToRaster[partIdxLT] + 1;
-    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
-    for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)
+    for (uint32_t offset = 1; offset <= numUnits; offset++, bValidFlags++)
     {
         uint32_t partAboveRight;
         const CUData* cuAboveRight = cu.getPUAboveRightAdi(partAboveRight, partIdxRT, offset);
-        if (cuAboveRight && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuAboveRight->isIntra(partAboveRight)))
+        if (cuAboveRight && (!cip || cuAboveRight->isIntra(partAboveRight)))
         {
             numIntra++;
-            *validFlagPtr = true;
+            *bValidFlags = true;
         }
         else
-            *validFlagPtr = false;
-
-        validFlagPtr++;
+            *bValidFlags = false;
     }
 
     return numIntra;
 }
 
-int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t partIdxLB, bool* bValidFlags)
+template<bool cip>
+int Predict::isBelowLeftAvailable(const CUData& cu, uint32_t partIdxLB, bool* bValidFlags, uint32_t numUnits)
 {
-    const uint32_t numUnitsInPU = (g_zscanToRaster[partIdxLB] - g_zscanToRaster[partIdxLT]) / cu.m_slice->m_sps->numPartInCUSize + 1;
-    bool* validFlagPtr = bValidFlags;
     int numIntra = 0;
 
-    for (uint32_t offset = 1; offset <= numUnitsInPU; offset++)
+    for (uint32_t offset = 1; offset <= numUnits; offset++, bValidFlags--) // opposite direction
     {
         uint32_t partBelowLeft;
         const CUData* cuBelowLeft = cu.getPUBelowLeftAdi(partBelowLeft, partIdxLB, offset);
-        if (cuBelowLeft && (!cu.m_slice->m_pps->bConstrainedIntraPred || cuBelowLeft->isIntra(partBelowLeft)))
+        if (cuBelowLeft && (!cip || cuBelowLeft->isIntra(partBelowLeft)))
         {
             numIntra++;
-            *validFlagPtr = true;
+            *bValidFlags = true;
         }
         else
-            *validFlagPtr = false;
-
-        validFlagPtr--; // opposite direction
+            *bValidFlags = false;
     }
 
     return numIntra;
