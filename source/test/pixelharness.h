@@ -92,6 +92,7 @@ protected:
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
+    bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
 
 public:
 

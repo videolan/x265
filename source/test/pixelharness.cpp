@@ -948,6 +948,28 @@ bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
     return true;
 }
 
+bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
+{
+    int j = 0, index1, index2, optres, refres;
+    intptr_t stride = STRIDE;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        index1 = rand() % TEST_CASES;
+        index2 = rand() % TEST_CASES;
+        optres = (int)checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        refres = ref(pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+
+        if (optres != refres)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -1287,6 +1309,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_cpy1Dto2D_shr_t(ref.cpy1Dto2D_shr[i], opt.cpy1Dto2D_shr[i]))
             {
                 printf("cpy1Dto2D_shr[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
+        if (opt.psy_cost_pp[i])
+        {
+            if (!check_psyCost_pp(ref.psy_cost_pp[i], opt.psy_cost_pp[i]))
+            {
+                printf("\npsy_cost_pp[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1630,6 +1661,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("copy_cnt[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.copy_cnt[i], ref.copy_cnt[i], sbuf1, sbuf2, STRIDE);
+        }
+
+        if (opt.psy_cost_pp[i])
+        {
+            HEADER("psy_cost_pp[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.psy_cost_pp[i], ref.psy_cost_pp[i], pbuf1, STRIDE, pbuf2, STRIDE);
         }
     }
 

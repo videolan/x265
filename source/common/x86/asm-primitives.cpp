@@ -1434,6 +1434,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4_HIGH(sse4);
+
+        p.psy_cost_pp[BLOCK_4x4] = x265_psyCost_pp_4x4_sse4;
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -1715,6 +1717,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
 //        p.denoiseDct = x265_denoise_dct_sse4;
+
+        p.psy_cost_pp[BLOCK_4x4] = x265_psyCost_pp_4x4_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

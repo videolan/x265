@@ -41,6 +41,8 @@ hmul_8p:   times 8 db 1
 hmul_4p:   times 2 db 1, 1, 1, 1, 1, -1, 1, -1
 mask_10:   times 4 dw 0, -1
 mask_1100: times 2 dd 0, -1
+hmul_8w:   times 4 dw 1
+           times 2 dw 1, -1
 
 ALIGN 32
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
@@ -6578,4 +6580,166 @@ cglobal upShift_8, 7,7,3
     shl         r3d, 2
     mov         [r2], r3w
 .end:
+    RET
+
+%macro ABSD2 6 ; dst1, dst2, src1, src2, tmp, tmp
+%if cpuflag(ssse3)
+    pabsd   %1, %3
+    pabsd   %2, %4
+%elifidn %1, %3
+    pxor    %5, %5
+    pxor    %6, %6
+    psubd   %5, %1
+    psubd   %6, %2
+    pmaxsd  %1, %5
+    pmaxsd  %2, %6
+%else
+    pxor    %1, %1
+    pxor    %2, %2
+    psubd   %1, %3
+    psubd   %2, %4
+    pmaxsd  %1, %3
+    pmaxsd  %2, %4
+%endif
+%endmacro
+
+;---------------------------------------------------------------------------------------------------------------------
+;int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)
+;---------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal psyCost_pp_4x4, 4, 5, 8
+
+%if HIGH_BIT_DEPTH
+    FIX_STRIDES r1, r3
+    lea             r4, [3 * r1]
+    movddup         m0, [r0]
+    movddup         m1, [r0 + r1]
+    movddup         m2, [r0 + r1 * 2]
+    movddup         m3, [r0 + r4]
+    mova            m4, [hmul_8w]
+    pmaddwd         m0, m4
+    pmaddwd         m1, m4
+    pmaddwd         m2, m4
+    pmaddwd         m3, m4
+
+    paddd           m5, m0, m1
+    paddd           m5, m2
+    paddd           m5, m3
+    psrldq          m4, m5, 4
+    paddd           m5, m4
+    psrld           m5, 2
+
+    SUMSUB_BA d, 0, 1, 4
+    SUMSUB_BA d, 2, 3, 4
+    SUMSUB_BA d, 0, 2, 4
+    SUMSUB_BA d, 1, 3, 4
+    %define ORDER unord
+    TRANS q, ORDER, 0, 2, 4, 6
+    TRANS q, ORDER, 1, 3, 4, 6
+    ABSD2 m0, m2, m0, m2, m4, m6
+    pmaxsd          m0, m2
+    ABSD2 m1, m3, m1, m3, m4, m6
+    pmaxsd          m1, m3
+    paddd           m0, m1
+    movhlps         m1, m0
+    paddd           m0, m1
+    psrldq          m1, m0, 4
+    paddd           m0, m1
+
+    psubd           m7, m0, m5
+
+    lea             r4, [3 * r3]
+    movddup         m0, [r2]
+    movddup         m1, [r2 + r3]
+    movddup         m2, [r2 + r3 * 2]
+    movddup         m3, [r2 + r4]
+    mova            m4, [hmul_8w]
+    pmaddwd         m0, m4
+    pmaddwd         m1, m4
+    pmaddwd         m2, m4
+    pmaddwd         m3, m4
+
+    paddd           m5, m0, m1
+    paddd           m5, m2
+    paddd           m5, m3
+    psrldq          m4, m5, 4
+    paddd           m5, m4
+    psrld           m5, 2
+
+    SUMSUB_BA d, 0, 1, 4
+    SUMSUB_BA d, 2, 3, 4
+    SUMSUB_BA d, 0, 2, 4
+    SUMSUB_BA d, 1, 3, 4
+    %define ORDER unord
+    TRANS q, ORDER, 0, 2, 4, 6
+    TRANS q, ORDER, 1, 3, 4, 6
+    ABSD2 m0, m2, m0, m2, m4, m6
+    pmaxsd          m0, m2
+    ABSD2 m1, m3, m1, m3, m4, m6
+    pmaxsd          m1, m3
+    paddd           m0, m1
+    movhlps         m1, m0
+    paddd           m0, m1
+    psrldq          m1, m0, 4
+    paddd           m0, m1
+
+    psubd           m0, m5
+
+    psubd           m7, m0
+    pabsd           m0, m7
+    movd            eax, m0
+
+%else ; !HIGH_BIT_DEPTH
+    lea             r4, [3 * r1]
+    movd            m0, [r0]
+    movd            m1, [r0 + r1]
+    movd            m2, [r0 + r1 * 2]
+    movd            m3, [r0 + r4]
+    shufps          m0, m1, 0
+    shufps          m2, m3, 0
+    mova            m4, [hmul_4p]
+    pmaddubsw       m0, m4
+    pmaddubsw       m2, m4
+
+    paddw           m5, m0, m2
+    movhlps         m4, m5
+    paddw           m5, m4
+    pmaddwd         m5, [pw_1]
+    psrld           m5, 2
+
+    HADAMARD 0, sumsub, 0, 2, 1, 3
+    HADAMARD 4, sumsub, 0, 2, 1, 3
+    HADAMARD 1, amax, 0, 2, 1, 3
+    HADDW m0, m2
+
+    psubd           m6, m0, m5
+
+    lea             r4, [3 * r3]
+    movd            m0, [r2]
+    movd            m1, [r2 + r3]
+    movd            m2, [r2 + r3 * 2]
+    movd            m3, [r2 + r4]
+    shufps          m0, m1, 0
+    shufps          m2, m3, 0
+    mova            m4, [hmul_4p]
+    pmaddubsw       m0, m4
+    pmaddubsw       m2, m4
+
+    paddw           m5, m0, m2
+    movhlps         m4, m5
+    paddw           m5, m4
+    pmaddwd         m5, [pw_1]
+    psrld           m5, 2
+
+    HADAMARD 0, sumsub, 0, 2, 1, 3
+    HADAMARD 4, sumsub, 0, 2, 1, 3
+    HADAMARD 1, amax, 0, 2, 1, 3
+    HADDW m0, m2
+
+    psubd           m0, m5
+
+    psubd           m6, m0
+    pabsd           m0, m6
+    movd            eax, m0
+%endif ; HIGH_BIT_DEPTH
     RET
