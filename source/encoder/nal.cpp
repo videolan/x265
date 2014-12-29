@@ -90,7 +90,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
     uint8_t *out = m_buffer + m_occupancy;
     uint32_t bytes = 0;
 
-    if (!m_numNal || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
+    if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
     {
         memcpy(out, startCodePrefix, 4);
         bytes += 4;
