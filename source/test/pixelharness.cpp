@@ -856,6 +856,33 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
     return true;
 }
 
+bool PixelHarness::check_calSign(sign_t ref, sign_t opt)
+{
+    ALIGN_VAR_16(int8_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int8_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int width = 16 * (rand() % 4 + 1);
+
+        ref(ref_dest, pbuf2 + j, pbuf3 + j, width);
+        checked(opt, opt_dest, pbuf2 + j, pbuf3 + j, width);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int8_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1386,6 +1413,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.sign)
+    {
+        if (!check_calSign(ref.sign, opt.sign))
+        {
+            printf("calSign failed\n");
+            return false;
+        }
+    }
+
     if (opt.saoCuOrgE0)
     {
         if (!check_saoCuOrgE0_t(ref.saoCuOrgE0, opt.saoCuOrgE0))
@@ -1710,6 +1746,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("ssim_end_4");
         REPORT_SPEEDUP(opt.ssim_end_4, ref.ssim_end_4, (int(*)[4])pbuf2, (int(*)[4])pbuf1, 4);
+    }
+
+    if (opt.sign)
+    {
+        HEADER0("calSign");
+        REPORT_SPEEDUP(opt.sign, ref.sign, psbuf1, pbuf1, pbuf2, 64);
     }
 
     if (opt.saoCuOrgE0)

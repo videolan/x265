@@ -25,5 +25,6 @@
 #define X265_LOOPFILTER_H
 
 void x265_saoCuOrgE0_sse4(pixel * rec, int8_t * offsetEo, int endX, int8_t signLeft);
+void x265_calSign_sse4(int8_t *dst, pixel *src1, pixel *src2, int endX);
 
 #endif // ifndef X265_LOOPFILTER_H

@@ -28,6 +28,18 @@
 #define PIXEL_MIN 0
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 
+/* get the sign of input variable (TODO: this is a dup, make common) */
+inline int8_t signOf(int x)
+{
+    return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
+}
+
+void calSign(int8_t *dst, pixel *src1, pixel *src2, int endX)
+{
+    for (int x = 0; x < endX; x++)
+        dst[x] = signOf(src1[x] - src2[x]);
+}
+
 void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
 {
     int x;
@@ -49,5 +61,6 @@ namespace x265 {
 void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;
+    p.sign = calSign;
 }
 }

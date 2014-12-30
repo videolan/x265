@@ -191,6 +191,7 @@ typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, cons
 typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
 typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t signLeft);
+typedef void (*sign_t)(int8_t *dst, pixel *src1, pixel *src2, int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
@@ -240,6 +241,7 @@ struct EncoderPrimitives
     ssim_4x4x2_core_t     ssim_4x4x2_core;
     ssim_end4_t           ssim_end_4;
 
+    sign_t                sign;
     saoCuOrgE0_t          saoCuOrgE0;
 
     downscale_t           frameInitLowres;

@@ -1645,6 +1645,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        p.sign = x265_calSign_sse4;
         p.saoCuOrgE0 = x265_saoCuOrgE0_sse4;
 
         LUMA_ADDAVG(_sse4);

@@ -93,6 +93,7 @@ protected:
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
+    bool check_calSign(sign_t ref, sign_t opt);
 
 public:
 

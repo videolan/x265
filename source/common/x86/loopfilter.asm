@@ -83,3 +83,33 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     sub         r2d, 16
     jnz        .loop
     RET
+
+;============================================================================================================
+; void calSign(int8_t *dst, Pixel *src1 , Pixel *src2, int endX)
+;============================================================================================================
+INIT_XMM sse4
+cglobal calSign, 4, 5, 7
+
+    mov         r4,    16
+    mova        m1,    [pb_128]
+    mova        m0,    [pb_1]
+    shr         r3d,   4
+.loop
+    movu        m2,    [r1]        ; m2 = pRec[x]
+    movu        m3,    [r2]        ; m3 = pTmpU[x]
+
+    pxor        m4,    m2,    m1
+    pxor        m5,    m3,    m1
+    pcmpgtb     m6,    m4,    m5
+    pcmpgtb     m5,    m4
+    pand        m6,    m0
+    por         m6,    m5
+
+    movu        [r0],  m6
+
+    add         r0,    r4
+    add         r1,    r4
+    add         r2,    r4
+    dec         r3d
+    jnz         .loop
+    RET
