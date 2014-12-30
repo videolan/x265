@@ -6748,7 +6748,83 @@ cglobal psyCost_pp_4x4, 4, 5, 8
 INIT_XMM sse4
 cglobal psyCost_pp_8x8, 4, 6, 13
 
+%if HIGH_BIT_DEPTH
     FIX_STRIDES r1, r3
+    lea             r4, [3 * r1]
+    pxor            m10, m10
+    movu            m0, [r0]
+    movu            m1, [r0 + r1]
+    movu            m2, [r0 + r1 * 2]
+    movu            m3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    movu            m4, [r5]
+    movu            m5, [r5 + r1]
+    movu            m6, [r5 + r1 * 2]
+    movu            m7, [r5 + r4]
+
+    paddw           m8, m0, m1
+    paddw           m8, m2
+    paddw           m8, m3
+    paddw           m8, m4
+    paddw           m8, m5
+    paddw           m8, m6
+    paddw           m8, m7
+    pmaddwd         m8, [pw_1]
+    movhlps         m9, m8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    HADAMARD8_2D 0, 1, 2, 3, 4, 5, 6, 7, 9, amax
+
+    paddd           m0, m1
+    paddd           m0, m2
+    paddd           m0, m3
+    HADDUW m0, m1
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+    psubd           m10, m0, m8
+
+    lea             r4, [3 * r3]
+    movu            m0, [r2]
+    movu            m1, [r2 + r3]
+    movu            m2, [r2 + r3 * 2]
+    movu            m3, [r2 + r4]
+    lea             r5, [r2 + r3 * 4]
+    movu            m4, [r5]
+    movu            m5, [r5 + r3]
+    movu            m6, [r5 + r3 * 2]
+    movu            m7, [r5 + r4]
+
+    paddw           m8, m0, m1
+    paddw           m8, m2
+    paddw           m8, m3
+    paddw           m8, m4
+    paddw           m8, m5
+    paddw           m8, m6
+    paddw           m8, m7
+    pmaddwd         m8, [pw_1]
+    movhlps         m9, m8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    HADAMARD8_2D 0, 1, 2, 3, 4, 5, 6, 7, 9, amax
+
+    paddd           m0, m1
+    paddd           m0, m2
+    paddd           m0, m3
+    HADDUW m0, m1
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+    psubd           m0, m8
+    psubd           m10, m0
+    pabsd           m0, m10
+    movd            eax, m0
+%endif ; HIGH_BIT_DEPTH
+%else ; !HIGH_BIT_DEPTH
     lea             r4, [3 * r1]
     mova            m8, [hmul_8p]
 
