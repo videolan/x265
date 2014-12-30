@@ -6743,3 +6743,104 @@ cglobal psyCost_pp_4x4, 4, 5, 8
     movd            eax, m0
 %endif ; HIGH_BIT_DEPTH
     RET
+
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal psyCost_pp_8x8, 4, 6, 13
+
+    FIX_STRIDES r1, r3
+    lea             r4, [3 * r1]
+    mova            m8, [hmul_8p]
+
+    movddup         m0, [r0]
+    movddup         m1, [r0 + r1]
+    movddup         m2, [r0 + r1 * 2]
+    movddup         m3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    movddup         m4, [r5]
+    movddup         m5, [r5 + r1]
+    movddup         m6, [r5 + r1 * 2]
+    movddup         m7, [r5 + r4]
+
+    pmaddubsw       m0, m8
+    pmaddubsw       m1, m8
+    pmaddubsw       m2, m8
+    pmaddubsw       m3, m8
+    pmaddubsw       m4, m8
+    pmaddubsw       m5, m8
+    pmaddubsw       m6, m8
+    pmaddubsw       m7, m8
+
+    paddw           m11, m0, m1
+    paddw           m11, m2
+    paddw           m11, m3
+    paddw           m11, m4
+    paddw           m11, m5
+    paddw           m11, m6
+    paddw           m11, m7
+
+    pmaddwd         m11, [pw_1]
+    psrldq          m10, m11, 4
+    paddd           m11, m10
+    psrld           m11, 2
+
+    HADAMARD8_2D_HMUL 0, 1, 2, 3, 4, 5, 6, 7, 9, 10
+
+    paddw           m0, m1
+    paddw           m0, m2
+    paddw           m0, m3
+    HADDW m0, m1
+
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+    psubd           m12, m0, m11
+
+    lea             r4, [3 * r3]
+
+    movddup         m0, [r2]
+    movddup         m1, [r2 + r3]
+    movddup         m2, [r2 + r3 * 2]
+    movddup         m3, [r2 + r4]
+    lea             r5, [r2 + r3 * 4]
+    movddup         m4, [r5]
+    movddup         m5, [r5 + r3]
+    movddup         m6, [r5 + r3 * 2]
+    movddup         m7, [r5 + r4]
+
+    pmaddubsw       m0, m8
+    pmaddubsw       m1, m8
+    pmaddubsw       m2, m8
+    pmaddubsw       m3, m8
+    pmaddubsw       m4, m8
+    pmaddubsw       m5, m8
+    pmaddubsw       m6, m8
+    pmaddubsw       m7, m8
+
+    paddw           m11, m0, m1
+    paddw           m11, m2
+    paddw           m11, m3
+    paddw           m11, m4
+    paddw           m11, m5
+    paddw           m11, m6
+    paddw           m11, m7
+
+    pmaddwd         m11, [pw_1]
+    psrldq          m10, m11, 4
+    paddd           m11, m10
+    psrld           m11, 2
+
+    HADAMARD8_2D_HMUL 0, 1, 2, 3, 4, 5, 6, 7, 9, 10
+
+    paddw           m0, m1
+    paddw           m0, m2
+    paddw           m0, m3
+    HADDW m0, m1
+
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+    psubd           m0, m11
+    psubd           m12, m0
+    pabsd           m0, m12
+    movd            eax, m0
+    RET
+%endif
