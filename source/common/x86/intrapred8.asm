@@ -6687,6 +6687,3823 @@ cglobal intra_pred_ang16_18, 4,5,3
     movu        [r0 + r3],  m0
     RET
 
+;------------------------------------------------------------------------------------------
+; void intraPredAng16(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
+;------------------------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal intra_pred_ang16_2_new, 3,5,3
+    lea             r4, [r2 + 2]
+    add             r2, 34
+    cmp             r3m, byte 34
+    cmove           r2, r4
+    movu            m0, [r2]
+    movu            m1, [r2 + 16]
+    movu            [r0], m0
+    palignr         m2, m1, m0, 1
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 2
+    movu            [r0], m2
+    palignr         m2, m1, m0, 3
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 4
+    movu            [r0], m2
+    palignr         m2, m1, m0, 5
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 6
+    movu            [r0], m2
+    palignr         m2, m1, m0, 7
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 8
+    movu            [r0], m2
+    palignr         m2, m1, m0, 9
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 10
+    movu            [r0], m2
+    palignr         m2, m1, m0, 11
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 12
+    movu            [r0], m2
+    palignr         m2, m1, m0, 13
+    movu            [r0 + r1], m2
+    lea             r0, [r0 + r1 * 2]
+    palignr         m2, m1, m0, 14
+    movu            [r0], m2
+    palignr         m2, m1, m0, 15
+    movu            [r0 + r1], m2
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_3_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m0,        [r2 + 1]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+
+    pmaddubsw   m4,        m0, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 + 4 * 16]              ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4
+
+    pmaddubsw   m5,        [r3 - 2 * 16]              ; [14]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 6
+
+    pmaddubsw   m6,        [r3 - 8 * 16]              ; [ 8]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m6,        m1, [r3 - 14 * 16]         ; [ 2]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m1,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 10
+
+    pmaddubsw   m1,        [r3 + 6 * 16]              ; [22]
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 12
+
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    movu        m0,        [r2 + 8]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m5,        m2, m0, 2
+
+    pmaddubsw   m4,        m0, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 12 * 16]         ; [04]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4
+
+    pmaddubsw   m6,        [r3 + 8 * 16]              ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6
+
+    pmaddubsw   m6,        m1, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m6,        m7
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m1,        [r3 - 4 * 16]              ; [12]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 10
+
+    pmaddubsw   m1,        [r3 - 10 * 16]             ; [06]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+
+    movhps      m1,        [r2 + 14]                  ; [00]
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_33_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m0,        [r2 + 1]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+
+    pmaddubsw   m4,        m0, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 + 4 * 16]              ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4
+
+    pmaddubsw   m5,        [r3 - 2 * 16]              ; [14]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 6
+
+    pmaddubsw   m6,        [r3 - 8 * 16]              ; [ 8]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m6,        m1, [r3 - 14 * 16]         ; [ 2]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m1,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 10
+
+    pmaddubsw   m1,        [r3 + 6 * 16]              ; [22]
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 12
+
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    movu        m0,        [r2 + 8]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m5,        m2, m0, 2
+
+    pmaddubsw   m4,        m0, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 12 * 16]         ; [04]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4
+
+    pmaddubsw   m6,        [r3 + 8 * 16]              ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6
+
+    pmaddubsw   m6,        m1, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m6,        m7
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m1,        [r3 - 4 * 16]              ; [12]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 10
+
+    pmaddubsw   m1,        [r3 - 10 * 16]             ; [06]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+
+    movh        m2,        [r2 + 14]                  ; [00]
+
+    movh        [r0         ], m4
+    movhps      [r0 + r1    ], m4
+    movh        [r0 + r1 * 2], m5
+    movhps      [r0 + r5    ], m5
+    lea         r0, [r0 + r1 * 4]
+    movh        [r0         ], m6
+    movhps      [r0 + r1    ], m6
+    movh        [r0 + r1 * 2], m1
+    movh        [r0 + r5    ], m2
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_4_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m0,        [r2 + 1]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+    mova        m5,        m1
+
+    pmaddubsw   m4,        m0, [r3 + 5 * 16]          ; [21]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 - 6 * 16]              ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4
+
+    pmaddubsw   m6,        [r3 + 4 * 16]              ; [ 20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6
+
+    pmaddubsw   m6,        m1, [r3 - 7 * 16]          ; [ 9]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m1,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m1,        [r3 + 3 * 16]              ; [19]
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 10
+
+    pmaddubsw   m3,        m2, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m2, [r3 + 13 * 16]         ; [29]
+    pmulhrsw    m4,        m7
+
+    movu        m0,        [r2 + 6]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+
+    pmaddubsw   m1,        [r3 +  2 * 16]             ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4
+    mova        m6,        m5
+
+    pmaddubsw   m5,        [r3 - 9 * 16]              ; [07]
+    pmulhrsw    m5,        m7
+
+    pmaddubsw   m6,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m6,        m2, m0, 6
+
+    pmaddubsw   m6,        [r3 +      16]             ; [17]
+    pmulhrsw    m6,        m7
+
+    palignr     m1,        m2, m0, 8
+    palignr     m2,        m0, 10
+
+    pmaddubsw   m3,        m1, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m3,        m7
+    packuswb    m6,        m3
+
+    pmaddubsw   m1,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m1,        m7
+
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_32_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m0,        [r2 + 1]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+    mova        m5,        m1
+
+
+    pmaddubsw   m4,        m0, [r3 + 5 * 16]          ; [21]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 - 6 * 16]              ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m5,        m7
+
+    palignr     m6,        m2, m0, 4
+
+    pmaddubsw   m6,        [r3 + 4 * 16]              ; [ 20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m0, 6
+
+    pmaddubsw   m6,        m1, [r3 - 7 * 16]          ; [ 9]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m1,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    palignr     m1,        m2, m0, 8
+
+    pmaddubsw   m1,        [r3 + 3 * 16]              ; [19]
+    pmulhrsw    m1,        m7
+
+    palignr     m2,        m0, 10
+
+    pmaddubsw   m3,        m2, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m2, [r3 + 13 * 16]         ; [29]
+    pmulhrsw    m4,        m7
+
+    movu        m0,        [r2 + 6]
+    palignr     m1,        m0, 1
+
+    punpckhbw   m2,        m0, m1
+    punpcklbw   m0,        m1
+    palignr     m1,        m2, m0, 2
+
+    pmaddubsw   m1,        [r3 +  2 * 16]             ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m5,        m2, m0, 4
+    mova        m6,        m5
+
+    pmaddubsw   m5,        [r3 - 9 * 16]              ; [07]
+    pmulhrsw    m5,        m7
+
+    pmaddubsw   m6,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m6,        m2, m0, 6
+
+    pmaddubsw   m6,        [r3 +      16]             ; [17]
+    pmulhrsw    m6,        m7
+
+    palignr     m1,        m2, m0, 8
+    palignr     m2,        m0, 10
+
+    pmaddubsw   m3,        m1, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m3,        m7
+    packuswb    m6,        m3
+
+    pmaddubsw   m1,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m1,        m7
+
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_5_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 2]                   ;[17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[17 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    palignr     m5,        m2, m3, 2
+
+    pmaddubsw   m4,        m3, [r3 +      16]         ; [17]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 4
+
+    pmaddubsw   m5,        [r3 + 3 * 16]              ; [19]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m1,        m6, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m1,        m7
+    packuswb    m5,        m1
+
+    palignr     m1,        m2, m3, 6
+
+    pmaddubsw   m6,        [r3 + 5 * 16]              ; [21]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 10 * 16]         ; [6]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 8
+
+    pmaddubsw   m1,        [r3 + 7 * 16]              ; [23]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    palignr     m4,        m2, m3, 8
+    palignr     m5,        m2, m3, 10
+
+    pmaddubsw   m4,        [r3 + 9 * 16]              ; [25]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 12
+
+    pmaddubsw   m5,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m1,        m6, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m1,        m7
+    packuswb    m5,        m1
+
+    palignr     m1,        m2, m3, 14
+
+    pmaddubsw   m6,        [r3 + 13 * 16]             ; [29]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_31_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    movu        m1,        [r2 + 2]                   ;[17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[17 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    palignr     m5,        m2, m3, 2
+
+    pmaddubsw   m4,        m3, [r3 +      16]         ; [17]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 4
+
+    pmaddubsw   m5,        [r3 + 3 * 16]              ; [19]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m1,        m6, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m1,        m7
+    packuswb    m5,        m1
+
+    palignr     m1,        m2, m3, 6
+
+    pmaddubsw   m6,        [r3 + 5 * 16]              ; [21]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 10 * 16]         ; [6]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 8
+
+    pmaddubsw   m1,        [r3 + 7 * 16]              ; [23]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    palignr     m4,        m2, m3, 8
+    palignr     m5,        m2, m3, 10
+
+    pmaddubsw   m4,        [r3 + 9 * 16]              ; [25]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m5, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 12
+
+    pmaddubsw   m5,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m1,        m6, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m1,        m7
+    packuswb    m5,        m1
+
+    palignr     m1,        m2, m3, 14
+
+    pmaddubsw   m6,        [r3 + 13 * 16]             ; [29]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_6_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m3, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m3, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 2
+
+    pmaddubsw   m5,        m6, [r3 - 9 * 16]          ; [7]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        [r3 + 4 * 16]              ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m3, 4
+
+    pmaddubsw   m6,        m1, [r3 - 15 * 16]         ; [1]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 6
+
+    pmaddubsw   m1,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    palignr     m4,        m2, m3, 6
+    palignr     m6,        m2, m3, 8
+
+    pmaddubsw   m4,        [r3 +  5 * 16]             ; [21]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m6, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        m6, [r3 - 16]              ; [15]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m0,        m2, m3, 10
+
+    pmaddubsw   m6,        m0, [r3 - 7 * 16]          ; [9]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r3 + 6 * 16]              ; [22]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m2,        m3, 12
+
+    pmaddubsw   m1,        m2, [r3 - 13 * 16]         ; [3]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_30_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m3, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m3, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m6,        m2, m3, 2
+
+    pmaddubsw   m5,        m6, [r3 - 9 * 16]          ; [7]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        [r3 + 4 * 16]              ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m1,        m2, m3, 4
+
+    pmaddubsw   m6,        m1, [r3 - 15 * 16]         ; [1]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 6
+
+    pmaddubsw   m1,        [r3 + 11 * 16]             ; [27]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    palignr     m4,        m2, m3, 6
+    palignr     m6,        m2, m3, 8
+
+    pmaddubsw   m4,        [r3 +  5 * 16]             ; [21]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m6, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        m6, [r3 - 16]              ; [15]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m0,        m2, m3, 10
+
+    pmaddubsw   m6,        m0, [r3 - 7 * 16]          ; [9]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r3 + 6 * 16]              ; [22]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m2,        m3, 12
+
+    pmaddubsw   m1,        m2, [r3 - 13 * 16]         ; [3]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_7_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]            ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]       ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m3, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m3, [r3 - 7 * 16]          ; [9]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    palignr     m1,        m2, m3, 2
+
+    pmaddubsw   m5,        m3, [r3 + 11 * 16]         ; [27]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m1, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m1, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 4
+
+    pmaddubsw   m1,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    palignr     m1,        m2, m3, 4
+
+    pmaddubsw   m4,        m1, [r3 + 16]              ; [17]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 + 10 * 16]             ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m0,        m2, m3, 6
+
+    pmaddubsw   m5,        m0, [r3 - 13 * 16]         ; [03]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m0, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m0, [r3 + 5 * 16]          ; [21]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m2,        m3, 8
+
+    pmaddubsw   m1,        m2, [r3 - 9 * 16]          ; [07]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_29_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m1,        m3, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m2,        m3, m1                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m3,        m1                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m3, [r3 - 7 * 16]          ; [9]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    palignr     m1,        m2, m3, 2
+
+    pmaddubsw   m5,        m3, [r3 + 11 * 16]         ; [27]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m1, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m1, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m1, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m0,        m2, m3, 4
+
+    pmaddubsw   m1,        [r3 + 15 * 16]             ; [31]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        [r3 - 8 * 16]              ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    palignr     m1,        m2, m3, 4
+
+    pmaddubsw   m4,        m1, [r3 + 16]              ; [17]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        [r3 + 10 * 16]             ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    palignr     m0,        m2, m3, 6
+
+    pmaddubsw   m5,        m0, [r3 - 13 * 16]         ; [03]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m0, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m0, [r3 + 5 * 16]          ; [21]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r3 + 14 * 16]             ; [30]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m2,        m3, 8
+
+    pmaddubsw   m1,        m2, [r3 - 9 * 16]          ; [07]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m2,        [r3]                       ; [16]
+    pmulhrsw    m2,        m7
+    packuswb    m1,        m2
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_8_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m1,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m3,        m1, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m0,        m1, m3                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m1,        m3                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m1, [r3 - 11 * 16]         ; [5]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m2,        m1, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m2,        m7
+    packuswb    m4,        m2
+
+    pmaddubsw   m5,        m1, [r3 - 1 * 16]          ; [15]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m1, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m1, [r3 + 9 * 16]          ; [25]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m2,        m1, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m2,        m7
+    packuswb    m6,        m2
+
+    palignr     m2,        m0, m1, 2
+    palignr     m3,        m0, m1, 4
+
+    pmaddubsw   m1,        m2, [r3 - 13 * 16]         ; [3]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m2, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m2, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m2, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m2, [r3 + 7 * 16]          ; [23]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m2,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m2,        m7
+    packuswb    m5,        m2
+
+    pmaddubsw   m6,        m3, [r3 - 15 * 16]         ; [01]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 - 5 * 16]          ; [11]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r3]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_28_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m1,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m3,        m1, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpckhbw   m0,        m1, m3                     ;[x 16 16 15 15 14 14 13 13 12 12 11 11 10 10 9]
+    punpcklbw   m1,        m3                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m1, [r3 - 11 * 16]         ; [5]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m2,        m1, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m2,        m7
+    packuswb    m4,        m2
+
+    pmaddubsw   m5,        m1, [r3 - 1 * 16]          ; [15]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m1, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m1, [r3 + 9 * 16]          ; [25]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m2,        m1, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m2,        m7
+    packuswb    m6,        m2
+
+    palignr     m2,        m0, m1, 2
+    palignr     m3,        m0, m1, 4
+
+    pmaddubsw   m1,        m2, [r3 - 13 * 16]         ; [3]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m2, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m2, [r3 - 3 * 16]          ; [13]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m2, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m2, [r3 + 7 * 16]          ; [23]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m2,        [r3 + 12 * 16]             ; [28]
+    pmulhrsw    m2,        m7
+    packuswb    m5,        m2
+
+    pmaddubsw   m6,        m3, [r3 - 15 * 16]         ; [01]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 - 5 * 16]          ; [11]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r3]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_9_new, 3,7,8
+    add         r2,        32
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m2,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m3,        m2, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpcklbw   m2,        m3                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m2, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m2, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        m2, [r3 - 10 * 16]         ; [6]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m2, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m2, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m2, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m2, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m2, [r3]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m2, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m2, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m2, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m2, [r3 + 8 * 16]          ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m2, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m2, [r3 + 12 * 16]         ; [28]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m2, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+
+    punpcklqdq  m1,        m3                         ; [00]
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_27_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2 + 1]                   ;[16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    palignr     m2,        m3, 1                      ;[x 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2]
+    punpcklbw   m3,        m2                         ;[9 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pmaddubsw   m4,        m3, [r3 - 14 * 16]         ; [2]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 - 12 * 16]         ; [4]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        m3, [r3 - 10 * 16]         ; [6]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 - 8 * 16]          ; [8]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r3]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 + 8 * 16]          ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 + 12 * 16]         ; [28]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+
+    movh        [r0         ], m4
+    movhps      [r0 + r1    ], m4
+    movh        [r0 + r1 * 2], m5
+    movhps      [r0 + r5    ], m5
+    lea         r0, [r0 + r1 * 4]
+    movh        [r0         ], m6
+    movhps      [r0 + r1    ], m6
+    movh        [r0 + r1 * 2], m1
+    movh        [r0 + r5    ], m2
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_10_new, 5,6,8
+    lea         r5,        [r1 * 3]
+    pxor        m7,        m7
+
+    movu        m0,        [r2 + 1 + 32]
+    palignr     m1,        m0, 1
+    pshufb      m1,        m7
+    palignr     m2,        m0, 2
+    pshufb      m2,        m7
+    palignr     m3,        m0, 3
+    pshufb      m3,        m7
+    palignr     m4,        m0, 4
+    pshufb      m4,        m7
+    palignr     m5,        m0, 5
+    pshufb      m5,        m7
+    palignr     m6,        m0, 6
+    pshufb      m6,        m7
+
+    movu        [r0 + r1],      m1
+    movu        [r0 + r1 * 2],  m2
+    movu        [r0 + r5],      m3
+    lea         r3,             [r0 + r1 * 4]
+    movu        [r3],           m4
+    movu        [r3 + r1],      m5
+    movu        [r3 + r1 * 2],  m6
+
+    palignr     m1,        m0, 7
+    pshufb      m1,        m7
+    movhlps     m2,        m0
+    pshufb      m2,        m7
+    palignr     m3,        m0, 9
+    pshufb      m3,        m7
+    palignr     m4,        m0, 10
+    pshufb      m4,        m7
+    palignr     m5,        m0, 11
+    pshufb      m5,        m7
+    palignr     m6,        m0, 12
+    pshufb      m6,        m7
+
+    movu        [r3 + r5],      m1
+    lea         r3,             [r3 + r1 * 4]
+    movu        [r3],           m2
+    movu        [r3 + r1],      m3
+    movu        [r3 + r1 * 2],  m4
+    movu        [r3 + r5],      m5
+    lea         r3,             [r3 + r1 * 4]
+    movu        [r3],           m6
+
+    palignr     m1,        m0, 13
+    pshufb      m1,        m7
+    palignr     m2,        m0, 14
+    pshufb      m2,        m7
+    palignr     m3,        m0, 15
+    pshufb      m3,        m7
+    pshufb      m0,        m7
+
+    movu        [r3 + r1],      m1
+    movu        [r3 + r1 * 2],  m2
+    movu        [r3 + r5],      m3
+
+; filter
+    cmp         r4w, byte 0
+    jz         .quit
+    pmovzxbw    m0,        m0
+    mova        m1,        m0
+    movu        m2,        [r2]
+    movu        m3,        [r2 + 1]
+
+    pshufb      m2,        m7
+    pmovzxbw    m2,        m2
+    movhlps     m4,        m3
+    pmovzxbw    m3,        m3
+    pmovzxbw    m4,        m4
+    psubw       m3,        m2
+    psubw       m4,        m2
+    psraw       m3,        1
+    psraw       m4,        1
+    paddw       m0,        m3
+    paddw       m1,        m4
+    packuswb    m0,        m1
+.quit:
+    movu        [r0],      m0
+    RET
+
+INIT_XMM sse4
+%if ARCH_X86_64 == 1
+cglobal intra_pred_ang16_26_new, 3,8,5
+    mov     r7, r4mp
+    %define bfilter r7w
+%else
+cglobal intra_pred_ang16_26_new, 5,7,5,0-4
+    %define bfilter dword[rsp]
+    mov     bfilter, r4
+%endif
+    movu        m0,             [r2 + 1]
+
+    lea         r4,             [r1 * 3]
+    lea         r3,             [r0 + r1 * 4]
+    lea         r5,             [r3 + r1 * 4]
+    lea         r6,             [r5 + r1 * 4]
+
+    movu        [r0],           m0
+    movu        [r0 + r1],      m0
+    movu        [r0 + r1 * 2],  m0
+    movu        [r0 + r4],      m0
+    movu        [r3],           m0
+    movu        [r3 + r1],      m0
+    movu        [r3 + r1 * 2],  m0
+    movu        [r3 + r4],      m0
+    movu        [r5],           m0
+    movu        [r5 + r1],      m0
+    movu        [r5 + r1 * 2],  m0
+    movu        [r5 + r4],      m0
+
+    movu        [r6],           m0
+    movu        [r6 + r1],      m0
+    movu        [r6 + r1 * 2],  m0
+    movu        [r6 + r4],      m0
+
+; filter
+    cmp         bfilter, byte 0
+    jz         .quit
+
+    pxor        m4,        m4
+    pshufb      m0,        m4
+    pmovzxbw    m0,        m0
+    mova        m1,        m0
+    movu        m2,        [r2 + 32]
+    pinsrb      m2,        [r2], 0
+    movu        m3,        [r2 + 1 + 32]
+
+    pshufb      m2,        m4
+    pmovzxbw    m2,        m2
+    movhlps     m4,        m3
+    pmovzxbw    m3,        m3
+    pmovzxbw    m4,        m4
+    psubw       m3,        m2
+    psubw       m4,        m2
+    psraw       m3,        1
+    psraw       m4,        1
+    paddw       m0,        m3
+    paddw       m1,        m4
+    packuswb    m0,        m1
+
+    pextrb      [r0],           m0, 0
+    pextrb      [r0 + r1],      m0, 1
+    pextrb      [r0 + r1 * 2],  m0, 2
+    pextrb      [r0 + r4],      m0, 3
+    pextrb      [r3],           m0, 4
+    pextrb      [r3 + r1],      m0, 5
+    pextrb      [r3 + r1 * 2],  m0, 6
+    pextrb      [r3 + r4],      m0, 7
+    pextrb      [r5],           m0, 8
+    pextrb      [r5 + r1],      m0, 9
+    pextrb      [r5 + r1 * 2],  m0, 10
+    pextrb      [r5 + r4],      m0, 11
+    pextrb      [r6],           m0, 12
+    pextrb      [r6 + r1],      m0, 13
+    pextrb      [r6 + r1 * 2],  m0, 14
+    pextrb      [r6 + r4],      m0, 15
+.quit:
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_11_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]              ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    mova        m2,        m3
+    palignr     m1,        m3, 1                  ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    punpcklbw   m3,        m1                     ;[8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m3, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 + 12 * 16]         ; [28]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 + 8 * 16]          ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r3]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 - 8 * 16]          ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 - 12 * 16]         ; [04]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+    punpcklqdq  m1,        m2                         ;[00]
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m3,        [r2 + 40]              ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    mova        m2,        m3
+    palignr     m1,        m3, 1                  ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    punpcklbw   m3,        m1                     ;[8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m3, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 + 12 * 16]         ; [28]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 + 8 * 16]          ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r3]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 - 8 * 16]          ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 - 12 * 16]         ; [04]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+    punpcklqdq  m1,        m2                         ;[00]
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_25_new, 3,7,8
+    lea         r3,        [ang_table + 16 * 16]
+    mov         r4d,       2
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+.loop:
+    movu        m3,        [r2]                   ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    mova        m2,        m3
+    palignr     m1,        m3, 1                  ;[15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    punpcklbw   m3,        m1                     ;[8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m3, [r3 + 14 * 16]         ; [30]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m3, [r3 + 12 * 16]         ; [28]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        m3, [r3 + 10 * 16]         ; [26]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 + 8 * 16]          ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 + 6 * 16]          ; [22]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r3 + 4 * 16]          ; [20]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r3 + 2 * 16]          ; [18]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r3]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r3 - 2 * 16]          ; [14]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r3 - 4 * 16]          ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r3 - 6 * 16]          ; [10]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r3 - 8 * 16]          ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r3 - 10 * 16]         ; [06]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r3 - 12 * 16]         ; [04]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r3 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m1,        m1
+
+    movh        [r0         ], m4
+    movhps      [r0 + r1    ], m4
+    movh        [r0 + r1 * 2], m5
+    movhps      [r0 + r5    ], m5
+    lea         r0, [r0 + r1 * 4]
+    movh        [r0         ], m6
+    movhps      [r0 + r1    ], m6
+    movh        [r0 + r1 * 2], m1
+    movh        [r0 + r5    ], m2
+
+    lea         r0,        [r6 + 8]
+    add         r2,        8
+    dec         r4
+    jnz        .loop
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_12_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m0,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_12]
+
+    palignr     m0,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m0, [r4 + 11 * 16]         ; [27]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m0, [r4 + 6 * 16]          ; [22]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        m0, [r4 + 1 * 16]          ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m0, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m0, [r4 - 9 * 16]          ; [7]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r4 - 14 * 16]             ; [2]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 + 5 * 16]          ; [21]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 11 * 16]         ; [27]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 + 6 * 16]          ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 1 * 16]          ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 9 * 16]          ; [7]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [2]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 + 5 * 16]          ; [21]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_24_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m0,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pshufb      m2,        [c_mode16_12]
+
+    palignr     m0,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m0, [r4 + 11 * 16]         ; [27]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m1,        m0, [r4 + 6 * 16]          ; [22]
+    pmulhrsw    m1,        m7
+    packuswb    m4,        m1
+
+    pmaddubsw   m5,        m0, [r4 + 1 * 16]          ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m0, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m0, [r4 - 9 * 16]          ; [7]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        [r4 - 14 * 16]             ; [2]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 + 5 * 16]          ; [21]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 11 * 16]         ; [27]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 + 6 * 16]          ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 1 * 16]          ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 9 * 16]          ; [7]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [2]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 + 5 * 16]          ; [21]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_13_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m5,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_13]
+
+    palignr     m5,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m5, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m5, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        [r4 - 11 * 16]             ; [05]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 6 * 16]          ; [10]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 6 * 16]          ; [10]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_23_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m5,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pshufb      m2,        [c_mode16_13]
+
+    palignr     m5,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m5, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m0,        m5, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m0,        m7
+    packuswb    m4,        m0
+
+    pmaddubsw   m5,        [r4 - 11 * 16]             ; [05]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 6 * 16]          ; [10]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 2 * 16]          ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 6 * 16]          ; [10]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_14_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m5,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_14]
+
+    palignr     m5,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m5, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        [r4 - 10 * 16]             ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 16]              ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 16]              ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_22_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m5,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pshufb      m2,        [c_mode16_14]
+
+    palignr     m5,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        m5, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        [r4 - 10 * 16]             ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 16]              ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 x x x x x x x]
+
+    pmaddubsw   m4,        m3, [r4 + 3 * 16]          ; [19]
+    pmulhrsw    m4,        m7
+    pmaddubsw   m5,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 9 * 16]          ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 4 * 16]          ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 15 * 16]         ; [31]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 + 2 * 16]          ; [18]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 + 16]              ; [17]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7 * 16]          ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 13 * 16]         ; [29]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_15_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_15]
+
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 16]                  ; [15]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 3 * 16]          ; [13]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 9  * 16]         ; [07]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0 0 0 0 0 0 0 15L]
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 3 * 16]          ; [13]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 -  5 * 16]         ; [11]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 7  * 16]         ; [09]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 9  * 16]         ; [07]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 +  4 * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_21_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pinsrb      m2,        [r2], 0
+    pshufb      m2,        [c_mode16_15]
+
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 16]                  ; [15]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 3 * 16]          ; [13]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 5 * 16]          ; [11]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 7 * 16]          ; [09]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 9  * 16]         ; [07]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0 0 0 0 0 0 0 15L]
+
+    pmaddubsw   m4,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 3 * 16]          ; [13]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 -  5 * 16]         ; [11]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pmaddubsw   m1,        m3, [r4 - 7  * 16]         ; [09]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 9  * 16]         ; [07]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 +  4 * 16]         ; [20]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pmaddubsw   m6,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_16_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_16]              ; [2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8]
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 5  * 16]             ; [11]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [3, 5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7  * 16]         ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1                           ; [5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 3  * 16]         ; [13]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1                           ; [8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1                           ; [9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 9  * 16]         ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1                           ; [12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    palignr     m2,        m2, 6                      ; [x, x, x, x, x, x, 14, 15, 0, 2, 3, 5, 6, 8, x, x]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0, 2, 3, 5, 6, 8, x, x]
+
+    pmaddubsw   m4,        m3, [r4 - 5  * 16]         ; [11]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7  * 16]         ; [23]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 3  * 16]         ; [13]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 +  9 * 16]         ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_20_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pinsrb      m2,        [r2], 0
+    pshufb      m2,        [c_mode16_16]              ; [2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8]
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 5  * 16]             ; [11]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m5,        m7
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [3, 5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7  * 16]         ; [23]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1                           ; [5, 6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 3  * 16]         ; [13]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [6, 8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1                           ; [8, 9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1                           ; [9, 11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 9  * 16]         ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [11, 12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1                           ; [12, 14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [14, 15, 0, 2, 3, 5, 6, 8, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    palignr     m2,        m2, 6                      ; [x, x, x, x, x, x, 14, 15, 0, 2, 3, 5, 6, 8, x, x]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0, 2, 3, 5, 6, 8, x, x]
+
+    pmaddubsw   m4,        m3, [r4 - 5  * 16]         ; [11]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 15 * 16]         ; [01]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 7  * 16]         ; [23]
+    pmulhrsw    m6,        m7
+
+    pmaddubsw   m0,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 3  * 16]         ; [13]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4 + 8 * 16]          ; [24]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pmaddubsw   m4,        m3, [r4 - 13 * 16]         ; [03]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 +  9 * 16]         ; [25]
+    pmulhrsw    m5,        m7
+    pmaddubsw   m6,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 16]              ; [15]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pmaddubsw   m1,        m3, [r4 - 11 * 16]         ; [05]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m3,        [r4]                       ; [16]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_17_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2 + 32]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    pinsrb      m3,        [r2], 0
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2]
+    pshufb      m2,        [c_mode16_17]              ; [1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4]
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 10 * 16]             ; [06]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 -  4 * 16]         ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1                           ; [2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, x]
+    pinsrb      m2,       [r2 + 5], 0                 ; [2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 8  * 16]         ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1                           ; [5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pslldq      m2,       1                           ; [7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m4,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1                           ; [9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1                           ; [10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  8 * 16]         ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1                           ; [12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1                           ; [14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4 - 16 * 16]             ; [00]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+
+    lea         r0,        [r6 + r1 * 4]
+    lea         r6,        [r6 + r1 * 8]
+
+    movu        m1,        [r2 + 1 + 32]              ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    palignr     m2,        m2, 6                      ; [x, x, x, x, x, x, 14, 15, 0, 1, 2, 4, 5, x, x, x]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0, 1, 2, 4, 5, x, x, x]
+
+    pmaddubsw   m4,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 8  * 16]         ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 1, m4, m5, m6, m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m4,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  8 * 16]         ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  2 * 16]         ; [14]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4 - 16 * 16]             ; [00]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 1, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_19_new, 4,7,8
+    lea         r4,        [ang_table + 16 * 16]
+    lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
+    mov         r6,        r0
+    mova        m7,        [pw_1024]
+
+    movu        m3,        [r2]                       ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    punpckhbw   m4,        m3, m3                     ; [15 15 14 14 13 13 12 12 11 11 10 10 9 9 8 8]
+    punpcklbw   m3,        m3                         ; [7 7 6 6 5 5 4 4 3 3 2 2 1 1 0 0]
+    movu        m2,        [r2 + 32]
+    pinsrb      m2,        [r2], 0
+    pshufb      m2,        [c_mode16_17]              ; [1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4]
+    palignr     m4,        m3, 1                      ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    pmaddubsw   m4,        [r4 - 10 * 16]             ; [06]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 15
+
+    pmaddubsw   m5,        m3, [r4 -  4 * 16]         ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1                           ; [2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, x]
+    pinsrb      m2,       [r2 + 5 + 32], 0            ; [2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 8  * 16]         ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1                           ; [5, 6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1                           ; [6, 7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pslldq      m2,       1                           ; [7, 9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m4,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1                           ; [9, 10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1                           ; [10, 11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  8 * 16]         ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1                           ; [11, 12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 - 2  * 16]         ; [14]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1                           ; [12, 14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1                           ; [14, 15, 0, 1, 2, 4, 5, x, x, x, x, x, x, x, x, x]
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4 - 16 * 16]             ; [00]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+
+    lea         r0,        [r6 + 8]
+
+    movu        m1,        [r2 + 1]                   ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
+    pslldq      m3,        m1, 1                      ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 x]
+    punpckhbw   m3,        m1                         ; [16 15 15 14 14 13 13 12 12 11 11 10 10 9 9 8]
+    palignr     m2,        m2, 6                      ; [x, x, x, x, x, 14, 15, 0, 1, 2, 4, 5, x, x, x]
+    movlhps     m2,        m1                         ; [8 7 6 5 4 3 2 1 0, 2, 3, 5, 6, 8, x, x]
+
+    pmaddubsw   m4,        m3, [r4 - 10 * 16]         ; [06]
+    pmulhrsw    m4,        m7
+
+    palignr     m3,        m2, 14
+
+    pmaddubsw   m5,        m3, [r4 - 4  * 16]         ; [12]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 2  * 16]         ; [18]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 8  * 16]         ; [24]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 + 14 * 16]         ; [30]
+    pmulhrsw    m6,        m7
+    pmaddubsw   m0,        m3, [r4 - 12 * 16]         ; [04]
+    pmulhrsw    m0,        m7
+    packuswb    m6,        m0
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 - 6  * 16]         ; [10]
+    pmulhrsw    m1,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m0,        m3, [r4]                   ; [16]
+    pmulhrsw    m0,        m7
+    packuswb    m1,        m0
+
+    TRANSPOSE_STORE_8x8 0, 0, m4, m5, m6, m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m4,        m3, [r4 + 6  * 16]         ; [22]
+    pmulhrsw    m4,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m5,        m3, [r4 + 12 * 16]         ; [28]
+    pmulhrsw    m5,        m7
+    packuswb    m4,        m5
+
+    pmaddubsw   m5,        m3, [r4 - 14 * 16]         ; [02]
+    pmulhrsw    m5,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  8 * 16]         ; [08]
+    pmulhrsw    m6,        m7
+    packuswb    m5,        m6
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m6,        m3, [r4 -  2 * 16]         ; [14]
+    pmulhrsw    m6,        m7
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 4  * 16]         ; [20]
+    pmulhrsw    m1,        m7
+    packuswb    m6,        m1
+
+    pslldq      m2,       1
+    palignr     m3,       m2, 14
+
+    pmaddubsw   m1,        m3, [r4 + 10 * 16]         ; [26]
+    pmulhrsw    m1,        m7
+    pmaddubsw   m3,        [r4 - 16 * 16]             ; [00]
+    pmulhrsw    m3,        m7
+    packuswb    m1,        m3
+
+    TRANSPOSE_STORE_8x8 1, 0, m4, m5, m6, m1
+    RET
+
+INIT_XMM sse4
+cglobal intra_pred_ang16_18_new, 4,5,3
+    movu        m0,         [r2]
+    movu        m1,         [r2 + 32]
+    mova        m2,         [c_mode16_18]
+    pshufb      m1,         m2
+
+    lea         r2,         [r1 * 2]
+    lea         r3,         [r1 * 3]
+    lea         r4,         [r1 * 4]
+    movu        [r0],       m0
+    palignr     m2,         m0, m1, 15
+    movu        [r0 + r1],  m2
+    palignr     m2,         m0, m1, 14
+    movu        [r0 + r2],  m2
+    palignr     m2,         m0, m1, 13
+    movu        [r0 + r3],  m2
+    lea         r0,         [r0 + r4]
+    palignr     m2,         m0, m1, 12
+    movu        [r0],       m2
+    palignr     m2,         m0, m1, 11
+    movu        [r0 + r1],  m2
+    palignr     m2,         m0, m1, 10
+    movu        [r0 + r2],  m2
+    palignr     m2,         m0, m1, 9
+    movu        [r0 + r3],  m2
+    lea         r0,         [r0 + r4]
+    palignr     m2,         m0, m1, 8
+    movu        [r0],       m2
+    palignr     m2,         m0, m1, 7
+    movu        [r0 + r1],  m2
+    palignr     m2,         m0, m1, 6
+    movu        [r0 + r2],  m2
+    palignr     m2,         m0, m1, 5
+    movu        [r0 + r3],  m2
+    lea         r0,         [r0 + r4]
+    palignr     m2,         m0, m1, 4
+    movu        [r0],       m2
+    palignr     m2,         m0, m1, 3
+    movu        [r0 + r1],  m2
+    palignr     m2,         m0, m1, 2
+    movu        [r0 + r2],  m2
+    palignr     m0,         m1, 1
+    movu        [r0 + r3],  m0
+    RET
+
 ;---------------------------------------------------------------------------------------------------------------
 ; void intraPredAng32(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------------------------

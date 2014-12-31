@@ -953,6 +953,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 #define SETUP_INTRA_ANG_COMMON_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
+    p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
 
 #define SETUP_INTRA_ANG(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
@@ -965,6 +966,9 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 #define SETUP_INTRA_ANG16_32(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
     p.intra_pred[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+
+#define SETUP_INTRA_ANG16_32_NEW(mode, fno, cpu) \
+    p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
 
 #define SETUP_INTRA_ANG4_8(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
@@ -1096,7 +1100,22 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG4_8_NEW(30, 6, cpu); \
     SETUP_INTRA_ANG4_8_NEW(31, 5, cpu); \
     SETUP_INTRA_ANG4_8_NEW(32, 4, cpu); \
-    SETUP_INTRA_ANG4_8_NEW(33, 3, cpu);
+    SETUP_INTRA_ANG4_8_NEW(33, 3, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(19, 19, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(20, 20, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(21, 21, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(22, 22, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(23, 23, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(24, 24, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(25, 25, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(26, 26, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(27, 27, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(28, 28, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(29, 29, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(30, 30, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(31, 31, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(32, 32, cpu); \
+    SETUP_INTRA_ANG16_32_NEW(33, 33, cpu);
 
 #define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vss = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu; \
