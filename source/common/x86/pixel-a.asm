@@ -6823,7 +6823,6 @@ cglobal psyCost_pp_8x8, 4, 6, 13
     psubd           m10, m0
     pabsd           m0, m10
     movd            eax, m0
-%endif ; HIGH_BIT_DEPTH
 %else ; !HIGH_BIT_DEPTH
     lea             r4, [3 * r1]
     mova            m8, [hmul_8p]
@@ -6918,5 +6917,6 @@ cglobal psyCost_pp_8x8, 4, 6, 13
     psubd           m12, m0
     pabsd           m0, m12
     movd            eax, m0
+%endif ; HIGH_BIT_DEPTH
     RET
 %endif
