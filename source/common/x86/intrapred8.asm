@@ -1959,7 +1959,7 @@ cglobal intra_pred_ang8_10, 4,5,5
     movh        [r0],      m0
     RET
 
-cglobal intra_pred_ang8_10_new, 3,5,5
+cglobal intra_pred_ang8_10_new, 3,6,5
     movh        m0,        [r2 + 17]
     mova        m4,        [pb_unpackbq]
     palignr     m1,        m0, 2
@@ -2118,19 +2118,20 @@ cglobal intra_pred_ang8_11, 3,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_11_new, 3,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_11_new, 3,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 25
-    cmove       r4,        r5
-    lea         r3,        [ang_table + 23 * 16]
-    mova        m7,        [pw_1024]
+    mov         r3,        16
+    cmove       r3,        r4
 
-    movu        m0,        [r2 + r4]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
+    movu        m0,        [r2 + r3]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m0,        [r2], 0
     palignr     m1,        m0, 1                      ; [x 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
 
     punpcklbw   m0,        m1                         ; [8 7 7 6 6 5 5 4 4 3 3 2 2 1 1 0]
+
+    lea         r3,        [ang_table + 23 * 16]
+    mova        m7,        [pw_1024]
 
     pmaddubsw   m4,        m0, [r3 + 7 * 16]          ; [30]
     pmulhrsw    m4,        m7
@@ -2205,18 +2206,18 @@ cglobal intra_pred_ang8_12, 4,5,8
     packuswb    m6,        m2
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_12_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_12_new, 3,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 24
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m1,        [r2 + r4]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m1,        [r2], 0
     pslldq      m0,        m1, 1                      ; [14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 a]
-    pinsrb      m0,        [r2 + r5 + 6], 0
+    pinsrb      m0,        [r2 + r3 + 6], 0
 
     lea         r4,        [ang_table + 22 * 16]
     mova        m7,        [pw_1024]
@@ -2303,20 +2304,20 @@ cglobal intra_pred_ang8_13, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_13_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_13_new, 4,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 23
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m1,        [r2 +  r4]                 ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m1,        [r2], 0
     pslldq      m1,        1                          ; [14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 a]
-    pinsrb      m1,        [r2 + r5 + 4], 0
+    pinsrb      m1,        [r2 + r3 + 4], 0
     pslldq      m0,        m1, 1                      ; [13 12 11 10 9 8 7 6 5 4 3 2 1 0 a b]
-    pinsrb      m0,        [r2 + r5 + 7], 0
+    pinsrb      m0,        [r2 + r3 + 7], 0
     punpckhbw   m5,        m0, m1                     ; [14 13 13 12 12 11 11 10 10 9 9 8 8 7 7 6]
     punpcklbw   m0,        m1                         ; [6 5 5 4 4 3 3 2 2 1 1 0 0 a a b]
     palignr     m1,        m5, m0, 2                  ; [7 6 6 5 5 4 4 3 3 2 2 1 1 0 0 a]
@@ -2405,20 +2406,20 @@ cglobal intra_pred_ang8_14, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_14_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_14_new, 4,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 22
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m1,        [r2 + r4 - 2]              ; [13 12 11 10 9 8 7 6 5 4 3 2 1 0 a b]
     pinsrb      m1,        [r2], 2
-    pinsrb      m1,        [r2 + r5 + 2], 1
-    pinsrb      m1,        [r2 + r5 + 5], 0
+    pinsrb      m1,        [r2 + r3 + 2], 1
+    pinsrb      m1,        [r2 + r3 + 5], 0
     pslldq      m0,        m1, 1                      ; [12 11 10 9 8 7 6 5 4 3 2 1 0 a b c]
-    pinsrb      m0,        [r2 + r5 + 7], 0
+    pinsrb      m0,        [r2 + r3 + 7], 0
     punpckhbw   m2,        m0, m1                     ; [13 12 12 11 11 10 10 9 9 8 8 7 7 6 6 5]
     punpcklbw   m0,        m1                         ; [5 4 4 3 3 2 2 1 1 0 0 a a b b c]
     palignr     m1,        m2, m0, 2                  ; [6 5 5 4 4 3 3 2 2 1 1 0 0 a a b]
@@ -2510,21 +2511,21 @@ cglobal intra_pred_ang8_15, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_15_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_15_new, 4,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 21
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m1,        [r2 + r4]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m1,        [r2], 0
-    movu        m2,        [r2 + r5]
+    movu        m2,        [r2 + r3]
     pshufb      m2,        [c_mode16_15]
     palignr     m1,        m2, 13                     ; [12 11 10 9 8 7 6 5 4 3 2 1 0 a b c]
     pslldq      m0,        m1, 1                      ; [11 10 9 8 7 6 5 4 3 2 1 0 a b c d]
-    pinsrb      m0,        [r2 + r5 + 8], 0
+    pinsrb      m0,        [r2 + r3 + 8], 0
     punpckhbw   m4,        m0, m1                     ; [12 11 11 10 10 9 9 8 8 7 7 6 6 5 5 4]
     punpcklbw   m0,        m1                         ; [4 3 3 2 2 1 1 0 0 a a b b c c d]
     palignr     m1,        m4, m0, 2                  ; [5 4 4 3 3 2 2 1 1 0 0 a a b b c]
@@ -2620,21 +2621,21 @@ cglobal intra_pred_ang8_16, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_16_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_16_new, 4,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 20
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m1,        [r2 + r4]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m1,        [r2], 0
-    movu        m2,        [r2 + r5]
+    movu        m2,        [r2 + r3]
     pshufb      m2,        [c_mode16_16]
     palignr     m1,        m2, 12                     ; [11 10 9 8 7 6 5 4 3 2 1 0 a b c d]
     pslldq      m0,        m1, 1                      ; [10 9 8 7 6 5 4 3 2 1 0 a b c d e]
-    pinsrb      m0,        [r2 + r5 + 8], 0
+    pinsrb      m0,        [r2 + r3 + 8], 0
     punpckhbw   m4,        m0, m1                     ; [11 10 10 9 9 8 8 7 7 6 6 5 5 4 4 3]
     punpcklbw   m0,        m1                         ; [3 2 2 1 1 0 0 a a b b c c d d e]
     palignr     m1,        m4, m0, 2                  ; [4 3 3 2 2 1 1 0 0 a a b b c c d]
@@ -2734,21 +2735,21 @@ cglobal intra_pred_ang8_17, 4,5,8
     packuswb    m1,        m0
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_17_new, 4,6,8
-    mov         r4,        16
-    mov         r5,        0
+cglobal intra_pred_ang8_17_new, 4,5,8
+    xor         r4,        r4
     cmp         r3m,       byte 19
     mov         r3,        16
-    cmove       r4,        r5
-    cmove       r5,        r3
+    jz          .next
+    xchg        r3,        r4
+.next:
 
     movu        m2,        [r2 + r4]                  ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     pinsrb      m2,        [r2], 0
-    movu        m1,        [r2 + r5]
+    movu        m1,        [r2 + r3]
     pshufb      m1,        [c_mode16_17]
     palignr     m2,        m1, 11                     ; [10 9 8 7 6 5 4 3 2 1 0 a b c d e]
     pslldq      m0,        m2, 1                      ; [9 8 7 6 5 4 3 2 1 0 a b c d e f]
-    pinsrb      m0,        [r2 + r5 + 7], 0
+    pinsrb      m0,        [r2 + r3 + 7], 0
     punpckhbw   m1,        m0, m2                     ; [10 9 9 8 8 7 7 6 6 5 5 4 4 3 3 2]
     punpcklbw   m0,        m2                         ; [2 1 1 0 0 a a b b c c d d e e f]
 
