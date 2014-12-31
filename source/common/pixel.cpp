@@ -580,16 +580,20 @@ void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int h
 {
     int x, y;
 
+    const int correction = (IF_INTERNAL_PREC - X265_DEPTH);
+
     X265_CHECK(!(width & 15), "weightp alignment error\n");
     X265_CHECK(!((w0 << 6) > 32767), "w0 using more than 16 bits, asm output will mismatch\n");
     X265_CHECK(!(round > 32767), "round using more than 16 bits, asm output will mismatch\n");
+    X265_CHECK((shift >= correction), "shift must be include factor correction, please update ASM ABI\n");
+    X265_CHECK(!(round & ((1 << correction) - 1)), "round must be include factor correction, please update ASM ABI\n");
 
     for (y = 0; y <= height - 1; y++)
     {
         for (x = 0; x <= width - 1; )
         {
             // simulating pixel to short conversion
-            int16_t val = src[x] << (IF_INTERNAL_PREC - X265_DEPTH);
+            int16_t val = src[x] << correction;
             dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (val) + round) >> shift) + offset);
             x++;
         }
