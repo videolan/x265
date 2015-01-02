@@ -33,14 +33,10 @@ pixel dcPredValue(pixel* above, pixel* left, intptr_t width)
     pixel pDcVal;
 
     for (w = 0; w < width; w++)
-    {
         sum += above[w];
-    }
 
     for (w = 0; w < width; w++)
-    {
         sum += left[w];
-    }
 
     pDcVal = (pixel)((sum + width) / (width + width));
 
@@ -53,9 +49,7 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
     dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);
 
     for (int x = 1; x < size; x++)
-    {
         dst[x] = (pixel)((above[x] +  3 * dst[x] + 2) >> 2);
-    }
 
     dst += dststride;
     for (int y = 1; y < size; y++)
@@ -75,15 +69,11 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, 
     for (k = 0; k < width; k++)
     {
         for (l = 0; l < width; l++)
-        {
             dst[k * dstStride + l] = dcval;
-        }
     }
 
     if (bFilter)
-    {
         dcPredFilter(above + 1, left + 1, dst, dstStride, width);
-    }
 }
 
 template<int log2Size>
@@ -182,9 +172,7 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
             for (k = 0; k < width; k++)
             {
                 for (l = 0; l < width; l++)
-                {
                     dst[k * dstStride + l] = refMain[l + 1];
-                }
             }
 
             if (bFilter)
@@ -219,9 +207,7 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
                 {
                     // Just copy the integer samples
                     for (l = 0; l < width; l++)
-                    {
                         dst[k * dstStride + l] = refMain[l + deltaInt + 1];
-                    }
                 }
             }
         }
