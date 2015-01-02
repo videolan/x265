@@ -85,7 +85,7 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     RET
 
 ;============================================================================================================
-; void calSign(int8_t *dst, Pixel *src1 , Pixel *src2, int endX)
+; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int endX)
 ;============================================================================================================
 INIT_XMM sse4
 cglobal calSign, 4, 5, 7

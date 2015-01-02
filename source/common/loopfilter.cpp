@@ -34,7 +34,7 @@ inline int8_t signOf(int x)
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
-void calSign(int8_t *dst, pixel *src1, pixel *src2, int endX)
+void calSign(int8_t *dst, const pixel *src1, const pixel *src2, const int endX)
 {
     for (int x = 0; x < endX; x++)
         dst[x] = signOf(src1[x] - src2[x]);
