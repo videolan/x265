@@ -770,7 +770,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("nr-inter") p->noiseReductionInter = atoi(value);
     OPT("pass")
     {
-        int pass = Clip3(0, 3, atoi(value));
+        int pass = x265_clip3(0, 3, atoi(value));
         p->rc.bStatWrite = pass & 1;
         p->rc.bStatRead = pass & 2;
     }

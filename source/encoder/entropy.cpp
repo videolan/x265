@@ -930,7 +930,7 @@ void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
 /** initialize context model with respect to QP and initialization value */
 uint8_t sbacInit(int qp, int initValue)
 {
-    qp = Clip3(0, 51, qp);
+    qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
 
     int  slope      = (initValue >> 4) * 5 - 45;
     int  offset     = ((initValue & 15) << 3) - 16;

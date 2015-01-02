@@ -74,10 +74,10 @@ void inversedst(const int16_t* tmp, int16_t* block, int shift)  // input tmp, ou
         c[2] = tmp[i] - tmp[12 + i];
         c[3] = 74 * tmp[4 + i];
 
-        block[4 * i + 0] = (int16_t)Clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
-        block[4 * i + 1] = (int16_t)Clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
-        block[4 * i + 2] = (int16_t)Clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
-        block[4 * i + 3] = (int16_t)Clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
+        block[4 * i + 0] = (int16_t)x265_clip3(-32768, 32767, (29 * c[0] + 55 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 1] = (int16_t)x265_clip3(-32768, 32767, (55 * c[2] - 29 * c[1]     + c[3]               + rnd_factor) >> shift);
+        block[4 * i + 2] = (int16_t)x265_clip3(-32768, 32767, (74 * (tmp[i] - tmp[8 + i]  + tmp[12 + i])      + rnd_factor) >> shift);
+        block[4 * i + 3] = (int16_t)x265_clip3(-32768, 32767, (55 * c[0] + 29 * c[2]     - c[3]               + rnd_factor) >> shift);
     }
 }
 
@@ -255,10 +255,10 @@ void partialButterflyInverse4(const int16_t* src, int16_t* dst, int shift, int l
         E[1] = g_t4[0][1] * src[0] + g_t4[2][1] * src[2 * line];
 
         /* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
-        dst[0] = (int16_t)(Clip3(-32768, 32767, (E[0] + O[0] + add) >> shift));
-        dst[1] = (int16_t)(Clip3(-32768, 32767, (E[1] + O[1] + add) >> shift));
-        dst[2] = (int16_t)(Clip3(-32768, 32767, (E[1] - O[1] + add) >> shift));
-        dst[3] = (int16_t)(Clip3(-32768, 32767, (E[0] - O[0] + add) >> shift));
+        dst[0] = (int16_t)(x265_clip3(-32768, 32767, (E[0] + O[0] + add) >> shift));
+        dst[1] = (int16_t)(x265_clip3(-32768, 32767, (E[1] + O[1] + add) >> shift));
+        dst[2] = (int16_t)(x265_clip3(-32768, 32767, (E[1] - O[1] + add) >> shift));
+        dst[3] = (int16_t)(x265_clip3(-32768, 32767, (E[0] - O[0] + add) >> shift));
 
         src++;
         dst += 4;
@@ -292,8 +292,8 @@ void partialButterflyInverse8(const int16_t* src, int16_t* dst, int shift, int l
         E[2] = EE[1] - EO[1];
         for (k = 0; k < 4; k++)
         {
-            dst[k] = (int16_t)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
-            dst[k + 4] = (int16_t)Clip3(-32768, 32767, (E[3 - k] - O[3 - k] + add) >> shift);
+            dst[k] = (int16_t)x265_clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 4] = (int16_t)x265_clip3(-32768, 32767, (E[3 - k] - O[3 - k] + add) >> shift);
         }
 
         src++;
@@ -343,8 +343,8 @@ void partialButterflyInverse16(const int16_t* src, int16_t* dst, int shift, int 
 
         for (k = 0; k < 8; k++)
         {
-            dst[k]   = (int16_t)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
-            dst[k + 8] = (int16_t)Clip3(-32768, 32767, (E[7 - k] - O[7 - k] + add) >> shift);
+            dst[k]   = (int16_t)x265_clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 8] = (int16_t)x265_clip3(-32768, 32767, (E[7 - k] - O[7 - k] + add) >> shift);
         }
 
         src++;
@@ -407,8 +407,8 @@ void partialButterflyInverse32(const int16_t* src, int16_t* dst, int shift, int 
 
         for (k = 0; k < 16; k++)
         {
-            dst[k] = (int16_t)Clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
-            dst[k + 16] = (int16_t)Clip3(-32768, 32767, (E[15 - k] - O[15 - k] + add) >> shift);
+            dst[k] = (int16_t)x265_clip3(-32768, 32767, (E[k] + O[k] + add) >> shift);
+            dst[k + 16] = (int16_t)x265_clip3(-32768, 32767, (E[15 - k] - O[15 - k] + add) >> shift);
         }
 
         src++;
@@ -630,7 +630,7 @@ void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scal
     for (int n = 0; n < num; n++)
     {
         coeffQ = (quantCoef[n] * scale + add) >> shift;
-        coef[n] = (int16_t)Clip3(-32768, 32767, coeffQ);
+        coef[n] = (int16_t)x265_clip3(-32768, 32767, coeffQ);
     }
 }
 
@@ -649,15 +649,15 @@ void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int
         for (int n = 0; n < num; n++)
         {
             coeffQ = ((quantCoef[n] * deQuantCoef[n]) + add) >> (shift - per);
-            coef[n] = (int16_t)Clip3(-32768, 32767, coeffQ);
+            coef[n] = (int16_t)x265_clip3(-32768, 32767, coeffQ);
         }
     }
     else
     {
         for (int n = 0; n < num; n++)
         {
-            coeffQ   = Clip3(-32768, 32767, quantCoef[n] * deQuantCoef[n]);
-            coef[n] = (int16_t)Clip3(-32768, 32767, coeffQ << (per - shift));
+            coeffQ   = x265_clip3(-32768, 32767, quantCoef[n] * deQuantCoef[n]);
+            coef[n] = (int16_t)x265_clip3(-32768, 32767, coeffQ << (per - shift));
         }
     }
 }
@@ -680,7 +680,7 @@ uint32_t quant_c(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = (int16_t)Clip3(-32768, 32767, level);
+        qCoef[blockpos] = (int16_t)x265_clip3(-32768, 32767, level);
     }
 
     return numSig;
@@ -704,7 +704,7 @@ uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = (int16_t)Clip3(-32768, 32767, level);
+        qCoef[blockpos] = (int16_t)x265_clip3(-32768, 32767, level);
     }
 
     return numSig;

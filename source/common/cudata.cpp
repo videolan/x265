@@ -106,8 +106,8 @@ inline bool lessThanRow(int addr, int val, int numUnitsPerRow)
 
 inline MV scaleMv(MV mv, int scale)
 {
-    int mvx = Clip3(-32768, 32767, (scale * mv.x + 127 + (scale * mv.x < 0)) >> 8);
-    int mvy = Clip3(-32768, 32767, (scale * mv.y + 127 + (scale * mv.y < 0)) >> 8);
+    int mvx = x265_clip3(-32768, 32767, (scale * mv.x + 127 + (scale * mv.x < 0)) >> 8);
+    int mvy = x265_clip3(-32768, 32767, (scale * mv.y + 127 + (scale * mv.y < 0)) >> 8);
 
     return MV((int16_t)mvx, (int16_t)mvy);
 }
@@ -1986,10 +1986,10 @@ void CUData::scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefP
         outMV = inMV;
     else
     {
-        int tdb   = Clip3(-128, 127, diffPocB);
-        int tdd   = Clip3(-128, 127, diffPocD);
+        int tdb   = x265_clip3(-128, 127, diffPocB);
+        int tdd   = x265_clip3(-128, 127, diffPocD);
         int x     = (0x4000 + abs(tdd / 2)) / tdd;
-        int scale = Clip3(-4096, 4095, (tdb * x + 32) >> 6);
+        int scale = x265_clip3(-4096, 4095, (tdb * x + 32) >> 6);
         outMV = scaleMv(inMV, scale);
     }
 }

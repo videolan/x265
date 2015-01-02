@@ -190,9 +190,7 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *ref
             if (bFilter)
             {
                 for (k = 0; k < width; k++)
-                {
-                    dst[k * dstStride] = (pixel)Clip3((int16_t)0, (int16_t)((1 << X265_DEPTH) - 1), static_cast<int16_t>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
-                }
+                    dst[k * dstStride] = x265_clip((int16_t)((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
             }
         }
         else

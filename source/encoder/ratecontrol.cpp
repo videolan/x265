@@ -365,9 +365,9 @@ RateControl::RateControl(x265_param *p)
     m_rce2Pass = NULL;
 
     // vbv initialization
-    m_param->rc.vbvBufferSize = Clip3(0, 2000000, m_param->rc.vbvBufferSize);
-    m_param->rc.vbvMaxBitrate = Clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
-    m_param->rc.vbvBufferInit = Clip3(0.0, 2000000.0, m_param->rc.vbvBufferInit);
+    m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
+    m_param->rc.vbvMaxBitrate = x265_clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
+    m_param->rc.vbvBufferInit = x265_clip3(0.0, 2000000.0, m_param->rc.vbvBufferInit);
     m_singleFrameVbv = 0;
     if (m_param->rc.vbvBufferSize)
     {
@@ -428,8 +428,8 @@ RateControl::RateControl(x265_param *p)
         if (m_qp && !m_param->bLossless)
         {
             m_qpConstant[P_SLICE] = m_qp;
-            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_qp + m_pbOffset + 0.5));
+            m_qpConstant[I_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_qp + m_pbOffset + 0.5));
         }
         else
         {
@@ -471,8 +471,8 @@ bool RateControl::init(const SPS *sps)
         m_singleFrameVbv = m_bufferRate * 1.1 > m_bufferSize;
 
         if (m_param->rc.vbvBufferInit > 1.)
-            m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
-        m_param->rc.vbvBufferInit = Clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
+            m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
+        m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
     }
 
@@ -737,10 +737,10 @@ void RateControl::initHRD(SPS *sps)
     hrd->cbrFlag = m_isCbr;
 
     // normalize HRD size and rate to the value / scale notation
-    hrd->bitRateScale = Clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT);
+    hrd->bitRateScale = x265_clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT);
     hrd->bitRateValue = (vbvMaxBitrate >> (hrd->bitRateScale + BR_SHIFT));
 
-    hrd->cpbSizeScale = Clip3(0, 15, calcScale(vbvBufferSize) - CPB_SHIFT);
+    hrd->cpbSizeScale = x265_clip3(0, 15, calcScale(vbvBufferSize) - CPB_SHIFT);
     hrd->cpbSizeValue = (vbvBufferSize >> (hrd->cpbSizeScale + CPB_SHIFT));
     int bitRateUnscale = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
     int cpbSizeUnscale = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
@@ -753,9 +753,9 @@ void RateControl::initHRD(SPS *sps)
     int maxDpbOutputDelay = (int)(sps->maxDecPicBuffering * MAX_DURATION * time->timeScale / time->numUnitsInTick);
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
 
-    hrd->initialCpbRemovalDelayLength = 2 + Clip3(4, 22, 32 - calcLength(maxDelay));
-    hrd->cpbRemovalDelayLength = Clip3(4, 31, 32 - calcLength(maxCpbOutputDelay));
-    hrd->dpbOutputDelayLength = Clip3(4, 31, 32 - calcLength(maxDpbOutputDelay));
+    hrd->initialCpbRemovalDelayLength = 2 + x265_clip3(4, 22, 32 - calcLength(maxDelay));
+    hrd->cpbRemovalDelayLength = x265_clip3(4, 31, 32 - calcLength(maxCpbOutputDelay));
+    hrd->dpbOutputDelayLength = x265_clip3(4, 31, 32 - calcLength(maxDpbOutputDelay));
 
     #undef MAX_DURATION
 }
@@ -1024,9 +1024,9 @@ int RateControl::rateControlSliceType(int frameNum)
              * adaptive B-frames, but that would be complicated.
              * So just calculate the average QP used so far. */
             m_param->rc.qp = (m_accumPQp < 1) ? ABR_INIT_QP_MAX : (int)(m_accumPQp + 0.5);
-            m_qpConstant[P_SLICE] = Clip3(0, QP_MAX_MAX, m_param->rc.qp);
-            m_qpConstant[I_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp - m_ipOffset + 0.5));
-            m_qpConstant[B_SLICE] = Clip3(0, QP_MAX_MAX, (int)(m_param->rc.qp + m_pbOffset + 0.5));
+            m_qpConstant[P_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, m_param->rc.qp);
+            m_qpConstant[I_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_param->rc.qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_param->rc.qp + m_pbOffset + 0.5));
 
             x265_log(m_param, X265_LOG_ERROR, "2nd pass has more frames than 1st pass (%d)\n", m_numEntries);
             x265_log(m_param, X265_LOG_ERROR, "continuing anyway, at constant QP=%d\n", m_param->rc.qp);
@@ -1139,7 +1139,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             rce->lastSatd = m_currentSatd;
         }
         double q = x265_qScale2qp(rateEstimateQscale(curFrame, rce));
-        q = Clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
+        q = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
         m_qp = int(q + 0.5);
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
@@ -1163,7 +1163,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     if (curFrame->m_forceqp)
     {
         m_qp = (int32_t)(curFrame->m_forceqp + 0.5) - 1;
-        m_qp = Clip3(QP_MIN, QP_MAX_MAX, m_qp);
+        m_qp = x265_clip3(QP_MIN, QP_MAX_MAX, m_qp);
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = m_qp;
     }
     // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
@@ -1223,7 +1223,7 @@ double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
     {
         double maxQscale = m_lastQScaleFor[rce->sliceType] * m_lstep;
         double minQscale = m_lastQScaleFor[rce->sliceType] / m_lstep;
-        q = Clip3(minQscale, maxQscale, q);
+        q = x265_clip3(minQscale, maxQscale, q);
     }
 
     m_lastQScaleFor[rce->sliceType] = q;
@@ -1271,7 +1271,7 @@ bool RateControl::findUnderflow(double *fills, int *t0, int *t1, int over)
     {
         fill += (m_frameDuration * m_vbvMaxRate -
                  qScale2bits(&m_rce2Pass[i], m_rce2Pass[i].newQScale)) * parity;
-        fill = Clip3(0.0, m_bufferSize, fill);
+        fill = x265_clip3(0.0, m_bufferSize, fill);
         fills[i] = fill;
         if (fill <= bufferMin || i == 0)
         {
@@ -1296,9 +1296,9 @@ bool RateControl::fixUnderflow(int t0, int t1, double adjustment, double qscaleM
     for (int i = t0; i <= t1; i++)
     {
         qscaleOrig = m_rce2Pass[i].newQScale;
-        qscaleOrig = Clip3(qscaleMin, qscaleMax, qscaleOrig);
+        qscaleOrig = x265_clip3(qscaleMin, qscaleMax, qscaleOrig);
         qscaleNew  = qscaleOrig * adjustment;
-        qscaleNew  = Clip3(qscaleMin, qscaleMax, qscaleNew);
+        qscaleNew  = x265_clip3(qscaleMin, qscaleMax, qscaleNew);
         m_rce2Pass[i].newQScale = qscaleNew;
         adjusted = adjusted || (qscaleNew != qscaleOrig);
     }
@@ -1360,7 +1360,7 @@ double RateControl::tuneAbrQScaleFromFeedback(double qScale)
         if (wantedBits > 0 && m_totalBits > 0 && !m_partialResidualFrames)
         {
             abrBuffer *= X265_MAX(1, sqrt(timeDone));
-            overflow = Clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
+            overflow = x265_clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
             qScale *= overflow;
         }
     }
@@ -1448,7 +1448,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 double lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
                 double lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
-                qScale = Clip3(lmin, lmax, qScale);
+                qScale = x265_clip3(lmin, lmax, qScale);
             }
             q = x265_qScale2qp(qScale);
         }
@@ -1494,13 +1494,13 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             }
             diff = m_predictedBits - (int64_t)rce->expectedBits;
             q = rce->newQScale;
-            q /= Clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
+            q /= x265_clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
             if (m_expectedBitsSum > 0)
             {
                 /* Adjust quant based on the difference between
                  * achieved and expected bitrate so far */
                 double curTime = (double)rce->encodeOrder / m_numEntries;
-                double w = Clip3(0.0, 1.0, curTime * 100);
+                double w = x265_clip3(0.0, 1.0, curTime * 100);
                 q *= pow((double)m_totalBits / m_expectedBitsSum, w);
             }
             rce->qpNoVbv = x265_qScale2qp(q);
@@ -1524,7 +1524,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                     expectedVbv = m_bufferFill + m_bufferRate - expectedSize;
                 }
             }
-            q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
+            q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
         }
         else
         {
@@ -1584,7 +1584,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                         else if (overflow < 0.9)
                             lqmin /= m_lstep;
                     }
-                    q = Clip3(lqmin, lqmax, q);
+                    q = x265_clip3(lqmin, lqmax, q);
                 }
             }
             else if (m_qCompress != 1 && m_param->rc.rateControlMode == X265_RC_CRF)
@@ -1597,7 +1597,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 double lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * m_lstep;
                 q = X265_MIN(lqmax, q);
             }
-            q = Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
+            q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
             rce->qpNoVbv = x265_qScale2qp(q);
             q = clipQscale(curFrame, rce, q);
         }
@@ -1778,7 +1778,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     continue;
                 }
                 /* Try to get the buffer atleast 50% filled, but don't set an impossible goal. */
-                targetFill = Clip3(m_bufferSize - (m_bufferSize * totalDuration * 0.5), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                targetFill = x265_clip3(m_bufferSize - (m_bufferSize * totalDuration * 0.5), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
                 if (m_isCbr && bufferFillCur > targetFill)
                 {
                     q /= 1.01;
@@ -1796,7 +1796,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     (m_sliceType == I_SLICE && m_lastNonBPictType == I_SLICE)) &&
                 m_bufferFill / m_bufferSize < 0.5)
             {
-                q /= Clip3(0.5, 1.0, 2.0 * m_bufferFill / m_bufferSize);
+                q /= x265_clip3(0.5, 1.0, 2.0 * m_bufferFill / m_bufferSize);
             }
             // Now a hard threshold to make sure the frame fits in VBV.
             // This one is mostly for I-frames.
@@ -1812,7 +1812,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             {
                 double qf = 1.0;
                 if (bits > m_bufferFill / maxFillFactor)
-                    qf = Clip3(0.2, 1.0, m_bufferFill / (maxFillFactor * bits));
+                    qf = x265_clip3(0.2, 1.0, m_bufferFill / (maxFillFactor * bits));
                 q /= qf;
                 bits *= qf;
                 if (bits < m_bufferRate / minFillFactor)
@@ -1835,7 +1835,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
         {
             double qpNoVbv = x265_qScale2qp(q0);
             double qmax = X265_MIN(MAX_MAX_QPSCALE,x265_qp2qScale(qpNoVbv + m_rateFactorMaxIncrement));
-            return Clip3(MIN_QPSCALE, qmax, q);
+            return x265_clip3(MIN_QPSCALE, qmax, q);
         }
     }
     if (m_2pass)
@@ -1847,7 +1847,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
         q = q*(max - min) + min;
         return exp(q);
     }
-    return Clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
+    return x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
 }
 
 double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, double qpVbv, int32_t& encodedBitsSoFar)
@@ -2020,7 +2020,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         if (qpVbv > qpMax && prevRowQp < qpMax && canReencodeRow)
         {
             /* Bump QP to halfway in between... close enough. */
-            qpVbv = Clip3(prevRowQp + 1.0f, qpMax, (prevRowQp + qpVbv) * 0.5);
+            qpVbv = x265_clip3(prevRowQp + 1.0f, qpMax, (prevRowQp + qpVbv) * 0.5);
             return -1;
         }
 
@@ -2028,7 +2028,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         {
             if (qpVbv < qpMin && prevRowQp > qpMin && canReencodeRow)
             {
-                qpVbv = Clip3(qpMin, prevRowQp, (prevRowQp + qpVbv) * 0.5);
+                qpVbv = x265_clip3(qpMin, prevRowQp, (prevRowQp + qpVbv) * 0.5);
                 return -1;
             }
         }
@@ -2081,7 +2081,7 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
     const double range = 2;
     double old_coeff = p->coeff / p->count;
     double new_coeff = bits * q / var;
-    double new_coeff_clipped = Clip3(old_coeff / range, old_coeff * range, new_coeff);
+    double new_coeff_clipped = x265_clip3(old_coeff / range, old_coeff * range, new_coeff);
     double new_offset = bits * q - new_coeff_clipped * var;
     if (new_offset >= 0)
         new_coeff = new_coeff_clipped;

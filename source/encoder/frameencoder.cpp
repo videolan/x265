@@ -275,7 +275,7 @@ void FrameEncoder::compressFrame()
     m_rce.newQp = qp;
 
     /* Clip slice QP to 0-51 spec range before encoding */
-    slice->m_sliceQp = Clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
+    slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
     m_initSliceContext.resetEntropy(*slice);
 
@@ -754,7 +754,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         {
             int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
             tld.analysis.setQP(*slice, qp);
-            qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
+            qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
             ctu->setQPSubParts((int8_t)qp, 0, 0);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
@@ -824,7 +824,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             {
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
-                qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
+                qpBase = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
                 curEncData.m_rowStat[row].diagQp = qpBase;
                 curEncData.m_rowStat[row].diagQpScale =  x265_qp2qScale(qpBase);
 
@@ -1140,7 +1140,7 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
     qp_offset /= cnt;
     qp += qp_offset;
 
-    return Clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
+    return x265_clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
 }
 
 Frame *FrameEncoder::getEncodedPicture(NALList& output)

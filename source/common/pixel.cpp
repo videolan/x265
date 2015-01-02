@@ -567,7 +567,7 @@ void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t ds
         for (x = 0; x <= width - 1; )
         {
             // note: width can be odd
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
+            dst[x] = x265_clip(((w0 * (src[x] + IF_INTERNAL_OFFS) + round) >> shift) + offset);
             x++;
         }
 
@@ -594,7 +594,7 @@ void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int h
         {
             // simulating pixel to short conversion
             int16_t val = src[x] << correction;
-            dst[x] = (pixel)Clip3(0, ((1 << X265_DEPTH) - 1), ((w0 * (val) + round) >> shift) + offset);
+            dst[x] = x265_clip(((w0 * (val) + round) >> shift) + offset);
             x++;
         }
 
@@ -913,7 +913,7 @@ void pixel_add_ps_c(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* 
     for (int y = 0; y < by; y++)
     {
         for (int x = 0; x < bx; x++)
-            a[x] = Clip(b0[x] + b1[x]);
+            a[x] = x265_clip(b0[x] + b1[x]);
 
         b0 += sstride0;
         b1 += sstride1;
@@ -933,8 +933,8 @@ void addAvg(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0S
     {
         for (int x = 0; x < bx; x += 2)
         {
-            dst[x + 0] = Clip((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
-            dst[x + 1] = Clip((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
+            dst[x + 0] = x265_clip((src0[x + 0] + src1[x + 0] + offset) >> shiftNum);
+            dst[x + 1] = x265_clip((src0[x + 1] + src1[x + 1] + offset) >> shiftNum);
         }
 
         src0 += src0Stride;

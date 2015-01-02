@@ -297,12 +297,12 @@ static inline void pelFilterLumaStrong(pixel* src, intptr_t srcStep, intptr_t of
         int16_t m1  = (int16_t)src[-offset * 3];
         int16_t m7  = (int16_t)src[offset * 3];
         int16_t m0  = (int16_t)src[-offset * 4];
-        src[-offset * 3] = (pixel)(Clip3(-tcP, tcP, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3) - m1) + m1);
-        src[-offset * 2] = (pixel)(Clip3(-tcP, tcP, ((m1 + m2 + m3 + m4 + 2) >> 2) - m2) + m2);
-        src[-offset]     = (pixel)(Clip3(-tcP, tcP, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3) - m3) + m3);
-        src[0]           = (pixel)(Clip3(-tcQ, tcQ, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3) - m4) + m4);
-        src[offset]      = (pixel)(Clip3(-tcQ, tcQ, ((m3 + m4 + m5 + m6 + 2) >> 2) - m5) + m5);
-        src[offset * 2]  = (pixel)(Clip3(-tcQ, tcQ, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3) - m6) + m6);
+        src[-offset * 3] = (pixel)(x265_clip3(-tcP, tcP, ((2 * m0 + 3 * m1 + m2 + m3 + m4 + 4) >> 3) - m1) + m1);
+        src[-offset * 2] = (pixel)(x265_clip3(-tcP, tcP, ((m1 + m2 + m3 + m4 + 2) >> 2) - m2) + m2);
+        src[-offset]     = (pixel)(x265_clip3(-tcP, tcP, ((m1 + 2 * m2 + 2 * m3 + 2 * m4 + m5 + 4) >> 3) - m3) + m3);
+        src[0]           = (pixel)(x265_clip3(-tcQ, tcQ, ((m2 + 2 * m3 + 2 * m4 + 2 * m5 + m6 + 4) >> 3) - m4) + m4);
+        src[offset]      = (pixel)(x265_clip3(-tcQ, tcQ, ((m3 + m4 + m5 + m6 + 2) >> 2) - m5) + m5);
+        src[offset * 2]  = (pixel)(x265_clip3(-tcQ, tcQ, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3) - m6) + m6);
     }
 }
 
@@ -326,21 +326,21 @@ static inline void pelFilterLuma(pixel* src, intptr_t srcStep, intptr_t offset, 
 
         if (abs(delta) < thrCut)
         {
-            delta = Clip3(-tc, tc, delta);
+            delta = x265_clip3(-tc, tc, delta);
 
-            src[-offset] = Clip(m3 + (delta & maskP));
-            src[0] = Clip(m4 - (delta & maskQ));
+            src[-offset] = x265_clip(m3 + (delta & maskP));
+            src[0] = x265_clip(m4 - (delta & maskQ));
             if (maskP1)
             {
                 int16_t m1  = (int16_t)src[-offset * 3];
-                int32_t delta1 = Clip3(-tc2, tc2, ((((m1 + m3 + 1) >> 1) - m2 + delta) >> 1));
-                src[-offset * 2] = Clip(m2 + delta1);
+                int32_t delta1 = x265_clip3(-tc2, tc2, ((((m1 + m3 + 1) >> 1) - m2 + delta) >> 1));
+                src[-offset * 2] = x265_clip(m2 + delta1);
             }
             if (maskQ1)
             {
                 int16_t m6  = (int16_t)src[offset * 2];
-                int32_t delta2 = Clip3(-tc2, tc2, ((((m6 + m4 + 1) >> 1) - m5 - delta) >> 1));
-                src[offset] = Clip(m5 + delta2);
+                int32_t delta2 = x265_clip3(-tc2, tc2, ((((m6 + m4 + 1) >> 1) - m5 - delta) >> 1));
+                src[offset] = x265_clip(m5 + delta2);
             }
         }
     }
@@ -361,9 +361,9 @@ static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset
         int16_t m5  = (int16_t)src[offset];
         int16_t m2  = (int16_t)src[-offset * 2];
 
-        int32_t delta = Clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
-        src[-offset] = Clip(m3 + (delta & maskP));
-        src[0] = Clip(m4 - (delta & maskQ));
+        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
+        src[-offset] = x265_clip(m3 + (delta & maskP));
+        src[0] = x265_clip(m4 - (delta & maskQ));
     }
 }
 
@@ -413,7 +413,7 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
         int32_t qpP = cuP->m_qp[partP];
         int32_t qp = (qpP + qpQ + 1) >> 1;
 
-        int32_t indexB = Clip3(0, QP_MAX_SPEC, qp + betaOffset);
+        int32_t indexB = x265_clip3(0, QP_MAX_SPEC, qp + betaOffset);
 
         const int32_t bitdepthShift = X265_DEPTH - 8;
         int32_t beta = s_betaTable[indexB] << bitdepthShift;
@@ -438,7 +438,7 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
             maskQ = (cuQ->m_tqBypass[partQ] ? 0 : -1);
         }
 
-        int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
+        int32_t indexTC = x265_clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
         int32_t tc = s_tcTable[indexTC] << bitdepthShift;
 
         bool sw = (2 * d0 < (beta >> 2) &&
@@ -538,7 +538,7 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
                     qp = X265_MIN(qp, 51);
             }
 
-            int32_t indexTC = Clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET + tcOffset));
+            int32_t indexTC = x265_clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET + tcOffset));
             const int32_t bitdepthShift = X265_DEPTH - 8;
             int32_t tc = s_tcTable[indexTC] << bitdepthShift;
             pixel* srcC = srcChroma[chromaIdx];

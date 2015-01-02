@@ -178,7 +178,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
     Slice* slice = frame->m_encData->m_slice;
     int qpCb = qp;
     if (m_param->internalCsp == X265_CSP_I420)
-        qpCb = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0]]);
+        qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0]]);
     else
         qpCb = X265_MIN(qp + slice->m_pps->chromaQpOffset[0], QP_MAX_SPEC);
     m_lumaLambda = x265_lambda2_tab[qp];
@@ -1217,7 +1217,7 @@ inline int64_t SAO::estSaoTypeDist(int plane, int typeIdx, double lambda, int32_
         if (count)
         {
             int offset = roundIBDI(offsetOrg, count << SAO_BIT_INC);
-            offset = Clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
+            offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
             if (typeIdx < SAO_BO)
             {
                 if (classIdx < 3)

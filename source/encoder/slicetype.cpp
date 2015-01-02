@@ -1441,9 +1441,9 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
         /* Rescale considering the constraints on curOffset. We do it in this order
          * because scale has a much wider range than offset (because of denom), so
          * it should almost never need to be clamped. */
-        curOffset = Clip3(-128, 127, curOffset);
+        curOffset = x265_clip3(-128, 127, curOffset);
         curScale = (int)((1 << mindenom) * (fencMean - curOffset) / refMean + 0.5f);
-        curScale = Clip3(0, 127, curScale);
+        curScale = x265_clip3(0, 127, curScale);
     }
     SET_WEIGHT(m_w, 1, curScale, mindenom, curOffset);
     s = weightCostLuma(frames, b, p0, &m_w);

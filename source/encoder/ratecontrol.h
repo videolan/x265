@@ -42,7 +42,7 @@ class SEIBufferingPeriod;
 #define MAX_FRAME_DURATION 1.00
 #define MIN_FRAME_DURATION 0.01
 
-#define CLIP_DURATION(f) Clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
+#define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
 /* Current frame stats for 2 pass */
 struct FrameStats

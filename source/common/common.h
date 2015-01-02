@@ -146,18 +146,6 @@ typedef int32_t  ssum2_t;      //Signed sum
 #define BITS_FOR_POC 8
 
 template<typename T>
-inline pixel Clip(T x)
-{
-    return (pixel)std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
-}
-
-template<typename T>
-inline T Clip3(T minVal, T maxVal, T a)
-{
-    return std::min<T>(std::max<T>(minVal, a), maxVal);
-}
-
-template<typename T>
 inline T x265_min(T a, T b) { return a < b ? a : b; }
 
 template<typename T>
@@ -165,6 +153,9 @@ inline T x265_max(T a, T b) { return a > b ? a : b; }
 
 template<typename T>
 inline T x265_clip3(T minVal, T maxVal, T a) { return x265_min(x265_max(minVal, a), maxVal); }
+
+template<typename T> /* clip to pixel range, 0..255 or 0..1023 */
+inline pixel x265_clip(T x) { return (pixel)x265_min<T>(T((1 << X265_DEPTH) - 1), x265_max<T>(T(0), x)); }
 
 typedef int16_t  coeff_t;      // transform coefficient
 

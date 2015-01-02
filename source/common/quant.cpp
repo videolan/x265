@@ -201,7 +201,7 @@ void Quant::setQPforQuant(const CUData& ctu)
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 {
-    int qp = Clip3(-QP_BD_OFFSET, 57, qpin);
+    int qp = x265_clip3(-QP_BD_OFFSET, 57, qpin);
     if (qp >= 30)
     {
         if (chFmt == X265_CSP_I420)

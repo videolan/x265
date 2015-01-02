@@ -84,10 +84,10 @@ bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t op
             rand_srcStride = rand_width;
 
         rand_width &= ~(min_size - 1);
-        rand_width = Clip3(min_size, max_size, rand_width);
+        rand_width = x265_clip3(min_size, max_size, rand_width);
 
         rand_height &= ~(min_size - 1);
-        rand_height = Clip3(min_size, max_size, rand_height);
+        rand_height = x265_clip3(min_size, max_size, rand_height);
 
         ref(pixel_test_buff[index],
             rand_srcStride,

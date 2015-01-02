@@ -303,7 +303,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 
             if (plane)
             {
-                int scale = Clip3(0, 255, (int)(guessScale[plane] * (1 << denom) + 0.5f));
+                int scale = x265_clip3(0, 255, (int)(guessScale[plane] * (1 << denom) + 0.5f));
                 if (scale > 127)
                     continue;
                 weights[plane].inputWeight = scale;
@@ -413,8 +413,8 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
             static const int scaleDist = 4;
             static const int offsetDist = 2;
 
-            int startScale = Clip3(0, 127, minscale - scaleDist);
-            int endScale   = Clip3(0, 127, minscale + scaleDist);
+            int startScale = x265_clip3(0, 127, minscale - scaleDist);
+            int endScale   = x265_clip3(0, 127, minscale + scaleDist);
             for (int scale = startScale; scale <= endScale; scale++)
             {
                 int deltaWeight = scale - (1 << mindenom);
@@ -429,13 +429,13 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                     /* Rescale considering the constraints on curOffset. We do it in this order
                      * because scale has a much wider range than offset (because of denom), so
                      * it should almost never need to be clamped. */
-                    curOffset = Clip3(-128, 127, curOffset);
+                    curOffset = x265_clip3(-128, 127, curOffset);
                     curScale = (int)((1 << mindenom) * (fencMean[plane] - curOffset) / refMean[plane] + 0.5f);
-                    curScale = Clip3(0, 127, curScale);
+                    curScale = x265_clip3(0, 127, curScale);
                 }
 
-                int startOffset = Clip3(-128, 127, curOffset - offsetDist);
-                int endOffset   = Clip3(-128, 127, curOffset + offsetDist);
+                int startOffset = x265_clip3(-128, 127, curOffset - offsetDist);
+                int endOffset   = x265_clip3(-128, 127, curOffset + offsetDist);
                 for (int off = startOffset; off <= endOffset; off++)
                 {
                     WeightParam wsp;

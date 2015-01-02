@@ -54,7 +54,7 @@ public:
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
-            qpCb = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+            qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
         else
             qpCb = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
@@ -62,7 +62,7 @@ public:
         m_chromaDistWeight[0] = lambdaOffset;
 
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
-            qpCr = Clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+            qpCr = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
         else
             qpCr = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
