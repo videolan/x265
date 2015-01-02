@@ -954,6 +954,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 #define SETUP_INTRA_ANG_COMMON_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
+    p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
 
 #define SETUP_INTRA_ANG(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
@@ -969,6 +970,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 #define SETUP_INTRA_ANG16_32_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
+    p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
 
 #define SETUP_INTRA_ANG4_8(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
