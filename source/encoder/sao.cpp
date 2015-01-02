@@ -328,8 +328,13 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         if (!tpely)
             rec += stride;
 
-        for (x = 0; x < ctuWidth; x++)
-            upBuff1[x] = signOf(rec[x] - tmpU[x]);
+        if (!(ctuWidth & 15))
+            primitives.sign(upBuff1, rec, tmpU, ctuWidth);
+        else
+        {
+            for (x = 0; x < ctuWidth; x++)
+                upBuff1[x] = signOf(rec[x] - tmpU[x]);
+        }
 
         for (y = startY; y < endY; y++)
         {
