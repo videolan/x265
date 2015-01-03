@@ -1561,7 +1561,7 @@ cglobal denoise_dct, 4, 4, 6
     mova     [r1 + 16], m2
 
     movu     m3, [r2]
-    psubsw   m1, m3
+    psubusw  m1, m3
     pcmpgtw  m4, m1, m5
     pand     m1, m4
     psignw   m1, m0
@@ -1590,7 +1590,7 @@ cglobal denoise_dct, 4, 4, 6
     paddd    m2, m3
     movu     [r1 + 32], m2
     movu     m3, [r2]
-    psubw    m1, m3
+    psubusw  m1, m3
     pcmpgtw  m4, m1, m5
     pand     m1, m4
     psignw   m1, m0

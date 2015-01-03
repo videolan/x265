@@ -1721,7 +1721,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INTRA_ANG_SSE4(sse4);
 
         p.dct[DCT_8x8] = x265_dct8_sse4;
-//        p.denoiseDct = x265_denoise_dct_sse4;
+        p.denoiseDct = x265_denoise_dct_sse4;
         p.psy_cost_pp[BLOCK_4x4] = x265_psyCost_pp_4x4_sse4;
 #if X86_64
         p.psy_cost_pp[BLOCK_8x8] = x265_psyCost_pp_8x8_sse4;
@@ -1805,7 +1805,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cpy1Dto2D_shr[BLOCK_16x16] = x265_cpy1Dto2D_shr_16_avx2;
         p.cpy1Dto2D_shr[BLOCK_32x32] = x265_cpy1Dto2D_shr_32_avx2;
 
-//        p.denoiseDct = x265_denoise_dct_avx2;
+        p.denoiseDct = x265_denoise_dct_avx2;
         p.dct[DCT_4x4] = x265_dct4_avx2;
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
