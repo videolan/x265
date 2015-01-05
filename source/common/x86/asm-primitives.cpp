@@ -1439,6 +1439,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         p.psy_cost_pp[BLOCK_8x8] = x265_psyCost_pp_8x8_sse4;
         p.psy_cost_pp[BLOCK_16x16] = x265_psyCost_pp_16x16_sse4;
+        p.psy_cost_pp[BLOCK_32x32] = x265_psyCost_pp_32x32_sse4;
 #endif
     }
     if (cpuMask & X265_CPU_XOP)
@@ -1726,6 +1727,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         p.psy_cost_pp[BLOCK_8x8] = x265_psyCost_pp_8x8_sse4;
         p.psy_cost_pp[BLOCK_16x16] = x265_psyCost_pp_16x16_sse4;
+        p.psy_cost_pp[BLOCK_32x32] = x265_psyCost_pp_32x32_sse4;
 #endif
     }
     if (cpuMask & X265_CPU_AVX)

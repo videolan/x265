@@ -221,6 +221,7 @@ void x265_upShift_8_sse4(const uint8_t* src, intptr_t srcStride, pixel* dst, int
 int x265_psyCost_pp_4x4_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_pp_8x8_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_pp_16x16_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int x265_psyCost_pp_32x32_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD
