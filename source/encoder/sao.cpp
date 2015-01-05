@@ -363,21 +363,21 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 
         if (!(ctuWidth & 15))
         {
-            pixel firstPxl, lastPxl;
+            int8_t firstSign, lastSign;
 
             if (!lpelx)
-                firstPxl = upBuff1[0];
+                firstSign = upBuff1[0];
 
             if (rpelx == picWidth)
-                lastPxl = upBuff1[ctuWidth - 1];
+                lastSign = upBuff1[ctuWidth - 1];
 
             primitives.sign(upBuff1, rec, &tmpU[- 1], ctuWidth);
 
             if (!lpelx)
-                upBuff1[0] = firstPxl;
+                upBuff1[0] = firstSign;
 
             if (rpelx == picWidth)
-                upBuff1[ctuWidth - 1] = lastPxl;
+                upBuff1[ctuWidth - 1] = lastSign;
         }
         else
         {
