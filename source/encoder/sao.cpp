@@ -447,7 +447,6 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         {
             #define SAO_BO_BITS 5
             const int boShift = X265_DEPTH - SAO_BO_BITS;
-            int x, y;
             for (y = 0; y < ctuHeight; y++)
             {
                 for (x = 0; x < ctuWidth; x++)
