@@ -250,15 +250,16 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
     int width = 2 * (rand() % 32 + 1);
     int height = 8;
     int w0 = rand() % 128;
-    int shift = rand() % 15;
+    int shift = rand() % 8; // maximum is 7, see setFromWeightAndOffset()
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     intptr_t stride = 64;
+    const int correction = (IF_INTERNAL_PREC - X265_DEPTH);
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-        checked(opt, short_test_buff[index] + j, opt_dest, stride, stride, width, height, w0, round, shift, offset);
-        ref(short_test_buff[index] + j, ref_dest, stride, stride, width, height, w0, round, shift, offset);
+        checked(opt, short_test_buff[index] + j, opt_dest, stride, stride, width, height, w0, round << correction, shift + correction, offset);
+        ref(short_test_buff[index] + j, ref_dest, stride, stride, width, height, w0, round << correction, shift + correction, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -281,15 +282,16 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
     int width = 16 * (rand() % 4 + 1);
     int height = 8;
     int w0 = rand() % 128;
-    int shift = rand() % 15;
+    int shift = rand() % 8; // maximum is 7, see setFromWeightAndOffset()
     int round = shift ? (1 << (shift - 1)) : 0;
     int offset = (rand() % 256) - 128;
     intptr_t stride = 64;
+    const int correction = (IF_INTERNAL_PREC - X265_DEPTH);
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-        checked(opt, pixel_test_buff[index] + j, opt_dest, stride, width, height, w0, round, shift, offset);
-        ref(pixel_test_buff[index] + j, ref_dest, stride, width, height, w0, round, shift, offset);
+        checked(opt, pixel_test_buff[index] + j, opt_dest, stride, width, height, w0, round << correction, shift + correction, offset);
+        ref(pixel_test_buff[index] + j, ref_dest, stride, width, height, w0, round << correction, shift + correction, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
