@@ -1558,6 +1558,7 @@ void Encoder::configure(x265_param *p)
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
 {
+    analysis->interData = analysis->intraData = NULL;
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
         analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
@@ -1582,7 +1583,7 @@ fail:
 
 void Encoder::freeAnalysis(x265_analysis_data* analysis)
 {
-    if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
+    if (analysis->intraData)
     {
         X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
         X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
