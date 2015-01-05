@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +78,7 @@ protected:
     PerPlane*   m_offsetOrgPreDblk;
 
     double      m_depthSaoRate[2][4];
-    pixel*      m_offsetBo;
+    int8_t      m_offsetBo[SAO_NUM_BO_CLASSES];
     int8_t      m_offsetEo[NUM_EDGETYPE];
 
     int         m_numCuInWidth;

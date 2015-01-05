@@ -28,7 +28,8 @@
 %include "x86inc.asm"
 
 SECTION_RODATA 32
-
+pb_31:      times 16 db 31
+pb_15:      times 16 db 15
 
 SECTION .text
 cextern pb_1
@@ -82,6 +83,56 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     add         r0q, 16
     sub         r2d, 16
     jnz        .loop
+    RET
+
+;=====================================================================================
+; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
+;=====================================================================================
+INIT_XMM sse4
+cglobal saoCuOrgB0, 4, 7, 8
+
+    mov         r3d, r3m
+    mov         r4d, r4m
+
+    shr         r2d, 4
+    movu        m3, [r1 + 0]      ; offset[0-15]
+    movu        m4, [r1 + 16]     ; offset[16-31]
+    pxor        m7, m7            ; m7 =[0]
+.loopH
+    mov         r5d, r2d
+    xor         r6,  r6
+
+.loopW
+    movu        m2, [r0 + r6]     ; m0 = [rec]
+    psrlw       m1, m2, 3
+    pand        m1, [pb_31]       ; m1 = [index]
+    pcmpgtb     m0, m1, [pb_15]   ; m2 = [mask]
+
+    pshufb      m6, m3, m1
+    pshufb      m5, m4, m1
+
+    pblendvb    m6, m6, m5, m0    ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+
+    pmovzxbw    m1, m2            ; rec
+    punpckhbw   m2, m7
+
+    pmovsxbw    m0, m6            ; offset
+    punpckhbw   m6, m6
+    psraw       m6, 8
+
+    paddw       m1, m0
+    paddw       m2, m6
+    packuswb    m1, m2
+
+    movu        [r0 + r6], m1
+    add         r6d, 16
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r4]
+
+    dec         r3d
+    jnz         .loopH
     RET
 
 ;============================================================================================================

@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #define X265_LOOPFILTER_H
 
 void x265_saoCuOrgE0_sse4(pixel * rec, int8_t * offsetEo, int endX, int8_t signLeft);
+void x265_saoCuOrgB0_sse4(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
 void x265_calSign_sse4(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 
 #endif // ifndef X265_LOOPFILTER_H

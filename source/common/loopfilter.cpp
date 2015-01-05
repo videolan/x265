@@ -57,10 +57,31 @@ void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
     }
 }
 
+void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeight, intptr_t stride)
+{
+    #define SAO_BO_BITS 5
+    const int boShift = X265_DEPTH - SAO_BO_BITS;
+    int x, y;
+    for (y = 0; y < ctuHeight; y++)
+    {
+        for (x = 0; x < ctuWidth; x++)
+        {
+            int val = rec[x] + offset[rec[x] >> boShift];
+            if (val < 0)
+               val = 0;
+            else if (val > ((1 << X265_DEPTH) - 1))
+                 val = ((1 << X265_DEPTH) - 1);
+            rec[x] = (pixel)val;
+        }
+        rec += stride;
+    }
+}
+
 namespace x265 {
 void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;
+    p.saoCuOrgB0 = processSaoCUB0;
     p.sign = calSign;
 }
 }

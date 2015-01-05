@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,7 +74,6 @@ SAO::SAO()
     m_param = NULL;
     m_clipTable = NULL;
     m_clipTableBase = NULL;
-    m_offsetBo = NULL;
     m_tmpU1[0] = NULL;
     m_tmpU1[1] = NULL;
     m_tmpU1[2] = NULL;
@@ -107,7 +107,6 @@ bool SAO::create(x265_param* param)
     int numCtu = m_numCuInWidth * m_numCuInHeight;
 
     CHECKED_MALLOC(m_clipTableBase,  pixel, maxY + 2 * rangeExt);
-    CHECKED_MALLOC(m_offsetBo,       pixel, maxY + 2 * rangeExt);
 
     CHECKED_MALLOC(m_tmpL1, pixel, g_maxCUSize + 1);
     CHECKED_MALLOC(m_tmpL2, pixel, g_maxCUSize + 1);
@@ -145,7 +144,6 @@ fail:
 void SAO::destroy()
 {
     X265_FREE(m_clipTableBase);
-    X265_FREE(m_offsetBo);
 
     X265_FREE(m_tmpL1);
     X265_FREE(m_tmpL2);
@@ -443,16 +441,31 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     }
     case SAO_BO:
     {
-        const pixel* offsetBo = m_offsetBo;
+        const int8_t* offsetBo = m_offsetBo;
 
-        for (y = 0; y < ctuHeight; y++)
+        if (ctuWidth & 15)
         {
-            for (x = 0; x < ctuWidth; x++)
-                rec[x] = offsetBo[rec[x]];
-
-            rec += stride;
+            #define SAO_BO_BITS 5
+            const int boShift = X265_DEPTH - SAO_BO_BITS;
+            int x, y;
+            for (y = 0; y < ctuHeight; y++)
+            {
+                for (x = 0; x < ctuWidth; x++)
+                {
+                     int val = rec[x] + offsetBo[rec[x] >> boShift];
+                     if (val < 0)
+                         val = 0;
+                     else if (val > ((1 << X265_DEPTH) - 1))
+                         val = ((1 << X265_DEPTH) - 1);
+                     rec[x] = (pixel)val;
+                }
+                rec += stride;
+            }
         }
-
+        else
+        {
+            primitives.saoCuOrgB0(rec, offsetBo, ctuWidth, ctuHeight, stride);
+        }
         break;
     }
     default: break;
@@ -495,8 +508,6 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 
     memcpy(m_tmpU2[plane], rec, sizeof(pixel) * picWidth);
 
-    const int boShift = X265_DEPTH - SAO_BO_BITS;
-
     for (int idxX = 0; idxX < m_numCuInWidth; idxX++)
     {
         addr = idxY * m_numCuInWidth + idxX;
@@ -510,15 +521,10 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             {
                 if (typeIdx == SAO_BO)
                 {
-                    pixel* offsetBo = m_offsetBo;
-                    int offset[SAO_NUM_BO_CLASSES];
-                    memset(offset, 0, sizeof(offset));
+                    memset(m_offsetBo, 0, sizeof(m_offsetBo));
 
                     for (int i = 0; i < SAO_NUM_OFFSET; i++)
-                        offset[((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = ctuParam[addr].offset[i] << SAO_BIT_INC;
-
-                    for (int i = 0; i < (1 << X265_DEPTH); i++)
-                        offsetBo[i] = m_clipTable[i + offset[i >> boShift]];
+                        m_offsetBo[((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
                 }
                 else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {

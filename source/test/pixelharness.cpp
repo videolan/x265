@@ -999,6 +999,36 @@ bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int width = 16 * (rand() % 4 + 1);
+        int height = rand() % 64 +1;
+        int stride = rand() % 65;
+
+        ref(ref_dest, psbuf1 + j, width, height, stride);
+        checked(opt, opt_dest, psbuf1 + j, width, height, stride);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.satd[part])
@@ -1433,6 +1463,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuOrgB0)
+    {
+        if (!check_saoCuOrgB0_t(ref.saoCuOrgB0, opt.saoCuOrgB0))
+        {
+            printf("SAO_BO_0 failed\n");
+            return false;
+        }
+    }
+
     if (opt.planecopy_sp)
     {
         if (!check_planecopy_sp(ref.planecopy_sp, opt.planecopy_sp))
@@ -1760,6 +1799,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("SAO_EO_0");
         REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, 1);
+    }
+
+    if (opt.saoCuOrgB0)
+    {
+        HEADER0("SAO_BO_0");
+        REPORT_SPEEDUP(opt.saoCuOrgB0, ref.saoCuOrgB0, pbuf1, psbuf1, 64, 64, 64);
     }
 
     if (opt.planecopy_sp)
