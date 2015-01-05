@@ -1285,12 +1285,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     bestPred->sa8dCost = MAX_INT64;
     int bestSadCand = -1;
-    int cpart, sizeIdx = cuGeom.log2CUSize - 2;
-    if (m_bChromaSa8d)
-    {
-        int cuSize = 1 << cuGeom.log2CUSize;
-        cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-    }
+    int sizeIdx = cuGeom.log2CUSize - 2;
+
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
         if (m_bFrameParallel &&
@@ -1312,8 +1308,8 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->distortion = primitives.cu[sizeIdx].sa8d(fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
         if (m_bChromaSa8d)
         {
-            tempPred->distortion += primitives.pu[cpart].sa8d_inter(fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
-            tempPred->distortion += primitives.pu[cpart].sa8d_inter(fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
+            tempPred->distortion += primitives.chroma[m_csp].cu[sizeIdx].sa8d(fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
+            tempPred->distortion += primitives.chroma[m_csp].cu[sizeIdx].sa8d(fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
         }
         tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
 
@@ -1507,10 +1503,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         interMode.distortion = primitives.cu[part].sa8d(fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
         if (m_bChromaSa8d)
         {
-            uint32_t cuSize = 1 << cuGeom.log2CUSize;
-            int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-            interMode.distortion += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
-            interMode.distortion += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
+            interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
+            interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
         }
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
 
@@ -1591,13 +1585,7 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
     const Yuv& fencYuv = *bidir2Nx2N.fencYuv;
     MV   mvzero(0, 0);
-    int  cpart, partEnum = cuGeom.log2CUSize - 2;
-
-    if (m_bChromaSa8d)
-    {
-        int cuSize = 1 << cuGeom.log2CUSize;
-        cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-    }
+    int  partEnum = cuGeom.log2CUSize - 2;
 
     bidir2Nx2N.bestME[0][0] = inter2Nx2N.bestME[0][0];
     bidir2Nx2N.bestME[0][1] = inter2Nx2N.bestME[0][1];
@@ -1633,8 +1621,8 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     if (m_bChromaSa8d)
     {
         /* Add in chroma distortion */
-        sa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
-        sa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[2], bidir2Nx2N.predYuv.m_csize);
+        sa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
+        sa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[2], bidir2Nx2N.predYuv.m_csize);
     }
     bidir2Nx2N.sa8dBits = bestME[0].bits + bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
     bidir2Nx2N.sa8dCost = sa8d + m_rdCost.getCost(bidir2Nx2N.sa8dBits);
@@ -1670,8 +1658,8 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
             motionCompensation(tmpPredYuv, true, true);
 
             zsa8d  = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
-            zsa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
-            zsa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
+            zsa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
+            zsa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
         }
         else
         {

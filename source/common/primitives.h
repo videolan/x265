@@ -298,6 +298,7 @@ struct EncoderPrimitives
         struct CUChroma
         {
             pixelcmp_t     sa8d;
+            pixelcmp_t     sse_pp;
             pixel_sub_ps_t sub_ps;
             pixel_add_ps_t add_ps;
         }
