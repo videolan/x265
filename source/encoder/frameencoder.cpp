@@ -695,6 +695,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 {
     CTURow& curRow = m_rows[row];
 
+    if (m_param->bEnableWavefront)
     {
         ScopedLock self(curRow.lock);
         if (!curRow.active)
