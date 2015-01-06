@@ -35,6 +35,7 @@ SECTION .text
 cextern pb_1
 cextern pb_128
 cextern pb_2
+cextern pw_2
 
 
 ;============================================================================================================
@@ -83,6 +84,58 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     add         r0q, 16
     sub         r2d, 16
     jnz        .loop
+    RET
+
+;======================================================================================================================================================
+; void saoCuOrgE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int lcuWidth, intptr_t stride)
+;======================================================================================================================================================
+INIT_XMM sse4
+cglobal saoCuOrgE2, 5, 7, 8, rec, bufft, buff1, offsetEo, lcuWidth
+
+    mov         r6,    16
+    mov         r5d,   r5m
+    pxor        m0,    m0                      ; m0 = 0
+    mova        m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    mova        m7,    [pb_128]
+    shr         r4d,   4
+    inc         r1q
+
+    .loop
+         movu        m1,    [r0]                    ; m1 = rec[x]
+         movu        m2,    [r0 + r5 + 1]           ; m2 = rec[x + stride + 1]
+         pxor        m3,    m1,    m7
+         pxor        m4,    m2,    m7
+         pcmpgtb     m2,    m3,    m4
+         pcmpgtb     m4,    m3
+         pand        m2,    [pb_1]
+         por         m2,    m4
+         movu        m3,    [r2]                    ; m3 = buff1
+
+         paddb       m3,    m2
+         paddb       m3,    m6                      ; m3 = edgeType
+
+         movu        m4,    [r3]                    ; m4 = offsetEo
+         pshufb      m4,    m3
+
+         psubb       m3,    m0,    m2
+         movu        [r1],  m3
+
+         pmovzxbw    m2,    m1
+         punpckhbw   m1,    m0
+         pmovsxbw    m3,    m4
+         punpckhbw   m4,    m4
+         psraw       m4,    8
+
+         paddw       m2,    m3
+         paddw       m1,    m4
+         packuswb    m2,    m1
+         movu        [r0],  m2
+
+         add         r0,    r6
+         add         r1,    r6
+         add         r2,    r6
+         dec         r4d
+         jnz         .loop
     RET
 
 ;=====================================================================================

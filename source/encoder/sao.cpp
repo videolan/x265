@@ -385,22 +385,53 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 upBuff1[x] = signOf(rec[x] - tmpU[x - 1]);
         }
 
-        for (y = startY; y < endY; y++)
+        if (ctuWidth & 15)
         {
-            upBufft[startX] = signOf(rec[stride + startX] - tmpL[y]);
-            for (x = startX; x < endX; x++)
-            {
-                int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
-                int edgeType = signDown + upBuff1[x] + 2;
-                upBufft[x + 1] = -signDown;
-                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
-            }
+             for (y = startY; y < endY; y++)
+             {
+                 upBufft[startX] = signOf(rec[stride + startX] - tmpL[y]);
+                 for (x = startX; x < endX; x++)
+                 {
+                     int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
+                     int edgeType = signDown + upBuff1[x] + 2;
+                     upBufft[x + 1] = -signDown;
+                     rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                 }
 
-            std::swap(upBuff1, upBufft);
+                 std::swap(upBuff1, upBufft);
 
-            rec += stride;
+                 rec += stride;
+             }
         }
+        else
+        {
+            for (y = startY; y < endY; y++)
+            {
+                int8_t iSignDown2 = signOf(rec[stride + startX] - tmpL[y]);
+                pixel firstPxl = rec[0];  // copy first Pxl
+                pixel lastPxl = rec[ctuWidth - 1];
+                int8_t one = upBufft[1];
+                int8_t two = upBufft[endX + 1];
 
+                primitives.saoCuOrgE2(rec, upBufft, upBuff1, m_offsetEo, ctuWidth, stride);
+                if (!lpelx)
+                {
+                    rec[0] = firstPxl;
+                    upBufft[1] = one;
+                }
+
+                if (rpelx == picWidth)
+                {
+                    rec[ctuWidth - 1] = lastPxl;
+                    upBufft[endX + 1] = two;
+                }
+
+                upBufft[startX] = iSignDown2;
+
+                std::swap(upBuff1, upBufft);
+                rec += stride;
+            }
+        }
         break;
     }
     case SAO_EO_3: // dir: 45
