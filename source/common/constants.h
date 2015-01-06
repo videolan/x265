@@ -83,7 +83,7 @@ extern const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t g_scan8x8diag[8 * 8];
 extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
 
-extern const uint8_t g_minInGroup[10];
+extern const uint8_t g_lastCoeffTable[32];
 extern const uint8_t g_goRiceRange[5]; // maximum value coded with Rice codes
 
 // CABAC tables

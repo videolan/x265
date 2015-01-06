@@ -1407,58 +1407,6 @@ void Entropy::codeQtCbfChroma(const CUData& cu, uint32_t absPartIdx, TextType tt
         encodeBin(cu.getCbf(absPartIdx, ttype, lowestTUDepth), m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
-/** Encode (X,Y) position of the last significant coefficient
- * \param posx X component of last coefficient
- * \param posy Y component of last coefficient
- * \param log2TrSize
- * \param bIsLuma
- * \param scanIdx scan type (zig-zag, hor, ver)
- * This method encodes the X and Y component within a block of the last significant coefficient.
- */
-void Entropy::codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx)
-{
-    // swap
-    if (scanIdx == SCAN_VER)
-        std::swap(posx, posy);
-
-    uint32_t ctxLast;
-    uint32_t groupIdxX = getGroupIdx(posx);
-    uint32_t groupIdxY = getGroupIdx(posy);
-
-    int blkSizeOffset = bIsLuma ? ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
-    int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
-    uint32_t maxGroupIdx = log2TrSize * 2 - 1;
-
-    // posX
-    uint8_t *ctxX = &m_contextState[OFF_CTX_LAST_FLAG_X];
-    for (ctxLast = 0; ctxLast < groupIdxX; ctxLast++)
-        encodeBin(1, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
-
-    if (groupIdxX < maxGroupIdx)
-        encodeBin(0, *(ctxX + blkSizeOffset + (ctxLast >> ctxShift)));
-
-    // posY
-    uint8_t *ctxY = &m_contextState[OFF_CTX_LAST_FLAG_Y];
-    for (ctxLast = 0; ctxLast < groupIdxY; ctxLast++)
-        encodeBin(1, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
-
-    if (groupIdxY < maxGroupIdx)
-        encodeBin(0, *(ctxY + blkSizeOffset + (ctxLast >> ctxShift)));
-
-    if (groupIdxX > 3)
-    {
-        uint32_t count = (groupIdxX - 2) >> 1;
-        posx = posx - g_minInGroup[groupIdxX];
-        encodeBinsEP(posx, count);
-    }
-    if (groupIdxY > 3)
-    {
-        uint32_t count = (groupIdxY - 2) >> 1;
-        posy = posy - g_minInGroup[groupIdxY];
-        encodeBinsEP(posy, count);
-    }
-}
-
 void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
@@ -1506,11 +1454,42 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     scanPosLast--;
 
     // Code position of last coefficient
-    int posLastY = posLast >> log2TrSize;
-    int posLastX = posLast & (trSize - 1);
-    codeLastSignificantXY(posLastX, posLastY, log2TrSize, bIsLuma, codingParameters.scanType);
+    {
+        // The last position is composed of a prefix and suffix.
+        // The prefix is context coded truncated unary bins. The suffix is bypass coded fixed length bins.
+        // The bypass coded bins for both the x and y components are grouped together.
+        int packedSuffixBits = 0, packedSuffixLen = 0;
+        int pos[2] = { (posLast & (trSize - 1)), (posLast >> log2TrSize) };
+        // swap
+        if (codingParameters.scanType == SCAN_VER)
+            std::swap(pos[0], pos[1]);
 
-    //===== code significance flag =====
+        int ctxIdx = bIsLuma ? (3 * (log2TrSize - 2) + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
+        int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
+        uint32_t maxGroupIdx = (log2TrSize << 1) - 1;
+
+        uint8_t *ctx = &m_contextState[OFF_CTX_LAST_FLAG_X];
+        for (uint32_t i = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
+        {
+            uint32_t temp = g_lastCoeffTable[pos[i]];
+            uint32_t prefixOnes = temp & 15;
+            uint32_t suffixLen = temp >> 4;
+
+            for (uint32_t ctxLast = 0; ctxLast < prefixOnes; ctxLast++)
+                encodeBin(1, *(ctx + ctxIdx + (ctxLast >> ctxShift)));
+
+            if (prefixOnes < maxGroupIdx)
+                encodeBin(0, *(ctx + ctxIdx + (prefixOnes >> ctxShift)));
+
+            packedSuffixBits <<= suffixLen;
+            packedSuffixBits |= (pos[i] & ((1 << suffixLen) - 1));
+            packedSuffixLen += suffixLen;
+        }
+
+        encodeBinsEP(packedSuffixBits, packedSuffixLen);
+    }
+
+    // code significance flag
     uint8_t * const baseCoeffGroupCtx = &m_contextState[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;

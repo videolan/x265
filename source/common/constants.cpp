@@ -412,7 +412,16 @@ const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE] =
     { g_scan4x4[2], g_scan2x2[0], g_scan4x4[0], g_scan8x8diag }
 };
 
-const uint8_t g_minInGroup[10] = { 0, 1, 2, 3, 4, 6, 8, 12, 16, 24 };
+// Table used for encoding the last coefficient position. The index is the position.
+// The low 4 bits are the number of "1" in the prefix and the high 4 bits are the number
+// of bits in the suffix.
+const uint8_t g_lastCoeffTable[32] =
+{
+    0x00, 0x01, 0x02, 0x03, 0x14, 0x14, 0x15, 0x15,
+    0x26, 0x26, 0x26, 0x26, 0x27, 0x27, 0x27, 0x27,
+    0x38, 0x38, 0x38, 0x38, 0x38, 0x38, 0x38, 0x38,
+    0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39,
+};
 
 // Rice parameters for absolute transform levels
 const uint8_t g_goRiceRange[5] = { 7, 14, 26, 46, 78 };
