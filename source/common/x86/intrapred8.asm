@@ -31976,3 +31976,792 @@ palignr    m4,              m2,       m1,    14
 movu       [r0 + 2111 * 16],   m4
 
 RET
+
+
+;-----------------------------------------------------------------------------
+; void all_angs_pred_new_4x4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal all_angs_pred_new_4x4, 4, 4, 8
+
+; mode 2
+
+movh      m0,         [r1 + 10]
+movd      [r0],       m0
+
+palignr   m1,         m0,      1
+movd      [r0 + 4],   m1
+
+palignr   m1,         m0,      2
+movd      [r0 + 8],   m1
+
+palignr   m1,         m0,      3
+movd      [r0 + 12],  m1
+
+; mode 3
+
+mova          m2,        [pw_1024]
+
+pslldq        m1,        m0,         1
+pinsrb        m1,        [r1 + 9],   0
+punpcklbw     m1,        m0
+
+lea           r3,        [ang_table]
+
+pmaddubsw     m6,        m1,        [r3 + 26 * 16]
+pmulhrsw      m6,        m2
+packuswb      m6,        m6
+movd          [r0 + 16], m6
+
+palignr       m0,        m1,        2
+
+mova          m7,        [r3 + 20 * 16]
+
+pmaddubsw     m3,        m0,        m7
+pmulhrsw      m3,        m2
+packuswb      m3,        m3
+movd          [r0 + 20], m3
+
+; mode 6 [row 3]
+movd          [r0 + 76], m3
+
+palignr       m3,        m1,       4
+
+pmaddubsw     m4,        m3,        [r3 + 14 * 16]
+pmulhrsw      m4,        m2
+packuswb      m4,        m4
+movd          [r0 + 24], m4
+
+palignr       m4,        m1,        6
+
+pmaddubsw     m4,        [r3 + 8 * 16]
+pmulhrsw      m4,        m2
+packuswb      m4,        m4
+movd          [r0 + 28], m4
+
+; mode 4
+
+pmaddubsw     m5,        m1,        [r3 + 21 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 32], m5
+
+pmaddubsw     m5,        m0,        [r3 + 10 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 36], m5
+
+pmaddubsw     m5,        m0,        [r3 + 31 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 40], m5
+
+pmaddubsw     m4,        m3,        m7
+pmulhrsw      m4,        m2
+packuswb      m4,        m4
+movd          [r0 + 44], m4
+
+; mode 5
+
+pmaddubsw     m5,        m1,        [r3 + 17 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 48], m5
+
+pmaddubsw     m5,        m0,        [r3 + 2 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 52], m5
+
+pmaddubsw     m5,        m0,        [r3 + 19 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 56], m5
+
+pmaddubsw     m4,        m3,        [r3 + 4 * 16]
+pmulhrsw      m4,        m2
+packuswb      m4,        m4
+movd          [r0 + 60], m4
+
+; mode 6
+
+pmaddubsw     m5,        m1,        [r3 + 13 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 64], m5
+
+movd          [r0 + 68], m6
+
+pmaddubsw     m5,        m0,        [r3 + 7 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 72], m5
+
+; mode 7
+
+pmaddubsw     m5,        m1,        [r3 + 9 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 80], m5
+
+pmaddubsw     m5,        m1,        [r3 + 18 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 84], m5
+
+pmaddubsw     m5,        m1,        [r3 + 27 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 88], m5
+
+pmaddubsw     m5,        m0,        [r3 + 4 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 92], m5
+
+; mode 8
+
+pmaddubsw     m5,        m1,        [r3 + 5 * 16]
+pmulhrsw      m5,        m2
+packuswb      m5,        m5
+movd          [r0 + 96], m5
+
+pmaddubsw     m5,         m1,       [r3 + 10 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 100], m5
+
+pmaddubsw     m5,         m1,        [r3 + 15 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 104], m5
+
+pmaddubsw     m5,         m1,        [r3 + 20 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 108], m5
+
+; mode 9
+
+pmaddubsw     m5,         m1,        [r3 + 2 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 112], m5
+
+pmaddubsw     m5,         m1,        [r3 + 4 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 116], m5
+
+pmaddubsw     m5,         m1,        [r3 + 6 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 120], m5
+
+pmaddubsw     m5,         m1,        [r3 + 8 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 124], m5
+
+; mode 10
+
+movd         m3,         [r1 + 9]
+pshufd       m4,         m3,        0
+movu         [r0 + 128], m4
+
+pxor         m5,         m5
+movd         m7,         [r1 + 1]
+pshufd       m4,         m7,        0
+punpcklbw    m4,         m5
+
+pinsrb       m7,         [r1],      0
+pshufb       m6,         m7,        m5
+punpcklbw    m6,         m5
+
+psubw        m4,         m6
+psraw        m4,         1
+
+pshufb       m6,         m3,       m5
+punpcklbw    m6,         m5
+
+paddw        m4,         m6
+packuswb     m4,         m5
+
+pextrb       [r0 + 128],  m4,    0
+pextrb       [r0 + 132],  m4,    1
+pextrb       [r0 + 136],  m4,    2
+pextrb       [r0 + 140],  m4,    3
+
+; mode 11
+
+pslldq        m1,        m1,         2
+pinsrb        m1,        [r1],       0
+pinsrb        m1,        [r1 + 9],   1
+
+pmaddubsw     m3,         m1,        [r3 + 30 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 144], m3
+
+pmaddubsw     m3,         m1,        [r3 + 28 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 148], m3
+
+pmaddubsw     m3,         m1,        [r3 + 26 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 152], m3
+
+pmaddubsw     m3,         m1,        [r3 + 24 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 156], m3
+
+; mode 12
+
+pmaddubsw     m3,         m1,        [r3 + 27 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 160], m3
+
+pmaddubsw     m3,         m1,        [r3 + 22 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 164], m3
+
+pmaddubsw     m3,         m1,        [r3 + 17 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 168], m3
+
+pmaddubsw     m3,         m1,        [r3 + 12 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 172], m3
+
+; mode 13
+
+pmaddubsw     m3,         m1,        [r3 + 23 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 176], m3
+
+pmaddubsw     m3,         m1,        [r3 + 14 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 180], m3
+
+pmaddubsw     m3,         m1,        [r3 + 5 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 184], m3
+
+pslldq        m5,         m1,        2
+pinsrb        m5,         [r1 + 0],  1
+pinsrb        m5,         [r1 + 4],  0
+
+pmaddubsw     m4,         m5,        [r3 + 28 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 188], m4
+
+; mode 14
+
+pmaddubsw     m4,         m1,        [r3 + 19 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 192], m4
+
+pmaddubsw     m7,         m1,        [r3 + 6 * 16]
+pmulhrsw      m7,         m2
+packuswb      m7,         m7
+movd          [r0 + 196], m7
+
+pinsrb        m5,         [r1 + 2],  0
+
+pmaddubsw     m4,         m5,        [r3 + 25 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 200], m4
+
+pmaddubsw     m4,         m5,        [r3 + 12 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 204], m4
+
+; mode 15
+
+pmaddubsw     m4,         m1,        [r3 + 15 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 208], m4
+
+pmaddubsw     m4,         m5,        [r3 + 30 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 212], m4
+
+pmaddubsw     m4,         m5,        [r3 + 13 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 216], m4
+
+pslldq        m4,         m5,         2
+pinsrb        m4,         [r1 + 2],   1
+pinsrb        m4,         [r1 + 4],   0
+
+pmaddubsw     m6,         m4,         [r3 + 28 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 220], m6
+
+; mode 16
+
+pmaddubsw     m6,         m1,        [r3 + 11 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 224], m6
+
+pmaddubsw     m6,         m5,        [r3 + 22 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 228], m6
+
+pmaddubsw     m6,         m5,        [r3 + 1 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 232], m6
+
+pinsrb        m4,         [r1 + 3],  0
+
+pmaddubsw     m4,         [r3 + 12 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 236], m4
+
+; mode 17
+
+movd          [r0 + 240],  m7
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 1],  0
+pinsrb        m1,         [r1 + 0],  1
+
+pmaddubsw     m3,         m1,        [r3 + 12 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 244], m3
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 1],  1
+pinsrb        m1,         [r1 + 2],  0
+
+pmaddubsw     m3,         m1,        [r3 + 18 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 248], m3
+
+pslldq        m1,         2
+pinsrb        m1,         [r1 + 2],  1
+pinsrb        m1,         [r1 + 4],  0
+
+pmaddubsw     m1,         [r3 + 24 * 16]
+pmulhrsw      m1,         m2
+packuswb      m1,         m1
+movd          [r0 + 252], m1
+
+; mode 18
+
+movh          m1,         [r1]
+movd          [r0 + 256], m1
+
+pslldq        m3,         m1,         1
+pinsrb        m3,         [r1 + 9],   0
+movd          [r0 + 260], m3
+
+pslldq        m4,         m3,         1
+pinsrb        m4,         [r1 + 10],  0
+movd          [r0 + 264], m4
+
+pslldq        m4,         1
+pinsrb        m4,         [r1 + 11],  0
+movd          [r0 + 268], m4
+
+; mode 19
+
+palignr       m3,         m1,        1
+punpcklbw     m1,         m3
+
+pmaddubsw     m7,         m1,        [r3 + 6 * 16]
+pmulhrsw      m7,         m2
+packuswb      m7,         m7
+movd          [r0 + 272], m7
+
+pslldq        m3,         m1,         2
+pinsrb        m3,         [r1],       1
+pinsrb        m3,         [r1 + 9],   0
+
+pmaddubsw     m4,         m3,         [r3 + 12 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 276], m4
+
+pslldq        m4,         m3,         2
+pinsrb        m4,         [r1 + 9],   1
+pinsrb        m4,         [r1 + 10],  0
+
+pmaddubsw     m5,         m4,         [r3 + 18 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 280], m5
+
+pslldq        m4,         2
+pinsrb        m4,         [r1 + 10],  1
+pinsrb        m4,         [r1 + 12],  0
+
+pmaddubsw     m4,         [r3 + 24 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 284], m4
+
+; mode 20
+
+pmaddubsw     m4,         m1,        [r3 + 11 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 288], m4
+
+pinsrb        m3,         [r1 + 10],  0
+
+pmaddubsw     m4,         m3,        [r3 + 22 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 292], m4
+
+pmaddubsw     m4,         m3,        [r3 + 1 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 296], m4
+
+pslldq        m6,         m3,        2
+pinsrb        m6,         [r1 + 10], 1
+pinsrb        m6,         [r1 + 11], 0
+
+pmaddubsw     m5,         m6,        [r3 + 12 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 300], m5
+
+; mode 21
+
+pmaddubsw     m4,         m1,        [r3 + 15 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 304], m4
+
+pmaddubsw     m4,         m3,        [r3 + 30 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 308], m4
+
+pmaddubsw     m4,         m3,        [r3 + 13 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 312], m4
+
+pinsrb        m6,         [r1 + 12],   0
+
+pmaddubsw     m6,         [r3 + 28 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 316], m6
+
+; mode 22
+
+pmaddubsw     m4,         m1,         [r3 + 19 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 320], m4
+
+movd          [r0 + 324], m7
+
+pmaddubsw     m4,         m3,        [r3 + 25 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 328], m4
+
+pmaddubsw     m4,         m3,         [r3 + 12 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 332], m4
+
+; mode 23
+
+pmaddubsw     m4,         m1,         [r3 + 23 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 336], m4
+
+pmaddubsw     m4,         m1,         [r3 + 14 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 340], m4
+
+pmaddubsw     m4,         m1,         [r3 + 5 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 344], m4
+
+pinsrb         m3,        [r1 + 12],   0
+
+pmaddubsw     m3,         [r3 + 28 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 348], m3
+
+; mode 24
+
+pmaddubsw     m3,         m1,         [r3 + 27 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 352], m3
+
+pmaddubsw     m3,         m1,         [r3 + 22 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 356], m3
+
+pmaddubsw     m3,         m1,         [r3 + 17 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 360], m3
+
+pmaddubsw     m3,         m1,         [r3 + 12 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 364], m3
+
+; mode 25
+
+pmaddubsw     m3,         m1,         [r3 + 30 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 368], m3
+
+pmaddubsw     m3,         m1,         [r3 + 28 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 372], m3
+
+pmaddubsw     m3,         m1,         [r3 + 26 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 376], m3
+
+pmaddubsw     m1,         [r3 + 24 * 16]
+pmulhrsw      m1,         m2
+packuswb      m1,         m1
+movd          [r0 + 380], m1
+
+; mode 26
+
+movh         m1,         [r1 + 1]
+pshufd       m3,         m1,        0
+movu         [r0 + 384], m3
+
+pxor         m4,         m4
+movd         m5,         [r1 + 9]
+pshufd       m5,         m5,        0
+punpcklbw    m5,         m4
+
+pinsrb       m6,         [r1],      0
+pshufb       m6,         m4
+punpcklbw    m6,         m4
+
+psubw        m5,         m6
+psraw        m5,         1
+
+pshufb       m6,         m1,        m4
+punpcklbw    m6,         m4
+
+paddw        m5,         m6
+packuswb     m5,         m4
+
+pextrb       [r0 + 384], m5,    0
+pextrb       [r0 + 388], m5,    1
+pextrb       [r0 + 392], m5,    2
+pextrb       [r0 + 396], m5,    3
+
+; mode 27
+
+palignr       m3,         m1,     1
+punpcklbw     m1,         m3
+
+pmaddubsw     m3,         m1,     [r3 + 2 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 400], m3
+
+pmaddubsw     m3,         m1,     [r3 + 4 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 404], m3
+
+pmaddubsw     m3,         m1,     [r3 + 6 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 408], m3
+
+pmaddubsw     m3,         m1,     [r3 + 8 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 412], m3
+
+; mode 28
+
+pmaddubsw     m3,         m1,     [r3 + 5 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 416], m3
+
+pmaddubsw     m3,         m1,     [r3 + 10 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 420], m3
+
+pmaddubsw     m3,         m1,     [r3 + 15 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 424], m3
+
+pmaddubsw     m3,         m1,     [r3 + 20 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 428], m3
+
+; mode 29
+
+pmaddubsw     m3,         m1,     [r3 + 9 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 432], m3
+
+pmaddubsw     m3,         m1,     [r3 + 18 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 436], m3
+
+pmaddubsw     m3,         m1,     [r3 + 27 * 16]
+pmulhrsw      m3,         m2
+packuswb      m3,         m3
+movd          [r0 + 440], m3
+
+palignr       m3,         m1,     2
+
+pmaddubsw     m4,         m3,     [r3 + 4 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 444], m4
+
+; mode 30
+
+pmaddubsw     m4,         m1,     [r3 + 13 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 448], m4
+
+pmaddubsw     m7,         m1,     [r3 + 26 * 16]
+pmulhrsw      m7,         m2
+packuswb      m7,         m7
+movd          [r0 + 452], m7
+
+pmaddubsw     m5,         m3,     [r3 + 7 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 456], m5
+
+pmaddubsw     m6,         m3,     [r3 + 20 * 16]
+pmulhrsw      m6,         m2
+packuswb      m6,         m6
+movd          [r0 + 460], m6
+
+; mode 31
+
+pmaddubsw     m4,         m1,     [r3 + 17 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 464], m4
+
+pmaddubsw     m5,         m3,     [r3 + 2 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 468], m5
+
+pmaddubsw     m5,         m3,     [r3 + 19 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 472], m5
+
+palignr       m4,         m3,     2
+
+pmaddubsw     m5,         m4,     [r3 + 4 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 476], m5
+
+; mode 32
+
+pmaddubsw     m5,         m1,     [r3 + 21 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 480], m5
+
+pmaddubsw     m5,         m3,     [r3 + 10 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 484], m5
+
+pmaddubsw     m5,         m3,     [r3 + 31 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 488], m5
+
+pmaddubsw     m5,         m4,     [r3 + 20 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 492], m5
+
+; mode 33
+
+movd          [r0 + 496], m7
+
+movd          [r0 + 500], m6
+
+pmaddubsw     m5,         m4,         [r3 + 14 * 16]
+pmulhrsw      m5,         m2
+packuswb      m5,         m5
+movd          [r0 + 504], m5
+
+psrldq        m4,         2
+
+pmaddubsw     m4,         [r3 + 8 * 16]
+pmulhrsw      m4,         m2
+packuswb      m4,         m4
+movd          [r0 + 508], m4
+
+; mode 34
+
+movh      m7,             [r1 + 2]
+movd      [r0 + 512],     m7
+
+psrldq    m7,      1
+movd      [r0 + 516],     m7
+
+psrldq    m7,      1
+movd      [r0 + 520],     m7
+
+psrldq    m7,      1
+movd      [r0 + 524],     m7
+
+RET
