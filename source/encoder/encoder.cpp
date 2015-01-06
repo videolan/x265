@@ -95,9 +95,10 @@ void Encoder::create()
     x265_param* p = m_param;
 
     int rows = (p->sourceHeight + p->maxCUSize - 1) >> g_log2Size[p->maxCUSize];
+    int cols = (p->sourceWidth  + p->maxCUSize - 1) >> g_log2Size[p->maxCUSize];
 
-    // Do not allow WPP if only one row, it is pointless and unstable
-    if (rows == 1)
+    // Do not allow WPP if only one row or fewer than 3 columns, it is pointless and unstable
+    if (rows == 1 || cols < 3)
         p->bEnableWavefront = 0;
 
     int poolThreadCount = p->poolNumThreads ? p->poolNumThreads : getCpuCount();
