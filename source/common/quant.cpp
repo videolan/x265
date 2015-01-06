@@ -352,10 +352,11 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     else
     {
         bool isIntra = cu.isIntra(absPartIdx);
-        int useDST = !sizeIdx && isLuma && isIntra;
-        int index = BLOCK_4x4 + sizeIdx - useDST;
 
-        primitives.cu[index].dct(residual, m_resiDctCoeff, resiStride);
+        if (!sizeIdx && isLuma && isIntra)
+            primitives.dst4x4(residual, m_resiDctCoeff, resiStride);
+        else
+            primitives.cu[sizeIdx].dct(residual, m_resiDctCoeff, resiStride);
 
         /* NOTE: if RDOQ is disabled globally, psy-rdoq is also disabled, so
          * there is no risk of performing this DCT unnecessarily */
@@ -364,7 +365,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
             int trSize = 1 << log2TrSize;
             /* perform DCT on source pixels for psy-rdoq */
             primitives.pu[sizeIdx].luma_copy_ps(m_fencShortBuf, trSize, fenc, fencStride);
-            primitives.cu[index].dct(m_fencShortBuf, m_fencDctCoeff, trSize);
+            primitives.cu[sizeIdx].dct(m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
         if (m_nr)
@@ -465,7 +466,10 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t r
             return;
         }
 
-        primitives.cu[BLOCK_4x4 + sizeIdx - useDST].idct(m_resiDctCoeff, residual, resiStride);
+        if (useDST)
+            primitives.idst4x4(m_resiDctCoeff, residual, resiStride);
+        else
+            primitives.cu[sizeIdx].idct(m_resiDctCoeff, residual, resiStride);
     }
 }
 

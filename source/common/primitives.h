@@ -93,27 +93,6 @@ enum SquareBlocks   // Routines can be indexed using log2n(width)-2
 
 enum { NUM_TR_SIZE = 4 };
 
-// NOTE: Not all DCT functions support dest stride
-enum Dcts
-{
-    DST_4x4,
-    DCT_4x4,
-    DCT_8x8,
-    DCT_16x16,
-    DCT_32x32,
-    NUM_DCTS
-};
-
-enum IDcts
-{
-    IDST_4x4,
-    IDCT_4x4,
-    IDCT_8x8,
-    IDCT_16x16,
-    IDCT_32x32,
-    NUM_IDCTS
-};
-
 // Returns a LumaPartitions enum for the given size, always expected to return a valid enum
 inline int partitionFromSizes(int width, int height)
 {
