@@ -147,20 +147,24 @@ public:
 
     void addPicture(Frame*, int sliceType);
     void flush();
+    void stop();
     Frame* getDecidedPicture();
 
     void getEstimatedPictureCost(Frame *pic);
 
 protected:
 
+
     Lock  m_inputQueueLock;
     Lock  m_outputQueueLock;
-    Lock  m_decideLock;
     Event m_outputAvailable;
-    volatile int  m_bReady;
-    volatile bool m_bFilling;
-    volatile bool m_bFlushed;
-    bool findJob(int);
+
+    bool  m_bReady;   /* input lock - slicetypeDecide() can be started */
+    bool  m_bBusy;    /* input lock - slicetypeDecide() is running */
+    bool  m_bFilled;  /* enough frames in lookahead for output to be available */
+    bool  m_bFlushed; /* no more frames will be received */
+
+    bool  findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();

@@ -291,10 +291,7 @@ void Encoder::destroy()
     delete [] m_threadLocalData;
 
     if (m_lookahead)
-    {
-        m_lookahead->destroy();
-        delete m_lookahead;
-    }
+        m_lookahead->stop();
 
     delete m_dpb;
     if (m_rateControl)
@@ -302,9 +299,16 @@ void Encoder::destroy()
         m_rateControl->destroy();
         delete m_rateControl;
     }
+
     // thread pool release should always happen last
     if (m_threadPool)
         m_threadPool->release();
+
+    if (m_lookahead)
+    {
+        m_lookahead->destroy();
+        delete m_lookahead;
+    }
 
     X265_FREE(m_cuOffsetY);
     X265_FREE(m_cuOffsetC);

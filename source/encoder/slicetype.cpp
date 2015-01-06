@@ -59,11 +59,12 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     : JobProvider(pool)
     , m_est(pool)
 {
-    m_bReady = 0;
+    m_bReady = false;
+    m_bBusy = false;
     m_param = param;
     m_lastKeyframe = -m_param->keyframeMax;
     m_lastNonB = NULL;
-    m_bFilling = true;
+    m_bFilled = false;
     m_bFlushed = false;
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_heightInCU = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
@@ -79,17 +80,26 @@ void Lookahead::init()
         ((m_param->bFrameAdaptive && m_param->bframes) ||
          m_param->rc.cuTree || m_param->scenecutThreshold ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
-        m_pool = m_pool; /* allow use of worker thread */
+    {
+        JobProvider::enqueue();
+    }
     else
         m_pool = NULL; /* disable use of worker thread */
 }
 
+void Lookahead::stop()
+{
+    /* do not allow slicetypeDecide() to get started again */
+    m_bReady = false;
+    m_bFlushed = false;
+    m_bBusy = false;
+
+    if (m_pool)
+        JobProvider::flush(); // flush will dequeue, if it is necessary
+}
+
 void Lookahead::destroy()
 {
-    if (m_pool)
-        // flush will dequeue, if it is necessary
-        JobProvider::flush();
-
     // these two queues will be empty unless the encode was aborted
     while (!m_inputQueue.empty())
     {
@@ -120,47 +130,52 @@ void Lookahead::addPicture(Frame *curFrame, int sliceType)
 
     if (m_inputQueue.size() >= m_param->lookaheadDepth)
     {
-        /* when queue fills the first time, run slicetypeDecide synchronously,
-         * since the encoder will always be blocked here */
-        if (m_pool && !m_bFilling)
+        if (m_pool)
         {
+            m_bReady = !m_bBusy;
             m_inputQueueLock.release();
-            m_bReady = 1;
             m_pool->pokeIdleThread();
         }
         else
             slicetypeDecide();
-
-        if (m_bFilling && m_pool)
-            JobProvider::enqueue();
-        m_bFilling = false;
     }
     else
         m_inputQueueLock.release();
+
+    /* determine if the lookahead is (over) filled enough for frames to begin to
+     * be consumed by frame encoders */
+    if (!m_bFilled)
+    {
+        if (!m_param->bframes & !m_param->lookaheadDepth)
+            m_bFilled = true; /* zero-latency */
+        else if (curFrame->m_poc >= m_param->lookaheadDepth + 2 + m_param->bframes)
+            m_bFilled = true; /* full capacity plus mini-gop lag */
+    }
 }
 
 /* Called by API thread */
 void Lookahead::flush()
 {
-    /* just in case the input queue is never allowed to fill */
-    m_bFilling = false;
+    m_bFilled = true;
 
-    /* flush synchronously */
+    /* just in case the input queue is never allowed to fill */
     m_inputQueueLock.acquire();
-    if (!m_inputQueue.empty())
+    if (m_inputQueue.empty())
     {
-        slicetypeDecide();
+        m_bFlushed = true;
+        m_inputQueueLock.release();
     }
     else
-        m_inputQueueLock.release();
-
-    m_inputQueueLock.acquire();
-
-    /* bFlushed indicates that an empty output queue actually means all frames
-     * have been decided (no more inputs for the encoder) */
-    if (m_inputQueue.empty())
-        m_bFlushed = true;
-    m_inputQueueLock.release();
+    {
+        if (m_pool)
+        {
+            m_bReady = !m_bBusy;
+            m_inputQueueLock.release();
+            m_pool->pokeIdleThread();
+        }
+        else
+            slicetypeDecide();
+    }
 }
 
 /* Called by API thread. If the lookahead queue has not yet been filled the
@@ -169,37 +184,60 @@ void Lookahead::flush()
  * flush() has been called and the output queue is empty, NULL is returned. */
 Frame* Lookahead::getDecidedPicture()
 {
-    m_outputQueueLock.acquire();
-
-    if (m_bFilling)
-    {
-        m_outputQueueLock.release();
+    if (!m_bFilled)
         return NULL;
-    }
 
-    while (m_outputQueue.empty() && !m_bFlushed)
-    {
-        m_outputQueueLock.release();
-        m_outputAvailable.wait();
-        m_outputQueueLock.acquire();
-    }
-
+    m_outputQueueLock.acquire();
     Frame *fenc = m_outputQueue.popFront();
     m_outputQueueLock.release();
+
+    if (fenc || m_bFlushed)
+        return fenc;
+
+    do
+    {
+        m_outputAvailable.wait();
+
+        m_outputQueueLock.acquire();
+        fenc = m_outputQueue.popFront();
+        m_outputQueueLock.release();
+    }
+    while (!fenc);
+
     return fenc;
 }
 
 /* Called by pool worker threads */
 bool Lookahead::findJob(int)
 {
-    if (m_bReady > 0 && ATOMIC_DEC(&m_bReady) == 0)
-    {
-        m_inputQueueLock.acquire();
-        slicetypeDecide();
-        return true;
-    }
-    else
+    if (!m_bReady)
         return false;
+
+    m_inputQueueLock.acquire();
+    if (!m_bReady)
+    {
+        m_inputQueueLock.release();
+        return false;
+    }
+
+    m_bReady = false;
+    m_bBusy = true;
+
+    do
+    {
+        slicetypeDecide(); // releases input queue lock
+
+        m_inputQueueLock.acquire();
+
+        if (!m_bBusy)
+            break;
+    }
+    while (m_inputQueue.size() >= m_param->lookaheadDepth ||
+           (m_bFlushed && m_inputQueue.size()));
+
+    m_bBusy = false;
+    m_inputQueueLock.release();
+    return true;
 }
 
 /* Called by rate-control to calculate the estimated SATD cost for a given
@@ -291,8 +329,6 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
 void Lookahead::slicetypeDecide()
 {
     ProfileScopeEvent(slicetypeDecideEV);
-
-    ScopedLock lock(m_decideLock);
 
     Lowres *frames[X265_LOOKAHEAD_MAX];
     Frame *list[X265_LOOKAHEAD_MAX];
