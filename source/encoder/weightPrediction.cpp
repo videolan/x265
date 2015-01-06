@@ -193,9 +193,9 @@ uint32_t weightCost(pixel *         fenc,
     if (bLuma)
     {
         int cu = 0;
-        for (int y = 8; y < height; y += 8, r += 8 * stride, f += 8 * stride)
+        for (int y = 0; y < height; y += 8, r += 8 * stride, f += 8 * stride)
         {
-            for (int x = 8; x < width; x += 8, cu++)
+            for (int x = 0; x < width; x += 8, cu++)
             {
                 int cmp = primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
                 cost += X265_MIN(cmp, cache.intraCost[cu]);
@@ -203,12 +203,12 @@ uint32_t weightCost(pixel *         fenc,
         }
     }
     else if (cache.csp == X265_CSP_I444)
-        for (int y = 16; y < height; y += 16, r += 16 * stride, f += 16 * stride)
-            for (int x = 16; x < width; x += 16)
+        for (int y = 0; y < height; y += 16, r += 16 * stride, f += 16 * stride)
+            for (int x = 0; x < width; x += 16)
                 cost += primitives.satd[LUMA_16x16](r + x, stride, f + x, stride);
     else
-        for (int y = 8; y < height; y += 8, r += 8 * stride, f += 8 * stride)
-            for (int x = 8; x < width; x += 8)
+        for (int y = 0; y < height; y += 8, r += 8 * stride, f += 8 * stride)
+            for (int x = 0; x < width; x += 8)
                 cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
 
     return cost;
@@ -381,9 +381,9 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 break;
 
             case 2:
-                fref = refFrame->m_fencPic->m_picOrg[2];
                 orig = fencPic->m_picOrg[2];
                 stride = fencPic->m_strideC;
+                fref = refFrame->m_fencPic->m_picOrg[2];
                 width =  ((fencPic->m_picWidth  >> 4) << 4) >> cache.hshift;
                 height = ((fencPic->m_picHeight >> 4) << 4) >> cache.vshift;
                 if (mvs)
