@@ -39,6 +39,17 @@ extern "C" {
 #include "dct8.h"
 }
 
+template<int size>
+void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
+{
+    ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA)]);
+    const int filterSize = NTAPS_LUMA;
+    const int halfFilterSize = filterSize >> 1;
+
+    x265::primitives.luma_hps[size](src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
+    x265::primitives.luma_vsp[size](immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
+}
+
 #define INIT2_NAME(name1, name2, cpu) \
     p.name1[LUMA_16x16] = x265_pixel_ ## name2 ## _16x16 ## cpu; \
     p.name1[LUMA_16x8]  = x265_pixel_ ## name2 ## _16x8 ## cpu;
@@ -531,13 +542,16 @@ extern "C" {
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
     p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
-    p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;
+    p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu; \
+    p.luma_hvpp[LUMA_ ## W ## x ## H] = interp_8tap_hv_pp_cpu<LUMA_ ## W ## x ## H>;
 #else
 #define SETUP_LUMA_FUNC_DEF(W, H, cpu) \
     p.luma_hpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_pp_ ## W ## x ## H ## cpu; \
     p.luma_hps[LUMA_ ## W ## x ## H] = x265_interp_8tap_horiz_ps_ ## W ## x ## H ## cpu; \
     p.luma_vpp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_pp_ ## W ## x ## H ## cpu; \
-    p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu;
+    p.luma_vps[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_ps_ ## W ## x ## H ## cpu; \
+    p.luma_vsp[LUMA_ ## W ## x ## H] = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu; \
+    p.luma_hvpp[LUMA_ ## W ## x ## H] = interp_8tap_hv_pp_cpu<LUMA_ ## W ## x ## H>;
 #endif // if HIGH_BIT_DEPTH
 
 #define SETUP_LUMA_SUB_FUNC_DEF(W, H, cpu) \
@@ -1635,7 +1649,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.sad_x3[LUMA_12x16] = x265_pixel_sad_x3_12x16_ssse3;
         p.sad_x4[LUMA_12x16] = x265_pixel_sad_x4_12x16_ssse3;
 
-        p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_ssse3;
         p.luma_p2s = x265_luma_p2s_ssse3;
         p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_ssse3;
         p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_ssse3;
@@ -1692,6 +1705,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         LUMA_SP_FILTERS(_sse4);
         LUMA_FILTERS(_sse4);
         ASSGN_SSE_SS(sse4);
+
+        // MUST be done after LUMA_FILTERS() to overwrite default version
+        p.luma_hvpp[LUMA_8x8] = x265_interp_8tap_hv_pp_8x8_sse4;
 
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x4] = x265_blockcopy_sp_2x4_sse4;
         p.chroma[X265_CSP_I420].copy_sp[CHROMA_2x8] = x265_blockcopy_sp_2x8_sse4;

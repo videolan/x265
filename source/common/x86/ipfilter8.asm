@@ -1817,7 +1817,7 @@ IPFILTER_LUMA_PP_W8     64, 64
 ;-----------------------------------------------------------------------------
 ; void interp_8tap_hv_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
 ;-----------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse4
 cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
 %define coef        m7
 %define stk_buf     rsp
