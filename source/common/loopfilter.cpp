@@ -51,9 +51,7 @@ void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
         signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
         edgeType = signRight + signLeft + 2;
         signLeft  = -signRight;
-
-        short v = rec[x] + offsetEo[edgeType];
-        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
     }
 }
 
@@ -68,9 +66,7 @@ void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stri
         signDown = signOf(rec[x] - rec[x + stride]);
         edgeType = signDown + upBuff1[x] + 2;
         upBuff1[x] = -signDown;
-
-        short v = rec[x] + offsetEo[edgeType];
-        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
     }
 }
 
@@ -82,8 +78,7 @@ void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offset
         int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
         int edgeType = signDown + buff1[x] + 2;
         bufft[x + 1] = -signDown;
-        short v = rec[x] + offsetEo[edgeType];
-        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);;
     }
 }
 
@@ -97,9 +92,7 @@ void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stri
         signDown = signOf(rec[x] - rec[x + stride]);
         edgeType = signDown + upBuff1[x] + 2;
         upBuff1[x - 1] = -signDown;
-
-        short v = rec[x] + offsetEo[edgeType];
-        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
     }
 }
 
@@ -112,12 +105,7 @@ void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeigh
     {
         for (x = 0; x < ctuWidth; x++)
         {
-            int val = rec[x] + offset[rec[x] >> boShift];
-            if (val < 0)
-               val = 0;
-            else if (val > ((1 << X265_DEPTH) - 1))
-                 val = ((1 << X265_DEPTH) - 1);
-            rec[x] = (pixel)val;
+            rec[x] = x265_clip(rec[x] + offset[rec[x] >> boShift]);
         }
         rec += stride;
     }
