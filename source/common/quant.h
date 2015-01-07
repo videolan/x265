@@ -122,29 +122,7 @@ protected:
     uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
     uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
-    inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
 };
-
-static inline uint32_t getGroupIdx(const uint32_t idx)
-{
-    // TODO: Why is this not a table lookup?
-
-    uint32_t group = (idx >> 3);
-
-    if (idx >= 24)
-        group = 2;
-    uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
-    if (idx <= 3)
-        groupIdx = idx;
-
-#ifdef _DEBUG
-    static const uint8_t g_groupIdx[32] = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
-    assert(groupIdx == g_groupIdx[idx]);
-#endif
-
-    return groupIdx;
-}
-
 }
 
 #endif // ifndef X265_QUANT_H

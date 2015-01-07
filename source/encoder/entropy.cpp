@@ -1715,32 +1715,26 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
             for (uint32_t bin = 0; bin < 2; bin++)
                 estBitsSbac.significantBits[ctxIdx][bin] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)], bin);
     }
-    int bitsX = 0, bitsY = 0;
 
     int blkSizeOffset = bIsLuma ? ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
     int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
     uint32_t maxGroupIdx = log2TrSize * 2 - 1;
 
     uint32_t ctx;
-    const uint8_t *ctxX = &m_contextState[OFF_CTX_LAST_FLAG_X];
-    for (ctx = 0; ctx < maxGroupIdx; ctx++)
+    for (int i = 0, ctxIdx = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
     {
-        int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac.lastXBits[ctx] = bitsX + sbacGetEntropyBits(ctxX[ctxOffset], 0);
-        bitsX += sbacGetEntropyBits(ctxX[ctxOffset], 1);
+        int bits = 0;
+        const uint8_t *ctxState = &m_contextState[OFF_CTX_LAST_FLAG_X + ctxIdx];
+
+        for (ctx = 0; ctx < maxGroupIdx; ctx++)
+        {
+            int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
+            estBitsSbac.lastBits[i][ctx] = bits + sbacGetEntropyBits(ctxState[ctxOffset], 0);
+            bits += sbacGetEntropyBits(ctxState[ctxOffset], 1);
+        }
+
+        estBitsSbac.lastBits[i][ctx] = bits;
     }
-
-    estBitsSbac.lastXBits[ctx] = bitsX;
-
-    const uint8_t *ctxY = &m_contextState[OFF_CTX_LAST_FLAG_Y];
-    for (ctx = 0; ctx < maxGroupIdx; ctx++)
-    {
-        int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-        estBitsSbac.lastYBits[ctx] = bitsY + sbacGetEntropyBits(ctxY[ctxOffset], 0);
-        bitsY += sbacGetEntropyBits(ctxY[ctxOffset], 1);
-    }
-
-    estBitsSbac.lastYBits[ctx] = bitsY;
 }
 
 /* estimate bit cost of significant coefficient */

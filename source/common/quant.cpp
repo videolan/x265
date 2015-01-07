@@ -838,12 +838,23 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * cost of signaling it as not-significant */
             uint32_t blkPos = codeParams.scan[scanPos];
             if (dstCoeff[blkPos])
-            {
-                /* Swap the cost of signaling its significant coeff bit with the cost of
-                 * signaling its lastNZ pos */
-                uint32_t posY = blkPos >> log2TrSize;
-                uint32_t posX = blkPos - (posY << log2TrSize);
-                uint32_t bitsLastNZ = codeParams.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+            {                
+                // Calculates the cost of signaling the last significant coefficient in the block 
+                int pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
+                if (codeParams.scanType == SCAN_VER)
+                    std::swap(pos[0], pos[1]);
+                uint32_t bitsLastNZ = 0;
+
+                for (int i = 0; i < 2; i++)
+                {
+                    int temp = g_lastCoeffTable[pos[i]];
+                    int prefixOnes = temp & 15;
+                    int suffixLen = temp >> 4;
+
+                    bitsLastNZ += m_entropyCoder->m_estBitsSbac.lastBits[i][prefixOnes];
+                    bitsLastNZ += IEP_RATE * suffixLen;
+                }
+
                 int64_t costAsLast = totalRdCost - costSig[scanPos] + SIGCOST(bitsLastNZ);
 
                 if (costAsLast < bestCost)
@@ -1090,21 +1101,6 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
     offset += cnt;
 
     return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
-}
-
-/* Calculates the cost of signaling the last significant coefficient in the block */
-inline uint32_t Quant::getRateLast(uint32_t posx, uint32_t posy) const
-{
-    uint32_t ctxX = getGroupIdx(posx);
-    uint32_t ctxY = getGroupIdx(posy);
-    uint32_t cost = m_entropyCoder->m_estBitsSbac.lastXBits[ctxX] + m_entropyCoder->m_estBitsSbac.lastYBits[ctxY];
-
-    int32_t maskX = (int32_t)(2 - posx) >> 31;
-    int32_t maskY = (int32_t)(2 - posy) >> 31;
-
-    cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
-    cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
-    return cost;
 }
 
 /* Context derivation process of coeff_abs_significant_flag */
