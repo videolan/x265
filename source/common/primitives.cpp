@@ -85,7 +85,7 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
     }
 
-    primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
+    primitives.sa8d[BLOCK_4x4]   = primitives.satd[LUMA_4x4];
     primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
     primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
     primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
