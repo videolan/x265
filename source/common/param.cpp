@@ -699,7 +699,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->rc.bStrictCbr = atobool(value);
         p->rc.pbFactor = 1.0;
-        p->rc.rateTolerance = 0.5;
+        p->rc.rateTolerance = 0.7;
     }
     OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
     OPT("sar")

@@ -406,8 +406,8 @@ RateControl::RateControl(x265_param *p)
     }
     if (m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr)
     {
-        m_amortizeFraction = 0;
-        m_amortizeFrames = 0;
+        m_amortizeFraction = 0.85;
+        m_amortizeFrames = m_param->totalFrames / 2;
     }
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
     if (m_param->rc.bStrictCbr && m_isCbr)
@@ -482,6 +482,7 @@ bool RateControl::init(const SPS *sps)
     }
 
     m_totalBits = 0;
+    m_encodedBits = 0;
     m_framesDone = 0;
     m_residualCost = 0;
     m_partialResidualCost = 0;
@@ -1362,10 +1363,18 @@ double RateControl::tuneAbrQScaleFromFeedback(double qScale)
         double overflow = 1.0;
         double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
         double wantedBits = timeDone * m_bitrate;
-        if (wantedBits > 0 && m_totalBits > 0 && !m_partialResidualFrames)
+        int64_t encodedBits = m_totalBits;
+        if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps)
+        {
+            abrBuffer = m_param->totalFrames * (m_bitrate / m_fps);
+            encodedBits = m_encodedBits;
+        }
+
+        if (wantedBits > 0 && encodedBits > 0 && (!m_partialResidualFrames || 
+            m_param->rc.bStrictCbr))
         {
             abrBuffer *= X265_MAX(1, sqrt(timeDone));
-            overflow = x265_clip3(.5, 2.0, 1.0 + (m_totalBits - wantedBits) / abrBuffer);
+            overflow = x265_clip3(.5, 2.0, 1.0 + (encodedBits - wantedBits) / abrBuffer);
             qScale *= overflow;
         }
     }
@@ -1572,7 +1581,8 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
                 && m_lastNonBPictType != I_SLICE && !m_isAbrReset)
             {
-                q = x265_qp2qScale(m_accumPQp / m_accumPNorm);
+                if (!m_param->rc.bStrictCbr)
+                    q = x265_qp2qScale(m_accumPQp / m_accumPNorm);
                 q /= fabs(m_param->rc.ipFactor);
             }
             else if (m_framesDone > 0)
@@ -1990,28 +2000,55 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         if (encodedBitsSoFar < 0.05f * rce->frameSizePlanned)
             qpMax = qpAbsoluteMax = prevRowQp;
 
-        if (rce->sliceType != I_SLICE)
+        if (rce->sliceType != I_SLICE || (m_param->rc.bStrictCbr && rce->poc > 0))
             rcTol *= 0.5;
 
         if (!m_isCbr)
             qpMin = X265_MAX(qpMin, rce->qpNoVbv);
 
+        double totalBitsNeeded = m_wantedBitsWindow;
+        if (m_param->totalFrames)
+            totalBitsNeeded = (m_param->totalFrames * m_bitrate) / m_fps;
+        double abrOvershoot = (accFrameBits + m_totalBits - m_wantedBitsWindow) / totalBitsNeeded;
+
         while (qpVbv < qpMax
-               && ((accFrameBits > rce->frameSizePlanned + rcTol) ||
+               && (((accFrameBits > rce->frameSizePlanned + rcTol) ||
                    (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.5) ||
-                   (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv)))
+                   (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv))
+                   && (!m_param->rc.bStrictCbr ? 1 : abrOvershoot > 0.1)))
         {
             qpVbv += stepSize;
             accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
+            abrOvershoot = (accFrameBits + m_totalBits - m_wantedBitsWindow) / totalBitsNeeded;
         }
 
         while (qpVbv > qpMin
                && (qpVbv > curEncData.m_rowStat[0].diagQp || m_singleFrameVbv)
-               && ((accFrameBits < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
-                   || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1))
+               && (((accFrameBits < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
+                   || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1)
+                   && (!m_param->rc.bStrictCbr ? 1 : abrOvershoot < 0)))
         {
             qpVbv -= stepSize;
             accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
+            abrOvershoot = (accFrameBits + m_totalBits - m_wantedBitsWindow) / totalBitsNeeded;
+        }
+
+        if (m_param->rc.bStrictCbr && m_param->totalFrames)
+        {
+            double timeDone = (double)(m_framesDone) / m_param->totalFrames;
+            while (qpVbv < qpMax && (qpVbv < rce->qpNoVbv + (m_param->rc.qpStep * timeDone)) &&
+                   (timeDone > 0.75 && abrOvershoot > 0))
+            {
+                qpVbv += stepSize;
+                accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
+                abrOvershoot = (accFrameBits + m_totalBits - m_wantedBitsWindow) / totalBitsNeeded;
+            }
+            if (qpVbv > curEncData.m_rowStat[0].diagQp &&
+                abrOvershoot < -0.1 && timeDone > 0.5 && accFrameBits < rce->frameSizePlanned - rcTol)
+            {
+                qpVbv -= stepSize;
+                accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
+            }
         }
 
         /* avoid VBV underflow or MinCr violation */
@@ -2246,6 +2283,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         }
         m_wantedBitsWindow += m_frameDuration * m_bitrate;
         m_totalBits += bits - rce->rowTotalBits;
+        m_encodedBits += actualBits;
         int pos = m_sliderPos - m_param->frameNumThreads;
         if (pos >= 0)
             m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;
@@ -2287,9 +2325,9 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->numUnitsInTick / time->timeScale + rce->hrdTiming->cpbRemovalTime;
         }
     }
+    rce->isActive = false;
     // Allow rateControlStart of next frame only when rateControlEnd of previous frame is over
     m_startEndOrder.incr();
-    rce->isActive = false;
     return 0;
 
 writeFailure:

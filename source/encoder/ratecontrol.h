@@ -173,8 +173,9 @@ public:
     double   m_shortTermCplxCount;
     double   m_lastRceq;
     double   m_qCompress;
-    int64_t  m_totalBits;        /* total bits used for already encoded frames */
+    int64_t  m_totalBits;        /* total bits used for already encoded frames (after ammortization) */
     int      m_framesDone;       /* # of frames passed through RateCotrol already */
+    int64_t  m_encodedBits;      /* bits used for encoded frames (without ammortization) */
     double   m_fps;
     int64_t  m_satdCostWindow[50];
     int      m_sliderPos;
