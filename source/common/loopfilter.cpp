@@ -87,6 +87,22 @@ void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offset
     }
 }
 
+void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stride, int startX, int endX)
+{
+    int8_t signDown;
+    int8_t edgeType;
+
+    for (int x = startX + 1; x < endX; x++)
+    {
+        signDown = signOf(rec[x] - rec[x + stride]);
+        edgeType = signDown + upBuff1[x] + 2;
+        upBuff1[x - 1] = -signDown;
+
+        short v = rec[x] + offsetEo[edgeType];
+        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+    }
+}
+
 void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeight, intptr_t stride)
 {
     #define SAO_BO_BITS 5
@@ -113,6 +129,7 @@ void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p)
     p.saoCuOrgE0 = processSaoCUE0;
     p.saoCuOrgE1 = processSaoCUE1;
     p.saoCuOrgE2 = processSaoCUE2;
+    p.saoCuOrgE3 = processSaoCUE3;
     p.saoCuOrgB0 = processSaoCUB0;
     p.sign = calSign;
 }

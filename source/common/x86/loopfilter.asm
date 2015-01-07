@@ -188,6 +188,88 @@ cglobal saoCuOrgE2, 5, 7, 8, rec, bufft, buff1, offsetEo, lcuWidth
          jnz         .loop
     RET
 
+;=======================================================================================================
+;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
+;=======================================================================================================
+INIT_XMM sse4
+cglobal saoCuOrgE3, 3, 7, 8
+    mov             r3d, r3m
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+    mov             r6d, r5d
+    sub             r6d, r4d
+
+    inc             r4d
+    add             r0, r4
+    add             r1, r4
+    movh            m7, [r0 + r6 - 1]
+    mov             r6, [r1 + r6 - 2]
+    pxor            m0, m0                      ; m0 = 0
+    movu            m6, [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+
+.loop:
+    movu            m1, [r0]                    ; m1 = pRec[x]
+    movu            m2, [r0 + r3]               ; m2 = pRec[x + iStride]
+
+    psubusb         m3, m2, m1
+    psubusb         m4, m1, m2
+    pcmpeqb         m3, m0
+    pcmpeqb         m4, m0
+    pcmpeqb         m2, m1
+
+    pabsb           m3, m3
+    por             m4, m3
+    pandn           m2, m4                      ; m2 = iSignDown
+
+    movu            m3, [r1]                    ; m3 = m_iUpBuff1
+
+    paddb           m3, m2
+    paddb           m3, m6                      ; m3 = uiEdgeType
+
+    movu            m4, [r2]                    ; m4 = m_iOffsetEo
+    pshufb          m5, m4, m3
+
+    psubb           m3, m0, m2
+    movu            [r1 - 1], m3
+
+    pmovzxbw        m2, m1
+    punpckhbw       m1, m0
+    pmovsxbw        m3, m5
+    punpckhbw       m5, m5
+    psraw           m5, 8
+
+    paddw           m2, m3
+    paddw           m1, m5
+    packuswb        m2, m1
+    movu            [r0], m2
+
+    sub             r5d, 16
+    jle             .end
+
+    lea             r0, [r0 + 16]
+    lea             r1, [r1 + 16]
+
+    jnz             .loop
+
+.end:
+    js              .skip
+    sub             r0, r4
+    sub             r1, r4
+    movh            [r0 + 16], m7
+    mov             [r1 + 15], r6
+    jmp             .quit
+
+.skip:
+    sub             r0, r4
+    sub             r1, r4
+    movh            [r0 + 15], m7
+    mov             [r1 + 14], r6
+
+.quit:
+
+    RET
+
 ;=====================================================================================
 ; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
 ;=====================================================================================
