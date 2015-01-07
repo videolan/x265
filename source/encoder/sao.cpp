@@ -453,27 +453,62 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         if (!tpely)
             rec += stride;
 
-        for (x = startX - 1; x < endX; x++)
-            upBuff1[x] = signOf(rec[x] - tmpU[x + 1]);
-
-        for (y = startY; y < endY; y++)
+        if (ctuWidth & 15)
         {
-            x = startX;
-            int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
-            int edgeType = signDown + upBuff1[x] + 2;
-            upBuff1[x - 1] = -signDown;
-            rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
-            for (x = startX + 1; x < endX; x++)
+            for (x = startX - 1; x < endX; x++)
+                upBuff1[x] = signOf(rec[x] - tmpU[x + 1]);
+
+            for (y = startY; y < endY; y++)
             {
-                signDown = signOf(rec[x] - rec[x + stride - 1]);
-                edgeType = signDown + upBuff1[x] + 2;
+                x = startX;
+                int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
+                int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown;
                 rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+
+                for (x = startX + 1; x < endX; x++)
+                {
+                    signDown = signOf(rec[x] - rec[x + stride - 1]);
+                    edgeType = signDown + upBuff1[x] + 2;
+                    upBuff1[x - 1] = -signDown;
+                    rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                }
+
+                upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
+
+                rec += stride;
             }
+        }
+        else
+        {
+            int8_t firstSign, lastSign;
 
-            upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
+            if (lpelx)
+                firstSign = signOf(rec[-1] - tmpU[0]);
+            if (rpelx == picWidth)
+                lastSign = upBuff1[ctuWidth - 1];
 
-            rec += stride;
+            primitives.sign(upBuff1, rec, &tmpU[1], ctuWidth);
+
+            if (lpelx)
+                upBuff1[-1] = firstSign;
+            if (rpelx == picWidth)
+                upBuff1[ctuWidth - 1] = lastSign;
+
+            for (y = startY; y < endY; y++)
+            {
+                x = startX;
+                int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
+                int edgeType = signDown + upBuff1[x] + 2;
+                upBuff1[x - 1] = -signDown;
+                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+
+                primitives.saoCuOrgE3(rec, upBuff1, m_offsetEo, stride - 1, startX, endX);
+
+                upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
+
+                rec += stride;
+            }
         }
 
         break;
