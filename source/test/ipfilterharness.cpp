@@ -526,57 +526,57 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
     for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
     {
-        if (opt.luma_hpp[value])
+        if (opt.pu[value].luma_hpp)
         {
-            if (!check_IPFilterLuma_primitive(ref.luma_hpp[value], opt.luma_hpp[value]))
+            if (!check_IPFilterLuma_primitive(ref.pu[value].luma_hpp, opt.pu[value].luma_hpp))
             {
                 printf("luma_hpp[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_hps[value])
+        if (opt.pu[value].luma_hps)
         {
-            if (!check_IPFilterLuma_hps_primitive(ref.luma_hps[value], opt.luma_hps[value]))
+            if (!check_IPFilterLuma_hps_primitive(ref.pu[value].luma_hps, opt.pu[value].luma_hps))
             {
                 printf("luma_hps[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_vpp[value])
+        if (opt.pu[value].luma_vpp)
         {
-            if (!check_IPFilterLuma_primitive(ref.luma_vpp[value], opt.luma_vpp[value]))
+            if (!check_IPFilterLuma_primitive(ref.pu[value].luma_vpp, opt.pu[value].luma_vpp))
             {
                 printf("luma_vpp[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_vps[value])
+        if (opt.pu[value].luma_vps)
         {
-            if (!check_IPFilterLuma_ps_primitive(ref.luma_vps[value], opt.luma_vps[value]))
+            if (!check_IPFilterLuma_ps_primitive(ref.pu[value].luma_vps, opt.pu[value].luma_vps))
             {
                 printf("luma_vps[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_vsp[value])
+        if (opt.pu[value].luma_vsp)
         {
-            if (!check_IPFilterLuma_sp_primitive(ref.luma_vsp[value], opt.luma_vsp[value]))
+            if (!check_IPFilterLuma_sp_primitive(ref.pu[value].luma_vsp, opt.pu[value].luma_vsp))
             {
                 printf("luma_vsp[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_vss[value])
+        if (opt.pu[value].luma_vss)
         {
-            if (!check_IPFilterLuma_ss_primitive(ref.luma_vss[value], opt.luma_vss[value]))
+            if (!check_IPFilterLuma_ss_primitive(ref.pu[value].luma_vss, opt.pu[value].luma_vss))
             {
                 printf("luma_vss[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.luma_hvpp[value])
+        if (opt.pu[value].luma_hvpp)
         {
-            if (!check_IPFilterLumaHV_primitive(ref.luma_hvpp[value], opt.luma_hvpp[value]))
+            if (!check_IPFilterLumaHV_primitive(ref.pu[value].luma_hvpp, opt.pu[value].luma_hvpp))
             {
                 printf("luma_hvpp[%s]", lumaPartStr[value]);
                 return false;
@@ -596,49 +596,49 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
         for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
         {
-            if (opt.chroma[csp].filter_hpp[value])
+            if (opt.chroma[csp].pu[value].filter_hpp)
             {
-                if (!check_IPFilterChroma_primitive(ref.chroma[csp].filter_hpp[value], opt.chroma[csp].filter_hpp[value]))
+                if (!check_IPFilterChroma_primitive(ref.chroma[csp].pu[value].filter_hpp, opt.chroma[csp].pu[value].filter_hpp))
                 {
                     printf("chroma_hpp[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].filter_hps[value])
+            if (opt.chroma[csp].pu[value].filter_hps)
             {
-                if (!check_IPFilterChroma_hps_primitive(ref.chroma[csp].filter_hps[value], opt.chroma[csp].filter_hps[value]))
+                if (!check_IPFilterChroma_hps_primitive(ref.chroma[csp].pu[value].filter_hps, opt.chroma[csp].pu[value].filter_hps))
                 {
                     printf("chroma_hps[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].filter_vpp[value])
+            if (opt.chroma[csp].pu[value].filter_vpp)
             {
-                if (!check_IPFilterChroma_primitive(ref.chroma[csp].filter_vpp[value], opt.chroma[csp].filter_vpp[value]))
+                if (!check_IPFilterChroma_primitive(ref.chroma[csp].pu[value].filter_vpp, opt.chroma[csp].pu[value].filter_vpp))
                 {
                     printf("chroma_vpp[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].filter_vps[value])
+            if (opt.chroma[csp].pu[value].filter_vps)
             {
-                if (!check_IPFilterChroma_ps_primitive(ref.chroma[csp].filter_vps[value], opt.chroma[csp].filter_vps[value]))
+                if (!check_IPFilterChroma_ps_primitive(ref.chroma[csp].pu[value].filter_vps, opt.chroma[csp].pu[value].filter_vps))
                 {
                     printf("chroma_vps[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].filter_vsp[value])
+            if (opt.chroma[csp].pu[value].filter_vsp)
             {
-                if (!check_IPFilterChroma_sp_primitive(ref.chroma[csp].filter_vsp[value], opt.chroma[csp].filter_vsp[value]))
+                if (!check_IPFilterChroma_sp_primitive(ref.chroma[csp].pu[value].filter_vsp, opt.chroma[csp].pu[value].filter_vsp))
                 {
                     printf("chroma_vsp[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].filter_vss[value])
+            if (opt.chroma[csp].pu[value].filter_vss)
             {
-                if (!check_IPFilterChroma_ss_primitive(ref.chroma[csp].filter_vss[value], opt.chroma[csp].filter_vss[value]))
+                if (!check_IPFilterChroma_ss_primitive(ref.chroma[csp].pu[value].filter_vss, opt.chroma[csp].pu[value].filter_vss))
                 {
                     printf("chroma_vss[%s]", chromaPartStr[csp][value]);
                     return false;
@@ -667,57 +667,57 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
 
     for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
     {
-        if (opt.luma_hpp[value])
+        if (opt.pu[value].luma_hpp)
         {
             printf("luma_hpp[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_hpp[value], ref.luma_hpp[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_hpp, ref.pu[value].luma_hpp,
                            pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
 
-        if (opt.luma_hps[value])
+        if (opt.pu[value].luma_hps)
         {
             printf("luma_hps[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_hps[value], ref.luma_hps[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_hps, ref.pu[value].luma_hps,
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_s, dstStride, 1, 1);
         }
 
-        if (opt.luma_vpp[value])
+        if (opt.pu[value].luma_vpp)
         {
             printf("luma_vpp[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_vpp[value], ref.luma_vpp[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_vpp, ref.pu[value].luma_vpp,
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_p, dstStride, 1);
         }
 
-        if (opt.luma_vps[value])
+        if (opt.pu[value].luma_vps)
         {
             printf("luma_vps[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_vps[value], ref.luma_vps[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_vps, ref.pu[value].luma_vps,
                            pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_s, dstStride, 1);
         }
 
-        if (opt.luma_vsp[value])
+        if (opt.pu[value].luma_vsp)
         {
             printf("luma_vsp[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_vsp[value], ref.luma_vsp[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_vsp, ref.pu[value].luma_vsp,
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_p, dstStride, 1);
         }
 
-        if (opt.luma_vss[value])
+        if (opt.pu[value].luma_vss)
         {
             printf("luma_vss[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_vss[value], ref.luma_vss[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_vss, ref.pu[value].luma_vss,
                            short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                            IPF_vec_output_s, dstStride, 1);
         }
 
-        if (opt.luma_hvpp[value])
+        if (opt.pu[value].luma_hvpp)
         {
             printf("luma_hv [%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.luma_hvpp[value], ref.luma_hvpp[value],
+            REPORT_SPEEDUP(opt.pu[value].luma_hvpp, ref.pu[value].luma_hvpp,
                            pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
     }
@@ -733,43 +733,43 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         }
         for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
         {
-            if (opt.chroma[csp].filter_hpp[value])
+            if (opt.chroma[csp].pu[value].filter_hpp)
             {
                 printf("chroma_hpp[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_hpp[value], ref.chroma[csp].filter_hpp[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_hpp, ref.chroma[csp].pu[value].filter_hpp,
                                pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
             }
-            if (opt.chroma[csp].filter_hps[value])
+            if (opt.chroma[csp].pu[value].filter_hps)
             {
                 printf("chroma_hps[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_hps[value], ref.chroma[csp].filter_hps[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_hps, ref.chroma[csp].pu[value].filter_hps,
                                pixel_buff + srcStride, srcStride, IPF_vec_output_s, dstStride, 1, 1);
             }
-            if (opt.chroma[csp].filter_vpp[value])
+            if (opt.chroma[csp].pu[value].filter_vpp)
             {
                 printf("chroma_vpp[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_vpp[value], ref.chroma[csp].filter_vpp[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vpp, ref.chroma[csp].pu[value].filter_vpp,
                                pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_p, dstStride, 1);
             }
-            if (opt.chroma[csp].filter_vps[value])
+            if (opt.chroma[csp].pu[value].filter_vps)
             {
                 printf("chroma_vps[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_vps[value], ref.chroma[csp].filter_vps[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vps, ref.chroma[csp].pu[value].filter_vps,
                                pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_s, dstStride, 1);
             }
-            if (opt.chroma[csp].filter_vsp[value])
+            if (opt.chroma[csp].pu[value].filter_vsp)
             {
                 printf("chroma_vsp[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_vsp[value], ref.chroma[csp].filter_vsp[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vsp, ref.chroma[csp].pu[value].filter_vsp,
                                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_p, dstStride, 1);
             }
-            if (opt.chroma[csp].filter_vss[value])
+            if (opt.chroma[csp].pu[value].filter_vss)
             {
                 printf("chroma_vss[%s]", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].filter_vss[value], ref.chroma[csp].filter_vss[value],
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vss, ref.chroma[csp].pu[value].filter_vss,
                                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_s, dstStride, 1);
             }
