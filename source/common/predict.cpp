@@ -340,13 +340,7 @@ void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv
     else if (!xFrac)
         primitives.luma_vpp[partEnum](src, srcStride, dst, dstStride, yFrac);
     else
-    {
-        int tmpStride = m_puWidth;
-        int filterSize = NTAPS_LUMA;
-        int halfFilterSize = (filterSize >> 1);
-        primitives.luma_hps[partEnum](src, srcStride, m_immedVals, tmpStride, xFrac, 1);
-        primitives.luma_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
-    }
+        primitives.luma_hvpp[partEnum](src, srcStride, dst, dstStride, xFrac, yFrac);
 }
 
 void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const

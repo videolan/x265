@@ -1207,14 +1207,8 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         else if (!xFrac)
             primitives.luma_vpp[partEnum](fref, refStride, subpelbuf, lclStride, yFrac);
         else
-        {
-            ALIGN_VAR_32(int16_t, immed[64 * (64 + NTAPS_LUMA)]);
+            primitives.luma_hvpp[partEnum](fref, refStride, subpelbuf, lclStride, xFrac, yFrac);
 
-            int filterSize = NTAPS_LUMA;
-            int halfFilterSize = filterSize >> 1;
-            primitives.luma_hps[partEnum](fref, refStride, immed, blockwidth, xFrac, 1);
-            primitives.luma_vsp[partEnum](immed + (halfFilterSize - 1) * blockwidth, blockwidth, subpelbuf, lclStride, yFrac);
-        }
         cost = cmp(fencPUYuv.m_buf[0], lclStride, subpelbuf, lclStride);
     }
 
