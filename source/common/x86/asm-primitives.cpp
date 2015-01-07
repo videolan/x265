@@ -1649,6 +1649,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         p.sign = x265_calSign_sse4;
         p.saoCuOrgE0 = x265_saoCuOrgE0_sse4;
+        p.saoCuOrgE1 = x265_saoCuOrgE1_sse4;
         p.saoCuOrgE2 = x265_saoCuOrgE2_sse4;
         p.saoCuOrgB0 = x265_saoCuOrgB0_sse4;
 

@@ -50,6 +50,7 @@ protected:
     int8_t   psbuf2[BUFFSIZE];
     int8_t   psbuf3[BUFFSIZE];
     int8_t   psbuf4[BUFFSIZE];
+    int8_t   psbuf5[BUFFSIZE];
 
     int16_t  sbuf1[BUFFSIZE];
     int16_t  sbuf2[BUFFSIZE];
@@ -93,6 +94,7 @@ protected:
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);
     bool check_addAvg(addAvg_t, addAvg_t);
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
+    bool check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt);
     bool check_saoCuOrgE2_t(saoCuOrgE2_t ref, saoCuOrgE2_t opt);
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);

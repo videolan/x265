@@ -326,26 +326,34 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         if (!tpely)
             rec += stride;
 
-        if (!(ctuWidth & 15))
-            primitives.sign(upBuff1, rec, tmpU, ctuWidth);
-        else
+        if (ctuWidth & 15)
         {
             for (x = 0; x < ctuWidth; x++)
                 upBuff1[x] = signOf(rec[x] - tmpU[x]);
-        }
 
-        for (y = startY; y < endY; y++)
-        {
-            for (x = 0; x < ctuWidth; x++)
+            for (y = startY; y < endY; y++)
             {
-                int8_t signDown = signOf(rec[x] - rec[x + stride]);
-                int edgeType = signDown + upBuff1[x] + 2;
-                upBuff1[x] = -signDown;
+                for (x = 0; x < ctuWidth; x++)
+                {
+                    int8_t signDown = signOf(rec[x] - rec[x + stride]);
+                    int edgeType = signDown + upBuff1[x] + 2;
+                    upBuff1[x] = -signDown;
 
-                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                    rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                }
+
+                rec += stride;
             }
+        }
+        else
+        {
+            primitives.sign(upBuff1, rec, tmpU, ctuWidth);
 
-            rec += stride;
+            for (y = startY; y < endY; y++)
+            {
+                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
+                rec += stride;
+            }
         }
 
         break;

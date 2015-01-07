@@ -57,6 +57,23 @@ void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
     }
 }
 
+void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
+{
+    int x;
+    int8_t signDown;
+    int edgeType;
+
+    for (x = 0; x < width; x++)
+    {
+        signDown = signOf(rec[x] - rec[x + stride]);
+        edgeType = signDown + upBuff1[x] + 2;
+        upBuff1[x] = -signDown;
+
+        short v = rec[x] + offsetEo[edgeType];
+        rec[x] = (pixel)(v < 0 ? 0 : (v > (PIXEL_MAX)) ? (PIXEL_MAX) : v);
+    }
+}
+
 void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int width, intptr_t stride)
 {
     int x;
@@ -94,6 +111,7 @@ namespace x265 {
 void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;
+    p.saoCuOrgE1 = processSaoCUE1;
     p.saoCuOrgE2 = processSaoCUE2;
     p.saoCuOrgB0 = processSaoCUB0;
     p.sign = calSign;

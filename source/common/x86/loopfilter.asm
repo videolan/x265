@@ -86,6 +86,56 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     jnz        .loop
     RET
 
+;==================================================================================================
+; void saoCuOrgE1(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
+;==================================================================================================
+INIT_XMM sse4
+cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
+    mov         r3d, r3m
+    mov         r4d, r4m
+    pxor        m0,    m0                      ; m0 = 0
+    movu        m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    mova        m7,    [pb_128]
+    shr         r4d,   4
+    .loop
+         movu        m1,    [r0]                    ; m1 = pRec[x]
+         movu        m2,    [r0 + r3]               ; m2 = pRec[x + iStride]
+
+         pxor        m3,    m1,    m7
+         pxor        m4,    m2,    m7
+         pcmpgtb     m2,    m3,    m4
+         pcmpgtb     m4,    m3
+         pand        m2,    [pb_1]
+         por         m2,    m4
+
+         movu        m3,    [r1]                    ; m3 = m_iUpBuff1
+
+         paddb       m3,    m2
+         paddb       m3,    m6
+
+         movu        m4,    [r2]                    ; m4 = m_iOffsetEo
+         pshufb      m5,    m4,    m3
+
+         psubb       m3,    m0,    m2
+         movu        [r1],  m3
+
+         pmovzxbw    m2,    m1
+         punpckhbw   m1,    m0
+         pmovsxbw    m3,    m5
+         punpckhbw   m5,    m5
+         psraw       m5,    8
+
+         paddw       m2,    m3
+         paddw       m1,    m5
+         packuswb    m2,    m1
+         movu        [r0],  m2
+
+         add         r0,    16
+         add         r1,    16
+         dec         r4d
+         jnz         .loop
+    RET
+
 ;======================================================================================================================================================
 ; void saoCuOrgE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int lcuWidth, intptr_t stride)
 ;======================================================================================================================================================
