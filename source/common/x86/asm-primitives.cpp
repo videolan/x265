@@ -1523,7 +1523,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         INIT8(sad_x3, _mmx2);
         INIT8(sad_x4, _mmx2);
         p.satd[LUMA_4x4] = x265_pixel_satd_4x4_mmx2;
-        p.sa8d_inter[LUMA_4x4]  = x265_pixel_satd_4x4_mmx2;
         p.frameInitLowres = x265_frame_init_lowres_core_mmx2;
 
         PIXEL_AVG(sse2);
