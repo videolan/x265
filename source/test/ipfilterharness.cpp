@@ -487,14 +487,14 @@ bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_
                 rand_srcStride = rand() % 100;
                 rand_dstStride = rand() % 100 + 64;
 
-                ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                ref(pixel_test_buff[index] + 3 * rand_srcStride + 3,
                     rand_srcStride,
                     IPF_C_output_p,
                     rand_dstStride,
                     coeffIdxX,
                     coeffIdxY);
 
-                checked(opt, pixel_test_buff[index] + 3 * rand_srcStride,
+                checked(opt, pixel_test_buff[index] + 3 * rand_srcStride + 3,
                         rand_srcStride,
                         IPF_vec_output_p,
                         rand_dstStride,
