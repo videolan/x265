@@ -330,18 +330,18 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-                ssd += primitives.sse_pp[LUMA_64x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.pu[LUMA_64x64].sse_pp(fenc + x, stride, rec + x, stride);
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x64](fenc + x, stride, rec + x, stride);
+                ssd += primitives.pu[LUMA_16x64].sse_pp(fenc + x, stride, rec + x, stride);
 
         for (; x + 4 <= width; x += 4)
         {
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 16 * stride, stride, rec + x + 16 * stride, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 32 * stride, stride, rec + x + 32 * stride, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 48 * stride, stride, rec + x + 48 * stride, stride);
+            ssd += primitives.pu[LUMA_4x16].sse_pp(fenc + x, stride, rec + x, stride);
+            ssd += primitives.pu[LUMA_4x16].sse_pp(fenc + x + 16 * stride, stride, rec + x + 16 * stride, stride);
+            ssd += primitives.pu[LUMA_4x16].sse_pp(fenc + x + 32 * stride, stride, rec + x + 32 * stride, stride);
+            ssd += primitives.pu[LUMA_4x16].sse_pp(fenc + x + 48 * stride, stride, rec + x + 48 * stride, stride);
         }
 
         fenc += stride * 64;
@@ -355,14 +355,14 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
 
         if (!(stride & 31))
             for (; x + 64 <= width; x += 64)
-                ssd += primitives.sse_pp[LUMA_64x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.pu[LUMA_64x16].sse_pp(fenc + x, stride, rec + x, stride);
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x16](fenc + x, stride, rec + x, stride);
+                ssd += primitives.pu[LUMA_16x16].sse_pp(fenc + x, stride, rec + x, stride);
 
         for (; x + 4 <= width; x += 4)
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
+            ssd += primitives.pu[LUMA_4x16].sse_pp(fenc + x, stride, rec + x, stride);
 
         fenc += stride * 16;
         rec += stride * 16;
@@ -375,10 +375,10 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
 
         if (!(stride & 15))
             for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x4](fenc + x, stride, rec + x, stride);
+                ssd += primitives.pu[LUMA_16x4].sse_pp(fenc + x, stride, rec + x, stride);
 
         for (; x + 4 <= width; x += 4)
-            ssd += primitives.sse_pp[LUMA_4x4](fenc + x, stride, rec + x, stride);
+            ssd += primitives.pu[LUMA_4x4].sse_pp(fenc + x, stride, rec + x, stride);
 
         fenc += stride * 4;
         rec += stride * 4;
@@ -427,7 +427,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
-    primitives.luma_copy_pp[part](dst, reconPic->m_stride, src, fencPic->m_stride);
+    primitives.pu[part].luma_copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
    
     pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absPartIdx);
     pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absPartIdx);
@@ -436,8 +436,8 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absPartIdx);
 
     int csp = fencPic->m_picCsp;
-    primitives.chroma[csp].copy_pp[part](dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
-    primitives.chroma[csp].copy_pp[part](dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
+    primitives.chroma[csp].pu[part].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
+    primitives.chroma[csp].pu[part].copy_pp(dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
 }
 
 /* Original YUV restoration for CU in lossless coding */

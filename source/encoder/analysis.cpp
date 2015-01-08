@@ -1254,11 +1254,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         motionCompensation(tempPred->predYuv, true, m_bChromaSa8d);
 
         tempPred->sa8dBits = getTUBits(i, maxNumMergeCand);
-        tempPred->distortion = primitives.sa8d[sizeIdx](fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
+        tempPred->distortion = primitives.cu[sizeIdx].sa8d(fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
         if (m_bChromaSa8d)
         {
-            tempPred->distortion += primitives.sa8d_inter[cpart](fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
-            tempPred->distortion += primitives.sa8d_inter[cpart](fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
+            tempPred->distortion += primitives.pu[cpart].sa8d_inter(fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
+            tempPred->distortion += primitives.pu[cpart].sa8d_inter(fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
         }
         tempPred->sa8dCost = m_rdCost.calcRdSADCost(tempPred->distortion, tempPred->sa8dBits);
 
@@ -1449,13 +1449,13 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         const Yuv& fencYuv = *interMode.fencYuv;
         Yuv& predYuv = interMode.predYuv;
         int part = partitionFromLog2Size(cuGeom.log2CUSize);
-        interMode.distortion = primitives.sa8d[part](fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
+        interMode.distortion = primitives.cu[part].sa8d(fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
         if (m_bChromaSa8d)
         {
             uint32_t cuSize = 1 << cuGeom.log2CUSize;
             int cpart = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-            interMode.distortion += primitives.sa8d_inter[cpart](fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
-            interMode.distortion += primitives.sa8d_inter[cpart](fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
+            interMode.distortion += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
+            interMode.distortion += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
         }
         interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
 
@@ -1574,12 +1574,12 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     prepMotionCompensation(cu, cuGeom, 0);
     motionCompensation(bidir2Nx2N.predYuv, true, m_bChromaSa8d);
 
-    int sa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
+    int sa8d = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
     if (m_bChromaSa8d)
     {
         /* Add in chroma distortion */
-        sa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
-        sa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[2], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[2], bidir2Nx2N.predYuv.m_csize);
+        sa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
+        sa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[2], bidir2Nx2N.predYuv.m_csize);
     }
     bidir2Nx2N.sa8dBits = bestME[0].bits + bestME[1].bits + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
     bidir2Nx2N.sa8dCost = sa8d + m_rdCost.getCost(bidir2Nx2N.sa8dBits);
@@ -1614,9 +1614,9 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
             prepMotionCompensation(cu, cuGeom, 0);
             motionCompensation(tmpPredYuv, true, true);
 
-            zsa8d  = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
-            zsa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
-            zsa8d += primitives.sa8d_inter[cpart](fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
+            zsa8d  = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+            zsa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
+            zsa8d += primitives.pu[cpart].sa8d_inter(fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
         }
         else
         {
@@ -1624,8 +1624,8 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
             pixel *fref1 = m_slice->m_mref[1][ref1].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx);
             intptr_t refStride = m_slice->m_mref[0][0].lumaStride;
 
-            primitives.pixelavg_pp[partEnum](tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
-            zsa8d = primitives.sa8d[partEnum](fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
+            primitives.pu[partEnum].pixelavg_pp(tmpPredYuv.m_buf[0], tmpPredYuv.m_size, fref0, refStride, fref1, refStride, 32);
+            zsa8d = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
         }
 
         uint32_t bits0 = bestME[0].bits - m_me.bitcost(bestME[0].mv, mvp0) + m_me.bitcost(mvzero, mvp0);
@@ -1721,15 +1721,15 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         pixel* predU = predYuv.getCbAddr(absPartIdx);
         pixel* predV = predYuv.getCrAddr(absPartIdx);
 
-        primitives.luma_sub_ps[sizeIdx](resiYuv.m_buf[0], resiYuv.m_size,
+        primitives.pu[sizeIdx].luma_sub_ps(resiYuv.m_buf[0], resiYuv.m_size,
                                         fencYuv.m_buf[0], predY,
                                         fencYuv.m_size, predYuv.m_size);
 
-        primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[1], resiYuv.m_csize,
+        primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[1], resiYuv.m_csize,
                                                  fencYuv.m_buf[1], predU,
                                                  fencYuv.m_csize, predYuv.m_csize);
 
-        primitives.chroma[m_csp].sub_ps[sizeIdx](resiYuv.m_buf[2], resiYuv.m_csize,
+        primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[2], resiYuv.m_csize,
                                                  fencYuv.m_buf[2], predV,
                                                  fencYuv.m_csize, predYuv.m_csize);
 
@@ -1746,24 +1746,24 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
         PicYuv& reconPic = *m_frame->m_reconPic;
         if (cu.m_cbf[0][0])
-            primitives.luma_add_ps[sizeIdx](reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+            primitives.pu[sizeIdx].luma_add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                             predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
         else
-            primitives.luma_copy_pp[sizeIdx](reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+            primitives.pu[sizeIdx].luma_copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                              predY, predYuv.m_size);
 
         if (cu.m_cbf[1][0])
-            primitives.chroma[m_csp].add_ps[sizeIdx](reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                      predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
         else
-            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            primitives.chroma[m_csp].pu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                       predU, predYuv.m_csize);
 
         if (cu.m_cbf[2][0])
-            primitives.chroma[m_csp].add_ps[sizeIdx](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                      predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
         else
-            primitives.chroma[m_csp].copy_pp[sizeIdx](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            primitives.chroma[m_csp].pu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                       predV, predYuv.m_csize);
     }
 

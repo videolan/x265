@@ -160,17 +160,17 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
-    sad = primitives.sad[partEnum];
-    satd = primitives.satd[partEnum];
-    sad_x3 = primitives.sad_x3[partEnum];
-    sad_x4 = primitives.sad_x4[partEnum];
+    sad = primitives.pu[partEnum].sad;
+    satd = primitives.pu[partEnum].satd;
+    sad_x3 = primitives.pu[partEnum].sad_x3;
+    sad_x4 = primitives.pu[partEnum].sad_x4;
 
     blockwidth = pwidth;
     blockOffset = offset;
     absPartIdx = ctuAddr = -1;
 
     /* copy PU block into cache */
-    primitives.luma_copy_pp[partEnum](fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
+    primitives.pu[partEnum].luma_copy_pp(fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
     X265_CHECK(!bChromaSATD, "chroma distortion measurements impossible in this code path\n");
 }
 
@@ -179,11 +179,11 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
-    sad = primitives.sad[partEnum];
-    satd = primitives.satd[partEnum];
-    sad_x3 = primitives.sad_x3[partEnum];
-    sad_x4 = primitives.sad_x4[partEnum];
-    chromaSatd = primitives.chroma[fencPUYuv.m_csp].satd[partEnum];
+    sad = primitives.pu[partEnum].sad;
+    satd = primitives.pu[partEnum].satd;
+    sad_x3 = primitives.pu[partEnum].sad_x3;
+    sad_x4 = primitives.pu[partEnum].sad_x4;
+    chromaSatd = primitives.chroma[fencPUYuv.m_csp].pu[partEnum].satd;
 
     /* Enable chroma residual cost if subpelRefine level is greater than 2 and chroma block size
      * is an even multiple of 4x4 pixels (indicated by non-null chromaSatd pointer) */
@@ -1203,11 +1203,11 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
          * accurate but good enough for fast qpel ME */
         ALIGN_VAR_32(pixel, subpelbuf[64 * 64]);
         if (!yFrac)
-            primitives.luma_hpp[partEnum](fref, refStride, subpelbuf, lclStride, xFrac);
+            primitives.pu[partEnum].luma_hpp(fref, refStride, subpelbuf, lclStride, xFrac);
         else if (!xFrac)
-            primitives.luma_vpp[partEnum](fref, refStride, subpelbuf, lclStride, yFrac);
+            primitives.pu[partEnum].luma_vpp(fref, refStride, subpelbuf, lclStride, yFrac);
         else
-            primitives.luma_hvpp[partEnum](fref, refStride, subpelbuf, lclStride, xFrac, yFrac);
+            primitives.pu[partEnum].luma_hvpp(fref, refStride, subpelbuf, lclStride, xFrac, yFrac);
 
         cost = cmp(fencPUYuv.m_buf[0], lclStride, subpelbuf, lclStride);
     }
@@ -1240,18 +1240,18 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
             ALIGN_VAR_32(pixel, subpelbuf[64 * 64]);
             if (!yFrac)
             {
-                primitives.chroma[csp].filter_hpp[partEnum](refCb, refStrideC, subpelbuf, lclStride, xFrac << (1 - hshift));
+                primitives.chroma[csp].pu[partEnum].filter_hpp(refCb, refStrideC, subpelbuf, lclStride, xFrac << (1 - hshift));
                 cost += chromaSatd(fencPUYuv.m_buf[1], lclStride, subpelbuf, lclStride);
 
-                primitives.chroma[csp].filter_hpp[partEnum](refCr, refStrideC, subpelbuf, lclStride, xFrac << (1 - hshift));
+                primitives.chroma[csp].pu[partEnum].filter_hpp(refCr, refStrideC, subpelbuf, lclStride, xFrac << (1 - hshift));
                 cost += chromaSatd(fencPUYuv.m_buf[2], lclStride, subpelbuf, lclStride);
             }
             else if (!xFrac)
             {
-                primitives.chroma[csp].filter_vpp[partEnum](refCb, refStrideC, subpelbuf, lclStride, yFrac << (1 - vshift));
+                primitives.chroma[csp].pu[partEnum].filter_vpp(refCb, refStrideC, subpelbuf, lclStride, yFrac << (1 - vshift));
                 cost += chromaSatd(fencPUYuv.m_buf[1], lclStride, subpelbuf, lclStride);
 
-                primitives.chroma[csp].filter_vpp[partEnum](refCr, refStrideC, subpelbuf, lclStride, yFrac << (1 - vshift));
+                primitives.chroma[csp].pu[partEnum].filter_vpp(refCr, refStrideC, subpelbuf, lclStride, yFrac << (1 - vshift));
                 cost += chromaSatd(fencPUYuv.m_buf[2], lclStride, subpelbuf, lclStride);
             }
             else
@@ -1262,12 +1262,12 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
                 int filterSize = NTAPS_CHROMA;
                 int halfFilterSize = (filterSize >> 1);
 
-                primitives.chroma[csp].filter_hps[partEnum](refCb, refStrideC, immed, extStride, xFrac << (1 - hshift), 1);
-                primitives.chroma[csp].filter_vsp[partEnum](immed + (halfFilterSize - 1) * extStride, extStride, subpelbuf, lclStride, yFrac << (1 - vshift));
+                primitives.chroma[csp].pu[partEnum].filter_hps(refCb, refStrideC, immed, extStride, xFrac << (1 - hshift), 1);
+                primitives.chroma[csp].pu[partEnum].filter_vsp(immed + (halfFilterSize - 1) * extStride, extStride, subpelbuf, lclStride, yFrac << (1 - vshift));
                 cost += chromaSatd(fencPUYuv.m_buf[1], lclStride, subpelbuf, lclStride);
 
-                primitives.chroma[csp].filter_hps[partEnum](refCr, refStrideC, immed, extStride, xFrac << (1 - hshift), 1);
-                primitives.chroma[csp].filter_vsp[partEnum](immed + (halfFilterSize - 1) * extStride, extStride, subpelbuf, lclStride, yFrac << (1 - vshift));
+                primitives.chroma[csp].pu[partEnum].filter_hps(refCr, refStrideC, immed, extStride, xFrac << (1 - hshift), 1);
+                primitives.chroma[csp].pu[partEnum].filter_vsp(immed + (halfFilterSize - 1) * extStride, extStride, subpelbuf, lclStride, yFrac << (1 - vshift));
                 cost += chromaSatd(fencPUYuv.m_buf[2], lclStride, subpelbuf, lclStride);
             }
         }
