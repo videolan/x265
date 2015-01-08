@@ -86,15 +86,15 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
     pixel* refLft;
     pixel* refAbv;
 
-    if (!(g_intraFilterFlags[dirMode] & tuSize))
-    {
-        refLft = m_refLeft + tuSize - 1;
-        refAbv = m_refAbove + tuSize - 1;
-    }
-    else
+    if (g_intraFilterFlags[dirMode] & tuSize)
     {
         refLft = m_refLeftFlt + tuSize - 1;
         refAbv = m_refAboveFlt + tuSize - 1;
+    }
+    else
+    {
+        refLft = m_refLeft + tuSize - 1;
+        refAbv = m_refAbove + tuSize - 1;
     }
 
     bool bFilter = log2TrSize <= 4;
