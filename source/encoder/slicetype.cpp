@@ -1733,14 +1733,17 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             }
             for (uint32_t dist = 2; dist >= 1; dist--)
             {
-                mode = lowmode - dist;
+                int minusmode = lowmode - dist;
+                int plusmode = lowmode + dist;
+
+                mode = minusmode;
                 if (mode < 18)
                     cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
                 else
                     cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
 
-                mode = lowmode + dist;
+                mode = plusmode;
                 if (mode < 18)
                     cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
                 else
@@ -1764,7 +1767,10 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             }
             for (uint32_t dist = 2; dist >= 1; dist--)
             {
-                mode = lowmode - dist;
+                int minusmode = lowmode - dist;
+                int plusmode = lowmode + dist;
+
+                mode = minusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
                     primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
                 else
@@ -1772,7 +1778,7 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
 
-                mode = lowmode + dist;
+                mode = plusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
                     primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
                 else
