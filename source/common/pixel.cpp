@@ -241,32 +241,35 @@ int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_
     return (int)(sum >> 1);
 }
 
-int satd_4x4(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t stride_pix2)
+static int satd_4x4(const int16_t* pix1, intptr_t stride_pix1)
 {
-    int64_t tmp[4][2];
-    int64_t a0, a1, a2, a3, b0, b1;
-    int64_t sum = 0;
+    int64_t tmp[4][4];
+    int64_t s01, s23, d01, d23;
+    int64_t satd = 0;
+    int d;
 
-    for (int i = 0; i < 4; i++, pix1 += stride_pix1, pix2 += stride_pix2)
+    for (d = 0; d < 4; d++, pix1 += stride_pix1)
     {
-        a0 = pix1[0] - pix2[0];
-        a1 = pix1[1] - pix2[1];
-        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
-        a2 = pix1[2] - pix2[2];
-        a3 = pix1[3] - pix2[3];
-        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
-        tmp[i][0] = b0 + b1;
-        tmp[i][1] = b0 - b1;
+        s01 = pix1[0] + pix1[1];
+        s23 = pix1[2] + pix1[3];
+        d01 = pix1[0] - pix1[1];
+        d23 = pix1[2] - pix1[3];
+
+        tmp[d][0] = s01 + s23;
+        tmp[d][1] = s01 - s23;
+        tmp[d][2] = d01 - d23;
+        tmp[d][3] = d01 + d23;
     }
 
-    for (int i = 0; i < 2; i++)
+    for (d = 0; d < 4; d++)
     {
-        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
-        a0 = abs2(a0) + abs2(a1) + abs2(a2) + abs2(a3);
-        sum += ((sum_t)a0) + (a0 >> BITS_PER_SUM);
+        s01 = tmp[0][d] + tmp[1][d];
+        s23 = tmp[2][d] + tmp[3][d];
+        d01 = tmp[0][d] - tmp[1][d];
+        d23 = tmp[2][d] - tmp[3][d];
+        satd += abs(s01 + s23) + abs(s01 - s23) + abs(d01 - d23) + abs(d01 + d23);
     }
-
-    return (int)(sum >> 1);
+    return (int)(satd / 2);
 }
 
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
@@ -832,8 +835,8 @@ int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, in
     else
     {
         /* 4x4 is too small for sa8d */
-        int sourceEnergy = satd_4x4(source, sstride, zeroBuf, 0) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
-        int reconEnergy = satd_4x4(recon, rstride, zeroBuf, 0) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
+        int sourceEnergy = satd_4x4(source, sstride) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
+        int reconEnergy = satd_4x4(recon, rstride) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
         return abs(sourceEnergy - reconEnergy);
     }
 }
