@@ -45,6 +45,11 @@
 #include "PPA/ppa.h"
 #define ProfileScopeEvent(x) PPAScopeEvent(x)
 #define PROFILE_INIT()       PPA_INIT()
+#elif ENABLE_VTUNE
+#include "ittnotify.h"
+#include "vtune/vtune.h"
+#define ProfileScopeEvent(x) VTuneScopeEvent _vtuneTask(x)
+#define PROFILE_INIT()       vtuneInit()
 #else
 #define ProfileScopeEvent(x)
 #define PROFILE_INIT()
