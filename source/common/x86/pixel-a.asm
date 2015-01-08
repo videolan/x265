@@ -449,7 +449,19 @@ cglobal pixel_satd_4x8, 4,6
 cglobal pixel_satd_4x4, 4,6
     SATD_START_MMX
     SATD_4x4_MMX m0, 0, 0
-    SATD_END_MMX
+%if HIGH_BIT_DEPTH
+    HADDUW      m0, m1
+    movd       eax, m0
+%else ; !HIGH_BIT_DEPTH
+    pshufw      m1, m0, q1032
+    paddw       m0, m1
+    pshufw      m1, m0, q2301
+    paddw       m0, m1
+    movd       eax, m0
+    and        eax, 0xffff
+%endif ; HIGH_BIT_DEPTH
+    EMMS
+    RET
 
 %macro SATD_START_SSE2 2-3 0
     FIX_STRIDES r1, r3
