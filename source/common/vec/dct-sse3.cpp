@@ -1402,9 +1402,9 @@ void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives &p)
      * still somewhat rare on end-user PCs we still compile and link these SSE3
      * intrinsic SIMD functions */
 #if !HIGH_BIT_DEPTH
-    p.idct[IDCT_8x8] = idct8;
-    p.idct[IDCT_16x16] = idct16;
-    p.idct[IDCT_32x32] = idct32;
+    p.cu[BLOCK_8x8].idct   = idct8;
+    p.cu[BLOCK_16x16].idct = idct16;
+    p.cu[BLOCK_32x32].idct = idct32;
 #endif
 }
 }

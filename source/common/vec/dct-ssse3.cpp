@@ -1111,8 +1111,8 @@ void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives &p)
      * still somewhat rare on end-user PCs we still compile and link these SSSE3
      * intrinsic SIMD functions */
 #if !HIGH_BIT_DEPTH
-    p.dct[DCT_16x16] = dct16;
-    p.dct[DCT_32x32] = dct32;
+    p.cu[BLOCK_16x16].dct = dct16;
+    p.cu[BLOCK_32x32].dct = dct32;
 #endif
 }
 }

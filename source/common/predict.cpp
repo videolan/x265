@@ -334,13 +334,13 @@ void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv
     int yFrac = mv.y & 0x3;
 
     if (!(yFrac | xFrac))
-        primitives.luma_copy_pp[partEnum](dst, dstStride, src, srcStride);
+        primitives.pu[partEnum].luma_copy_pp(dst, dstStride, src, srcStride);
     else if (!yFrac)
-        primitives.luma_hpp[partEnum](src, srcStride, dst, dstStride, xFrac);
+        primitives.pu[partEnum].luma_hpp(src, srcStride, dst, dstStride, xFrac);
     else if (!xFrac)
-        primitives.luma_vpp[partEnum](src, srcStride, dst, dstStride, yFrac);
+        primitives.pu[partEnum].luma_vpp(src, srcStride, dst, dstStride, yFrac);
     else
-        primitives.luma_hvpp[partEnum](src, srcStride, dst, dstStride, xFrac, yFrac);
+        primitives.pu[partEnum].luma_hvpp(src, srcStride, dst, dstStride, xFrac, yFrac);
 }
 
 void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
@@ -363,16 +363,16 @@ void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const 
     if (!(yFrac | xFrac))
         primitives.luma_p2s(src, srcStride, dst, m_puWidth, m_puHeight);
     else if (!yFrac)
-        primitives.luma_hps[partEnum](src, srcStride, dst, dstStride, xFrac, 0);
+        primitives.pu[partEnum].luma_hps(src, srcStride, dst, dstStride, xFrac, 0);
     else if (!xFrac)
-        primitives.luma_vps[partEnum](src, srcStride, dst, dstStride, yFrac);
+        primitives.pu[partEnum].luma_vps(src, srcStride, dst, dstStride, yFrac);
     else
     {
         int tmpStride = m_puWidth;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.luma_hps[partEnum](src, srcStride, m_immedVals, tmpStride, xFrac, 1);
-        primitives.luma_vss[partEnum](m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
+        primitives.pu[partEnum].luma_hps(src, srcStride, m_immedVals, tmpStride, xFrac, 1);
+        primitives.pu[partEnum].luma_vss(m_immedVals + (halfFilterSize - 1) * tmpStride, tmpStride, dst, dstStride, yFrac);
     }
 }
 
@@ -399,18 +399,18 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
     
     if (!(yFrac | xFrac))
     {
-        primitives.chroma[m_csp].copy_pp[partEnum](dstCb, dstStride, refCb, refStride);
-        primitives.chroma[m_csp].copy_pp[partEnum](dstCr, dstStride, refCr, refStride);
+        primitives.chroma[m_csp].pu[partEnum].copy_pp(dstCb, dstStride, refCb, refStride);
+        primitives.chroma[m_csp].pu[partEnum].copy_pp(dstCr, dstStride, refCr, refStride);
     }
     else if (!yFrac)
     {
-        primitives.chroma[m_csp].filter_hpp[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift));
-        primitives.chroma[m_csp].filter_hpp[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hpp(refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hpp(refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift));
     }
     else if (!xFrac)
     {
-        primitives.chroma[m_csp].filter_vpp[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_vpp[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_vpp(refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_vpp(refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
     }
     else
     {
@@ -418,11 +418,11 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
+        primitives.chroma[m_csp].pu[partEnum].filter_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
 
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vsp[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
+        primitives.chroma[m_csp].pu[partEnum].filter_vsp(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
     }
 }
 
@@ -459,23 +459,23 @@ void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, cons
     }
     else if (!yFrac)
     {
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift), 0);
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift), 0);
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCb, refStride, dstCb, dstStride, xFrac << (1 - m_hChromaShift), 0);
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCr, refStride, dstCr, dstStride, xFrac << (1 - m_hChromaShift), 0);
     }
     else if (!xFrac)
     {
-        primitives.chroma[m_csp].filter_vps[partEnum](refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_vps[partEnum](refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_vps(refCb, refStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_vps(refCr, refStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
     }
     else
     {
         int extStride = cxWidth;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
-        primitives.chroma[m_csp].filter_hps[partEnum](refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
-        primitives.chroma[m_csp].filter_hps[partEnum](refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
-        primitives.chroma[m_csp].filter_vss[partEnum](m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCb, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
+        primitives.chroma[m_csp].pu[partEnum].filter_vss(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCb, dstStride, yFrac << (1 - m_vChromaShift));
+        primitives.chroma[m_csp].pu[partEnum].filter_hps(refCr, refStride, m_immedVals, extStride, xFrac << (1 - m_hChromaShift), 1);
+        primitives.chroma[m_csp].pu[partEnum].filter_vss(m_immedVals + (halfFilterSize - 1) * extStride, extStride, dstCr, dstStride, yFrac << (1 - m_vChromaShift));
     }
 }
 
