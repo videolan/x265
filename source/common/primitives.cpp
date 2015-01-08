@@ -162,6 +162,12 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     {
         Setup_C_Primitives(primitives);
 
+        /* We do not want the encoder to use the un-optimized intra all-angles
+         * C references. It is better to call the individual angle functions
+         * instead. We must check for NULL before using this primitive */
+        for (int i = 0; i < NUM_TR_SIZE; i++)
+            primitives.intra_pred_allangs[i] = NULL;
+
 #if ENABLE_ASSEMBLY
         Setup_Instrinsic_Primitives(primitives, cpuid);
         Setup_Assembly_Primitives(primitives, cpuid);

@@ -1290,22 +1290,32 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     cost = m_rdCost.calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
-    // Transpose NxN
-    primitives.transpose[sizeIdx](bufTrans, fenc, scaleStride);
-
-    primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-
-    bool modeHor;
-    const pixel* cmp;
-    intptr_t srcStride;
+    bool allangs = true;
+    if (primitives.intra_pred_allangs[sizeIdx])
+    {
+        primitives.transpose[sizeIdx](bufTrans, fenc, scaleStride);
+        primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
+    }
+    else
+        allangs = false;
 
 #define TRY_ANGLE(angle) \
-    modeHor = angle < 18; \
-    cmp = modeHor ? bufTrans : fenc; \
-    srcStride = modeHor ? scaleTuSize : scaleStride; \
-    sad = sa8d(cmp, srcStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
-    bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
-    cost = m_rdCost.calcRdSADCost(sad, bits)
+    if (allangs) { \
+        if (mode < 18) \
+            sad = sa8d(bufTrans, scaleTuSize, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
+        else \
+            sad = sa8d(fenc, scaleStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
+        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
+        cost = m_rdCost.calcRdSADCost(sad, bits); \
+    } else { \
+        if (g_intraFilterFlags[angle] & scaleTuSize) \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, leftFiltered, aboveFiltered, mode, scaleTuSize <= 16); \
+        else \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, left, above, mode, scaleTuSize <= 16); \
+        sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift; \
+        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
+        cost = m_rdCost.calcRdSADCost(sad, bits); \
+    }
 
     if (m_param->bEnableFastIntra)
     {
@@ -1520,18 +1530,34 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
 
             // angular predictions
-            primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-
-            primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
-            for (int mode = 2; mode < 35; mode++)
+            if (primitives.intra_pred_allangs[sizeIdx])
             {
-                bool modeHor = (mode < 18);
-                const pixel* cmp = (modeHor ? buf_trans : fenc);
-                intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
-                bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
-                sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-                modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-                COPY1_IF_LT(bcost, modeCosts[mode]);
+                primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
+                primitives.transpose[sizeIdx](buf_trans, fenc, scaleStride);
+                for (int mode = 2; mode < 35; mode++)
+                {
+                    bool modeHor = (mode < 18);
+                    const pixel* cmp = (modeHor ? buf_trans : fenc);
+                    intptr_t srcStride = (modeHor ? scaleTuSize : scaleStride);
+                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+                    sad = sa8d(cmp, srcStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                    COPY1_IF_LT(bcost, modeCosts[mode]);
+                }
+            }
+            else
+            {
+                for (int mode = 2; mode < 35; mode++)
+                {
+                    if (g_intraFilterFlags[mode] & scaleTuSize)
+                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, leftFiltered, aboveFiltered, mode, scaleTuSize <= 16);
+                    else
+                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, left, above, mode, scaleTuSize <= 16);
+                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+                    sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift;
+                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                    COPY1_IF_LT(bcost, modeCosts[mode]);
+                }
             }
 
             /* Find the top maxCandCount candidate modes with cost within 25% of best

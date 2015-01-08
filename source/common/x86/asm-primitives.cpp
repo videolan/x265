@@ -1246,32 +1246,6 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 namespace x265 {
 // private x265 namespace
 
-#if HIGH_BIT_DEPTH
-/* Very similar to CRef in intrapred.cpp, except it uses optimized primitives */
-template<int log2Size>
-void intra_allangs(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
-{
-    const int size = 1 << log2Size;
-    const int sizeIdx = log2Size - 2;
-    ALIGN_VAR_32(pixel, buffer[32 * 32]);
-
-    for (int mode = 2; mode <= 34; mode++)
-    {
-        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
-        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
-        pixel *out = dest + ((mode - 2) << (log2Size * 2));
-
-        if (mode < 18)
-        {
-            primitives.intra_pred[mode][sizeIdx](buffer, size, left, above, mode, bLuma);
-            primitives.transpose[sizeIdx](out, buffer, size);
-        }
-        else
-            primitives.intra_pred[mode][sizeIdx](out, size, left, above, mode, bLuma);
-    }
-}
-#endif
-
 void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
@@ -1519,14 +1493,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I422].copy_ps[i] = (copy_ps_t)p.chroma[X265_CSP_I422].copy_ss[i];
         p.chroma[X265_CSP_I422].copy_sp[i] = (copy_sp_t)p.chroma[X265_CSP_I422].copy_ss[i];
         p.chroma[X265_CSP_I422].copy_pp[i] = (copy_pp_t)p.chroma[X265_CSP_I422].copy_ss[i];
-    }
-
-    if (p.intra_pred[0][0] && p.transpose[0])
-    {
-        p.intra_pred_allangs[BLOCK_4x4] = intra_allangs<2>;
-        p.intra_pred_allangs[BLOCK_8x8] = intra_allangs<3>;
-        p.intra_pred_allangs[BLOCK_16x16] = intra_allangs<4>;
-        p.intra_pred_allangs[BLOCK_32x32] = intra_allangs<5>;
     }
 
 #else // if HIGH_BIT_DEPTH

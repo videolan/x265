@@ -1713,40 +1713,76 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         cost = m_me.bufSATD(m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
-        primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
 
-        // calculate satd costs, keep least cost
-        ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-        primitives.transpose[sizeIdx](buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
-
-        int acost = m_me.COST_MAX;
         uint32_t mode, lowmode = 4;
-        for (mode = 5; mode < 35; mode += 5)
+        if (primitives.intra_pred_allangs[sizeIdx])
         {
-            if (mode < 18)
-                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-            else
-                cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-            COPY2_IF_LT(acost, cost, lowmode, mode);
-        }
-        for (uint32_t dist = 2; dist >= 1; dist--)
-        {
-            mode = lowmode - dist;
-            if (mode < 18)
-                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-            else
-                cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-            COPY2_IF_LT(acost, cost, lowmode, mode);
+            ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
 
-            mode = lowmode + dist;
-            if (mode < 18)
-                cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-            else
-                cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-            COPY2_IF_LT(acost, cost, lowmode, mode);
+            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
+            primitives.transpose[sizeIdx](buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
+
+            int acost = m_me.COST_MAX;
+            for (mode = 5; mode < 35; mode += 5)
+            {
+                if (mode < 18)
+                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+                else
+                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+            }
+            for (uint32_t dist = 2; dist >= 1; dist--)
+            {
+                mode = lowmode - dist;
+                if (mode < 18)
+                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+                else
+                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+
+                mode = lowmode + dist;
+                if (mode < 18)
+                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
+                else
+                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+            }
+            if (acost < icost)
+                icost = acost;
         }
-        if (acost < icost)
-            icost = acost;
+        else
+        {
+            int acost = m_me.COST_MAX;
+            for (mode = 5; mode < 35; mode += 5)
+            {
+                if (g_intraFilterFlags[mode] & cuSize)
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                else
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                cost = m_me.bufSATD(m_predictions, cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+            }
+            for (uint32_t dist = 2; dist >= 1; dist--)
+            {
+                mode = lowmode - dist;
+                if (g_intraFilterFlags[mode] & cuSize)
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                else
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                cost = m_me.bufSATD(m_predictions, cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+
+                mode = lowmode + dist;
+                if (g_intraFilterFlags[mode] & cuSize)
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                else
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                cost = m_me.bufSATD(m_predictions, cuSize);
+                COPY2_IF_LT(acost, cost, lowmode, mode);
+            }
+            if (acost < icost)
+                icost = acost;
+        }
 
         const int intraPenalty = 5 * m_lookAheadLambda;
         icost += intraPenalty + lowresPenalty; /* estimate intra signal cost */
