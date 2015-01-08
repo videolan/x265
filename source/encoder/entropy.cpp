@@ -1458,8 +1458,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         // The last position is composed of a prefix and suffix.
         // The prefix is context coded truncated unary bins. The suffix is bypass coded fixed length bins.
         // The bypass coded bins for both the x and y components are grouped together.
-        int packedSuffixBits = 0, packedSuffixLen = 0;
-        int pos[2] = { (posLast & (trSize - 1)), (posLast >> log2TrSize) };
+        uint32_t packedSuffixBits = 0, packedSuffixLen = 0;
+        uint32_t pos[2] = { (posLast & (trSize - 1)), (posLast >> log2TrSize) };
         // swap
         if (codingParameters.scanType == SCAN_VER)
             std::swap(pos[0], pos[1]);

@@ -840,7 +840,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             if (dstCoeff[blkPos])
             {                
                 // Calculates the cost of signaling the last significant coefficient in the block 
-                int pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
+                uint32_t pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
                 if (codeParams.scanType == SCAN_VER)
                     std::swap(pos[0], pos[1]);
                 uint32_t bitsLastNZ = 0;
