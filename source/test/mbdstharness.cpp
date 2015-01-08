@@ -37,7 +37,6 @@ struct DctConf
 
 const DctConf dctInfo[] =
 {
-    { "dst4x4\t",    4 },
     { "dct4x4\t",    4 },
     { "dct8x8\t",    8 },
     { "dct16x16",   16 },
@@ -46,7 +45,6 @@ const DctConf dctInfo[] =
 
 const DctConf idctInfo[] =
 {
-    { "idst4x4\t",    4 },
     { "idct4x4\t",    4 },
     { "idct8x8\t",    8 },
     { "idct16x16",   16 },
@@ -383,6 +381,24 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 printf("%s failed\n", idctInfo[i].name);
                 return false;
             }
+        }
+    }
+
+    if (opt.dst4x4)
+    {
+        if (!check_dct_primitive(ref.dst4x4, opt.dst4x4, 4))
+        {
+          printf("dst4x4: Failed\n");
+          return false;
+        }
+    }
+
+    if (opt.idst4x4)
+    {
+        if (!check_idct_primitive(ref.idst4x4, opt.idst4x4, 4))
+        {
+          printf("idst4x4: Failed\n");
+          return false;
         }
     }
 
