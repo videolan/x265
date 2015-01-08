@@ -162,7 +162,8 @@ protected:
     bool  m_bReady;   /* input lock - slicetypeDecide() can be started */
     bool  m_bBusy;    /* input lock - slicetypeDecide() is running */
     bool  m_bFilled;  /* enough frames in lookahead for output to be available */
-    bool  m_bFlushed; /* no more frames will be received */
+    bool  m_bFlushed; /* all frames have been decided, lookahead is finished */
+    bool  m_bFlush;   /* no more frames will be received, empty the input queue */
 
     bool  findJob(int);
 

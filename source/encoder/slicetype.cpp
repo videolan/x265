@@ -66,6 +66,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_lastNonB = NULL;
     m_bFilled = false;
     m_bFlushed = false;
+    m_bFlush = false;
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_heightInCU = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_scratch = (int*)x265_malloc(m_widthInCU * sizeof(int));
@@ -92,6 +93,7 @@ void Lookahead::stop()
     /* do not allow slicetypeDecide() to get started again */
     m_bReady = false;
     m_bFlushed = false;
+    m_bFlush = false;
     m_bBusy = false;
 
     if (m_pool)
@@ -156,6 +158,7 @@ void Lookahead::addPicture(Frame *curFrame, int sliceType)
 /* Called by API thread */
 void Lookahead::flush()
 {
+    m_bFlush = true;
     m_bFilled = true;
 
     /* just in case the input queue is never allowed to fill */
@@ -233,7 +236,7 @@ bool Lookahead::findJob(int)
             break;
     }
     while (m_inputQueue.size() >= m_param->lookaheadDepth ||
-           (m_bFlushed && m_inputQueue.size()));
+           (m_bFlush && m_inputQueue.size()));
 
     m_bBusy = false;
     m_inputQueueLock.release();
