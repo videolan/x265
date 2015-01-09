@@ -46,15 +46,21 @@
 #define ProfileScopeEvent(x) PPAScopeEvent(x)
 #define THREAD_NAME(n,i)
 #define PROFILE_INIT()       PPA_INIT()
+#define PROFILE_PAUSE()
+#define PROFILE_RESUME()
 #elif ENABLE_VTUNE
 #include "profile/vtune/vtune.h"
 #define ProfileScopeEvent(x) VTuneScopeEvent _vtuneTask(x)
 #define THREAD_NAME(n,i)     vtuneSetThreadName(n, i)
 #define PROFILE_INIT()       vtuneInit()
+#define PROFILE_PAUSE()      __itt_pause()
+#define PROFILE_RESUME()     __itt_resume()
 #else
 #define ProfileScopeEvent(x)
 #define THREAD_NAME(n,i)
 #define PROFILE_INIT()
+#define PROFILE_PAUSE()
+#define PROFILE_RESUME()
 #endif
 
 #define FENC_STRIDE 64
