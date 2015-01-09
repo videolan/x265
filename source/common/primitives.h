@@ -180,65 +180,64 @@ typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* 
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
-/* Define a structure containing function pointers to optimized encoder
- * primitives.  Each pointer can reference either an assembly routine,
- * a vectorized primitive, or a C function. */
+/* Function pointers to optimized encoder primitives. Each pointer can reference
+ * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
 {
-  struct PU
-  {
-    pixelcmp_t            sad;        // Sum of Differences for each size
-    pixelcmp_x3_t         sad_x3;     // Sum of Differences 3x for each size
-    pixelcmp_x4_t         sad_x4;     // Sum of Differences 4x for each size
-    pixelcmp_t            sse_pp;     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-    pixelcmp_ss_t         sse_ss;     // Sum of Square Error (short, short) fenc alignment not assumed
-    pixelcmp_sp_t         sse_sp;     // Sum of Square Error (short, pixel) fenc alignment not assumed
-    pixelcmp_t            satd;       // Sum of Transformed differences (HADAMARD)
-    pixelcmp_t            sa8d_inter; // sa8d primitives for motion search partitions
+    struct PU
+    {
+        pixelcmp_t     sad;        // Sum of Differences for each size
+        pixelcmp_x3_t  sad_x3;     // Sum of Differences 3x for each size
+        pixelcmp_x4_t  sad_x4;     // Sum of Differences 4x for each size
+        pixelcmp_t     sse_pp;     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+        pixelcmp_ss_t  sse_ss;     // Sum of Square Error (short, short) fenc alignment not assumed
+        pixelcmp_sp_t  sse_sp;     // Sum of Square Error (short, pixel) fenc alignment not assumed
+        pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
+        pixelcmp_t     sa8d_inter; // sa8d primitives for motion search partitions
 
-    pixelavg_pp_t         pixelavg_pp;
-    addAvg_t              luma_addAvg;
+        pixelavg_pp_t  pixelavg_pp;
+        addAvg_t       luma_addAvg;
 
-    filter_pp_t           luma_hpp;
-    filter_hps_t          luma_hps;
-    filter_pp_t           luma_vpp;
-    filter_ps_t           luma_vps;
-    filter_sp_t           luma_vsp;
-    filter_ss_t           luma_vss;
-    filter_hv_pp_t        luma_hvpp;
+        filter_pp_t    luma_hpp;
+        filter_hps_t   luma_hps;
+        filter_pp_t    luma_vpp;
+        filter_ps_t    luma_vps;
+        filter_sp_t    luma_vsp;
+        filter_ss_t    luma_vss;
+        filter_hv_pp_t luma_hvpp;
 
-    copy_pp_t             luma_copy_pp;
-    copy_sp_t             luma_copy_sp;
-    copy_ps_t             luma_copy_ps;
-    copy_ss_t             luma_copy_ss;
+        copy_pp_t      luma_copy_pp;
+        copy_sp_t      luma_copy_sp;
+        copy_ps_t      luma_copy_ps;
+        copy_ss_t      luma_copy_ss;
 
-    pixel_sub_ps_t        luma_sub_ps;
-    pixel_add_ps_t        luma_add_ps;
+        pixel_sub_ps_t luma_sub_ps;
+        pixel_add_ps_t luma_add_ps;
+    }
+    pu[NUM_LUMA_PARTITIONS];
 
-  } pu[NUM_LUMA_PARTITIONS];
+    struct CU
+    {
+        dct_t           dct;
+        idct_t          idct;
+        calcresidual_t  calcresidual;
+        blockfill_s_t   blockfill_s;   // block fill with value
+        cpy2Dto1D_shl_t cpy2Dto1D_shl;
+        cpy2Dto1D_shr_t cpy2Dto1D_shr;
+        cpy1Dto2D_shl_t cpy1Dto2D_shl;
+        cpy1Dto2D_shr_t cpy1Dto2D_shr;
+        copy_cnt_t      copy_cnt;
 
-  struct CU
-  {
-    dct_t                 dct;
-    idct_t                idct;
-    calcresidual_t        calcresidual;
-    blockfill_s_t         blockfill_s;  // block fill with value
-    cpy2Dto1D_shl_t       cpy2Dto1D_shl;
-    cpy2Dto1D_shr_t       cpy2Dto1D_shr;
-    cpy1Dto2D_shl_t       cpy1Dto2D_shl;
-    cpy1Dto2D_shr_t       cpy1Dto2D_shr;
-    copy_cnt_t            copy_cnt;
+        transpose_t     transpose;
 
-    transpose_t           transpose;
+        var_t           var;
 
-    var_t                 var;
-
-    pixelcmp_t            sa8d;         // sa8d primitives for square intra blocks
-    pixel_ssd_s_t         ssd_s;    // Sum of Square Error (short) fenc alignment not assumed
-    pixelcmp_t            psy_cost_pp;  // difference in AC energy between two blocks
-    pixelcmp_ss_t         psy_cost_ss;
-
-  } cu[NUM_SQUARE_BLOCKS];
+        pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
+        pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self
+        pixelcmp_t      psy_cost_pp;   // difference in AC energy between two blocks
+        pixelcmp_ss_t   psy_cost_ss;
+    }
+    cu[NUM_SQUARE_BLOCKS];
 
     dct_t                 dst4x4;
     idct_t                idst4x4;
@@ -250,8 +249,8 @@ struct EncoderPrimitives
     count_nonzero_t       count_nonzero;
     denoiseDct_t          denoiseDct;
 
-    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
-    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];
+    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE]; /* todo: move to CU */
+    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];         /* todo: move to CU */
     scale_t               scale1D_128to64;
     scale_t               scale2D_64to32;
 
@@ -279,32 +278,34 @@ struct EncoderPrimitives
 
     struct Chroma
     {
-      struct PUChroma
-      {
-        // ME and MC
-        pixelcmp_t      satd;
-        filter_pp_t     filter_vpp;
-        filter_ps_t     filter_vps;
-        filter_sp_t     filter_vsp;
-        filter_ss_t     filter_vss;
-        filter_pp_t     filter_hpp;
-        filter_hps_t    filter_hps;
-        addAvg_t        addAvg;
-        copy_pp_t       copy_pp;
-        copy_sp_t       copy_sp;
-        copy_ps_t       copy_ps;
-        copy_ss_t       copy_ss;
-      } pu[NUM_LUMA_PARTITIONS];
+        struct PUChroma
+        {
+            pixelcmp_t   satd;
+            filter_pp_t  filter_vpp;
+            filter_ps_t  filter_vps;
+            filter_sp_t  filter_vsp;
+            filter_ss_t  filter_vss;
+            filter_pp_t  filter_hpp;
+            filter_hps_t filter_hps;
+            addAvg_t     addAvg;
+            copy_pp_t    copy_pp;
+            copy_sp_t    copy_sp;
+            copy_ps_t    copy_ps;
+            copy_ss_t    copy_ss;
+        }
+        pu[NUM_LUMA_PARTITIONS];
 
-      struct CUChroma
-      {
-        pixelcmp_t sa8d;
-        pixel_sub_ps_t  sub_ps;
-        pixel_add_ps_t  add_ps;
-      } cu[NUM_SQUARE_BLOCKS];
+        struct CUChroma
+        {
+            pixelcmp_t     sa8d;
+            pixel_sub_ps_t sub_ps;
+            pixel_add_ps_t add_ps;
+        }
+        cu[NUM_SQUARE_BLOCKS];
 
-      filter_p2s_t    p2s;
-    } chroma[X265_CSP_COUNT];
+        filter_p2s_t p2s;
+    }
+    chroma[X265_CSP_COUNT];
 };
 
 void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int marginX, int marginY);
