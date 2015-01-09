@@ -1089,6 +1089,28 @@ bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
     return true;
 }
 
+bool PixelHarness::check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
+{
+    int j = 0, index1, index2, optres, refres;
+    intptr_t stride = STRIDE;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        index1 = rand() % TEST_CASES;
+        index2 = rand() % TEST_CASES;
+        optres = (int)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        refres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+
+        if (optres != refres)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1467,6 +1489,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_psyCost_pp(ref.cu[i].psy_cost_pp, opt.cu[i].psy_cost_pp))
             {
                 printf("\npsy_cost_pp[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
+        if (opt.cu[i].psy_cost_ss)
+        {
+            if (!check_psyCost_ss(ref.cu[i].psy_cost_ss, opt.cu[i].psy_cost_ss))
+            {
+                printf("\npsy_cost_ss[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1861,6 +1892,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("psy_cost_pp[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].psy_cost_pp, ref.cu[i].psy_cost_pp, pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        if (opt.cu[i].psy_cost_ss)
+        {
+            HEADER("psy_cost_ss[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].psy_cost_ss, ref.cu[i].psy_cost_ss, sbuf1, STRIDE, sbuf2, STRIDE);
         }
     }
 
