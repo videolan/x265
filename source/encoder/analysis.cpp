@@ -315,6 +315,7 @@ bool Analysis::findJob(int threadId)
         int id = m_numAcquiredJobs++;
         m_pmodeLock.release();
 
+        ProfileScopeEvent(pmode);
         parallelModeAnalysis(threadId, id);
 
         m_pmodeLock.acquire();
@@ -332,6 +333,7 @@ bool Analysis::findJob(int threadId)
         int id = m_numAcquiredME++;
         m_meLock.release();
 
+        ProfileScopeEvent(pme);
         parallelME(threadId, id);
 
         m_meLock.acquire();

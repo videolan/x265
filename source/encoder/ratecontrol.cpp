@@ -1754,7 +1754,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 for (int j = 0; bufferFillCur >= 0; j++)
                 {
                     int type = curFrame->m_lowres.plannedType[j];
-                    if (type == X265_TYPE_AUTO)
+                    if (type == X265_TYPE_AUTO || totalDuration >= 1.0)
                         break;
                     totalDuration += m_frameDuration;
                     double wantedFrameSize = m_vbvMaxRate * m_frameDuration;
@@ -1971,7 +1971,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     if (row < sps.numCuInHeight - 1)
     {
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
-        double rcTol = (bufferLeftPlanned * 0.2) / m_param->frameNumThreads * m_param->rc.rateTolerance;
+        double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_param->rc.rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
 
@@ -1989,7 +1989,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
 
         while (qpVbv < qpMax
                && ((accFrameBits > rce->frameSizePlanned + rcTol) ||
-                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.2) ||
+                   (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.5) ||
                    (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv)))
         {
             qpVbv += stepSize;
