@@ -21,18 +21,17 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "common.h"
 #include "vtune.h"
 
 namespace x265 {
 
-#define PPA_REGISTER_CPU_EVENT(x) #x
+#define CPU_EVENT(x) #x
 const char *stringNames[] =
 {
-#include "PPA/ppaCPUEvents.h"
+#include "../cpuEvents.h"
     ""
 };
-#undef PPA_REGISTER_CPU_EVENT
+#undef CPU_EVENT
 
 __itt_domain* domain;
 __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];
@@ -42,7 +41,7 @@ void vtuneInit()
     domain = __itt_domain_create("x265");
     if (domain)
     {
-        for (int i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
+        for (size_t i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
             taskHandle[i] = __itt_string_handle_create(stringNames[i]);
     }
 }

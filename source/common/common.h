@@ -42,12 +42,11 @@
 #include "x265.h"
 
 #if ENABLE_PPA
-#include "PPA/ppa.h"
+#include "profile/PPA/ppa.h"
 #define ProfileScopeEvent(x) PPAScopeEvent(x)
 #define PROFILE_INIT()       PPA_INIT()
 #elif ENABLE_VTUNE
-#include "ittnotify.h"
-#include "vtune/vtune.h"
+#include "profile/vtune/vtune.h"
 #define ProfileScopeEvent(x) VTuneScopeEvent _vtuneTask(x)
 #define PROFILE_INIT()       vtuneInit()
 #else

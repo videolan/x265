@@ -24,16 +24,17 @@
 #ifndef VTUNE_H
 #define VTUNE_H
 
+#include "ittnotify.h"
+
 namespace x265 {
 
-/* Use PPA CPU event list header to define VTune tasks */
-#define PPA_REGISTER_CPU_EVENT(x) x,
+#define CPU_EVENT(x) x,
 enum VTuneTasksEnum
 {
-#include "PPA/ppaCPUEvents.h"
+#include "../cpuEvents.h"
     NUM_VTUNE_TASKS
 };
-#undef PPA_REGISTER_CPU_EVENT
+#undef CPU_EVENT
 
 extern __itt_domain* domain;
 extern __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];

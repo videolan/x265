@@ -25,13 +25,13 @@
 #define PPA_H
 
 /* declare enum list of users CPU events */
-#define PPA_REGISTER_CPU_EVENT(x) x,
+#define CPU_EVENT(x) x,
 enum PPACpuEventEnum
 {
-#include "ppaCPUEvents.h"
+#include "../cpuEvents.h"
     PPACpuGroupNums
 };
-#undef PPA_REGISTER_CPU_EVENT
+#undef CPU_EVENT
 
 #include "ppaApi.h"
 
