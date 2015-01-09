@@ -962,6 +962,9 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
 
+#define SETUP_INTRA_ANG4_NEW(mode, fno, cpu) \
+    p.intra_pred_new[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _new_ ## cpu;
+
 #define SETUP_INTRA_ANG16_32_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
@@ -1049,7 +1052,22 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG_HIGH(30, 30, cpu); \
     SETUP_INTRA_ANG_HIGH(31, 31, cpu); \
     SETUP_INTRA_ANG_HIGH(32, 32, cpu); \
-    SETUP_INTRA_ANG_HIGH(33, 33, cpu);
+    SETUP_INTRA_ANG_HIGH(33, 33, cpu); \
+    SETUP_INTRA_ANG4_NEW(19, 17, cpu); \
+    SETUP_INTRA_ANG4_NEW(20, 16, cpu); \
+    SETUP_INTRA_ANG4_NEW(21, 15, cpu); \
+    SETUP_INTRA_ANG4_NEW(22, 14, cpu); \
+    SETUP_INTRA_ANG4_NEW(23, 13, cpu); \
+    SETUP_INTRA_ANG4_NEW(24, 12, cpu); \
+    SETUP_INTRA_ANG4_NEW(25, 11, cpu); \
+    SETUP_INTRA_ANG4_NEW(26, 26, cpu); \
+    SETUP_INTRA_ANG4_NEW(27, 9, cpu); \
+    SETUP_INTRA_ANG4_NEW(28, 8, cpu); \
+    SETUP_INTRA_ANG4_NEW(29, 7, cpu); \
+    SETUP_INTRA_ANG4_NEW(30, 6, cpu); \
+    SETUP_INTRA_ANG4_NEW(31, 5, cpu); \
+    SETUP_INTRA_ANG4_NEW(32, 4, cpu); \
+    SETUP_INTRA_ANG4_NEW(33, 3, cpu);
 
 #define INTRA_ANG_SSE4(cpu) \
     SETUP_INTRA_ANG4_8(19, 17, cpu); \
