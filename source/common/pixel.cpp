@@ -367,46 +367,55 @@ int sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_p
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1, const int16_t* pix2, intptr_t i_pix2)
+inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
 {
-    ssum2_t tmp[8][4];
-    ssum2_t a0, a1, a2, a3, a4, a5, a6, a7, b0, b1, b2, b3;
-    ssum2_t sum = 0;
+    int32_t tmp[8][8];
+    int32_t a0, a1, a2, a3, a4, a5, a6, a7;
+    int32_t sum = 0;
 
-    for (int i = 0; i < 8; i++, pix1 += i_pix1, pix2 += i_pix2)
+    for (int i = 0; i < 8; i++, pix1 += i_pix1)
     {
-        a0 = pix1[0] - pix2[0];
-        a1 = pix1[1] - pix2[1];
-        b0 = (a0 + a1) + ((a0 - a1) << BITS_PER_SUM);
-        a2 = pix1[2] - pix2[2];
-        a3 = pix1[3] - pix2[3];
-        b1 = (a2 + a3) + ((a2 - a3) << BITS_PER_SUM);
-        a4 = pix1[4] - pix2[4];
-        a5 = pix1[5] - pix2[5];
-        b2 = (a4 + a5) + ((a4 - a5) << BITS_PER_SUM);
-        a6 = pix1[6] - pix2[6];
-        a7 = pix1[7] - pix2[7];
-        b3 = (a6 + a7) + ((a6 - a7) << BITS_PER_SUM);
-        HADAMARD4(tmp[i][0], tmp[i][1], tmp[i][2], tmp[i][3], b0, b1, b2, b3);
+        a0 = pix1[0] + pix1[1];
+        a1 = pix1[2] + pix1[3];
+        a2 = pix1[4] + pix1[5];
+        a3 = pix1[6] + pix1[7];
+        a4 = pix1[0] - pix1[1];
+        a5 = pix1[2] - pix1[3];
+        a6 = pix1[4] - pix1[5];
+        a7 = pix1[6] - pix1[7];
+        tmp[i][0] = (a0 + a1) + (a2 + a3);
+        tmp[i][1] = (a0 + a1) - (a2 + a3);
+        tmp[i][2] = (a0 - a1) + (a2 - a3);
+        tmp[i][3] = (a0 - a1) - (a2 - a3);
+        tmp[i][4] = (a4 + a5) + (a6 + a7);
+        tmp[i][5] = (a4 + a5) - (a6 + a7);
+        tmp[i][6] = (a4 - a5) + (a6 - a7);
+        tmp[i][7] = (a4 - a5) - (a6 - a7);
     }
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 8; i++)
     {
-        HADAMARD4(a0, a1, a2, a3, tmp[0][i], tmp[1][i], tmp[2][i], tmp[3][i]);
-        HADAMARD4(a4, a5, a6, a7, tmp[4][i], tmp[5][i], tmp[6][i], tmp[7][i]);
-        b0  = abs2(a0 + a4) + abs2(a0 - a4);
-        b0 += abs2(a1 + a5) + abs2(a1 - a5);
-        b0 += abs2(a2 + a6) + abs2(a2 - a6);
-        b0 += abs2(a3 + a7) + abs2(a3 - a7);
-        sum += (sum_t)b0 + (b0 >> BITS_PER_SUM);
+        a0 = (tmp[0][i] + tmp[1][i]) + (tmp[2][i] + tmp[3][i]);
+        a2 = (tmp[0][i] + tmp[1][i]) - (tmp[2][i] + tmp[3][i]);
+        a1 = (tmp[0][i] - tmp[1][i]) + (tmp[2][i] - tmp[3][i]);
+        a3 = (tmp[0][i] - tmp[1][i]) - (tmp[2][i] - tmp[3][i]);
+        a4 = (tmp[4][i] + tmp[5][i]) + (tmp[6][i] + tmp[7][i]);
+        a6 = (tmp[4][i] + tmp[5][i]) - (tmp[6][i] + tmp[7][i]);
+        a5 = (tmp[4][i] - tmp[5][i]) + (tmp[6][i] - tmp[7][i]);
+        a7 = (tmp[4][i] - tmp[5][i]) - (tmp[6][i] - tmp[7][i]);
+        a0 = abs(a0 + a4) + abs(a0 - a4);
+        a0 += abs(a1 + a5) + abs(a1 - a5);
+        a0 += abs(a2 + a6) + abs(a2 - a6);
+        a0 += abs(a3 + a7) + abs(a3 - a7);
+        sum += a0;
     }
 
     return (int)sum;
 }
 
-int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1, const int16_t* pix2, intptr_t i_pix2)
+int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
 {
-    return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
+    return (int)((_sa8d_8x8(pix1, i_pix1) + 2) >> 2);
 }
 
 int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
@@ -822,9 +831,9 @@ int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, in
             for (int j = 0; j < dim; j+= 8)
             {
                 /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
-                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride, zeroBuf, 0) - 
+                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride) - 
                                    (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
-                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride, zeroBuf, 0) - 
+                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride) - 
                                    (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
 
                 totEnergy += abs(sourceEnergy - reconEnergy);
