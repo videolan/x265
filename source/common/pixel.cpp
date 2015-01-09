@@ -243,9 +243,9 @@ int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_
 
 static int satd_4x4(const int16_t* pix1, intptr_t stride_pix1)
 {
-    int64_t tmp[4][4];
-    int64_t s01, s23, d01, d23;
-    int64_t satd = 0;
+    int32_t tmp[4][4];
+    int32_t s01, s23, d01, d23;
+    int32_t satd = 0;
     int d;
 
     for (d = 0; d < 4; d++, pix1 += stride_pix1)
