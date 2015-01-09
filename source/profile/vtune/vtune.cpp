@@ -23,7 +23,7 @@
 
 #include "vtune.h"
 
-namespace x265 {
+namespace {
 
 #define CPU_EVENT(x) #x
 const char *stringNames[] =
@@ -33,17 +33,18 @@ const char *stringNames[] =
 };
 #undef CPU_EVENT
 
+}
+
+namespace x265 {
+
 __itt_domain* domain;
 __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];
 
 void vtuneInit()
 {
     domain = __itt_domain_create("x265");
-    if (domain)
-    {
-        for (size_t i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
-            taskHandle[i] = __itt_string_handle_create(stringNames[i]);
-    }
+    for (size_t i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
+        taskHandle[i] = __itt_string_handle_create(stringNames[i]);
 }
 
 void vtuneSetThreadName(const char *name, int id)

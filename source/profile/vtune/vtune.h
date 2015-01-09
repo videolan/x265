@@ -41,8 +41,8 @@ extern __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];
 
 struct VTuneScopeEvent
 {
-    VTuneScopeEvent(int e) { if (domain) __itt_task_begin(domain, __itt_null, __itt_null, taskHandle[e]); }
-    ~VTuneScopeEvent()     { if (domain) __itt_task_end(domain); }
+    VTuneScopeEvent(int e) { __itt_task_begin(domain, __itt_null, __itt_null, taskHandle[e]); }
+    ~VTuneScopeEvent()     { __itt_task_end(domain); }
 };
 
 void vtuneInit();
