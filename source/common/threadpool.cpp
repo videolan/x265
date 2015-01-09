@@ -137,6 +137,8 @@ public:
 
 void PoolThread::threadMain()
 {
+    THREAD_NAME("Worker", m_id);
+
 #if _WIN32
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 #else

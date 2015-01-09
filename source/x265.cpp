@@ -808,6 +808,7 @@ int main(int argc, char **argv)
     VLDSetReportOptions(VLD_OPT_REPORT_TO_DEBUGGER | VLD_OPT_REPORT_TO_FILE, L"x265_leaks.txt");
 #endif
     PROFILE_INIT();
+    THREAD_NAME("API", 0);
 
     x265_param *param = x265_param_alloc();
     CLIOptions cliopt;

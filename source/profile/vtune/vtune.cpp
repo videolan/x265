@@ -46,4 +46,11 @@ void vtuneInit()
     }
 }
 
+void vtuneSetThreadName(const char *name, int id)
+{
+    char threadname[128];
+    sprintf(threadname, "%s %d", name, id);
+    __itt_thread_set_name(threadname);
+}
+
 }

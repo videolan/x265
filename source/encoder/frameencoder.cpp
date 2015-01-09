@@ -215,6 +215,8 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
 
 void FrameEncoder::threadMain()
 {
+    THREAD_NAME("Frame", m_frameEncoderID);
+
     // worker thread routine for FrameEncoder
     do
     {

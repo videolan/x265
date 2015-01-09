@@ -44,13 +44,16 @@
 #if ENABLE_PPA
 #include "profile/PPA/ppa.h"
 #define ProfileScopeEvent(x) PPAScopeEvent(x)
+#define THREAD_NAME(n,i)
 #define PROFILE_INIT()       PPA_INIT()
 #elif ENABLE_VTUNE
 #include "profile/vtune/vtune.h"
 #define ProfileScopeEvent(x) VTuneScopeEvent _vtuneTask(x)
+#define THREAD_NAME(n,i)     vtuneSetThreadName(n, i)
 #define PROFILE_INIT()       vtuneInit()
 #else
 #define ProfileScopeEvent(x)
+#define THREAD_NAME(n,i)
 #define PROFILE_INIT()
 #endif
 

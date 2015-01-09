@@ -46,6 +46,7 @@ struct VTuneScopeEvent
 };
 
 void vtuneInit();
+void vtuneSetThreadName(const char *name, int id);
 
 }
 
