@@ -419,6 +419,7 @@ bool Y4MInput::populateFrameQueue()
             return false;
     }
 
+    ProfileScopeEvent(frameRead);
     ifs->read(buf[written % QUEUE_SIZE], framesize);
     if (ifs->good())
     {

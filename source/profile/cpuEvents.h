@@ -1,3 +1,4 @@
+CPU_EVENT(frameRead)
 CPU_EVENT(bitstreamWrite)
 CPU_EVENT(frameThread)
 CPU_EVENT(encodeCTU)
