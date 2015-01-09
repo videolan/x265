@@ -26,7 +26,7 @@
 
 namespace {
 
-#define CPU_EVENT(x) #x
+#define CPU_EVENT(x) #x,
 const char *stringNames[] =
 {
 #include "../cpuEvents.h"
