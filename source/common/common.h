@@ -366,10 +366,12 @@ struct SAOParam
     }
 };
 
-/* Stores inter (motion estimation) analysis data for a single frame */
+/* Stores inter analysis data for a single frame */
 struct analysis_inter_data
 {
     int32_t*    ref;
+    uint8_t*    depth;
+    uint8_t*    modes;
 };
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
