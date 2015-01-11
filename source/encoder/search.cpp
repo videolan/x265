@@ -1301,7 +1301,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
 #define TRY_ANGLE(angle) \
     if (allangs) { \
-        if (mode < 18) \
+        if (angle < 18) \
             sad = sa8d(bufTrans, scaleTuSize, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
         else \
             sad = sa8d(fenc, scaleStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
@@ -1309,9 +1309,9 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
         cost = m_rdCost.calcRdSADCost(sad, bits); \
     } else { \
         if (g_intraFilterFlags[angle] & scaleTuSize) \
-            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, leftFiltered, aboveFiltered, mode, scaleTuSize <= 16); \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, leftFiltered, aboveFiltered, angle, scaleTuSize <= 16); \
         else \
-            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, left, above, mode, scaleTuSize <= 16); \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, left, above, angle, scaleTuSize <= 16); \
         sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift; \
         bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
         cost = m_rdCost.calcRdSADCost(sad, bits); \
