@@ -299,7 +299,7 @@ void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv
     int yFrac = mv.y & 0x3;
 
     if (!(yFrac | xFrac))
-        primitives.pu[partEnum].luma_copy_pp(dst, dstStride, src, srcStride);
+        primitives.pu[partEnum].copy_pp(dst, dstStride, src, srcStride);
     else if (!yFrac)
         primitives.pu[partEnum].luma_hpp(src, srcStride, dst, dstStride, xFrac);
     else if (!xFrac)

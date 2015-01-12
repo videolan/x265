@@ -1167,11 +1167,11 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].luma_copy_pp)
+    if (opt.pu[part].copy_pp)
     {
-        if (!check_copy_pp(ref.pu[part].luma_copy_pp, opt.pu[part].luma_copy_pp))
+        if (!check_copy_pp(ref.pu[part].copy_pp, opt.pu[part].copy_pp))
         {
-            printf("luma_copy_pp[%s] failed\n", lumaPartStr[part]);
+            printf("copy_pp[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -1205,47 +1205,47 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             }
         }
 
-        if (opt.cu[part].luma_sub_ps)
+        if (opt.cu[part].sub_ps)
         {
-            if (!check_pixel_sub_ps(ref.cu[part].luma_sub_ps, opt.cu[part].luma_sub_ps))
+            if (!check_pixel_sub_ps(ref.cu[part].sub_ps, opt.cu[part].sub_ps))
             {
-                printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
+                printf("sub_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.cu[part].luma_add_ps)
+        if (opt.cu[part].add_ps)
         {
-            if (!check_pixel_add_ps(ref.cu[part].luma_add_ps, opt.cu[part].luma_add_ps))
+            if (!check_pixel_add_ps(ref.cu[part].add_ps, opt.cu[part].add_ps))
             {
-                printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
+                printf("add_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.cu[part].luma_copy_ss)
+        if (opt.cu[part].copy_ss)
         {
-            if (!check_copy_ss(ref.cu[part].luma_copy_ss, opt.cu[part].luma_copy_ss))
+            if (!check_copy_ss(ref.cu[part].copy_ss, opt.cu[part].copy_ss))
             {
-                printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
+                printf("copy_ss[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.cu[part].luma_copy_sp)
+        if (opt.cu[part].copy_sp)
         {
-            if (!check_copy_sp(ref.cu[part].luma_copy_sp, opt.cu[part].luma_copy_sp))
+            if (!check_copy_sp(ref.cu[part].copy_sp, opt.cu[part].copy_sp))
             {
-                printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
+                printf("copy_sp[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.cu[part].luma_copy_ps)
+        if (opt.cu[part].copy_ps)
         {
-            if (!check_copy_ps(ref.cu[part].luma_copy_ps, opt.cu[part].luma_copy_ps))
+            if (!check_copy_ps(ref.cu[part].copy_ps, opt.cu[part].copy_ps))
             {
-                printf("luma_copy_ps[%s] failed\n", lumaPartStr[part]);
+                printf("copy_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
@@ -1639,10 +1639,10 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].sad_x4, ref.pu[part].sad_x4, pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 
-    if (opt.pu[part].luma_copy_pp)
+    if (opt.pu[part].copy_pp)
     {
-        HEADER("luma_copy_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].luma_copy_pp, ref.pu[part].luma_copy_pp, pbuf1, 64, pbuf2, 128);
+        HEADER("copy_pp[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.pu[part].copy_pp, ref.pu[part].copy_pp, pbuf1, 64, pbuf2, 128);
     }
 
     if (opt.pu[part].addAvg)
@@ -1664,30 +1664,30 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("sse_ss[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].sse_ss, ref.cu[part].sse_ss, (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
         }
-        if (opt.cu[part].luma_sub_ps)
+        if (opt.cu[part].sub_ps)
         {
-            HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].luma_sub_ps, ref.cu[part].luma_sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+            HEADER("sub_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].sub_ps, ref.cu[part].sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
         }
-        if (opt.cu[part].luma_add_ps)
+        if (opt.cu[part].add_ps)
         {
-            HEADER("luma_add_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].luma_add_ps, ref.cu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            HEADER("add_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].add_ps, ref.cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
-        if (opt.cu[part].luma_copy_ss)
+        if (opt.cu[part].copy_ss)
         {
-            HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].luma_copy_ss, ref.cu[part].luma_copy_ss, sbuf1, 64, sbuf2, 128);
+            HEADER("copy_ss[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].copy_ss, ref.cu[part].copy_ss, sbuf1, 64, sbuf2, 128);
         }
-        if (opt.cu[part].luma_copy_sp)
+        if (opt.cu[part].copy_sp)
         {
-            HEADER("luma_copy_sp[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].luma_copy_sp, ref.cu[part].luma_copy_sp, pbuf1, 64, sbuf3, 128);
+            HEADER("copy_sp[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].copy_sp, ref.cu[part].copy_sp, pbuf1, 64, sbuf3, 128);
         }
-        if (opt.cu[part].luma_copy_ps)
+        if (opt.cu[part].copy_ps)
         {
-            HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].luma_copy_ps, ref.cu[part].luma_copy_ps, sbuf1, 64, pbuf1, 128);
+            HEADER("copy_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].copy_ps, ref.cu[part].copy_ps, sbuf1, 64, pbuf1, 128);
         }
     }
 

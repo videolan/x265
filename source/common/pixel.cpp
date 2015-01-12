@@ -981,19 +981,19 @@ void extendPicBorder(pixel* pic, intptr_t stride, int width, int height, int mar
 void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
 #define LUMA_PU(W, H) \
+    p.pu[LUMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].luma_copy_pp = blockcopy_pp_c<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad = sad<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x3 = sad_x3<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x4 = sad_x4<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp = pixelavg_pp<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp = pixelavg_pp<W, H>;
 
 #define LUMA_CU(W, H) \
-    p.cu[BLOCK_ ## W ## x ## H].luma_sub_ps   = pixel_sub_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_add_ps   = pixel_add_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_sp  = blockcopy_sp_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ps  = blockcopy_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ss  = blockcopy_ss_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].sub_ps        = pixel_sub_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].add_ps        = pixel_add_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].copy_sp       = blockcopy_sp_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].copy_ps       = blockcopy_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].copy_ss       = blockcopy_ss_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].blockfill_s   = blockfil_s_c<W>;  \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shl = cpy2Dto1D_shl<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shr = cpy2Dto1D_shr<W>; \

@@ -406,7 +406,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
     pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
 
-    primitives.pu[part].luma_copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
+    primitives.pu[part].copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
    
     pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absPartIdx);
     pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absPartIdx);

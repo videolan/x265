@@ -170,7 +170,7 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
     absPartIdx = ctuAddr = -1;
 
     /* copy PU block into cache */
-    primitives.pu[partEnum].luma_copy_pp(fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
+    primitives.pu[partEnum].copy_pp(fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
     X265_CHECK(!bChromaSATD, "chroma distortion measurements impossible in this code path\n");
 }
 

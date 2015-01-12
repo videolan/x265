@@ -162,7 +162,7 @@ static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcSt
     if ((colorFormat != X265_CSP_I444) && bChroma)
     {
         ALIGN_VAR_8(pixel, pix[8 * 8]);
-        primitives.pu[LUMA_8x8].luma_copy_pp(pix, 8, src, srcStride);
+        primitives.pu[LUMA_8x8].copy_pp(pix, 8, src, srcStride);
         return acEnergyVar(curFrame, primitives.cu[BLOCK_8x8].var(pix, 8), 6, bChroma);
     }
     else

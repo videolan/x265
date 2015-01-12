@@ -1764,9 +1764,9 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         pixel* predU = predYuv.getCbAddr(absPartIdx);
         pixel* predV = predYuv.getCrAddr(absPartIdx);
 
-        primitives.cu[sizeIdx].luma_sub_ps(resiYuv.m_buf[0], resiYuv.m_size,
-                                        fencYuv.m_buf[0], predY,
-                                        fencYuv.m_size, predYuv.m_size);
+        primitives.cu[sizeIdx].sub_ps(resiYuv.m_buf[0], resiYuv.m_size,
+                                      fencYuv.m_buf[0], predY,
+                                      fencYuv.m_size, predYuv.m_size);
 
         primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[1], resiYuv.m_csize,
                                                  fencYuv.m_buf[1], predU,
@@ -1789,11 +1789,11 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
         PicYuv& reconPic = *m_frame->m_reconPic;
         if (cu.m_cbf[0][0])
-            primitives.cu[sizeIdx].luma_add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
-                                            predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
+            primitives.cu[sizeIdx].add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+                                          predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
         else
-            primitives.pu[sizeIdx].luma_copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
-                                             predY, predYuv.m_size);
+            primitives.pu[sizeIdx].copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+                                           predY, predYuv.m_size);
 
         if (cu.m_cbf[1][0])
             primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,

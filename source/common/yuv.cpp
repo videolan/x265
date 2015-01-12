@@ -81,7 +81,7 @@ void Yuv::destroy()
 void Yuv::copyToPicYuv(PicYuv& dstPic, uint32_t cuAddr, uint32_t absPartIdx) const
 {
     pixel* dstY = dstPic.getLumaAddr(cuAddr, absPartIdx);
-    primitives.pu[m_part].luma_copy_pp(dstY, dstPic.m_stride, m_buf[0], m_size);
+    primitives.pu[m_part].copy_pp(dstY, dstPic.m_stride, m_buf[0], m_size);
 
     pixel* dstU = dstPic.getCbAddr(cuAddr, absPartIdx);
     pixel* dstV = dstPic.getCrAddr(cuAddr, absPartIdx);
@@ -92,7 +92,7 @@ void Yuv::copyToPicYuv(PicYuv& dstPic, uint32_t cuAddr, uint32_t absPartIdx) con
 void Yuv::copyFromPicYuv(const PicYuv& srcPic, uint32_t cuAddr, uint32_t absPartIdx)
 {
     const pixel* srcY = srcPic.getLumaAddr(cuAddr, absPartIdx);
-    primitives.pu[m_part].luma_copy_pp(m_buf[0], m_size, srcY, srcPic.m_stride);
+    primitives.pu[m_part].copy_pp(m_buf[0], m_size, srcY, srcPic.m_stride);
 
     const pixel* srcU = srcPic.getCbAddr(cuAddr, absPartIdx);
     const pixel* srcV = srcPic.getCrAddr(cuAddr, absPartIdx);
@@ -104,7 +104,7 @@ void Yuv::copyFromYuv(const Yuv& srcYuv)
 {
     X265_CHECK(m_size >= srcYuv.m_size, "invalid size\n");
 
-    primitives.pu[m_part].luma_copy_pp(m_buf[0], m_size, srcYuv.m_buf[0], srcYuv.m_size);
+    primitives.pu[m_part].copy_pp(m_buf[0], m_size, srcYuv.m_buf[0], srcYuv.m_size);
     primitives.chroma[m_csp].pu[m_part].copy_pp(m_buf[1], m_csize, srcYuv.m_buf[1], srcYuv.m_csize);
     primitives.chroma[m_csp].pu[m_part].copy_pp(m_buf[2], m_csize, srcYuv.m_buf[2], srcYuv.m_csize);
 }
@@ -115,7 +115,7 @@ void Yuv::copyPUFromYuv(const Yuv& srcYuv, uint32_t absPartIdx, int partEnum, bo
     X265_CHECK(m_size == FENC_STRIDE && m_size >= srcYuv.m_size, "PU buffer size mismatch\n");
 
     const pixel* srcY = srcYuv.m_buf[0] + getAddrOffset(absPartIdx, srcYuv.m_size);
-    primitives.pu[partEnum].luma_copy_pp(m_buf[0], m_size, srcY, srcYuv.m_size);
+    primitives.pu[partEnum].copy_pp(m_buf[0], m_size, srcY, srcYuv.m_size);
 
     if (bChroma)
     {
@@ -129,7 +129,7 @@ void Yuv::copyPUFromYuv(const Yuv& srcYuv, uint32_t absPartIdx, int partEnum, bo
 void Yuv::copyToPartYuv(Yuv& dstYuv, uint32_t absPartIdx) const
 {
     pixel* dstY = dstYuv.getLumaAddr(absPartIdx);
-    primitives.pu[m_part].luma_copy_pp(dstY, dstYuv.m_size, m_buf[0], m_size);
+    primitives.pu[m_part].copy_pp(dstY, dstYuv.m_size, m_buf[0], m_size);
 
     pixel* dstU = dstYuv.getCbAddr(absPartIdx);
     pixel* dstV = dstYuv.getCrAddr(absPartIdx);
@@ -141,7 +141,7 @@ void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t absPartIdx) const
 {
     pixel* srcY = m_buf[0] + getAddrOffset(absPartIdx, m_size);
     pixel* dstY = dstYuv.m_buf[0];
-    primitives.pu[dstYuv.m_part].luma_copy_pp(dstY, dstYuv.m_size, srcY, m_size);
+    primitives.pu[dstYuv.m_part].copy_pp(dstY, dstYuv.m_size, srcY, m_size);
 
     pixel* srcU = m_buf[1] + getChromaAddrOffset(absPartIdx);
     pixel* srcV = m_buf[2] + getChromaAddrOffset(absPartIdx);
@@ -153,7 +153,7 @@ void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t absPartIdx) const
 
 void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL)
 {
-    primitives.cu[log2SizeL - 2].luma_add_ps(m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
+    primitives.cu[log2SizeL - 2].add_ps(m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
     primitives.chroma[m_csp].cu[log2SizeL - 2].add_ps(m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
     primitives.chroma[m_csp].cu[log2SizeL - 2].add_ps(m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
 }
@@ -186,7 +186,7 @@ void Yuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size
 {
     const pixel* src = getLumaAddr(absPartIdx);
     pixel* dst = dstYuv.getLumaAddr(absPartIdx);
-    primitives.pu[log2Size - 2].luma_copy_pp(dst, dstYuv.m_size, src, m_size);
+    primitives.pu[log2Size - 2].copy_pp(dst, dstYuv.m_size, src, m_size);
 }
 
 void Yuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const

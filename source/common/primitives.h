@@ -201,7 +201,7 @@ struct EncoderPrimitives
         pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
-        copy_pp_t      luma_copy_pp;
+        copy_pp_t      copy_pp;
     }
     pu[NUM_LUMA_PARTITIONS];
 
@@ -221,11 +221,11 @@ struct EncoderPrimitives
 
         var_t           var;
 
-        pixel_sub_ps_t  luma_sub_ps;
-        pixel_add_ps_t  luma_add_ps;
-        copy_sp_t       luma_copy_sp;
-        copy_ps_t       luma_copy_ps;
-        copy_ss_t       luma_copy_ss;
+        pixel_sub_ps_t  sub_ps;
+        pixel_add_ps_t  add_ps;
+        copy_sp_t       copy_sp;
+        copy_ps_t       copy_ps;
+        copy_ss_t       copy_ss;
 
         pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self
