@@ -1185,11 +1185,11 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].luma_addAvg)
+    if (opt.pu[part].addAvg)
     {
-        if (!check_addAvg(ref.pu[part].luma_addAvg, opt.pu[part].luma_addAvg))
+        if (!check_addAvg(ref.pu[part].addAvg, opt.pu[part].addAvg))
         {
-            printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
+            printf("addAvg[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -1651,10 +1651,10 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].luma_copy_pp, ref.pu[part].luma_copy_pp, pbuf1, 64, pbuf2, 128);
     }
 
-    if (opt.pu[part].luma_addAvg)
+    if (opt.pu[part].addAvg)
     {
-        HEADER("luma_addAvg[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].luma_addAvg, ref.pu[part].luma_addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        HEADER("addAvg[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.pu[part].addAvg, ref.pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
 
     if (part < NUM_SQUARE_BLOCKS)

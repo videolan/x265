@@ -72,7 +72,7 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].luma_copy_pp;
-        p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].luma_addAvg;
+        p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
         p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
     }
 

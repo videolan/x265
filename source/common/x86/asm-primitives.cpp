@@ -761,7 +761,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_PIXEL_VAR_DEF(64, 64, cpu);
 
 #define SETUP_LUMA_ADDAVG_FUNC_DEF(W, H, cpu) \
-    p.pu[LUMA_ ## W ## x ## H].luma_addAvg = x265_addAvg_ ## W ## x ## H ## cpu;
+    p.pu[LUMA_ ## W ## x ## H].addAvg = x265_addAvg_ ## W ## x ## H ## cpu;
 
 #define LUMA_ADDAVG(cpu) \
     SETUP_LUMA_ADDAVG_FUNC_DEF(4,  4,  cpu); \

@@ -116,7 +116,6 @@ typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const in
 typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
-typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter);
@@ -166,6 +165,7 @@ typedef void (*copy_ss_t)(int16_t* dst, intptr_t dstStride, const int16_t* src, 
 
 typedef void (*pixel_sub_ps_t)(int16_t* dst, intptr_t dstride, const pixel* src0, const pixel* src1, intptr_t sstride0, intptr_t sstride1);
 typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
 typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t signLeft);
@@ -191,9 +191,6 @@ struct EncoderPrimitives
         pixelcmp_t     sse_pp;     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
         pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
 
-        pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
-        addAvg_t       luma_addAvg; // bidir motion compensation, uses 16bit values
-
         filter_pp_t    luma_hpp;
         filter_hps_t   luma_hps;
         filter_pp_t    luma_vpp;
@@ -201,6 +198,9 @@ struct EncoderPrimitives
         filter_sp_t    luma_vsp;
         filter_ss_t    luma_vss;
         filter_hv_pp_t luma_hvpp;
+
+        pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
+        addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      luma_copy_pp;
     }

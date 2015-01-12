@@ -167,7 +167,7 @@ void Yuv::addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t absP
         const int16_t* srcY0 = srcYuv0.getLumaAddr(absPartIdx);
         const int16_t* srcY1 = srcYuv1.getLumaAddr(absPartIdx);
         pixel* dstY = getLumaAddr(absPartIdx);
-        primitives.pu[part].luma_addAvg(srcY0, srcY1, dstY, srcYuv0.m_size, srcYuv1.m_size, m_size);
+        primitives.pu[part].addAvg(srcY0, srcY1, dstY, srcYuv0.m_size, srcYuv1.m_size, m_size);
     }
     if (bChroma)
     {

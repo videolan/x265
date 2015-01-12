@@ -1151,7 +1151,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>;
 
 #define LUMA(W, H) \
-    p.pu[LUMA_ ## W ## x ## H].luma_addAvg  = addAvg<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].luma_copy_pp = blockcopy_pp_c<W, H>; \
 
 #define LUMA_CU(W, H) \
