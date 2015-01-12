@@ -1355,17 +1355,17 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        p.cu[i].sse_ss   = (pixelcmp_ss_t)p.pu[i].sse_pp;
+        p.cu[i].sse_ss   = (pixelcmp_ss_t)p.cu[i].sse_pp;
         p.cu[i].luma_copy_ps = (copy_ps_t)p.pu[i].luma_copy_pp;
         p.cu[i].luma_copy_sp = (copy_sp_t)p.pu[i].luma_copy_pp;
         p.cu[i].luma_copy_ss = (copy_ss_t)p.pu[i].luma_copy_pp;
 
         p.chroma[X265_CSP_I420].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
         p.chroma[X265_CSP_I420].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
+        p.chroma[X265_CSP_I420].pu[i].copy_pp = (copy_pp_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
+
         p.chroma[X265_CSP_I422].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
         p.chroma[X265_CSP_I422].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
-
-        p.chroma[X265_CSP_I420].pu[i].copy_pp = (copy_pp_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
         p.chroma[X265_CSP_I422].pu[i].copy_pp = (copy_pp_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
     }
 
