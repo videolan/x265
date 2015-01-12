@@ -193,7 +193,6 @@ struct EncoderPrimitives
         pixelcmp_ss_t  sse_ss;     // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_sp_t  sse_sp;     // Sum of Square Error (short, pixel) fenc alignment not assumed
         pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
-        pixelcmp_t     sa8d_inter; // sa8d primitives for motion search partitions
 
         pixelavg_pp_t  pixelavg_pp;
         addAvg_t       luma_addAvg;

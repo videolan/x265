@@ -202,30 +202,13 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.pu[LUMA_64x64].sse_ss = x265_pixel_ssd_ss_64x64_ ## cpu;
 
 #define SA8D_INTER_FROM_BLOCK(cpu) \
-    p.pu[LUMA_4x8].sa8d_inter   = x265_pixel_satd_4x8_ ## cpu; \
-    p.pu[LUMA_8x4].sa8d_inter   = x265_pixel_satd_8x4_ ## cpu; \
-    p.pu[LUMA_4x16].sa8d_inter  = x265_pixel_satd_4x16_ ## cpu; \
-    p.pu[LUMA_16x4].sa8d_inter  = x265_pixel_satd_16x4_ ## cpu; \
-    p.pu[LUMA_12x16].sa8d_inter = x265_pixel_satd_12x16_ ## cpu; \
-    p.pu[LUMA_8x8].sa8d_inter   = x265_pixel_sa8d_8x8_ ## cpu; \
-    p.pu[LUMA_16x16].sa8d_inter = x265_pixel_sa8d_16x16_ ## cpu; \
-    p.pu[LUMA_16x12].sa8d_inter = x265_pixel_satd_16x12_ ## cpu; \
-    p.pu[LUMA_16x8].sa8d_inter  = x265_pixel_sa8d_16x8_ ## cpu; \
-    p.pu[LUMA_8x16].sa8d_inter  = x265_pixel_sa8d_8x16_ ## cpu; \
-    p.pu[LUMA_32x24].sa8d_inter = x265_pixel_sa8d_32x24_ ## cpu; \
-    p.pu[LUMA_24x32].sa8d_inter = x265_pixel_sa8d_24x32_ ## cpu; \
-    p.pu[LUMA_32x8].sa8d_inter  = x265_pixel_sa8d_32x8_ ## cpu; \
-    p.pu[LUMA_8x32].sa8d_inter  = x265_pixel_sa8d_8x32_ ## cpu; \
-    p.pu[LUMA_32x32].sa8d_inter = x265_pixel_sa8d_32x32_ ## cpu; \
-    p.pu[LUMA_32x16].sa8d_inter = x265_pixel_sa8d_32x16_ ## cpu; \
-    p.pu[LUMA_16x32].sa8d_inter = x265_pixel_sa8d_16x32_ ## cpu; \
-    p.pu[LUMA_64x64].sa8d_inter = x265_pixel_sa8d_64x64_ ## cpu; \
-    p.pu[LUMA_64x32].sa8d_inter = x265_pixel_sa8d_64x32_ ## cpu; \
-    p.pu[LUMA_32x64].sa8d_inter = x265_pixel_sa8d_32x64_ ## cpu; \
-    p.pu[LUMA_64x48].sa8d_inter = x265_pixel_sa8d_64x48_ ## cpu; \
-    p.pu[LUMA_48x64].sa8d_inter = x265_pixel_sa8d_48x64_ ## cpu; \
-    p.pu[LUMA_64x16].sa8d_inter = x265_pixel_sa8d_64x16_ ## cpu; \
-    p.pu[LUMA_16x64].sa8d_inter = x265_pixel_sa8d_16x64_ ## cpu;
+    p.cu[BLOCK_8x8].sa8d = x265_pixel_sa8d_8x8_ ## cpu; \
+    p.cu[BLOCK_16x16].sa8d = x265_pixel_sa8d_16x16_ ## cpu; \
+    p.cu[BLOCK_32x32].sa8d = x265_pixel_sa8d_32x32_ ## cpu; \
+    p.cu[BLOCK_64x64].sa8d = x265_pixel_sa8d_64x64_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sa8d = x265_pixel_sa8d_8x16_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sa8d = x265_pixel_sa8d_16x32_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sa8d = x265_pixel_sa8d_32x64_ ## cpu;
 
 #define PIXEL_AVG(cpu) \
     p.pu[LUMA_64x64].pixelavg_pp = x265_pixel_avg_64x64_ ## cpu; \
@@ -1259,10 +1242,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         HEVC_SATD(sse2);
         p.pu[LUMA_4x4].satd = x265_pixel_satd_4x4_mmx2;
 
-        p.pu[LUMA_4x4].sa8d_inter  = x265_pixel_satd_4x4_mmx2;
         SA8D_INTER_FROM_BLOCK(sse2);
-        p.pu[LUMA_8x8].sa8d_inter = x265_pixel_sa8d_8x8_sse2;
-        p.pu[LUMA_16x16].sa8d_inter = x265_pixel_sa8d_16x16_sse2;
 
         p.pu[LUMA_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_mmx2;
         p.pu[LUMA_4x8].sse_ss   = x265_pixel_ssd_ss_4x8_mmx2;

@@ -88,19 +88,6 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
     }
 
     primitives.cu[BLOCK_4x4].sa8d   = primitives.pu[LUMA_4x4].satd;
-    primitives.cu[BLOCK_8x8].sa8d   = primitives.pu[LUMA_8x8].sa8d_inter;
-    primitives.cu[BLOCK_16x16].sa8d = primitives.pu[LUMA_16x16].sa8d_inter;
-    primitives.cu[BLOCK_32x32].sa8d = primitives.pu[LUMA_32x32].sa8d_inter;
-    primitives.cu[BLOCK_64x64].sa8d = primitives.pu[LUMA_64x64].sa8d_inter;
-
-    // SA8D devolves to SATD for blocks not even multiples of 8x8
-    primitives.pu[LUMA_4x4].sa8d_inter   = primitives.pu[LUMA_4x4].satd;
-    primitives.pu[LUMA_4x8].sa8d_inter   = primitives.pu[LUMA_4x8].satd;
-    primitives.pu[LUMA_4x16].sa8d_inter  = primitives.pu[LUMA_4x16].satd;
-    primitives.pu[LUMA_8x4].sa8d_inter   = primitives.pu[LUMA_8x4].satd;
-    primitives.pu[LUMA_16x4].sa8d_inter  = primitives.pu[LUMA_16x4].satd;
-    primitives.pu[LUMA_16x12].sa8d_inter = primitives.pu[LUMA_16x12].satd;
-    primitives.pu[LUMA_12x16].sa8d_inter = primitives.pu[LUMA_12x16].satd;
 
     // Chroma SATD can often reuse luma primitives
     p.chroma[X265_CSP_I420].pu[CHROMA_4x4].satd   = primitives.pu[LUMA_4x4].satd;
@@ -153,11 +140,8 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x4].satd;
     p.chroma[X265_CSP_I422].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x8].satd;
     p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = p.cu[BLOCK_8x8].sa8d;
-    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sa8d = p.pu[LUMA_8x16].sa8d_inter;
     p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = p.cu[BLOCK_16x16].sa8d;
-    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sa8d = p.pu[LUMA_16x32].sa8d_inter;
     p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = p.cu[BLOCK_32x32].sa8d;
-    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sa8d = p.pu[LUMA_32x64].sa8d_inter;
 
     p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sse_pp = NULL;
     p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sse_pp = NULL;

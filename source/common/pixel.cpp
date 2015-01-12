@@ -1319,6 +1319,10 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_32x32].sa8d = sa8d16<32, 32>;
     p.cu[BLOCK_64x64].sa8d = sa8d16<64, 64>;
 
+    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sa8d = sa8d8<8, 16>;
+    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sa8d = sa8d16<16, 32>;
+    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sa8d = sa8d16<32, 64>;
+
     p.cu[BLOCK_4x4].psy_cost_pp   = psyCost_pp<BLOCK_4x4>;
     p.cu[BLOCK_8x8].psy_cost_pp   = psyCost_pp<BLOCK_8x8>;
     p.cu[BLOCK_16x16].psy_cost_pp = psyCost_pp<BLOCK_16x16>;
@@ -1330,32 +1334,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.cu[BLOCK_16x16].psy_cost_ss = psyCost_ss<BLOCK_16x16>;
     p.cu[BLOCK_32x32].psy_cost_ss = psyCost_ss<BLOCK_32x32>;
     p.cu[BLOCK_64x64].psy_cost_ss = psyCost_ss<BLOCK_64x64>;
-
-    p.pu[LUMA_4x4].sa8d_inter   = satd_4x4;
-    p.pu[LUMA_8x8].sa8d_inter   = sa8d_8x8;
-    p.pu[LUMA_8x4].sa8d_inter   = satd_8x4;
-    p.pu[LUMA_4x8].sa8d_inter   = satd4<4, 8>;
-    p.pu[LUMA_16x16].sa8d_inter = sa8d_16x16;
-    p.pu[LUMA_16x8].sa8d_inter  = sa8d8<16, 8>;
-    p.pu[LUMA_8x16].sa8d_inter  = sa8d8<8, 16>;
-    p.pu[LUMA_16x12].sa8d_inter = satd8<16, 12>;
-    p.pu[LUMA_12x16].sa8d_inter = satd4<12, 16>;
-    p.pu[LUMA_4x16].sa8d_inter  = satd4<4, 16>;
-    p.pu[LUMA_16x4].sa8d_inter  = satd8<16, 4>;
-    p.pu[LUMA_32x32].sa8d_inter = sa8d16<32, 32>;
-    p.pu[LUMA_32x16].sa8d_inter = sa8d16<32, 16>;
-    p.pu[LUMA_16x32].sa8d_inter = sa8d16<16, 32>;
-    p.pu[LUMA_32x24].sa8d_inter = sa8d8<32, 24>;
-    p.pu[LUMA_24x32].sa8d_inter = sa8d8<24, 32>;
-    p.pu[LUMA_32x8].sa8d_inter  = sa8d8<32, 8>;
-    p.pu[LUMA_8x32].sa8d_inter  = sa8d8<8, 32>;
-    p.pu[LUMA_64x64].sa8d_inter = sa8d16<64, 64>;
-    p.pu[LUMA_64x32].sa8d_inter = sa8d16<64, 32>;
-    p.pu[LUMA_32x64].sa8d_inter = sa8d16<32, 64>;
-    p.pu[LUMA_64x48].sa8d_inter = sa8d16<64, 48>;
-    p.pu[LUMA_48x64].sa8d_inter = sa8d16<48, 64>;
-    p.pu[LUMA_64x16].sa8d_inter = sa8d16<64, 16>;
-    p.pu[LUMA_16x64].sa8d_inter = sa8d16<16, 64>;
 
     p.cu[BLOCK_4x4].calcresidual   = getResidual<4>;
     p.cu[BLOCK_8x8].calcresidual   = getResidual<8>;

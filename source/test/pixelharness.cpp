@@ -1152,15 +1152,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].sa8d_inter)
-    {
-        if (!check_pixelcmp(ref.pu[part].sa8d_inter, opt.pu[part].sa8d_inter))
-        {
-            printf("sa8d_inter[%s]: failed!\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].sad)
     {
         if (!check_pixelcmp(ref.pu[part].sad, opt.pu[part].sad))
@@ -1658,12 +1649,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         HEADER("avg_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pu[part].pixelavg_pp, ref.pu[part].pixelavg_pp, pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
-    }
-
-    if (opt.pu[part].sa8d_inter)
-    {
-        HEADER("sa8d[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].sa8d_inter, ref.pu[part].sa8d_inter, pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.pu[part].sad)
