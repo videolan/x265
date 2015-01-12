@@ -951,6 +951,9 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
     p.intra_pred[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
+#define SETUP_INTRA_ANG_COMMON_NEW(mode, fno, cpu) \
+    p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
+
 #define SETUP_INTRA_ANG(mode, fno, cpu) \
     p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
     p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
@@ -967,9 +970,16 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
     p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
 
+#define SETUP_INTRA_ANG4_8_NEW(mode, fno, cpu) \
+    p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu;
+
 #define INTRA_ANG_SSSE3(cpu) \
     SETUP_INTRA_ANG_COMMON(2, 2, cpu); \
     SETUP_INTRA_ANG_COMMON(34, 2, cpu);
+
+#define INTRA_ANG_SSSE3_NEW(cpu) \
+    SETUP_INTRA_ANG_COMMON_NEW(2, 2, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(34, 2, cpu);
 
 #define INTRA_ANG_SSE4_COMMON(cpu) \
     SETUP_INTRA_ANG_COMMON(3,  3,  cpu); \
@@ -988,6 +998,24 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG_COMMON(16, 16, cpu); \
     SETUP_INTRA_ANG_COMMON(17, 17, cpu); \
     SETUP_INTRA_ANG_COMMON(18, 18, cpu);
+
+#define INTRA_ANG_SSE4_COMMON_NEW(cpu) \
+    SETUP_INTRA_ANG_COMMON_NEW(3,  3,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(4,  4,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(5,  5,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(6,  6,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(7,  7,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(8,  8,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(9,  9,  cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(10, 10, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(11, 11, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(12, 12, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(13, 13, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(14, 14, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(15, 15, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(16, 16, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(17, 17, cpu); \
+    SETUP_INTRA_ANG_COMMON_NEW(18, 18, cpu);
 
 #define INTRA_ANG_SSE4_HIGH(cpu) \
     SETUP_INTRA_ANG(19, 19, cpu); \
@@ -1052,6 +1080,23 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG16_32(31, 31, cpu); \
     SETUP_INTRA_ANG16_32(32, 32, cpu); \
     SETUP_INTRA_ANG16_32(33, 33, cpu);
+
+#define INTRA_ANG_SSE4_NEW(cpu) \
+    SETUP_INTRA_ANG4_8_NEW(19, 17, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(20, 16, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(21, 15, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(22, 14, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(23, 13, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(24, 12, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(25, 11, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(26, 26, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(27, 9, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(28, 8, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(29, 7, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(30, 6, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(31, 5, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(32, 4, cpu); \
+    SETUP_INTRA_ANG4_8_NEW(33, 3, cpu);
 
 #define SETUP_CHROMA_VERT_FUNC_DEF(W, H, cpu) \
     p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vss = x265_interp_4tap_vert_ss_ ## W ## x ## H ## cpu; \
@@ -1603,6 +1648,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG_W4(ssse3);
 
         INTRA_ANG_SSSE3(ssse3);
+        INTRA_ANG_SSSE3_NEW(ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
@@ -1710,6 +1756,9 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4(sse4);
+
+        INTRA_ANG_SSE4_COMMON_NEW(sse4);
+        INTRA_ANG_SSE4_NEW(sse4);
 
         p.cu[BLOCK_8x8].dct = x265_dct8_sse4;
         p.denoiseDct = x265_denoise_dct_sse4;
