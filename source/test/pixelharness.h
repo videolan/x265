@@ -65,7 +65,6 @@ protected:
     uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
-    bool check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt);
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_pixelcmp_x3(pixelcmp_x3_t ref, pixelcmp_x3_t opt);
     bool check_pixelcmp_x4(pixelcmp_x4_t ref, pixelcmp_x4_t opt);

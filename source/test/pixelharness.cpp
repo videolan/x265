@@ -93,27 +93,6 @@ bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_sp(pixelcmp_sp_t ref, pixelcmp_sp_t opt)
-{
-    int j = 0;
-    intptr_t stride = STRIDE;
-
-    for (int i = 0; i < ITERS; i++)
-    {
-        int index1 = rand() % TEST_CASES;
-        int index2 = rand() % TEST_CASES;
-        int vres = (int)checked(opt, short_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
-        int cres = ref(short_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
-        if (vres != cres)
-            return false;
-
-        reportfail();
-        j += INCR;
-    }
-
-    return true;
-}
-
 bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
 {
     int j = 0;
