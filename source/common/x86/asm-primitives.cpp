@@ -1227,7 +1227,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_CU_BLOCKCOPY(ss, _sse2);
         CHROMA_CU_BLOCKCOPY_422(ss, _sse2);
-        LUMA_BLOCKCOPY(ss, _sse2);
+        LUMA_CU_BLOCKCOPY(ss, _sse2);
 
         CHROMA_VERT_FILTERS(_sse2);
         CHROMA_VERT_FILTERS_422(_sse2);
@@ -1316,6 +1316,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #endif
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
+    if (cpuMask & X265_CPU_AVX)
+    {
+        p.pu[LUMA_64x64].luma_copy_pp = (copy_pp_t)x265_blockcopy_ss_64x64_avx;
+    }
     if (cpuMask & X265_CPU_XOP)
     {
         p.frameInitLowres = x265_frame_init_lowres_core_xop;
@@ -1351,31 +1355,25 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_32x32].transpose = x265_transpose32_avx2;
         p.cu[BLOCK_64x64].transpose = x265_transpose64_avx2;
 #endif
+        p.pu[LUMA_64x16].luma_copy_pp = (copy_pp_t)x265_blockcopy_ss_64x16_avx;
+        p.pu[LUMA_64x32].luma_copy_pp = (copy_pp_t)x265_blockcopy_ss_64x32_avx;
+        p.pu[LUMA_64x48].luma_copy_pp = (copy_pp_t)x265_blockcopy_ss_64x48_avx;
+        p.pu[LUMA_64x64].luma_copy_pp = (copy_pp_t)x265_blockcopy_ss_64x64_avx;
     }
+
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
-    for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
-    {
-        p.pu[i].sse_pp = (pixelcmp_t)p.pu[i].sse_ss;
-        p.pu[i].sse_sp = (pixelcmp_sp_t)p.pu[i].sse_ss;
-        p.pu[i].luma_copy_pp = (copy_pp_t)p.pu[i].luma_copy_ss;
-    }
-
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        p.cu[i].luma_copy_ps = (copy_ps_t)p.pu[i].luma_copy_ss;
-        p.cu[i].luma_copy_sp = (copy_sp_t)p.pu[i].luma_copy_ss;
-    }
+        p.cu[i].sse_ss   = (pixelcmp_ss_t)p.pu[i].sse_pp;
+        p.cu[i].luma_copy_ps = (copy_ps_t)p.pu[i].luma_copy_pp;
+        p.cu[i].luma_copy_sp = (copy_sp_t)p.pu[i].luma_copy_pp;
+        p.cu[i].luma_copy_ss = (copy_ss_t)p.pu[i].luma_copy_pp;
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
-    {
         p.chroma[X265_CSP_I420].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
         p.chroma[X265_CSP_I420].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
         p.chroma[X265_CSP_I422].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
         p.chroma[X265_CSP_I422].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
-    }
 
-    for (int i = 0; i < NUM_CHROMA_PARTITIONS; i++)
-    {
         p.chroma[X265_CSP_I420].pu[i].copy_pp = (copy_pp_t)p.chroma[X265_CSP_I420].cu[i].copy_ss;
         p.chroma[X265_CSP_I422].pu[i].copy_pp = (copy_pp_t)p.chroma[X265_CSP_I422].cu[i].copy_ss;
     }
@@ -1405,7 +1403,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         CHROMA_BLOCKCOPY(pp, _sse2);
         LUMA_BLOCKCOPY(pp, _sse2);
-        LUMA_BLOCKCOPY(ss, _sse2);
+        LUMA_CU_BLOCKCOPY(ss, _sse2);
         CHROMA_BLOCKCOPY_422(pp, _sse2);
 
         CHROMA_CU_BLOCKCOPY(ss, _sse2);
@@ -1619,10 +1617,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_avx;
         p.ssim_end_4 = x265_pixel_ssim_end4_avx;
-        p.pu[LUMA_64x16].luma_copy_ss = x265_blockcopy_ss_64x16_avx;
-        p.pu[LUMA_64x32].luma_copy_ss = x265_blockcopy_ss_64x32_avx;
-        p.pu[LUMA_64x48].luma_copy_ss = x265_blockcopy_ss_64x48_avx;
-        p.pu[LUMA_64x64].luma_copy_ss = x265_blockcopy_ss_64x64_avx;
+        p.cu[BLOCK_64x64].luma_copy_ss = x265_blockcopy_ss_64x64_avx;
 
         p.chroma[X265_CSP_I420].pu[CHROMA_32x8].copy_pp = x265_blockcopy_pp_32x8_avx;
         p.pu[LUMA_32x8].luma_copy_pp = x265_blockcopy_pp_32x8_avx;

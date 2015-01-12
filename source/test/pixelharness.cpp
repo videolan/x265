@@ -1206,15 +1206,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].luma_copy_ss)
-    {
-        if (!check_copy_ss(ref.pu[part].luma_copy_ss, opt.pu[part].luma_copy_ss))
-        {
-            printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].luma_addAvg)
     {
         if (!check_addAvg(ref.pu[part].luma_addAvg, opt.pu[part].luma_addAvg))
@@ -1249,6 +1240,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             if (!check_pixel_add_ps(ref.cu[part].luma_add_ps, opt.cu[part].luma_add_ps))
             {
                 printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
+        if (opt.cu[part].luma_copy_ss)
+        {
+            if (!check_copy_ss(ref.cu[part].luma_copy_ss, opt.cu[part].luma_copy_ss))
+            {
+                printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
@@ -1672,12 +1672,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].luma_copy_pp, ref.pu[part].luma_copy_pp, pbuf1, 64, pbuf2, 128);
     }
 
-    if (opt.pu[part].luma_copy_ss)
-    {
-        HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].luma_copy_ss, ref.pu[part].luma_copy_ss, sbuf1, 64, sbuf2, 128);
-    }
-
     if (opt.pu[part].luma_addAvg)
     {
         HEADER("luma_addAvg[%s]", lumaPartStr[part]);
@@ -1700,6 +1694,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         {
             HEADER("luma_add_ps[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].luma_add_ps, ref.cu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+        }
+        if (opt.cu[part].luma_copy_ss)
+        {
+            HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].luma_copy_ss, ref.cu[part].luma_copy_ss, sbuf1, 64, sbuf2, 128);
         }
         if (opt.cu[part].luma_copy_sp)
         {

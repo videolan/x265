@@ -204,7 +204,6 @@ struct EncoderPrimitives
         filter_hv_pp_t luma_hvpp;
 
         copy_pp_t      luma_copy_pp;
-        copy_ss_t      luma_copy_ss;
     }
     pu[NUM_LUMA_PARTITIONS];
 
@@ -228,6 +227,7 @@ struct EncoderPrimitives
         pixel_add_ps_t  luma_add_ps;
         copy_sp_t       luma_copy_sp;
         copy_ps_t       luma_copy_ps;
+        copy_ss_t       luma_copy_ss;
 
         pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self

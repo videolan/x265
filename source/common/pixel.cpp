@@ -1153,13 +1153,13 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 #define LUMA(W, H) \
     p.pu[LUMA_ ## W ## x ## H].luma_addAvg  = addAvg<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].luma_copy_pp = blockcopy_pp_c<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].luma_copy_ss = blockcopy_ss_c<W, H>;
 
-#define LUMA_PIXELSUB(W, H) \
+#define LUMA_CU(W, H) \
+    p.cu[BLOCK_ ## W ## x ## H].luma_sub_ps = pixel_sub_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].luma_add_ps = pixel_add_ps_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].luma_copy_sp = blockcopy_sp_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].luma_copy_ps = blockcopy_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_sub_ps = pixel_sub_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_add_ps = pixel_add_ps_c<W, H>;
+    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ss = blockcopy_ss_c<W, H>;
 
 #define CHROMA_PIXELSUB_420(W, H) \
     p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>;  \
@@ -1223,11 +1223,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     LUMA(16, 64);
     CHROMA_420(8,  32);
 
-    LUMA_PIXELSUB(4, 4);
-    LUMA_PIXELSUB(8, 8);
-    LUMA_PIXELSUB(16, 16);
-    LUMA_PIXELSUB(32, 32);
-    LUMA_PIXELSUB(64, 64);
+    LUMA_CU(4, 4);
+    LUMA_CU(8, 8);
+    LUMA_CU(16, 16);
+    LUMA_CU(32, 32);
+    LUMA_CU(64, 64);
+
     CHROMA_PIXELSUB_420(4, 4)
     CHROMA_PIXELSUB_420(8, 8)
     CHROMA_PIXELSUB_420(16, 16)

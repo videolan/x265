@@ -78,7 +78,7 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        p.chroma[X265_CSP_I444].cu[i].copy_ss = p.pu[i].luma_copy_ss;
+        p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].luma_copy_ss;
         p.chroma[X265_CSP_I444].cu[i].copy_ps = p.cu[i].luma_copy_ps;
         p.chroma[X265_CSP_I444].cu[i].copy_sp = p.cu[i].luma_copy_sp;
         p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].luma_add_ps;

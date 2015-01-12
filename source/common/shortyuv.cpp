@@ -84,7 +84,7 @@ void ShortYuv::copyPartToPartLuma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_
     const int16_t* src = getLumaAddr(absPartIdx);
     int16_t* dst = dstYuv.getLumaAddr(absPartIdx);
 
-    primitives.pu[log2Size - 2].luma_copy_ss(dst, dstYuv.m_size, src, m_size);
+    primitives.cu[log2Size - 2].luma_copy_ss(dst, dstYuv.m_size, src, m_size);
 }
 
 void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size) const
