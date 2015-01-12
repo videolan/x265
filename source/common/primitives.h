@@ -255,7 +255,6 @@ struct EncoderPrimitives
     intra_pred_new_t      intra_pred_new[NUM_INTRA_MODE][NUM_TR_SIZE];
     intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];         /* todo: move to CU */
     intra_allangs_new_t   intra_pred_allangs_new[NUM_TR_SIZE];
-    scale_t               scale1D_128to64;
     scale_t               scale1D_128to64_new;
     scale_t               scale2D_64to32;
 

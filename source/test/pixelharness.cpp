@@ -1557,15 +1557,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.scale1D_128to64)
-    {
-        if (!check_scale_pp(ref.scale1D_128to64, opt.scale1D_128to64))
-        {
-            printf("scale1D_128to64 failed!\n");
-            return false;
-        }
-    }
-
     if (opt.scale1D_128to64_new)
     {
         if (!check_scale_pp_new(ref.scale1D_128to64_new, opt.scale1D_128to64_new))
@@ -1953,12 +1944,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("downscale");
         REPORT_SPEEDUP(opt.frameInitLowres, ref.frameInitLowres, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
-    }
-
-    if (opt.scale1D_128to64)
-    {
-        HEADER0("scale1D_128to64");
-        REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1, 64);
     }
 
     if (opt.scale1D_128to64_new)

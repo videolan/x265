@@ -629,20 +629,6 @@ void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstri
     }
 }
 
-void scale1D_128to64(pixel* dst, const pixel* src, intptr_t /*stride*/)
-{
-    int x;
-
-    for (x = 0; x < 128; x += 2)
-    {
-        pixel pix0 = src[(x + 0)];
-        pixel pix1 = src[(x + 1)];
-        int sum = pix0 + pix1;
-
-        dst[x >> 1] = (pixel)((sum + 1) >> 1);
-    }
-}
-
 void scale1D_128to64_new(pixel *dst, const pixel *src, intptr_t /*stride*/)
 {
     int x;
@@ -1391,7 +1377,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;
 
-    p.scale1D_128to64 = scale1D_128to64;
     p.scale1D_128to64_new = scale1D_128to64_new;
     p.scale2D_64to32 = scale2D_64to32;
     p.frameInitLowres = frame_init_lowres_core;
