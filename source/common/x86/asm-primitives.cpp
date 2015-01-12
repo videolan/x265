@@ -1692,9 +1692,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_16x32].sad_x4 = x265_pixel_sad_x4_16x32_avx2;
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
 
-        /* Need to update assembly code as per changed interface of the copy_cnt primitive, once
-         * code is updated, avx2 version will be enabled */
-
         p.cu[BLOCK_8x8].copy_cnt = x265_copy_cnt_8_avx2;
         p.cu[BLOCK_16x16].copy_cnt = x265_copy_cnt_16_avx2;
         p.cu[BLOCK_32x32].copy_cnt = x265_copy_cnt_32_avx2;
