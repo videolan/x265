@@ -643,6 +643,32 @@ void scale1D_128to64(pixel* dst, const pixel* src, intptr_t /*stride*/)
     }
 }
 
+void scale1D_128to64_new(pixel *dst, const pixel *src, intptr_t /*stride*/)
+{
+    int x;
+    const pixel* src1 = src;
+    const pixel* src2 = src + 128;
+
+    pixel* dst1 = dst;
+    pixel* dst2 = dst + 64/*128*/;
+
+    for (x = 0; x < 128; x += 2)
+    {
+        // Top pixel
+        pixel pix0 = src1[(x + 0)];
+        pixel pix1 = src1[(x + 1)];
+
+        // Left pixel
+        pixel pix2 = src2[(x + 0)];
+        pixel pix3 = src2[(x + 1)];
+        int sum1 = pix0 + pix1;
+        int sum2 = pix2 + pix3;
+
+        dst1[x >> 1] = (pixel)((sum1 + 1) >> 1);
+        dst2[x >> 1] = (pixel)((sum2 + 1) >> 1);
+    }
+}
+
 void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
 {
     uint32_t x, y;
@@ -1366,6 +1392,7 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.weight_sp = weight_sp_c;
 
     p.scale1D_128to64 = scale1D_128to64;
+    p.scale1D_128to64_new = scale1D_128to64_new;
     p.scale2D_64to32 = scale2D_64to32;
     p.frameInitLowres = frame_init_lowres_core;
     p.ssim_4x4x2_core = ssim_4x4x2_core;

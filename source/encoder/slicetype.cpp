@@ -1668,37 +1668,37 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
     if (!fenc->bIntraCalculated)
     {
         const int sizeIdx = X265_LOWRES_CU_BITS - 2; // partition size
-
-        pixel _above0[X265_LOWRES_CU_SIZE * 4 + 1], *const above0 = _above0 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _above1[X265_LOWRES_CU_SIZE * 4 + 1], *const above1 = _above1 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _left0[X265_LOWRES_CU_SIZE * 4 + 1], *const left0 = _left0 + 2 * X265_LOWRES_CU_SIZE;
-        pixel _left1[X265_LOWRES_CU_SIZE * 4 + 1], *const left1 = _left1 + 2 * X265_LOWRES_CU_SIZE;
+        const int cuSize2 = cuSize << 1;
+        pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
 
         pixel *pix_cur = fenc->lowresPlane[0] + pelOffset;
 
         // Copy Above
-        memcpy(above0, pix_cur - 1 - fenc->lumaStride, (cuSize + 1) * sizeof(pixel));
+        memcpy(neighbours[0], pix_cur - 1 - fenc->lumaStride, (cuSize + 1) * sizeof(pixel));
 
         // Copy Left
-        for (int i = 0; i < cuSize + 1; i++)
-            left0[i] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
+        for (int i = 1; i < cuSize + 1; i++)
+            neighbours[0][i + cuSize2] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
 
         for (int i = 0; i < cuSize; i++)
         {
-            above0[cuSize + i + 1] = above0[cuSize];
-            left0[cuSize + i + 1] = left0[cuSize];
+            // Copy above-last pixel
+            neighbours[0][i + cuSize + 1] = neighbours[0][cuSize]; //neighbours[0][i + 9] = neighbours[0][8]
+            // Copy left-last pixel
+            neighbours[0][i + cuSize2 + cuSize + 1] = neighbours[0][cuSize2 + cuSize]; //neighbours[0][i + 25] = neighbours[0][24]
         }
 
-        // filtering with [1 2 1]
-        // assume getUseStrongIntraSmoothing() is disabled
-        above1[0] = above0[0];
-        above1[2 * cuSize] = above0[2 * cuSize];
-        left1[0] = left0[0];
-        left1[2 * cuSize] = left0[2 * cuSize];
-        for (int i = 1; i < 2 * cuSize; i++)
+        // Filter neighbour pixels with [1-2-1]
+        neighbours[1][0]  = neighbours[0][0];  // Copy top-left pixel 
+        neighbours[1][cuSize2] = neighbours[0][cuSize2]; //Copy top-right pixel
+        neighbours[1][cuSize2 << 1] = neighbours[0][cuSize2 << 1]; // Bottom-left pixel
+
+        neighbours[1][1]           = (neighbours[0][0] + (neighbours[0][1] << 1)           + neighbours[0][2] + 2)               >> 2;
+        neighbours[1][cuSize2 + 1] = (neighbours[0][0] + (neighbours[0][cuSize2 + 1] << 1) + neighbours[0][cuSize2 + 1 + 1] + 2) >> 2;
+        for (int i = 2; i < cuSize2; i++)
         {
-            above1[i] = (above0[i - 1] + 2 * above0[i] + above0[i + 1] + 2) >> 2;
-            left1[i] = (left0[i - 1] + 2 * left0[i] + left0[i + 1] + 2) >> 2;
+            neighbours[1][i]           = (neighbours[0][i - 1]      + (neighbours[0][i] << 1)      + neighbours[0][i + 1]      + 2) >> 2;
+            neighbours[1][cuSize2 + i] = (neighbours[0][cuSize2 + i - 1] + (neighbours[0][cuSize2 + i] << 1) + neighbours[0][cuSize2 + i + 1] + 2) >> 2;
         }
 
         int predsize = cuSize * cuSize;
@@ -1706,23 +1706,25 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         // generate 35 intra predictions into m_predictions
         pixelcmp_t satd = primitives.pu[partitionFromLog2Size(X265_LOWRES_CU_BITS)].satd;
         int icost = m_me.COST_MAX;
-        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
+//        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
+        primitives.intra_pred_new[DC_IDX][sizeIdx](m_predictions, cuSize, neighbours[0], 0, (cuSize <= 16));
         int cost = m_me.bufSATD(m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
-        pixel *above = (cuSize >= 8) ? above1 : above0;
-        pixel *left  = (cuSize >= 8) ? left1 : left0;
-        primitives.intra_pred[PLANAR_IDX][sizeIdx](m_predictions, cuSize, left, above, 0, 0);
+
+        pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
+        primitives.intra_pred_new[PLANAR_IDX][sizeIdx](m_predictions, cuSize, planar, 0, 0);
         cost = m_me.bufSATD(m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
 
         uint32_t mode, lowmode = 4;
-        if (primitives.intra_pred_allangs[sizeIdx])
+        if (primitives.intra_pred_allangs_new[sizeIdx])
         {
             ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
 
-            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
+//            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
+            primitives.intra_pred_allangs_new[sizeIdx](m_predictions + 2 * predsize, neighbours[0], neighbours[1], (cuSize <= 16));
             primitives.cu[sizeIdx].transpose(buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
 
             int acost = m_me.COST_MAX;
@@ -1762,9 +1764,11 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             for (mode = 5; mode < 35; mode += 5)
             {
                 if (g_intraFilterFlags[mode] & cuSize)
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
             }
@@ -1775,17 +1779,21 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
 
                 mode = minusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+//                   primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
 
                 mode = plusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
+                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
             }
