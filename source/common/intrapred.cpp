@@ -27,22 +27,6 @@
 using namespace x265;
 
 namespace {
-pixel dcPredValue(pixel* above, pixel* left, intptr_t width)
-{
-    int w, sum = 0;
-    pixel pDcVal;
-
-    for (w = 0; w < width; w++)
-        sum += above[w];
-
-    for (w = 0; w < width; w++)
-        sum += left[w];
-
-    pDcVal = (pixel)((sum + width) / (width + width));
-
-    return pDcVal;
-}
-
 void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int size)
 {
     // boundary pixels processing
@@ -57,23 +41,6 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
         *dst = (pixel)((left[y] + 3 * *dst + 2) >> 2);
         dst += dststride;
     }
-}
-
-template<int width>
-void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int bFilter)
-{
-    int k, l;
-
-    pixel dcval = dcPredValue(above + 1, left + 1, width);
-
-    for (k = 0; k < width; k++)
-    {
-        for (l = 0; l < width; l++)
-            dst[k * dstStride + l] = dcval;
-    }
-
-    if (bFilter)
-        dcPredFilter(above + 1, left + 1, dst, dstStride, width);
 }
 
 template<int width>
@@ -437,12 +404,6 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
     p.intra_pred_new[0][BLOCK_8x8] = planar_pred_c_new<3>;
     p.intra_pred_new[0][BLOCK_16x16] = planar_pred_c_new<4>;
     p.intra_pred_new[0][BLOCK_32x32] = planar_pred_c_new<5>;
-
-    // Intra Prediction DC
-    p.intra_pred[1][BLOCK_4x4] = intra_pred_dc_c<4>;
-    p.intra_pred[1][BLOCK_8x8] = intra_pred_dc_c<8>;
-    p.intra_pred[1][BLOCK_16x16] = intra_pred_dc_c<16>;
-    p.intra_pred[1][BLOCK_32x32] = intra_pred_dc_c<32>;
 
     p.intra_pred_new[1][BLOCK_4x4] = intra_pred_dc_c_new<4>;
     p.intra_pred_new[1][BLOCK_8x8] = intra_pred_dc_c_new<8>;

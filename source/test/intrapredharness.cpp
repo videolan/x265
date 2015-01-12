@@ -236,15 +236,6 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
 {
     for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
-        if (opt.intra_pred[1][i])
-        {
-            const int size = (1 << (i + 2));
-            if (!check_dc_primitive(ref.intra_pred[1][i], opt.intra_pred[1][i], size))
-            {
-                printf("intra_dc %dx%d failed\n", size, size);
-                return false;
-            }
-        }
         if (opt.intra_pred[0][i])
         {
             const int size = (1 << (i + 2));
@@ -292,18 +283,6 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
         const int size = (1 << (i + 2));
-        if (opt.intra_pred[1][i])
-        {
-            printf("intra_dc_%dx%d[f=0]", size, size);
-            REPORT_SPEEDUP(opt.intra_pred[1][i], ref.intra_pred[1][i],
-                           pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 0);
-            if (size <= 16)
-            {
-                printf("intra_dc_%dx%d[f=1]", size, size);
-                REPORT_SPEEDUP(opt.intra_pred[1][i], ref.intra_pred[1][i],
-                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pixel_buff, 0, 1);
-            }
-        }
         if (opt.intra_pred[0][i])
         {
             printf("intra_planar %2dx%d", size, size);
