@@ -1194,31 +1194,11 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 
         SA8D_INTER_FROM_BLOCK(sse2);
 
-        p.pu[LUMA_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_mmx2;
-        p.pu[LUMA_4x8].sse_ss   = x265_pixel_ssd_ss_4x8_mmx2;
-        p.pu[LUMA_4x16].sse_ss  = x265_pixel_ssd_ss_4x16_mmx2;
-        p.pu[LUMA_8x4].sse_ss   = x265_pixel_ssd_ss_8x4_sse2;
-        p.pu[LUMA_8x8].sse_ss   = x265_pixel_ssd_ss_8x8_sse2;
-        p.pu[LUMA_8x16].sse_ss  = x265_pixel_ssd_ss_8x16_sse2;
-        p.pu[LUMA_8x32].sse_ss  = x265_pixel_ssd_ss_8x32_sse2;
-        p.pu[LUMA_12x16].sse_ss = x265_pixel_ssd_ss_12x16_sse2;
-        p.pu[LUMA_16x4].sse_ss  = x265_pixel_ssd_ss_16x4_sse2;
-        p.pu[LUMA_16x8].sse_ss  = x265_pixel_ssd_ss_16x8_sse2;
-        p.pu[LUMA_16x12].sse_ss = x265_pixel_ssd_ss_16x12_sse2;
-        p.pu[LUMA_16x16].sse_ss = x265_pixel_ssd_ss_16x16_sse2;
-        p.pu[LUMA_16x32].sse_ss = x265_pixel_ssd_ss_16x32_sse2;
-        p.pu[LUMA_16x64].sse_ss = x265_pixel_ssd_ss_16x64_sse2;
-        p.pu[LUMA_24x32].sse_ss = x265_pixel_ssd_ss_24x32_sse2;
-        p.pu[LUMA_32x8].sse_ss  = x265_pixel_ssd_ss_32x8_sse2;
-        p.pu[LUMA_32x16].sse_ss = x265_pixel_ssd_ss_32x16_sse2;
-        p.pu[LUMA_32x24].sse_ss = x265_pixel_ssd_ss_32x24_sse2;
-        p.pu[LUMA_32x32].sse_ss = x265_pixel_ssd_ss_32x32_sse2;
-        p.pu[LUMA_32x64].sse_ss = x265_pixel_ssd_ss_32x64_sse2;
-        p.pu[LUMA_48x64].sse_ss = x265_pixel_ssd_ss_48x64_sse2;
-        p.pu[LUMA_64x16].sse_ss = x265_pixel_ssd_ss_64x16_sse2;
-        p.pu[LUMA_64x32].sse_ss = x265_pixel_ssd_ss_64x32_sse2;
-        p.pu[LUMA_64x48].sse_ss = x265_pixel_ssd_ss_64x48_sse2;
-        p.pu[LUMA_64x64].sse_ss = x265_pixel_ssd_ss_64x64_sse2;
+        p.cu[BLOCK_4x4].sse_ss = x265_pixel_ssd_ss_4x4_mmx2;
+        p.cu[BLOCK_8x8].sse_ss   = x265_pixel_ssd_ss_8x8_sse2;
+        p.cu[BLOCK_16x16].sse_ss = x265_pixel_ssd_ss_16x16_sse2;
+        p.cu[BLOCK_32x32].sse_ss = x265_pixel_ssd_ss_32x32_sse2;
+        p.cu[BLOCK_64x64].sse_ss = x265_pixel_ssd_ss_64x64_sse2;
 
         p.cu[BLOCK_4x4].transpose   = x265_transpose4_sse2;
         p.cu[BLOCK_8x8].transpose   = x265_transpose8_sse2;
