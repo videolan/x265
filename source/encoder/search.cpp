@@ -2462,7 +2462,6 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     X265_CHECK(!cu.isIntra(0), "intra CU not expected\n");
 
-    uint32_t cuSize = 1 << cu.m_log2CUSize[0];
     uint32_t depth  = cu.m_cuDepth[0];
 
     // No residual coding : SKIP mode
@@ -2477,9 +2476,8 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     int part = partitionFromLog2Size(cu.m_log2CUSize[0]);
     interMode.distortion = primitives.pu[part].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
     // Chroma
-    part = partitionFromSizes(cuSize >> m_hChromaShift, cuSize >> m_vChromaShift);
-    interMode.distortion += m_rdCost.scaleChromaDist(1, primitives.pu[part].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
-    interMode.distortion += m_rdCost.scaleChromaDist(2, primitives.pu[part].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
+    interMode.distortion += m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
+    interMode.distortion += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
 
     m_entropyCoder.load(m_rqt[depth].cur);
     m_entropyCoder.resetBits();
