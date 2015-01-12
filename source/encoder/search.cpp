@@ -295,7 +295,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
         if (numSig)
         {
             m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffY, log2TrSize, TEXT_LUMA, true, false, numSig);
-            primitives.pu[sizeIdx].luma_add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
+            primitives.cu[sizeIdx].luma_add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
         }
         else
             // no coded residual, recon = pred
@@ -496,7 +496,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
         if (numSig)
         {
             m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTSkip, numSig);
-            primitives.pu[sizeIdx].luma_add_ps(tmpRecon, tmpReconStride, pred, residual, stride, stride);
+            primitives.cu[sizeIdx].luma_add_ps(tmpRecon, tmpReconStride, pred, residual, stride, stride);
         }
         else if (useTSkip)
         {
@@ -646,7 +646,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         if (numSig)
         {
             m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffY, log2TrSize, TEXT_LUMA, true, false, numSig);
-            primitives.pu[sizeIdx].luma_add_ps(picReconY, picStride, pred, residual, stride, stride);
+            primitives.cu[sizeIdx].luma_add_ps(picReconY, picStride, pred, residual, stride, stride);
             cu.setCbfSubParts(1 << tuDepth, TEXT_LUMA, absPartIdx, fullDepth);
         }
         else
@@ -827,7 +827,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             if (numSig)
             {
                 m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffC, log2TrSizeC, ttype, true, false, numSig);
-                primitives.pu[sizeIdxC].luma_add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
+                primitives.cu[sizeIdxC].luma_add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
                 cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             }
             else
@@ -933,7 +933,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
                 if (numSig)
                 {
                     m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeff, log2TrSizeC, ttype, true, useTSkip, numSig);
-                    primitives.pu[sizeIdxC].luma_add_ps(recon, reconStride, pred, residual, stride, stride);
+                    primitives.cu[sizeIdxC].luma_add_ps(recon, reconStride, pred, residual, stride, stride);
                     cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
                 }
                 else if (useTSkip)
@@ -1123,7 +1123,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             if (numSig)
             {
                 m_quant.invtransformNxN(cu.m_tqBypass[0], residual, stride, coeffC, log2TrSizeC, ttype, true, false, numSig);
-                primitives.pu[sizeIdxC].luma_add_ps(picReconC, picStride, pred, residual, stride, stride);
+                primitives.cu[sizeIdxC].luma_add_ps(picReconC, picStride, pred, residual, stride, stride);
                 cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             }
             else

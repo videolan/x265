@@ -153,7 +153,7 @@ void Yuv::copyPartToYuv(Yuv& dstYuv, uint32_t absPartIdx) const
 
 void Yuv::addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL)
 {
-    primitives.pu[log2SizeL - 2].luma_add_ps(m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
+    primitives.cu[log2SizeL - 2].luma_add_ps(m_buf[0], m_size, srcYuv0.m_buf[0], srcYuv1.m_buf[0], srcYuv0.m_size, srcYuv1.m_size);
     primitives.chroma[m_csp].cu[log2SizeL - 2].add_ps(m_buf[1], m_csize, srcYuv0.m_buf[1], srcYuv1.m_buf[1], srcYuv0.m_csize, srcYuv1.m_csize);
     primitives.chroma[m_csp].cu[log2SizeL - 2].add_ps(m_buf[2], m_csize, srcYuv0.m_buf[2], srcYuv1.m_buf[2], srcYuv0.m_csize, srcYuv1.m_csize);
 }

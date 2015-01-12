@@ -1271,18 +1271,18 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (part < NUM_SQUARE_BLOCKS)
     {
-        if (opt.pu[part].luma_sub_ps)
+        if (opt.cu[part].luma_sub_ps)
         {
-            if (!check_pixel_sub_ps(ref.pu[part].luma_sub_ps, opt.pu[part].luma_sub_ps))
+            if (!check_pixel_sub_ps(ref.cu[part].luma_sub_ps, opt.cu[part].luma_sub_ps))
             {
                 printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.pu[part].luma_add_ps)
+        if (opt.cu[part].luma_add_ps)
         {
-            if (!check_pixel_add_ps(ref.pu[part].luma_add_ps, opt.pu[part].luma_add_ps))
+            if (!check_pixel_add_ps(ref.cu[part].luma_add_ps, opt.cu[part].luma_add_ps))
             {
                 printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
@@ -1731,15 +1731,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     }
     if (part < NUM_SQUARE_BLOCKS)
     {
-        if (opt.pu[part].luma_sub_ps)
+        if (opt.cu[part].luma_sub_ps)
         {
             HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.pu[part].luma_sub_ps, ref.pu[part].luma_sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.cu[part].luma_sub_ps, ref.cu[part].luma_sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
         }
-        if (opt.pu[part].luma_add_ps)
+        if (opt.cu[part].luma_add_ps)
         {
             HEADER("luma_add_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.pu[part].luma_add_ps, ref.pu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.cu[part].luma_add_ps, ref.cu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
     }
 

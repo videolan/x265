@@ -81,8 +81,8 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        p.chroma[X265_CSP_I444].cu[i].add_ps  = p.pu[i].luma_add_ps;
-        p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.pu[i].luma_sub_ps;
+        p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].luma_add_ps;
+        p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.cu[i].luma_sub_ps;
     }
 
     primitives.cu[BLOCK_4x4].sa8d   = primitives.pu[LUMA_4x4].satd;
