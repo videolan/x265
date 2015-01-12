@@ -84,7 +84,7 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].luma_add_ps;
         p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.cu[i].luma_sub_ps;
         p.chroma[X265_CSP_I444].cu[i].sa8d    = p.cu[i].sa8d;
-        p.chroma[X265_CSP_I444].cu[i].sse_pp  = p.pu[i].sse_pp;
+        p.chroma[X265_CSP_I444].cu[i].sse_pp  = p.cu[i].sse_pp;
     }
 
     primitives.cu[BLOCK_4x4].sa8d   = primitives.pu[LUMA_4x4].satd;
@@ -135,24 +135,21 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].pu[CHROMA422_32x16].satd = primitives.pu[LUMA_32x16].satd;
     //p.chroma[X265_CSP_I422].satd[CHROMA422_8x64]  = satd8<8, 64>;
 
-    p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sa8d = NULL;
     p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sa8d = NULL;
-    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x4].satd;
     p.chroma[X265_CSP_I422].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x8].satd;
+    p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sse_pp = NULL;
+
+    p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sa8d = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x4].satd;
     p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = p.cu[BLOCK_8x8].sa8d;
     p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = p.cu[BLOCK_16x16].sa8d;
     p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = p.cu[BLOCK_32x32].sa8d;
 
     p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sse_pp = NULL;
-    p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sse_pp = NULL;
-    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sse_pp = p.pu[LUMA_4x4].sse_pp;
-    p.chroma[X265_CSP_I422].cu[BLOCK_8x8].sse_pp = p.pu[LUMA_4x8].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sse_pp = p.pu[LUMA_8x8].sse_pp;
-    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sse_pp = p.pu[LUMA_8x16].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sse_pp = p.pu[LUMA_16x16].sse_pp;
-    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sse_pp = p.pu[LUMA_16x32].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sse_pp = p.pu[LUMA_32x32].sse_pp;
-    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sse_pp = p.pu[LUMA_32x64].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sse_pp = p.cu[BLOCK_4x4].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sse_pp = p.cu[BLOCK_8x8].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sse_pp = p.cu[BLOCK_16x16].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sse_pp = p.cu[BLOCK_32x32].sse_pp;
 }
 }
 using namespace x265;

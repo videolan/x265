@@ -1140,15 +1140,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].sse_pp)
-    {
-        if (!check_pixelcmp(ref.pu[part].sse_pp, opt.pu[part].sse_pp))
-        {
-            printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].sad_x3)
     {
         if (!check_pixelcmp_x3(ref.pu[part].sad_x3, opt.pu[part].sad_x3))
@@ -1196,6 +1187,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (part < NUM_SQUARE_BLOCKS)
     {
+        if (opt.cu[part].sse_pp)
+        {
+            if (!check_pixelcmp(ref.cu[part].sse_pp, opt.cu[part].sse_pp))
+            {
+                printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
         if (opt.cu[part].sse_ss)
         {
             if (!check_pixelcmp_ss(ref.cu[part].sse_ss, opt.cu[part].sse_ss))
@@ -1639,12 +1639,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].sad_x4, ref.pu[part].sad_x4, pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 
-    if (opt.pu[part].sse_pp)
-    {
-        HEADER("sse_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].sse_pp, ref.pu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
-    }
-
     if (opt.pu[part].luma_copy_pp)
     {
         HEADER("luma_copy_pp[%s]", lumaPartStr[part]);
@@ -1659,6 +1653,12 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
 
     if (part < NUM_SQUARE_BLOCKS)
     {
+        if (opt.cu[part].sse_pp)
+        {
+            HEADER("sse_pp[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].sse_pp, ref.cu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
+        }
+
         if (opt.cu[part].sse_ss)
         {
             HEADER("sse_ss[%s]", lumaPartStr[part]);

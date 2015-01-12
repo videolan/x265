@@ -158,21 +158,12 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.pu[LUMA_12x16].sad = x265_pixel_sad_12x16_ ## cpu
 
 #define ASSGN_SSE(cpu) \
-    p.pu[LUMA_8x8].sse_pp   = x265_pixel_ssd_8x8_ ## cpu; \
-    p.pu[LUMA_8x4].sse_pp   = x265_pixel_ssd_8x4_ ## cpu; \
-    p.pu[LUMA_16x16].sse_pp = x265_pixel_ssd_16x16_ ## cpu; \
-    p.pu[LUMA_16x4].sse_pp  = x265_pixel_ssd_16x4_ ## cpu; \
-    p.pu[LUMA_16x8].sse_pp  = x265_pixel_ssd_16x8_ ## cpu; \
-    p.pu[LUMA_8x16].sse_pp  = x265_pixel_ssd_8x16_ ## cpu; \
-    p.pu[LUMA_16x12].sse_pp = x265_pixel_ssd_16x12_ ## cpu; \
-    p.pu[LUMA_32x32].sse_pp = x265_pixel_ssd_32x32_ ## cpu; \
-    p.pu[LUMA_32x16].sse_pp = x265_pixel_ssd_32x16_ ## cpu; \
-    p.pu[LUMA_16x32].sse_pp = x265_pixel_ssd_16x32_ ## cpu; \
-    p.pu[LUMA_8x32].sse_pp  = x265_pixel_ssd_8x32_ ## cpu; \
-    p.pu[LUMA_32x8].sse_pp  = x265_pixel_ssd_32x8_ ## cpu; \
-    p.pu[LUMA_32x24].sse_pp = x265_pixel_ssd_32x24_ ## cpu; \
-    p.pu[LUMA_32x64].sse_pp = x265_pixel_ssd_32x64_ ## cpu; \
-    p.pu[LUMA_16x64].sse_pp = x265_pixel_ssd_16x64_ ## cpu
+    p.cu[BLOCK_8x8].sse_pp   = x265_pixel_ssd_8x8_ ## cpu; \
+    p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_ ## cpu; \
+    p.cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_32x32_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_16x32_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_8x16_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_32x64_ ## cpu;
 
 #define ASSGN_SSE_SS(cpu) \
     p.cu[BLOCK_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_ ## cpu; \
@@ -1381,12 +1372,15 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
 #else // if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
-        INIT8_NAME(sse_pp, ssd, _mmx);
         INIT8(sad, _mmx2);
         INIT8(sad_x3, _mmx2);
         INIT8(sad_x4, _mmx2);
         p.pu[LUMA_4x4].satd = x265_pixel_satd_4x4_mmx2;
         p.frameInitLowres = x265_frame_init_lowres_core_mmx2;
+
+        p.cu[BLOCK_4x4].sse_pp = x265_pixel_ssd_4x4_mmx;
+        p.cu[BLOCK_8x8].sse_pp = x265_pixel_ssd_8x8_mmx;
+        p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_mmx;
 
         PIXEL_AVG(sse2);
         PIXEL_AVG_W4(mmx2);
@@ -1478,10 +1472,10 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
     {
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
         SA8D_INTER_FROM_BLOCK(ssse3);
-        p.pu[LUMA_4x4].sse_pp = x265_pixel_ssd_4x4_ssse3;
         ASSGN_SSE(ssse3);
         PIXEL_AVG(ssse3);
         PIXEL_AVG_W4(ssse3);
+        p.cu[BLOCK_4x4].sse_pp = x265_pixel_ssd_4x4_ssse3;
 
         INTRA_ANG_SSSE3(ssse3);
 
@@ -1530,13 +1524,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         HEVC_SATD(sse4);
         SA8D_INTER_FROM_BLOCK(sse4);
 
-        p.pu[LUMA_12x16].sse_pp = x265_pixel_ssd_12x16_sse4;
-        p.pu[LUMA_24x32].sse_pp = x265_pixel_ssd_24x32_sse4;
-        p.pu[LUMA_48x64].sse_pp = x265_pixel_ssd_48x64_sse4;
-        p.pu[LUMA_64x16].sse_pp = x265_pixel_ssd_64x16_sse4;
-        p.pu[LUMA_64x32].sse_pp = x265_pixel_ssd_64x32_sse4;
-        p.pu[LUMA_64x48].sse_pp = x265_pixel_ssd_64x48_sse4;
-        p.pu[LUMA_64x64].sse_pp = x265_pixel_ssd_64x64_sse4;
+        p.cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_64x64_sse4;
 
         CHROMA_PIXELSUB_PS(_sse4);
         CHROMA_PIXELSUB_PS_422(_sse4);
@@ -1643,16 +1631,18 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.frameInitLowres = x265_frame_init_lowres_core_xop;
         SA8D_INTER_FROM_BLOCK(xop);
         INIT7(satd, _xop);
-        INIT5_NAME(sse_pp, ssd, _xop);
         HEVC_SATD(xop);
+        p.cu[BLOCK_8x8].sse_pp = x265_pixel_ssd_8x8_xop;
+        p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_xop;
     }
     if (cpuMask & X265_CPU_AVX2)
     {
         INIT2(sad_x4, _avx2);
         INIT4(satd, _avx2);
-        INIT2_NAME(sse_pp, ssd, _avx2);
         p.pu[LUMA_16x12].sad_x4 = x265_pixel_sad_x4_16x12_avx2;
         p.pu[LUMA_16x32].sad_x4 = x265_pixel_sad_x4_16x32_avx2;
+
+        p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
 
         p.cu[BLOCK_8x8].copy_cnt = x265_copy_cnt_8_avx2;
@@ -1666,6 +1656,7 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_8x8].cpy1Dto2D_shl   = x265_cpy1Dto2D_shl_8_avx2;
         p.cu[BLOCK_16x16].cpy1Dto2D_shl = x265_cpy1Dto2D_shl_16_avx2;
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = x265_cpy1Dto2D_shl_32_avx2;
+
         p.cu[BLOCK_4x4].cpy1Dto2D_shr   = x265_cpy1Dto2D_shr_4_avx2;
         p.cu[BLOCK_8x8].cpy1Dto2D_shr   = x265_cpy1Dto2D_shr_8_avx2;
         p.cu[BLOCK_16x16].cpy1Dto2D_shr = x265_cpy1Dto2D_shr_16_avx2;
