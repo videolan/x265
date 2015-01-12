@@ -37,7 +37,6 @@ struct DctConf
 
 const DctConf dctInfo[] =
 {
-    { "dst4x4\t",    4 },
     { "dct4x4\t",    4 },
     { "dct8x8\t",    8 },
     { "dct16x16",   16 },
@@ -46,7 +45,6 @@ const DctConf dctInfo[] =
 
 const DctConf idctInfo[] =
 {
-    { "idst4x4\t",    4 },
     { "idct4x4\t",    4 },
     { "idct8x8\t",    8 },
     { "idct16x16",   16 },
@@ -362,11 +360,11 @@ bool MBDstHarness::check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t op
 
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int i = 0; i < NUM_DCTS; i++)
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if (opt.dct[i])
+        if (opt.cu[i].dct)
         {
-            if (!check_dct_primitive(ref.dct[i], opt.dct[i], dctInfo[i].width))
+            if (!check_dct_primitive(ref.cu[i].dct, opt.cu[i].dct, dctInfo[i].width))
             {
                 printf("\n%s failed\n", dctInfo[i].name);
                 return false;
@@ -374,15 +372,33 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_IDCTS; i++)
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if (opt.idct[i])
+        if (opt.cu[i].idct)
         {
-            if (!check_idct_primitive(ref.idct[i], opt.idct[i], idctInfo[i].width))
+            if (!check_idct_primitive(ref.cu[i].idct, opt.cu[i].idct, idctInfo[i].width))
             {
                 printf("%s failed\n", idctInfo[i].name);
                 return false;
             }
+        }
+    }
+
+    if (opt.dst4x4)
+    {
+        if (!check_dct_primitive(ref.dst4x4, opt.dst4x4, 4))
+        {
+          printf("dst4x4: Failed\n");
+          return false;
+        }
+    }
+
+    if (opt.idst4x4)
+    {
+        if (!check_idct_primitive(ref.idst4x4, opt.idst4x4, 4))
+        {
+          printf("idst4x4: Failed\n");
+          return false;
         }
     }
 
@@ -454,21 +470,21 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
 void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 0; value < NUM_DCTS; value++)
+    for (int value = 0; value < NUM_SQUARE_BLOCKS; value++)
     {
-        if (opt.dct[value])
+        if (opt.cu[value].dct)
         {
             printf("%s\t", dctInfo[value].name);
-            REPORT_SPEEDUP(opt.dct[value], ref.dct[value], mbuf1, mshortbuf2, dctInfo[value].width);
+            REPORT_SPEEDUP(opt.cu[value].dct, ref.cu[value].dct, mbuf1, mshortbuf2, dctInfo[value].width);
         }
     }
 
-    for (int value = 0; value < NUM_IDCTS; value++)
+    for (int value = 0; value < NUM_SQUARE_BLOCKS; value++)
     {
-        if (opt.idct[value])
+        if (opt.cu[value].idct)
         {
             printf("%s\t", idctInfo[value].name);
-            REPORT_SPEEDUP(opt.idct[value], ref.idct[value], mshortbuf3, mshortbuf2, idctInfo[value].width);
+            REPORT_SPEEDUP(opt.cu[value].idct, ref.cu[value].idct, mshortbuf3, mshortbuf2, idctInfo[value].width);
         }
     }
 

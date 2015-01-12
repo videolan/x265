@@ -406,6 +406,10 @@ enum SignificanceMapContextType
     CONTEXT_TYPE_NxN = 2,
     CONTEXT_NUMBER_OF_TYPES = 3
 };
+
+/* located in pixel.cpp */
+void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int marginX, int marginY);
+
 }
 
 /* outside x265 namespace, but prefixed. defined in common.cpp */

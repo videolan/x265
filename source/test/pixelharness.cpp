@@ -1089,6 +1089,28 @@ bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
     return true;
 }
 
+bool PixelHarness::check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
+{
+    int j = 0, index1, index2, optres, refres;
+    intptr_t stride = STRIDE;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        index1 = rand() % TEST_CASES;
+        index2 = rand() % TEST_CASES;
+        optres = (int)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        refres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+
+        if (optres != refres)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
@@ -1121,126 +1143,126 @@ bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
 
 bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    if (opt.satd[part])
+    if (opt.pu[part].satd)
     {
-        if (!check_pixelcmp(ref.satd[part], opt.satd[part]))
+        if (!check_pixelcmp(ref.pu[part].satd, opt.pu[part].satd))
         {
             printf("satd[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sa8d_inter[part])
+    if (opt.pu[part].sa8d_inter)
     {
-        if (!check_pixelcmp(ref.sa8d_inter[part], opt.sa8d_inter[part]))
+        if (!check_pixelcmp(ref.pu[part].sa8d_inter, opt.pu[part].sa8d_inter))
         {
             printf("sa8d_inter[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sad[part])
+    if (opt.pu[part].sad)
     {
-        if (!check_pixelcmp(ref.sad[part], opt.sad[part]))
+        if (!check_pixelcmp(ref.pu[part].sad, opt.pu[part].sad))
         {
             printf("sad[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sse_pp[part])
+    if (opt.pu[part].sse_pp)
     {
-        if (!check_pixelcmp(ref.sse_pp[part], opt.sse_pp[part]))
+        if (!check_pixelcmp(ref.pu[part].sse_pp, opt.pu[part].sse_pp))
         {
             printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sse_sp[part])
+    if (opt.pu[part].sse_sp)
     {
-        if (!check_pixelcmp_sp(ref.sse_sp[part], opt.sse_sp[part]))
+        if (!check_pixelcmp_sp(ref.pu[part].sse_sp, opt.pu[part].sse_sp))
         {
             printf("sse_sp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sse_ss[part])
+    if (opt.pu[part].sse_ss)
     {
-        if (!check_pixelcmp_ss(ref.sse_ss[part], opt.sse_ss[part]))
+        if (!check_pixelcmp_ss(ref.pu[part].sse_ss, opt.pu[part].sse_ss))
         {
             printf("sse_ss[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sad_x3[part])
+    if (opt.pu[part].sad_x3)
     {
-        if (!check_pixelcmp_x3(ref.sad_x3[part], opt.sad_x3[part]))
+        if (!check_pixelcmp_x3(ref.pu[part].sad_x3, opt.pu[part].sad_x3))
         {
             printf("sad_x3[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.sad_x4[part])
+    if (opt.pu[part].sad_x4)
     {
-        if (!check_pixelcmp_x4(ref.sad_x4[part], opt.sad_x4[part]))
+        if (!check_pixelcmp_x4(ref.pu[part].sad_x4, opt.pu[part].sad_x4))
         {
             printf("sad_x4[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.pixelavg_pp[part])
+    if (opt.pu[part].pixelavg_pp)
     {
-        if (!check_pixelavg_pp(ref.pixelavg_pp[part], opt.pixelavg_pp[part]))
+        if (!check_pixelavg_pp(ref.pu[part].pixelavg_pp, opt.pu[part].pixelavg_pp))
         {
             printf("pixelavg_pp[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.luma_copy_pp[part])
+    if (opt.pu[part].luma_copy_pp)
     {
-        if (!check_copy_pp(ref.luma_copy_pp[part], opt.luma_copy_pp[part]))
+        if (!check_copy_pp(ref.pu[part].luma_copy_pp, opt.pu[part].luma_copy_pp))
         {
             printf("luma_copy_pp[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.luma_copy_sp[part])
+    if (opt.pu[part].luma_copy_sp)
     {
-        if (!check_copy_sp(ref.luma_copy_sp[part], opt.luma_copy_sp[part]))
+        if (!check_copy_sp(ref.pu[part].luma_copy_sp, opt.pu[part].luma_copy_sp))
         {
             printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.luma_copy_ps[part])
+    if (opt.pu[part].luma_copy_ps)
     {
-        if (!check_copy_ps(ref.luma_copy_ps[part], opt.luma_copy_ps[part]))
+        if (!check_copy_ps(ref.pu[part].luma_copy_ps, opt.pu[part].luma_copy_ps))
         {
             printf("luma_copy_ps[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.luma_copy_ss[part])
+    if (opt.pu[part].luma_copy_ss)
     {
-        if (!check_copy_ss(ref.luma_copy_ss[part], opt.luma_copy_ss[part]))
+        if (!check_copy_ss(ref.pu[part].luma_copy_ss, opt.pu[part].luma_copy_ss))
         {
             printf("luma_copy_ss[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.luma_addAvg[part])
+    if (opt.pu[part].luma_addAvg)
     {
-        if (!check_addAvg(ref.luma_addAvg[part], opt.luma_addAvg[part]))
+        if (!check_addAvg(ref.pu[part].luma_addAvg, opt.pu[part].luma_addAvg))
         {
             printf("luma_addAvg[%s] failed\n", lumaPartStr[part]);
             return false;
@@ -1249,18 +1271,18 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (part < NUM_SQUARE_BLOCKS)
     {
-        if (opt.luma_sub_ps[part])
+        if (opt.pu[part].luma_sub_ps)
         {
-            if (!check_pixel_sub_ps(ref.luma_sub_ps[part], opt.luma_sub_ps[part]))
+            if (!check_pixel_sub_ps(ref.pu[part].luma_sub_ps, opt.pu[part].luma_sub_ps))
             {
                 printf("luma_sub_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.luma_add_ps[part])
+        if (opt.pu[part].luma_add_ps)
         {
-            if (!check_pixel_add_ps(ref.luma_add_ps[part], opt.luma_add_ps[part]))
+            if (!check_pixel_add_ps(ref.pu[part].luma_add_ps, opt.pu[part].luma_add_ps))
             {
                 printf("luma_add_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
@@ -1270,41 +1292,41 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
     {
-        if (opt.chroma[i].copy_pp[part])
+        if (opt.chroma[i].pu[part].copy_pp)
         {
-            if (!check_copy_pp(ref.chroma[i].copy_pp[part], opt.chroma[i].copy_pp[part]))
+            if (!check_copy_pp(ref.chroma[i].pu[part].copy_pp, opt.chroma[i].pu[part].copy_pp))
             {
                 printf("chroma_copy_pp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
-        if (opt.chroma[i].copy_sp[part])
+        if (opt.chroma[i].pu[part].copy_sp)
         {
-            if (!check_copy_sp(ref.chroma[i].copy_sp[part], opt.chroma[i].copy_sp[part]))
+            if (!check_copy_sp(ref.chroma[i].pu[part].copy_sp, opt.chroma[i].pu[part].copy_sp))
             {
                 printf("chroma_copy_sp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
-        if (opt.chroma[i].copy_ps[part])
+        if (opt.chroma[i].pu[part].copy_ps)
         {
-            if (!check_copy_ps(ref.chroma[i].copy_ps[part], opt.chroma[i].copy_ps[part]))
+            if (!check_copy_ps(ref.chroma[i].pu[part].copy_ps, opt.chroma[i].pu[part].copy_ps))
             {
                 printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
-        if (opt.chroma[i].copy_ss[part])
+        if (opt.chroma[i].pu[part].copy_ss)
         {
-            if (!check_copy_ss(ref.chroma[i].copy_ss[part], opt.chroma[i].copy_ss[part]))
+            if (!check_copy_ss(ref.chroma[i].pu[part].copy_ss, opt.chroma[i].pu[part].copy_ss))
             {
                 printf("chroma_copy_ss[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
-        if (opt.chroma[i].addAvg[part])
+        if (opt.chroma[i].pu[part].addAvg)
         {
-            if (!check_addAvg(ref.chroma[i].addAvg[part], opt.chroma[i].addAvg[part]))
+            if (!check_addAvg(ref.chroma[i].pu[part].addAvg, opt.chroma[i].pu[part].addAvg))
             {
                 printf("chroma_addAvg[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
@@ -1312,17 +1334,17 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
         if (part < NUM_SQUARE_BLOCKS)
         {
-            if (opt.chroma[i].sub_ps[part])
+            if (opt.chroma[i].cu[part].sub_ps)
             {
-                if (!check_pixel_sub_ps(ref.chroma[i].sub_ps[part], opt.chroma[i].sub_ps[part]))
+                if (!check_pixel_sub_ps(ref.chroma[i].cu[part].sub_ps, opt.chroma[i].cu[part].sub_ps))
                 {
                     printf("chroma_sub_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
                 }
             }
-            if (opt.chroma[i].add_ps[part])
+            if (opt.chroma[i].cu[part].add_ps)
             {
-                if (!check_pixel_add_ps(ref.chroma[i].add_ps[part], opt.chroma[i].add_ps[part]))
+                if (!check_pixel_add_ps(ref.chroma[i].cu[part].add_ps, opt.chroma[i].cu[part].add_ps))
                 {
                     printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
@@ -1365,108 +1387,117 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if (opt.calcresidual[i])
+        if (opt.cu[i].calcresidual)
         {
-            if (!check_calresidual(ref.calcresidual[i], opt.calcresidual[i]))
+            if (!check_calresidual(ref.cu[i].calcresidual, opt.cu[i].calcresidual))
             {
                 printf("calcresidual width: %d failed!\n", 4 << i);
                 return false;
             }
         }
-        if (opt.sa8d[i])
+        if (opt.cu[i].sa8d)
         {
-            if (!check_pixelcmp(ref.sa8d[i], opt.sa8d[i]))
+            if (!check_pixelcmp(ref.cu[i].sa8d, opt.cu[i].sa8d))
             {
                 printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if ((i <= BLOCK_32x32) && opt.ssd_s[i])
+        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s)
         {
-            if (!check_ssd_s(ref.ssd_s[i], opt.ssd_s[i]))
+            if (!check_ssd_s(ref.cu[i].ssd_s, opt.cu[i].ssd_s))
             {
                 printf("ssd_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if (opt.blockfill_s[i])
+        if (opt.cu[i].blockfill_s)
         {
-            if (!check_blockfill_s(ref.blockfill_s[i], opt.blockfill_s[i]))
+            if (!check_blockfill_s(ref.cu[i].blockfill_s, opt.cu[i].blockfill_s))
             {
                 printf("blockfill_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
-        if (opt.transpose[i])
+        if (opt.cu[i].transpose)
         {
-            if (!check_transpose(ref.transpose[i], opt.transpose[i]))
+            if (!check_transpose(ref.cu[i].transpose, opt.cu[i].transpose))
             {
                 printf("transpose[%dx%d] failed\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if (opt.var[i])
+        if (opt.cu[i].var)
         {
-            if (!check_pixel_var(ref.var[i], opt.var[i]))
+            if (!check_pixel_var(ref.cu[i].var, opt.cu[i].var))
             {
                 printf("var[%dx%d] failed\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.copy_cnt[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].copy_cnt)
         {
-            if (!check_copy_cnt_t(ref.copy_cnt[i], opt.copy_cnt[i]))
+            if (!check_copy_cnt_t(ref.cu[i].copy_cnt, opt.cu[i].copy_cnt))
             {
                 printf("copy_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy2Dto1D_shl[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shl)
         {
-            if (!check_cpy2Dto1D_shl_t(ref.cpy2Dto1D_shl[i], opt.cpy2Dto1D_shl[i]))
+            if (!check_cpy2Dto1D_shl_t(ref.cu[i].cpy2Dto1D_shl, opt.cu[i].cpy2Dto1D_shl))
             {
                 printf("cpy2Dto1D_shl failed!\n");
                 return false;
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy2Dto1D_shr[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shr)
         {
-            if (!check_cpy2Dto1D_shr_t(ref.cpy2Dto1D_shr[i], opt.cpy2Dto1D_shr[i]))
+            if (!check_cpy2Dto1D_shr_t(ref.cu[i].cpy2Dto1D_shr, opt.cu[i].cpy2Dto1D_shr))
             {
                 printf("cpy2Dto1D_shr failed!\n");
                 return false;
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy1Dto2D_shl[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shl)
         {
-            if (!check_cpy1Dto2D_shl_t(ref.cpy1Dto2D_shl[i], opt.cpy1Dto2D_shl[i]))
+            if (!check_cpy1Dto2D_shl_t(ref.cu[i].cpy1Dto2D_shl, opt.cu[i].cpy1Dto2D_shl))
             {
                 printf("cpy1Dto2D_shl[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy1Dto2D_shr[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shr)
         {
-            if (!check_cpy1Dto2D_shr_t(ref.cpy1Dto2D_shr[i], opt.cpy1Dto2D_shr[i]))
+            if (!check_cpy1Dto2D_shr_t(ref.cu[i].cpy1Dto2D_shr, opt.cu[i].cpy1Dto2D_shr))
             {
                 printf("cpy1Dto2D_shr[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if (opt.psy_cost_pp[i])
+        if (opt.cu[i].psy_cost_pp)
         {
-            if (!check_psyCost_pp(ref.psy_cost_pp[i], opt.psy_cost_pp[i]))
+            if (!check_psyCost_pp(ref.cu[i].psy_cost_pp, opt.cu[i].psy_cost_pp))
             {
                 printf("\npsy_cost_pp[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
+        if (opt.cu[i].psy_cost_ss)
+        {
+            if (!check_psyCost_ss(ref.cu[i].psy_cost_ss, opt.cu[i].psy_cost_ss))
+            {
+                printf("\npsy_cost_ss[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1617,139 +1648,139 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     char header[128];
 #define HEADER(str, ...) sprintf(header, str, __VA_ARGS__); printf("%22s", header);
 
-    if (opt.satd[part])
+    if (opt.pu[part].satd)
     {
         HEADER("satd[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.satd[part], ref.satd[part], pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].satd, ref.pu[part].satd, pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.pixelavg_pp[part])
+    if (opt.pu[part].pixelavg_pp)
     {
         HEADER("avg_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pixelavg_pp[part], ref.pixelavg_pp[part], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
+        REPORT_SPEEDUP(opt.pu[part].pixelavg_pp, ref.pu[part].pixelavg_pp, pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
     }
 
-    if (opt.sa8d_inter[part])
+    if (opt.pu[part].sa8d_inter)
     {
         HEADER("sa8d[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sa8d_inter[part], ref.sa8d_inter[part], pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].sa8d_inter, ref.pu[part].sa8d_inter, pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.sad[part])
+    if (opt.pu[part].sad)
     {
         HEADER("sad[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sad[part], ref.sad[part], pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].sad, ref.pu[part].sad, pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.sad_x3[part])
+    if (opt.pu[part].sad_x3)
     {
         HEADER("sad_x3[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sad_x3[part], ref.sad_x3[part], pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
+        REPORT_SPEEDUP(opt.pu[part].sad_x3, ref.pu[part].sad_x3, pbuf1, fref, fref + 1, fref - 1, FENC_STRIDE + 5, &cres[0]);
     }
 
-    if (opt.sad_x4[part])
+    if (opt.pu[part].sad_x4)
     {
         HEADER("sad_x4[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sad_x4[part], ref.sad_x4[part], pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
+        REPORT_SPEEDUP(opt.pu[part].sad_x4, ref.pu[part].sad_x4, pbuf1, fref, fref + 1, fref - 1, fref - INCR, FENC_STRIDE + 5, &cres[0]);
     }
 
-    if (opt.sse_pp[part])
+    if (opt.pu[part].sse_pp)
     {
         HEADER("sse_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sse_pp[part], ref.sse_pp[part], pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].sse_pp, ref.pu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.sse_sp[part])
+    if (opt.pu[part].sse_sp)
     {
         HEADER("sse_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sse_sp[part], ref.sse_sp[part], (int16_t*)pbuf1, STRIDE, fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].sse_sp, ref.pu[part].sse_sp, (int16_t*)pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.sse_ss[part])
+    if (opt.pu[part].sse_ss)
     {
         HEADER("sse_ss[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.sse_ss[part], ref.sse_ss[part], (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].sse_ss, ref.pu[part].sse_ss, (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
     }
 
-    if (opt.luma_copy_pp[part])
+    if (opt.pu[part].luma_copy_pp)
     {
         HEADER("luma_copy_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_copy_pp[part], ref.luma_copy_pp[part], pbuf1, 64, pbuf2, 128);
+        REPORT_SPEEDUP(opt.pu[part].luma_copy_pp, ref.pu[part].luma_copy_pp, pbuf1, 64, pbuf2, 128);
     }
 
-    if (opt.luma_copy_sp[part])
+    if (opt.pu[part].luma_copy_sp)
     {
         HEADER("luma_copy_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_copy_sp[part], ref.luma_copy_sp[part], pbuf1, 64, sbuf3, 128);
+        REPORT_SPEEDUP(opt.pu[part].luma_copy_sp, ref.pu[part].luma_copy_sp, pbuf1, 64, sbuf3, 128);
     }
 
-    if (opt.luma_copy_ps[part])
+    if (opt.pu[part].luma_copy_ps)
     {
         HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_copy_ps[part], ref.luma_copy_ps[part], sbuf1, 64, pbuf1, 128);
+        REPORT_SPEEDUP(opt.pu[part].luma_copy_ps, ref.pu[part].luma_copy_ps, sbuf1, 64, pbuf1, 128);
     }
-    if (opt.luma_copy_ss[part])
+    if (opt.pu[part].luma_copy_ss)
     {
         HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_copy_ss[part], ref.luma_copy_ss[part], sbuf1, 64, sbuf2, 128);
+        REPORT_SPEEDUP(opt.pu[part].luma_copy_ss, ref.pu[part].luma_copy_ss, sbuf1, 64, sbuf2, 128);
     }
-    if (opt.luma_addAvg[part])
+    if (opt.pu[part].luma_addAvg)
     {
         HEADER("luma_addAvg[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.luma_addAvg[part], ref.luma_addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].luma_addAvg, ref.pu[part].luma_addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
     if (part < NUM_SQUARE_BLOCKS)
     {
-        if (opt.luma_sub_ps[part])
+        if (opt.pu[part].luma_sub_ps)
         {
             HEADER("luma_sub_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.luma_sub_ps[part], ref.luma_sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.pu[part].luma_sub_ps, ref.pu[part].luma_sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
         }
-        if (opt.luma_add_ps[part])
+        if (opt.pu[part].luma_add_ps)
         {
             HEADER("luma_add_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.luma_add_ps[part], ref.luma_add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.pu[part].luma_add_ps, ref.pu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
     {
-        if (opt.chroma[i].copy_pp[part])
+        if (opt.chroma[i].pu[part].copy_pp)
         {
             HEADER("[%s] copy_pp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].copy_pp[part], ref.chroma[i].copy_pp[part], pbuf1, 64, pbuf2, 128);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_pp, ref.chroma[i].pu[part].copy_pp, pbuf1, 64, pbuf2, 128);
         }
-        if (opt.chroma[i].copy_sp[part])
+        if (opt.chroma[i].pu[part].copy_sp)
         {
             HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].copy_sp[part], ref.chroma[i].copy_sp[part], pbuf1, 64, sbuf3, 128);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_sp, ref.chroma[i].pu[part].copy_sp, pbuf1, 64, sbuf3, 128);
         }
-        if (opt.chroma[i].copy_ps[part])
+        if (opt.chroma[i].pu[part].copy_ps)
         {
             HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].copy_ps[part], ref.chroma[i].copy_ps[part], sbuf1, 64, pbuf1, 128);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_ps, ref.chroma[i].pu[part].copy_ps, sbuf1, 64, pbuf1, 128);
         }
-        if (opt.chroma[i].copy_ss[part])
+        if (opt.chroma[i].pu[part].copy_ss)
         {
             HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].copy_ss[part], ref.chroma[i].copy_ss[part], sbuf1, 64, sbuf2, 128);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_ss, ref.chroma[i].pu[part].copy_ss, sbuf1, 64, sbuf2, 128);
         }
-        if (opt.chroma[i].addAvg[part])
+        if (opt.chroma[i].pu[part].addAvg)
         {
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].addAvg[part], ref.chroma[i].addAvg[part], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg, ref.chroma[i].pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
         if (part < NUM_SQUARE_BLOCKS)
         {
-            if (opt.chroma[i].sub_ps[part])
+            if (opt.chroma[i].cu[part].sub_ps)
             {
                 HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-                REPORT_SPEEDUP(opt.chroma[i].sub_ps[part], ref.chroma[i].sub_ps[part], (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].sub_ps, ref.chroma[i].cu[part].sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
             }
-            if (opt.chroma[i].add_ps[part])
+            if (opt.chroma[i].cu[part].add_ps)
             {
                 HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-                REPORT_SPEEDUP(opt.chroma[i].add_ps[part], ref.chroma[i].add_ps[part], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps, ref.chroma[i].cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
             }
         }
     }
@@ -1793,74 +1824,80 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
     {
-        if ((i <= BLOCK_32x32) && opt.ssd_s[i])
+        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s)
         {
             HEADER("ssd_s[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.ssd_s[i], ref.ssd_s[i], sbuf1, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].ssd_s, ref.cu[i].ssd_s, sbuf1, STRIDE);
         }
-        if (opt.sa8d[i])
+        if (opt.cu[i].sa8d)
         {
             HEADER("sa8d[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.sa8d[i], ref.sa8d[i], pbuf1, STRIDE, pbuf2, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].sa8d, ref.cu[i].sa8d, pbuf1, STRIDE, pbuf2, STRIDE);
         }
-        if (opt.calcresidual[i])
+        if (opt.cu[i].calcresidual)
         {
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.calcresidual[i], ref.calcresidual[i], pbuf1, pbuf2, sbuf1, 64);
+            REPORT_SPEEDUP(opt.cu[i].calcresidual, ref.cu[i].calcresidual, pbuf1, pbuf2, sbuf1, 64);
         }
 
-        if (opt.blockfill_s[i])
+        if (opt.cu[i].blockfill_s)
         {
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.blockfill_s[i], ref.blockfill_s[i], sbuf1, 64, SHORT_MAX);
+            REPORT_SPEEDUP(opt.cu[i].blockfill_s, ref.cu[i].blockfill_s, sbuf1, 64, SHORT_MAX);
         }
 
-        if (opt.transpose[i])
+        if (opt.cu[i].transpose)
         {
             HEADER("transpose[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.transpose[i], ref.transpose[i], pbuf1, pbuf2, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].transpose, ref.cu[i].transpose, pbuf1, pbuf2, STRIDE);
         }
 
-        if (opt.var[i])
+        if (opt.cu[i].var)
         {
             HEADER("var[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.var[i], ref.var[i], pbuf1, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].var, ref.cu[i].var, pbuf1, STRIDE);
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy2Dto1D_shl[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shl)
         {
             HEADER("cpy2Dto1D_shl[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cpy2Dto1D_shl[i], ref.cpy2Dto1D_shl[i], sbuf1, sbuf2, STRIDE, MAX_TR_DYNAMIC_RANGE - X265_DEPTH - (i + 2));
+            REPORT_SPEEDUP(opt.cu[i].cpy2Dto1D_shl, ref.cu[i].cpy2Dto1D_shl, sbuf1, sbuf2, STRIDE, MAX_TR_DYNAMIC_RANGE - X265_DEPTH - (i + 2));
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy2Dto1D_shr[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shr)
         {
             HEADER("cpy2Dto1D_shr[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cpy2Dto1D_shr[i], ref.cpy2Dto1D_shr[i], sbuf1, sbuf2, STRIDE, 3);
+            REPORT_SPEEDUP(opt.cu[i].cpy2Dto1D_shr, ref.cu[i].cpy2Dto1D_shr, sbuf1, sbuf2, STRIDE, 3);
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy1Dto2D_shl[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shl)
         {
             HEADER("cpy1Dto2D_shl[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cpy1Dto2D_shl[i], ref.cpy1Dto2D_shl[i], sbuf1, sbuf2, STRIDE, 64);
+            REPORT_SPEEDUP(opt.cu[i].cpy1Dto2D_shl, ref.cu[i].cpy1Dto2D_shl, sbuf1, sbuf2, STRIDE, 64);
         }
 
-        if ((i < BLOCK_64x64) && opt.cpy1Dto2D_shr[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shr)
         {
             HEADER("cpy1Dto2D_shr[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cpy1Dto2D_shr[i], ref.cpy1Dto2D_shr[i], sbuf1, sbuf2, STRIDE, 64);
+            REPORT_SPEEDUP(opt.cu[i].cpy1Dto2D_shr, ref.cu[i].cpy1Dto2D_shr, sbuf1, sbuf2, STRIDE, 64);
         }
 
-        if ((i < BLOCK_64x64) && opt.copy_cnt[i])
+        if ((i < BLOCK_64x64) && opt.cu[i].copy_cnt)
         {
             HEADER("copy_cnt[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.copy_cnt[i], ref.copy_cnt[i], sbuf1, sbuf2, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].copy_cnt, ref.cu[i].copy_cnt, sbuf1, sbuf2, STRIDE);
         }
 
-        if (opt.psy_cost_pp[i])
+        if (opt.cu[i].psy_cost_pp)
         {
             HEADER("psy_cost_pp[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.psy_cost_pp[i], ref.psy_cost_pp[i], pbuf1, STRIDE, pbuf2, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].psy_cost_pp, ref.cu[i].psy_cost_pp, pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        if (opt.cu[i].psy_cost_ss)
+        {
+            HEADER("psy_cost_ss[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].psy_cost_ss, ref.cu[i].psy_cost_ss, sbuf1, STRIDE, sbuf2, STRIDE);
         }
     }
 

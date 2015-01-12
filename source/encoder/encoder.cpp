@@ -85,7 +85,7 @@ Encoder::Encoder()
 
 void Encoder::create()
 {
-    if (!primitives.sad[0])
+    if (!primitives.pu[0].sad)
     {
         // this should be an impossible condition when using our public API, and indicates a serious bug.
         x265_log(m_param, X265_LOG_ERROR, "Primitives must be initialized before encoder is created\n");

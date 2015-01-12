@@ -80,7 +80,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
             MV mv = mvs[cu];
             mv = mv.clipped(mvmin, mvmax);
             pixel *tmp = ref.lowresMC(pixoff, mv, buf8x8, bstride);
-            primitives.luma_copy_pp[LUMA_8x8](mcout + pixoff, stride, tmp, bstride);
+            primitives.pu[LUMA_8x8].luma_copy_pp(mcout + pixoff, stride, tmp, bstride);
         }
     }
 }
@@ -133,26 +133,26 @@ void mcChroma(pixel *      mcout,
                 int yFrac = mv.y & 0x7;
                 if ((yFrac | xFrac) == 0)
                 {
-                    primitives.chroma[csp].copy_pp[LUMA_16x16](mcout + pixoff, stride, temp, stride);
+                    primitives.chroma[csp].pu[LUMA_16x16].copy_pp(mcout + pixoff, stride, temp, stride);
                 }
                 else if (yFrac == 0)
                 {
-                    primitives.chroma[csp].filter_hpp[LUMA_16x16](temp, stride, mcout + pixoff, stride, xFrac);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_hpp(temp, stride, mcout + pixoff, stride, xFrac);
                 }
                 else if (xFrac == 0)
                 {
-                    primitives.chroma[csp].filter_vpp[LUMA_16x16](temp, stride, mcout + pixoff, stride, yFrac);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_vpp(temp, stride, mcout + pixoff, stride, yFrac);
                 }
                 else
                 {
                     ALIGN_VAR_16(int16_t, imm[16 * (16 + NTAPS_CHROMA)]);
-                    primitives.chroma[csp].filter_hps[LUMA_16x16](temp, stride, imm, bw, xFrac, 1);
-                    primitives.chroma[csp].filter_vsp[LUMA_16x16](imm + ((NTAPS_CHROMA >> 1) - 1) * bw, bw, mcout + pixoff, stride, yFrac);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_hps(temp, stride, imm, bw, xFrac, 1);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_vsp(imm + ((NTAPS_CHROMA >> 1) - 1) * bw, bw, mcout + pixoff, stride, yFrac);
                 }
             }
             else
             {
-                primitives.chroma[csp].copy_pp[LUMA_16x16](mcout + pixoff, stride, src + pixoff, stride);
+                primitives.chroma[csp].pu[LUMA_16x16].copy_pp(mcout + pixoff, stride, src + pixoff, stride);
             }
         }
     }
@@ -197,7 +197,7 @@ uint32_t weightCost(pixel *         fenc,
         {
             for (int x = 0; x < width; x += 8, cu++)
             {
-                int cmp = primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
+                int cmp = primitives.pu[LUMA_8x8].satd(r + x, stride, f + x, stride);
                 cost += X265_MIN(cmp, cache.intraCost[cu]);
             }
         }
@@ -205,11 +205,11 @@ uint32_t weightCost(pixel *         fenc,
     else if (cache.csp == X265_CSP_I444)
         for (int y = 0; y < height; y += 16, r += 16 * stride, f += 16 * stride)
             for (int x = 0; x < width; x += 16)
-                cost += primitives.satd[LUMA_16x16](r + x, stride, f + x, stride);
+                cost += primitives.pu[LUMA_16x16].satd(r + x, stride, f + x, stride);
     else
         for (int y = 0; y < height; y += 8, r += 8 * stride, f += 8 * stride)
             for (int x = 0; x < width; x += 8)
-                cost += primitives.satd[LUMA_8x8](r + x, stride, f + x, stride);
+                cost += primitives.pu[LUMA_8x8].satd(r + x, stride, f + x, stride);
 
     return cost;
 }

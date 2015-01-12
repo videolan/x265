@@ -765,22 +765,22 @@ void Setup_C_DCTPrimitives(EncoderPrimitives& p)
     p.dequant_normal = dequant_normal_c;
     p.quant = quant_c;
     p.nquant = nquant_c;
-    p.dct[DST_4x4] = dst4_c;
-    p.dct[DCT_4x4] = dct4_c;
-    p.dct[DCT_8x8] = dct8_c;
-    p.dct[DCT_16x16] = dct16_c;
-    p.dct[DCT_32x32] = dct32_c;
-    p.idct[IDST_4x4] = idst4_c;
-    p.idct[IDCT_4x4] = idct4_c;
-    p.idct[IDCT_8x8] = idct8_c;
-    p.idct[IDCT_16x16] = idct16_c;
-    p.idct[IDCT_32x32] = idct32_c;
+    p.dst4x4 = dst4_c;
+    p.cu[BLOCK_4x4].dct   = dct4_c;
+    p.cu[BLOCK_8x8].dct   = dct8_c;
+    p.cu[BLOCK_16x16].dct = dct16_c;
+    p.cu[BLOCK_32x32].dct = dct32_c;
+    p.idst4x4 = idst4_c;
+    p.cu[BLOCK_4x4].idct   = idct4_c;
+    p.cu[BLOCK_8x8].idct   = idct8_c;
+    p.cu[BLOCK_16x16].idct = idct16_c;
+    p.cu[BLOCK_32x32].idct = idct32_c;
     p.count_nonzero = count_nonzero_c;
     p.denoiseDct = denoiseDct_c;
 
-    p.copy_cnt[BLOCK_4x4] = copy_count<4>;
-    p.copy_cnt[BLOCK_8x8] = copy_count<8>;
-    p.copy_cnt[BLOCK_16x16] = copy_count<16>;
-    p.copy_cnt[BLOCK_32x32] = copy_count<32>;
+    p.cu[BLOCK_4x4].copy_cnt   = copy_count<4>;
+    p.cu[BLOCK_8x8].copy_cnt   = copy_count<8>;
+    p.cu[BLOCK_16x16].copy_cnt = copy_count<16>;
+    p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
 }
 }
