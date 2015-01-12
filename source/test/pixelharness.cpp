@@ -1224,24 +1224,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].luma_copy_sp)
-    {
-        if (!check_copy_sp(ref.pu[part].luma_copy_sp, opt.pu[part].luma_copy_sp))
-        {
-            printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
-    if (opt.pu[part].luma_copy_ps)
-    {
-        if (!check_copy_ps(ref.pu[part].luma_copy_ps, opt.pu[part].luma_copy_ps))
-        {
-            printf("luma_copy_ps[%s] failed\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].luma_copy_ss)
     {
         if (!check_copy_ss(ref.pu[part].luma_copy_ss, opt.pu[part].luma_copy_ss))
@@ -1279,6 +1261,24 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 return false;
             }
         }
+
+        if (opt.cu[part].luma_copy_sp)
+        {
+            if (!check_copy_sp(ref.cu[part].luma_copy_sp, opt.cu[part].luma_copy_sp))
+            {
+                printf("luma_copy_sp[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
+        if (opt.cu[part].luma_copy_ps)
+        {
+            if (!check_copy_ps(ref.cu[part].luma_copy_ps, opt.cu[part].luma_copy_ps))
+            {
+                printf("luma_copy_ps[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
+        }
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
@@ -1288,30 +1288,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
             if (!check_copy_pp(ref.chroma[i].pu[part].copy_pp, opt.chroma[i].pu[part].copy_pp))
             {
                 printf("chroma_copy_pp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
-                return false;
-            }
-        }
-        if (opt.chroma[i].pu[part].copy_sp)
-        {
-            if (!check_copy_sp(ref.chroma[i].pu[part].copy_sp, opt.chroma[i].pu[part].copy_sp))
-            {
-                printf("chroma_copy_sp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
-                return false;
-            }
-        }
-        if (opt.chroma[i].pu[part].copy_ps)
-        {
-            if (!check_copy_ps(ref.chroma[i].pu[part].copy_ps, opt.chroma[i].pu[part].copy_ps))
-            {
-                printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
-                return false;
-            }
-        }
-        if (opt.chroma[i].pu[part].copy_ss)
-        {
-            if (!check_copy_ss(ref.chroma[i].pu[part].copy_ss, opt.chroma[i].pu[part].copy_ss))
-            {
-                printf("chroma_copy_ss[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
@@ -1338,6 +1314,30 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 if (!check_pixel_add_ps(ref.chroma[i].cu[part].add_ps, opt.chroma[i].cu[part].add_ps))
                 {
                     printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
+            if (opt.chroma[i].cu[part].copy_sp)
+            {
+                if (!check_copy_sp(ref.chroma[i].cu[part].copy_sp, opt.chroma[i].cu[part].copy_sp))
+                {
+                    printf("chroma_copy_sp[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
+            if (opt.chroma[i].cu[part].copy_ps)
+            {
+                if (!check_copy_ps(ref.chroma[i].cu[part].copy_ps, opt.chroma[i].cu[part].copy_ps))
+                {
+                    printf("chroma_copy_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
+            if (opt.chroma[i].cu[part].copy_ss)
+            {
+                if (!check_copy_ss(ref.chroma[i].cu[part].copy_ss, opt.chroma[i].cu[part].copy_ss))
+                {
+                    printf("chroma_copy_ss[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
                 }
             }
@@ -1693,22 +1693,12 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].luma_copy_pp, ref.pu[part].luma_copy_pp, pbuf1, 64, pbuf2, 128);
     }
 
-    if (opt.pu[part].luma_copy_sp)
-    {
-        HEADER("luma_copy_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].luma_copy_sp, ref.pu[part].luma_copy_sp, pbuf1, 64, sbuf3, 128);
-    }
-
-    if (opt.pu[part].luma_copy_ps)
-    {
-        HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].luma_copy_ps, ref.pu[part].luma_copy_ps, sbuf1, 64, pbuf1, 128);
-    }
     if (opt.pu[part].luma_copy_ss)
     {
         HEADER("luma_copy_ss[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pu[part].luma_copy_ss, ref.pu[part].luma_copy_ss, sbuf1, 64, sbuf2, 128);
     }
+
     if (opt.pu[part].luma_addAvg)
     {
         HEADER("luma_addAvg[%s]", lumaPartStr[part]);
@@ -1726,6 +1716,16 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("luma_add_ps[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].luma_add_ps, ref.cu[part].luma_add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
+        if (opt.cu[part].luma_copy_sp)
+        {
+            HEADER("luma_copy_sp[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].luma_copy_sp, ref.cu[part].luma_copy_sp, pbuf1, 64, sbuf3, 128);
+        }
+        if (opt.cu[part].luma_copy_ps)
+        {
+            HEADER("luma_copy_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].luma_copy_ps, ref.cu[part].luma_copy_ps, sbuf1, 64, pbuf1, 128);
+        }
     }
 
     for (int i = 0; i < X265_CSP_COUNT; i++)
@@ -1735,21 +1735,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s] copy_pp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_pp, ref.chroma[i].pu[part].copy_pp, pbuf1, 64, pbuf2, 128);
         }
-        if (opt.chroma[i].pu[part].copy_sp)
-        {
-            HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_sp, ref.chroma[i].pu[part].copy_sp, pbuf1, 64, sbuf3, 128);
-        }
-        if (opt.chroma[i].pu[part].copy_ps)
-        {
-            HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_ps, ref.chroma[i].pu[part].copy_ps, sbuf1, 64, pbuf1, 128);
-        }
-        if (opt.chroma[i].pu[part].copy_ss)
-        {
-            HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_ss, ref.chroma[i].pu[part].copy_ss, sbuf1, 64, sbuf2, 128);
-        }
         if (opt.chroma[i].pu[part].addAvg)
         {
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
@@ -1757,6 +1742,21 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         }
         if (part < NUM_SQUARE_BLOCKS)
         {
+            if (opt.chroma[i].cu[part].copy_ss)
+            {
+                HEADER("[%s] copy_ss[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].copy_ss, ref.chroma[i].cu[part].copy_ss, sbuf1, 64, sbuf2, 128);
+            }
+            if (opt.chroma[i].cu[part].copy_ps)
+            {
+                HEADER("[%s] copy_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].copy_ps, ref.chroma[i].cu[part].copy_ps, sbuf1, 64, pbuf1, 128);
+            }
+            if (opt.chroma[i].cu[part].copy_sp)
+            {
+                HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].copy_sp, ref.chroma[i].cu[part].copy_sp, pbuf1, 64, sbuf3, 128);
+            }
             if (opt.chroma[i].cu[part].sub_ps)
             {
                 HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);

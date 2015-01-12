@@ -92,7 +92,7 @@ void ShortYuv::copyPartToPartLuma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log
     const int16_t* src = getLumaAddr(absPartIdx);
     pixel* dst = dstYuv.getLumaAddr(absPartIdx);
 
-    primitives.pu[log2Size - 2].luma_copy_sp(dst, dstYuv.m_size, src, m_size);
+    primitives.cu[log2Size - 2].luma_copy_sp(dst, dstYuv.m_size, src, m_size);
 }
 
 void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const
@@ -103,8 +103,8 @@ void ShortYuv::copyPartToPartChroma(ShortYuv& dstYuv, uint32_t absPartIdx, uint3
     int16_t* dstU = dstYuv.getCbAddr(absPartIdx);
     int16_t* dstV = dstYuv.getCrAddr(absPartIdx);
 
-    primitives.chroma[m_csp].pu[part].copy_ss(dstU, dstYuv.m_csize, srcU, m_csize);
-    primitives.chroma[m_csp].pu[part].copy_ss(dstV, dstYuv.m_csize, srcV, m_csize);
+    primitives.chroma[m_csp].cu[part].copy_ss(dstU, dstYuv.m_csize, srcU, m_csize);
+    primitives.chroma[m_csp].cu[part].copy_ss(dstV, dstYuv.m_csize, srcV, m_csize);
 }
 
 void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const
@@ -115,6 +115,6 @@ void ShortYuv::copyPartToPartChroma(Yuv& dstYuv, uint32_t absPartIdx, uint32_t l
     pixel* dstU = dstYuv.getCbAddr(absPartIdx);
     pixel* dstV = dstYuv.getCrAddr(absPartIdx);
 
-    primitives.chroma[m_csp].pu[part].copy_sp(dstU, dstYuv.m_csize, srcU, m_csize);
-    primitives.chroma[m_csp].pu[part].copy_sp(dstV, dstYuv.m_csize, srcV, m_csize);
+    primitives.chroma[m_csp].cu[part].copy_sp(dstU, dstYuv.m_csize, srcU, m_csize);
+    primitives.chroma[m_csp].cu[part].copy_sp(dstV, dstYuv.m_csize, srcV, m_csize);
 }
