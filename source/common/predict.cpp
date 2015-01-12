@@ -83,18 +83,17 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
 {
     int tuSize = 1 << log2TrSize;
 
-    pixel* refLft;
-    pixel* refAbv;
+    pixel *refLft, *refAbv;
 
-    if (g_intraFilterFlags[dirMode] & tuSize)
-    {
-        refLft = m_refLeftFlt + tuSize - 1;
-        refAbv = m_refAboveFlt + tuSize - 1;
-    }
-    else
+    if (!(g_intraFilterFlags[dirMode] & tuSize))
     {
         refLft = m_refLeft + tuSize - 1;
         refAbv = m_refAbove + tuSize - 1;
+    }
+    else
+    {
+        refLft = m_refLeftFlt + tuSize - 1;
+        refAbv = m_refAboveFlt + tuSize - 1;
     }
 
     bool bFilter = log2TrSize <= 4;
@@ -116,8 +115,10 @@ void Predict::predIntraChromaAng(pixel* src, uint32_t dirMode, pixel* dst, intpt
     pixel* left = buf0 + bufOffset;
 
     int limit = (dirMode <= 25 && dirMode >= 11) ? (tuSize + 1 + 1) : (tuSize2 + 1);
-    for (int k = 0; k < limit; k++)
-        left[k] = src[k * ADI_BUF_STRIDE];
+
+    left[0] = src[0];
+    for (int k = 1; k < limit; k++)
+        left[k] = src[k + tuSize2];
 
     if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
     {
@@ -669,10 +670,11 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     refAbove += bufOffset;
     refLeft += bufOffset;
 
-    //  ADI_BUF_STRIDE * (2 * tuSize + 1);
     memcpy(refAbove, adiBuf, (tuSize2 + 1) * sizeof(pixel));
-    for (int k = 0; k < tuSize2 + 1; k++)
-        refLeft[k] = adiBuf[k * ADI_BUF_STRIDE];
+
+    refLeft[0] = adiBuf[0];
+    for (int k = 1; k < tuSize2 + 1 ; k++)
+        refLeft[k] = adiBuf[k + tuSize2];
 
     if (dirMode == ALL_IDX ? (8 | 16 | 32) & tuSize : g_intraFilterFlags[dirMode] & tuSize)
     {
@@ -685,46 +687,45 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
         if (bStrongSmoothing)
         {
             const int trSize = 32;
-            const int trSize2 = 32 * 2;
+            const int trSize2 = trSize << 1;
             const int threshold = 1 << (X265_DEPTH - 5);
             int refBL = refLeft[trSize2];
             int refTL = refAbove[0];
             int refTR = refAbove[trSize2];
-            bStrongSmoothing = (abs(refBL + refTL - 2 * refLeft[trSize]) < threshold &&
-                                abs(refTL + refTR - 2 * refAbove[trSize]) < threshold);
+            bStrongSmoothing = (abs(refBL + refTL - (refLeft[trSize] << 1)) < threshold &&
+                abs(refTL + refTR - (refAbove[trSize] << 1)) < threshold);
 
             if (bStrongSmoothing)
             {
                 // bilinear interpolation
                 const int shift = 5 + 1; // log2TrSize + 1;
                 int init = (refTL << shift) + tuSize;
-                int delta;
+                int deltaL, deltaR;
 
                 refLeftFlt[0] = refAboveFlt[0] = refAbove[0];
 
                 //TODO: Performance Primitive???
-                delta = refBL - refTL;
+                deltaL = refBL - refTL; deltaR = refTR - refTL;
                 for (int i = 1; i < trSize2; i++)
-                    refLeftFlt[i] = (pixel)((init + delta * i) >> shift);
+                {
+                    refLeftFlt[i] = (pixel)((init + deltaL * i) >> shift);
+                    refAboveFlt[i] = (pixel)((init + deltaR * i) >> shift);
+                }
                 refLeftFlt[trSize2] = refLeft[trSize2];
-
-                delta = refTR - refTL;
-                for (int i = 1; i < trSize2; i++)
-                    refAboveFlt[i] = (pixel)((init + delta * i) >> shift);
                 refAboveFlt[trSize2] = refAbove[trSize2];
 
                 return;
             }
         }
 
-        refLeft[-1] = refAbove[1];
-        for (int i = 0; i < tuSize2; i++)
-            refLeftFlt[i] = (refLeft[i - 1] + 2 * refLeft[i] + refLeft[i + 1] + 2) >> 2;
+        refLeftFlt[0] = (refAbove[1] + (refLeft[0] << 1) + refLeft[1] + 2) >> 2;
+        for (int i = 1; i < tuSize2; i++)
+            refLeftFlt[i] = (refLeft[i - 1] + (refLeft[i] << 1) + refLeft[i + 1] + 2) >> 2;
         refLeftFlt[tuSize2] = refLeft[tuSize2];
 
         refAboveFlt[0] = refLeftFlt[0];
         for (int i = 1; i < tuSize2; i++)
-            refAboveFlt[i] = (refAbove[i - 1] + 2 * refAbove[i] + refAbove[i + 1] + 2) >> 2;
+            refAboveFlt[i] = (refAbove[i - 1] + (refAbove[i] << 1) + refAbove[i + 1] + 2) >> 2;
         refAboveFlt[tuSize2] = refAbove[tuSize2];
     }
 }
@@ -804,14 +805,15 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
     uint32_t tuSize = intraNeighbors.tuSize;
     uint32_t refSize = tuSize * 2 + 1;
 
+    // Nothing is available, perform DC prediction.
     if (numIntraNeighbor == 0)
     {
         // Fill border with DC value
         for (uint32_t i = 0; i < refSize; i++)
             adiRef[i] = dcValue;
 
-        for (uint32_t i = 1; i < refSize; i++)
-            adiRef[i * ADI_BUF_STRIDE] = dcValue;
+        for (uint32_t i = 0; i < refSize - 1; i++)
+            adiRef[i + refSize] = dcValue;
     }
     else if (numIntraNeighbor == totalUnits)
     {
@@ -821,9 +823,10 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
 
         // Fill left border with rec. samples
         adiTemp = adiOrigin - 1;
-        for (uint32_t i = 1; i < refSize; i++)
+
+        for (uint32_t i = 0; i < refSize - 1; i++)
         {
-            adiRef[i * ADI_BUF_STRIDE] = adiTemp[0];
+            adiRef[i + refSize] = adiTemp[0];
             adiTemp += picStride;
         }
     }
@@ -943,8 +946,8 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, p
         memcpy(adiRef, adi, refSize * sizeof(*adiRef));
 
         adi = adiLineBuffer + refSize - 1;
-        for (int i = 1; i < (int)refSize; i++)
-            adiRef[i * ADI_BUF_STRIDE] = adi[-i];
+        for (int i = 0; i < (int)refSize - 1; i++)
+            adiRef[i + refSize] = adi[-(i + 1)];
     }
 }
 
