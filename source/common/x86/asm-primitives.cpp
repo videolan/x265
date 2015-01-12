@@ -760,36 +760,6 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_PIXEL_VAR_DEF(32, 32, cpu); \
     SETUP_PIXEL_VAR_DEF(64, 64, cpu);
 
-#define SETUP_PIXEL_SSE_SP_DEF(W, H, cpu) \
-    p.pu[LUMA_ ## W ## x ## H].sse_sp = x265_pixel_ssd_sp_ ## W ## x ## H ## cpu;
-
-#define LUMA_SSE_SP(cpu) \
-    SETUP_PIXEL_SSE_SP_DEF(4,   4, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(8,   8, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(8,   4, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(4,   8, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16, 16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16,  8, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(8,  16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16, 12, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(12, 16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16,  4, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(4,  16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(32, 32, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(32, 16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16, 32, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(32, 24, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(24, 32, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(32,  8, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(8,  32, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(64, 64, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(64, 32, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(32, 64, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(64, 48, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(48, 64, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(64, 16, cpu); \
-    SETUP_PIXEL_SSE_SP_DEF(16, 64, cpu);
-
 #define SETUP_LUMA_ADDAVG_FUNC_DEF(W, H, cpu) \
     p.pu[LUMA_ ## W ## x ## H].luma_addAvg = x265_addAvg_ ## W ## x ## H ## cpu;
 
@@ -1569,8 +1539,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x32].sse_pp = x265_pixel_ssd_64x32_sse4;
         p.pu[LUMA_64x48].sse_pp = x265_pixel_ssd_64x48_sse4;
         p.pu[LUMA_64x64].sse_pp = x265_pixel_ssd_64x64_sse4;
-
-        LUMA_SSE_SP(_sse4);
 
         CHROMA_PIXELSUB_PS(_sse4);
         CHROMA_PIXELSUB_PS_422(_sse4);

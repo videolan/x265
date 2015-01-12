@@ -1170,15 +1170,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].sse_sp)
-    {
-        if (!check_pixelcmp_sp(ref.pu[part].sse_sp, opt.pu[part].sse_sp))
-        {
-            printf("sse_sp[%s]: failed!\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].sad_x3)
     {
         if (!check_pixelcmp_x3(ref.pu[part].sad_x3, opt.pu[part].sad_x3))
@@ -1673,12 +1664,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     {
         HEADER("sse_pp[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pu[part].sse_pp, ref.pu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
-    }
-
-    if (opt.pu[part].sse_sp)
-    {
-        HEADER("sse_sp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].sse_sp, ref.pu[part].sse_sp, (int16_t*)pbuf1, STRIDE, fref, STRIDE);
     }
 
     if (opt.pu[part].luma_copy_pp)

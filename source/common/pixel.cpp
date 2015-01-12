@@ -1293,7 +1293,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     CHROMA_444(16, 64);
 
     SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixel, pixel)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, int16_t, pixel)
 
     p.cu[BLOCK_4x4].sse_ss = sse<4, 4, int16_t, int16_t>;
     p.cu[BLOCK_8x8].sse_ss = sse<8, 8, int16_t, int16_t>;
