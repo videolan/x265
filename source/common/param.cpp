@@ -188,7 +188,6 @@ void x265_param_default(x265_param *param)
     param->rc.vbvBufferInit = 0.9;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
-    param->rc.rateTolerance = 1.0;
     param->rc.qCompress = 0.6;
     param->rc.ipFactor = 1.4f;
     param->rc.pbFactor = 1.3f;
@@ -665,7 +664,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT2("pbratio", "pb-factor") p->rc.pbFactor = atof(value);
     OPT("qcomp") p->rc.qCompress = atof(value);
     OPT("qpstep") p->rc.qpStep = atoi(value);
-    OPT("ratetol") p->rc.rateTolerance = atof(value);
     OPT("cplxblur") p->rc.complexityBlur = atof(value);
     OPT("qblur") p->rc.qblur = atof(value);
     OPT("aq-mode") p->rc.aqMode = atoi(value);
@@ -699,7 +697,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     {
         p->rc.bStrictCbr = atobool(value);
         p->rc.pbFactor = 1.0;
-        p->rc.rateTolerance = 0.7;
     }
     OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
     OPT("sar")
@@ -1303,8 +1300,7 @@ char *x265_param2string(x265_param *p)
         if (p->rc.rateControlMode == X265_RC_CRF)
             s += sprintf(s, " crf=%.1f", p->rc.rfConstant);
         else
-            s += sprintf(s, " bitrate=%d ratetol=%.1f",
-                         p->rc.bitrate, p->rc.rateTolerance);
+            s += sprintf(s, " bitrate=%d", p->rc.bitrate);
         s += sprintf(s, " qcomp=%.2f qpmin=%d qpmax=%d qpstep=%d",
                      p->rc.qCompress, QP_MIN, QP_MAX_SPEC, p->rc.qpStep);
         if (p->rc.bStatRead)

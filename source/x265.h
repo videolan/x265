@@ -793,11 +793,6 @@ typedef struct x265_param
          * bitrate is specified on the command line, ABR is implied. Default 0 */
         int       bitrate;
 
-        /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used
-         * along with overflow (difference between actual and target bitrate), to adjust
-         * qp. Default is 1.0 */
-        double    rateTolerance;
-
         /* qComp sets the quantizer curve compression factor. It weights the frame
          * quantizer based on the complexity of residual (measured by lookahead).
          * Default value is 0.6. Increasing it to 1 will effectively generate CQP */

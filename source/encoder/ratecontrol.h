@@ -139,6 +139,7 @@ public:
     bool   m_isAbrReset;
     int    m_lastAbrResetPoc;
 
+    double  m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
     double m_bitrate;
     double m_rateFactorConstant;

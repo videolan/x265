@@ -365,6 +365,8 @@ RateControl::RateControl(x265_param *p)
     m_param->rc.vbvMaxBitrate = x265_clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
     m_param->rc.vbvBufferInit = x265_clip3(0.0, 2000000.0, m_param->rc.vbvBufferInit);
     m_singleFrameVbv = 0;
+    m_rateTolerance = 1.0;
+
     if (m_param->rc.vbvBufferSize)
     {
         if (m_param->rc.rateControlMode == X265_RC_CQP)
@@ -415,6 +417,8 @@ RateControl::RateControl(x265_param *p)
         m_amortizeFraction = 0.85;
         m_amortizeFrames = m_param->totalFrames / 2;
     }
+    if(m_param->rc.bStrictCbr)
+        m_rateTolerance = 0.7;
 
     m_leadingBframes = m_param->bframes;
     m_bframeBits = 0;
@@ -1357,7 +1361,7 @@ fail:
 
 double RateControl::tuneAbrQScaleFromFeedback(double qScale)
 {
-    double abrBuffer = 2 * m_param->rc.rateTolerance * m_bitrate;
+    double abrBuffer = 2 * m_rateTolerance * m_bitrate;
     if (m_currentSatd)
     {
         /* use framesDone instead of POC as poc count is not serial with bframes enabled */
@@ -1487,7 +1491,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
     }
     else
     {
-        double abrBuffer = 2 * m_param->rc.rateTolerance * m_bitrate;
+        double abrBuffer = 2 * m_rateTolerance * m_bitrate;
         if (m_2pass)
         {
             int64_t diff;
@@ -1676,7 +1680,7 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
 
 void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
 {
-    double abrBuffer = 2 * m_param->rc.rateTolerance * m_bitrate;
+    double abrBuffer = 2 * m_rateTolerance * m_bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
     if (rce->lastSatd > 4 * rce->movingAvgSum)
@@ -1991,7 +1995,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     if (row < sps.numCuInHeight - 1)
     {
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
-        double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_param->rc.rateTolerance;
+        double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
 
