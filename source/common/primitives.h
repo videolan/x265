@@ -194,8 +194,8 @@ struct EncoderPrimitives
         pixelcmp_sp_t  sse_sp;     // Sum of Square Error (short, pixel) fenc alignment not assumed
         pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
 
-        pixelavg_pp_t  pixelavg_pp;
-        addAvg_t       luma_addAvg;
+        pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
+        addAvg_t       luma_addAvg; // bidir motion compensation, uses 16bit values
 
         filter_pp_t    luma_hpp;
         filter_hps_t   luma_hps;
