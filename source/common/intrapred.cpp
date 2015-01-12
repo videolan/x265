@@ -77,111 +77,6 @@ void planar_pred_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirM
             dst[y * dstStride + x] = (pixel) (((blkSize - 1 - x) * left[y] + (blkSize - 1 -y) * above[x] + (x + 1) * topRight + (y + 1) * bottomLeft + blkSize) >> (log2Size + 1));
 }
 template<int width>
-void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
-{
-    // Map the mode index to main prediction direction and angle
-    int k, l;
-    bool modeHor       = (dirMode < 18);
-    bool modeVer       = !modeHor;
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
-    int absAng         = abs(intraPredAngle);
-    int signAng        = intraPredAngle < 0 ? -1 : 1;
-
-    // Set bitshifts and scale the angle parameter to block size
-    static const int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    static const int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    int invAngle       = invAngTable[absAng];
-
-    absAng             = angTable[absAng];
-    intraPredAngle     = signAng * absAng;
-
-    // Do angular predictions
-    {
-        pixel* refMain;
-        pixel* refSide;
-
-        // Initialise the Main and Left reference array.
-        if (intraPredAngle < 0)
-        {
-            refMain = (modeVer ? refAbove : refLeft); // + (width - 1);
-            refSide = (modeVer ? refLeft : refAbove); // + (width - 1);
-
-            // Extend the Main reference to the left.
-            int invAngleSum    = 128; // rounding for (shift by 8)
-            for (k = -1; k > width * intraPredAngle >> 5; k--)
-            {
-                invAngleSum += invAngle;
-                refMain[k] = refSide[invAngleSum >> 8];
-            }
-        }
-        else
-        {
-            refMain = modeVer ? refAbove : refLeft;
-            refSide = modeVer ? refLeft  : refAbove;
-        }
-
-        if (intraPredAngle == 0)
-        {
-            for (k = 0; k < width; k++)
-            {
-                for (l = 0; l < width; l++)
-                    dst[k * dstStride + l] = refMain[l + 1];
-            }
-
-            if (bFilter)
-            {
-                for (k = 0; k < width; k++)
-                    dst[k * dstStride] = x265_clip((int16_t)((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
-            }
-        }
-        else
-        {
-            int deltaPos = 0;
-            int deltaInt;
-            int deltaFract;
-            int refMainIndex;
-
-            for (k = 0; k < width; k++)
-            {
-                deltaPos += intraPredAngle;
-                deltaInt   = deltaPos >> 5;
-                deltaFract = deltaPos & (32 - 1);
-
-                if (deltaFract)
-                {
-                    // Do linear filtering
-                    for (l = 0; l < width; l++)
-                    {
-                        refMainIndex = l + deltaInt + 1;
-                        dst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
-                    }
-                }
-                else
-                {
-                    // Just copy the integer samples
-                    for (l = 0; l < width; l++)
-                        dst[k * dstStride + l] = refMain[l + deltaInt + 1];
-                }
-            }
-        }
-
-        // Flip the block if this is the horizontal mode
-        if (modeHor)
-        {
-            for (k = 0; k < width - 1; k++)
-            {
-                for (l = k + 1; l < width; l++)
-                {
-                    pixel tmp              = dst[k * dstStride + l];
-                    dst[k * dstStride + l] = dst[l * dstStride + k];
-                    dst[l * dstStride + k] = tmp;
-                }
-            }
-        }
-    }
-}
-
-template<int width>
 void intra_pred_ang_c_new(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 {
     int width2 = width << 1;
@@ -330,11 +225,6 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 
     for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
-        p.intra_pred[i][BLOCK_4x4] = intra_pred_ang_c<4>;
-        p.intra_pred[i][BLOCK_8x8] = intra_pred_ang_c<8>;
-        p.intra_pred[i][BLOCK_16x16] = intra_pred_ang_c<16>;
-        p.intra_pred[i][BLOCK_32x32] = intra_pred_ang_c<32>;
-
         p.intra_pred_new[i][BLOCK_4x4] = intra_pred_ang_c_new<4>;
         p.intra_pred_new[i][BLOCK_8x8] = intra_pred_ang_c_new<8>;
         p.intra_pred_new[i][BLOCK_16x16] = intra_pred_ang_c_new<16>;

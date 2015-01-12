@@ -945,22 +945,11 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_CHROMA_ADDAVG_FUNC_DEF_422(32, 48, cpu); \
     SETUP_CHROMA_ADDAVG_FUNC_DEF_422(32, 64, cpu);
 
-#define SETUP_INTRA_ANG_COMMON(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
-
 #define SETUP_INTRA_ANG_COMMON_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
-
-#define SETUP_INTRA_ANG_HIGH(mode, fno, cpu) \
-    p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
-    p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
-    p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
-
-#define SETUP_INTRA_ANG4(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
 
 #define SETUP_INTRA_ANG4_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _new_ ## cpu;
@@ -969,38 +958,13 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
 
-#define SETUP_INTRA_ANG4_8(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
-
 #define SETUP_INTRA_ANG4_8_NEW(mode, fno, cpu) \
     p.intra_pred_new[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _new_ ## cpu; \
     p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu;
 
-#define INTRA_ANG_SSSE3(cpu) \
-    SETUP_INTRA_ANG_COMMON(2, 2, cpu); \
-    SETUP_INTRA_ANG_COMMON(34, 2, cpu);
-
 #define INTRA_ANG_SSSE3_NEW(cpu) \
     SETUP_INTRA_ANG_COMMON_NEW(2, 2, cpu); \
     SETUP_INTRA_ANG_COMMON_NEW(34, 2, cpu);
-
-#define INTRA_ANG_SSE4_COMMON(cpu) \
-    SETUP_INTRA_ANG_COMMON(3,  3,  cpu); \
-    SETUP_INTRA_ANG_COMMON(4,  4,  cpu); \
-    SETUP_INTRA_ANG_COMMON(5,  5,  cpu); \
-    SETUP_INTRA_ANG_COMMON(6,  6,  cpu); \
-    SETUP_INTRA_ANG_COMMON(7,  7,  cpu); \
-    SETUP_INTRA_ANG_COMMON(8,  8,  cpu); \
-    SETUP_INTRA_ANG_COMMON(9,  9,  cpu); \
-    SETUP_INTRA_ANG_COMMON(10, 10, cpu); \
-    SETUP_INTRA_ANG_COMMON(11, 11, cpu); \
-    SETUP_INTRA_ANG_COMMON(12, 12, cpu); \
-    SETUP_INTRA_ANG_COMMON(13, 13, cpu); \
-    SETUP_INTRA_ANG_COMMON(14, 14, cpu); \
-    SETUP_INTRA_ANG_COMMON(15, 15, cpu); \
-    SETUP_INTRA_ANG_COMMON(16, 16, cpu); \
-    SETUP_INTRA_ANG_COMMON(17, 17, cpu); \
-    SETUP_INTRA_ANG_COMMON(18, 18, cpu);
 
 #define INTRA_ANG_SSE4_COMMON_NEW(cpu) \
     SETUP_INTRA_ANG_COMMON_NEW(3,  3,  cpu); \
@@ -1020,22 +984,10 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG_COMMON_NEW(17, 17, cpu); \
     SETUP_INTRA_ANG_COMMON_NEW(18, 18, cpu);
 
-#define INTRA_ANG_SSE4_HIGH(cpu) \
-    SETUP_INTRA_ANG4(19, 17, cpu); \
-    SETUP_INTRA_ANG4(20, 16, cpu); \
-    SETUP_INTRA_ANG4(21, 15, cpu); \
-    SETUP_INTRA_ANG4(22, 14, cpu); \
-    SETUP_INTRA_ANG4(23, 13, cpu); \
-    SETUP_INTRA_ANG4(24, 12, cpu); \
-    SETUP_INTRA_ANG4(25, 11, cpu); \
-    SETUP_INTRA_ANG4(26, 26, cpu); \
-    SETUP_INTRA_ANG4(27, 9, cpu); \
-    SETUP_INTRA_ANG4(28, 8, cpu); \
-    SETUP_INTRA_ANG4(29, 7, cpu); \
-    SETUP_INTRA_ANG4(30, 6, cpu); \
-    SETUP_INTRA_ANG4(31, 5, cpu); \
-    SETUP_INTRA_ANG4(32, 4, cpu); \
-    SETUP_INTRA_ANG4(33, 3, cpu);
+#define SETUP_INTRA_ANG_HIGH(mode, fno, cpu) \
+    p.intra_pred_new[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _new_ ## cpu; \
+    p.intra_pred_new[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _new_ ## cpu; \
+    p.intra_pred_new[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _new_ ## cpu;
 
 #define INTRA_ANG_SSE4_HIGH_NEW(cpu) \
     SETUP_INTRA_ANG_HIGH(19, 19, cpu); \
@@ -1068,23 +1020,6 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_INTRA_ANG4_NEW(31, 5, cpu); \
     SETUP_INTRA_ANG4_NEW(32, 4, cpu); \
     SETUP_INTRA_ANG4_NEW(33, 3, cpu);
-
-#define INTRA_ANG_SSE4(cpu) \
-    SETUP_INTRA_ANG4_8(19, 17, cpu); \
-    SETUP_INTRA_ANG4_8(20, 16, cpu); \
-    SETUP_INTRA_ANG4_8(21, 15, cpu); \
-    SETUP_INTRA_ANG4_8(22, 14, cpu); \
-    SETUP_INTRA_ANG4_8(23, 13, cpu); \
-    SETUP_INTRA_ANG4_8(24, 12, cpu); \
-    SETUP_INTRA_ANG4_8(25, 11, cpu); \
-    SETUP_INTRA_ANG4_8(26, 26, cpu); \
-    SETUP_INTRA_ANG4_8(27, 9, cpu); \
-    SETUP_INTRA_ANG4_8(28, 8, cpu); \
-    SETUP_INTRA_ANG4_8(29, 7, cpu); \
-    SETUP_INTRA_ANG4_8(30, 6, cpu); \
-    SETUP_INTRA_ANG4_8(31, 5, cpu); \
-    SETUP_INTRA_ANG4_8(32, 4, cpu); \
-    SETUP_INTRA_ANG4_8(33, 3, cpu);
 
 #define INTRA_ANG_SSE4_NEW(cpu) \
     SETUP_INTRA_ANG4_8_NEW(19, 17, cpu); \
@@ -1452,7 +1387,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
 
-        INTRA_ANG_SSSE3(ssse3);
         INTRA_ANG_SSSE3_NEW(ssse3);
 
         p.dst4x4 = x265_dst4_ssse3;
@@ -1487,9 +1421,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred_new[1][BLOCK_32x32] = x265_intra_pred_dc32_new_sse4;
 
         p.planecopy_cp = x265_upShift_8_sse4;
-
-        INTRA_ANG_SSE4_COMMON(sse4);
-        INTRA_ANG_SSE4_HIGH(sse4);
 
         INTRA_ANG_SSE4_COMMON_NEW(sse4);
         INTRA_ANG_SSE4_HIGH_NEW(sse4);
@@ -1671,7 +1602,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         PIXEL_AVG(ssse3);
         PIXEL_AVG_W4(ssse3);
 
-        INTRA_ANG_SSSE3(ssse3);
         INTRA_ANG_SSSE3_NEW(ssse3);
 
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
@@ -1777,9 +1707,6 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.intra_pred_new[1][BLOCK_8x8] = x265_intra_pred_dc8_new_sse4;
         p.intra_pred_new[1][BLOCK_16x16] = x265_intra_pred_dc16_new_sse4;
         p.intra_pred_new[1][BLOCK_32x32] = x265_intra_pred_dc32_new_sse4;
-
-        INTRA_ANG_SSE4_COMMON(sse4);
-        INTRA_ANG_SSE4(sse4);
 
         INTRA_ANG_SSE4_COMMON_NEW(sse4);
         INTRA_ANG_SSE4_NEW(sse4);
