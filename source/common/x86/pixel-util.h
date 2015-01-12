@@ -65,8 +65,6 @@ float x265_pixel_ssim_end4_avx(int sum0[5][4], int sum1[5][4], int width);
 
 void x265_scale1D_128to64_ssse3(pixel*, const pixel*, intptr_t);
 void x265_scale1D_128to64_avx2(pixel*, const pixel*, intptr_t);
-void x265_scale1D_128to64_new_ssse3(pixel*, const pixel*, intptr_t);
-void x265_scale1D_128to64_new_avx2(pixel*, const pixel*, intptr_t);
 void x265_scale2D_64to32_ssse3(pixel*, const pixel*, intptr_t);
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \

@@ -2984,7 +2984,7 @@ SSIM
 ; void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
 ;-----------------------------------------------------------------
 INIT_XMM ssse3
-cglobal scale1D_128to64_new, 2, 2, 8, dest, src1, stride
+cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
 %if HIGH_BIT_DEPTH
     mova        m7,      [deinterleave_word_shuf]
 
@@ -3109,7 +3109,7 @@ RET
 
 %if HIGH_BIT_DEPTH == 1
 INIT_YMM avx2
-cglobal scale1D_128to64_new, 2, 2, 3
+cglobal scale1D_128to64, 2, 2, 3
     pxor            m2, m2
 
     ;Top pixel
@@ -3173,7 +3173,7 @@ cglobal scale1D_128to64_new, 2, 2, 3
     RET
 %else ; HIGH_BIT_DEPTH == 0
 INIT_YMM avx2
-cglobal scale1D_128to64_new, 2, 2, 4
+cglobal scale1D_128to64, 2, 2, 4
     pxor            m2, m2
     mova            m3, [pb_1]
 
@@ -3218,220 +3218,6 @@ cglobal scale1D_128to64_new, 2, 2, 4
     packuswb        m0, m1
     vpermq          m0, m0, 0xD8
     movu            [r0 + 96], m0
-    RET
-%endif
-
-;-----------------------------------------------------------------
-; void scale1D_128to64(pixel *dst, pixel *src, intptr_t /*stride*/)
-;-----------------------------------------------------------------
-INIT_XMM ssse3
-cglobal scale1D_128to64, 2, 2, 8, dest, src1, stride
-%if HIGH_BIT_DEPTH
-    mova        m7,      [deinterleave_word_shuf]
-
-    movu        m0,      [r1]
-    palignr     m1,      m0,    2
-    movu        m2,      [r1 + 16]
-    palignr     m3,      m2,    2
-    movu        m4,      [r1 + 32]
-    palignr     m5,      m4,    2
-    movu        m6,      [r1 + 48]
-    pavgw       m0,      m1
-    palignr     m1,      m6,    2
-    pavgw       m2,      m3
-    pavgw       m4,      m5
-    pavgw       m6,      m1
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-    punpcklqdq    m0,           m2
-    movu          [r0],         m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 16],    m4
-
-
-
-    movu        m0,      [r1 + 64]
-    palignr     m1,      m0,    2
-    movu        m2,      [r1 + 80]
-    palignr     m3,      m2,    2
-    movu        m4,      [r1 + 96]
-    palignr     m5,      m4,    2
-    movu        m6,      [r1 + 112]
-    pavgw       m0,      m1
-    palignr     m1,      m6,    2
-    pavgw       m2,      m3
-    pavgw       m4,      m5
-    pavgw       m6,      m1
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-    punpcklqdq    m0,           m2
-    movu          [r0 + 32],    m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 48],    m4
-
-    movu        m0,      [r1 + 128]
-    palignr     m1,      m0,    2
-    movu        m2,      [r1 + 144]
-    palignr     m3,      m2,    2
-    movu        m4,      [r1 + 160]
-    palignr     m5,      m4,    2
-    movu        m6,      [r1 + 176]
-    pavgw       m0,      m1
-    palignr     m1,      m6,    2
-    pavgw       m2,      m3
-    pavgw       m4,      m5
-    pavgw       m6,      m1
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-
-    punpcklqdq    m0,           m2
-    movu          [r0 + 64],    m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 80],    m4
-
-    movu        m0,      [r1 + 192]
-    palignr     m1,      m0,    2
-    movu        m2,      [r1 + 208]
-    palignr     m3,      m2,    2
-    movu        m4,      [r1 + 224]
-    palignr     m5,      m4,    2
-    movu        m6,      [r1 + 240]
-    pavgw       m0,      m1
-    palignr     m1,      m6,    2
-    pavgw       m2,      m3
-    pavgw       m4,      m5
-    pavgw       m6,      m1
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-
-    punpcklqdq    m0,           m2
-    movu          [r0 + 96],    m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 112],    m4
-
-%else
-    mova        m7,      [deinterleave_shuf]
-
-    movu        m0,      [r1]
-    palignr     m1,      m0,    1
-    movu        m2,      [r1 + 16]
-    palignr     m3,      m2,    1
-    movu        m4,      [r1 + 32]
-    palignr     m5,      m4,    1
-    movu        m6,      [r1 + 48]
-
-    pavgb       m0,      m1
-
-    palignr     m1,      m6,    1
-
-    pavgb       m2,      m3
-    pavgb       m4,      m5
-    pavgb       m6,      m1
-
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-
-    punpcklqdq    m0,           m2
-    movu          [r0],         m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 16],    m4
-
-    movu        m0,      [r1 + 64]
-    palignr     m1,      m0,    1
-    movu        m2,      [r1 + 80]
-    palignr     m3,      m2,    1
-    movu        m4,      [r1 + 96]
-    palignr     m5,      m4,    1
-    movu        m6,      [r1 + 112]
-
-    pavgb       m0,      m1
-
-    palignr     m1,      m6,    1
-
-    pavgb       m2,      m3
-    pavgb       m4,      m5
-    pavgb       m6,      m1
-
-    pshufb      m0,      m0,    m7
-    pshufb      m2,      m2,    m7
-    pshufb      m4,      m4,    m7
-    pshufb      m6,      m6,    m7
-
-    punpcklqdq    m0,           m2
-    movu          [r0 + 32],    m0
-    punpcklqdq    m4,           m6
-    movu          [r0 + 48],    m4
-%endif
-RET
-
-%if HIGH_BIT_DEPTH == 1
-INIT_YMM avx2
-cglobal scale1D_128to64, 2, 2, 3
-    pxor            m2, m2
-
-    movu            m0, [r1]
-    movu            m1, [r1 + 32]
-    phaddw          m0, m1
-    pavgw           m0, m2
-    vpermq          m0, m0, 0xD8
-    movu            [r0], m0
-
-    movu            m0, [r1 + 64]
-    movu            m1, [r1 + 96]
-    phaddw          m0, m1
-    pavgw           m0, m2
-    vpermq          m0, m0, 0xD8
-    movu            [r0 + 32], m0
-
-    movu            m0, [r1 + 128]
-    movu            m1, [r1 + 160]
-    phaddw          m0, m1
-    pavgw           m0, m2
-    vpermq          m0, m0, 0xD8
-    movu            [r0 + 64], m0
-
-    movu            m0, [r1 + 192]
-    movu            m1, [r1 + 224]
-    phaddw          m0, m1
-    pavgw           m0, m2
-    vpermq          m0, m0, 0xD8
-    movu            [r0 + 96], m0
-    RET
-%else ; HIGH_BIT_DEPTH == 0
-INIT_YMM avx2
-cglobal scale1D_128to64, 2, 2, 4
-    pxor            m2, m2
-    mova            m3, [pb_1]
-
-    movu            m0, [r1]
-    pmaddubsw       m0, m0, m3
-    pavgw           m0, m2
-    movu            m1, [r1 + 32]
-    pmaddubsw       m1, m1, m3
-    pavgw           m1, m2
-    packuswb        m0, m1
-    vpermq          m0, m0, 0xD8
-    movu            [r0], m0
-
-    movu            m0, [r1 + 64]
-    pmaddubsw       m0, m0, m3
-    pavgw           m0, m2
-    movu            m1, [r1 + 96]
-    pmaddubsw       m1, m1, m3
-    pavgw           m1, m2
-    packuswb        m0, m1
-    vpermq          m0, m0, 0xD8
-    movu            [r0 + 32], m0
     RET
 %endif
 
