@@ -226,6 +226,7 @@ struct EncoderPrimitives
         copy_sp_t       copy_sp;
         copy_ps_t       copy_ps;
         copy_ss_t       copy_ss;
+        copy_pp_t       copy_pp;       // alias to pu[].copy_pp
 
         pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self
