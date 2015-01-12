@@ -1766,7 +1766,6 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 double bufferFillCur = m_bufferFill - curBits;
                 double targetFill;
                 double totalDuration = m_frameDuration;
-                bool isIFramePresent = m_sliceType == I_SLICE ? true : false;
                 frameQ[P_SLICE] = m_sliceType == I_SLICE ? q * m_param->rc.ipFactor : (m_sliceType == B_SLICE ? q / m_param->rc.pbFactor : q);
                 frameQ[B_SLICE] = frameQ[P_SLICE] * m_param->rc.pbFactor;
                 frameQ[I_SLICE] = frameQ[P_SLICE] / m_param->rc.ipFactor;
@@ -1782,8 +1781,6 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                         bufferFillCur += wantedFrameSize;
                     int64_t satd = curFrame->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
-                    if (type == I_SLICE) 
-                        isIFramePresent = true;
                     curBits = predictSize(&m_pred[type], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
