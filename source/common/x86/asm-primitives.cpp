@@ -175,31 +175,11 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.pu[LUMA_16x64].sse_pp = x265_pixel_ssd_16x64_ ## cpu
 
 #define ASSGN_SSE_SS(cpu) \
-    p.pu[LUMA_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_ ## cpu; \
-    p.pu[LUMA_4x8].sse_ss   = x265_pixel_ssd_ss_4x8_ ## cpu; \
-    p.pu[LUMA_4x16].sse_ss  = x265_pixel_ssd_ss_4x16_ ## cpu; \
-    p.pu[LUMA_8x4].sse_ss   = x265_pixel_ssd_ss_8x4_ ## cpu; \
-    p.pu[LUMA_8x8].sse_ss   = x265_pixel_ssd_ss_8x8_ ## cpu; \
-    p.pu[LUMA_8x16].sse_ss  = x265_pixel_ssd_ss_8x16_ ## cpu; \
-    p.pu[LUMA_8x32].sse_ss  = x265_pixel_ssd_ss_8x32_ ## cpu; \
-    p.pu[LUMA_12x16].sse_ss = x265_pixel_ssd_ss_12x16_ ## cpu; \
-    p.pu[LUMA_16x4].sse_ss  = x265_pixel_ssd_ss_16x4_ ## cpu; \
-    p.pu[LUMA_16x8].sse_ss  = x265_pixel_ssd_ss_16x8_ ## cpu; \
-    p.pu[LUMA_16x12].sse_ss = x265_pixel_ssd_ss_16x12_ ## cpu; \
-    p.pu[LUMA_16x16].sse_ss = x265_pixel_ssd_ss_16x16_ ## cpu; \
-    p.pu[LUMA_16x32].sse_ss = x265_pixel_ssd_ss_16x32_ ## cpu; \
-    p.pu[LUMA_16x64].sse_ss = x265_pixel_ssd_ss_16x64_ ## cpu; \
-    p.pu[LUMA_24x32].sse_ss = x265_pixel_ssd_ss_24x32_ ## cpu; \
-    p.pu[LUMA_32x8].sse_ss  = x265_pixel_ssd_ss_32x8_ ## cpu; \
-    p.pu[LUMA_32x16].sse_ss = x265_pixel_ssd_ss_32x16_ ## cpu; \
-    p.pu[LUMA_32x24].sse_ss = x265_pixel_ssd_ss_32x24_ ## cpu; \
-    p.pu[LUMA_32x32].sse_ss = x265_pixel_ssd_ss_32x32_ ## cpu; \
-    p.pu[LUMA_32x64].sse_ss = x265_pixel_ssd_ss_32x64_ ## cpu; \
-    p.pu[LUMA_48x64].sse_ss = x265_pixel_ssd_ss_48x64_ ## cpu; \
-    p.pu[LUMA_64x16].sse_ss = x265_pixel_ssd_ss_64x16_ ## cpu; \
-    p.pu[LUMA_64x32].sse_ss = x265_pixel_ssd_ss_64x32_ ## cpu; \
-    p.pu[LUMA_64x48].sse_ss = x265_pixel_ssd_ss_64x48_ ## cpu; \
-    p.pu[LUMA_64x64].sse_ss = x265_pixel_ssd_ss_64x64_ ## cpu;
+    p.cu[BLOCK_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_ ## cpu; \
+    p.cu[BLOCK_8x8].sse_ss   = x265_pixel_ssd_ss_8x8_ ## cpu; \
+    p.cu[BLOCK_16x16].sse_ss = x265_pixel_ssd_ss_16x16_ ## cpu; \
+    p.cu[BLOCK_32x32].sse_ss = x265_pixel_ssd_ss_32x32_ ## cpu; \
+    p.cu[BLOCK_64x64].sse_ss = x265_pixel_ssd_ss_64x64_ ## cpu;
 
 #define SA8D_INTER_FROM_BLOCK(cpu) \
     p.cu[BLOCK_8x8].sa8d = x265_pixel_sa8d_8x8_ ## cpu; \

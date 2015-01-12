@@ -1294,7 +1294,12 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 
     SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixel, pixel)
     SET_FUNC_PRIMITIVE_TABLE_C(sse_sp, sse, int16_t, pixel)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, int16_t, int16_t)
+
+    p.cu[BLOCK_4x4].sse_ss = sse<4, 4, int16_t, int16_t>;
+    p.cu[BLOCK_8x8].sse_ss = sse<8, 8, int16_t, int16_t>;
+    p.cu[BLOCK_16x16].sse_ss = sse<16, 16, int16_t, int16_t>;
+    p.cu[BLOCK_32x32].sse_ss = sse<32, 32, int16_t, int16_t>;
+    p.cu[BLOCK_64x64].sse_ss = sse<64, 64, int16_t, int16_t>;
 
     p.cu[BLOCK_4x4].blockfill_s   = blockfil_s_c<4>;
     p.cu[BLOCK_8x8].blockfill_s   = blockfil_s_c<8>;

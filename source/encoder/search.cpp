@@ -2858,7 +2858,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
             // non-zero cost calculation for luma - This is an approximation
             // finally we have to encode correct cbf after comparing with null cost
-            const uint32_t nonZeroDistY = primitives.pu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
+            const uint32_t nonZeroDistY = primitives.cu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, curResiY, strideResiY);
             uint32_t nzCbfBitsY = m_entropyCoder.estimateCbfBits(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
             uint32_t nonZeroPsyEnergyY = 0; uint64_t singleCostY = 0;
             if (m_rdCost.m_psyRd)
@@ -2958,7 +2958,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                         // non-zero cost calculation for luma, same as luma - This is an approximation
                         // finally we have to encode correct cbf after comparing with null cost
-                        uint32_t dist = primitives.pu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
+                        uint32_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
                         uint32_t nzCbfBitsC = m_entropyCoder.estimateCbfBits(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
                         uint32_t nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, dist);
                         uint32_t nonZeroPsyEnergyC = 0; uint64_t singleCostC = 0;
@@ -3047,7 +3047,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                 m_quant.invtransformNxN(cu.m_tqBypass[absPartIdx], tsResiY, trSize, tsCoeffY, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
 
-                nonZeroDistY = primitives.pu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, tsResiY, trSize);
+                nonZeroDistY = primitives.cu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, tsResiY, trSize);
 
                 if (m_rdCost.m_psyRd)
                 {
@@ -3118,7 +3118,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                         m_quant.invtransformNxN(cu.m_tqBypass[absPartIdxC], tsResiC, trSizeC, tsCoeffC,
                                                 log2TrSizeC, (TextType)chromaId, false, true, numSigTSkipC);
-                        uint32_t dist = primitives.pu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, tsResiC, trSizeC);
+                        uint32_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, tsResiC, trSizeC);
                         nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, dist);
                         if (m_rdCost.m_psyRd)
                         {

@@ -1179,15 +1179,6 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (opt.pu[part].sse_ss)
-    {
-        if (!check_pixelcmp_ss(ref.pu[part].sse_ss, opt.pu[part].sse_ss))
-        {
-            printf("sse_ss[%s]: failed!\n", lumaPartStr[part]);
-            return false;
-        }
-    }
-
     if (opt.pu[part].sad_x3)
     {
         if (!check_pixelcmp_x3(ref.pu[part].sad_x3, opt.pu[part].sad_x3))
@@ -1244,6 +1235,15 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
 
     if (part < NUM_SQUARE_BLOCKS)
     {
+        if (opt.cu[part].sse_ss)
+        {
+            if (!check_pixelcmp_ss(ref.cu[part].sse_ss, opt.cu[part].sse_ss))
+            {
+                printf("sse_ss[%s]: failed!\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
         if (opt.cu[part].luma_sub_ps)
         {
             if (!check_pixel_sub_ps(ref.cu[part].luma_sub_ps, opt.cu[part].luma_sub_ps))
@@ -1681,12 +1681,6 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].sse_sp, ref.pu[part].sse_sp, (int16_t*)pbuf1, STRIDE, fref, STRIDE);
     }
 
-    if (opt.pu[part].sse_ss)
-    {
-        HEADER("sse_ss[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].sse_ss, ref.pu[part].sse_ss, (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
-    }
-
     if (opt.pu[part].luma_copy_pp)
     {
         HEADER("luma_copy_pp[%s]", lumaPartStr[part]);
@@ -1704,8 +1698,14 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         HEADER("luma_addAvg[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pu[part].luma_addAvg, ref.pu[part].luma_addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
+
     if (part < NUM_SQUARE_BLOCKS)
     {
+        if (opt.cu[part].sse_ss)
+        {
+            HEADER("sse_ss[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].sse_ss, ref.cu[part].sse_ss, (int16_t*)pbuf1, STRIDE, (int16_t*)fref, STRIDE);
+        }
         if (opt.cu[part].luma_sub_ps)
         {
             HEADER("luma_sub_ps[%s]", lumaPartStr[part]);

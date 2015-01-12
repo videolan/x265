@@ -190,7 +190,6 @@ struct EncoderPrimitives
         pixelcmp_x3_t  sad_x3;     // Sum of Differences 3x for each size
         pixelcmp_x4_t  sad_x4;     // Sum of Differences 4x for each size
         pixelcmp_t     sse_pp;     // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-        pixelcmp_ss_t  sse_ss;     // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_sp_t  sse_sp;     // Sum of Square Error (short, pixel) fenc alignment not assumed
         pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
 
@@ -233,6 +232,7 @@ struct EncoderPrimitives
 
         pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self
+        pixelcmp_ss_t   sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two blocks
         pixelcmp_ss_t   psy_cost_ss;
     }
