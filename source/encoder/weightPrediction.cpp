@@ -80,7 +80,7 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
             MV mv = mvs[cu];
             mv = mv.clipped(mvmin, mvmax);
             pixel *tmp = ref.lowresMC(pixoff, mv, buf8x8, bstride);
-            primitives.pu[LUMA_8x8].copy_pp(mcout + pixoff, stride, tmp, bstride);
+            primitives.cu[BLOCK_8x8].copy_pp(mcout + pixoff, stride, tmp, bstride);
         }
     }
 }

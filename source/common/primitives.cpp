@@ -85,9 +85,15 @@ void Setup_Alias_Primitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].cu[i].copy_ps = p.cu[i].copy_ps;
         p.chroma[X265_CSP_I444].cu[i].copy_sp = p.cu[i].copy_sp;
         p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].copy_ss;
+    }
 
-        /* alias CU copy_pp from square PU copy_pp */
+    /* alias CU copy_pp from square PU copy_pp */
+    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    {
         p.cu[i].copy_pp = p.pu[i].copy_pp;
+
+        for (int c = 0; c < X265_CSP_COUNT; c++)
+            p.chroma[c].cu[i].copy_pp = p.chroma[c].pu[i].copy_pp;
     }
 
     p.cu[BLOCK_4x4].sa8d = p.pu[LUMA_4x4].satd;

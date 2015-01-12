@@ -1792,22 +1792,22 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
             primitives.cu[sizeIdx].add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                           predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
         else
-            primitives.pu[sizeIdx].copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+            primitives.cu[sizeIdx].copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                            predY, predYuv.m_size);
 
         if (cu.m_cbf[1][0])
             primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                     predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+                                                        predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
         else
-            primitives.chroma[m_csp].pu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                      predU, predYuv.m_csize);
+            primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                                                         predU, predYuv.m_csize);
 
         if (cu.m_cbf[2][0])
             primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                     predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+                                                        predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
         else
-            primitives.chroma[m_csp].pu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                      predV, predYuv.m_csize);
+            primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                                                         predV, predYuv.m_csize);
     }
 
     checkDQP(cu, cuGeom);

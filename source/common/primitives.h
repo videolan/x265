@@ -300,8 +300,9 @@ struct EncoderPrimitives
             copy_ps_t      copy_ps;
             copy_sp_t      copy_sp;
             copy_ss_t      copy_ss;
-       }
-       cu[NUM_SQUARE_BLOCKS];
+            copy_pp_t      copy_pp;
+        }
+        cu[NUM_SQUARE_BLOCKS];
 
         filter_p2s_t p2s;
     }
