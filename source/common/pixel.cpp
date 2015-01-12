@@ -32,40 +32,6 @@
 
 using namespace x265;
 
-#define SET_FUNC_PRIMITIVE_TABLE_C(FUNC_PREFIX, FUNC_PREFIX_DEF, DATA_TYPE1, DATA_TYPE2) \
-    p.cu[BLOCK_4x4].FUNC_PREFIX   = FUNC_PREFIX_DEF<4,  4, DATA_TYPE1, DATA_TYPE2>; \
-    p.cu[BLOCK_8x8].FUNC_PREFIX   = FUNC_PREFIX_DEF<8,  8, DATA_TYPE1, DATA_TYPE2>; \
-    p.cu[BLOCK_16x16].FUNC_PREFIX = FUNC_PREFIX_DEF<16, 16, DATA_TYPE1, DATA_TYPE2>; \
-    p.cu[BLOCK_32x32].FUNC_PREFIX = FUNC_PREFIX_DEF<32, 32, DATA_TYPE1, DATA_TYPE2>; \
-    p.cu[BLOCK_64x64].FUNC_PREFIX = FUNC_PREFIX_DEF<64, 64, DATA_TYPE1, DATA_TYPE2>; \
-
-#define SET_FUNC_PRIMITIVE_TABLE_C2(FUNC_PREFIX) \
-    p.pu[LUMA_4x4].FUNC_PREFIX   = FUNC_PREFIX<4,  4>; \
-    p.pu[LUMA_8x8].FUNC_PREFIX   = FUNC_PREFIX<8,  8>; \
-    p.pu[LUMA_8x4].FUNC_PREFIX   = FUNC_PREFIX<8,  4>; \
-    p.pu[LUMA_4x8].FUNC_PREFIX   = FUNC_PREFIX<4,  8>; \
-    p.pu[LUMA_16x16].FUNC_PREFIX = FUNC_PREFIX<16, 16>; \
-    p.pu[LUMA_16x8].FUNC_PREFIX  = FUNC_PREFIX<16,  8>; \
-    p.pu[LUMA_8x16].FUNC_PREFIX  = FUNC_PREFIX<8, 16>; \
-    p.pu[LUMA_16x12].FUNC_PREFIX = FUNC_PREFIX<16, 12>; \
-    p.pu[LUMA_12x16].FUNC_PREFIX = FUNC_PREFIX<12, 16>; \
-    p.pu[LUMA_16x4].FUNC_PREFIX  = FUNC_PREFIX<16,  4>; \
-    p.pu[LUMA_4x16].FUNC_PREFIX  = FUNC_PREFIX<4, 16>; \
-    p.pu[LUMA_32x32].FUNC_PREFIX = FUNC_PREFIX<32, 32>; \
-    p.pu[LUMA_32x16].FUNC_PREFIX = FUNC_PREFIX<32, 16>; \
-    p.pu[LUMA_16x32].FUNC_PREFIX = FUNC_PREFIX<16, 32>; \
-    p.pu[LUMA_32x24].FUNC_PREFIX = FUNC_PREFIX<32, 24>; \
-    p.pu[LUMA_24x32].FUNC_PREFIX = FUNC_PREFIX<24, 32>; \
-    p.pu[LUMA_32x8].FUNC_PREFIX  = FUNC_PREFIX<32,  8>; \
-    p.pu[LUMA_8x32].FUNC_PREFIX  = FUNC_PREFIX<8, 32>; \
-    p.pu[LUMA_64x64].FUNC_PREFIX = FUNC_PREFIX<64, 64>; \
-    p.pu[LUMA_64x32].FUNC_PREFIX = FUNC_PREFIX<64, 32>; \
-    p.pu[LUMA_32x64].FUNC_PREFIX = FUNC_PREFIX<32, 64>; \
-    p.pu[LUMA_64x48].FUNC_PREFIX = FUNC_PREFIX<64, 48>; \
-    p.pu[LUMA_48x64].FUNC_PREFIX = FUNC_PREFIX<48, 64>; \
-    p.pu[LUMA_64x16].FUNC_PREFIX = FUNC_PREFIX<64, 16>; \
-    p.pu[LUMA_16x64].FUNC_PREFIX = FUNC_PREFIX<16, 64>;
-
 namespace {
 // place functions in anonymous namespace (file static)
 
@@ -1014,12 +980,60 @@ void extendPicBorder(pixel* pic, intptr_t stride, int width, int height, int mar
 /* Initialize entries for pixel functions defined in this file */
 void Setup_C_PixelPrimitives(EncoderPrimitives &p)
 {
-    SET_FUNC_PRIMITIVE_TABLE_C2(sad)
-    SET_FUNC_PRIMITIVE_TABLE_C2(sad_x3)
-    SET_FUNC_PRIMITIVE_TABLE_C2(sad_x4)
-    SET_FUNC_PRIMITIVE_TABLE_C2(pixelavg_pp)
+#define LUMA_PU(W, H) \
+    p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].luma_copy_pp = blockcopy_pp_c<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].sad = sad<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].sad_x3 = sad_x3<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].sad_x4 = sad_x4<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp = pixelavg_pp<W, H>; \
 
-    // satd
+#define LUMA_CU(W, H) \
+    p.cu[BLOCK_ ## W ## x ## H].luma_sub_ps   = pixel_sub_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].luma_add_ps   = pixel_add_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].luma_copy_sp  = blockcopy_sp_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ps  = blockcopy_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ss  = blockcopy_ss_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].blockfill_s   = blockfil_s_c<W>;  \
+    p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shl = cpy2Dto1D_shl<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shr = cpy2Dto1D_shr<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl = cpy1Dto2D_shl<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shr = cpy1Dto2D_shr<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].psy_cost_pp   = psyCost_pp<BLOCK_ ## W ## x ## H>; \
+    p.cu[BLOCK_ ## W ## x ## H].psy_cost_ss   = psyCost_ss<BLOCK_ ## W ## x ## H>; \
+    p.cu[BLOCK_ ## W ## x ## H].transpose     = transpose<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].ssd_s         = pixel_ssd_s_c<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].var           = pixel_var<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].calcresidual  = getResidual<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].sse_pp        = sse<W, H, pixel, pixel>; \
+    p.cu[BLOCK_ ## W ## x ## H].sse_ss        = sse<W, H, int16_t, int16_t>;
+
+    LUMA_PU(4, 4);
+    LUMA_PU(8, 8);
+    LUMA_PU(16, 16);
+    LUMA_PU(32, 32);
+    LUMA_PU(64, 64);
+    LUMA_PU(4, 8);
+    LUMA_PU(8, 4);
+    LUMA_PU(16,  8);
+    LUMA_PU(8, 16);
+    LUMA_PU(16, 12);
+    LUMA_PU(12, 16);
+    LUMA_PU(16,  4);
+    LUMA_PU(4, 16);
+    LUMA_PU(32, 16);
+    LUMA_PU(16, 32);
+    LUMA_PU(32, 24);
+    LUMA_PU(24, 32);
+    LUMA_PU(32,  8);
+    LUMA_PU(8, 32);
+    LUMA_PU(64, 32);
+    LUMA_PU(32, 64);
+    LUMA_PU(64, 48);
+    LUMA_PU(48, 64);
+    LUMA_PU(64, 16);
+    LUMA_PU(16, 64);
+
     p.pu[LUMA_4x4].satd   = satd_4x4;
     p.pu[LUMA_8x8].satd   = satd8<8, 8>;
     p.pu[LUMA_8x4].satd   = satd_8x4;
@@ -1045,6 +1059,48 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.pu[LUMA_48x64].satd = satd8<48, 64>;
     p.pu[LUMA_64x16].satd = satd8<64, 16>;
     p.pu[LUMA_16x64].satd = satd8<16, 64>;
+
+    LUMA_CU(4, 4);
+    LUMA_CU(8, 8);
+    LUMA_CU(16, 16);
+    LUMA_CU(32, 32);
+    LUMA_CU(64, 64);
+
+    p.cu[BLOCK_4x4].sa8d   = satd_4x4;
+    p.cu[BLOCK_8x8].sa8d   = sa8d_8x8;
+    p.cu[BLOCK_16x16].sa8d = sa8d_16x16;
+    p.cu[BLOCK_32x32].sa8d = sa8d16<32, 32>;
+    p.cu[BLOCK_64x64].sa8d = sa8d16<64, 64>;
+
+#define CHROMA_PU_420(W, H) \
+    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
+
+    CHROMA_PU_420(2, 2);
+    CHROMA_PU_420(2, 4);
+    CHROMA_PU_420(4, 4);
+    CHROMA_PU_420(8, 8);
+    CHROMA_PU_420(16, 16);
+    CHROMA_PU_420(32, 32);
+    CHROMA_PU_420(4, 2);
+    CHROMA_PU_420(8, 4);
+    CHROMA_PU_420(4, 8);
+    CHROMA_PU_420(8, 6);
+    CHROMA_PU_420(6, 8);
+    CHROMA_PU_420(8, 2);
+    CHROMA_PU_420(2, 8);
+    CHROMA_PU_420(16, 8);
+    CHROMA_PU_420(8,  16);
+    CHROMA_PU_420(16, 12);
+    CHROMA_PU_420(12, 16);
+    CHROMA_PU_420(16, 4);
+    CHROMA_PU_420(4,  16);
+    CHROMA_PU_420(32, 16);
+    CHROMA_PU_420(16, 32);
+    CHROMA_PU_420(32, 24);
+    CHROMA_PU_420(24, 32);
+    CHROMA_PU_420(32, 8);
+    CHROMA_PU_420(8,  32);
 
     p.chroma[X265_CSP_I420].pu[CHROMA_2x2].satd   = NULL;
     p.chroma[X265_CSP_I420].pu[CHROMA_4x4].satd   = satd_4x4;
@@ -1074,6 +1130,55 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].pu[CHROMA_32x8].satd  = satd8<32, 8>;
     p.chroma[X265_CSP_I420].pu[CHROMA_8x32].satd  = satd8<8, 32>;
 
+#define CHROMA_CU_420(W, H) \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].sse_pp  = sse<W, H, pixel, pixel>; \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_sp = blockcopy_sp_c<W, H>; \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>; \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>;  \
+    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
+
+    CHROMA_CU_420(2, 2)
+    CHROMA_CU_420(4, 4)
+    CHROMA_CU_420(8, 8)
+    CHROMA_CU_420(16, 16)
+    CHROMA_CU_420(32, 32)
+
+    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d   = p.chroma[X265_CSP_I420].pu[CHROMA_4x4].satd;
+    p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = sa8d8<8, 8>;
+    p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = sa8d16<16, 16>;
+    p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = sa8d16<32, 32>;
+
+#define CHROMA_PU_422(W, H) \
+    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
+
+    CHROMA_PU_422(2, 4);
+    CHROMA_PU_422(4, 8);
+    CHROMA_PU_422(8, 16);
+    CHROMA_PU_422(16, 32);
+    CHROMA_PU_422(32, 64);
+    CHROMA_PU_422(4, 4);
+    CHROMA_PU_422(2, 8);
+    CHROMA_PU_422(8, 8);
+    CHROMA_PU_422(4, 16);
+    CHROMA_PU_422(8, 12);
+    CHROMA_PU_422(6, 16);
+    CHROMA_PU_422(8, 4);
+    CHROMA_PU_422(2, 16);
+    CHROMA_PU_422(16, 16);
+    CHROMA_PU_422(8, 32);
+    CHROMA_PU_422(16, 24);
+    CHROMA_PU_422(12, 32);
+    CHROMA_PU_422(16, 8);
+    CHROMA_PU_422(4,  32);
+    CHROMA_PU_422(32, 32);
+    CHROMA_PU_422(16, 64);
+    CHROMA_PU_422(32, 48);
+    CHROMA_PU_422(24, 64);
+    CHROMA_PU_422(32, 16);
+    CHROMA_PU_422(8,  64);
+
     p.chroma[X265_CSP_I422].pu[CHROMA422_2x4].satd   = NULL;
     p.chroma[X265_CSP_I422].pu[CHROMA422_4x8].satd   = satd4<4, 8>;
     p.chroma[X265_CSP_I422].pu[CHROMA422_8x16].satd  = satd8<8, 16>;
@@ -1102,241 +1207,24 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].pu[CHROMA422_32x16].satd = satd8<32, 16>;
     p.chroma[X265_CSP_I422].pu[CHROMA422_8x64].satd  = satd8<8, 64>;
 
-#define CHROMA_420(W, H) \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
-
-#define CHROMA_422(W, H) \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
-
-#define CHROMA_444(W, H) \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].satd    = p.pu[LUMA_ ## W ## x ## H].satd; \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].addAvg  = addAvg<W, H>; \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
-
-#define CHROMA_420_BLOCK(W, H) \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_sp = blockcopy_sp_c<W, H>; \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>;
-
-#define CHROMA_422_BLOCK(W, H) \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].copy_sp = blockcopy_sp_c<W, H>; \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>;
-
-#define CHROMA_444_BLOCK(W, H) \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].copy_sp = blockcopy_sp_c<W, H>; \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>;
-
-#define LUMA(W, H) \
-    p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].luma_copy_pp = blockcopy_pp_c<W, H>; \
-
-#define LUMA_CU(W, H) \
-    p.cu[BLOCK_ ## W ## x ## H].luma_sub_ps = pixel_sub_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_add_ps = pixel_add_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_sp = blockcopy_sp_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ps = blockcopy_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].luma_copy_ss = blockcopy_ss_c<W, H>;
-
-#define CHROMA_PIXELSUB_420(W, H) \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>;  \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
-
-#define CHROMA_PIXELSUB_422(W, H) \
+#define CHROMA_CU_422(W, H) \
+    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].sse_pp  = sse<W, H, pixel, pixel>; \
+    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].copy_sp = blockcopy_sp_c<W, H>; \
+    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
+    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>; \
     p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
 
-#define CHROMA_PIXELSUB_444(W, H) \
-    p.chroma[X265_CSP_I444].cu[LUMA_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I444].cu[LUMA_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
+    CHROMA_CU_422(2, 4)
+    CHROMA_CU_422(4, 8)
+    CHROMA_CU_422(8, 16)
+    CHROMA_CU_422(16, 32)
+    CHROMA_CU_422(32, 64)
 
-    LUMA(4, 4);
-    LUMA(8, 8);
-    CHROMA_420(4, 4);
-    LUMA(4, 8);
-    CHROMA_420(2, 4);
-    LUMA(8, 4);
-    CHROMA_420(4, 2);
-    LUMA(16, 16);
-    CHROMA_420(8,  8);
-    LUMA(16,  8);
-    CHROMA_420(8,  4);
-    LUMA(8, 16);
-    CHROMA_420(4,  8);
-    LUMA(16, 12);
-    CHROMA_420(8,  6);
-    LUMA(12, 16);
-    CHROMA_420(6,  8);
-    LUMA(16,  4);
-    CHROMA_420(8,  2);
-    LUMA(4, 16);
-    CHROMA_420(2,  8);
-    LUMA(32, 32);
-    CHROMA_420(16, 16);
-    LUMA(32, 16);
-    CHROMA_420(16, 8);
-    LUMA(16, 32);
-    CHROMA_420(8,  16);
-    LUMA(32, 24);
-    CHROMA_420(16, 12);
-    LUMA(24, 32);
-    CHROMA_420(12, 16);
-    LUMA(32,  8);
-    CHROMA_420(16, 4);
-    LUMA(8, 32);
-    CHROMA_420(4,  16);
-    LUMA(64, 64);
-    CHROMA_420(32, 32);
-    LUMA(64, 32);
-    CHROMA_420(32, 16);
-    LUMA(32, 64);
-    CHROMA_420(16, 32);
-    LUMA(64, 48);
-    CHROMA_420(32, 24);
-    LUMA(48, 64);
-    CHROMA_420(24, 32);
-    LUMA(64, 16);
-    CHROMA_420(32, 8);
-    LUMA(16, 64);
-    CHROMA_420(8,  32);
-
-    LUMA_CU(4, 4);
-    LUMA_CU(8, 8);
-    LUMA_CU(16, 16);
-    LUMA_CU(32, 32);
-    LUMA_CU(64, 64);
-
-    CHROMA_PIXELSUB_420(4, 4)
-    CHROMA_PIXELSUB_420(8, 8)
-    CHROMA_PIXELSUB_420(16, 16)
-    CHROMA_PIXELSUB_420(32, 32)
-    CHROMA_PIXELSUB_422(4, 8)
-    CHROMA_PIXELSUB_422(8, 16)
-    CHROMA_PIXELSUB_422(16, 32)
-    CHROMA_PIXELSUB_422(32, 64)
-    CHROMA_PIXELSUB_444(8, 8)
-    CHROMA_PIXELSUB_444(16, 16)
-    CHROMA_PIXELSUB_444(32, 32)
-    CHROMA_PIXELSUB_444(64, 64)
-
-    CHROMA_422(4, 8);
-    CHROMA_422(4, 4);
-    CHROMA_422(2, 8);
-    CHROMA_422(8,  16);
-    CHROMA_422(8,  8);
-    CHROMA_422(4,  16);
-    CHROMA_422(8,  12);
-    CHROMA_422(6,  16);
-    CHROMA_422(8,  4);
-    CHROMA_422(2,  16);
-    CHROMA_422(16, 32);
-    CHROMA_422(16, 16);
-    CHROMA_422(8,  32);
-    CHROMA_422(16, 24);
-    CHROMA_422(12, 32);
-    CHROMA_422(16, 8);
-    CHROMA_422(4,  32);
-    CHROMA_422(32, 64);
-    CHROMA_422(32, 32);
-    CHROMA_422(16, 64);
-    CHROMA_422(32, 48);
-    CHROMA_422(24, 64);
-    CHROMA_422(32, 16);
-    CHROMA_422(8,  64);
-
-    CHROMA_444(4,  4);
-    CHROMA_444(8,  8);
-    CHROMA_444(4,  8);
-    CHROMA_444(8,  4);
-    CHROMA_444(16, 16);
-    CHROMA_444(16, 8);
-    CHROMA_444(8,  16);
-    CHROMA_444(16, 12);
-    CHROMA_444(12, 16);
-    CHROMA_444(16, 4);
-    CHROMA_444(4,  16);
-    CHROMA_444(32, 32);
-    CHROMA_444(32, 16);
-    CHROMA_444(16, 32);
-    CHROMA_444(32, 24);
-    CHROMA_444(24, 32);
-    CHROMA_444(32, 8);
-    CHROMA_444(8,  32);
-    CHROMA_444(64, 64);
-    CHROMA_444(64, 32);
-    CHROMA_444(32, 64);
-    CHROMA_444(64, 48);
-    CHROMA_444(48, 64);
-    CHROMA_444(64, 16);
-    CHROMA_444(16, 64);
-
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_pp, sse, pixel, pixel)
-    SET_FUNC_PRIMITIVE_TABLE_C(sse_ss, sse, int16_t, int16_t)
-
-    p.cu[BLOCK_4x4].blockfill_s   = blockfil_s_c<4>;
-    p.cu[BLOCK_8x8].blockfill_s   = blockfil_s_c<8>;
-    p.cu[BLOCK_16x16].blockfill_s = blockfil_s_c<16>;
-    p.cu[BLOCK_32x32].blockfill_s = blockfil_s_c<32>;
-    p.cu[BLOCK_64x64].blockfill_s = blockfil_s_c<64>;
-
-    p.cu[BLOCK_4x4].cpy2Dto1D_shl   = cpy2Dto1D_shl<4>;
-    p.cu[BLOCK_8x8].cpy2Dto1D_shl   = cpy2Dto1D_shl<8>;
-    p.cu[BLOCK_16x16].cpy2Dto1D_shl = cpy2Dto1D_shl<16>;
-    p.cu[BLOCK_32x32].cpy2Dto1D_shl = cpy2Dto1D_shl<32>;
-    p.cu[BLOCK_4x4].cpy2Dto1D_shr   = cpy2Dto1D_shr<4>;
-    p.cu[BLOCK_8x8].cpy2Dto1D_shr   = cpy2Dto1D_shr<8>;
-    p.cu[BLOCK_16x16].cpy2Dto1D_shr = cpy2Dto1D_shr<16>;
-    p.cu[BLOCK_32x32].cpy2Dto1D_shr = cpy2Dto1D_shr<32>;
-    p.cu[BLOCK_4x4].cpy1Dto2D_shl   = cpy1Dto2D_shl<4>;
-    p.cu[BLOCK_8x8].cpy1Dto2D_shl   = cpy1Dto2D_shl<8>;
-    p.cu[BLOCK_16x16].cpy1Dto2D_shl = cpy1Dto2D_shl<16>;
-    p.cu[BLOCK_32x32].cpy1Dto2D_shl = cpy1Dto2D_shl<32>;
-    p.cu[BLOCK_4x4].cpy1Dto2D_shr   = cpy1Dto2D_shr<4>;
-    p.cu[BLOCK_8x8].cpy1Dto2D_shr   = cpy1Dto2D_shr<8>;
-    p.cu[BLOCK_16x16].cpy1Dto2D_shr = cpy1Dto2D_shr<16>;
-    p.cu[BLOCK_32x32].cpy1Dto2D_shr = cpy1Dto2D_shr<32>;
-
-    p.cu[BLOCK_4x4].sa8d   = satd_4x4;
-    p.cu[BLOCK_8x8].sa8d   = sa8d_8x8;
-    p.cu[BLOCK_16x16].sa8d = sa8d_16x16;
-    p.cu[BLOCK_32x32].sa8d = sa8d16<32, 32>;
-    p.cu[BLOCK_64x64].sa8d = sa8d16<64, 64>;
-
+    p.chroma[X265_CSP_I422].cu[BLOCK_8x8].sa8d   = p.chroma[X265_CSP_I422].pu[CHROMA422_4x8].satd;
     p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sa8d = sa8d8<8, 16>;
     p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sa8d = sa8d16<16, 32>;
     p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sa8d = sa8d16<32, 64>;
-
-    p.cu[BLOCK_4x4].psy_cost_pp   = psyCost_pp<BLOCK_4x4>;
-    p.cu[BLOCK_8x8].psy_cost_pp   = psyCost_pp<BLOCK_8x8>;
-    p.cu[BLOCK_16x16].psy_cost_pp = psyCost_pp<BLOCK_16x16>;
-    p.cu[BLOCK_32x32].psy_cost_pp = psyCost_pp<BLOCK_32x32>;
-    p.cu[BLOCK_64x64].psy_cost_pp = psyCost_pp<BLOCK_64x64>;
-
-    p.cu[BLOCK_4x4].psy_cost_ss   = psyCost_ss<BLOCK_4x4>;
-    p.cu[BLOCK_8x8].psy_cost_ss   = psyCost_ss<BLOCK_8x8>;
-    p.cu[BLOCK_16x16].psy_cost_ss = psyCost_ss<BLOCK_16x16>;
-    p.cu[BLOCK_32x32].psy_cost_ss = psyCost_ss<BLOCK_32x32>;
-    p.cu[BLOCK_64x64].psy_cost_ss = psyCost_ss<BLOCK_64x64>;
-
-    p.cu[BLOCK_4x4].calcresidual   = getResidual<4>;
-    p.cu[BLOCK_8x8].calcresidual   = getResidual<8>;
-    p.cu[BLOCK_16x16].calcresidual = getResidual<16>;
-    p.cu[BLOCK_32x32].calcresidual = getResidual<32>;
-    p.cu[BLOCK_64x64].calcresidual = NULL;
-
-    p.cu[BLOCK_4x4].transpose   = transpose<4>;
-    p.cu[BLOCK_8x8].transpose   = transpose<8>;
-    p.cu[BLOCK_16x16].transpose = transpose<16>;
-    p.cu[BLOCK_32x32].transpose = transpose<32>;
-    p.cu[BLOCK_64x64].transpose = transpose<64>;
-
-    p.cu[BLOCK_4x4].ssd_s   = pixel_ssd_s_c<4>;
-    p.cu[BLOCK_8x8].ssd_s   = pixel_ssd_s_c<8>;
-    p.cu[BLOCK_16x16].ssd_s = pixel_ssd_s_c<16>;
-    p.cu[BLOCK_32x32].ssd_s = pixel_ssd_s_c<32>;
 
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;
@@ -1347,10 +1235,6 @@ void Setup_C_PixelPrimitives(EncoderPrimitives &p)
     p.ssim_4x4x2_core = ssim_4x4x2_core;
     p.ssim_end_4 = ssim_end_4;
 
-    p.cu[BLOCK_8x8].var   = pixel_var<8>;
-    p.cu[BLOCK_16x16].var = pixel_var<16>;
-    p.cu[BLOCK_32x32].var = pixel_var<32>;
-    p.cu[BLOCK_64x64].var = pixel_var<64>;
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.propagateCost = estimateCUPropagateCost;
