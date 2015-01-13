@@ -35,6 +35,7 @@ using namespace x265;
 #if _MSC_VER
 #pragma warning(disable: 4800) // 'uint8_t' : forcing value to bool 'true' or 'false' (performance warning)
 #pragma warning(disable: 4244) // '=' : conversion from 'int' to 'uint8_t', possible loss of data)
+#pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
 #define MVP_IDX_BITS 1
