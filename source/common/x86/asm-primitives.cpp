@@ -161,9 +161,9 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.cu[BLOCK_8x8].sse_pp   = x265_pixel_ssd_8x8_ ## cpu; \
     p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_ ## cpu; \
     p.cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_32x32_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_16x32_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_8x16_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_32x64_ ## cpu;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp = x265_pixel_ssd_8x16_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = x265_pixel_ssd_16x32_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = x265_pixel_ssd_32x64_ ## cpu;
 
 #define ASSGN_SSE_SS(cpu) \
     p.cu[BLOCK_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_ ## cpu; \
@@ -177,9 +177,9 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.cu[BLOCK_16x16].sa8d = x265_pixel_sa8d_16x16_ ## cpu; \
     p.cu[BLOCK_32x32].sa8d = x265_pixel_sa8d_32x32_ ## cpu; \
     p.cu[BLOCK_64x64].sa8d = x265_pixel_sa8d_64x64_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_16x16].sa8d = x265_pixel_sa8d_8x16_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_32x32].sa8d = x265_pixel_sa8d_16x32_ ## cpu; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_64x64].sa8d = x265_pixel_sa8d_32x64_ ## cpu;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sa8d = x265_pixel_sa8d_8x16_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sa8d = x265_pixel_sa8d_16x32_ ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sa8d = x265_pixel_sa8d_32x64_ ## cpu;
 
 #define PIXEL_AVG(cpu) \
     p.pu[LUMA_64x64].pixelavg_pp = x265_pixel_avg_64x64_ ## cpu; \
@@ -548,7 +548,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_CHROMA_BLOCKCOPY(type, 32, 32, cpu);
 
 #define SETUP_CHROMA_CU_BLOCKCOPY(type, W, H, cpu) \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].copy_ ## type = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].copy_ ## type = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
 
 #define CHROMA_CU_BLOCKCOPY(type, cpu) \
     SETUP_CHROMA_CU_BLOCKCOPY(type, 4,  4,  cpu); \
@@ -586,7 +586,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_CHROMA_BLOCKCOPY_422(type, 32, 64, cpu);
 
 #define SETUP_CHROMA_CU_BLOCKCOPY_422(type, W, H, cpu) \
-    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].copy_ ## type = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].copy_ ## type = x265_blockcopy_ ## type ## _ ## W ## x ## H ## cpu;
 
 #define CHROMA_CU_BLOCKCOPY_422(type, cpu) \
     SETUP_CHROMA_CU_BLOCKCOPY_422(type, 4,  8,  cpu); \
@@ -635,8 +635,8 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_LUMA_CU_BLOCKCOPY(type, 64, 64, cpu); \
 
 #define SETUP_CHROMA_PIXELSUB(W, H, cpu) \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
-    p.chroma[X265_CSP_I420].cu[CHROMA_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
 
 #define CHROMA_PIXELSUB_PS(cpu) \
     SETUP_CHROMA_PIXELSUB(4,  4,  cpu); \
@@ -645,8 +645,8 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     SETUP_CHROMA_PIXELSUB(32, 32, cpu);
 
 #define SETUP_CHROMA_PIXELSUB_422(W, H, cpu) \
-    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
-    p.chroma[X265_CSP_I422].cu[CHROMA422_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
 
 #define CHROMA_PIXELSUB_PS_422(cpu) \
     SETUP_CHROMA_PIXELSUB_422(4,  8,  cpu); \
@@ -1353,7 +1353,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     }
 
     /* at HIGH_BIT_DEPTH, pixel == short so we can reuse a number of primitives */
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
         p.cu[i].sse_ss  = (pixelcmp_ss_t)p.cu[i].sse_pp;
         p.cu[i].copy_ps = (copy_ps_t)p.pu[i].copy_pp;

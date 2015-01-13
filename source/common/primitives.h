@@ -36,9 +36,9 @@
 namespace x265 {
 // x265 private namespace
 
-enum LumaPartitions
+enum LumaPU
 {
-    // Square
+    // Square (the first 5 PUs match the CU sizes)
     LUMA_4x4,   LUMA_8x8,   LUMA_16x16, LUMA_32x32, LUMA_64x64,
     // Rectangular
     LUMA_8x4,   LUMA_4x8,
@@ -49,13 +49,24 @@ enum LumaPartitions
     LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
     LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
     LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
-    NUM_LUMA_PARTITIONS
+    NUM_PU_SIZES
 };
 
-// 4:2:0 chroma partition sizes. These enums are just a convenience for indexing into the
-// chroma primitive arrays when instantiating templates. The function tables should always
-// be indexed by the luma partition enum
-enum Chroma420Partitions
+enum LumaCU // can be indexed using log2n(width)-2
+{
+    BLOCK_4x4,
+    BLOCK_8x8,
+    BLOCK_16x16,
+    BLOCK_32x32,
+    BLOCK_64x64,
+    NUM_CU_SIZES
+};
+
+
+// Chroma partition sizes. These enums are just a convenience for indexing into the
+// chroma primitive arrays when instantiating templates. The chroma function tables should
+// always be indexed by the luma PU enum
+enum ChromaPU420
 {
     CHROMA_2x2,   CHROMA_4x4,   CHROMA_8x8,   CHROMA_16x16, CHROMA_32x32,
     CHROMA_4x2,   CHROMA_2x4,
@@ -65,10 +76,18 @@ enum Chroma420Partitions
     CHROMA_8x6,   CHROMA_6x8,   CHROMA_8x2,  CHROMA_2x8,
     CHROMA_16x12, CHROMA_12x16, CHROMA_16x4, CHROMA_4x16,
     CHROMA_32x24, CHROMA_24x32, CHROMA_32x8, CHROMA_8x32,
-    NUM_CHROMA_PARTITIONS
 };
 
-enum Chroma422Partitions
+enum ChromaCU420
+{
+    BLOCK_420_2x2,
+    BLOCK_420_4x4,
+    BLOCK_420_8x8,
+    BLOCK_420_16x16,
+    BLOCK_420_32x32
+};
+
+enum ChromaPU422
 {
     CHROMA422_2x4,   CHROMA422_4x8,   CHROMA422_8x16,  CHROMA422_16x32, CHROMA422_32x64,
     CHROMA422_4x4,   CHROMA422_2x8,
@@ -78,17 +97,15 @@ enum Chroma422Partitions
     CHROMA422_8x12,  CHROMA422_6x16,  CHROMA422_8x4,   CHROMA422_2x16,
     CHROMA422_16x24, CHROMA422_12x32, CHROMA422_16x8,  CHROMA422_4x32,
     CHROMA422_32x48, CHROMA422_24x64, CHROMA422_32x16, CHROMA422_8x64,
-    NUM_CHROMA_PARTITIONS422
 };
 
-enum SquareBlocks   // Routines can be indexed using log2n(width)-2
+enum ChromaCU422
 {
-    BLOCK_4x4,
-    BLOCK_8x8,
-    BLOCK_16x16,
-    BLOCK_32x32,
-    BLOCK_64x64,
-    NUM_SQUARE_BLOCKS
+    BLOCK_422_2x4,
+    BLOCK_422_4x8,
+    BLOCK_422_8x16,
+    BLOCK_422_16x32,
+    BLOCK_422_32x64
 };
 
 enum { NUM_TR_SIZE = 4 };
@@ -203,7 +220,7 @@ struct EncoderPrimitives
 
         copy_pp_t      copy_pp;
     }
-    pu[NUM_LUMA_PARTITIONS];
+    pu[NUM_PU_SIZES];
 
     struct CU
     {
@@ -235,7 +252,7 @@ struct EncoderPrimitives
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two blocks
         pixelcmp_ss_t   psy_cost_ss;
     }
-    cu[NUM_SQUARE_BLOCKS];
+    cu[NUM_CU_SIZES];
 
     dct_t                 dst4x4;
     idct_t                idst4x4;
@@ -288,7 +305,7 @@ struct EncoderPrimitives
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
         }
-        pu[NUM_LUMA_PARTITIONS];
+        pu[NUM_PU_SIZES];
 
         struct CUChroma
         {
@@ -302,7 +319,7 @@ struct EncoderPrimitives
             copy_ss_t      copy_ss;
             copy_pp_t      copy_pp;
         }
-        cu[NUM_SQUARE_BLOCKS];
+        cu[NUM_CU_SIZES];
 
         filter_p2s_t p2s;
     }

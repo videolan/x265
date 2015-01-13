@@ -34,7 +34,7 @@
 
 using namespace x265;
 
-const char* lumaPartStr[NUM_LUMA_PARTITIONS] =
+const char* lumaPartStr[NUM_PU_SIZES] =
 {
     "  4x4", "  8x8", "16x16", "32x32", "64x64",
     "  8x4", "  4x8",
@@ -46,7 +46,7 @@ const char* lumaPartStr[NUM_LUMA_PARTITIONS] =
     "64x48", "48x64", "64x16", "16x64",
 };
 
-const char* chromaPartStr420[NUM_CHROMA_PARTITIONS] =
+const char* chromaPartStr420[NUM_PU_SIZES] =
 {
     "  2x2", "  4x4", "  8x8", "16x16", "32x32",
     "  4x2", "  2x4",
@@ -58,7 +58,7 @@ const char* chromaPartStr420[NUM_CHROMA_PARTITIONS] =
     "32x24", "24x32", " 32x8", " 8x32",
 };
 
-const char* chromaPartStr422[NUM_CHROMA_PARTITIONS] =
+const char* chromaPartStr422[NUM_PU_SIZES] =
 {
     "  2x4", "  4x8", " 8x16", "16x32", "32x64",
     "  4x4", "  2x8",

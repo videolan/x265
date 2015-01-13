@@ -524,7 +524,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
         }
     }
 
-    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    for (int value = 0; value < NUM_PU_SIZES; value++)
     {
         if (opt.pu[value].luma_hpp)
         {
@@ -594,7 +594,7 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
-        for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
+        for (int value = 0; value < NUM_PU_SIZES; value++)
         {
             if (opt.chroma[csp].pu[value].filter_hpp)
             {
@@ -665,7 +665,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                        pixel_buff, srcStride, IPF_vec_output_s, width, height);
     }
 
-    for (int value = 0; value < NUM_LUMA_PARTITIONS; value++)
+    for (int value = 0; value < NUM_PU_SIZES; value++)
     {
         if (opt.pu[value].luma_hpp)
         {
@@ -731,7 +731,7 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.chroma[csp].p2s, ref.chroma[csp].p2s,
                            pixel_buff, srcStride, IPF_vec_output_s, width, height);
         }
-        for (int value = 0; value < NUM_CHROMA_PARTITIONS; value++)
+        for (int value = 0; value < NUM_PU_SIZES; value++)
         {
             if (opt.chroma[csp].pu[value].filter_hpp)
             {

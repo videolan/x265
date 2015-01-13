@@ -56,7 +56,7 @@ const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
     { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
 };
 
-int sizeScale[NUM_LUMA_PARTITIONS];
+int sizeScale[NUM_PU_SIZES];
 #define SAD_THRESH(v) (bcost < (((v >> 4) * sizeScale[partEnum])))
 
 void initScales(void)

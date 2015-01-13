@@ -1185,7 +1185,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
         }
     }
 
-    if (part < NUM_SQUARE_BLOCKS)
+    if (part < NUM_CU_SIZES)
     {
         if (opt.cu[part].sse_pp)
         {
@@ -1269,7 +1269,7 @@ bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const E
                 return false;
             }
         }
-        if (part < NUM_SQUARE_BLOCKS)
+        if (part < NUM_CU_SIZES)
         {
             if (opt.chroma[i].cu[part].sub_ps)
             {
@@ -1346,7 +1346,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
         if (opt.cu[i].calcresidual)
         {
@@ -1651,7 +1651,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].addAvg, ref.pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
 
-    if (part < NUM_SQUARE_BLOCKS)
+    if (part < NUM_CU_SIZES)
     {
         if (opt.cu[part].sse_pp)
         {
@@ -1703,7 +1703,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg, ref.chroma[i].pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
-        if (part < NUM_SQUARE_BLOCKS)
+        if (part < NUM_CU_SIZES)
         {
             if (opt.chroma[i].cu[part].copy_ss)
             {
@@ -1770,7 +1770,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
         if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s)
         {

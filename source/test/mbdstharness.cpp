@@ -360,7 +360,7 @@ bool MBDstHarness::check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t op
 
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
         if (opt.cu[i].dct)
         {
@@ -372,7 +372,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
         if (opt.cu[i].idct)
         {
@@ -470,7 +470,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
 void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 0; value < NUM_SQUARE_BLOCKS; value++)
+    for (int value = 0; value < NUM_CU_SIZES; value++)
     {
         if (opt.cu[value].dct)
         {
@@ -479,7 +479,7 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    for (int value = 0; value < NUM_SQUARE_BLOCKS; value++)
+    for (int value = 0; value < NUM_CU_SIZES; value++)
     {
         if (opt.cu[value].idct)
         {
