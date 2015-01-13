@@ -71,6 +71,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     /* alias chroma 4:4:4 from luma primitives (all but chroma filters) */
 
     p.chroma[X265_CSP_I444].p2s = p.luma_p2s;
+    p.chroma[X265_CSP_I444].cu[BLOCK_4x4].sa8d = NULL;
 
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
