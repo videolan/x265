@@ -111,15 +111,6 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].copy_ss;
     }
 
-    /* alias CU copy_pp from square PU copy_pp */
-    for (int i = 0; i < NUM_CU_SIZES; i++)
-    {
-        p.cu[i].copy_pp = p.pu[i].copy_pp;
-
-        for (int c = 0; c < X265_CSP_COUNT; c++)
-            p.chroma[c].cu[i].copy_pp = p.chroma[c].pu[i].copy_pp;
-    }
-
     p.cu[BLOCK_4x4].sa8d = p.pu[LUMA_4x4].satd;
 
     /* Chroma PU can often use luma satd primitives */
@@ -168,21 +159,31 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].pu[CHROMA422_32x16].satd = p.pu[LUMA_32x16].satd;
     //p.chroma[X265_CSP_I422].satd[CHROMA422_8x64]  = satd8<8, 64>;
 
-    p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sa8d = NULL;
-    p.chroma[X265_CSP_I422].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x8].satd;
-    p.chroma[X265_CSP_I422].cu[BLOCK_4x4].sse_pp = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_2x2].sa8d = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sa8d = p.pu[LUMA_4x4].satd;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sa8d = p.cu[BLOCK_8x8].sa8d;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sa8d = p.cu[BLOCK_16x16].sa8d;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sa8d = p.cu[BLOCK_32x32].sa8d;
 
-    p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sa8d = NULL;
-    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sa8d = p.pu[LUMA_4x4].satd;
-    p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sa8d = p.cu[BLOCK_8x8].sa8d;
-    p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sa8d = p.cu[BLOCK_16x16].sa8d;
-    p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = p.cu[BLOCK_32x32].sa8d;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sa8d = NULL;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sa8d = p.pu[LUMA_4x8].satd;
 
-    p.chroma[X265_CSP_I420].cu[BLOCK_4x4].sse_pp = NULL;
-    p.chroma[X265_CSP_I420].cu[BLOCK_8x8].sse_pp = p.cu[BLOCK_4x4].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_16x16].sse_pp = p.cu[BLOCK_8x8].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_32x32].sse_pp = p.cu[BLOCK_16x16].sse_pp;
-    p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sse_pp = p.cu[BLOCK_32x32].sse_pp;
+    /* alias CU copy_pp from square PU copy_pp */
+    for (int i = 0; i < NUM_CU_SIZES; i++)
+    {
+        p.cu[i].copy_pp = p.pu[i].copy_pp;
+
+        for (int c = 0; c < X265_CSP_I444; c++)
+            p.chroma[c].cu[i].copy_pp = p.chroma[c].pu[i].copy_pp;
+    }
+
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_2x2].sse_pp = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sse_pp = p.cu[BLOCK_4x4].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sse_pp = p.cu[BLOCK_8x8].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = p.cu[BLOCK_16x16].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = p.cu[BLOCK_32x32].sse_pp;
+
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
 }
 using namespace x265;
