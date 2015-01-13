@@ -53,7 +53,6 @@ public:
     x265_param*         m_param;
     MotionEstimate      m_me;
     Lock                m_lock;
-    pixel*              m_predictions;    // buffer for 35 intra predictions
 
     volatile uint32_t   m_completed;      // Number of CUs in this row for which cost estimation is completed
     volatile bool       m_active;
@@ -74,14 +73,8 @@ public:
     {
         m_me.setQP(X265_LOOKAHEAD_QP);
         m_me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
-        m_predictions = X265_MALLOC(pixel, 35 * 8 * 8);
         m_merange = 16;
         m_lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
-    }
-
-    ~EstimateRow()
-    {
-        X265_FREE(m_predictions);
     }
 
     void init();

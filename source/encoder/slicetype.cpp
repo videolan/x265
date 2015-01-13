@@ -1665,20 +1665,22 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             COPY2_IF_LT(bcost, bicost, listused, 3);
         }
     }
+
     if (!fenc->bIntraCalculated)
     {
+        ALIGN_VAR_32(pixel, prediction[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
+        pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
         const int sizeIdx = X265_LOWRES_CU_BITS - 2; // partition size
         const int cuSize2 = cuSize << 1;
-        pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
 
-        pixel *pix_cur = fenc->lowresPlane[0] + pelOffset;
+        pixel *pixCur = fenc->lowresPlane[0] + pelOffset;
 
         // Copy Above
-        memcpy(neighbours[0], pix_cur - 1 - fenc->lumaStride, (cuSize + 1) * sizeof(pixel));
+        memcpy(neighbours[0], pixCur - 1 - fenc->lumaStride, (cuSize + 1) * sizeof(pixel));
 
         // Copy Left
         for (int i = 1; i < cuSize + 1; i++)
-            neighbours[0][i + cuSize2] = pix_cur[-1 - fenc->lumaStride + i * fenc->lumaStride];
+            neighbours[0][i + cuSize2] = pixCur[-1 - fenc->lumaStride + i * fenc->lumaStride];
 
         for (int i = 0; i < cuSize; i++)
         {
@@ -1701,110 +1703,49 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             neighbours[1][cuSize2 + i] = (neighbours[0][cuSize2 + i - 1] + (neighbours[0][cuSize2 + i] << 1) + neighbours[0][cuSize2 + i + 1] + 2) >> 2;
         }
 
-        int predsize = cuSize * cuSize;
-
-        // generate 35 intra predictions into m_predictions
-        pixelcmp_t satd = primitives.pu[partitionFromLog2Size(X265_LOWRES_CU_BITS)].satd;
-        int icost = m_me.COST_MAX;
-//        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
-        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, neighbours[0], 0, (cuSize <= 16));
-        int cost = m_me.bufSATD(m_predictions, cuSize);
-        if (cost < icost)
-            icost = cost;
+        int icost = m_me.COST_MAX, ilowmode;
+        primitives.intra_pred[DC_IDX][sizeIdx](prediction, cuSize, neighbours[0], 0, (cuSize <= 16));
+        int cost = m_me.bufSATD(prediction, cuSize);
+        COPY2_IF_LT(icost, cost, ilowmode, DC_IDX);
 
         pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
-        primitives.intra_pred[PLANAR_IDX][sizeIdx](m_predictions, cuSize, planar, 0, 0);
-        cost = m_me.bufSATD(m_predictions, cuSize);
-        if (cost < icost)
-            icost = cost;
+        primitives.intra_pred[PLANAR_IDX][sizeIdx](prediction, cuSize, planar, 0, 0);
+        cost = m_me.bufSATD(prediction, cuSize);
+        COPY2_IF_LT(icost, cost, ilowmode, PLANAR_IDX);
 
         uint32_t mode, lowmode = 4;
-        if (primitives.intra_pred_allangs[sizeIdx])
+        int acost = m_me.COST_MAX, filter;
+        for (mode = 5; mode < 35; mode += 5)
         {
-            ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
-
-//            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
-            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, neighbours[0], neighbours[1], (cuSize <= 16));
-            primitives.cu[sizeIdx].transpose(buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
-
-            int acost = m_me.COST_MAX;
-            for (mode = 5; mode < 35; mode += 5)
-            {
-                if (mode < 18)
-                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
-            }
-            for (uint32_t dist = 2; dist >= 1; dist--)
-            {
-                int minusmode = lowmode - dist;
-                int plusmode = lowmode + dist;
-
-                mode = minusmode;
-                if (mode < 18)
-                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
-
-                mode = plusmode;
-                if (mode < 18)
-                    cost = satd(buf_trans, cuSize, &m_predictions[mode * predsize], cuSize);
-                else
-                    cost = m_me.bufSATD(&m_predictions[mode * predsize], cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
-            }
-            if (acost < icost)
-                icost = acost;
+            filter = !!(g_intraFilterFlags[mode] & cuSize);
+            primitives.intra_pred[mode][sizeIdx](prediction, cuSize, neighbours[filter], mode, cuSize <= 16);
+            cost = m_me.bufSATD(prediction, cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
         }
-        else
+        for (uint32_t dist = 2; dist >= 1; dist--)
         {
-            int acost = m_me.COST_MAX;
-            for (mode = 5; mode < 35; mode += 5)
-            {
-                if (g_intraFilterFlags[mode] & cuSize)
-//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
-                else
-//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
-                cost = m_me.bufSATD(m_predictions, cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
-            }
-            for (uint32_t dist = 2; dist >= 1; dist--)
-            {
-                int minusmode = lowmode - dist;
-                int plusmode = lowmode + dist;
+            int minusmode = lowmode - dist;
+            int plusmode = lowmode + dist;
 
-                mode = minusmode;
-                if (g_intraFilterFlags[mode] & cuSize)
-//                   primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
-                else
-//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
-                cost = m_me.bufSATD(m_predictions, cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
+            mode = minusmode;
+            filter = !!(g_intraFilterFlags[mode] & cuSize);
+            primitives.intra_pred[mode][sizeIdx](prediction, cuSize, neighbours[filter], mode, cuSize <= 16);
+            cost = m_me.bufSATD(prediction, cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
 
-                mode = plusmode;
-                if (g_intraFilterFlags[mode] & cuSize)
-//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
-                else
-//                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
-                cost = m_me.bufSATD(m_predictions, cuSize);
-                COPY2_IF_LT(acost, cost, lowmode, mode);
-            }
-            if (acost < icost)
-                icost = acost;
+            mode = plusmode;
+            filter = !!(g_intraFilterFlags[mode] & cuSize);
+            primitives.intra_pred[mode][sizeIdx](prediction, cuSize, neighbours[filter], mode, cuSize <= 16);
+            cost = m_me.bufSATD(prediction, cuSize);
+            COPY2_IF_LT(acost, cost, lowmode, mode);
         }
+        COPY2_IF_LT(icost, acost, ilowmode, lowmode);
 
         const int intraPenalty = 5 * m_lookAheadLambda;
         icost += intraPenalty + lowresPenalty; /* estimate intra signal cost */
         fenc->intraCost[cuXY] = icost;
-        fenc->intraMode[cuXY] = (uint8_t)lowmode;
+        fenc->intraMode[cuXY] = (uint8_t)ilowmode;
+
         int icostAq = icost;
         if (bFrameScoreCU)
         {
