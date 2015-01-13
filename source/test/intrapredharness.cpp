@@ -180,57 +180,6 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_new_t ref[][NUM_
     return true;
 }
 
-bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[])
-{
-    int j = Predict::ADI_BUF_STRIDE;
-    int isLuma;
-
-#if _DEBUG
-    memset(pixel_out_33_vec, 0xCD, OUTPUT_SIZE_33);
-    memset(pixel_out_33_c, 0xCD, OUTPUT_SIZE_33);
-#endif
-
-    for (int size = 2; size <= 5; size++)
-    {
-        if (opt[size - 2] == NULL) continue;
-
-        const int width = (1 << size);
-
-        for (int i = 0; i <= 100; i++)
-        {
-            isLuma = (width <= 16) ? true : false;  // bFilter is true for 4x4, 8x8, 16x16 and false for 32x32
-
-            pixel * refAbove0 = pixel_buff + j;
-            pixel * refLeft0 = refAbove0 + 3 * width;
-
-            pixel * refAbove1 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0]
-            pixel * refLeft1 = refAbove1 + 3 * width + FENC_STRIDE;
-            refLeft0[0] = refAbove0[0] = refLeft1[0] = refAbove1[0];
-
-            ref[size - 2](pixel_out_33_c,   refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-            checked(opt[size - 2], pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-
-            for (int p = 2 - 2; p <= 34 - 2; p++)
-            {
-                for (int k = 0; k < width; k++)
-                {
-                    if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width * sizeof(pixel)))
-                    {
-                        printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p + 2, k, isLuma);
-                        opt[size - 2](pixel_out_33_vec, refAbove0, refLeft0, refAbove1, refLeft1, isLuma);
-                        return false;
-                    }
-                }
-            }
-
-            reportfail();
-            j += FENC_STRIDE;
-        }
-    }
-
-    return true;
-}
-
 bool IntraPredHarness::check_allangs_new_primitive(const intra_allangs_new_t ref[], const intra_allangs_new_t opt[])
 {
     int j = Predict::ADI_BUF_STRIDE;
@@ -317,15 +266,6 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
         return false;
     }
 
-    if (opt.intra_pred_allangs[0])
-    {
-        if (!check_allangs_primitive(ref.intra_pred_allangs, opt.intra_pred_allangs))
-        {
-            printf("intra_allangs failed\n");
-            return false;
-        }
-    }
-
     if (opt.intra_pred_allangs_new[0])
     {
         if (!check_allangs_new_primitive(ref.intra_pred_allangs_new, opt.intra_pred_allangs_new))
@@ -351,16 +291,6 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
             printf("intra_planar_new %2dx%d", size, size);
             REPORT_SPEEDUP(opt.intra_pred_new[0][i], ref.intra_pred_new[0][i],
                            pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
-        }
-        if (opt.intra_pred_allangs[i])
-        {
-            bool bFilter = (size <= 16);
-            pixel * refAbove = pixel_buff + srcStride;
-            pixel * refLeft = refAbove + 3 * size;
-            refLeft[0] = refAbove[0];
-            printf("intra_allangs%dx%d", size, size);
-            REPORT_SPEEDUP(opt.intra_pred_allangs[i], ref.intra_pred_allangs[i],
-                           pixel_out_33_vec, refAbove, refLeft, refAbove, refLeft, bFilter);
         }
         if (opt.intra_pred_allangs_new[i])
         {

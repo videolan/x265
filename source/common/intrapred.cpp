@@ -63,52 +63,6 @@ void intra_pred_dc_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*di
 }
 
 template<int log2Size>
-void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
-{
-    above += 1;
-    left  += 1;
-    int k, l;
-    pixel bottomLeft, topRight;
-    int horPred;
-    int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
-    // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
-    int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
-    const int blkSize = 1 << log2Size;
-    const int offset2D = blkSize;
-    const int shift1D = log2Size;
-    const int shift2D = shift1D + 1;
-
-    // Get left and above reference column and row
-    for (k = 0; k < blkSize + 1; k++)
-    {
-        topRow[k] = above[k];
-        leftColumn[k] = left[k];
-    }
-
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = (pixel)leftColumn[blkSize];
-    topRight   = (pixel)topRow[blkSize];
-    for (k = 0; k < blkSize; k++)
-    {
-        bottomRow[k]   = (int16_t)(bottomLeft - topRow[k]);
-        rightColumn[k] = (int16_t)(topRight   - leftColumn[k]);
-        topRow[k]      <<= shift1D;
-        leftColumn[k]  <<= shift1D;
-    }
-
-    // Generate prediction signal
-    for (k = 0; k < blkSize; k++)
-    {
-        horPred = leftColumn[k] + offset2D;
-        for (l = 0; l < blkSize; l++)
-        {
-            horPred += rightColumn[k];
-            topRow[l] += bottomRow[l];
-            dst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
-        }
-    }
-}
-template<int log2Size>
 void planar_pred_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
 {
     const int blkSize = 1 << log2Size;
@@ -329,37 +283,6 @@ void intra_pred_ang_c_new(pixel* dst, intptr_t dstStride, pixel *srcPix, int dir
 }
 
 template<int log2Size>
-void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
-{
-    const int size = 1 << log2Size;
-    for (int mode = 2; mode <= 34; mode++)
-    {
-        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
-        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
-        pixel *out = dest + ((mode - 2) << (log2Size * 2));
-
-        intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
-
-        // Optimize code don't flip buffer
-        bool modeHor = (mode < 18);
-
-        // transpose the block if this is a horizontal mode
-        if (modeHor)
-        {
-            for (int k = 0; k < size - 1; k++)
-            {
-                for (int l = k + 1; l < size; l++)
-                {
-                    pixel tmp         = out[k * size + l];
-                    out[k * size + l] = out[l * size + k];
-                    out[l * size + k] = tmp;
-                }
-            }
-        }
-    }
-}
-
-template<int log2Size>
 void all_angs_pred_c_new(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 {
     const int size = 1 << log2Size;
@@ -395,11 +318,6 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred[0][BLOCK_4x4] = planar_pred_c<2>;
-    p.intra_pred[0][BLOCK_8x8] = planar_pred_c<3>;
-    p.intra_pred[0][BLOCK_16x16] = planar_pred_c<4>;
-    p.intra_pred[0][BLOCK_32x32] = planar_pred_c<5>;
-
     p.intra_pred_new[0][BLOCK_4x4] = planar_pred_c_new<2>;
     p.intra_pred_new[0][BLOCK_8x8] = planar_pred_c_new<3>;
     p.intra_pred_new[0][BLOCK_16x16] = planar_pred_c_new<4>;
@@ -422,11 +340,6 @@ void Setup_C_IPredPrimitives(EncoderPrimitives& p)
         p.intra_pred_new[i][BLOCK_16x16] = intra_pred_ang_c_new<16>;
         p.intra_pred_new[i][BLOCK_32x32] = intra_pred_ang_c_new<32>;
     }
-
-    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<2>;
-    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<3>;
-    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<4>;
-    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<5>;
 
     p.intra_pred_allangs_new[BLOCK_4x4] = all_angs_pred_c_new<2>;
     p.intra_pred_allangs_new[BLOCK_8x8] = all_angs_pred_c_new<3>;
