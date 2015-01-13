@@ -509,8 +509,8 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 #endif // if HIGH_BIT_DEPTH
 
 #define SETUP_LUMA_SUB_FUNC_DEF(W, H, cpu) \
-    p.cu[LUMA_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
-    p.cu[LUMA_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
+    p.cu[BLOCK_ ## W ## x ## H].sub_ps = x265_pixel_sub_ps_ ## W ## x ## H ## cpu; \
+    p.cu[BLOCK_ ## W ## x ## H].add_ps = x265_pixel_add_ps_ ## W ## x ## H ## cpu;
 
 #define SETUP_LUMA_SP_FUNC_DEF(W, H, cpu) \
     p.pu[LUMA_ ## W ## x ## H].luma_vsp = x265_interp_8tap_vert_sp_ ## W ## x ## H ## cpu;
