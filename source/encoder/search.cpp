@@ -1254,7 +1254,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     // DC
 //    primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-    primitives.intra_pred_new[DC_IDX][sizeIdx](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
+    primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
     bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     bmode = mode = DC_IDX;
     bbits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
@@ -1266,7 +1266,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
         planar = intraNeighbourBuf[1];
 
 //    primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-    primitives.intra_pred_new[PLANAR_IDX][sizeIdx](tmp, scaleStride, planar, 0, 0);
+    primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, planar, 0, 0);
     sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
     mode = PLANAR_IDX;
     bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
@@ -1278,7 +1278,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     {
         primitives.cu[sizeIdx].transpose(bufTrans, fenc, scaleStride);
 //        primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-        primitives.intra_pred_allangs_new[sizeIdx](tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16)); 
+        primitives.intra_pred_allangs[sizeIdx](tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16)); 
     }
     else
         allangs = false;
@@ -1293,9 +1293,9 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
         cost = m_rdCost.calcRdSADCost(sad, bits); \
     } else { \
         if (g_intraFilterFlags[angle] & scaleTuSize) \
-            primitives.intra_pred_new[angle][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[1], angle, scaleTuSize <= 16); \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[1], angle, scaleTuSize <= 16); \
         else \
-            primitives.intra_pred_new[angle][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[0], angle, scaleTuSize <= 16); \
+            primitives.intra_pred[angle][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[0], angle, scaleTuSize <= 16); \
         sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift; \
         bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
         cost = m_rdCost.calcRdSADCost(sad, bits); \
@@ -1487,7 +1487,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
 
             // DC
 //            primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, left, above, 0, (scaleTuSize <= 16));
-            primitives.intra_pred_new[DC_IDX][sizeIdx](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
+            primitives.intra_pred[DC_IDX][sizeIdx](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
             uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, DC_IDX) : rbits;
             uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
@@ -1498,17 +1498,17 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
                 planar = intraNeighbourBuf[1];
 
 //            primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, leftPlanar, abovePlanar, 0, 0);
-            primitives.intra_pred_new[PLANAR_IDX][sizeIdx](tmp, scaleStride, planar, 0, 0);
+            primitives.intra_pred[PLANAR_IDX][sizeIdx](tmp, scaleStride, planar, 0, 0);
             bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, PLANAR_IDX) : rbits;
             sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
             modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
             COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
 
             // angular predictions
-            if (primitives.intra_pred_allangs_new[sizeIdx])
+            if (primitives.intra_pred_allangs[sizeIdx])
             {
 //                primitives.intra_pred_allangs[sizeIdx](tmp, above, left, aboveFiltered, leftFiltered, (scaleTuSize <= 16));
-                primitives.intra_pred_allangs_new[sizeIdx](tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
+                primitives.intra_pred_allangs[sizeIdx](tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
                 primitives.cu[sizeIdx].transpose(buf_trans, fenc, scaleStride);
                 for (int mode = 2; mode < 35; mode++)
                 {
@@ -1527,10 +1527,10 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
                 {
                     if (g_intraFilterFlags[mode] & scaleTuSize)
 //                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, leftFiltered, aboveFiltered, mode, scaleTuSize <= 16);
-                        primitives.intra_pred_new[mode][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[1], mode, scaleTuSize <= 16);
+                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[1], mode, scaleTuSize <= 16);
                     else
 //                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, left, above, mode, scaleTuSize <= 16);
-                        primitives.intra_pred_new[mode][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[0], mode, scaleTuSize <= 16);
+                        primitives.intra_pred[mode][sizeIdx](tmp, scaleTuSize, intraNeighbourBuf[0], mode, scaleTuSize <= 16);
                     bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
                     sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift;
                     modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);

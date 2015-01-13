@@ -72,7 +72,7 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
     int sizeIdx = log2TrSize - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 //    primitives.intra_pred[dirMode][sizeIdx](dst, stride, refLft, refAbv, dirMode, bFilter);
-    primitives.intra_pred_new[dirMode][sizeIdx](dst, stride, srcPix, dirMode, bFilter);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, srcPix, dirMode, bFilter);
 }
 
 void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
@@ -107,7 +107,7 @@ void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, 
     int sizeIdx = log2TrSizeC - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 //    primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
-    primitives.intra_pred_new[dirMode][sizeIdx](dst, stride, srcBuf, dirMode, 0);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, srcBuf, dirMode, 0);
 }
 
 void Predict::initMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)

@@ -120,10 +120,8 @@ typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel
 typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel* refLeft, pixel* refAbove, int dirMode, int bFilter);
-typedef void (*intra_pred_new_t)(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter);
-typedef void (*intra_allangs_t)(pixel* dst, pixel* above0, pixel* left0, pixel* above1, pixel* left1, int bLuma);
-typedef void (*intra_allangs_new_t)(pixel *dst, pixel *refPix, pixel *filtPix, int bLuma);
+typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter);
+typedef void (*intra_allangs_t)(pixel *dst, pixel *refPix, pixel *filtPix, int bLuma);
 
 typedef void (*cpy2Dto1D_shl_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 typedef void (*cpy2Dto1D_shr_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
@@ -251,10 +249,8 @@ struct EncoderPrimitives
     count_nonzero_t       count_nonzero;
     denoiseDct_t          denoiseDct;
 
-    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE]; /* todo: move to CU */
-    intra_pred_new_t      intra_pred_new[NUM_INTRA_MODE][NUM_TR_SIZE];
-    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];         /* todo: move to CU */
-    intra_allangs_new_t   intra_pred_allangs_new[NUM_TR_SIZE];
+    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
+    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];
     scale_t               scale1D_128to64;
     scale_t               scale2D_64to32;
 

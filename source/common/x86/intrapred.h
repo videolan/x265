@@ -26,18 +26,18 @@
 #ifndef X265_INTRAPRED_H
 #define X265_INTRAPRED_H
 
-void x265_intra_pred_dc4_new_sse4 (pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter);
-void x265_intra_pred_dc8_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
-void x265_intra_pred_dc16_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
-void x265_intra_pred_dc32_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
+void x265_intra_pred_dc4_sse4 (pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter);
+void x265_intra_pred_dc8_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
+void x265_intra_pred_dc16_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
+void x265_intra_pred_dc32_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
 
-void x265_intra_pred_planar4_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar8_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar16_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar32_new_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
+void x265_intra_pred_planar4_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
+void x265_intra_pred_planar8_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
+void x265_intra_pred_planar16_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
+void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
 
 #define DECL_ANG(bsize, mode, cpu) \
-    void x265_intra_pred_ang ## bsize ## _ ## mode ## _new_ ## cpu(pixel* dst, intptr_t dstStride, pixel* above, int dirMode, int bFilter);
+    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, pixel* above, int dirMode, int bFilter);
 
 DECL_ANG(4, 2, ssse3);
 DECL_ANG(4, 3, sse4);
@@ -157,8 +157,8 @@ DECL_ANG(32, 32, sse4);
 DECL_ANG(32, 33, sse4);
 
 #undef DECL_ANG
-void x265_all_angs_pred_new_4x4_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
-void x265_all_angs_pred_new_8x8_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
-void x265_all_angs_pred_new_16x16_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
-void x265_all_angs_pred_new_32x32_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
+void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
+void x265_all_angs_pred_8x8_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
+void x265_all_angs_pred_16x16_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
+void x265_all_angs_pred_32x32_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
 #endif // ifndef X265_INTRAPRED_H

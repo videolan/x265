@@ -90,7 +90,7 @@ cextern multi_2Row
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc4_new, 5,5,3
+cglobal intra_pred_dc4, 5,5,3
     inc         r2
     pxor        m0, m0
     movd        m1, [r2]
@@ -152,7 +152,7 @@ cglobal intra_pred_dc4_new, 5,5,3
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc8_new, 5, 7, 3
+cglobal intra_pred_dc8, 5, 7, 3
     lea             r3, [r2 + 17]
     inc             r2
     pxor            m0,            m0
@@ -231,7 +231,7 @@ cglobal intra_pred_dc8_new, 5, 7, 3
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;--------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc16_new, 5, 7, 4
+cglobal intra_pred_dc16, 5, 7, 4
     lea             r3, [r2 + 33]
     inc             r2
     pxor            m0,            m0
@@ -345,7 +345,7 @@ cglobal intra_pred_dc16_new, 5, 7, 4
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_dc32_new, 3, 5, 5
+cglobal intra_pred_dc32, 3, 5, 5
     lea             r3, [r2 + 65]
     inc             r2
     pxor            m0,            m0
@@ -419,7 +419,7 @@ cglobal intra_pred_dc32_new, 3, 5, 5
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar4_new, 3,3,7
+cglobal intra_pred_planar4, 3,3,7
     pmovzxbw        m1, [r2 + 1]
     pmovzxbw        m2, [r2 + 9]
     pshufhw         m3, m1, 0               ; topRight
@@ -473,7 +473,7 @@ cglobal intra_pred_planar4_new, 3,3,7
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar8_new, 3,3,7
+cglobal intra_pred_planar8, 3,3,7
     pmovzxbw        m1, [r2 + 1]
     pmovzxbw        m2, [r2 + 17]
 
@@ -525,7 +525,7 @@ cglobal intra_pred_planar8_new, 3,3,7
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal intra_pred_planar16_new, 3,3,8
+cglobal intra_pred_planar16, 3,3,8
     pmovzxbw        m2, [r2 + 1]
     pmovzxbw        m7, [r2 + 9]
 
@@ -608,9 +608,9 @@ cglobal intra_pred_planar16_new, 3,3,8
 ;---------------------------------------------------------------------------------------
 INIT_XMM sse4
 %if ARCH_X86_64 == 1
-cglobal intra_pred_planar32_new, 3,4,12
+cglobal intra_pred_planar32, 3,4,12
 %else
-cglobal intra_pred_planar32_new, 3,4,8,0-(4*mmsize)
+cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
   %define           m8  [rsp + 0 * mmsize]
   %define           m9  [rsp + 1 * mmsize]
   %define           m10 [rsp + 2 * mmsize]
@@ -714,7 +714,7 @@ cglobal intra_pred_planar32_new, 3,4,8,0-(4*mmsize)
 ; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal intra_pred_ang4_2_new, 3,5,4
+cglobal intra_pred_ang4_2, 3,5,4
     lea         r4, [r2 + 2]
     add         r2, 10
     cmp         r3m, byte 34
@@ -732,7 +732,7 @@ cglobal intra_pred_ang4_2_new, 3,5,4
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang4_3_new, 3,5,5
+cglobal intra_pred_ang4_3, 3,5,5
     mov         r4, 1
     cmp         r3m, byte 33
     mov         r3, 9
@@ -780,7 +780,7 @@ ALIGN 16
     pextrd      [r0 + r1], m0, 3
     RET
 
-cglobal intra_pred_ang4_4_new, 3,5,5
+cglobal intra_pred_ang4_4, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 32
@@ -800,9 +800,9 @@ cglobal intra_pred_ang4_4_new, 3,5,5
     movhps      m3, [r3 -  8 * 16]  ; [10]
     movh        m4, [r3 + 13 * 16]  ; [31]
     movhps      m4, [r3 +  2 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_5_new, 3,5,5
+cglobal intra_pred_ang4_5, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 31
@@ -822,9 +822,9 @@ cglobal intra_pred_ang4_5_new, 3,5,5
     movhps      m3, [r3 -  8 * 16]  ; [ 2]
     movh        m4, [r3 +  9 * 16]  ; [19]
     movhps      m4, [r3 -  6 * 16]  ; [ 4]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_6_new, 3,5,5
+cglobal intra_pred_ang4_6, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 30
@@ -843,9 +843,9 @@ cglobal intra_pred_ang4_6_new, 3,5,5
     movhps      m3, [r3 +  7 * 16]  ; [26]
     movh        m4, [r3 - 12 * 16]  ; [ 7]
     movhps      m4, [r3 +  1 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_7_new, 3,5,5
+cglobal intra_pred_ang4_7, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 29
@@ -864,9 +864,9 @@ cglobal intra_pred_ang4_7_new, 3,5,5
     movhps      m3, [r3 -  2 * 16]  ; [18]
     movh        m4, [r3 +  7 * 16]  ; [27]
     movhps      m4, [r3 - 16 * 16]  ; [ 4]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_8_new, 3,5,5
+cglobal intra_pred_ang4_8, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 28
@@ -884,9 +884,9 @@ cglobal intra_pred_ang4_8_new, 3,5,5
     movhps      m3, [r3 -  3 * 16]  ; [10]
     movh        m4, [r3 +  2 * 16]  ; [15]
     movhps      m4, [r3 +  7 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_9_new, 3,5,5
+cglobal intra_pred_ang4_9, 3,5,5
     xor         r4, r4
     inc         r4
     cmp         r3m, byte 27
@@ -904,9 +904,9 @@ cglobal intra_pred_ang4_9_new, 3,5,5
     movhps      m3, [r3 -  0 * 16]  ; [ 4]
     movh        m4, [r3 +  2 * 16]  ; [ 6]
     movhps      m4, [r3 +  4 * 16]  ; [ 8]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_10_new, 3,3,4
+cglobal intra_pred_ang4_10, 3,3,4
     movd        m0, [r2 + 9]            ; [8 7 6 5 4 3 2 1]
     pshufb      m0, [pb_unpackbd1]
     pshufd      m1, m0, 1
@@ -933,7 +933,7 @@ cglobal intra_pred_ang4_10_new, 3,3,4
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang4_26_new, 3,4,3
+cglobal intra_pred_ang4_26, 3,4,3
     movd        m0, [r2 + 1]            ; [8 7 6 5 4 3 2 1]
 
     ; store
@@ -964,7 +964,7 @@ cglobal intra_pred_ang4_26_new, 3,4,3
 .quit:
     RET
 
-cglobal intra_pred_ang4_11_new, 3,5,5
+cglobal intra_pred_ang4_11, 3,5,5
     xor         r4, r4
     cmp         r3m, byte 25
     mov         r3, 8
@@ -983,9 +983,9 @@ cglobal intra_pred_ang4_11_new, 3,5,5
     movhps      m3, [r3 +  4 * 16]  ; [26]
     movh        m4, [r3 +  2 * 16]  ; [28]
     movhps      m4, [r3 +  0 * 16]  ; [30]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_12_new, 3,5,5
+cglobal intra_pred_ang4_12, 3,5,5
     xor         r4, r4
     cmp         r3m, byte 24
     mov         r3, 8
@@ -1003,9 +1003,9 @@ cglobal intra_pred_ang4_12_new, 3,5,5
     movhps      m3, [r3 +  2 * 16]  ; [22]
     movh        m4, [r3 -  3 * 16]  ; [17]
     movhps      m4, [r3 -  8 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_13_new, 4,5,5
+cglobal intra_pred_ang4_13, 4,5,5
     xor         r4, r4
     cmp         r3m, byte 23
     mov         r3, 8
@@ -1027,9 +1027,9 @@ cglobal intra_pred_ang4_13_new, 4,5,5
     movhps      m3, [r3 -  7 * 16]  ; [14]
     movh        m4, [r3 - 16 * 16]  ; [ 5]
     movhps      m4, [r3 +  7 * 16]  ; [28]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_14_new, 4,5,5
+cglobal intra_pred_ang4_14, 4,5,5
     xor         r4, r4
     cmp         r3m, byte 22
     mov         r3, 8
@@ -1051,9 +1051,9 @@ cglobal intra_pred_ang4_14_new, 4,5,5
     movhps      m3, [r3 - 13 * 16]  ; [ 6]
     movh        m4, [r3 +  6 * 16]  ; [25]
     movhps      m4, [r3 -  7 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_15_new, 4,5,5
+cglobal intra_pred_ang4_15, 4,5,5
     xor         r4, r4
     cmp         r3m, byte 21
     mov         r3, 8
@@ -1078,9 +1078,9 @@ cglobal intra_pred_ang4_15_new, 4,5,5
     movhps      m3, [r3 +  7 * 16]  ; [30]
     movh        m4, [r3 - 10 * 16]  ; [13]
     movhps      m4, [r3 +  5 * 16]  ; [28]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_16_new, 3,5,5
+cglobal intra_pred_ang4_16, 3,5,5
     xor         r4, r4
     cmp         r3m, byte 20
     mov         r3, 8
@@ -1105,9 +1105,9 @@ cglobal intra_pred_ang4_16_new, 3,5,5
     movhps      m3, [r3 +  3 * 16]  ; [22]
     movh        m4, [r3 - 18 * 16]  ; [ 1]
     movhps      m4, [r3 -  7 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_17_new, 3,5,5
+cglobal intra_pred_ang4_17, 3,5,5
     xor         r4, r4
     cmp         r3m, byte 19
     mov         r3, 8
@@ -1137,9 +1137,9 @@ cglobal intra_pred_ang4_17_new, 3,5,5
     movhps      m3, [r3 -  2 * 16]  ; [12]
     movh        m4, [r3 +  4 * 16]  ; [18]
     movhps      m4, [r3 + 10 * 16]  ; [24]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3_new %+ SUFFIX %+ .do_filter4x4)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
-cglobal intra_pred_ang4_18_new, 3,5,1
+cglobal intra_pred_ang4_18, 3,5,1
     mov         r4d, [r2 + 8]
     mov         r3b, byte [r2]
     mov         [r2 + 8], r3b
@@ -1163,7 +1163,7 @@ cglobal intra_pred_ang4_18_new, 3,5,1
 ; void intraPredAng8(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal intra_pred_ang8_2_new, 3,5,2
+cglobal intra_pred_ang8_2, 3,5,2
     lea         r4,             [r2 + 2]
     add         r2,             18
     cmp         r3m,            byte 34
@@ -1190,7 +1190,7 @@ cglobal intra_pred_ang8_2_new, 3,5,2
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang8_3_new, 3,5,8
+cglobal intra_pred_ang8_3, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 33
@@ -1278,7 +1278,7 @@ ALIGN 16
     movhps      [r0 + r1 * 4],   m1
     RET
 
-cglobal intra_pred_ang8_4_new, 3,5,8
+cglobal intra_pred_ang8_4, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 32
@@ -1329,9 +1329,9 @@ cglobal intra_pred_ang8_4_new, 3,5,8
     pmaddubsw   m2,        [r4 - 2 * 16]              ; [8]
     pmulhrsw    m2,        m3
     packuswb    m1,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_5_new, 3,5,8
+cglobal intra_pred_ang8_5, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 31
@@ -1382,9 +1382,9 @@ cglobal intra_pred_ang8_5_new, 3,5,8
     pmaddubsw   m2,        [r4 + 6 * 16]              ; [8]
     pmulhrsw    m2,        m3
     packuswb    m1,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_6_new, 3,5,8
+cglobal intra_pred_ang8_6, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 30
@@ -1433,9 +1433,9 @@ cglobal intra_pred_ang8_6_new, 3,5,8
     pmaddubsw   m2,        [r4]                       ; [8]
     pmulhrsw    m2,        m7
     packuswb    m1,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_7_new, 3,5,8
+cglobal intra_pred_ang8_7, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 29
@@ -1481,9 +1481,9 @@ cglobal intra_pred_ang8_7_new, 3,5,8
     pmaddubsw   m2,        [r4 + 2 * 16]              ; [8]
     pmulhrsw    m2,        m7
     packuswb    m1,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_8_new, 3,5,8
+cglobal intra_pred_ang8_8, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 28
@@ -1525,9 +1525,9 @@ cglobal intra_pred_ang8_8_new, 3,5,8
     pmaddubsw   m2,        [r4]                       ; [8]
     pmulhrsw    m2,        m7
     packuswb    m1,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_9_new, 3,5,8
+cglobal intra_pred_ang8_9, 3,5,8
     lea         r4,        [r2 + 1]
     add         r2,        17
     cmp         r3m,       byte 27
@@ -1566,9 +1566,9 @@ cglobal intra_pred_ang8_9_new, 3,5,8
     pmaddubsw   m0,        [r3 + 6 * 16]              ; [16]
     pmulhrsw    m0,        m7
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_10_new, 3,6,5
+cglobal intra_pred_ang8_10, 3,6,5
     movh        m0,        [r2 + 17]
     mova        m4,        [pb_unpackbq]
     palignr     m1,        m0, 2
@@ -1608,7 +1608,7 @@ cglobal intra_pred_ang8_10_new, 3,6,5
     movh        [r0],      m0
     RET
 
-cglobal intra_pred_ang8_26_new, 3,6,3
+cglobal intra_pred_ang8_26, 3,6,3
     movu        m2,             [r2]
     palignr     m0,             m2, 1
     lea         r5,             [r1 * 3]
@@ -1647,7 +1647,7 @@ cglobal intra_pred_ang8_26_new, 3,6,3
 .quit:
     RET
 
-cglobal intra_pred_ang8_11_new, 3,5,8
+cglobal intra_pred_ang8_11, 3,5,8
     xor         r4,        r4
     cmp         r3m,       byte 25
     mov         r3,        16
@@ -1688,9 +1688,9 @@ cglobal intra_pred_ang8_11_new, 3,5,8
     pmaddubsw   m0,        [r3 - 7 * 16]              ; [16]
     pmulhrsw    m0,        m7
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_12_new, 3,5,8
+cglobal intra_pred_ang8_12, 3,5,8
     xor         r4,        r4
     cmp         r3m,       byte 24
     mov         r3,        16
@@ -1737,9 +1737,9 @@ cglobal intra_pred_ang8_12_new, 3,5,8
     pmaddubsw   m2,        [r4 - 5 * 16]              ; [2]
     pmulhrsw    m2,        m7
     packuswb    m6,        m2
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_13_new, 4,5,8
+cglobal intra_pred_ang8_13, 4,5,8
     xor         r4,        r4
     cmp         r3m,       byte 23
     mov         r3,        16
@@ -1789,9 +1789,9 @@ cglobal intra_pred_ang8_13_new, 4,5,8
     pmaddubsw   m1,        [r4 - 12 * 16]             ; [1]
     pmulhrsw    m1,        m7
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_14_new, 4,5,8
+cglobal intra_pred_ang8_14, 4,5,8
     xor         r4,        r4
     cmp         r3m,       byte 22
     mov         r3,        16
@@ -1842,9 +1842,9 @@ cglobal intra_pred_ang8_14_new, 4,5,8
     pmaddubsw   m1,        [r4 - 7 * 16]              ; [5]
     pmulhrsw    m1,        m3
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_15_new, 4,5,8
+cglobal intra_pred_ang8_15, 4,5,8
     xor         r4,        r4
     cmp         r3m,       byte 21
     mov         r3,        16
@@ -1897,9 +1897,9 @@ cglobal intra_pred_ang8_15_new, 4,5,8
     pmaddubsw   m1,        [r4 - 2 * 16]              ; [9]
     pmulhrsw    m1,        m3
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_16_new, 4,5,8
+cglobal intra_pred_ang8_16, 4,5,8
     xor         r4,        r4
     cmp         r3m,       byte 20
     mov         r3,        16
@@ -1955,9 +1955,9 @@ cglobal intra_pred_ang8_16_new, 4,5,8
     pmaddubsw   m1,        [r4 + 4 * 16]              ; [13]
     pmulhrsw    m1,        m7
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_17_new, 4,5,8
+cglobal intra_pred_ang8_17, 4,5,8
     xor         r4,        r4
     cmp         r3m,       byte 19
     mov         r3,        16
@@ -2013,9 +2013,9 @@ cglobal intra_pred_ang8_17_new, 4,5,8
     pmaddubsw   m0,        [r4 - 1 * 16]              ; [16]
     pmulhrsw    m0,        m3
     packuswb    m1,        m0
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3_new %+ SUFFIX %+ .transpose8x8)
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang8_3 %+ SUFFIX %+ .transpose8x8)
 
-cglobal intra_pred_ang8_18_new, 4,4,1
+cglobal intra_pred_ang8_18, 4,4,1
     movu        m0, [r2 + 16]
     pinsrb      m0, [r2], 0
     pshufb      m0, [pb_swap8]
@@ -2084,7 +2084,7 @@ cglobal intra_pred_ang8_18_new, 4,4,1
 ; void intraPredAng16(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;------------------------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal intra_pred_ang16_2_new, 3,5,3
+cglobal intra_pred_ang16_2, 3,5,3
     lea             r4, [r2 + 2]
     add             r2, 34
     cmp             r3m, byte 34
@@ -2132,7 +2132,7 @@ cglobal intra_pred_ang16_2_new, 3,5,3
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_3_new, 3,7,8
+cglobal intra_pred_ang16_3, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -2238,7 +2238,7 @@ cglobal intra_pred_ang16_3_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_33_new, 3,7,8
+cglobal intra_pred_ang16_33, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]
@@ -2350,7 +2350,7 @@ cglobal intra_pred_ang16_33_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_4_new, 3,7,8
+cglobal intra_pred_ang16_4, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -2457,7 +2457,7 @@ cglobal intra_pred_ang16_4_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_32_new, 3,7,8
+cglobal intra_pred_ang16_32, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -2563,7 +2563,7 @@ cglobal intra_pred_ang16_32_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_5_new, 3,7,8
+cglobal intra_pred_ang16_5, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -2652,7 +2652,7 @@ cglobal intra_pred_ang16_5_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_31_new, 3,7,8
+cglobal intra_pred_ang16_31, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -2739,7 +2739,7 @@ cglobal intra_pred_ang16_31_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_6_new, 3,7,8
+cglobal intra_pred_ang16_6, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -2826,7 +2826,7 @@ cglobal intra_pred_ang16_6_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_30_new, 3,7,8
+cglobal intra_pred_ang16_30, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -2911,7 +2911,7 @@ cglobal intra_pred_ang16_30_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_7_new, 3,7,8
+cglobal intra_pred_ang16_7, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -2995,7 +2995,7 @@ cglobal intra_pred_ang16_7_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_29_new, 3,7,8
+cglobal intra_pred_ang16_29, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -3077,7 +3077,7 @@ cglobal intra_pred_ang16_29_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_8_new, 3,7,8
+cglobal intra_pred_ang16_8, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -3154,7 +3154,7 @@ cglobal intra_pred_ang16_8_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_28_new, 3,7,8
+cglobal intra_pred_ang16_28, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -3229,7 +3229,7 @@ cglobal intra_pred_ang16_28_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_9_new, 3,7,8
+cglobal intra_pred_ang16_9, 3,7,8
     add         r2,        32
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
@@ -3302,7 +3302,7 @@ cglobal intra_pred_ang16_9_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_27_new, 3,7,8
+cglobal intra_pred_ang16_27, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -3379,7 +3379,7 @@ cglobal intra_pred_ang16_27_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_10_new, 5,6,8
+cglobal intra_pred_ang16_10, 5,6,8
     lea         r5,        [r1 * 3]
     pxor        m7,        m7
 
@@ -3465,11 +3465,11 @@ cglobal intra_pred_ang16_10_new, 5,6,8
 
 INIT_XMM sse4
 %if ARCH_X86_64 == 1
-cglobal intra_pred_ang16_26_new, 3,8,5
+cglobal intra_pred_ang16_26, 3,8,5
     mov     r7, r4mp
     %define bfilter r7w
 %else
-cglobal intra_pred_ang16_26_new, 5,7,5,0-4
+cglobal intra_pred_ang16_26, 5,7,5,0-4
     %define bfilter dword[rsp]
     mov     bfilter, r4
 %endif
@@ -3543,7 +3543,7 @@ cglobal intra_pred_ang16_26_new, 5,7,5,0-4
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_11_new, 3,7,8
+cglobal intra_pred_ang16_11, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -3667,7 +3667,7 @@ cglobal intra_pred_ang16_11_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_25_new, 3,7,8
+cglobal intra_pred_ang16_25, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       2
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
@@ -3745,7 +3745,7 @@ cglobal intra_pred_ang16_25_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_12_new, 4,7,8
+cglobal intra_pred_ang16_12, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -3883,7 +3883,7 @@ cglobal intra_pred_ang16_12_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_24_new, 4,7,8
+cglobal intra_pred_ang16_24, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -4019,7 +4019,7 @@ cglobal intra_pred_ang16_24_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_13_new, 4,7,8
+cglobal intra_pred_ang16_13, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -4173,7 +4173,7 @@ cglobal intra_pred_ang16_13_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_23_new, 4,7,8
+cglobal intra_pred_ang16_23, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -4325,7 +4325,7 @@ cglobal intra_pred_ang16_23_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_14_new, 4,7,8
+cglobal intra_pred_ang16_14, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -4491,7 +4491,7 @@ cglobal intra_pred_ang16_14_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_22_new, 4,7,8
+cglobal intra_pred_ang16_22, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -4655,7 +4655,7 @@ cglobal intra_pred_ang16_22_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_15_new, 4,7,8
+cglobal intra_pred_ang16_15, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -4845,7 +4845,7 @@ cglobal intra_pred_ang16_15_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_21_new, 4,7,8
+cglobal intra_pred_ang16_21, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -5034,7 +5034,7 @@ cglobal intra_pred_ang16_21_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_16_new, 4,7,8
+cglobal intra_pred_ang16_16, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -5233,7 +5233,7 @@ cglobal intra_pred_ang16_16_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_20_new, 4,7,8
+cglobal intra_pred_ang16_20, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -5431,7 +5431,7 @@ cglobal intra_pred_ang16_20_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_17_new, 4,7,8
+cglobal intra_pred_ang16_17, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
@@ -5642,7 +5642,7 @@ cglobal intra_pred_ang16_17_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_19_new, 4,7,8
+cglobal intra_pred_ang16_19, 4,7,8
     lea         r4,        [ang_table + 16 * 16]
     lea         r5,        [r1 * 3]                   ; r5 -> 3 * stride
     mov         r6,        r0
@@ -5852,7 +5852,7 @@ cglobal intra_pred_ang16_19_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang16_18_new, 4,5,3
+cglobal intra_pred_ang16_18, 4,5,3
     movu        m0,         [r2]
     movu        m1,         [r2 + 32]
     mova        m2,         [c_mode16_18]
@@ -6974,7 +6974,7 @@ cglobal intra_pred_ang16_18_new, 4,5,3
 ; void intraPredAng32(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;------------------------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal intra_pred_ang32_2_new, 3,5,4
+cglobal intra_pred_ang32_2, 3,5,4
     lea             r4, [r2]
     add             r2, 64
     cmp             r3m, byte 34
@@ -7134,7 +7134,7 @@ cglobal intra_pred_ang32_2_new, 3,5,4
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_3_new, 3,7,8
+cglobal intra_pred_ang32_3, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7151,7 +7151,7 @@ cglobal intra_pred_ang32_3_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_4_new, 3,7,8
+cglobal intra_pred_ang32_4, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7168,7 +7168,7 @@ cglobal intra_pred_ang32_4_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_5_new, 3,7,8
+cglobal intra_pred_ang32_5, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7185,7 +7185,7 @@ cglobal intra_pred_ang32_5_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_6_new, 3,7,8
+cglobal intra_pred_ang32_6, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7202,7 +7202,7 @@ cglobal intra_pred_ang32_6_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_7_new, 3,7,8
+cglobal intra_pred_ang32_7, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7219,7 +7219,7 @@ cglobal intra_pred_ang32_7_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_8_new, 3,7,8
+cglobal intra_pred_ang32_8, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7236,7 +7236,7 @@ cglobal intra_pred_ang32_8_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_9_new, 3,7,8
+cglobal intra_pred_ang32_9, 3,7,8
     add         r2,        64
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
@@ -7253,7 +7253,7 @@ cglobal intra_pred_ang32_9_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_10_new, 5,7,8,0-(2*mmsize)
+cglobal intra_pred_ang32_10, 5,7,8,0-(2*mmsize)
 %define m8 [rsp + 0 * mmsize]
 %define m9 [rsp + 1 * mmsize]
     pxor        m7, m7
@@ -7369,7 +7369,7 @@ cglobal intra_pred_ang32_10_new, 5,7,8,0-(2*mmsize)
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_11_new, 4,7,8
+cglobal intra_pred_ang32_11, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -7452,7 +7452,7 @@ cglobal intra_pred_ang32_11_new, 4,7,8
     mov         rsp, [rsp+64]
     RET
 
-%macro MODE_12_24_ROW0_NEW 1
+%macro MODE_12_24_ROW0 1
     movu        m0,        [r3 + 6]
     pshufb      m0,        [c_mode32_12_0]
     pinsrb      m0,        [r3 + 26], 12
@@ -7562,7 +7562,7 @@ cglobal intra_pred_ang32_11_new, 4,7,8
 %endmacro
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_12_new, 3,7,8,0-(1*mmsize)
+cglobal intra_pred_ang32_12, 3,7,8,0-(1*mmsize)
   %define above    [rsp + 0 * mmsize]
     mov         r3,        r2
     add         r2,        64
@@ -7571,7 +7571,7 @@ cglobal intra_pred_ang32_12_new, 3,7,8,0-(1*mmsize)
     lea         r6,        [r0 + r1 * 4]              ; r6 -> 4 * stride
     mova        m7,        [pw_1024]
 
-    MODE_12_24_ROW0_NEW 1
+    MODE_12_24_ROW0 1
     lea         r0,        [r6 + r1 * 4]
     lea         r6,        [r6 + r1 * 8]
     add         r2,        7
@@ -7585,7 +7585,7 @@ cglobal intra_pred_ang32_12_new, 3,7,8,0-(1*mmsize)
     jnz         .loop
     RET
 
-%macro MODE_13_23_ROW0_NEW 1
+%macro MODE_13_23_ROW0 1
     movu        m0,        [r3 + 1]
     movu        m1,        [r3 + 15]
     pshufb      m0,        [c_mode32_13_0]
@@ -7704,7 +7704,7 @@ cglobal intra_pred_ang32_12_new, 3,7,8,0-(1*mmsize)
     TRANSPOSE_STORE_8x8 3, %1, m4, m5, m6, m1
 %endmacro
 
-%macro MODE_13_23_NEW 2
+%macro MODE_13_23 2
     movu        m2,        [r2]                      ; [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
     palignr     m1,        m2, 1                     ; [x ,15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
     punpckhbw   m0,        m2, m1                    ; [x, 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8]
@@ -7821,7 +7821,7 @@ cglobal intra_pred_ang32_12_new, 3,7,8,0-(1*mmsize)
 %endmacro
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_13_new, 3,7,8,0-(1*mmsize)
+cglobal intra_pred_ang32_13, 3,7,8,0-(1*mmsize)
 %define above [rsp + 0 * mmsize]
     mov         r3,        r2
     add         r2,        64
@@ -7830,18 +7830,18 @@ cglobal intra_pred_ang32_13_new, 3,7,8,0-(1*mmsize)
     lea         r6,        [r0 + r1 * 4]             ; r6 -> 4 * stride
     mova        m7,        [pw_1024]
 
-    MODE_13_23_ROW0_NEW 1
+    MODE_13_23_ROW0 1
     lea         r0,        [r6 + r1 * 4]
     lea         r6,        [r6 + r1 * 8]
     add         r2,        7
 
-    MODE_13_23_NEW 1, 1
+    MODE_13_23 1, 1
     lea         r0,        [r6 + r1 * 4]
     lea         r6,        [r6 + r1 * 8]
     add         r2,        8
     mov         r3,        2
 .loop:
-    MODE_13_23_NEW 1, 0
+    MODE_13_23 1, 0
     lea         r0,        [r6 + r1 * 4]
     lea         r6,        [r6 + r1 * 8]
     add         r2,        8
@@ -7850,7 +7850,7 @@ cglobal intra_pred_ang32_13_new, 3,7,8,0-(1*mmsize)
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_14_new, 3,7,8
+cglobal intra_pred_ang32_14, 3,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -7934,7 +7934,7 @@ cglobal intra_pred_ang32_14_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_15_new, 4,7,8
+cglobal intra_pred_ang32_15, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8017,7 +8017,7 @@ cglobal intra_pred_ang32_15_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_16_new, 4,7,8
+cglobal intra_pred_ang32_16, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8100,7 +8100,7 @@ cglobal intra_pred_ang32_16_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_17_new, 4,7,8
+cglobal intra_pred_ang32_17, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8184,7 +8184,7 @@ cglobal intra_pred_ang32_17_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_18_new, 4,5,5
+cglobal intra_pred_ang32_18, 4,5,5
     movu        m0, [r2]               ; [15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0]
     movu        m1, [r2 + 16]          ; [31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16]
     movu        m2, [r2 + 1 + 64]      ; [16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1]
@@ -8346,7 +8346,7 @@ cglobal intra_pred_ang32_18_new, 4,5,5
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_19_new, 4,7,8
+cglobal intra_pred_ang32_19, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8433,7 +8433,7 @@ cglobal intra_pred_ang32_19_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_20_new, 4,7,8
+cglobal intra_pred_ang32_20, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8520,7 +8520,7 @@ cglobal intra_pred_ang32_20_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_21_new, 4,7,8
+cglobal intra_pred_ang32_21, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8607,7 +8607,7 @@ cglobal intra_pred_ang32_21_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_22_new, 4,7,8
+cglobal intra_pred_ang32_22, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8695,7 +8695,7 @@ cglobal intra_pred_ang32_22_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_23_new, 4,7,8,0-(1*mmsize)
+cglobal intra_pred_ang32_23, 4,7,8,0-(1*mmsize)
 %define above [rsp + 0 * mmsize]
     lea         r3,        [r2 + 64]
     lea         r4,        [ang_table + 16 * 16]
@@ -8703,13 +8703,13 @@ cglobal intra_pred_ang32_23_new, 4,7,8,0-(1*mmsize)
     mov         r6,        r0
     mova        m7,        [pw_1024]
 
-    MODE_13_23_ROW0_NEW 0
+    MODE_13_23_ROW0 0
     add         r6,        8
     mov         r0,        r6
     add         r2,        7
     mov         r3,        3
 .loop:
-    MODE_13_23_NEW 0, 0
+    MODE_13_23 0, 0
     add         r6,        8
     mov         r0,        r6
     add         r2,        8
@@ -8718,7 +8718,7 @@ cglobal intra_pred_ang32_23_new, 4,7,8,0-(1*mmsize)
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_24_new, 4,7,8,0-(1*mmsize)
+cglobal intra_pred_ang32_24, 4,7,8,0-(1*mmsize)
   %define above    [rsp + 0 * mmsize]
     lea         r3,        [r2 + 64]
     lea         r4,        [ang_table + 16 * 16]
@@ -8726,7 +8726,7 @@ cglobal intra_pred_ang32_24_new, 4,7,8,0-(1*mmsize)
     mov         r6,        r0
     mova        m7,        [pw_1024]
 
-    MODE_12_24_ROW0_NEW 0
+    MODE_12_24_ROW0 0
     add         r6,        8
     mov         r0,        r6
     add         r2,        7
@@ -8741,7 +8741,7 @@ cglobal intra_pred_ang32_24_new, 4,7,8,0-(1*mmsize)
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_25_new, 4,7,8
+cglobal intra_pred_ang32_25, 4,7,8
     ; NOTE: alignment stack to 64 bytes, so all of local data in same cache line
     mov         r6, rsp
     sub         rsp, 64+gprsize
@@ -8827,7 +8827,7 @@ cglobal intra_pred_ang32_25_new, 4,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_26_new, 5,7,7,0-(2*mmsize)
+cglobal intra_pred_ang32_26, 5,7,7,0-(2*mmsize)
 %define m8 [rsp + 0 * mmsize]
 %define m9 [rsp + 1 * mmsize]
     mov         r6,             2
@@ -8949,7 +8949,7 @@ cglobal intra_pred_ang32_26_new, 5,7,7,0-(2*mmsize)
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_27_new, 3,7,8
+cglobal intra_pred_ang32_27, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
     lea         r5,        [r1 * 3]
@@ -8965,7 +8965,7 @@ cglobal intra_pred_ang32_27_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_28_new, 3,7,8
+cglobal intra_pred_ang32_28, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
     lea         r5,        [r1 * 3]
@@ -8981,7 +8981,7 @@ cglobal intra_pred_ang32_28_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_29_new, 3,7,8
+cglobal intra_pred_ang32_29, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
     lea         r5,        [r1 * 3]
@@ -8997,7 +8997,7 @@ cglobal intra_pred_ang32_29_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_30_new, 3,7,8
+cglobal intra_pred_ang32_30, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
     lea         r5,        [r1 * 3]
@@ -9013,7 +9013,7 @@ cglobal intra_pred_ang32_30_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_31_new, 3,7,8
+cglobal intra_pred_ang32_31, 3,7,8
     lea         r3,        [ang_table + 16 * 16]
     mov         r4d,       4
     lea         r5,        [r1 * 3]
@@ -9029,7 +9029,7 @@ cglobal intra_pred_ang32_31_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_32_new, 3,7,8
+cglobal intra_pred_ang32_32, 3,7,8
     lea         r3,     [ang_table + 16 * 16]
     mov         r4d,    4
     lea         r5,     [r1 * 3]
@@ -9045,7 +9045,7 @@ cglobal intra_pred_ang32_32_new, 3,7,8
     RET
 
 INIT_XMM sse4
-cglobal intra_pred_ang32_33_new, 3,7,8
+cglobal intra_pred_ang32_33, 3,7,8
     lea         r3,    [ang_table + 16 * 16]
     mov         r4d,   4
     lea         r5,    [r1 * 3]
@@ -9061,10 +9061,10 @@ cglobal intra_pred_ang32_33_new, 3,7,8
     RET
 
 ;-----------------------------------------------------------------------------
-; void all_angs_pred_new_4x4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
+; void all_angs_pred_4x4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_new_4x4, 4, 4, 8
+cglobal all_angs_pred_4x4, 4, 4, 8
 
 ; mode 2
 
@@ -9852,7 +9852,7 @@ RET
 ; void all_angs_pred_8x8(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 ;------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_new_8x8, 3,4,8
+cglobal all_angs_pred_8x8, 3,4,8
     ; mode 2
 
     movu         m0,          [r2 + 18]
@@ -11479,7 +11479,7 @@ RET
 ; void all_angs_pred_16x16(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 ;--------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_new_16x16, 3,4,8
+cglobal all_angs_pred_16x16, 3,4,8
     ; mode 2
 
     movu      m0,               [r2 + 2 + 32]
@@ -16233,7 +16233,7 @@ cglobal all_angs_pred_new_16x16, 3,4,8
 ; void all_angs_pred_32x32(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 ;--------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal all_angs_pred_new_32x32, 3,7,8, 0-4
+cglobal all_angs_pred_32x32, 3,7,8, 0-4
     mov        r6d, [r1 + 64]
     mov        r3d, [r1]
     mov        [rsp], r6d

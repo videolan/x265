@@ -1707,24 +1707,24 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
         pixelcmp_t satd = primitives.pu[partitionFromLog2Size(X265_LOWRES_CU_BITS)].satd;
         int icost = m_me.COST_MAX;
 //        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, left0, above0, 0, (cuSize <= 16));
-        primitives.intra_pred_new[DC_IDX][sizeIdx](m_predictions, cuSize, neighbours[0], 0, (cuSize <= 16));
+        primitives.intra_pred[DC_IDX][sizeIdx](m_predictions, cuSize, neighbours[0], 0, (cuSize <= 16));
         int cost = m_me.bufSATD(m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
 
         pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
-        primitives.intra_pred_new[PLANAR_IDX][sizeIdx](m_predictions, cuSize, planar, 0, 0);
+        primitives.intra_pred[PLANAR_IDX][sizeIdx](m_predictions, cuSize, planar, 0, 0);
         cost = m_me.bufSATD(m_predictions, cuSize);
         if (cost < icost)
             icost = cost;
 
         uint32_t mode, lowmode = 4;
-        if (primitives.intra_pred_allangs_new[sizeIdx])
+        if (primitives.intra_pred_allangs[sizeIdx])
         {
             ALIGN_VAR_32(pixel, buf_trans[32 * 32]);
 
 //            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, above0, left0, above1, left1, (cuSize <= 16));
-            primitives.intra_pred_allangs_new[sizeIdx](m_predictions + 2 * predsize, neighbours[0], neighbours[1], (cuSize <= 16));
+            primitives.intra_pred_allangs[sizeIdx](m_predictions + 2 * predsize, neighbours[0], neighbours[1], (cuSize <= 16));
             primitives.cu[sizeIdx].transpose(buf_trans, m_me.fencPUYuv.m_buf[0], FENC_STRIDE);
 
             int acost = m_me.COST_MAX;
@@ -1765,10 +1765,10 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
             {
                 if (g_intraFilterFlags[mode] & cuSize)
 //                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
 //                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
             }
@@ -1780,20 +1780,20 @@ void EstimateRow::estimateCUCost(Lowres **frames, ReferencePlanes *wfref0, int c
                 mode = minusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
 //                   primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
 //                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
 
                 mode = plusmode;
                 if (g_intraFilterFlags[mode] & cuSize)
 //                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left1, above1, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[1], mode, cuSize <= 16);
                 else
 //                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, left0, above0, mode, cuSize <= 16);
-                    primitives.intra_pred_new[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
+                    primitives.intra_pred[mode][sizeIdx](m_predictions, cuSize, neighbours[0], mode, cuSize <= 16);
                 cost = m_me.bufSATD(m_predictions, cuSize);
                 COPY2_IF_LT(acost, cost, lowmode, mode);
             }

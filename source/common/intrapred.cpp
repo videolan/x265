@@ -44,7 +44,7 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
 }
 
 template<int width>
-void intra_pred_dc_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int bFilter)
+void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int bFilter)
 {
     int k, l;
 
@@ -63,7 +63,7 @@ void intra_pred_dc_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*di
 }
 
 template<int log2Size>
-void planar_pred_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
+void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
 {
     const int blkSize = 1 << log2Size;
 
@@ -77,7 +77,7 @@ void planar_pred_c_new(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirM
             dst[y * dstStride + x] = (pixel) (((blkSize - 1 - x) * left[y] + (blkSize - 1 -y) * above[x] + (x + 1) * topRight + (y + 1) * bottomLeft + blkSize) >> (log2Size + 1));
 }
 template<int width>
-void intra_pred_ang_c_new(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 {
     int width2 = width << 1;
     // Flip the neighbours in the horizontal case.
@@ -178,7 +178,7 @@ void intra_pred_ang_c_new(pixel* dst, intptr_t dstStride, pixel *srcPix, int dir
 }
 
 template<int log2Size>
-void all_angs_pred_c_new(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
+void all_angs_pred_c(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 {
     const int size = 1 << log2Size;
     for (int mode = 2; mode <= 34; mode++)
@@ -186,7 +186,7 @@ void all_angs_pred_c_new(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
         pixel *srcPix  = (g_intraFilterFlags[mode] & size ? filtPix  : refPix);
         pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
-        intra_pred_ang_c_new<size>(out, size, srcPix, mode, bLuma);
+        intra_pred_ang_c<size>(out, size, srcPix, mode, bLuma);
 
         // Optimize code don't flip buffer
         bool modeHor = (mode < 18);
@@ -213,27 +213,27 @@ namespace x265 {
 
 void Setup_C_IPredPrimitives(EncoderPrimitives& p)
 {
-    p.intra_pred_new[0][BLOCK_4x4] = planar_pred_c_new<2>;
-    p.intra_pred_new[0][BLOCK_8x8] = planar_pred_c_new<3>;
-    p.intra_pred_new[0][BLOCK_16x16] = planar_pred_c_new<4>;
-    p.intra_pred_new[0][BLOCK_32x32] = planar_pred_c_new<5>;
+    p.intra_pred[0][BLOCK_4x4] = planar_pred_c<2>;
+    p.intra_pred[0][BLOCK_8x8] = planar_pred_c<3>;
+    p.intra_pred[0][BLOCK_16x16] = planar_pred_c<4>;
+    p.intra_pred[0][BLOCK_32x32] = planar_pred_c<5>;
 
-    p.intra_pred_new[1][BLOCK_4x4] = intra_pred_dc_c_new<4>;
-    p.intra_pred_new[1][BLOCK_8x8] = intra_pred_dc_c_new<8>;
-    p.intra_pred_new[1][BLOCK_16x16] = intra_pred_dc_c_new<16>;
-    p.intra_pred_new[1][BLOCK_32x32] = intra_pred_dc_c_new<32>;
+    p.intra_pred[1][BLOCK_4x4] = intra_pred_dc_c<4>;
+    p.intra_pred[1][BLOCK_8x8] = intra_pred_dc_c<8>;
+    p.intra_pred[1][BLOCK_16x16] = intra_pred_dc_c<16>;
+    p.intra_pred[1][BLOCK_32x32] = intra_pred_dc_c<32>;
 
     for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
-        p.intra_pred_new[i][BLOCK_4x4] = intra_pred_ang_c_new<4>;
-        p.intra_pred_new[i][BLOCK_8x8] = intra_pred_ang_c_new<8>;
-        p.intra_pred_new[i][BLOCK_16x16] = intra_pred_ang_c_new<16>;
-        p.intra_pred_new[i][BLOCK_32x32] = intra_pred_ang_c_new<32>;
+        p.intra_pred[i][BLOCK_4x4] = intra_pred_ang_c<4>;
+        p.intra_pred[i][BLOCK_8x8] = intra_pred_ang_c<8>;
+        p.intra_pred[i][BLOCK_16x16] = intra_pred_ang_c<16>;
+        p.intra_pred[i][BLOCK_32x32] = intra_pred_ang_c<32>;
     }
 
-    p.intra_pred_allangs_new[BLOCK_4x4] = all_angs_pred_c_new<2>;
-    p.intra_pred_allangs_new[BLOCK_8x8] = all_angs_pred_c_new<3>;
-    p.intra_pred_allangs_new[BLOCK_16x16] = all_angs_pred_c_new<4>;
-    p.intra_pred_allangs_new[BLOCK_32x32] = all_angs_pred_c_new<5>;
+    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<2>;
+    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<3>;
+    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<4>;
+    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<5>;
 }
 }
