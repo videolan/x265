@@ -1223,10 +1223,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         CHROMA_VERT_FILTERS(_sse2);
         CHROMA_VERT_FILTERS_422(_sse2);
         CHROMA_VERT_FILTERS_444(_sse2);
+
         p.luma_p2s = x265_luma_p2s_sse2;
         p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_sse2;
         p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_sse2;
-        p.chroma[X265_CSP_I444].p2s = x265_luma_p2s_sse2; // for i444 , chroma_p2s can be replaced by luma_p2s
 
         p.cu[BLOCK_4x4].blockfill_s = x265_blockfill_s_4x4_sse2;
         p.cu[BLOCK_8x8].blockfill_s = x265_blockfill_s_8x8_sse2;
@@ -1496,7 +1496,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.luma_p2s = x265_luma_p2s_ssse3;
         p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_ssse3;
         p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_ssse3;
-        p.chroma[X265_CSP_I444].p2s = x265_luma_p2s_ssse3; // for i444, chroma_p2s can use luma_p2s
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;

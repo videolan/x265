@@ -68,7 +68,10 @@ void setupCPrimitives(EncoderPrimitives &p)
 
 void setupAliasPrimitives(EncoderPrimitives &p)
 {
-    /* copy reusable luma primitives to chroma 4:4:4 (all but chroma filters) */
+    /* alias chroma 4:4:4 from luma primitives (all but chroma filters) */
+
+    p.chroma[X265_CSP_I444].p2s = p.luma_p2s;
+
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
     {
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
