@@ -173,7 +173,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     {
         p.cu[i].copy_pp = p.pu[i].copy_pp;
 
-        for (int c = 0; c < X265_CSP_I444; c++)
+        for (int c = 0; c < X265_CSP_COUNT; c++)
             p.chroma[c].cu[i].copy_pp = p.chroma[c].pu[i].copy_pp;
     }
 
