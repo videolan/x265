@@ -57,7 +57,7 @@ void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
 void Setup_C_IPredPrimitives(EncoderPrimitives &p);
 void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p);
 
-void Setup_C_Primitives(EncoderPrimitives &p)
+void setupCPrimitives(EncoderPrimitives &p)
 {
     Setup_C_PixelPrimitives(p);      // pixel.cpp
     Setup_C_DCTPrimitives(p);        // dct.cpp
@@ -66,7 +66,7 @@ void Setup_C_Primitives(EncoderPrimitives &p)
     Setup_C_LoopFilterPrimitives(p); // loopfilter.cpp
 }
 
-void Setup_Alias_Primitives(EncoderPrimitives &p)
+void setupAliasPrimitives(EncoderPrimitives &p)
 {
     /* copy reusable luma primitives to chroma 4:4:4 (all but chroma filters) */
     for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
@@ -174,7 +174,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     // initialize global variables
     if (!primitives.pu[0].sad)
     {
-        Setup_C_Primitives(primitives);
+        setupCPrimitives(primitives);
 
         /* We do not want the encoder to use the un-optimized intra all-angles
          * C references. It is better to call the individual angle functions
@@ -183,13 +183,13 @@ void x265_setup_primitives(x265_param *param, int cpuid)
             primitives.intra_pred_allangs[i] = NULL;
 
 #if ENABLE_ASSEMBLY
-        Setup_Instrinsic_Primitives(primitives, cpuid);
-        Setup_Assembly_Primitives(primitives, cpuid);
+        setupInstrinsicPrimitives(primitives, cpuid);
+        setupAssemblyPrimitives(primitives, cpuid);
 #else
         x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 
-        Setup_Alias_Primitives(primitives);
+        setupAliasPrimitives(primitives);
     }
 
     if (param->logLevel >= X265_LOG_INFO)

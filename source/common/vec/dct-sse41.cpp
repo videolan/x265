@@ -103,7 +103,7 @@ void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16
 }
 
 namespace x265 {
-void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives &p)
+void setupIntrinsicDCT_sse41(EncoderPrimitives &p)
 {
     p.dequant_scaling = dequant_scaling;
 }

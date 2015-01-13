@@ -1140,7 +1140,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 namespace x265 {
 // private x265 namespace
 
-void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)

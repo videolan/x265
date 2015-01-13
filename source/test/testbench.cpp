@@ -152,8 +152,8 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives cprim;
     memset(&cprim, 0, sizeof(EncoderPrimitives));
-    Setup_C_Primitives(cprim);
-    Setup_Alias_Primitives(cprim);
+    setupCPrimitives(cprim);
+    setupAliasPrimitives(cprim);
 
     struct test_arch_t
     {
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
-        Setup_Instrinsic_Primitives(vecprim, test_arch[i].flag);
+        setupInstrinsicPrimitives(vecprim, test_arch[i].flag);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
-        Setup_Assembly_Primitives(asmprim, test_arch[i].flag);
+        setupAssemblyPrimitives(asmprim, test_arch[i].flag);
         memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
@@ -212,9 +212,9 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
-    Setup_Instrinsic_Primitives(optprim, cpuid);
-    Setup_Assembly_Primitives(optprim, cpuid);
-    Setup_Alias_Primitives(optprim);
+    setupInstrinsicPrimitives(optprim, cpuid);
+    setupAssemblyPrimitives(optprim, cpuid);
+    setupAliasPrimitives(optprim);
 
     /* some hybrid primitives may rely on other primitives in the
      * global primitive table, so set up those pointers. This is a

@@ -313,10 +313,10 @@ struct EncoderPrimitives
  * It must be initialized before the encoder begins. */
 extern EncoderPrimitives primitives;
 
-void Setup_C_Primitives(EncoderPrimitives &p);
-void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask);
-void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask);
-void Setup_Alias_Primitives(EncoderPrimitives &p);
+void setupCPrimitives(EncoderPrimitives &p);
+void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
+void setupAliasPrimitives(EncoderPrimitives &p);
 }
 
 #endif // ifndef X265_PRIMITIVES_H

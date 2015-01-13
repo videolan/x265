@@ -1105,7 +1105,7 @@ void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
 #endif // if !HIGH_BIT_DEPTH
 
 namespace x265 {
-void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives &p)
+void setupIntrinsicDCT_ssse3(EncoderPrimitives &p)
 {
     /* Note: We have AVX2 assembly for these two functions, but since AVX2 is
      * still somewhat rare on end-user PCs we still compile and link these SSSE3

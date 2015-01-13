@@ -53,29 +53,29 @@
 namespace x265 {
 // private x265 namespace
 
-void Setup_Vec_DCTPrimitives_sse3(EncoderPrimitives&);
-void Setup_Vec_DCTPrimitives_ssse3(EncoderPrimitives&);
-void Setup_Vec_DCTPrimitives_sse41(EncoderPrimitives&);
+void setupIntrinsicDCT_sse3(EncoderPrimitives&);
+void setupIntrinsicDCT_ssse3(EncoderPrimitives&);
+void setupIntrinsicDCT_sse41(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
-void Setup_Instrinsic_Primitives(EncoderPrimitives &p, int cpuMask)
+void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
     if (cpuMask & X265_CPU_SSE3)
     {
-        Setup_Vec_DCTPrimitives_sse3(p);
+        setupIntrinsicDCT_sse3(p);
     }
 #endif
 #ifdef HAVE_SSSE3
     if (cpuMask & X265_CPU_SSSE3)
     {
-        Setup_Vec_DCTPrimitives_ssse3(p);
+        setupIntrinsicDCT_ssse3(p);
     }
 #endif
 #ifdef HAVE_SSE4
     if (cpuMask & X265_CPU_SSE4)
     {
-        Setup_Vec_DCTPrimitives_sse41(p);
+        setupIntrinsicDCT_sse41(p);
     }
 #endif
     (void)p;
