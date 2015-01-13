@@ -65,14 +65,13 @@ fail:
 
 void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
+    int sizeIdx = log2TrSize - 2;
     int tuSize = 1 << log2TrSize;
-    pixel* srcPix = (!(g_intraFilterFlags[dirMode] & tuSize)) ? intraNeighbourBuf[0] : intraNeighbourBuf[1];
+    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 
     bool bFilter = log2TrSize <= 4;
-    int sizeIdx = log2TrSize - 2;
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-//    primitives.intra_pred[dirMode][sizeIdx](dst, stride, refLft, refAbv, dirMode, bFilter);
-    primitives.intra_pred[dirMode][sizeIdx](dst, stride, srcPix, dirMode, bFilter);
+    primitives.intra_pred[dirMode][sizeIdx](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
 }
 
 void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
@@ -106,7 +105,6 @@ void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, 
 
     int sizeIdx = log2TrSizeC - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-//    primitives.intra_pred[dirMode][sizeIdx](dst, stride, left, above, dirMode, 0);
     primitives.intra_pred[dirMode][sizeIdx](dst, stride, srcBuf, dirMode, 0);
 }
 
@@ -651,14 +649,14 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
                 int init = (topLeft << shift) + tuSize;
                 int deltaL, deltaR;
 
-                //TODO: Performance Primitive???
+                // TODO: Performance Primitive???
                 deltaL = leftLast - topLeft; deltaR = topLast - topLeft;
 
                 fltBuf[0] = topLeft;
                 for (int i = 1; i < trSize2; i++)
                 {
-                    fltBuf[i + tuSize2] = (pixel)((init + deltaL * i) >> shift); //Left Filtering
-                    fltBuf[i] = (pixel)((init + deltaR * i) >> shift); //Above Filtering
+                    fltBuf[i + tuSize2] = (pixel)((init + deltaL * i) >> shift); // Left Filtering
+                    fltBuf[i] = (pixel)((init + deltaR * i) >> shift);           // Above Filtering
                 }
                 fltBuf[trSize2] = topLast;
                 fltBuf[tuSize2 + trSize2] = leftLast;
@@ -675,7 +673,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
         // filtering top-left
         fltBuf[0] = ((topLeft << 1) + refBuf[1] + refBuf[tuSize2 + 1] + 2) >> 2;
 
-        //filtering left
+        // filtering left
         fltBuf[tuSize2 + 1] = ((refBuf[tuSize2 + 1] << 1) + topLeft + refBuf[tuSize2 + 2] + 2) >> 2;
         for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
             fltBuf[i] = ((refBuf[i] << 1) + refBuf[i - 1] + refBuf[i + 1] + 2) >> 2;
