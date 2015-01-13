@@ -202,10 +202,10 @@ struct EncoderPrimitives
 {
     struct PU
     {
-        pixelcmp_t     sad;        // Sum of Differences for each size
-        pixelcmp_x3_t  sad_x3;     // Sum of Differences 3x for each size
-        pixelcmp_x4_t  sad_x4;     // Sum of Differences 4x for each size
-        pixelcmp_t     satd;       // Sum of Transformed differences (HADAMARD)
+        pixelcmp_t     sad;        // Sum of Absolute Differences
+        pixelcmp_x3_t  sad_x3;     // Sum of Absolute Differences, 3 mv offsets at once
+        pixelcmp_x4_t  sad_x4;     // Sum of Absolute Differences, 4 mv offsets at once
+        pixelcmp_t     satd;       // Sum of Absolute Transformed Differences (4x4 Hadamaard)
 
         filter_pp_t    luma_hpp;
         filter_hps_t   luma_hps;
@@ -227,30 +227,29 @@ struct EncoderPrimitives
         dct_t           dct;
         idct_t          idct;
         calcresidual_t  calcresidual;
-        blockfill_s_t   blockfill_s;   // block fill with value
+        pixel_sub_ps_t  sub_ps;
+        pixel_add_ps_t  add_ps;
+        blockfill_s_t   blockfill_s;   // block fill, for DC transforms
+        transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
+        copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
+
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
         cpy2Dto1D_shr_t cpy2Dto1D_shr;
         cpy1Dto2D_shl_t cpy1Dto2D_shl;
         cpy1Dto2D_shr_t cpy1Dto2D_shr;
-        copy_cnt_t      copy_cnt;
 
-        transpose_t     transpose;
-
-        var_t           var;
-
-        pixel_sub_ps_t  sub_ps;
-        pixel_add_ps_t  add_ps;
         copy_sp_t       copy_sp;
         copy_ps_t       copy_ps;
         copy_ss_t       copy_ss;
         copy_pp_t       copy_pp;       // alias to pu[].copy_pp
 
-        pixelcmp_t      sa8d;          // sa8d primitives for square intra blocks
-        pixel_ssd_s_t   ssd_s;         // Sum of Square Error, residual coeff to self
+        pixelcmp_t      sa8d;          // Sum of 8x8 Hadamaard transformed differences
         pixelcmp_t      sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
         pixelcmp_ss_t   sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
-        pixelcmp_t      psy_cost_pp;   // difference in AC energy between two blocks
-        pixelcmp_ss_t   psy_cost_ss;
+        pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
+        pixelcmp_ss_t   psy_cost_ss;   // difference in AC energy between two signed residual blocks
+        var_t           var;           // block internal variance
+        pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
     }
     cu[NUM_CU_SIZES];
 
