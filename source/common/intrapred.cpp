@@ -76,6 +76,7 @@ void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*
         for (int x = 0; x < blkSize; x++)
             dst[y * dstStride + x] = (pixel) (((blkSize - 1 - x) * left[y] + (blkSize - 1 -y) * above[x] + (x + 1) * topRight + (y + 1) * bottomLeft + blkSize) >> (log2Size + 1));
 }
+
 template<int width>
 void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 {
