@@ -1668,7 +1668,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.dequant_normal = x265_dequant_normal_avx2;
 
         p.chroma[X265_CSP_I420].cu[CHROMA_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
-        p.chroma[X265_CSP_I420].cu[CHROMA_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;
         p.chroma[X265_CSP_I422].cu[CHROMA422_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
 
