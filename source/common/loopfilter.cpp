@@ -28,6 +28,8 @@
 #define PIXEL_MIN 0
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 
+namespace {
+
 /* get the sign of input variable (TODO: this is a dup, make common) */
 inline int8_t signOf(int x)
 {
@@ -109,6 +111,7 @@ void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeigh
         }
         rec += stride;
     }
+}
 }
 
 namespace x265 {
