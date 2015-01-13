@@ -405,7 +405,7 @@ namespace x265 {
     p.pu[LUMA_ ## W ## x ## H].luma_vss     = interp_vert_ss_c<8, W, H>;  \
     p.pu[LUMA_ ## W ## x ## H].luma_hvpp    = interp_hv_pp_c<8, W, H>;
 
-void Setup_C_IPFilterPrimitives(EncoderPrimitives& p)
+void setupFilterPrimitives_c(EncoderPrimitives& p)
 {
     LUMA(4, 4);
     LUMA(8, 8);

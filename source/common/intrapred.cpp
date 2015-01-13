@@ -211,7 +211,7 @@ void all_angs_pred_c(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 namespace x265 {
 // x265 private namespace
 
-void Setup_C_IPredPrimitives(EncoderPrimitives& p)
+void setupIntraPrimitives_c(EncoderPrimitives& p)
 {
     p.intra_pred[0][BLOCK_4x4] = planar_pred_c<2>;
     p.intra_pred[0][BLOCK_8x8] = planar_pred_c<3>;

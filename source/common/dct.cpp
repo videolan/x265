@@ -759,7 +759,7 @@ void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, in
 namespace x265 {
 // x265 private namespace
 
-void Setup_C_DCTPrimitives(EncoderPrimitives& p)
+void setupDCTPrimitives_c(EncoderPrimitives& p)
 {
     p.dequant_scaling = dequant_scaling_c;
     p.dequant_normal = dequant_normal_c;

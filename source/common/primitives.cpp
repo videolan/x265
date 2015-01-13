@@ -51,19 +51,19 @@ extern const uint8_t lumaPartitionMapTable[] =
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
-void Setup_C_PixelPrimitives(EncoderPrimitives &p);
-void Setup_C_DCTPrimitives(EncoderPrimitives &p);
-void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
-void Setup_C_IPredPrimitives(EncoderPrimitives &p);
-void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p);
+void setupPixelPrimitives_c(EncoderPrimitives &p);
+void setupDCTPrimitives_c(EncoderPrimitives &p);
+void setupFilterPrimitives_c(EncoderPrimitives &p);
+void setupIntraPrimitives_c(EncoderPrimitives &p);
+void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
 
 void setupCPrimitives(EncoderPrimitives &p)
 {
-    Setup_C_PixelPrimitives(p);      // pixel.cpp
-    Setup_C_DCTPrimitives(p);        // dct.cpp
-    Setup_C_IPFilterPrimitives(p);   // ipfilter.cpp
-    Setup_C_IPredPrimitives(p);      // intrapred.cpp
-    Setup_C_LoopFilterPrimitives(p); // loopfilter.cpp
+    setupPixelPrimitives_c(p);      // pixel.cpp
+    setupDCTPrimitives_c(p);        // dct.cpp
+    setupFilterPrimitives_c(p);     // ipfilter.cpp
+    setupIntraPrimitives_c(p);      // intrapred.cpp
+    setupLoopFilterPrimitives_c(p); // loopfilter.cpp
 }
 
 void setupAliasPrimitives(EncoderPrimitives &p)

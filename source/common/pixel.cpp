@@ -978,7 +978,7 @@ void extendPicBorder(pixel* pic, intptr_t stride, int width, int height, int mar
 }
 
 /* Initialize entries for pixel functions defined in this file */
-void Setup_C_PixelPrimitives(EncoderPrimitives &p)
+void setupPixelPrimitives_c(EncoderPrimitives &p)
 {
 #define LUMA_PU(W, H) \
     p.pu[LUMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
