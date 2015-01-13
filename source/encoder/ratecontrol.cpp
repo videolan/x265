@@ -407,7 +407,7 @@ RateControl::RateControl(x265_param *p)
         m_param->bEmitHRDSEI = 0;
     }
     m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
-    if (m_param->rc.bStrictCbr && m_isCbr)
+    if (m_param->rc.bStrictCbr && !m_isCbr)
     {
         x265_log(m_param, X265_LOG_WARNING, "strict CBR set without CBR mode, ignored\n");
         m_param->rc.bStrictCbr = 0;
