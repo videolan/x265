@@ -68,6 +68,26 @@ void setupCPrimitives(EncoderPrimitives &p)
 
 void setupAliasPrimitives(EncoderPrimitives &p)
 {
+#if HIGH_BIT_DEPTH
+    /* at HIGH_BIT_DEPTH, pixel == short so we can alias many primitives */
+    for (int i = 0; i < NUM_CU_SIZES; i++)
+    {
+        p.cu[i].sse_pp = (pixelcmp_t)p.cu[i].sse_ss;
+
+        p.cu[i].copy_ps = (copy_ps_t)p.pu[i].copy_pp;
+        p.cu[i].copy_sp = (copy_sp_t)p.pu[i].copy_pp;
+        p.cu[i].copy_ss = (copy_ss_t)p.pu[i].copy_pp;
+
+        p.chroma[X265_CSP_I420].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+        p.chroma[X265_CSP_I420].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+        p.chroma[X265_CSP_I420].cu[i].copy_ss = (copy_ss_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+
+        p.chroma[X265_CSP_I422].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+        p.chroma[X265_CSP_I422].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+        p.chroma[X265_CSP_I422].cu[i].copy_ss = (copy_ss_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+    }
+#endif
+
     /* alias chroma 4:4:4 from luma primitives (all but chroma filters) */
 
     p.chroma[X265_CSP_I444].p2s = p.luma_p2s;
