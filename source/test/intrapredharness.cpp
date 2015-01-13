@@ -164,7 +164,10 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_new_t ref[][NUM_
                 for (int k = 0; k < width; k++)
                 {
                     if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
+                    {
+                        printf("ang_%dx%d, Mode = %d, Row = %d failed !!\n", width, width, pmode, k);
                         return false;
+                    }
                 }
 
                 reportfail();
