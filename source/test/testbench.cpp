@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         setupInstrinsicPrimitives(vecprim, test_arch[i].flag);
+        setupAliasPrimitives(vecprim);
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
             if (testname && strncmp(testname, harness[h]->getName(), strlen(testname)))
@@ -195,6 +196,7 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         setupAssemblyPrimitives(asmprim, test_arch[i].flag);
+        setupAliasPrimitives(asmprim);
         memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
         {
@@ -214,7 +216,9 @@ int main(int argc, char *argv[])
     memset(&optprim, 0, sizeof(optprim));
     setupInstrinsicPrimitives(optprim, cpuid);
     setupAssemblyPrimitives(optprim, cpuid);
-    setupAliasPrimitives(optprim);
+
+    /* Note that we do not setup aliases for performance tests, that would be
+     * redundant. The testbench only verifies they are correctly aliased */
 
     /* some hybrid primitives may rely on other primitives in the
      * global primitive table, so set up those pointers. This is a
