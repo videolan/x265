@@ -59,7 +59,6 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMod
 
     if (bFilter)
         dcPredFilter(srcPix + 1, srcPix + (2 * width + 1), dst, dstStride, width);
-
 }
 
 template<int log2Size>

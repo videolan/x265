@@ -238,7 +238,7 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
         const int size = (1 << (i + 2));
         if (opt.intra_pred[0][i])
         {
-            printf("intra_planar %2dx%d", size, size);
+            printf("intra_planar_%dx%d", size, size);
             REPORT_SPEEDUP(opt.intra_pred[0][i], ref.intra_pred[0][i],
                            pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
         }
