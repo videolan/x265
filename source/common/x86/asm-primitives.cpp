@@ -1431,6 +1431,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_16x16].psy_cost_pp = x265_psyCost_pp_16x16_sse4;
         p.cu[BLOCK_32x32].psy_cost_pp = x265_psyCost_pp_32x32_sse4;
         p.cu[BLOCK_64x64].psy_cost_pp = x265_psyCost_pp_64x64_sse4;
+
+        p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_sse4;
 #endif
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
@@ -1719,6 +1721,8 @@ void Setup_Assembly_Primitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_16x16].psy_cost_pp = x265_psyCost_pp_16x16_sse4;
         p.cu[BLOCK_32x32].psy_cost_pp = x265_psyCost_pp_32x32_sse4;
         p.cu[BLOCK_64x64].psy_cost_pp = x265_psyCost_pp_64x64_sse4;
+
+        p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_sse4;
 #endif
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
