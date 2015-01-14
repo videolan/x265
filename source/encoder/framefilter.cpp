@@ -322,45 +322,44 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
         return ssd;
     }
 
-    uint32_t y = 0;
-    int rowHeight = 64;
+    intptr_t y = 0;
 
     /* Consume rows in ever narrower chunks of height */
-    for (int size = BLOCK_64x64; size >= BLOCK_4x4; size--)
+    for (int size = BLOCK_64x64; size >= BLOCK_4x4 && y < height; size--)
     {
+        int rowHeight = 1 << (size + 2);
+
         for (; y + rowHeight <= height; y += rowHeight)
         {
-            uint32_t x = 0;
+            intptr_t x = 0;
 
             /* Consume each row using the largest square blocks possible */
-            if (size == BLOCK_64x64)
+            if (size == BLOCK_64x64 && !(stride & 31))
                 for (; x + 64 <= width; x += 64)
                     ssd += primitives.cu[BLOCK_64x64].sse_pp(fenc + x, stride, rec + x, stride);
 
-            if (size >= BLOCK_32x32)
+            if (size >= BLOCK_32x32 && !(stride & 15))
                 for (; x + 32 <= width; x += 32)
-                    for (int y1 = 0; y1 < rowHeight; y1 += 32)
-                        ssd += primitives.cu[BLOCK_32x32].sse_pp(fenc + stride * y1 * 32 + x, stride, rec + stride * y1 * 32 + x, stride);
+                    for (int y1 = 0; y1 + 32 <= rowHeight; y1 += 32)
+                        ssd += primitives.cu[BLOCK_32x32].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
 
             if (size >= BLOCK_16x16)
                 for (; x + 16 <= width; x += 16)
-                    for (int y1 = 0; y1 < rowHeight; y1 += 16)
-                        ssd += primitives.cu[BLOCK_16x16].sse_pp(fenc + stride * y1 * 16 + x, stride, rec + stride * y1 * 16 + x, stride);
+                    for (int y1 = 0; y1 + 16 <= rowHeight; y1 += 16)
+                        ssd += primitives.cu[BLOCK_16x16].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
 
             if (size >= BLOCK_8x8)
                 for (; x + 8 <= width; x += 8)
-                    for (int y1 = 0; y1 < rowHeight; y1 += 8)
-                        ssd += primitives.cu[BLOCK_8x8].sse_pp(fenc + stride * y1 * 8 + x, stride, rec + stride * y1 * 8 + x, stride);
+                    for (int y1 = 0; y1 + 8 <= rowHeight; y1 += 8)
+                        ssd += primitives.cu[BLOCK_8x8].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
 
             for (; x + 4 <= width; x += 4)
-                for (int y1 = 0; y1 < rowHeight; y1 += 4)
-                    ssd += primitives.cu[BLOCK_4x4].sse_pp(fenc + stride * y1 * 4 + x, stride, rec + stride * y1 * 4 + x, stride);
+                for (int y1 = 0; y1 + 4 <= rowHeight; y1 += 4)
+                    ssd += primitives.cu[BLOCK_4x4].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
 
             fenc += stride * rowHeight;
             rec += stride * rowHeight;
         }
-
-        rowHeight >>= 1;
     }
 
     return ssd;
