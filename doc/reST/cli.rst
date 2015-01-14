@@ -998,6 +998,15 @@ Quality, rate control and rate distortion options
 	target bitrate in CBR mode. Bitrate adherence is prioritised
 	over quality. Rate tolerance is reduced to 50%. Default disabled.
 	
+	This option is for use-cases which require the final average bitrate 
+	to be within very strict limits of the target - preventing overshoots 
+	completely, and achieve bitrates within 5% of target bitrate, 
+	especially in short segment encodes. Typically, the encoder stays 
+	conservative, waiting until there is enough feedback in terms of 
+	encoded frames to control QP. strict-cbr allows the encoder to be 
+	more aggressive in hitting the target bitrate even for short segment 
+	videos. Experimental.
+	
 .. option:: --cbqpoffs <integer>
 
 	Offset of Cb chroma QP from the luma QP selected by rate control.
@@ -1037,12 +1046,6 @@ Quality, rate control and rate distortion options
 
 	The maximum single adjustment in QP allowed to rate control. Default
 	4
-
-.. option:: --ratetol <float>
-
-	The degree of rate fluctuation that x265 tolerates. Rate tolerance
-	is used along with overflow (difference between actual and target
-	bitrate), to adjust qp. Default is 1.0
 
 .. option:: --qblur <float>
 
