@@ -10659,35 +10659,35 @@ cglobal all_angs_pred_8x8, 3,4,8
     ; mode 18 [row 0, 1, 2, 3, 4, 5, 6, 7]
 
     movh          m1,          [r2]
-    movh          [r0 + 1024], m1
 
     pslldq        m2,          m1,         1
     pinsrb        m2,          [r2 + 1 + 16],   0
-    movh          [r0 + 1032], m2
+    punpcklqdq    m1,          m2
+    movu          [r0 + 1024], m1
 
     pslldq        m2,          1
     pinsrb        m2,          [r2 + 2 + 16],   0
-    movh          [r0 + 1040], m2
 
-    pslldq        m2,          1
-    pinsrb        m2,          [r2 + 3 + 16],   0
-    movh          [r0 + 1048], m2
+    pslldq        m0,          m2,          1
+    pinsrb        m0,          [r2 + 3 + 16],   0
+    punpcklqdq    m2,          m0
+    movu          [r0 + 1040], m2
 
-    pslldq        m2,          1
-    pinsrb        m2,          [r2 + 4 + 16],   0
-    movh          [r0 + 1056], m2
+    pslldq        m0,          1
+    pinsrb        m0,          [r2 + 4 + 16],   0
 
-    pslldq        m2,          1
+    pslldq        m2,          m0,              1
     pinsrb        m2,          [r2 + 5 + 16],   0
-    movh          [r0 + 1064], m2
+    punpcklqdq    m0,          m2
+    movu          [r0 + 1056], m0
 
     pslldq        m2,          1
     pinsrb        m2,          [r2 + 6 + 16],   0
-    movh          [r0 + 1072], m2
 
-    pslldq        m2,          1
-    pinsrb        m2,          [r2 + 7 + 16],   0
-    movh          [r0 + 1080], m2
+    pslldq        m0,           m2,             1
+    pinsrb        m0,          [r2 + 7 + 16],   0
+    punpcklqdq    m2,          m0
+    movu          [r0 + 1072], m2
 
     ; mode 19 [row 0, 1]
 
