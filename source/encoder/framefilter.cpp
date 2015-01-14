@@ -396,7 +396,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 /* restore original YUV samples to recon after SAO (if lossless) */
 static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
 {
-    int size = g_maxCUDepth - depth - 2;
+    int size = g_maxLog2CUSize - depth - 2;
 
     PicYuv* reconPic = frame.m_reconPic;
     PicYuv* fencPic  = frame.m_fencPic;
