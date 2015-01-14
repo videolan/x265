@@ -27,7 +27,7 @@
 using namespace x265;
 
 namespace {
-void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int size)
+void dcPredFilter(const pixel* above, const pixel* left, pixel* dst, intptr_t dststride, int size)
 {
     // boundary pixels processing
     dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);
@@ -44,7 +44,7 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
 }
 
 template<int width>
-void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int bFilter)
+void intra_pred_dc_c(pixel* dst, intptr_t dstStride, const pixel* srcPix, int /*dirMode*/, int bFilter)
 {
     int k, l;
 
@@ -62,12 +62,12 @@ void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMod
 }
 
 template<int log2Size>
-void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
+void planar_pred_c(pixel* dst, intptr_t dstStride, const pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
 {
     const int blkSize = 1 << log2Size;
 
-    pixel* above = srcPix + 1;
-    pixel* left  = srcPix + (2 * blkSize + 1);
+    const pixel* above = srcPix + 1;
+    const pixel* left  = srcPix + (2 * blkSize + 1);
 
     pixel topRight = above[blkSize];
     pixel bottomLeft = left[blkSize];
@@ -77,12 +77,13 @@ void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* srcPix, int /*dirMode*
 }
 
 template<int width>
-void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+void intra_pred_ang_c(pixel* dst, intptr_t dstStride, const pixel *srcPix0, int dirMode, int bFilter)
 {
     int width2 = width << 1;
     // Flip the neighbours in the horizontal case.
     int horMode = dirMode < 18;
     pixel neighbourBuf[129];
+    const pixel *srcPix = srcPix0;
 
     if (horMode)
     {
@@ -120,14 +121,15 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode
     else // Angular prediction.
     {
         // Get the reference pixels. The reference base is the first pixel to the top (neighbourBuf[1]).
-        pixel refBuf[64], *ref;
+        pixel refBuf[64];
+        const pixel *ref;
 
         // Use the projected left neighbours and the top neighbours.
         if (angle < 0)
         {
             // Number of neighbours projected. 
             int nbProjected = -((width * angle) >> 5) - 1;
-            ref = refBuf + nbProjected + 1;
+            pixel *ref_pix = refBuf + nbProjected + 1;
 
             // Project the neighbours.
             int invAngle = invAngleTable[- angleOffset - 1];
@@ -135,12 +137,13 @@ void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode
             for (int i = 0; i < nbProjected; i++)
             {
                 invAngleSum += invAngle;
-                ref[- 2 - i] = srcPix[width2 + (invAngleSum >> 8)];
+                ref_pix[- 2 - i] = srcPix[width2 + (invAngleSum >> 8)];
             }
 
             // Copy the top-left and top pixels.
             for (int i = 0; i < width + 1; i++)
-                ref[-1 + i] = srcPix[i];
+                ref_pix[-1 + i] = srcPix[i];
+            ref = ref_pix;
         }
         else // Use the top and top-right neighbours.
             ref = srcPix + 1;

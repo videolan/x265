@@ -26,18 +26,18 @@
 #ifndef X265_INTRAPRED_H
 #define X265_INTRAPRED_H
 
-void x265_intra_pred_dc4_sse4 (pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter);
-void x265_intra_pred_dc8_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
-void x265_intra_pred_dc16_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
-void x265_intra_pred_dc32_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int filter);
+void x265_intra_pred_dc4_sse4 (pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
+void x265_intra_pred_dc8_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int filter);
+void x265_intra_pred_dc16_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int filter);
+void x265_intra_pred_dc32_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int filter);
 
-void x265_intra_pred_planar4_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar8_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar16_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
-void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, pixel* above, int, int);
+void x265_intra_pred_planar4_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
+void x265_intra_pred_planar8_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
+void x265_intra_pred_planar16_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
+void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
 
 #define DECL_ANG(bsize, mode, cpu) \
-    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, pixel* above, int dirMode, int bFilter);
+    void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 
 DECL_ANG(4, 2, ssse3);
 DECL_ANG(4, 3, sse4);

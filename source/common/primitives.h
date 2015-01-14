@@ -135,7 +135,7 @@ typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
-typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter);
+typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, const pixel *srcPix, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *refPix, pixel *filtPix, int bLuma);
 
 typedef void (*cpy2Dto1D_shl_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
