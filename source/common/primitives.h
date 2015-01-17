@@ -62,6 +62,8 @@ enum LumaCU // can be indexed using log2n(width)-2
     NUM_CU_SIZES
 };
 
+enum { NUM_TR_SIZE = 4 }; // TU are 4x4, 8x8, 16x16, and 32x32
+
 
 // Chroma partition sizes. These enums are just a convenience for indexing into the
 // chroma primitive arrays when instantiating templates. The chroma function tables should
@@ -107,26 +109,6 @@ enum ChromaCU422
     BLOCK_422_16x32,
     BLOCK_422_32x64
 };
-
-enum { NUM_TR_SIZE = 4 };
-
-// Returns a LumaPartitions enum for the given size, always expected to return a valid enum
-inline int partitionFromSizes(int width, int height)
-{
-    X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
-    extern const uint8_t lumaPartitionMapTable[];
-    int w = (width >> 2) - 1;
-    int h = (height >> 2) - 1;
-    int part = (int)lumaPartitionMapTable[(w << 4) + h];
-    X265_CHECK(part != 255, "Invalid block width %d height %d\n", width, height);
-    return part;
-}
-
-inline int partitionFromLog2Size(int log2Size)
-{
-    X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
-    return log2Size - 2;
-}
 
 typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
@@ -325,9 +307,26 @@ struct EncoderPrimitives
     chroma[X265_CSP_COUNT];
 };
 
-/* This copy of the table is what gets used by the encoder.
- * It must be initialized before the encoder begins. */
+/* This copy of the table is what gets used by the encoder */
 extern EncoderPrimitives primitives;
+
+/* Returns a LumaPartitions enum for the given size, always expected to return a valid enum */
+inline int partitionFromSizes(int width, int height)
+{
+    X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
+    extern const uint8_t lumaPartitionMapTable[];
+    int w = (width >> 2) - 1;
+    int h = (height >> 2) - 1;
+    int part = (int)lumaPartitionMapTable[(w << 4) + h];
+    X265_CHECK(part != 255, "Invalid block width %d height %d\n", width, height);
+    return part;
+}
+
+inline int partitionFromLog2Size(int log2Size)
+{
+    X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
+    return log2Size - 2;
+}
 
 void setupCPrimitives(EncoderPrimitives &p);
 void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
