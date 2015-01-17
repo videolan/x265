@@ -417,7 +417,7 @@ int pixel_ssd_s_c(const int16_t* a, intptr_t dstride)
 }
 
 template<int size>
-void blockfil_s_c(int16_t* dst, intptr_t dstride, int16_t val)
+void blockfill_s_c(int16_t* dst, intptr_t dstride, int16_t val)
 {
     for (int y = 0; y < size; y++)
         for (int x = 0; x < size; x++)
@@ -994,7 +994,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_ ## W ## x ## H].copy_sp       = blockcopy_sp_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].copy_ps       = blockcopy_ps_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].copy_ss       = blockcopy_ss_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].blockfill_s   = blockfil_s_c<W>;  \
+    p.cu[BLOCK_ ## W ## x ## H].blockfill_s   = blockfill_s_c<W>;  \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shl = cpy2Dto1D_shl<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shr = cpy2Dto1D_shr<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl = cpy1Dto2D_shl<W>; \
