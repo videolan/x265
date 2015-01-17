@@ -39,17 +39,6 @@ extern "C" {
 #include "dct8.h"
 }
 
-template<int size>
-void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
-{
-    ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA)]);
-    const int filterSize = NTAPS_LUMA;
-    const int halfFilterSize = filterSize >> 1;
-
-    x265::primitives.pu[size].luma_hps(src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
-    x265::primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
-}
-
 #define ALL_LUMA_CU_TYPED(prim, fncdef, fname, cpu) \
     p.cu[BLOCK_8x8].prim   = fncdef x265_ ## fname ## _8x8_ ## cpu; \
     p.cu[BLOCK_16x16].prim = fncdef x265_ ## fname ## _16x16_ ## cpu; \
@@ -784,6 +773,17 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 namespace x265 {
 // private x265 namespace
+
+template<int size>
+void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
+{
+    ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA)]);
+    const int filterSize = NTAPS_LUMA;
+    const int halfFilterSize = filterSize >> 1;
+
+    x265::primitives.pu[size].luma_hps(src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
+    x265::primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
+}
 
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
