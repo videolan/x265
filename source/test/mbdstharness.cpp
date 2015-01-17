@@ -360,7 +360,7 @@ bool MBDstHarness::check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t op
 
 bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int i = 0; i < NUM_CU_SIZES; i++)
+    for (int i = 0; i < NUM_TR_SIZE; i++)
     {
         if (opt.cu[i].dct)
         {
@@ -372,7 +372,7 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    for (int i = 0; i < NUM_CU_SIZES; i++)
+    for (int i = 0; i < NUM_TR_SIZE; i++)
     {
         if (opt.cu[i].idct)
         {
@@ -388,8 +388,8 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (!check_dct_primitive(ref.dst4x4, opt.dst4x4, 4))
         {
-          printf("dst4x4: Failed\n");
-          return false;
+            printf("dst4x4: Failed\n");
+            return false;
         }
     }
 
@@ -397,8 +397,8 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (!check_idct_primitive(ref.idst4x4, opt.idst4x4, 4))
         {
-          printf("idst4x4: Failed\n");
-          return false;
+            printf("idst4x4: Failed\n");
+            return false;
         }
     }
 
@@ -470,7 +470,13 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
 void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    for (int value = 0; value < NUM_CU_SIZES; value++)
+    if (opt.dst4x4)
+    {
+        printf("dst4x4\t");
+        REPORT_SPEEDUP(opt.dst4x4, ref.dst4x4, mbuf1, mshortbuf2, 4);
+    }
+
+    for (int value = 0; value < NUM_TR_SIZE; value++)
     {
         if (opt.cu[value].dct)
         {
@@ -479,7 +485,13 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
     }
 
-    for (int value = 0; value < NUM_CU_SIZES; value++)
+    if (opt.idst4x4)
+    {
+        printf("idst4x4\t");
+        REPORT_SPEEDUP(opt.idst4x4, ref.idst4x4, mbuf1, mshortbuf2, 4);
+    }
+
+    for (int value = 0; value < NUM_TR_SIZE; value++)
     {
         if (opt.cu[value].idct)
         {
@@ -526,5 +538,4 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         printf("denoiseDct\t");
         REPORT_SPEEDUP(opt.denoiseDct, ref.denoiseDct, short_denoise_test_buff1[0], mubuf1, mushortbuf1, 32 * 32);
     }
-
 }
