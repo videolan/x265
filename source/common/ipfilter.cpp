@@ -373,20 +373,20 @@ namespace x265 {
 // x265 private namespace
 
 #define CHROMA_420(W, H) \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_hpp = interp_horiz_pp_c<4, W, H>; \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_hps = interp_horiz_ps_c<4, W, H>; \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vpp = interp_vert_pp_c<4, W, H>;  \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vps = interp_vert_ps_c<4, W, H>;  \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vsp = interp_vert_sp_c<4, W, H>;  \
-    p.chroma[X265_CSP_I420].pu[CHROMA_ ## W ## x ## H].filter_vss = interp_vert_ss_c<4, W, H>;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_hpp = interp_horiz_pp_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_hps = interp_horiz_ps_c<4, W, H>; \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_vpp = interp_vert_pp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_vps = interp_vert_ps_c<4, W, H>;  \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_vsp = interp_vert_sp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].filter_vss = interp_vert_ss_c<4, W, H>;
 
 #define CHROMA_422(W, H) \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_hpp = interp_horiz_pp_c<4, W, H>; \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_hps = interp_horiz_ps_c<4, W, H>; \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_vpp = interp_vert_pp_c<4, W, H>;  \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_vps = interp_vert_ps_c<4, W, H>;  \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_vsp = interp_vert_sp_c<4, W, H>;  \
-    p.chroma[X265_CSP_I422].pu[CHROMA422_ ## W ## x ## H].filter_vss = interp_vert_ss_c<4, W, H>;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_hpp = interp_horiz_pp_c<4, W, H>; \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_hps = interp_horiz_ps_c<4, W, H>; \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vpp = interp_vert_pp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vps = interp_vert_ps_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vsp = interp_vert_sp_c<4, W, H>;  \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].filter_vss = interp_vert_ss_c<4, W, H>;
 
 #define CHROMA_444(W, H) \
     p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].filter_hpp = interp_horiz_pp_c<4, W, H>; \

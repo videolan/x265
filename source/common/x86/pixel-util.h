@@ -71,13 +71,13 @@ void x265_scale2D_64to32_ssse3(pixel*, const pixel*, intptr_t);
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t*  dest, intptr_t destride, const pixel* src0, const pixel* src1, intptr_t srcstride0, intptr_t srcstride1); \
     void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  scr1, intptr_t srcStride0, intptr_t srcStride1);
 
-#define CHROMA_PIXELSUB_DEF(cpu) \
+#define CHROMA_420_PIXELSUB_DEF(cpu) \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 8, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 16, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(32, 32, cpu);
 
-#define CHROMA_PIXELSUB_DEF_422(cpu) \
+#define CHROMA_422_PIXELSUB_DEF(cpu) \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 8, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(8, 16, cpu); \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(16, 32, cpu); \
@@ -93,13 +93,13 @@ void x265_scale2D_64to32_ssse3(pixel*, const pixel*, intptr_t);
     SETUP_LUMA_PIXELSUB_PS_FUNC(32, 32, cpu); \
     SETUP_LUMA_PIXELSUB_PS_FUNC(64, 64, cpu);
 
-CHROMA_PIXELSUB_DEF(_sse4);
-LUMA_PIXELSUB_DEF(_sse4);
-CHROMA_PIXELSUB_DEF(_sse2);
 LUMA_PIXELSUB_DEF(_sse2);
+CHROMA_420_PIXELSUB_DEF(_sse2);
+CHROMA_422_PIXELSUB_DEF(_sse2);
 
-CHROMA_PIXELSUB_DEF_422(_sse4);
-CHROMA_PIXELSUB_DEF_422(_sse2);
+LUMA_PIXELSUB_DEF(_sse4);
+CHROMA_420_PIXELSUB_DEF(_sse4);
+CHROMA_422_PIXELSUB_DEF(_sse4);
 
 #define SETUP_LUMA_PIXELVAR_FUNC(W, H, cpu) \
     uint64_t x265_pixel_var_ ## W ## x ## H ## cpu(const pixel* pix, intptr_t pixstride);
@@ -112,8 +112,8 @@ CHROMA_PIXELSUB_DEF_422(_sse2);
 
 LUMA_PIXELVAR_DEF(_sse2);
 
-#undef CHROMA_PIXELSUB_DEF
-#undef CHROMA_PIXELSUB_DEF_422
+#undef CHROMA_420_PIXELSUB_DEF
+#undef CHROMA_422_PIXELSUB_DEF
 #undef LUMA_PIXELSUB_DEF
 #undef LUMA_PIXELVAR_DEF
 #undef SETUP_CHROMA_PIXELSUB_PS_FUNC
