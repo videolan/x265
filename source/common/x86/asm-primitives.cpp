@@ -568,21 +568,21 @@ extern "C" {
 #define CHROMA_422_ADDAVG(cpu)       ALL_CHROMA_444_PU(addAvg, addAvg, cpu);
 
 #define SETUP_INTRA_ANG_COMMON(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+    p.cu[BLOCK_4x4].intra_pred[mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_8x8].intra_pred[mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_16x16].intra_pred[mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_32x32].intra_pred[mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
 #define SETUP_INTRA_ANG4(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
+    p.cu[BLOCK_4x4].intra_pred[mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu;
 
 #define SETUP_INTRA_ANG16_32(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+    p.cu[BLOCK_16x16].intra_pred[mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_32x32].intra_pred[mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
 #define SETUP_INTRA_ANG4_8(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_4x4] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
+    p.cu[BLOCK_4x4].intra_pred[mode] = x265_intra_pred_ang4_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_8x8].intra_pred[mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu;
 
 #define INTRA_ANG_SSSE3(cpu) \
     SETUP_INTRA_ANG_COMMON(2, 2, cpu); \
@@ -607,9 +607,9 @@ extern "C" {
     SETUP_INTRA_ANG_COMMON(18, 18, cpu);
 
 #define SETUP_INTRA_ANG_HIGH(mode, fno, cpu) \
-    p.intra_pred[mode][BLOCK_8x8] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_16x16] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
-    p.intra_pred[mode][BLOCK_32x32] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
+    p.cu[BLOCK_8x8].intra_pred[mode] = x265_intra_pred_ang8_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_16x16].intra_pred[mode] = x265_intra_pred_ang16_ ## fno ## _ ## cpu; \
+    p.cu[BLOCK_32x32].intra_pred[mode] = x265_intra_pred_ang32_ ## fno ## _ ## cpu;
 
 #define INTRA_ANG_SSE4_HIGH(cpu) \
     SETUP_INTRA_ANG_HIGH(19, 19, cpu); \
@@ -913,15 +913,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.nquant = x265_nquant_sse4;
         p.dequant_normal = x265_dequant_normal_sse4;
 
-        p.intra_pred[0][BLOCK_4x4] = x265_intra_pred_planar4_sse4;
-        p.intra_pred[0][BLOCK_8x8] = x265_intra_pred_planar8_sse4;
-        p.intra_pred[0][BLOCK_16x16] = x265_intra_pred_planar16_sse4;
-        p.intra_pred[0][BLOCK_32x32] = x265_intra_pred_planar32_sse4;
+        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = x265_intra_pred_planar4_sse4;
+        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = x265_intra_pred_planar8_sse4;
+        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_sse4;
+        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_sse4;
 
-        p.intra_pred[1][BLOCK_4x4] = x265_intra_pred_dc4_sse4;
-        p.intra_pred[1][BLOCK_8x8] = x265_intra_pred_dc8_sse4;
-        p.intra_pred[1][BLOCK_16x16] = x265_intra_pred_dc16_sse4;
-        p.intra_pred[1][BLOCK_32x32] = x265_intra_pred_dc32_sse4;
+        p.cu[BLOCK_4x4].intra_pred[DC_IDX] = x265_intra_pred_dc4_sse4;
+        p.cu[BLOCK_8x8].intra_pred[DC_IDX] = x265_intra_pred_dc8_sse4;
+        p.cu[BLOCK_16x16].intra_pred[DC_IDX] = x265_intra_pred_dc16_sse4;
+        p.cu[BLOCK_32x32].intra_pred[DC_IDX] = x265_intra_pred_dc32_sse4;
 
         p.planecopy_cp = x265_upShift_8_sse4;
 
@@ -1169,20 +1169,20 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;
 
-        p.intra_pred[0][BLOCK_4x4] = x265_intra_pred_planar4_sse4;
-        p.intra_pred[0][BLOCK_8x8] = x265_intra_pred_planar8_sse4;
-        p.intra_pred[0][BLOCK_16x16] = x265_intra_pred_planar16_sse4;
-        p.intra_pred[0][BLOCK_32x32] = x265_intra_pred_planar32_sse4;
+        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = x265_intra_pred_planar4_sse4;
+        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = x265_intra_pred_planar8_sse4;
+        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_sse4;
+        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_sse4;
 
-        p.intra_pred_allangs[BLOCK_4x4] = x265_all_angs_pred_4x4_sse4;
-        p.intra_pred_allangs[BLOCK_8x8] = x265_all_angs_pred_8x8_sse4;
-        p.intra_pred_allangs[BLOCK_16x16] = x265_all_angs_pred_16x16_sse4;
-        p.intra_pred_allangs[BLOCK_32x32] = x265_all_angs_pred_32x32_sse4;
+        p.cu[BLOCK_4x4].intra_pred[DC_IDX] = x265_intra_pred_dc4_sse4;
+        p.cu[BLOCK_8x8].intra_pred[DC_IDX] = x265_intra_pred_dc8_sse4;
+        p.cu[BLOCK_16x16].intra_pred[DC_IDX] = x265_intra_pred_dc16_sse4;
+        p.cu[BLOCK_32x32].intra_pred[DC_IDX] = x265_intra_pred_dc32_sse4;
 
-        p.intra_pred[1][BLOCK_4x4] = x265_intra_pred_dc4_sse4;
-        p.intra_pred[1][BLOCK_8x8] = x265_intra_pred_dc8_sse4;
-        p.intra_pred[1][BLOCK_16x16] = x265_intra_pred_dc16_sse4;
-        p.intra_pred[1][BLOCK_32x32] = x265_intra_pred_dc32_sse4;
+        p.cu[BLOCK_4x4].intra_pred_allangs = x265_all_angs_pred_4x4_sse4;
+        p.cu[BLOCK_8x8].intra_pred_allangs = x265_all_angs_pred_8x8_sse4;
+        p.cu[BLOCK_16x16].intra_pred_allangs = x265_all_angs_pred_16x16_sse4;
+        p.cu[BLOCK_32x32].intra_pred_allangs = x265_all_angs_pred_32x32_sse4;
 
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4(sse4);

@@ -212,7 +212,6 @@ struct EncoderPrimitives
         pixel_sub_ps_t  sub_ps;
         pixel_add_ps_t  add_ps;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
-        transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
 
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
@@ -225,13 +224,17 @@ struct EncoderPrimitives
         copy_ss_t       copy_ss;
         copy_pp_t       copy_pp;       // alias to pu[].copy_pp
 
-        pixelcmp_t      sa8d;          // Sum of 8x8 Hadamaard transformed differences
+        var_t           var;           // block internal variance
         pixelcmp_t      sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
         pixelcmp_ss_t   sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
         pixelcmp_ss_t   psy_cost_ss;   // difference in AC energy between two signed residual blocks
-        var_t           var;           // block internal variance
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
+        pixelcmp_t      sa8d;          // Sum of 8x8 Hadamaard transformed differences
+
+        transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
+        intra_allangs_t intra_pred_allangs;
+        intra_pred_t    intra_pred[NUM_INTRA_MODE];
     }
     cu[NUM_CU_SIZES];
 
@@ -245,8 +248,6 @@ struct EncoderPrimitives
     count_nonzero_t       count_nonzero;
     denoiseDct_t          denoiseDct;
 
-    intra_pred_t          intra_pred[NUM_INTRA_MODE][NUM_TR_SIZE];
-    intra_allangs_t       intra_pred_allangs[NUM_TR_SIZE];
     scale_t               scale1D_128to64;
     scale_t               scale2D_64to32;
 

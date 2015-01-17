@@ -93,7 +93,7 @@ bool IntraPredHarness::check_planar_primitive(intra_pred_t ref, intra_pred_t opt
     return true;
 }
 
-bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_TR_SIZE], const intra_pred_t opt[][NUM_TR_SIZE])
+bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[], const intra_pred_t opt[], int sizeIdx)
 {
     int j = Predict::ADI_BUF_STRIDE;
     intptr_t stride = FENC_STRIDE;
@@ -103,40 +103,37 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[][NUM_TR_S
     memset(pixel_out_c, 0xCD, OUTPUT_SIZE);
 #endif
 
-    for (int size = 2; size <= 5; size++)
+    int width = 1 << (sizeIdx + 2);
+    for (int i = 0; i <= 100; i++)
     {
-        int width = (1 << size);
-        for (int i = 0; i <= 100; i++)
+        int bFilter = (width <= 16) && (rand() % 2);
+        for (int pmode = 2; pmode <= 34; pmode++)
         {
-            int bFilter = (width <= 16) && (rand() % 2);
-            for (int pmode = 2; pmode <= 34; pmode++)
+            if (!opt[pmode])
+                continue;
+
+            checked(opt[pmode], pixel_out_vec, stride, pixel_buff + j, pmode, bFilter);
+            ref[pmode](pixel_out_c, stride, pixel_buff + j, pmode, bFilter);
+
+            for (int k = 0; k < width; k++)
             {
-                if (!opt[pmode][size - 2])
-                    continue;
-
-                checked(opt[pmode][size - 2], pixel_out_vec, stride, pixel_buff + j, pmode, bFilter);
-                ref[pmode][size - 2](pixel_out_c, stride, pixel_buff + j, pmode, bFilter);
-
-                for (int k = 0; k < width; k++)
+                if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
                 {
-                    if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
-                    {
-                        printf("ang_%dx%d, Mode = %d, Row = %d failed !!\n", width, width, pmode, k);
-                        return false;
-                    }
+                    printf("ang_%dx%d, Mode = %d, Row = %d failed !!\n", width, width, pmode, k);
+                    return false;
                 }
-
-                reportfail();
             }
 
-            j += FENC_STRIDE;
+            reportfail();
         }
+
+        j += FENC_STRIDE;
     }
 
     return true;
 }
 
-bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], const intra_allangs_t opt[])
+bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref, const intra_allangs_t opt, int sizeIdx)
 {
     int j = Predict::ADI_BUF_STRIDE;
     int isLuma;
@@ -146,40 +143,35 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref[], cons
     memset(pixel_out_33_c, 0xCD, OUTPUT_SIZE_33);
 #endif
 
-    for (int size = 2; size <= 5; size++)
+    const int width = 1 << (sizeIdx + 2);
+
+    for (int i = 0; i <= 100; i++)
     {
-        if (opt[size - 2] == NULL) continue;
+        isLuma = (width <= 16) ? true : false;  // bFilter is true for 4x4, 8x8, 16x16 and false for 32x32
 
-        const int width = (1 << size);
+        pixel * refAbove0 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0];
+        pixel * refLeft0 = refAbove0 + 3 * width + FENC_STRIDE;
 
-        for (int i = 0; i <= 100; i++)
+        refLeft0[0] = refAbove0[0];
+
+        ref(pixel_out_33_c,   refAbove0, refLeft0, isLuma);
+        checked(opt, pixel_out_33_vec, refAbove0, refLeft0, isLuma);
+
+        for (int p = 2 - 2; p <= 34 - 2; p++)
         {
-            isLuma = (width <= 16) ? true : false;  // bFilter is true for 4x4, 8x8, 16x16 and false for 32x32
-
-            pixel * refAbove0 = pixel_buff + j + 3 * FENC_STRIDE;   // keep this offset, since vector code may broken input buffer range [-(width-1), 0];
-            pixel * refLeft0 = refAbove0 + 3 * width + FENC_STRIDE;
-
-            refLeft0[0] = refAbove0[0];
-
-            ref[size - 2](pixel_out_33_c,   refAbove0, refLeft0, isLuma);
-            checked(opt[size - 2], pixel_out_33_vec, refAbove0, refLeft0, isLuma);
-
-            for (int p = 2 - 2; p <= 34 - 2; p++)
+            for (int k = 0; k < width; k++)
             {
-                for (int k = 0; k < width; k++)
+                if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width * sizeof(pixel)))
                 {
-                    if (memcmp(pixel_out_33_c + p * (width * width) + k * width, pixel_out_33_vec + p * (width * width) + k * width, width * sizeof(pixel)))
-                    {
-                        printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p + 2, k, isLuma);
-                        opt[size - 2](pixel_out_33_vec, refAbove0, refLeft0, isLuma);
-                        return false;
-                    }
+                    printf("\nFailed: (%dx%d) Mode(%2d), Line[%2d], bfilter=%d\n", width, width, p + 2, k, isLuma);
+                    opt(pixel_out_33_vec, refAbove0, refLeft0, isLuma);
+                    return false;
                 }
             }
-
-            reportfail();
-            j += FENC_STRIDE;
         }
+
+        reportfail();
+        j += FENC_STRIDE;
     }
 
     return true;
@@ -189,39 +181,37 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
 {
     for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
-        if (opt.intra_pred[0][i])
+        const int size = (1 << (i + 2));
+        if (opt.cu[i].intra_pred[PLANAR_IDX])
         {
-            const int size = (1 << (i + 2));
-            if (!check_planar_primitive(ref.intra_pred[0][i], opt.intra_pred[0][i], size))
+            if (!check_planar_primitive(ref.cu[i].intra_pred[PLANAR_IDX], opt.cu[i].intra_pred[PLANAR_IDX], size))
             {
                 printf("intra_planar %dx%d failed\n", size, size);
                 return false;
             }
         }
-        if (opt.intra_pred[1][i])
+        if (opt.cu[i].intra_pred[DC_IDX])
         {
-            const int size = (1 << (i + 2));
-            if (!check_dc_primitive(ref.intra_pred[1][i], opt.intra_pred[1][i], size))
+            if (!check_dc_primitive(ref.cu[i].intra_pred[DC_IDX], opt.cu[i].intra_pred[DC_IDX], size))
             {
                 printf("intra_dc %dx%d failed\n", size, size);
                 return false;
             }
         }
-    }
 
-    // NOTE: always call since this function have check pointer in loop
-    if (!check_angular_primitive(ref.intra_pred, opt.intra_pred))
-    {
-        printf("intra_angular failed\n");
-        return false;
-    }
-
-    if (opt.intra_pred_allangs[0])
-    {
-        if (!check_allangs_primitive(ref.intra_pred_allangs, opt.intra_pred_allangs))
+        if (!check_angular_primitive(ref.cu[i].intra_pred, opt.cu[i].intra_pred, i))
         {
-            printf("intra_allangs failed\n");
+            printf("intra_angular failed\n");
             return false;
+        }
+
+        if (opt.cu[i].intra_pred_allangs)
+        {
+            if (!check_allangs_primitive(ref.cu[i].intra_pred_allangs, opt.cu[i].intra_pred_allangs, i))
+            {
+                printf("intra_allangs failed\n");
+                return false;
+            }
         }
     }
 
@@ -236,51 +226,46 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
     for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
     {
         const int size = (1 << (i + 2));
-        if (opt.intra_pred[0][i])
+        if (opt.cu[i].intra_pred[PLANAR_IDX])
         {
             printf("intra_planar_%dx%d", size, size);
-            REPORT_SPEEDUP(opt.intra_pred[0][i], ref.intra_pred[0][i],
+            REPORT_SPEEDUP(opt.cu[i].intra_pred[PLANAR_IDX], ref.cu[i].intra_pred[PLANAR_IDX],
                            pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
         }
-        if (opt.intra_pred_allangs[i])
+        if (opt.cu[i].intra_pred[DC_IDX])
+        {
+            printf("intra_dc_%dx%d[f=0]", size, size);
+            REPORT_SPEEDUP(opt.cu[i].intra_pred[DC_IDX], ref.cu[i].intra_pred[DC_IDX],
+                pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
+            if (size <= 16)
+            {
+                printf("intra_dc_%dx%d[f=1]", size, size);
+                REPORT_SPEEDUP(opt.cu[i].intra_pred[DC_IDX], ref.cu[i].intra_pred[DC_IDX],
+                    pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 1);
+            }
+        }
+        if (opt.cu[i].intra_pred_allangs)
         {
             bool bFilter = (size <= 16);
             pixel * refAbove = pixel_buff + srcStride;
             pixel * refLeft = refAbove + 3 * size;
             refLeft[0] = refAbove[0];
             printf("intra_allangs%dx%d", size, size);
-            REPORT_SPEEDUP(opt.intra_pred_allangs[i], ref.intra_pred_allangs[i],
+            REPORT_SPEEDUP(opt.cu[i].intra_pred_allangs, ref.cu[i].intra_pred_allangs,
                            pixel_out_33_vec, refAbove, refLeft, bFilter);
         }
-        if (opt.intra_pred[1][i])
+        for (int mode = 2; mode <= 34; mode += 1)
         {
-            printf("intra_dc_%dx%d[f=0]", size, size);
-            REPORT_SPEEDUP(opt.intra_pred[1][i], ref.intra_pred[1][i],
-                           pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 0);
-            if (size <= 16)
+            if (opt.cu[i].intra_pred[mode])
             {
-                printf("intra_dc_%dx%d[f=1]", size, size);
-                REPORT_SPEEDUP(opt.intra_pred[1][i], ref.intra_pred[1][i],
-                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, 0, 1);
-            }
-        }
-    }
-
-    for (int ii = 2; ii <= 5; ii++)
-    {
-        for (int p = 2; p <= 34; p += 1)
-        {
-            int pmode = p;  //(rand()%33)+2;
-            if (opt.intra_pred[pmode][ii - 2])
-            {
-                width = (1 << ii);
+                width = 1 << (i + 2);
                 bool bFilter = (width <= 16);
                 pixel * refAbove = pixel_buff + srcStride;
                 pixel * refLeft = refAbove + 3 * width;
                 refLeft[0] = refAbove[0];
-                printf("intra_ang_%dx%d[%2d]", width, width, pmode);
-                REPORT_SPEEDUP(opt.intra_pred[pmode][ii - 2], ref.intra_pred[pmode][ii - 2],
-                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, pmode, bFilter);
+                printf("intra_ang_%dx%d[%2d]", width, width, mode);
+                REPORT_SPEEDUP(opt.cu[i].intra_pred[mode], ref.cu[i].intra_pred[mode],
+                               pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, mode, bFilter);
             }
         }
     }

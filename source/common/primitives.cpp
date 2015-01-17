@@ -205,7 +205,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
          * C references. It is better to call the individual angle functions
          * instead. We must check for NULL before using this primitive */
         for (int i = 0; i < NUM_TR_SIZE; i++)
-            primitives.intra_pred_allangs[i] = NULL;
+            primitives.cu[i].intra_pred_allangs = NULL;
 
 #if ENABLE_ASSEMBLY
         setupInstrinsicPrimitives(primitives, cpuid);
