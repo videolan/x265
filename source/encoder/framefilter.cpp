@@ -63,8 +63,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_lastHeight = m_param->sourceHeight % g_maxCUSize ? m_param->sourceHeight % g_maxCUSize : g_maxCUSize;
 
-    m_deblock.init();
-
     if (m_param->bEnableSAO)
         if (!m_sao.create(m_param))
             m_param->bEnableSAO = 0;
@@ -96,22 +94,24 @@ void FrameFilter::processRow(int row)
 
     if (m_param->bEnableLoopFilter)
     {
+        const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
+        const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
             const CUData* ctu = encData.getPicCTU(cuAddr);
-
-            m_deblock.deblockCTU(ctu, Deblock::EDGE_VER);
+            deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
 
             if (col > 0)
             {
                 const CUData* ctuPrev = encData.getPicCTU(cuAddr - 1);
-                m_deblock.deblockCTU(ctuPrev, Deblock::EDGE_HOR);
+                deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
             }
         }
 
         const CUData* ctuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
-        m_deblock.deblockCTU(ctuPrev, Deblock::EDGE_HOR);
+        deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[lineStartCUAddr + numCols - 1]], Deblock::EDGE_HOR);
     }
 
     // SAO
@@ -394,23 +394,24 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 }
 
 /* restore original YUV samples to recon after SAO (if lossless) */
-static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
+static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx)
 {
-    int size = g_maxLog2CUSize - depth - 2;
+    int size = cu->m_log2CUSize[absPartIdx] - 2;
+    uint32_t cuAddr = cu->m_cuAddr;
 
     PicYuv* reconPic = frame.m_reconPic;
     PicYuv* fencPic  = frame.m_fencPic;
 
-    pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
-    pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dst = reconPic->getLumaAddr(cuAddr, absPartIdx);
+    pixel* src = fencPic->getLumaAddr(cuAddr, absPartIdx);
 
     primitives.cu[size].copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
    
-    pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absPartIdx);
-    pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dstCb = reconPic->getCbAddr(cuAddr, absPartIdx);
+    pixel* srcCb = fencPic->getCbAddr(cuAddr, absPartIdx);
 
-    pixel* dstCr = reconPic->getCrAddr(cu->m_cuAddr, absPartIdx);
-    pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dstCr = reconPic->getCrAddr(cuAddr, absPartIdx);
+    pixel* srcCr = fencPic->getCrAddr(cuAddr, absPartIdx);
 
     int csp = fencPic->m_picCsp;
     primitives.chroma[csp].cu[size].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
@@ -418,34 +419,29 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
 }
 
 /* Original YUV restoration for CU in lossless coding */
-static void origCUSampleRestoration(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
+static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Frame& frame)
 {
-    if (cu->m_cuDepth[absPartIdx] > depth)
+    uint32_t absPartIdx = cuGeom.encodeIdx;
+    if (cu->m_cuDepth[absPartIdx] > cuGeom.depth)
     {
-        /* TODO: this could use cuGeom.numPartition and flags */
-        uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
-        uint32_t qNumParts   = curNumParts >> 2;
-        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
-        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->m_cuPelY;
-
-        /* process four split sub-cu at next depth */
-        for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
+        for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-                origCUSampleRestoration(cu, frame, absPartIdx, depth + 1);
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
+                origCUSampleRestoration(cu, childGeom, frame);
         }
-
         return;
     }
 
     // restore original YUV samples
     if (cu->m_tqBypass[absPartIdx])
-        restoreOrigLosslessYuv(cu, frame, absPartIdx, depth);
+        restoreOrigLosslessYuv(cu, frame, absPartIdx);
 }
 
 void FrameFilter::processSao(int row)
 {
-    SAOParam* saoParam = m_frame->m_encData->m_saoParam;
+    FrameData& encData = *m_frame->m_encData;
+    SAOParam* saoParam = encData.m_saoParam;
 
     if (saoParam->bSaoFlag[0])
         m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
@@ -456,12 +452,19 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
     }
 
-    if (m_frame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
+    if (encData.m_slice->m_pps->bTransquantBypassEnabled)
     {
-        uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
+        uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
         uint32_t lineStartCUAddr = row * numCols;
 
+        const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
+        const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+
         for (uint32_t col = 0; col < numCols; col++)
-            origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), *m_frame, 0, 0);
+        {
+            uint32_t cuAddr = lineStartCUAddr + col;
+            const CUData* ctu = encData.getPicCTU(cuAddr);
+            origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frame);
+        }
     }
 }

@@ -57,51 +57,51 @@ void copy256(uint8_t* dst, uint8_t* src) { memcpy(dst, src, 256); }
 void bcast256(uint8_t* dst, uint8_t val) { memset(dst, val, 256); }
 
 /* Check whether 2 addresses point to the same column */
-inline bool isEqualCol(int addrA, int addrB, int numUnitsPerRow)
+inline bool isEqualCol(int addrA, int addrB, int numUnits)
 {
-    // addrA % numUnitsPerRow == addrB % numUnitsPerRow
-    return ((addrA ^ addrB) &  (numUnitsPerRow - 1)) == 0;
+    // addrA % numUnits == addrB % numUnits
+    return ((addrA ^ addrB) &  (numUnits - 1)) == 0;
 }
 
 /* Check whether 2 addresses point to the same row */
-inline bool isEqualRow(int addrA, int addrB, int numUnitsPerRow)
+inline bool isEqualRow(int addrA, int addrB, int numUnits)
 {
-    // addrA / numUnitsPerRow == addrB / numUnitsPerRow
-    return ((addrA ^ addrB) & ~(numUnitsPerRow - 1)) == 0;
+    // addrA / numUnits == addrB / numUnits
+    return ((addrA ^ addrB) & ~(numUnits - 1)) == 0;
 }
 
 /* Check whether 2 addresses point to the same row or column */
-inline bool isEqualRowOrCol(int addrA, int addrB, int numUnitsPerRow)
+inline bool isEqualRowOrCol(int addrA, int addrB, int numUnits)
 {
-    return isEqualCol(addrA, addrB, numUnitsPerRow) | isEqualRow(addrA, addrB, numUnitsPerRow);
+    return isEqualCol(addrA, addrB, numUnits) | isEqualRow(addrA, addrB, numUnits);
 }
 
 /* Check whether one address points to the first column */
-inline bool isZeroCol(int addr, int numUnitsPerRow)
+inline bool isZeroCol(int addr, int numUnits)
 {
-    // addr % numUnitsPerRow == 0
-    return (addr & (numUnitsPerRow - 1)) == 0;
+    // addr % numUnits == 0
+    return (addr & (numUnits - 1)) == 0;
 }
 
 /* Check whether one address points to the first row */
-inline bool isZeroRow(int addr, int numUnitsPerRow)
+inline bool isZeroRow(int addr, int numUnits)
 {
-    // addr / numUnitsPerRow == 0
-    return (addr & ~(numUnitsPerRow - 1)) == 0;
+    // addr / numUnits == 0
+    return (addr & ~(numUnits - 1)) == 0;
 }
 
 /* Check whether one address points to a column whose index is smaller than a given value */
-inline bool lessThanCol(int addr, int val, int numUnitsPerRow)
+inline bool lessThanCol(int addr, int val, int numUnits)
 {
-    // addr % numUnitsPerRow < val
-    return (addr & (numUnitsPerRow - 1)) < val;
+    // addr % numUnits < val
+    return (addr & (numUnits - 1)) < val;
 }
 
 /* Check whether one address points to a row whose index is smaller than a given value */
-inline bool lessThanRow(int addr, int val, int numUnitsPerRow)
+inline bool lessThanRow(int addr, int val, int numUnits)
 {
-    // addr / numUnitsPerRow < val
-    return addr < val * numUnitsPerRow;
+    // addr / numUnits < val
+    return addr < val * numUnits;
 }
 
 inline MV scaleMv(MV mv, int scale)
@@ -1533,17 +1533,17 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             m_encData->getPicCTU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
-            uint32_t numPartInCUSize = s_numPartInCUSize;
-            bool bNotLastCol = lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
-            bool bNotLastRow = lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
+            uint32_t numUnits = s_numPartInCUSize;
+            bool bNotLastCol = lessThanCol(absPartIdxRB, numUnits - 1, numUnits); // is not at the last column of CTU
+            bool bNotLastRow = lessThanRow(absPartIdxRB, numUnits - 1, numUnits); // is not at the last row    of CTU
 
             if (bNotLastCol && bNotLastRow)
             {
-                absPartAddr = g_rasterToZscan[absPartIdxRB + numPartInCUSize + 1];
+                absPartAddr = g_rasterToZscan[absPartIdxRB + numUnits + 1];
                 ctuIdx = m_cuAddr;
             }
             else if (bNotLastCol)
-                absPartAddr = g_rasterToZscan[(absPartIdxRB + numPartInCUSize + 1) & (numPartInCUSize - 1)];
+                absPartAddr = g_rasterToZscan[(absPartIdxRB + numUnits + 1) & (numUnits - 1)];
             else if (bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];
@@ -1760,17 +1760,17 @@ int CUData::fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int re
             m_encData->getPicCTU(m_cuAddr)->m_cuPelY + g_zscanToPelY[partIdxRB] + UNIT_SIZE < m_slice->m_sps->picHeightInLumaSamples)
         {
             uint32_t absPartIdxRB = g_zscanToRaster[partIdxRB];
-            uint32_t numPartInCUSize = s_numPartInCUSize;
-            bool bNotLastCol = lessThanCol(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last column of CTU
-            bool bNotLastRow = lessThanRow(absPartIdxRB, numPartInCUSize - 1, numPartInCUSize); // is not at the last row    of CTU
+            uint32_t numUnits = s_numPartInCUSize;
+            bool bNotLastCol = lessThanCol(absPartIdxRB, numUnits - 1, numUnits); // is not at the last column of CTU
+            bool bNotLastRow = lessThanRow(absPartIdxRB, numUnits - 1, numUnits); // is not at the last row    of CTU
 
             if (bNotLastCol && bNotLastRow)
             {
-                absPartAddr = g_rasterToZscan[absPartIdxRB + numPartInCUSize + 1];
+                absPartAddr = g_rasterToZscan[absPartIdxRB + numUnits + 1];
                 ctuIdx = m_cuAddr;
             }
             else if (bNotLastCol)
-                absPartAddr = g_rasterToZscan[(absPartIdxRB + numPartInCUSize + 1) & (numPartInCUSize - 1)];
+                absPartAddr = g_rasterToZscan[(absPartIdxRB + numUnits + 1) & (numUnits - 1)];
             else if (bNotLastRow)
             {
                 absPartAddr = g_rasterToZscan[absPartIdxRB + 1];

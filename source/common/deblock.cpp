@@ -33,13 +33,13 @@ using namespace x265;
 #define DEBLOCK_SMALLEST_BLOCK  8
 #define DEFAULT_INTRA_TC_OFFSET 2
 
-void Deblock::deblockCTU(const CUData* ctu, int32_t dir)
+void Deblock::deblockCTU(const CUData* ctu, const CUGeom& cuGeom, int32_t dir)
 {
     uint8_t blockStrength[MAX_NUM_PARTITIONS];
 
-    memset(blockStrength, 0, sizeof(uint8_t) * m_numPartitions);
+    memset(blockStrength, 0, sizeof(uint8_t) * cuGeom.numPartitions);
 
-    deblockCU(ctu, 0, 0, dir, blockStrength);
+    deblockCU(ctu, cuGeom, dir, blockStrength);
 }
 
 static inline uint8_t bsCuEdge(const CUData* cu, uint32_t absPartIdx, int32_t dir)
@@ -68,32 +68,31 @@ static inline uint8_t bsCuEdge(const CUData* cu, uint32_t absPartIdx, int32_t di
 
 /* Deblocking filter process in CU-based (the same function as conventional's)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
-void Deblock::deblockCU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, const int32_t dir, uint8_t blockStrength[])
+void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[])
 {
+    uint32_t absPartIdx = cuGeom.encodeIdx;
+    uint32_t depth = cuGeom.depth;
     if (cu->m_predMode[absPartIdx] == MODE_NONE)
         return;
 
-    uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
-
-    const SPS& sps = *cu->m_slice->m_sps;
-
     if (cu->m_cuDepth[absPartIdx] > depth)
     {
-        uint32_t qNumParts   = curNumParts >> 2;
-        uint32_t xmax = sps.picWidthInLumaSamples  - cu->m_cuPelX;
-        uint32_t ymax = sps.picHeightInLumaSamples - cu->m_cuPelY;
-        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absPartIdx += qNumParts)
-            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-                deblockCU(cu, absPartIdx, depth + 1, dir, blockStrength);
+        for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
+        {
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
+                deblockCU(cu, childGeom, dir, blockStrength);
+        }
         return;
     }
 
-    const uint32_t numUnits  = sps.numPartInCUSize >> depth;
+    uint32_t numUnits = 1 << (cuGeom.log2CUSize - LOG2_UNIT_SIZE);
     setEdgefilterPU(cu, absPartIdx, dir, blockStrength, numUnits);
-    setEdgefilterTU(cu, absPartIdx, depth, dir, blockStrength);
+    setEdgefilterTU(cu, absPartIdx, 0, dir, blockStrength);
     setEdgefilterMultiple(cu, absPartIdx, dir, 0, bsCuEdge(cu, absPartIdx, dir), blockStrength, numUnits);
 
-    for (uint32_t partIdx = absPartIdx; partIdx < absPartIdx + curNumParts; partIdx++)
+    uint32_t numParts = cuGeom.numPartitions;
+    for (uint32_t partIdx = absPartIdx; partIdx < absPartIdx + numParts; partIdx++)
     {
         uint32_t bsCheck = !(partIdx & (1 << dir));
 
@@ -102,12 +101,11 @@ void Deblock::deblockCU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, c
     }
 
     const uint32_t partIdxIncr = DEBLOCK_SMALLEST_BLOCK >> LOG2_UNIT_SIZE;
-    uint32_t sizeInPU = sps.numPartInCUSize >> depth;
     uint32_t shiftFactor = (dir == EDGE_VER) ? cu->m_hChromaShift : cu->m_vChromaShift;
     uint32_t chromaMask = ((DEBLOCK_SMALLEST_BLOCK << shiftFactor) >> LOG2_UNIT_SIZE) - 1;
     uint32_t e0 = (dir == EDGE_VER ? g_zscanToPelX[absPartIdx] : g_zscanToPelY[absPartIdx]) >> LOG2_UNIT_SIZE;
         
-    for (uint32_t e = 0; e < sizeInPU; e += partIdxIncr)
+    for (uint32_t e = 0; e < numUnits; e += partIdxIncr)
     {
         edgeFilterLuma(cu, absPartIdx, depth, dir, e, blockStrength);
         if (!((e0 + e) & chromaMask))
@@ -117,12 +115,12 @@ void Deblock::deblockCU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, c
 
 static inline uint32_t calcBsIdx(const CUData* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, int32_t baseUnitIdx)
 {
-    uint32_t numPartInCUSize = cu->m_slice->m_sps->numPartInCUSize;
+    uint32_t numUnits = cu->m_slice->m_sps->numPartInCUSize;
 
     if (dir)
-        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + edgeIdx * numPartInCUSize + baseUnitIdx];
+        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + edgeIdx * numUnits + baseUnitIdx];
     else
-        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + baseUnitIdx * numPartInCUSize + edgeIdx];
+        return g_rasterToZscan[g_zscanToRaster[absPartIdx] + baseUnitIdx * numUnits + edgeIdx];
 }
 
 void Deblock::setEdgefilterMultiple(const CUData* cu, uint32_t scanIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits)
@@ -135,19 +133,18 @@ void Deblock::setEdgefilterMultiple(const CUData* cu, uint32_t scanIdx, int32_t 
     }
 }
 
-void Deblock::setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, uint8_t blockStrength[])
+void Deblock::setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tuDepth, int32_t dir, uint8_t blockStrength[])
 {
-    if ((uint32_t)cu->m_tuDepth[absPartIdx] + cu->m_cuDepth[absPartIdx] > depth)
+    uint32_t log2TrSize = cu->m_log2CUSize[absPartIdx] - tuDepth;
+    if (cu->m_tuDepth[absPartIdx] > tuDepth)
     {
-        const uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
-        const uint32_t qNumParts   = curNumParts >> 2;
-
-        for (uint32_t partIdx = 0; partIdx < 4; partIdx++, absPartIdx += qNumParts)
-            setEdgefilterTU(cu, absPartIdx, depth + 1, dir, blockStrength);
+        uint32_t qNumParts = 1 << (log2TrSize - LOG2_UNIT_SIZE - 1) * 2;
+        for (uint32_t qIdx = 0; qIdx < 4; ++qIdx, absPartIdx += qNumParts)
+            setEdgefilterTU(cu, absPartIdx, tuDepth + 1, dir, blockStrength);
         return;
     }
 
-    uint32_t numUnits  = 1 << (cu->m_log2CUSize[absPartIdx] - cu->m_tuDepth[absPartIdx] - LOG2_UNIT_SIZE);
+    uint32_t numUnits  = 1 << (log2TrSize - LOG2_UNIT_SIZE);
     setEdgefilterMultiple(cu, absPartIdx, dir, 0, 2, blockStrength, numUnits);
 }
 
@@ -501,7 +498,6 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
     srcChroma[1] = reconPic->m_picOrg[2] + srcOffset;
 
     uint32_t numUnits = cuQ->m_slice->m_sps->numPartInCUSize >> (depth + chromaShift);
-
     for (uint32_t idx = 0; idx < numUnits; idx++)
     {
         uint32_t partQ = calcBsIdx(cuQ, absPartIdx, dir, edge, idx << chromaShift);

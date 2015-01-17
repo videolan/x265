@@ -201,7 +201,7 @@ protected:
     bool          m_bJobsQueued;
     void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
 
-    void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t depth);
+    void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t tuDepth);
 
     // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
     uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes);
@@ -210,7 +210,7 @@ protected:
     uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
     void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx);
-    void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t depth, const uint32_t depthRange[2]);
+    void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t tuDepth, const uint32_t depthRange[2]);
     void     codeCoeffQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx, TextType ttype);
 
     struct Cost
@@ -224,9 +224,6 @@ protected:
 
     uint64_t estimateNullCbfCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2]);
-
-    // estimate bit cost of residual QT
-    void     encodeResidualQT(CUData& cu, uint32_t absPartIdx, uint32_t depth, TextType ttype, const uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
     void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, const uint32_t depthRange[2]);

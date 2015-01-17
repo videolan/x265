@@ -30,27 +30,22 @@ namespace x265 {
 // private namespace
 
 class CUData;
+struct CUGeom;
 
 class Deblock
 {
 public:
     enum { EDGE_VER, EDGE_HOR };
 
-    uint32_t m_numPartitions;
-
-    Deblock() : m_numPartitions(0) {}
-
-    void init() { m_numPartitions = 1 << (g_maxFullDepth * 2); }
-
-    void deblockCTU(const CUData* ctu, int32_t dir);
+    void deblockCTU(const CUData* ctu, const CUGeom& cuGeom, int32_t dir);
 
 protected:
 
     // CU-level deblocking function
-    void deblockCU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, const int32_t dir, uint8_t blockStrength[]);
+    void deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[]);
 
     // set filtering functions
-    void setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t depth, int32_t dir, uint8_t blockStrength[]);
+    void setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tuDepth, int32_t dir, uint8_t blockStrength[]);
     void setEdgefilterPU(const CUData* cu, uint32_t absPartIdx, int32_t dir, uint8_t blockStrength[], uint32_t numUnits);
     void setEdgefilterMultiple(const CUData* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits);
 
