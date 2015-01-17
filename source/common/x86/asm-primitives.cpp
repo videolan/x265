@@ -245,33 +245,15 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     p.chroma[X265_CSP_I444].pu[LUMA_16x64].prim = fncdef x265_ ## fname ## _16x64_ ## cpu
 #define ALL_CHROMA_444_PU(prim, fname, cpu) ALL_CHROMA_444_PU_TYPED(prim, , fname, cpu)
 
-#define INIT2_NAME(name1, name2, cpu) \
-    p.pu[LUMA_16x16].name1 = x265_pixel_ ## name2 ## _16x16 ## cpu; \
-    p.pu[LUMA_16x8].name1  = x265_pixel_ ## name2 ## _16x8 ## cpu;
-#define INIT4_NAME(name1, name2, cpu) \
-    INIT2_NAME(name1, name2, cpu) \
-    p.pu[LUMA_8x16].name1  = x265_pixel_ ## name2 ## _8x16 ## cpu; \
-    p.pu[LUMA_8x8].name1   = x265_pixel_ ## name2 ## _8x8 ## cpu;
-#define INIT5_NAME(name1, name2, cpu) \
-    INIT4_NAME(name1, name2, cpu) \
-    p.pu[LUMA_8x4].name1   = x265_pixel_ ## name2 ## _8x4 ## cpu;
-#define INIT6_NAME(name1, name2, cpu) \
-    INIT5_NAME(name1, name2, cpu) \
-    p.pu[LUMA_4x8].name1   = x265_pixel_ ## name2 ## _4x8 ## cpu;
-#define INIT7_NAME(name1, name2, cpu) \
-    INIT6_NAME(name1, name2, cpu) \
-    p.pu[LUMA_4x4].name1   = x265_pixel_ ## name2 ## _4x4 ## cpu;
-#define INIT8_NAME(name1, name2, cpu) \
-    INIT7_NAME(name1, name2, cpu) \
-    p.pu[LUMA_4x16].name1  = x265_pixel_ ## name2 ## _4x16 ## cpu;
-#define INIT2(name, cpu) INIT2_NAME(name, name, cpu)
-#define INIT4(name, cpu) INIT4_NAME(name, name, cpu)
-#define INIT5(name, cpu) INIT5_NAME(name, name, cpu)
-#define INIT6(name, cpu) INIT6_NAME(name, name, cpu)
-#define INIT7(name, cpu) INIT7_NAME(name, name, cpu)
-#define INIT8(name, cpu) INIT8_NAME(name, name, cpu)
-
-#define HEVC_SATD(cpu) ALL_LUMA_PU(satd, pixel_satd, cpu)
+#define AVC_LUMA_PU(name, cpu) \
+    p.pu[LUMA_16x16].name = x265_pixel_ ## name ## _16x16_ ## cpu; \
+    p.pu[LUMA_16x8].name  = x265_pixel_ ## name ## _16x8_ ## cpu; \
+    p.pu[LUMA_8x16].name  = x265_pixel_ ## name ## _8x16_ ## cpu; \
+    p.pu[LUMA_8x8].name   = x265_pixel_ ## name ## _8x8_ ## cpu; \
+    p.pu[LUMA_8x4].name   = x265_pixel_ ## name ## _8x4_ ## cpu; \
+    p.pu[LUMA_4x8].name   = x265_pixel_ ## name ## _4x8_ ## cpu; \
+    p.pu[LUMA_4x4].name   = x265_pixel_ ## name ## _4x4_ ## cpu; \
+    p.pu[LUMA_4x16].name  = x265_pixel_ ## name ## _4x16_ ## cpu
 
 #define HEVC_SAD(cpu) \
     p.pu[LUMA_8x32].sad  = x265_pixel_sad_8x32_ ## cpu; \
@@ -802,15 +784,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
-        INIT8(sad, _mmx2);
-        INIT2(sad, _sse2);
+        AVC_LUMA_PU(sad, mmx2);
+
+        p.pu[LUMA_16x16].sad = x265_pixel_sad_16x16_sse2;
+        p.pu[LUMA_16x8].sad  = x265_pixel_sad_16x8_sse2;
         HEVC_SAD(sse2);
 
-        INIT6(satd, _sse2);
-        HEVC_SATD(sse2);
-        p.pu[LUMA_4x4].satd = x265_pixel_satd_4x4_mmx2;
-
-        HEVC_SAD_X3(sse2);
         p.pu[LUMA_4x4].sad_x3   = x265_pixel_sad_x3_4x4_mmx2;
         p.pu[LUMA_4x8].sad_x3   = x265_pixel_sad_x3_4x8_mmx2;
         p.pu[LUMA_4x16].sad_x3  = x265_pixel_sad_x3_4x16_mmx2;
@@ -820,8 +799,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_8x32].sad_x3  = x265_pixel_sad_x3_8x32_sse2;
         p.pu[LUMA_16x4].sad_x3  = x265_pixel_sad_x3_16x4_sse2;
         p.pu[LUMA_12x16].sad_x3 = x265_pixel_sad_x3_12x16_mmx2;
+        HEVC_SAD_X3(sse2);
 
-        HEVC_SAD_X4(sse2);
         p.pu[LUMA_4x4].sad_x4   = x265_pixel_sad_x4_4x4_mmx2;
         p.pu[LUMA_4x8].sad_x4   = x265_pixel_sad_x4_4x8_mmx2;
         p.pu[LUMA_4x16].sad_x4  = x265_pixel_sad_x4_4x16_mmx2;
@@ -831,6 +810,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_8x32].sad_x4  = x265_pixel_sad_x4_8x32_sse2;
         p.pu[LUMA_16x4].sad_x4  = x265_pixel_sad_x4_16x4_sse2;
         p.pu[LUMA_12x16].sad_x4 = x265_pixel_sad_x4_12x16_mmx2;
+        HEVC_SAD_X4(sse2);
+
+        p.pu[LUMA_4x4].satd = x265_pixel_satd_4x4_mmx2;
+        ALL_LUMA_PU(satd, pixel_satd, sse2);
 
         ASSIGN_SA8D(sse2);
         LUMA_PIXELSUB(sse2);
@@ -1021,10 +1004,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_XOP)
     {
-        p.frameInitLowres = x265_frame_init_lowres_core_xop;
+        ALL_LUMA_PU(satd, pixel_satd, xop);
         ASSIGN_SA8D(xop);
-        INIT7(satd, _xop);
-        HEVC_SATD(xop);
+        p.frameInitLowres = x265_frame_init_lowres_core_xop;
     }
     if (cpuMask & X265_CPU_AVX2)
     {
@@ -1063,17 +1045,20 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #else // if HIGH_BIT_DEPTH
     if (cpuMask & X265_CPU_SSE2)
     {
-        INIT8(sad, _mmx2);
-        INIT8(sad_x3, _mmx2);
-        INIT8(sad_x4, _mmx2);
+        AVC_LUMA_PU(sad, mmx2);
+        AVC_LUMA_PU(sad_x3, mmx2);
+        AVC_LUMA_PU(sad_x4, mmx2);
 
-        INIT2(sad, _sse2);
+        p.pu[LUMA_16x16].sad = x265_pixel_sad_16x16_sse2;
+        p.pu[LUMA_16x16].sad_x3 = x265_pixel_sad_x3_16x16_sse2;
+        p.pu[LUMA_16x16].sad_x4 = x265_pixel_sad_x4_16x16_sse2;
+        p.pu[LUMA_16x8].sad  = x265_pixel_sad_16x8_sse2;
+        p.pu[LUMA_16x8].sad_x3  = x265_pixel_sad_x3_16x8_sse2;
+        p.pu[LUMA_16x8].sad_x4  = x265_pixel_sad_x4_16x8_sse2;
         HEVC_SAD(sse2);
-        INIT2(sad_x3, _sse2);
-        INIT2(sad_x4, _sse2);
-        HEVC_SATD(sse2);
 
         p.pu[LUMA_4x4].satd = x265_pixel_satd_4x4_mmx2;
+        ALL_LUMA_PU(satd, pixel_satd, sse2);
 
         p.cu[BLOCK_4x4].sse_pp = x265_pixel_ssd_4x4_mmx;
         p.cu[BLOCK_8x8].sse_pp = x265_pixel_ssd_8x8_mmx;
@@ -1139,16 +1124,17 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
+        p.pu[LUMA_8x16].sad_x3 = x265_pixel_sad_x3_8x16_ssse3;
+        p.pu[LUMA_8x32].sad_x3 = x265_pixel_sad_x3_8x32_ssse3;
+        p.pu[LUMA_12x16].sad_x3 = x265_pixel_sad_x3_12x16_ssse3;
         HEVC_SAD_X3(ssse3);
-        HEVC_SAD_X4(ssse3);
+
         p.pu[LUMA_8x4].sad_x4  = x265_pixel_sad_x4_8x4_ssse3;
         p.pu[LUMA_8x8].sad_x4  = x265_pixel_sad_x4_8x8_ssse3;
-        p.pu[LUMA_8x16].sad_x3 = x265_pixel_sad_x3_8x16_ssse3;
         p.pu[LUMA_8x16].sad_x4 = x265_pixel_sad_x4_8x16_ssse3;
-        p.pu[LUMA_8x32].sad_x3 = x265_pixel_sad_x3_8x32_ssse3;
         p.pu[LUMA_8x32].sad_x4 = x265_pixel_sad_x4_8x32_ssse3;
-        p.pu[LUMA_12x16].sad_x3 = x265_pixel_sad_x3_12x16_ssse3;
         p.pu[LUMA_12x16].sad_x4 = x265_pixel_sad_x4_12x16_ssse3;
+        HEVC_SAD_X4(ssse3);
 
         ASSIGN_SA8D(ssse3);
         PIXEL_AVG(ssse3);
@@ -1186,7 +1172,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         // TODO: check POPCNT flag!
         ALL_LUMA_TU_S(copy_cnt, copy_cnt, sse4);
 
-        HEVC_SATD(sse4);
+        ALL_LUMA_PU(satd, pixel_satd, sse4);
         ASSIGN_SA8D(sse4);
         ASSIGN_SSE_SS(sse4);
         p.cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_64x64_sse4;
@@ -1255,18 +1241,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     }
     if (cpuMask & X265_CPU_AVX)
     {
-        p.frameInitLowres = x265_frame_init_lowres_core_avx;
-        HEVC_SATD(avx);
+        ALL_LUMA_PU(satd, pixel_satd, avx);
         ASSIGN_SA8D(avx);
         ASSIGN_SSE_PP(avx);
-
         ASSIGN_SSE_SS(avx);
-        HEVC_SAD_X3(avx);
-        HEVC_SAD_X4(avx);
+        
         p.pu[LUMA_12x16].sad_x3 = x265_pixel_sad_x3_12x16_avx;
-        p.pu[LUMA_12x16].sad_x4 = x265_pixel_sad_x4_12x16_avx;
         p.pu[LUMA_16x4].sad_x3  = x265_pixel_sad_x3_16x4_avx;
+        HEVC_SAD_X3(avx);
+
+        p.pu[LUMA_12x16].sad_x4 = x265_pixel_sad_x4_12x16_avx;
         p.pu[LUMA_16x4].sad_x4  = x265_pixel_sad_x4_16x4_avx;
+        HEVC_SAD_X4(avx);
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_avx;
         p.ssim_end_4 = x265_pixel_ssim_end4_avx;
@@ -1290,21 +1276,27 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].copy_pp = x265_blockcopy_pp_32x64_avx;
         p.pu[LUMA_32x64].copy_pp = x265_blockcopy_pp_32x64_avx;
+
+        p.frameInitLowres = x265_frame_init_lowres_core_avx;
     }
     if (cpuMask & X265_CPU_XOP)
     {
+        ALL_LUMA_PU(satd, pixel_satd, xop);
         ASSIGN_SA8D(xop);
-        INIT7(satd, _xop);
-        HEVC_SATD(xop);
         p.cu[BLOCK_8x8].sse_pp = x265_pixel_ssd_8x8_xop;
         p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_xop;
         p.frameInitLowres = x265_frame_init_lowres_core_xop;
     }
     if (cpuMask & X265_CPU_AVX2)
     {
-        INIT2(sad_x4, _avx2);
-        INIT4(satd, _avx2);
+        p.pu[LUMA_16x16].satd = x265_pixel_satd_16x16_avx2;
+        p.pu[LUMA_16x8].satd  = x265_pixel_satd_16x8_avx2;
+        p.pu[LUMA_8x16].satd  = x265_pixel_satd_8x16_avx2;
+        p.pu[LUMA_8x8].satd   = x265_pixel_satd_8x8_avx2;
+
+        p.pu[LUMA_16x8].sad_x4  = x265_pixel_sad_x4_16x8_sse2;
         p.pu[LUMA_16x12].sad_x4 = x265_pixel_sad_x4_16x12_avx2;
+        p.pu[LUMA_16x16].sad_x4 = x265_pixel_sad_x4_16x16_sse2;
         p.pu[LUMA_16x32].sad_x4 = x265_pixel_sad_x4_16x32_avx2;
 
         p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
