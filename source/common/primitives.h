@@ -38,7 +38,7 @@ namespace x265 {
 
 enum LumaPU
 {
-    // Square (the first 5 PUs match the CU sizes)
+    // Square (the first 5 PUs match the block sizes)
     LUMA_4x4,   LUMA_8x8,   LUMA_16x16, LUMA_32x32, LUMA_64x64,
     // Rectangular
     LUMA_8x4,   LUMA_4x8,
@@ -65,9 +65,9 @@ enum LumaCU // can be indexed using log2n(width)-2
 enum { NUM_TR_SIZE = 4 }; // TU are 4x4, 8x8, 16x16, and 32x32
 
 
-// Chroma partition sizes. These enums are just a convenience for indexing into the
-// chroma primitive arrays when instantiating templates. The chroma function tables should
-// always be indexed by the luma PU enum
+/* Chroma partition sizes. These enums are only a convenience for indexing into
+ * the chroma primitive arrays when instantiating macros or templates. The
+ * chroma function tables should always be indexed by a LumaPU enum when used. */
 enum ChromaPU420
 {
     CHROMA_420_2x2,   CHROMA_420_4x4,   CHROMA_420_8x8,  CHROMA_420_16x16, CHROMA_420_32x32,
@@ -182,20 +182,26 @@ typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, co
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
 {
+    /* These primitives can be used for any sized prediction unit (from 4x4 to
+     * 64x64, square, rectangular - 50/50 or asymmetrical - 25/75) and are
+     * generally restricted to motion estimation and motion compensation (inter
+     * prediction. Note that the 4x4 PU can only be used for intra, which is
+     * really a 4x4 TU, so at most copy_pp and satd will use 4x4. This array is
+     * indexed by LumaPU values, which can be retrieved by partitionFromSizes() */
     struct PU
     {
-        pixelcmp_t     sad;        // Sum of Absolute Differences
-        pixelcmp_x3_t  sad_x3;     // Sum of Absolute Differences, 3 mv offsets at once
-        pixelcmp_x4_t  sad_x4;     // Sum of Absolute Differences, 4 mv offsets at once
-        pixelcmp_t     satd;       // Sum of Absolute Transformed Differences (4x4 Hadamaard)
+        pixelcmp_t     sad;         // Sum of Absolute Differences
+        pixelcmp_x3_t  sad_x3;      // Sum of Absolute Differences, 3 mv offsets at once
+        pixelcmp_x4_t  sad_x4;      // Sum of Absolute Differences, 4 mv offsets at once
+        pixelcmp_t     satd;        // Sum of Absolute Transformed Differences (4x4 Hadamard)
 
-        filter_pp_t    luma_hpp;
+        filter_pp_t    luma_hpp;    // 8-tap luma motion compensation interpolation filters
         filter_hps_t   luma_hps;
         filter_pp_t    luma_vpp;
         filter_ps_t    luma_vps;
         filter_sp_t    luma_vsp;
         filter_ss_t    luma_vss;
-        filter_hv_pp_t luma_hvpp;
+        filter_hv_pp_t luma_hvpp;   // combines hps + vsp
 
         pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
@@ -204,6 +210,12 @@ struct EncoderPrimitives
     }
     pu[NUM_PU_SIZES];
 
+    /* These primitives can be used for square TU blocks (4x4 to 32x32) or
+     * possibly square CU blocks (8x8 to 64x64). Some primitives are used for
+     * both CU and TU so we merge them into one array that is indexed uniformly.
+     * This keeps the index logic uniform and simple and improves cache
+     * coherency. CU only primitives will leave 4x4 pointers NULL while TU only
+     * primitives will leave 64x64 pointers NULL.  Indexed by LumaCU */
     struct CU
     {
         dct_t           dct;
@@ -230,7 +242,7 @@ struct EncoderPrimitives
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
         pixelcmp_ss_t   psy_cost_ss;   // difference in AC energy between two signed residual blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
-        pixelcmp_t      sa8d;          // Sum of 8x8 Hadamaard transformed differences
+        pixelcmp_t      sa8d;          // Sum of Transformed Differences (8x8 Hadamard), uses satd for 4x4 intra TU
 
         transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
         intra_allangs_t intra_pred_allangs;
@@ -238,6 +250,9 @@ struct EncoderPrimitives
     }
     cu[NUM_CU_SIZES];
 
+    /* These remaining primitives work on either fixed block sizes or take
+     * block dimensions as arguments and thus do not belong in either the PU or
+     * the CU arrays */
     dct_t                 dst4x4;
     idct_t                idst4x4;
 
@@ -273,11 +288,21 @@ struct EncoderPrimitives
 
     filter_p2s_t          luma_p2s;
 
+    /* There is one set of chroma primitives per color space. An encoder will
+     * have just a single color space and thus it will only ever use one entry
+     * in this array. However we always fill all entries in the array in case
+     * multiple encoders with different color spaces share the primitive table
+     * in a single process. Note that 4:2:0 PU and CU are 1/2 width and 1/2
+     * height of their luma counterparts. 4:2:2 PU and CU are 1/2 width and full
+     * height, while 4:4:4 directly uses the luma block sizes and shares luma
+     * primitives for all cases except for the interpolation filters. 4:4:4
+     * interpolation filters have luma partition sizes but are only 4-tap. */
     struct Chroma
     {
+        /* Chroma prediction unit primitives. Indexed by LumaPU */
         struct PUChroma
         {
-            pixelcmp_t   satd;
+            pixelcmp_t   satd;      // if chroma PU is not multiple of 4x4, will be NULL
             filter_pp_t  filter_vpp;
             filter_ps_t  filter_vps;
             filter_sp_t  filter_vsp;
@@ -289,9 +314,10 @@ struct EncoderPrimitives
         }
         pu[NUM_PU_SIZES];
 
+        /* Chroma transform and coding unit primitives. Indexed by LumaCU */
         struct CUChroma
         {
-            pixelcmp_t     sa8d;
+            pixelcmp_t     sa8d;    // if chroma CU is not multiple of 8x8, will use satd
             pixelcmp_t     sse_pp;
             pixel_sub_ps_t sub_ps;
             pixel_add_ps_t add_ps;
@@ -303,7 +329,7 @@ struct EncoderPrimitives
         }
         cu[NUM_CU_SIZES];
 
-        filter_p2s_t p2s;
+        filter_p2s_t p2s; // takes width/height as arguments
     }
     chroma[X265_CSP_COUNT];
 };
@@ -311,7 +337,7 @@ struct EncoderPrimitives
 /* This copy of the table is what gets used by the encoder */
 extern EncoderPrimitives primitives;
 
-/* Returns a LumaPartitions enum for the given size, always expected to return a valid enum */
+/* Returns a LumaPU enum for the given size, always expected to return a valid enum */
 inline int partitionFromSizes(int width, int height)
 {
     X265_CHECK(((width | height) & ~(4 | 8 | 16 | 32 | 64)) == 0, "Invalid block width/height\n");
