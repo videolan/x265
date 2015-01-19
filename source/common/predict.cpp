@@ -30,6 +30,10 @@
 
 using namespace x265;
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
+
 namespace
 {
 inline pixel weightBidir(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
