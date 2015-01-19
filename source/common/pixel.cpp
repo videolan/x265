@@ -520,7 +520,9 @@ void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t ds
 {
     int x, y;
 
+#if CHECKED_BUILD || _DEBUG
     const int correction = (IF_INTERNAL_PREC - X265_DEPTH);
+#endif
 
     X265_CHECK(!((w0 << 6) > 32767), "w0 using more than 16 bits, asm output will mismatch\n");
     X265_CHECK(!(round > 32767), "round using more than 16 bits, asm output will mismatch\n");
