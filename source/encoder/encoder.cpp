@@ -1224,7 +1224,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
             if (buffer)
             {
                 sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                        "Copyright 2013-2014 (c) Multicoreware Inc - "
+                        "Copyright 2013-2015 (c) Multicoreware Inc - "
                         "http://x265.org - options: %s",
                         X265_BUILD, x265_version_str, x265_build_info_str, opts);
                 
