@@ -291,6 +291,254 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
 
 void idct16(const int16_t *src, int16_t *dst, intptr_t stride)
 {
+#define READ_UNPACKHILO(offset)\
+    const __m128i T_00_00A = _mm_unpacklo_epi16(*(__m128i*)&src[1 * 16 + offset], *(__m128i*)&src[3 * 16 + offset]);\
+    const __m128i T_00_00B = _mm_unpackhi_epi16(*(__m128i*)&src[1 * 16 + offset], *(__m128i*)&src[3 * 16 + offset]);\
+    const __m128i T_00_01A = _mm_unpacklo_epi16(*(__m128i*)&src[5 * 16 + offset], *(__m128i*)&src[7 * 16 + offset]);\
+    const __m128i T_00_01B = _mm_unpackhi_epi16(*(__m128i*)&src[5 * 16 + offset], *(__m128i*)&src[7 * 16 + offset]);\
+    const __m128i T_00_02A = _mm_unpacklo_epi16(*(__m128i*)&src[9 * 16 + offset], *(__m128i*)&src[11 * 16 + offset]);\
+    const __m128i T_00_02B = _mm_unpackhi_epi16(*(__m128i*)&src[9 * 16 + offset], *(__m128i*)&src[11 * 16 + offset]);\
+    const __m128i T_00_03A = _mm_unpacklo_epi16(*(__m128i*)&src[13 * 16 + offset], *(__m128i*)&src[15 * 16 + offset]);\
+    const __m128i T_00_03B = _mm_unpackhi_epi16(*(__m128i*)&src[13 * 16 + offset], *(__m128i*)&src[15 * 16 + offset]);\
+    const __m128i T_00_04A = _mm_unpacklo_epi16(*(__m128i*)&src[2 * 16 + offset], *(__m128i*)&src[6 * 16 + offset]);\
+    const __m128i T_00_04B = _mm_unpackhi_epi16(*(__m128i*)&src[2 * 16 + offset], *(__m128i*)&src[6 * 16 + offset]);\
+    const __m128i T_00_05A = _mm_unpacklo_epi16(*(__m128i*)&src[10 * 16 + offset], *(__m128i*)&src[14 * 16 + offset]);\
+    const __m128i T_00_05B = _mm_unpackhi_epi16(*(__m128i*)&src[10 * 16 + offset], *(__m128i*)&src[14 * 16 + offset]);\
+    const __m128i T_00_06A = _mm_unpacklo_epi16(*(__m128i*)&src[4 * 16 + offset], *(__m128i*)&src[12 * 16 + offset]);\
+    const __m128i T_00_06B = _mm_unpackhi_epi16(*(__m128i*)&src[4 * 16 + offset], *(__m128i*)&src[12 * 16 + offset]);\
+    const __m128i T_00_07A = _mm_unpacklo_epi16(*(__m128i*)&src[0 * 16 + offset], *(__m128i*)&src[8 * 16 + offset]);\
+    const __m128i T_00_07B = _mm_unpackhi_epi16(*(__m128i*)&src[0 * 16 + offset], *(__m128i*)&src[8 * 16 + offset]);
+
+#define UNPACKHILO(part) \
+    const __m128i T_00_00A = _mm_unpacklo_epi16(in01[part], in03[part]);\
+    const __m128i T_00_00B = _mm_unpackhi_epi16(in01[part], in03[part]);\
+    const __m128i T_00_01A = _mm_unpacklo_epi16(in05[part], in07[part]);\
+    const __m128i T_00_01B = _mm_unpackhi_epi16(in05[part], in07[part]);\
+    const __m128i T_00_02A = _mm_unpacklo_epi16(in09[part], in11[part]);\
+    const __m128i T_00_02B = _mm_unpackhi_epi16(in09[part], in11[part]);\
+    const __m128i T_00_03A = _mm_unpacklo_epi16(in13[part], in15[part]);\
+    const __m128i T_00_03B = _mm_unpackhi_epi16(in13[part], in15[part]);\
+    const __m128i T_00_04A = _mm_unpacklo_epi16(in02[part], in06[part]);\
+    const __m128i T_00_04B = _mm_unpackhi_epi16(in02[part], in06[part]);\
+    const __m128i T_00_05A = _mm_unpacklo_epi16(in10[part], in14[part]);\
+    const __m128i T_00_05B = _mm_unpackhi_epi16(in10[part], in14[part]);\
+    const __m128i T_00_06A = _mm_unpacklo_epi16(in04[part], in12[part]);\
+    const __m128i T_00_06B = _mm_unpackhi_epi16(in04[part], in12[part]);\
+    const __m128i T_00_07A = _mm_unpacklo_epi16(in00[part], in08[part]);\
+    const __m128i T_00_07B = _mm_unpackhi_epi16(in00[part], in08[part]);
+
+#define COMPUTE_ROW(row0103, row0507, row0911, row1315, c0103, c0507, c0911, c1315, row) \
+    T00 = _mm_add_epi32(_mm_madd_epi16(row0103, c0103), _mm_madd_epi16(row0507, c0507)); \
+    T01 = _mm_add_epi32(_mm_madd_epi16(row0911, c0911), _mm_madd_epi16(row1315, c1315)); \
+    row = _mm_add_epi32(T00, T01);
+
+#define TRANSPOSE_8x8_16BIT(I0, I1, I2, I3, I4, I5, I6, I7, O0, O1, O2, O3, O4, O5, O6, O7) \
+    tr0_0 = _mm_unpacklo_epi16(I0, I1); \
+    tr0_1 = _mm_unpacklo_epi16(I2, I3); \
+    tr0_2 = _mm_unpackhi_epi16(I0, I1); \
+    tr0_3 = _mm_unpackhi_epi16(I2, I3); \
+    tr0_4 = _mm_unpacklo_epi16(I4, I5); \
+    tr0_5 = _mm_unpacklo_epi16(I6, I7); \
+    tr0_6 = _mm_unpackhi_epi16(I4, I5); \
+    tr0_7 = _mm_unpackhi_epi16(I6, I7); \
+    tr1_0 = _mm_unpacklo_epi32(tr0_0, tr0_1); \
+    tr1_1 = _mm_unpacklo_epi32(tr0_2, tr0_3); \
+    tr1_2 = _mm_unpackhi_epi32(tr0_0, tr0_1); \
+    tr1_3 = _mm_unpackhi_epi32(tr0_2, tr0_3); \
+    tr1_4 = _mm_unpacklo_epi32(tr0_4, tr0_5); \
+    tr1_5 = _mm_unpacklo_epi32(tr0_6, tr0_7); \
+    tr1_6 = _mm_unpackhi_epi32(tr0_4, tr0_5); \
+    tr1_7 = _mm_unpackhi_epi32(tr0_6, tr0_7); \
+    O0 = _mm_unpacklo_epi64(tr1_0, tr1_4); \
+    O1 = _mm_unpackhi_epi64(tr1_0, tr1_4); \
+    O2 = _mm_unpacklo_epi64(tr1_2, tr1_6); \
+    O3 = _mm_unpackhi_epi64(tr1_2, tr1_6); \
+    O4 = _mm_unpacklo_epi64(tr1_1, tr1_5); \
+    O5 = _mm_unpackhi_epi64(tr1_1, tr1_5); \
+    O6 = _mm_unpacklo_epi64(tr1_3, tr1_7); \
+    O7 = _mm_unpackhi_epi64(tr1_3, tr1_7);
+
+#define PROCESS(part, rnd, shift) \
+    __m128i c32_rnd = _mm_set1_epi32(rnd);\
+    int nShift = shift;\
+\
+    __m128i O0A, O1A, O2A, O3A, O4A, O5A, O6A, O7A;\
+    __m128i O0B, O1B, O2B, O3B, O4B, O5B, O6B, O7B;\
+    {\
+        __m128i T00, T01;\
+\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p87_p90, c16_p70_p80, c16_p43_p57, c16_p09_p25, O0A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p57_p87, c16_n43_p09, c16_n90_n80, c16_n25_n70, O1A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p09_p80, c16_n87_n70, c16_p57_n25, c16_p43_p90, O2A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n43_p70, c16_p09_n87, c16_p25_p90, c16_n57_n80, O3A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n80_p57, c16_p90_n25, c16_n87_n09, c16_p70_p43, O4A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n90_p43, c16_p25_p57, c16_p70_n87, c16_n80_p09, O5A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n70_p25, c16_n80_p90, c16_p09_p43, c16_p87_n57, O6A)\
+        COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n25_p09, c16_n57_p43, c16_n80_p70, c16_n90_p87, O7A)\
+\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p87_p90, c16_p70_p80, c16_p43_p57, c16_p09_p25, O0B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p57_p87, c16_n43_p09, c16_n90_n80, c16_n25_n70, O1B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p09_p80, c16_n87_n70, c16_p57_n25, c16_p43_p90, O2B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n43_p70, c16_p09_n87, c16_p25_p90, c16_n57_n80, O3B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n80_p57, c16_p90_n25, c16_n87_n09, c16_p70_p43, O4B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n90_p43, c16_p25_p57, c16_p70_n87, c16_n80_p09, O5B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n70_p25, c16_n80_p90, c16_p09_p43, c16_p87_n57, O6B)\
+        COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n25_p09, c16_n57_p43, c16_n80_p70, c16_n90_p87, O7B)\
+    }\
+\
+    __m128i EO0A, EO1A, EO2A, EO3A;\
+    __m128i EO0B, EO1B, EO2B, EO3B;\
+    EO0A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_p75_p89), _mm_madd_epi16(T_00_05A, c16_p18_p50));\
+    EO0B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_p75_p89), _mm_madd_epi16(T_00_05B, c16_p18_p50));\
+    EO1A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n18_p75), _mm_madd_epi16(T_00_05A, c16_n50_n89));\
+    EO1B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n18_p75), _mm_madd_epi16(T_00_05B, c16_n50_n89));\
+    EO2A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n89_p50), _mm_madd_epi16(T_00_05A, c16_p75_p18));\
+    EO2B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n89_p50), _mm_madd_epi16(T_00_05B, c16_p75_p18));\
+    EO3A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n50_p18), _mm_madd_epi16(T_00_05A, c16_n89_p75));\
+    EO3B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n50_p18), _mm_madd_epi16(T_00_05B, c16_n89_p75));\
+\
+    __m128i EEO0A, EEO1A;\
+    __m128i EEO0B, EEO1B;\
+    EEO0A = _mm_madd_epi16(T_00_06A, c16_p36_p83);\
+    EEO0B = _mm_madd_epi16(T_00_06B, c16_p36_p83);\
+    EEO1A = _mm_madd_epi16(T_00_06A, c16_n83_p36);\
+    EEO1B = _mm_madd_epi16(T_00_06B, c16_n83_p36);\
+\
+    __m128i EEE0A, EEE1A;\
+    __m128i EEE0B, EEE1B;\
+    EEE0A = _mm_madd_epi16(T_00_07A, c16_p64_p64);\
+    EEE0B = _mm_madd_epi16(T_00_07B, c16_p64_p64);\
+    EEE1A = _mm_madd_epi16(T_00_07A, c16_n64_p64);\
+    EEE1B = _mm_madd_epi16(T_00_07B, c16_n64_p64);\
+\
+    const __m128i EE0A = _mm_add_epi32(EEE0A, EEO0A);\
+    const __m128i EE0B = _mm_add_epi32(EEE0B, EEO0B);\
+    const __m128i EE1A = _mm_add_epi32(EEE1A, EEO1A);\
+    const __m128i EE1B = _mm_add_epi32(EEE1B, EEO1B);\
+    const __m128i EE3A = _mm_sub_epi32(EEE0A, EEO0A);\
+    const __m128i EE3B = _mm_sub_epi32(EEE0B, EEO0B);\
+    const __m128i EE2A = _mm_sub_epi32(EEE1A, EEO1A);\
+    const __m128i EE2B = _mm_sub_epi32(EEE1B, EEO1B);\
+\
+    const __m128i E0A = _mm_add_epi32(EE0A, EO0A);\
+    const __m128i E0B = _mm_add_epi32(EE0B, EO0B);\
+    const __m128i E1A = _mm_add_epi32(EE1A, EO1A);\
+    const __m128i E1B = _mm_add_epi32(EE1B, EO1B);\
+    const __m128i E2A = _mm_add_epi32(EE2A, EO2A);\
+    const __m128i E2B = _mm_add_epi32(EE2B, EO2B);\
+    const __m128i E3A = _mm_add_epi32(EE3A, EO3A);\
+    const __m128i E3B = _mm_add_epi32(EE3B, EO3B);\
+    const __m128i E7A = _mm_sub_epi32(EE0A, EO0A);\
+    const __m128i E7B = _mm_sub_epi32(EE0B, EO0B);\
+    const __m128i E6A = _mm_sub_epi32(EE1A, EO1A);\
+    const __m128i E6B = _mm_sub_epi32(EE1B, EO1B);\
+    const __m128i E5A = _mm_sub_epi32(EE2A, EO2A);\
+    const __m128i E5B = _mm_sub_epi32(EE2B, EO2B);\
+    const __m128i E4A = _mm_sub_epi32(EE3A, EO3A);\
+    const __m128i E4B = _mm_sub_epi32(EE3B, EO3B);\
+\
+    const __m128i T10A = _mm_add_epi32(E0A, c32_rnd);\
+    const __m128i T10B = _mm_add_epi32(E0B, c32_rnd);\
+    const __m128i T11A = _mm_add_epi32(E1A, c32_rnd);\
+    const __m128i T11B = _mm_add_epi32(E1B, c32_rnd);\
+    const __m128i T12A = _mm_add_epi32(E2A, c32_rnd);\
+    const __m128i T12B = _mm_add_epi32(E2B, c32_rnd);\
+    const __m128i T13A = _mm_add_epi32(E3A, c32_rnd);\
+    const __m128i T13B = _mm_add_epi32(E3B, c32_rnd);\
+    const __m128i T14A = _mm_add_epi32(E4A, c32_rnd);\
+    const __m128i T14B = _mm_add_epi32(E4B, c32_rnd);\
+    const __m128i T15A = _mm_add_epi32(E5A, c32_rnd);\
+    const __m128i T15B = _mm_add_epi32(E5B, c32_rnd);\
+    const __m128i T16A = _mm_add_epi32(E6A, c32_rnd);\
+    const __m128i T16B = _mm_add_epi32(E6B, c32_rnd);\
+    const __m128i T17A = _mm_add_epi32(E7A, c32_rnd);\
+    const __m128i T17B = _mm_add_epi32(E7B, c32_rnd);\
+\
+    const __m128i T20A = _mm_add_epi32(T10A, O0A);\
+    const __m128i T20B = _mm_add_epi32(T10B, O0B);\
+    const __m128i T21A = _mm_add_epi32(T11A, O1A);\
+    const __m128i T21B = _mm_add_epi32(T11B, O1B);\
+    const __m128i T22A = _mm_add_epi32(T12A, O2A);\
+    const __m128i T22B = _mm_add_epi32(T12B, O2B);\
+    const __m128i T23A = _mm_add_epi32(T13A, O3A);\
+    const __m128i T23B = _mm_add_epi32(T13B, O3B);\
+    const __m128i T24A = _mm_add_epi32(T14A, O4A);\
+    const __m128i T24B = _mm_add_epi32(T14B, O4B);\
+    const __m128i T25A = _mm_add_epi32(T15A, O5A);\
+    const __m128i T25B = _mm_add_epi32(T15B, O5B);\
+    const __m128i T26A = _mm_add_epi32(T16A, O6A);\
+    const __m128i T26B = _mm_add_epi32(T16B, O6B);\
+    const __m128i T27A = _mm_add_epi32(T17A, O7A);\
+    const __m128i T27B = _mm_add_epi32(T17B, O7B);\
+    const __m128i T2FA = _mm_sub_epi32(T10A, O0A);\
+    const __m128i T2FB = _mm_sub_epi32(T10B, O0B);\
+    const __m128i T2EA = _mm_sub_epi32(T11A, O1A);\
+    const __m128i T2EB = _mm_sub_epi32(T11B, O1B);\
+    const __m128i T2DA = _mm_sub_epi32(T12A, O2A);\
+    const __m128i T2DB = _mm_sub_epi32(T12B, O2B);\
+    const __m128i T2CA = _mm_sub_epi32(T13A, O3A);\
+    const __m128i T2CB = _mm_sub_epi32(T13B, O3B);\
+    const __m128i T2BA = _mm_sub_epi32(T14A, O4A);\
+    const __m128i T2BB = _mm_sub_epi32(T14B, O4B);\
+    const __m128i T2AA = _mm_sub_epi32(T15A, O5A);\
+    const __m128i T2AB = _mm_sub_epi32(T15B, O5B);\
+    const __m128i T29A = _mm_sub_epi32(T16A, O6A);\
+    const __m128i T29B = _mm_sub_epi32(T16B, O6B);\
+    const __m128i T28A = _mm_sub_epi32(T17A, O7A);\
+    const __m128i T28B = _mm_sub_epi32(T17B, O7B);\
+\
+    const __m128i T30A = _mm_srai_epi32(T20A, nShift);\
+    const __m128i T30B = _mm_srai_epi32(T20B, nShift);\
+    const __m128i T31A = _mm_srai_epi32(T21A, nShift);\
+    const __m128i T31B = _mm_srai_epi32(T21B, nShift);\
+    const __m128i T32A = _mm_srai_epi32(T22A, nShift);\
+    const __m128i T32B = _mm_srai_epi32(T22B, nShift);\
+    const __m128i T33A = _mm_srai_epi32(T23A, nShift);\
+    const __m128i T33B = _mm_srai_epi32(T23B, nShift);\
+    const __m128i T34A = _mm_srai_epi32(T24A, nShift);\
+    const __m128i T34B = _mm_srai_epi32(T24B, nShift);\
+    const __m128i T35A = _mm_srai_epi32(T25A, nShift);\
+    const __m128i T35B = _mm_srai_epi32(T25B, nShift);\
+    const __m128i T36A = _mm_srai_epi32(T26A, nShift);\
+    const __m128i T36B = _mm_srai_epi32(T26B, nShift);\
+    const __m128i T37A = _mm_srai_epi32(T27A, nShift);\
+    const __m128i T37B = _mm_srai_epi32(T27B, nShift);\
+\
+    const __m128i T38A = _mm_srai_epi32(T28A, nShift);\
+    const __m128i T38B = _mm_srai_epi32(T28B, nShift);\
+    const __m128i T39A = _mm_srai_epi32(T29A, nShift);\
+    const __m128i T39B = _mm_srai_epi32(T29B, nShift);\
+    const __m128i T3AA = _mm_srai_epi32(T2AA, nShift);\
+    const __m128i T3AB = _mm_srai_epi32(T2AB, nShift);\
+    const __m128i T3BA = _mm_srai_epi32(T2BA, nShift);\
+    const __m128i T3BB = _mm_srai_epi32(T2BB, nShift);\
+    const __m128i T3CA = _mm_srai_epi32(T2CA, nShift);\
+    const __m128i T3CB = _mm_srai_epi32(T2CB, nShift);\
+    const __m128i T3DA = _mm_srai_epi32(T2DA, nShift);\
+    const __m128i T3DB = _mm_srai_epi32(T2DB, nShift);\
+    const __m128i T3EA = _mm_srai_epi32(T2EA, nShift);\
+    const __m128i T3EB = _mm_srai_epi32(T2EB, nShift);\
+    const __m128i T3FA = _mm_srai_epi32(T2FA, nShift);\
+    const __m128i T3FB = _mm_srai_epi32(T2FB, nShift);\
+\
+    res00[part]  = _mm_packs_epi32(T30A, T30B);\
+    res01[part]  = _mm_packs_epi32(T31A, T31B);\
+    res02[part]  = _mm_packs_epi32(T32A, T32B);\
+    res03[part]  = _mm_packs_epi32(T33A, T33B);\
+    res04[part]  = _mm_packs_epi32(T34A, T34B);\
+    res05[part]  = _mm_packs_epi32(T35A, T35B);\
+    res06[part]  = _mm_packs_epi32(T36A, T36B);\
+    res07[part]  = _mm_packs_epi32(T37A, T37B);\
+\
+    res08[part]  = _mm_packs_epi32(T38A, T38B);\
+    res09[part]  = _mm_packs_epi32(T39A, T39B);\
+    res10[part]  = _mm_packs_epi32(T3AA, T3AB);\
+    res11[part]  = _mm_packs_epi32(T3BA, T3BB);\
+    res12[part]  = _mm_packs_epi32(T3CA, T3CB);\
+    res13[part]  = _mm_packs_epi32(T3DA, T3DB);\
+    res14[part]  = _mm_packs_epi32(T3EA, T3EB);\
+    res15[part]  = _mm_packs_epi32(T3FA, T3FB);
+
     const __m128i c16_p87_p90   = _mm_set1_epi32(0x0057005A); //row0 87high - 90low address
     const __m128i c16_p70_p80   = _mm_set1_epi32(0x00460050);
     const __m128i c16_p43_p57   = _mm_set1_epi32(0x002B0039);
@@ -338,9 +586,6 @@ void idct16(const int16_t *src, int16_t *dst, intptr_t stride)
 
     const __m128i c16_n64_p64   = _mm_set1_epi32(0xFFC00040);
     const __m128i c16_p64_p64   = _mm_set1_epi32(0x00400040);
-    __m128i c32_rnd             = _mm_set1_epi32(64);
-
-    int nShift = 7;
 
     // DCT1
     __m128i in00[2], in01[2], in02[2], in03[2], in04[2], in05[2], in06[2], in07[2];
@@ -348,308 +593,79 @@ void idct16(const int16_t *src, int16_t *dst, intptr_t stride)
     __m128i res00[2], res01[2], res02[2], res03[2], res04[2], res05[2], res06[2], res07[2];
     __m128i res08[2], res09[2], res10[2], res11[2], res12[2], res13[2], res14[2], res15[2];
 
-    for (int i = 0; i < 2; i++)
     {
-        const int offset = (i << 3);
-        in00[i]  = _mm_loadu_si128((const __m128i*)&src[0 * 16 + offset]); // [07 06 05 04 03 02 01 00]
-        in01[i]  = _mm_loadu_si128((const __m128i*)&src[1 * 16 + offset]); // [17 16 15 14 13 12 11 10]
-        in02[i]  = _mm_loadu_si128((const __m128i*)&src[2 * 16 + offset]); // [27 26 25 24 23 22 21 20]
-        in03[i]  = _mm_loadu_si128((const __m128i*)&src[3 * 16 + offset]); // [37 36 35 34 33 32 31 30]
-        in04[i]  = _mm_loadu_si128((const __m128i*)&src[4 * 16 + offset]); // [47 46 45 44 43 42 41 40]
-        in05[i]  = _mm_loadu_si128((const __m128i*)&src[5 * 16 + offset]); // [57 56 55 54 53 52 51 50]
-        in06[i]  = _mm_loadu_si128((const __m128i*)&src[6 * 16 + offset]); // [67 66 65 64 63 62 61 60]
-        in07[i]  = _mm_loadu_si128((const __m128i*)&src[7 * 16 + offset]); // [77 76 75 74 73 72 71 70]
-        in08[i]  = _mm_loadu_si128((const __m128i*)&src[8 * 16 + offset]);
-        in09[i]  = _mm_loadu_si128((const __m128i*)&src[9 * 16 + offset]);
-        in10[i]  = _mm_loadu_si128((const __m128i*)&src[10 * 16 + offset]);
-        in11[i]  = _mm_loadu_si128((const __m128i*)&src[11 * 16 + offset]);
-        in12[i]  = _mm_loadu_si128((const __m128i*)&src[12 * 16 + offset]);
-        in13[i]  = _mm_loadu_si128((const __m128i*)&src[13 * 16 + offset]);
-        in14[i]  = _mm_loadu_si128((const __m128i*)&src[14 * 16 + offset]);
-        in15[i]  = _mm_loadu_si128((const __m128i*)&src[15 * 16 + offset]);
+        READ_UNPACKHILO(0)
+        PROCESS(0, 64, 7)
     }
 
-    for (int pass = 0; pass < 2; pass++)
     {
-        if (pass == 1)
-        {
-            c32_rnd = _mm_set1_epi32(2048);
-            nShift  = 12;
-        }
-
-        for (int part = 0; part < 2; part++)
-        {
-            const __m128i T_00_00A = _mm_unpacklo_epi16(in01[part], in03[part]);       // [33 13 32 12 31 11 30 10]
-            const __m128i T_00_00B = _mm_unpackhi_epi16(in01[part], in03[part]);       // [37 17 36 16 35 15 34 14]
-            const __m128i T_00_01A = _mm_unpacklo_epi16(in05[part], in07[part]);       // [ ]
-            const __m128i T_00_01B = _mm_unpackhi_epi16(in05[part], in07[part]);       // [ ]
-            const __m128i T_00_02A = _mm_unpacklo_epi16(in09[part], in11[part]);       // [ ]
-            const __m128i T_00_02B = _mm_unpackhi_epi16(in09[part], in11[part]);       // [ ]
-            const __m128i T_00_03A = _mm_unpacklo_epi16(in13[part], in15[part]);       // [ ]
-            const __m128i T_00_03B = _mm_unpackhi_epi16(in13[part], in15[part]);       // [ ]
-            const __m128i T_00_04A = _mm_unpacklo_epi16(in02[part], in06[part]);       // [ ]
-            const __m128i T_00_04B = _mm_unpackhi_epi16(in02[part], in06[part]);       // [ ]
-            const __m128i T_00_05A = _mm_unpacklo_epi16(in10[part], in14[part]);       // [ ]
-            const __m128i T_00_05B = _mm_unpackhi_epi16(in10[part], in14[part]);       // [ ]
-            const __m128i T_00_06A = _mm_unpacklo_epi16(in04[part], in12[part]);       // [ ]row
-            const __m128i T_00_06B = _mm_unpackhi_epi16(in04[part], in12[part]);       // [ ]
-            const __m128i T_00_07A = _mm_unpacklo_epi16(in00[part], in08[part]);       // [83 03 82 02 81 01 81 00] row08 row00
-            const __m128i T_00_07B = _mm_unpackhi_epi16(in00[part], in08[part]);       // [87 07 86 06 85 05 84 04]
-
-            __m128i O0A, O1A, O2A, O3A, O4A, O5A, O6A, O7A;
-            __m128i O0B, O1B, O2B, O3B, O4B, O5B, O6B, O7B;
-            {
-                __m128i T00, T01;
-#define COMPUTE_ROW(row0103, row0507, row0911, row1315, c0103, c0507, c0911, c1315, row) \
-    T00 = _mm_add_epi32(_mm_madd_epi16(row0103, c0103), _mm_madd_epi16(row0507, c0507)); \
-    T01 = _mm_add_epi32(_mm_madd_epi16(row0911, c0911), _mm_madd_epi16(row1315, c1315)); \
-    row = _mm_add_epi32(T00, T01);
-
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p87_p90, c16_p70_p80, c16_p43_p57, c16_p09_p25, O0A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p57_p87, c16_n43_p09, c16_n90_n80, c16_n25_n70, O1A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_p09_p80, c16_n87_n70, c16_p57_n25, c16_p43_p90, O2A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n43_p70, c16_p09_n87, c16_p25_p90, c16_n57_n80, O3A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n80_p57, c16_p90_n25, c16_n87_n09, c16_p70_p43, O4A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n90_p43, c16_p25_p57, c16_p70_n87, c16_n80_p09, O5A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n70_p25, c16_n80_p90, c16_p09_p43, c16_p87_n57, O6A)
-                COMPUTE_ROW(T_00_00A, T_00_01A, T_00_02A, T_00_03A, c16_n25_p09, c16_n57_p43, c16_n80_p70, c16_n90_p87, O7A)
-
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p87_p90, c16_p70_p80, c16_p43_p57, c16_p09_p25, O0B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p57_p87, c16_n43_p09, c16_n90_n80, c16_n25_n70, O1B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_p09_p80, c16_n87_n70, c16_p57_n25, c16_p43_p90, O2B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n43_p70, c16_p09_n87, c16_p25_p90, c16_n57_n80, O3B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n80_p57, c16_p90_n25, c16_n87_n09, c16_p70_p43, O4B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n90_p43, c16_p25_p57, c16_p70_n87, c16_n80_p09, O5B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n70_p25, c16_n80_p90, c16_p09_p43, c16_p87_n57, O6B)
-                COMPUTE_ROW(T_00_00B, T_00_01B, T_00_02B, T_00_03B, c16_n25_p09, c16_n57_p43, c16_n80_p70, c16_n90_p87, O7B)
-#undef COMPUTE_ROW
-            }
-
-            __m128i EO0A, EO1A, EO2A, EO3A;
-            __m128i EO0B, EO1B, EO2B, EO3B;
-            EO0A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_p75_p89), _mm_madd_epi16(T_00_05A, c16_p18_p50)); // EO0
-            EO0B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_p75_p89), _mm_madd_epi16(T_00_05B, c16_p18_p50));
-            EO1A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n18_p75), _mm_madd_epi16(T_00_05A, c16_n50_n89)); // EO1
-            EO1B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n18_p75), _mm_madd_epi16(T_00_05B, c16_n50_n89));
-            EO2A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n89_p50), _mm_madd_epi16(T_00_05A, c16_p75_p18)); // EO2
-            EO2B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n89_p50), _mm_madd_epi16(T_00_05B, c16_p75_p18));
-            EO3A = _mm_add_epi32(_mm_madd_epi16(T_00_04A, c16_n50_p18), _mm_madd_epi16(T_00_05A, c16_n89_p75)); // EO3
-            EO3B = _mm_add_epi32(_mm_madd_epi16(T_00_04B, c16_n50_p18), _mm_madd_epi16(T_00_05B, c16_n89_p75));
-
-            __m128i EEO0A, EEO1A;
-            __m128i EEO0B, EEO1B;
-            EEO0A = _mm_madd_epi16(T_00_06A, c16_p36_p83);
-            EEO0B = _mm_madd_epi16(T_00_06B, c16_p36_p83);
-            EEO1A = _mm_madd_epi16(T_00_06A, c16_n83_p36);
-            EEO1B = _mm_madd_epi16(T_00_06B, c16_n83_p36);
-
-            __m128i EEE0A, EEE1A;
-            __m128i EEE0B, EEE1B;
-            EEE0A = _mm_madd_epi16(T_00_07A, c16_p64_p64);
-            EEE0B = _mm_madd_epi16(T_00_07B, c16_p64_p64);
-            EEE1A = _mm_madd_epi16(T_00_07A, c16_n64_p64);
-            EEE1B = _mm_madd_epi16(T_00_07B, c16_n64_p64);
-
-            const __m128i EE0A = _mm_add_epi32(EEE0A, EEO0A);          // EE0 = EEE0 + EEO0
-            const __m128i EE0B = _mm_add_epi32(EEE0B, EEO0B);
-            const __m128i EE1A = _mm_add_epi32(EEE1A, EEO1A);          // EE1 = EEE1 + EEO1
-            const __m128i EE1B = _mm_add_epi32(EEE1B, EEO1B);
-            const __m128i EE3A = _mm_sub_epi32(EEE0A, EEO0A);          // EE2 = EEE0 - EEO0
-            const __m128i EE3B = _mm_sub_epi32(EEE0B, EEO0B);
-            const __m128i EE2A = _mm_sub_epi32(EEE1A, EEO1A);          // EE3 = EEE1 - EEO1
-            const __m128i EE2B = _mm_sub_epi32(EEE1B, EEO1B);
-
-            const __m128i E0A = _mm_add_epi32(EE0A, EO0A);          // E0 = EE0 + EO0
-            const __m128i E0B = _mm_add_epi32(EE0B, EO0B);
-            const __m128i E1A = _mm_add_epi32(EE1A, EO1A);          // E1 = EE1 + EO1
-            const __m128i E1B = _mm_add_epi32(EE1B, EO1B);
-            const __m128i E2A = _mm_add_epi32(EE2A, EO2A);          // E2 = EE2 + EO2
-            const __m128i E2B = _mm_add_epi32(EE2B, EO2B);
-            const __m128i E3A = _mm_add_epi32(EE3A, EO3A);          // E3 = EE3 + EO3
-            const __m128i E3B = _mm_add_epi32(EE3B, EO3B);
-            const __m128i E7A = _mm_sub_epi32(EE0A, EO0A);          // E0 = EE0 - EO0
-            const __m128i E7B = _mm_sub_epi32(EE0B, EO0B);
-            const __m128i E6A = _mm_sub_epi32(EE1A, EO1A);          // E1 = EE1 - EO1
-            const __m128i E6B = _mm_sub_epi32(EE1B, EO1B);
-            const __m128i E5A = _mm_sub_epi32(EE2A, EO2A);          // E2 = EE2 - EO2
-            const __m128i E5B = _mm_sub_epi32(EE2B, EO2B);
-            const __m128i E4A = _mm_sub_epi32(EE3A, EO3A);          // E3 = EE3 - EO3
-            const __m128i E4B = _mm_sub_epi32(EE3B, EO3B);
-
-            const __m128i T10A = _mm_add_epi32(E0A, c32_rnd);         // E0 + rnd
-            const __m128i T10B = _mm_add_epi32(E0B, c32_rnd);
-            const __m128i T11A = _mm_add_epi32(E1A, c32_rnd);         // E1 + rnd
-            const __m128i T11B = _mm_add_epi32(E1B, c32_rnd);
-            const __m128i T12A = _mm_add_epi32(E2A, c32_rnd);         // E2 + rnd
-            const __m128i T12B = _mm_add_epi32(E2B, c32_rnd);
-            const __m128i T13A = _mm_add_epi32(E3A, c32_rnd);         // E3 + rnd
-            const __m128i T13B = _mm_add_epi32(E3B, c32_rnd);
-            const __m128i T14A = _mm_add_epi32(E4A, c32_rnd);         // E4 + rnd
-            const __m128i T14B = _mm_add_epi32(E4B, c32_rnd);
-            const __m128i T15A = _mm_add_epi32(E5A, c32_rnd);         // E5 + rnd
-            const __m128i T15B = _mm_add_epi32(E5B, c32_rnd);
-            const __m128i T16A = _mm_add_epi32(E6A, c32_rnd);         // E6 + rnd
-            const __m128i T16B = _mm_add_epi32(E6B, c32_rnd);
-            const __m128i T17A = _mm_add_epi32(E7A, c32_rnd);         // E7 + rnd
-            const __m128i T17B = _mm_add_epi32(E7B, c32_rnd);
-
-            const __m128i T20A = _mm_add_epi32(T10A, O0A);          // E0 + O0 + rnd
-            const __m128i T20B = _mm_add_epi32(T10B, O0B);
-            const __m128i T21A = _mm_add_epi32(T11A, O1A);          // E1 + O1 + rnd
-            const __m128i T21B = _mm_add_epi32(T11B, O1B);
-            const __m128i T22A = _mm_add_epi32(T12A, O2A);          // E2 + O2 + rnd
-            const __m128i T22B = _mm_add_epi32(T12B, O2B);
-            const __m128i T23A = _mm_add_epi32(T13A, O3A);          // E3 + O3 + rnd
-            const __m128i T23B = _mm_add_epi32(T13B, O3B);
-            const __m128i T24A = _mm_add_epi32(T14A, O4A);          // E4
-            const __m128i T24B = _mm_add_epi32(T14B, O4B);
-            const __m128i T25A = _mm_add_epi32(T15A, O5A);          // E5
-            const __m128i T25B = _mm_add_epi32(T15B, O5B);
-            const __m128i T26A = _mm_add_epi32(T16A, O6A);          // E6
-            const __m128i T26B = _mm_add_epi32(T16B, O6B);
-            const __m128i T27A = _mm_add_epi32(T17A, O7A);          // E7
-            const __m128i T27B = _mm_add_epi32(T17B, O7B);
-            const __m128i T2FA = _mm_sub_epi32(T10A, O0A);          // E0 - O0 + rnd
-            const __m128i T2FB = _mm_sub_epi32(T10B, O0B);
-            const __m128i T2EA = _mm_sub_epi32(T11A, O1A);          // E1 - O1 + rnd
-            const __m128i T2EB = _mm_sub_epi32(T11B, O1B);
-            const __m128i T2DA = _mm_sub_epi32(T12A, O2A);          // E2 - O2 + rnd
-            const __m128i T2DB = _mm_sub_epi32(T12B, O2B);
-            const __m128i T2CA = _mm_sub_epi32(T13A, O3A);          // E3 - O3 + rnd
-            const __m128i T2CB = _mm_sub_epi32(T13B, O3B);
-            const __m128i T2BA = _mm_sub_epi32(T14A, O4A);          // E4
-            const __m128i T2BB = _mm_sub_epi32(T14B, O4B);
-            const __m128i T2AA = _mm_sub_epi32(T15A, O5A);          // E5
-            const __m128i T2AB = _mm_sub_epi32(T15B, O5B);
-            const __m128i T29A = _mm_sub_epi32(T16A, O6A);          // E6
-            const __m128i T29B = _mm_sub_epi32(T16B, O6B);
-            const __m128i T28A = _mm_sub_epi32(T17A, O7A);          // E7
-            const __m128i T28B = _mm_sub_epi32(T17B, O7B);
-
-            const __m128i T30A = _mm_srai_epi32(T20A, nShift);             // [30 20 10 00]
-            const __m128i T30B = _mm_srai_epi32(T20B, nShift);             // [70 60 50 40]
-            const __m128i T31A = _mm_srai_epi32(T21A, nShift);             // [31 21 11 01]
-            const __m128i T31B = _mm_srai_epi32(T21B, nShift);             // [71 61 51 41]
-            const __m128i T32A = _mm_srai_epi32(T22A, nShift);             // [32 22 12 02]
-            const __m128i T32B = _mm_srai_epi32(T22B, nShift);             // [72 62 52 42]
-            const __m128i T33A = _mm_srai_epi32(T23A, nShift);             // [33 23 13 03]
-            const __m128i T33B = _mm_srai_epi32(T23B, nShift);             // [73 63 53 43]
-            const __m128i T34A = _mm_srai_epi32(T24A, nShift);             // [33 24 14 04]
-            const __m128i T34B = _mm_srai_epi32(T24B, nShift);             // [74 64 54 44]
-            const __m128i T35A = _mm_srai_epi32(T25A, nShift);             // [35 25 15 05]
-            const __m128i T35B = _mm_srai_epi32(T25B, nShift);             // [75 65 55 45]
-            const __m128i T36A = _mm_srai_epi32(T26A, nShift);             // [36 26 16 06]
-            const __m128i T36B = _mm_srai_epi32(T26B, nShift);             // [76 66 56 46]
-            const __m128i T37A = _mm_srai_epi32(T27A, nShift);             // [37 27 17 07]
-            const __m128i T37B = _mm_srai_epi32(T27B, nShift);             // [77 67 57 47]
-
-            const __m128i T38A = _mm_srai_epi32(T28A, nShift);             // [30 20 10 00] x8
-            const __m128i T38B = _mm_srai_epi32(T28B, nShift);             // [70 60 50 40]
-            const __m128i T39A = _mm_srai_epi32(T29A, nShift);             // [31 21 11 01] x9
-            const __m128i T39B = _mm_srai_epi32(T29B, nShift);             // [71 61 51 41]
-            const __m128i T3AA = _mm_srai_epi32(T2AA, nShift);             // [32 22 12 02] xA
-            const __m128i T3AB = _mm_srai_epi32(T2AB, nShift);             // [72 62 52 42]
-            const __m128i T3BA = _mm_srai_epi32(T2BA, nShift);             // [33 23 13 03] xB
-            const __m128i T3BB = _mm_srai_epi32(T2BB, nShift);             // [73 63 53 43]
-            const __m128i T3CA = _mm_srai_epi32(T2CA, nShift);             // [33 24 14 04] xC
-            const __m128i T3CB = _mm_srai_epi32(T2CB, nShift);             // [74 64 54 44]
-            const __m128i T3DA = _mm_srai_epi32(T2DA, nShift);             // [35 25 15 05] xD
-            const __m128i T3DB = _mm_srai_epi32(T2DB, nShift);             // [75 65 55 45]
-            const __m128i T3EA = _mm_srai_epi32(T2EA, nShift);             // [36 26 16 06] xE
-            const __m128i T3EB = _mm_srai_epi32(T2EB, nShift);             // [76 66 56 46]
-            const __m128i T3FA = _mm_srai_epi32(T2FA, nShift);             // [37 27 17 07] xF
-            const __m128i T3FB = _mm_srai_epi32(T2FB, nShift);             // [77 67 57 47]
-
-            res00[part]  = _mm_packs_epi32(T30A, T30B);        // [70 60 50 40 30 20 10 00]
-            res01[part]  = _mm_packs_epi32(T31A, T31B);        // [71 61 51 41 31 21 11 01]
-            res02[part]  = _mm_packs_epi32(T32A, T32B);        // [72 62 52 42 32 22 12 02]
-            res03[part]  = _mm_packs_epi32(T33A, T33B);        // [73 63 53 43 33 23 13 03]
-            res04[part]  = _mm_packs_epi32(T34A, T34B);        // [74 64 54 44 34 24 14 04]
-            res05[part]  = _mm_packs_epi32(T35A, T35B);        // [75 65 55 45 35 25 15 05]
-            res06[part]  = _mm_packs_epi32(T36A, T36B);        // [76 66 56 46 36 26 16 06]
-            res07[part]  = _mm_packs_epi32(T37A, T37B);        // [77 67 57 47 37 27 17 07]
-
-            res08[part]  = _mm_packs_epi32(T38A, T38B);        // [A0 ... 80]
-            res09[part]  = _mm_packs_epi32(T39A, T39B);        // [A1 ... 81]
-            res10[part]  = _mm_packs_epi32(T3AA, T3AB);        // [A2 ... 82]
-            res11[part]  = _mm_packs_epi32(T3BA, T3BB);        // [A3 ... 83]
-            res12[part]  = _mm_packs_epi32(T3CA, T3CB);        // [A4 ... 84]
-            res13[part]  = _mm_packs_epi32(T3DA, T3DB);        // [A5 ... 85]
-            res14[part]  = _mm_packs_epi32(T3EA, T3EB);        // [A6 ... 86]
-            res15[part]  = _mm_packs_epi32(T3FA, T3FB);        // [A7 ... 87]
-        }
-        //transpose matrix 8x8 16bit.
-        {
-            __m128i tr0_0, tr0_1, tr0_2, tr0_3, tr0_4, tr0_5, tr0_6, tr0_7;
-            __m128i tr1_0, tr1_1, tr1_2, tr1_3, tr1_4, tr1_5, tr1_6, tr1_7;
-#define TRANSPOSE_8x8_16BIT(I0, I1, I2, I3, I4, I5, I6, I7, O0, O1, O2, O3, O4, O5, O6, O7) \
-    tr0_0 = _mm_unpacklo_epi16(I0, I1); \
-    tr0_1 = _mm_unpacklo_epi16(I2, I3); \
-    tr0_2 = _mm_unpackhi_epi16(I0, I1); \
-    tr0_3 = _mm_unpackhi_epi16(I2, I3); \
-    tr0_4 = _mm_unpacklo_epi16(I4, I5); \
-    tr0_5 = _mm_unpacklo_epi16(I6, I7); \
-    tr0_6 = _mm_unpackhi_epi16(I4, I5); \
-    tr0_7 = _mm_unpackhi_epi16(I6, I7); \
-    tr1_0 = _mm_unpacklo_epi32(tr0_0, tr0_1); \
-    tr1_1 = _mm_unpacklo_epi32(tr0_2, tr0_3); \
-    tr1_2 = _mm_unpackhi_epi32(tr0_0, tr0_1); \
-    tr1_3 = _mm_unpackhi_epi32(tr0_2, tr0_3); \
-    tr1_4 = _mm_unpacklo_epi32(tr0_4, tr0_5); \
-    tr1_5 = _mm_unpacklo_epi32(tr0_6, tr0_7); \
-    tr1_6 = _mm_unpackhi_epi32(tr0_4, tr0_5); \
-    tr1_7 = _mm_unpackhi_epi32(tr0_6, tr0_7); \
-    O0 = _mm_unpacklo_epi64(tr1_0, tr1_4); \
-    O1 = _mm_unpackhi_epi64(tr1_0, tr1_4); \
-    O2 = _mm_unpacklo_epi64(tr1_2, tr1_6); \
-    O3 = _mm_unpackhi_epi64(tr1_2, tr1_6); \
-    O4 = _mm_unpacklo_epi64(tr1_1, tr1_5); \
-    O5 = _mm_unpackhi_epi64(tr1_1, tr1_5); \
-    O6 = _mm_unpacklo_epi64(tr1_3, tr1_7); \
-    O7 = _mm_unpackhi_epi64(tr1_3, tr1_7); \
-
-            TRANSPOSE_8x8_16BIT(res00[0], res01[0], res02[0], res03[0], res04[0], res05[0], res06[0], res07[0], in00[0], in01[0], in02[0], in03[0], in04[0], in05[0], in06[0], in07[0])
-            TRANSPOSE_8x8_16BIT(res08[0], res09[0], res10[0], res11[0], res12[0], res13[0], res14[0], res15[0], in00[1], in01[1], in02[1], in03[1], in04[1], in05[1], in06[1], in07[1])
-            TRANSPOSE_8x8_16BIT(res00[1], res01[1], res02[1], res03[1], res04[1], res05[1], res06[1], res07[1], in08[0], in09[0], in10[0], in11[0], in12[0], in13[0], in14[0], in15[0])
-            TRANSPOSE_8x8_16BIT(res08[1], res09[1], res10[1], res11[1], res12[1], res13[1], res14[1], res15[1], in08[1], in09[1], in10[1], in11[1], in12[1], in13[1], in14[1], in15[1])
-
-#undef TRANSPOSE_8x8_16BIT
-        }
+        READ_UNPACKHILO(8)
+        PROCESS(1, 64, 7)
+    }
+    {
+        __m128i tr0_0, tr0_1, tr0_2, tr0_3, tr0_4, tr0_5, tr0_6, tr0_7;
+        __m128i tr1_0, tr1_1, tr1_2, tr1_3, tr1_4, tr1_5, tr1_6, tr1_7;
+        TRANSPOSE_8x8_16BIT(res00[0], res01[0], res02[0], res03[0], res04[0], res05[0], res06[0], res07[0], in00[0], in01[0], in02[0], in03[0], in04[0], in05[0], in06[0], in07[0])
+        TRANSPOSE_8x8_16BIT(res08[0], res09[0], res10[0], res11[0], res12[0], res13[0], res14[0], res15[0], in00[1], in01[1], in02[1], in03[1], in04[1], in05[1], in06[1], in07[1])
+        TRANSPOSE_8x8_16BIT(res00[1], res01[1], res02[1], res03[1], res04[1], res05[1], res06[1], res07[1], in08[0], in09[0], in10[0], in11[0], in12[0], in13[0], in14[0], in15[0])
+        TRANSPOSE_8x8_16BIT(res08[1], res09[1], res10[1], res11[1], res12[1], res13[1], res14[1], res15[1], in08[1], in09[1], in10[1], in11[1], in12[1], in13[1], in14[1], in15[1])
     }
 
-    _mm_store_si128((__m128i*)&dst[0 * stride + 0], in00[0]);
-    _mm_store_si128((__m128i*)&dst[0 * stride + 8], in00[1]);
-    _mm_store_si128((__m128i*)&dst[1 * stride + 0], in01[0]);
-    _mm_store_si128((__m128i*)&dst[1 * stride + 8], in01[1]);
-    _mm_store_si128((__m128i*)&dst[2 * stride + 0], in02[0]);
-    _mm_store_si128((__m128i*)&dst[2 * stride + 8], in02[1]);
-    _mm_store_si128((__m128i*)&dst[3 * stride + 0], in03[0]);
-    _mm_store_si128((__m128i*)&dst[3 * stride + 8], in03[1]);
-    _mm_store_si128((__m128i*)&dst[4 * stride + 0], in04[0]);
-    _mm_store_si128((__m128i*)&dst[4 * stride + 8], in04[1]);
-    _mm_store_si128((__m128i*)&dst[5 * stride + 0], in05[0]);
-    _mm_store_si128((__m128i*)&dst[5 * stride + 8], in05[1]);
-    _mm_store_si128((__m128i*)&dst[6 * stride + 0], in06[0]);
-    _mm_store_si128((__m128i*)&dst[6 * stride + 8], in06[1]);
-    _mm_store_si128((__m128i*)&dst[7 * stride + 0], in07[0]);
-    _mm_store_si128((__m128i*)&dst[7 * stride + 8], in07[1]);
-    _mm_store_si128((__m128i*)&dst[8 * stride + 0], in08[0]);
-    _mm_store_si128((__m128i*)&dst[8 * stride + 8], in08[1]);
-    _mm_store_si128((__m128i*)&dst[9 * stride + 0], in09[0]);
-    _mm_store_si128((__m128i*)&dst[9 * stride + 8], in09[1]);
-    _mm_store_si128((__m128i*)&dst[10 * stride + 0], in10[0]);
-    _mm_store_si128((__m128i*)&dst[10 * stride + 8], in10[1]);
-    _mm_store_si128((__m128i*)&dst[11 * stride + 0], in11[0]);
-    _mm_store_si128((__m128i*)&dst[11 * stride + 8], in11[1]);
-    _mm_store_si128((__m128i*)&dst[12 * stride + 0], in12[0]);
-    _mm_store_si128((__m128i*)&dst[12 * stride + 8], in12[1]);
-    _mm_store_si128((__m128i*)&dst[13 * stride + 0], in13[0]);
-    _mm_store_si128((__m128i*)&dst[13 * stride + 8], in13[1]);
-    _mm_store_si128((__m128i*)&dst[14 * stride + 0], in14[0]);
-    _mm_store_si128((__m128i*)&dst[14 * stride + 8], in14[1]);
-    _mm_store_si128((__m128i*)&dst[15 * stride + 0], in15[0]);
-    _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
+    {
+        UNPACKHILO(0)
+        PROCESS(0, 2048, 12)
+    }
+    {
+        UNPACKHILO(1)
+        PROCESS(1, 2048, 12)
+    }
+
+    {
+        __m128i tr0_0, tr0_1, tr0_2, tr0_3, tr0_4, tr0_5, tr0_6, tr0_7;
+        __m128i tr1_0, tr1_1, tr1_2, tr1_3, tr1_4, tr1_5, tr1_6, tr1_7;
+        TRANSPOSE_8x8_16BIT(res00[0], res01[0], res02[0], res03[0], res04[0], res05[0], res06[0], res07[0], in00[0], in01[0], in02[0], in03[0], in04[0], in05[0], in06[0], in07[0])
+        _mm_store_si128((__m128i*)&dst[0 * stride + 0], in00[0]);
+        _mm_store_si128((__m128i*)&dst[1 * stride + 0], in01[0]);
+        _mm_store_si128((__m128i*)&dst[2 * stride + 0], in02[0]);
+        _mm_store_si128((__m128i*)&dst[3 * stride + 0], in03[0]);
+        _mm_store_si128((__m128i*)&dst[4 * stride + 0], in04[0]);
+        _mm_store_si128((__m128i*)&dst[5 * stride + 0], in05[0]);
+        _mm_store_si128((__m128i*)&dst[6 * stride + 0], in06[0]);
+        _mm_store_si128((__m128i*)&dst[7 * stride + 0], in07[0]);
+        TRANSPOSE_8x8_16BIT(res08[0], res09[0], res10[0], res11[0], res12[0], res13[0], res14[0], res15[0], in00[1], in01[1], in02[1], in03[1], in04[1], in05[1], in06[1], in07[1])
+        _mm_store_si128((__m128i*)&dst[0 * stride + 8], in00[1]);
+        _mm_store_si128((__m128i*)&dst[1 * stride + 8], in01[1]);
+        _mm_store_si128((__m128i*)&dst[2 * stride + 8], in02[1]);
+        _mm_store_si128((__m128i*)&dst[3 * stride + 8], in03[1]);
+        _mm_store_si128((__m128i*)&dst[4 * stride + 8], in04[1]);
+        _mm_store_si128((__m128i*)&dst[5 * stride + 8], in05[1]);
+        _mm_store_si128((__m128i*)&dst[6 * stride + 8], in06[1]);
+        _mm_store_si128((__m128i*)&dst[7 * stride + 8], in07[1]);
+        TRANSPOSE_8x8_16BIT(res00[1], res01[1], res02[1], res03[1], res04[1], res05[1], res06[1], res07[1], in08[0], in09[0], in10[0], in11[0], in12[0], in13[0], in14[0], in15[0])
+        _mm_store_si128((__m128i*)&dst[8 * stride + 0], in08[0]);
+        _mm_store_si128((__m128i*)&dst[9 * stride + 0], in09[0]);
+        _mm_store_si128((__m128i*)&dst[10 * stride + 0], in10[0]);
+        _mm_store_si128((__m128i*)&dst[11 * stride + 0], in11[0]);
+        _mm_store_si128((__m128i*)&dst[12 * stride + 0], in12[0]);
+        _mm_store_si128((__m128i*)&dst[13 * stride + 0], in13[0]);
+        _mm_store_si128((__m128i*)&dst[14 * stride + 0], in14[0]);
+        _mm_store_si128((__m128i*)&dst[15 * stride + 0], in15[0]);
+        TRANSPOSE_8x8_16BIT(res08[1], res09[1], res10[1], res11[1], res12[1], res13[1], res14[1], res15[1], in08[1], in09[1], in10[1], in11[1], in12[1], in13[1], in14[1], in15[1])
+        _mm_store_si128((__m128i*)&dst[8 * stride + 8], in08[1]);
+        _mm_store_si128((__m128i*)&dst[9 * stride + 8], in09[1]);
+        _mm_store_si128((__m128i*)&dst[10 * stride + 8], in10[1]);
+        _mm_store_si128((__m128i*)&dst[11 * stride + 8], in11[1]);
+        _mm_store_si128((__m128i*)&dst[12 * stride + 8], in12[1]);
+        _mm_store_si128((__m128i*)&dst[13 * stride + 8], in13[1]);
+        _mm_store_si128((__m128i*)&dst[14 * stride + 8], in14[1]);
+        _mm_store_si128((__m128i*)&dst[15 * stride + 8], in15[1]);
+    }
 }
+#undef PROCESS
+#undef TRANSPOSE_8x8_16BIT
+#undef COMPUTE_ROW
+#undef UNPACKHILO
+#undef READ_UNPACKHILO
 
 void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
 {
