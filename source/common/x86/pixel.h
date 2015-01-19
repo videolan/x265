@@ -225,6 +225,7 @@ int x265_psyCost_pp_32x32_sse4(const pixel* source, intptr_t sstride, const pixe
 int x265_psyCost_pp_64x64_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_ss_4x4_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 int x265_psyCost_ss_8x8_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+int x265_psyCost_ss_16x16_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD

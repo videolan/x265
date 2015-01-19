@@ -8305,3 +8305,601 @@ cglobal psyCost_ss_8x8, 4, 6, 15
     movd            eax, m0
     RET
 %endif
+
+%macro psy_cost_ss 0
+    movu            m0, [r0]
+    movu            m1, [r0 + r1]
+    movu            m2, [r0 + r1 * 2]
+    movu            m3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    movu            m4, [r5]
+    movu            m5, [r5 + r1]
+    movu            m6, [r5 + r1 * 2]
+    movu            m7, [r5 + r4]
+
+    pabsw           m8, m0
+    pabsw           m9, m1
+    paddw           m8, m9
+    pabsw           m10, m2
+    pabsw           m11, m3
+    paddw           m10, m11
+    paddw           m8, m10
+    pabsw           m9, m4
+    pabsw           m10, m5
+    paddw           m9, m10
+    pabsw           m11, m6
+    pabsw           m12, m7
+    paddw           m11, m12
+    paddw           m9, m11
+    paddw           m8, m9
+    movhlps         m9, m8
+    pmovzxwd        m8, m8
+    pmovzxwd        m9, m9
+    paddd           m8, m9
+    movhlps         m9, m8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    pmaddwd         m0, m13
+    pmaddwd         m1, m13
+    pmaddwd         m2, m13
+    pmaddwd         m3, m13
+
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+
+    SUMSUB_BA d, 0, 1, 9
+    SUMSUB_BA d, 2, 3, 9
+    SUMSUB_BA d, 0, 2, 9
+    SUMSUB_BA d, 1, 3, 9
+
+    pmaddwd         m4, m13
+    pmaddwd         m5, m13
+    pmaddwd         m6, m13
+    pmaddwd         m7, m13
+
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+
+    SUMSUB_BA d, 4, 5, 9
+    SUMSUB_BA d, 6, 7, 9
+    SUMSUB_BA d, 4, 6, 9
+    SUMSUB_BA d, 5, 7, 9
+
+    SUMSUB_BA d, 0, 4, 9
+    SUMSUB_BA d, 1, 5, 9
+    SUMSUB_BA d, 2, 6, 9
+    SUMSUB_BA d, 3, 7, 9
+
+    pabsd           m0, m0
+    pabsd           m2, m2
+    pabsd           m1, m1
+    pabsd           m3, m3
+    pabsd           m4, m4
+    pabsd           m5, m5
+    pabsd           m6, m6
+    pabsd           m7, m7
+
+    paddd           m0, m2
+    paddd           m1, m3
+    paddd           m0, m1
+    paddd           m5, m4
+    paddd           m0, m5
+    paddd           m7, m6
+    paddd           m11, m0, m7
+
+    movu            m0, [r0]
+    movu            m1, [r0 + r1]
+    movu            m2, [r0 + r1 * 2]
+    movu            m3, [r0 + r4]
+
+    pmaddwd         m0, m14
+    pmaddwd         m1, m14
+    pmaddwd         m2, m14
+    pmaddwd         m3, m14
+
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+
+    SUMSUB_BA d, 0, 1, 9
+    SUMSUB_BA d, 2, 3, 9
+    SUMSUB_BA d, 0, 2, 9
+    SUMSUB_BA d, 1, 3, 9
+
+    movu            m4, [r5]
+    movu            m5, [r5 + r1]
+    movu            m6, [r5 + r1 * 2]
+    movu            m7, [r5 + r4]
+
+    pmaddwd         m4, m14
+    pmaddwd         m5, m14
+    pmaddwd         m6, m14
+    pmaddwd         m7, m14
+
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+
+    SUMSUB_BA d, 4, 5, 9
+    SUMSUB_BA d, 6, 7, 9
+    SUMSUB_BA d, 4, 6, 9
+    SUMSUB_BA d, 5, 7, 9
+
+    SUMSUB_BA d, 0, 4, 9
+    SUMSUB_BA d, 1, 5, 9
+    SUMSUB_BA d, 2, 6, 9
+    SUMSUB_BA d, 3, 7, 9
+
+    pabsd           m0, m0
+    pabsd           m2, m2
+    pabsd           m1, m1
+    pabsd           m3, m3
+    pabsd           m4, m4
+    pabsd           m5, m5
+    pabsd           m6, m6
+    pabsd           m7, m7
+
+    paddd           m0, m2
+    paddd           m1, m3
+    paddd           m0, m1
+    paddd           m5, m4
+    paddd           m0, m5
+    paddd           m7, m6
+    paddd           m0, m7
+    paddd           m0, m11
+
+    movhlps         m1, m0
+    paddd           m0, m1
+    psrldq          m1, m0, 4
+    paddd           m0, m1
+    paddd           m0, [pd_2]
+    psrld           m0, 2
+    psubd           m12, m0, m8
+
+    movu            m0, [r2]
+    movu            m1, [r2 + r3]
+    movu            m2, [r2 + r3 * 2]
+    movu            m3, [r2 + r6]
+    lea             r5, [r2 + r3 * 4]
+    movu            m4, [r5]
+    movu            m5, [r5 + r3]
+    movu            m6, [r5 + r3 * 2]
+    movu            m7, [r5 + r6]
+
+    pabsw           m8, m0
+    pabsw           m9, m1
+    paddw           m8, m9
+    pabsw           m10, m2
+    pabsw           m11, m3
+    paddw           m10, m11
+    paddw           m8, m10
+    pabsw           m9, m4
+    pabsw           m10, m5
+    paddw           m9, m10
+    pabsw           m11, m6
+    pabsw           m10, m7
+    paddw           m11, m10
+    paddw           m9, m11
+    paddw           m8, m9
+    movhlps         m9, m8
+    pmovzxwd        m8, m8
+    pmovzxwd        m9, m9
+    paddd           m8, m9
+    movhlps         m9, m8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    pmaddwd         m0, m13
+    pmaddwd         m1, m13
+    pmaddwd         m2, m13
+    pmaddwd         m3, m13
+
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+
+    SUMSUB_BA d, 0, 1, 9
+    SUMSUB_BA d, 2, 3, 9
+    SUMSUB_BA d, 0, 2, 9
+    SUMSUB_BA d, 1, 3, 9
+
+    pmaddwd         m4, m13
+    pmaddwd         m5, m13
+    pmaddwd         m6, m13
+    pmaddwd         m7, m13
+
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+
+    SUMSUB_BA d, 4, 5, 9
+    SUMSUB_BA d, 6, 7, 9
+    SUMSUB_BA d, 4, 6, 9
+    SUMSUB_BA d, 5, 7, 9
+
+    SUMSUB_BA d, 0, 4, 9
+    SUMSUB_BA d, 1, 5, 9
+    SUMSUB_BA d, 2, 6, 9
+    SUMSUB_BA d, 3, 7, 9
+
+    pabsd           m0, m0
+    pabsd           m2, m2
+    pabsd           m1, m1
+    pabsd           m3, m3
+    pabsd           m4, m4
+    pabsd           m5, m5
+    pabsd           m6, m6
+    pabsd           m7, m7
+
+    paddd           m0, m2
+    paddd           m1, m3
+    paddd           m0, m1
+    paddd           m5, m4
+    paddd           m0, m5
+    paddd           m7, m6
+    paddd           m11, m0, m7
+
+    movu            m0, [r2]
+    movu            m1, [r2 + r3]
+    movu            m2, [r2 + r3 * 2]
+    movu            m3, [r2 + r6]
+
+    pmaddwd         m0, m14
+    pmaddwd         m1, m14
+    pmaddwd         m2, m14
+    pmaddwd         m3, m14
+
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+    psrldq          m9, m0, 4
+    psubd           m10, m0, m9
+    paddd           m0, m9
+    shufps          m0, m10, 10001000b
+
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+    psrldq          m9, m1, 4
+    psubd           m10, m1, m9
+    paddd           m1, m9
+    shufps          m1, m10, 10001000b
+
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+    psrldq          m9, m2, 4
+    psubd           m10, m2, m9
+    paddd           m2, m9
+    shufps          m2, m10, 10001000b
+
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+    psrldq          m9, m3, 4
+    psubd           m10, m3, m9
+    paddd           m3, m9
+    shufps          m3, m10, 10001000b
+
+    SUMSUB_BA d, 0, 1, 9
+    SUMSUB_BA d, 2, 3, 9
+    SUMSUB_BA d, 0, 2, 9
+    SUMSUB_BA d, 1, 3, 9
+
+    movu            m4, [r5]
+    movu            m5, [r5 + r3]
+    movu            m6, [r5 + r3 * 2]
+    movu            m7, [r5 + r6]
+
+    pmaddwd         m4, m14
+    pmaddwd         m5, m14
+    pmaddwd         m6, m14
+    pmaddwd         m7, m14
+
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+    psrldq          m9, m4, 4
+    psubd           m10, m4, m9
+    paddd           m4, m9
+    shufps          m4, m10, 10001000b
+
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+    psrldq          m9, m5, 4
+    psubd           m10, m5, m9
+    paddd           m5, m9
+    shufps          m5, m10, 10001000b
+
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+    psrldq          m9, m6, 4
+    psubd           m10, m6, m9
+    paddd           m6, m9
+    shufps          m6, m10, 10001000b
+
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+    psrldq          m9, m7, 4
+    psubd           m10, m7, m9
+    paddd           m7, m9
+    shufps          m7, m10, 10001000b
+
+    SUMSUB_BA d, 4, 5, 9
+    SUMSUB_BA d, 6, 7, 9
+    SUMSUB_BA d, 4, 6, 9
+    SUMSUB_BA d, 5, 7, 9
+
+    SUMSUB_BA d, 0, 4, 9
+    SUMSUB_BA d, 1, 5, 9
+    SUMSUB_BA d, 2, 6, 9
+    SUMSUB_BA d, 3, 7, 9
+
+    pabsd           m0, m0
+    pabsd           m2, m2
+    pabsd           m1, m1
+    pabsd           m3, m3
+    pabsd           m4, m4
+    pabsd           m5, m5
+    pabsd           m6, m6
+    pabsd           m7, m7
+
+    paddd           m0, m2
+    paddd           m1, m3
+    paddd           m0, m1
+    paddd           m5, m4
+    paddd           m0, m5
+    paddd           m7, m6
+    paddd           m0, m7
+    paddd           m0, m11
+
+    movhlps         m1, m0
+    paddd           m0, m1
+    psrldq          m1, m0, 4
+    paddd           m0, m1
+    paddd           m0, [pd_2]
+    psrld           m0, 2
+    psubd           m0, m8
+
+    psubd           m12, m0
+    pabsd           m0, m12
+    paddd           m15, m0
+%endmacro
+
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal psyCost_ss_16x16, 4, 9, 16
+
+    mova            m13, [hmul_w]
+    mova            m14, [pw_1]
+    add             r1, r1
+    add             r3, r3
+    lea             r4, [3 * r1]
+    lea             r6, [3 * r3]
+    pxor            m15, m15
+    mov             r7d, 2
+.loopH:
+    mov             r8d, 2
+.loopW:
+    psy_cost_ss
+    add             r0, 16
+    add             r2, 16
+    dec             r8d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec             r7d
+    jnz             .loopH
+    movd            eax, m15
+    RET
+%endif

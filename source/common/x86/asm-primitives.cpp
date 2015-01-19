@@ -932,6 +932,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
 
         p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_sse4;
+        p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_sse4;
 #endif
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
@@ -1184,6 +1185,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
         p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_sse4;
+        p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_sse4;
 #endif
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
