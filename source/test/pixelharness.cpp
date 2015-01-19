@@ -243,7 +243,29 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
         ref(short_test_buff[index] + j, ref_dest, stride, stride, width, height, w0, round << correction, shift + correction, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        {
+            printf("--- Ref ---\n");
+            for(int y = 0; y < 16; y++)
+            {
+                for(int x = 0; x < 16; x++)
+                {
+                    printf("%04X, ", ref_dest[y * stride + x] & 0xFFFF);
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("--- Opt ---\n");
+            for(int y = 0; y < 16; y++)
+            {
+                for(int x = 0; x < 16; x++)
+                {
+                    printf("%04X, ", opt_dest[y * stride + x] & 0xFFFF);
+                }
+                printf("\n");
+            }
+            printf("\n");
             return false;
+        }
 
         reportfail();
         j += INCR;
@@ -275,7 +297,30 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
         ref(pixel_test_buff[index] + j, ref_dest, stride, width, height, w0, round << correction, shift + correction, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+        {
+            printf("--- Ref ---\n");
+            for(int y = 0; y < 16; y++)
+            {
+                for(int x = 0; x < 16; x++)
+                {
+                    printf("%04X, ", ref_dest[y * stride + x] & 0xFFFF);
+                }
+                printf("\n");
+            }
+            printf("\n");
+            printf("--- Opt ---\n");
+            for(int y = 0; y < 16; y++)
+            {
+                for(int x = 0; x < 16; x++)
+                {
+                    printf("%04X, ", opt_dest[y * stride + x] & 0xFFFF);
+                }
+                printf("\n");
+            }
+            printf("\n");
+            checked(opt, pixel_test_buff[index] + j, opt_dest, stride, width, height, w0, round << correction, shift + correction, offset);
             return false;
+        }
 
         reportfail();
         j += INCR;

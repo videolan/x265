@@ -55,6 +55,8 @@ SECTION .text
 cextern pw_1
 cextern pb_1
 cextern pw_00ff
+cextern pw_1023
+cextern pw_3fff
 cextern pw_2000
 cextern pw_pixel_max
 cextern pd_1
@@ -856,26 +858,52 @@ cglobal count_nonzero, 2,2,3
 ;void weight_pp(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-cglobal weight_pp, 6, 7, 6
-
-    shl         r5d, 6      ; m0 = [w0<<6]
+cglobal weight_pp, 4,7,7
+%define correction      (14 - BIT_DEPTH)
+%if BIT_DEPTH == 10
+    mova        m6, [pw_1023]
+%elif BIT_DEPTH == 12
+    mova        m6, [pw_3fff]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
     mov         r6d, r6m
-    shl         r6d, 16
-    or          r6d, r5d    ; assuming both (w0<<6) and round are using maximum of 16 bits each.
+    mov         r4d, r4m
+    mov         r5d, r5m
+    shl         r6d, 16 - correction
+    or          r6d, r5d    ; assuming both (w0) and round are using maximum of 16 bits each.
     movd        m0, r6d
-    pshufd      m0, m0, 0   ; m0 = [w0<<6, round]
-    movd        m1, r7m
+    pshufd      m0, m0, 0   ; m0 = [w0, round]
+    mov         r5d, r7m
+    sub         r5d, correction
+    movd        m1, r5d
     movd        m2, r8m
     pshufd      m2, m2, 0
     mova        m5, [pw_1]
     sub         r2d, r3d
+    add         r2d, r2d
     shr         r3d, 4
 
 .loopH:
     mov         r5d, r3d
 
 .loopW:
-    pmovzxbw    m4, [r0]
+    movu        m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, m1
+    paddd       m3, m2      ; TODO: we can put Offset into Round, but we have to analyze Dynamic Range before that.
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, m1
+    paddd       m4, m2
+
+    packusdw    m3, m4
+    pminuw      m3, m6
+    movu        [r1], m3
+
+    movu        m4, [r0 + mmsize]
     punpcklwd   m3, m4, m5
     pmaddwd     m3, m0
     psrad       m3, m1
@@ -886,33 +914,18 @@ cglobal weight_pp, 6, 7, 6
     psrad       m4, m1
     paddd       m4, m2
 
-    packssdw    m3, m4
-    packuswb    m3, m3
-    movh        [r1], m3
+    packusdw    m3, m4
+    pminuw      m3, m6
+    movu        [r1 + mmsize], m3
 
-    pmovzxbw    m4, [r0 + 8]
-    punpcklwd   m3, m4, m5
-    pmaddwd     m3, m0
-    psrad       m3, m1
-    paddd       m3, m2
-
-    punpckhwd   m4, m5
-    pmaddwd     m4, m0
-    psrad       m4, m1
-    paddd       m4, m2
-
-    packssdw    m3, m4
-    packuswb    m3, m3
-    movh        [r1 + 8], m3
-
-    add         r0, 16
-    add         r1, 16
+    add         r0, 2 * mmsize
+    add         r1, 2 * mmsize
 
     dec         r5d
-    jnz         .loopW
+    jnz        .loopW
 
-    lea         r0, [r0 + r2]
-    lea         r1, [r1 + r2]
+    add         r0, r2
+    add         r1, r2
 
     dec         r4d
     jnz         .loopH

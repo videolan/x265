@@ -924,7 +924,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         p.planecopy_cp = x265_upShift_8_sse4;
         // these fail unit tests
-        // p.weight_pp = x265_weight_pp_sse4;
+        p.weight_pp = x265_weight_pp_sse4;
         // p.weight_sp = x265_weight_sp_sse4;
 
         p.cu[BLOCK_4x4].psy_cost_pp = x265_psyCost_pp_4x4_sse4;
