@@ -63,6 +63,7 @@ const pb_32,       times 16 db 32
 const pb_128,      times 16 db 128
 const pb_shuf8x8c, db 0,0,0,0,2,2,2,2,4,4,4,4,6,6,6,6
 
+const pw_0_15,     times 2 dw 0, 1, 2, 3, 4, 5, 6, 7
 const pw_2,        times 8 dw 2
 const pw_m2,       times 8 dw -2
 const pw_4,        times 8 dw 4

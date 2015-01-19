@@ -53,6 +53,7 @@ trans8_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
 SECTION .text
 
 cextern pw_1
+cextern pw_0_15
 cextern pb_1
 cextern pw_00ff
 cextern pw_1023
@@ -62,7 +63,6 @@ cextern pw_pixel_max
 cextern pd_1
 cextern pd_32767
 cextern pd_n32768
-
 
 ;-----------------------------------------------------------------------------
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
@@ -986,84 +986,82 @@ cglobal weight_pp, 6, 7, 6
 ;void weight_sp(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
-%if ARCH_X86_64
-cglobal weight_sp, 6, 7+2, 7
-    %define tmp_r0      r7
-    %define tmp_r1      r8
-%else ; ARCH_X86_64 = 0
-cglobal weight_sp, 6, 7, 7, 0-(2*4)
-    %define tmp_r0      [(rsp + 0 * 4)]
-    %define tmp_r1      [(rsp + 1 * 4)]
-%endif ; ARCH_X86_64
+cglobal weight_sp, 6,7,8
+%if BIT_DEPTH == 10
+    mova        m1, [pw_1023]
+%elif BIT_DEPTH == 12
+    mova        m1, [pw_3fff]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
+    mova        m2, [pw_1]
+    mov         r6d, r7m
+    shl         r6d, 16
+    or          r6d, r6m    ; assuming both (w0) and round are using maximum of 16 bits each.
+    movd        m3, r6d
+    pshufd      m3, m3, 0   ; m3 = [round w0]
 
-    movd        m0, r6m         ; m0 = [w0]
+    movd        m4, r8m     ; m4 = [shift]
+    movd        m5, r9m
+    pshufd      m5, m5, 0   ; m5 = [offset]
 
-    movd        m1, r7m         ; m1 = [round]
-    punpcklwd   m0, m1
-    pshufd      m0, m0, 0       ; m0 = [w0 round]
-
-    movd        m1, r8m         ; m1 = [shift]
-
-    movd        m2, r9m
-    pshufd      m2, m2, 0       ; m2 =[offset]
-
-    mova        m3, [pw_1]
-    mova        m4, [pw_2000]
-
+    ; correct row stride
+    add         r3d, r3d
     add         r2d, r2d
+    mov         r6d, r4d
+    and         r6d, ~(mmsize / SIZEOF_PIXEL - 1)
+    sub         r3d, r6d
+    sub         r3d, r6d
+    sub         r2d, r6d
+    sub         r2d, r6d
+
+    ; generate partial width mask (MUST BE IN XMM0)
+    mov         r6d, r4d
+    and         r6d, (mmsize / SIZEOF_PIXEL - 1)
+    movd        m0, r6d
+    pshuflw     m0, m0, 0
+    punpcklqdq  m0, m0
+    pcmpgtw     m0, [pw_0_15]
 
 .loopH:
     mov         r6d, r4d
 
-    ; save old src and dst
-    mov         tmp_r0, r0
-    mov         tmp_r1, r1
 .loopW:
-    movu        m5, [r0]
-    paddw       m5, m4
+    movu        m6, [r0]
+    paddw       m6, [pw_2000]
 
-    punpcklwd   m6,m5, m3
-    pmaddwd     m6, m0
-    psrad       m6, m1
-    paddd       m6, m2
+    punpcklwd   m7, m6, m2
+    pmaddwd     m7, m3
+    psrad       m7, m4
+    paddd       m7, m5
 
-    punpckhwd   m5, m3
-    pmaddwd     m5, m0
-    psrad       m5, m1
-    paddd       m5, m2
+    punpckhwd   m6, m2
+    pmaddwd     m6, m3
+    psrad       m6, m4
+    paddd       m6, m5
 
-    packssdw    m6, m5
-    packuswb    m6, m6
+    packusdw    m7, m6
+    pminuw      m7, m1
 
-    sub         r6d, 8
-    jl          .width4
-    movh        [r1], m6
-    je          .nextH
-    add         r0, 16
-    add         r1, 8
+    sub         r6d, (mmsize / SIZEOF_PIXEL)
+    jl         .widthLess8
+    movu        [r1], m7
+    lea         r0, [r0 + mmsize]
+    lea         r1, [r1 + mmsize]
+    je         .nextH
+    jmp        .loopW
 
-    jmp         .loopW
-
-.width4:
-    cmp         r6d, -4
-    jl          .width2
-    movd        [r1], m6
-    je          .nextH
-    add         r1, 4
-    pshufd      m6, m6, 1
-
-.width2:
-    pextrw      [r1], m6, 0
+.widthLess8:
+    movu        m6, [r1]
+    pblendvb    m6, m6, m7, m0
+    movu        [r1], m6
 
 .nextH:
-    mov         r0, tmp_r0
-    mov         r1, tmp_r1
-    lea         r0, [r0 + r2]
-    lea         r1, [r1 + r3]
+    add         r0, r2
+    add         r1, r3
 
     dec         r5d
     jnz         .loopH
-
     RET
 
 ;-----------------------------------------------------------------

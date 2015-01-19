@@ -222,8 +222,8 @@ bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
 
 bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_dest[64 * (64 + 1)]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * (64 + 1)]);
 
     memset(ref_dest, 0, 64 * 64 * sizeof(pixel));
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
@@ -236,11 +236,12 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
     int offset = (rand() % 256) - 128;
     intptr_t stride = 64;
     const int correction = (IF_INTERNAL_PREC - X265_DEPTH);
+
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-        checked(opt, short_test_buff[index] + j, opt_dest, stride, stride, width, height, w0, round << correction, shift + correction, offset);
-        ref(short_test_buff[index] + j, ref_dest, stride, stride, width, height, w0, round << correction, shift + correction, offset);
+        checked(opt, short_test_buff[index] + j, opt_dest, stride, stride + 1, width, height, w0, round << correction, shift + correction, offset);
+        ref(short_test_buff[index] + j, ref_dest, stride, stride + 1, width, height, w0, round << correction, shift + correction, offset);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
         {
@@ -264,6 +265,7 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
                 printf("\n");
             }
             printf("\n");
+            opt(short_test_buff[index] + j, opt_dest, stride, stride + 1, width, height, w0, round << correction, shift + correction, offset);
             return false;
         }
 
