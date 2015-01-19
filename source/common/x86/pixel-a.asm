@@ -8931,3 +8931,31 @@ cglobal psyCost_ss_32x32, 4, 9, 16
     movd            eax, m15
     RET
 %endif
+
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal psyCost_ss_64x64, 4, 9, 16
+
+    mova            m13, [hmul_w]
+    mova            m14, [pw_1]
+    add             r1, r1
+    add             r3, r3
+    lea             r4, [3 * r1]
+    lea             r6, [3 * r3]
+    pxor            m15, m15
+    mov             r7d, 8
+.loopH:
+    mov             r8d, 8
+.loopW:
+    psy_cost_ss
+    add             r0, 16
+    add             r2, 16
+    dec             r8d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 128]
+    lea             r2, [r2 + r3 * 8 - 128]
+    dec             r7d
+    jnz             .loopH
+    movd            eax, m15
+    RET
+%endif
