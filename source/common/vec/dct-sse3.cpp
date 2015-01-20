@@ -1423,8 +1423,8 @@ void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
 namespace x265 {
 void setupIntrinsicDCT_sse3(EncoderPrimitives &p)
 {
-    /* Note: We have AVX2 assembly for these two functions, but since AVX2 is
-     * still somewhat rare on end-user PCs we still compile and link these SSE3
+    /* Note: We have AVX2 assembly for these functions, but since AVX2 is still
+     * somewhat rare on end-user PCs we still compile and link these SSE3
      * intrinsic SIMD functions */
     p.cu[BLOCK_8x8].idct   = idct8;
     p.cu[BLOCK_16x16].idct = idct16;

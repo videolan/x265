@@ -1274,7 +1274,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
 
         p.denoiseDct = x265_denoise_dct_avx2;
-        p.cu[BLOCK_4x4].dct = x265_dct4_avx2;
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal = x265_dequant_normal_avx2;
@@ -1285,6 +1284,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         p.weight_pp = x265_weight_pp_avx2;
 
+        p.cu[BLOCK_4x4].dct = x265_dct4_avx2;
 #if X86_64
         p.cu[BLOCK_8x8].dct    = x265_dct8_avx2;
         p.cu[BLOCK_16x16].dct  = x265_dct16_avx2;
