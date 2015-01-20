@@ -36,7 +36,17 @@
 using namespace x265;
 
 namespace {
-#if !HIGH_BIT_DEPTH
+#define SHIFT1  7
+#define ADD1    64
+
+#if HIGH_BIT_DEPTH
+#define SHIFT2  10
+#define ADD2    512
+#else
+#define SHIFT2  12
+#define ADD2    2048
+#endif
+
 ALIGN_VAR_32(static const int16_t, tab_idct_8x8[12][8]) =
 {
     {  89,  75,  89,  75, 89,  75, 89,  75 },
@@ -57,7 +67,7 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
     __m128i m128iS0, m128iS1, m128iS2, m128iS3, m128iS4, m128iS5, m128iS6, m128iS7, m128iAdd, m128Tmp0, m128Tmp1, m128Tmp2, m128Tmp3, E0h, E1h, E2h, E3h, E0l, E1l, E2l, E3l, O0h, O1h, O2h, O3h, O0l, O1l, O2l, O3l, EE0l, EE1l, E00l, E01l, EE0h, EE1h, E00h, E01h;
     __m128i T00, T01, T02, T03, T04, T05, T06, T07;
 
-    m128iAdd = _mm_set1_epi32(64);
+    m128iAdd = _mm_set1_epi32(ADD1);
 
     m128iS1 = _mm_load_si128((__m128i*)&src[8 + 0]);
     m128iS3 = _mm_load_si128((__m128i*)&src[24 + 0]);
@@ -136,14 +146,14 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
     E2l = _mm_add_epi32(E2l, m128iAdd);
     E2h = _mm_sub_epi32(EE1h, E01h);
     E2h = _mm_add_epi32(E2h, m128iAdd);
-    m128iS0 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E0l, O0l), 7), _mm_srai_epi32(_mm_add_epi32(E0h, O0h), 7));
-    m128iS1 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E1l, O1l), 7), _mm_srai_epi32(_mm_add_epi32(E1h, O1h), 7));
-    m128iS2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E2l, O2l), 7), _mm_srai_epi32(_mm_add_epi32(E2h, O2h), 7));
-    m128iS3 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E3l, O3l), 7), _mm_srai_epi32(_mm_add_epi32(E3h, O3h), 7));
-    m128iS4 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E3l, O3l), 7), _mm_srai_epi32(_mm_sub_epi32(E3h, O3h), 7));
-    m128iS5 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E2l, O2l), 7), _mm_srai_epi32(_mm_sub_epi32(E2h, O2h), 7));
-    m128iS6 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E1l, O1l), 7), _mm_srai_epi32(_mm_sub_epi32(E1h, O1h), 7));
-    m128iS7 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E0l, O0l), 7), _mm_srai_epi32(_mm_sub_epi32(E0h, O0h), 7));
+    m128iS0 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E0l, O0l), SHIFT1), _mm_srai_epi32(_mm_add_epi32(E0h, O0h), SHIFT1));
+    m128iS1 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E1l, O1l), SHIFT1), _mm_srai_epi32(_mm_add_epi32(E1h, O1h), SHIFT1));
+    m128iS2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E2l, O2l), SHIFT1), _mm_srai_epi32(_mm_add_epi32(E2h, O2h), SHIFT1));
+    m128iS3 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E3l, O3l), SHIFT1), _mm_srai_epi32(_mm_add_epi32(E3h, O3h), SHIFT1));
+    m128iS4 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E3l, O3l), SHIFT1), _mm_srai_epi32(_mm_sub_epi32(E3h, O3h), SHIFT1));
+    m128iS5 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E2l, O2l), SHIFT1), _mm_srai_epi32(_mm_sub_epi32(E2h, O2h), SHIFT1));
+    m128iS6 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E1l, O1l), SHIFT1), _mm_srai_epi32(_mm_sub_epi32(E1h, O1h), SHIFT1));
+    m128iS7 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E0l, O0l), SHIFT1), _mm_srai_epi32(_mm_sub_epi32(E0h, O0h), SHIFT1));
     /*  Invers matrix   */
 
     E0l = _mm_unpacklo_epi16(m128iS0, m128iS4);
@@ -171,7 +181,7 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
     m128iS6  = _mm_unpacklo_epi16(m128Tmp2, m128Tmp3);
     m128iS7  = _mm_unpackhi_epi16(m128Tmp2, m128Tmp3);
 
-    m128iAdd = _mm_set1_epi32(2048);
+    m128iAdd = _mm_set1_epi32(ADD2);
 
     m128Tmp0 = _mm_unpacklo_epi16(m128iS1, m128iS3);
     E1l = _mm_madd_epi16(m128Tmp0, _mm_load_si128((__m128i*)(tab_idct_8x8[0])));
@@ -232,14 +242,14 @@ void idct8(const int16_t* src, int16_t* dst, intptr_t stride)
     E2h = _mm_sub_epi32(EE1h, E01h);
     E2h = _mm_add_epi32(E2h, m128iAdd);
 
-    m128iS0 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E0l, O0l), 12), _mm_srai_epi32(_mm_add_epi32(E0h, O0h), 12));
-    m128iS1 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E1l, O1l), 12), _mm_srai_epi32(_mm_add_epi32(E1h, O1h), 12));
-    m128iS2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E2l, O2l), 12), _mm_srai_epi32(_mm_add_epi32(E2h, O2h), 12));
-    m128iS3 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E3l, O3l), 12), _mm_srai_epi32(_mm_add_epi32(E3h, O3h), 12));
-    m128iS4 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E3l, O3l), 12), _mm_srai_epi32(_mm_sub_epi32(E3h, O3h), 12));
-    m128iS5 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E2l, O2l), 12), _mm_srai_epi32(_mm_sub_epi32(E2h, O2h), 12));
-    m128iS6 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E1l, O1l), 12), _mm_srai_epi32(_mm_sub_epi32(E1h, O1h), 12));
-    m128iS7 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E0l, O0l), 12), _mm_srai_epi32(_mm_sub_epi32(E0h, O0h), 12));
+    m128iS0 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E0l, O0l), SHIFT2), _mm_srai_epi32(_mm_add_epi32(E0h, O0h), SHIFT2));
+    m128iS1 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E1l, O1l), SHIFT2), _mm_srai_epi32(_mm_add_epi32(E1h, O1h), SHIFT2));
+    m128iS2 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E2l, O2l), SHIFT2), _mm_srai_epi32(_mm_add_epi32(E2h, O2h), SHIFT2));
+    m128iS3 = _mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(E3l, O3l), SHIFT2), _mm_srai_epi32(_mm_add_epi32(E3h, O3h), SHIFT2));
+    m128iS4 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E3l, O3l), SHIFT2), _mm_srai_epi32(_mm_sub_epi32(E3h, O3h), SHIFT2));
+    m128iS5 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E2l, O2l), SHIFT2), _mm_srai_epi32(_mm_sub_epi32(E2h, O2h), SHIFT2));
+    m128iS6 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E1l, O1l), SHIFT2), _mm_srai_epi32(_mm_sub_epi32(E1h, O1h), SHIFT2));
+    m128iS7 = _mm_packs_epi32(_mm_srai_epi32(_mm_sub_epi32(E0l, O0l), SHIFT2), _mm_srai_epi32(_mm_sub_epi32(E0h, O0h), SHIFT2));
 
     // [07 06 05 04 03 02 01 00]
     // [17 16 15 14 13 12 11 10]
@@ -595,12 +605,12 @@ void idct16(const int16_t *src, int16_t *dst, intptr_t stride)
 
     {
         READ_UNPACKHILO(0)
-        PROCESS(0, 64, 7)
+        PROCESS(0, ADD1, SHIFT1)
     }
 
     {
         READ_UNPACKHILO(8)
-        PROCESS(1, 64, 7)
+        PROCESS(1, ADD1, SHIFT1)
     }
     {
         __m128i tr0_0, tr0_1, tr0_2, tr0_3, tr0_4, tr0_5, tr0_6, tr0_7;
@@ -613,11 +623,11 @@ void idct16(const int16_t *src, int16_t *dst, intptr_t stride)
 
     {
         UNPACKHILO(0)
-        PROCESS(0, 2048, 12)
+        PROCESS(0, ADD2, SHIFT2)
     }
     {
         UNPACKHILO(1)
-        PROCESS(1, 2048, 12)
+        PROCESS(1, ADD2, SHIFT2)
     }
 
     {
@@ -847,9 +857,9 @@ void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
     //EEEE
     const __m128i c16_n64_p64   = _mm_set1_epi32(0xFFC00040);
     const __m128i c16_p64_p64   = _mm_set1_epi32(0x00400040);
-    __m128i c32_rnd             = _mm_set1_epi32(64);
+    __m128i c32_rnd             = _mm_set1_epi32(ADD1);
 
-    int nShift = 7;
+    int nShift = SHIFT1;
 
     // DCT1
     __m128i in00[4], in01[4], in02[4], in03[4], in04[4], in05[4], in06[4], in07[4], in08[4], in09[4], in10[4], in11[4], in12[4], in13[4], in14[4], in15[4];
@@ -898,8 +908,8 @@ void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
     {
         if (pass == 1)
         {
-            c32_rnd = _mm_set1_epi32(2048);
-            nShift  = 12;
+            c32_rnd = _mm_set1_epi32(ADD2);
+            nShift  = SHIFT2;
         }
 
         for (int part = 0; part < 4; part++)
@@ -1408,7 +1418,6 @@ void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
     }
 }
 
-#endif // if !HIGH_BIT_DEPTH
 }
 
 namespace x265 {
@@ -1417,10 +1426,8 @@ void setupIntrinsicDCT_sse3(EncoderPrimitives &p)
     /* Note: We have AVX2 assembly for these two functions, but since AVX2 is
      * still somewhat rare on end-user PCs we still compile and link these SSE3
      * intrinsic SIMD functions */
-#if !HIGH_BIT_DEPTH
     p.cu[BLOCK_8x8].idct   = idct8;
     p.cu[BLOCK_16x16].idct = idct16;
     p.cu[BLOCK_32x32].idct = idct32;
-#endif
 }
 }
