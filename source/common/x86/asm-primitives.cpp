@@ -791,8 +791,11 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
 #if HIGH_BIT_DEPTH
+
     if (cpuMask & X265_CPU_SSE2)
     {
+        /* We do not differentiate CPUs which support MMX and not SSE2. We only check
+         * for SSE2 and then use both MMX and SSE2 functions */
         AVC_LUMA_PU(sad, mmx2);
 
         p.pu[LUMA_16x16].sad = x265_pixel_sad_16x16_sse2;
@@ -861,7 +864,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         ALL_LUMA_TU_S(calcresidual, getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
-        p.cu[BLOCK_4x4].sse_ss   = x265_pixel_ssd_ss_4x4_mmx2;
+        p.cu[BLOCK_4x4].sse_ss = x265_pixel_ssd_ss_4x4_mmx2;
         ALL_LUMA_CU(sse_ss, pixel_ssd_ss, sse2);
 
         p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = (pixelcmp_t)x265_pixel_ssd_ss_4x8_mmx2;
@@ -927,15 +930,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.weight_sp = x265_weight_sp_sse4;
 
         p.cu[BLOCK_4x4].psy_cost_pp = x265_psyCost_pp_4x4_sse4;
+        p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
+
 #if X86_64
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
-
-        p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_sse4;
-        p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_sse4;
-        p.cu[BLOCK_32x32].psy_cost_ss = x265_psyCost_ss_32x32_sse4;
-        p.cu[BLOCK_64x64].psy_cost_ss = x265_psyCost_ss_64x64_sse4;
+        ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 #endif
-        p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
@@ -979,7 +979,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal  = x265_dequant_normal_avx2;
-        p.scale1D_128to64= x265_scale1D_128to64_avx2;
+        p.scale1D_128to64 = x265_scale1D_128to64_avx2;
         // p.weight_pp = x265_weight_pp_avx2; fails tests
 
         ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, avx2);
@@ -988,7 +988,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 #if X86_64
         ALL_LUMA_TU_S(dct, dct, avx2);
         ALL_LUMA_TU_S(idct, idct, avx2);
-        
+
         p.cu[BLOCK_8x8].transpose = x265_transpose8_avx2;
         p.cu[BLOCK_16x16].transpose = x265_transpose16_avx2;
         p.cu[BLOCK_32x32].transpose = x265_transpose32_avx2;
@@ -1004,9 +1004,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
         p.cu[BLOCK_16x16].sse_ss = x265_pixel_ssd_ss_16x16_avx2;
     }
+
 #else // if HIGH_BIT_DEPTH
+
     if (cpuMask & X265_CPU_SSE2)
     {
+        /* We do not differentiate CPUs which support MMX and not SSE2. We only check
+         * for SSE2 and then use both MMX and SSE2 functions */
         AVC_LUMA_PU(sad, mmx2);
         AVC_LUMA_PU(sad_x3, mmx2);
         AVC_LUMA_PU(sad_x4, mmx2);
