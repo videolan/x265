@@ -209,9 +209,7 @@ bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
         int vres = (int)checked(opt, sbuf1 + j, (intptr_t)stride);
 
         if (cres != vres)
-        {
             return false;
-        }
 
         reportfail();
         j += INCR;
@@ -245,26 +243,6 @@ bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
         {
-            printf("--- Ref ---\n");
-            for(int y = 0; y < 16; y++)
-            {
-                for(int x = 0; x < 16; x++)
-                {
-                    printf("%04X, ", ref_dest[y * stride + x] & 0xFFFF);
-                }
-                printf("\n");
-            }
-            printf("\n");
-            printf("--- Opt ---\n");
-            for(int y = 0; y < 16; y++)
-            {
-                for(int x = 0; x < 16; x++)
-                {
-                    printf("%04X, ", opt_dest[y * stride + x] & 0xFFFF);
-                }
-                printf("\n");
-            }
-            printf("\n");
             opt(short_test_buff[index] + j, opt_dest, stride, stride + 1, width, height, w0, round << correction, shift + correction, offset);
             return false;
         }
@@ -300,26 +278,6 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
         {
-            printf("--- Ref ---\n");
-            for(int y = 0; y < 16; y++)
-            {
-                for(int x = 0; x < 16; x++)
-                {
-                    printf("%04X, ", ref_dest[y * stride + x] & 0xFFFF);
-                }
-                printf("\n");
-            }
-            printf("\n");
-            printf("--- Opt ---\n");
-            for(int y = 0; y < 16; y++)
-            {
-                for(int x = 0; x < 16; x++)
-                {
-                    printf("%04X, ", opt_dest[y * stride + x] & 0xFFFF);
-                }
-                printf("\n");
-            }
-            printf("\n");
             checked(opt, pixel_test_buff[index] + j, opt_dest, stride, width, height, w0, round << correction, shift + correction, offset);
             return false;
         }
@@ -830,7 +788,6 @@ bool PixelHarness::check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_
     return true;
 }
 
-/* TODO: This function causes crashes when checked. Is this a real bug? */
 bool PixelHarness::check_ssim_end(ssim_end4_t ref, ssim_end4_t opt)
 {
     ALIGN_VAR_32(int, sum0[5][4]);
@@ -928,9 +885,7 @@ bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
         int width = 16 * (rand() % 4 + 1);
         int8_t sign = rand() % 3;
         if (sign == 2)
-        {
             sign = -1;
-        }
 
         ref(ref_dest, psbuf1 + j, width, sign);
         checked(opt, opt_dest, psbuf1 + j, width, sign);
@@ -1167,7 +1122,7 @@ bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
 }
 
 
-bool PixelHarness::testPartition(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
+bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
     {
@@ -1369,54 +1324,37 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     for (int size = 4; size <= 64; size *= 2)
     {
         int part = partitionFromSizes(size, size); // 2Nx2N
-        if (!testPartition(part, ref, opt)) return false;
+        if (!testPU(part, ref, opt)) return false;
 
         if (size > 4)
         {
             part = partitionFromSizes(size, size >> 1); // 2NxN
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
             part = partitionFromSizes(size >> 1, size); // Nx2N
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
         }
         if (size > 8)
         {
             // 4 AMP modes
             part = partitionFromSizes(size, size >> 2);
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
             part = partitionFromSizes(size, 3 * (size >> 2));
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
 
             part = partitionFromSizes(size >> 2, size);
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
             part = partitionFromSizes(3 * (size >> 2), size);
-            if (!testPartition(part, ref, opt)) return false;
+            if (!testPU(part, ref, opt)) return false;
         }
     }
 
     for (int i = 0; i < NUM_CU_SIZES; i++)
     {
-        if (opt.cu[i].calcresidual)
-        {
-            if (!check_calresidual(ref.cu[i].calcresidual, opt.cu[i].calcresidual))
-            {
-                printf("calcresidual width: %d failed!\n", 4 << i);
-                return false;
-            }
-        }
         if (opt.cu[i].sa8d)
         {
             if (!check_pixelcmp(ref.cu[i].sa8d, opt.cu[i].sa8d))
             {
                 printf("sa8d[%dx%d]: failed!\n", 4 << i, 4 << i);
-                return false;
-            }
-        }
-
-        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s)
-        {
-            if (!check_ssd_s(ref.cu[i].ssd_s, opt.cu[i].ssd_s))
-            {
-                printf("ssd_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1429,65 +1367,12 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 return false;
             }
         }
-        if (opt.cu[i].transpose)
-        {
-            if (!check_transpose(ref.cu[i].transpose, opt.cu[i].transpose))
-            {
-                printf("transpose[%dx%d] failed\n", 4 << i, 4 << i);
-                return false;
-            }
-        }
 
         if (opt.cu[i].var)
         {
             if (!check_pixel_var(ref.cu[i].var, opt.cu[i].var))
             {
                 printf("var[%dx%d] failed\n", 4 << i, 4 << i);
-                return false;
-            }
-        }
-
-        if ((i < BLOCK_64x64) && opt.cu[i].copy_cnt)
-        {
-            if (!check_copy_cnt_t(ref.cu[i].copy_cnt, opt.cu[i].copy_cnt))
-            {
-                printf("copy_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
-                return false;
-            }
-        }
-
-        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shl)
-        {
-            if (!check_cpy2Dto1D_shl_t(ref.cu[i].cpy2Dto1D_shl, opt.cu[i].cpy2Dto1D_shl))
-            {
-                printf("cpy2Dto1D_shl failed!\n");
-                return false;
-            }
-        }
-
-        if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shr)
-        {
-            if (!check_cpy2Dto1D_shr_t(ref.cu[i].cpy2Dto1D_shr, opt.cu[i].cpy2Dto1D_shr))
-            {
-                printf("cpy2Dto1D_shr failed!\n");
-                return false;
-            }
-        }
-
-        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shl)
-        {
-            if (!check_cpy1Dto2D_shl_t(ref.cu[i].cpy1Dto2D_shl, opt.cu[i].cpy1Dto2D_shl))
-            {
-                printf("cpy1Dto2D_shl[%dx%d] failed!\n", 4 << i, 4 << i);
-                return false;
-            }
-        }
-
-        if ((i < BLOCK_64x64) && opt.cu[i].cpy1Dto2D_shr)
-        {
-            if (!check_cpy1Dto2D_shr_t(ref.cu[i].cpy1Dto2D_shr, opt.cu[i].cpy1Dto2D_shr))
-            {
-                printf("cpy1Dto2D_shr[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -1507,6 +1392,83 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             {
                 printf("\npsy_cost_ss[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
+            }
+        }
+
+        if (i < BLOCK_64x64)
+        {
+            /* TU only primitives */
+
+            if (opt.cu[i].calcresidual)
+            {
+                if (!check_calresidual(ref.cu[i].calcresidual, opt.cu[i].calcresidual))
+                {
+                    printf("calcresidual width: %d failed!\n", 4 << i);
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].transpose)
+            {
+                if (!check_transpose(ref.cu[i].transpose, opt.cu[i].transpose))
+                {
+                    printf("transpose[%dx%d] failed\n", 4 << i, 4 << i);
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].ssd_s)
+            {
+                if (!check_ssd_s(ref.cu[i].ssd_s, opt.cu[i].ssd_s))
+                {
+                    printf("ssd_s[%dx%d]: failed!\n", 4 << i, 4 << i);
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].copy_cnt)
+            {
+                if (!check_copy_cnt_t(ref.cu[i].copy_cnt, opt.cu[i].copy_cnt))
+                {
+                    printf("copy_cnt[%dx%d] failed!\n", 4 << i, 4 << i);
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].cpy2Dto1D_shl)
+            {
+                if (!check_cpy2Dto1D_shl_t(ref.cu[i].cpy2Dto1D_shl, opt.cu[i].cpy2Dto1D_shl))
+                {
+                    printf("cpy2Dto1D_shl failed!\n");
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].cpy2Dto1D_shr)
+            {
+                if (!check_cpy2Dto1D_shr_t(ref.cu[i].cpy2Dto1D_shr, opt.cu[i].cpy2Dto1D_shr))
+                {
+                    printf("cpy2Dto1D_shr failed!\n");
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].cpy1Dto2D_shl)
+            {
+                if (!check_cpy1Dto2D_shl_t(ref.cu[i].cpy1Dto2D_shl, opt.cu[i].cpy1Dto2D_shl))
+                {
+                    printf("cpy1Dto2D_shl[%dx%d] failed!\n", 4 << i, 4 << i);
+                    return false;
+                }
+            }
+
+            if (opt.cu[i].cpy1Dto2D_shr)
+            {
+                if (!check_cpy1Dto2D_shr_t(ref.cu[i].cpy1Dto2D_shr, opt.cu[i].cpy1Dto2D_shr))
+                {
+                    printf("cpy1Dto2D_shr[%dx%d] failed!\n", 4 << i, 4 << i);
+                    return false;
+                }
             }
         }
     }
