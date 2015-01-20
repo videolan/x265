@@ -788,10 +788,10 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     x265::primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
 }
 
-void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
-{
 #if HIGH_BIT_DEPTH
 
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
+{
     if (cpuMask & X265_CPU_SSE2)
     {
         /* We do not differentiate CPUs which support MMX and not SSE2. We only check
@@ -1004,9 +1004,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
         p.cu[BLOCK_16x16].sse_ss = x265_pixel_ssd_ss_16x16_avx2;
     }
+}
 
 #else // if HIGH_BIT_DEPTH
 
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
+{
     if (cpuMask & X265_CPU_SSE2)
     {
         /* We do not differentiate CPUs which support MMX and not SSE2. We only check
@@ -1375,9 +1378,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vpp = x265_interp_4tap_vert_pp_32x32_avx2;
 #endif
     }
+}
 #endif // if HIGH_BIT_DEPTH
-}
-}
+
+} // namespace x265
 
 extern "C" {
 #ifdef __INTEL_COMPILER
