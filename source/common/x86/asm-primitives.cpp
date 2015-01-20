@@ -536,7 +536,6 @@ extern "C" {
     ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, cpu); p.pu[LUMA_4x4].luma_vsp = x265_interp_8tap_vert_sp_4x4_ ## cpu; \
     ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu); p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;
 
-#define LUMA_SP_FILTERS(cpu) ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, cpu); p.pu[LUMA_4x4].luma_vsp = x265_interp_8tap_vert_sp_4x4_ ## cpu
 #define LUMA_SS_FILTERS(cpu) ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, cpu); p.pu[LUMA_4x4].luma_vss = x265_interp_8tap_vert_ss_4x4_ ## cpu
 
 #define LUMA_CU_BLOCKCOPY(type, cpu) \
@@ -1153,7 +1152,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         CHROMA_420_PIXELSUB_PS(sse4);
         CHROMA_422_PIXELSUB_PS(sse4);
 
-        LUMA_SP_FILTERS(sse4);
         LUMA_FILTERS(sse4);
         CHROMA_420_FILTERS(sse4);
         CHROMA_422_FILTERS(sse4);
