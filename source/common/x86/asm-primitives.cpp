@@ -923,7 +923,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         INTRA_ANG_SSE4_HIGH(sse4);
 
         p.planecopy_cp = x265_upShift_8_sse4;
-        // these fail unit tests
         p.weight_pp = x265_weight_pp_sse4;
         p.weight_sp = x265_weight_sp_sse4;
 
