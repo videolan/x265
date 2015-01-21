@@ -311,19 +311,11 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-#if HIGH_BIT_DEPTH
-    if (param->internalBitDepth != 10)
+    if (param->internalBitDepth != x265_max_bit_depth)
     {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of 10 are supported in this build\n");
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", x265_max_bit_depth);
         return true;
     }
-#else
-    if (param->internalBitDepth != 8)
-    {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of 8 are supported in this build\n");
-        return true;
-    }
-#endif // if HIGH_BIT_DEPTH
 
     InputFileInfo info;
     info.filename = inputfn;
