@@ -103,7 +103,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
 
     WRITE_UVLC(sps.maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
     WRITE_UVLC(sps.numReorderPics,         "sps_num_reorder_pics[i]");
-    WRITE_UVLC(0,                          "sps_max_latency_increase_plus1[i]");
+    WRITE_UVLC(sps.maxLatencyIncrease + 1, "sps_max_latency_increase_plus1[i]");
 
     WRITE_UVLC(sps.log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
     WRITE_UVLC(sps.log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");

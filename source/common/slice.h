@@ -230,6 +230,7 @@ struct SPS
 
     uint32_t maxDecPicBuffering; // these are dups of VPS values
     int      numReorderPics;
+    int      maxLatencyIncrease;
 
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
