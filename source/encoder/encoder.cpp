@@ -488,11 +488,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
     int ret = 0;
 
-    // getEncodedPicture() should block until the FrameEncoder has completed
-    // encoding the frame.  This is how back-pressure through the API is
-    // accomplished when the encoder is full.
+    /* getEncodedPicture() should block until the FrameEncoder has completed
+     * encoding the frame.  This is how back-pressure through the API is
+     * accomplished when the encoder is full */
     Frame *outFrame = curEncoder->getEncodedPicture(m_nalList);
-
     if (outFrame)
     {
         Slice *slice = outFrame->m_encData->m_slice;
@@ -570,11 +569,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (bChroma)
                 m_numChromaWPBiFrames++;
         }
+
         if (m_aborted)
             return -1;
+
         finishFrameStats(outFrame, curEncoder, curEncoder->m_accessUnitBits);
 
-        // Allow this frame to be recycled if no frame encoders are using it for reference
+        /* Allow this frame to be recycled if no frame encoders are using it for reference */
         if (!pic_out)
         {
             ATOMIC_DEC(&outFrame->m_countRefEncoders);
@@ -588,12 +589,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         ret = 1;
     }
 
-    // pop a single frame from decided list, then provide to frame encoder
-    // curEncoder is guaranteed to be idle at this point
+    /* pop a single frame from decided list, then provide to frame encoder
+     * curEncoder is guaranteed to be idle at this point */
     Frame* frameEnc = m_lookahead->getDecidedPicture();
     if (frameEnc)
     {
-        // give this picture a FrameData instance before encoding
+        /* give this frame a FrameData instance before encoding */
         if (m_dpb->m_picSymFreeList)
         {
             frameEnc->m_encData = m_dpb->m_picSymFreeList;
@@ -613,6 +614,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc->m_reconPic->m_buOffsetC = m_buOffsetC;
             frameEnc->m_reconPic->m_buOffsetY = m_buOffsetY;
         }
+
         curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
         if (m_bframeDelay)
         {
@@ -624,7 +626,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
         else
             frameEnc->m_dts = frameEnc->m_reorderedPts;
-        /* Allocate analysis data before encode in save mode. This is allocated in frameEnc*/
+
+        /* Allocate analysis data before encode in save mode. This is allocated in frameEnc */
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
         {
             x265_analysis_data* analysis = &frameEnc->m_analysisData;
@@ -639,13 +642,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             allocAnalysis(analysis);
         }
 
-        // determine references, setup RPS, etc
+        /* determine references, setup RPS, etc */
         m_dpb->prepareEncode(frameEnc);
 
         if (m_param->rc.rateControlMode != X265_RC_CQP)
             m_lookahead->getEstimatedPictureCost(frameEnc);
 
-        // Allow FrameEncoder::compressFrame() to start in the frame encoder thread
+        /* Allow FrameEncoder::compressFrame() to start in the frame encoder thread */
         if (!curEncoder->startCompressFrame(frameEnc))
             m_aborted = true;
     }
@@ -1473,9 +1476,7 @@ void Encoder::configure(x265_param *p)
         p->rc.aqStrength = 0;
 
     if (p->totalFrames <= 2 * ((float)p->fpsNum)/p->fpsDenom && p->rc.bStrictCbr)
-    {
         p->lookaheadDepth = p->totalFrames;
-    }
 
     if (p->internalCsp != X265_CSP_I420)
     {
