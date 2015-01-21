@@ -1975,7 +1975,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
 
         /* Uni-directional prediction */
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD && bestME[0].ref >= 0)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
         {
             for (int l = 0; l < numPredDir; l++)
             {
