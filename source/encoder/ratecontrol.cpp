@@ -1183,7 +1183,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             if (zone->bForceQp)
                 m_qp += zone->qp - m_qpConstant[P_SLICE];
             else
-                m_qp -= 6.0 * X265_LOG2(zone->bitrateFactor);
+                m_qp -= (int)(6.0 * X265_LOG2(zone->bitrateFactor));
         }
     }
     if (m_sliceType != B_SLICE)
