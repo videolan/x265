@@ -409,6 +409,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 0;
             param->scenecutThreshold = 0;
             param->rc.cuTree = 0;
+            param->frameNumThreads = 1;
         }
         else if (!strcmp(tune, "grain"))
         {
