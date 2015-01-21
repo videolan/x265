@@ -257,6 +257,8 @@ void Encoder::create()
         }
     }
 
+    m_bZeroLatency = !m_param->bframes && !m_param->lookaheadDepth && m_param->frameNumThreads == 1;
+
     m_aborted |= parseLambdaFile(m_param);
 
     m_encodeStartTime = x265_mdate();
@@ -488,10 +490,21 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
     int ret = 0;
 
+    /* Normal operation is to wait for the current frame encoder to complete its current frame
+     * and then to give it a new frame to work on.  In zero-latency mode, we must encode this
+     * input picture before returning so the order must be reversed. This do/while() loop allows
+     * us to alternate the order of the calls without ugly code replication */
+    Frame* outFrame = NULL;
+    Frame* frameEnc = NULL;
+    int pass = 0;
+    do
+    {
+
     /* getEncodedPicture() should block until the FrameEncoder has completed
      * encoding the frame.  This is how back-pressure through the API is
      * accomplished when the encoder is full */
-    Frame *outFrame = curEncoder->getEncodedPicture(m_nalList);
+    if (!m_bZeroLatency || pass)
+        outFrame = curEncoder->getEncodedPicture(m_nalList);
     if (outFrame)
     {
         Slice *slice = outFrame->m_encData->m_slice;
@@ -591,8 +604,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
     /* pop a single frame from decided list, then provide to frame encoder
      * curEncoder is guaranteed to be idle at this point */
-    Frame* frameEnc = m_lookahead->getDecidedPicture();
-    if (frameEnc)
+    if (!pass)
+        frameEnc = m_lookahead->getDecidedPicture();
+    if (frameEnc && !pass)
     {
         /* give this frame a FrameData instance before encoding */
         if (m_dpb->m_picSymFreeList)
@@ -654,6 +668,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     }
     else if (m_encodedFrameNum)
         m_rateControl->setFinalFrameCount(m_encodedFrameNum);
+
+    }
+    while (m_bZeroLatency && ++pass < 2);
 
     return ret;
 }
