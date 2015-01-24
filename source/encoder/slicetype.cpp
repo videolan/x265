@@ -123,9 +123,11 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame *curFrame, int sliceType)
 {
-    PicYuv *orig = curFrame->m_fencPic;
-
-    curFrame->m_lowres.init(orig, curFrame->m_poc, sliceType);
+    {
+        ProfileScopeEvent(prelookahead);
+        PicYuv *orig = curFrame->m_fencPic;
+        curFrame->m_lowres.init(orig, curFrame->m_poc, sliceType);
+    }
 
     m_inputQueueLock.acquire();
     m_inputQueue.pushBack(*curFrame);

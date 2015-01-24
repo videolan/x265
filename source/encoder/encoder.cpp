@@ -458,7 +458,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 }
             }
             else
+            {
+                ProfileScopeEvent(prelookahead);
                 m_rateControl->calcAdaptiveQuantFrame(inFrame);
+            }
         }
 
         /* Use the frame types from the first pass, if available */
