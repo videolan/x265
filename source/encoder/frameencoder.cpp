@@ -232,7 +232,7 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::compressFrame()
 {
-    //ProfileScopeEvent(frameThread);
+    ProfileScopeEvent(frameThread);
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_encData->m_slice;
 
