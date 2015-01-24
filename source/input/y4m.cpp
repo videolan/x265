@@ -375,6 +375,7 @@ void Y4MInput::startReader()
 
 void Y4MInput::threadMain()
 {
+    THREAD_NAME("Y4MRead", 0);
     do
     {
         if (!populateFrameQueue())
