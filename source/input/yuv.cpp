@@ -167,6 +167,7 @@ void YUVInput::startReader()
 
 void YUVInput::threadMain()
 {
+    THREAD_NAME("YUVRead", 0);
     while (threadActive)
     {
         if (!populateFrameQueue())

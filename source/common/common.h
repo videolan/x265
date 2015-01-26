@@ -41,6 +41,9 @@
 
 #include "x265.h"
 
+#if ENABLE_PPA && ENABLE_VTUNE
+#error "PPA and VTUNE cannot both be enabled. Disable one of them."
+#endif
 #if ENABLE_PPA
 #include "profile/PPA/ppa.h"
 #define ProfileScopeEvent(x) PPAScopeEvent(x)

@@ -131,6 +131,7 @@ public:
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
+    bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
 
     Encoder();
