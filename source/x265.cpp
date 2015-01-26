@@ -89,6 +89,7 @@ struct CLIOptions
 
     CLIOptions()
     {
+        frameRate = 0.f;
         input = NULL;
         recon = NULL;
         framesToBeEncoded = seek = 0;
