@@ -1055,6 +1055,16 @@ Quality, rate control and rate distortion options
 
 	temporally blur complexity. default 20
 
+.. option:: --zones <zone0>/<zone1>/...
+
+	Tweak the bitrate of regions of the video. Each zone takes the form:
+
+	<start frame>,<end frame>,<option> where <option> is either q=<integer>
+	(force QP) or b=<float> (bitrate multiplier).
+
+	If zones overlap, whichever comes later in the list takes precedence.
+	Default none
+
 Quantization Options
 ====================
 
