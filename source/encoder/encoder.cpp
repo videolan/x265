@@ -214,7 +214,9 @@ void Encoder::create()
                     if (m_param->rc.rateControlMode == X265_RC_CRF)
                         fprintf(m_csvfpt, "RateFactor, ");
                     fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), "
-                                      "Encoding time, Elapsed time, List 0, List 1\n");
+                                      "List 0, List 1");
+                    /* detailed performance statistics */
+                    fprintf(m_csvfpt, ", Wall time, Total CTU time, Avg WPP\n");
                 }
                 else
                     fputs(summaryCSVHeader, m_csvfpt);
@@ -1159,13 +1161,14 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
             if (m_param->bEnablePsnr)
                 fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
             else
-                fprintf(m_csvfpt, " -, -, -, -,");
+                fputs(" -, -, -, -,", m_csvfpt);
             if (m_param->bEnableSsim)
-                fprintf(m_csvfpt, " %.6f, %6.3f,", ssim, x265_ssim2dB(ssim));
+                fprintf(m_csvfpt, " %.6f, %6.3f", ssim, x265_ssim2dB(ssim));
             else
-                fprintf(m_csvfpt, " -, -,");
-            fprintf(m_csvfpt, " %.3lf, %.3lf", curEncoder->m_frameTime, curEncoder->m_elapsedCompressTime);
-            if (!slice->isIntra())
+                fputs(" -, -", m_csvfpt);
+            if (slice->isIntra())
+                fputs(", -, -", m_csvfpt);
+            else
             {
                 int numLists = slice->isInterP() ? 1 : 2;
                 for (int list = 0; list < numLists; list++)
@@ -1179,10 +1182,14 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
                 }
 
                 if (numLists == 1)
-                    fprintf(m_csvfpt, ", -");
+                    fputs(", -", m_csvfpt);
             }
+            // detailed frame statistics
+            fprintf(m_csvfpt, ", %.3lf, %.3lf", curEncoder->m_frameTime, curEncoder->m_elapsedCompressTime);
+            if (curEncoder->m_totalActiveWorkerCount)
+                fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
             else
-                fprintf(m_csvfpt, ", -, -");
+                fputs(", 1", m_csvfpt);
             fprintf(m_csvfpt, "\n");
         }
 

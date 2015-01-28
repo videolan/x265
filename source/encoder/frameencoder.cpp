@@ -237,6 +237,9 @@ void FrameEncoder::compressFrame()
     int64_t startCompressTime = x265_mdate();
     Slice* slice = m_frame->m_encData->m_slice;
 
+    m_totalActiveWorkerCount = 0;
+    m_activeWorkerCountSamples = 0;
+
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
@@ -778,6 +781,10 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
 
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
+
+        // take a sample of the current active worker count
+        ATOMIC_ADD(&m_totalActiveWorkerCount, m_activeWorkerCount);
+        ATOMIC_INC(&m_activeWorkerCountSamples);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */

@@ -147,6 +147,7 @@ public:
     uint64_t                 m_SSDU;
     uint64_t                 m_SSDV;
     double                   m_ssim;
+    uint64_t                 m_accessUnitBits;
     uint32_t                 m_ssimCnt;
     MD5Context               m_state[3];
     uint32_t                 m_crc[3];
@@ -157,8 +158,10 @@ public:
     FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
-    volatile int             m_activeWorkerCount;
-    uint64_t                 m_accessUnitBits;
+
+    volatile int             m_activeWorkerCount;        // count of workers current encoding or filtering CTUs
+    volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
+    volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
 
     Encoder*                 m_top;
     x265_param*              m_param;
