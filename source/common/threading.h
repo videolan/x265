@@ -53,6 +53,7 @@
 #define ATOMIC_AND(ptr, mask)               __sync_fetch_and_and(ptr, mask)
 #define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
 #define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
+#define ATOMIC_ADD(ptr, value)              __sync_add_and_fetch((volatile int32_t*)ptr, value)
 #define GIVE_UP_TIME()                      usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
@@ -63,6 +64,7 @@
 #define CTZ(id, x)                          _BitScanForward(&id, x)
 #define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
+#define ATOMIC_ADD(ptr, value)              InterlockedAdd((volatile LONG*)ptr, value)
 #define ATOMIC_OR(ptr, mask)                _InterlockedOr((volatile LONG*)ptr, (LONG)mask)
 #define ATOMIC_AND(ptr, mask)               _InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
 #define GIVE_UP_TIME()                      Sleep(0)
