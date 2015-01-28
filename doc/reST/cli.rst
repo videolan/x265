@@ -75,6 +75,47 @@ Logging/Statistic Options
 	:option:`--log-level` is debug or above, it writes one line per
 	frame. Default none
 
+	When frame level logging is enabled, several frame performance
+	statistics are listed:
+
+	**DecideWait ms** number of milliseconds the frame encoder had to
+	wait, since the previous frame was retrieved by the API thread,
+	before a new frame has been given to it. This is the latency
+	introduced by slicetype decisions (lookahead).
+	
+	**Row0Wait ms** number of milliseconds since the frame encoder
+	received a frame to encode before its first row of CTUs is allowed
+	to begin compression. This is the latency introduced by reference
+	frames making reconstructed and filtered rows available.
+	
+	**Wall time ms** number of milliseconds between the first CTU
+	being ready to be compressed and the entire frame being compressed
+	and the output NALs being completed.
+	
+	**Ref Wait Wall ms** number of milliseconds between the first
+	reference row being available and the last reference row becoming
+	available.
+	
+	**Total CTU time ms** the total time (measured in milliseconds)
+	spent by worker threads compressing of filtering CTUs for this
+	frame.
+	
+	**Stall Time ms** the number of milliseconds of the reported wall
+	time that were spent with zero worker threads, aka all compression
+	was completely stalled.
+
+	**Avg WPP** the average number of worker threads working on this
+	frame, at any given time. This value is sampled at the completion of
+	each CTU. This shows the effectiveness of Wavefront Parallel
+	Processing.
+
+	**Row Blocks** the number of times a worker thread had to abandon
+	the row of CTUs it was encoding because the row above it was not far
+	enough ahead for the necessary reference data to be available. This
+	is more of a problem for P frames where some blocks are much more
+	expensive than others.
+
+
 .. option:: --cu-stats, --no-cu-stats
 
 	Records statistics on how each CU was coded (split depths and other
